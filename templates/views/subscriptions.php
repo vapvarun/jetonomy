@@ -68,6 +68,7 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 				<button class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
 					data-wp-on--click="actions.unsubscribeRow"
 					data-subscription-id="<?php echo absint( $item['id'] ); ?>"
+					<?php /* translators: %s: the followed space or topic title. */ ?>
 					data-confirm="<?php echo esc_attr( sprintf( __( 'Unfollow “%s”?', 'jetonomy' ), $item['title'] ?: __( 'this item', 'jetonomy' ) ) ); ?>"
 					title="<?php esc_attr_e( 'Stop receiving notifications for this', 'jetonomy' ); ?>">
 					<?php jetonomy_echo_icon( 'bell-off', 14 ); ?>
@@ -101,6 +102,7 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 				?>
 			<?php else : ?>
 				<?php if ( ! empty( $jt_spaces_subs ) ) : ?>
+					<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 					<h2 class="jt-subs-heading"><?php echo esc_html( sprintf( __( '%s you follow', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>
 					<?php $jt_render_group( $jt_spaces_subs, 'space', $jt_base, $jt_via_labels ); ?>
 				<?php endif; ?>

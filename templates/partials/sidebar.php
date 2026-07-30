@@ -283,13 +283,13 @@ $bn_active = did_action( 'buddynext_loaded' );
 							/* translators: 1: vote count with singular/plural, 2: reply count with singular/plural */
 							echo esc_html(
 								sprintf(
-									/* translators: %d: number of votes */
+									/* translators: %d: number of votes. */
 									_n( '%d vote', '%d votes', $v, 'jetonomy' ),
 									$v
 								)
 								. ' · '
 								. sprintf(
-									/* translators: %d: number of replies */
+									/* translators: %d: number of replies. */
 									_n( '%d reply', '%d replies', $r, 'jetonomy' ),
 									$r
 								)

@@ -361,7 +361,7 @@ $role_labels = [
 								?>
 								<div class="jt-member-joined">
 									<?php
-									/* translators: %s: joined date */
+									/* translators: %s: join date. */
 									echo esc_html( sprintf( __( 'Joined %s', 'jetonomy' ), $joined ) );
 									?>
 								</div>
@@ -402,6 +402,7 @@ $role_labels = [
 									data-space-id="<?php echo absint( $space->id ); ?>"
 									data-user-id="<?php echo absint( $member->user_id ); ?>"
 									data-user-name="<?php echo esc_attr( $mu->display_name ); ?>">
+									<?php /* translators: %s: site title. */ ?>
 									<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 								</button>
 							<?php endif; ?>

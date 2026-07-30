@@ -40,6 +40,7 @@ if ( is_wp_error( $result ) ) {
 		$login_url   = wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) );
 		?>
 		<div class="jt-narrow" style="text-align:center;padding:48px 0;">
+			<?php /* translators: %s: space title. */ ?>
 			<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong>' . esc_html( $space_title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
 			<?php if ( '' !== $space_desc ) : ?>
 				<p class="jt-text-secondary"><?php echo esc_html( wp_strip_all_tags( $space_desc ) ); ?></p>

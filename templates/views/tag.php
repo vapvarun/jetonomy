@@ -103,7 +103,7 @@ $crumbs = [
 				<span class="jt-tag jt-tag-hero"><?php echo esc_html( $tag->name ); ?></span>
 				<span class="jt-tag-count-label">
 					<?php
-					/* translators: %d: number of posts with this tag */
+					/* translators: %d: post count. */
 					echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $tag->post_count, 'jetonomy' ), (int) $tag->post_count ) );
 					?>
 				</span>

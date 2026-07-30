@@ -89,7 +89,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 						<?php foreach ( array( 20, 50, 100 ) as $pp ) : ?>
 							<option value="<?php echo (int) $pp; ?>" <?php selected( (int) $per_page, $pp ); ?>>
 								<?php
-								/* translators: %d: per-page count */
+								/* translators: %d: per-page count. */
 								echo esc_html( sprintf( __( '%d per page', 'jetonomy' ), $pp ) );
 								?>
 							</option>
@@ -144,6 +144,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 						<?php foreach ( $tags as $tag ) : ?>
 							<tr data-id="<?php echo absint( $tag->id ); ?>" data-post-count="<?php echo absint( $tag->post_count ?? 0 ); ?>" class="jetonomy-tag-row">
 								<th scope="row" class="check-column">
+									<?php /* translators: %s: tag name. */ ?>
 									<input type="checkbox" class="jetonomy-tag-cb" value="<?php echo absint( $tag->id ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Select %s', 'jetonomy' ), $tag->name ) ); ?>">
 								</th>
 								<td class="column-name column-primary">

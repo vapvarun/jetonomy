@@ -94,7 +94,7 @@ if ( 'post' === $flag->object_type ) {
 		<span class="jt-mod-flag-reporter">
 			<?php echo esc_html( $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' ) ); ?>
 			<?php
-			/* translators: %s: human-readable time difference */
+			/* translators: %s: human-readable time difference. */
 			echo ' &middot; ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 			?>
 		</span>

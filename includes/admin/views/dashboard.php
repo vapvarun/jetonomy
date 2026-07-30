@@ -168,6 +168,7 @@ $stat_cards = array(
 										$post_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply_row->post_id );
 										/* translators: %s: post title */
 										$object_html = sprintf(
+											/* translators: %s: site title. */
 											__( 'Reply on %s', 'jetonomy' ),
 											'<a href="' . esc_url( $post_url ) . '">' . esc_html( $parent_post->title ) . '</a>'
 										);

@@ -157,6 +157,7 @@ class Notifier {
 				'body'    => __( "Hi {user},\n\n{message}\n\nIf you think this was a mistake, reply to a moderator in the community.", 'jetonomy' ),
 			),
 			'join_request'          => array(
+				/* translators: %s: the singular space label; {site} is replaced with the site name before sending. */
 				'subject' => sprintf( __( '[{site}] New %s join request', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nReview the request and approve or decline it.", 'jetonomy' ),
 			),
@@ -473,7 +474,8 @@ class Notifier {
 			return;
 		}
 
-		$space       = Space::find( $space_id );
+		$space = Space::find( $space_id );
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 		$space_name  = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$actor_id    = (int) $post->author_id;
 		$post_url    = $this->get_post_url( $post );
@@ -534,6 +536,7 @@ class Notifier {
 				'reply',
 				$reply_id,
 				sprintf(
+					/* translators: 1: replier display name, 2: post title. */
 					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
@@ -560,6 +563,7 @@ class Notifier {
 					'reply',
 					$reply_id,
 					sprintf(
+						/* translators: 1: replier display name, 2: post title. */
 						__( '%1$s replied to your comment in "%2$s"', 'jetonomy' ),
 						\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 						mb_substr( $post->title, 0, 50 )
@@ -615,6 +619,7 @@ class Notifier {
 				'reply',
 				$reply_id,
 				sprintf(
+					/* translators: 1: replier display name, 2: post title. */
 					__( '%1$s replied in "%2$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
@@ -847,6 +852,7 @@ class Notifier {
 				'reply',
 				$reply_id,
 				sprintf(
+					/* translators: %s: post title. */
 					__( 'Your answer was accepted in "%s"', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
@@ -921,6 +927,7 @@ class Notifier {
 			'badge',
 			$new_level,
 			sprintf(
+				/* translators: 1: trust level name, 2: trust level number. */
 				__( 'Congratulations! You have been promoted to %1$s (Level %2$d)', 'jetonomy' ),
 				$name,
 				$new_level
@@ -1481,8 +1488,9 @@ class Notifier {
 	 */
 	public function on_join_request_approved( int $space_id, int $user_id, int $reviewed_by ): void {
 		$space = Space::find( $space_id );
-		$name  = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
-		$url   = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+		$name = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		$url  = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
 		$this->create_and_maybe_email(
 			$user_id,
 			$reviewed_by,

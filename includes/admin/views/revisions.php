@@ -130,7 +130,7 @@ if ( 'detail' === $mode ) :
 											esc_attr( $created ),
 											esc_html(
 												sprintf(
-													/* translators: %s: human-readable time difference */
+													/* translators: %s: human-readable time difference. */
 													__( '%s ago', 'jetonomy' ),
 													human_time_diff( $ts, time() )
 												)

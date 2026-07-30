@@ -167,10 +167,10 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 				$jt_notif_anon = ! empty( $notif->actor_anonymous );
 				$actor         = ( $notif->actor_id && ! $jt_notif_anon ) ? get_userdata( (int) $notif->actor_id ) : null;
 				$actor_name    = $jt_notif_anon ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'Someone', 'jetonomy' ) );
-				$action_label = ! empty( $notif->message )
+				$action_label  = ! empty( $notif->message )
 					? $notif->message
 					: ( $type_labels[ $notif->type ] ?? $notif->type );
-				$time_ago     = human_time_diff( strtotime( $notif->created_at ), time() );
+				$time_ago      = human_time_diff( strtotime( $notif->created_at ), time() );
 
 				// Build link to the relevant object using pre-joined slug columns.
 				$notif_url = $base;
@@ -234,7 +234,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 							</div>
 							<div class="jt-notif-time">
 								<?php
-								/* translators: %s: human-readable time difference */
+								/* translators: %s: human-readable time difference. */
 								echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 								?>
 							</div>

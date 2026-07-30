@@ -42,6 +42,7 @@ $trust_labels = array(
 					<p><?php esc_html_e( 'Earned automatically through participation — posting links, images, and editing privileges unlock as members prove themselves. Override per user below; tune thresholds under Settings → Trust.', 'jetonomy' ); ?></p>
 				</div>
 				<div class="jt-roles-explainer__col">
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<h3><?php echo esc_html( sprintf( __( '%s role', 'jetonomy' ), \Jetonomy\space_label( false ) ) ); ?></h3>
 					<?php /* translators: 1: singular space label, 2: singular space label */ ?>
 					<p><?php echo esc_html( sprintf( __( 'Member, moderator, or admin of ONE %1$s — granted on that %2$s’s Members screen. Never implies wp-admin access.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>

@@ -103,6 +103,7 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 					<span class="jt-similar-label"><?php esc_html_e( 'Similar topics', 'jetonomy' ); ?></span>
 					<label class="jt-similar-toggle">
 						<input type="checkbox" id="jt-similar-all-spaces">
+						<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 						<?php echo esc_html( sprintf( __( 'Search all %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>
 					</label>
 				</div>

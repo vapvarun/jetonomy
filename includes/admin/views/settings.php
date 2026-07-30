@@ -188,6 +188,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 						<th scope="row"><label for="default_space_type"><?php echo esc_html( sprintf( __( 'Default %s Type', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></label></th>
 						<td>
 							<select id="default_space_type" name="jetonomy_settings[default_space_type]">
@@ -196,10 +197,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<option value="ideas" <?php selected( $settings['default_space_type'] ?? '', 'ideas' ); ?>><?php esc_html_e( 'Ideas', 'jetonomy' ); ?></option>
 								<option value="feed" <?php selected( $settings['default_space_type'] ?? '', 'feed' ); ?>><?php esc_html_e( 'Feed', 'jetonomy' ); ?></option>
 							</select>
+							<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'The pre-selected type when creating a new %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 						</td>
 					</tr>
 					<tr>
+						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 						<th scope="row"><?php echo esc_html( sprintf( __( 'Front-end %s creation', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></th>
 						<td>
 							<?php
@@ -255,6 +258,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							}
 							?>
 							<fieldset>
+								<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 								<legend class="screen-reader-text"><?php echo esc_html( sprintf( __( 'Roles allowed to create %s from the front end', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></legend>
 								<?php foreach ( $jt_role_groups as $jt_group ) : ?>
 									<?php if ( ! empty( $jt_group['keys'] ) ) : ?>
@@ -270,6 +274,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									<?php endif; ?>
 								<?php endforeach; ?>
 							</fieldset>
+							<?php /* translators: 1: plural space label, 2: singular space label. */ ?>
 							<p class="description" style="margin-block-start:12px;"><?php echo esc_html( sprintf( __( 'Site administrators always qualify. Tick any additional WordPress roles you trust to create %1$s from /community/new-space/. Leave every box unticked to keep front-end %2$s creation admin-only.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 						</td>
 					</tr>
@@ -384,9 +389,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 							<tr>
 								<th scope="row"><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></th>
+								<?php /* translators: %s: trust level name. */ ?>
 								<td data-colname="<?php esc_attr_e( 'Posts Required', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Posts Required for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
+								<?php /* translators: %s: trust level name. */ ?>
 								<td data-colname="<?php esc_attr_e( 'Days Active', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Days Active for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
+								<?php /* translators: %s: trust level name. */ ?>
 								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Reputation for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
+								<?php /* translators: %s: trust level name. */ ?>
 								<td data-colname="<?php esc_attr_e( 'Replies Received', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Replies Received for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
 									<td class="description" data-colname="<?php esc_attr_e( 'What this unlocks', 'jetonomy' ); ?>">
 										<?php
@@ -395,7 +404,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											'upload_media' => __( 'Upload images', 'jetonomy' ),
 											'edit_own_posts' => __( 'Edit own posts', 'jetonomy' ),
 											'delete_own_posts' => __( 'Delete own posts', 'jetonomy' ),
+											/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 											'create_spaces' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+											/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 											'join_spaces'  => sprintf( __( 'Join private %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
 											'close_posts'  => __( 'Close topics', 'jetonomy' ),
@@ -631,12 +642,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'mention'             => __( 'Mention (@username)', 'jetonomy' ),
 					'accepted_answer'     => __( 'Your answer accepted', 'jetonomy' ),
 					'idea_status_changed' => __( 'Your idea roadmap status changed', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'new_post_in_sub'     => sprintf( __( 'New post in subscribed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 					'vote_on_post'        => __( 'Vote on your post', 'jetonomy' ),
 					'reaction'            => __( 'Reaction on your post', 'jetonomy' ),
 					'moderation'          => __( 'Moderator action on your content', 'jetonomy' ),
 					'flag_resolved'       => __( 'Your report was reviewed', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 				];
 				?>
@@ -920,6 +933,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<input type="number" name="jetonomy_settings[container_width_custom]" value="<?php echo esc_attr( (string) $jt_container_width_custom ); ?>" min="600" max="2400" step="10" class="small-text" style="margin-inline-start:8px;">
 								<span><?php esc_html_e( 'px', 'jetonomy' ); ?></span>
 							</fieldset>
+							<?php /* translators: %s: plural space label. */ ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'Applies to community pages only (%s, Discussions, Profile, etc.).', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></p>
 						</td>
 					</tr>
@@ -1015,6 +1029,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 						<th scope="row"><label for="seo_space_title"><?php echo esc_html( sprintf( __( '%s Title', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></label></th>
 						<td>
 							<input type="text" id="seo_space_title" name="jetonomy_settings[seo_space_title]" value="<?php echo esc_attr( $settings['seo_space_title'] ?? '{space_name} | {site_name}' ); ?>" class="large-text">
@@ -1086,6 +1101,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<a class="button" href="<?php echo esc_url( home_url( '/wp-sitemap.xml' ) ); ?>" target="_blank" rel="noopener">
 								<?php esc_html_e( 'Open XML sitemap', 'jetonomy' ); ?>
 							</a>
+							<?php /* translators: 1: plural space label, 2: plural space label. */ ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'Confirms /wp-sitemap.xml is reachable and that community URLs (%1$s + posts) are listed. New %2$s can take a few minutes to appear after the next ping.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 						</td>
 					</tr>
@@ -1187,6 +1203,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'SEO Pro', 'jetonomy' ); ?></h4>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<p><?php echo esc_html( sprintf( __( 'Open Graph tags, per-%s canonical URLs, breadcrumb schema, and advanced robots control.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
@@ -1310,6 +1327,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'Analytics Dashboard', 'jetonomy' ),
 						'icon' => 'dashicons-chart-area',
+						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						'desc' => sprintf( __( 'Engagement graphs, user growth, top %s, post trends, and CSV export.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 						'tier' => 'Starter',
 					],
@@ -1358,6 +1376,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'SEO Pro', 'jetonomy' ),
 						'icon' => 'dashicons-search',
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 						'desc' => sprintf( __( 'Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						'tier' => 'Growth',
 					],

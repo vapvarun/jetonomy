@@ -41,6 +41,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 		'empty-state',
 		[
 			'icon'    => 'lock',
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'message' => sprintf( __( 'You need to be a member of this %s to see its roadmap.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
 		]
@@ -155,6 +156,7 @@ $space_url = $base . '/s/' . $space->slug . '/';
 	</div>
 </div>
 
+<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 <nav class="jt-space-tabs" aria-label="<?php echo esc_attr( sprintf( __( '%s sections', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>">
 	<a href="<?php echo esc_url( $space_url ); ?>" class="jt-space-tab">
 		<?php esc_html_e( 'Ideas', 'jetonomy' ); ?>

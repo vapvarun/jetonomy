@@ -51,7 +51,12 @@ $jt_can_moderate     = is_user_logged_in()
 // Lift control. Only queried for moderators.
 $jt_restriction = null;
 if ( $jt_can_moderate ) {
-	$jt_rows        = \Jetonomy\Models\Restriction::list_active( array( 'user_id' => $profile_user_id, 'limit' => 1 ) );
+	$jt_rows        = \Jetonomy\Models\Restriction::list_active(
+		array(
+			'user_id' => $profile_user_id,
+			'limit'   => 1,
+		)
+	);
 	$jt_restriction = $jt_rows[0] ?? null;
 }
 $jt_restriction_label = '';
@@ -195,6 +200,7 @@ $crumbs = [
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( $user->display_name ); ?>
 							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
+							<?php /* translators: %d: trust level number (0-5). */ ?>
 							<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>
 						</h1>
 						<div class="jt-flex jt-items-center jt-gap-sm jt-flex-shrink-0 jt-profile-head-actions">
@@ -261,7 +267,7 @@ $crumbs = [
 					<div class="jt-profile-meta">
 						<span>
 							<?php
-							/* translators: %s: join date */
+							/* translators: %s: join date. */
 							echo esc_html( sprintf( __( 'Joined %s', 'jetonomy' ), $joined ) );
 							?>
 						</span>
@@ -427,7 +433,7 @@ $crumbs = [
 								<div class="jt-row-stat">
 									<div class="jt-row-time">
 										<?php
-										/* translators: %s: human-readable time difference */
+										/* translators: %s: human-readable time difference. */
 										echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $ur_ago ) );
 										?>
 									</div>
@@ -478,7 +484,7 @@ $crumbs = [
 								<div class="jt-row-stat">
 									<div class="jt-row-time">
 										<?php
-										/* translators: %s: human-readable time difference */
+										/* translators: %s: human-readable time difference. */
 										echo esc_html( sprintf( __( 'voted %s ago', 'jetonomy' ), $uv_ago ) );
 										?>
 									</div>
@@ -556,7 +562,7 @@ $crumbs = [
 							<div class="jt-row-stat">
 								<div class="jt-row-time">
 									<?php
-									/* translators: %s: human-readable time difference */
+									/* translators: %s: human-readable time difference. */
 									echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $dr_ago ) );
 									?>
 								</div>
@@ -629,7 +635,7 @@ $crumbs = [
 								<div class="jt-row-stat">
 									<div class="jt-row-time">
 										<?php
-										/* translators: %s: human-readable time difference */
+										/* translators: %s: human-readable time difference. */
 										echo esc_html( sprintf( __( 'saved %s ago', 'jetonomy' ), $bk_ago ) );
 										?>
 									</div>
@@ -680,7 +686,7 @@ $crumbs = [
 								<div class="jt-row-stat">
 									<div class="jt-row-time">
 										<?php
-										/* translators: %s: human-readable time difference */
+										/* translators: %s: human-readable time difference. */
 										echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 										?>
 									</div>

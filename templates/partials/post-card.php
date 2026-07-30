@@ -11,8 +11,8 @@ $display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 // raw author_id when the display identity is masked, or "Anonymous [Admin]"
 // de-anonymizes the real author.
 $jt_is_masked = (int) $display['id'] !== (int) $post->author_id;
-$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
-$space   = \Jetonomy\Models\Space::find( (int) $post->space_id );
+$profile      = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
+$space        = \Jetonomy\Models\Space::find( (int) $post->space_id );
 // 1.4.0 C.5: caller passes `has_unread` from the bulk read-status map.
 // Boolean signal — pill text reads "New" regardless of how many.
 $has_unread = isset( $has_unread ) ? (bool) $has_unread : false;
@@ -165,7 +165,7 @@ if ( $prefix_name && $space ) {
 	<div class="jt-row-stat">
 		<div class="jt-row-time">
 			<?php
-			/* translators: %s: human-readable time difference */
+			/* translators: %s: human-readable time difference. */
 			echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 			?>
 		</div>

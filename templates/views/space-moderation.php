@@ -39,6 +39,7 @@ if ( ! Moderation_Permissions::can_view_space_queue( $user_id, (int) $space->id 
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'message' => sprintf( __( 'You do not have permission to moderate this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
 		]
@@ -85,7 +86,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 						<p class="jt-member-sub">
 							<?php
 							$count = count( $flags );
-							/* translators: %d: number of pending flags */
+							/* translators: %d: number of pending flags. */
 							echo esc_html( sprintf( _n( '%d pending flag', '%d pending flags', $count, 'jetonomy' ), $count ) );
 							?>
 						</p>
@@ -95,7 +96,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<?php if ( ! empty( $flags ) ) : ?>
 					<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( (string) count( $flags ) ); ?>">
 						<?php
-						/* translators: %d: number of pending flags */
+						/* translators: %d: number of pending flags. */
 						echo esc_html( sprintf( _n( '%d pending', '%d pending', count( $flags ), 'jetonomy' ), count( $flags ) ) );
 						?>
 					</span>

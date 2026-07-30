@@ -704,6 +704,7 @@ class Blocks {
 					</a>
 				<?php endif; ?>
 				<a href="<?php echo esc_url( $my_spaces_url ); ?>" class="jt-userpanel-link">
+					<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 					<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></span>
 				</a>
 				<a href="<?php echo esc_url( $subs_url ); ?>" class="jt-userpanel-link">

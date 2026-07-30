@@ -164,7 +164,7 @@ $crumbs = [
 		<?php if ( $total > 0 ) : ?>
 			<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( (string) $total ); ?>">
 				<?php
-				/* translators: %d: total pending flag count */
+				/* translators: %d: number of pending flags. */
 				echo esc_html( sprintf( _n( '%d pending', '%d pending', $total, 'jetonomy' ), $total ) );
 				?>
 			</span>
@@ -253,7 +253,7 @@ $crumbs = [
 					<?php endif; ?>
 					<span class="jt-pagination-status">
 						<?php
-						/* translators: 1: current page number, 2: total page count */
+						/* translators: 1: current page, 2: total pages */
 						echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $jt_ban_paged, $jt_ban_pages ) );
 						?>
 					</span>
@@ -314,7 +314,7 @@ $crumbs = [
 						</a>
 						<span class="jt-mod-flag-age">
 							<?php
-							/* translators: %s: human-readable time since flag was filed */
+							/* translators: %s: human-readable time difference. */
 							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $age ) );
 							?>
 						</span>

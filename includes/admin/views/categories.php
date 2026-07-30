@@ -91,7 +91,7 @@ defined( 'ABSPATH' ) || exit;
 					foreach ( array( 20, 50, 100 ) as $pp ) :
 						?>
 						<option value="<?php echo (int) $pp; ?>" <?php selected( $current_per_page, $pp ); ?>>
-							<?php /* translators: %d per-page count */ echo esc_html( sprintf( __( '%d per page', 'jetonomy' ), $pp ) ); ?>
+							<?php /* translators: %d: per-page count. */ echo esc_html( sprintf( __( '%d per page', 'jetonomy' ), $pp ) ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>

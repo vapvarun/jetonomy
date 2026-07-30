@@ -57,6 +57,7 @@ $crumbs = [
 					[
 						'icon'      => 'empty-search',
 						'icon_size' => 48,
+						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						'message'   => sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					]
 				);

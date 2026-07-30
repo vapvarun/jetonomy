@@ -179,7 +179,7 @@ class Shortcodes {
 			$out   .= '<div class="jt-shortcode-post-meta">';
 			$out   .= esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
 			$out   .= ' · ' . esc_html( $post->space_title ?? '' );
-			/* translators: %s: human-readable time difference */
+			/* translators: %s: human-readable time difference. */
 			$out .= ' · ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time ) );
 			$out .= '</div>';
 			$out .= '<div class="jt-shortcode-post-stats">';

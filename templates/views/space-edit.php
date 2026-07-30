@@ -124,6 +124,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					</div>
 				</div>
 				<input type="hidden" name="cover_image" value="<?php echo esc_attr( $space->cover_image ?? '' ); ?>" data-jt-cover-value>
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Wide banner shown at the top of the %s page. Recommended 1500×400 px.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 
@@ -199,6 +200,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					class="jt-input jt-input-narrow"
 					value="<?php echo esc_attr( (string) $posts_per_page ); ?>"
 					placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'How many topics to show per page in this %s. Leave blank to use the site default.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 

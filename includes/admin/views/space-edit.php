@@ -165,6 +165,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</tr>
 			</table>
 			<p class="submit">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<button type="submit" class="button button-primary"><?php echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></button>
 				<span class="spinner"></span>
 			</p>
@@ -209,6 +210,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								'variant' => 'compact',
 								'icon'    => 'groups',
 								'title'   => __( 'No members yet', 'jetonomy' ),
+								/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 								'body'    => sprintf( __( 'Invite members or open this %s to the wider community.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							)
 						);
@@ -282,6 +284,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							'variant' => 'compact',
 							'icon'    => 'admin-links',
 							'title'   => __( 'No invite links yet', 'jetonomy' ),
+							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 							'body'    => sprintf( __( 'Generate a link to invite people directly into this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						)
 					);
@@ -334,6 +337,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<th><?php esc_html_e( 'Type', 'jetonomy' ); ?></th>
 						<th><?php esc_html_e( 'Value', 'jetonomy' ); ?></th>
 						<th><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
+						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 						<th><?php echo esc_html( sprintf( __( '%s Role', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></th>
 						<th><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
 					</tr>
@@ -385,7 +389,9 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 	<?php elseif ( 'settings' === $active_tab ) : ?>
 		<!-- Space Settings Tab -->
 		<div class="jetonomy-tab-content">
+			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 			<h2><?php echo esc_html( sprintf( __( '%s-Specific Settings', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></h2>
+			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 			<p class="description"><?php echo esc_html( sprintf( __( 'These settings override the global defaults for this %s only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 
 			<form id="jetonomy-space-settings-form" data-space-id="<?php echo absint( $space->id ); ?>">
@@ -447,6 +453,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<label style="margin-bottom:8px;display:block;">
 								<input type="checkbox" id="ss-enable-prefixes" value="1" <?php checked( ! empty( $space_settings['enable_prefixes'] ) ); ?>>
+								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 								<?php echo esc_html( sprintf( __( 'Enable topic prefixes for this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</label>
 							<div id="jt-prefixes-config" <?php echo empty( $space_settings['enable_prefixes'] ) ? 'style="display:none;"' : ''; ?>>
@@ -494,6 +501,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 									</option>
 								<?php endforeach; ?>
 							</select>
+							<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'Link this %s to a BuddyPress group. Members will be synced automatically.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 						</td>
 					</tr>
@@ -550,6 +558,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								'variant' => 'success',
 								'icon'    => 'yes-alt',
 								'title'   => __( 'No pending join requests', 'jetonomy' ),
+								/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 								'body'    => sprintf( __( 'New requests to join this %s will appear here for review.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							)
 						);

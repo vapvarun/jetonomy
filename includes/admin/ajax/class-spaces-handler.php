@@ -251,6 +251,7 @@ class Spaces_Handler {
 
 		$space = Space::find( $id );
 		if ( ! $space ) {
+			/* translators: %s: the singular space label. */
 			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
@@ -297,6 +298,7 @@ class Spaces_Handler {
 
 		wp_send_json_success(
 			array(
+				/* translators: 1: member display name, 2: the space role they were given. */
 				'message'      => sprintf( __( '%1$s added as %2$s.', 'jetonomy' ), $user->display_name, $role ),
 				'user_id'      => $user_id,
 				'display_name' => $user->display_name,

@@ -137,7 +137,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<?php endif; ?>
 		<span class="jt-reply-time">
 			<?php
-			/* translators: %s: human-readable time difference */
+			/* translators: %s: human-readable time difference. */
 			$jt_time_text = sprintf( __( '%s ago', 'jetonomy' ), $time_ago );
 			// Stored UTC -> site timezone for the machine-readable value, per
 			// the date/time standard. The visible text stays relative.

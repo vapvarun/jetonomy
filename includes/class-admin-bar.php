@@ -67,6 +67,7 @@ class Admin_Bar {
 			array(
 				'parent' => 'jetonomy-community',
 				'id'     => 'jetonomy-community-home',
+				/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 				'title'  => sprintf( __( 'Browse %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				'href'   => esc_url( $base . '/' ),
 			)

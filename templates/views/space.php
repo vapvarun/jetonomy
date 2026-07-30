@@ -56,7 +56,9 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		// and the home/category listings show a Hidden badge, so the gate
 		// message must agree.
 		$gate_message = $_jt_is_hidden
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			? sprintf( __( 'This %s is hidden. Log in to check whether you have access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			: sprintf( __( 'This %s is private. Please log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
@@ -73,7 +75,9 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		// Invite-only — cannot self-join. Hidden spaces always land here
 		// (forced above) so the message wording works for both.
 		$invite_message = $_jt_is_hidden
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			? sprintf( __( 'This %s is hidden and invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			: sprintf( __( 'This %s is invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
@@ -92,6 +96,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 				'empty-state',
 				[
 					'icon'    => 'check-circle',
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'message' => sprintf( __( 'Your request to join this %s is awaiting approval.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				]
 			);
@@ -102,6 +107,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			'empty-state',
 			[
 				'icon'    => 'lock',
+				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 				'message' => sprintf( __( 'This %s requires approval to join. Submit a request below.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'    => 'forbidden',
 			]
@@ -122,6 +128,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			'empty-state',
 			[
 				'icon'    => 'lock',
+				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 				'message' => sprintf( __( 'This %s is private. Join to access posts and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'    => 'forbidden',
 			]
@@ -147,7 +154,7 @@ if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
 }
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$paged  = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$paged = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 // Resolve per-page through the model, never inline. This used to re-implement
 // the space → global → 20 chain with `??`, which only falls through on null —
 // so a stored `posts_per_page: ""` (what the front-end edit form sends for
@@ -313,8 +320,10 @@ $crumbs[] = [
 		<?php if ( $is_restricted ) : ?>
 			<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">
 				<?php if ( 'archived' === $space_status ) : ?>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<?php echo esc_html( sprintf( __( 'This %s is archived. New posts and replies are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 				<?php else : ?>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<?php echo esc_html( sprintf( __( 'This %s is locked. New posts and replies are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 				<?php endif; ?>
 			</div>

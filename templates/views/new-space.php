@@ -48,6 +48,7 @@ $crumbs = array(
 				[
 					'icon'      => 'lock',
 					'icon_size' => 64,
+					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'message'   => sprintf( __( 'Creating %s is reserved for community administrators.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					'cta_label' => __( 'Back to community', 'jetonomy' ),
 					'cta_url'   => $base . '/',
@@ -58,6 +59,7 @@ $crumbs = array(
 		<?php else : ?>
 			<form id="jt-new-space-form" class="jt-form jt-card" data-wp-on--submit="actions.createSpace" data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>" data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-jt-community-base="<?php echo esc_url( $base ); ?>">
 				<div class="jt-form-row">
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<label for="jt-ns-title"><?php echo esc_html( sprintf( __( '%s title', 'jetonomy' ), \Jetonomy\space_label() ) ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 					<input type="text" id="jt-ns-title" name="title" required maxlength="120" class="jt-input">
 					<p class="jt-form-help"><?php esc_html_e( 'Short, descriptive. What people will look for.', 'jetonomy' ); ?></p>
@@ -105,6 +107,7 @@ $crumbs = array(
 							</option>
 						<?php endforeach; ?>
 					</select>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %s under a top-level category on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
 
@@ -124,6 +127,7 @@ $crumbs = array(
 						</div>
 					</div>
 					<input type="hidden" name="cover_image" value="" data-jt-cover-value>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Wide banner shown at the top of the %s page. Optional.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
 
@@ -135,6 +139,7 @@ $crumbs = array(
 							'field_name'    => 'icon',
 							'current_value' => 'users',
 							'id_prefix'     => 'jt-ns-icon',
+							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 							'help'          => sprintf( __( 'Pick the icon that matches what this %s is about.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						)
 					);

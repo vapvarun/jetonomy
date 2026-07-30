@@ -31,15 +31,19 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 
 	<nav class="nav-tab-wrapper">
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=posts' ) ); ?>" class="nav-tab <?php echo esc_attr( 'posts' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php /* translators: %d: number of pending posts. */ ?>
 			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), absint( $total_posts ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=replies' ) ); ?>" class="nav-tab <?php echo esc_attr( 'replies' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php /* translators: %d: number of pending replies. */ ?>
 			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), absint( $total_replies ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>" class="nav-tab <?php echo esc_attr( 'flags' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php /* translators: %d: number of open flags. */ ?>
 			<?php printf( esc_html__( 'Flags (%d)', 'jetonomy' ), absint( $total_flags ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=banned' ) ); ?>" class="nav-tab <?php echo esc_attr( 'banned' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php /* translators: %d: number of currently banned members. */ ?>
 			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), absint( $total_banned ) ); ?>
 		</a>
 		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>

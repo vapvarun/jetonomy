@@ -990,6 +990,7 @@ class Spaces_Controller extends Base_Controller {
 
 		if ( ! in_array( $role, self::VALID_ROLES, true ) ) {
 			return $this->validation_error(
+				/* translators: %s: comma-separated list of valid space roles. */
 				sprintf( __( 'Invalid role. Allowed: %s.', 'jetonomy' ), implode( ', ', self::VALID_ROLES ) )
 			);
 		}

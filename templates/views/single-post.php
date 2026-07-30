@@ -251,9 +251,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 		\Jetonomy\Template_Loader::partial(
 			'reply-card',
 			[
-				'reply' => $reply,
-				'post'  => $post,
-				'space' => $space,
+				'reply'          => $reply,
+				'post'           => $post,
+				'space'          => $space,
 				// This page was just rendered, so every card on it — including
 				// nested children, which page with their top-level ancestor —
 				// permalinks to it. Passing it keeps reply_permalink() from
@@ -409,7 +409,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						?>
 						<span>
 							<?php
-							/* translators: %s: human-readable time difference */
+							/* translators: %s: human-readable time difference. */
 							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 							?>
 						</span>

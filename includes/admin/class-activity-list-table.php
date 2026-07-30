@@ -240,7 +240,7 @@ class Activity_List_Table extends \WP_List_Table {
 			return esc_html( $item->created_at );
 		}
 		$human = sprintf(
-			/* translators: %s: human-readable time difference */
+			/* translators: %s: human-readable time difference. */
 			__( '%s ago', 'jetonomy' ),
 			human_time_diff( $ts, time() )
 		);
