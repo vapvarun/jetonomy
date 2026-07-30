@@ -85,6 +85,60 @@ function now(): string {
 }
 
 /**
+ * The verb a space type uses for "create something here".
+ *
+ * Single source of truth for the compose label. The same four strings used to
+ * be written out separately in the composer heading, the space CTA button, the
+ * BuddyPress tab CTA and (type-blind, so wrong on three of the four types) the
+ * browser tab title — a Q&A space offered "Ask a Question" on the page while
+ * the tab said "Start a discussion".
+ *
+ * @param string $space_type Space type: qa, ideas, feed, or anything else (forum).
+ * @return string
+ */
+function compose_label( string $space_type ): string {
+	switch ( $space_type ) {
+		case 'qa':
+			$label = __( 'Ask a Question', 'jetonomy' );
+			break;
+		case 'ideas':
+			$label = __( 'Share an Idea', 'jetonomy' );
+			break;
+		case 'feed':
+			$label = __( 'New Status', 'jetonomy' );
+			break;
+		default:
+			$label = __( 'New Topic', 'jetonomy' );
+			break;
+	}
+
+	/**
+	 * Filter the compose label for a space type.
+	 *
+	 * @param string $label      Resolved label.
+	 * @param string $space_type The space type it was resolved for.
+	 */
+	return (string) apply_filters( 'jetonomy_compose_label', $label, $space_type );
+}
+
+/**
+ * The post type a space type creates.
+ *
+ * Paired with {@see compose_label()} so the two never drift apart.
+ *
+ * @param string $space_type Space type: qa, ideas, feed, or anything else (forum).
+ * @return string
+ */
+function compose_post_type( string $space_type ): string {
+	$map = array(
+		'qa'    => 'question',
+		'ideas' => 'idea',
+		'feed'  => 'status',
+	);
+	return $map[ $space_type ] ?? 'topic';
+}
+
+/**
  * Format a stored UTC MySQL datetime as a UTC ISO-8601 instant with a literal `Z`.
  *
  * All Jetonomy datetime columns are written via {@see now()} (`current_time('mysql', true)`),

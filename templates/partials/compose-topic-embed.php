@@ -155,7 +155,7 @@ $_partial_space = $_space ? $_space : (object) array(
 		<p class="jt-compose-topic-posting-to">
 			<?php
 			printf(
-				/* translators: %s: space title */
+				/* translators: %s: space title. */
 				esc_html__( 'Posting in %s', 'jetonomy' ),
 				'<strong>' . esc_html( $_space->title ) . '</strong>' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 			);

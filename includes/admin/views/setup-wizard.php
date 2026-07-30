@@ -200,7 +200,7 @@ wp_head();
 		<div class="jt-btn-row">
 			<button type="button" class="jt-btn jt-btn--secondary" id="jt-back-2"><?php esc_html_e( 'Back', 'jetonomy' ); ?></button>
 			<button type="button" class="jt-btn jt-btn--primary" id="jt-next-2">
-				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+				<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
 				<?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 				<span class="jt-spinner"></span>
 			</button>

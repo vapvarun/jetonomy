@@ -28,7 +28,7 @@ $categories = \Jetonomy\Models\Category::list_top_level();
 $base   = \Jetonomy\base_url();
 $crumbs = array(
 	array(
-		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+		/* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */
 		'label' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 		'url'   => '',
 	),
@@ -160,7 +160,7 @@ $crumbs = array(
 
 				<div class="jt-form-actions">
 					<button type="submit" class="jt-btn jt-btn-fill">
-						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+						<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
 						<?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 					</button>
 					<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( $base . '/' ); ?>">

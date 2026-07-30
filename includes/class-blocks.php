@@ -680,7 +680,7 @@ class Blocks {
 					<div class="jt-userpanel-meta">
 						<span class="jt-userpanel-username">@<?php echo esc_html( $user->user_login ); ?></span>
 						<?php if ( $trust_level > 0 ) : ?>
-							<span class="jt-userpanel-tl" data-jt-tl="<?php echo (int) $trust_level; ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: trust level */ __( 'Trust Level %d', 'jetonomy' ), $trust_level ) ); ?>">
+							<span class="jt-userpanel-tl" data-jt-tl="<?php echo (int) $trust_level; ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: trust level number (0-5). */ __( 'Trust Level %d', 'jetonomy' ), $trust_level ) ); ?>">
 								TL<?php echo (int) $trust_level; ?>
 							</span>
 						<?php endif; ?>
@@ -712,7 +712,7 @@ class Blocks {
 				</a>
 				<?php if ( $can_create_space ) : ?>
 					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">
-						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+						<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
 						<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 					</a>
 				<?php endif; ?>

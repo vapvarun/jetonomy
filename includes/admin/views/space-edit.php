@@ -23,7 +23,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		/* translators: %s: space title */
 		printf( esc_html__( 'Edit %1$s: %2$s', 'jetonomy' ), esc_html( \Jetonomy\space_label() ), esc_html( $space->title ) );
 		?>
-		<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+		<?php /* translators: %s: where the link returns to - the configured space label, or a specific space title. */ ?>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces' ) ); ?>" class="page-title-action"><?php echo esc_html( sprintf( __( 'Back to %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></a>
 	</h1>
 

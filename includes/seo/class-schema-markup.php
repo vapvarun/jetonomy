@@ -362,7 +362,7 @@ class Schema_Markup {
 			'@type'       => 'CollectionPage',
 			'name'        => '#' . $tag->name,
 			'description' => sprintf(
-				/* translators: 1: tag name, 2: site name */
+				/* translators: 1: tag name, 2: site title. */
 				__( 'Discussions tagged %1$s on %2$s.', 'jetonomy' ),
 				$tag->name,
 				get_bloginfo( 'name' )

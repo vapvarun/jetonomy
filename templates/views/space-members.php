@@ -283,9 +283,9 @@ $role_labels = [
 											// the "Uses" column the wp-admin table already uses.
 											echo esc_html(
 												$jt_invite_max > 0
-													/* translators: 1: times used, 2: maximum uses */
+													/* translators: 1: number of uses so far, 2: maximum number of uses. */
 													? sprintf( __( 'Uses: %1$s of %2$s', 'jetonomy' ), number_format_i18n( $jt_invite_use ), number_format_i18n( $jt_invite_max ) )
-													/* translators: %s: times used */
+													/* translators: %s: number of uses so far. */
 													: sprintf( __( 'Uses: %s', 'jetonomy' ), number_format_i18n( $jt_invite_use ) )
 											);
 											?>
@@ -294,7 +294,7 @@ $role_labels = [
 											<?php
 											echo esc_html(
 												$jt_invite->expires_at
-													/* translators: %s: expiry date */
+													/* translators: %s: expiry date. */
 													? sprintf( __( 'Expires %s', 'jetonomy' ), date_i18n( get_option( 'date_format' ), strtotime( (string) $jt_invite->expires_at ) ) )
 													: __( 'No expiry', 'jetonomy' )
 											);

@@ -831,7 +831,9 @@ class BuddyPress {
 		echo '<div class="jt-bp-forum-head">';
 		echo '<strong>' . esc_html( $space->title ) . '</strong>';
 		if ( is_user_logged_in() ) {
-			echo ' <a href="' . esc_url( $new_post_url ) . '" class="button bp-primary-action">' . esc_html__( '+ New Topic', 'jetonomy' ) . '</a>';
+			/* translators: %s: the compose action for this space type, e.g. "Ask a Question". */
+			$jt_cta = sprintf( __( '+ %s', 'jetonomy' ), \Jetonomy\compose_label( (string) ( $space->type ?? '' ) ) );
+			echo ' <a href="' . esc_url( $new_post_url ) . '" class="button bp-primary-action">' . esc_html( $jt_cta ) . '</a>';
 		}
 		echo '</div>';
 

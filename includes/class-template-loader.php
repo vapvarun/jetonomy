@@ -1068,7 +1068,7 @@ class Template_Loader {
 	 * @return string
 	 */
 	private static function seo_display_name( string $route, string $slug, string $fallback ): string {
-		if ( in_array( $route, array( 'space', 'space-members', 'space-roadmap', 'space-moderation' ), true ) ) {
+		if ( in_array( $route, array( 'space', 'space-members', 'space-roadmap', 'space-moderation', 'new-post' ), true ) ) {
 			$sp = \Jetonomy\Models\Space::find_by_slug( $slug );
 			// Concealed spaces must not leak their title into <title> — the
 			// viewer gets the prettified slug they themselves typed, nothing
@@ -1083,6 +1083,29 @@ class Template_Loader {
 			}
 		}
 		return $fallback;
+	}
+
+	/**
+	 * Title for the composer route: the space's own compose verb, plus the
+	 * space it posts into. Shares \Jetonomy\compose_label() with the composer
+	 * heading, the space CTA and the BuddyPress tab CTA, and resolves the space
+	 * name through seo_display_name() so a concealed space never leaks.
+	 *
+	 * @param string $slug        Space slug from the route.
+	 * @param string $slug_pretty Prettified slug, used when the space is
+	 *                            missing or concealed.
+	 * @return string
+	 */
+	private static function compose_route_title( string $slug, string $slug_pretty ): string {
+		$space = '' !== $slug ? \Jetonomy\Models\Space::find_by_slug( $slug ) : null;
+		$label = \Jetonomy\compose_label( $space ? (string) $space->type : '' );
+
+		if ( '' === $slug ) {
+			return $label;
+		}
+
+		/* translators: 1: compose action e.g. "Ask a Question", 2: space name. */
+		return sprintf( __( '%1$s in %2$s', 'jetonomy' ), $label, self::seo_display_name( 'new-post', $slug, $slug_pretty ) );
 	}
 
 	private static function set_seo_meta( array $data ): void {
@@ -1169,7 +1192,11 @@ class Template_Loader {
 						$parts['title'] = __( 'Moderation Queue', 'jetonomy' );
 						break;
 					case 'new-post':
-						$parts['title'] = __( 'Start a discussion', 'jetonomy' );
+						// Match the heading the page actually renders. A fixed
+						// "Start a discussion" was wrong on every Q&A, ideas and
+						// feed space, where the composer says "Ask a Question",
+						// "Share an Idea" or "New Status".
+						$parts['title'] = self::compose_route_title( (string) $data['slug'], $slug_pretty );
 						break;
 					case 'notifications':
 						$parts['title'] = __( 'Notifications', 'jetonomy' );
@@ -1192,7 +1219,7 @@ class Template_Loader {
 						$parts['title'] = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'edit-space':
-						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						/* translators: %s: what is being edited - the configured space label, or a specific space title. */
 						$parts['title'] = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'drafts':
@@ -1431,11 +1458,11 @@ class Template_Loader {
 						$noindex   = true; // Admin tooling.
 						break;
 					case 'new-post':
-						$slug  = (string) $data['slug'];
-						$title = '' !== $slug
-							/* translators: %s: space title (derived from its slug). */
-							? sprintf( __( 'Start a discussion in %s', 'jetonomy' ), ucfirst( str_replace( '-', ' ', $slug ) ) )
-							: __( 'Start a discussion', 'jetonomy' );
+						$slug = (string) $data['slug'];
+						// Same title the <title> tag uses — and the space's real
+						// name via seo_display_name(), not a slug the owner may
+						// have renamed away from.
+						$title = self::compose_route_title( $slug, ucfirst( str_replace( '-', ' ', $slug ) ) );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Compose a new discussion on %s.', 'jetonomy' ), $site_name );
 						$url       = $base . ( '' !== $slug ? '/s/' . rawurlencode( $slug ) . '/new/' : '/new/' );
@@ -1491,7 +1518,7 @@ class Template_Loader {
 						$noindex   = true; // Composer page.
 						break;
 					case 'edit-space':
-						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						/* translators: %s: what is being edited - the configured space label, or a specific space title. */
 						$title = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: %s: singular space label. */
 						$desc      = sprintf( __( 'Edit your community %s settings.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );

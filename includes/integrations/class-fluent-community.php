@@ -845,7 +845,7 @@ class Fluent_Community {
 			<a href="<?php echo esc_url( $fc_url ); ?>">
 				&larr;
 				<?php
-				/* translators: %s: paired FluentCommunity space title. */
+				/* translators: %s: where the link returns to - the configured space label, or a specific space title. */
 				printf( esc_html__( 'Back to %s', 'jetonomy' ), esc_html( $fc_name ) );
 				?>
 			</a>

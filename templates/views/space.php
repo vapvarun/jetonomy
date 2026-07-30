@@ -251,7 +251,7 @@ $crumbs[] = [
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
 								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
-								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+								<?php /* translators: %s: what is being edited - the configured space label, or a specific space title. */ ?>
 								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</a>
 						</p>
@@ -430,12 +430,11 @@ $crumbs[] = [
 				<?php elseif ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy ) ) : ?>
 					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
 						<?php
-						$new_post_labels = [
-							'qa'    => __( '+ Ask a Question', 'jetonomy' ),
-							'ideas' => __( '+ Share an Idea', 'jetonomy' ),
-							'feed'  => __( '+ New Status', 'jetonomy' ),
-						];
-						echo esc_html( $new_post_labels[ $space->type ] ?? __( '+ New Post', 'jetonomy' ) );
+						// Shared label, so the button and the composer heading it
+						// leads to never disagree (they used to: "+ New Post"
+						// here, "New Topic" on the page it opened).
+						/* translators: %s: the compose action for this space type, e.g. "Ask a Question". */
+						echo esc_html( sprintf( __( '+ %s', 'jetonomy' ), \Jetonomy\compose_label( (string) $space->type ) ) );
 						?>
 					</a>
 				<?php elseif ( ! is_user_logged_in() ) : ?>

@@ -92,10 +92,14 @@ $all_ideas = $wpdb->get_results(
 
 // Canonical column order (mirrors Post::valid_idea_statuses()). Owners
 // move ideas left to right; "declined" sits at the end as the off-ramp.
+// One colour per stage. Planned and In Progress both used --jt-warn, so the
+// two leftmost columns were indistinguishable and the colour carried no
+// information at all — the whole point of a status board. Accent reads as
+// "committed, queued", warn as "in flight".
 $columns = array(
 	'planned'     => array(
 		'label' => __( 'Planned', 'jetonomy' ),
-		'color' => 'var(--jt-warn)',
+		'color' => 'var(--jt-accent)',
 		'posts' => array(),
 	),
 	'in_progress' => array(

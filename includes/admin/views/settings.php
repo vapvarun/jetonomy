@@ -413,7 +413,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											'upload_media' => __( 'Upload images', 'jetonomy' ),
 											'edit_own_posts' => __( 'Edit own posts', 'jetonomy' ),
 											'delete_own_posts' => __( 'Delete own posts', 'jetonomy' ),
-											/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+											/* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */
 											'create_spaces' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 											/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 											'join_spaces'  => sprintf( __( 'Join private %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),

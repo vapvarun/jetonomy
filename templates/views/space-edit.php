@@ -80,7 +80,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
 				<?php
-				/* translators: %s: space title */
+				/* translators: %s: what is being edited - the configured space label, or a specific space title. */
 				echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), $space->title ) );
 				?>
 			</h1>
