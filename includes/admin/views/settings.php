@@ -447,16 +447,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
-						<th scope="row"><label><?php esc_html_e( 'Posts per Day', 'jetonomy' ); ?></label></th>
-						<td><input type="number" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? $rl_defaults['posts'] ); ?>" min="1" class="small-text"></td>
+						<th scope="row"><label for="jt-rate-posts"><?php esc_html_e( 'Posts per Day', 'jetonomy' ); ?></label></th>
+						<td><input type="number" id="jt-rate-posts" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? $rl_defaults['posts'] ); ?>" min="1" class="small-text"></td>
 					</tr>
 					<tr>
-						<th scope="row"><label><?php esc_html_e( 'Replies per Day', 'jetonomy' ); ?></label></th>
-						<td><input type="number" name="jetonomy_settings[rate_limits][replies]" value="<?php echo absint( $rate_limits['replies'] ?? $rl_defaults['replies'] ); ?>" min="1" class="small-text"></td>
+						<th scope="row"><label for="jt-rate-replies"><?php esc_html_e( 'Replies per Day', 'jetonomy' ); ?></label></th>
+						<td><input type="number" id="jt-rate-replies" name="jetonomy_settings[rate_limits][replies]" value="<?php echo absint( $rate_limits['replies'] ?? $rl_defaults['replies'] ); ?>" min="1" class="small-text"></td>
 					</tr>
 					<tr>
-						<th scope="row"><label><?php esc_html_e( 'Votes per Day', 'jetonomy' ); ?></label></th>
-						<td><input type="number" name="jetonomy_settings[rate_limits][votes]" value="<?php echo absint( $rate_limits['votes'] ?? $rl_defaults['votes'] ); ?>" min="1" class="small-text"></td>
+						<th scope="row"><label for="jt-rate-votes"><?php esc_html_e( 'Votes per Day', 'jetonomy' ); ?></label></th>
+						<td><input type="number" id="jt-rate-votes" name="jetonomy_settings[rate_limits][votes]" value="<?php echo absint( $rate_limits['votes'] ?? $rl_defaults['votes'] ); ?>" min="1" class="small-text"></td>
 					</tr>
 				</table>
 			</div>
@@ -610,9 +610,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Email Adapter', 'jetonomy' ); ?></th>
+						<th scope="row"><label for="jt-email-adapter"><?php esc_html_e( 'Email Adapter', 'jetonomy' ); ?></label></th>
 						<td>
-							<select disabled>
+							<select id="jt-email-adapter" disabled>
 								<option><?php esc_html_e( 'WordPress Default (wp_mail)', 'jetonomy' ); ?></option>
 							</select>
 							<p class="description"><?php esc_html_e( 'Uses your WordPress email configuration. SMTP plugins are supported.', 'jetonomy' ); ?></p>

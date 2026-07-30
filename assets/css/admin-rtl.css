@@ -3332,6 +3332,82 @@ tr.jetonomy-moderated td {
 		min-height: 44px;
 		box-sizing: border-box;
 	}
+
+	/* Settings matrix on a PHONE (Basecamp 10146440810, self-audit 2026-07-31).
+	   The stacked-matrix rules live in the 783-1100 squeeze band, so below 782
+	   the only thing stacking these tables is core's own .wp-list-table mobile
+	   CSS - which renders the data-colname as `position:absolute; left:10px;
+	   width:32%` and expects the cell to reserve a padding lane for it. Our
+	   cells reserve none, so the label was painted straight over the field:
+	   "5" on top of "POSTS REQUIRED" on every Trust Level Thresholds row, and
+	   the unlock summary on top of its own heading.
+
+	   Reserving a 32% lane on a 390px screen would leave ~200px for the input,
+	   so the label becomes a normal block ABOVE the value instead - the same
+	   shape the squeeze band already uses, and the shape the rest of the
+	   settings screens use. */
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td[data-colname]::before {
+		position: static;
+		right: auto;
+		width: auto;
+		max-width: 100%;
+		display: block;
+		overflow: visible;
+		white-space: normal;
+		text-overflow: clip;
+		margin-bottom: 4px;
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: var(--jt-admin-text-3, #646970);
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td[data-colname] {
+		display: block;
+		width: auto;
+		padding: 10px 0;
+		border-top: 1px solid var(--jt-admin-border-subtle, #f0f0f1);
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td[data-colname] input[type="number"],
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td[data-colname] input[type="text"] {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	/* Settings FORM controls. The ladder above covers list tables, tablenavs
+	   and the settings nav, but never reached the fields themselves - every
+	   text input, select and textarea in a settings card measured 40px on a
+	   phone, i.e. the DESKTOP floor (Basecamp 10150582519, re-measured
+	   2026-07-31 across general/permissions/email/ai/attachments/webhooks/
+	   branding). Touch gets 44. `.small-text` number fields are included on
+	   purpose: a rate-limit stepper is no easier to hit than any other. */
+	.jetonomy-admin .jt-settings-card input[type="text"],
+	.jetonomy-admin .jt-settings-card input[type="url"],
+	.jetonomy-admin .jt-settings-card input[type="email"],
+	.jetonomy-admin .jt-settings-card input[type="number"],
+	.jetonomy-admin .jt-settings-card input[type="search"],
+	.jetonomy-admin .jt-settings-card input[type="password"],
+	.jetonomy-admin .jt-settings-card select,
+	.jetonomy-admin .jt-settings-card textarea,
+	.jetonomy-admin .jt-settings-card .button,
+	.jetonomy-admin .jt-settings-card button,
+	.jetonomy-admin .form-table input[type="text"],
+	.jetonomy-admin .form-table input[type="url"],
+	.jetonomy-admin .form-table input[type="email"],
+	.jetonomy-admin .form-table input[type="number"],
+	.jetonomy-admin .form-table select,
+	.jetonomy-admin .form-table textarea,
+	.jetonomy-admin p.submit .button {
+		min-height: 44px;
+		box-sizing: border-box;
+	}
+	.jetonomy-admin .jt-settings-card .button,
+	.jetonomy-admin .jt-settings-card button,
+	.jetonomy-admin p.submit .button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
 	/* Row-action links already carry their own floor above; keep the
 	   primary-cell rule from double-padding them. */
 	.jetonomy-admin .wp-list-table td.column-primary .row-actions a {
@@ -3404,6 +3480,19 @@ tr.jetonomy-moderated td {
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
 		color: var(--jt-admin-text-3, #646970);
+		/* The table carries .wp-list-table, so core's mobile rule makes this
+		   pseudo-element `position:absolute; left:10px` and expects the cell
+		   to reserve a padding lane for it. Our cell is a flex row with no
+		   horizontal padding, so the label was painted straight over the
+		   value - "5" sitting on top of "POSTS REQUIRED" on every threshold
+		   row (Basecamp 10146440810, self-audit 2026-07-31). Same reset the
+		   expanded-row labels needed: make it a real flex child. */
+		position: static;
+		right: auto;
+		width: auto;
+		display: block;
+		flex: 0 1 auto;
+		min-width: 0;
 	}
 	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) .button,
 	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) input,
@@ -3617,6 +3706,18 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .wp-list-table .button-link {
 		display: inline-flex;
 		align-items: center;
+		min-height: 34px;
+		box-sizing: border-box;
+	}
+	/* Per-template Preview / Send test on the Email tab measured 24px - core
+	   `.button-small` with nothing raising it. It IS a dense repeating list,
+	   so it takes the documented 34px dense floor rather than the 40px
+	   regular one, but 24px was under even that (Basecamp 10150582519). */
+	.jetonomy-admin .jetonomy-email-actions .button,
+	.jetonomy-admin .jetonomy-email-actions button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		min-height: 34px;
 		box-sizing: border-box;
 	}
