@@ -3202,6 +3202,37 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .wp-list-table th.jt-col-l  { width: 180px; }
 }
 
+/* The 1024px cliff (Basecamp 10150581904): the media query above keys on
+   the VIEWPORT, but the open wp-admin menu leaves only ~820px of container
+   at 1024 - table-layout:fixed then paid every fixed secondary width and
+   crushed the PRIMARY column to 51-80px (titles fragmenting vertically,
+   and the crushed hidden row-actions stack inflated rows to 200px+).
+   The scroll wrappers are size containers now: when the CONTAINER is too
+   narrow to afford fixed widths, the table reverts to content-driven auto
+   layout (primary keeps the lion's share, secondaries shrink to content)
+   with the wrapper's horizontal scrollbar as the fallback. Fixed widths
+   return as soon as the container genuinely fits them. */
+.jetonomy-admin .jt-content-table-wrap,
+.jetonomy-admin .jt-table-scroll {
+	container-type: inline-size;
+}
+
+@media screen and (min-width: 783px) {
+	@container (max-width: 1099px) {
+		.jetonomy-admin .wp-list-table.fixed { table-layout: auto; }
+		.jetonomy-admin .wp-list-table th.jt-col-xs,
+		.jetonomy-admin .wp-list-table th.jt-col-s,
+		.jetonomy-admin .wp-list-table th.jt-col-m,
+		.jetonomy-admin .wp-list-table th.jt-col-l { width: auto; }
+		/* Keep the identity column from being outvoted by long secondary
+		   content in auto layout. */
+		.jetonomy-admin .wp-list-table th.column-primary { min-width: 240px; }
+		.jetonomy-admin .wp-list-table td,
+		.jetonomy-admin .wp-list-table th { white-space: nowrap; }
+		.jetonomy-admin .wp-list-table td.column-primary { white-space: normal; }
+	}
+}
+
 /* The card wrapper used to be overflow:hidden at every size, which CLIPPED
    any table wider than the viewport — data and row actions simply vanished.
    The wrap now scrolls at EVERY width (see its base rule) so this block
