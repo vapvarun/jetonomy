@@ -340,7 +340,9 @@
   .jt-icon-picker .jt-icon-option[hidden] { display: none; }
   .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; color: var(--jt-accent); }
   .jt-icon-option-svg svg { width: 22px; height: 22px; }
-  .jt-icon-picker-more { align-self: flex-start; font-size: 0.875rem; }
+  /* min-height 40px: this button measured 23px tall in the icon picker on admin
+     screens - below the touch-target floor (Basecamp 10146405920). */
+  .jt-icon-picker-more { align-self: flex-start; font-size: 0.875rem; min-height: 40px; }
   .jt-icon-picker-empty { color: var(--jt-text-secondary); font-size: 0.875rem; padding: 8px 4px; grid-column: 1 / -1; margin: 0; }
 
   /* Posts-per-page narrow input + prefix editor (G5 settings). */

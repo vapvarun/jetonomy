@@ -38,14 +38,10 @@ $baseline = array(
 	'includes/admin/views/users.php', // already core-compliant by hand; migrate for uniformity.
 	// Pro (tranche 3 - paths relative to the DIRECTORY ARGUMENT given):
 	'includes/extensions/advanced-moderation/class-extension.php',
-	'includes/extensions/analytics/views/dashboard.php',
 	'includes/extensions/anonymous-posting/views/space-setting.php',
 	'includes/extensions/ai/class-extension.php',
 	'includes/extensions/attachments/views/settings.php',
-	'includes/extensions/custom-badges/class-extension.php',
-	'includes/extensions/custom-fields/views/admin.php',
 	'includes/extensions/email-digest/class-extension.php',
-	'includes/extensions/polls/class-extension.php',
 	'includes/extensions/private-messaging/class-admin-page.php',
 	'includes/extensions/reactions/class-extension.php',
 	'includes/extensions/reply-by-email/class-extension.php',

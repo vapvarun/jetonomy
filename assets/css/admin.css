@@ -1970,7 +1970,10 @@ tr.jetonomy-moderated td {
 		display: flex !important;
 		justify-content: space-between;
 		align-items: center;
-		gap: 12px;
+		/* wrap: a 4-button Actions cell pushed the last button past the
+		   viewport edge (Badges at 390 - Basecamp 10146405920). */
+		flex-wrap: wrap;
+		gap: 8px 12px;
 		padding: 9px 10px;
 		border-top: 1px solid #f0f0f1;
 	}
