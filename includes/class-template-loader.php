@@ -1181,6 +1181,7 @@ class Template_Loader {
 						$parts['title'] = __( 'You are invited', 'jetonomy' );
 						break;
 					case 'my-spaces':
+						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						$parts['title'] = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						break;
 					case 'subscriptions':
@@ -1191,6 +1192,7 @@ class Template_Loader {
 						$parts['title'] = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'edit-space':
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 						$parts['title'] = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'drafts':
@@ -1399,7 +1401,8 @@ class Template_Loader {
 						}
 						break;
 					case 'tag':
-						$title     = '#' . (string) $data['slug'];
+						$title = '#' . (string) $data['slug'];
+						/* translators: 1: tag name, 2: site title. */
 						$desc      = sprintf( __( 'Discussions tagged %1$s on %2$s.', 'jetonomy' ), $title, $site_name );
 						$url       = $base . '/tag/' . rawurlencode( (string) $data['slug'] ) . '/';
 						$image_alt = $title;
@@ -1420,7 +1423,8 @@ class Template_Loader {
 						$noindex   = true; // Search results — duplicate / thin.
 						break;
 					case 'moderation':
-						$title     = __( 'Moderation Queue', 'jetonomy' );
+						$title = __( 'Moderation Queue', 'jetonomy' );
+						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $site_name );
 						$url       = $base . '/mod/';
 						$image_alt = $site_name;
@@ -1461,6 +1465,7 @@ class Template_Loader {
 						$noindex   = true; // One-shot landing.
 						break;
 					case 'my-spaces':
+						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						$title = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						/* translators: 1: plural space label, 2: plural space label, 3: site title. */
 						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
@@ -1477,6 +1482,7 @@ class Template_Loader {
 						$noindex   = true; // Logged-in personal view.
 						break;
 					case 'new-space':
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 						$title = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: 1: singular space label, 2: site title. */
 						$desc      = sprintf( __( 'Start a new community %1$s on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $site_name );
@@ -1485,6 +1491,7 @@ class Template_Loader {
 						$noindex   = true; // Composer page.
 						break;
 					case 'edit-space':
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 						$title = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: %s: singular space label. */
 						$desc      = sprintf( __( 'Edit your community %s settings.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );

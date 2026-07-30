@@ -30,7 +30,10 @@ module.exports = function( grunt ) {
 					// Never scan build/staging/vendor/test trees. A leftover
 					// dist/ (the zip-staging copy) otherwise doubles every
 					// source reference with phantom dist/jetonomy/... lines.
-					exclude: [ 'dist/.*', 'vendor/.*', 'node_modules/.*', 'tests/.*' ],
+					// libs/ are vendored third-party bundles (Action Scheduler, EDD SDK)
+					// with their own text domains - their 256 references polluted the
+					// POT (QA 10150516732).
+					exclude: [ 'dist/.*', 'vendor/.*', 'node_modules/.*', 'tests/.*', 'libs/.*' ],
 					potHeaders: {
 						poedit: true,
 						'x-poedit-keywordslist': true,

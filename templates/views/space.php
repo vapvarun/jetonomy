@@ -17,6 +17,7 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -136,6 +137,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		?>
 		<div class="jt-space-gate-actions">
 			<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 			</button>
 		</div>
@@ -249,6 +251,7 @@ $crumbs[] = [
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
 								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
+								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</a>
 						</p>
@@ -299,6 +302,7 @@ $crumbs[] = [
 						<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-btn"
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
+							<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 							<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 						</button>
 						<?php
@@ -387,6 +391,7 @@ $crumbs[] = [
 
 			if ( is_array( $jt_space_tabs ) && count( $jt_space_tabs ) > 1 ) :
 				?>
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<nav class="jt-space-tabs" aria-label="<?php echo esc_attr( sprintf( __( '%s sections', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>">
 					<?php
 					foreach ( $jt_space_tabs as $jt_space_tab ) :

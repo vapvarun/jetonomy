@@ -199,6 +199,7 @@ $crumbs = [
 					<div class="jt-flex jt-items-start jt-justify-between jt-w-full jt-profile-headrow">
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( $user->display_name ); ?>
+							<?php /* translators: %d: trust level number (0-5). */ ?>
 							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
 							<?php /* translators: %d: trust level number (0-5). */ ?>
 							<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>

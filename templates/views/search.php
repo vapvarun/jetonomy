@@ -324,6 +324,7 @@ $crumbs = [
 											&middot;
 											<?php echo esc_html( $post->space_title ); ?>
 											&middot;
+											<?php /* translators: %s: human-readable time difference. */ ?>
 											<?php echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ); ?>
 										</div>
 										<?php if ( $excerpt ) : ?>

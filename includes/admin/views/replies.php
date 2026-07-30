@@ -147,6 +147,7 @@ $status_labels = array(
 					$_first = ( $paged - 1 ) * $per_page + 1;
 					$_last  = min( $paged * $per_page, $total );
 					printf(
+						/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 						esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ),
 						esc_html( number_format_i18n( $_first ) ),
 						esc_html( number_format_i18n( $_last ) ),

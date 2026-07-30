@@ -17,6 +17,7 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -204,9 +205,12 @@ $role_labels = [
 					aria-label="<?php esc_attr_e( 'Invite links', 'jetonomy' ); ?>"
 					data-jt-invite-panel
 					data-space-id="<?php echo absint( $space->id ); ?>"
+					<?php /* translators: 1: number of uses so far, 2: maximum number of uses. */ ?>
 					data-jt-uses-format="<?php echo esc_attr__( 'Uses: %1$s of %2$s', 'jetonomy' ); ?>"
+					<?php /* translators: %s: number of uses so far. */ ?>
 					data-jt-uses-unlimited-format="<?php echo esc_attr__( 'Uses: %s', 'jetonomy' ); ?>"
 					data-jt-no-expiry="<?php esc_attr_e( 'No expiry', 'jetonomy' ); ?>"
+					<?php /* translators: %s: expiry date. */ ?>
 					data-jt-expires-format="<?php echo esc_attr__( 'Expires %s', 'jetonomy' ); ?>"
 					data-jt-copy-label="<?php esc_attr_e( 'Copy', 'jetonomy' ); ?>"
 					data-jt-copy-aria="<?php esc_attr_e( 'Copy invite link', 'jetonomy' ); ?>"

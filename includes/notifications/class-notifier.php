@@ -1508,7 +1508,8 @@ class Notifier {
 	 */
 	public function on_join_request_denied( int $space_id, int $user_id, int $reviewed_by ): void {
 		$space = Space::find( $space_id );
-		$name  = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+		$name = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$this->create_and_maybe_email(
 			$user_id,
 			$reviewed_by,
@@ -1524,7 +1525,8 @@ class Notifier {
 	 * Notify space admins/moderators when a join request is submitted.
 	 */
 	public function on_join_request( int $space_id, int $user_id, string $message ): void {
-		$space      = Space::find( $space_id );
+		$space = Space::find( $space_id );
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 
 		// Collect recipients: space-level admins/moderators + WP-level admins.

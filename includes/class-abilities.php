@@ -1407,6 +1407,7 @@ class Abilities {
 	public function execute_get_space( $input ) {
 		$space = Space::find( (int) $input['space_id'] );
 		if ( ! $space ) {
+			/* translators: %s: the singular space label. */
 			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 		return [
@@ -1426,6 +1427,7 @@ class Abilities {
 		$space    = Space::find( $space_id );
 
 		if ( ! $space ) {
+			/* translators: %s: the singular space label. */
 			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 

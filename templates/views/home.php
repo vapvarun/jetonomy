@@ -18,6 +18,7 @@ $base                 = \Jetonomy\base_url();
  */
 function jetonomy_render_space_grid( array $spaces, string $base ): void {
 	if ( empty( $spaces ) ) {
+		/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 		echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</p>';
 		return;
 	}

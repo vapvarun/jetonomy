@@ -190,6 +190,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 						?>
 						<a href="<?php echo esc_url( \Jetonomy\get_space_edit_url( $space ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-edit">
 							<?php jetonomy_echo_icon( 'edit', 14 ); ?>
+							<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 							<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 						</a>
 					<?php endif; ?>

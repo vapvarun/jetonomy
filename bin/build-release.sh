@@ -98,6 +98,25 @@ if [ -f "$ROOT/bin/audit-docs-consistency.php" ]; then
 	}
 fi
 
+# --- 0d. i18n make-pot warning gate ------------------------------------------
+# Translator-comment coverage is release-gated (QA 10150516732): a release
+# cannot ship while wp i18n make-pot reports string warnings on the tree.
+# Exit 25. Requires wp-cli; skipped (with a loud note) when wp is absent.
+if command -v wp > /dev/null 2>&1; then
+	echo "==> Step 0d: i18n make-pot warning gate"
+	I18N_WARNINGS="$(wp i18n make-pot "$ROOT" /tmp/jetonomy-release-check.pot \
+		--slug=jetonomy --domain=jetonomy \
+		--exclude=node_modules,vendor,tests,build,libs,docs,dist 2>&1 \
+		| grep -cE '^Warning: The string' || true)"
+	rm -f /tmp/jetonomy-release-check.pot
+	if [ "$I18N_WARNINGS" -gt 0 ]; then
+		echo "FAIL: wp i18n make-pot reports $I18N_WARNINGS string warning(s). Fix translator comments before tagging." >&2
+		exit 25
+	fi
+else
+	echo "    NOTE: wp-cli not found - i18n warning gate SKIPPED on this box."
+fi
+
 # --- 1. clean-tree gate -----------------------------------------------------
 # Step 0 may have regenerated build artefacts. The gate excludes
 # grunt-generated paths so the build doesn't trip on its own deterministic

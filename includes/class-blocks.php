@@ -712,6 +712,7 @@ class Blocks {
 				</a>
 				<?php if ( $can_create_space ) : ?>
 					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">
+						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 						<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 					</a>
 				<?php endif; ?>

@@ -732,10 +732,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'mention'               => __( 'Mention (@username)', 'jetonomy' ),
 					'accepted_answer'       => __( 'Your answer accepted', 'jetonomy' ),
 					'idea_status_changed'   => __( 'Your idea roadmap status changed', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'new_post_in_sub'       => sprintf( __( 'New post in subscribed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'badge_earned'          => __( 'Badge earned', 'jetonomy' ),
 					'vote_on_post'          => __( 'Vote on your post', 'jetonomy' ),
 					'moderation'            => __( 'Moderator action', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'join_request'          => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 					'verification_reminder' => __( 'Verification reminder', 'jetonomy' ),
 				);
