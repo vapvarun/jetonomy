@@ -4153,3 +4153,47 @@ const { state, actions } = store( 'jetonomy', {
         }
     } );
 } )();
+
+/**
+ * Avatar image-error fallback (Basecamp 10110833991).
+ *
+ * templates/partials/avatar.php renders every avatar <img> with a hidden
+ * sibling `.jt-avatar-fallback` initials span. When the image URL is dead
+ * (deleted upload, stale CDN entry) the browser fires `error` on the img -
+ * Firefox then paints the alt text as a broken-image placeholder where the
+ * required behaviour is initials. Swap the pair here, centrally, instead of
+ * per-tag inline handlers (the frontend standard bans inline scripts).
+ *
+ * `error` does not bubble but IS observable in the capture phase, so one
+ * document-level listener covers every avatar - including lazy-loaded ones
+ * and everything swapped in by client-side navigation. The sweep() pass
+ * covers images that had already failed before this script ran (cached 404s
+ * resolve synchronously) and re-runs on `jetonomy:navigated` per the
+ * client-nav re-init contract.
+ */
+( function () {
+    function fallback( img ) {
+        if ( ! img.classList || ! img.classList.contains( 'jt-avatar' ) ) return;
+        const next = img.nextElementSibling;
+        if ( ! next || ! next.classList.contains( 'jt-avatar-fallback' ) ) return;
+        img.hidden = true;
+        next.hidden = false;
+    }
+
+    document.addEventListener( 'error', function ( e ) {
+        if ( e.target && e.target.tagName === 'IMG' ) fallback( e.target );
+    }, true );
+
+    function sweep() {
+        document.querySelectorAll( 'img.jt-avatar' ).forEach( function ( img ) {
+            if ( img.complete && img.naturalWidth === 0 ) fallback( img );
+        } );
+    }
+
+    if ( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', sweep );
+    } else {
+        sweep();
+    }
+    document.addEventListener( 'jetonomy:navigated', sweep );
+} )();

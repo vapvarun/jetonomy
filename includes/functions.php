@@ -420,8 +420,14 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 	$avatar_url = Avatar::display_url( $user_id, $avatar_size * 2 );
 	$initials   = strtoupper( mb_substr( $name, 0, 2 ) );
 
+	// The hidden .jt-avatar-fallback sibling is the initials the reader sees
+	// if the image URL is dead - view.js swaps the pair on the img's error
+	// event. Same contract as templates/partials/avatar.php (Basecamp
+	// 10110833991): an <img> with no fallback renders as broken-image alt
+	// text in Firefox when the upload behind it has been deleted.
 	$avatar_html = $avatar_url
 		? '<img src="' . esc_url( $avatar_url ) . '" alt="' . esc_attr( $name ) . '" class="jt-avatar ' . esc_attr( $avatar_class ) . '" width="' . (int) $avatar_size . '" height="' . (int) $avatar_size . '" loading="lazy">'
+			. '<span class="jt-avatar ' . esc_attr( $avatar_class ) . ' jt-avatar-fallback" hidden>' . esc_html( $initials ) . '</span>'
 		: '<span class="jt-avatar ' . esc_attr( $avatar_class ) . '">' . esc_html( $initials ) . '</span>';
 
 	$name_html = $show_name ? ' <span class="jt-user-name">' . esc_html( $name ) . '</span>' : '';
