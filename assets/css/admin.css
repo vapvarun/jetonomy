@@ -3265,8 +3265,8 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .tablenav-pages .page-numbers,
 	.jetonomy-admin .tablenav-pages .tablenav-pages-navspan,
 	.jetonomy-admin .tablenav-pages .current-page {
-		min-height: 40px;
-		min-width: 40px;
+		min-height: 44px;
+		min-width: 44px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -3277,8 +3277,8 @@ tr.jetonomy-moderated td {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 40px;
-		min-width: 40px;
+		min-height: 44px;
+		min-width: 44px;
 		padding: 10px 8px;
 		box-sizing: border-box;
 	}
@@ -3290,13 +3290,21 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .tablenav input[type="search"],
 	.jetonomy-admin .jt-content-toolbar select,
 	.jetonomy-admin .jt-content-toolbar input[type="search"] {
-		min-height: 40px;
+		min-height: 44px;
 	}
 	.jetonomy-admin .wp-list-table td.column-primary a,
 	.jetonomy-admin .wp-list-table td.column-primary strong > a {
 		display: inline-flex;
 		align-items: center;
-		min-height: 40px;
+		min-height: 44px;
+	}
+	/* Settings tab nav measured 28.8px on phones (Basecamp 10150582519). */
+	.jetonomy-admin .nav-tab,
+	.jetonomy-admin .jt-settings-nav a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		box-sizing: border-box;
 	}
 	/* Row-action links already carry their own floor above; keep the
 	   primary-cell rule from double-padding them. */
@@ -3468,4 +3476,31 @@ tr.jetonomy-moderated td {
 	font-size: 12px;
 	font-weight: 600;
 	color: var(--jt-admin-text-3, #646970);
+}
+
+/* ── Desktop target ladder (Basecamp 10150582519) ─────────────
+   Regular controls meet 40px; dense list rows (row actions, the
+   expanded-row action links) carry the documented dense exception and
+   never fall below 34px. Measured failures: Moderation actions
+   22-27.6px, Activity/Revisions 32px, pagination 34px. */
+@media screen and (min-width: 783px) {
+	.jetonomy-admin .tablenav .button,
+	.jetonomy-admin .tablenav-pages a,
+	.jetonomy-admin .tablenav-pages .page-numbers,
+	.jetonomy-admin .tablenav select,
+	.jetonomy-admin .nav-tab {
+		min-height: 40px;
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+	}
+	.jetonomy-admin .wp-list-table .row-actions a,
+	.jetonomy-admin .wp-list-table .jt-btn,
+	.jetonomy-admin .wp-list-table .button,
+	.jetonomy-admin .wp-list-table .button-link {
+		display: inline-flex;
+		align-items: center;
+		min-height: 34px;
+		box-sizing: border-box;
+	}
 }
