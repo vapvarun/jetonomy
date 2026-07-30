@@ -231,8 +231,10 @@ else :
 			<input type="hidden" name="page" value="jetonomy-revisions" />
 			<?php
 			$list_table->render_filters();
-			$list_table->display();
 			?>
+			<div class="jt-content-table-wrap">
+				<?php $list_table->display(); ?>
+			</div>
 		</form>
 	</div>
 	<?php

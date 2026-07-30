@@ -60,6 +60,12 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 
 	<?php if ( 'general' === $active_tab ) : ?>
 		<!-- General Tab -->
+		<div class="jt-settings-card">
+			<div class="jt-settings-card__head">
+				<p class="jt-settings-card__title"><?php esc_html_e( 'Details', 'jetonomy' ); ?></p>
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+				<p class="jt-settings-card__desc"><?php echo esc_html( sprintf( __( 'Name, category, visibility, and appearance of this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+			</div>
 		<form id="jetonomy-edit-space-form" class="jetonomy-space-form" data-space-id="<?php echo absint( $space->id ); ?>">
 			<table class="form-table">
 				<tr>
@@ -170,6 +176,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<span class="spinner"></span>
 			</p>
 		</form>
+		</div><!-- /.jt-settings-card -->
 
 	<?php elseif ( 'members' === $active_tab ) : ?>
 		<!-- Members Tab -->
@@ -389,11 +396,13 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 	<?php elseif ( 'settings' === $active_tab ) : ?>
 		<!-- Space Settings Tab -->
 		<div class="jetonomy-tab-content">
-			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-			<h2><?php echo esc_html( sprintf( __( '%s-Specific Settings', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></h2>
-			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-			<p class="description"><?php echo esc_html( sprintf( __( 'These settings override the global defaults for this %s only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
-
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+					<p class="jt-settings-card__title"><?php echo esc_html( sprintf( __( '%s-Specific Settings', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></p>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+					<p class="jt-settings-card__desc"><?php echo esc_html( sprintf( __( 'These settings override the global defaults for this %s only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+				</div>
 			<form id="jetonomy-space-settings-form" data-space-id="<?php echo absint( $space->id ); ?>">
 				<table class="form-table">
 					<tr>
@@ -512,6 +521,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<span class="spinner"></span>
 				</p>
 			</form>
+			</div><!-- /.jt-settings-card -->
 		</div>
 		<?php
 		/**
@@ -540,7 +550,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<div class="jetonomy-tab-content">
 			<?php /* translators: %d: number of pending join requests */ ?>
 		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), (int) count( $join_requests ) ); ?></h2>
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-join-requests-table">
+			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-join-requests-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
@@ -587,7 +597,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</tbody>
-			</table>
+			</table></div><!-- /.jt-content-table-wrap -->
 		</div>
 
 	<?php endif; ?>

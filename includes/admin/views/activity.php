@@ -52,7 +52,9 @@ $export_url = wp_nonce_url(
 		<input type="hidden" name="page" value="jetonomy-activity" />
 		<?php
 		$list_table->render_filters();
-		$list_table->display();
 		?>
+		<div class="jt-content-table-wrap">
+			<?php $list_table->display(); ?>
+		</div>
 	</form>
 </div>
