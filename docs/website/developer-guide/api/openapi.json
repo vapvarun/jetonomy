@@ -3961,71 +3961,13 @@
       }
     },
     "/flags": {
-      "get": {
-        "tags": [
-          "Moderation"
-        ],
-        "summary": "List flags",
-        "operationId": "listFlags",
-        "description": "List reported content. Requires jetonomy_moderate.",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FlagCollection"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        },
-        "parameters": [
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "open",
-                "resolved",
-                "all"
-              ],
-              "default": "open"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ]
-      },
       "post": {
         "tags": [
           "Moderation"
         ],
-        "summary": "Report content",
+        "summary": "Report a post, reply, or user",
         "operationId": "createFlag",
-        "description": "Report a post or reply. Login required.",
+        "description": "Files a flag into the moderation queue. Requires the jetonomy_flag capability (any member by default) plus a REST nonce. The silenced-gate runs in the handler. Rejects nonexistent targets (404 jetonomy_flag_target_missing), self-reports (400 jetonomy_flag_self), and duplicate reports by the same member on the same object (409 jetonomy_already_flagged).",
         "responses": {
           "201": {
             "description": "Created",
@@ -4038,10 +3980,16 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Self-report rejected (jetonomy_flag_self)"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Target does not exist (jetonomy_flag_target_missing)"
+          },
+          "409": {
+            "description": "Already reported by this member (jetonomy_already_flagged)"
           }
         },
         "requestBody": {
@@ -4055,7 +4003,8 @@
                     "type": "string",
                     "enum": [
                       "post",
-                      "reply"
+                      "reply",
+                      "user"
                     ]
                   },
                   "object_id": {

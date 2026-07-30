@@ -764,16 +764,15 @@
 			{
 				"route": "/flags",
 				"methods": [
-					"GET",
 					"POST"
 				],
-				"handler": "Moderation_Controller::list_flags,create_flag",
-				"permission": "__return_true",
-				"purpose": "List flags or create new flag",
-				"auth": "public_with_handler",
+				"handler": "Moderation_Controller::create_flag",
+				"permission": "REST_Auth::auth_mutation('jetonomy_flag')",
+				"purpose": "Create a flag report against a post, reply, or user",
+				"auth": "auth_mutation",
 				"capability": "jetonomy_flag",
 				"ownership_check": "handler_enforces",
-				"audit_notes": "GET: list flags (mod-only); POST: flag (jetonomy_flag enforced)"
+				"audit_notes": "POST only - listing lives at GET /moderation/flags (require_moderate). object_type enum: post|reply|user. Handler additionally enforces silenced-gate, target existence (404), self-flag (400), and duplicate (409). Corrected 2026-07-30 (Basecamp 10130360032): entry previously advertised GET,POST with __return_true, which never matched source."
 			},
 			{
 				"route": "/moderation/flags",

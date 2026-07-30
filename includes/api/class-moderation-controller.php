@@ -423,6 +423,36 @@ class Moderation_Controller extends Base_Controller {
 		$reason      = sanitize_text_field( (string) $request->get_param( 'reason' ) );
 		$description = sanitize_textarea_field( (string) ( $request->get_param( 'description' ) ?? '' ) );
 
+		// The target must exist, and members cannot report their own content /
+		// themselves. Both were client-side-only before, so a raw API call
+		// could 201 a flag against a nonexistent id or self-report to farm the
+		// reporter-reputation path (Basecamp 10130360032 contract audit).
+		$target_author = null;
+		if ( 'post' === $object_type ) {
+			$target        = \Jetonomy\Models\Post::find( $object_id );
+			$target_author = $target ? (int) $target->author_id : null;
+		} elseif ( 'reply' === $object_type ) {
+			$target        = \Jetonomy\Models\Reply::find( $object_id );
+			$target_author = $target ? (int) $target->author_id : null;
+		} else { // 'user' - schema enum guarantees one of the three.
+			$target        = get_userdata( $object_id );
+			$target_author = $target ? (int) $target->ID : null;
+		}
+		if ( null === $target_author ) {
+			return new WP_Error(
+				'jetonomy_flag_target_missing',
+				__( 'The reported content no longer exists.', 'jetonomy' ),
+				[ 'status' => 404 ]
+			);
+		}
+		if ( $target_author === $user_id ) {
+			return new WP_Error(
+				'jetonomy_flag_self',
+				__( 'You cannot report your own content.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
 		// Prevent duplicate flags by the same user on the same object.
 		$existing = Flag::find_by_reporter_and_object( $user_id, $object_type, $object_id );
 		if ( $existing ) {

@@ -590,7 +590,13 @@ class REST_Tests {
 			$this->check( 'E24: POST /bookmarks (off) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'E24: bookmarked = false', empty( $data['bookmarked'] ), 'bookmarked was not false' );
 
-			// 25. Create flag.
+			// 25. Create flag. Reporting your own content is server-rejected
+			// (Basecamp 10130360032), so the reporter is the TL0 test user
+			// flagging the admin-authored post - same actor-switch pattern the
+			// self-downvote step uses above.
+			if ( $this->test_user_id ) {
+				wp_set_current_user( $this->test_user_id );
+			}
 			$r = $this->rest( 'POST', '/flags', [
 				'object_type' => 'post',
 				'object_id'   => $this->post_id,
@@ -606,6 +612,38 @@ class REST_Tests {
 			if ( $flag_id ) {
 				$this->cleanup[] = [ 'type' => 'flag_db', 'id' => $flag_id ];
 			}
+
+			// 25b. object_type=user - the third enum member had no coverage.
+			$r = $this->rest( 'POST', '/flags', [
+				'object_type' => 'user',
+				'object_id'   => $this->admin_id,
+				'reason'      => 'harassment',
+			] );
+			$data = $r->get_data();
+			$this->check( 'E25b: POST /flags (user target) → 200/201', in_array( $r->get_status(), [ 200, 201 ], true ), "HTTP {$r->get_status()}" );
+			if ( ! empty( $data['id'] ) ) {
+				$this->cleanup[] = [ 'type' => 'flag_db', 'id' => (int) $data['id'] ];
+			}
+
+			// 25c. Nonexistent target must 404, never 201.
+			$r = $this->rest( 'POST', '/flags', [
+				'object_type' => 'post',
+				'object_id'   => 999999999,
+				'reason'      => 'spam',
+			] );
+			$this->check( 'E25c: POST /flags (missing target) → 404', 404 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+			if ( $this->test_user_id ) {
+				wp_set_current_user( $this->admin_id );
+			}
+
+			// 25d. Self-report is server-rejected, not just UI-hidden.
+			$r = $this->rest( 'POST', '/flags', [
+				'object_type' => 'post',
+				'object_id'   => $this->post_id,
+				'reason'      => 'spam',
+			] );
+			$this->check( 'E25d: POST /flags (self-report) → 400', 400 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 			// 26. Resolve flag.
 			if ( $flag_id ) {

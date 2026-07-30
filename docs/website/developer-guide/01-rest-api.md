@@ -332,7 +332,7 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | POST | `/moderation/spam/{type}/{id}` | Moderator | Mark as spam |
 | POST | `/moderation/trash/{type}/{id}` | Moderator | Send to trash |
 | POST | `/moderation/bulk` *(new in 1.4.1)* | Moderator | Approve / spam / trash many posts in one call |
-| POST | `/flags` | Logged in | Submit a flag on a post or reply |
+| POST | `/flags` | Logged in (`jetonomy_flag`) | Report a post, reply, or user (`object_type: post\|reply\|user`); server rejects missing targets (404), self-reports (400), and duplicates (409) |
 | GET | `/posts/{id}/flags` *(new in 1.4.1)* | Moderator | The flags raised against a specific post |
 | GET | `/moderation/flags` | Moderator | List all open flags |
 | POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag (`valid` or `dismissed`) |
