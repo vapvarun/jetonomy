@@ -15,6 +15,19 @@
 ( function () {
 	'use strict';
 
+	/**
+	 * Localized string with an English fallback. Every message this block shows
+	 * lands on a logged-out visitor, so none of them may be English-only.
+	 *
+	 * @param {string} key      Key in jetonomyLoginBlock.i18n.
+	 * @param {string} fallback English default.
+	 * @return {string} Localized string.
+	 */
+	function lbI18n( key, fallback ) {
+		var d = window.jetonomyLoginBlock && window.jetonomyLoginBlock.i18n;
+		return ( d && d[ key ] ) || fallback;
+	}
+
 	function activateTab( block, name ) {
 		block.querySelectorAll( '.jt-login-tab' ).forEach( function ( tab ) {
 			var active = tab.dataset.jtTab === name;
@@ -152,7 +165,7 @@
 			.then( function ( payload ) {
 				if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
 					var msg = ( payload.json && payload.json.message )
-						|| 'Something went wrong. Please try again.';
+						|| lbI18n( 'genericError', 'Something went wrong. Please try again.' );
 					setMessage( form, msg, false );
 					// When the visitor's account is still pending email
 					// confirmation, surface a Resend button alongside the
@@ -164,11 +177,11 @@
 					if ( unlock ) { unlock(); }
 					return;
 				}
-				setMessage( form, payload.json.message || 'Signed in.', true );
+				setMessage( form, payload.json.message || lbI18n( 'signedIn', 'Signed in.' ), true );
 				window.location.reload();
 			} )
 			.catch( function () {
-				setMessage( form, 'Network error. Please try again.', false );
+				setMessage( form, lbI18n( 'networkError', 'Network error. Please try again.' ), false );
 				if ( unlock ) { unlock(); }
 			} );
 	}
@@ -184,9 +197,8 @@
 		if ( ! holder || holder.querySelector( '.jt-login-resend' ) ) {
 			return;
 		}
-		var i18n = ( window.jetonomyLoginBlock && window.jetonomyLoginBlock.i18n ) || {};
-		var resendLabel = i18n.resendConfirmation || 'Resend confirmation email';
-		var sendingLabel = i18n.sending || 'Sending…';
+		var resendLabel = lbI18n( 'resendConfirmation', 'Resend confirmation email' );
+		var sendingLabel = lbI18n( 'sending', 'Sending…' );
 		var btn = document.createElement( 'button' );
 		btn.type = 'button';
 		btn.className = 'jt-login-resend';
@@ -211,7 +223,7 @@
 			} ).then( function ( res ) {
 				return res.json().catch( function () { return {}; } );
 			} ).then( function ( json ) {
-				btn.textContent = ( json && json.message ) || 'If an account is waiting on confirmation, a new link is on its way.';
+				btn.textContent = ( json && json.message ) || lbI18n( 'resendSent', 'If an account is waiting on confirmation, a new link is on its way.' );
 			} ).catch( function () {
 				btn.disabled = false;
 				btn.textContent = resendLabel;
@@ -268,7 +280,7 @@
 		} ).then( function ( payload ) {
 			if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
 				var msg = ( payload.json && payload.json.message )
-					|| 'Something went wrong. Please try again.';
+					|| lbI18n( 'genericError', 'Something went wrong. Please try again.' );
 				setMessage( form, msg, false );
 				if ( unlock ) { unlock(); }
 				return;
@@ -277,15 +289,15 @@
 			// Show the masked-email success message and DON'T reload — the
 			// visitor needs to click the link in their inbox first.
 			if ( payload.json.requires_verification ) {
-				setMessage( form, payload.json.message || 'Account created. Check your email to confirm.', true );
+				setMessage( form, payload.json.message || lbI18n( 'accountCreatedConfirm', 'Account created. Check your email to confirm.' ), true );
 				renderResendVerificationLink( block, form, body.username || body.email || '' );
 				if ( unlock ) { unlock(); }
 				return;
 			}
-			setMessage( form, payload.json.message || 'Account created.', true );
+			setMessage( form, payload.json.message || lbI18n( 'accountCreated', 'Account created.' ), true );
 			window.location.reload();
 		} ).catch( function () {
-			setMessage( form, 'Network error. Please try again.', false );
+			setMessage( form, lbI18n( 'networkError', 'Network error. Please try again.' ), false );
 			if ( unlock ) { unlock(); }
 		} );
 	}
@@ -325,7 +337,7 @@
 		} ).then( function ( payload ) {
 			if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
 				var msg = ( payload.json && payload.json.message )
-					|| 'Something went wrong. Please try again.';
+					|| lbI18n( 'genericError', 'Something went wrong. Please try again.' );
 				setMessage( form, msg, false );
 				if ( unlock ) { unlock(); }
 				return;
@@ -333,12 +345,12 @@
 			// Success: keep the panel open, show the inline message,
 			// clear the input. No reload — the user is still anonymous
 			// and needs to wait for the email.
-			setMessage( form, payload.json.message || 'Reset link sent.', true );
+			setMessage( form, payload.json.message || lbI18n( 'resetLinkSent', 'Reset link sent.' ), true );
 			var input = form.querySelector( '[name="user_login"]' );
 			if ( input ) { input.value = ''; }
 			if ( unlock ) { unlock(); }
 		} ).catch( function () {
-			setMessage( form, 'Network error. Please try again.', false );
+			setMessage( form, lbI18n( 'networkError', 'Network error. Please try again.' ), false );
 			if ( unlock ) { unlock(); }
 		} );
 	}

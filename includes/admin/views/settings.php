@@ -812,7 +812,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="description" style="margin:0 0 12px;color:#646970;">
 						<?php esc_html_e( 'Preview rendered with sample data. Save the page to persist overrides.', 'jetonomy' ); ?>
 					</p>
-					<iframe id="jetonomy-email-preview-iframe" style="width:100%;height:520px;border:1px solid #dcdcde;border-radius:6px;background:#fff;" title="Email preview"></iframe>
+					<iframe id="jetonomy-email-preview-iframe" style="width:100%;height:520px;border:1px solid #dcdcde;border-radius:6px;background:#fff;" title="<?php esc_attr_e( 'Email preview', 'jetonomy' ); ?>"></iframe>
 					<p class="jetonomy-modal__actions">
 						<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Close', 'jetonomy' ); ?></button>
 					</p>

@@ -666,3 +666,98 @@ function space_visibility_options( string $current = '', bool $with_details = tr
 		);
 	}
 }
+
+/**
+ * Human label for a space's stored `visibility` enum.
+ *
+ * Reads Space::visibility_levels(), the same source space_visibility_options()
+ * uses, so a listing badge and the form that set it always agree.
+ *
+ * @param string $visibility Stored enum value.
+ * @return string
+ */
+function space_visibility_label( string $visibility ): string {
+	$levels = \Jetonomy\Models\Space::visibility_levels();
+	return isset( $levels[ $visibility ]['label'] )
+		? (string) $levels[ $visibility ]['label']
+		: ucfirst( $visibility );
+}
+
+/**
+ * Human labels for the post/reply `status` enum, keyed by stored value.
+ *
+ * One map for the Content and Replies screens, which each carried their own
+ * copy for the filter tabs while their status badge printed ucfirst() of the
+ * raw enum instead — so the tab said "Published" and the badge said "Publish",
+ * and neither badge could be translated at all.
+ *
+ * @param bool $with_all Include the 'all' pseudo-status the filter tabs use.
+ * @return array<string, string>
+ */
+function content_status_labels( bool $with_all = false ): array {
+	$labels = array(
+		'publish' => __( 'Published', 'jetonomy' ),
+		'pending' => __( 'Pending', 'jetonomy' ),
+		'spam'    => __( 'Spam', 'jetonomy' ),
+		'trash'   => __( 'Trash', 'jetonomy' ),
+	);
+
+	return $with_all ? array( 'all' => __( 'All', 'jetonomy' ) ) + $labels : $labels;
+}
+
+/**
+ * Human label for a single post/reply status.
+ *
+ * @param string $status Stored enum value.
+ * @return string
+ */
+function content_status_label( string $status ): string {
+	$labels = content_status_labels();
+	return $labels[ $status ] ?? ucfirst( $status );
+}
+
+/**
+ * Human label for a space's stored `status` enum.
+ *
+ * The admin listing used to print ucfirst() of the raw enum, which is a
+ * machine value — untranslatable, and wrong in any language that does not
+ * capitalise the way English does.
+ *
+ * @param string $status Stored enum value.
+ * @return string
+ */
+function space_status_label( string $status ): string {
+	switch ( $status ) {
+		case 'active':
+			return __( 'Active', 'jetonomy' );
+		case 'archived':
+			return __( 'Archived', 'jetonomy' );
+		case 'locked':
+			return __( 'Locked', 'jetonomy' );
+		default:
+			return ucfirst( $status );
+	}
+}
+
+/**
+ * Human label for a space's stored `join_policy` enum.
+ *
+ * Same reasoning as space_status_label(). Casing is fixed here once instead
+ * of drifting between forms ("Invite Only" in wp-admin, "Invite only" on the
+ * front end).
+ *
+ * @param string $policy Stored enum value.
+ * @return string
+ */
+function space_join_policy_label( string $policy ): string {
+	switch ( $policy ) {
+		case 'open':
+			return __( 'Open', 'jetonomy' );
+		case 'approval':
+			return __( 'Requires Approval', 'jetonomy' );
+		case 'invite':
+			return __( 'Invite Only', 'jetonomy' );
+		default:
+			return ucfirst( $policy );
+	}
+}

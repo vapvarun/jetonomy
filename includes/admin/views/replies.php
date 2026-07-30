@@ -38,13 +38,8 @@ $front_url   = $space_slug && $post_slug
 	? home_url( "/{$base_slug}/s/{$space_slug}/t/{$post_slug}/" )
 	: '';
 
-$status_labels = array(
-	'all'     => __( 'All', 'jetonomy' ),
-	'publish' => __( 'Published', 'jetonomy' ),
-	'pending' => __( 'Pending', 'jetonomy' ),
-	'spam'    => __( 'Spam', 'jetonomy' ),
-	'trash'   => __( 'Trash', 'jetonomy' ),
-);
+// Shared with the Replies screen and the status badge below.
+$status_labels = \Jetonomy\content_status_labels( true );
 ?>
 <div class="wrap jetonomy-admin">
 
@@ -300,7 +295,7 @@ $status_labels = array(
 						<td data-colname="<?php esc_attr_e( 'Author', 'jetonomy' ); ?>"><?php echo esc_html( $author_name ); ?></td>
 						<td data-colname="<?php esc_attr_e( 'Status', 'jetonomy' ); ?>">
 							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $r->status ?? 'publish' ); ?>">
-								<?php echo esc_html( ucfirst( $r->status ?? 'publish' ) ); ?>
+								<?php echo esc_html( \Jetonomy\content_status_label( (string) ( $r->status ?? 'publish' ) ) ); ?>
 							</span>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Date', 'jetonomy' ); ?>">

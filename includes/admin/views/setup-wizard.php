@@ -171,7 +171,7 @@ wp_head();
 
 		<div class="jt-form-group">
 			<label for="jt-cat-name"><?php esc_html_e( 'Category Name', 'jetonomy' ); ?></label>
-			<input type="text" id="jt-cat-name" value="General" placeholder="General">
+			<input type="text" id="jt-cat-name" value="<?php esc_attr_e( 'General', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'General', 'jetonomy' ); ?>">
 			<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 			<p class="jt-form-hint"><?php echo esc_html( sprintf( __( 'Categories group related %s together.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 		</div>
@@ -179,7 +179,7 @@ wp_head();
 		<div class="jt-form-group">
 			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 			<label for="jt-space-name"><?php echo esc_html( sprintf( __( '%s Name', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></label>
-			<input type="text" id="jt-space-name" value="Community Discussion" placeholder="Community Discussion">
+			<input type="text" id="jt-space-name" value="<?php esc_attr_e( 'Community Discussion', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'Community Discussion', 'jetonomy' ); ?>">
 		</div>
 
 		<div class="jt-form-group">

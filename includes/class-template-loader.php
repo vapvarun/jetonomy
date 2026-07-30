@@ -537,6 +537,8 @@ class Template_Loader {
 					'joining'                => esc_html__( 'Joining...', 'jetonomy' ),
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpace'              => esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					'requesting'             => esc_html__( 'Requesting...', 'jetonomy' ),
 					'awaitingApproval'       => esc_html__( 'Awaiting Approval', 'jetonomy' ),
 					'requestToJoin'          => esc_html__( 'Request to Join', 'jetonomy' ),

@@ -958,6 +958,16 @@ class Admin {
 					'inviteExpired'           => esc_html__( 'Expired', 'jetonomy' ),
 					'copy'                    => esc_html__( 'Copy', 'jetonomy' ),
 					'revoke'                  => esc_html__( 'Revoke', 'jetonomy' ),
+					// Access-rule sync button + the import restart confirm. These
+					// were written inline in admin.js with no key, so they stayed
+					// English on every locale; the count was also concatenated,
+					// which no translator could reorder.
+					'sync'                    => esc_html__( 'Sync', 'jetonomy' ),
+					'syncing'                 => esc_html__( 'Syncing...', 'jetonomy' ),
+					/* translators: %d: number of memberships synced. */
+					'syncedFormat'            => esc_html__( 'Synced (%d)', 'jetonomy' ),
+					'importRestartConfirm'    => esc_html__( 'This will discard the interrupted import progress. Continue?', 'jetonomy' ),
+					'importRestartTitle'      => esc_html__( 'Restart import', 'jetonomy' ),
 				),
 			)
 		);

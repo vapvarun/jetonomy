@@ -276,13 +276,13 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 							echo absint( $space->post_count );
 							break;
 						case 'status':
-							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $space->status ) . '">' . esc_html( ucfirst( $space->status ) ) . '</span>';
+							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $space->status ) . '">' . esc_html( \Jetonomy\space_status_label( (string) $space->status ) ) . '</span>';
 							break;
 						case 'join':
-							echo esc_html( ucfirst( $space->join_policy ) );
+							echo esc_html( \Jetonomy\space_join_policy_label( (string) $space->join_policy ) );
 							break;
 						case 'visibility':
-							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $space->visibility ) . '">' . esc_html( ucfirst( $space->visibility ) ) . '</span>';
+							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $space->visibility ) . '">' . esc_html( \Jetonomy\space_visibility_label( (string) $space->visibility ) ) . '</span>';
 							break;
 					}
 				},

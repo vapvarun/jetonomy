@@ -25,13 +25,8 @@ $valid_statuses = array( 'all', 'publish', 'pending', 'spam', 'trash' );
 $current_status = in_array( $current_status, $valid_statuses, true ) ? $current_status : 'all';
 $current_space  = absint( $current_space );
 
-$status_labels = array(
-	'all'     => __( 'All', 'jetonomy' ),
-	'publish' => __( 'Published', 'jetonomy' ),
-	'pending' => __( 'Pending', 'jetonomy' ),
-	'spam'    => __( 'Spam', 'jetonomy' ),
-	'trash'   => __( 'Trash', 'jetonomy' ),
-);
+// Shared with the Replies screen and the status badge below.
+$status_labels = \Jetonomy\content_status_labels( true );
 
 $search_query = sanitize_text_field( $_GET['s'] ?? '' );
 $page_url     = admin_url( 'admin.php?page=jetonomy-content' );
@@ -274,7 +269,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Status', 'jetonomy' ); ?>">
 							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $p->status ); ?>">
-								<?php echo esc_html( ucfirst( $p->status ) ); ?>
+								<?php echo esc_html( \Jetonomy\content_status_label( (string) $p->status ) ); ?>
 							</span>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Replies', 'jetonomy' ); ?>">

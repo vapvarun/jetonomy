@@ -812,7 +812,7 @@
 			// Sync existing memberships for a rule
 			$(document).on('click', '.jetonomy-sync-rule', function() {
 				var $btn = $(this);
-				$btn.prop('disabled', true).text('Syncing...');
+				$btn.prop('disabled', true).text(self.i18n.syncing || 'Syncing...');
 
 				self.ajax('jetonomy_sync_access_rule', {
 					space_id: $btn.data('space-id'),
@@ -821,14 +821,14 @@
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);
-						$btn.text('Synced (' + res.data.synced + ')');
+						$btn.text((self.i18n.syncedFormat || 'Synced (%d)').replace('%d', res.data.synced));
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
-						$btn.text('Sync');
+						$btn.text(self.i18n.sync || 'Sync');
 					}
 				}).fail(function() {
 					self.toast(self.i18n.error, 'error');
-					$btn.text('Sync');
+					$btn.text(self.i18n.sync || 'Sync');
 				}).always(function() {
 					$btn.prop('disabled', false);
 				});
@@ -1346,8 +1346,8 @@
 			$(document).on('click', '.jetonomy-import-restart-btn', function() {
 				var $btn = $(this);
 				self.confirmAsync(
-					'This will discard the interrupted import progress. Continue?',
-					{ danger: true, title: 'Restart import' }
+					self.i18n.importRestartConfirm || 'This will discard the interrupted import progress. Continue?',
+					{ danger: true, title: self.i18n.importRestartTitle || 'Restart import' }
 				).then(function(ok) {
 					if (!ok) return;
 					self.startImport($btn.data('source'), 'forums', 0, true);
