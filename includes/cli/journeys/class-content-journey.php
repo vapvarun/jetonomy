@@ -59,7 +59,7 @@ final class Content_Journey {
 			'space_id'  => (int) $input['space_id'],
 			'author_id' => (int) $input['author_id'],
 			'title'     => (string) $input['title'],
-			'content'   => wp_kses_post( jetonomy_normalize_editor_html( (string) $input['content'] ) ),
+			'content'   => jetonomy_sanitize_editor_content( (string) $input['content'] ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
 			'slug'      => isset( $input['slug'] ) ? (string) $input['slug'] : '',
 		];
@@ -122,7 +122,7 @@ final class Content_Journey {
 		// the update path was the last writer that could persist raw div soup
 		// (Basecamp 10138808747 deep follow-up).
 		if ( isset( $patch['content'] ) ) {
-			$patch['content'] = wp_kses_post( jetonomy_normalize_editor_html( (string) $patch['content'] ) );
+			$patch['content'] = jetonomy_sanitize_editor_content( (string) $patch['content'] );
 		}
 
 		$ok = Post::update( $id, $patch );
@@ -203,7 +203,7 @@ final class Content_Journey {
 		$data = [
 			'post_id'   => (int) $input['post_id'],
 			'author_id' => (int) $input['author_id'],
-			'content'   => wp_kses_post( jetonomy_normalize_editor_html( (string) $input['content'] ) ),
+			'content'   => jetonomy_sanitize_editor_content( (string) $input['content'] ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
 		];
 		if ( ! empty( $input['parent_id'] ) ) {

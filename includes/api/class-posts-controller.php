@@ -423,7 +423,7 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$title   = sanitize_text_field( (string) $request->get_param( 'title' ) );
-		$content = wp_kses_post( jetonomy_normalize_editor_html( (string) $request->get_param( 'content' ) ) );
+		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 		if ( empty( $content ) ) {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
 		}
@@ -708,7 +708,7 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		if ( null !== $request->get_param( 'content' ) ) {
-			$content                      = wp_kses_post( jetonomy_normalize_editor_html( (string) $request->get_param( 'content' ) ) );
+			$content                      = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 			$update_data['content']       = $content;
 			$update_data['content_plain'] = wp_strip_all_tags( $content );
 		}

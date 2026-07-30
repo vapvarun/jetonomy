@@ -700,6 +700,24 @@ function jetonomy_normalize_editor_html( string $content ): string {
 }
 
 /**
+ * THE sanitize pipeline for member-authored body content: normalize
+ * contenteditable div soup into real paragraphs, then kses.
+ *
+ * Post::create/update and Reply::create/update run every 'content' write
+ * through this, so every writer - REST, wp-admin AJAX, CLI journeys,
+ * Abilities, the importers, Pro reply-by-email - shares ONE choke point
+ * (Basecamp 10138808747: per-writer sanitizing let div soup persist via
+ * the paths that forgot the normalize half). Idempotent: normalized clean
+ * HTML passes through byte-identical, so pre-sanitized callers lose nothing.
+ *
+ * @param string $content Raw editor/imported HTML.
+ * @return string Normalized, kses-safe HTML.
+ */
+function jetonomy_sanitize_editor_content( string $content ): string {
+	return wp_kses_post( jetonomy_normalize_editor_html( $content ) );
+}
+
+/**
  * The first paragraph of a content blob, as plain text.
  *
  * The feed-space derived title used to strip the WHOLE body and take the

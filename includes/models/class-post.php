@@ -36,6 +36,8 @@ class Post extends Model {
 	 * @return int Inserted row ID.
 	 */
 	public static function create( array $data ): int|\WP_Error {
+		$data = self::sanitize_content_fields( $data );
+
 		/**
 		 * Filter post data before creation. Return WP_Error to abort.
 		 *
@@ -144,6 +146,8 @@ class Post extends Model {
 	 *   everything else           : no-op
 	 */
 	public static function update( int $id, array $data ): bool {
+		$data = self::sanitize_content_fields( $data );
+
 		$delta = 0;
 		$post  = null;
 

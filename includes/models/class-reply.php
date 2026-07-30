@@ -48,6 +48,8 @@ class Reply extends Model {
 	 * @return int Inserted row ID.
 	 */
 	public static function create( array $data ): int|\WP_Error {
+		$data = self::sanitize_content_fields( $data );
+
 		/**
 		 * Filter reply data before creation. Return WP_Error to abort.
 		 *
@@ -133,6 +135,8 @@ class Reply extends Model {
 	 * so every caller (REST, admin AJAX, abilities, CLI) stays counter-consistent.
 	 */
 	public static function update( int $id, array $data ): bool {
+		$data = self::sanitize_content_fields( $data );
+
 		$delta = 0;
 		$reply = null;
 
