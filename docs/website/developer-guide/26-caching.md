@@ -116,3 +116,25 @@ public static function update( int $id, array $data ): bool {
     return $result;
 }
 ```
+
+## Rendering many avatars? Prime first
+
+Jetonomy answers WordPress's standard avatar filters (`pre_get_avatar_data`)
+from its own profile table. The filter runs once per avatar and cannot know
+which user ids your page will ask for next — so a loop that renders N avatars
+issues N profile queries unless the cache is warmed up front.
+
+Before any loop that renders many users (leaderboards, member directories,
+large comment threads — yours or another plugin's), prime once:
+
+```php
+if ( class_exists( '\Jetonomy\Avatar' ) ) {
+    \Jetonomy\Avatar::prime( wp_list_pluck( $rows, 'user_id' ) );
+}
+// Now render normally — get_avatar() / get_avatar_url() answer from cache.
+```
+
+One `WHERE user_id IN (...)` query replaces N single-row lookups. Users with
+no profile row are cached as absent, so they don't re-query either. Jetonomy's
+own leaderboard, sidebar, and REST user lists already do this; the public
+seam exists so pages Jetonomy has never heard of can too.

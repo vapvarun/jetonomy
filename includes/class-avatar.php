@@ -133,6 +133,32 @@ class Avatar {
 	}
 
 	/**
+	 * Batch-prime the avatar lookup for many users in ONE query.
+	 *
+	 * PUBLIC SEAM for any code - Jetonomy's own or a third-party plugin's -
+	 * about to render many avatars in one request. The pre_get_avatar_data
+	 * filter this class hooks runs once per avatar and cannot see the ids a
+	 * page will ask for next, so without priming, a leaderboard rendering 100
+	 * members costs 100 profile-table queries from this hook alone (Basecamp
+	 * 10142814595 - found via SAVEQUERIES on an external plugin's page).
+	 *
+	 * Call it before the loop:
+	 *
+	 *     if ( class_exists( '\Jetonomy\Avatar' ) ) {
+	 *         \Jetonomy\Avatar::prime( wp_list_pluck( $rows, 'user_id' ) );
+	 *     }
+	 *
+	 * Delegates to UserProfile::prime(), which seeds the same cache
+	 * find_by_user() reads (absent users cached as null too), so the filter
+	 * chain then resolves every avatar without touching the database.
+	 *
+	 * @param int[] $user_ids WP user IDs about to have avatars rendered.
+	 */
+	public static function prime( array $user_ids ): void {
+		UserProfile::prime( $user_ids );
+	}
+
+	/**
 	 * Clear the per-request cache for a user (after their avatar changes).
 	 *
 	 * @param int $user_id WP user ID.
