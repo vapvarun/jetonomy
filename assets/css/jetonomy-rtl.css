@@ -362,7 +362,11 @@
   /* Page-head pattern (1.4.0): h1 + muted subtitle, generous gap below. */
   .jt-page-head { margin-block-end: 28px; }
   .jt-page-head .jt-page-title { margin: 0 0 4px; }
-  .jt-page-head .jt-page-subtitle { margin: 0; color: var(--jt-text-secondary); font-size: 0.9375rem; }
+  /* One subtitle look everywhere. This used to be scoped to .jt-page-head, so
+     the space sub-pages (which use .jt-cat-page-row, not a page head) either
+     got no styling at all or reached for .jt-member-sub, a near-duplicate in
+     a different colour. Both selectors now resolve to the same rule. */
+  .jt-page-subtitle, .jt-member-sub { margin: 2px 0 0; color: var(--jt-text-secondary); font-size: 0.9375rem; }
 
   /* My Spaces landing (G7). Two stacked sections, card per space. */
   .jt-my-spaces-section { margin-block-end: 36px; }
@@ -573,9 +577,11 @@
   .jt-reply > :last-child { border-bottom-right-radius: var(--jt-radius-lg); border-bottom-left-radius: var(--jt-radius-lg); }
   .jt-reply-head { display: flex; align-items: center; flex-wrap: wrap; row-gap: var(--jt-space-1); gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); }
   /* Anonymous / unknown author: center the silhouette icon and keep it from
-     collapsing to 0 width as a flex child. */
-  .jt-avatar-anon { color: var(--jt-text-tertiary); }
-  .jt-avatar-anon svg { flex-shrink: 0; }
+     collapsing to 0 width as a flex child. .jt-avatar-system is the same
+     circle for an event with no person behind it at all (a flag needing
+     review, a vote roll-up) — it carries the notification's type icon. */
+  .jt-avatar-anon, .jt-avatar-system { color: var(--jt-text-tertiary); }
+  .jt-avatar-anon svg, .jt-avatar-system svg { flex-shrink: 0; }
   .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-5); }
@@ -693,7 +699,10 @@
   .jt-idea-meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.9375rem; color: var(--jt-text-tertiary); }
 
   /* ── Leaderboard ── */
-  .jt-leader { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--jt-border); }
+  /* Padding lives HERE, once. It used to be declared twice — 10px 12px here
+     and 8px 12px again in the hover-states block 1300 lines down, which
+     silently won. Editing this line had no effect. */
+  .jt-leader { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--jt-border); }
   .jt-leader:last-child { border-bottom: none; }
   /* "You are ranked #N" summary — accent-tinted card above the board. */
   .jt-leader-you { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 16px; border-inline-start: 3px solid var(--jt-accent); background: var(--jt-accent-light, var(--jt-bg-subtle)); }
@@ -713,7 +722,8 @@
   .jt-leader-pts { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
 
   /* ── Trending ── */
-  .jt-trend { display: flex; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--jt-border); }
+  /* Single padding declaration — see the note on .jt-leader above. */
+  .jt-trend { display: flex; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--jt-border); }
   .jt-trend:last-child { border-bottom: none; }
   .jt-trend-n { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; color: var(--jt-border-strong); min-width: 24px; }
   .jt-trend-title { font-size: 0.9375rem; font-weight: 500; line-height: 1.4; cursor: pointer; }
@@ -1180,7 +1190,11 @@
   .jt-leader-stats { display: flex; gap: 16px; margin-right: auto; text-align: left; }
   .jt-leader-stat-val { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; }
   .jt-leader-stat-lbl { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: .05em; }
-  .jt-leader-pad { padding: 10px 0; }
+  /* Leaderboard-page row: the page card's own 20px gutter is the whole inset,
+     so the row adds no inline padding — and therefore must not bleed either.
+     (This rule was dead until 1.8.1: the hover-states block re-declared
+     .jt-leader's padding further down the file and silently won.) */
+  .jt-leader.jt-leader-pad { padding: 10px 0; margin-inline: 0; }
 
   /* ── Sidebar extras ── */
   .jt-sidebar-link { margin-top: 10px; }
@@ -1649,9 +1663,13 @@
   .jt-member-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); }
   .jt-member-name { font-weight: 600; color: var(--jt-text); }
   .jt-member-joined { font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-top: 2px; }
-  .jt-member-rep { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
+  /* Reputation is the last cell in the row, so its width sets where every
+     control to its left lands. Left free, a 4-digit score pushed the role
+     select and Ban button ~10px further left than a 3-digit one and the
+     column read as ragged down the list. Fixed width + end-alignment locks
+     the whole trailing cluster into a column. */
+  .jt-member-rep { flex: 0 0 auto; min-width: 5.5rem; text-align: end; font-family: var(--jt-font-mono); font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
-  .jt-member-sub { color: var(--jt-text-tertiary); margin-top: 2px; }
   .jt-pending-requests { margin-bottom: 20px; }
   /* Deep-linked from a join-request notification (#jt-pending-requests). Same
      scroll-margin-top treatment as .jt-reply:target — without it the section
@@ -2071,13 +2089,25 @@
   a.jt-row { transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.15s; }
   a.jt-row:hover { box-shadow: var(--jt-shadow-md); transform: translateY(-1px); }
 
-  /* Leaderboard rows — hover background */
-  .jt-leader { transition: background 0.15s; padding: 8px 12px; margin: 0 -12px; border-radius: var(--jt-radius); }
+  /* Leaderboard + trending rows — hover background bleeds into the card's
+     own gutter so the highlight reads as a full row, not a floating pill.
+     The negative margin is only correct while the row sits in a card WE
+     own; see the host-card reset below for when it does not. */
+  .jt-leader { transition: background 0.15s; margin-inline: -12px; border-radius: var(--jt-radius); }
   .jt-leader:hover { background: var(--jt-bg-hover); }
 
-  /* Sidebar trending items — hover background */
-  .jt-trend { transition: background 0.15s; padding: 6px 8px; margin: 0 -8px; border-radius: var(--jt-radius); }
+  .jt-trend { transition: background 0.15s; margin-inline: -8px; border-radius: var(--jt-radius); }
   .jt-trend:hover { background: var(--jt-bg-hover); }
+
+  /* Host-card reset. When a theme or companion plugin supplies the sidebar
+     card (BuddyNext renders .bn-sidebar-card, and its bridge CSS zeroes our
+     rows' inline padding because its card body owns the gutter), the bleed
+     above has nothing to bleed into — it just drags the row outside the
+     content box. Members ended up ~5px from the card border while the card
+     header and footer link sat at 16px, and every sidebar widget looked
+     crowded against its edge. Rows align with the rest of the card here. */
+  .jt-app .bn-sidebar-card .jt-leader,
+  .jt-app .bn-sidebar-card .jt-trend { margin-inline: 0; }
 
   /* Tag pills */
   .jt-tag { transition: all 0.15s; }
@@ -3172,4 +3202,27 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-attachment--file .jt-attachment__file {
 		width: 100%;
 	}
+}
+
+/* Composer toolbar + emoji picker touch floors (Basecamp 10149499573:
+   trigger measured 32x30, options ~37x33 at 320). */
+@media screen and (max-width: 782px) {
+	.jt-editor-bar button,
+	.jt-editor-bar .jt-editor-bar-btn {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
+	.jt-emoji-picker .jt-emoji-option {
+		min-width: 44px;
+		min-height: 44px;
+	}
+}
+.jt-emoji-picker .jt-emoji-option:focus-visible {
+	outline: 2px solid var(--jt-accent, #0073aa);
+	outline-offset: 1px;
+	border-radius: 4px;
 }

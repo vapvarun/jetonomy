@@ -79,12 +79,11 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<div class="jt-cat-page-row">
 					<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 					<div>
+						<?php // Shared space sub-page header — see space-members.php. ?>
 						<h1 class="jt-page-title jt-page-title-sm">
 							<?php echo esc_html( $space->title ); ?>
-							&nbsp;&middot;&nbsp;
-							<?php esc_html_e( 'Moderation', 'jetonomy' ); ?>
 						</h1>
-						<p class="jt-member-sub">
+						<p class="jt-page-subtitle">
 							<?php
 							$count = count( $flags );
 							/* translators: %d: number of pending flags. */

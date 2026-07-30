@@ -135,10 +135,17 @@ $role_labels = [
 			<div class="jt-cat-page-row">
 				<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 				<div>
+					<?php
+					// Every space sub-page (Members / Moderation / Roadmap) uses the
+					// same header: the space title alone as the h1, the section's
+					// status line as the subtitle. The section name is already the
+					// last breadcrumb, so compositing it into the h1 only produced
+					// three different separators across the three pages.
+					?>
 					<h1 class="jt-page-title jt-page-title-sm">
-						<?php echo esc_html( $space->title ); ?> &mdash; <?php esc_html_e( 'Members', 'jetonomy' ); ?>
+						<?php echo esc_html( $space->title ); ?>
 					</h1>
-					<p class="jt-member-sub">
+					<p class="jt-page-subtitle">
 						<?php
 						/* translators: %d: member count */
 						echo esc_html( sprintf( _n( '%d member', '%d members', (int) $space->member_count, 'jetonomy' ), (int) $space->member_count ) );
@@ -401,12 +408,19 @@ $role_labels = [
 								// space_id), so the cap-vs-role gap that blocked space mods
 								// is closed. Site-wide bans / silences stay cap-only.
 								?>
+								<?php
+								// Danger-ghost + x-circle: the identical treatment the
+								// site-wide Ban button carries on the user profile. This
+								// was the only .jt-btn in the plugin with no variant
+								// class, so a destructive action rendered as bare text.
+								?>
 								<button type="button"
-									class="jt-btn jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
+									class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
 									data-space-id="<?php echo absint( $space->id ); ?>"
 									data-user-id="<?php echo absint( $member->user_id ); ?>"
 									data-user-name="<?php echo esc_attr( $mu->display_name ); ?>">
-									<?php /* translators: %s: site title. */ ?>
+									<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
+									<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 									<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 								</button>
 							<?php endif; ?>

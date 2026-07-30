@@ -54,6 +54,23 @@ $type_labels = array(
 	'flag'                => __( 'new content flag requires review', 'jetonomy' ),
 );
 
+// Icon shown in the row's circle when a notification has no actor at all
+// (system events: a flag needing review, an aggregated vote roll-up). Keyed
+// to $type_labels above — keep the two in step when a type is added. Every
+// slug here has a matching SVG in assets/icons/.
+$type_icons = array(
+	'reply_to_post'       => 'message-circle',
+	'reply_to_reply'      => 'message-circle',
+	'mention'             => 'user',
+	'vote_on_post'        => 'chevron-up',
+	'accepted_answer'     => 'check-circle',
+	'idea_status_changed' => 'lightbulb',
+	'new_post_in_sub'     => 'bell',
+	'moderation'          => 'shield',
+	'badge_earned'        => 'award',
+	'flag'                => 'flag',
+);
+
 $filter_tabs = array(
 	'all'      => __( 'All', 'jetonomy' ),
 	'unread'   => __( 'Unread', 'jetonomy' ),
@@ -220,9 +237,27 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 						<input type="checkbox" class="jt-notif-cb" data-jt-notif-cb data-wp-on--change="actions.updateNotifSelection" value="<?php echo esc_attr( (int) $notif->id ); ?>">
 					</label>
 					<a href="<?php echo esc_url( $notif_url ); ?>" class="jt-notif-item__link">
-						<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
-							<?php echo esc_html( $actor ? strtoupper( substr( $actor->display_name, 0, 2 ) ) : '?' ); ?>
-						</span>
+						<?php
+						// The circle never renders a literal "?" — that reads as
+						// broken, and it fired on EVERY system notification (flag
+						// review, vote roll-up), which carry no actor by design.
+						// Same contract get_user_link() already sets for unknown
+						// authors: a silhouette for a masked person, and a
+						// type icon where there is genuinely nobody to show.
+						if ( $actor ) :
+							?>
+							<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
+								<?php echo esc_html( strtoupper( mb_substr( $actor->display_name, 0, 2 ) ) ); ?>
+							</span>
+						<?php elseif ( $jt_notif_anon ) : ?>
+							<span class="jt-avatar jt-avatar-anon jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
+								<?php jetonomy_echo_icon( 'user', 18 ); ?>
+							</span>
+						<?php else : ?>
+							<span class="jt-avatar jt-avatar-system jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
+								<?php jetonomy_echo_icon( $type_icons[ $notif->type ] ?? 'bell', 16 ); ?>
+							</span>
+						<?php endif; ?>
 						<div class="jt-notif-body">
 							<div class="jt-notif-text">
 								<?php if ( ! empty( $notif->message ) ) : ?>

@@ -149,7 +149,7 @@ $crumbs = [
 			<h1 class="jt-page-title">
 				<?php esc_html_e( 'Moderation Overview', 'jetonomy' ); ?>
 			</h1>
-			<p class="jt-member-sub">
+			<p class="jt-page-subtitle">
 				<?php
 				if ( $is_admin ) {
 					/* translators: %d: total pending flag count across every space */

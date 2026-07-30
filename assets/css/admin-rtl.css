@@ -744,6 +744,12 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 	-webkit-overflow-scrolling: touch;
+	/* The scroll container is a BFC - beside WP's FLOATED filter forms it
+	   used to shrink into the leftover right half of the page instead of
+	   clearing below them (self-audit 2026-07-30: Users/Activity/Revisions
+	   rendered half-width with clipped columns). */
+	clear: both;
+	min-width: 0;
 }
 
 /* Bare scroll container emitted when a table renders inside its own card
@@ -832,8 +838,8 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 32px;
-	height: 32px;
+	min-width: 40px;
+	height: 40px;
 	padding: 0 10px;
 	border: 1px solid var(--jt-admin-border, #dcdcde);
 	border-radius: 6px;
@@ -2685,19 +2691,39 @@ tr.jetonomy-moderated td {
 		position: static;
 	}
 
+	/* Small screens get a UNIFORM two-column menu, not a ragged pill
+	   cloud (owner screenshot 2026-07-30): every entry is a 44px row with
+	   an aligned icon slot and one consistent gap; entries without their
+	   own dashicon inherit a fallback glyph so columns stay aligned. */
 	.jt-settings-sidebar-nav {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 2px 8px;
 		padding: 8px;
 	}
 
 	.jt-snav-link,
 	.jt-settings-sidebar-nav .nav-tab {
 		width: auto;
-		flex: 0 0 auto;
-		padding: 6px 10px;
-		font-size: 12px;
+		margin: 0;
+		min-height: 44px;
+		padding: 8px 10px;
+		font-size: 13px;
+		box-sizing: border-box;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.jt-snav-link:not(:has(.dashicons))::before {
+		content: "\f108";
+		font-family: dashicons;
+		font-size: 16px;
+		width: 16px;
+		height: 16px;
+		line-height: 1;
+		flex-shrink: 0;
+		color: var(--jt-admin-text-muted);
 	}
 
 	.jt-snav-divider {
@@ -3265,8 +3291,8 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .tablenav-pages .page-numbers,
 	.jetonomy-admin .tablenav-pages .tablenav-pages-navspan,
 	.jetonomy-admin .tablenav-pages .current-page {
-		min-height: 40px;
-		min-width: 40px;
+		min-height: 44px;
+		min-width: 44px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -3277,8 +3303,8 @@ tr.jetonomy-moderated td {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 40px;
-		min-width: 40px;
+		min-height: 44px;
+		min-width: 44px;
 		padding: 10px 8px;
 		box-sizing: border-box;
 	}
@@ -3290,13 +3316,21 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .tablenav input[type="search"],
 	.jetonomy-admin .jt-content-toolbar select,
 	.jetonomy-admin .jt-content-toolbar input[type="search"] {
-		min-height: 40px;
+		min-height: 44px;
 	}
 	.jetonomy-admin .wp-list-table td.column-primary a,
 	.jetonomy-admin .wp-list-table td.column-primary strong > a {
 		display: inline-flex;
 		align-items: center;
-		min-height: 40px;
+		min-height: 44px;
+	}
+	/* Settings tab nav measured 28.8px on phones (Basecamp 10150582519). */
+	.jetonomy-admin .nav-tab,
+	.jetonomy-admin .jt-settings-nav a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		box-sizing: border-box;
 	}
 	/* Row-action links already carry their own floor above; keep the
 	   primary-cell rule from double-padding them. */
@@ -3329,6 +3363,60 @@ tr.jetonomy-moderated td {
    clipped ~19px under the card's hidden overflow (QA 2026-07-30, cards
    10146440810/10146297370). Inside Jetonomy settings cards the stacked
    layout simply persists until the row genuinely fits. */
+/* Settings MATRICES get the same squeeze-band treatment as form-tables:
+   at exactly 783px the Email Templates matrix reverted to desktop layout
+   inside a ~463px card - body editors measured 32px wide, actions 24px
+   (QA wave-7 on 10146440810). Non-wide matrices stay stacked until the
+   card genuinely fits them; the role matrix keeps its scroll wrapper. */
+@media screen and (min-width: 783px) and (max-width: 1100px) {
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide),
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) tbody,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) tr,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) th { display: block; width: auto; }
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) thead { display: none; }
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) tr {
+		border: 1px solid var(--jt-admin-border, #dcdcde);
+		border-radius: 6px;
+		padding: 10px 12px;
+		margin-block-end: 10px;
+		background: var(--jt-admin-white, #fff);
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:first-child,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) th[scope="row"] {
+		font-weight: 600;
+		padding-block-end: 6px;
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:not(:first-child) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 8px 12px;
+		padding: 8px 0;
+		min-height: 44px;
+		border-top: 1px solid var(--jt-admin-border-subtle, #f0f0f1);
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:not(:first-child)::before {
+		content: attr(data-colname);
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: var(--jt-admin-text-3, #646970);
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) .button,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) input,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) textarea {
+		min-height: 40px;
+		box-sizing: border-box;
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) textarea,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) input[type="text"] {
+		width: 100%;
+	}
+}
+
 @media screen and (min-width: 783px) and (max-width: 1100px) {
 	.jetonomy-admin .jt-settings-card .form-table,
 	.jetonomy-admin .jt-settings-card .form-table tbody,
@@ -3433,4 +3521,215 @@ tr.jetonomy-moderated td {
 		letter-spacing: 0.03em;
 		color: var(--jt-admin-text-3, #646970);
 	}
+}
+
+/* Space editor list tables (Basecamp 10150588436): Members measured 472px
+   at 320 (152px document overflow) and Access Rules letter-wrapped its
+   headings. Inside their scroll container the tables keep a readable
+   natural width and single-line headings; the container absorbs the rest. */
+@media screen and (max-width: 782px) {
+	.jetonomy-admin .jt-spacedit-list {
+		min-width: 560px;
+	}
+	.jetonomy-admin .jt-spacedit-list th {
+		white-space: nowrap;
+	}
+}
+
+/* Grouped field pairs in settings (Basecamp 10150582271): sibling inputs
+   used to touch with 0px gap and the second field's only "label" was its
+   placeholder. The pair primitive gives each field a visible label and a
+   consistent 12px rhythm, stacking on narrow cards. */
+.jetonomy-admin .jt-field-pair {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-block-end: 4px;
+}
+.jetonomy-admin .jt-field-pair__item {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+.jetonomy-admin .jt-field-pair__item label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--jt-admin-text-3, #646970);
+}
+
+/* ── Desktop target ladder (Basecamp 10150582519) ─────────────
+   Regular controls meet 40px; dense list rows (row actions, the
+   expanded-row action links) carry the documented dense exception and
+   never fall below 34px. Measured failures: Moderation actions
+   22-27.6px, Activity/Revisions 32px, pagination 34px. */
+@media screen and (min-width: 783px) {
+	.jetonomy-admin .tablenav .button,
+	.jetonomy-admin .tablenav-pages a,
+	.jetonomy-admin .tablenav-pages .page-numbers,
+	.jetonomy-admin .tablenav select,
+	.jetonomy-admin .nav-tab {
+		min-height: 40px;
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+	}
+	/* The 40px floors change link boxes, so EVERYTHING in the pagination
+	   row must share one centered flex baseline - without this the item
+	   count, "of N" text, and current-page input floated at their old
+	   baselines beside the taller pills (owner screenshot, Revisions). */
+	.jetonomy-admin .tablenav-pages {
+		display: inline-flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 4px;
+	}
+	.jetonomy-admin .tablenav-pages .displaying-num {
+		margin-inline-end: 8px;
+	}
+	.jetonomy-admin .tablenav-pages .paging-input {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin: 0 4px;
+	}
+	.jetonomy-admin .tablenav-pages .current-page {
+		min-height: 40px;
+		box-sizing: border-box;
+		margin: 0;
+	}
+	.jetonomy-admin .tablenav-pages .tablenav-paging-text {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.jetonomy-admin .tablenav-pages .tablenav-pages-navspan {
+		min-height: 40px;
+		min-width: 40px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
+	.jetonomy-admin .wp-list-table .row-actions a,
+	.jetonomy-admin .wp-list-table .jt-btn,
+	.jetonomy-admin .wp-list-table .button,
+	.jetonomy-admin .wp-list-table .button-link {
+		display: inline-flex;
+		align-items: center;
+		min-height: 34px;
+		box-sizing: border-box;
+	}
+}
+
+/* Dialog contract shared chrome (Basecamp 10150582851): every overlay
+   keeps a phone edge gutter and actions on the ladder. */
+.jetonomy-modal .jetonomy-modal__content {
+	margin: 16px;
+}
+.jetonomy-modal .button,
+.jetonomy-modal .jt-btn,
+#jetonomy-award-modal .jt-btn,
+#jetonomy-award-modal .button {
+	min-height: 40px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+}
+@media screen and (max-width: 782px) {
+	.jetonomy-modal .button,
+	.jetonomy-modal .jt-btn,
+	#jetonomy-award-modal .jt-btn,
+	#jetonomy-award-modal .button {
+		min-height: 44px;
+	}
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ONE pagination pill family + carded filter toolbars
+   (owner screenshot 2026-07-30: on Revisions the arrows were WP .button
+   blue-outline pills, the disabled arrows grey squares, the page input a
+   bare square, and "of N" floated - four species on one row; the filter
+   controls floated raw on the page background above the card.)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Core WP_List_Table pagination arrows carry .button - restyle them into
+   the SAME pill as .page-numbers: neutral border, white face, accent on
+   hover; disabled spans are the same pill dimmed, not a different grey. */
+.jetonomy-admin .tablenav-pages .pagination-links .button,
+.jetonomy-admin .tablenav-pages .pagination-links a,
+.jetonomy-admin .tablenav-pages .tablenav-pages-navspan {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 40px;
+	height: 40px;
+	padding: 0 10px;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 6px;
+	background: var(--jt-admin-white, #fff);
+	color: var(--jt-admin-text-wp, #1d2327);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+	text-decoration: none;
+	box-shadow: none;
+	margin: 0;
+}
+.jetonomy-admin .tablenav-pages .pagination-links a:hover,
+.jetonomy-admin .tablenav-pages .pagination-links a:focus {
+	background: var(--jt-admin-surface-1, #f6f7f7);
+	border-color: #8c8f94;
+	color: var(--jt-admin-text-wp, #1d2327);
+	outline: none;
+}
+.jetonomy-admin .tablenav-pages .pagination-links a:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+.jetonomy-admin .tablenav-pages .tablenav-pages-navspan {
+	opacity: 0.45;
+}
+.jetonomy-admin .tablenav-pages .current-page {
+	height: 40px;
+	min-width: 52px;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 6px;
+	text-align: center;
+	font-size: 13px;
+	margin: 0;
+	box-sizing: border-box;
+}
+.jetonomy-admin .tablenav-pages .tablenav-paging-text {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--jt-admin-text-wp-3, #646970);
+	font-size: 13px;
+}
+
+/* Filter toolbars inside the card strip: every control shares one 40px
+   height, radius, and border - no more mixed-size raw inputs. */
+.jetonomy-admin .tablenav select,
+.jetonomy-admin .tablenav input[type="search"],
+.jetonomy-admin .tablenav input[type="text"],
+.jetonomy-admin .tablenav input[type="date"],
+.jetonomy-admin .tablenav input[type="number"],
+.jetonomy-admin .tablenav .button {
+	height: 40px;
+	min-height: 40px;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 6px;
+	box-sizing: border-box;
+	font-size: 13px;
+	margin: 0;
+}
+.jetonomy-admin .tablenav .alignleft.actions {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 0;
 }

@@ -509,4 +509,14 @@ body.jt-setup-body {
 	.jt-setup-card .jt-btn {
 		min-height: 44px;
 	}
+	/* The live URL preview is one unbroken string (site URL + slug) - it
+	   must wrap, not push the card sideways. */
+	.jt-url-preview {
+		flex-wrap: wrap;
+		min-width: 0;
+	}
+	.jt-url-preview__url {
+		overflow-wrap: anywhere;
+		min-width: 0;
+	}
 }
