@@ -14,6 +14,9 @@
         <testsuite name="security">
             <directory suffix="Test.php">./tests/security</directory>
         </testsuite>
+        <testsuite name="real-writers">
+            <directory suffix="Test.php">./tests/real-writers</directory>
+        </testsuite>
         <testsuite name="error-paths">
             <directory suffix="Test.php">./tests/error-paths</directory>
         </testsuite>
