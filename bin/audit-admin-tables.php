@@ -42,7 +42,6 @@ $baseline = array(
 	'includes/extensions/reply-by-email/class-extension.php',
 	'includes/extensions/seo-pro/class-extension.php',
 	'includes/extensions/web-push/class-extension.php',
-	'includes/extensions/webhooks/class-extension.php',
 	'includes/extensions/white-label/class-extension.php',
 	'includes/adapters/class-tag-space-integration.php',
 	'includes/class-jetonomy-pro.php',

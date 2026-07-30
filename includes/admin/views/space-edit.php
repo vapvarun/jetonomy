@@ -192,7 +192,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 
 			<?php /* translators: %d: number of members */ ?>
 		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), (int) count( $members ) ); ?></h2>
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-members-table">
+			<div class="jt-table-scroll"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-members-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
@@ -245,7 +245,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</tbody>
-			</table>
+			</table></div><!-- /.jt-table-scroll -->
 
 			<hr>
 
@@ -267,7 +267,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<p class="description"><?php esc_html_e( 'Max uses 0 means unlimited. Leave Expires blank for no expiry.', 'jetonomy' ); ?></p>
 			</div>
 
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-invites-table" data-space-id="<?php echo absint( $space->id ); ?>">
+			<div class="jt-table-scroll"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-invites-table" data-space-id="<?php echo absint( $space->id ); ?>">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Invite Link', 'jetonomy' ); ?></th>
@@ -290,7 +290,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					);
 					?>
 				</tbody>
-			</table>
+			</table></div><!-- /.jt-table-scroll -->
 		</div>
 
 	<?php elseif ( 'access' === $active_tab ) : ?>
@@ -331,7 +331,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 
 			<?php /* translators: %d: number of access rules */ ?>
 		<h2><?php printf( esc_html__( 'Access Rules (%d)', 'jetonomy' ), (int) count( $access_rules ) ); ?></h2>
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-rules-table">
+			<div class="jt-table-scroll"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-rules-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Type', 'jetonomy' ); ?></th>
@@ -383,7 +383,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</tbody>
-			</table>
+			</table></div><!-- /.jt-table-scroll -->
 		</div>
 
 	<?php elseif ( 'settings' === $active_tab ) : ?>

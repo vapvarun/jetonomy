@@ -3434,3 +3434,16 @@ tr.jetonomy-moderated td {
 		color: var(--jt-admin-text-3, #646970);
 	}
 }
+
+/* Space editor list tables (Basecamp 10150588436): Members measured 472px
+   at 320 (152px document overflow) and Access Rules letter-wrapped its
+   headings. Inside their scroll container the tables keep a readable
+   natural width and single-line headings; the container absorbs the rest. */
+@media screen and (max-width: 782px) {
+	.jetonomy-admin .jt-spacedit-list {
+		min-width: 560px;
+	}
+	.jetonomy-admin .jt-spacedit-list th {
+		white-space: nowrap;
+	}
+}
