@@ -49,19 +49,20 @@ class Adapter_Registry {
 		return apply_filters(
 			'jetonomy_membership_adapter_labels',
 			array(
-				'wp-roles'    => __( 'WP Role', 'jetonomy' ),
-				'memberpress' => __( 'MemberPress', 'jetonomy' ),
-				'pmpro'       => __( 'PMPro', 'jetonomy' ),
-				'woocommerce' => __( 'WooCommerce', 'jetonomy' ),
-				'rcp'         => __( 'RCP', 'jetonomy' ),
-				'learndash'   => __( 'LearnDash', 'jetonomy' ),
-				'tutor'       => __( 'Tutor LMS', 'jetonomy' ),
-				'lifterlms'   => __( 'LifterLMS', 'jetonomy' ),
-				'sensei'      => __( 'Sensei', 'jetonomy' ),
-				'masterstudy' => __( 'MasterStudy', 'jetonomy' ),
-				'learnomy'    => __( 'Learnomy', 'jetonomy' ),
-				'suremembers' => __( 'SureMembers', 'jetonomy' ),
-				'wpfusion'    => __( 'WP Fusion Tag', 'jetonomy' ),
+				'wp-roles'      => __( 'WP Role', 'jetonomy' ),
+				'memberpress'   => __( 'MemberPress', 'jetonomy' ),
+				'pmpro'         => __( 'PMPro', 'jetonomy' ),
+				'woocommerce'   => __( 'WooCommerce', 'jetonomy' ),
+				'rcp'           => __( 'RCP', 'jetonomy' ),
+				'learndash'     => __( 'LearnDash', 'jetonomy' ),
+				'tutor'         => __( 'Tutor LMS', 'jetonomy' ),
+				'lifterlms'     => __( 'LifterLMS', 'jetonomy' ),
+				'sensei'        => __( 'Sensei', 'jetonomy' ),
+				'masterstudy'   => __( 'MasterStudy', 'jetonomy' ),
+				'learnomy'      => __( 'Learnomy', 'jetonomy' ),
+				'suremembers'   => __( 'SureMembers', 'jetonomy' ),
+				'buddynext-pro' => __( 'BuddyNext Pro Tier', 'jetonomy' ),
+				'wpfusion'      => __( 'WP Fusion Tag', 'jetonomy' ),
 			)
 		);
 	}

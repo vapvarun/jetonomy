@@ -145,7 +145,6 @@ Universal interfaces for swappable providers:
 |-----------|----------------------|---------|
 | `Membership_Adapter` | WP Roles | Map external memberships to space access |
 | `Search_Adapter` | MySQL FULLTEXT | Pluggable search backend |
-| `Realtime_Adapter` | Polling | Live updates (WebSocket-ready) |
 | `Email_Adapter` | wp_mail | Email delivery |
 | `AI_Adapter` | Ollama | Content moderation, spam detection |
 

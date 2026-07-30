@@ -42,8 +42,32 @@
 	var iframe = document.getElementById('jetonomy-email-preview-iframe');
 	var subjEl = document.getElementById('jetonomy-email-preview-subject');
 
-	function closeModal() { modal.style.display = 'none'; }
-	function openModal() { modal.style.display = ''; }
+	// Dialog keyboard contract (Basecamp 10146440810 a11y addendum): remember
+	// the opener, move focus into the dialog on open, trap Tab inside it, and
+	// restore focus on close. The markup carries role="dialog" + aria-modal.
+	var lastOpener = null;
+	function focusables() {
+		return modal.querySelectorAll('button, [href], iframe, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+	}
+	function closeModal() {
+		modal.style.display = 'none';
+		if (lastOpener && lastOpener.focus) { lastOpener.focus(); }
+		lastOpener = null;
+	}
+	function openModal() {
+		lastOpener = document.activeElement;
+		modal.style.display = '';
+		var f = focusables();
+		if (f.length) { f[0].focus(); }
+	}
+	modal.addEventListener('keydown', function (e) {
+		if ('Tab' !== e.key) { return; }
+		var f = focusables();
+		if (!f.length) { return; }
+		var first = f[0], last = f[f.length - 1];
+		if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+		else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+	});
 
 	modal.querySelectorAll('.jetonomy-modal-close, .jetonomy-modal__overlay').forEach(function (el) {
 		el.addEventListener('click', closeModal);

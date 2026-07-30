@@ -36,7 +36,6 @@ $baseline = array(
 	'includes/admin/views/tags.php',
 	'includes/admin/views/users.php', // already core-compliant by hand; migrate for uniformity.
 	// Pro (tranche 3 - paths relative to the DIRECTORY ARGUMENT given):
-	'includes/extensions/advanced-moderation/class-extension.php',
 	'includes/extensions/anonymous-posting/views/space-setting.php',
 	'includes/extensions/ai/class-extension.php',
 	'includes/extensions/attachments/views/settings.php',
@@ -77,6 +76,16 @@ foreach ( $dirs as $dir ) {
 		}
 		$src = (string) file_get_contents( $path );
 		if ( ! preg_match( '/<table[\s>]/', $src ) ) {
+			continue;
+		}
+
+		// Balance check: an unmatched </table> means a migration left stale
+		// closers behind (the helper emits its own) - broken nesting that can
+		// close a tab container early (Basecamp 10146440826 regression).
+		$opens  = preg_match_all( '/<table[\s>]/i', $src );
+		$closes = substr_count( strtolower( $src ), '</table>' );
+		if ( $opens !== $closes ) {
+			$offenders[] = $path . ': unbalanced <table> (' . $opens . ' open / ' . $closes . ' close)';
 			continue;
 		}
 

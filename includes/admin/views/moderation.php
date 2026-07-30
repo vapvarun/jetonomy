@@ -137,8 +137,6 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					)
 				);
 				?>
-				</table>
-				</div><!-- /.jt-content-table-wrap -->
 				<?php if ( (int) ceil( $total_posts / $per_page ) > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
@@ -249,8 +247,6 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					)
 				);
 				?>
-				</table>
-				</div><!-- /.jt-content-table-wrap -->
 				<?php if ( (int) ceil( $total_replies / $per_page ) > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
@@ -361,8 +357,6 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					)
 				);
 				?>
-				</table>
-				</div><!-- /.jt-content-table-wrap -->
 				<?php if ( (int) ceil( $total_flags / $per_page ) > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
@@ -474,8 +468,6 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					)
 				);
 				?>
-				</table>
-				</div><!-- /.jt-content-table-wrap -->
 				<?php if ( (int) ceil( $total_banned / $per_page ) > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">

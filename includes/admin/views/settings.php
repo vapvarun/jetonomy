@@ -383,11 +383,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$td = $tl_defaults[ $level ];
 							?>
 							<tr>
-								<td><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></td>
-								<td data-colname="<?php esc_attr_e( 'Posts Required', 'jetonomy' ); ?>"><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
-								<td data-colname="<?php esc_attr_e( 'Days Active', 'jetonomy' ); ?>"><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
-								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
-								<td data-colname="<?php esc_attr_e( 'Replies Received', 'jetonomy' ); ?>"><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
+								<th scope="row"><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></th>
+								<td data-colname="<?php esc_attr_e( 'Posts Required', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Posts Required for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php esc_attr_e( 'Days Active', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Days Active for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Reputation for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php esc_attr_e( 'Replies Received', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Replies Received for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
 									<td class="description" data-colname="<?php esc_attr_e( 'What this unlocks', 'jetonomy' ); ?>">
 										<?php
 										// Surface what each level unlocks (data from Trust_Levels::LEVELS).
@@ -471,7 +471,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<?php foreach ( $jt_cap_labels as $jt_cap => $jt_cap_label ) : ?>
 							<tr>
-								<td><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $jt_cap ); ?></code></td>
+								<th scope="row"><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $jt_cap ); ?></code></th>
 								<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
 									<td data-colname="<?php echo esc_attr( $jt_role_label ); ?>">
 										<input type="checkbox"
@@ -527,10 +527,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$default = (int) ( $rep_defaults[ $action_key ] ?? 0 );
 							?>
 							<tr>
-								<td><strong><?php echo esc_html( $action_label ); ?></strong></td>
+								<th scope="row"><strong><?php echo esc_html( $action_label ); ?></strong></th>
 								<td data-colname="<?php esc_attr_e( 'Points', 'jetonomy' ); ?>">
 									<input
 										type="number"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: reputation action label */ __( 'Points for %s', 'jetonomy' ), $action_label ) ); ?>"
 										name="jetonomy_settings[reputation_points][<?php echo esc_attr( $action_key ); ?>]"
 										value="<?php echo (int) $current; ?>"
 										class="small-text"
@@ -652,15 +653,17 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$email_on = isset( $notif_defaults[ $type ]['email'] ) ? (bool) $notif_defaults[ $type ]['email'] : false;
 							?>
 							<tr>
-								<td><?php echo esc_html( $label ); ?></td>
+								<th scope="row"><?php echo esc_html( $label ); ?></th>
 								<td data-colname="<?php esc_attr_e( 'Web', 'jetonomy' ); ?>">
 									<input type="checkbox"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: notification type */ __( 'Web notification for %s', 'jetonomy' ), $label ) ); ?>"
 										name="jetonomy_settings[notification_defaults][<?php echo esc_attr( $type ); ?>][web]"
 										value="1"
 										<?php checked( $web_on ); ?>>
 								</td>
 								<td data-colname="<?php esc_attr_e( 'Email', 'jetonomy' ); ?>">
 									<input type="checkbox"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: notification type */ __( 'Email notification for %s', 'jetonomy' ), $label ) ); ?>"
 										name="jetonomy_settings[notification_defaults][<?php echo esc_attr( $type ); ?>][email]"
 										value="1"
 										<?php checked( $email_on ); ?>>
@@ -725,9 +728,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$body    = isset( $row['body'] ) ? (string) $row['body'] : '';
 							?>
 							<tr data-jt-email-type="<?php echo esc_attr( $type ); ?>">
-								<td><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $type ); ?></code></td>
+								<th scope="row"><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $type ); ?></code></th>
 								<td data-colname="<?php esc_attr_e( 'Subject', 'jetonomy' ); ?>">
 									<input type="text"
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: notification type */ __( 'Email subject for %s', 'jetonomy' ), $label ) ); ?>"
 										name="jetonomy_email_templates[<?php echo esc_attr( $type ); ?>][subject]"
 										value="<?php echo esc_attr( $subject ); ?>"
 										class="large-text jetonomy-email-subject-input"
@@ -735,6 +739,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								</td>
 								<td data-colname="<?php esc_attr_e( 'Body / Intro', 'jetonomy' ); ?>">
 									<textarea
+										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: notification type */ __( 'Email body for %s', 'jetonomy' ), $label ) ); ?>"
 										name="jetonomy_email_templates[<?php echo esc_attr( $type ); ?>][body]"
 										rows="2"
 										class="large-text jetonomy-email-body-input"
@@ -769,7 +774,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			</div>
 
 			<!-- Email preview modal -->
-			<div class="jetonomy-modal" id="jetonomy-email-preview-modal" style="display:none;">
+			<div class="jetonomy-modal" id="jetonomy-email-preview-modal" role="dialog" aria-modal="true" aria-labelledby="jetonomy-email-preview-subject" style="display:none;">
 				<div class="jetonomy-modal__overlay"></div>
 				<div class="jetonomy-modal__content" style="max-width:720px;">
 					<h2 id="jetonomy-email-preview-subject"><?php esc_html_e( 'Email Preview', 'jetonomy' ); ?></h2>

@@ -77,7 +77,6 @@
 [x] Fulltext_Search | includes/search/class-fulltext-search.php | status:documented
 [x] Membership_Adapter (interface) | includes/adapters/interface-membership-adapter.php | status:documented
 [x] Email_Adapter (interface) | includes/adapters/interface-email-adapter.php | status:documented
-[x] Realtime_Adapter (interface) | includes/adapters/interface-realtime-adapter.php | status:documented
 [x] Search_Adapter (interface) | includes/adapters/interface-search-adapter.php | status:documented
 
 ## Database

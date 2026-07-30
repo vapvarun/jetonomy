@@ -118,6 +118,13 @@ final class Content_Journey {
 			return Journey_Result::fail( sprintf( 'No updatable fields provided. Allowed: %s', implode( ', ', $allowed ) ) );
 		}
 
+		// Same normalize+kses contract as create and the REST controllers -
+		// the update path was the last writer that could persist raw div soup
+		// (Basecamp 10138808747 deep follow-up).
+		if ( isset( $patch['content'] ) ) {
+			$patch['content'] = wp_kses_post( jetonomy_normalize_editor_html( (string) $patch['content'] ) );
+		}
+
 		$ok = Post::update( $id, $patch );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Post::update(%d) returned false.', $id ) );

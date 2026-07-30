@@ -3970,11 +3970,24 @@
         "description": "Files a flag into the moderation queue. Requires the jetonomy_flag capability (any member by default) plus a REST nonce. The silenced-gate runs in the handler. Rejects nonexistent targets (404 jetonomy_flag_target_missing), self-reports (400 jetonomy_flag_self), and duplicate reports by the same member on the same object (409 jetonomy_already_flagged).",
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "Flag created",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Flag"
+                  "type": "object",
+                  "properties": {
+                    "created": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "integer",
+                      "description": "The new flag id"
+                    }
+                  },
+                  "required": [
+                    "created",
+                    "id"
+                  ]
                 }
               }
             }
@@ -3990,6 +4003,9 @@
           },
           "409": {
             "description": "Already reported by this member (jetonomy_already_flagged)"
+          },
+          "403": {
+            "description": "Silenced members cannot report (code: silenced). Also returned for auth/capability failures."
           }
         },
         "requestBody": {

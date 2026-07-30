@@ -2597,6 +2597,17 @@ tr.jetonomy-moderated td {
 	accent-color: var(--jt-admin-accent);
 }
 
+/* Never shrink controls below the touch floor on small screens - the fixed
+   16px above overrode WP core's own mobile checkbox sizing
+   (Basecamp 10146440810 a11y addendum). */
+@media screen and (max-width: 782px) {
+	.jt-notif-defaults-table input[type="checkbox"],
+	.jetonomy-admin table.jt-settings-matrix input[type="checkbox"] {
+		width: 25px;
+		height: 25px;
+	}
+}
+
 /* Settings save bar */
 .jt-settings-save {
 	position: sticky;
@@ -3218,7 +3229,11 @@ tr.jetonomy-moderated td {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 12px;
+		/* wrap: a three-button action cell (Preview + Send test + Reset) spanned
+		   past the viewport when an override made Reset visible
+		   (Basecamp 10146440810 QA fail at 320/390). */
+		flex-wrap: wrap;
+		gap: 8px 12px;
 		padding: 8px 0;
 		min-height: 44px;
 		border-top: 1px solid var(--jt-admin-border-subtle, #f0f0f1);

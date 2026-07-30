@@ -44,7 +44,7 @@ Jetonomy is a next-gen discussion platform for WordPress. It provides **forums, 
 | API | WP REST API (`jetonomy/v1`) | 42 endpoints - clean decoupling of data from views |
 | Frontend | PHP templates + WP Interactivity API | SSR for SEO; reactive for UX |
 | Permissions | 3-layer engine (ban → WP caps → space roles) | Fine-grained control without custom role plugins |
-| Integrations | Universal adapter interfaces | Swap membership/email/realtime providers without touching core |
+| Integrations | Universal adapter interfaces | Swap membership/search/email/AI providers without touching core (there is no realtime adapter - live updates are REST polling) |
 | Pro tier | Separate plugin (`jetonomy-pro`) | Independent versioning; free plugin is fully functional |
 
 ---
@@ -207,11 +207,9 @@ jetonomy/
 │   │   ├── class-adapter-registry.php       # Static registry for all adapter types
 │   │   ├── interface-membership-adapter.php
 │   │   ├── interface-email-adapter.php
-│   │   ├── interface-realtime-adapter.php
 │   │   ├── interface-search-adapter.php
 │   │   ├── class-wp-roles-adapter.php       # Default membership (WP roles)
 │   │   ├── class-wp-mail-adapter.php        # Default email (wp_mail)
-│   │   ├── class-polling-adapter.php        # Default realtime (HTTP polling)
 │   │   ├── class-member-press-adapter.php   # MemberPress (conditional)
 │   │   └── class-pmpro-adapter.php          # PMPro (conditional)
 │   ├── search/
@@ -601,7 +599,6 @@ All handlers are currently in `Admin` class. **Target state:** Extracted to `Jet
 |------|-----------|---------|---------|
 | Membership | `Membership_Adapter` | `WP_Roles_Adapter` | Access gating by membership status |
 | Email | `Email_Adapter` | `WP_Mail_Adapter` | Transactional email delivery |
-| Realtime | `Realtime_Adapter` | `Polling_Adapter` | Push/polling updates |
 | Search | `Search_Adapter` | `Fulltext_Search` | Content search |
 
 ### Membership Adapters
