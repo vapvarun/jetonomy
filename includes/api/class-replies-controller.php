@@ -228,7 +228,7 @@ class Replies_Controller extends Base_Controller {
 			);
 		}
 
-		$content = wp_kses_post( (string) $request->get_param( 'content' ) );
+		$content = wp_kses_post( jetonomy_normalize_editor_html( (string) $request->get_param( 'content' ) ) );
 		if ( empty( $content ) ) {
 			return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
 		}
@@ -425,7 +425,7 @@ class Replies_Controller extends Base_Controller {
 
 		$raw_content = $request->get_param( 'content' );
 		if ( null !== $raw_content ) {
-			$content = wp_kses_post( (string) $raw_content );
+			$content = wp_kses_post( jetonomy_normalize_editor_html( (string) $raw_content ) );
 			if ( empty( $content ) ) {
 				return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
 			}

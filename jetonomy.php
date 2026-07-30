@@ -623,8 +623,75 @@ function jetonomy_maybe_enqueue_embed_scripts( string $content ): void {
 	}
 }
 
+/**
+ * Normalize contenteditable "div soup" into real paragraphs.
+ *
+ * The composer authors into a contenteditable div and submits its innerHTML.
+ * Chromium/WebKit wrap every Enter-separated block in a bare `<div>` (an empty
+ * line is `<div><br></div>`); Firefox-style editors separate blocks with
+ * `<br><br>`. wpautop() skips block-level tags, so those divs were stored and
+ * rendered as-is - and because the CSS spacing contract targets
+ * `.jt-post-body p`, consecutive paragraphs collided with 0px between them
+ * (Basecamp 10138808747, measured: p->div 12px, div->div 0px).
+ *
+ * Called at BOTH ends, one implementation:
+ *  - write time (posts/replies create + update, before wp_kses_post) so new
+ *    content is stored as canonical `<p>` markup on every surface incl. REST;
+ *  - display time (jetonomy_format_content) so content already stored as div
+ *    soup on customer sites renders correctly without a migration.
+ *
+ * The div transform only runs when the content contains NO attributed
+ * `<div ...>` - with attributed divs present (embed wrappers etc.), a bare
+ * `</div>` is ambiguous and the content is left exactly as before. Composer
+ * output never contains attributed divs, so the reported case is always
+ * covered; literal `<div>` text inside code blocks is entity-escaped in
+ * storage and never matches.
+ *
+ * @param string $content Editor-submitted or stored HTML.
+ * @return string Content with paragraphs as `<p>` blocks.
+ */
+function jetonomy_normalize_editor_html( string $content ): string {
+	// Fast path: nothing a contenteditable would have mangled.
+	if ( false === stripos( $content, '<div' ) && false === stripos( $content, '<br' ) ) {
+		return $content;
+	}
+
+	$had_soup = false;
+
+	if ( false !== stripos( $content, '<div' ) && false === stripos( $content, '<div ' ) ) {
+		// Every div is bare, so open/close pairs are unambiguous regardless of
+		// nesting: treat each boundary as a paragraph break and let wpautop
+		// re-wrap. `<div><br></div>` is the editor's empty line - drop the br
+		// so it doesn't survive into the middle of a paragraph gap.
+		$content  = preg_replace( '#<div>\s*(?:<br\s*/?>)?\s*</div>#i', "\n\n", $content );
+		$content  = str_ireplace( array( '<div>', '</div>' ), array( "\n\n", "\n\n" ), $content );
+		$had_soup = true;
+	}
+
+	// Two or more consecutive <br>s is a paragraph break in every editor
+	// dialect; a single <br> stays a deliberate line break.
+	$replaced = preg_replace( '#(?:<br\s*/?>\s*){2,}#i', "\n\n", $content );
+	if ( $replaced !== $content ) {
+		$content  = $replaced;
+		$had_soup = true;
+	}
+
+	if ( ! $had_soup ) {
+		return $content;
+	}
+
+	// Canonicalize immediately: downstream consumers (REST payloads, the app,
+	// title derivation) read stored content raw, so the paragraph structure
+	// must live in the markup, not wait for a display-side wpautop.
+	return trim( wpautop( trim( $content ) ) );
+}
+
 function jetonomy_format_content( string $content ): string {
 	$base = \Jetonomy\base_url();
+
+	// Repair div-soup that older releases stored verbatim (see
+	// jetonomy_normalize_editor_html) - a no-op for clean content.
+	$content = jetonomy_normalize_editor_html( $content );
 
 	// Normalize paragraphs: wpautop converts \n\n to <p>…</p> for plain-text
 	// storage, and is a no-op when content is already block-wrapped. This is

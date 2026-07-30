@@ -496,6 +496,13 @@
   .jt-meta strong { color: var(--jt-text); }
   .jt-post-body { padding: var(--jt-space-6); font-size: 1rem; line-height: 1.8; }
   .jt-post-body p { margin: 0 0 var(--jt-space-3); }
+  /* Contenteditable fallback: content that reaches the page as bare <div>
+     paragraphs (older stored posts, third-party REST writers) gets the same
+     rhythm as <p>. Unclassed divs only - classed divs are embeds/components
+     that manage their own spacing. Server-side jetonomy_normalize_editor_html()
+     is the real fix; this covers whatever slips past it. */
+  .jt-post-body > div:not([class]),
+  .jt-reply-body > div:not([class]) { margin: 0 0 var(--jt-space-3); }
   /* Prose element rules are shared by the post body AND the reply body so every
      content type (lists, code, blockquotes, long words) aligns and wraps the
      same way in both — no per-container drift. Long unbroken tokens (URLs, hashes)
