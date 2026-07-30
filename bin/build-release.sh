@@ -228,6 +228,14 @@ REQUIRED_FILES=(
 	"libs/edd-sl-sdk/assets/build/css/style-edd-sl-sdk.css"
 	"libs/action-scheduler/action-scheduler.php"
 	"libs/action-scheduler/functions.php"
+	# Vendored Prism (QA card 10149499675): the 1.8.0 zip shipped WITHOUT
+	# assets/vendor/ because the tree was never committed - the loader's
+	# file_exists() guard then silently no-opped the marketed highlighting
+	# feature for every customer. Required so packaging can't regress.
+	"assets/vendor/prismjs/prism.min.js"
+	"assets/vendor/prismjs/prism.min.css"
+	"assets/vendor/prismjs/prism-autoloader.min.js"
+	"assets/vendor/prismjs/components/prism-php.min.js"
 )
 for f in "${REQUIRED_FILES[@]}"; do
 	if [ ! -f "$STAGE/$f" ]; then

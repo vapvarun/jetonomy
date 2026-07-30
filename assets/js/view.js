@@ -4197,3 +4197,30 @@ const { state, actions } = store( 'jetonomy', {
     }
     document.addEventListener( 'jetonomy:navigated', sweep );
 } )();
+
+/**
+ * Prism re-highlight on client-side navigation (QA card 10149499675).
+ *
+ * Prism auto-runs only on DOMContentLoaded, so a topic reached through the
+ * iAPI router would render un-highlighted even with the library present.
+ * Bare `<pre><code>` blocks (the composer emits no language tag) get
+ * `language-none` so Prism's theme styling applies without guessing a
+ * grammar; authored `language-*` classes highlight fully via the
+ * autoloader.
+ */
+( function () {
+    function highlight() {
+        if ( ! window.Prism || typeof window.Prism.highlightAll !== 'function' ) return;
+        document.querySelectorAll( '.jt-post-body pre > code:not([class*="language-"]), .jt-reply-body pre > code:not([class*="language-"])' ).forEach( function ( code ) {
+            code.classList.add( 'language-none' );
+        } );
+        window.Prism.highlightAll();
+    }
+
+    if ( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', highlight );
+    } else {
+        highlight();
+    }
+    document.addEventListener( 'jetonomy:navigated', highlight );
+} )();
