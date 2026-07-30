@@ -140,7 +140,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Community Setup', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Core settings for your community URL and content types.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="base_slug"><?php esc_html_e( 'Community Base URL', 'jetonomy' ); ?></label></th>
 						<td>
@@ -292,7 +292,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Pagination', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'How many items to show per page on list views.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="posts_per_page"><?php esc_html_e( 'Posts Per Page', 'jetonomy' ); ?></label></th>
 						<td><input type="number" id="posts_per_page" name="jetonomy_settings[posts_per_page]" value="<?php echo absint( $settings['posts_per_page'] ?? 20 ); ?>" min="5" max="100" class="small-text"></td>
@@ -317,7 +317,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Access Control', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Who can read and participate in your community.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Community Access', 'jetonomy' ); ?></th>
 						<td>
@@ -366,7 +366,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Trust Level Thresholds', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Define what users must achieve to advance through trust levels. Higher levels unlock posting privileges and reduce moderation scrutiny.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="wp-list-table widefat fixed" style="margin:0;border:none;box-shadow:none;border-radius:0;">
+				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Level', 'jetonomy' ); ?></th>
@@ -384,11 +384,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 							<tr>
 								<td><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></td>
-								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
-								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
-								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
-								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
-									<td class="description">
+								<td data-colname="<?php esc_attr_e( 'Posts Required', 'jetonomy' ); ?>"><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php esc_attr_e( 'Days Active', 'jetonomy' ); ?>"><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
+								<td data-colname="<?php esc_attr_e( 'Replies Received', 'jetonomy' ); ?>"><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
+									<td class="description" data-colname="<?php esc_attr_e( 'What this unlocks', 'jetonomy' ); ?>">
 										<?php
 										// Surface what each level unlocks (data from Trust_Levels::LEVELS).
 										$jt_ability_labels = array(
@@ -425,7 +425,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Rate Limits for New Users (Level 0)', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Limit how much brand-new users can post in a single day to reduce spam.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label><?php esc_html_e( 'Posts per Day', 'jetonomy' ); ?></label></th>
 						<td><input type="number" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? $rl_defaults['posts'] ); ?>" min="1" class="small-text"></td>
@@ -447,7 +447,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'WordPress Role Mapping', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Jetonomy capabilities are auto-assigned based on the user\'s WordPress role. This mapping is fixed.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="wp-list-table widefat fixed" style="margin:0;border:none;box-shadow:none;border-radius:0;">
+				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'WordPress Role', 'jetonomy' ); ?></th>
@@ -457,19 +457,19 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<tr>
 							<td><strong><?php esc_html_e( 'Administrator', 'jetonomy' ); ?></strong></td>
-							<td><?php echo esc_html( sprintf( __( 'All capabilities: manage settings, manage %s, moderate', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'Jetonomy Capabilities', 'jetonomy' ); ?>"><?php echo esc_html( sprintf( __( 'All capabilities: manage settings, manage %s, moderate', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
 						</tr>
 						<tr>
 							<td><strong><?php esc_html_e( 'Editor', 'jetonomy' ); ?></strong></td>
-							<td><?php echo esc_html( sprintf( __( 'Moderate content, manage %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'Jetonomy Capabilities', 'jetonomy' ); ?>"><?php echo esc_html( sprintf( __( 'Moderate content, manage %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
 						</tr>
 						<tr>
 							<td><strong><?php esc_html_e( 'Author / Contributor', 'jetonomy' ); ?></strong></td>
-							<td><?php esc_html_e( 'Create posts and replies (standard participant)', 'jetonomy' ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'Jetonomy Capabilities', 'jetonomy' ); ?>"><?php esc_html_e( 'Create posts and replies (standard participant)', 'jetonomy' ); ?></td>
 						</tr>
 						<tr>
 							<td><strong><?php esc_html_e( 'Subscriber', 'jetonomy' ); ?></strong></td>
-							<td><?php echo esc_html( sprintf( __( 'Read public %s, create posts and replies', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'Jetonomy Capabilities', 'jetonomy' ); ?>"><?php echo esc_html( sprintf( __( 'Read public %s, create posts and replies', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
 						</tr>
 					</tbody>
 				</table>
@@ -498,12 +498,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Reputation Points', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'How many points each action awards (or deducts). Positive numbers reward, negative numbers penalize. Leave a row at its default if you have no reason to change it.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="wp-list-table widefat fixed" style="margin:0;border:none;box-shadow:none;border-radius:0;">
+				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Action', 'jetonomy' ); ?></th>
-							<th style="width:140px;"><?php esc_html_e( 'Points', 'jetonomy' ); ?></th>
-							<th style="width:120px;"><?php esc_html_e( 'Default', 'jetonomy' ); ?></th>
+							<th class="jt-col-m"><?php esc_html_e( 'Points', 'jetonomy' ); ?></th>
+							<th class="jt-col-m"><?php esc_html_e( 'Default', 'jetonomy' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -516,7 +516,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 							<tr>
 								<td><strong><?php echo esc_html( $action_label ); ?></strong></td>
-								<td>
+								<td data-colname="<?php esc_attr_e( 'Points', 'jetonomy' ); ?>">
 									<input
 										type="number"
 										name="jetonomy_settings[reputation_points][<?php echo esc_attr( $action_key ); ?>]"
@@ -525,7 +525,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 										step="1"
 									>
 								</td>
-								<td><code><?php echo esc_html( ( $default >= 0 ? '+' : '' ) . $default ); ?></code></td>
+								<td data-colname="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>"><code><?php echo esc_html( ( $default >= 0 ? '+' : '' ) . $default ); ?></code></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -541,7 +541,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Email Sender', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Configure the name and address that appear in outgoing community emails.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="email_from_name"><?php esc_html_e( 'From Name', 'jetonomy' ); ?></label></th>
 						<td>
@@ -620,7 +620,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 				];
 				?>
-				<table class="jt-notif-defaults-table">
+				<table class="jt-notif-defaults-table jt-settings-matrix">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Notification Type', 'jetonomy' ); ?></th>
@@ -641,13 +641,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 							<tr>
 								<td><?php echo esc_html( $label ); ?></td>
-								<td>
+								<td data-colname="<?php esc_attr_e( 'Web', 'jetonomy' ); ?>">
 									<input type="checkbox"
 										name="jetonomy_settings[notification_defaults][<?php echo esc_attr( $type ); ?>][web]"
 										value="1"
 										<?php checked( $web_on ); ?>>
 								</td>
-								<td>
+								<td data-colname="<?php esc_attr_e( 'Email', 'jetonomy' ); ?>">
 									<input type="checkbox"
 										name="jetonomy_settings[notification_defaults][<?php echo esc_attr( $type ); ?>][email]"
 										value="1"
@@ -670,7 +670,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<code>{site}</code> <code>{user}</code> <code>{message}</code> <code>{type}</code> <code>{url}</code>
 					</p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="email_footer_text"><?php esc_html_e( 'Footer Text', 'jetonomy' ); ?></label></th>
 						<td>
@@ -696,13 +696,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'verification_reminder' => __( 'Verification reminder', 'jetonomy' ),
 				);
 				?>
-				<table class="widefat striped jetonomy-email-templates-table" style="margin-top:12px;">
+				<table class="widefat striped jetonomy-email-templates-table jt-settings-matrix" style="margin-top:12px;">
 					<thead>
 						<tr>
-							<th style="width:220px;"><?php esc_html_e( 'Notification', 'jetonomy' ); ?></th>
+							<th class="jt-col-l"><?php esc_html_e( 'Notification', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Subject', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Body / Intro', 'jetonomy' ); ?></th>
-							<th style="width:180px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
+							<th class="jt-col-l"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -714,21 +714,21 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 							<tr data-jt-email-type="<?php echo esc_attr( $type ); ?>">
 								<td><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $type ); ?></code></td>
-								<td>
+								<td data-colname="<?php esc_attr_e( 'Subject', 'jetonomy' ); ?>">
 									<input type="text"
 										name="jetonomy_email_templates[<?php echo esc_attr( $type ); ?>][subject]"
 										value="<?php echo esc_attr( $subject ); ?>"
 										class="large-text jetonomy-email-subject-input"
 										placeholder="[{site}] {message}">
 								</td>
-								<td>
+								<td data-colname="<?php esc_attr_e( 'Body / Intro', 'jetonomy' ); ?>">
 									<textarea
 										name="jetonomy_email_templates[<?php echo esc_attr( $type ); ?>][body]"
 										rows="2"
 										class="large-text jetonomy-email-body-input"
 										placeholder="{message}"><?php echo esc_textarea( $body ); ?></textarea>
 								</td>
-								<td class="jetonomy-email-actions">
+								<td class="jetonomy-email-actions" data-colname="<?php esc_attr_e( 'Actions', 'jetonomy' ); ?>">
 									<button type="button" class="button button-small jetonomy-email-preview-btn" data-type="<?php echo esc_attr( $type ); ?>">
 										<?php esc_html_e( 'Preview', 'jetonomy' ); ?>
 									</button>
@@ -788,7 +788,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Theme Integration', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Control how Jetonomy adopts your active theme\'s design tokens.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Theme appearance', 'jetonomy' ); ?></th>
 						<td>
@@ -806,7 +806,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Logo', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Your community logo. Shown in the mobile app (login + header) and anywhere a brand mark is needed. Square or wide PNG/SVG; leave empty to show the Community Title as text.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="logo_url"><?php esc_html_e( 'Logo URL', 'jetonomy' ); ?></label></th>
 						<td>
@@ -823,7 +823,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Color Palette', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Set the community colors directly — useful when your theme has no color tokens for Jetonomy to inherit. A colour you set here is applied in both light and dark mode and outranks the theme. Leave a field empty to keep the default; secondary shades (hover, muted text) derive automatically.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="accent_color"><?php esc_html_e( 'Accent', 'jetonomy' ); ?></label></th>
 						<td>
@@ -874,7 +874,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Layout', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Control how community pages fit inside your active theme. "Theme Default" leaves your theme in charge.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Container Width', 'jetonomy' ); ?></th>
 						<td>
@@ -956,7 +956,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Custom CSS', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Extra CSS injected into the community frontend. Use browser DevTools to find selectors.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<td colspan="2" style="padding: 16px 20px;">
 							<textarea id="custom_css" name="jetonomy_settings[custom_css]" rows="12" class="large-text code" style="font-family:monospace;width:100%;"><?php echo esc_textarea( $settings['custom_css'] ?? '' ); ?></textarea>
@@ -982,7 +982,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Title Templates', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Control how page titles are formatted for community pages.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="seo_post_title"><?php esc_html_e( 'Post Title', 'jetonomy' ); ?></label></th>
 						<td>
@@ -1006,7 +1006,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Structured Data & Indexing', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Schema markup, sitemap inclusion, and noindex rules.', 'jetonomy' ); ?></p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Schema Markup', 'jetonomy' ); ?></th>
 						<td>
@@ -1076,7 +1076,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<?php esc_html_e( 'YouTube, Vimeo, TikTok, Twitter/X, Spotify, SoundCloud, and TED Talks embed automatically with no setup required. Instagram and Facebook require a free Meta Developer App because Meta deprecated anonymous oEmbed access in October 2020.', 'jetonomy' ); ?>
 					</p>
 				</div>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="fb_app_id"><?php esc_html_e( 'Facebook App ID', 'jetonomy' ); ?></label></th>
 						<td>
@@ -1196,7 +1196,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<?php
 				endif;
 				?>
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
 						<th scope="row"><label for="captcha_provider"><?php esc_html_e( 'Provider', 'jetonomy' ); ?></label></th>
 						<td>
@@ -1387,7 +1387,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					$jt_bp_broadcast = '0' !== (string) get_option( 'jetonomy_bp_broadcast', '1' );
 					$jt_bp_bridge    = '0' !== (string) get_option( 'jetonomy_bp_comment_bridge', '1' );
 					?>
-					<table class="form-table">
+					<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Broadcast topics to group activity', 'jetonomy' ); ?></th>
 							<td>
