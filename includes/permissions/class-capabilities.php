@@ -101,6 +101,12 @@ class Capabilities {
 	 * a box on the mapping screen actually revokes.
 	 */
 	public static function register(): void {
+		// Same guard roles_with_create_spaces() carries: in a minimal boot
+		// context (the WP-stub smoke test) the roles API may not exist yet.
+		if ( ! function_exists( 'wp_roles' ) ) {
+			return;
+		}
+
 		// First sync on a site that predates the editable mapping: snapshot
 		// any live role whose Jetonomy caps differ from the ROLE_MAP default
 		// (hand-granted custom roles included) into the option, so syncing
