@@ -380,9 +380,16 @@ function join_request_url_for( int $recipient_id, $space ): string {
 		return '';
 	}
 
-	if ( user_can( $recipient_id, 'jetonomy_manage_spaces' ) || user_can( $recipient_id, 'manage_options' ) ) {
-		return admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id . '&tab=join_requests' );
-	}
+	// EVERY recipient lands on the frontend pending-requests anchor - admins
+	// included. The capability branch that sent jetonomy_manage_spaces /
+	// manage_options holders to the wp-admin Join Requests tab meant the same
+	// notification promised one destination and delivered two, and QA kept
+	// reproducing "empty moderation screen" for the admin audience (Basecamp
+	// 10118686521). The frontend members page approves/rejects for both
+	// audiences, and the wp-admin tab remains reachable through Spaces > Edit
+	// for owners who prefer it. $recipient_id stays in the signature: the
+	// notifier passes it per-recipient and a filter may re-branch on it.
+	unset( $recipient_id );
 
 	// #jt-pending-requests anchors the pending list on the members page, so a
 	// space with many members doesn't land the reader above the fold and away
