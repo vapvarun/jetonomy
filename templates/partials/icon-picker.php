@@ -209,6 +209,7 @@ $jt_ip_search_id = $jt_ip_id_prefix . '-search';
 			class="jt-input"
 			data-jt-icon-search
 			placeholder="<?php esc_attr_e( 'Search icons…', 'jetonomy' ); ?>"
+			aria-label="<?php esc_attr_e( 'Search icons', 'jetonomy' ); ?>"
 			autocomplete="off">
 	</div>
 	<div class="jt-icon-picker" role="radiogroup" aria-label="<?php esc_attr_e( 'Choose an icon', 'jetonomy' ); ?>">
