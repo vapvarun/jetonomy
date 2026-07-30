@@ -384,6 +384,28 @@ class Admin {
 		$existing = get_option( 'jetonomy_settings', array() );
 		$clean    = is_array( $existing ) ? $existing : array();
 
+		// ── Permissions tab: role -> capability mapping (Basecamp 9725751235) ──
+		// Lives in its own option (not jetonomy_settings) and resyncs the live
+		// WP roles immediately, so unticking a box revokes on save. The hidden
+		// role_caps_submitted marker distinguishes "tab posted with everything
+		// unticked" from "another tab posted".
+		if ( ! empty( $input['role_caps_submitted'] ) ) {
+			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
+			$roles      = array_keys( get_editable_roles() );
+			$overrides  = array();
+			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
+			foreach ( $roles as $role_slug ) {
+				if ( 'administrator' === $role_slug ) {
+					continue; // Admins always hold every cap - never stored.
+				}
+				$caps                    = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
+				$overrides[ $role_slug ] = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
+			}
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $overrides, false );
+			\Jetonomy\Permissions\Capabilities::register();
+			unset( $input['role_caps'], $input['role_caps_submitted'] );
+		}
+
 		// ── General tab ──
 		// Only process if base_slug is present (General tab was submitted).
 		if ( isset( $input['base_slug'] ) ) {

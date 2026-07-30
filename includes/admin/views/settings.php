@@ -441,36 +441,48 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
-			<!-- Role Mapping (read-only reference) -->
+			<!-- Role -> Capability Mapping (editable - Basecamp 9725751235) -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
-					<p class="jt-settings-card__title"><?php esc_html_e( 'WordPress Role Mapping', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'Jetonomy capabilities are auto-assigned based on the user\'s WordPress role. This mapping is fixed.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Role Capability Mapping', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Which Jetonomy capabilities each WordPress role holds. Administrators always hold every capability. Unticking a box revokes the capability on save.', 'jetonomy' ); ?></p>
 				</div>
+				<?php
+				$jt_cap_labels = \Jetonomy\Permissions\Capabilities::labels();
+				$jt_effective  = \Jetonomy\Permissions\Capabilities::effective_map();
+				$jt_map_roles  = array();
+				foreach ( get_editable_roles() as $jt_role_slug => $jt_role_info ) {
+					if ( 'administrator' === $jt_role_slug ) {
+						continue;
+					}
+					$jt_map_roles[ $jt_role_slug ] = translate_user_role( $jt_role_info['name'] );
+				}
+				?>
+				<input type="hidden" name="jetonomy_settings[role_caps_submitted]" value="1">
 				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'WordPress Role', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Jetonomy Capabilities', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'Capability', 'jetonomy' ); ?></th>
+							<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
+								<th class="jt-col-s"><?php echo esc_html( $jt_role_label ); ?></th>
+							<?php endforeach; ?>
 						</tr>
 					</thead>
 					<tbody>
-						<tr>
-							<td><strong><?php esc_html_e( 'Administrator', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'Jetonomy Capabilities', 'jetonomy' ); ?>"><?php echo esc_html( sprintf( __( 'All capabilities: manage settings, manage %s, moderate', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
-						</tr>
-						<tr>
-							<td><strong><?php esc_html_e( 'Editor', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'Jetonomy Capabilities', 'jetonomy' ); ?>"><?php echo esc_html( sprintf( __( 'Moderate content, manage %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
-						</tr>
-						<tr>
-							<td><strong><?php esc_html_e( 'Author / Contributor', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'Jetonomy Capabilities', 'jetonomy' ); ?>"><?php esc_html_e( 'Create posts and replies (standard participant)', 'jetonomy' ); ?></td>
-						</tr>
-						<tr>
-							<td><strong><?php esc_html_e( 'Subscriber', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'Jetonomy Capabilities', 'jetonomy' ); ?>"><?php echo esc_html( sprintf( __( 'Read public %s, create posts and replies', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
-						</tr>
+						<?php foreach ( $jt_cap_labels as $jt_cap => $jt_cap_label ) : ?>
+							<tr>
+								<td><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $jt_cap ); ?></code></td>
+								<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
+									<td data-colname="<?php echo esc_attr( $jt_role_label ); ?>">
+										<input type="checkbox"
+											name="jetonomy_settings[role_caps][<?php echo esc_attr( $jt_role_slug ); ?>][]"
+											value="<?php echo esc_attr( $jt_cap ); ?>"
+											aria-label="<?php echo esc_attr( sprintf( /* translators: 1: capability label, 2: role name */ __( '%1$s for %2$s', 'jetonomy' ), $jt_cap_label, $jt_role_label ) ); ?>"
+											<?php checked( in_array( $jt_cap, $jt_effective[ $jt_role_slug ] ?? array(), true ) ); ?>>
+									</td>
+								<?php endforeach; ?>
+							</tr>
+						<?php endforeach; ?>
 					</tbody>
 				</table>
 			</div>

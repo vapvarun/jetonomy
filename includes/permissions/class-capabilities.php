@@ -44,21 +44,102 @@ class Capabilities {
 	];
 
 	/**
-	 * Register all Jetonomy capabilities on WordPress roles.
+	 * Option holding the site owner's role => caps overrides.
 	 *
-	 * Capabilities are cumulative: each role inherits all caps from the roles
-	 * listed above it in the ROLE_MAP hierarchy.
+	 * Absent role key = that role uses the ROLE_MAP default. Present key =
+	 * the role's Jetonomy caps are EXACTLY the stored list (an empty list is
+	 * a valid "none" choice). Administrator is never stored: admins always
+	 * hold every cap, so a site owner cannot lock themselves out of the
+	 * mapping screen (Basecamp 9725751235 - the mapping used to be
+	 * hard-coded and the settings card literally said "This mapping is
+	 * fixed").
 	 */
-	public static function register(): void {
+	public const ROLE_CAPS_OPTION = 'jetonomy_role_caps';
+
+	/**
+	 * The default cumulative cap set per core role, from ROLE_MAP.
+	 *
+	 * @return array<string, string[]> role => caps.
+	 */
+	public static function default_map(): array {
+		$out        = [];
 		$cumulative = [];
 		foreach ( self::ROLE_MAP as $role_name => $caps ) {
-			$cumulative = array_merge( $cumulative, $caps );
-			$role       = get_role( $role_name );
-			if ( ! $role ) {
-				continue;
+			$cumulative        = array_merge( $cumulative, $caps );
+			$out[ $role_name ] = array_values( $cumulative );
+		}
+		return $out;
+	}
+
+	/**
+	 * The mapping that should be live: defaults overlaid with the owner's
+	 * saved overrides. Administrator is pinned to the full cap list.
+	 *
+	 * @return array<string, string[]> role => caps.
+	 */
+	public static function effective_map(): array {
+		$map       = self::default_map();
+		$overrides = get_option( self::ROLE_CAPS_OPTION, [] );
+		if ( is_array( $overrides ) ) {
+			foreach ( $overrides as $role => $caps ) {
+				if ( 'administrator' === $role ) {
+					continue;
+				}
+				$map[ (string) $role ] = array_values( array_intersect( self::all(), array_map( 'sanitize_key', (array) $caps ) ) );
 			}
-			foreach ( $cumulative as $cap ) {
-				$role->add_cap( $cap );
+		}
+		$map['administrator'] = self::all();
+		return $map;
+	}
+
+	/**
+	 * Register all Jetonomy capabilities on WordPress roles.
+	 *
+	 * Defaults are cumulative per ROLE_MAP; the owner's saved overrides
+	 * replace a role's set outright. This SYNCS rather than only adding:
+	 * a Jetonomy cap a role should no longer hold is removed, so unticking
+	 * a box on the mapping screen actually revokes.
+	 */
+	public static function register(): void {
+		// First sync on a site that predates the editable mapping: snapshot
+		// any live role whose Jetonomy caps differ from the ROLE_MAP default
+		// (hand-granted custom roles included) into the option, so syncing
+		// never changes a site's effective permissions out from under it -
+		// same seeding discipline roles_with_create_spaces() established.
+		if ( false === get_option( self::ROLE_CAPS_OPTION, false ) ) {
+			$defaults = self::default_map();
+			$seed     = [];
+			foreach ( wp_roles()->role_objects as $slug => $role ) {
+				if ( 'administrator' === $slug ) {
+					continue;
+				}
+				$live = array_values( array_filter( self::all(), static fn( $cap ) => $role->has_cap( $cap ) ) );
+				$def  = $defaults[ $slug ] ?? [];
+				sort( $live );
+				$def_sorted = $def;
+				sort( $def_sorted );
+				if ( $live !== $def_sorted ) {
+					$seed[ $slug ] = $live;
+				}
+			}
+			update_option( self::ROLE_CAPS_OPTION, $seed, false );
+		}
+
+		$targets = self::effective_map();
+		$all     = self::all();
+
+		foreach ( wp_roles()->role_objects as $slug => $role ) {
+			// Roles outside the map (custom roles) default to no Jetonomy caps
+			// unless the owner saved a set for them.
+			$want = isset( $targets[ $slug ] ) ? $targets[ $slug ] : [];
+			foreach ( $all as $cap ) {
+				$should = in_array( $cap, $want, true );
+				$has    = $role->has_cap( $cap );
+				if ( $should && ! $has ) {
+					$role->add_cap( $cap );
+				} elseif ( ! $should && $has ) {
+					$role->remove_cap( $cap );
+				}
 			}
 		}
 	}
@@ -135,6 +216,39 @@ class Capabilities {
 		 * @param int  $user_id WP user ID (0 when logged out).
 		 */
 		return (bool) apply_filters( 'jetonomy_can_create_space_frontend', $can, $user_id );
+	}
+
+	/**
+	 * Human labels for every capability, for the mapping screen.
+	 *
+	 * @return array<string, string> cap => label.
+	 */
+	public static function labels(): array {
+		return [
+			'jetonomy_read'                => __( 'Read the community', 'jetonomy' ),
+			'jetonomy_create_posts'        => __( 'Create posts', 'jetonomy' ),
+			'jetonomy_create_replies'      => __( 'Create replies', 'jetonomy' ),
+			'jetonomy_edit_own_posts'      => __( 'Edit own posts', 'jetonomy' ),
+			'jetonomy_delete_own_posts'    => __( 'Delete own posts', 'jetonomy' ),
+			'jetonomy_vote'                => __( 'Vote', 'jetonomy' ),
+			'jetonomy_flag'                => __( 'Report content', 'jetonomy' ),
+			'jetonomy_join_spaces'         => __( 'Join spaces', 'jetonomy' ),
+			'jetonomy_upload_media'        => __( 'Upload media', 'jetonomy' ),
+			'jetonomy_create_spaces'       => __( 'Create spaces (programmatic)', 'jetonomy' ),
+			'jetonomy_edit_others_posts'   => __( "Edit others' posts", 'jetonomy' ),
+			'jetonomy_delete_others_posts' => __( "Delete others' posts", 'jetonomy' ),
+			'jetonomy_moderate'            => __( 'Moderate (queue, flags, bans)', 'jetonomy' ),
+			'jetonomy_manage_users'        => __( 'Manage community users', 'jetonomy' ),
+			'jetonomy_move_posts'          => __( 'Move posts between spaces', 'jetonomy' ),
+			'jetonomy_close_posts'         => __( 'Close topics', 'jetonomy' ),
+			'jetonomy_pin_posts'           => __( 'Pin topics', 'jetonomy' ),
+			'jetonomy_manage_settings'     => __( 'Manage settings', 'jetonomy' ),
+			'jetonomy_manage_categories'   => __( 'Manage categories', 'jetonomy' ),
+			'jetonomy_manage_spaces'       => __( 'Manage all spaces', 'jetonomy' ),
+			'jetonomy_manage_badges'       => __( 'Manage badges', 'jetonomy' ),
+			'jetonomy_view_analytics'      => __( 'View analytics', 'jetonomy' ),
+			'jetonomy_manage_extensions'   => __( 'Manage extensions', 'jetonomy' ),
+		];
 	}
 
 	/**
