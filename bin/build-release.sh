@@ -86,6 +86,18 @@ if [ -f "$ROOT/bin/gen-hooks-reference.php" ]; then
 	fi
 fi
 
+# --- 0c. docs-consistency gate ----------------------------------------------
+# Docs must not advertise features the code does not have (the realtime
+# adapter kept resurfacing across three QA passes after manual scrubs -
+# Basecamp 10114333907). Exit 24 so CI can distinguish the failure.
+if [ -f "$ROOT/bin/audit-docs-consistency.php" ]; then
+	echo "==> Step 0c: docs-consistency gate"
+	( cd "$ROOT" && php bin/audit-docs-consistency.php ) || {
+		echo "FAIL: docs claim features the code does not have (see list above)." >&2
+		exit 24
+	}
+fi
+
 # --- 1. clean-tree gate -----------------------------------------------------
 # Step 0 may have regenerated build artefacts. The gate excludes
 # grunt-generated paths so the build doesn't trip on its own deterministic

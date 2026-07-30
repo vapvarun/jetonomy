@@ -4027,7 +4027,19 @@
                     "type": "integer"
                   },
                   "reason": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                      "spam",
+                      "offensive",
+                      "off_topic",
+                      "harassment",
+                      "other"
+                    ],
+                    "description": "Why the content/user is being reported."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional free-text detail from the reporter."
                   }
                 },
                 "required": [

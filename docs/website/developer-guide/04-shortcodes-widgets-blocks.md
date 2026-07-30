@@ -464,4 +464,4 @@ Use the model classes for server-side rendering or the REST API for client-side 
 
 - [REST API Reference](./01-rest-api.md) - Fetch community data from any context
 - [Template Overrides](./03-template-overrides.md) - Customize community page layouts
-- [Adapter System](./05-adapters.md) - Extend search, email, and real-time integrations
+- [Adapter System](./05-adapters.md) - Extend the search and email integrations

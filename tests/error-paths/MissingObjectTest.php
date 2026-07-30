@@ -259,27 +259,36 @@ class MissingObjectTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * POST /flags on a nonexistent post.
+	 * POST /flags on a nonexistent target is a strict 404.
 	 *
-	 * The current moderation controller does NOT validate that the target
-	 * object exists before creating the flag — it stores the flag regardless.
-	 * This is an acceptable design: flags are reports from users, and the
-	 * moderator can dismiss flags for objects that no longer exist.
-	 *
-	 * TODO: Consider adding object-existence validation in create_flag() so
-	 *       that flagging a nonexistent object returns 404 instead of 201.
+	 * create_flag() validates target existence since the 1.8.1-dev flags
+	 * contract close (jetonomy_flag_target_missing) — the old tolerant
+	 * 201/400/404 assertion predates that guard and would have let a
+	 * regression back to store-regardless pass silently.
 	 */
-	public function test_flag_nonexistent_post_returns_error(): void {
+	public function test_flag_nonexistent_post_returns_404(): void {
 		$response = $this->do_request( 'POST', '/flags', array(
 			'object_type' => 'post',
 			'object_id'   => 999999999,
 			'reason'      => 'spam',
 		) );
 
-		$this->assertContains(
-			$response->get_status(),
-			array( 201, 400, 404 ),
-			"Expected 201, 400, or 404 when flagging a nonexistent post; got {$response->get_status()}."
-		);
+		$this->assertSame( 404, $response->get_status(), 'flagging a nonexistent post must 404' );
+		$this->assertSame( 'jetonomy_flag_target_missing', $response->get_data()['code'] ?? '' );
+	}
+
+	/**
+	 * Same strict 404 for the other two target types.
+	 */
+	public function test_flag_nonexistent_reply_and_user_return_404(): void {
+		foreach ( array( 'reply', 'user' ) as $type ) {
+			$response = $this->do_request( 'POST', '/flags', array(
+				'object_type' => $type,
+				'object_id'   => 999999999,
+				'reason'      => 'spam',
+			) );
+			$this->assertSame( 404, $response->get_status(), "flagging a nonexistent {$type} must 404" );
+			$this->assertSame( 'jetonomy_flag_target_missing', $response->get_data()['code'] ?? '', $type );
+		}
 	}
 }

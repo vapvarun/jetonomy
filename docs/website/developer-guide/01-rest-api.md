@@ -369,11 +369,14 @@ Returns per-item results so partial failures are visible:
 
 ```javascript
 {
-    object_type: 'post',   // or 'reply'
+    object_type: 'post',   // post | reply | user
     object_id:   42,
     reason:      'spam',   // spam | offensive | off_topic | harassment | other
+    description: 'Optional free-text detail from the reporter',
 }
 ```
+
+Error paths: `404 jetonomy_flag_target_missing` (target does not exist), `400 jetonomy_flag_self` (self-report), `409 jetonomy_already_flagged` (duplicate by the same member), `403 silenced` (silenced members cannot report).
 
 **POST /moderation/ban - body**
 
@@ -894,4 +897,4 @@ Every write mutation rejects banned users (`jetonomy_user_banned`) and users who
 
 - [Hooks Reference](./02-hooks-reference.md) - React to Jetonomy events in your own plugin
 - [Template Overrides](./03-template-overrides.md) - Customize the frontend without touching plugin files
-- [Adapter System](./05-adapters.md) - Swap the search backend or add a real-time layer
+- [Adapter System](./05-adapters.md) - Swap the search or email backend behind the registry
