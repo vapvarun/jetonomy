@@ -730,13 +730,28 @@
 	color: var(--jt-admin-text-3);
 }
 
-/* Content Table Card Wrapper */
+/* Content Table Card Wrapper.
+   overflow-x is auto at EVERY width, not just ≤782px: in the 783-960px
+   squeeze band (folded admin menu) the desktop column widths can exceed
+   the content column, and overflow:hidden silently CLIPPED data and row
+   actions there (QA 2026-07-30, Auto-Rules at exactly 783px). A fitting
+   table shows no scrollbar, so desktop visuals are unchanged. */
 .jt-content-table-wrap {
 	background: var(--jt-admin-white);
 	border: 1px solid var(--jt-admin-border);
 	border-radius: var(--jt-admin-radius);
 	box-shadow: var(--jt-admin-shadow);
-	overflow: hidden;
+	overflow-x: auto;
+	overflow-y: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+
+/* Bare scroll container emitted when a table renders inside its own card
+   (wrap=false call sites). Same containment guarantee, no card chrome. */
+.jetonomy-admin .jt-table-scroll {
+	overflow-x: auto;
+	overflow-y: hidden;
+	-webkit-overflow-scrolling: touch;
 }
 
 /* Tablenav rows (search + bulk + per-page + pagination) sit inside the
@@ -3182,21 +3197,97 @@ tr.jetonomy-moderated td {
 
 /* The card wrapper used to be overflow:hidden at every size, which CLIPPED
    any table wider than the viewport — data and row actions simply vanished.
-   Desktop keeps hidden (rounded-corner clipping is the point there and
-   compliant tables fit); small screens allow horizontal scroll as the
-   TEMPORARY fallback for not-yet-migrated tables. Migrated tables collapse
-   via the contract and never need the scrollbar. */
+   The wrap now scrolls at EVERY width (see its base rule) so this block
+   only carries the small-screen touch-target floors. */
 @media screen and (max-width: 782px) {
-	.jetonomy-admin .jt-content-table-wrap {
-		overflow-x: auto;
-		overflow-y: hidden;
-		-webkit-overflow-scrolling: touch;
-	}
 	/* Core hides non-primary columns below 782px only for compliant tables;
 	   the expander button must be an easy target. */
 	.jetonomy-admin .wp-list-table .toggle-row {
 		min-width: 44px;
 		min-height: 44px;
+	}
+	/* Keyboard users need to SEE where the expander is (QA 2026-07-30
+	   a11y: shared toggles lacked visible focus). */
+	.jetonomy-admin .wp-list-table .toggle-row:focus-visible {
+		outline: 2px solid var(--jt-admin-accent, #2271b1);
+		outline-offset: 2px;
+		border-radius: 4px;
+	}
+
+	/* Touch floors (QA 2026-07-30: Spaces row actions measured 28px,
+	   pagination links 32-34px on Spaces/Content/Users/Polls). WP core only
+	   grows form controls on small screens, not anchors/buttons in tables
+	   and tablenavs - so every actionable control in a Jetonomy admin list
+	   gets the 40px floor here. */
+	.jetonomy-admin .wp-list-table .button,
+	.jetonomy-admin .wp-list-table a.button,
+	.jetonomy-admin .wp-list-table .jt-btn,
+	.jetonomy-admin .tablenav .button,
+	.jetonomy-admin .tablenav-pages a,
+	.jetonomy-admin .tablenav-pages .tablenav-pages-navspan,
+	.jetonomy-admin .tablenav-pages .current-page {
+		min-height: 40px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
+	.jetonomy-admin .wp-list-table .row-actions a {
+		display: inline-block;
+		padding: 10px 4px;
+	}
+
+	/* The pagination row must WRAP, never widen the document: at 320px the
+	   "N items" count plus the page links pushed the Content screen out to
+	   371px (QA 2026-07-30). */
+	.jetonomy-admin .tablenav,
+	.jetonomy-admin .tablenav-pages {
+		flex-wrap: wrap;
+		max-width: 100%;
+	}
+	.jetonomy-admin .tablenav-pages .displaying-num {
+		flex-basis: 100%;
+	}
+	.jetonomy-admin .tablenav-pages .pagination-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+	}
+}
+
+/* Wide matrices (one column per ROLE — count is site-defined and unbounded)
+   scroll horizontally inside their card instead of being squeezed to 100%
+   and clipped by the card's hidden overflow (Basecamp 10146440810 QA fail
+   at 1024/1440: a 14-role site produced an ~1820px table inside a 578px
+   card). Above 782px the wrapper scrolls and columns keep natural width;
+   below 782px the stacking primitive takes over and the table collapses,
+   so the wrapper has nothing to scroll. */
+.jetonomy-admin .jt-matrix-scroll {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.jetonomy-admin .jt-role-caps-locked {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	color: var(--jt-admin-text-3, #646970);
+}
+
+@media screen and (min-width: 783px) {
+	.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide {
+		width: max-content;
+		min-width: 100%;
+	}
+	.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide th,
+	.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide td {
+		white-space: nowrap;
+	}
+	/* Row label stays readable while roles scroll. */
+	.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide th[scope="row"] {
+		white-space: normal;
+		min-width: 220px;
 	}
 }
 

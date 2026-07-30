@@ -33,7 +33,6 @@ $baseline = array(
 	'includes/admin/views/replies.php',
 	'includes/admin/views/revisions.php',
 	'includes/admin/views/space-edit.php',
-	'includes/admin/views/tags.php',
 	'includes/admin/views/users.php', // already core-compliant by hand; migrate for uniformity.
 	// Pro (tranche 3 - paths relative to the DIRECTORY ARGUMENT given):
 	'includes/extensions/anonymous-posting/views/space-setting.php',

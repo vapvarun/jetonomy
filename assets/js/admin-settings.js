@@ -57,8 +57,26 @@
 	function openModal() {
 		lastOpener = document.activeElement;
 		modal.style.display = '';
+		// Focus the Close button, not the first focusable: DOM order put the
+		// preview IFRAME first, which swallowed the dialog's key handling and
+		// read poorly to screen readers (QA 2026-07-30, card 10146440810).
+		var close = modal.querySelector('.jetonomy-modal-close');
 		var f = focusables();
-		if (f.length) { f[0].focus(); }
+		if (close) { close.focus(); } else if (f.length) { f[0].focus(); }
+	}
+
+	// Escape must close the dialog even while focus is INSIDE the preview
+	// iframe: the parent document's keydown listeners never fire there
+	// because the srcdoc iframe owns its own document. Rebind per load -
+	// srcdoc replaces the document on every preview.
+	if (iframe) {
+		iframe.addEventListener('load', function () {
+			try {
+				iframe.contentDocument.addEventListener('keydown', function (e) {
+					if ('Escape' === e.key) { closeModal(); }
+				});
+			} catch (err) { /* cross-origin guard - srcdoc is same-origin, never expected */ }
+		});
 	}
 	modal.addEventListener('keydown', function (e) {
 		if ('Tab' !== e.key) { return; }

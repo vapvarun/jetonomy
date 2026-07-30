@@ -447,19 +447,24 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Role Capability Mapping', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Which Jetonomy capabilities each WordPress role holds. Administrators always hold every capability. Unticking a box revokes the capability on save.', 'jetonomy' ); ?></p>
 				</div>
-				<?php
-				$jt_cap_labels = \Jetonomy\Permissions\Capabilities::labels();
-				$jt_effective  = \Jetonomy\Permissions\Capabilities::effective_map();
-				$jt_map_roles  = array();
-				foreach ( get_editable_roles() as $jt_role_slug => $jt_role_info ) {
-					if ( 'administrator' === $jt_role_slug ) {
-						continue;
+				<?php if ( ! current_user_can( 'manage_options' ) ) : ?>
+					<?php // Role administration stays admin-only even when settings are delegated - the sanitize branch enforces the same gate server-side. ?>
+					<p class="jt-role-caps-locked"><span class="dashicons dashicons-lock" aria-hidden="true"></span> <?php esc_html_e( 'Only administrators can change the role capability mapping.', 'jetonomy' ); ?></p>
+				<?php else : ?>
+					<?php
+					$jt_cap_labels = \Jetonomy\Permissions\Capabilities::labels();
+					$jt_effective  = \Jetonomy\Permissions\Capabilities::effective_map();
+					$jt_map_roles  = array();
+					foreach ( get_editable_roles() as $jt_role_slug => $jt_role_info ) {
+						if ( 'administrator' === $jt_role_slug ) {
+							continue;
+						}
+						$jt_map_roles[ $jt_role_slug ] = translate_user_role( $jt_role_info['name'] );
 					}
-					$jt_map_roles[ $jt_role_slug ] = translate_user_role( $jt_role_info['name'] );
-				}
-				?>
+					?>
 				<input type="hidden" name="jetonomy_settings[role_caps_submitted]" value="1">
-				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
+				<div class="jt-matrix-scroll">
+				<table class="wp-list-table widefat jt-settings-matrix jt-settings-matrix--wide" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Capability', 'jetonomy' ); ?></th>
@@ -485,6 +490,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				</div><!-- /.jt-matrix-scroll -->
+				<?php endif; ?>
 			</div>
 
 			<!-- Reputation Points -->

@@ -1526,4 +1526,19 @@
 		Jetonomy.init();
 	});
 
+	// Small-screen row expander: core's common.js toggles tr.is-expanded but
+	// never manages aria-expanded, so screen readers heard a stateless
+	// button (QA 2026-07-30, card 10146443346). Delegated so it covers every
+	// jetonomy_admin_table() on the page, including AJAX-refreshed rows.
+	// requestAnimationFrame lets core's own toggle land first, then the
+	// button mirrors the row's real state.
+	document.addEventListener('click', function (e) {
+		var btn = e.target.closest ? e.target.closest('.jetonomy-admin .toggle-row') : null;
+		if (!btn) { return; }
+		window.requestAnimationFrame(function () {
+			var tr = btn.closest('tr');
+			btn.setAttribute('aria-expanded', tr && tr.classList.contains('is-expanded') ? 'true' : 'false');
+		});
+	});
+
 })(jQuery);
