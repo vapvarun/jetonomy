@@ -199,6 +199,55 @@ class Auth_Controller extends Base_Controller {
 			]
 		);
 
+		// Connect-app bridge mint (Wbcom App Auth standard, phase J3). Only
+		// registered when BuddyNext is ABSENT: one door per site — with BN
+		// active, BN's bridge and BN's mint endpoint serve every app
+		// (Jetonomy joins its scheme allowlist at boot), and this surface
+		// must not exist as a second one.
+		if ( ! class_exists( '\\BuddyNext\\App\\AppConnectService' ) ) {
+			register_rest_route(
+				$this->namespace,
+				'/' . $this->rest_base . '/app-connect',
+				[
+					[
+						'methods'             => \WP_REST_Server::CREATABLE,
+						'callback'            => [ $this, 'app_connect' ],
+						'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+						'args'                => [
+							'scheme'       => [
+								'required'          => true,
+								'type'              => 'string',
+								'sanitize_callback' => 'sanitize_text_field',
+							],
+							'bridge_token' => [
+								'required'          => true,
+								'type'              => 'string',
+								'sanitize_callback' => 'sanitize_text_field',
+							],
+							'app_name'     => [
+								'required'          => false,
+								'type'              => 'string',
+								'default'           => '',
+								'sanitize_callback' => 'sanitize_text_field',
+							],
+							'app_id'       => [
+								'required'          => false,
+								'type'              => 'string',
+								'default'           => '',
+								'sanitize_callback' => 'sanitize_text_field',
+							],
+							'state'        => [
+								'required'          => false,
+								'type'              => 'string',
+								'default'           => '',
+								'sanitize_callback' => 'sanitize_text_field',
+							],
+						],
+					],
+				]
+			);
+		}
+
 		// Fresh wp_rest nonce for the current session (1.5.0). The client
 		// fetch wrapper (assets/js/jetonomy-rest.js) retries 403
 		// rest_cookie_invalid_nonce responses against this route — until now
@@ -350,6 +399,83 @@ class Auth_Controller extends Base_Controller {
 			// A response carrying a live credential must never be cached.
 			$response->header( 'Cache-Control', 'no-store' );
 		}
+
+		return $response;
+	}
+
+	/**
+	 * POST /jetonomy/v1/auth/app-connect — the bridge's mint step.
+	 *
+	 * Runs only for a member signed in IN THIS BROWSER (REST_Auth mutation
+	 * gate: cookie + wp_rest nonce) holding a live one-time bridge token from
+	 * a freshly rendered approve screen. The response carries the deep link;
+	 * the approve screen navigates to it client-side — deliberately never a
+	 * server 302, because a Location header holding a credential lands in
+	 * proxy and access logs.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function app_connect( WP_REST_Request $request ) {
+		$user_id = get_current_user_id();
+
+		$scheme = (string) $request->get_param( 'scheme' );
+		if ( ! \Jetonomy\Integrations\App_Connect::allowed_scheme( $scheme ) ) {
+			return new WP_Error(
+				'jetonomy_app_bad_scheme',
+				__( 'This connection request came from an app this site does not recognise.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! \Jetonomy\Integrations\App_Connect::consume_bridge_token( (string) $request->get_param( 'bridge_token' ), $user_id ) ) {
+			return new WP_Error(
+				'jetonomy_app_bridge_expired',
+				__( 'This connection screen has expired. Go back to the app and try connecting again.', 'jetonomy' ),
+				[ 'status' => 410 ]
+			);
+		}
+
+		// A member connects a handful of devices, ever. Anything past a small
+		// hourly cap is a runaway retry loop or abuse, and every excess mint
+		// is a live credential that then exists.
+		$cap_key = 'jt_app_connect_' . $user_id;
+		$hits    = (int) get_transient( $cap_key );
+		if ( $hits >= 5 ) {
+			return new WP_Error(
+				'jetonomy_rate_limited',
+				__( 'Too many connection attempts. Please wait a while and try again.', 'jetonomy' ),
+				[ 'status' => 429 ]
+			);
+		}
+		set_transient( $cap_key, $hits + 1, HOUR_IN_SECONDS );
+
+		$minted = $this->mint_app_password(
+			$user_id,
+			(string) $request->get_param( 'app_name' ),
+			(string) $request->get_param( 'app_id' )
+		);
+		if ( is_wp_error( $minted ) ) {
+			return $minted;
+		}
+
+		// The state nonce is the APP's, echoed verbatim: it proves to the app
+		// that this redirect answers a flow the app itself started.
+		$response = rest_ensure_response(
+			[
+				'site_url'   => home_url(),
+				'user_login' => $minted['username'],
+				'uuid'       => $minted['uuid'],
+				'deep_link'  => \Jetonomy\Integrations\App_Connect::deep_link(
+					$scheme,
+					$minted['username'],
+					$minted['password'],
+					(string) $request->get_param( 'state' )
+				),
+			]
+		);
+		// A response carrying a live credential must never be cached anywhere.
+		$response->header( 'Cache-Control', 'no-store' );
 
 		return $response;
 	}

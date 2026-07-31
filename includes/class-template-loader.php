@@ -37,7 +37,7 @@ class Template_Loader {
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
-		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'subscriptions', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks' );
+		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'subscriptions', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks', 'connect-app' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( current_url() ) );
 			exit;
@@ -116,6 +116,7 @@ class Template_Loader {
 			'post'             => 'views/single-post.php',
 			'profile'          => 'views/user-profile.php',
 			'notifications'    => 'views/notifications.php',
+			'connect-app'      => 'views/connect-app.php',
 			'search'           => 'views/search.php',
 			'leaderboard'      => 'views/leaderboard.php',
 			'moderation'       => 'views/moderation.php',

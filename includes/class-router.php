@@ -131,6 +131,11 @@ class Router {
 		// Community home
 		add_rewrite_rule( "^{$base}/?$", 'index.php?jetonomy_route=home', 'top' );
 
+		// Native-app connect bridge (Wbcom App Auth standard): the mobile app
+		// opens this in a browser auth session; the approve screen mints a WP
+		// Application Password and deep-links it back to the app.
+		add_rewrite_rule( "^{$base}/connect-app/?$", 'index.php?jetonomy_route=connect-app', 'top' );
+
 		// Custom XML sitemap (index + paginated children) — replaces the WP-core
 		// providers so we can emit <priority>/<changefreq>. Handled by
 		// Sitemap_Emitter, which echoes XML and exits (see handle_request).
