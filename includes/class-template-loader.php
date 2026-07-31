@@ -81,7 +81,11 @@ class Template_Loader {
 			$jt_space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
 			if ( $jt_space ) {
 				$jt_join_policy = $jt_space->join_policy ?? 'open';
-				$jt_is_member   = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() );
+				// An access rule that admits this user counts as access here too,
+				// or a paid subscriber gated in by a membership rule would be
+				// bounced off the composer of the space they just paid for.
+				$jt_is_member = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() )
+					|| \Jetonomy\Models\AccessRule::grants_access( get_current_user_id(), (int) $jt_space->id );
 				if ( ! $jt_is_member && in_array( $jt_join_policy, array( 'invite', 'approval' ), true ) ) {
 					$jt_settings  = get_option( 'jetonomy_settings', array() );
 					$jt_base_slug = $jt_settings['base_slug'] ?? 'community';

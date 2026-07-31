@@ -317,7 +317,16 @@ class Space extends Model {
 		if ( user_can( (int) $user_id, 'manage_options' ) ) {
 			return false;
 		}
-		return ! ( $user_id && SpaceMember::is_member( (int) $space->id, (int) $user_id ) );
+		if ( ! $user_id ) {
+			return true;
+		}
+		// A viewer admitted by an access rule (e.g. a paid tier) is not a
+		// stranger - concealing the space from them would 404 the very people
+		// the rule exists to let in.
+		return ! (
+			SpaceMember::is_member( (int) $space->id, (int) $user_id )
+			|| AccessRule::grants_access( (int) $user_id, (int) $space->id )
+		);
 	}
 
 	/**

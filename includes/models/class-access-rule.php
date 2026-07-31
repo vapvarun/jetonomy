@@ -70,6 +70,33 @@ class AccessRule extends Model {
 	 * @param int $space_id
 	 * @return array|null Matched rule's resolved data, or null if no rule matched.
 	 */
+	/**
+	 * Does any access rule admit this user to this space?
+	 *
+	 * The question a GATE asks, as opposed to `is_member()`, which asks whether
+	 * someone is on the roster. Before 1.8.1 the two were conflated: private and
+	 * hidden spaces demanded roster membership BEFORE access rules were read, so
+	 * a rule could only ever upgrade an existing member's grants and could never
+	 * admit anyone. A site owner who pointed a space at a membership tier got a
+	 * space nobody could enter, and the only way in was the manual "Sync Members"
+	 * button materialising roster rows - which then never came off when the
+	 * subscription lapsed, because nothing listens for deactivation.
+	 *
+	 * Resolving the rule at request time instead means access follows the
+	 * subscription in both directions with no roster row, no sync step and
+	 * nothing to drift out of date.
+	 *
+	 * @param int $user_id  WP user ID (0 = guest).
+	 * @param int $space_id Space ID.
+	 * @return bool True when a rule grants this user access to the space.
+	 */
+	public static function grants_access( int $user_id, int $space_id ): bool {
+		if ( $space_id <= 0 ) {
+			return false;
+		}
+		return null !== static::resolve_access( $user_id, $space_id );
+	}
+
 	public static function resolve_access( int $user_id, int $space_id ): ?array {
 		$rules = static::list_for_space( $space_id );
 

@@ -184,9 +184,19 @@ class Permission_Engine {
 			return false;
 		}
 
-		// Private / hidden spaces require membership.
+		// Private / hidden spaces require membership OR an access rule that
+		// admits this user.
+		//
+		// The rule check is the load-bearing half. Without it this returned
+		// false before the access-rule block below ever ran, so a membership /
+		// role / trust-level rule could only upgrade someone already on the
+		// roster - it could never let anyone in. An owner who gated a space on
+		// a paid tier got a space their subscribers could not enter, and the
+		// only workaround (the per-rule "Sync Members" button) wrote roster
+		// rows that nothing ever removed when the subscription lapsed.
 		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
-			if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
+			if ( ! SpaceMember::is_member( $space_id, $user_id )
+				&& ! AccessRule::grants_access( $user_id, $space_id ) ) {
 				return false;
 			}
 		}
@@ -289,7 +299,7 @@ class Permission_Engine {
 	/**
 	 * May this post's AUTHORED TEXT be emitted to this viewer out-of-band?
 	 *
-	 * can_read_post() plus the blocked-author check, for the surfaces that
+	 * Adds the blocked-author check on top of can_read_post(), for surfaces that
 	 * broadcast a post's title/body somewhere the viewer cannot be shown a
 	 * tombstone: the <head> (title / og:* / meta description), JSON-LD, and the
 	 * oEmbed unfurl. Those three asked can_read_post() — which knows about
@@ -354,6 +364,7 @@ class Permission_Engine {
 	 * @param \stdClass $post    Post row (must have status, is_private, author_id, space_id).
 	 * @return bool
 	 */
+	// phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint -- docblock is deliberately \stdClass (PHPStan reads the row's properties from it) while the hint stays `object`, matching Model::find()'s ?object return.
 	public static function can_read_post( int $user_id, object $post ): bool {
 		$space_id = (int) $post->space_id;
 
@@ -431,6 +442,7 @@ class Permission_Engine {
 	 * @param \stdClass $post    Parent post row (author_id, space_id).
 	 * @return bool
 	 */
+	// phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint -- see can_read_post(): \stdClass docblock, `object` hint, on purpose.
 	public static function can_read_reply( int $user_id, object $reply, object $post ): bool {
 		if ( empty( $reply->is_private ) ) {
 			return true;
