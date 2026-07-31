@@ -93,6 +93,14 @@ class App_Config_Controller extends Base_Controller {
 				'max_size_bytes' => 10 * 1024 * 1024,
 				'allowed_types'  => array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'docx', 'xlsx', 'pptx', 'odt', 'txt', 'csv' ),
 			),
+			// How the app signs a member in on THIS site (Wbcom App Auth
+			// standard, docs/standards/app-auth.md). Additive — an older
+			// plugin simply has no `auth` key, which the app reads as "use
+			// the legacy wp-admin authorize flow". One door per site: on the
+			// ~60% of sites also running BuddyNext, connect_url is BN's
+			// bridge, so the app inherits the site's real login (social,
+			// two-factor) with zero app-side logic.
+			'auth'         => \Jetonomy\Integrations\App_Connect::auth_block(),
 		);
 
 		/**

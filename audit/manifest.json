@@ -3397,6 +3397,22 @@
 			"where": "includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_level_url)",
 			"consumed_by": null,
 			"notes": "1.8.1. Where a visitor buys the membership level a space is gated on - the href of the button on the \"this space is included with VIP\" gate. Resolved from the owning adapter's OPTIONAL get_level_url() (probed with method_exists so third-party adapters implementing the interface are not fataled by a new method), then filtered. Adapters whose level is granted rather than sold - WP Roles, WP Fusion tags, SureMembers, tag-membership - intentionally resolve to \"\" and the gate renders the requirement with no button; this filter is how such a site supplies its own destination. A wrong button is worse than none."
+		},
+		{
+			"name": "jetonomy_app_connect_schemes",
+			"type": "filter",
+			"args": "$schemes (string[], default [\"jetonomyapp\"])",
+			"where": "includes/integrations/class-app-connect.php (App_Connect::schemes)",
+			"consumed_by": null,
+			"notes": "1.8.2. Custom URL schemes Jetonomy's app-connect flow may deliver an Application Password to. Sibling Wbcom apps register their scheme here, mirroring the buddynext_app_connect_schemes seam Jetonomy itself joins. Wbcom App Auth standard (docs/standards/app-auth.md)."
+		},
+		{
+			"name": "jetonomy_app_connect_bridge",
+			"type": "filter",
+			"args": "$info (array{owner, connect_url, connect_schemes})",
+			"where": "includes/integrations/class-app-connect.php (App_Connect::bridge_info)",
+			"consumed_by": null,
+			"notes": "1.8.2. The resolved app-connect bridge advertised on GET /app/config `auth`. One door per site: BuddyNext's bridge when BN is active (Jetonomy also joins buddynext_app_connect_schemes at boot), else Jetonomy's own. Tests + unusual auth topologies override here."
 		}
 	],
 	"buddypress_integration": {

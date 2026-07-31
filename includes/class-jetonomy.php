@@ -615,6 +615,13 @@ final class Jetonomy {
 		new Integrations\Theme_Integration();
 		new Integrations\Layout_CSS();
 
+		// App-connect wiring (Wbcom App Auth standard): joins BuddyNext's
+		// bridge-scheme allowlist and resolves which connect bridge this
+		// site's /app/config advertises. Unconditional — the BN filter is
+		// harmless when BN is absent, and that is what makes plugin
+		// activation order irrelevant.
+		new Integrations\App_Connect();
+
 		// CAPTCHA protection (reCAPTCHA v3 / Cloudflare Turnstile).
 		Captcha\Captcha_Manager::init();
 
