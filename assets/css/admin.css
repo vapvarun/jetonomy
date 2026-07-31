@@ -3846,3 +3846,92 @@ tr.jetonomy-moderated td {
 	gap: 8px;
 	padding: 0;
 }
+
+/* ── Select picker: style the dropdown instead of leaving it to the OS ──────
+   A native <select> renders its option list as an OS-drawn window. On macOS
+   that means a large system-font panel anchored to the checked item, which
+   reads as a floating box unrelated to the control we styled — nothing CSS
+   could reach, because the popup was never part of the page.
+
+   `appearance: base-select` opts the element into the CSS-rendered picker, so
+   the list becomes real DOM we can style to match the admin. Chromium ships
+   it today; Safari and Firefox ignore the whole block and keep the native
+   popup, which is a perfectly good fallback. Everything here is inside
+   @supports so no browser sees a half-applied state.
+
+   Deliberately NOT a JS dropdown: a real <select> keeps type-ahead, keyboard
+   semantics and screen-reader behaviour that a div-based replacement has to
+   reimplement and usually gets wrong. */
+@supports (appearance: base-select) {
+	.jetonomy-admin select,
+	.jetonomy-admin select::picker(select) {
+		appearance: base-select;
+	}
+
+	/* base-select draws its own ::picker-icon, and core paints a chevron as a
+	   background SVG for the `appearance: none` case. Keep one arrow. */
+	.jetonomy-admin select {
+		background-image: none;
+		padding-inline-end: 10px;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.jetonomy-admin select::picker-icon {
+		color: var(--jt-admin-text-3, #646970);
+		margin-inline-start: auto;
+		transition: transform 0.15s ease;
+	}
+
+	.jetonomy-admin select:open::picker-icon {
+		transform: rotate(180deg);
+	}
+
+	.jetonomy-admin select::picker(select) {
+		border: 1px solid var(--jt-admin-border, #dcdcde);
+		border-radius: 6px;
+		background: #fff;
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+		padding: 4px;
+		margin-block-start: 4px;
+		/* Long lists (the 14-source rule-type menu) scroll instead of running
+		   off the viewport. */
+		max-height: 60vh;
+		overflow-y: auto;
+	}
+
+	.jetonomy-admin select option {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 10px;
+		border-radius: 4px;
+		font-size: 13px;
+		line-height: 1.4;
+		color: var(--jt-admin-text, #1d2327);
+	}
+
+	.jetonomy-admin select option:hover,
+	.jetonomy-admin select option:focus {
+		background: var(--jt-admin-bg-subtle, #f0f0f1);
+	}
+
+	.jetonomy-admin select option:checked {
+		font-weight: 600;
+	}
+
+	/* The tick core reserves space for; keep it from shoving the label. */
+	.jetonomy-admin select option::checkmark {
+		flex-shrink: 0;
+		color: var(--jt-admin-accent, #2271b1);
+	}
+
+	/* Touch keeps the 44px row height the rest of the admin uses. */
+	@media screen and (max-width: 782px) {
+		.jetonomy-admin select option {
+			min-height: 44px;
+			font-size: 14px;
+		}
+	}
+}
