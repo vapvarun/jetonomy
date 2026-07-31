@@ -32,23 +32,43 @@ class Auth_Controller extends Base_Controller {
 					'callback'            => [ $this, 'login' ],
 					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'login' ] ),
 					'args'                => [
-						'user_login'    => [
+						'user_login'         => [
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'user_password' => [
+						'user_password'      => [
 							'required' => true,
 							'type'     => 'string',
 						],
-						'remember'      => [
+						'remember'           => [
 							'type'    => 'boolean',
 							'default' => false,
 						],
-						'captcha_token' => [
+						'captcha_token'      => [
 							'required' => false,
 							'type'     => 'string',
 							'default'  => '',
+						],
+						// Native-app credential mint (App Auth standard J2):
+						// when true, a successful sign-in also returns a WP
+						// core Application Password for the app to keep.
+						'issue_app_password' => [
+							'required' => false,
+							'type'     => 'boolean',
+							'default'  => false,
+						],
+						'device_name'        => [
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'app_id'             => [
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
 						],
 					],
 				],
