@@ -3939,9 +3939,35 @@ tr.jetonomy-moderated td {
 /* ── Access-rule explainer ──────────────────────────────────────────────────
    Reference copy on the space editor's Access Rules tab. Static content, so
    it stacks by hand below 782px rather than going through the list-table
-   collapse contract. */
+   collapse contract.
+
+   .jt-settings-card is padding:0 by design - its head and any table cells
+   bring their own 20px gutter. Loose paragraphs therefore get none, and the
+   notes under this table were running edge to edge against the card border.
+   They take the same gutter as everything else in the card. */
 .jetonomy-admin .jt-access-help-table {
-	margin-block-start: 12px;
+	margin-block-start: 0;
+}
+
+.jetonomy-admin .jt-access-help > p.description {
+	margin: 0;
+	padding: 10px 20px;
+	color: var(--jt-admin-text-2, #50575e);
+}
+
+/* Separate the notes from the table they annotate, and keep them from
+   crowding each other. */
+.jetonomy-admin .jt-access-help > p.description:first-of-type {
+	padding-block-start: 14px;
+	border-block-start: 1px solid var(--jt-admin-border-subtle, #f0f0f1);
+}
+
+.jetonomy-admin .jt-access-help > p.description:last-of-type {
+	padding-block-end: 16px;
+}
+
+.jetonomy-admin .jt-access-help > p.description strong {
+	color: var(--jt-admin-text, #1d2327);
 }
 
 .jetonomy-admin .jt-access-help-table td:first-child {
@@ -3977,4 +4003,17 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .jt-access-help-table td:first-child {
 		width: auto;
 	}
+}
+
+/* Access-rule composer preview: reads the rule back in plain English next to
+   the selects that produce it. */
+.jetonomy-admin .jt-rule-preview {
+	margin-block-start: 10px;
+	max-width: 70ch;
+	line-height: 1.5;
+}
+
+.jetonomy-admin .jt-rule-preview__warn {
+	color: var(--jt-admin-warn, #914c00);
+	font-weight: 600;
 }
