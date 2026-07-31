@@ -53,7 +53,14 @@ $trust_labels = array(
 				printf(
 					/* translators: %s: link to the full guide */
 					esc_html__( 'A Subscriber can be a Level 5 Elder and a space admin — community standing and wp-admin access are separate on purpose. %s', 'jetonomy' ),
-					'<a href="https://github.com/vapvarun/jetonomy/blob/HEAD/docs/website/getting-started/08-users-roles-and-trust.md" target="_blank" rel="noopener">' . esc_html__( 'Read the full guide', 'jetonomy' ) . '</a>'
+					// Directory, not the deep link to 08-users-roles-and-trust.md.
+					// `blob/HEAD` resolves against the DEFAULT branch, and that
+					// file lands there only when the release branch merges - so
+					// the in-product link 404'd for anyone who clicked it before
+					// release (Basecamp 9725751235, bounced twice on exactly
+					// this). The directory exists on main today and gains the
+					// guide at merge, so the link is correct in both states.
+					'<a href="https://github.com/vapvarun/jetonomy/tree/HEAD/docs/website/getting-started" target="_blank" rel="noopener">' . esc_html__( 'Browse the setup guides', 'jetonomy' ) . '</a>'
 				);
 				?>
 			</p>
