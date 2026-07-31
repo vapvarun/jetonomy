@@ -271,6 +271,7 @@ Sell access to a space with a membership plan, and be told which plan opens it. 
 * New      - Gate a space on a membership plan, and people holding that plan get in automatically. Access starts when the plan becomes active and ends when it lapses, with nothing to sync by hand.
 * New      - A visitor who cannot enter a paid space is told which plan includes it and given a link to buy it, instead of a generic "this space is private".
 * New      - Keyboard shortcuts l (upvote the focused post) and r (reply to it), which the FAQ has always documented.
+* Improve  - The buy link on a gated space works with Paid Memberships Pro, MemberPress, WooCommerce Memberships, Restrict Content Pro, LearnDash, Tutor LMS, LifterLMS, Sensei, MasterStudy and Learnomy, sending people to the right plan or course. Levels that are granted rather than sold, such as a WordPress role or a CRM tag, state the requirement without a link.
 * Improve  - The Access Rules screen explains what each access level unlocks, and reads your rule back in plain English as you build it.
 * Improve  - An access rule now uses a single Access level rather than two settings that could contradict each other, and defaults to Participate.
 * Improve  - Warn on the Access Rules screen when a rule cannot restrict anything, because the space is public or anyone can join it.
