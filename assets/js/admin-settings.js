@@ -54,8 +54,17 @@
 		if (lastOpener && lastOpener.focus) { lastOpener.focus(); }
 		lastOpener = null;
 	}
-	function openModal() {
-		lastOpener = document.activeElement;
+	/**
+	 * @param {Element} [opener] The control that asked for the dialog.
+	 *
+	 * The opener must be passed in, not read from document.activeElement:
+	 * this runs inside the preview request's .then(), by which point focus
+	 * has long since returned to <body>, so the dialog remembered the body
+	 * and Escape restored focus to nothing (Basecamp 10146440810, a11y
+	 * addendum, second pass).
+	 */
+	function openModal( opener ) {
+		lastOpener = opener || document.activeElement;
 		modal.style.display = '';
 		// Focus the Close button, not the first focusable: DOM order put the
 		// preview IFRAME first, which swallowed the dialog's key handling and
@@ -90,6 +99,19 @@
 	modal.querySelectorAll('.jetonomy-modal-close, .jetonomy-modal__overlay').forEach(function (el) {
 		el.addEventListener('click', closeModal);
 	});
+
+	// Restore focus on EVERY close, not just the ones this file handles.
+	// admin.js ships a generic dialog enhancer that also binds Escape (capture
+	// phase, so it wins) and hides the dialog itself. Whichever handler gets
+	// there first, the outcome has to be the same: focus returns to the button
+	// that opened the preview. Watching the element decouples that promise from
+	// which code path did the closing (Basecamp 10146440810, a11y addendum -
+	// Escape was leaving focus on <body> while the Close button was fine).
+	new MutationObserver(function () {
+		if ('none' !== modal.style.display) { return; }
+		if (lastOpener && lastOpener.focus) { lastOpener.focus(); }
+		lastOpener = null;
+	}).observe(modal, { attributes: true, attributeFilter: ['style'] });
 	document.addEventListener('keydown', function (e) {
 		if ('Escape' === e.key && 'none' !== modal.style.display) { closeModal(); }
 	});
@@ -122,7 +144,7 @@
 				}
 				subjEl.textContent = json.data.subject || (i18n.emailPreviewTitle || 'Email Preview');
 				iframe.srcdoc = json.data.html;
-				openModal();
+				openModal( btn );
 			});
 		});
 	});

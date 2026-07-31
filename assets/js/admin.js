@@ -1663,11 +1663,36 @@
 				box.setAttribute( 'aria-labelledby', h.id );
 			}
 		}
-		active = { el: el, opener: document.activeElement };
+		// Opener: prefer whatever the user actually activated. A dialog opened
+		// from an async callback (the email preview waits on its AJAX) enhances
+		// long after the click, by which point document.activeElement is <body>
+		// - so Escape restored focus to nothing (Basecamp 10146440810, a11y
+		// addendum). lastActivated is the control the user pressed, tracked
+		// below, and is only fallen back on when activeElement is not useful.
+		var opener = document.activeElement;
+		if ( ! opener || opener === document.body || opener === document.documentElement ) {
+			opener = lastActivated;
+		}
+		active = { el: el, opener: opener };
 		document.addEventListener( 'keydown', onKey, true );
 		var target = el.querySelector( '.jetonomy-modal-close' ) || focusables( el )[ 0 ];
 		if ( target ) { target.focus(); }
 	}
+
+	// The control the user last activated, used as a dialog's opener when the
+	// dialog is created asynchronously and focus has already gone back to the
+	// body. Capture phase so it is recorded even when a handler stops
+	// propagation.
+	var lastActivated = null;
+	document.addEventListener( 'mousedown', function ( e ) {
+		var el = e.target && e.target.closest ? e.target.closest( 'button, a[href], [role="button"], input[type="submit"], input[type="button"]' ) : null;
+		if ( el ) { lastActivated = el; }
+	}, true );
+	document.addEventListener( 'keydown', function ( e ) {
+		if ( e.key !== 'Enter' && e.key !== ' ' ) { return; }
+		var el = e.target && e.target.closest ? e.target.closest( 'button, a[href], [role="button"]' ) : null;
+		if ( el ) { lastActivated = el; }
+	}, true );
 
 	function teardown( el ) {
 		if ( ! active || active.el !== el ) { return; }

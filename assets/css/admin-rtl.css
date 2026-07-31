@@ -4017,3 +4017,19 @@ tr.jetonomy-moderated td {
 	color: var(--jt-admin-warn, #914c00);
 	font-weight: 600;
 }
+
+/* Tab bars keep the touch floor through the tablet range.
+   The ladder gives 44px to phones (<=782) and 40px to desktop, and the
+   space-editor tabs landed on 42px at 1024 - above the desktop floor, but
+   1024 is iPad landscape, which is a touch device navigating with a finger
+   (Basecamp 10150588436, second pass). A primary nav control should not drop
+   below the touch target on any screen someone actually taps. */
+@media screen and (min-width: 783px) and (max-width: 1024px) {
+	.jetonomy-admin .nav-tab,
+	.jetonomy-admin .jt-settings-nav a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		box-sizing: border-box;
+	}
+}
