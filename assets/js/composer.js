@@ -399,69 +399,18 @@ document.addEventListener( 'DOMContentLoaded', () => {
         }
     });
 
-    // ── G8: Keyboard Shortcuts ──
-
-    var currentIndex = -1;
-
-    document.addEventListener('keydown', function(e) {
-        // Don't trigger when typing in inputs
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-
-        // ? = show help
-        if (e.key === '?') {
-            toggleShortcutHelp();
-            return;
-        }
-        // / = focus search
-        if (e.key === '/') {
-            e.preventDefault();
-            var search = document.querySelector('.jt-search-page-input input, .jt-community-nav input');
-            if (search) search.focus();
-            return;
-        }
-        // n = new post (if on space page)
-        if (e.key === 'n') {
-            var newBtn = document.querySelector('a[href*="/new/"]');
-            if (newBtn) { e.preventDefault(); window.location = newBtn.href; }
-            return;
-        }
-        // j/k = navigate items
-        if (e.key === 'j' || e.key === 'k') {
-            navigateItems(e.key === 'j' ? 1 : -1);
-            return;
-        }
-        // Enter on focused item = open it
-        if (e.key === 'Enter' && document.querySelector('.jt-row.jt-kb-focus')) {
-            var focused = document.querySelector('.jt-row.jt-kb-focus');
-            if (focused.href) window.location = focused.href;
-            return;
-        }
-    });
-
-    function navigateItems(direction) {
-        var items = document.querySelectorAll('.jt-row, .jt-leader');
-        if (!items.length) return;
-        items.forEach(function(i) { i.classList.remove('jt-kb-focus'); });
-        currentIndex = Math.max(0, Math.min(items.length - 1, currentIndex + direction));
-        items[currentIndex].classList.add('jt-kb-focus');
-        items[currentIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-
-    function toggleShortcutHelp() {
-        var existing = document.querySelector('.jt-shortcut-help');
-        if (existing) { existing.remove(); return; }
-
-        var modal = document.createElement('div');
-        modal.className = 'jt-shortcut-help';
-        modal.innerHTML = '<div class="jt-shortcut-modal"><h3>Keyboard Shortcuts</h3><table>' +
-            '<tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>Navigate items up/down</td></tr>' +
-            '<tr><td><kbd>Enter</kbd></td><td>Open selected item</td></tr>' +
-            '<tr><td><kbd>/</kbd></td><td>Focus search</td></tr>' +
-            '<tr><td><kbd>n</kbd></td><td>New post</td></tr>' +
-            '<tr><td><kbd>?</kbd></td><td>Show/hide shortcuts</td></tr>' +
-            '</table><button onclick="this.closest(\'.jt-shortcut-help\').remove()">Close</button></div>';
-        document.body.appendChild(modal);
-    }
+    // ── Keyboard shortcuts live in header.js ──
+    //
+    // This file used to carry a second, competing implementation of the whole
+    // set (?, /, n, j/k, Enter) plus its own `.jt-shortcut-help` modal. Two
+    // handlers owned `?`, so the help surface toggled itself and QA could not
+    // get a stable panel (10150869012). The duplicate was also the worse copy:
+    // hardcoded English, no `l`/`r` rows, an inline onclick, and the broken
+    // `focused.href` Enter handler that started the "Enter does nothing" report
+    // in the first place - a .jt-row DIV has no href.
+    //
+    // header.js is the single owner: localized strings, the full shortcut list,
+    // and Enter resolving the row's real title link.
 
     // ── G9: Emoji Picker (delegated — works for composers injected after DOMContentLoaded) ──
     //
@@ -580,6 +529,11 @@ document.addEventListener( 'DOMContentLoaded', () => {
             if (!isOpen) {
                 sharedPicker._activeToolbar = toolbar;
                 pickerTrigger = emojiBtn;
+                // aria-haspopup / aria-controls are stamped in the template so
+                // the contract is complete on first paint rather than only
+                // after the first click (QA 10149499573, second pass). Kept
+                // here as a belt-and-braces for any theme override that
+                // renders its own toolbar without them.
                 emojiBtn.setAttribute('aria-haspopup', 'menu');
                 emojiBtn.setAttribute('aria-controls', 'jt-emoji-picker');
                 emojiBtn.setAttribute('aria-expanded', 'true');

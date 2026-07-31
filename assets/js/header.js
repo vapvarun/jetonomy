@@ -169,6 +169,28 @@
 			clearTimeout(searchTimer);
 			var q = input.value.trim();
 			if (q.length < 2) { results.textContent = ''; return; }
+			/**
+			 * Permalink for a search hit.
+			 *
+			 * The overlay queries posts (space_slug + slug); the same endpoint
+			 * can return spaces (slug, no space_slug). Anything unrecognised
+			 * goes to the search page for the query, which is always a useful
+			 * destination - never a broken one.
+			 */
+			function searchResultUrl(r, query) {
+				var base = (D && D.base) || '';
+				if (r && r.space_slug && r.slug) {
+					return base + '/s/' + encodeURIComponent(r.space_slug) + '/t/' + encodeURIComponent(r.slug) + '/';
+				}
+				if (r && r.slug && r.category_id !== undefined) {
+					return base + '/s/' + encodeURIComponent(r.slug) + '/';
+				}
+				if (r && r.slug && r.space_id === undefined) {
+					return base + '/tag/' + encodeURIComponent(r.slug) + '/';
+				}
+				return base + '/search/?q=' + encodeURIComponent(query || '');
+			}
+
 			searchTimer = setTimeout(function () {
 				window.jetonomyRest.restFetch('/search?q=' + encodeURIComponent(q) + '&per_page=6').then(function (res) {
 					// restFetch wraps the REST body as {ok, status, data} - the
@@ -184,7 +206,14 @@
 					results.className = 'jt-search-overlay-results';
 					data.forEach(function (r) {
 						var a = document.createElement('a');
-						a.href = r.url;
+						// The search payload carries slugs, not a permalink -
+						// there is no `url` field, so `a.href = r.url` produced
+						// "undefined" and every result led nowhere once results
+						// started rendering (QA 10150864518, second pass).
+						// Build the destination from the slugs the API does
+						// return, and fall back to the full search page rather
+						// than emit a dead link.
+						a.href = searchResultUrl(r, q);
 						a.className = 'jt-search-overlay-item';
 						var strong = document.createElement('strong');
 						strong.textContent = r.title;
