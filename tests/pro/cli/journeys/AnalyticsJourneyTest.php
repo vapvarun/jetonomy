@@ -244,14 +244,44 @@ class AnalyticsJourneyTest extends WP_UnitTestCase {
 		$this->assertIsInt( $result->data['spam_total'] );
 	}
 
+	/**
+	 * The CLI export must RETURN a CSV, not stream one.
+	 *
+	 * This asserted a raw substring for the header row, which was never
+	 * reachable: the journey used to call `rest_export()`, and that method
+	 * ends in `exit` because a browser download must have nothing appended to
+	 * it - so `wp jetonomy-pro analytics export --format=csv` printed a CSV to
+	 * stdout and killed the WP-CLI process before returning anything. Both
+	 * surfaces now share one builder (`Extension::export_csv_string()`).
+	 *
+	 * The columns are parsed rather than string-matched because `fputcsv`
+	 * legitimately encloses "New Users" - it contains a space - and asserting
+	 * the raw bytes made correct CSV look like a failure.
+	 */
 	public function test_export_csv_returns_csv_string(): void {
 		$result = $this->journey->export( '7d', 'csv' );
 
 		$this->assertTrue( $result->is_success(), implode( '; ', $result->errors ) );
 		$this->assertSame( 'csv', $result->data['format'] );
 		$this->assertIsString( $result->data['payload'] );
-		$this->assertStringContainsString( 'Date,Posts,Replies,New Users,Votes', $result->data['payload'] );
 		$this->assertGreaterThan( 0, (int) $result->data['byte_length'] );
+
+		$lines  = array_values( array_filter( explode( "\n", (string) $result->data['payload'] ) ) );
+		$header = str_getcsv( $lines[0] );
+
+		$this->assertSame(
+			array( 'Date', 'Posts', 'Replies', 'New Users', 'Votes' ),
+			$header,
+			'the download and the command must agree on the columns'
+		);
+
+		// A 7-day range emits the header plus one row per day, so the command
+		// returning only a header would mean the range never resolved.
+		$this->assertGreaterThan( 1, count( $lines ), 'export returned a header with no data rows' );
+
+		$first_row = str_getcsv( $lines[1] );
+		$this->assertCount( 5, $first_row, 'every data row must carry all five columns' );
+		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $first_row[0] );
 	}
 
 	public function test_export_rejects_invalid_format(): void {

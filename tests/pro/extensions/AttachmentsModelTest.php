@@ -152,9 +152,29 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 		$new = $wpdb->prefix . 'jt_attachments';
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// WP_UnitTestCase filters `query` to rewrite CREATE TABLE into CREATE
+		// TEMPORARY TABLE, and a temporary table is invisible to SHOW TABLES.
+		// SHOW TABLES is exactly how the migration decides whether the old
+		// table is there, so under the default harness $has_old came back
+		// false, neither branch ran, and the guard reported 0 rows out - the
+		// very data loss it exists to catch, produced by the fixture rather
+		// than by the migration. A real table is required; tear_down drops it.
+		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
+		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+
 		$wpdb->query( "DROP TABLE IF EXISTS {$old}" );
 		$wpdb->query( "CREATE TABLE {$old} LIKE {$new}" );
 		$wpdb->query( "INSERT INTO {$old} (object_type, object_id, attachment_id, sort, created_at) VALUES ('post', 8181, 501, 0, NOW()), ('post', 8181, 502, 1, NOW())" );
+
+		// Precondition: prove the fixture is visible the way the migration
+		// looks for it, so a future harness change fails HERE with a clear
+		// message instead of masquerading as a data-loss regression.
+		$this->assertSame(
+			$old,
+			$wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $old ) ),
+			'fixture precondition: the old table must be a real table, not a temporary one'
+		);
 
 		( new Migration_1_7_1() )->up();
 
@@ -164,6 +184,14 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 			'Old table left behind after a complete merge.'
 		);
 		// phpcs:enable
+	}
+
+	public function tear_down(): void {
+		global $wpdb;
+		// The merge test drops this itself on success; this covers the failure
+		// path so a red run cannot leave a real table behind to poison the next.
+		$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'jt_pro_attachments' ); // phpcs:ignore WordPress.DB
+		parent::tear_down();
 	}
 
 	public function test_gc_schedule_and_clear(): void {
