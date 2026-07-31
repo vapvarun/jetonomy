@@ -303,12 +303,98 @@ class Auth_Controller extends Base_Controller {
 			);
 		}
 
-		return rest_ensure_response(
-			[
-				'success' => true,
-				'message' => __( 'Signed in. Reloading…', 'jetonomy' ),
-			]
-		);
+		$payload = [
+			'success' => true,
+			'message' => __( 'Signed in. Reloading…', 'jetonomy' ),
+		];
+
+		// Native-app path (Wbcom App Auth standard, docs/standards/app-auth.md):
+		// the app sends the member's WordPress password ONCE, receives a WP
+		// core Application Password, and authenticates every later request
+		// with HTTP Basic — no cookie jar, no nonce. Minting sits AFTER the
+		// full wp_signon() above, so the rate limit, CAPTCHA, ban and
+		// pending-verification gates all fail closed by construction.
+		if ( (bool) $request->get_param( 'issue_app_password' ) ) {
+			$minted = $this->mint_app_password(
+				(int) $user->ID,
+				(string) $request->get_param( 'device_name' ),
+				(string) $request->get_param( 'app_id' )
+			);
+			if ( ! is_wp_error( $minted ) ) {
+				$payload['app_password'] = $minted;
+			}
+		}
+
+		$response = rest_ensure_response( $payload );
+		if ( isset( $payload['app_password'] ) ) {
+			// A response carrying a live credential must never be cached.
+			$response->header( 'Cache-Control', 'no-store' );
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Mint a WP Application Password for a member (the native-app credential).
+	 *
+	 * The plaintext is returned ONCE; the app stores it and sends
+	 * `Authorization: Basic base64(login:password)` from then on. Mirrors the
+	 * BuddyNext reference implementation (App Auth standard):
+	 *
+	 * A RECONNECT replaces the device's credential rather than stacking a new
+	 * row beside the old one — core's class does not dedupe, so left alone
+	 * every reconnect of the same device appends another live credential.
+	 * Matching is by the app's stable per-install app_id when it sent one,
+	 * else by label; the stale credential dies the moment its replacement is
+	 * born, which is also the right outcome for a lost or reset device.
+	 *
+	 * @param int    $user_id User to mint for.
+	 * @param string $name    Device / app label (defaults to a generic Jetonomy label).
+	 * @param string $app_id  The app's stable per-install UUID; matching rows are replaced on reconnect.
+	 * @return array{password:string,uuid:string,name:string,username:string}|\WP_Error
+	 */
+	private function mint_app_password( int $user_id, string $name = '', string $app_id = '' ) {
+		if ( ! class_exists( '\WP_Application_Passwords' ) || ! wp_is_application_passwords_available_for_user( $user_id ) ) {
+			return new WP_Error(
+				'jetonomy_app_passwords_unavailable',
+				__( 'Application passwords are not available on this site.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		$name  = sanitize_text_field( $name );
+		$label = '' !== $name ? $name : __( 'Jetonomy app', 'jetonomy' );
+
+		$args   = [ 'name' => $label ];
+		$app_id = sanitize_text_field( $app_id );
+		if ( '' !== $app_id && wp_is_uuid( $app_id ) ) {
+			$args['app_id'] = $app_id;
+		}
+
+		foreach ( (array) \WP_Application_Passwords::get_user_application_passwords( $user_id ) as $existing ) {
+			if ( empty( $existing['uuid'] ) ) {
+				continue;
+			}
+			$same_app  = isset( $args['app_id'] ) && (string) $existing['app_id'] === (string) $args['app_id'];
+			$same_name = ! isset( $args['app_id'] ) && (string) $existing['name'] === $label;
+			if ( $same_app || $same_name ) {
+				\WP_Application_Passwords::delete_application_password( $user_id, (string) $existing['uuid'] );
+			}
+		}
+
+		$created = \WP_Application_Passwords::create_new_application_password( $user_id, $args );
+		if ( is_wp_error( $created ) ) {
+			return $created;
+		}
+
+		$account = get_userdata( $user_id );
+
+		return [
+			'password' => (string) $created[0],
+			'uuid'     => (string) $created[1]['uuid'],
+			'name'     => (string) $created[1]['name'],
+			'username' => $account ? $account->user_login : '',
+		];
 	}
 
 	/**
