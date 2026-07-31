@@ -23,16 +23,16 @@ Jetonomy Pro detects Restrict Content Pro automatically when both plugins are ac
 2. Click the **Access Rules** tab.
 3. Set **Rule Type** to **Restrict Content Pro Level**.
 4. Pick the subscription level in the **Value** field.
-5. Set **Grants** to **Participate** and **Space Role** to **Member** for a standard gated space.
+5. Set the **Access level** to **Participate** - the default, and the right answer for a standard gated space.
 6. Click **Add Rule**.
 
-Members with an active subscription to the selected level gain access immediately. You can add multiple rules to grant access across more than one RCP level. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
+Members with an active subscription to the selected level gain access immediately. You can add multiple rules to grant access across more than one RCP level. For what each **Access level** means, see [Access level](01-memberpress.md#access-level).
 
 > **Tip:** RCP supports free membership levels. You can use a free level as a gate to require a (free) registration before members can post - while still keeping the community open to anyone willing to sign up.
 
-## Auto-Join on Activation
+## Access Follows the Subscription
 
-When a member's RCP subscription status becomes **active**, Jetonomy Pro adds them to any spaces that grant that subscription level. The standard Jetonomy hook fires:
+When a member's RCP subscription status becomes **active**, they can open any space whose Access Rules grant that level on their very next page load - access is resolved live, so there is nothing to synchronise. When the subscription lapses, access goes with it, and their posts and replies remain. The standard Jetonomy hook fires:
 
 ```php
 add_action( 'jetonomy_membership_activated', function( int $user_id, string $level_id, string $adapter ) {

@@ -33,18 +33,18 @@ The WooCommerce adapter activates only when WooCommerce is active **and** either
 3. Click the **Access Rules** tab.
 4. Set **Rule Type** to **WooCommerce**.
 5. Pick the Membership plan or Subscription product in the **Value** field.
-6. Set **Grants** to **Participate** and **Space Role** to **Member** for a standard gated space.
+6. Set the **Access level** to **Participate** - the default, and the right answer for a standard gated space.
 7. Click **Add Rule**.
 
-The Access Rule takes effect immediately. Members who already hold the membership or active subscription are granted access in the background within a few seconds of saving.
+The Access Rule takes effect immediately. Members who already hold the membership or active subscription can open the space right away - access is worked out when they visit, so there is no background job to wait for.
 
-> **Tip:** You can add multiple WooCommerce rules to a single space. Access is granted if the member matches any one of the listed memberships or subscriptions. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
+> **Tip:** You can add multiple WooCommerce rules to a single space. Access is granted if the member matches any one of the listed memberships or subscriptions. For what each **Access level** means, see [Access level](01-memberpress.md#access-level).
 
 ## Auto-Activate
 
 Jetonomy Pro listens to WooCommerce Memberships and WooCommerce Subscriptions status changes - not to raw order status transitions.
 
-For WooCommerce Memberships, when a membership becomes active Jetonomy Pro adds the member to any spaces that grant access on that plan and sends a welcome notification.
+For WooCommerce Memberships, a member whose membership is active can open any space that grants access on that plan, from their next page load onward.
 
 For WooCommerce Subscriptions, access tracks the subscription status:
 
@@ -57,7 +57,7 @@ For WooCommerce Subscriptions, access tracks the subscription status:
 
 ## Auto-Revoke
 
-Access is revoked through the same status hooks. A WooCommerce Membership moving out of active status, or a subscription moving to on-hold, cancelled, or expired, removes the member from any spaces gated exclusively to that level.
+Access is revoked through the same status hooks. A WooCommerce Membership moving out of active status, or a subscription moving to on-hold, cancelled, or expired, ends access to any space gated exclusively to that level - on their very next page load, with nothing to synchronise. Their posts and replies stay where they are.
 
 > **Note:** Revocation is driven by membership and subscription status changes, not by order Refunded transitions. Refunding a one-off order does not by itself revoke access - the gating membership or subscription has to change status.
 

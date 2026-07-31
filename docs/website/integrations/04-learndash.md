@@ -25,10 +25,10 @@ Jetonomy Pro detects LearnDash automatically when both plugins are active. A **L
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LearnDash Course** from the rule type dropdown.
 3. Start typing the course name - a searchable dropdown shows all published LearnDash courses.
-4. Select the course, set **Grants** to **Participate** and **Space Role** to **Member**.
+4. Select the course, set the **Access level** to **Participate**.
 5. Click **Add Rule**.
 
-The rule appears in the table showing the course name and a **Sync Members** button. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
+The rule appears in the table showing the course name and a **Sync Members** button. For what each **Access level** means, see [Access level](01-memberpress.md#access-level).
 
 ## Gating a Space by LearnDash Group
 
@@ -36,7 +36,7 @@ LearnDash groups also appear in the searchable dropdown. This is ideal for cohor
 
 1. Select **LearnDash Course** from the rule type dropdown.
 2. Type the group name - groups show as "Group Name (LD Group)" in the results.
-3. Select the group, set Grants and Space Role, and click **Add Rule**.
+3. Select the group, set the **Access level**, and click **Add Rule**.
 
 All members of the LearnDash group - including group leaders - gain access. When a user is removed from the group, they lose space access.
 

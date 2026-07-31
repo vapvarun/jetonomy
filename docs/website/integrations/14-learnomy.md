@@ -2,7 +2,7 @@ Connect Learnomy course enrollment and membership-plan subscriptions to Jetonomy
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![Jetonomy Access Rules tab showing a saved membership rule with its Type, Value, Grants, and Space Role columns](images/access-rules-with-rule.png)
+![Jetonomy Access Rules tab showing a saved membership rule with its Type, Value and Access level columns](images/access-rules-with-rule.png)
 
 Learnomy stores its courses, membership plans, enrollments, and subscriptions in its own custom tables, not in WordPress posts. Jetonomy Pro connects to it through Learnomy's public model API, so gating a space by a Learnomy course works the same as the LearnDash flow.
 
@@ -24,10 +24,10 @@ Jetonomy Pro detects Learnomy automatically when both plugins are active. Detect
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **Learnomy Course** from the rule type dropdown.
 3. Start typing the course name - a searchable dropdown filters the Learnomy catalog. Courses show as "Course Name (Learnomy Course)".
-4. Select the course, set **Grants** to **Participate** and **Space Role** to **Member**.
+4. Select the course, set the **Access level** to **Participate**.
 5. Click **Add Rule**.
 
-The rule appears in the table showing the course label and a **Sync Members** button. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
+The rule appears in the table showing the course label and a **Sync Members** button. For what each **Access level** means, see [Access level](01-memberpress.md#access-level).
 
 The catalog picker lists up to 500 courses and plans. Filter `jetonomy_learnomy_max_levels` raises or lowers that cap when a site's catalog is larger.
 
@@ -37,7 +37,7 @@ Learnomy membership plans appear in the same **Learnomy Course** picker alongsid
 
 1. Select **Learnomy Course** from the rule type dropdown.
 2. Type the membership plan name and pick it from the results.
-3. Set Grants and Space Role, and click **Add Rule**.
+3. set the **Access level**, and click **Add Rule**.
 
 Members with an active subscription to that plan gain access. When the subscription is cancelled or expires, access is removed.
 
@@ -51,10 +51,10 @@ New enrollments, subscriptions, and removals are handled automatically after the
 
 | Learnomy Event | Jetonomy Action |
 |---|---|
-| Student enrolls in course | Added to linked spaces at the rule's Space Role |
+| Student enrolls in course | Given access to linked spaces at the rule's access level |
 | Student un-enrolls from course | Removed from linked spaces |
 | Course enrollment expires | Removed from linked spaces |
-| Membership plan subscription created | Added to linked spaces at the rule's Space Role |
+| Membership plan subscription created | Given access to linked spaces at the rule's access level |
 | Membership plan subscription cancelled | Removed from linked spaces |
 | Membership plan subscription expires | Removed from linked spaces |
 

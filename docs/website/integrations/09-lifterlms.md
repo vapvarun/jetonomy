@@ -21,10 +21,10 @@ Jetonomy Pro detects LifterLMS automatically when both plugins are active. A **L
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LifterLMS Course** from the rule type dropdown.
 3. Start typing the course name - a searchable dropdown shows all published courses and memberships (see the [course picker screenshot](04-learndash.md#gating-a-space-by-course-enrollment)).
-4. Select the course, set **Grants** to **Participate** and **Space Role** to **Member**.
+4. Select the course, set the **Access level** to **Participate**.
 5. Click **Add Rule**.
 
-LifterLMS memberships also appear in the search - select a membership to gate a space by membership level instead of individual course enrollment. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
+LifterLMS memberships also appear in the search - select a membership to gate a space by membership level instead of individual course enrollment. For what each **Access level** means, see [Access level](01-memberpress.md#access-level).
 
 ## Syncing Existing Students
 
