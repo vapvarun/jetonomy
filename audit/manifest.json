@@ -3389,6 +3389,14 @@
 			"where": "includes/notifications/class-notifier.php:1155; includes/models/class-notification.php:44; includes/class-mentions.php:149",
 			"consumed_by": [],
 			"audit_notes": "1.8.1 (commit baeef5d): global veto covering ALL THREE notification producers (Notifier create_and_maybe_email, direct Notification::add, mention notify). Lets bulk importers add_filter __return_false so a backdated import fans out zero notifications/emails. Default true; no core consumer by design - it is a site/importer extension point."
+		},
+		{
+			"name": "jetonomy_membership_upgrade_url",
+			"type": "filter",
+			"args": "$url (string, \"\" when none resolved), $level_id (string), $adapter_id (string, \"\" when unknown)",
+			"where": "includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_level_url)",
+			"consumed_by": null,
+			"notes": "1.8.1. Where a visitor buys the membership level a space is gated on - the href of the button on the \"this space is included with VIP\" gate. Resolved from the owning adapter's OPTIONAL get_level_url() (probed with method_exists so third-party adapters implementing the interface are not fataled by a new method), then filtered. Adapters whose level is granted rather than sold - WP Roles, WP Fusion tags, SureMembers, tag-membership - intentionally resolve to \"\" and the gate renders the requirement with no button; this filter is how such a site supplies its own destination. A wrong button is worse than none."
 		}
 	],
 	"buddypress_integration": {
