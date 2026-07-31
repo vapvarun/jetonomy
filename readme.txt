@@ -264,6 +264,31 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 1.8.1 - July 2026 =
+
+Sell access to a space with a membership plan, and be told which plan opens it. Closes a permissions issue where an access rule could grant more than it said.
+
+* New      - Gate a space on a membership plan, and people holding that plan get in automatically. Access starts when the plan becomes active and ends when it lapses, with nothing to sync by hand.
+* New      - A visitor who cannot enter a paid space is told which plan includes it and given a link to buy it, instead of a generic "this space is private".
+* New      - Keyboard shortcuts l (upvote the focused post) and r (reply to it), which the FAQ has always documented.
+* Improve  - The Access Rules screen explains what each access level unlocks, and reads your rule back in plain English as you build it.
+* Improve  - An access rule now uses a single Access level rather than two settings that could contradict each other, and defaults to Participate.
+* Improve  - Warn on the Access Rules screen when a rule cannot restrict anything, because the space is public or anyone can join it.
+* Improve  - Admin screens are usable down to 320px, and touch targets meet 44px on phones and tablets.
+* Improve  - Dropdown menus in wp-admin match the rest of the interface instead of using the operating system's own styling, where the browser supports it.
+* Improve  - Every message the plugin shows can be translated, including sign-in, sign-up and password-reset feedback, and admin list statuses.
+* Fix      - Search-as-you-type returns results again, and clicking one opens that topic.
+* Fix      - Pressing Enter on a keyboard-focused row opens it.
+* Fix      - The emoji picker can be opened from the composer toolbar.
+* Fix      - Paragraph spacing is kept on topics and replies written in the composer.
+* Fix      - The Conversations screen explains that messaging is dormant when another plugin handles direct messages, instead of showing a permissions error.
+* Fix      - Closing the email preview with Escape returns focus to the button that opened it.
+* Fix      - Activity Log and Revisions rows identify themselves on a phone rather than showing only a date or a type.
+* Fix      - Roadmap columns no longer use the same colour for Planned and In Progress.
+* Fix      - The "Read the full guide" link on the Users screen resolves.
+* Security - An access rule could grant more than it advertised: a rule set to "Read" could record people as space admins, and running Sync Members then gave them moderation powers, including deleting other people's posts. The role a rule assigns is now capped by what the rule allows, and a membership rule can never make somebody a moderator. Rules already saved on your site are covered; no action is needed.
+* Dev      - New filters: jetonomy_compose_label (the create verb per space type) and jetonomy_membership_upgrade_url (where a plan is bought). Membership adapters may implement get_level_url() to link a plan directly.
+
 = 1.8.0 - July 2026 =
 
 Forum imports bring attachments and hierarchy across, attachments work with or without Pro, moderation and search read the same on the app and the web, and cached data is never served stale after a change.
