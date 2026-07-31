@@ -49,6 +49,15 @@ class CronBatchTest extends WP_UnitTestCase {
 		$posts_t    = table( 'posts' );
 		$replies_t  = table( 'replies' );
 
+		// The batch is keyset-paginated by user_id ASC over EVERY profile with
+		// trust_level < 4, so this test only means what it says if the seeded
+		// rows are the whole population. They were not: the WP factory user and
+		// a lurker-provisioned profile sat at lower ids (2 and 478), so a batch
+		// of 2 spent both slots on non-qualifying rows and promoted 1. That read
+		// as "the cap is broken" when the cap was working exactly as designed -
+		// it evaluated 2 profiles, and only one of them qualified.
+		$wpdb->query( "DELETE FROM {$profiles_t}" ); // phpcs:ignore WordPress.DB
+
 		// Use a small batch so we can seed only a few rows.
 		$small_batch = 2;
 		add_filter(
