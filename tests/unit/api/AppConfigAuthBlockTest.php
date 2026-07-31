@@ -44,10 +44,14 @@ class AppConfigAuthBlockTest extends WP_UnitTestCase {
 		$this->assertIsBool( $auth['register'] );
 		$this->assertIsBool( $auth['app_passwords_available'] );
 		$this->assertContains( 'jetonomyapp', $auth['connect_schemes'] );
-		// Pre-J3 a standalone site has no bridge yet; the app reads '' as
-		// "use the legacy wp-admin authorize flow". When J3 lands, this
-		// assertion changes to the router-resolved connect-app URL.
-		$this->assertSame( '', $auth['connect_url'] );
+		// J3 shipped the standalone bridge: a BN-less site advertises its own
+		// router-resolved connect-app door, honouring a renamed base slug.
+		$this->assertSame( home_url( '/community/connect-app/' ), $auth['connect_url'] );
+
+		update_option( 'jetonomy_settings', array( 'base_slug' => 'forums' ) );
+		$renamed = rest_do_request( new \WP_REST_Request( 'GET', '/jetonomy/v1/app/config' ) )->get_data()['auth'];
+		delete_option( 'jetonomy_settings' );
+		$this->assertSame( home_url( '/forums/connect-app/' ), $renamed['connect_url'], 'the bridge URL must follow the base slug' );
 	}
 
 	/**
