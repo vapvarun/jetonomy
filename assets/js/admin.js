@@ -796,7 +796,9 @@
 					var typeSel  = $('#rule-type option:selected').text();
 					var grants   = $('#rule-grants').val();
 					var role     = $('#rule-space-role').val();
-					var roleTxt  = $('#rule-space-role option:selected').text();
+					// Roster role is derived now, so its label comes from the
+					// dictionary rather than a select the owner can see.
+					var roleTxt  = (i18n.roles && i18n.roles[role]) || role;
 					var grantTxt = (i18n.grants && i18n.grants[grants]) || grants;
 
 					var who = i18n.whoFallback || 'People who match this rule';
@@ -808,23 +810,27 @@
 						.replace('%2$s', grantTxt)
 						.replace('%3$s', roleTxt);
 
-					// Mismatch: the recorded role implies more power than the
-					// grant allows, or vice versa. Ranked purely on the two
-					// ladders, so it stays true if either gains a rung.
-					var grantRank = { read: 1, participate: 2, full: 3 }[grants] || 1;
-					var roleRank  = { viewer: 1, member: 2, moderator: 3, admin: 3 }[role] || 1;
+					// No mismatch warning any more: the roster role is derived
+					// from the access level, so the two can no longer disagree.
 					var warn = '';
-					if (roleRank > grantRank) {
-						warn = i18n.warnRoleHigher || 'Heads up: the Space Role is more powerful than the Grants. Whoever is added to the roster by "Sync Members" will get the role\'s abilities too.';
-					} else if (grantRank > roleRank) {
-						warn = i18n.warnGrantHigher || 'Heads up: the Grants are broader than the Space Role, so member lists will understate what these people can do.';
-					}
 
 					$out.html('').append($('<span/>').text(sentence));
 					if (warn) {
 						$out.append($('<span class="jt-rule-preview__warn"/>').text(' ' + warn));
 					}
 				}
+
+				// Roster role is derived, never chosen: read -> viewer,
+				// participate -> member, full -> moderator. Matches
+				// AccessRule::cap_space_role() on the server, which is the
+				// authority - this only keeps the hidden field honest.
+				function syncDerivedRole() {
+					var map = { read: 'viewer', participate: 'member', full: 'moderator' };
+					$('#rule-space-role').val(map[$('#rule-grants').val()] || 'viewer');
+				}
+
+				$(document).on('change', '#rule-grants', syncDerivedRole);
+				syncDerivedRole();
 
 				$(document).on('change', '#rule-grants, #rule-space-role', renderRulePreview);
 				$(document).on('input', '#rule-value, #rule-value-membership-search', renderRulePreview);
@@ -871,6 +877,9 @@
 				self.ajax('jetonomy_sync_access_rule', {
 					space_id: $btn.data('space-id'),
 					rule_value: $btn.data('value'),
+					// The server reads the rule by id and derives the roster role
+					// from its grants; space_role is sent only for older builds.
+					rule_id: $btn.data('id'),
 					space_role: $btn.data('role')
 				}).done(function(res) {
 					if (res.success) {

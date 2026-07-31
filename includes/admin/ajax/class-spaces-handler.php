@@ -466,10 +466,21 @@ class Spaces_Handler {
 
 		$space_id   = absint( $_POST['space_id'] ?? 0 );
 		$rule_value = sanitize_text_field( wp_unslash( $_POST['rule_value'] ?? '' ) );
+		$rule_id    = absint( $_POST['rule_id'] ?? 0 );
 		$space_role = sanitize_text_field( wp_unslash( $_POST['space_role'] ?? 'member' ) );
 
 		if ( ! $space_id || ! $rule_value ) {
 			wp_send_json_error( __( 'Missing parameters.', 'jetonomy' ) );
+		}
+
+		// The roster role comes from the STORED rule, capped by that rule's own
+		// grants - never from the request. Sync used to write whatever role the
+		// button carried, so a rule advertising "Read" could deposit space
+		// admins, who then get the moderation bypass that reads the roster role
+		// and never looks at grants. See AccessRule::cap_space_role().
+		$rule = $rule_id ? AccessRule::find( $rule_id ) : null;
+		if ( $rule && (int) $rule->space_id === $space_id ) {
+			$space_role = AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type );
 		}
 
 		// Find the adapter that owns this level.

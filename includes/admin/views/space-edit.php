@@ -354,7 +354,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					</tbody>
 				</table>
 				<p class="description">
-					<?php esc_html_e( '"Space Role" is separate: it is the role the person is recorded as holding here, which is what member lists and role-based settings read. It does not limit the Grants - someone given Full and recorded as Viewer still gets everything Full allows.', 'jetonomy' ); ?>
+					<?php esc_html_e( 'Members lists show a matching role - Read is listed as Viewer, Participate as Member, Full as Moderator. To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ); ?>
 				</p>
 				<p class="description">
 					<strong><?php esc_html_e( 'A rule can never exceed a WordPress role.', 'jetonomy' ); ?></strong>
@@ -408,18 +408,30 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<div id="rule-value-membership-results" class="jetonomy-ac-results" style="display:none;"></div>
 					</div>
 					<label class="screen-reader-text" for="rule-grants"><?php esc_html_e( 'Grants', 'jetonomy' ); ?></label>
+					<?php
+					// Participate is preselected because it is what a gated space
+					// almost always wants - somebody let in by a rule, especially a
+					// paid one, is there to take part. Read-only is the exception.
+					// The ladder keeps its order so the progression still reads
+					// left to right.
+					?>
 					<select id="rule-grants">
 						<option value="read"><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
-						<option value="participate"><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
+						<option value="participate" selected><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
 						<option value="full"><?php esc_html_e( 'Full', 'jetonomy' ); ?></option>
 					</select>
-					<label class="screen-reader-text" for="rule-space-role"><?php esc_html_e( 'Space role', 'jetonomy' ); ?></label>
-					<select id="rule-space-role">
-						<option value="viewer"><?php esc_html_e( 'Viewer', 'jetonomy' ); ?></option>
-						<option value="member"><?php esc_html_e( 'Member', 'jetonomy' ); ?></option>
-						<option value="moderator"><?php esc_html_e( 'Moderator', 'jetonomy' ); ?></option>
-						<option value="admin"><?php esc_html_e( 'Admin', 'jetonomy' ); ?></option>
-					</select>
+					<?php
+					// Space Role is no longer a separate choice. It never affected
+					// access - Permission_Engine reads only `grants` - and its one
+					// consumer, "Sync Members", could deposit space admins from a
+					// rule labelled "Read", who then picked up the moderation
+					// bypass that reads the roster role. The role is derived from
+					// the access level now and submitted as a hidden field so the
+					// stored shape and every existing rule are untouched. To give
+					// one person a different role, use the Members tab, where
+					// roster roles belong and the change is visible per person.
+					?>
+					<input type="hidden" id="rule-space-role" value="viewer">
 					<input type="hidden" id="rule-priority" value="0">
 					<button type="button" class="button button-primary" id="jetonomy-add-rule" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Add Rule', 'jetonomy' ); ?></button>
 				</div>

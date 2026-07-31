@@ -71,6 +71,58 @@ class AccessRule extends Model {
 	 * @return array|null Matched rule's resolved data, or null if no rule matched.
 	 */
 	/**
+	 * The roster role a rule's grants can justify.
+	 *
+	 * A rule stores BOTH what someone may do (`grants`) and what role they are
+	 * recorded as when "Sync Members" materialises them (`space_role`). Those
+	 * were independent, and the combination was not merely confusing - it was a
+	 * privilege escalation. A rule labelled "Read - view posts and replies,
+	 * cannot take part" with space_role=admin gave every matched person
+	 * `delete_others_posts` and `moderate` the moment an owner pressed Sync
+	 * Members, because Permission_Engine's space-moderator bypass reads the
+	 * ROSTER role and never looks at the rule's grants.
+	 *
+	 * Capping here closes that on every site, including the rules already
+	 * stored on installs that upgrade - the stored value is left alone, but it
+	 * can no longer buy more power than the rule advertises.
+	 *
+	 * A `membership` rule is capped harder still: never above `member`, whatever
+	 * its grants say. A membership rule means "everyone holding this plan", and
+	 * nobody should become a space moderator by buying something - moderation is
+	 * an appointment, made per person on the Members tab. Role, capability and
+	 * trust-level rules are deliberate administrative choices about a known
+	 * group, so they keep the full ladder.
+	 *
+	 * @param string $grants     read | participate | full.
+	 * @param string $space_role Requested roster role.
+	 * @param string $rule_type  Rule type; `membership` is capped at member.
+	 * @return string The requested role, or the highest the rule justifies.
+	 */
+	public static function cap_space_role( string $grants, string $space_role, string $rule_type = '' ): string {
+		$ladder  = array(
+			'viewer'    => 1,
+			'member'    => 2,
+			'moderator' => 3,
+			'admin'     => 4,
+		);
+		$ceiling = array(
+			'read'        => 'viewer',
+			'participate' => 'member',
+			'full'        => 'moderator',
+		);
+
+		$max = $ceiling[ $grants ] ?? 'viewer';
+
+		if ( 'membership' === $rule_type && $ladder[ $max ] > $ladder['member'] ) {
+			$max = 'member';
+		}
+
+		$want = $ladder[ $space_role ] ?? 1;
+
+		return $want > $ladder[ $max ] ? $max : $space_role;
+	}
+
+	/**
 	 * Does any access rule admit this user to this space?
 	 *
 	 * The question a GATE asks, as opposed to `is_member()`, which asks whether
