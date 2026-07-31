@@ -965,7 +965,7 @@ class Admin {
 						'grants'          => array(
 							'read'        => __( 'read posts and replies, but not take part', 'jetonomy' ),
 							'participate' => __( 'read, post, reply, vote and report', 'jetonomy' ),
-							'full'        => __( 'read, post, reply, vote, report, and edit, close or pin other people\'s topics', 'jetonomy' ),
+							'full'        => __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s topics', 'jetonomy' ),
 						),
 						'warnRoleHigher'  => __( 'Heads up: the Space Role is more powerful than the Grants. Anyone added to the roster by "Sync Members" gets the role\'s abilities too.', 'jetonomy' ),
 						'warnGrantHigher' => __( 'Heads up: the Grants are broader than the Space Role, so member lists will understate what these people can do.', 'jetonomy' ),

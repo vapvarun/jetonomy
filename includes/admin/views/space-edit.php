@@ -349,12 +349,16 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						</tr>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Full', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'Participate, plus edit other people\'s posts, close and pin topics.', 'jetonomy' ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'Participate, plus edit other people\'s posts, close and pin topics - but only for people whose WordPress role already allows moderation. For an ordinary member this behaves exactly like Participate.', 'jetonomy' ); ?></td>
 						</tr>
 					</tbody>
 				</table>
 				<p class="description">
-					<?php esc_html_e( '"Space Role" is separate: it is the role the person is recorded as holding here, which is what member lists and role-based settings read.', 'jetonomy' ); ?>
+					<?php esc_html_e( '"Space Role" is separate: it is the role the person is recorded as holding here, which is what member lists and role-based settings read. It does not limit the Grants - someone given Full and recorded as Viewer still gets everything Full allows.', 'jetonomy' ); ?>
+				</p>
+				<p class="description">
+					<strong><?php esc_html_e( 'A rule can never exceed a WordPress role.', 'jetonomy' ); ?></strong>
+					<?php esc_html_e( 'Grants filter what someone may do here; they cannot hand out an ability the person\'s WordPress role does not already carry. Moderation abilities come from the role - set those under Jetonomy - Settings - Permissions.', 'jetonomy' ); ?>
 				</p>
 				<p class="description">
 					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
