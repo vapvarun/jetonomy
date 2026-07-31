@@ -774,7 +774,61 @@
 						activeLevels = adapterMap[adapterId] || [];
 						$input.attr('placeholder', adapters.filter(function(a) { return a.id === adapterId; })[0].label + '...');
 					}
+					renderRulePreview();
 				});
+
+				/**
+				 * Plain-English sentence for the rule being composed.
+				 *
+				 * The two trailing selects are the confusing part of this form:
+				 * "Grants" is what the person may DO, "Space Role" is what they
+				 * are RECORDED as, and nothing at the point of use said so — or
+				 * warned that the pair can contradict itself (Read + Admin reads
+				 * as "look but don't touch, and also run the place"). Rather than
+				 * explain two dials in the abstract, describe the combination
+				 * the owner has actually picked, and flag it when it disagrees.
+				 */
+				function renderRulePreview() {
+					var $out = $('[data-jt-rule-preview]');
+					if (!$out.length) { return; }
+
+					var i18n     = (self.i18n && self.i18n.rulePreview) || {};
+					var typeSel  = $('#rule-type option:selected').text();
+					var grants   = $('#rule-grants').val();
+					var role     = $('#rule-space-role').val();
+					var roleTxt  = $('#rule-space-role option:selected').text();
+					var grantTxt = (i18n.grants && i18n.grants[grants]) || grants;
+
+					var who = i18n.whoFallback || 'People who match this rule';
+					var val = $('#rule-value').is(':visible') ? $('#rule-value').val() : $('#rule-value-membership-search').val();
+					if (val) { who = typeSel + ': ' + val; }
+
+					var sentence = (i18n.sentence || '%1$s can %2$s. They are recorded as %3$s.')
+						.replace('%1$s', who)
+						.replace('%2$s', grantTxt)
+						.replace('%3$s', roleTxt);
+
+					// Mismatch: the recorded role implies more power than the
+					// grant allows, or vice versa. Ranked purely on the two
+					// ladders, so it stays true if either gains a rung.
+					var grantRank = { read: 1, participate: 2, full: 3 }[grants] || 1;
+					var roleRank  = { viewer: 1, member: 2, moderator: 3, admin: 3 }[role] || 1;
+					var warn = '';
+					if (roleRank > grantRank) {
+						warn = i18n.warnRoleHigher || 'Heads up: the Space Role is more powerful than the Grants. Whoever is added to the roster by "Sync Members" will get the role\'s abilities too.';
+					} else if (grantRank > roleRank) {
+						warn = i18n.warnGrantHigher || 'Heads up: the Grants are broader than the Space Role, so member lists will understate what these people can do.';
+					}
+
+					$out.html('').append($('<span/>').text(sentence));
+					if (warn) {
+						$out.append($('<span class="jt-rule-preview__warn"/>').text(' ' + warn));
+					}
+				}
+
+				$(document).on('change', '#rule-grants, #rule-space-role', renderRulePreview);
+				$(document).on('input', '#rule-value, #rule-value-membership-search', renderRulePreview);
+				renderRulePreview();
 			})();
 
 			// Add rule

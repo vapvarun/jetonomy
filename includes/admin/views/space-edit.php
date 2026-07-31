@@ -305,8 +305,90 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<!-- Access Rules Tab -->
 		<div class="jetonomy-tab-content">
 			<h2><?php esc_html_e( 'Add Access Rule', 'jetonomy' ); ?></h2>
+
+			<?php
+			// What a rule actually does was invisible: two dials with no
+			// explanation, and nothing saying that access follows a
+			// subscription rather than being a one-time grant. Owners were
+			// left guessing what they had configured.
+			$jt_rule_open_join = 'open' === ( $space->join_policy ?? 'open' );
+			$jt_rule_public    = 'public' === ( $space->visibility ?? 'public' );
+			$jt_has_membership = false;
+			foreach ( $access_rules as $jt_r ) {
+				if ( 'membership' === $jt_r->rule_type ) {
+					$jt_has_membership = true;
+					break;
+				}
+			}
+			?>
+			<div class="jt-settings-card jt-access-help">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'How access rules work', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc">
+						<?php
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						echo esc_html( sprintf( __( 'A rule lets people in to this %s. It never locks anyone out on its own - visibility and join policy do that.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+						?>
+					</p>
+				</div>
+				<table class="widefat striped jt-access-help-table"><!-- jetonomy-audit-table-ok: static reference copy, stacks below 782px via .jt-access-help-table -->
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'What the person can do', 'jetonomy' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'View posts and replies. Cannot take part.', 'jetonomy' ); ?></td>
+						</tr>
+						<tr>
+							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'Read, plus post, reply, vote and report. The usual choice for a paid plan.', 'jetonomy' ); ?></td>
+						</tr>
+						<tr>
+							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Full', 'jetonomy' ); ?></strong></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'Participate, plus edit other people\'s posts, close and pin topics.', 'jetonomy' ); ?></td>
+						</tr>
+					</tbody>
+				</table>
+				<p class="description">
+					<?php esc_html_e( '"Space Role" is separate: it is the role the person is recorded as holding here, which is what member lists and role-based settings read.', 'jetonomy' ); ?>
+				</p>
+				<p class="description">
+					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
+					<?php esc_html_e( 'Access begins the moment a plan becomes active and ends when it lapses - there is nothing to sync and nothing to undo by hand. "Sync Members" is only needed if you also want these people listed on the roster.', 'jetonomy' ); ?>
+				</p>
+			</div>
+
+			<?php if ( $jt_has_membership && ( $jt_rule_public || $jt_rule_open_join ) ) : ?>
+				<div class="notice notice-warning inline jt-access-warning">
+					<p>
+						<strong><?php esc_html_e( 'This rule is not restricting anyone yet.', 'jetonomy' ); ?></strong>
+					</p>
+					<p>
+						<?php if ( $jt_rule_public ) : ?>
+							<?php
+							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+							echo esc_html( sprintf( __( 'This %s is Public, so everyone can already read it. A membership rule only adds access - it cannot take it away.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+							?>
+						<?php else : ?>
+							<?php esc_html_e( 'The join policy is Open, so anyone signed in can join without the plan.', 'jetonomy' ); ?>
+						<?php endif; ?>
+					</p>
+					<p>
+						<?php
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						echo esc_html( sprintf( __( 'To sell access to this %s, set Visibility to Private and Join Policy to Invite Only on the Settings tab. Plan holders still get in automatically through this rule.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<div class="jetonomy-inline-form" id="jetonomy-add-rule-form">
 				<div class="jetonomy-form-row">
+					<label class="screen-reader-text" for="rule-type"><?php esc_html_e( 'Rule type', 'jetonomy' ); ?></label>
 					<select id="rule-type">
 						<option value="everyone"><?php esc_html_e( 'Everyone', 'jetonomy' ); ?></option>
 						<option value="logged_in"><?php esc_html_e( 'Logged In', 'jetonomy' ); ?></option>
@@ -321,11 +403,13 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<input type="hidden" id="rule-value-membership" value="">
 						<div id="rule-value-membership-results" class="jetonomy-ac-results" style="display:none;"></div>
 					</div>
+					<label class="screen-reader-text" for="rule-grants"><?php esc_html_e( 'Grants', 'jetonomy' ); ?></label>
 					<select id="rule-grants">
 						<option value="read"><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
 						<option value="participate"><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
 						<option value="full"><?php esc_html_e( 'Full', 'jetonomy' ); ?></option>
 					</select>
+					<label class="screen-reader-text" for="rule-space-role"><?php esc_html_e( 'Space role', 'jetonomy' ); ?></label>
 					<select id="rule-space-role">
 						<option value="viewer"><?php esc_html_e( 'Viewer', 'jetonomy' ); ?></option>
 						<option value="member"><?php esc_html_e( 'Member', 'jetonomy' ); ?></option>
@@ -335,6 +419,12 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<input type="hidden" id="rule-priority" value="0">
 					<button type="button" class="button button-primary" id="jetonomy-add-rule" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Add Rule', 'jetonomy' ); ?></button>
 				</div>
+				<?php
+				// Reads back the rule being composed in plain English, right
+				// where the two confusing selects are, and warns when Grants
+				// and Space Role disagree. Rendered by admin.js.
+				?>
+				<p class="description jt-rule-preview" data-jt-rule-preview aria-live="polite"></p>
 			</div>
 
 			<?php /* translators: %d: number of access rules */ ?>

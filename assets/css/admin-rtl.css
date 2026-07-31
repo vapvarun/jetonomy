@@ -3935,3 +3935,46 @@ tr.jetonomy-moderated td {
 		}
 	}
 }
+
+/* ── Access-rule explainer ──────────────────────────────────────────────────
+   Reference copy on the space editor's Access Rules tab. Static content, so
+   it stacks by hand below 782px rather than going through the list-table
+   collapse contract. */
+.jetonomy-admin .jt-access-help-table {
+	margin-block-start: 12px;
+}
+
+.jetonomy-admin .jt-access-help-table td:first-child {
+	width: 130px;
+}
+
+.jetonomy-admin .jt-access-warning {
+	margin-block: 12px 0;
+}
+
+@media screen and (max-width: 782px) {
+	.jetonomy-admin .jt-access-help-table,
+	.jetonomy-admin .jt-access-help-table tbody,
+	.jetonomy-admin .jt-access-help-table tr,
+	.jetonomy-admin .jt-access-help-table td {
+		display: block;
+		width: auto;
+	}
+
+	.jetonomy-admin .jt-access-help-table thead {
+		display: none;
+	}
+
+	.jetonomy-admin .jt-access-help-table tr {
+		padding-block: 10px;
+		border-block-end: 1px solid var(--jt-admin-border-subtle, #f0f0f1);
+	}
+
+	.jetonomy-admin .jt-access-help-table tr:last-child {
+		border-block-end: 0;
+	}
+
+	.jetonomy-admin .jt-access-help-table td:first-child {
+		width: auto;
+	}
+}

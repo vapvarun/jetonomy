@@ -956,6 +956,20 @@ class Admin {
 					'inviteUnlimited'         => esc_html__( 'Unlimited', 'jetonomy' ),
 					'inviteNever'             => esc_html__( 'Never', 'jetonomy' ),
 					'inviteExpired'           => esc_html__( 'Expired', 'jetonomy' ),
+					// Access-rule composer preview. Keyed so the sentence and its
+					// mismatch warnings are translatable like everything else.
+					'rulePreview'             => array(
+						'whoFallback'     => __( 'People who match this rule', 'jetonomy' ),
+						/* translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as. */
+						'sentence'        => __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
+						'grants'          => array(
+							'read'        => __( 'read posts and replies, but not take part', 'jetonomy' ),
+							'participate' => __( 'read, post, reply, vote and report', 'jetonomy' ),
+							'full'        => __( 'read, post, reply, vote, report, and edit, close or pin other people\'s topics', 'jetonomy' ),
+						),
+						'warnRoleHigher'  => __( 'Heads up: the Space Role is more powerful than the Grants. Anyone added to the roster by "Sync Members" gets the role\'s abilities too.', 'jetonomy' ),
+						'warnGrantHigher' => __( 'Heads up: the Grants are broader than the Space Role, so member lists will understate what these people can do.', 'jetonomy' ),
+					),
 					'copy'                    => esc_html__( 'Copy', 'jetonomy' ),
 					'revoke'                  => esc_html__( 'Revoke', 'jetonomy' ),
 					// Access-rule sync button + the import restart confirm. These
