@@ -4033,3 +4033,25 @@ tr.jetonomy-moderated td {
 		box-sizing: border-box;
 	}
 }
+
+/* Core's .regular-text is a fixed 25em (~325px), which is wider than a 320px
+   screen - the Users filter bar pushed the document to 335px and the whole
+   backend could not be called presentable while it did (Basecamp 10146297370).
+   Cap every fixed-width core field to the space actually available. */
+.jetonomy-admin .regular-text,
+.jetonomy-admin .large-text,
+.jetonomy-admin input[type="search"],
+.jetonomy-admin input[type="text"],
+.jetonomy-admin input[type="url"],
+.jetonomy-admin input[type="email"],
+.jetonomy-admin select {
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+/* The filter row itself must wrap rather than force its own width. */
+.jetonomy-admin .jetonomy-user-filters,
+.jetonomy-admin .tablenav .alignleft.actions {
+	flex-wrap: wrap;
+	max-width: 100%;
+}

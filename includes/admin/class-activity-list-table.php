@@ -71,6 +71,18 @@ class Activity_List_Table extends \WP_List_Table {
 	}
 
 	/**
+	 * Collapse mobile rows around WHO acted, not when.
+	 *
+	 * WP_List_Table makes the first column primary, which here was the date -
+	 * so every collapsed row on a phone read "22 minutes ago" and nothing
+	 * distinguished one entry from the next (Basecamp 10146443346). The actor
+	 * is the identity in an activity log; the rest expands behind the toggle.
+	 */
+	protected function get_default_primary_column_name(): string {
+		return 'actor';
+	}
+
+	/**
 	 * Sortable columns. Limited to created_at to keep the index path
 	 * (KEY created) — sorting on actor/action would need extra indexes.
 	 *
@@ -166,7 +178,13 @@ class Activity_List_Table extends \WP_List_Table {
 		$paged    = max( 1, absint( $this->get_pagenum() ) );
 		$offset   = ( $paged - 1 ) * $per_page;
 
-		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns() );
+		// Fourth element is the PRIMARY column, set explicitly. Leaving it off
+		// means core resolves it via get_primary_column_name(), which validates
+		// the name against get_column_headers( $this->screen ) - and a custom admin
+		// page registers no screen columns, so the check fails and it silently
+		// falls back to the first column. That put the DATE in the mobile primary
+		// cell, so every collapsed row read "22 minutes ago" (Basecamp 10146443346).
+		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns(), 'actor' );
 
 		[ $where, $args ] = $this->build_where();
 		$activity_t       = table( 'activity_log' );

@@ -101,10 +101,10 @@ $stat_cards = array(
 				<table class="widefat striped"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Action', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Object', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'When', 'jetonomy' ); ?></th>
+							<th scope="col" class="column-primary"><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Action', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Object', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'When', 'jetonomy' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -196,13 +196,22 @@ $stat_cards = array(
 								$object_html = esc_html( $object_type . ' #' . $object_id );
 							}
 							?>
+							<?php
+							// column-primary + data-colname put this table on the same
+							// mobile collapse contract as every other admin list, and
+							// collapse it around WHO acted rather than leaving the
+							// phone with four unlabelled cells (Basecamp 10146443346).
+							?>
 							<tr>
-								<td><?php echo esc_html( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
-								<td>
+								<td class="column-primary" data-colname="<?php esc_attr_e( 'User', 'jetonomy' ); ?>">
+									<strong><?php echo esc_html( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ); ?></strong>
+									<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
+								</td>
+								<td data-colname="<?php esc_attr_e( 'Action', 'jetonomy' ); ?>">
 									<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:<?php echo esc_attr( $dot_color ); ?>;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span><?php echo esc_html( $action_label ); ?>
 								</td>
-								<td><?php echo wp_kses( $object_html, array( 'a' => array( 'href' => array() ) ) ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td data-colname="<?php esc_attr_e( 'Object', 'jetonomy' ); ?>"><?php echo wp_kses( $object_html, array( 'a' => array( 'href' => array() ) ) ); ?></td>
+								<td data-colname="<?php esc_attr_e( 'When', 'jetonomy' ); ?>"><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
