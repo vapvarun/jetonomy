@@ -166,4 +166,57 @@ class AccessRule extends Model {
 
 		return null;
 	}
+
+	/**
+	 * The membership levels this space asks for that this viewer does not hold.
+	 *
+	 * Powers the gate's "this needs the VIP tier, here is where to get it"
+	 * state. Without it a non-subscriber hitting a tier-gated space saw the
+	 * generic "this space is private" copy and a Join button that could not
+	 * help them — the one thing they needed to know (which plan opens this,
+	 * and where to buy it) was the one thing nothing told them.
+	 *
+	 * Only `membership` rules are considered: a role, capability or
+	 * trust-level requirement is not something a visitor can go and purchase,
+	 * so surfacing it as a call to action would be misleading.
+	 *
+	 * @param int $user_id  Viewer ID (0 = guest).
+	 * @param int $space_id Space ID.
+	 * @return array<int, array{level_id:string, type:string, label:string, url:string}>
+	 */
+	public static function unmet_membership_requirements( int $user_id, int $space_id ): array {
+		if ( $space_id <= 0 ) {
+			return array();
+		}
+
+		$unmet = array();
+
+		foreach ( static::list_for_space( $space_id ) as $rule ) {
+			if ( 'membership' !== $rule->rule_type || '' === (string) $rule->rule_value ) {
+				continue;
+			}
+
+			$held = false;
+			foreach ( \Jetonomy\Adapters\Adapter_Registry::get_all_membership() as $adapter ) {
+				if ( $adapter->is_active() && $adapter->user_has_level( $user_id, $rule->rule_value ) ) {
+					$held = true;
+					break;
+				}
+			}
+			if ( $held ) {
+				continue;
+			}
+
+			$described = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
+
+			$unmet[ (string) $rule->rule_value ] = array(
+				'level_id' => (string) $rule->rule_value,
+				'type'     => $described['type'],
+				'label'    => $described['value'],
+				'url'      => \Jetonomy\Adapters\Adapter_Registry::membership_level_url( (string) $rule->rule_value ),
+			);
+		}
+
+		return array_values( $unmet );
+	}
 }

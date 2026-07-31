@@ -28,6 +28,12 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 $_jt_join_policy = $space->join_policy ?? 'open';
 $_jt_user_id     = get_current_user_id();
 $_jt_is_member   = $_jt_user_id && \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $_jt_user_id );
+// Somebody an access rule admits (a paying subscriber, say) is not on the
+// roster, so every gate below has to count them as being through the door.
+// Without this a member who had just bought the plan that includes this space
+// was still shown "requires approval to join" and asked to petition a human
+// for what they had already paid for.
+$_jt_rule_admits = $_jt_user_id && \Jetonomy\Models\AccessRule::grants_access( $_jt_user_id, (int) $space->id );
 $_jt_is_admin    = current_user_can( 'manage_options' );
 $_jt_is_hidden   = 'hidden' === ( $space->visibility ?? '' );
 
@@ -49,7 +55,15 @@ if ( $_jt_is_hidden ) {
 // spacing, icon, and tone treatment are uniform with every other empty path.
 // Only the join-form variant adds raw HTML below the partial because the form
 // itself is too bespoke to fit the generic CTA argument.
-if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin ) {
+// Membership levels this space asks for that the viewer does not hold. Drives
+// the "included with VIP" gate below; empty for guests (they get the login
+// prompt first, since they may already own the plan) and for anyone whose
+// plan is active.
+$_jt_unmet_membership = $_jt_user_id
+	? \Jetonomy\Models\AccessRule::unmet_membership_requirements( $_jt_user_id, (int) $space->id )
+	: array();
+
+if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) {
 	if ( ! $_jt_user_id ) {
 		// Guest — prompt to log in. Hidden and private spaces use distinct
 		// copy so the message does not lie about the space's actual setting:
@@ -70,6 +84,43 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 				'cta_url'   => wp_login_url( \Jetonomy\current_url() ),
 				'tone'      => 'forbidden',
 			]
+		);
+		return;
+	} elseif ( ! empty( $_jt_unmet_membership ) ) {
+		// A membership rule is the reason this person is out, so say so and
+		// give them the way in. Ranked above the invite / approval copy on
+		// purpose: telling a would-be subscriber "you need an invitation"
+		// when the space is actually sold as part of a plan sends them to ask
+		// a human for something they could have bought in one click.
+		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
+		$_jt_first_url  = '';
+		foreach ( $_jt_unmet_membership as $_jt_req ) {
+			if ( '' !== $_jt_req['url'] ) {
+				$_jt_first_url = $_jt_req['url'];
+				break;
+			}
+		}
+
+		\Jetonomy\Template_Loader::partial(
+			'empty-state',
+			array(
+				'icon'        => 'lock',
+				'message'     => sprintf(
+					/* translators: 1: the singular space label (e.g. space, group), 2: comma-separated plan names. */
+					__( 'This %1$s is included with %2$s.', 'jetonomy' ),
+					\Jetonomy\space_label( false, true ),
+					implode( ', ', $_jt_tier_names )
+				),
+				'description' => '' !== $_jt_first_url
+					? __( 'Your access starts as soon as the plan is active, and ends if it lapses.', 'jetonomy' )
+					: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' ),
+				'cta_label'   => '' !== $_jt_first_url
+					/* translators: %s: plan name. */
+					? sprintf( __( 'Get %s', 'jetonomy' ), (string) reset( $_jt_tier_names ) )
+					: '',
+				'cta_url'     => $_jt_first_url,
+				'tone'        => 'forbidden',
+			)
 		);
 		return;
 	} elseif ( 'invite' === $_jt_join_policy ) {
@@ -269,14 +320,14 @@ $crumbs[] = [
 				</div>
 				<?php
 				if ( is_user_logged_in() ) :
-					if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+					if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
 						// Invite-only: show a disabled badge instead of Follow/Join.
 						?>
 						<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;">
 							<?php esc_html_e( 'Invite Only', 'jetonomy' ); ?>
 						</span>
 						<?php
-					elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+					elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
 						// Approval required: check for existing pending request.
 						$_jt_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
 						if ( $_jt_pending ) :
@@ -295,7 +346,7 @@ $crumbs[] = [
 							</button>
 						<?php endif; ?>
 						<?php
-					elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+					elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
 						// Open space, non-member: show Join Space button (instant membership).
 						$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
 						?>
@@ -427,7 +478,7 @@ $crumbs[] = [
 				</div>
 				<?php if ( $is_restricted ) : ?>
 					<?php /* No new-post button for archived/locked spaces. */ ?>
-				<?php elseif ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy ) ) : ?>
+				<?php elseif ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || $_jt_rule_admits || 'open' === $_jt_join_policy ) ) : ?>
 					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
 						<?php
 						// Shared label, so the button and the composer heading it
@@ -481,7 +532,7 @@ $crumbs[] = [
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
 				];
 				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? __( 'New Post', 'jetonomy' );
-				$_jt_can_post    = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
+				$_jt_can_post    = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || $_jt_rule_admits || 'open' === $_jt_join_policy );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					[

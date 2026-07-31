@@ -146,6 +146,52 @@ class Adapter_Registry {
 		];
 	}
 
+	/**
+	 * Where a visitor goes to BUY the membership level a space requires.
+	 *
+	 * Telling somebody "this needs the VIP tier" without a way to get it is
+	 * half an answer, so the gate needs a link. There is no purchase URL on
+	 * the Membership_Adapter interface and adding a required method would
+	 * break all fourteen adapters, so this is opt-in two ways:
+	 *
+	 *   1. the owning adapter may implement `get_level_url( $level_id )`
+	 *      (BuddyNext Pro does, resolving to that tier's plan page);
+	 *   2. otherwise `jetonomy_membership_upgrade_url` lets a site point any
+	 *      level at whatever page sells it.
+	 *
+	 * Returns '' when neither answers, and the caller then renders the
+	 * requirement without a button rather than a link to nowhere.
+	 *
+	 * @param string $level_id Stored `rule_value`, e.g. `bnp_tier_3`.
+	 * @return string Absolute URL, or '' when nothing can resolve one.
+	 */
+	public static function membership_level_url( string $level_id ): string {
+		$url = '';
+
+		if ( '' !== $level_id ) {
+			$owners     = self::membership_level_owners();
+			$adapter_id = $owners[ $level_id ] ?? '';
+			$adapter    = '' !== $adapter_id ? self::get_membership( $adapter_id ) : null;
+
+			if ( $adapter && method_exists( $adapter, 'get_level_url' ) ) {
+				$url = (string) $adapter->get_level_url( $level_id );
+			}
+
+			/**
+			 * Filter the purchase/upgrade URL for a membership level.
+			 *
+			 * @since 1.8.1
+			 *
+			 * @param string $url        Resolved URL ('' when the adapter offers none).
+			 * @param string $level_id   Stored rule value.
+			 * @param string $adapter_id Owning adapter id ('' when unknown).
+			 */
+			$url = (string) apply_filters( 'jetonomy_membership_upgrade_url', $url, $level_id, $adapter_id );
+		}
+
+		return '' !== $url ? esc_url_raw( $url ) : '';
+	}
+
 	public static function register_search( string $id, Search_Adapter $adapter ): void {
 		self::$search[ $id ] = $adapter;
 	}
