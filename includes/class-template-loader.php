@@ -37,7 +37,7 @@ class Template_Loader {
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
-		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks' );
+		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'subscriptions', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks', 'connect-app' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( current_url() ) );
 			exit;
@@ -81,7 +81,11 @@ class Template_Loader {
 			$jt_space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
 			if ( $jt_space ) {
 				$jt_join_policy = $jt_space->join_policy ?? 'open';
-				$jt_is_member   = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() );
+				// An access rule that admits this user counts as access here too,
+				// or a paid subscriber gated in by a membership rule would be
+				// bounced off the composer of the space they just paid for.
+				$jt_is_member = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() )
+					|| \Jetonomy\Models\AccessRule::grants_access( get_current_user_id(), (int) $jt_space->id );
 				if ( ! $jt_is_member && in_array( $jt_join_policy, array( 'invite', 'approval' ), true ) ) {
 					$jt_settings  = get_option( 'jetonomy_settings', array() );
 					$jt_base_slug = $jt_settings['base_slug'] ?? 'community';
@@ -112,6 +116,7 @@ class Template_Loader {
 			'post'             => 'views/single-post.php',
 			'profile'          => 'views/user-profile.php',
 			'notifications'    => 'views/notifications.php',
+			'connect-app'      => 'views/connect-app.php',
 			'search'           => 'views/search.php',
 			'leaderboard'      => 'views/leaderboard.php',
 			'moderation'       => 'views/moderation.php',
@@ -120,6 +125,7 @@ class Template_Loader {
 			'edit-profile'     => 'views/edit-profile.php',
 			'invite'           => 'views/invite.php',
 			'my-spaces'        => 'views/my-spaces.php',
+			'subscriptions'    => 'views/subscriptions.php',
 			'new-space'        => 'views/new-space.php',
 			'edit-space'       => 'views/space-edit.php',
 			'drafts'           => 'views/drafts.php',
@@ -238,9 +244,22 @@ class Template_Loader {
 		// It also re-declared the whole accent chain from a stale copy, which had
 		// already drifted from the real one in jetonomy.css.
 
-		// Layout density.
-		if ( ! empty( $settings['layout_density'] ) && 'compact' === $settings['layout_density'] ) {
-			$dynamic_css .= '.jt-app{font-size:0.875rem;line-height:1.5;}.jt-row{padding:8px 12px;}.jt-reply-body{padding:12px 14px;}.jt-post-body{padding:16px;}';
+		// Layout density. Comfortable is the baseline (theme defaults, no override);
+		// compact tightens spacing/type, spacious loosens it. Rules are keyed to the
+		// data-jt-density attribute set on the .jt-app wrapper below, matching the
+		// documented mechanism (docs/website/admin-settings/04-appearance.md). All
+		// values reference --jt-* tokens so density inherits theme + dark-mode scaling.
+		$density = $settings['layout_density'] ?? 'comfortable';
+		if ( 'compact' === $density ) {
+			$dynamic_css .= '.jt-app[data-jt-density="compact"]{font-size:var(--jt-text-sm);line-height:var(--jt-leading-normal);}'
+				. '.jt-app[data-jt-density="compact"] .jt-row{padding:var(--jt-space-2) var(--jt-space-3);}'
+				. '.jt-app[data-jt-density="compact"] .jt-reply-body{padding:var(--jt-space-3) var(--jt-space-4);}'
+				. '.jt-app[data-jt-density="compact"] .jt-post-body{padding:var(--jt-space-4);}';
+		} elseif ( 'spacious' === $density ) {
+			$dynamic_css .= '.jt-app[data-jt-density="spacious"]{font-size:var(--jt-text-lg);line-height:1.8;}'
+				. '.jt-app[data-jt-density="spacious"] .jt-row{padding:var(--jt-space-5) var(--jt-space-6);}'
+				. '.jt-app[data-jt-density="spacious"] .jt-reply-body{padding:var(--jt-space-6) var(--jt-space-8);}'
+				. '.jt-app[data-jt-density="spacious"] .jt-post-body{padding:var(--jt-space-8);}';
 		}
 
 		// Custom CSS from settings.
@@ -294,7 +313,9 @@ class Template_Loader {
 					'networkError'          => __( 'Network error. Please try again.', 'jetonomy' ),
 					'follow'                => __( 'Follow', 'jetonomy' ),
 					'following'             => __( 'Following', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'followingSpace'        => sprintf( __( 'Following %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					/* translators: %s: the unfollowed space or topic title. */
 					'unfollowedSpace'       => sprintf( __( 'Unfollowed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'copyLink'              => __( 'Copy link', 'jetonomy' ),
 					'bookmark'              => __( 'Bookmark', 'jetonomy' ),
@@ -310,6 +331,7 @@ class Template_Loader {
 					'confirmDeletePost'     => __( 'Are you sure you want to delete this topic?', 'jetonomy' ),
 					'confirmDeleteReply'    => __( 'Are you sure you want to delete this reply?', 'jetonomy' ),
 					'failedDelete'          => __( 'Failed to delete.', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'moveTopicTitle'        => sprintf( __( 'Move topic to another %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'topicMoved'            => __( 'Topic moved successfully.', 'jetonomy' ),
 					'moveFailed'            => __( 'Failed to move topic.', 'jetonomy' ),
@@ -324,7 +346,9 @@ class Template_Loader {
 					'cancelReply'           => __( 'Cancel reply', 'jetonomy' ),
 					'posting'               => __( 'Posting...', 'jetonomy' ),
 					'postTopic'             => __( 'Post Topic', 'jetonomy' ),
+					/* translators: %d: number of new replies (always 1 in this singular form). */
 					'newReply'              => __( '%d new reply. Click to refresh.', 'jetonomy' ),
+					/* translators: %d: number of new replies. */
 					'newReplies'            => __( '%d new replies. Click to refresh.', 'jetonomy' ),
 					'linkCopied'            => __( 'Link copied', 'jetonomy' ),
 					'linkCopyFailed'        => __( 'Could not copy the link. Copy it from the address bar.', 'jetonomy' ),
@@ -335,6 +359,7 @@ class Template_Loader {
 					'messageSending'        => __( 'Sending...', 'jetonomy' ),
 					'messageSend'           => __( 'Send', 'jetonomy' ),
 					'messageSendFailed'     => __( 'Failed to send. Please try again.', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'noMessageMatches'      => sprintf( __( 'No matches. You can only message people who share at least one %s with you.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'recipientRequired'     => __( 'Please enter a recipient.', 'jetonomy' ),
 					'userNotFound'          => __( 'User not found: ', 'jetonomy' ),
@@ -358,6 +383,7 @@ class Template_Loader {
 					// missing here, so they always rendered the English fallback even
 					// on a translated locale.
 					'voteFailed'            => __( 'Vote failed.', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'chooseSpace'           => sprintf( __( 'Choose a %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'draftSaved'            => __( 'Draft saved. You can find it in your profile under Drafts.', 'jetonomy' ),
 					'saveDraft'             => __( 'Save Draft', 'jetonomy' ),
@@ -506,6 +532,7 @@ class Template_Loader {
 					'uploadFailed'           => esc_html__( 'Upload failed.', 'jetonomy' ),
 					'networkError'           => esc_html__( 'Network error.', 'jetonomy' ),
 					'networkErrorRetry'      => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'createSpaceFailed'      => esc_html( sprintf( __( 'Could not create the %s. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					'saveFailed'             => esc_html__( 'Could not save changes.', 'jetonomy' ),
 					'prefixLabel'            => esc_html__( 'Label', 'jetonomy' ),
@@ -513,7 +540,10 @@ class Template_Loader {
 					// Composer + Join-Space gate strings (consumed by composer.js).
 					'quoteSelected'          => esc_html__( 'Quote', 'jetonomy' ),
 					'joining'                => esc_html__( 'Joining...', 'jetonomy' ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpace'              => esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					'requesting'             => esc_html__( 'Requesting...', 'jetonomy' ),
 					'awaitingApproval'       => esc_html__( 'Awaiting Approval', 'jetonomy' ),
 					'requestToJoin'          => esc_html__( 'Request to Join', 'jetonomy' ),
@@ -532,9 +562,13 @@ class Template_Loader {
 					'modalSubmit'            => esc_html__( 'Submit', 'jetonomy' ),
 					'modalMove'              => esc_html__( 'Move', 'jetonomy' ),
 					'modalMerge'             => esc_html__( 'Merge', 'jetonomy' ),
+					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'loadingSpaces'          => esc_html( sprintf( __( 'Loading %s…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'selectSpacePlaceholder' => esc_html( sprintf( __( 'Select a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
+					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'noOtherSpaces'          => esc_html( sprintf( __( 'No other %s available', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
+					/* translators: %s: plural space label. */
 					'failedLoadSpaces'       => esc_html( sprintf( __( 'Failed to load %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					'searchTopicPlaceholder' => esc_html__( 'Search for a topic...', 'jetonomy' ),
 					'noTopicsFound'          => esc_html__( 'No topics found', 'jetonomy' ),
@@ -545,9 +579,9 @@ class Template_Loader {
 					// translator picks singular/plural per their locale.
 					'mergeFromLabel'         => esc_html__( 'From', 'jetonomy' ),
 					'pickerHintTwoChars'     => esc_html__( 'Type at least 2 characters to search.', 'jetonomy' ),
-					/* translators: %d: number of replies on a topic. */
+					/* translators: %d: number of replies. */
 					'pickerReplySingular'    => esc_html__( '%d reply', 'jetonomy' ),
-					/* translators: %d: number of replies on a topic. */
+					/* translators: %d: number of replies. */
 					'pickerReplyPlural'      => esc_html__( '%d replies', 'jetonomy' ),
 					'roleLabels'             => array(
 						'member'    => esc_html__( 'Member', 'jetonomy' ),
@@ -569,6 +603,18 @@ class Template_Loader {
 					'banMemberTitle'         => esc_html__( 'Ban member', 'jetonomy' ),
 					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
 					'banFailed'              => esc_html__( 'Ban failed. Please try again.', 'jetonomy' ),
+					// Frontend member moderation from a profile (site ban / silence / lift).
+					/* translators: %s: member display name. */
+					'banSiteConfirmFormat'   => esc_html__( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ),
+					'banSiteTitle'           => esc_html__( 'Ban member', 'jetonomy' ),
+					/* translators: %s: member display name. */
+					'silenceConfirmFormat'   => esc_html__( 'Silence %s? They stay a member but cannot post, reply, or file reports until you lift it.', 'jetonomy' ),
+					'silenceTitle'           => esc_html__( 'Silence member', 'jetonomy' ),
+					'silenceLabel'           => esc_html__( 'Silence', 'jetonomy' ),
+					/* translators: %s: member display name. */
+					'liftConfirmFormat'      => esc_html__( 'Lift the restriction on %s? They regain full access right away.', 'jetonomy' ),
+					'liftTitle'              => esc_html__( 'Lift restriction', 'jetonomy' ),
+					'liftLabel'              => esc_html__( 'Lift', 'jetonomy' ),
 					// 1.6.1 i18n sweep - role-change + deny-join confirm dialogs (view.js reads
 					// window.jetonomyData.i18n outside the IA store; these were never injected).
 					/* translators: %name%, %from%, %to% are replaced client-side. */
@@ -704,7 +750,7 @@ class Template_Loader {
 		// click to actions.navigate (Phase 2 client-side routing). The action
 		// route-guards which targets are safe to swap vs. full-load, and always
 		// preserves the real <a href> as the fallback.
-		echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy" data-wp-on--click="actions.navigate">';
+		echo '<div id="jetonomy-app" class="jt-app" data-jt-density="' . esc_attr( $density ) . '" data-wp-interactive="jetonomy" data-wp-on--click="actions.navigate">';
 
 		/**
 		 * Fires inside the Jetonomy app wrapper, before the header partial and
@@ -1004,6 +1050,12 @@ class Template_Loader {
 		if ( ! $space ) {
 			return '';
 		}
+		// Concealed space: the tab title must not name it. NULL (not '') for the
+		// same reason as the gated-post branch above — the slug fallback would
+		// re-leak in hyphens the words this gate withholds.
+		if ( \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+			return null;
+		}
 		return str_replace( '{space_name}', (string) $space->title, $pattern );
 	}
 
@@ -1023,9 +1075,12 @@ class Template_Loader {
 	 * @return string
 	 */
 	private static function seo_display_name( string $route, string $slug, string $fallback ): string {
-		if ( in_array( $route, array( 'space', 'space-members', 'space-roadmap', 'space-moderation' ), true ) ) {
+		if ( in_array( $route, array( 'space', 'space-members', 'space-roadmap', 'space-moderation', 'new-post' ), true ) ) {
 			$sp = \Jetonomy\Models\Space::find_by_slug( $slug );
-			if ( $sp && ! empty( $sp->title ) ) {
+			// Concealed spaces must not leak their title into <title> — the
+			// viewer gets the prettified slug they themselves typed, nothing
+			// more (pairs with the 404 in maybe_set_404).
+			if ( $sp && ! empty( $sp->title ) && ! \Jetonomy\Models\Space::concealed_from_viewer( $sp, get_current_user_id() ) ) {
 				return (string) $sp->title;
 			}
 		} elseif ( 'category' === $route ) {
@@ -1035,6 +1090,29 @@ class Template_Loader {
 			}
 		}
 		return $fallback;
+	}
+
+	/**
+	 * Title for the composer route: the space's own compose verb, plus the
+	 * space it posts into. Shares \Jetonomy\compose_label() with the composer
+	 * heading, the space CTA and the BuddyPress tab CTA, and resolves the space
+	 * name through seo_display_name() so a concealed space never leaks.
+	 *
+	 * @param string $slug        Space slug from the route.
+	 * @param string $slug_pretty Prettified slug, used when the space is
+	 *                            missing or concealed.
+	 * @return string
+	 */
+	private static function compose_route_title( string $slug, string $slug_pretty ): string {
+		$space = '' !== $slug ? \Jetonomy\Models\Space::find_by_slug( $slug ) : null;
+		$label = \Jetonomy\compose_label( $space ? (string) $space->type : '' );
+
+		if ( '' === $slug ) {
+			return $label;
+		}
+
+		/* translators: 1: compose action e.g. "Ask a Question", 2: space name. */
+		return sprintf( __( '%1$s in %2$s', 'jetonomy' ), $label, self::seo_display_name( 'new-post', $slug, $slug_pretty ) );
 	}
 
 	private static function set_seo_meta( array $data ): void {
@@ -1121,7 +1199,11 @@ class Template_Loader {
 						$parts['title'] = __( 'Moderation Queue', 'jetonomy' );
 						break;
 					case 'new-post':
-						$parts['title'] = __( 'Start a discussion', 'jetonomy' );
+						// Match the heading the page actually renders. A fixed
+						// "Start a discussion" was wrong on every Q&A, ideas and
+						// feed space, where the composer says "Ask a Question",
+						// "Share an Idea" or "New Status".
+						$parts['title'] = self::compose_route_title( (string) $data['slug'], $slug_pretty );
 						break;
 					case 'notifications':
 						$parts['title'] = __( 'Notifications', 'jetonomy' );
@@ -1133,12 +1215,18 @@ class Template_Loader {
 						$parts['title'] = __( 'You are invited', 'jetonomy' );
 						break;
 					case 'my-spaces':
+						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						$parts['title'] = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						break;
+					case 'subscriptions':
+						$parts['title'] = __( 'My Subscriptions', 'jetonomy' );
+						break;
 					case 'new-space':
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 						$parts['title'] = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'edit-space':
+						/* translators: %s: what is being edited - the configured space label, or a specific space title. */
 						$parts['title'] = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'drafts':
@@ -1209,7 +1297,8 @@ class Template_Loader {
 						$image_alt = $site_name;
 						break;
 					case 'category':
-						$title     = self::seo_display_name( 'category', (string) $data['slug'], ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) ) );
+						$title = self::seo_display_name( 'category', (string) $data['slug'], ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) ) );
+						/* translators: 1: plural space label, 2: category name, 3: site title. */
 						$desc      = sprintf( __( '%1$s in the %2$s category on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name );
 						$url       = $base . '/category/' . rawurlencode( (string) $data['slug'] ) . '/';
 						$image_alt = $title;
@@ -1219,6 +1308,12 @@ class Template_Loader {
 					case 'space-roadmap':
 					case 'space-moderation':
 						$space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
+						// A concealed space's <head> must look exactly like a
+						// missing space's: no title/desc/og/image (pairs with the
+						// 404 in maybe_set_404 — Basecamp 10105630168).
+						if ( $space && \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+							$space = null;
+						}
 						if ( $space ) {
 							$is_private = ! empty( $space->visibility ) && 'public' !== $space->visibility;
 
@@ -1234,16 +1329,19 @@ class Template_Loader {
 							switch ( $data['route'] ) {
 								case 'space-members':
 									$title = $space->title . ' — ' . __( 'Members', 'jetonomy' );
-									$desc  = sprintf( __( 'Members of the %1$s %2$s on %3$s.', 'jetonomy' ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
-									$url   = $base . '/s/' . $space->slug . '/members/';
+									/* translators: 1: space title, 2: singular space label, 3: site title. */
+									$desc = sprintf( __( 'Members of the %1$s %2$s on %3$s.', 'jetonomy' ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
+									$url  = $base . '/s/' . $space->slug . '/members/';
 									break;
 								case 'space-roadmap':
 									$title = $space->title . ' — ' . __( 'Roadmap', 'jetonomy' );
-									$desc  = sprintf( __( 'Roadmap for the %1$s %2$s on %3$s.', 'jetonomy' ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
-									$url   = $base . '/s/' . $space->slug . '/roadmap/';
+									/* translators: 1: space title, 2: singular space label, 3: site title. */
+									$desc = sprintf( __( 'Roadmap for the %1$s %2$s on %3$s.', 'jetonomy' ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
+									$url  = $base . '/s/' . $space->slug . '/roadmap/';
 									break;
 								case 'space-moderation':
-									$title   = $space->title . ' — ' . __( 'Moderation', 'jetonomy' );
+									$title = $space->title . ' — ' . __( 'Moderation', 'jetonomy' );
+									/* translators: %s: site title. */
 									$desc    = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $space->title );
 									$url     = $base . '/s/' . $space->slug . '/mod/';
 									$noindex = true; // Mod tools never indexed.
@@ -1326,9 +1424,10 @@ class Template_Loader {
 					case 'profile':
 						$user = get_user_by( 'login', (string) $data['slug'] );
 						if ( $user ) {
-							$profile   = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
-							$bio       = $profile && ! empty( $profile->bio ) ? wp_strip_all_tags( (string) $profile->bio ) : '';
-							$title     = $user->display_name;
+							$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
+							$bio     = $profile && ! empty( $profile->bio ) ? wp_strip_all_tags( (string) $profile->bio ) : '';
+							$title   = $user->display_name;
+							/* translators: 1: user login, 2: site title. */
 							$desc      = $bio !== '' ? $bio : sprintf( __( 'Community profile for @%1$s on %2$s.', 'jetonomy' ), $user->user_login, $site_name );
 							$url       = $base . '/u/' . rawurlencode( $user->user_login ) . '/';
 							$image     = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
@@ -1336,36 +1435,42 @@ class Template_Loader {
 						}
 						break;
 					case 'tag':
-						$title     = '#' . (string) $data['slug'];
+						$title = '#' . (string) $data['slug'];
+						/* translators: 1: tag name, 2: site title. */
 						$desc      = sprintf( __( 'Discussions tagged %1$s on %2$s.', 'jetonomy' ), $title, $site_name );
 						$url       = $base . '/tag/' . rawurlencode( (string) $data['slug'] ) . '/';
 						$image_alt = $title;
 						break;
 					case 'leaderboard':
-						$title     = __( 'Top members', 'jetonomy' );
+						$title = __( 'Top members', 'jetonomy' );
+						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Top contributors and most-helpful members on %s.', 'jetonomy' ), $site_name );
 						$url       = $base . '/leaderboard/';
 						$image_alt = $site_name;
 						break;
 					case 'search':
-						$title     = __( 'Search the community', 'jetonomy' );
+						$title = __( 'Search the community', 'jetonomy' );
+						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Search discussions, replies, members, and tags on %s.', 'jetonomy' ), $site_name );
 						$url       = $base . '/search/';
 						$image_alt = $site_name;
 						$noindex   = true; // Search results — duplicate / thin.
 						break;
 					case 'moderation':
-						$title     = __( 'Moderation Queue', 'jetonomy' );
+						$title = __( 'Moderation Queue', 'jetonomy' );
+						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $site_name );
 						$url       = $base . '/mod/';
 						$image_alt = $site_name;
 						$noindex   = true; // Admin tooling.
 						break;
 					case 'new-post':
-						$slug      = (string) $data['slug'];
-						$title     = '' !== $slug
-							? sprintf( __( 'Start a discussion in %s', 'jetonomy' ), ucfirst( str_replace( '-', ' ', $slug ) ) )
-							: __( 'Start a discussion', 'jetonomy' );
+						$slug = (string) $data['slug'];
+						// Same title the <title> tag uses — and the space's real
+						// name via seo_display_name(), not a slug the owner may
+						// have renamed away from.
+						$title = self::compose_route_title( $slug, ucfirst( str_replace( '-', ' ', $slug ) ) );
+						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Compose a new discussion on %s.', 'jetonomy' ), $site_name );
 						$url       = $base . ( '' !== $slug ? '/s/' . rawurlencode( $slug ) . '/new/' : '/new/' );
 						$image_alt = $site_name;
@@ -1386,28 +1491,43 @@ class Template_Loader {
 						$noindex   = true; // Logged-in form.
 						break;
 					case 'invite':
-						$title     = __( 'You are invited', 'jetonomy' );
+						$title = __( 'You are invited', 'jetonomy' );
+						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Accept your community invite to %s.', 'jetonomy' ), $site_name );
 						$url       = $base . '/invite/' . rawurlencode( (string) $data['slug'] ) . '/';
 						$image_alt = $site_name;
 						$noindex   = true; // One-shot landing.
 						break;
 					case 'my-spaces':
-						$title     = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
+						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+						$title = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
+						/* translators: 1: plural space label, 2: plural space label, 3: site title. */
 						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
 						$url       = $base . '/my-spaces/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
 						break;
+					case 'subscriptions':
+						$title = __( 'My Subscriptions', 'jetonomy' );
+						/* translators: 1: plural space label (e.g. Spaces), 2: site name */
+						$desc      = sprintf( __( 'Topics and %1$s you follow on %2$s.', 'jetonomy' ), \Jetonomy\space_label( true, true ), $site_name );
+						$url       = $base . '/subscriptions/';
+						$image_alt = $site_name;
+						$noindex   = true; // Logged-in personal view.
+						break;
 					case 'new-space':
-						$title     = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						$title = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						/* translators: 1: singular space label, 2: site title. */
 						$desc      = sprintf( __( 'Start a new community %1$s on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $site_name );
 						$url       = $base . '/new-space/';
 						$image_alt = $site_name;
 						$noindex   = true; // Composer page.
 						break;
 					case 'edit-space':
-						$title     = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						/* translators: %s: what is being edited - the configured space label, or a specific space title. */
+						$title = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						/* translators: %s: singular space label. */
 						$desc      = sprintf( __( 'Edit your community %s settings.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						$url       = $base . '/s/' . rawurlencode( (string) $data['slug'] ) . '/edit/';
 						$image_alt = $site_name;
@@ -1593,8 +1713,17 @@ class Template_Loader {
 
 		switch ( $data['route'] ) {
 			case 'space':
-				if ( $slug && ! \Jetonomy\Models\Space::find_by_slug( $slug ) ) {
-					status_header( 404 );
+			case 'space-members':
+			case 'space-roadmap':
+			case 'space-moderation':
+				if ( $slug ) {
+					$space = \Jetonomy\Models\Space::find_by_slug( $slug );
+					// A hidden space answers 404 to non-members — its existence
+					// is concealed, same as the view templates render (Basecamp
+					// 10105630168). Missing and concealed are indistinguishable.
+					if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+						status_header( 404 );
+					}
 				}
 				break;
 

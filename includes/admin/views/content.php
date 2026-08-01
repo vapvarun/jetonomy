@@ -25,13 +25,8 @@ $valid_statuses = array( 'all', 'publish', 'pending', 'spam', 'trash' );
 $current_status = in_array( $current_status, $valid_statuses, true ) ? $current_status : 'all';
 $current_space  = absint( $current_space );
 
-$status_labels = array(
-	'all'     => __( 'All', 'jetonomy' ),
-	'publish' => __( 'Published', 'jetonomy' ),
-	'pending' => __( 'Pending', 'jetonomy' ),
-	'spam'    => __( 'Spam', 'jetonomy' ),
-	'trash'   => __( 'Trash', 'jetonomy' ),
-);
+// Shared with the Replies screen and the status badge below.
+$status_labels = \Jetonomy\content_status_labels( true );
 
 $search_query = sanitize_text_field( $_GET['s'] ?? '' );
 $page_url     = admin_url( 'admin.php?page=jetonomy-content' );
@@ -87,6 +82,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 				$_first = ( $paged - 1 ) * $per_page + 1;
 				$_last  = min( $paged * $per_page, $total );
 				printf(
+					/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 					esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ),
 					esc_html( number_format_i18n( $_first ) ),
 					esc_html( number_format_i18n( $_last ) ),
@@ -112,19 +108,19 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 	<?php else : ?>
 
 	<div class="jt-content-table-wrap">
-		<table class="wp-list-table widefat fixed striped" id="jt-posts-table">
+		<table class="wp-list-table widefat fixed striped" id="jt-posts-table"><!-- jetonomy-audit-table-ok: inline-edit rows + bulk check-column need custom markup; core collapse contract implemented by hand (column-primary, data-colname, toggle-row, width classes) -->
 			<thead>
 				<tr>
 					<td class="manage-column column-cb check-column">
 						<input type="checkbox" id="jt-select-all" aria-label="<?php esc_attr_e( 'Select all rows', 'jetonomy' ); ?>">
 					</td>
 					<th class="manage-column column-title column-primary"><?php esc_html_e( 'Title', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:120px;"><?php esc_html_e( 'Space', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:120px;"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:90px;"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:70px;"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:70px;"><?php esc_html_e( 'Views', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:130px;"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-m"><?php esc_html_e( 'Space', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-m"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-s"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-xs"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-xs"><?php esc_html_e( 'Views', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-m"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
 				</tr>
 			</thead>
 			<tbody id="jt-posts-tbody">
@@ -159,6 +155,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 								type="checkbox"
 								class="jt-row-cb"
 								value="<?php echo absint( $p->id ); ?>"
+								<?php /* translators: %s: row title (post, tag, or space name). */ ?>
 								aria-label="<?php echo esc_attr( sprintf( __( 'Select "%s"', 'jetonomy' ), $p->title ) ); ?>"
 							>
 						</th>
@@ -257,6 +254,8 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 									</span>
 								<?php endif; ?>
 							</div>
+							<?php // Core small-screen expander: without it the six data-colname cells stayed hidden below 783px with no way to reveal them (QA wave-5). ?>
+							<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
 							<?php echo esc_html( $p->space_title ?? '' ); ?>
@@ -270,7 +269,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Status', 'jetonomy' ); ?>">
 							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $p->status ); ?>">
-								<?php echo esc_html( ucfirst( $p->status ) ); ?>
+								<?php echo esc_html( \Jetonomy\content_status_label( (string) $p->status ) ); ?>
 							</span>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Replies', 'jetonomy' ); ?>">

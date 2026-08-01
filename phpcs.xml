@@ -43,7 +43,6 @@
 		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
 
 		<!-- i18n — translators comments not critical for v1. -->
-		<exclude name="WordPress.WP.I18n.MissingTranslatorsComment"/>
 
 		<!-- PSR-4 namespaced class filenames are valid. -->
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>

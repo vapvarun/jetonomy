@@ -335,6 +335,8 @@ class Notifications_Controller extends Base_Controller {
 			'actor_id'     => $actor_id ?: null,
 			'is_read'      => (bool) ( $notification->is_read ?? false ),
 			'created_at'   => $notification->created_at ?? null,
+			// Additive UTC ISO-8601 (`Z`) instant for app clients; column is already UTC.
+			'created_at_gmt' => \Jetonomy\to_iso8601_z( $notification->created_at ?? null ),
 			// Enriched actor data (for app clients + JS rendering)
 			'message'      => $notification->message ?? '',
 			'actor_name'   => $is_actor_anonymous ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'System', 'jetonomy' ) ),
@@ -376,6 +378,19 @@ class Notifications_Controller extends Base_Controller {
 				return \Jetonomy\base_url() . '/u/' . rawurlencode( $user->user_login ) . '/#jt-badges';
 			}
 			return '';
+		}
+
+		// A join request is not a link to the space — it's a link to the queue
+		// where the recipient can approve or reject it, which differs by who
+		// they are. Same resolver the email and the /notifications/ page use;
+		// this path had no case for the type at all, so it fell through to an
+		// empty URL and header.js defaulted to /notifications/ (Basecamp
+		// 10118686521).
+		if ( 'space' === $object_type && 'join_request' === ( $notification->type ?? '' ) ) {
+			return \Jetonomy\join_request_url_for(
+				(int) $notification->user_id,
+				\Jetonomy\Models\Space::find( $object_id )
+			);
 		}
 
 		// Fast path: pre-joined slugs come from list_for_user_with_targets().

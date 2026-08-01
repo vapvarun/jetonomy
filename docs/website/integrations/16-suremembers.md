@@ -40,13 +40,17 @@ These extra access groups are granted to the member through SureMembers when the
 
 When enabled, a member who leaves the space has the linked access groups revoked in SureMembers. Leave this off if the access group also gates other SureMembers-protected content the member should keep.
 
-## Setting the Space Role
+## Setting the Access Level
 
-The SureMembers tab creates the access rule at the **Member** role by default. To change the role, open the **Access Rules** tab on the same space and adjust the role for the SureMembers rule. Both tabs share the same underlying rule. The **Current access linkage** summary at the bottom of the SureMembers tab lists which access groups currently grant access to the space.
+The SureMembers tab creates the access rule at **Participate**, which records access-group holders as Members. To change what the rule grants, open the **Access Rules** tab on the same space and change its **Access level**. Both tabs share the same underlying rule. The **Current access linkage** summary at the bottom of the SureMembers tab lists which access groups currently grant access to the space.
+
+> **Changed in 1.8.1.** The space role is no longer picked separately - it is derived from the access level (Read → Viewer, Participate → Member, Full → Moderator) so a rule can never grant more than it says. See [Access level](01-memberpress.md#access-level).
 
 ## How Reconciliation Works
 
-SureMembers fires `suremembers_user_access_group_granted` when a member receives an access group and `suremembers_user_access_group_revoked` when one is taken away. Jetonomy Pro listens to both actions and adds or removes the member from every space that references the affected access group.
+SureMembers fires `suremembers_user_access_group_granted` when a member receives an access group and `suremembers_user_access_group_revoked` when one is taken away. Jetonomy Pro reads the member's current access groups whenever they open a space, so gaining a group opens the spaces that reference it and losing one closes them again, with nothing to synchronise.
+
+> A SureMembers access group is granted rather than sold, so a visitor who lacks one is told what they need without a buy button. Point it at your own sales page with the `jetonomy_membership_upgrade_url` filter if you want one.
 
 Because access is evaluated through SureMembers' own access check, an access group that has expired is treated as not held. The member is removed from the space when SureMembers fires the revoked action for them.
 

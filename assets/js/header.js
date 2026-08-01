@@ -169,9 +169,34 @@
 			clearTimeout(searchTimer);
 			var q = input.value.trim();
 			if (q.length < 2) { results.textContent = ''; return; }
+			/**
+			 * Permalink for a search hit.
+			 *
+			 * The overlay queries posts (space_slug + slug); the same endpoint
+			 * can return spaces (slug, no space_slug). Anything unrecognised
+			 * goes to the search page for the query, which is always a useful
+			 * destination - never a broken one.
+			 */
+			function searchResultUrl(r, query) {
+				var base = (D && D.base) || '';
+				if (r && r.space_slug && r.slug) {
+					return base + '/s/' + encodeURIComponent(r.space_slug) + '/t/' + encodeURIComponent(r.slug) + '/';
+				}
+				if (r && r.slug && r.category_id !== undefined) {
+					return base + '/s/' + encodeURIComponent(r.slug) + '/';
+				}
+				if (r && r.slug && r.space_id === undefined) {
+					return base + '/tag/' + encodeURIComponent(r.slug) + '/';
+				}
+				return base + '/search/?q=' + encodeURIComponent(query || '');
+			}
+
 			searchTimer = setTimeout(function () {
 				window.jetonomyRest.restFetch('/search?q=' + encodeURIComponent(q) + '&per_page=6').then(function (res) {
-					var data = res.data || [];
+					// restFetch wraps the REST body as {ok, status, data} - the
+					// results array lives one level deeper (QA 10150864518; the
+					// single-unwrap here showed 'No results' for every query).
+					var data = ( res.data && res.data.data ) || [];
 					results.textContent = '';
 					if (!data.length) {
 						results.textContent = D.i18n.noResults;
@@ -181,7 +206,14 @@
 					results.className = 'jt-search-overlay-results';
 					data.forEach(function (r) {
 						var a = document.createElement('a');
-						a.href = r.url;
+						// The search payload carries slugs, not a permalink -
+						// there is no `url` field, so `a.href = r.url` produced
+						// "undefined" and every result led nowhere once results
+						// started rendering (QA 10150864518, second pass).
+						// Build the destination from the slugs the API does
+						// return, and fall back to the full search page rather
+						// than emit a dead link.
+						a.href = searchResultUrl(r, q);
 						a.className = 'jt-search-overlay-item';
 						var strong = document.createElement('strong');
 						strong.textContent = r.title;
@@ -237,7 +269,31 @@
 		}
 		if (e.key === 'Enter') {
 			var focused = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
-			if (focused) { focused.click(); return; }
+			if (focused) {
+				// The row is a DIV whose navigation anchor lives inside it -
+				// clicking the div fires nothing (QA 10150866326). Click the
+				// real link so the client-side router intercepts it like any
+				// pointer click; fall back to a hard navigation.
+				var link = focused.matches('a[href]') ? focused : focused.querySelector('.jt-row-title-link, a[href]');
+				if (link) { link.click(); } 
+				return;
+			}
+		}
+		if (e.key === 'l' && !e.metaKey && !e.ctrlKey) {
+			// Documented shortcut (readme FAQ): upvote the focused post
+			// (QA 10150869012 - promised but never implemented).
+			var lRow = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
+			var up = lRow && lRow.querySelector('[data-wp-on--click="actions.voteUp"], .jt-vote-up');
+			if (up) { e.preventDefault(); up.click(); }
+			return;
+		}
+		if (e.key === 'r' && !e.metaKey && !e.ctrlKey) {
+			// Documented shortcut: open a reply on the focused post - navigate
+			// to it with the #reply intent; the post view focuses the composer.
+			var rRow = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
+			var rLink = rRow && (rRow.matches('a[href]') ? rRow : rRow.querySelector('.jt-row-title-link, a[href]'));
+			if (rLink) { e.preventDefault(); window.location.href = rLink.href.split('#')[0] + '#reply'; }
+			return;
 		}
 		if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
@@ -255,6 +311,8 @@
 				['/ or Ctrl+K', ( D.i18n && D.i18n.kbSearch ) || 'Search'],
 				['j / k',       ( D.i18n && D.i18n.kbNavigate ) || 'Navigate up/down'],
 				['Enter',       ( D.i18n && D.i18n.kbOpenSelected ) || 'Open selected'],
+				['l',           ( D.i18n && D.i18n.kbUpvote ) || 'Upvote selected'],
+				['r',           ( D.i18n && D.i18n.kbReply ) || 'Reply to selected'],
 				['n',           ( D.i18n && D.i18n.kbHome ) || 'Home'],
 				['?',           ( D.i18n && D.i18n.kbThisHelp ) || 'This help']
 			];

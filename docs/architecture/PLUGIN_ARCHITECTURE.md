@@ -41,10 +41,10 @@ Jetonomy is a next-gen discussion platform for WordPress. It provides **forums, 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Storage | Custom MySQL tables (22) | Performance at 10,000+ posts/space; CPTs cannot scale |
-| API | WP REST API (`jetonomy/v1`) | 42 endpoints - clean decoupling of data from views |
+| API | WP REST API (`jetonomy/v1`) | 80 endpoints - clean decoupling of data from views |
 | Frontend | PHP templates + WP Interactivity API | SSR for SEO; reactive for UX |
 | Permissions | 3-layer engine (ban → WP caps → space roles) | Fine-grained control without custom role plugins |
-| Integrations | Universal adapter interfaces | Swap membership/email/realtime providers without touching core |
+| Integrations | Universal adapter interfaces | Swap membership/search/email/AI providers without touching core (there is no realtime adapter - live updates are REST polling) |
 | Pro tier | Separate plugin (`jetonomy-pro`) | Independent versioning; free plugin is fully functional |
 
 ---
@@ -191,7 +191,7 @@ jetonomy/
 │   ├── api/
 │   │   ├── class-api.php         # Registers all controllers at rest_api_init
 │   │   ├── class-base-controller.php # Shared helpers (auth, pagination, error codes)
-│   │   └── class-*-controller.php    # 13 controllers
+│   │   └── class-*-controller.php    # 22 controllers
 │   ├── models/
 │   │   ├── class-model.php       # Abstract: find/insert/update/delete/count
 │   │   └── class-*.php           # 18 concrete models
@@ -207,11 +207,9 @@ jetonomy/
 │   │   ├── class-adapter-registry.php       # Static registry for all adapter types
 │   │   ├── interface-membership-adapter.php
 │   │   ├── interface-email-adapter.php
-│   │   ├── interface-realtime-adapter.php
 │   │   ├── interface-search-adapter.php
 │   │   ├── class-wp-roles-adapter.php       # Default membership (WP roles)
 │   │   ├── class-wp-mail-adapter.php        # Default email (wp_mail)
-│   │   ├── class-polling-adapter.php        # Default realtime (HTTP polling)
 │   │   ├── class-member-press-adapter.php   # MemberPress (conditional)
 │   │   └── class-pmpro-adapter.php          # PMPro (conditional)
 │   ├── search/
@@ -384,16 +382,17 @@ can($user_id, $action, $space_id?)
 
 ### `Jetonomy\Permissions\Capabilities`
 
-WP capabilities registered at activation and on version change:
+WP capabilities synced by `Capabilities::register()` (activation, version change, and every save of the Settings → Permissions matrix). Since 1.8.1 the role → capability mapping is **editable**: `jetonomy_role_caps` stores per-role overrides, `register()` adds AND revokes to match `effective_map()`, administrators are pinned to every capability, and editing the mapping itself requires `manage_options`. The table below shows the ROLE_MAP **defaults**:
 
-| Capability | Default roles |
-|------------|--------------|
-| `jetonomy_create_posts` | subscriber+ |
-| `jetonomy_create_replies` | subscriber+ |
-| `jetonomy_moderate_content` | editor+ |
-| `jetonomy_manage_spaces` | editor+ |
-| `jetonomy_manage_users` | administrator |
-| `jetonomy_view_analytics` | administrator |
+| Capability | Default roles (ROLE_MAP is cumulative) |
+|------------|----------------------------------------|
+| `jetonomy_read`, `jetonomy_create_posts`, `jetonomy_create_replies`, `jetonomy_edit_own_posts`, `jetonomy_delete_own_posts`, `jetonomy_vote`, `jetonomy_flag`, `jetonomy_join_spaces` | subscriber+ |
+| `jetonomy_upload_media` | contributor+ |
+| `jetonomy_create_spaces` | author+ |
+| `jetonomy_edit_others_posts`, `jetonomy_delete_others_posts`, `jetonomy_moderate`, `jetonomy_manage_users`, `jetonomy_move_posts`, `jetonomy_close_posts`, `jetonomy_pin_posts` | editor+ |
+| `jetonomy_manage_settings`, `jetonomy_manage_categories`, `jetonomy_manage_spaces`, `jetonomy_manage_badges`, `jetonomy_view_analytics`, `jetonomy_manage_extensions` | administrator |
+
+(There is no `jetonomy_moderate_content` capability — site-wide moderation is `jetonomy_moderate`, held by editor+ by default. `jetonomy_manage_spaces` and `jetonomy_manage_users` defaults above match `Permissions\Capabilities::ROLE_MAP`, the single source of truth.)
 
 ---
 
@@ -601,7 +600,6 @@ All handlers are currently in `Admin` class. **Target state:** Extracted to `Jet
 |------|-----------|---------|---------|
 | Membership | `Membership_Adapter` | `WP_Roles_Adapter` | Access gating by membership status |
 | Email | `Email_Adapter` | `WP_Mail_Adapter` | Transactional email delivery |
-| Realtime | `Realtime_Adapter` | `Polling_Adapter` | Push/polling updates |
 | Search | `Search_Adapter` | `Fulltext_Search` | Content search |
 
 ### Membership Adapters

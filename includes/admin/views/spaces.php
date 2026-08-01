@@ -25,7 +25,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 		<!-- New Space Form -->
 		<h1><?php esc_html_e( 'Add New Space', 'jetonomy' ); ?></h1>
 		<form id="jetonomy-new-space-form" class="jetonomy-space-form">
-			<table class="form-table">
+			<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin's own CSS stacks label/field rows below 782px -->
 				<tr>
 					<th scope="row"><label for="space-title"><?php esc_html_e( 'Title', 'jetonomy' ); ?> <span class="required">*</span></label></th>
 					<td><input type="text" id="space-title" class="regular-text" required></td>
@@ -177,6 +177,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 						$_first = ( $paged - 1 ) * $per_page + 1;
 						$_last  = min( $paged * $per_page, $total );
 						printf(
+							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ),
 							esc_html( number_format_i18n( $_first ) ),
 							esc_html( number_format_i18n( $_last ) ),
@@ -190,80 +191,104 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 			</div>
 		</form>
 
-		<div class="jt-content-table-wrap">
-		<table class="wp-list-table widefat fixed striped">
-			<thead>
-				<tr>
-					<th class="column-title"><?php esc_html_e( 'Title', 'jetonomy' ); ?></th>
-					<th class="column-type" style="width:80px;"><?php esc_html_e( 'Type', 'jetonomy' ); ?></th>
-					<th class="column-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></th>
-					<th class="column-members" style="width:80px;"><?php esc_html_e( 'Members', 'jetonomy' ); ?></th>
-					<th class="column-posts" style="width:70px;"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></th>
-					<th class="column-status" style="width:80px;"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
-					<th class="column-join" style="width:100px;"><?php esc_html_e( 'Join Policy', 'jetonomy' ); ?></th>
-					<th class="column-visibility" style="width:90px;"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></th>
-				</tr>
-			</thead>
-			<tbody>
-				<?php if ( empty( $spaces ) ) : ?>
-					<?php
-					jetonomy_admin_empty_state(
-						array(
-							'colspan' => 8,
-							'icon'    => 'admin-multisite',
-							'title'   => __( 'No spaces yet', 'jetonomy' ),
-							'body'    => __( 'Spaces group your topics. Create one to start organizing the community.', 'jetonomy' ),
-						)
-					);
-					?>
-				<?php else : ?>
-					<?php
-					foreach ( $spaces as $space ) :
-						$cat_name = '';
-						foreach ( $categories as $c ) {
-							if ( (int) $c->id === (int) $space->category_id ) {
-								$cat_name = $c->name;
-								break;
-							}
-						}
-						?>
-						<tr data-id="<?php echo absint( $space->id ); ?>">
-							<td class="column-title">
-								<strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . $space->id ) ); ?>"><?php echo esc_html( $space->title ); ?></a></strong>
-								<br><code>/community/s/<?php echo esc_html( $space->slug ); ?>/</code>
-								<div class="row-actions">
-									<span class="edit"><a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . $space->id ) ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
-									<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
-									<span class="delete"><a href="#" class="jetonomy-delete-space" data-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
-								</div>
-							</td>
-							<td class="column-type">
-								<?php
-								$type_labels = array(
-									'forum' => __( 'Forum', 'jetonomy' ),
-									'qa'    => __( 'Q&A', 'jetonomy' ),
-									'ideas' => __( 'Ideas', 'jetonomy' ),
-									'feed'  => __( 'Feed', 'jetonomy' ),
-								);
-								?>
-								<span class="jetonomy-type-badge jetonomy-type-badge--<?php echo esc_attr( $space->type ); ?>"><?php echo esc_html( $type_labels[ $space->type ] ?? ucfirst( $space->type ) ); ?></span>
-							</td>
-							<td class="column-category"><?php echo esc_html( $cat_name ?: '&mdash;' ); ?></td>
-							<td class="column-members"><?php echo absint( $space->member_count ); ?></td>
-							<td class="column-posts"><?php echo absint( $space->post_count ); ?></td>
-							<td class="column-status">
-								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $space->status ); ?>"><?php echo esc_html( ucfirst( $space->status ) ); ?></span>
-							</td>
-							<td class="column-join"><?php echo esc_html( ucfirst( $space->join_policy ) ); ?></td>
-							<td class="column-visibility">
-								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $space->visibility ); ?>"><?php echo esc_html( ucfirst( $space->visibility ) ); ?></span>
-							</td>
-						</tr>
-					<?php endforeach; ?>
-				<?php endif; ?>
-			</tbody>
-		</table>
-		</div><!-- /.jt-content-table-wrap -->
+		<?php
+		// Category id => name lookup once, replacing the per-row inner loop.
+		$jt_cat_names = array();
+		foreach ( (array) $categories as $jt_c ) {
+			$jt_cat_names[ (int) $jt_c->id ] = $jt_c->name;
+		}
+		$jt_type_labels = array(
+			'forum' => __( 'Forum', 'jetonomy' ),
+			'qa'    => __( 'Q&A', 'jetonomy' ),
+			'ideas' => __( 'Ideas', 'jetonomy' ),
+			'feed'  => __( 'Feed', 'jetonomy' ),
+		);
+
+		// Rendered through the shared responsive primitive: this table's 8
+		// fixed-width columns clipped unreadably on mobile (Basecamp
+		// 10146405861, root cause 10146443346).
+		jetonomy_admin_table(
+			array(
+				'columns'   => array(
+					'title'      => array(
+						'label'   => __( 'Title', 'jetonomy' ),
+						'primary' => true,
+					),
+					'type'       => array(
+						'label' => __( 'Type', 'jetonomy' ),
+						'width' => 's',
+					),
+					'category'   => array( 'label' => __( 'Category', 'jetonomy' ) ),
+					'members'    => array(
+						'label' => __( 'Members', 'jetonomy' ),
+						'width' => 's',
+					),
+					'posts'      => array(
+						'label' => __( 'Posts', 'jetonomy' ),
+						'width' => 'xs',
+					),
+					'status'     => array(
+						'label' => __( 'Status', 'jetonomy' ),
+						'width' => 's',
+					),
+					'join'       => array(
+						'label' => __( 'Join Policy', 'jetonomy' ),
+						'width' => 'm',
+					),
+					'visibility' => array(
+						'label' => __( 'Visibility', 'jetonomy' ),
+						'width' => 's',
+					),
+				),
+				'rows'      => (array) ( $spaces ?? array() ),
+				'row_attrs' => static function ( $space ): array {
+					return array( 'data-id' => (int) $space->id );
+				},
+				'empty'     => array(
+					'icon'  => 'admin-multisite',
+					'title' => __( 'No spaces yet', 'jetonomy' ),
+					'body'  => __( 'Spaces group your topics. Create one to start organizing the community.', 'jetonomy' ),
+				),
+				'cell'      => static function ( $space, string $key ) use ( $jt_cat_names, $jt_type_labels ): void {
+					switch ( $key ) {
+						case 'title':
+							$edit_url = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id );
+							echo '<strong><a href="' . esc_url( $edit_url ) . '">' . esc_html( $space->title ) . '</a></strong>';
+							echo '<br><code>/community/s/' . esc_html( $space->slug ) . '/</code>';
+							?>
+							<div class="row-actions">
+								<span class="edit"><a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
+								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
+								<span class="delete"><a href="#" class="jetonomy-delete-space" data-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
+							</div>
+							<?php
+							break;
+						case 'type':
+							echo '<span class="jetonomy-type-badge jetonomy-type-badge--' . esc_attr( $space->type ) . '">' . esc_html( $jt_type_labels[ $space->type ] ?? ucfirst( $space->type ) ) . '</span>';
+							break;
+						case 'category':
+							echo esc_html( $jt_cat_names[ (int) $space->category_id ] ?? '—' );
+							break;
+						case 'members':
+							echo absint( $space->member_count );
+							break;
+						case 'posts':
+							echo absint( $space->post_count );
+							break;
+						case 'status':
+							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $space->status ) . '">' . esc_html( \Jetonomy\space_status_label( (string) $space->status ) ) . '</span>';
+							break;
+						case 'join':
+							echo esc_html( \Jetonomy\space_join_policy_label( (string) $space->join_policy ) );
+							break;
+						case 'visibility':
+							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $space->visibility ) . '">' . esc_html( \Jetonomy\space_visibility_label( (string) $space->visibility ) ) . '</span>';
+							break;
+					}
+				},
+			)
+		);
+		?>
 
 		<?php if ( $total_pages > 1 ) : ?>
 			<div class="tablenav bottom">

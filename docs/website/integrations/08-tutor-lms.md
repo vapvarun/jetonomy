@@ -23,10 +23,10 @@ Jetonomy Pro detects Tutor LMS automatically when both plugins are active. A **T
 2. Open the **Access Rules** tab.
 3. Select **Tutor Course** from the rule type dropdown.
 4. Start typing your course name - a searchable dropdown appears showing all published Tutor courses (see the [course picker screenshot](04-learndash.md#gating-a-space-by-course-enrollment)).
-5. Select the course, set **Grants** to **Participate** and **Space Role** to **Member**.
+5. Select the course, set the **Access level** to **Participate**.
 6. Click **Add Rule**.
 
-The rule appears in the table showing the course name (not an ID), with a **Sync Members** button and **Delete** button. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
+The rule appears in the table showing the course name (not an ID), with a **Sync Members** button and **Delete** button. For what each **Access level** means, see [Access level](01-memberpress.md#access-level).
 
 ## Syncing Existing Students
 

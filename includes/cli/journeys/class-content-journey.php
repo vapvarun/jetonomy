@@ -35,7 +35,10 @@ final class Content_Journey {
 	 * Create a post in a space.
 	 *
 	 * Required input keys: `space_id`, `author_id`, `title`, `content`.
-	 * Optional: `status` (default `publish`), `slug` (auto-generated from title).
+	 * Optional: `status` (default `publish`), `slug` (auto-generated from
+	 * title), `created_at` (backdated UTC timestamp — importer seam, see
+	 * {@see Journey_Backdate}; a backdated topic also backdates its
+	 * last_reply_at so it does not claim activity "now").
 	 *
 	 * @param array<string,mixed> $input Create payload.
 	 */
@@ -47,16 +50,27 @@ final class Content_Journey {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
-		$result = Post::create(
-			[
-				'space_id'  => (int) $input['space_id'],
-				'author_id' => (int) $input['author_id'],
-				'title'     => (string) $input['title'],
-				'content'   => (string) $input['content'],
-				'status'    => (string) ( $input['status'] ?? 'publish' ),
-				'slug'      => isset( $input['slug'] ) ? (string) $input['slug'] : '',
-			]
-		);
+		$unknown = Journey_Input::error( $input, [ 'space_id', 'author_id', 'title', 'content', 'status', 'slug', 'created_at' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
+		}
+
+		$data = [
+			'space_id'  => (int) $input['space_id'],
+			'author_id' => (int) $input['author_id'],
+			'title'     => (string) $input['title'],
+			'content'   => jetonomy_sanitize_editor_content( (string) $input['content'] ),
+			'status'    => (string) ( $input['status'] ?? 'publish' ),
+			'slug'      => isset( $input['slug'] ) ? (string) $input['slug'] : '',
+		];
+
+		$backdate = Journey_Backdate::resolve( $input );
+		if ( null !== $backdate ) {
+			$data['created_at']    = $backdate;
+			$data['last_reply_at'] = $backdate;
+		}
+
+		$result = Post::create( $data );
 
 		if ( is_wp_error( $result ) ) {
 			return Journey_Result::from_wp_error( $result );
@@ -102,6 +116,13 @@ final class Content_Journey {
 
 		if ( empty( $patch ) ) {
 			return Journey_Result::fail( sprintf( 'No updatable fields provided. Allowed: %s', implode( ', ', $allowed ) ) );
+		}
+
+		// Same normalize+kses contract as create and the REST controllers -
+		// the update path was the last writer that could persist raw div soup
+		// (Basecamp 10138808747 deep follow-up).
+		if ( isset( $patch['content'] ) ) {
+			$patch['content'] = jetonomy_sanitize_editor_content( (string) $patch['content'] );
 		}
 
 		$ok = Post::update( $id, $patch );
@@ -174,14 +195,27 @@ final class Content_Journey {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
+		$unknown = Journey_Input::error( $input, [ 'post_id', 'author_id', 'content', 'status', 'parent_id', 'created_at' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
+		}
+
 		$data = [
 			'post_id'   => (int) $input['post_id'],
 			'author_id' => (int) $input['author_id'],
-			'content'   => (string) $input['content'],
+			'content'   => jetonomy_sanitize_editor_content( (string) $input['content'] ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
 		];
 		if ( ! empty( $input['parent_id'] ) ) {
 			$data['parent_id'] = (int) $input['parent_id'];
+		}
+
+		// Importer seam: forward a validated backdate; the model default (now)
+		// applies otherwise. Reply::create() carries this into the parent
+		// post's last_reply_at.
+		$backdate = Journey_Backdate::resolve( $input );
+		if ( null !== $backdate ) {
+			$data['created_at'] = $backdate;
 		}
 
 		$result = Reply::create( $data );
@@ -314,6 +348,11 @@ final class Content_Journey {
 		$missing = $this->require_keys( $input, [ 'object_type', 'object_id', 'reporter_id', 'reason' ] );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
+		}
+
+		$unknown = Journey_Input::error( $input, [ 'object_type', 'object_id', 'reporter_id', 'reason', 'description' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
 		}
 
 		$object_type = (string) $input['object_type'];

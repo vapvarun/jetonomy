@@ -54,6 +54,23 @@ $type_labels = array(
 	'flag'                => __( 'new content flag requires review', 'jetonomy' ),
 );
 
+// Icon shown in the row's circle when a notification has no actor at all
+// (system events: a flag needing review, an aggregated vote roll-up). Keyed
+// to $type_labels above — keep the two in step when a type is added. Every
+// slug here has a matching SVG in assets/icons/.
+$type_icons = array(
+	'reply_to_post'       => 'message-circle',
+	'reply_to_reply'      => 'message-circle',
+	'mention'             => 'user',
+	'vote_on_post'        => 'chevron-up',
+	'accepted_answer'     => 'check-circle',
+	'idea_status_changed' => 'lightbulb',
+	'new_post_in_sub'     => 'bell',
+	'moderation'          => 'shield',
+	'badge_earned'        => 'award',
+	'flag'                => 'flag',
+);
+
 $filter_tabs = array(
 	'all'      => __( 'All', 'jetonomy' ),
 	'unread'   => __( 'Unread', 'jetonomy' ),
@@ -167,10 +184,10 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 				$jt_notif_anon = ! empty( $notif->actor_anonymous );
 				$actor         = ( $notif->actor_id && ! $jt_notif_anon ) ? get_userdata( (int) $notif->actor_id ) : null;
 				$actor_name    = $jt_notif_anon ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'Someone', 'jetonomy' ) );
-				$action_label = ! empty( $notif->message )
+				$action_label  = ! empty( $notif->message )
 					? $notif->message
 					: ( $type_labels[ $notif->type ] ?? $notif->type );
-				$time_ago     = human_time_diff( strtotime( $notif->created_at ), time() );
+				$time_ago      = human_time_diff( strtotime( $notif->created_at ), time() );
 
 				// Build link to the relevant object using pre-joined slug columns.
 				$notif_url = $base;
@@ -189,16 +206,14 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 						$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/#jt-badges';
 					}
 				} elseif ( 'space' === $notif->object_type && 'join_request' === $notif->type ) {
-					// Mirrors Notifier::build_join_request_url_for() so the link
-					// the customer sees on this page matches the link in their
-					// email — and routes to the right surface for who they are.
-					$jr_space = \Jetonomy\Models\Space::find( (int) $notif->object_id );
-					if ( $jr_space ) {
-						if ( current_user_can( 'jetonomy_manage_spaces' ) || current_user_can( 'manage_options' ) ) {
-							$notif_url = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $jr_space->id . '&tab=join_requests' );
-						} else {
-							$notif_url = $base . '/s/' . $jr_space->slug . '/mod/';
-						}
+					// Shared resolver, so the link on this page, the link in the
+					// email, and the link in the bell dropdown are one decision.
+					$jr_url = \Jetonomy\join_request_url_for(
+						(int) $notif->user_id,
+						\Jetonomy\Models\Space::find( (int) $notif->object_id )
+					);
+					if ( '' !== $jr_url ) {
+						$notif_url = $jr_url;
 					}
 				} else {
 					// Anything else (e.g. Pro DM 'message'/'conversation') routes
@@ -222,9 +237,27 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 						<input type="checkbox" class="jt-notif-cb" data-jt-notif-cb data-wp-on--change="actions.updateNotifSelection" value="<?php echo esc_attr( (int) $notif->id ); ?>">
 					</label>
 					<a href="<?php echo esc_url( $notif_url ); ?>" class="jt-notif-item__link">
-						<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
-							<?php echo esc_html( $actor ? strtoupper( substr( $actor->display_name, 0, 2 ) ) : '?' ); ?>
-						</span>
+						<?php
+						// The circle never renders a literal "?" — that reads as
+						// broken, and it fired on EVERY system notification (flag
+						// review, vote roll-up), which carry no actor by design.
+						// Same contract get_user_link() already sets for unknown
+						// authors: a silhouette for a masked person, and a
+						// type icon where there is genuinely nobody to show.
+						if ( $actor ) :
+							?>
+							<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
+								<?php echo esc_html( strtoupper( mb_substr( $actor->display_name, 0, 2 ) ) ); ?>
+							</span>
+						<?php elseif ( $jt_notif_anon ) : ?>
+							<span class="jt-avatar jt-avatar-anon jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
+								<?php jetonomy_echo_icon( 'user', 18 ); ?>
+							</span>
+						<?php else : ?>
+							<span class="jt-avatar jt-avatar-system jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
+								<?php jetonomy_echo_icon( $type_icons[ $notif->type ] ?? 'bell', 16 ); ?>
+							</span>
+						<?php endif; ?>
 						<div class="jt-notif-body">
 							<div class="jt-notif-text">
 								<?php if ( ! empty( $notif->message ) ) : ?>
@@ -236,7 +269,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 							</div>
 							<div class="jt-notif-time">
 								<?php
-								/* translators: %s: human-readable time difference */
+								/* translators: %s: human-readable time difference. */
 								echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 								?>
 							</div>

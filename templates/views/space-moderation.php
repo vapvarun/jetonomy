@@ -19,13 +19,14 @@ use Jetonomy\Moderation\Moderation_Service;
 $space_slug = (string) ( $data['slug'] ?? '' );
 $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
-if ( ! $space ) {
+if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -39,6 +40,7 @@ if ( ! Moderation_Permissions::can_view_space_queue( $user_id, (int) $space->id 
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'message' => sprintf( __( 'You do not have permission to moderate this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
 		]
@@ -77,15 +79,14 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<div class="jt-cat-page-row">
 					<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 					<div>
+						<?php // Shared space sub-page header — see space-members.php. ?>
 						<h1 class="jt-page-title jt-page-title-sm">
 							<?php echo esc_html( $space->title ); ?>
-							&nbsp;&middot;&nbsp;
-							<?php esc_html_e( 'Moderation', 'jetonomy' ); ?>
 						</h1>
-						<p class="jt-member-sub">
+						<p class="jt-page-subtitle">
 							<?php
 							$count = count( $flags );
-							/* translators: %d: number of pending flags */
+							/* translators: %d: number of pending flags. */
 							echo esc_html( sprintf( _n( '%d pending flag', '%d pending flags', $count, 'jetonomy' ), $count ) );
 							?>
 						</p>
@@ -95,7 +96,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<?php if ( ! empty( $flags ) ) : ?>
 					<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( (string) count( $flags ) ); ?>">
 						<?php
-						/* translators: %d: number of pending flags */
+						/* translators: %d: number of pending flags. */
 						echo esc_html( sprintf( _n( '%d pending', '%d pending', count( $flags ), 'jetonomy' ), count( $flags ) ) );
 						?>
 					</span>

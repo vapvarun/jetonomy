@@ -23,20 +23,26 @@ Jetonomy detects PMPro automatically when the plugin is active. The PMPro adapte
 2. Open the **Access Rules** tab in the space settings panel.
 3. Set **Rule Type** to your Paid Memberships Pro level (PMPro levels appear in the dropdown once PMPro is active).
 4. Pick the PMPro level in the **Value** field.
-5. Set **Grants** to **Participate** and **Space Role** to **Member** for a standard gated space.
+5. Set the **Access level** to **Participate** - the default, and the right answer for a standard gated space.
 6. Click **Add Rule**. The rule appears in the table below the form.
 
 Members who hold the selected PMPro level gain access to the space immediately. You can stack multiple rules - access is granted if the member matches any rule.
 
-> **Tip:** For a full explanation of the **Grants** (Read / Participate / Full) and **Space Role** (Viewer / Member / Moderator / Admin) choices, see [Grants and Space Role](01-memberpress.md#grants-and-space-role) in the MemberPress guide - they work the same for every integration.
+> **Tip:** For a full explanation of the **Access level** (Read / Participate / Full) choices, see [Access level](01-memberpress.md#access-level) in the MemberPress guide - they work the same for every integration.
 
-## Auto-Join and Auto-Leave
+## Access Follows the Subscription
 
-**On activation** - when a member's PMPro level activates, Jetonomy adds them to any spaces where that level is in an Access Rule. The hook `jetonomy_membership_activated` fires with `$adapter = 'pmpro'`.
+Access is worked out when someone opens the space, by reading your Access Rules against the levels they hold right now. There is nothing to synchronise.
 
-**On cancellation or expiry** - when a PMPro level expires or is manually cancelled, Jetonomy removes the member from gated spaces. The hook `jetonomy_membership_deactivated` fires with `$adapter = 'pmpro'`.
+**On activation** - the member can open the space on their next page load. The hook `jetonomy_membership_activated` fires with `$adapter = 'pmpro'`.
+
+**On cancellation or expiry** - they lose access just as immediately. The hook `jetonomy_membership_deactivated` fires with `$adapter = 'pmpro'`. Their posts and replies stay exactly as they are.
 
 The adapter hooks into PMPro's `pmpro_after_change_membership_level` action to detect both events.
+
+> **The roster is separate.** A member let in by a rule does not appear in the space's Members list or member count until you press **Sync Members**, and those rows are not removed again when a level lapses. Access is always correct either way - see [Access Follows the Subscription](01-memberpress.md#access-follows-the-subscription) for the full explanation.
+
+A visitor without the level is shown which plan opens the space, with a button to PMPro checkout with that level already selected.
 
 ## Visibility Behavior
 

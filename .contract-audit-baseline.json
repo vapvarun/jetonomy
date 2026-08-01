@@ -2,11 +2,6 @@
   "generated": "2026-06-11T05:47:38+00:00",
   "suppressions": [
     {
-      "id": "user_meta-read-never-written:jetonomy_email_opt_out",
-      "reason": "REAL gap, tracked: Basecamp card 9985243886 - the verification reminder honors an opt-out nothing can set. Fix = wire into edit-profile notification prefs + unsubscribe link.",
-      "severity": "error"
-    },
-    {
       "id": "user_meta-written-never-read:_jetonomy_verified_at",
       "reason": "Audit-trail timestamp written on email verification (class-auth-controller.php:538) - intentionally write-only; kept for support/forensics.",
       "severity": "warning"
@@ -14,11 +9,6 @@
     {
       "id": "option-read-never-written:jetonomy_setup_admin_id",
       "reason": "Operator escape hatch: CLI scenarios read it to pin the acting admin, falling back to the first administrator (class-cli.php:292). Intentionally write-less; setting it via wp option update is the documented override.",
-      "severity": "error"
-    },
-    {
-      "id": "option-read-never-written:jetonomy_bp_broadcast",
-      "reason": "REAL gap, tracked: Basecamp card 9985243976 - BP broadcast toggle has no settings UI; operators flip via wp option update. Read defaults ON with safe fallback.",
       "severity": "error"
     },
     {

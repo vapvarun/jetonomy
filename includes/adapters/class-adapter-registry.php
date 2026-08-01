@@ -16,8 +16,180 @@ class Adapter_Registry {
 	private static array $email      = [];
 	private static array $ai         = [];
 
+	/**
+	 * Request-scoped cache for membership_level_owners().
+	 *
+	 * @var array<string, string>|null
+	 */
+	private static ?array $level_owners = null;
+
 	public static function register_membership( string $id, Membership_Adapter $adapter ): void {
 		self::$membership[ $id ] = $adapter;
+		self::$level_owners      = null;
+	}
+
+	/**
+	 * Display names for the membership adapters, keyed by adapter id.
+	 *
+	 * Deliberately adapter-level, not entity-level: one adapter can expose
+	 * several kinds of thing (Learnomy courses AND memberships, LearnDash
+	 * courses AND groups), so an entity-specific name here would be wrong for
+	 * half the ids it labels. The level's own label carries the specifics.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function membership_labels(): array {
+		/**
+		 * Filter the display names shown for membership adapters.
+		 *
+		 * Lets a third-party adapter name itself in the access-rules UI.
+		 *
+		 * @param array<string, string> $labels Adapter id => display name.
+		 */
+		return apply_filters(
+			'jetonomy_membership_adapter_labels',
+			array(
+				'wp-roles'      => __( 'WP Role', 'jetonomy' ),
+				'memberpress'   => __( 'MemberPress', 'jetonomy' ),
+				'pmpro'         => __( 'PMPro', 'jetonomy' ),
+				'woocommerce'   => __( 'WooCommerce', 'jetonomy' ),
+				'rcp'           => __( 'RCP', 'jetonomy' ),
+				'learndash'     => __( 'LearnDash', 'jetonomy' ),
+				'tutor'         => __( 'Tutor LMS', 'jetonomy' ),
+				'lifterlms'     => __( 'LifterLMS', 'jetonomy' ),
+				'sensei'        => __( 'Sensei', 'jetonomy' ),
+				'masterstudy'   => __( 'MasterStudy', 'jetonomy' ),
+				'learnomy'      => __( 'Learnomy', 'jetonomy' ),
+				'suremembers'   => __( 'SureMembers', 'jetonomy' ),
+				'buddynext-pro' => __( 'BuddyNext Pro Tier', 'jetonomy' ),
+				'wpfusion'      => __( 'WP Fusion Tag', 'jetonomy' ),
+			)
+		);
+	}
+
+	/**
+	 * Map every level id an active adapter exposes to that adapter's id.
+	 *
+	 * Asking the adapters which ids they own replaces the hardcoded prefix
+	 * table this used to rely on. That table silently went stale every time an
+	 * adapter shipped without someone remembering to add its prefix — WP Fusion
+	 * and SureMembers both landed after it was written, so their rules rendered
+	 * as raw `wpfusion_123` / `suremembers_5` on the Access Rules screen
+	 * (Basecamp 10126146658). A registry lookup cannot drift that way.
+	 *
+	 * `wp-roles` is skipped: its ids are bare role slugs with no prefix, it is
+	 * excluded from the membership picker, and a `membership` rule should never
+	 * resolve to a WP role.
+	 *
+	 * @return array<string, string> Level id => adapter id.
+	 */
+	public static function membership_level_owners(): array {
+		if ( null !== self::$level_owners ) {
+			return self::$level_owners;
+		}
+
+		$owners = [];
+		foreach ( self::$membership as $adapter_id => $adapter ) {
+			if ( 'wp-roles' === $adapter_id || ! $adapter->is_active() ) {
+				continue;
+			}
+			foreach ( $adapter->get_all_levels() as $level ) {
+				$level_id = isset( $level['id'] ) ? (string) $level['id'] : '';
+				if ( '' !== $level_id ) {
+					$owners[ $level_id ] = $adapter_id;
+				}
+			}
+		}
+
+		self::$level_owners = $owners;
+
+		return $owners;
+	}
+
+	/**
+	 * Human-readable type + value for a membership rule value.
+	 *
+	 * Falls back to the raw level id when no active adapter claims it — an
+	 * adapter whose plugin has been deactivated still has rules on disk, and
+	 * showing the stored value beats showing nothing.
+	 *
+	 * @param string $level_id Stored `rule_value`, e.g. `wpfusion_102`.
+	 * @return array{type: string, value: string}
+	 */
+	public static function describe_membership_level( string $level_id ): array {
+		$fallback = [
+			'type'  => __( 'Membership', 'jetonomy' ),
+			'value' => $level_id,
+		];
+
+		if ( '' === $level_id ) {
+			return $fallback;
+		}
+
+		$owners     = self::membership_level_owners();
+		$adapter_id = $owners[ $level_id ] ?? '';
+		if ( '' === $adapter_id ) {
+			return $fallback;
+		}
+
+		$adapter = self::get_membership( $adapter_id );
+		if ( ! $adapter ) {
+			return $fallback;
+		}
+
+		$labels = self::membership_labels();
+		$label  = $adapter->get_level_label( $level_id );
+
+		return [
+			'type'  => $labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
+			'value' => '' !== $label ? $label : $level_id,
+		];
+	}
+
+	/**
+	 * Where a visitor goes to BUY the membership level a space requires.
+	 *
+	 * Telling somebody "this needs the VIP tier" without a way to get it is
+	 * half an answer, so the gate needs a link. There is no purchase URL on
+	 * the Membership_Adapter interface and adding a required method would
+	 * break all fourteen adapters, so this is opt-in two ways:
+	 *
+	 *   1. the owning adapter may implement `get_level_url( $level_id )`
+	 *      (BuddyNext Pro does, resolving to that tier's plan page);
+	 *   2. otherwise `jetonomy_membership_upgrade_url` lets a site point any
+	 *      level at whatever page sells it.
+	 *
+	 * Returns '' when neither answers, and the caller then renders the
+	 * requirement without a button rather than a link to nowhere.
+	 *
+	 * @param string $level_id Stored `rule_value`, e.g. `bnp_tier_3`.
+	 * @return string Absolute URL, or '' when nothing can resolve one.
+	 */
+	public static function membership_level_url( string $level_id ): string {
+		$url = '';
+
+		if ( '' !== $level_id ) {
+			$owners     = self::membership_level_owners();
+			$adapter_id = $owners[ $level_id ] ?? '';
+			$adapter    = '' !== $adapter_id ? self::get_membership( $adapter_id ) : null;
+
+			if ( $adapter && method_exists( $adapter, 'get_level_url' ) ) {
+				$url = (string) $adapter->get_level_url( $level_id );
+			}
+
+			/**
+			 * Filter the purchase/upgrade URL for a membership level.
+			 *
+			 * @since 1.9.0
+			 *
+			 * @param string $url        Resolved URL ('' when the adapter offers none).
+			 * @param string $level_id   Stored rule value.
+			 * @param string $adapter_id Owning adapter id ('' when unknown).
+			 */
+			$url = (string) apply_filters( 'jetonomy_membership_upgrade_url', $url, $level_id, $adapter_id );
+		}
+
+		return '' !== $url ? esc_url_raw( $url ) : '';
 	}
 
 	public static function register_search( string $id, Search_Adapter $adapter ): void {

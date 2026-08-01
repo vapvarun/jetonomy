@@ -65,6 +65,58 @@ if [ -f "$ROOT/Gruntfile.js" ]; then
 	}
 fi
 
+# --- 0b. hooks-index drift gate ---------------------------------------------
+# The generated hooks index (docs/website/developer-guide/02a-hooks-index.md)
+# is derived from audit/manifest.json by bin/gen-hooks-reference.php. It was
+# documented as "regenerated at every release" but nothing enforced that, so
+# it sat one release stale (192 hooks while the manifest carried 200 -
+# Basecamp 10114333907). Regenerate here and FAIL if the committed copy
+# differs: the fix is to commit the regenerated index, same discipline as the
+# clean-tree gate below.
+if [ -f "$ROOT/bin/gen-hooks-reference.php" ]; then
+	echo "==> hooks index regen (from manifest)"
+	( cd "$ROOT" && php bin/gen-hooks-reference.php > /dev/null ) || {
+		echo "FAIL: gen-hooks-reference.php errored - manifest unreadable?" >&2
+		exit 22
+	}
+	if ! git -C "$ROOT" diff --quiet -- docs/website/developer-guide/02a-hooks-index.md; then
+		echo "FAIL: generated hooks index is stale vs audit/manifest.json." >&2
+		echo "    Commit the regenerated docs/website/developer-guide/02a-hooks-index.md and re-run." >&2
+		exit 23
+	fi
+fi
+
+# --- 0c. docs-consistency gate ----------------------------------------------
+# Docs must not advertise features the code does not have (the realtime
+# adapter kept resurfacing across three QA passes after manual scrubs -
+# Basecamp 10114333907). Exit 24 so CI can distinguish the failure.
+if [ -f "$ROOT/bin/audit-docs-consistency.php" ]; then
+	echo "==> Step 0c: docs-consistency gate"
+	( cd "$ROOT" && php bin/audit-docs-consistency.php ) || {
+		echo "FAIL: docs claim features the code does not have (see list above)." >&2
+		exit 24
+	}
+fi
+
+# --- 0d. i18n make-pot warning gate ------------------------------------------
+# Translator-comment coverage is release-gated (QA 10150516732): a release
+# cannot ship while wp i18n make-pot reports string warnings on the tree.
+# Exit 25. Requires wp-cli; skipped (with a loud note) when wp is absent.
+if command -v wp > /dev/null 2>&1; then
+	echo "==> Step 0d: i18n make-pot warning gate"
+	I18N_WARNINGS="$(wp i18n make-pot "$ROOT" /tmp/jetonomy-release-check.pot \
+		--slug=jetonomy --domain=jetonomy \
+		--exclude=node_modules,vendor,tests,build,libs,docs,dist 2>&1 \
+		| grep -cE '^Warning: The string' || true)"
+	rm -f /tmp/jetonomy-release-check.pot
+	if [ "$I18N_WARNINGS" -gt 0 ]; then
+		echo "FAIL: wp i18n make-pot reports $I18N_WARNINGS string warning(s). Fix translator comments before tagging." >&2
+		exit 25
+	fi
+else
+	echo "    NOTE: wp-cli not found - i18n warning gate SKIPPED on this box."
+fi
+
 # --- 1. clean-tree gate -----------------------------------------------------
 # Step 0 may have regenerated build artefacts. The gate excludes
 # grunt-generated paths so the build doesn't trip on its own deterministic
@@ -195,6 +247,19 @@ REQUIRED_FILES=(
 	"libs/edd-sl-sdk/assets/build/css/style-edd-sl-sdk.css"
 	"libs/action-scheduler/action-scheduler.php"
 	"libs/action-scheduler/functions.php"
+	# Vendored Prism (QA card 10149499675): the 1.8.0 zip shipped WITHOUT
+	# assets/vendor/ because the tree was never committed - the loader's
+	# file_exists() guard then silently no-opped the marketed highlighting
+	# feature for every customer. Required so packaging can't regress.
+	"assets/vendor/prismjs/prism.min.js"
+	"assets/vendor/prismjs/prism.min.css"
+	"assets/vendor/prismjs/prism-autoloader.min.js"
+	"assets/vendor/prismjs/components/prism-php.min.js"
+	# MIT notice must ship with the vendored library (QA 10149499675).
+	"assets/vendor/prismjs/LICENSE"
+	# Full language set backs the readme's language claim - kotlin is the
+	# canary the QA probe requested and 404'd on when only 20 shipped.
+	"assets/vendor/prismjs/components/prism-kotlin.min.js"
 )
 for f in "${REQUIRED_FILES[@]}"; do
 	if [ ! -f "$STAGE/$f" ]; then
@@ -254,6 +319,18 @@ if [ "${#CRUFT[@]}" -gt 0 ]; then
 	printf '    %s\n' "${CRUFT[@]}" >&2
 	echo "    Add the matching pattern to the EXCLUDES heredoc in this script, or remove the file." >&2
 	exit 40
+fi
+
+# --- 5c2. admin-table responsive contract guard -----------------------------
+# Raw <table> markup in admin views bypasses the responsive contract and
+# regresses mobile/iPad rendering (Basecamp 10146443346). The baseline inside
+# the script is shrink-only; a NEW offender fails the build.
+if [ -f "$ROOT/bin/audit-admin-tables.php" ]; then
+	echo "==> admin-table contract guard"
+	php "$ROOT/bin/audit-admin-tables.php" "$ROOT/includes/admin/views" || {
+		echo "FAIL: new admin table bypasses the responsive contract (see above)." >&2
+		exit 41
+	}
 fi
 
 # --- 5d. contract audit (key/hook contract drift, free+pro pair) ----------

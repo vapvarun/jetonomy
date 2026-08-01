@@ -98,13 +98,13 @@ $stat_cards = array(
 				);
 				?>
 			<?php else : ?>
-				<table class="widefat striped">
+				<table class="widefat striped"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Action', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Object', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'When', 'jetonomy' ); ?></th>
+							<th scope="col" class="column-primary"><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Action', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Object', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'When', 'jetonomy' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -168,6 +168,7 @@ $stat_cards = array(
 										$post_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply_row->post_id );
 										/* translators: %s: post title */
 										$object_html = sprintf(
+											/* translators: %s: site title. */
 											__( 'Reply on %s', 'jetonomy' ),
 											'<a href="' . esc_url( $post_url ) . '">' . esc_html( $parent_post->title ) . '</a>'
 										);
@@ -195,13 +196,22 @@ $stat_cards = array(
 								$object_html = esc_html( $object_type . ' #' . $object_id );
 							}
 							?>
+							<?php
+							// column-primary + data-colname put this table on the same
+							// mobile collapse contract as every other admin list, and
+							// collapse it around WHO acted rather than leaving the
+							// phone with four unlabelled cells (Basecamp 10146443346).
+							?>
 							<tr>
-								<td><?php echo esc_html( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
-								<td>
+								<td class="column-primary" data-colname="<?php esc_attr_e( 'User', 'jetonomy' ); ?>">
+									<strong><?php echo esc_html( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ); ?></strong>
+									<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
+								</td>
+								<td data-colname="<?php esc_attr_e( 'Action', 'jetonomy' ); ?>">
 									<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:<?php echo esc_attr( $dot_color ); ?>;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span><?php echo esc_html( $action_label ); ?>
 								</td>
-								<td><?php echo wp_kses( $object_html, array( 'a' => array( 'href' => array() ) ) ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td data-colname="<?php esc_attr_e( 'Object', 'jetonomy' ); ?>"><?php echo wp_kses( $object_html, array( 'a' => array( 'href' => array() ) ) ); ?></td>
+								<td data-colname="<?php esc_attr_e( 'When', 'jetonomy' ); ?>"><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -247,7 +257,7 @@ $stat_cards = array(
 			<!-- System Info -->
 			<div class="jetonomy-dashboard-card">
 				<h2><?php esc_html_e( 'System Info', 'jetonomy' ); ?></h2>
-				<table class="widefat">
+				<table class="widefat"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
 					<tbody>
 						<tr>
 							<td><strong><?php esc_html_e( 'Plugin Version', 'jetonomy' ); ?></strong></td>
@@ -273,12 +283,41 @@ $stat_cards = array(
 				</table>
 			</div>
 
-			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-				<!-- Pro Upsell: Analytics -->
-				<div class="jt-pro-upsell-card">
-					<h3><?php esc_html_e( 'Analytics', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></h3>
-					<p><?php esc_html_e( 'Engagement graphs, user growth, top spaces, and more.', 'jetonomy' ); ?></p>
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) && null !== ( $pulse ?? null ) ) : ?>
+				<!-- Analytics teaser: REAL 7-day numbers (cached 1h) + Pro upsell.
+					Replaces the old static card so the widget itself demonstrates
+					what Pro's full analytics does. -->
+				<div class="jt-pro-upsell-card jt-pulse-card">
+					<h3><?php esc_html_e( 'This week in your community', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PREVIEW', 'jetonomy' ); ?></span></h3>
+					<div class="jt-pulse-grid">
+						<div class="jt-pulse-stat">
+							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['posts'] ) ); ?></span>
+							<span class="jt-pulse-l"><?php esc_html_e( 'new topics', 'jetonomy' ); ?></span>
+						</div>
+						<div class="jt-pulse-stat">
+							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['replies'] ) ); ?></span>
+							<span class="jt-pulse-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
+						</div>
+						<div class="jt-pulse-stat">
+							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['contributors'] ) ); ?></span>
+							<span class="jt-pulse-l"><?php esc_html_e( 'active members', 'jetonomy' ); ?></span>
+						</div>
+					</div>
+					<?php if ( ! empty( $pulse['top_space'] ) ) : ?>
+						<p class="jt-pulse-top">
+							<?php
+							printf(
+								/* translators: 1: space title, 2: post count */
+								esc_html__( 'Most active: %1$s (%2$s new topics)', 'jetonomy' ),
+								'<strong>' . esc_html( $pulse['top_space'] ) . '</strong>',
+								esc_html( number_format_i18n( $pulse['top_space_posts'] ) )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+					<p><?php esc_html_e( 'Pro adds full history, engagement and moderation analytics, top contributors, and CSV export.', 'jetonomy' ); ?></p>
+					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<a class="jt-pulse-dismiss" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'jetonomy_dismiss_pulse', '1' ), 'jetonomy_dismiss_pulse' ) ); ?>"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
 

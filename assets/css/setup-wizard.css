@@ -482,3 +482,41 @@ body.jt-setup-body {
 /* Step visibility */
 .jt-step { display: none; }
 .jt-step--active { display: block; }
+
+/* ── 320px floor (Basecamp 10150583158) ─────────────────────
+   The two-column option grids used bare 1fr tracks, whose min-content
+   floor let long labels push the card 43px past a 320px viewport. Tracks
+   are clamped to minmax(0, 1fr) and the grids stack on small phones;
+   inputs and buttons cap at the available width. */
+.jt-radio-group,
+.jt-success-cta {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media screen and (max-width: 480px) {
+	.jt-radio-group,
+	.jt-success-cta {
+		grid-template-columns: 1fr;
+	}
+	.jt-setup-card input[type="text"],
+	.jt-setup-card input[type="url"],
+	.jt-setup-card input[type="email"],
+	.jt-setup-card select,
+	.jt-setup-card .jt-btn {
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+	.jt-setup-card .jt-btn {
+		min-height: 44px;
+	}
+	/* The live URL preview is one unbroken string (site URL + slug) - it
+	   must wrap, not push the card sideways. */
+	.jt-url-preview {
+		flex-wrap: wrap;
+		min-width: 0;
+	}
+	.jt-url-preview__url {
+		overflow-wrap: anywhere;
+		min-width: 0;
+	}
+}

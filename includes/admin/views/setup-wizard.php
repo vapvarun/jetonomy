@@ -51,6 +51,7 @@ wp_localize_script(
 		'siteUrl' => $site_url,
 		'i18n'    => array(
 			'slugRequired'         => esc_html__( 'Please enter a community URL slug.', 'jetonomy' ),
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'fillCategoryAndSpace' => esc_html( sprintf( __( 'Please fill in the category and %s name.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 			'genericError'         => esc_html__( 'Something went wrong. Please try again.', 'jetonomy' ),
 			'networkError'         => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
@@ -85,6 +86,7 @@ wp_head();
 		<div class="jt-setup-step-connector" id="jt-conn-1"></div>
 		<div class="jt-setup-step-dot" data-step="2">
 			<div class="jt-setup-step-dot__circle">2</div>
+			<?php /* translators: %s: singular space label. */ ?>
 			<div class="jt-setup-step-dot__label"><?php echo esc_html( sprintf( __( 'First %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></div>
 		</div>
 		<div class="jt-setup-step-connector" id="jt-conn-2"></div>
@@ -151,6 +153,7 @@ wp_head();
 
 		<div class="jt-btn-row">
 			<button type="button" class="jt-btn jt-btn--primary" id="jt-next-1">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<?php echo esc_html( sprintf( __( 'Next: First %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 				<span class="jt-spinner"></span>
 			</button>
@@ -159,23 +162,28 @@ wp_head();
 
 	<!-- Step 2: Create First Space -->
 	<div class="jt-setup-card jt-step" id="jt-step-2">
+		<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 		<h2><?php echo esc_html( sprintf( __( 'Create Your First %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></h2>
+		<?php /* translators: 1: singular space label, 2: plural space label. */ ?>
 		<p class="jt-setup-card__desc"><?php echo esc_html( sprintf( __( 'A %1$s is a community section where people can start discussions. You can add more %2$s later.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 
 		<div class="jt-setup-error" id="jt-error-2"></div>
 
 		<div class="jt-form-group">
 			<label for="jt-cat-name"><?php esc_html_e( 'Category Name', 'jetonomy' ); ?></label>
-			<input type="text" id="jt-cat-name" value="General" placeholder="General">
+			<input type="text" id="jt-cat-name" value="<?php esc_attr_e( 'General', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'General', 'jetonomy' ); ?>">
+			<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 			<p class="jt-form-hint"><?php echo esc_html( sprintf( __( 'Categories group related %s together.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 		</div>
 
 		<div class="jt-form-group">
+			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 			<label for="jt-space-name"><?php echo esc_html( sprintf( __( '%s Name', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></label>
-			<input type="text" id="jt-space-name" value="Community Discussion" placeholder="Community Discussion">
+			<input type="text" id="jt-space-name" value="<?php esc_attr_e( 'Community Discussion', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'Community Discussion', 'jetonomy' ); ?>">
 		</div>
 
 		<div class="jt-form-group">
+			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 			<label for="jt-space-desc"><?php echo esc_html( sprintf( __( '%s Description', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></label>
 			<textarea id="jt-space-desc" placeholder="<?php esc_attr_e( 'A place for community discussions...', 'jetonomy' ); ?>"></textarea>
 		</div>
@@ -184,6 +192,7 @@ wp_head();
 
 		<button type="button" class="jt-btn jt-btn--ghost" id="jt-create-sample">
 			<?php jetonomy_echo_icon( 'plus', 16 ); ?>
+			<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 			<?php echo esc_html( sprintf( __( 'Create sample data instead (2 categories, 6 %s across all four types, ~12 posts)', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>
 			<span class="jt-spinner" style="border-color:rgba(100,116,139,.4);border-top-color:#64748b;"></span>
 		</button>
@@ -191,6 +200,7 @@ wp_head();
 		<div class="jt-btn-row">
 			<button type="button" class="jt-btn jt-btn--secondary" id="jt-back-2"><?php esc_html_e( 'Back', 'jetonomy' ); ?></button>
 			<button type="button" class="jt-btn jt-btn--primary" id="jt-next-2">
+				<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
 				<?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 				<span class="jt-spinner"></span>
 			</button>
@@ -220,6 +230,7 @@ wp_head();
 			<h4><?php esc_html_e( 'Next Steps', 'jetonomy' ); ?></h4>
 			<ul>
 				<li><?php esc_html_e( 'Customize appearance in Settings (colors, fonts, layout)', 'jetonomy' ); ?></li>
+				<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 				<li><?php echo esc_html( sprintf( __( 'Create more %s for different topics', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></li>
 				<li><?php esc_html_e( 'Invite members to start discussions', 'jetonomy' ); ?></li>
 				<li><?php esc_html_e( 'Import existing content from bbPress or wpForo', 'jetonomy' ); ?></li>

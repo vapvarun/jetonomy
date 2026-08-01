@@ -228,7 +228,7 @@ class Replies_Controller extends Base_Controller {
 			);
 		}
 
-		$content = wp_kses_post( (string) $request->get_param( 'content' ) );
+		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 		if ( empty( $content ) ) {
 			return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
 		}
@@ -260,6 +260,11 @@ class Replies_Controller extends Base_Controller {
 		// plumbs it through — Pro validates/enforces it via the
 		// `jetonomy_before_create_reply` filter (see Task 12).
 		$reply_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
+
+		// Private reply (1.9.0): author's choice at compose time. Readable only
+		// by the author, the topic author, admins, and space staff — everyone
+		// else gets a tombstone (Permission_Engine::can_read_reply).
+		$reply_data['is_private'] = (int) (bool) $request->get_param( 'is_private' );
 
 		if ( $akismet_spam ) {
 			$reply_data['status'] = 'spam';
@@ -408,11 +413,19 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Privacy toggle (1.9.0): same author-or-editor gate as content edits.
+		// Only applied when the client actually sent the param, so ordinary
+		// content edits don't silently reset the flag.
+		if ( null !== $request->get_param( 'is_private' ) ) {
+			Reply::set_private( $id, rest_sanitize_boolean( $request->get_param( 'is_private' ) ) );
+			$reply->is_private = (int) rest_sanitize_boolean( $request->get_param( 'is_private' ) );
+		}
+
 		$update_data = array();
 
 		$raw_content = $request->get_param( 'content' );
 		if ( null !== $raw_content ) {
-			$content = wp_kses_post( (string) $raw_content );
+			$content = jetonomy_sanitize_editor_content( (string) $raw_content );
 			if ( empty( $content ) ) {
 				return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
 			}
@@ -817,6 +830,10 @@ class Replies_Controller extends Base_Controller {
 			'created_at'        => $reply->created_at ?? null,
 			// Aliased from created_at since jt_replies has no separate published_at column.
 			'published_at'      => $reply->created_at ?? null,
+			// Additive UTC ISO-8601 (`Z`) instants for app clients; columns are already UTC.
+			'created_at_gmt'    => \Jetonomy\to_iso8601_z( $reply->created_at ?? null ),
+			'published_at_gmt'  => \Jetonomy\to_iso8601_z( $reply->created_at ?? null ),
+			'edited_at_gmt'     => \Jetonomy\to_iso8601_z( $reply->edited_at ?? null ),
 			// Enriched author data (for app clients + JS rendering)
 			'author_name'       => $author_name,
 			'author_avatar'     => $author_avatar,
@@ -830,6 +847,12 @@ class Replies_Controller extends Base_Controller {
 			// dropping the row, so the children of a blocked author still render;
 			// clients use this flag to draw a tombstone in place of the body.
 			'is_blocked_author' => ! empty( $reply->is_blocked_author ),
+			// Private-reply contract (1.9.0): is_private marks the row for
+			// authorized viewers (badge + toggle UI); is_private_hidden means
+			// THIS viewer may not read it — content arrives blanked (the model
+			// tombstone already stripped it) and clients draw a tombstone.
+			'is_private'        => ! empty( $reply->is_private ),
+			'is_private_hidden' => ! empty( $reply->is_private_hidden ),
 		);
 
 		/**
@@ -859,6 +882,12 @@ class Replies_Controller extends Base_Controller {
 				'minimum'  => 1,
 			),
 			'is_anonymous'   => array(
+				'type'              => 'boolean',
+				'required'          => false,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			),
+			'is_private'     => array(
 				'type'              => 'boolean',
 				'required'          => false,
 				'default'           => false,

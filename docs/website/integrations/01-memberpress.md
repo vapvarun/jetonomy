@@ -21,52 +21,88 @@ Jetonomy checks for MemberPress automatically on every page load. No configurati
 
 This is the standard Access Rules flow that every membership and LMS integration in this section follows. The other integration guides link back here for the full walkthrough.
 
-![Jetonomy Access Rules tab showing a saved membership rule with its Type, Value, Grants, and Space Role columns](images/access-rules-with-rule.png)
+![Jetonomy Access Rules tab showing a saved membership rule with its Type, Value and Access level columns](images/access-rules-with-rule.png)
 
 1. Go to **Jetonomy → Spaces** and open the space you want to gate.
 2. Click the **Access Rules** tab in the space settings panel.
 3. Set **Rule Type** to your MemberPress level (membership levels appear in the dropdown once MemberPress is active).
 4. Pick the membership level in the **Value** field.
-5. Choose what the rule **Grants** - Read, Participate, or Full (see below).
-6. Choose the **Space Role** members get when they match - Viewer, Member, Moderator, or Admin (see below).
-7. Click **Add Rule**. The rule appears in the table below the form.
+5. Choose the **Access level** the rule grants - Read, Participate, or Full (see below). Participate is the default and the right answer for most paid spaces.
+6. Click **Add Rule**. The rule appears in the table below the form, and the form reads your rule back to you in plain English before you save it.
 
 Members who hold the selected level gain access to this space at the level you chose. Members without it see the space as locked (or hidden, depending on your space visibility setting).
 
 > **Tip:** Add more than one rule if you want to grant access for more than one membership level. Rules are evaluated top to bottom by priority, and a member passes on the first rule they match.
 
-## Grants and Space Role
+## Access level
 
-Every Access Rule has two settings that decide *what* a matching member can do. They are the same across all integrations:
+An Access Rule has **one** setting that decides what a matching member can do:
 
-**Grants** - how much of the space the member can use:
-
-| Grants | What the member can do |
+| Access level | What the member can do |
 |---|---|
 | Read | View topics and replies, but not post or reply |
 | Participate | Read, post topics, and reply (the usual choice for a course or paid space) |
-| Full | Participate plus the space-management abilities tied to their Space Role |
+| Full | Participate, plus close and pin topics and edit other people's posts |
 
-**Space Role** - the role the member is given inside this one space:
+The space role a matching member is recorded as is **derived from the access level**, not chosen separately:
 
-| Space Role | Meaning |
+| Access level | Recorded as |
 |---|---|
-| Viewer | Read-only presence in the space |
-| Member | A regular participating member (the usual choice) |
-| Moderator | Can moderate content in this space |
-| Admin | Can manage this space's settings and members |
+| Read | Viewer |
+| Participate | Member |
+| Full | Moderator |
 
-For most gated spaces - a paid membership or a course community - set **Grants: Participate** and **Space Role: Member**. Use Moderator or Admin only when you specifically want a membership tier to run the space.
+> **Changed in 1.8.1.** This used to be two dropdowns - an access level *and* a space role - which could contradict each other. A rule labelled "Read" could be set to record people as space Admins, and that combination handed out post deletion and moderation. The role is now derived from the access level and capped by it, so a rule can never grant more than it advertises. **Rules already saved on your site are capped automatically; you do not need to change anything.**
+
+> **Membership rules never create moderators.** Whatever access level you pick, a rule based on a *membership* tier tops out at Member. Moderation is an appointment you make per person on the space's Members tab - nobody should be able to buy it. Role, capability and trust-level rules keep the full range, because those are deliberate decisions about a known group rather than anything a visitor can purchase.
 
 > **Note:** There is no separate "Grant vs Revoke" switch. A rule always *grants* the access you choose to members who match it; members who match no rule simply do not get in. To take a level's access away, delete its rule.
 
-## Auto-Join and Auto-Leave
+## Access Follows the Subscription
 
-When a MemberPress membership **activates**, Jetonomy automatically adds the member to any spaces whose Access Rules grant that level. They receive a welcome notification in the community.
+Access is worked out **at the moment someone opens the space**, by reading your Access Rules against what they currently hold. Nothing has to be synchronised, and there is no step for you to run.
 
-When a membership **expires, cancels, or is paused**, Jetonomy fires `jetonomy_membership_deactivated` and removes the member from any spaces gated exclusively to that level. Their posts and replies remain intact.
+- Their membership goes active → they can open the space on their very next page load.
+- Their membership expires, is cancelled, refunded or paused → they lose access just as immediately.
+- They buy again → access returns.
 
-This is handled by the `MemberPress_Adapter` class. It hooks `mepr-txn-status-complete` for activation, and `mepr-txn-status-refunded`, `mepr-txn-expired`, and `mepr_subscription_transition_status` for deactivation.
+Their posts and replies are never touched by any of this. Losing access hides the space from them; it does not remove what they wrote.
+
+This is handled by the `MemberPress_Adapter` class, which hooks `mepr-txn-status-complete` for activation and `mepr-txn-status-refunded`, `mepr-txn-expired`, and `mepr_subscription_transition_status` for deactivation.
+
+> **Changed in 1.8.1.** Access rules used to be read only *after* Jetonomy had already decided you were a member of the space, which meant a rule could raise an existing member's access but could never let anybody new in. Pointing a private space at a membership tier produced a space nobody could enter, and the only way in was the manual **Sync Members** button - which then never took anyone back out when their plan lapsed. Access is now resolved live, both directions, with nothing to sync.
+
+### What a paying member does *not* get yet
+
+Access is automatic; the **roster** is not. Someone who gets in through a membership rule can read and post, but until you press **Sync Members** on the rule they:
+
+- do not appear in the space's Members list,
+- are not included in the member count,
+- are not matched by space settings that act on roles, such as "who can post: members".
+
+**Sync Members** writes those roster rows, and nothing removes them again when a plan lapses - so treat it as a snapshot, not a subscription. Access itself is always correct regardless; the roster is a convenience. Automatic roster upkeep is planned.
+
+## What a Visitor Without the Membership Sees
+
+Somebody who lands on a space gated by a membership rule is told **which plan opens it** and given a button to go and get it - rather than a generic "this space is private".
+
+The button goes to that membership's own MemberPress registration page, so they arrive at the right plan instead of a pricing table they have to re-read. Every membership and LMS integration in this section does the same thing, each pointing at wherever that system sells the thing:
+
+| Integration | The button goes to |
+|---|---|
+| MemberPress | the membership's own page |
+| Paid Memberships Pro | checkout with that level preselected |
+| Restrict Content Pro | your registration page with that level preselected |
+| WooCommerce Memberships | the product that grants the plan |
+| LearnDash, Tutor, LifterLMS, Sensei, MasterStudy | the course (or LearnDash group) |
+| Learnomy | the course or membership plan |
+
+**When there is no button**, that is deliberate. Two cases:
+
+1. **The requirement is not something anyone can buy.** Rules based on a WordPress role, a capability, a trust level, a CRM tag (WP Fusion) or an access group (SureMembers) state the requirement plainly and stop there, because sending a visitor to a checkout would be misleading.
+2. **The answer is ambiguous.** A WooCommerce Memberships plan granted by three different products has three possible answers, and guessing which price point to sell somebody is worse than saying nothing. One granting product gives one button; several give none.
+
+In either case you can point the button wherever you like with the `jetonomy_membership_upgrade_url` filter - see [Custom Access Logic](../developer-guide/28-custom-access-logic.md).
 
 ## Visibility Behavior
 

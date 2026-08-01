@@ -53,7 +53,6 @@ Pro registers membership adapters via `Adapter_Registry::register_membership()` 
 \Jetonomy\Adapters\Adapter_Registry::register_email( 'my-mailer', $adapter );
 \Jetonomy\Adapters\Adapter_Registry::register_membership( 'my-membership', $adapter );
 \Jetonomy\Adapters\Adapter_Registry::register_ai( 'my-ai', $adapter );
-
 // Retrieve the active adapter (first registered adapter where is_active() returns true).
 $search     = \Jetonomy\Adapters\Adapter_Registry::get_search();
 $email      = \Jetonomy\Adapters\Adapter_Registry::get_email();
@@ -68,6 +67,9 @@ $openai = \Jetonomy\Adapters\Adapter_Registry::get_ai( 'openai' );
 $all    = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
 $all_ai = \Jetonomy\Adapters\Adapter_Registry::get_all_ai();
 ```
+
+> **There is no realtime adapter.** Only membership, search, email, and AI adapters exist - four interfaces, four `register_*()` methods on `Adapter_Registry`, and no `register_realtime()`. Live updates (new replies, notification counts) are delivered by REST polling against the updates endpoint, not by a pluggable realtime backend. Older docs listed "real-time" among the adapter interfaces - that was never implemented. If you need push-based delivery, open an issue; do not implement the other adapter interfaces expecting a realtime seam to exist.
+
 
 The Registry returns `null` when no active adapter is found for a type - always null-check before calling methods.
 

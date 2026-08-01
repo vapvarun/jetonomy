@@ -144,6 +144,7 @@ class SpaceMember extends Model {
 		if ( ! in_array( $role, self::VALID_ROLES, true ) ) {
 			return new \WP_Error(
 				'invalid_role',
+				/* translators: %s: comma-separated list of valid space roles. */
 				sprintf( __( 'Invalid role. Allowed: %s.', 'jetonomy' ), implode( ', ', self::VALID_ROLES ) ),
 				[ 'status' => 400 ]
 			);

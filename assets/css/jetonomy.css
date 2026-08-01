@@ -243,6 +243,13 @@
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
+  /* Danger-ghost: an outlined pill (same shape as .jt-btn-ghost) that reads as
+     destructive - red label + red-tinted hover. Higher specificity than the
+     neutral ghost rules above so the danger colour wins for a destructive
+     secondary action (member Ban, notification Delete) while the shape stays
+     consistent with its ghost siblings. */
+  .jt-app button.jt-btn-ghost.jt-btn-danger { color: var(--jt-danger) !important; }
+  .jt-app button.jt-btn-ghost.jt-btn-danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; border-color: var(--jt-danger) !important; }
   /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
      raised surface + accent underline. */
   .jt-app button.jt-pill.on, .jt-app button.jt-pill.active,
@@ -333,7 +340,9 @@
   .jt-icon-picker .jt-icon-option[hidden] { display: none; }
   .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; color: var(--jt-accent); }
   .jt-icon-option-svg svg { width: 22px; height: 22px; }
-  .jt-icon-picker-more { align-self: flex-start; font-size: 0.875rem; }
+  /* min-height 40px: this button measured 23px tall in the icon picker on admin
+     screens - below the touch-target floor (Basecamp 10146405920). */
+  .jt-icon-picker-more { align-self: flex-start; font-size: 0.875rem; min-height: 40px; }
   .jt-icon-picker-empty { color: var(--jt-text-secondary); font-size: 0.875rem; padding: 8px 4px; grid-column: 1 / -1; margin: 0; }
 
   /* Posts-per-page narrow input + prefix editor (G5 settings). */
@@ -353,7 +362,11 @@
   /* Page-head pattern (1.4.0): h1 + muted subtitle, generous gap below. */
   .jt-page-head { margin-block-end: 28px; }
   .jt-page-head .jt-page-title { margin: 0 0 4px; }
-  .jt-page-head .jt-page-subtitle { margin: 0; color: var(--jt-text-secondary); font-size: 0.9375rem; }
+  /* One subtitle look everywhere. This used to be scoped to .jt-page-head, so
+     the space sub-pages (which use .jt-cat-page-row, not a page head) either
+     got no styling at all or reached for .jt-member-sub, a near-duplicate in
+     a different colour. Both selectors now resolve to the same rule. */
+  .jt-page-subtitle, .jt-member-sub { margin: 2px 0 0; color: var(--jt-text-secondary); font-size: 0.9375rem; }
 
   /* My Spaces landing (G7). Two stacked sections, card per space. */
   .jt-my-spaces-section { margin-block-end: 36px; }
@@ -489,6 +502,13 @@
   .jt-meta strong { color: var(--jt-text); }
   .jt-post-body { padding: var(--jt-space-6); font-size: 1rem; line-height: 1.8; }
   .jt-post-body p { margin: 0 0 var(--jt-space-3); }
+  /* Contenteditable fallback: content that reaches the page as bare <div>
+     paragraphs (older stored posts, third-party REST writers) gets the same
+     rhythm as <p>. Unclassed divs only - classed divs are embeds/components
+     that manage their own spacing. Server-side jetonomy_normalize_editor_html()
+     is the real fix; this covers whatever slips past it. */
+  .jt-post-body > div:not([class]),
+  .jt-reply-body > div:not([class]) { margin: 0 0 var(--jt-space-3); }
   /* Prose element rules are shared by the post body AND the reply body so every
      content type (lists, code, blockquotes, long words) aligns and wraps the
      same way in both — no per-container drift. Long unbroken tokens (URLs, hashes)
@@ -557,9 +577,11 @@
   .jt-reply > :last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
   .jt-reply-head { display: flex; align-items: center; flex-wrap: wrap; row-gap: var(--jt-space-1); gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); }
   /* Anonymous / unknown author: center the silhouette icon and keep it from
-     collapsing to 0 width as a flex child. */
-  .jt-avatar-anon { color: var(--jt-text-tertiary); }
-  .jt-avatar-anon svg { flex-shrink: 0; }
+     collapsing to 0 width as a flex child. .jt-avatar-system is the same
+     circle for an event with no person behind it at all (a flag needing
+     review, a vote roll-up) — it carries the notification's type icon. */
+  .jt-avatar-anon, .jt-avatar-system { color: var(--jt-text-tertiary); }
+  .jt-avatar-anon svg, .jt-avatar-system svg { flex-shrink: 0; }
   .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-5); }
@@ -623,6 +645,22 @@
   .jt-progress { height: 4px; background: var(--jt-bg-muted); border-radius: 2px; overflow: hidden; }
   .jt-progress-fill { height: 100%; background: var(--jt-accent); border-radius: 2px; transition: width 0.8s var(--jt-ease); }
 
+  /* ── Private replies (1.8.1) ── */
+  .jt-private-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--jt-warn); background: var(--jt-warn-light); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); }
+  .jt-reply-private-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); cursor: pointer; user-select: none; }
+  .jt-reply-private-toggle input { margin: 0; }
+
+  /* ── My Subscriptions ── */
+  .jt-subs-heading { font-family: var(--jt-font-heading); font-size: 1rem; font-weight: 600; margin: var(--jt-space-6) 0 var(--jt-space-3); }
+  .jt-subs-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
+  .jt-subs-row { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); padding: var(--jt-space-3) var(--jt-space-4); }
+  .jt-subs-row + .jt-subs-row { border-block-start: 1px solid var(--jt-border); }
+  .jt-subs-main { display: flex; align-items: center; gap: var(--jt-space-3); min-width: 0; }
+  .jt-subs-title { font-weight: 600; color: var(--jt-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jt-subs-title:hover { color: var(--jt-accent); }
+  .jt-subs-title--gone { color: var(--jt-text-tertiary); font-style: italic; font-weight: 400; }
+  .jt-subs-via { font-size: 0.75rem; color: var(--jt-text-tertiary); background: var(--jt-bg-subtle); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); flex-shrink: 0; }
+
   /* ── Profile ── */
   .jt-profile { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
   .jt-profile-banner { height: 120px; background: linear-gradient(135deg, var(--jt-accent), #1e40af); background: linear-gradient(135deg, var(--jt-accent), color-mix(in srgb, var(--jt-accent) 60%, black)); }
@@ -630,6 +668,9 @@
   .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: var(--jt-accent-fg); display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
   .jt-profile-name { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0; flex-wrap: wrap; row-gap: 8px; }
   .jt-profile-name > * { flex-shrink: 0; }
+  /* Grouped header actions (Report / Silence / Ban / Message / Edit) sit as one
+     cluster on the right, not spread across the row. */
+  .jt-profile-head-actions { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
   .jt-level-tag { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-accent-fg); white-space: nowrap; display: inline-block; }
 
   .jt-stats-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
@@ -658,7 +699,10 @@
   .jt-idea-meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.9375rem; color: var(--jt-text-tertiary); }
 
   /* ── Leaderboard ── */
-  .jt-leader { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--jt-border); }
+  /* Padding lives HERE, once. It used to be declared twice — 10px 12px here
+     and 8px 12px again in the hover-states block 1300 lines down, which
+     silently won. Editing this line had no effect. */
+  .jt-leader { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--jt-border); }
   .jt-leader:last-child { border-bottom: none; }
   /* "You are ranked #N" summary — accent-tinted card above the board. */
   .jt-leader-you { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 16px; border-inline-start: 3px solid var(--jt-accent); background: var(--jt-accent-light, var(--jt-bg-subtle)); }
@@ -678,7 +722,8 @@
   .jt-leader-pts { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
 
   /* ── Trending ── */
-  .jt-trend { display: flex; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--jt-border); }
+  /* Single padding declaration — see the note on .jt-leader above. */
+  .jt-trend { display: flex; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--jt-border); }
   .jt-trend:last-child { border-bottom: none; }
   .jt-trend-n { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; color: var(--jt-border-strong); min-width: 24px; }
   .jt-trend-title { font-size: 0.9375rem; font-weight: 500; line-height: 1.4; cursor: pointer; }
@@ -784,6 +829,10 @@
 
     /* Profile header — allow wrap, keep badges atomic */
     .jt-profile-name > .jt-level-tag { margin-left: var(--jt-space-2); }
+    /* Name + action cluster can't share a line at phone widths — let the row
+       wrap and drop the action group to its own full-width line, left-aligned. */
+    .jt-profile-headrow { flex-wrap: wrap; }
+    .jt-profile-head-actions { width: 100%; justify-content: flex-start; margin-top: var(--jt-space-2); }
 
     /* Multi-column grids collapse to single column on phones */
     .jt-kanban { grid-template-columns: 1fr; }
@@ -1141,7 +1190,11 @@
   .jt-leader-stats { display: flex; gap: 16px; margin-left: auto; text-align: right; }
   .jt-leader-stat-val { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; }
   .jt-leader-stat-lbl { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: .05em; }
-  .jt-leader-pad { padding: 10px 0; }
+  /* Leaderboard-page row: the page card's own 20px gutter is the whole inset,
+     so the row adds no inline padding — and therefore must not bleed either.
+     (This rule was dead until 1.8.1: the hover-states block re-declared
+     .jt-leader's padding further down the file and silently won.) */
+  .jt-leader.jt-leader-pad { padding: 10px 0; margin-inline: 0; }
 
   /* ── Sidebar extras ── */
   .jt-sidebar-link { margin-top: 10px; }
@@ -1610,10 +1663,18 @@
   .jt-member-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); }
   .jt-member-name { font-weight: 600; color: var(--jt-text); }
   .jt-member-joined { font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-top: 2px; }
-  .jt-member-rep { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
+  /* Reputation is the last cell in the row, so its width sets where every
+     control to its left lands. Left free, a 4-digit score pushed the role
+     select and Ban button ~10px further left than a 3-digit one and the
+     column read as ragged down the list. Fixed width + end-alignment locks
+     the whole trailing cluster into a column. */
+  .jt-member-rep { flex: 0 0 auto; min-width: 5.5rem; text-align: end; font-family: var(--jt-font-mono); font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
-  .jt-member-sub { color: var(--jt-text-tertiary); margin-top: 2px; }
   .jt-pending-requests { margin-bottom: 20px; }
+  /* Deep-linked from a join-request notification (#jt-pending-requests). Same
+     scroll-margin-top treatment as .jt-reply:target — without it the section
+     lands under the sticky header and the reader sees a clipped request. */
+  .jt-pending-requests:target { scroll-margin-top: var(--jt-scroll-offset); }
   .jt-pending-requests-title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; padding: 12px 16px 0; font-size: 1rem; font-weight: 600; color: var(--jt-text); }
   .jt-pending-item:last-child { border-bottom: none; }
   .jt-pending-message { font-size: 0.875rem; color: var(--jt-text-secondary); margin-top: 2px; }
@@ -2029,13 +2090,25 @@
   a.jt-row { transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.15s; }
   a.jt-row:hover { box-shadow: var(--jt-shadow-md); transform: translateY(-1px); }
 
-  /* Leaderboard rows — hover background */
-  .jt-leader { transition: background 0.15s; padding: 8px 12px; margin: 0 -12px; border-radius: var(--jt-radius); }
+  /* Leaderboard + trending rows — hover background bleeds into the card's
+     own gutter so the highlight reads as a full row, not a floating pill.
+     The negative margin is only correct while the row sits in a card WE
+     own; see the host-card reset below for when it does not. */
+  .jt-leader { transition: background 0.15s; margin-inline: -12px; border-radius: var(--jt-radius); }
   .jt-leader:hover { background: var(--jt-bg-hover); }
 
-  /* Sidebar trending items — hover background */
-  .jt-trend { transition: background 0.15s; padding: 6px 8px; margin: 0 -8px; border-radius: var(--jt-radius); }
+  .jt-trend { transition: background 0.15s; margin-inline: -8px; border-radius: var(--jt-radius); }
   .jt-trend:hover { background: var(--jt-bg-hover); }
+
+  /* Host-card reset. When a theme or companion plugin supplies the sidebar
+     card (BuddyNext renders .bn-sidebar-card, and its bridge CSS zeroes our
+     rows' inline padding because its card body owns the gutter), the bleed
+     above has nothing to bleed into — it just drags the row outside the
+     content box. Members ended up ~5px from the card border while the card
+     header and footer link sat at 16px, and every sidebar widget looked
+     crowded against its edge. Rows align with the rest of the card here. */
+  .jt-app .bn-sidebar-card .jt-leader,
+  .jt-app .bn-sidebar-card .jt-trend { margin-inline: 0; }
 
   /* Tag pills */
   .jt-tag { transition: all 0.15s; }
@@ -2507,7 +2580,26 @@
 .jt-modal-msg { font-size: 0.9375rem; line-height: 1.5; margin: 0 0 16px; color: var(--jt-text); }
 .jt-modal-input { width: 100%; margin-bottom: 16px; resize: vertical; }
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-.jt-modal-actions .jt-btn { min-width: 90px; justify-content: center; }
+/* The confirm/alert/prompt modal is appended to <body>, OUTSIDE .jt-app, so the
+   `.jt-app .jt-btn` rules never reach its buttons - they'd render as bare native
+   controls. Re-declare the full button appearance here, unscoped, driven by the
+   :root tokens (which reach <body>). Keeps modal buttons pixel-consistent with
+   the in-app pills: Cancel = ghost outline, confirm = filled accent, danger
+   confirm = filled red. */
+.jt-modal-actions .jt-btn {
+	min-width: 90px;
+	display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+	padding: 8px 18px; border-radius: var(--jt-radius-full);
+	font-weight: 600; font-size: 0.9375rem; font-family: var(--jt-font);
+	border: none; cursor: pointer; text-decoration: none;
+	transition: all var(--jt-dur) var(--jt-ease);
+}
+.jt-modal-actions .jt-btn-fill { background: var(--jt-accent); color: var(--jt-accent-fg); }
+.jt-modal-actions .jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-accent-hover-fg); }
+.jt-modal-actions .jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
+.jt-modal-actions .jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
+.jt-modal-actions .jt-btn-danger { background: var(--jt-danger); color: #fff; }
+.jt-modal-actions .jt-btn-danger:hover { background: var(--jt-danger); filter: brightness( 0.93 ); color: #fff; }
 @media ( max-width: 640px ) {
 	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
 	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }
@@ -3111,4 +3203,27 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-attachment--file .jt-attachment__file {
 		width: 100%;
 	}
+}
+
+/* Composer toolbar + emoji picker touch floors (Basecamp 10149499573:
+   trigger measured 32x30, options ~37x33 at 320). */
+@media screen and (max-width: 782px) {
+	.jt-editor-bar button,
+	.jt-editor-bar .jt-editor-bar-btn {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
+	.jt-emoji-picker .jt-emoji-option {
+		min-width: 44px;
+		min-height: 44px;
+	}
+}
+.jt-emoji-picker .jt-emoji-option:focus-visible {
+	outline: 2px solid var(--jt-accent, #0073aa);
+	outline-offset: 1px;
+	border-radius: 4px;
 }

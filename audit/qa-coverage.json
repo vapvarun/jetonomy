@@ -2,18 +2,18 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.8.0"
+        "version": "1.8.1"
     },
     "generated": {
-        "at": "2026-07-17T16:40:41+00:00",
-        "manifest_at": "2026-07-17T00:00:00Z",
-        "manifest_branch": "main"
+        "at": "2026-08-01T05:42:29+00:00",
+        "manifest_at": "2026-08-01T00:00:00Z",
+        "manifest_branch": "1.8.1-dev"
     },
     "categories": {
         "rest": {
-            "total": 99,
-            "covered": 42,
-            "uncovered": 57,
+            "total": 100,
+            "covered": 44,
+            "uncovered": 56,
             "skipped": 0,
             "covered_items": [
                 {
@@ -138,6 +138,10 @@
                 },
                 {
                     "method": "GET",
+                    "route": "/users"
+                },
+                {
+                    "method": "GET",
                     "route": "/notifications"
                 },
                 {
@@ -179,6 +183,10 @@
                 {
                     "method": "POST",
                     "route": "/moderation/flags/(?P<id>\\d+)/resolve"
+                },
+                {
+                    "method": "POST",
+                    "route": "/auth/app-connect"
                 },
                 {
                     "method": "GET",
@@ -363,11 +371,6 @@
                 },
                 {
                     "method": "GET",
-                    "route": "/flags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/flags\""
-                },
-                {
-                    "method": "GET",
                     "route": "/moderation/flags",
                     "stub_command": "bin/qa-stub-gen.php rest GET \"/moderation/flags\""
                 },
@@ -475,10 +478,13 @@
         },
         "ajax": {
             "total": 43,
-            "covered": 3,
-            "uncovered": 40,
+            "covered": 4,
+            "uncovered": 39,
             "skipped": 0,
             "covered_items": [
+                {
+                    "action": "jetonomy_update_post"
+                },
                 {
                     "action": "jetonomy_generate_invite"
                 },
@@ -615,10 +621,6 @@
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_flush_rules"
                 },
                 {
-                    "action": "jetonomy_update_post",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_post"
-                },
-                {
                     "action": "jetonomy_delete_post",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_post"
                 },
@@ -656,7 +658,7 @@
             "total": 9,
             "covered": 5,
             "uncovered": 4,
-            "skipped": 184,
+            "skipped": 205,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -800,15 +802,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 171,
-        "items_covered": 55,
-        "items_uncovered": 116,
-        "items_skipped": 184,
-        "coverage_percent": 32.200000000000003
+        "items_total": 172,
+        "items_covered": 58,
+        "items_uncovered": 114,
+        "items_skipped": 205,
+        "coverage_percent": 33.700000000000003
     },
     "drift": {
-        "previous_uncovered": 114,
-        "current_uncovered": 116,
-        "delta": 2
+        "previous_uncovered": 115,
+        "current_uncovered": 114,
+        "delta": -1
     }
 }

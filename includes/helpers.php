@@ -351,3 +351,132 @@ if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
 		return $tags;
 	}
 }
+
+if ( ! function_exists( 'jetonomy_admin_table' ) ) {
+	/**
+	 * Render an admin data table that satisfies the responsive contract.
+	 *
+	 * THE shared list-table primitive for Free and Pro admin screens
+	 * (Basecamp 10146443346). Hand-rolled `<table>` markup kept omitting the
+	 * core small-screen semantics (`column-primary`, `data-colname`,
+	 * `.toggle-row`), so the shared responsive CSS could never activate and
+	 * every non-compliant screen clipped or overflowed on mobile/iPad. This
+	 * renderer emits WP core's own list-table contract - the same markup
+	 * wp-admin's common.js/CSS collapse natively at 782px - so a view that
+	 * uses it is responsive by construction. bin/audit-admin-tables.php
+	 * fails the release build when a new admin view bypasses it.
+	 *
+	 * Column widths are CLASSES applied desktop-only (`.jt-col-xs|s|m|l`),
+	 * never inline pixel styles - fixed inline widths were the second half
+	 * of the mobile breakage.
+	 *
+	 * @param array $args {
+	 *     Table definition.
+	 *
+	 *     @type array    $columns   Required. key => { label, primary?, width?, class? }.
+	 *                               Exactly one column may set primary; defaults
+	 *                               to the FIRST column. width: 'xs'|'s'|'m'|'l'.
+	 *     @type iterable $rows      Row items (arrays or objects).
+	 *     @type callable $cell      Required. function( $row, string $key ): void - ECHOES cell content.
+	 *     @type callable $row_attrs Optional. function( $row ): array of attr => value for the <tr>.
+	 *     @type array    $empty     jetonomy_admin_empty_state() args when $rows is empty
+	 *                               (colspan is filled in automatically).
+	 *     @type string   $class     Extra classes for the <table>.
+	 *     @type string   $table_id  Optional id="" for the <table> (JS hooks).
+	 *     @type string   $tbody_id  Optional id="" for the <tbody> (JS hooks).
+	 *     @type bool     $wrap      Wrap in .jt-content-table-wrap. Default true.
+	 * }
+	 */
+	function jetonomy_admin_table( array $args ): void {
+		$columns = isset( $args['columns'] ) && is_array( $args['columns'] ) ? $args['columns'] : array();
+		$cell    = $args['cell'] ?? null;
+		if ( ! $columns || ! is_callable( $cell ) ) {
+			_doing_it_wrong( __FUNCTION__, 'columns and a cell renderer are required.', '1.9.0' );
+			return;
+		}
+
+		$rows      = $args['rows'] ?? array();
+		$row_attrs = isset( $args['row_attrs'] ) && is_callable( $args['row_attrs'] ) ? $args['row_attrs'] : null;
+		$wrap      = ! isset( $args['wrap'] ) || (bool) $args['wrap'];
+
+		// Resolve the primary column: exactly one, defaulting to the first.
+		$primary = '';
+		foreach ( $columns as $key => $col ) {
+			if ( ! empty( $col['primary'] ) ) {
+				$primary = (string) $key;
+				break;
+			}
+		}
+		if ( '' === $primary ) {
+			$primary = (string) array_key_first( $columns );
+		}
+
+		// CONTAINMENT BY CONSTRUCTION: every table gets a scroll container.
+		// wrap=false call sites (tables living inside their own card) used to
+		// emit a bare <table>, and in the 783-960px squeeze band the desktop
+		// width classes pushed the document wide (QA 2026-07-30: Auto-Rules
+		// grew the page to 840px at exactly 783px). A width the layout cannot
+		// absorb now scrolls inside the container instead of widening the
+		// page - at ANY viewport, for every current and future call site.
+		echo $wrap ? '<div class="jt-content-table-wrap">' : '<div class="jt-table-scroll">';
+		$table_id = ! empty( $args['table_id'] ) ? ' id="' . esc_attr( (string) $args['table_id'] ) . '"' : '';
+		$tbody_id = ! empty( $args['tbody_id'] ) ? ' id="' . esc_attr( (string) $args['tbody_id'] ) . '"' : '';
+		echo '<table' . $table_id . ' class="wp-list-table widefat fixed striped' . ( ! empty( $args['class'] ) ? ' ' . esc_attr( (string) $args['class'] ) : '' ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- id escaped above.
+
+		echo '<thead><tr>';
+		foreach ( $columns as $key => $col ) {
+			$th_class = 'manage-column column-' . sanitize_html_class( (string) $key );
+			if ( (string) $key === $primary ) {
+				$th_class .= ' column-primary';
+			}
+			if ( ! empty( $col['width'] ) && in_array( $col['width'], array( 'xs', 's', 'm', 'l' ), true ) ) {
+				$th_class .= ' jt-col-' . $col['width'];
+			}
+			if ( ! empty( $col['class'] ) ) {
+				$th_class .= ' ' . (string) $col['class'];
+			}
+			echo '<th scope="col" class="' . esc_attr( $th_class ) . '">' . esc_html( (string) ( $col['label'] ?? '' ) ) . '</th>';
+		}
+		echo '</tr></thead><tbody' . $tbody_id . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- id escaped above.
+
+		$row_count = 0;
+		foreach ( $rows as $row ) {
+			++$row_count;
+			$attrs = '';
+			if ( $row_attrs ) {
+				foreach ( (array) $row_attrs( $row ) as $a_key => $a_val ) {
+					$attrs .= ' ' . esc_attr( (string) $a_key ) . '="' . esc_attr( (string) $a_val ) . '"';
+				}
+			}
+			echo '<tr' . $attrs . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attrs escaped per pair above.
+			foreach ( $columns as $key => $col ) {
+				$is_primary = (string) $key === $primary;
+				$td_class   = 'column-' . sanitize_html_class( (string) $key ) . ( $is_primary ? ' column-primary' : '' );
+				if ( $is_primary ) {
+					echo '<td class="' . esc_attr( $td_class ) . '">';
+					$cell( $row, (string) $key );
+					// Core's small-screen expander: common.js toggles
+					// tr.is-expanded, the shared CSS renders the sheet.
+					// aria-expanded is ours to manage (core never sets it) -
+					// admin-settings.js syncs it on toggle.
+					echo '<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text">' . esc_html__( 'Show more details', 'jetonomy' ) . '</span></button>';
+					echo '</td>';
+				} else {
+					echo '<td class="' . esc_attr( $td_class ) . '" data-colname="' . esc_attr( (string) ( $col['label'] ?? '' ) ) . '">';
+					$cell( $row, (string) $key );
+					echo '</td>';
+				}
+			}
+			echo '</tr>';
+		}
+
+		if ( 0 === $row_count ) {
+			$empty            = isset( $args['empty'] ) && is_array( $args['empty'] ) ? $args['empty'] : array( 'title' => __( 'Nothing here yet', 'jetonomy' ) );
+			$empty['colspan'] = count( $columns );
+			jetonomy_admin_empty_state( $empty );
+		}
+
+		echo '</tbody></table>';
+		echo '</div>'; // Closes .jt-content-table-wrap or .jt-table-scroll.
+	}
+}

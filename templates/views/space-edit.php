@@ -27,6 +27,7 @@ if ( ! $space ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -43,6 +44,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( get_current_user
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -78,7 +80,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
 				<?php
-				/* translators: %s: space title */
+				/* translators: %s: what is being edited - the configured space label, or a specific space title. */
 				echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), $space->title ) );
 				?>
 			</h1>
@@ -95,6 +97,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			data-jt-community-base="<?php echo esc_url( $base ); ?>">
 
 			<div class="jt-form-row">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<label for="jt-se-title"><?php echo esc_html( sprintf( __( '%s title', 'jetonomy' ), \Jetonomy\space_label() ) ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 				<input type="text" id="jt-se-title" name="title" required maxlength="120" class="jt-input" value="<?php echo esc_attr( $space->title ); ?>">
 			</div>
@@ -124,6 +127,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					</div>
 				</div>
 				<input type="hidden" name="cover_image" value="<?php echo esc_attr( $space->cover_image ?? '' ); ?>" data-jt-cover-value>
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Wide banner shown at the top of the %s page. Recommended 1500×400 px.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 
@@ -135,6 +139,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 						'field_name'    => 'icon',
 						'current_value' => $current_icon,
 						'id_prefix'     => 'jt-se-icon',
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 						'help'          => sprintf( __( 'Pick the icon that matches what this %s is about.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					)
 				);
@@ -185,6 +190,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 						</option>
 					<?php endforeach; ?>
 				</select>
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %s under a top-level category on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 
@@ -199,6 +205,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					class="jt-input jt-input-narrow"
 					value="<?php echo esc_attr( (string) $posts_per_page ); ?>"
 					placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'How many topics to show per page in this %s. Leave blank to use the site default.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 

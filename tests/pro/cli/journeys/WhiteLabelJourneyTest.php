@@ -29,6 +29,23 @@ if ( ! class_exists( White_Label_Journey::class ) ) {
  *
  * Each test snapshots the existing option in set_up() and restores it in
  * tear_down() so a site with live branding settings is not clobbered.
+ *
+ * SCOPE NOTE. White Label is backend-only. It renames and re-labels wp-admin;
+ * it does not style the frontend. Commit ae949a2 (2026-07-04) deliberately
+ * dropped every frontend/email/styling field, leaving exactly four settings:
+ * community_name, footer_text, admin_label, admin_icon.
+ *
+ * This file was written before that decision and went unrevised, so it kept
+ * asserting an `accent_color` setting and a `validate_css()` method - neither
+ * of which has existed since. That produced seven failures which read like
+ * product bugs and were carried as "pre-existing" noise across releases,
+ * making the suite worse than useless for this extension: nobody could tell a
+ * real regression from the standing red.
+ *
+ * The tests below assert the shipped scope instead, and two of them
+ * (test_styling_fields_are_rejected, test_exposes_no_css_surface) exist
+ * specifically to pin the scope decision so styling cannot creep back in
+ * without someone consciously reversing it.
  */
 class WhiteLabelJourneyTest extends WP_UnitTestCase {
 
@@ -69,7 +86,7 @@ class WhiteLabelJourneyTest extends WP_UnitTestCase {
 			'jetonomy_pro_white_label',
 			array(
 				'community_name' => 'Acme Forum',
-				'accent_color'   => '#ff6a00',
+				'admin_label'    => 'Acme HQ',
 			),
 			false
 		);
@@ -80,9 +97,11 @@ class WhiteLabelJourneyTest extends WP_UnitTestCase {
 		$this->assertTrue( $result->is_success(), implode( '; ', $result->errors ) );
 		$this->assertArrayHasKey( 'settings', $result->data );
 		$this->assertSame( 'Acme Forum', $result->data['settings']['community_name'] );
-		$this->assertSame( '#ff6a00', $result->data['settings']['accent_color'] );
-		// Defaults should be filled in for absent keys.
-		$this->assertSame( '', $result->data['settings']['custom_css'] );
+		$this->assertSame( 'Acme HQ', $result->data['settings']['admin_label'] );
+		// Defaults are filled in for absent keys, so callers always get a
+		// complete shape and never have to guard on missing indexes.
+		$this->assertSame( '', $result->data['settings']['footer_text'] );
+		$this->assertSame( '', $result->data['settings']['admin_icon'] );
 	}
 
 	public function test_update_settings_whitelists_fields(): void {
@@ -90,20 +109,20 @@ class WhiteLabelJourneyTest extends WP_UnitTestCase {
 			array(
 				'community_name' => 'Beta Community',
 				'footer_text'    => 'Powered by Beta',
-				'accent_color'   => '#1a2b3c',
+				'admin_label'    => 'Beta HQ',
 			)
 		);
 
 		$this->assertTrue( $result->is_success(), implode( '; ', $result->errors ) );
 		$this->assertContains( 'community_name', $result->data['updated_keys'] );
 		$this->assertContains( 'footer_text', $result->data['updated_keys'] );
-		$this->assertContains( 'accent_color', $result->data['updated_keys'] );
+		$this->assertContains( 'admin_label', $result->data['updated_keys'] );
 
 		$stored = get_option( 'jetonomy_pro_white_label' );
 		$this->assertIsArray( $stored );
 		$this->assertSame( 'Beta Community', $stored['community_name'] );
 		$this->assertSame( 'Powered by Beta', $stored['footer_text'] );
-		$this->assertSame( '#1a2b3c', $stored['accent_color'] );
+		$this->assertSame( 'Beta HQ', $stored['admin_label'] );
 	}
 
 	public function test_update_settings_rejects_unknown_keys(): void {
@@ -120,13 +139,38 @@ class WhiteLabelJourneyTest extends WP_UnitTestCase {
 		$this->assertFalse( get_option( 'jetonomy_pro_white_label', false ) );
 	}
 
-	public function test_update_settings_rejects_malformed_hex_color(): void {
-		$result = $this->journey->update_settings(
-			array( 'accent_color' => 'not-a-color' )
-		);
+	/**
+	 * Styling is not part of White Label and a patch carrying it must fail.
+	 *
+	 * Pins the ae949a2 scope decision from the write side. If somebody adds a
+	 * colour or CSS field to ALLOWED_FIELDS without reversing that decision
+	 * deliberately, this goes red rather than the change landing unnoticed.
+	 *
+	 * @dataProvider dropped_styling_field_provider
+	 */
+	public function test_styling_fields_are_rejected( string $field, string $value ): void {
+		$result = $this->journey->update_settings( array( $field => $value ) );
 
-		$this->assertFalse( $result->is_success() );
-		$this->assertStringContainsString( 'accent_color', strtolower( (string) $result->first_error() ) );
+		$this->assertFalse(
+			$result->is_success(),
+			sprintf( '%s is a frontend styling concern and White Label is backend-only', $field )
+		);
+		$this->assertStringContainsString( $field, strtolower( (string) $result->first_error() ) );
+		$this->assertFalse(
+			get_option( 'jetonomy_pro_white_label', false ),
+			'a rejected patch must write nothing at all'
+		);
+	}
+
+	/**
+	 * @return array<string, array{0:string,1:string}>
+	 */
+	public function dropped_styling_field_provider(): array {
+		return array(
+			'accent colour' => array( 'accent_color', '#1a2b3c' ),
+			'custom css'    => array( 'custom_css', '.jt-app{color:red}' ),
+			'logo'          => array( 'logo_url', 'https://example.test/logo.png' ),
+		);
 	}
 
 	public function test_reset_settings_deletes_option(): void {
@@ -150,8 +194,7 @@ class WhiteLabelJourneyTest extends WP_UnitTestCase {
 				'community_name' => 'Preview Land',
 				'admin_label'    => 'Preview Admin',
 				'footer_text'    => '(c) Preview',
-				'accent_color'   => '#abcdef',
-				'logo_url'       => 'https://example.test/logo.png',
+				'admin_icon'     => 'dashicons-groups',
 			),
 			false
 		);
@@ -162,41 +205,46 @@ class WhiteLabelJourneyTest extends WP_UnitTestCase {
 		$this->assertSame( 'Preview Land', $result->data['community_name'] );
 		$this->assertSame( 'Preview Admin', $result->data['admin_menu_label'] );
 		$this->assertSame( '(c) Preview', $result->data['footer_html'] );
-		$this->assertSame( '#abcdef', $result->data['accent_color'] );
-		$this->assertSame( 'https://example.test/logo.png', $result->data['logo_url'] );
-		$this->assertArrayHasKey( 'admin_menu_icon', $result->data );
-		$this->assertArrayHasKey( 'custom_css_bytes', $result->data );
+		$this->assertSame( 'dashicons-groups', $result->data['admin_menu_icon'] );
 	}
 
-	public function test_validate_css_accepts_clean_css(): void {
-		$css    = ".jt-app { color: #111; }\n.jt-card { padding: 8px; }";
-		$result = $this->journey->validate_css( $css );
+	/**
+	 * With nothing configured, preview falls back to the site's own identity
+	 * rather than showing blanks - the branding an owner sees before they have
+	 * typed anything is what wp-admin already says.
+	 */
+	public function test_preview_branding_falls_back_to_site_identity(): void {
+		$result = $this->journey->preview_branding();
 
 		$this->assertTrue( $result->is_success() );
-		$this->assertTrue( (bool) $result->data['valid'] );
-		$this->assertSame( array(), $result->data['errors'] );
-		$this->assertSame( strlen( $css ), (int) $result->data['size_bytes'] );
+		$this->assertSame( get_bloginfo( 'name' ), $result->data['community_name'] );
+		// Admin label defaults to the community name, not to an empty menu.
+		$this->assertSame( get_bloginfo( 'name' ), $result->data['admin_menu_label'] );
 	}
 
-	public function test_validate_css_rejects_script_tags(): void {
-		$css    = 'body{color:red}<script>alert(1)</script>';
-		$result = $this->journey->validate_css( $css );
+	/**
+	 * White Label exposes no CSS surface at all.
+	 *
+	 * The other half of the ae949a2 pin. `validate_css()` existed when this
+	 * extension styled the frontend; the scope-back removed the feature and
+	 * the method with it. Asserting its absence keeps that explicit - a future
+	 * reader finds a recorded decision here instead of wondering whether CSS
+	 * validation was meant to exist and got lost.
+	 */
+	public function test_exposes_no_css_surface(): void {
+		$this->assertFalse(
+			method_exists( $this->journey, 'validate_css' ),
+			'White Label is backend-only since ae949a2; it must not accept custom CSS'
+		);
 
-		$this->assertTrue( $result->is_success() );
-		$this->assertFalse( (bool) $result->data['valid'] );
-		$this->assertNotEmpty( $result->data['errors'] );
-		$joined = strtolower( implode( ' ', $result->data['errors'] ) );
-		$this->assertStringContainsString( 'script', $joined );
-	}
-
-	public function test_validate_css_rejects_oversized_css(): void {
-		$css    = str_repeat( 'a', 60000 );
-		$result = $this->journey->validate_css( $css );
-
-		$this->assertTrue( $result->is_success() );
-		$this->assertFalse( (bool) $result->data['valid'] );
-		$joined = strtolower( implode( ' ', $result->data['errors'] ) );
-		$this->assertStringContainsString( 'max', $joined );
+		$settings = $this->journey->get_settings()->data['settings'];
+		foreach ( array( 'custom_css', 'accent_color', 'logo_url' ) as $dropped ) {
+			$this->assertArrayNotHasKey(
+				$dropped,
+				$settings,
+				sprintf( '%s is a frontend styling concern and must not be in the branding option', $dropped )
+			);
+		}
 	}
 
 	public function test_export_settings_includes_version(): void {
@@ -234,7 +282,8 @@ class WhiteLabelJourneyTest extends WP_UnitTestCase {
 			'jetonomy_pro_white_label',
 			array(
 				'community_name' => 'Round Trip',
-				'accent_color'   => '#123456',
+				'admin_label'    => 'Round Trip HQ',
+				'footer_text'    => '(c) Round Trip',
 			),
 			false
 		);
@@ -253,6 +302,38 @@ class WhiteLabelJourneyTest extends WP_UnitTestCase {
 		$stored = get_option( 'jetonomy_pro_white_label' );
 		$this->assertIsArray( $stored );
 		$this->assertSame( 'Round Trip', $stored['community_name'] );
-		$this->assertSame( '#123456', $stored['accent_color'] );
+		$this->assertSame( 'Round Trip HQ', $stored['admin_label'] );
+		$this->assertSame( '(c) Round Trip', $stored['footer_text'] );
+	}
+
+	/**
+	 * An export taken from a site that still had styling settings - a backup
+	 * made before ae949a2, or one hand-edited - imports its supported keys and
+	 * drops the rest, rather than failing the whole restore.
+	 *
+	 * Import routes each key through update_settings(), which rejects unknown
+	 * keys outright, so this pins that the payload is FILTERED to the allowed
+	 * set first. Without that, every pre-scope-back backup would be
+	 * un-restorable.
+	 */
+	public function test_import_drops_legacy_styling_keys_instead_of_failing(): void {
+		$result = $this->journey->import_settings(
+			array(
+				'version'  => 1,
+				'settings' => array(
+					'community_name' => 'Legacy Site',
+					'accent_color'   => '#ff6a00',
+					'custom_css'     => '.jt-app{color:red}',
+				),
+			)
+		);
+
+		$this->assertTrue( $result->is_success(), implode( '; ', $result->errors ) );
+
+		$stored = get_option( 'jetonomy_pro_white_label' );
+		$this->assertIsArray( $stored );
+		$this->assertSame( 'Legacy Site', $stored['community_name'] );
+		$this->assertArrayNotHasKey( 'accent_color', $stored );
+		$this->assertArrayNotHasKey( 'custom_css', $stored );
 	}
 }

@@ -48,6 +48,7 @@ if ( ! empty( $privileged_spaces ) ) {
 
 $crumbs = array(
 	array(
+		/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 		'label' => sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ),
 		'url'   => '',
 	),
@@ -59,9 +60,11 @@ $crumbs = array(
 	<main>
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
+				<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 				<?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?>
 			</h1>
 			<p class="jt-page-subtitle">
+				<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 				<?php echo esc_html( sprintf( __( '%s you run, plus the ones you are part of.', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?>
 			</p>
 		</header>
@@ -72,7 +75,9 @@ $crumbs = array(
 				'empty-state',
 				[
 					'icon'      => 'users',
+					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'message'   => sprintf( __( 'You are not in any %s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'cta_label' => sprintf( __( 'Browse %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					'cta_url'   => $base . '/',
 				]
@@ -115,7 +120,7 @@ $crumbs = array(
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
 									<?php
-									/* translators: %d: post count */
+									/* translators: %d: post count. */
 									echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
 									?>
 									·
@@ -166,7 +171,7 @@ $crumbs = array(
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
 									<?php
-									/* translators: %d: post count */
+									/* translators: %d: post count. */
 									echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
 									?>
 									·

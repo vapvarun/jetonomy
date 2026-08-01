@@ -35,6 +35,23 @@ class Post extends Model {
 	 * @param array $data Column data.
 	 * @return int Inserted row ID.
 	 */
+	/**
+	 * Insert override: the LAST write barrier for the content pipeline.
+	 *
+	 * Sanitizing only inside create() left two bypasses (QA 2026-07-30):
+	 * a jetonomy_before_create_post filter could replace content AFTER the
+	 * early sanitize ran, and the inherited public Model::insert() skipped
+	 * the pipeline entirely. Sanitizing here - immediately before the row
+	 * is written - closes both: create() reaches insert AFTER its filter,
+	 * and a direct Post::insert() call gets the same treatment.
+	 *
+	 * @param array $data Column data.
+	 * @return int New row id.
+	 */
+	public static function insert( array $data ): int {
+		return parent::insert( self::sanitize_content_fields( $data ) );
+	}
+
 	public static function create( array $data ): int|\WP_Error {
 		/**
 		 * Filter post data before creation. Return WP_Error to abort.
@@ -144,6 +161,8 @@ class Post extends Model {
 	 *   everything else           : no-op
 	 */
 	public static function update( int $id, array $data ): bool {
+		$data = self::sanitize_content_fields( $data );
+
 		$delta = 0;
 		$post  = null;
 
@@ -582,16 +601,19 @@ class Post extends Model {
 	 * Pass a negative value to decrement. Uses GREATEST() to prevent
 	 * the counter from going below zero.
 	 *
-	 * @param int $id Post ID.
-	 * @param int $by Amount to adjust (default +1).
+	 * @param int         $id Post ID.
+	 * @param int         $by Amount to adjust (default +1).
+	 * @param string|null $at Optional UTC datetime to record as last_reply_at
+	 *                        (importer seam: a backdated reply carries its own
+	 *                        date, not the migration run time). Null = now.
 	 */
-	public static function increment_reply_count( int $id, int $by = 1 ): void {
+	public static function increment_reply_count( int $id, int $by = 1, ?string $at = null ): void {
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(
 				'UPDATE ' . static::table() . ' SET reply_count = GREATEST(reply_count + %d, 0), last_reply_at = %s, updated_at = %s WHERE id = %d',
 				$by,
-				$now,
+				( null !== $at && '' !== $at ) ? $at : $now,
 				$now,
 				$id
 			)

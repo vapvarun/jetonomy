@@ -1033,6 +1033,96 @@ const { state, actions } = store( 'jetonomy', {
             btn.remove();
         },
 
+        // ── Member moderation from a profile (frontend; site moderators) ──
+        // Site-wide ban or silence a member from their profile page. Mirrors
+        // banMember (space_ban) but sends type global_ban / silence with no
+        // space_id. The template only renders the control when the ban is
+        // allowed; the server re-checks and guards self/admin/moderator bans.
+        *restrictMember() {
+            const btn    = getElement().ref;
+            const userId = btn.getAttribute( 'data-user-id' );
+            const name   = btn.getAttribute( 'data-user-name' );
+            const type   = btn.getAttribute( 'data-restrict-type' ) || 'global_ban';
+            if ( ! userId || 'function' !== typeof window.jetonomyConfirm ) return;
+
+            const i18n      = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const isSilence = 'silence' === type;
+            const bodyTpl   = isSilence
+                ? ( i18n.silenceConfirmFormat || 'Silence %s? They stay a member but cannot post, reply, or file reports until you lift it.' )
+                : ( i18n.banSiteConfirmFormat || 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.' );
+            const ok = yield window.jetonomyConfirm( bodyTpl.replace( '%s', name || '' ), {
+                title: isSilence ? ( i18n.silenceTitle || 'Silence member' ) : ( i18n.banSiteTitle || 'Ban member' ),
+                confirmLabel: isSilence ? ( i18n.silenceLabel || 'Silence' ) : ( i18n.banLabel || 'Ban' ),
+                danger: true,
+            } );
+            if ( ! ok ) return;
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/moderation/ban', {
+                method: 'POST',
+                body: { user_id: parseInt( userId, 10 ), type },
+            } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            // Reload so the profile re-renders the badge + Lift control server-side.
+            window.location.reload();
+        },
+        *liftRestriction() {
+            const btn = getElement().ref;
+            const rid  = btn.getAttribute( 'data-restriction-id' );
+            const name = btn.getAttribute( 'data-user-name' );
+            if ( ! rid || 'function' !== typeof window.jetonomyConfirm ) return;
+
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const ok = yield window.jetonomyConfirm(
+                ( i18n.liftConfirmFormat || 'Lift the restriction on %s?' ).replace( '%s', name || '' ),
+                { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift' }
+            );
+            if ( ! ok ) return;
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/moderation/ban/' + parseInt( rid, 10 ), { method: 'DELETE' } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            window.location.reload();
+        },
+
+        // ── My Subscriptions page ──
+        *unsubscribeRow() {
+            const btn = getElement().ref;
+            const sid = btn.getAttribute( 'data-subscription-id' );
+            if ( ! sid ) return;
+
+            if ( 'function' === typeof window.jetonomyConfirm ) {
+                const ok = yield window.jetonomyConfirm( btn.getAttribute( 'data-confirm' ) || 'Unfollow?' );
+                if ( ! ok ) return;
+            }
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/subscriptions/' + parseInt( sid, 10 ), { method: 'DELETE' } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            // Remove the row in place; reload only when the group emptied so
+            // the empty-state / heading logic re-renders server-side.
+            const row  = btn.closest( '.jt-subs-row' );
+            const list = row && row.closest( '.jt-subs-list' );
+            if ( row ) row.remove();
+            if ( list && ! list.querySelector( '.jt-subs-row' ) ) window.location.reload();
+        },
+
+        // ── Private replies (1.8.1) ──
+        *toggleReplyPrivacy() {
+            const btn = getElement().ref;
+            const rid = btn.getAttribute( 'data-reply-id' );
+            if ( ! rid ) return;
+            const makePrivate = '1' !== btn.getAttribute( 'data-private' );
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/replies/' + parseInt( rid, 10 ), {
+                method: 'PATCH',
+                body: { is_private: makePrivate },
+            } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            window.location.reload();
+        },
+
         // ── Join requests (space-members mod panel) ──
         *approveJoinRequest() {
             yield jtModerateJoinRequest( getElement().ref, 'approve' );
@@ -3055,10 +3145,12 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             try {
+                const privateBox = editorWrap?.querySelector( '[data-jt-reply-private]' );
                 const payload = {
                     content: body.innerHTML,
                     ...( parentId && { parent_id: parentId } ),
                     ...( captchaToken && { captcha_token: captchaToken } ),
+                    ...( privateBox?.checked && { is_private: true } ),
                 };
 
                 // Generic pre-submit extension point (mirrors composePost's
@@ -4060,4 +4152,99 @@ const { state, actions } = store( 'jetonomy', {
             }
         }
     } );
+} )();
+
+/**
+ * Avatar image-error fallback (Basecamp 10110833991).
+ *
+ * templates/partials/avatar.php renders every avatar <img> with a hidden
+ * sibling `.jt-avatar-fallback` initials span. When the image URL is dead
+ * (deleted upload, stale CDN entry) the browser fires `error` on the img -
+ * Firefox then paints the alt text as a broken-image placeholder where the
+ * required behaviour is initials. Swap the pair here, centrally, instead of
+ * per-tag inline handlers (the frontend standard bans inline scripts).
+ *
+ * `error` does not bubble but IS observable in the capture phase, so one
+ * document-level listener covers every avatar - including lazy-loaded ones
+ * and everything swapped in by client-side navigation. The sweep() pass
+ * covers images that had already failed before this script ran (cached 404s
+ * resolve synchronously) and re-runs on `jetonomy:navigated` per the
+ * client-nav re-init contract.
+ */
+( function () {
+    function fallback( img ) {
+        if ( ! img.classList || ! img.classList.contains( 'jt-avatar' ) ) return;
+        const next = img.nextElementSibling;
+        if ( ! next || ! next.classList.contains( 'jt-avatar-fallback' ) ) return;
+        img.hidden = true;
+        next.hidden = false;
+    }
+
+    document.addEventListener( 'error', function ( e ) {
+        if ( e.target && e.target.tagName === 'IMG' ) fallback( e.target );
+    }, true );
+
+    function sweep() {
+        document.querySelectorAll( 'img.jt-avatar' ).forEach( function ( img ) {
+            if ( img.complete && img.naturalWidth === 0 ) fallback( img );
+        } );
+    }
+
+    if ( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', sweep );
+    } else {
+        sweep();
+    }
+    document.addEventListener( 'jetonomy:navigated', sweep );
+} )();
+
+/**
+ * Prism re-highlight on client-side navigation (QA card 10149499675).
+ *
+ * Prism auto-runs only on DOMContentLoaded, so a topic reached through the
+ * iAPI router would render un-highlighted even with the library present.
+ * Bare `<pre><code>` blocks (the composer emits no language tag) get
+ * `language-none` so Prism's theme styling applies without guessing a
+ * grammar; authored `language-*` classes highlight fully via the
+ * autoloader.
+ */
+( function () {
+    function highlight() {
+        if ( ! window.Prism || typeof window.Prism.highlightAll !== 'function' ) return;
+        document.querySelectorAll( '.jt-post-body pre > code:not([class*="language-"]), .jt-reply-body pre > code:not([class*="language-"])' ).forEach( function ( code ) {
+            code.classList.add( 'language-none' );
+        } );
+        window.Prism.highlightAll();
+    }
+
+    if ( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', highlight );
+    } else {
+        highlight();
+    }
+    document.addEventListener( 'jetonomy:navigated', highlight );
+} )();
+
+/**
+ * #reply intent: the r keyboard shortcut (and any deep link) lands on a
+ * topic with location.hash === '#reply' - focus the composer so "opens a
+ * reply" is literally true (QA 10150869012). Re-checked after client-side
+ * navigation per the re-init contract.
+ */
+( function () {
+    function focusComposer() {
+        if ( window.location.hash !== '#reply' ) return;
+        var body = document.querySelector( '.jt-editor-body' );
+        if ( body ) {
+            body.scrollIntoView( { block: 'center' } );
+            body.focus();
+        }
+    }
+    if ( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', focusComposer );
+    } else {
+        focusComposer();
+    }
+    document.addEventListener( 'jetonomy:navigated', focusComposer );
+    window.addEventListener( 'hashchange', focusComposer );
 } )();

@@ -10,13 +10,14 @@ defined( 'ABSPATH' ) || exit;
 $space_slug = $data['slug'] ?? '';
 $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
-if ( ! $space ) {
+if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -27,6 +28,12 @@ if ( ! $space ) {
 $_jt_join_policy = $space->join_policy ?? 'open';
 $_jt_user_id     = get_current_user_id();
 $_jt_is_member   = $_jt_user_id && \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $_jt_user_id );
+// Somebody an access rule admits (a paying subscriber, say) is not on the
+// roster, so every gate below has to count them as being through the door.
+// Without this a member who had just bought the plan that includes this space
+// was still shown "requires approval to join" and asked to petition a human
+// for what they had already paid for.
+$_jt_rule_admits = $_jt_user_id && \Jetonomy\Models\AccessRule::grants_access( $_jt_user_id, (int) $space->id );
 $_jt_is_admin    = current_user_can( 'manage_options' );
 $_jt_is_hidden   = 'hidden' === ( $space->visibility ?? '' );
 
@@ -48,7 +55,15 @@ if ( $_jt_is_hidden ) {
 // spacing, icon, and tone treatment are uniform with every other empty path.
 // Only the join-form variant adds raw HTML below the partial because the form
 // itself is too bespoke to fit the generic CTA argument.
-if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin ) {
+// Membership levels this space asks for that the viewer does not hold. Drives
+// the "included with VIP" gate below; empty for guests (they get the login
+// prompt first, since they may already own the plan) and for anyone whose
+// plan is active.
+$_jt_unmet_membership = $_jt_user_id
+	? \Jetonomy\Models\AccessRule::unmet_membership_requirements( $_jt_user_id, (int) $space->id )
+	: array();
+
+if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) {
 	if ( ! $_jt_user_id ) {
 		// Guest — prompt to log in. Hidden and private spaces use distinct
 		// copy so the message does not lie about the space's actual setting:
@@ -56,7 +71,9 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		// and the home/category listings show a Hidden badge, so the gate
 		// message must agree.
 		$gate_message = $_jt_is_hidden
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			? sprintf( __( 'This %s is hidden. Log in to check whether you have access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			: sprintf( __( 'This %s is private. Please log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
@@ -69,11 +86,50 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			]
 		);
 		return;
+	} elseif ( ! empty( $_jt_unmet_membership ) ) {
+		// A membership rule is the reason this person is out, so say so and
+		// give them the way in. Ranked above the invite / approval copy on
+		// purpose: telling a would-be subscriber "you need an invitation"
+		// when the space is actually sold as part of a plan sends them to ask
+		// a human for something they could have bought in one click.
+		$_jt_tier_names = wp_list_pluck( $_jt_unmet_membership, 'label' );
+		$_jt_first_url  = '';
+		foreach ( $_jt_unmet_membership as $_jt_req ) {
+			if ( '' !== $_jt_req['url'] ) {
+				$_jt_first_url = $_jt_req['url'];
+				break;
+			}
+		}
+
+		\Jetonomy\Template_Loader::partial(
+			'empty-state',
+			array(
+				'icon'        => 'lock',
+				'message'     => sprintf(
+					/* translators: 1: the singular space label (e.g. space, group), 2: comma-separated plan names. */
+					__( 'This %1$s is included with %2$s.', 'jetonomy' ),
+					\Jetonomy\space_label( false, true ),
+					implode( ', ', $_jt_tier_names )
+				),
+				'description' => '' !== $_jt_first_url
+					? __( 'Your access starts as soon as the plan is active, and ends if it lapses.', 'jetonomy' )
+					: __( 'Ask a site administrator how to get access to this plan.', 'jetonomy' ),
+				'cta_label'   => '' !== $_jt_first_url
+					/* translators: %s: plan name. */
+					? sprintf( __( 'Get %s', 'jetonomy' ), (string) reset( $_jt_tier_names ) )
+					: '',
+				'cta_url'     => $_jt_first_url,
+				'tone'        => 'forbidden',
+			)
+		);
+		return;
 	} elseif ( 'invite' === $_jt_join_policy ) {
 		// Invite-only — cannot self-join. Hidden spaces always land here
 		// (forced above) so the message wording works for both.
 		$invite_message = $_jt_is_hidden
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			? sprintf( __( 'This %s is hidden and invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			: sprintf( __( 'This %s is invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
@@ -92,6 +148,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 				'empty-state',
 				[
 					'icon'    => 'check-circle',
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'message' => sprintf( __( 'Your request to join this %s is awaiting approval.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				]
 			);
@@ -102,6 +159,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			'empty-state',
 			[
 				'icon'    => 'lock',
+				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 				'message' => sprintf( __( 'This %s requires approval to join. Submit a request below.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'    => 'forbidden',
 			]
@@ -122,6 +180,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			'empty-state',
 			[
 				'icon'    => 'lock',
+				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 				'message' => sprintf( __( 'This %s is private. Join to access posts and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'    => 'forbidden',
 			]
@@ -129,6 +188,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		?>
 		<div class="jt-space-gate-actions">
 			<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 			</button>
 		</div>
@@ -147,11 +207,16 @@ if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
 }
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$paged           = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
-$_jt_settings    = get_option( 'jetonomy_settings', [] );
-$_space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
-$limit           = max( 1, (int) ( $_space_settings['posts_per_page'] ?? $_jt_settings['posts_per_page'] ?? 20 ) );
-$offset          = ( $paged - 1 ) * $limit;
+$paged = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+// Resolve per-page through the model, never inline. This used to re-implement
+// the space → global → 20 chain with `??`, which only falls through on null —
+// so a stored `posts_per_page: ""` (what the front-end edit form sends for
+// "use the default", view.js) evaluated to (int) '' = 0 and clamped to a limit
+// of 1. The space then rendered a single topic with "Load More" under it while
+// the REST path, which already used the model, correctly said 20 (Basecamp
+// 10118693115). One resolver, one answer, every surface.
+$limit  = \Jetonomy\Models\Space::get_posts_per_page( (int) $space->id );
+$offset = ( $paged - 1 ) * $limit;
 
 // Use the visibility-aware listing so private topics (is_private = 1) are
 // filtered out for non-author, non-privileged viewers — before 1.3.6 this
@@ -237,6 +302,7 @@ $crumbs[] = [
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
 								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
+								<?php /* translators: %s: what is being edited - the configured space label, or a specific space title. */ ?>
 								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</a>
 						</p>
@@ -254,14 +320,14 @@ $crumbs[] = [
 				</div>
 				<?php
 				if ( is_user_logged_in() ) :
-					if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+					if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
 						// Invite-only: show a disabled badge instead of Follow/Join.
 						?>
 						<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;">
 							<?php esc_html_e( 'Invite Only', 'jetonomy' ); ?>
 						</span>
 						<?php
-					elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+					elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
 						// Approval required: check for existing pending request.
 						$_jt_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
 						if ( $_jt_pending ) :
@@ -280,13 +346,14 @@ $crumbs[] = [
 							</button>
 						<?php endif; ?>
 						<?php
-					elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+					elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
 						// Open space, non-member: show Join Space button (instant membership).
 						$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
 						?>
 						<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-btn"
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
+							<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 							<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 						</button>
 						<?php
@@ -308,8 +375,10 @@ $crumbs[] = [
 		<?php if ( $is_restricted ) : ?>
 			<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">
 				<?php if ( 'archived' === $space_status ) : ?>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<?php echo esc_html( sprintf( __( 'This %s is archived. New posts and replies are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 				<?php else : ?>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<?php echo esc_html( sprintf( __( 'This %s is locked. New posts and replies are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 				<?php endif; ?>
 			</div>
@@ -373,6 +442,7 @@ $crumbs[] = [
 
 			if ( is_array( $jt_space_tabs ) && count( $jt_space_tabs ) > 1 ) :
 				?>
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<nav class="jt-space-tabs" aria-label="<?php echo esc_attr( sprintf( __( '%s sections', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>">
 					<?php
 					foreach ( $jt_space_tabs as $jt_space_tab ) :
@@ -408,15 +478,14 @@ $crumbs[] = [
 				</div>
 				<?php if ( $is_restricted ) : ?>
 					<?php /* No new-post button for archived/locked spaces. */ ?>
-				<?php elseif ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy ) ) : ?>
+				<?php elseif ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || $_jt_rule_admits || 'open' === $_jt_join_policy ) ) : ?>
 					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
 						<?php
-						$new_post_labels = [
-							'qa'    => __( '+ Ask a Question', 'jetonomy' ),
-							'ideas' => __( '+ Share an Idea', 'jetonomy' ),
-							'feed'  => __( '+ New Status', 'jetonomy' ),
-						];
-						echo esc_html( $new_post_labels[ $space->type ] ?? __( '+ New Post', 'jetonomy' ) );
+						// Shared label, so the button and the composer heading it
+						// leads to never disagree (they used to: "+ New Post"
+						// here, "New Topic" on the page it opened).
+						/* translators: %s: the compose action for this space type, e.g. "Ask a Question". */
+						echo esc_html( sprintf( __( '+ %s', 'jetonomy' ), \Jetonomy\compose_label( (string) $space->type ) ) );
 						?>
 					</a>
 				<?php elseif ( ! is_user_logged_in() ) : ?>
@@ -463,7 +532,7 @@ $crumbs[] = [
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
 				];
 				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? __( 'New Post', 'jetonomy' );
-				$_jt_can_post    = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
+				$_jt_can_post    = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || $_jt_rule_admits || 'open' === $_jt_join_policy );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					[

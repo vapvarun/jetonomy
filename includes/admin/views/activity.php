@@ -50,9 +50,11 @@ $export_url = wp_nonce_url(
 
 	<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
 		<input type="hidden" name="page" value="jetonomy-activity" />
-		<?php
-		$list_table->render_filters();
-		$list_table->display();
-		?>
+		<div class="jt-content-table-wrap">
+			<?php
+			$list_table->render_filters();
+			$list_table->display();
+			?>
+		</div>
 	</form>
 </div>

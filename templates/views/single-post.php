@@ -251,9 +251,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 		\Jetonomy\Template_Loader::partial(
 			'reply-card',
 			[
-				'reply' => $reply,
-				'post'  => $post,
-				'space' => $space,
+				'reply'          => $reply,
+				'post'           => $post,
+				'space'          => $space,
 				// This page was just rendered, so every card on it — including
 				// nested children, which page with their top-level ancestor —
 				// permalinks to it. Passing it keeps reply_permalink() from
@@ -409,7 +409,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						?>
 						<span>
 							<?php
-							/* translators: %s: human-readable time difference */
+							/* translators: %s: human-readable time difference. */
 							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 							?>
 						</span>
@@ -657,7 +657,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( $jt_can_moderate_here ) : ?>
+							<?php // Gate matches the TARGET: the jetonomy-spaces admin page requires jetonomy_manage_settings, so a space-level moderator (subscriber WP role) must not see a link that lands on Access Denied (Basecamp 10115337948). The moderation actions above correctly stay on the space-role gate. ?>
+							<?php if ( current_user_can( 'jetonomy_manage_settings' ) ) : ?>
 								<a class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>"><?php jetonomy_echo_icon( 'settings', 14 ); ?> <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
 							<?php endif; ?>
 						</div>

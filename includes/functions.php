@@ -85,6 +85,86 @@ function now(): string {
 }
 
 /**
+ * The verb a space type uses for "create something here".
+ *
+ * Single source of truth for the compose label. The same four strings used to
+ * be written out separately in the composer heading, the space CTA button, the
+ * BuddyPress tab CTA and (type-blind, so wrong on three of the four types) the
+ * browser tab title — a Q&A space offered "Ask a Question" on the page while
+ * the tab said "Start a discussion".
+ *
+ * @param string $space_type Space type: qa, ideas, feed, or anything else (forum).
+ * @return string
+ */
+function compose_label( string $space_type ): string {
+	switch ( $space_type ) {
+		case 'qa':
+			$label = __( 'Ask a Question', 'jetonomy' );
+			break;
+		case 'ideas':
+			$label = __( 'Share an Idea', 'jetonomy' );
+			break;
+		case 'feed':
+			$label = __( 'New Status', 'jetonomy' );
+			break;
+		default:
+			$label = __( 'New Topic', 'jetonomy' );
+			break;
+	}
+
+	/**
+	 * Filter the compose label for a space type.
+	 *
+	 * @param string $label      Resolved label.
+	 * @param string $space_type The space type it was resolved for.
+	 */
+	return (string) apply_filters( 'jetonomy_compose_label', $label, $space_type );
+}
+
+/**
+ * The post type a space type creates.
+ *
+ * Paired with {@see compose_label()} so the two never drift apart.
+ *
+ * @param string $space_type Space type: qa, ideas, feed, or anything else (forum).
+ * @return string
+ */
+function compose_post_type( string $space_type ): string {
+	$map = array(
+		'qa'    => 'question',
+		'ideas' => 'idea',
+		'feed'  => 'status',
+	);
+	return $map[ $space_type ] ?? 'topic';
+}
+
+/**
+ * Format a stored UTC MySQL datetime as a UTC ISO-8601 instant with a literal `Z`.
+ *
+ * All Jetonomy datetime columns are written via {@see now()} (`current_time('mysql', true)`),
+ * i.e. already GMT/UTC. This is therefore a pure reformat with no offset math: the value
+ * is reinterpreted as UTC and rendered as `Y-m-d\TH:i:s\Z` (e.g. `2026-06-13T05:17:42Z`).
+ *
+ * Serializers emit this as an additive `*_gmt` field so the app can format relative-then-
+ * absolute time in the site owner's WordPress timezone client-side. The transport contract is
+ * UTC ISO-8601 with `Z`; do NOT convert to site-local here (that is the display layer's job,
+ * per docs/standards/datetime-timezone.md).
+ *
+ * `gmdate('c')` is deliberately avoided because it emits `+00:00` rather than the `Z` the
+ * cross-plugin timestamp standard specifies.
+ *
+ * @param string|null $utc_mysql Stored UTC datetime (`Y-m-d H:i:s`), or null/empty/zero-date.
+ * @return string|null ISO-8601 UTC string ending in `Z`, or null when the input is empty.
+ */
+function to_iso8601_z( ?string $utc_mysql ): ?string {
+	if ( empty( $utc_mysql ) || '0000-00-00 00:00:00' === $utc_mysql ) {
+		return null;
+	}
+	$ts = strtotime( $utc_mysql . ' UTC' );
+	return $ts ? gmdate( 'Y-m-d\TH:i:s\Z', $ts ) : null;
+}
+
+/**
  * Whether the private-messaging (DM) feature is available on this request.
  *
  * The Pro private-messaging extension registers its `/messages/` route via the
@@ -311,6 +391,11 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 		return get_profile_url( $object_id );
 	}
 
+	if ( 'space' === $object_type ) {
+		$space = Models\Space::find( $object_id );
+		return $space ? base_url() . '/s/' . $space->slug . '/' : '';
+	}
+
 	/**
 	 * Resolve a deep link for an object type free doesn't know about (e.g. Pro's
 	 * 'message'/'conversation'). Lets Pro map its own object types to URLs
@@ -322,6 +407,48 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 	 * @param int    $object_id   Notification object id.
 	 */
 	return (string) apply_filters( 'jetonomy_notification_deep_link', '', $object_type, $object_id );
+}
+
+/**
+ * Where a given recipient should land to act on a pending join request.
+ *
+ * Single source of truth for the three surfaces that link a `join_request`
+ * notification: the email (Notifier), the /notifications/ page, and the REST
+ * bell dropdown. They used to build this URL independently — the first two
+ * had copies of the same logic and the third had none at all, so the bell
+ * resolved join requests to an empty URL and fell back to /notifications/
+ * (Basecamp 10118686521).
+ *
+ * Recipient-dependent by necessity: wp-admin cap-holders get the Join
+ * Requests tab, everyone else (space admins and moderators who own the space
+ * but not wp-admin) gets the front-end members page. It must NOT be the
+ * space-mod queue at /s/{slug}/mod/, which renders pending FLAGS only — the
+ * approve / reject UI for join requests lives on the members page.
+ *
+ * @param int         $recipient_id WP user id of the notification recipient.
+ * @param object|null $space        Space row.
+ * @return string URL, or '' when the space is gone.
+ */
+function join_request_url_for( int $recipient_id, $space ): string {
+	if ( ! $space ) {
+		return '';
+	}
+
+	// EVERY recipient lands on the frontend pending-requests anchor - admins
+	// included. The capability branch that sent jetonomy_manage_spaces /
+	// manage_options holders to the wp-admin Join Requests tab meant the same
+	// notification promised one destination and delivered two, and QA kept
+	// reproducing "empty moderation screen" for the admin audience (Basecamp
+	// 10118686521). The frontend members page approves/rejects for both
+	// audiences, and the wp-admin tab remains reachable through Spaces > Edit
+	// for owners who prefer it. $recipient_id stays in the signature: the
+	// notifier passes it per-recipient and a filter may re-branch on it.
+	unset( $recipient_id );
+
+	// #jt-pending-requests anchors the pending list on the members page, so a
+	// space with many members doesn't land the reader above the fold and away
+	// from the thing the notification was about.
+	return base_url() . '/s/' . $space->slug . '/members/#jt-pending-requests';
 }
 
 /**
@@ -354,8 +481,14 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 	$avatar_url = Avatar::display_url( $user_id, $avatar_size * 2 );
 	$initials   = strtoupper( mb_substr( $name, 0, 2 ) );
 
+	// The hidden .jt-avatar-fallback sibling is the initials the reader sees
+	// if the image URL is dead - view.js swaps the pair on the img's error
+	// event. Same contract as templates/partials/avatar.php (Basecamp
+	// 10110833991): an <img> with no fallback renders as broken-image alt
+	// text in Firefox when the upload behind it has been deleted.
 	$avatar_html = $avatar_url
 		? '<img src="' . esc_url( $avatar_url ) . '" alt="' . esc_attr( $name ) . '" class="jt-avatar ' . esc_attr( $avatar_class ) . '" width="' . (int) $avatar_size . '" height="' . (int) $avatar_size . '" loading="lazy">'
+			. '<span class="jt-avatar ' . esc_attr( $avatar_class ) . ' jt-avatar-fallback" hidden>' . esc_html( $initials ) . '</span>'
 		: '<span class="jt-avatar ' . esc_attr( $avatar_class ) . '">' . esc_html( $initials ) . '</span>';
 
 	$name_html = $show_name ? ' <span class="jt-user-name">' . esc_html( $name ) . '</span>' : '';
@@ -531,5 +664,100 @@ function space_visibility_options( string $current = '', bool $with_details = tr
 			selected( $current, $value, false ),
 			esc_html( $label )
 		);
+	}
+}
+
+/**
+ * Human label for a space's stored `visibility` enum.
+ *
+ * Reads Space::visibility_levels(), the same source space_visibility_options()
+ * uses, so a listing badge and the form that set it always agree.
+ *
+ * @param string $visibility Stored enum value.
+ * @return string
+ */
+function space_visibility_label( string $visibility ): string {
+	$levels = \Jetonomy\Models\Space::visibility_levels();
+	return isset( $levels[ $visibility ]['label'] )
+		? (string) $levels[ $visibility ]['label']
+		: ucfirst( $visibility );
+}
+
+/**
+ * Human labels for the post/reply `status` enum, keyed by stored value.
+ *
+ * One map for the Content and Replies screens, which each carried their own
+ * copy for the filter tabs while their status badge printed ucfirst() of the
+ * raw enum instead — so the tab said "Published" and the badge said "Publish",
+ * and neither badge could be translated at all.
+ *
+ * @param bool $with_all Include the 'all' pseudo-status the filter tabs use.
+ * @return array<string, string>
+ */
+function content_status_labels( bool $with_all = false ): array {
+	$labels = array(
+		'publish' => __( 'Published', 'jetonomy' ),
+		'pending' => __( 'Pending', 'jetonomy' ),
+		'spam'    => __( 'Spam', 'jetonomy' ),
+		'trash'   => __( 'Trash', 'jetonomy' ),
+	);
+
+	return $with_all ? array( 'all' => __( 'All', 'jetonomy' ) ) + $labels : $labels;
+}
+
+/**
+ * Human label for a single post/reply status.
+ *
+ * @param string $status Stored enum value.
+ * @return string
+ */
+function content_status_label( string $status ): string {
+	$labels = content_status_labels();
+	return $labels[ $status ] ?? ucfirst( $status );
+}
+
+/**
+ * Human label for a space's stored `status` enum.
+ *
+ * The admin listing used to print ucfirst() of the raw enum, which is a
+ * machine value — untranslatable, and wrong in any language that does not
+ * capitalise the way English does.
+ *
+ * @param string $status Stored enum value.
+ * @return string
+ */
+function space_status_label( string $status ): string {
+	switch ( $status ) {
+		case 'active':
+			return __( 'Active', 'jetonomy' );
+		case 'archived':
+			return __( 'Archived', 'jetonomy' );
+		case 'locked':
+			return __( 'Locked', 'jetonomy' );
+		default:
+			return ucfirst( $status );
+	}
+}
+
+/**
+ * Human label for a space's stored `join_policy` enum.
+ *
+ * Same reasoning as space_status_label(). Casing is fixed here once instead
+ * of drifting between forms ("Invite Only" in wp-admin, "Invite only" on the
+ * front end).
+ *
+ * @param string $policy Stored enum value.
+ * @return string
+ */
+function space_join_policy_label( string $policy ): string {
+	switch ( $policy ) {
+		case 'open':
+			return __( 'Open', 'jetonomy' );
+		case 'approval':
+			return __( 'Requires Approval', 'jetonomy' );
+		case 'invite':
+			return __( 'Invite Only', 'jetonomy' );
+		default:
+			return ucfirst( $policy );
 	}
 }

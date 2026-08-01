@@ -300,10 +300,16 @@ class Posts_Controller extends Base_Controller {
 
 		$items = array_map( array( $this, 'prepare_post' ), $posts );
 
+		// `total` drives has_more in paginated_response(), so it must count the
+		// SAME population the listing returned. $space->post_count is the
+		// denormalized all-published counter — it ignores is_private and blocked
+		// authors, so a space with 3 topics of which 2 are invisible to the viewer
+		// reported total=3 against 1 returned row and pinned "Load More" on
+		// forever (Basecamp 10118693115). Mirrors templates/views/space.php.
 		return $this->paginated_response(
 			$items,
 			array(
-				'total'  => (int) ( $space->post_count ?? 0 ),
+				'total'  => Post::count_by_space_visible( $space_id, $user_id, $is_privileged, $pagination['sort'] ),
 				'offset' => (int) $pagination['offset'],
 			)
 		);
@@ -417,7 +423,7 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$title   = sanitize_text_field( (string) $request->get_param( 'title' ) );
-		$content = wp_kses_post( (string) $request->get_param( 'content' ) );
+		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 		if ( empty( $content ) ) {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
 		}
@@ -429,7 +435,9 @@ class Posts_Controller extends Base_Controller {
 		// update. Every other space type still requires a real title.
 		if ( empty( $title ) ) {
 			if ( 'feed' === ( $space->type ?? '' ) ) {
-				$derived = trim( wp_strip_all_tags( $content ) );
+				// First paragraph only - stripping the whole body ran
+				// paragraphs together in the headline and slug.
+				$derived = jetonomy_first_paragraph_text( $content );
 				$title   = '' !== $derived
 					? trim( (string) mb_substr( $derived, 0, 60 ) )
 					: __( 'Status update', 'jetonomy' );
@@ -700,7 +708,7 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		if ( null !== $request->get_param( 'content' ) ) {
-			$content                      = wp_kses_post( $request->get_param( 'content' ) );
+			$content                      = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 			$update_data['content']       = $content;
 			$update_data['content_plain'] = wp_strip_all_tags( $content );
 		}
@@ -1218,6 +1226,12 @@ class Posts_Controller extends Base_Controller {
 			'published_at'      => $post->published_at ?? null,
 			'created_at'        => $post->created_at ?? null,
 			'updated_at'        => $post->updated_at ?? null,
+			// Additive UTC ISO-8601 (`Z`) instants for app clients; columns are already UTC.
+			'created_at_gmt'    => \Jetonomy\to_iso8601_z( $post->created_at ?? null ),
+			'updated_at_gmt'    => \Jetonomy\to_iso8601_z( $post->updated_at ?? null ),
+			'last_reply_at_gmt' => \Jetonomy\to_iso8601_z( $post->last_reply_at ?? null ),
+			'edited_at_gmt'     => \Jetonomy\to_iso8601_z( $post->edited_at ?? null ),
+			'published_at_gmt'  => \Jetonomy\to_iso8601_z( $post->published_at ?? null ),
 			// Enriched author data (for app clients + JS rendering)
 			'author_name'       => $author_name,
 			'author_avatar'     => $author_avatar,

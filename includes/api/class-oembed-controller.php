@@ -248,7 +248,7 @@ class OEmbed_Controller extends Base_Controller {
 
 		// translators: %d: number of replies.
 		$replies_label = sprintf( _n( '%d reply', '%d replies', $reply_count, 'jetonomy' ), $reply_count );
-		// translators: %d: vote score.
+		// translators: %d: number of votes.
 		$votes_label = sprintf( _n( '%d vote', '%d votes', max( 0, $vote_score ), 'jetonomy' ), max( 0, $vote_score ) );
 
 		$thumb_html = '';

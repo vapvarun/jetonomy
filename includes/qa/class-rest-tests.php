@@ -590,7 +590,13 @@ class REST_Tests {
 			$this->check( 'E24: POST /bookmarks (off) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'E24: bookmarked = false', empty( $data['bookmarked'] ), 'bookmarked was not false' );
 
-			// 25. Create flag.
+			// 25. Create flag. Reporting your own content is server-rejected
+			// (Basecamp 10130360032), so the reporter is the TL0 test user
+			// flagging the admin-authored post - same actor-switch pattern the
+			// self-downvote step uses above.
+			if ( $this->test_user_id ) {
+				wp_set_current_user( $this->test_user_id );
+			}
 			$r = $this->rest( 'POST', '/flags', [
 				'object_type' => 'post',
 				'object_id'   => $this->post_id,
@@ -606,6 +612,38 @@ class REST_Tests {
 			if ( $flag_id ) {
 				$this->cleanup[] = [ 'type' => 'flag_db', 'id' => $flag_id ];
 			}
+
+			// 25b. object_type=user - the third enum member had no coverage.
+			$r = $this->rest( 'POST', '/flags', [
+				'object_type' => 'user',
+				'object_id'   => $this->admin_id,
+				'reason'      => 'harassment',
+			] );
+			$data = $r->get_data();
+			$this->check( 'E25b: POST /flags (user target) → 200/201', in_array( $r->get_status(), [ 200, 201 ], true ), "HTTP {$r->get_status()}" );
+			if ( ! empty( $data['id'] ) ) {
+				$this->cleanup[] = [ 'type' => 'flag_db', 'id' => (int) $data['id'] ];
+			}
+
+			// 25c. Nonexistent target must 404, never 201.
+			$r = $this->rest( 'POST', '/flags', [
+				'object_type' => 'post',
+				'object_id'   => 999999999,
+				'reason'      => 'spam',
+			] );
+			$this->check( 'E25c: POST /flags (missing target) → 404', 404 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+			if ( $this->test_user_id ) {
+				wp_set_current_user( $this->admin_id );
+			}
+
+			// 25d. Self-report is server-rejected, not just UI-hidden.
+			$r = $this->rest( 'POST', '/flags', [
+				'object_type' => 'post',
+				'object_id'   => $this->post_id,
+				'reason'      => 'spam',
+			] );
+			$this->check( 'E25d: POST /flags (self-report) → 400', 400 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 			// 26. Resolve flag.
 			if ( $flag_id ) {
@@ -683,6 +721,55 @@ class REST_Tests {
 		$nonce = is_array( $data ) ? (string) ( $data['nonce'] ?? '' ) : '';
 		$this->check( 'E31: GET /auth/nonce → 200 with nonce', 200 === $r->get_status() && '' !== $nonce, "HTTP {$r->get_status()}" );
 		$this->check( 'E31: refreshed nonce verifies for wp_rest', false !== wp_verify_nonce( $nonce, 'wp_rest' ), 'wp_verify_nonce failed' );
+
+		// 31b. POST /auth/app-connect — the app-connect bridge mint step
+		// (1.9.0, Wbcom App Auth standard). @covers POST /auth/app-connect
+		//
+		// This route is CONDITIONALLY registered, and which branch is correct
+		// depends on the site, so the test asserts the topology it is actually
+		// running on rather than one fixed shape:
+		//
+		//  - BuddyNext present: BN owns the single bridge for the site and
+		//    Jetonomy joins its scheme allowlist. Jetonomy must NOT stand up a
+		//    second door — two mint endpoints means two credential issuers to
+		//    secure and audit, which is the whole point of the one-door rule.
+		//  - BuddyNext absent: Jetonomy serves its own bridge, and the two
+		//    gates in front of the mint must hold.
+		$err_code       = static function ( \WP_REST_Response $res ): string {
+			$d = $res->get_data();
+			return is_array( $d ) ? (string) ( $d['code'] ?? '' ) : '';
+		};
+		$bn_owns_bridge = class_exists( '\\BuddyNext\\App\\AppConnectService' );
+		$r              = $this->rest( 'POST', '/auth/app-connect', [ 'scheme' => 'nope', 'bridge_token' => 'nope' ], $this->admin_id );
+		$code           = $err_code( $r );
+
+		if ( $bn_owns_bridge ) {
+			$this->check(
+				'E31b: BuddyNext active → Jetonomy exposes no second bridge (one door per site)',
+				404 === $r->get_status(),
+				"HTTP {$r->get_status()} (expected 404: BN owns the bridge)"
+			);
+		} else {
+			// An unrecognised scheme is rejected before anything is minted —
+			// the allowlist is what stops a credential being handed to an app
+			// this site never shipped.
+			$this->check(
+				'E31b: POST /auth/app-connect with unknown scheme → 400',
+				400 === $r->get_status() && 'jetonomy_app_bad_scheme' === $code,
+				"HTTP {$r->get_status()} code={$code}"
+			);
+
+			// Correct scheme, bogus bridge token: the one-time token proves the
+			// request came from a freshly rendered approve screen, so a forged
+			// or replayed one must not mint.
+			$r2    = $this->rest( 'POST', '/auth/app-connect', [ 'scheme' => 'jetonomyapp', 'bridge_token' => 'not-a-real-token' ], $this->admin_id );
+			$code2 = $err_code( $r2 );
+			$this->check(
+				'E31b: valid scheme + forged bridge token → 410, nothing minted',
+				410 === $r2->get_status() && 'jetonomy_app_bridge_expired' === $code2,
+				"HTTP {$r2->get_status()} code={$code2}"
+			);
+		}
 
 		// 32. Space RSS feed (1.5.0) — loopback HTTP because the feed is a
 		// rewrite route, not REST. A public space serves RSS 2.0; a private/

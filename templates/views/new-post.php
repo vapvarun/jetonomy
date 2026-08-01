@@ -16,6 +16,7 @@ if ( ! $space ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -56,6 +57,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 				'icon_size' => 48,
 				/* translators: %s: space title */
 				'message'   => sprintf( __( 'Join %s to start a discussion.', 'jetonomy' ), $space->title ),
+				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 				'cta_label' => sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ),
 				'cta_url'   => $space_url,
 				'tone'      => 'info',
@@ -65,6 +67,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 				'icon_size' => 48,
 				/* translators: %s: space label (e.g. space, forum) */
 				'message'   => sprintf( __( 'You do not have permission to post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				/* translators: %s: where the link returns to - the configured space label, or a specific space title. */
 				'cta_label' => sprintf( __( 'Back to %s', 'jetonomy' ), \Jetonomy\space_label() ),
 				'cta_url'   => $space_url,
 				'tone'      => 'forbidden',
@@ -73,26 +76,9 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 	return;
 }
 
-$space_type_map = [
-	'qa'    => [
-		'post_type' => 'question',
-		'label'     => __( 'Ask a Question', 'jetonomy' ),
-	],
-	'ideas' => [
-		'post_type' => 'idea',
-		'label'     => __( 'Share an Idea', 'jetonomy' ),
-	],
-	'feed'  => [
-		'post_type' => 'status',
-		'label'     => __( 'New Status', 'jetonomy' ),
-	],
-];
-$type_defaults  = $space_type_map[ $space->type ] ?? [
-	'post_type' => 'topic',
-	'label'     => __( 'New Topic', 'jetonomy' ),
-];
-$post_type      = $type_defaults['post_type'];
-$type_label     = $type_defaults['label'];
+// Shared with the space CTA, the BuddyPress tab CTA and the browser tab title.
+$post_type  = \Jetonomy\compose_post_type( (string) $space->type );
+$type_label = \Jetonomy\compose_label( (string) $space->type );
 
 // Type-aware submit label. Set as Interactivity state so the button text
 // stays correct after hydration (the SSR'd label gets replaced by
@@ -127,6 +113,7 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 <div class="jt-narrow">
 	<h1 class="jt-post-create-title"><?php echo esc_html( $type_label ); ?></h1>
 	<p class="jt-post-create-subtitle">
+		<?php /* translators: %s: space title. */ ?>
 		<?php printf( esc_html__( 'Posting in %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?>
 	</p>
 

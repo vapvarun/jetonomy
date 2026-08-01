@@ -78,8 +78,20 @@ class Blocks {
 			'jetonomyLoginBlock',
 			array(
 				'i18n' => array(
-					'resendConfirmation' => esc_html__( 'Resend confirmation email', 'jetonomy' ),
-					'sending'            => esc_html__( 'Sending...', 'jetonomy' ),
+					'resendConfirmation'    => esc_html__( 'Resend confirmation email', 'jetonomy' ),
+					'sending'               => esc_html__( 'Sending...', 'jetonomy' ),
+					// Every outcome message this block can show. They were English
+					// literals in login-block.js with only these two keys defined,
+					// so a visitor on a translated site got their sign-in, sign-up
+					// and password-reset feedback in English - on the one surface a
+					// first-time visitor is guaranteed to see.
+					'genericError'          => esc_html__( 'Something went wrong. Please try again.', 'jetonomy' ),
+					'networkError'          => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
+					'signedIn'              => esc_html__( 'Signed in.', 'jetonomy' ),
+					'accountCreated'        => esc_html__( 'Account created.', 'jetonomy' ),
+					'accountCreatedConfirm' => esc_html__( 'Account created. Check your email to confirm.', 'jetonomy' ),
+					'resetLinkSent'         => esc_html__( 'Reset link sent.', 'jetonomy' ),
+					'resendSent'            => esc_html__( 'If an account is waiting on confirmation, a new link is on its way.', 'jetonomy' ),
 				),
 			)
 		);
@@ -654,18 +666,13 @@ class Blocks {
 		$notifs_url    = $base . '/notifications/';
 		$messages_url  = $base . '/messages/';
 		$my_spaces_url = $base . '/my-spaces/';
+		$subs_url      = $base . '/subscriptions/';
 		$new_space_url = $base . '/new-space/';
 
-		// 1.4.0 G6 — show "Create space" link when the viewer is a site
-		// admin, holds the cap, or matches an admin-allowlisted role.
-		$jt_settings_panel = get_option( 'jetonomy_settings', array() );
-		$jt_allowed_roles  = isset( $jt_settings_panel['frontend_space_creation_roles'] )
-			? array_filter( array_map( 'sanitize_key', (array) $jt_settings_panel['frontend_space_creation_roles'] ) )
-			: array();
-		$jt_user_roles     = ! empty( $user->roles ) ? (array) $user->roles : array();
-		$can_create_space  = current_user_can( 'manage_options' )
-			|| current_user_can( 'jetonomy_create_spaces' )
-			|| ( ! empty( $jt_allowed_roles ) && count( array_intersect( $jt_user_roles, $jt_allowed_roles ) ) > 0 );
+		// 1.4.0 G6 — show "Create space" link only to viewers who could
+		// actually complete the flow. Same gate as the /new-space/ form and
+		// REST POST /spaces, so the link never leads to an empty state.
+		$can_create_space = \Jetonomy\Permissions\Capabilities::can_create_space_frontend();
 		// Only show the Messages (DM) link when the private-messaging extension is
 		// actually active (route registered) - Pro merely being installed is not
 		// enough, or the link 404s. See \Jetonomy\messaging_active().
@@ -685,7 +692,7 @@ class Blocks {
 					<div class="jt-userpanel-meta">
 						<span class="jt-userpanel-username">@<?php echo esc_html( $user->user_login ); ?></span>
 						<?php if ( $trust_level > 0 ) : ?>
-							<span class="jt-userpanel-tl" data-jt-tl="<?php echo (int) $trust_level; ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: trust level */ __( 'Trust Level %d', 'jetonomy' ), $trust_level ) ); ?>">
+							<span class="jt-userpanel-tl" data-jt-tl="<?php echo (int) $trust_level; ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: trust level number (0-5). */ __( 'Trust Level %d', 'jetonomy' ), $trust_level ) ); ?>">
 								TL<?php echo (int) $trust_level; ?>
 							</span>
 						<?php endif; ?>
@@ -709,10 +716,15 @@ class Blocks {
 					</a>
 				<?php endif; ?>
 				<a href="<?php echo esc_url( $my_spaces_url ); ?>" class="jt-userpanel-link">
+					<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 					<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></span>
+				</a>
+				<a href="<?php echo esc_url( $subs_url ); ?>" class="jt-userpanel-link">
+					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Subscriptions', 'jetonomy' ); ?></span>
 				</a>
 				<?php if ( $can_create_space ) : ?>
 					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">
+						<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
 						<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 					</a>
 				<?php endif; ?>

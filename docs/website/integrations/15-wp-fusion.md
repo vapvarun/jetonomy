@@ -40,9 +40,11 @@ These extra tags are granted to the member in the CRM when they join the space t
 
 When enabled, a member who leaves the space has the linked tags removed in the CRM. Leave this off if the tag also gates other content outside Jetonomy that a departing member should keep.
 
-## Setting the Space Role
+## Setting the Access Level
 
-The WP Fusion tab creates the access rule at the **Member** role by default. To change the role - for example, to give certain tag holders Moderator access - open the **Access Rules** tab on the same space and adjust the role for the WP Fusion rule. Both tabs share the same underlying rule, so a change in one is reflected in the other. The **Current access linkage** summary at the bottom of the WP Fusion tab lists which tags currently grant access to the space.
+The WP Fusion tab creates the access rule at **Participate**, which records tag holders as Members. To change what the rule grants, open the **Access Rules** tab on the same space and change its **Access level**. Both tabs share the same underlying rule, so a change in one is reflected in the other. The **Current access linkage** summary at the bottom of the WP Fusion tab lists which tags currently grant access to the space.
+
+> **Changed in 1.8.1.** The space role is no longer picked separately - it is derived from the access level (Read → Viewer, Participate → Member, Full → Moderator) so a rule can never grant more than it says. See [Access level](01-memberpress.md#access-level).
 
 ## How Reconciliation Works
 

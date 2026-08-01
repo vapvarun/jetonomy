@@ -89,7 +89,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 						<?php foreach ( array( 20, 50, 100 ) as $pp ) : ?>
 							<option value="<?php echo (int) $pp; ?>" <?php selected( (int) $per_page, $pp ); ?>>
 								<?php
-								/* translators: %d: per-page count */
+								/* translators: %d: per-page count. */
 								echo esc_html( sprintf( __( '%d per page', 'jetonomy' ), $pp ) );
 								?>
 							</option>
@@ -104,7 +104,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 				</p>
 			</form>
 
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-tags-table">
+			<table class="wp-list-table widefat fixed striped" id="jetonomy-tags-table"><!-- jetonomy-audit-table-ok: sortable headers + bulk check-column need custom markup; core collapse contract implemented by hand (column-primary, data-colname, toggle-row) -->
 				<thead>
 					<tr>
 						<td id="cb" class="manage-column column-cb check-column">
@@ -144,6 +144,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 						<?php foreach ( $tags as $tag ) : ?>
 							<tr data-id="<?php echo absint( $tag->id ); ?>" data-post-count="<?php echo absint( $tag->post_count ?? 0 ); ?>" class="jetonomy-tag-row">
 								<th scope="row" class="check-column">
+									<?php /* translators: %s: tag name. */ ?>
 									<input type="checkbox" class="jetonomy-tag-cb" value="<?php echo absint( $tag->id ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Select %s', 'jetonomy' ), $tag->name ) ); ?>">
 								</th>
 								<td class="column-name column-primary">
@@ -152,9 +153,10 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 										<span class="edit"><a href="#" class="jetonomy-edit-tag" data-id="<?php echo absint( $tag->id ); ?>" data-name="<?php echo esc_attr( $tag->name ); ?>" data-slug="<?php echo esc_attr( $tag->slug ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
 										<span class="delete"><a href="#" class="jetonomy-delete-tag" data-id="<?php echo absint( $tag->id ); ?>" data-name="<?php echo esc_attr( $tag->name ); ?>" data-count="<?php echo absint( $tag->post_count ?? 0 ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 									</div>
+									<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 								</td>
-								<td class="column-slug"><code><?php echo esc_html( $tag->slug ); ?></code></td>
-								<td class="column-count">
+								<td class="column-slug" data-colname="<?php esc_attr_e( 'Slug', 'jetonomy' ); ?>"><code><?php echo esc_html( $tag->slug ); ?></code></td>
+								<td class="column-count" data-colname="<?php esc_attr_e( 'Posts', 'jetonomy' ); ?>">
 									<?php
 									$count = absint( $tag->post_count ?? 0 );
 									if ( $count > 0 ) {

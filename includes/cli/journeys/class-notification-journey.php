@@ -62,6 +62,11 @@ final class Notification_Journey {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
+		$unknown = Journey_Input::error( $input, [ 'type', 'user_id', 'actor_id', 'object_type', 'object_id', 'message' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
+		}
+
 		$user_id = (int) $input['user_id'];
 		if ( $user_id <= 0 ) {
 			return Journey_Result::fail( 'user_id must be positive.' );

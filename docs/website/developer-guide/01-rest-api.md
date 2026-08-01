@@ -1,4 +1,4 @@
-Jetonomy exposes a full REST API under the `jetonomy/v1` namespace: 48+ endpoints in the free plugin, plus 40+ additional endpoints when Jetonomy Pro is active (90+ total). All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
+Jetonomy exposes a full REST API under the `jetonomy/v1` namespace: 80 endpoints in the free plugin, plus 73 additional endpoints when Jetonomy Pro is active (153 total). All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
 
 **Base URL:** `https://example.com/wp-json/jetonomy/v1/`
 
@@ -332,7 +332,7 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | POST | `/moderation/spam/{type}/{id}` | Moderator | Mark as spam |
 | POST | `/moderation/trash/{type}/{id}` | Moderator | Send to trash |
 | POST | `/moderation/bulk` *(new in 1.4.1)* | Moderator | Approve / spam / trash many posts in one call |
-| POST | `/flags` | Logged in | Submit a flag on a post or reply |
+| POST | `/flags` | Logged in (`jetonomy_flag`) | Report a post, reply, or user (`object_type: post\|reply\|user`); server rejects missing targets (404), self-reports (400), and duplicates (409) |
 | GET | `/posts/{id}/flags` *(new in 1.4.1)* | Moderator | The flags raised against a specific post |
 | GET | `/moderation/flags` | Moderator | List all open flags |
 | POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag (`valid` or `dismissed`) |
@@ -369,11 +369,14 @@ Returns per-item results so partial failures are visible:
 
 ```javascript
 {
-    object_type: 'post',   // or 'reply'
+    object_type: 'post',   // post | reply | user
     object_id:   42,
     reason:      'spam',   // spam | offensive | off_topic | harassment | other
+    description: 'Optional free-text detail from the reporter',
 }
 ```
+
+Error paths: `404 jetonomy_flag_target_missing` (target does not exist), `400 jetonomy_flag_self` (self-report), `409 jetonomy_already_flagged` (duplicate by the same member), `403 silenced` (silenced members cannot report).
 
 **POST /moderation/ban - body**
 
@@ -894,4 +897,4 @@ Every write mutation rejects banned users (`jetonomy_user_banned`) and users who
 
 - [Hooks Reference](./02-hooks-reference.md) - React to Jetonomy events in your own plugin
 - [Template Overrides](./03-template-overrides.md) - Customize the frontend without touching plugin files
-- [Adapter System](./05-adapters.md) - Swap the search backend or add a real-time layer
+- [Adapter System](./05-adapters.md) - Swap the search or email backend behind the registry

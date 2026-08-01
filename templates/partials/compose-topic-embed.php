@@ -130,11 +130,13 @@ $_partial_space = $_space ? $_space : (object) array(
 
 	<?php if ( 'picker' === $_mode ) : ?>
 		<label class="jt-compose-topic-field">
+			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 			<span class="jt-compose-topic-label"><?php echo esc_html( sprintf( __( 'Post to %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 			<select
 				class="jt-compose-topic-space"
 				data-wp-on--change="actions.composeTopicSelectSpace"
 				data-wp-bind--disabled="context.submitting">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<option value="" data-type=""><?php echo esc_html( sprintf( __( 'Choose a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></option>
 				<?php foreach ( $_postable as $_s ) : ?>
 					<option
@@ -144,6 +146,7 @@ $_partial_space = $_space ? $_space : (object) array(
 			</select>
 			<?php if ( empty( $_postable ) ) : ?>
 				<small class="jt-compose-topic-empty">
+					<?php /* translators: 1: plural space label, 2: singular space label. */ ?>
 					<?php echo esc_html( sprintf( __( 'You are not a member of any %1$s yet. Join a %2$s to start posting.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?>
 				</small>
 			<?php endif; ?>
@@ -152,7 +155,7 @@ $_partial_space = $_space ? $_space : (object) array(
 		<p class="jt-compose-topic-posting-to">
 			<?php
 			printf(
-				/* translators: %s: space title */
+				/* translators: %s: space title. */
 				esc_html__( 'Posting in %s', 'jetonomy' ),
 				'<strong>' . esc_html( $_space->title ) . '</strong>' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 			);

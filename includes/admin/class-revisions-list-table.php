@@ -76,6 +76,17 @@ class Revisions_List_Table extends \WP_List_Table {
 	}
 
 	/**
+	 * Collapse mobile rows around WHICH object was edited, not its type.
+	 *
+	 * The first column - and therefore WP's default primary - was Type, so a
+	 * phone showed a column of "Post" / "Reply" with no way to tell the rows
+	 * apart (Basecamp 10146443346). The title is the identity.
+	 */
+	protected function get_default_primary_column_name(): string {
+		return 'object_title';
+	}
+
+	/**
 	 * No sortable columns — list mode is always ordered by last_edited DESC.
 	 * Allowing sort on the aggregate would require composite indexes the
 	 * table doesn't have, so the column is fixed for now.
@@ -136,7 +147,10 @@ class Revisions_List_Table extends \WP_List_Table {
 		$paged    = max( 1, absint( $this->get_pagenum() ) );
 		$offset   = ( $paged - 1 ) * $per_page;
 
-		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns() );
+		// Fourth element is the PRIMARY column - see the note in
+		// Activity_List_Table. Without it core falls back to the first column,
+		// which put the bare object TYPE in the mobile primary cell.
+		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns(), 'object_title' );
 
 		$filters = self::read_filters();
 
@@ -303,7 +317,7 @@ class Revisions_List_Table extends \WP_List_Table {
 			return esc_html( $raw );
 		}
 		$human = sprintf(
-			/* translators: %s: human-readable time difference */
+			/* translators: %s: human-readable time difference. */
 			__( '%s ago', 'jetonomy' ),
 			human_time_diff( $ts, time() )
 		);

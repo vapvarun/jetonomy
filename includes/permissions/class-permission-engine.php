@@ -184,9 +184,19 @@ class Permission_Engine {
 			return false;
 		}
 
-		// Private / hidden spaces require membership.
+		// Private / hidden spaces require membership OR an access rule that
+		// admits this user.
+		//
+		// The rule check is the load-bearing half. Without it this returned
+		// false before the access-rule block below ever ran, so a membership /
+		// role / trust-level rule could only upgrade someone already on the
+		// roster - it could never let anyone in. An owner who gated a space on
+		// a paid tier got a space their subscribers could not enter, and the
+		// only workaround (the per-rule "Sync Members" button) wrote roster
+		// rows that nothing ever removed when the subscription lapsed.
 		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
-			if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
+			if ( ! SpaceMember::is_member( $space_id, $user_id )
+				&& ! AccessRule::grants_access( $user_id, $space_id ) ) {
 				return false;
 			}
 		}
@@ -289,7 +299,7 @@ class Permission_Engine {
 	/**
 	 * May this post's AUTHORED TEXT be emitted to this viewer out-of-band?
 	 *
-	 * can_read_post() plus the blocked-author check, for the surfaces that
+	 * Adds the blocked-author check on top of can_read_post(), for surfaces that
 	 * broadcast a post's title/body somewhere the viewer cannot be shown a
 	 * tombstone: the <head> (title / og:* / meta description), JSON-LD, and the
 	 * oEmbed unfurl. Those three asked can_read_post() — which knows about
@@ -350,10 +360,11 @@ class Permission_Engine {
 	/**
 	 * Check if a user can read a specific post, considering status and private visibility.
 	 *
-	 * @param int    $user_id  WP user ID (0 for guest).
-	 * @param object $post     Post row object (must have status, is_private, author_id, space_id).
+	 * @param int       $user_id WP user ID (0 for guest).
+	 * @param \stdClass $post    Post row (must have status, is_private, author_id, space_id).
 	 * @return bool
 	 */
+	// phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint -- docblock is deliberately \stdClass (PHPStan reads the row's properties from it) while the hint stays `object`, matching Model::find()'s ?object return.
 	public static function can_read_post( int $user_id, object $post ): bool {
 		$space_id = (int) $post->space_id;
 
@@ -408,6 +419,47 @@ class Permission_Engine {
 
 		// Space moderators/admins can see all private posts.
 		return self::is_space_privileged( $user_id, $space_id );
+	}
+
+	/**
+	 * May this viewer read a PRIVATE reply's text? (1.9.0, Basecamp 9804279999)
+	 *
+	 * Companion to {@see self::can_read_post()}'s private-post branch, with one
+	 * addition: the PARENT TOPIC's author always sees private replies on their
+	 * own thread — it is their conversation, and "share the sensitive detail
+	 * privately with the person who asked" is the entire use case.
+	 *
+	 * Callers pass the parent post so no surface re-fetches it per reply. A
+	 * non-private reply is always readable (the thread's space/status gating
+	 * happened at the post level before any reply rendered).
+	 *
+	 * The read surfaces TOMBSTONE on false (Reply::apply_private_tombstone) —
+	 * they never row-filter — so reply counts and reply_permalink() page
+	 * math stay identical for every viewer, same as the blocked-author rule.
+	 *
+	 * @param int       $user_id Viewer ID (0 for guests).
+	 * @param \stdClass $reply   Reply row (is_private, author_id).
+	 * @param \stdClass $post    Parent post row (author_id, space_id).
+	 * @return bool
+	 */
+	// phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint -- see can_read_post(): \stdClass docblock, `object` hint, on purpose.
+	public static function can_read_reply( int $user_id, object $reply, object $post ): bool {
+		if ( empty( $reply->is_private ) ) {
+			return true;
+		}
+		if ( ! $user_id ) {
+			return false;
+		}
+		if ( (int) $reply->author_id === $user_id ) {
+			return true;
+		}
+		if ( (int) $post->author_id === $user_id ) {
+			return true;
+		}
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+		return self::is_space_privileged( $user_id, (int) $post->space_id );
 	}
 
 	/**

@@ -89,6 +89,12 @@ $leaders = $wpdb->get_results(
 	"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT 5"
 ) ?: [];
 
+// Warm the profile cache for the Top Members widget in one query so the avatar
+// partial below does not fire a per-row SELECT on a cold cache.
+if ( ! empty( $leaders ) ) {
+	\Jetonomy\Models\UserProfile::prime( array_map( static fn( $r ) => (int) $r->user_id, $leaders ) );
+}
+
 // Popular tags.
 $popular_tags = \Jetonomy\Models\Tag::list_popular( 15 );
 
@@ -184,6 +190,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 						?>
 						<a href="<?php echo esc_url( \Jetonomy\get_space_edit_url( $space ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-edit">
 							<?php jetonomy_echo_icon( 'edit', 14 ); ?>
+							<?php /* translators: %s: what is being edited - the configured space label, or a specific space title. */ ?>
 							<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 						</a>
 					<?php endif; ?>
@@ -277,13 +284,13 @@ $bn_active = did_action( 'buddynext_loaded' );
 							/* translators: 1: vote count with singular/plural, 2: reply count with singular/plural */
 							echo esc_html(
 								sprintf(
-									/* translators: %d: number of votes */
+									/* translators: %d: number of votes. */
 									_n( '%d vote', '%d votes', $v, 'jetonomy' ),
 									$v
 								)
 								. ' · '
 								. sprintf(
-									/* translators: %d: number of replies */
+									/* translators: %d: number of replies. */
 									_n( '%d reply', '%d replies', $r, 'jetonomy' ),
 									$r
 								)
@@ -336,7 +343,18 @@ $bn_active = did_action( 'buddynext_loaded' );
 				?>
 				<div class="jt-leader">
 					<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $leader->user_id ) ? esc_attr( 'is-online' ) : ''; ?>">
-						<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0"><?php echo esc_html( strtoupper( substr( $lu->display_name, 0, 2 ) ) ); ?></span>
+						<?php
+						// Real avatar (image with initials fallback) via the shared
+						// partial, consistent with every other member surface.
+						\Jetonomy\Template_Loader::partial(
+							'avatar',
+							[
+								'user_id' => (int) $leader->user_id,
+								'size'    => 30,
+								'class'   => 'jt-avatar-sm jt-flex-shrink-0',
+							]
+						);
+						?>
 					</span>
 					<span class="jt-leader-name">
 						<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">

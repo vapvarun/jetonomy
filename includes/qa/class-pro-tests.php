@@ -292,6 +292,20 @@ class Pro_Tests {
 			return;
 		}
 
+		// Enabled is not the same as serving. The extension stands down when
+		// another DM engine owns messaging on this site, and then its routes
+		// are deliberately never registered. Ask the extension itself rather
+		// than re-deriving the rule here — the two answers must not be able to
+		// disagree, which is exactly what happened on a site running
+		// WPMediaVerse without BuddyNext: the option said enabled, the routes
+		// were correctly absent, and these tests reported three failures
+		// against working software.
+		$msg_ext = '\\Jetonomy_Pro\\Extensions\\Private_Messaging\\Extension';
+		if ( is_callable( array( $msg_ext, 'is_dormant' ) ) && $msg_ext::is_dormant() ) {
+			\WP_CLI::log( '    (extension dormant — another DM engine owns messaging on this site — skipping)' );
+			return;
+		}
+
 		wp_set_current_user( $this->admin_id );
 
 		if ( ! $this->recipient_id ) {

@@ -10,13 +10,14 @@ defined( 'ABSPATH' ) || exit;
 $space_slug = $data['slug'] ?? '';
 $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
-if ( ! $space ) {
+if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -134,10 +135,17 @@ $role_labels = [
 			<div class="jt-cat-page-row">
 				<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 				<div>
+					<?php
+					// Every space sub-page (Members / Moderation / Roadmap) uses the
+					// same header: the space title alone as the h1, the section's
+					// status line as the subtitle. The section name is already the
+					// last breadcrumb, so compositing it into the h1 only produced
+					// three different separators across the three pages.
+					?>
 					<h1 class="jt-page-title jt-page-title-sm">
-						<?php echo esc_html( $space->title ); ?> &mdash; <?php esc_html_e( 'Members', 'jetonomy' ); ?>
+						<?php echo esc_html( $space->title ); ?>
 					</h1>
-					<p class="jt-member-sub">
+					<p class="jt-page-subtitle">
 						<?php
 						/* translators: %d: member count */
 						echo esc_html( sprintf( _n( '%d member', '%d members', (int) $space->member_count, 'jetonomy' ), (int) $space->member_count ) );
@@ -147,7 +155,7 @@ $role_labels = [
 			</div>
 
 			<?php if ( $viewer_is_priv && ! empty( $jt_pending_requests ) ) : ?>
-				<section class="jt-card jt-pending-requests" aria-label="<?php esc_attr_e( 'Pending join requests', 'jetonomy' ); ?>">
+				<section id="jt-pending-requests" class="jt-card jt-pending-requests" aria-label="<?php esc_attr_e( 'Pending join requests', 'jetonomy' ); ?>">
 					<h2 class="jt-pending-requests-title">
 						<?php esc_html_e( 'Pending join requests', 'jetonomy' ); ?>
 						<span class="jt-badge-accent"><?php echo esc_html( number_format_i18n( (int) $jt_pending_total ) ); ?></span>
@@ -204,9 +212,12 @@ $role_labels = [
 					aria-label="<?php esc_attr_e( 'Invite links', 'jetonomy' ); ?>"
 					data-jt-invite-panel
 					data-space-id="<?php echo absint( $space->id ); ?>"
+					<?php /* translators: 1: number of uses so far, 2: maximum number of uses. */ ?>
 					data-jt-uses-format="<?php echo esc_attr__( 'Uses: %1$s of %2$s', 'jetonomy' ); ?>"
+					<?php /* translators: %s: number of uses so far. */ ?>
 					data-jt-uses-unlimited-format="<?php echo esc_attr__( 'Uses: %s', 'jetonomy' ); ?>"
 					data-jt-no-expiry="<?php esc_attr_e( 'No expiry', 'jetonomy' ); ?>"
+					<?php /* translators: %s: expiry date. */ ?>
 					data-jt-expires-format="<?php echo esc_attr__( 'Expires %s', 'jetonomy' ); ?>"
 					data-jt-copy-label="<?php esc_attr_e( 'Copy', 'jetonomy' ); ?>"
 					data-jt-copy-aria="<?php esc_attr_e( 'Copy invite link', 'jetonomy' ); ?>"
@@ -272,9 +283,9 @@ $role_labels = [
 											// the "Uses" column the wp-admin table already uses.
 											echo esc_html(
 												$jt_invite_max > 0
-													/* translators: 1: times used, 2: maximum uses */
+													/* translators: 1: number of uses so far, 2: maximum number of uses. */
 													? sprintf( __( 'Uses: %1$s of %2$s', 'jetonomy' ), number_format_i18n( $jt_invite_use ), number_format_i18n( $jt_invite_max ) )
-													/* translators: %s: times used */
+													/* translators: %s: number of uses so far. */
 													: sprintf( __( 'Uses: %s', 'jetonomy' ), number_format_i18n( $jt_invite_use ) )
 											);
 											?>
@@ -283,7 +294,7 @@ $role_labels = [
 											<?php
 											echo esc_html(
 												$jt_invite->expires_at
-													/* translators: %s: expiry date */
+													/* translators: %s: expiry date. */
 													? sprintf( __( 'Expires %s', 'jetonomy' ), date_i18n( get_option( 'date_format' ), strtotime( (string) $jt_invite->expires_at ) ) )
 													: __( 'No expiry', 'jetonomy' )
 											);
@@ -361,7 +372,7 @@ $role_labels = [
 								?>
 								<div class="jt-member-joined">
 									<?php
-									/* translators: %s: joined date */
+									/* translators: %s: join date. */
 									echo esc_html( sprintf( __( 'Joined %s', 'jetonomy' ), $joined ) );
 									?>
 								</div>
@@ -397,11 +408,19 @@ $role_labels = [
 								// space_id), so the cap-vs-role gap that blocked space mods
 								// is closed. Site-wide bans / silences stay cap-only.
 								?>
+								<?php
+								// Danger-ghost + x-circle: the identical treatment the
+								// site-wide Ban button carries on the user profile. This
+								// was the only .jt-btn in the plugin with no variant
+								// class, so a destructive action rendered as bare text.
+								?>
 								<button type="button"
-									class="jt-btn jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
+									class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
 									data-space-id="<?php echo absint( $space->id ); ?>"
 									data-user-id="<?php echo absint( $member->user_id ); ?>"
 									data-user-name="<?php echo esc_attr( $mu->display_name ); ?>">
+									<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
+									<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 									<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 								</button>
 							<?php endif; ?>

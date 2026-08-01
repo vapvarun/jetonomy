@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     1.8.0
+ * Version:     1.9.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,8 +16,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '1.8.0' );
-define( 'JETONOMY_DB_VERSION', '1.8.0' );
+define( 'JETONOMY_VERSION', '1.9.0' );
+define( 'JETONOMY_DB_VERSION', '1.9.0' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -79,6 +79,34 @@ add_action(
 if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' ) ) {
 	require_once JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php';
 }
+
+// Update-screen icon. WordPress only auto-resolves icons for wp.org-hosted
+// plugins; a self-hosted update renders a broken placeholder unless the update
+// object carries icon URLs. The store response MAY provide them — this bundled
+// SVG guarantees the row renders branded even when it does not (asset ships in
+// the zip and is served from the customer's own site, so it can never 404 on a
+// store outage). Store-provided icons win: we only fill the key when empty.
+add_filter(
+	'site_transient_update_plugins',
+	function ( $transient ) {
+		if ( ! is_object( $transient ) ) {
+			return $transient;
+		}
+		$basename = plugin_basename( JETONOMY_FILE );
+		$icon_1x  = plugins_url( 'assets/images/update-icon-128.png', JETONOMY_FILE );
+		$icon_2x  = plugins_url( 'assets/images/update-icon-256.png', JETONOMY_FILE );
+		foreach ( array( 'response', 'no_update' ) as $bucket ) {
+			if ( isset( $transient->{$bucket}[ $basename ] ) && empty( $transient->{$bucket}[ $basename ]->icons ) ) {
+				$transient->{$bucket}[ $basename ]->icons = array(
+					'1x'      => $icon_1x,
+					'2x'      => $icon_2x,
+					'default' => $icon_2x,
+				);
+			}
+		}
+		return $transient;
+	}
+);
 
 // Auto-activate the preset license key on first load so downloads work.
 add_action(
@@ -595,8 +623,131 @@ function jetonomy_maybe_enqueue_embed_scripts( string $content ): void {
 	}
 }
 
+/**
+ * Normalize contenteditable "div soup" into real paragraphs.
+ *
+ * The composer authors into a contenteditable div and submits its innerHTML.
+ * Chromium/WebKit wrap every Enter-separated block in a bare `<div>` (an empty
+ * line is `<div><br></div>`); Firefox-style editors separate blocks with
+ * `<br><br>`. wpautop() skips block-level tags, so those divs were stored and
+ * rendered as-is - and because the CSS spacing contract targets
+ * `.jt-post-body p`, consecutive paragraphs collided with 0px between them
+ * (Basecamp 10138808747, measured: p->div 12px, div->div 0px).
+ *
+ * Called at BOTH ends, one implementation:
+ *  - write time (posts/replies create + update, before wp_kses_post) so new
+ *    content is stored as canonical `<p>` markup on every surface incl. REST;
+ *  - display time (jetonomy_format_content) so content already stored as div
+ *    soup on customer sites renders correctly without a migration.
+ *
+ * The div transform only runs when the content contains NO attributed
+ * `<div ...>` - with attributed divs present (embed wrappers etc.), a bare
+ * `</div>` is ambiguous and the content is left exactly as before. Composer
+ * output never contains attributed divs, so the reported case is always
+ * covered; literal `<div>` text inside code blocks is entity-escaped in
+ * storage and never matches.
+ *
+ * @param string $content Editor-submitted or stored HTML.
+ * @return string Content with paragraphs as `<p>` blocks.
+ */
+function jetonomy_normalize_editor_html( string $content ): string {
+	// Fast path: nothing a contenteditable would have mangled.
+	if ( false === stripos( $content, '<div' ) && false === stripos( $content, '<br' ) ) {
+		return $content;
+	}
+
+	// ANY attributed <div> makes BOTH rewrites unsafe, so such content passes
+	// through byte-identical. The div transform can't tell whose </div> it is,
+	// and the <br><br> rewrite would have wpautop close paragraphs INSIDE the
+	// wrapper, tearing the embed
+	// (`<div class="embed">one<br><br>two</div>` -> `...one</p><p>two</p></div>`).
+	// The detection is whitespace-class based - `<div\tclass=...>` and
+	// `<div\nclass=...>` count, not just the literal "<div " (QA probe,
+	// Basecamp 10138808747 reopen). Composer output never contains attributed
+	// divs, so the reported case is always still covered.
+	if ( preg_match( '/<div\s+[^>]/i', $content ) ) {
+		return $content;
+	}
+
+	$had_soup = false;
+
+	if ( false !== stripos( $content, '<div' ) ) {
+		// Every div is bare, so open/close pairs are unambiguous regardless of
+		// nesting: treat each boundary as a paragraph break and let wpautop
+		// re-wrap. `<div><br></div>` is the editor's empty line - drop the br
+		// so it doesn't survive into the middle of a paragraph gap.
+		$content  = preg_replace( '#<div>\s*(?:<br\s*/?>)?\s*</div>#i', "\n\n", $content );
+		$content  = str_ireplace( array( '<div>', '</div>' ), array( "\n\n", "\n\n" ), $content );
+		$had_soup = true;
+	}
+
+	// Two or more consecutive <br>s is a paragraph break in every editor
+	// dialect; a single <br> stays a deliberate line break.
+	$replaced = preg_replace( '#(?:<br\s*/?>\s*){2,}#i', "\n\n", $content );
+	if ( $replaced !== $content ) {
+		$content  = $replaced;
+		$had_soup = true;
+	}
+
+	if ( ! $had_soup ) {
+		return $content;
+	}
+
+	// Canonicalize immediately: downstream consumers (REST payloads, the app,
+	// title derivation) read stored content raw, so the paragraph structure
+	// must live in the markup, not wait for a display-side wpautop.
+	return trim( wpautop( trim( $content ) ) );
+}
+
+/**
+ * THE sanitize pipeline for member-authored body content: normalize
+ * contenteditable div soup into real paragraphs, then kses.
+ *
+ * Post::create/update and Reply::create/update run every 'content' write
+ * through this, so every writer - REST, wp-admin AJAX, CLI journeys,
+ * Abilities, the importers, Pro reply-by-email - shares ONE choke point
+ * (Basecamp 10138808747: per-writer sanitizing let div soup persist via
+ * the paths that forgot the normalize half). Idempotent: normalized clean
+ * HTML passes through byte-identical, so pre-sanitized callers lose nothing.
+ *
+ * @param string $content Raw editor/imported HTML.
+ * @return string Normalized, kses-safe HTML.
+ */
+function jetonomy_sanitize_editor_content( string $content ): string {
+	return wp_kses_post( jetonomy_normalize_editor_html( $content ) );
+}
+
+/**
+ * The first paragraph of a content blob, as plain text.
+ *
+ * The feed-space derived title used to strip the WHOLE body and take the
+ * first 60 characters, so a multi-paragraph status ran its paragraphs
+ * together in the headline and the slug (Basecamp 10138808747 reopen). A
+ * headline is the first paragraph, not the first 60 bytes of everything.
+ *
+ * @param string $content Stored/normalized HTML or plain text.
+ * @return string First non-empty plain-text paragraph, '' if none.
+ */
+function jetonomy_first_paragraph_text( string $content ): string {
+	// Block-level closers become newlines BEFORE tags are stripped, so
+	// `<p>a</p><p>b</p>` splits even without literal newlines in the source.
+	$text = preg_replace( '#</(p|div|li|h[1-6]|blockquote)>#i', "\n", $content );
+	$text = trim( wp_strip_all_tags( (string) $text ) );
+	foreach ( preg_split( '/\n+/', $text ) as $line ) {
+		$line = trim( $line );
+		if ( '' !== $line ) {
+			return $line;
+		}
+	}
+	return '';
+}
+
 function jetonomy_format_content( string $content ): string {
 	$base = \Jetonomy\base_url();
+
+	// Repair div-soup that older releases stored verbatim (see
+	// jetonomy_normalize_editor_html) - a no-op for clean content.
+	$content = jetonomy_normalize_editor_html( $content );
 
 	// Normalize paragraphs: wpautop converts \n\n to <p>…</p> for plain-text
 	// storage, and is a no-op when content is already block-wrapped. This is

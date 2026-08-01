@@ -384,6 +384,44 @@ class Admin {
 		$existing = get_option( 'jetonomy_settings', array() );
 		$clean    = is_array( $existing ) ? $existing : array();
 
+		// ── Permissions tab: role -> capability mapping (Basecamp 9725751235) ──
+		// Lives in its own option (not jetonomy_settings) and resyncs the live
+		// WP roles immediately, so unticking a box revokes on save. The hidden
+		// role_caps_submitted marker distinguishes "tab posted with everything
+		// unticked" from "another tab posted".
+		if ( ! empty( $input['role_caps_submitted'] ) ) {
+			// Editing WHO HOLDS WHICH CAPABILITY is role administration, not a
+			// plugin setting: a delegated jetonomy_manage_settings holder could
+			// otherwise grant their own role jetonomy_manage_users/moderate and
+			// escalate. Same bar WP core sets for editing roles.
+			if ( ! current_user_can( 'manage_options' ) ) {
+				// Drop only the mapping - the rest of the Permissions tab
+				// (trust thresholds, rate limits) is still theirs to save.
+				unset( $input['role_caps'], $input['role_caps_submitted'] );
+				add_settings_error(
+					'jetonomy_settings',
+					'jetonomy_role_caps_forbidden',
+					__( 'Only administrators can change the role capability mapping.', 'jetonomy' )
+				);
+			}
+		}
+		if ( ! empty( $input['role_caps_submitted'] ) ) {
+			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
+			$roles      = array_keys( get_editable_roles() );
+			$overrides  = array();
+			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
+			foreach ( $roles as $role_slug ) {
+				if ( 'administrator' === $role_slug ) {
+					continue; // Admins always hold every cap - never stored.
+				}
+				$caps                    = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
+				$overrides[ $role_slug ] = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
+			}
+			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $overrides, false );
+			\Jetonomy\Permissions\Capabilities::register();
+			unset( $input['role_caps'], $input['role_caps_submitted'] );
+		}
+
 		// ── General tab ──
 		// Only process if base_slug is present (General tab was submitted).
 		if ( isset( $input['base_slug'] ) ) {
@@ -408,10 +446,13 @@ class Admin {
 			$clean['space_label_plural']   = sanitize_text_field( $input['space_label_plural'] ?? '' );
 			// Clamp to the UI max (100) so a crafted POST can't store a huge
 			// value that flows straight into a SQL LIMIT on a big-site query.
-			$clean['posts_per_page']     = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
-			$clean['replies_per_page']   = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
-			$raw_space_type              = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
-			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
+			$clean['posts_per_page'] = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
+			// Activity-log retention: 1 day to ~10 years. Consumed by the daily
+			// jetonomy_prune_activity cron (class-cron.php).
+			$clean['activity_log_retention_days'] = min( 3650, max( 1, absint( $input['activity_log_retention_days'] ?? 90 ) ) );
+			$clean['replies_per_page']            = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
+			$raw_space_type                       = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
+			$clean['default_space_type']          = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
 			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
 			// Community as homepage — unchecked checkboxes don't submit, so
@@ -524,7 +565,7 @@ class Admin {
 		// Only process if accent_color is present (Appearance tab was submitted).
 		if ( isset( $input['accent_color'] ) ) {
 			$clean['accent_color'] = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
-			$clean['logo_url']       = esc_url_raw( $input['logo_url'] ?? '' );
+			$clean['logo_url']     = esc_url_raw( $input['logo_url'] ?? '' );
 			// Color palette — empty string means "no override, keep the default".
 			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
 				$clean[ $palette_key ] = sanitize_hex_color( (string) ( $input[ $palette_key ] ?? '' ) ) ?: '';
@@ -835,21 +876,9 @@ class Admin {
 		wp_enqueue_media();
 
 		// Gather membership adapters with their levels for the access rules UI.
-		$adapter_labels = array(
-			'wp-roles'    => __( 'WP Role', 'jetonomy' ),
-			'memberpress' => __( 'MemberPress Plan', 'jetonomy' ),
-			'pmpro'       => __( 'PMPro Level', 'jetonomy' ),
-			'woocommerce' => __( 'WooCommerce Membership', 'jetonomy' ),
-			'rcp'         => __( 'RCP Membership', 'jetonomy' ),
-			'learndash'   => __( 'LearnDash Course', 'jetonomy' ),
-			'tutor'       => __( 'Tutor Course', 'jetonomy' ),
-			'lifterlms'   => __( 'LifterLMS Course', 'jetonomy' ),
-			'sensei'      => __( 'Sensei Course', 'jetonomy' ),
-			'masterstudy' => __( 'MasterStudy Course', 'jetonomy' ),
-			'learnomy'    => __( 'Learnomy Course', 'jetonomy' ),
-			'suremembers' => __( 'SureMembers Access Group', 'jetonomy' ),
-			'wpfusion'    => __( 'WP Fusion Tag', 'jetonomy' ),
-		);
+		// Names come from the registry so the picker and the saved-rules table
+		// can never disagree about what an adapter is called.
+		$adapter_labels = \Jetonomy\Adapters\Adapter_Registry::membership_labels();
 
 		$membership_adapters = array();
 		$all_adapters        = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
@@ -927,8 +956,39 @@ class Admin {
 					'inviteUnlimited'         => esc_html__( 'Unlimited', 'jetonomy' ),
 					'inviteNever'             => esc_html__( 'Never', 'jetonomy' ),
 					'inviteExpired'           => esc_html__( 'Expired', 'jetonomy' ),
+					// Access-rule composer preview. Keyed so the sentence and its
+					// mismatch warnings are translatable like everything else.
+					'rulePreview'             => array(
+						'whoFallback'     => __( 'People who match this rule', 'jetonomy' ),
+						/* translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as. */
+						'sentence'        => __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
+						'grants'          => array(
+							'read'        => __( 'read posts and replies, but not take part', 'jetonomy' ),
+							'participate' => __( 'read, post, reply, vote and report', 'jetonomy' ),
+							'full'        => __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s topics', 'jetonomy' ),
+						),
+						// Roster-role labels for the derived value in the preview.
+						'roles'           => array(
+							'viewer'    => __( 'Viewer', 'jetonomy' ),
+							'member'    => __( 'Member', 'jetonomy' ),
+							'moderator' => __( 'Moderator', 'jetonomy' ),
+							'admin'     => __( 'Admin', 'jetonomy' ),
+						),
+						'warnRoleHigher'  => __( 'Heads up: the Space Role is more powerful than the Grants. Anyone added to the roster by "Sync Members" gets the role\'s abilities too.', 'jetonomy' ),
+						'warnGrantHigher' => __( 'Heads up: the Grants are broader than the Space Role, so member lists will understate what these people can do.', 'jetonomy' ),
+					),
 					'copy'                    => esc_html__( 'Copy', 'jetonomy' ),
 					'revoke'                  => esc_html__( 'Revoke', 'jetonomy' ),
+					// Access-rule sync button + the import restart confirm. These
+					// were written inline in admin.js with no key, so they stayed
+					// English on every locale; the count was also concatenated,
+					// which no translator could reorder.
+					'sync'                    => esc_html__( 'Sync', 'jetonomy' ),
+					'syncing'                 => esc_html__( 'Syncing...', 'jetonomy' ),
+					/* translators: %d: number of memberships synced. */
+					'syncedFormat'            => esc_html__( 'Synced (%d)', 'jetonomy' ),
+					'importRestartConfirm'    => esc_html__( 'This will discard the interrupted import progress. Continue?', 'jetonomy' ),
+					'importRestartTitle'      => esc_html__( 'Restart import', 'jetonomy' ),
 				),
 			)
 		);
@@ -1009,7 +1069,62 @@ class Admin {
 		$settings  = get_option( 'jetonomy_settings', array() );
 		$base_slug = $settings['base_slug'] ?? 'community';
 
+		// Live 7-day pulse for the analytics teaser (real numbers, not a
+		// blurred screenshot — the widget demonstrates what Pro's analytics
+		// does). Dismissible per user; cached 1h so it costs the dashboard
+		// nothing on repeat views.
+		if ( isset( $_GET['jetonomy_dismiss_pulse'] ) && check_admin_referer( 'jetonomy_dismiss_pulse' ) ) {
+			update_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', 1 );
+		}
+		$pulse = get_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', true )
+			? null
+			: $this->weekly_pulse();
+
 		include JETONOMY_DIR . 'includes/admin/views/dashboard.php';
+	}
+
+	/**
+	 * 7-day community pulse for the dashboard analytics teaser.
+	 *
+	 * Four bounded queries (date-windowed COUNTs over indexed created_at
+	 * columns), transient-cached for an hour. Big-site checklist: no
+	 * unbounded scans, the DISTINCT runs over the 7-day activity window only.
+	 *
+	 * @return array{posts:int,replies:int,contributors:int,top_space:?string,top_space_posts:int}
+	 */
+	private function weekly_pulse(): array {
+		$cached = get_transient( 'jetonomy_weekly_pulse' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		global $wpdb;
+		$posts_t    = table( 'posts' );
+		$replies_t  = table( 'replies' );
+		$spaces_t   = table( 'spaces' );
+		$activity_t = table( 'activity_log' );
+		$since      = gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS );
+
+		$top = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT s.title, COUNT(*) AS n FROM {$posts_t} p
+				 INNER JOIN {$spaces_t} s ON s.id = p.space_id
+				 WHERE p.status = 'publish' AND p.created_at >= %s
+				 GROUP BY p.space_id, s.title ORDER BY n DESC LIMIT 1",
+				$since
+			)
+		);
+
+		$pulse = array(
+			'posts'           => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish' AND created_at >= %s", $since ) ),
+			'replies'         => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'publish' AND created_at >= %s", $since ) ),
+			'contributors'    => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT user_id) FROM {$activity_t} WHERE created_at >= %s", $since ) ),
+			'top_space'       => $top->title ?? null,
+			'top_space_posts' => (int) ( $top->n ?? 0 ),
+		);
+
+		set_transient( 'jetonomy_weekly_pulse', $pulse, HOUR_IN_SECONDS );
+		return $pulse;
 	}
 
 	public function render_categories(): void {
@@ -1071,6 +1186,7 @@ class Admin {
 		if ( 'edit' === $action && $space_id > 0 ) {
 			$space = Space::find( $space_id );
 			if ( ! $space ) {
+				/* translators: %s: the singular space label. */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
 			$categories     = $this->get_all_categories_flat();

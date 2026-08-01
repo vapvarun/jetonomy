@@ -21,7 +21,7 @@ apply_filters( 'jetonomy_attachment_card', string $card, array $attachment, stri
 ```
 
 - `$card` — free's default `<li>` markup (image card or file card).
-- `$attachment` — hydrated attachment array, see [`Attachment::hydrate()`](models.md#hydrate).
+- `$attachment` — hydrated attachment array, see [`Attachment::hydrate()`](23-attachment-model.md#hydrate).
 - `$object_type` — `'post'` or `'reply'`.
 - `$object_id` — the post or reply id.
 
@@ -59,7 +59,7 @@ apply_filters( 'jetonomy_rest_attachment_data', array $data, string $object_type
 Fired once per row inside `Attachment::payload_for()` — the same call that
 backs both the frontend card renderer and the REST payload, so the two can
 never drift. `$data` is the shape documented in
-[`Attachment::hydrate()`](models.md#hydrate). Pro uses this to swap in a
+[`Attachment::hydrate()`](23-attachment-model.md#hydrate). Pro uses this to swap in a
 gated download URL for non-image files and to add PDF page counts.
 
 ## REST payload — `attachments`

@@ -157,6 +157,7 @@ class Notifier {
 				'body'    => __( "Hi {user},\n\n{message}\n\nIf you think this was a mistake, reply to a moderator in the community.", 'jetonomy' ),
 			),
 			'join_request'          => array(
+				/* translators: %s: the singular space label; {site} is replaced with the site name before sending. */
 				'subject' => sprintf( __( '[{site}] New %s join request', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nReview the request and approve or decline it.", 'jetonomy' ),
 			),
@@ -473,7 +474,8 @@ class Notifier {
 			return;
 		}
 
-		$space       = Space::find( $space_id );
+		$space = Space::find( $space_id );
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 		$space_name  = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$actor_id    = (int) $post->author_id;
 		$post_url    = $this->get_post_url( $post );
@@ -534,6 +536,7 @@ class Notifier {
 				'reply',
 				$reply_id,
 				sprintf(
+					/* translators: 1: replier display name, 2: post title. */
 					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
@@ -547,7 +550,12 @@ class Notifier {
 		// 2. Notify parent reply author (reply-to-reply) — single recipient.
 		if ( ! empty( $reply->parent_id ) ) {
 			$parent_reply = Reply::find( (int) $reply->parent_id );
-			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id ) {
+			// Private-reply gate (1.9.0): the parent commenter is NOT
+			// automatically allowed to read a private reply (only the topic
+			// author, staff, and the reply author are) — never notify someone
+			// about words they will only ever see as a tombstone.
+			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( (int) $parent_reply->author_id, $reply, $post ) ) {
 				$this->create_and_maybe_email(
 					(int) $parent_reply->author_id,
 					$actor_id,
@@ -555,6 +563,7 @@ class Notifier {
 					'reply',
 					$reply_id,
 					sprintf(
+						/* translators: 1: replier display name, 2: post title. */
 						__( '%1$s replied to your comment in "%2$s"', 'jetonomy' ),
 						\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 						mb_substr( $post->title, 0, 50 )
@@ -567,6 +576,12 @@ class Notifier {
 		}
 
 		// 3. Notify post subscribers — inline for small threads, deferred for large.
+		// Private replies never fan out (1.9.0): the audience is the topic
+		// author (branch 1), who was already notified. Subscribers would only
+		// receive a link to a tombstone.
+		if ( ! empty( $reply->is_private ) ) {
+			return;
+		}
 		if ( Subscription::count_subscribers( 'post', $post_id ) > self::FANOUT_INLINE_MAX
 			&& $this->enqueue_fanout( 'jetonomy_fanout_reply_subscribers', array( $reply_id, $post_id ) ) ) {
 			return;
@@ -604,6 +619,7 @@ class Notifier {
 				'reply',
 				$reply_id,
 				sprintf(
+					/* translators: 1: replier display name, 2: post title. */
 					__( '%1$s replied in "%2$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
@@ -836,6 +852,7 @@ class Notifier {
 				'reply',
 				$reply_id,
 				sprintf(
+					/* translators: %s: post title. */
 					__( 'Your answer was accepted in "%s"', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
@@ -910,6 +927,7 @@ class Notifier {
 			'badge',
 			$new_level,
 			sprintf(
+				/* translators: 1: trust level name, 2: trust level number. */
 				__( 'Congratulations! You have been promoted to %1$s (Level %2$d)', 'jetonomy' ),
 				$name,
 				$new_level
@@ -1139,6 +1157,12 @@ class Notifier {
 	 * @return bool
 	 */
 	public static function should_email( int $user_id, string $type = '', ?array $user_prefs = null, ?array $global_defaults = null ): bool {
+		// Global veto (documented in Notification::create()) — one filter
+		// silences rows AND emails, e.g. for the duration of an import run.
+		if ( ! apply_filters( 'jetonomy_notification_should_send', true ) ) {
+			return false;
+		}
+
 		// Master kill-switch — suppresses ALL email (web notifications unaffected).
 		if ( get_user_meta( $user_id, 'jetonomy_email_opt_out', true ) ) {
 			return false;
@@ -1464,8 +1488,9 @@ class Notifier {
 	 */
 	public function on_join_request_approved( int $space_id, int $user_id, int $reviewed_by ): void {
 		$space = Space::find( $space_id );
-		$name  = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
-		$url   = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+		$name = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		$url  = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
 		$this->create_and_maybe_email(
 			$user_id,
 			$reviewed_by,
@@ -1483,7 +1508,8 @@ class Notifier {
 	 */
 	public function on_join_request_denied( int $space_id, int $user_id, int $reviewed_by ): void {
 		$space = Space::find( $space_id );
-		$name  = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+		$name = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$this->create_and_maybe_email(
 			$user_id,
 			$reviewed_by,
@@ -1499,7 +1525,8 @@ class Notifier {
 	 * Notify space admins/moderators when a join request is submitted.
 	 */
 	public function on_join_request( int $space_id, int $user_id, string $message ): void {
-		$space      = Space::find( $space_id );
+		$space = Space::find( $space_id );
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 
 		// Collect recipients: space-level admins/moderators + WP-level admins.
@@ -1562,21 +1589,15 @@ class Notifier {
 	/**
 	 * Per-recipient join-request action URL.
 	 *
-	 * WP admin / `jetonomy_manage_spaces` cap-holders go to the wp-admin
-	 * space-edit `join_requests` tab. Everyone else (space-level admins +
-	 * moderators without those caps) gets the front-end space-mod queue.
+	 * Delegates to \Jetonomy\join_request_url_for() so the email, the
+	 * /notifications/ page, and the REST bell dropdown all land the reader on
+	 * the same surface.
 	 *
 	 * @param int         $recipient_id Recipient WP user id.
 	 * @param object|null $space        Space row (may be null).
 	 */
 	private function build_join_request_url_for( int $recipient_id, $space ): string {
-		if ( ! $space ) {
-			return '';
-		}
-		if ( user_can( $recipient_id, 'jetonomy_manage_spaces' ) || user_can( $recipient_id, 'manage_options' ) ) {
-			return admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id . '&tab=join_requests' );
-		}
-		return \Jetonomy\base_url() . '/s/' . $space->slug . '/mod/';
+		return \Jetonomy\join_request_url_for( $recipient_id, $space );
 	}
 
 	private function get_display_name( int $user_id ): string {

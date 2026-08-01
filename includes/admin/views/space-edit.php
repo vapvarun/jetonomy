@@ -23,6 +23,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		/* translators: %s: space title */
 		printf( esc_html__( 'Edit %1$s: %2$s', 'jetonomy' ), esc_html( \Jetonomy\space_label() ), esc_html( $space->title ) );
 		?>
+		<?php /* translators: %s: where the link returns to - the configured space label, or a specific space title. */ ?>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces' ) ); ?>" class="page-title-action"><?php echo esc_html( sprintf( __( 'Back to %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></a>
 	</h1>
 
@@ -60,6 +61,12 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 
 	<?php if ( 'general' === $active_tab ) : ?>
 		<!-- General Tab -->
+		<div class="jt-settings-card">
+			<div class="jt-settings-card__head">
+				<p class="jt-settings-card__title"><?php esc_html_e( 'Details', 'jetonomy' ); ?></p>
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+				<p class="jt-settings-card__desc"><?php echo esc_html( sprintf( __( 'Name, category, visibility, and appearance of this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+			</div>
 		<form id="jetonomy-edit-space-form" class="jetonomy-space-form" data-space-id="<?php echo absint( $space->id ); ?>">
 			<table class="form-table">
 				<tr>
@@ -165,10 +172,12 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</tr>
 			</table>
 			<p class="submit">
+				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 				<button type="submit" class="button button-primary"><?php echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></button>
 				<span class="spinner"></span>
 			</p>
 		</form>
+		</div><!-- /.jt-settings-card -->
 
 	<?php elseif ( 'members' === $active_tab ) : ?>
 		<!-- Members Tab -->
@@ -191,7 +200,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 
 			<?php /* translators: %d: number of members */ ?>
 		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), (int) count( $members ) ); ?></h2>
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-members-table">
+			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-members-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
@@ -209,6 +218,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								'variant' => 'compact',
 								'icon'    => 'groups',
 								'title'   => __( 'No members yet', 'jetonomy' ),
+								/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 								'body'    => sprintf( __( 'Invite members or open this %s to the wider community.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							)
 						);
@@ -243,7 +253,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</tbody>
-			</table>
+			</table></div><!-- /.jt-content-table-wrap -->
 
 			<hr>
 
@@ -265,7 +275,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<p class="description"><?php esc_html_e( 'Max uses 0 means unlimited. Leave Expires blank for no expiry.', 'jetonomy' ); ?></p>
 			</div>
 
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-invites-table" data-space-id="<?php echo absint( $space->id ); ?>">
+			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-invites-table" data-space-id="<?php echo absint( $space->id ); ?>">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Invite Link', 'jetonomy' ); ?></th>
@@ -282,20 +292,107 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							'variant' => 'compact',
 							'icon'    => 'admin-links',
 							'title'   => __( 'No invite links yet', 'jetonomy' ),
+							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 							'body'    => sprintf( __( 'Generate a link to invite people directly into this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						)
 					);
 					?>
 				</tbody>
-			</table>
+			</table></div><!-- /.jt-content-table-wrap -->
 		</div>
 
 	<?php elseif ( 'access' === $active_tab ) : ?>
 		<!-- Access Rules Tab -->
 		<div class="jetonomy-tab-content">
 			<h2><?php esc_html_e( 'Add Access Rule', 'jetonomy' ); ?></h2>
+
+			<?php
+			// What a rule actually does was invisible: two dials with no
+			// explanation, and nothing saying that access follows a
+			// subscription rather than being a one-time grant. Owners were
+			// left guessing what they had configured.
+			$jt_rule_open_join = 'open' === ( $space->join_policy ?? 'open' );
+			$jt_rule_public    = 'public' === ( $space->visibility ?? 'public' );
+			$jt_has_membership = false;
+			foreach ( $access_rules as $jt_r ) {
+				if ( 'membership' === $jt_r->rule_type ) {
+					$jt_has_membership = true;
+					break;
+				}
+			}
+			?>
+			<div class="jt-settings-card jt-access-help">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'How access rules work', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc">
+						<?php
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						echo esc_html( sprintf( __( 'A rule lets people in to this %s. It never locks anyone out on its own - visibility and join policy do that.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+						?>
+					</p>
+				</div>
+				<table class="widefat striped jt-access-help-table"><!-- jetonomy-audit-table-ok: static reference copy, stacks below 782px via .jt-access-help-table -->
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'What the person can do', 'jetonomy' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'View posts and replies. Cannot take part.', 'jetonomy' ); ?></td>
+						</tr>
+						<tr>
+							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'Read, plus post, reply, vote and report. The usual choice for a paid plan.', 'jetonomy' ); ?></td>
+						</tr>
+						<tr>
+							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Full', 'jetonomy' ); ?></strong></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'Participate, plus edit other people\'s posts, close and pin topics - but only for people whose WordPress role already allows moderation. For an ordinary member this behaves exactly like Participate.', 'jetonomy' ); ?></td>
+						</tr>
+					</tbody>
+				</table>
+				<p class="description">
+					<?php esc_html_e( 'Members lists show a matching role - Read is listed as Viewer, Participate as Member, Full as Moderator. To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ); ?>
+				</p>
+				<p class="description">
+					<strong><?php esc_html_e( 'A rule can never exceed a WordPress role.', 'jetonomy' ); ?></strong>
+					<?php esc_html_e( 'Grants filter what someone may do here; they cannot hand out an ability the person\'s WordPress role does not already carry. Moderation abilities come from the role - set those under Jetonomy - Settings - Permissions.', 'jetonomy' ); ?>
+				</p>
+				<p class="description">
+					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
+					<?php esc_html_e( 'Access begins the moment a plan becomes active and ends when it lapses - there is nothing to sync and nothing to undo by hand. "Sync Members" is only needed if you also want these people listed on the roster.', 'jetonomy' ); ?>
+				</p>
+			</div>
+
+			<?php if ( $jt_has_membership && ( $jt_rule_public || $jt_rule_open_join ) ) : ?>
+				<div class="notice notice-warning inline jt-access-warning">
+					<p>
+						<strong><?php esc_html_e( 'This rule is not restricting anyone yet.', 'jetonomy' ); ?></strong>
+					</p>
+					<p>
+						<?php if ( $jt_rule_public ) : ?>
+							<?php
+							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+							echo esc_html( sprintf( __( 'This %s is Public, so everyone can already read it. A membership rule only adds access - it cannot take it away.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+							?>
+						<?php else : ?>
+							<?php esc_html_e( 'The join policy is Open, so anyone signed in can join without the plan.', 'jetonomy' ); ?>
+						<?php endif; ?>
+					</p>
+					<p>
+						<?php
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						echo esc_html( sprintf( __( 'To sell access to this %s, set Visibility to Private and Join Policy to Invite Only on the Settings tab. Plan holders still get in automatically through this rule.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<div class="jetonomy-inline-form" id="jetonomy-add-rule-form">
 				<div class="jetonomy-form-row">
+					<label class="screen-reader-text" for="rule-type"><?php esc_html_e( 'Rule type', 'jetonomy' ); ?></label>
 					<select id="rule-type">
 						<option value="everyone"><?php esc_html_e( 'Everyone', 'jetonomy' ); ?></option>
 						<option value="logged_in"><?php esc_html_e( 'Logged In', 'jetonomy' ); ?></option>
@@ -310,30 +407,51 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<input type="hidden" id="rule-value-membership" value="">
 						<div id="rule-value-membership-results" class="jetonomy-ac-results" style="display:none;"></div>
 					</div>
+					<label class="screen-reader-text" for="rule-grants"><?php esc_html_e( 'Grants', 'jetonomy' ); ?></label>
+					<?php
+					// Participate is preselected because it is what a gated space
+					// almost always wants - somebody let in by a rule, especially a
+					// paid one, is there to take part. Read-only is the exception.
+					// The ladder keeps its order so the progression still reads
+					// left to right.
+					?>
 					<select id="rule-grants">
 						<option value="read"><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
-						<option value="participate"><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
+						<option value="participate" selected><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
 						<option value="full"><?php esc_html_e( 'Full', 'jetonomy' ); ?></option>
 					</select>
-					<select id="rule-space-role">
-						<option value="viewer"><?php esc_html_e( 'Viewer', 'jetonomy' ); ?></option>
-						<option value="member"><?php esc_html_e( 'Member', 'jetonomy' ); ?></option>
-						<option value="moderator"><?php esc_html_e( 'Moderator', 'jetonomy' ); ?></option>
-						<option value="admin"><?php esc_html_e( 'Admin', 'jetonomy' ); ?></option>
-					</select>
+					<?php
+					// Space Role is no longer a separate choice. It never affected
+					// access - Permission_Engine reads only `grants` - and its one
+					// consumer, "Sync Members", could deposit space admins from a
+					// rule labelled "Read", who then picked up the moderation
+					// bypass that reads the roster role. The role is derived from
+					// the access level now and submitted as a hidden field so the
+					// stored shape and every existing rule are untouched. To give
+					// one person a different role, use the Members tab, where
+					// roster roles belong and the change is visible per person.
+					?>
+					<input type="hidden" id="rule-space-role" value="viewer">
 					<input type="hidden" id="rule-priority" value="0">
 					<button type="button" class="button button-primary" id="jetonomy-add-rule" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Add Rule', 'jetonomy' ); ?></button>
 				</div>
+				<?php
+				// Reads back the rule being composed in plain English, right
+				// where the two confusing selects are, and warns when Grants
+				// and Space Role disagree. Rendered by admin.js.
+				?>
+				<p class="description jt-rule-preview" data-jt-rule-preview aria-live="polite"></p>
 			</div>
 
 			<?php /* translators: %d: number of access rules */ ?>
 		<h2><?php printf( esc_html__( 'Access Rules (%d)', 'jetonomy' ), (int) count( $access_rules ) ); ?></h2>
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-rules-table">
+			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-rules-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Type', 'jetonomy' ); ?></th>
 						<th><?php esc_html_e( 'Value', 'jetonomy' ); ?></th>
 						<th><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
+						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 						<th><?php echo esc_html( sprintf( __( '%s Role', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></th>
 						<th><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
 					</tr>
@@ -359,32 +477,9 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
 
 							if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
-								$adapter_prefix_map = array(
-									'tutor_course_'    => array( 'tutor', __( 'Tutor Course', 'jetonomy' ) ),
-									'sensei_course_'   => array( 'sensei', __( 'Sensei Course', 'jetonomy' ) ),
-									'ms_course_'       => array( 'masterstudy', __( 'MasterStudy Course', 'jetonomy' ) ),
-									'lrn_course_'      => array( 'learnomy', __( 'Learnomy Course', 'jetonomy' ) ),
-									'lrn_membership_'  => array( 'learnomy', __( 'Learnomy Membership', 'jetonomy' ) ),
-									'llms_course_'     => array( 'lifterlms', __( 'LifterLMS Course', 'jetonomy' ) ),
-									'llms_membership_' => array( 'lifterlms', __( 'LifterLMS Membership', 'jetonomy' ) ),
-									'ld_course_'       => array( 'learndash', __( 'LearnDash Course', 'jetonomy' ) ),
-									'ld_group_'        => array( 'learndash', __( 'LearnDash Group', 'jetonomy' ) ),
-									'wc_membership_'   => array( 'woocommerce', __( 'WooCommerce Membership', 'jetonomy' ) ),
-									'wc_subscription_' => array( 'woocommerce', __( 'WooCommerce Subscription', 'jetonomy' ) ),
-									'rcp_'             => array( 'rcp', __( 'RCP Membership', 'jetonomy' ) ),
-									'mepr_'            => array( 'memberpress', __( 'MemberPress Plan', 'jetonomy' ) ),
-									'pmpro_'           => array( 'pmpro', __( 'PMPro Level', 'jetonomy' ) ),
-								);
-								foreach ( $adapter_prefix_map as $prefix => $info ) {
-									if ( str_starts_with( $rule->rule_value, $prefix ) ) {
-										$display_type = $info[1];
-										$adapter      = \Jetonomy\Adapters\Adapter_Registry::get_membership( $info[0] );
-										if ( $adapter && $adapter->is_active() ) {
-											$display_value = $adapter->get_level_label( $rule->rule_value );
-										}
-										break;
-									}
-								}
+								$described     = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
+								$display_type  = $described['type'];
+								$display_value = $described['value'];
 							}
 							?>
 							<tr data-rule-id="<?php echo absint( $rule->id ); ?>">
@@ -402,15 +497,19 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</tbody>
-			</table>
+			</table></div><!-- /.jt-content-table-wrap -->
 		</div>
 
 	<?php elseif ( 'settings' === $active_tab ) : ?>
 		<!-- Space Settings Tab -->
 		<div class="jetonomy-tab-content">
-			<h2><?php echo esc_html( sprintf( __( '%s-Specific Settings', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></h2>
-			<p class="description"><?php echo esc_html( sprintf( __( 'These settings override the global defaults for this %s only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
-
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+					<p class="jt-settings-card__title"><?php echo esc_html( sprintf( __( '%s-Specific Settings', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></p>
+					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+					<p class="jt-settings-card__desc"><?php echo esc_html( sprintf( __( 'These settings override the global defaults for this %s only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+				</div>
 			<form id="jetonomy-space-settings-form" data-space-id="<?php echo absint( $space->id ); ?>">
 				<table class="form-table">
 					<tr>
@@ -470,6 +569,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<label style="margin-bottom:8px;display:block;">
 								<input type="checkbox" id="ss-enable-prefixes" value="1" <?php checked( ! empty( $space_settings['enable_prefixes'] ) ); ?>>
+								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 								<?php echo esc_html( sprintf( __( 'Enable topic prefixes for this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</label>
 							<div id="jt-prefixes-config" <?php echo empty( $space_settings['enable_prefixes'] ) ? 'style="display:none;"' : ''; ?>>
@@ -517,6 +617,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 									</option>
 								<?php endforeach; ?>
 							</select>
+							<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'Link this %s to a BuddyPress group. Members will be synced automatically.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 						</td>
 					</tr>
@@ -527,6 +628,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<span class="spinner"></span>
 				</p>
 			</form>
+			</div><!-- /.jt-settings-card -->
 		</div>
 		<?php
 		/**
@@ -555,7 +657,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<div class="jetonomy-tab-content">
 			<?php /* translators: %d: number of pending join requests */ ?>
 		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), (int) count( $join_requests ) ); ?></h2>
-			<table class="wp-list-table widefat fixed striped" id="jetonomy-join-requests-table">
+			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-join-requests-table">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
@@ -573,6 +675,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								'variant' => 'success',
 								'icon'    => 'yes-alt',
 								'title'   => __( 'No pending join requests', 'jetonomy' ),
+								/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 								'body'    => sprintf( __( 'New requests to join this %s will appear here for review.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							)
 						);
@@ -601,7 +704,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</tbody>
-			</table>
+			</table></div><!-- /.jt-content-table-wrap -->
 		</div>
 
 	<?php endif; ?>

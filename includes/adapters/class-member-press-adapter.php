@@ -54,6 +54,39 @@ class MemberPress_Adapter implements Membership_Adapter {
 		return $levels;
 	}
 
+	/**
+	 * Where a visitor buys this membership: its own MemberPress page.
+	 *
+	 * A MemberPress membership is a published CPT whose permalink IS the
+	 * registration/checkout page, so this needs no MemberPress API. Optional
+	 * across the adapter interface (see
+	 * Adapter_Registry::membership_level_url); returns '' for a missing or
+	 * unpublished membership so the gate shows the requirement without a dead
+	 * button rather than linking somewhere broken.
+	 *
+	 * @param string $level_id Stored rule value, e.g. `mepr_42`.
+	 * @return string
+	 */
+	public function get_level_url( string $level_id ): string {
+		if ( ! str_starts_with( $level_id, 'mepr_' ) ) {
+			return '';
+		}
+
+		$product_id = (int) str_replace( 'mepr_', '', $level_id );
+		if ( $product_id <= 0 ) {
+			return '';
+		}
+
+		$product = get_post( $product_id );
+		if ( ! $product || 'publish' !== $product->post_status ) {
+			return '';
+		}
+
+		$url = get_permalink( $product_id );
+
+		return is_string( $url ) ? $url : '';
+	}
+
 	public function get_level_label( string $level_id ): string {
 		$product_id = (int) str_replace( 'mepr_', '', $level_id );
 		$product    = get_post( $product_id );

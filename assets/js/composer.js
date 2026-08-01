@@ -279,7 +279,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     editor.appendChild( img );
                     editor.appendChild( document.createElement( 'br' ) );
                 } else {
-                    var msg = ( res.data && res.data.message ) ? res.data.message : 'Upload failed';
+                    var msg = ( res.data && res.data.message ) ? res.data.message : jtI18n( 'uploadFailed', 'Upload failed' );
                     if ( window.bnToast ) { window.bnToast( msg, 'error' ); }
                 }
             } );
@@ -399,69 +399,18 @@ document.addEventListener( 'DOMContentLoaded', () => {
         }
     });
 
-    // ── G8: Keyboard Shortcuts ──
-
-    var currentIndex = -1;
-
-    document.addEventListener('keydown', function(e) {
-        // Don't trigger when typing in inputs
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-
-        // ? = show help
-        if (e.key === '?') {
-            toggleShortcutHelp();
-            return;
-        }
-        // / = focus search
-        if (e.key === '/') {
-            e.preventDefault();
-            var search = document.querySelector('.jt-search-page-input input, .jt-community-nav input');
-            if (search) search.focus();
-            return;
-        }
-        // n = new post (if on space page)
-        if (e.key === 'n') {
-            var newBtn = document.querySelector('a[href*="/new/"]');
-            if (newBtn) { e.preventDefault(); window.location = newBtn.href; }
-            return;
-        }
-        // j/k = navigate items
-        if (e.key === 'j' || e.key === 'k') {
-            navigateItems(e.key === 'j' ? 1 : -1);
-            return;
-        }
-        // Enter on focused item = open it
-        if (e.key === 'Enter' && document.querySelector('.jt-row.jt-kb-focus')) {
-            var focused = document.querySelector('.jt-row.jt-kb-focus');
-            if (focused.href) window.location = focused.href;
-            return;
-        }
-    });
-
-    function navigateItems(direction) {
-        var items = document.querySelectorAll('.jt-row, .jt-leader');
-        if (!items.length) return;
-        items.forEach(function(i) { i.classList.remove('jt-kb-focus'); });
-        currentIndex = Math.max(0, Math.min(items.length - 1, currentIndex + direction));
-        items[currentIndex].classList.add('jt-kb-focus');
-        items[currentIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-
-    function toggleShortcutHelp() {
-        var existing = document.querySelector('.jt-shortcut-help');
-        if (existing) { existing.remove(); return; }
-
-        var modal = document.createElement('div');
-        modal.className = 'jt-shortcut-help';
-        modal.innerHTML = '<div class="jt-shortcut-modal"><h3>Keyboard Shortcuts</h3><table>' +
-            '<tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>Navigate items up/down</td></tr>' +
-            '<tr><td><kbd>Enter</kbd></td><td>Open selected item</td></tr>' +
-            '<tr><td><kbd>/</kbd></td><td>Focus search</td></tr>' +
-            '<tr><td><kbd>n</kbd></td><td>New post</td></tr>' +
-            '<tr><td><kbd>?</kbd></td><td>Show/hide shortcuts</td></tr>' +
-            '</table><button onclick="this.closest(\'.jt-shortcut-help\').remove()">Close</button></div>';
-        document.body.appendChild(modal);
-    }
+    // ── Keyboard shortcuts live in header.js ──
+    //
+    // This file used to carry a second, competing implementation of the whole
+    // set (?, /, n, j/k, Enter) plus its own `.jt-shortcut-help` modal. Two
+    // handlers owned `?`, so the help surface toggled itself and QA could not
+    // get a stable panel (10150869012). The duplicate was also the worse copy:
+    // hardcoded English, no `l`/`r` rows, an inline onclick, and the broken
+    // `focused.href` Enter handler that started the "Enter does nothing" report
+    // in the first place - a .jt-row DIV has no href.
+    //
+    // header.js is the single owner: localized strings, the full shortcut list,
+    // and Enter resolving the row's real title link.
 
     // ── G9: Emoji Picker (delegated — works for composers injected after DOMContentLoaded) ──
     //
@@ -507,13 +456,20 @@ document.addEventListener( 'DOMContentLoaded', () => {
     }
 
     // Shared singleton picker — repositioned beside the active emoji button.
+    // Popup semantics (QA 10149499573): the picker is a named menu, the
+    // trigger carries aria-haspopup/expanded/controls, focus moves into the
+    // menu on open, arrows/Tab move between options, Escape closes and
+    // returns focus to the trigger.
     var sharedPicker = document.createElement('div');
     sharedPicker.className = 'jt-emoji-picker';
+    sharedPicker.id = 'jt-emoji-picker';
+    sharedPicker.setAttribute('role', 'menu');
     sharedPicker.style.display = 'none';
     emojis.forEach(function(emoji) {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'jt-emoji-option';
+        btn.setAttribute('role', 'menuitem');
         btn.textContent = emoji;
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -528,11 +484,34 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     }
                 }
             }
-            sharedPicker.style.display = 'none';
+            closePicker();
         });
         sharedPicker.appendChild(btn);
     });
     document.body.appendChild(sharedPicker);
+
+    var pickerTrigger = null;
+
+    function closePicker() {
+        if (sharedPicker.style.display === 'none') { return; }
+        sharedPicker.style.display = 'none';
+        if (pickerTrigger) {
+            pickerTrigger.setAttribute('aria-expanded', 'false');
+            pickerTrigger.focus();
+            pickerTrigger = null;
+        }
+    }
+
+    sharedPicker.addEventListener('keydown', function (e) {
+        var options = Array.prototype.filter.call(sharedPicker.children, function (b) { return b.offsetParent; });
+        var i = options.indexOf(document.activeElement);
+        if (e.key === 'Escape') { e.preventDefault(); closePicker(); return; }
+        var next = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { next = options[(i + 1) % options.length]; }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { next = options[(i - 1 + options.length) % options.length]; }
+        if (e.key === 'Tab') { e.preventDefault(); next = e.shiftKey ? options[(i - 1 + options.length) % options.length] : options[(i + 1) % options.length]; }
+        if (next) { e.preventDefault(); next.focus(); }
+    });
 
     // Delegated click handler — catches emoji buttons in any toolbar, present or future.
     document.addEventListener('click', function(e) {
@@ -545,22 +524,38 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
             var isOpen = sharedPicker.style.display !== 'none' && sharedPicker._activeToolbar === toolbar;
             // Close any open picker first.
-            sharedPicker.style.display = 'none';
+            closePicker();
 
             if (!isOpen) {
                 sharedPicker._activeToolbar = toolbar;
+                pickerTrigger = emojiBtn;
+                // aria-haspopup / aria-controls are stamped in the template so
+                // the contract is complete on first paint rather than only
+                // after the first click (QA 10149499573, second pass). Kept
+                // here as a belt-and-braces for any theme override that
+                // renders its own toolbar without them.
+                emojiBtn.setAttribute('aria-haspopup', 'menu');
+                emojiBtn.setAttribute('aria-controls', 'jt-emoji-picker');
+                emojiBtn.setAttribute('aria-expanded', 'true');
+                // Localized name comes from the trigger's own title.
+                sharedPicker.setAttribute('aria-label', emojiBtn.getAttribute('title') || emojiBtn.getAttribute('aria-label') || 'Insert emoji');
                 if ( sharedPicker.parentElement !== document.body ) {
                     document.body.appendChild( sharedPicker );
                 }
                 sharedPicker.style.display = 'grid';
                 positionEmojiPicker(emojiBtn);
+                var firstOption = sharedPicker.querySelector('.jt-emoji-option');
+                if (firstOption) { firstOption.focus(); }
             }
             return;
         }
 
         // Close picker on any outside click.
         if (!e.target.closest('.jt-emoji-picker')) {
-            sharedPicker.style.display = 'none';
+            if (sharedPicker.style.display !== 'none') {
+                sharedPicker.style.display = 'none';
+                if (pickerTrigger) { pickerTrigger.setAttribute('aria-expanded', 'false'); pickerTrigger = null; }
+            }
         }
     });
 } );
@@ -609,7 +604,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
             } else {
                 btn.disabled = false;
                 btn.textContent = jtI18n( 'joinSpace', 'Join Space' );
-                (window.bnToast ? window.bnToast((res.data && res.data.message) || 'Could not join space.', 'error') : null);
+                (window.bnToast ? window.bnToast((res.data && res.data.message) || jtI18n( 'joinSpaceFailed', 'Could not join space.' ), 'error') : null);
             }
         });
     });
@@ -638,7 +633,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 btn.textContent = jtI18n( 'awaitingApproval', 'Awaiting Approval' );
                 btn.classList.remove('jt-btn-fill');
                 btn.classList.add('jt-btn-outline');
-                (window.bnToast ? window.bnToast(data.message || 'Request submitted. Awaiting approval.', 'success') : null);
+                (window.bnToast ? window.bnToast(data.message || jtI18n( 'requestSubmitted', 'Request submitted. Awaiting approval.' ), 'success') : null);
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
@@ -670,7 +665,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             var data = res.data || {};
             if (data.status === 'pending') {
-                showGateMessage(form, data.message || 'Request submitted. Awaiting approval.', false);
+                showGateMessage(form, data.message || jtI18n( 'requestSubmitted', 'Request submitted. Awaiting approval.' ), false);
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'requestSent', 'Request Sent' ); }
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();

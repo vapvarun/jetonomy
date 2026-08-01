@@ -18,6 +18,7 @@ $base                 = \Jetonomy\base_url();
  */
 function jetonomy_render_space_grid( array $spaces, string $base ): void {
 	if ( empty( $spaces ) ) {
+		/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 		echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</p>';
 		return;
 	}
@@ -40,6 +41,7 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 					<div class="jt-space-card-badges">
 						<?php jetonomy_render_space_meta_badges( $space ); ?>
 						<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
+							<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 							<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php echo esc_attr( sprintf( __( 'Hidden %s. Only admins and members can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>">
 								<?php jetonomy_echo_icon( 'lock', 12 ); ?>
 								<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
@@ -110,9 +112,10 @@ if ( ! is_user_logged_in() ) :
 		'jetonomy_home_welcome_subheading',
 		! empty( $settings['community_tagline'] )
 			? (string) $settings['community_tagline']
+			/* translators: %s: plural space label. */
 			: sprintf( __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
 	);
-	$jt_pulse       = jetonomy_community_pulse();
+	$jt_pulse = jetonomy_community_pulse();
 	?>
 	<section class="jt-home-welcome" aria-label="<?php esc_attr_e( 'Welcome', 'jetonomy' ); ?>">
 		<div class="jt-home-welcome-body">
@@ -164,7 +167,8 @@ if ( ! is_user_logged_in() ) :
 								</h2>
 							<?php endif; ?>
 							<?php if ( ! empty( $category->description ) ) : ?>
-								<span class="jt-cat-desc">&mdash; <?php echo esc_html( $category->description ); ?></span>
+								<?php // No hardcoded dash prefix: it dangled as a heading fragment when the duplicate category name above is suppressed (self-audit 2026-07-30), and customer copy carries no em-dashes. Separation comes from the header gap. ?>
+								<span class="jt-cat-desc"><?php echo esc_html( $category->description ); ?></span>
 							<?php endif; ?>
 						</div>
 						<?php jetonomy_render_space_grid( $spaces, $base ); ?>
@@ -174,6 +178,7 @@ if ( ! is_user_logged_in() ) :
 				<?php if ( ! empty( $uncategorized_spaces ) ) : ?>
 					<section class="jt-mb-md">
 						<div class="jt-cat-row">
+							<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 							<h2 class="jt-cat-name"><?php echo esc_html( sprintf( __( 'Other %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>
 						</div>
 						<?php jetonomy_render_space_grid( $uncategorized_spaces, $base ); ?>

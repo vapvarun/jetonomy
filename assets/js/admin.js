@@ -774,7 +774,67 @@
 						activeLevels = adapterMap[adapterId] || [];
 						$input.attr('placeholder', adapters.filter(function(a) { return a.id === adapterId; })[0].label + '...');
 					}
+					renderRulePreview();
 				});
+
+				/**
+				 * Plain-English sentence for the rule being composed.
+				 *
+				 * The two trailing selects are the confusing part of this form:
+				 * "Grants" is what the person may DO, "Space Role" is what they
+				 * are RECORDED as, and nothing at the point of use said so — or
+				 * warned that the pair can contradict itself (Read + Admin reads
+				 * as "look but don't touch, and also run the place"). Rather than
+				 * explain two dials in the abstract, describe the combination
+				 * the owner has actually picked, and flag it when it disagrees.
+				 */
+				function renderRulePreview() {
+					var $out = $('[data-jt-rule-preview]');
+					if (!$out.length) { return; }
+
+					var i18n     = (self.i18n && self.i18n.rulePreview) || {};
+					var typeSel  = $('#rule-type option:selected').text();
+					var grants   = $('#rule-grants').val();
+					var role     = $('#rule-space-role').val();
+					// Roster role is derived now, so its label comes from the
+					// dictionary rather than a select the owner can see.
+					var roleTxt  = (i18n.roles && i18n.roles[role]) || role;
+					var grantTxt = (i18n.grants && i18n.grants[grants]) || grants;
+
+					var who = i18n.whoFallback || 'People who match this rule';
+					var val = $('#rule-value').is(':visible') ? $('#rule-value').val() : $('#rule-value-membership-search').val();
+					if (val) { who = typeSel + ': ' + val; }
+
+					var sentence = (i18n.sentence || '%1$s can %2$s. They are recorded as %3$s.')
+						.replace('%1$s', who)
+						.replace('%2$s', grantTxt)
+						.replace('%3$s', roleTxt);
+
+					// No mismatch warning any more: the roster role is derived
+					// from the access level, so the two can no longer disagree.
+					var warn = '';
+
+					$out.html('').append($('<span/>').text(sentence));
+					if (warn) {
+						$out.append($('<span class="jt-rule-preview__warn"/>').text(' ' + warn));
+					}
+				}
+
+				// Roster role is derived, never chosen: read -> viewer,
+				// participate -> member, full -> moderator. Matches
+				// AccessRule::cap_space_role() on the server, which is the
+				// authority - this only keeps the hidden field honest.
+				function syncDerivedRole() {
+					var map = { read: 'viewer', participate: 'member', full: 'moderator' };
+					$('#rule-space-role').val(map[$('#rule-grants').val()] || 'viewer');
+				}
+
+				$(document).on('change', '#rule-grants', syncDerivedRole);
+				syncDerivedRole();
+
+				$(document).on('change', '#rule-grants, #rule-space-role', renderRulePreview);
+				$(document).on('input', '#rule-value, #rule-value-membership-search', renderRulePreview);
+				renderRulePreview();
 			})();
 
 			// Add rule
@@ -812,23 +872,26 @@
 			// Sync existing memberships for a rule
 			$(document).on('click', '.jetonomy-sync-rule', function() {
 				var $btn = $(this);
-				$btn.prop('disabled', true).text('Syncing...');
+				$btn.prop('disabled', true).text(self.i18n.syncing || 'Syncing...');
 
 				self.ajax('jetonomy_sync_access_rule', {
 					space_id: $btn.data('space-id'),
 					rule_value: $btn.data('value'),
+					// The server reads the rule by id and derives the roster role
+					// from its grants; space_role is sent only for older builds.
+					rule_id: $btn.data('id'),
 					space_role: $btn.data('role')
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);
-						$btn.text('Synced (' + res.data.synced + ')');
+						$btn.text((self.i18n.syncedFormat || 'Synced (%d)').replace('%d', res.data.synced));
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
-						$btn.text('Sync');
+						$btn.text(self.i18n.sync || 'Sync');
 					}
 				}).fail(function() {
 					self.toast(self.i18n.error, 'error');
-					$btn.text('Sync');
+					$btn.text(self.i18n.sync || 'Sync');
 				}).always(function() {
 					$btn.prop('disabled', false);
 				});
@@ -1346,8 +1409,8 @@
 			$(document).on('click', '.jetonomy-import-restart-btn', function() {
 				var $btn = $(this);
 				self.confirmAsync(
-					'This will discard the interrupted import progress. Continue?',
-					{ danger: true, title: 'Restart import' }
+					self.i18n.importRestartConfirm || 'This will discard the interrupted import progress. Continue?',
+					{ danger: true, title: self.i18n.importRestartTitle || 'Restart import' }
 				).then(function(ok) {
 					if (!ok) return;
 					self.startImport($btn.data('source'), 'forums', 0, true);
@@ -1526,4 +1589,147 @@
 		Jetonomy.init();
 	});
 
+	// Small-screen row expander: core's common.js toggles tr.is-expanded but
+	// never manages aria-expanded, so screen readers heard a stateless
+	// button (QA 2026-07-30, card 10146443346). Delegated so it covers every
+	// jetonomy_admin_table() on the page, including AJAX-refreshed rows.
+	// requestAnimationFrame lets core's own toggle land first, then the
+	// button mirrors the row's real state.
+	//
+	// Initial state: WP_List_Table screens (Activity, Revisions) print
+	// core's OWN toggle markup, which ships without aria-expanded - stamp
+	// it on load so the button is never stateless before first interaction
+	// (QA wave-5).
+	function stampToggleState(root) {
+		(root || document).querySelectorAll('.jetonomy-admin .toggle-row:not([aria-expanded])').forEach(function (btn) {
+			var tr = btn.closest('tr');
+			btn.setAttribute('aria-expanded', tr && tr.classList.contains('is-expanded') ? 'true' : 'false');
+		});
+	}
+	$(document).ready(function () { stampToggleState(); });
+	$(document).ajaxComplete(function () { stampToggleState(); });
+
+	document.addEventListener('click', function (e) {
+		var btn = e.target.closest ? e.target.closest('.jetonomy-admin .toggle-row') : null;
+		if (!btn) { return; }
+		window.requestAnimationFrame(function () {
+			var tr = btn.closest('tr');
+			btn.setAttribute('aria-expanded', tr && tr.classList.contains('is-expanded') ? 'true' : 'false');
+		});
+	});
+
 })(jQuery);
+
+/**
+ * Accessible-dialog enhancer (QA card 10150582851).
+ *
+ * The admin's hand-rolled overlays (Edit Category, Ban, Pro Badge Award)
+ * showed/hid a positioned div with none of the dialog contract. Rather
+ * than rewrite each caller, a MutationObserver watches every overlay's
+ * display state and applies the ONE primitive on open: role=dialog +
+ * aria-modal + labelled title, initial focus (Close first), trapped Tab
+ * order, Escape closes, opener focus restored on close. Callers keep
+ * their own show()/hide() logic untouched.
+ */
+( function () {
+	var active = null;
+
+	function focusables( root ) {
+		return Array.prototype.filter.call(
+			root.querySelectorAll( 'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])' ),
+			function ( el ) { return el.offsetParent !== null; }
+		);
+	}
+
+	function onKey( e ) {
+		if ( ! active ) { return; }
+		if ( e.key === 'Escape' ) {
+			e.preventDefault();
+			active.el.style.display = 'none'; // observer runs teardown()
+			return;
+		}
+		if ( e.key !== 'Tab' ) { return; }
+		var f = focusables( active.el );
+		if ( ! f.length ) { e.preventDefault(); return; }
+		var first = f[ 0 ], last = f[ f.length - 1 ];
+		if ( e.shiftKey && document.activeElement === first ) { e.preventDefault(); last.focus(); }
+		else if ( ! e.shiftKey && document.activeElement === last ) { e.preventDefault(); first.focus(); }
+	}
+
+	function boxOf( el ) {
+		return el.querySelector( '.jetonomy-modal__content' ) ||
+			( el.children.length === 1 ? el.children[ 0 ] : el.children[ el.children.length - 1 ] ) || el;
+	}
+
+	function enhance( el ) {
+		var box = boxOf( el );
+		box.setAttribute( 'role', 'dialog' );
+		box.setAttribute( 'aria-modal', 'true' );
+		if ( ! box.getAttribute( 'aria-labelledby' ) ) {
+			var h = box.querySelector( 'h1, h2, h3' );
+			if ( h ) {
+				if ( ! h.id ) { h.id = 'jt-dialog-title-' + Math.random().toString( 36 ).slice( 2, 8 ); }
+				box.setAttribute( 'aria-labelledby', h.id );
+			}
+		}
+		// Opener: prefer whatever the user actually activated. A dialog opened
+		// from an async callback (the email preview waits on its AJAX) enhances
+		// long after the click, by which point document.activeElement is <body>
+		// - so Escape restored focus to nothing (Basecamp 10146440810, a11y
+		// addendum). lastActivated is the control the user pressed, tracked
+		// below, and is only fallen back on when activeElement is not useful.
+		var opener = document.activeElement;
+		if ( ! opener || opener === document.body || opener === document.documentElement ) {
+			opener = lastActivated;
+		}
+		active = { el: el, opener: opener };
+		document.addEventListener( 'keydown', onKey, true );
+		var target = el.querySelector( '.jetonomy-modal-close' ) || focusables( el )[ 0 ];
+		if ( target ) { target.focus(); }
+	}
+
+	// The control the user last activated, used as a dialog's opener when the
+	// dialog is created asynchronously and focus has already gone back to the
+	// body. Capture phase so it is recorded even when a handler stops
+	// propagation.
+	var lastActivated = null;
+	document.addEventListener( 'mousedown', function ( e ) {
+		var el = e.target && e.target.closest ? e.target.closest( 'button, a[href], [role="button"], input[type="submit"], input[type="button"]' ) : null;
+		if ( el ) { lastActivated = el; }
+	}, true );
+	document.addEventListener( 'keydown', function ( e ) {
+		if ( e.key !== 'Enter' && e.key !== ' ' ) { return; }
+		var el = e.target && e.target.closest ? e.target.closest( 'button, a[href], [role="button"]' ) : null;
+		if ( el ) { lastActivated = el; }
+	}, true );
+
+	function teardown( el ) {
+		if ( ! active || active.el !== el ) { return; }
+		var opener = active.opener;
+		active = null;
+		document.removeEventListener( 'keydown', onKey, true );
+		if ( opener && opener.focus ) { opener.focus(); }
+	}
+
+	function watch( el ) {
+		// jQuery's .show() clears the inline value to '' and lets the
+		// stylesheet default apply, so open-ness must be read from the
+		// COMPUTED display, never the style attribute.
+		var wasOpen = getComputedStyle( el ).display !== 'none';
+		new MutationObserver( function () {
+			var isOpen = getComputedStyle( el ).display !== 'none';
+			if ( isOpen && ! wasOpen ) { enhance( el ); }
+			if ( ! isOpen && wasOpen ) { teardown( el ); }
+			wasOpen = isOpen;
+		} ).observe( el, { attributes: true, attributeFilter: [ 'style', 'class' ] } );
+	}
+
+	function init() {
+		document.querySelectorAll( '.jetonomy-modal, #jetonomy-award-modal' ).forEach( watch );
+	}
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', init );
+	} else {
+		init();
+	}
+} )();

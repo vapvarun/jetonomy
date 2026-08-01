@@ -25,7 +25,7 @@ class Reply extends Model {
 	/**
 	 * Ordering a topic's replies render in when no ?rsort is supplied.
 	 *
-	 * page_of() computes a reply's page under THIS ordering, so it is a
+	 * The page_of() helper computes a reply's page under THIS ordering, so it is a
 	 * contract between the link-builder and the view, not a cosmetic default.
 	 * \Jetonomy\reply_permalink() deliberately emits no ?rsort precisely so the
 	 * page it computed is the page that renders. Changing this value without
@@ -47,6 +47,18 @@ class Reply extends Model {
 	 * @param array $data Column data.
 	 * @return int Inserted row ID.
 	 */
+	/**
+	 * Insert override: the LAST write barrier for the content pipeline.
+	 * See Post::insert() - closes the post-filter and raw-insert bypasses
+	 * (QA 2026-07-30, card 10138808747).
+	 *
+	 * @param array $data Column data.
+	 * @return int New row id.
+	 */
+	public static function insert( array $data ): int {
+		return parent::insert( self::sanitize_content_fields( $data ) );
+	}
+
 	public static function create( array $data ): int|\WP_Error {
 		/**
 		 * Filter reply data before creation. Return WP_Error to abort.
@@ -73,7 +85,7 @@ class Reply extends Model {
 
 		if ( $id > 0 ) {
 			if ( ! empty( $data['post_id'] ) ) {
-				Post::increment_reply_count( (int) $data['post_id'] );
+				Post::increment_reply_count( (int) $data['post_id'], 1, (string) $data['created_at'] );
 			}
 			if ( ! empty( $data['author_id'] ) ) {
 				UserProfile::increment_reply_count( (int) $data['author_id'] );
@@ -133,6 +145,8 @@ class Reply extends Model {
 	 * so every caller (REST, admin AJAX, abilities, CLI) stays counter-consistent.
 	 */
 	public static function update( int $id, array $data ): bool {
+		$data = self::sanitize_content_fields( $data );
+
 		$delta = 0;
 		$reply = null;
 
@@ -326,8 +340,16 @@ class Reply extends Model {
 			) ?: array();
 		}
 
+		// Private replies tombstone per-viewer (1.9.0) — one post fetch for the
+		// whole list, then O(1) per row. Same never-row-filter contract as the
+		// block tombstone above.
+		$viewer_id   = get_current_user_id();
+		$parent_post = \Jetonomy\Models\Post::find( $post_id );
 		foreach ( $rows as $row ) {
 			self::apply_block_tombstone( $row, $blocked_ids );
+			if ( $parent_post ) {
+				self::apply_private_tombstone( $row, $parent_post, $viewer_id );
+			}
 		}
 
 		return $rows;
@@ -506,6 +528,17 @@ class Reply extends Model {
 		// tree (not per-row) — see build_tree()'s tombstone step.
 		$blocked_ids = BlockedUser::blocked_ids( get_current_user_id() );
 
+		// Private replies tombstone per-viewer (1.9.0): one post fetch for the
+		// whole tree, applied on the flat set BEFORE nesting so every depth is
+		// covered without threading the post through build_tree().
+		$parent_post = \Jetonomy\Models\Post::find( $post_id );
+		if ( $parent_post ) {
+			$viewer_id = get_current_user_id();
+			foreach ( $all as $reply ) {
+				self::apply_private_tombstone( $reply, $parent_post, $viewer_id );
+			}
+		}
+
 		// Recursively attach children (max 3 levels).
 		$tree = self::build_tree( $by_parent, 0, 0, 3, $blocked_ids );
 
@@ -606,6 +639,42 @@ class Reply extends Model {
 	 */
 	public static function apply_block_tombstone( object $reply, array $blocked_ids ): void {
 		BlockedUser::apply_tombstone( $reply, $blocked_ids, array( 'content', 'content_plain' ) );
+	}
+
+	/**
+	 * Tombstone a PRIVATE reply for an unauthorized viewer (1.9.0).
+	 *
+	 * Same shape as the blocked-author tombstone and for the same reasons:
+	 * the row stays in the payload (children keep their parent, counts and
+	 * reply_permalink() page math stay viewer-independent) but its text is
+	 * withheld. Sets ->is_private_hidden which the REST serializer and
+	 * reply-card template branch on.
+	 *
+	 * @param \stdClass $reply     Reply row (mutated in place).
+	 * @param \stdClass $post      Parent post row.
+	 * @param int       $viewer_id Viewer user ID (0 for guests).
+	 */
+	public static function apply_private_tombstone( \stdClass $reply, \stdClass $post, int $viewer_id ): void {
+		if ( empty( $reply->is_private ) ) {
+			return;
+		}
+		if ( \Jetonomy\Permissions\Permission_Engine::can_read_reply( $viewer_id, $reply, $post ) ) {
+			return;
+		}
+		$reply->is_private_hidden = true;
+		$reply->content           = '';
+		$reply->content_plain     = '';
+	}
+
+	/**
+	 * Set the privacy flag on a reply. Mirrors Post::set_private.
+	 *
+	 * @param int  $id         Reply ID.
+	 * @param bool $is_private New privacy state.
+	 * @return bool
+	 */
+	public static function set_private( int $id, bool $is_private ): bool {
+		return self::update( $id, array( 'is_private' => $is_private ? 1 : 0 ) );
 	}
 
 	/**

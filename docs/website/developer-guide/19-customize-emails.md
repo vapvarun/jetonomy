@@ -335,6 +335,6 @@ See [Adapters](./05-adapters.md) for the full adapter pattern documentation.
 
 ## What's next
 
-- [Hooks Reference - `jetonomy_notification_created`](./02-hooks-reference.md#jetonomy_notification_created) - listen for notification creation events to forward to mobile push or webhooks
+- [Hooks Reference - `jetonomy_notification_created`](./02-hooks-reference.md#notifications) - listen for notification creation events to forward to mobile push or webhooks
 - [Extend the REST API](./18-extend-the-rest-api.md) - expose notification data via a custom endpoint
 - [Adapters](./05-adapters.md) - swap the email transport entirely

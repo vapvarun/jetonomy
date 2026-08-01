@@ -78,7 +78,7 @@ class UserProfile extends Model {
 	/**
 	 * Warm find_by_user()'s cache for many users in ONE query.
 	 *
-	 * find_by_user() caches per user, but nothing ever filled that cache ahead of
+	 * Although find_by_user() caches per user, nothing ever filled that cache ahead of
 	 * a loop — so a page rendering N distinct people paid N misses. It hid well:
 	 * the miss is inside get_avatar_url() -> pre_get_avatar_data -> Avatar, three
 	 * layers from the loop that causes it, and it only shows COLD. Warm, in a
@@ -233,6 +233,14 @@ class UserProfile extends Model {
 		if ( get_transient( $key ) ) {
 			return; // Already updated within last minute.
 		}
+
+		// A bare UPDATE hits nothing for a member who has only ever READ the
+		// community, so lurkers never got a profile row: is_online() stayed
+		// false forever and the "profile is created on first visit" promise
+		// in the Users-screen copy was a lie (QA 2026-07-30, card
+		// 9725751235). Throttled by the transient above, so this costs one
+		// SELECT per user per minute at most.
+		static::find_or_create( $user_id );
 
 		static::db()->query(
 			static::db()->prepare(

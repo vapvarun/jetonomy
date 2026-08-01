@@ -37,6 +37,8 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 		</button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>">&ldquo;&rdquo;</button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="image" title="<?php esc_attr_e( 'Upload Image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
+		<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it (QA card 10149499573). ?>
+		<button type="button" class="jt-editor-bar-btn" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>
 		<?php
 		/**
 		 * Fires inside the composer toolbar, after the built-in formatting
@@ -71,6 +73,12 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 			: __( 'Markdown · Ctrl+Enter to submit', 'jetonomy' );
 		?>
 		<span class="jt-editor-hint"><?php echo esc_html( $_jt_composer_hint ); ?></span>
+		<?php if ( is_user_logged_in() ) : ?>
+			<label class="jt-reply-private-toggle" title="<?php esc_attr_e( 'Only you, the topic author, and moderators will be able to read it.', 'jetonomy' ); ?>">
+				<input type="checkbox" data-jt-reply-private>
+				<?php esc_html_e( 'Private reply', 'jetonomy' ); ?>
+			</label>
+		<?php endif; ?>
 		<div class="jt-flex jt-items-center jt-gap-sm">
 			<?php if ( $_reply_to ) : ?>
 				<button type="button" class="jt-btn jt-btn-ghost"

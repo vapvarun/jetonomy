@@ -15,19 +15,19 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$display     = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+$display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 // Anonymous-posting leak-audit fix: role pill / online status must never be
 // derived from the raw author_id when the display identity is masked, or
 // "Anonymous [Admin]" / an online dot de-anonymizes the real author.
 $jt_is_masked = (int) $display['id'] !== (int) $post->author_id;
-$profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
-$space       = \Jetonomy\Models\Space::find( (int) $post->space_id );
-$has_unread  = isset( $has_unread ) ? (bool) $has_unread : false;
-$base        = \Jetonomy\base_url();
-$post_url    = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
-$time_ago    = human_time_diff( strtotime( $post->created_at ), time() );
-$viewer_id   = get_current_user_id();
-$viewer_vote = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
+$profile      = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
+$space        = \Jetonomy\Models\Space::find( (int) $post->space_id );
+$has_unread   = isset( $has_unread ) ? (bool) $has_unread : false;
+$base         = \Jetonomy\base_url();
+$post_url     = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+$time_ago     = human_time_diff( strtotime( $post->created_at ), time() );
+$viewer_id    = get_current_user_id();
+$viewer_vote  = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
 
 $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' );
 ?>
@@ -55,7 +55,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 			<?php endif; ?>
 			<a class="jt-feed-card-time" href="<?php echo esc_url( $post_url ); ?>">
 				<?php
-				/* translators: %s: human-readable time difference */
+				/* translators: %s: human-readable time difference. */
 				echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 				?>
 			</a>

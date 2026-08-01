@@ -1,8 +1,10 @@
 # Hooks Reference
 
-Jetonomy is built to be extended cleanly - every hook below is a real, supported extension point, generated straight from the source so this page never drifts from the code. Each row says what the hook is for and where it fires. New here? Start with the **[developer cookbook](00-index.md)** for step-by-step recipes (add a profile tab, customise a card, theme with tokens, extend the REST API), and the **[Coming from BuddyPress / BuddyBoss](21-coming-from-buddypress-buddyboss.md)** guide.
+> Looking for the COMPLETE list? The generated [Hooks Index](./02a-hooks-index.md) is derived mechanically from the manifest at every release and cannot drift — when this page and the index disagree on a name or argument, the index wins.
 
-**208 hooks**, 141 with a description. `filter` = return a modified value; `action` = run a side effect. Args are listed where documented; the source file always has the full signature.
+Jetonomy is built to be extended cleanly - every hook below is a real, supported extension point. This page is the CURATED reference: it explains what each hook is for and where it fires, and it also documents the Pro extension hooks (marked `jetonomy_pro_*`) that the free plugin's mechanical index does not carry. The complete, count-accurate inventory of hooks the free plugin fires is the generated [Hooks Index](./02a-hooks-index.md). New here? Start with the **[developer cookbook](00-index.md)** for step-by-step recipes (add a profile tab, customise a card, theme with tokens, extend the REST API), and the **[Coming from BuddyPress / BuddyBoss](21-coming-from-buddypress-buddyboss.md)** guide.
+
+`filter` = return a modified value; `action` = run a side effect. Args are listed where documented; the source file always has the full signature. (No hook total is stated here on purpose - a hand-written number drifts; the generated index carries the authoritative count.)
 
 > The 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) are documented with usage examples on the dedicated **[Attachment Hooks](24-attachment-hooks.md)** page.
 

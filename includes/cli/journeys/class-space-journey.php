@@ -46,6 +46,11 @@ final class Space_Journey {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
+		$unknown = Journey_Input::error( $input, [ 'title', 'slug', 'category_id', 'type', 'visibility', 'join_policy', 'description', 'created_at' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
+		}
+
 		$type        = (string) ( $input['type'] ?? 'forum' );
 		$visibility  = (string) ( $input['visibility'] ?? 'public' );
 		$join_policy = (string) ( $input['join_policy'] ?? 'open' );
@@ -74,6 +79,13 @@ final class Space_Journey {
 			'visibility'  => $visibility,
 			'join_policy' => $join_policy,
 		];
+
+		// Importer seam: forward a validated backdate; the model default (now)
+		// applies otherwise (see Journey_Backdate).
+		$backdate = Journey_Backdate::resolve( $input );
+		if ( null !== $backdate ) {
+			$data['created_at'] = $backdate;
+		}
 
 		$id = Space::create( $data );
 		if ( ! $id ) {
@@ -319,8 +331,7 @@ final class Space_Journey {
 			return Journey_Result::fail( 'settings must not be empty.' );
 		}
 
-		$existing = Space::get_settings( $id );
-		$merged   = array_merge( $existing, $settings );
+		$merged = Space::merge_settings( $id, $settings );
 
 		$ok = Space::update( $id, [ 'settings' => wp_json_encode( $merged ) ] );
 		if ( ! $ok ) {

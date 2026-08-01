@@ -135,7 +135,10 @@ class Space_Moderation_Controller extends Base_Controller {
 			return new WP_REST_Response(
 				[
 					'data' => [],
-					'meta' => [ 'total' => 0, 'space_id' => $space_id ],
+					'meta' => [
+						'total'    => 0,
+						'space_id' => $space_id,
+					],
 				],
 				200
 			);

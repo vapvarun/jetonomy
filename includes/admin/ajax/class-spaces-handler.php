@@ -198,21 +198,6 @@ class Spaces_Handler {
 			if ( is_string( $settings_raw ) ) {
 				$decoded = json_decode( wp_unslash( $settings_raw ), true );
 				if ( is_array( $decoded ) ) {
-					// Sanitize topic prefixes if present.
-					if ( isset( $decoded['prefixes'] ) && is_array( $decoded['prefixes'] ) ) {
-						$sanitized_prefixes = array();
-						foreach ( $decoded['prefixes'] as $pfx ) {
-							$name  = sanitize_text_field( $pfx['name'] ?? '' );
-							$color = sanitize_hex_color( $pfx['color'] ?? '' );
-							if ( $name && $color ) {
-								$sanitized_prefixes[] = array(
-									'name'  => $name,
-									'color' => $color,
-								);
-							}
-						}
-						$decoded['prefixes'] = $sanitized_prefixes;
-					}
 					// Handle BuddyPress group linking (stored in group meta, not space settings).
 					if ( isset( $decoded['bp_group_id'] ) && function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
 						$bp_gid = absint( $decoded['bp_group_id'] );
@@ -228,31 +213,9 @@ class Spaces_Handler {
 						unset( $decoded['bp_group_id'] );
 					}
 
-					// Sanitize posts_per_page: clamp to [1, 100] when set, drop key when
-					// null/empty/<=0 so Space::get_posts_per_page() can fall through to
-					// global → 20 instead of being overridden by a phantom per-space value.
-					if ( array_key_exists( 'posts_per_page', $decoded ) ) {
-						$pp = $decoded['posts_per_page'];
-						if ( null === $pp || '' === $pp || (int) $pp <= 0 ) {
-							unset( $decoded['posts_per_page'] );
-							$drop_posts_per_page = true;
-						} else {
-							$decoded['posts_per_page'] = max( 1, min( 100, (int) $pp ) );
-							$drop_posts_per_page       = false;
-						}
-					} else {
-						$drop_posts_per_page = false;
-					}
-
-					// Merge with existing settings so other keys are not wiped.
-					$existing = Space::get_settings( $id );
-					$merged   = array_merge( $existing, $decoded );
-					// If the user cleared the field, also strip the key from the merged
-					// result (otherwise the previous value would persist after merge).
-					if ( $drop_posts_per_page ) {
-						unset( $merged['posts_per_page'] );
-					}
-					$data['settings'] = wp_json_encode( $merged );
+					// Merge + normalize (prefixes, posts_per_page) through the model so
+					// this writer and the REST writer store one shape.
+					$data['settings'] = wp_json_encode( Space::merge_settings( $id, $decoded ) );
 				}
 			}
 		}
@@ -288,6 +251,7 @@ class Spaces_Handler {
 
 		$space = Space::find( $id );
 		if ( ! $space ) {
+			/* translators: %s: the singular space label. */
 			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
@@ -334,6 +298,7 @@ class Spaces_Handler {
 
 		wp_send_json_success(
 			array(
+				/* translators: 1: member display name, 2: the space role they were given. */
 				'message'      => sprintf( __( '%1$s added as %2$s.', 'jetonomy' ), $user->display_name, $role ),
 				'user_id'      => $user_id,
 				'display_name' => $user->display_name,
@@ -501,10 +466,21 @@ class Spaces_Handler {
 
 		$space_id   = absint( $_POST['space_id'] ?? 0 );
 		$rule_value = sanitize_text_field( wp_unslash( $_POST['rule_value'] ?? '' ) );
+		$rule_id    = absint( $_POST['rule_id'] ?? 0 );
 		$space_role = sanitize_text_field( wp_unslash( $_POST['space_role'] ?? 'member' ) );
 
 		if ( ! $space_id || ! $rule_value ) {
 			wp_send_json_error( __( 'Missing parameters.', 'jetonomy' ) );
+		}
+
+		// The roster role comes from the STORED rule, capped by that rule's own
+		// grants - never from the request. Sync used to write whatever role the
+		// button carried, so a rule advertising "Read" could deposit space
+		// admins, who then get the moderation bypass that reads the roster role
+		// and never looks at grants. See AccessRule::cap_space_role().
+		$rule = $rule_id ? AccessRule::find( $rule_id ) : null;
+		if ( $rule && (int) $rule->space_id === $space_id ) {
+			$space_role = AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type );
 		}
 
 		// Find the adapter that owns this level.

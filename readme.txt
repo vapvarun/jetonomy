@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,7 +34,7 @@ If you're still running bbPress, wpForo, or Asgaros, Jetonomy ships with one-cli
 
 ### Built to Be Fast at Scale
 
-Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 24 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
+Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 22 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
 
 Every list view uses cursor-based pagination (no expensive `COUNT(*)` queries). Frequently accessed data is automatically cached with Redis or Memcached if you have them. Batch queries everywhere - no N+1 problems.
 
@@ -125,9 +125,9 @@ The trust level system is your best spam defense. New accounts can post, but the
 - FULLTEXT indexes for instant search
 
 **Developer Tools**
-- 48+ REST API endpoints at `/wp-json/jetonomy/v1/`
+- 80 REST API endpoints at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
-- 20+ action hooks and filters for customization
+- 214 action hooks and filters for customization (102 actions, 112 filters)
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
 - RTL stylesheet included
@@ -256,13 +256,42 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abilities (WP 6.9+), 20+ action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abilities (WP 6.9+), 214 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.9.0 - August 2026 =
+
+Sell access to a space with a membership plan, and be told which plan opens it. Closes a permissions issue where an access rule could grant more than it said.
+
+* New      - Gate a space on a membership plan, and people holding that plan get in automatically. Access starts when the plan becomes active and ends when it lapses, with nothing to sync by hand.
+* New      - A visitor who cannot enter a paid space is told which plan includes it and given a link to buy it, instead of a generic "this space is private".
+* New      - Connect the mobile app to your account: approve the connection once in the browser and the app gets its own access key for that account, visible and revocable any time from your profile.
+* New      - Keyboard shortcuts l (upvote the focused post) and r (reply to it), which the FAQ has always documented.
+* Improve  - The buy link on a gated space works with Paid Memberships Pro, MemberPress, WooCommerce Memberships, Restrict Content Pro, LearnDash, Tutor LMS, LifterLMS, Sensei, MasterStudy and Learnomy, sending people to the right plan or course. Levels that are granted rather than sold, such as a WordPress role or a CRM tag, state the requirement without a link.
+* Improve  - The Access Rules screen explains what each access level unlocks, and reads your rule back in plain English as you build it.
+* Improve  - An access rule now uses a single Access level rather than two settings that could contradict each other, and defaults to Participate.
+* Improve  - Warn on the Access Rules screen when a rule cannot restrict anything, because the space is public or anyone can join it.
+* Improve  - Admin screens are usable down to 320px, and touch targets meet 44px on phones and tablets.
+* Improve  - Dropdown menus in wp-admin match the rest of the interface instead of using the operating system's own styling, where the browser supports it.
+* Improve  - Every message the plugin shows can be translated, including sign-in, sign-up and password-reset feedback, and admin list statuses.
+* Fix      - Search-as-you-type returns results again, and clicking one opens that topic.
+* Fix      - Pressing Enter on a keyboard-focused row opens it.
+* Fix      - The emoji picker can be opened from the composer toolbar.
+* Fix      - Paragraph spacing is kept on topics and replies written in the composer.
+* Fix      - The Conversations screen explains that messaging is dormant when another plugin handles direct messages, instead of showing a permissions error.
+* Fix      - Closing the email preview with Escape returns focus to the button that opened it.
+* Fix      - Activity Log and Revisions rows identify themselves on a phone rather than showing only a date or a type.
+* Fix      - Roadmap columns no longer use the same colour for Planned and In Progress.
+* Fix      - The "Read the full guide" link on the Users screen resolves.
+* Security - An access rule could grant more than it advertised: a rule set to "Read" could record people as space admins, and running Sync Members then gave them moderation powers, including deleting other people's posts. The role a rule assigns is now capped by what the rule allows, and a membership rule can never make somebody a moderator. Rules already saved on your site are covered; no action is needed.
+* Dev      - New filters: jetonomy_compose_label (the create verb per space type) and jetonomy_membership_upgrade_url (where a plan is bought). Membership adapters may implement get_level_url() to link a plan directly.
+* Dev      - New filters for app connection: jetonomy_app_connect_schemes (which app URL schemes may receive a credential) and jetonomy_app_connect_bridge (which plugin owns the connect screen when several are installed). Add a scheme only for an app you ship, never a wildcard.
+* Compat   - Removed a finfo_close() call that PHP 8.4 deprecates, so upload checks no longer emit a notice on 8.4.
 
 = 1.8.0 - July 2026 =
 

@@ -198,6 +198,7 @@ $crumbs = [
 					<span class="jt-search-page-icon" aria-hidden="true"><?php jetonomy_echo_icon( 'search', 20 ); ?></span>
 					<input type="text" name="q"
 						value="<?php echo esc_attr( $q ); ?>"
+						<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 						placeholder="<?php echo esc_attr( sprintf( __( 'Search discussions, %s, tags…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
 						autofocus>
 				</div>
@@ -288,6 +289,7 @@ $crumbs = [
 							/* translators: %s: search query */
 							'message'     => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
 							'description' => __( 'Try different or fewer keywords (search needs at least 2 characters), or browse the community.', 'jetonomy' ),
+							/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 							'cta_label'   => sprintf( __( 'Browse all %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 							'cta_url'     => \Jetonomy\base_url() . '/',
 							'tone'        => 'warn',
@@ -322,6 +324,7 @@ $crumbs = [
 											&middot;
 											<?php echo esc_html( $post->space_title ); ?>
 											&middot;
+											<?php /* translators: %s: human-readable time difference. */ ?>
 											<?php echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ); ?>
 										</div>
 										<?php if ( $excerpt ) : ?>
@@ -390,6 +393,7 @@ $crumbs = [
 					'empty-state',
 					[
 						'icon'    => 'empty-search',
+						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						'message' => sprintf( __( 'Enter a search term above to find discussions, %s, and tags.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					]
 				);

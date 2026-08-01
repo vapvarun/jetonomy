@@ -31,15 +31,19 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 
 	<nav class="nav-tab-wrapper">
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=posts' ) ); ?>" class="nav-tab <?php echo esc_attr( 'posts' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php /* translators: %d: number of pending posts. */ ?>
 			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), absint( $total_posts ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=replies' ) ); ?>" class="nav-tab <?php echo esc_attr( 'replies' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php /* translators: %d: number of pending replies. */ ?>
 			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), absint( $total_replies ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>" class="nav-tab <?php echo esc_attr( 'flags' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php /* translators: %d: number of open flags. */ ?>
 			<?php printf( esc_html__( 'Flags (%d)', 'jetonomy' ), absint( $total_flags ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=banned' ) ); ?>" class="nav-tab <?php echo esc_attr( 'banned' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php /* translators: %d: number of currently banned members. */ ?>
 			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), absint( $total_banned ) ); ?>
 		</a>
 		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
@@ -71,42 +75,72 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 				);
 				?>
 			<?php else : ?>
-				<div class="jt-content-table-wrap">
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th class="column-title"><?php esc_html_e( 'Title', 'jetonomy' ); ?></th>
-							<th style="width:120px;"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
-							<th style="width:120px;"><?php esc_html_e( 'Space', 'jetonomy' ); ?></th>
-							<th style="width:140px;"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
-							<th style="width:200px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ( $pending_posts as $p ) :
-							$author = get_userdata( $p->author_id );
-							?>
-							<tr data-type="post" data-id="<?php echo absint( $p->id ); ?>">
-								<td>
-									<strong><?php echo esc_html( $p->title ); ?></strong>
-									<?php if ( $p->content ) : ?>
-										<p class="description jetonomy-content-preview"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $p->content ), 20 ) ); ?></p>
-									<?php endif; ?>
-								</td>
-								<td><?php echo esc_html( $author ? $author->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
-								<td><?php echo esc_html( $p->space_title ?? '&mdash;' ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $p->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
-								<td class="jetonomy-mod-actions">
-									<button type="button" class="button button-primary button-small jetonomy-moderate-btn" data-action="approve" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
-									<button type="button" class="button button-small jetonomy-moderate-btn" data-action="spam" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Spam', 'jetonomy' ); ?></button>
-									<button type="button" class="button button-small button-link-delete jetonomy-moderate-btn" data-action="trash" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Trash', 'jetonomy' ); ?></button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				</div><!-- /.jt-content-table-wrap -->
+				<?php
+				// Shared responsive primitive (Basecamp 10146440826 / 10146443346):
+				// the four moderation tabs hid records and actions on mobile.
+				jetonomy_admin_table(
+					array(
+						'columns'   => array(
+							'title'   => array(
+								'label'   => __( 'Title', 'jetonomy' ),
+								'primary' => true,
+							),
+							'author'  => array(
+								'label' => __( 'Author', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'space'   => array(
+								'label' => __( 'Space', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'date'    => array(
+								'label' => __( 'Date', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'actions' => array(
+								'label' => __( 'Actions', 'jetonomy' ),
+								'width' => 'l',
+							),
+						),
+						'rows'      => $pending_posts,
+						'row_attrs' => static function ( $p ): array {
+							return array(
+								'data-type' => 'post',
+								'data-id'   => (int) $p->id,
+							);
+						},
+						'cell'      => static function ( $p, string $key ): void {
+							switch ( $key ) {
+								case 'title':
+									echo '<strong>' . esc_html( $p->title ) . '</strong>';
+									if ( $p->content ) {
+										echo '<p class="description jetonomy-content-preview">' . esc_html( wp_trim_words( wp_strip_all_tags( $p->content ), 20 ) ) . '</p>';
+									}
+									break;
+								case 'author':
+									$author = get_userdata( $p->author_id );
+									echo esc_html( $author ? $author->display_name : __( 'Unknown', 'jetonomy' ) );
+									break;
+								case 'space':
+									echo esc_html( $p->space_title ?? '—' );
+									break;
+								case 'date':
+									echo esc_html( human_time_diff( strtotime( $p->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									break;
+								case 'actions':
+									?>
+									<span class="jetonomy-mod-actions">
+										<button type="button" class="button button-primary button-small jetonomy-moderate-btn" data-action="approve" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
+										<button type="button" class="button button-small jetonomy-moderate-btn" data-action="spam" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Spam', 'jetonomy' ); ?></button>
+										<button type="button" class="button button-small button-link-delete jetonomy-moderate-btn" data-action="trash" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Trash', 'jetonomy' ); ?></button>
+									</span>
+									<?php
+									break;
+							}
+						},
+					)
+				);
+				?>
 				<?php if ( (int) ceil( $total_posts / $per_page ) > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
@@ -114,6 +148,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							<?php
 							$_first = ( $paged_posts - 1 ) * $per_page + 1;
 							$_last  = min( $paged_posts * $per_page, $total_posts );
+							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_posts ) ) );
 							?>
 						</span>
@@ -156,39 +191,67 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 				);
 				?>
 			<?php else : ?>
-				<div class="jt-content-table-wrap">
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th class="column-content"><?php esc_html_e( 'Content', 'jetonomy' ); ?></th>
-							<th style="width:120px;"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
-							<th style="width:150px;"><?php esc_html_e( 'Parent Post', 'jetonomy' ); ?></th>
-							<th style="width:140px;"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
-							<th style="width:200px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ( $pending_replies as $r ) :
-							$author = get_userdata( $r->author_id );
-							?>
-							<tr data-type="reply" data-id="<?php echo absint( $r->id ); ?>">
-								<td>
-									<p class="description jetonomy-content-preview"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $r->content ?? '' ), 30 ) ); ?></p>
-								</td>
-								<td><?php echo esc_html( $author ? $author->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
-								<td><?php echo esc_html( $r->post_title ?? '#' . $r->post_id ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $r->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
-								<td class="jetonomy-mod-actions">
-									<button type="button" class="button button-primary button-small jetonomy-moderate-btn" data-action="approve" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
-									<button type="button" class="button button-small jetonomy-moderate-btn" data-action="spam" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Spam', 'jetonomy' ); ?></button>
-									<button type="button" class="button button-small button-link-delete jetonomy-moderate-btn" data-action="trash" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Trash', 'jetonomy' ); ?></button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				</div><!-- /.jt-content-table-wrap -->
+				<?php
+				jetonomy_admin_table(
+					array(
+						'columns'   => array(
+							'content' => array(
+								'label'   => __( 'Content', 'jetonomy' ),
+								'primary' => true,
+							),
+							'author'  => array(
+								'label' => __( 'Author', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'parent'  => array(
+								'label' => __( 'Parent Post', 'jetonomy' ),
+								'width' => 'l',
+							),
+							'date'    => array(
+								'label' => __( 'Date', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'actions' => array(
+								'label' => __( 'Actions', 'jetonomy' ),
+								'width' => 'l',
+							),
+						),
+						'rows'      => $pending_replies,
+						'row_attrs' => static function ( $r ): array {
+							return array(
+								'data-type' => 'reply',
+								'data-id'   => (int) $r->id,
+							);
+						},
+						'cell'      => static function ( $r, string $key ): void {
+							switch ( $key ) {
+								case 'content':
+									echo '<p class="description jetonomy-content-preview">' . esc_html( wp_trim_words( wp_strip_all_tags( $r->content ?? '' ), 30 ) ) . '</p>';
+									break;
+								case 'author':
+									$author = get_userdata( $r->author_id );
+									echo esc_html( $author ? $author->display_name : __( 'Unknown', 'jetonomy' ) );
+									break;
+								case 'parent':
+									echo esc_html( $r->post_title ?? '#' . $r->post_id );
+									break;
+								case 'date':
+									echo esc_html( human_time_diff( strtotime( $r->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									break;
+								case 'actions':
+									?>
+									<span class="jetonomy-mod-actions">
+										<button type="button" class="button button-primary button-small jetonomy-moderate-btn" data-action="approve" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
+										<button type="button" class="button button-small jetonomy-moderate-btn" data-action="spam" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Spam', 'jetonomy' ); ?></button>
+										<button type="button" class="button button-small button-link-delete jetonomy-moderate-btn" data-action="trash" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Trash', 'jetonomy' ); ?></button>
+									</span>
+									<?php
+									break;
+							}
+						},
+					)
+				);
+				?>
 				<?php if ( (int) ceil( $total_replies / $per_page ) > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
@@ -196,6 +259,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							<?php
 							$_first = ( $paged_replies - 1 ) * $per_page + 1;
 							$_last  = min( $paged_replies * $per_page, $total_replies );
+							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_replies ) ) );
 							?>
 						</span>
@@ -238,42 +302,67 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 				);
 				?>
 			<?php else : ?>
-				<div class="jt-content-table-wrap">
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'Object', 'jetonomy' ); ?></th>
-							<th style="width:110px;"><?php esc_html_e( 'Reason', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Description', 'jetonomy' ); ?></th>
-							<th style="width:120px;"><?php esc_html_e( 'Reporter', 'jetonomy' ); ?></th>
-							<th style="width:120px;"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
-							<th style="width:180px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ( $pending_flags as $f ) :
-							$reporter = get_userdata( $f->reporter_id );
-							?>
-							<tr data-flag-id="<?php echo absint( $f->id ); ?>">
-								<td>
-									<code><?php echo esc_html( $f->object_type . ' #' . $f->object_id ); ?></code>
-								</td>
-								<td>
-									<span class="jetonomy-badge jetonomy-badge--flag-<?php echo esc_attr( $f->reason ); ?>"><?php echo esc_html( ucfirst( str_replace( '_', ' ', $f->reason ) ) ); ?></span>
-								</td>
-								<td><?php echo esc_html( $f->description ?: '&mdash;' ); ?></td>
-								<td><?php echo esc_html( $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $f->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
-								<td class="jetonomy-mod-actions">
-									<button type="button" class="button button-small button-link-delete jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="valid"><?php esc_html_e( 'Valid (Trash)', 'jetonomy' ); ?></button>
-									<button type="button" class="button button-small jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="dismissed"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				</div><!-- /.jt-content-table-wrap -->
+				<?php
+				jetonomy_admin_table(
+					array(
+						'columns'   => array(
+							'object'      => array(
+								'label'   => __( 'Object', 'jetonomy' ),
+								'primary' => true,
+							),
+							'reason'      => array(
+								'label' => __( 'Reason', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'description' => array( 'label' => __( 'Description', 'jetonomy' ) ),
+							'reporter'    => array(
+								'label' => __( 'Reporter', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'date'        => array(
+								'label' => __( 'Date', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'actions'     => array(
+								'label' => __( 'Actions', 'jetonomy' ),
+								'width' => 'l',
+							),
+						),
+						'rows'      => $pending_flags,
+						'row_attrs' => static function ( $f ): array {
+							return array( 'data-flag-id' => (int) $f->id );
+						},
+						'cell'      => static function ( $f, string $key ): void {
+							switch ( $key ) {
+								case 'object':
+									echo '<code>' . esc_html( $f->object_type . ' #' . $f->object_id ) . '</code>';
+									break;
+								case 'reason':
+									echo '<span class="jetonomy-badge jetonomy-badge--flag-' . esc_attr( $f->reason ) . '">' . esc_html( ucfirst( str_replace( '_', ' ', $f->reason ) ) ) . '</span>';
+									break;
+								case 'description':
+									echo esc_html( $f->description ? $f->description : '—' );
+									break;
+								case 'reporter':
+									$reporter = get_userdata( $f->reporter_id );
+									echo esc_html( $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' ) );
+									break;
+								case 'date':
+									echo esc_html( human_time_diff( strtotime( $f->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+									break;
+								case 'actions':
+									?>
+									<span class="jetonomy-mod-actions">
+										<button type="button" class="button button-small button-link-delete jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="valid"><?php esc_html_e( 'Valid (Trash)', 'jetonomy' ); ?></button>
+										<button type="button" class="button button-small jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="dismissed"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></button>
+									</span>
+									<?php
+									break;
+							}
+						},
+					)
+				);
+				?>
 				<?php if ( (int) ceil( $total_flags / $per_page ) > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
@@ -281,6 +370,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							<?php
 							$_first = ( $paged_flags - 1 ) * $per_page + 1;
 							$_last  = min( $paged_flags * $per_page, $total_flags );
+							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_flags ) ) );
 							?>
 						</span>
@@ -323,47 +413,68 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 				);
 				?>
 			<?php else : ?>
-				<div class="jt-content-table-wrap">
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
-							<th style="width:110px;"><?php esc_html_e( 'Type', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Reason', 'jetonomy' ); ?></th>
-							<th style="width:140px;"><?php esc_html_e( 'Expires', 'jetonomy' ); ?></th>
-							<th style="width:120px;"><?php esc_html_e( 'Issued By', 'jetonomy' ); ?></th>
-							<th style="width:80px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ( $banned_users as $ban ) :
-							$issuer = get_userdata( $ban->issued_by );
-							?>
-							<tr data-restriction-id="<?php echo absint( $ban->id ); ?>">
-								<td>
-									<strong><?php echo esc_html( $ban->display_name ?? $ban->user_login ?? __( 'Unknown', 'jetonomy' ) ); ?></strong>
-								</td>
-								<td>
-									<span class="jetonomy-badge jetonomy-badge--ban"><?php echo esc_html( str_replace( '_', ' ', ucfirst( $ban->type ) ) ); ?></span>
-								</td>
-								<td><?php echo esc_html( $ban->reason ?: '&mdash;' ); ?></td>
-								<td>
-									<?php if ( $ban->expires_at ) : ?>
-										<?php echo esc_html( human_time_diff( time(), strtotime( $ban->expires_at ) ) ); ?>
-									<?php else : ?>
-										<strong><?php esc_html_e( 'Permanent', 'jetonomy' ); ?></strong>
-									<?php endif; ?>
-								</td>
-								<td><?php echo esc_html( $issuer ? $issuer->display_name : __( 'System', 'jetonomy' ) ); ?></td>
-								<td>
+				<?php
+				jetonomy_admin_table(
+					array(
+						'columns'   => array(
+							'user'    => array(
+								'label'   => __( 'User', 'jetonomy' ),
+								'primary' => true,
+							),
+							'type'    => array(
+								'label' => __( 'Type', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'reason'  => array( 'label' => __( 'Reason', 'jetonomy' ) ),
+							'expires' => array(
+								'label' => __( 'Expires', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'issuer'  => array(
+								'label' => __( 'Issued By', 'jetonomy' ),
+								'width' => 'm',
+							),
+							'actions' => array(
+								'label' => __( 'Actions', 'jetonomy' ),
+								'width' => 's',
+							),
+						),
+						'rows'      => $banned_users,
+						'row_attrs' => static function ( $ban ): array {
+							return array( 'data-restriction-id' => (int) $ban->id );
+						},
+						'cell'      => static function ( $ban, string $key ): void {
+							switch ( $key ) {
+								case 'user':
+									echo '<strong>' . esc_html( $ban->display_name ?? $ban->user_login ?? __( 'Unknown', 'jetonomy' ) ) . '</strong>';
+									break;
+								case 'type':
+									echo '<span class="jetonomy-badge jetonomy-badge--ban">' . esc_html( str_replace( '_', ' ', ucfirst( $ban->type ) ) ) . '</span>';
+									break;
+								case 'reason':
+									echo esc_html( $ban->reason ? $ban->reason : '—' );
+									break;
+								case 'expires':
+									if ( $ban->expires_at ) {
+										echo esc_html( human_time_diff( time(), strtotime( $ban->expires_at ) ) );
+									} else {
+										echo '<strong>' . esc_html__( 'Permanent', 'jetonomy' ) . '</strong>';
+									}
+									break;
+								case 'issuer':
+									$issuer = get_userdata( $ban->issued_by );
+									echo esc_html( $issuer ? $issuer->display_name : __( 'System', 'jetonomy' ) );
+									break;
+								case 'actions':
+									?>
 									<button type="button" class="jt-btn jt-btn-sm jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Unban', 'jetonomy' ); ?></button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				</div><!-- /.jt-content-table-wrap -->
+									<?php
+									break;
+							}
+						},
+					)
+				);
+				?>
 				<?php if ( (int) ceil( $total_banned / $per_page ) > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
@@ -371,6 +482,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							<?php
 							$_first = ( $paged_banned - 1 ) * $per_page + 1;
 							$_last  = min( $paged_banned * $per_page, $total_banned );
+							/* translators: 1: first item number on the page, 2: last item number, 3: total item count. */
 							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_banned ) ) );
 							?>
 						</span>

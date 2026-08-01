@@ -17,13 +17,14 @@ defined( 'ABSPATH' ) || exit;
 $space_slug = $data['slug'] ?? '';
 $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
-if ( ! $space ) {
+if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
+			/* translators: %s: the singular space label. */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -41,6 +42,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 		'empty-state',
 		[
 			'icon'    => 'lock',
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'message' => sprintf( __( 'You need to be a member of this %s to see its roadmap.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
 		]
@@ -90,10 +92,14 @@ $all_ideas = $wpdb->get_results(
 
 // Canonical column order (mirrors Post::valid_idea_statuses()). Owners
 // move ideas left to right; "declined" sits at the end as the off-ramp.
+// One colour per stage. Planned and In Progress both used --jt-warn, so the
+// two leftmost columns were indistinguishable and the colour carried no
+// information at all — the whole point of a status board. Accent reads as
+// "committed, queued", warn as "in flight".
 $columns = array(
 	'planned'     => array(
 		'label' => __( 'Planned', 'jetonomy' ),
-		'color' => 'var(--jt-warn)',
+		'color' => 'var(--jt-accent)',
 		'posts' => array(),
 	),
 	'in_progress' => array(
@@ -155,6 +161,7 @@ $space_url = $base . '/s/' . $space->slug . '/';
 	</div>
 </div>
 
+<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 <nav class="jt-space-tabs" aria-label="<?php echo esc_attr( sprintf( __( '%s sections', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>">
 	<a href="<?php echo esc_url( $space_url ); ?>" class="jt-space-tab">
 		<?php esc_html_e( 'Ideas', 'jetonomy' ); ?>

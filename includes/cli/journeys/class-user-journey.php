@@ -65,6 +65,11 @@ final class User_Journey {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
+		$unknown = Journey_Input::error( $input, [ 'login', 'email', 'role', 'trust_level', 'password', 'display_name' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
+		}
+
 		$login = (string) $input['login'];
 		$email = (string) $input['email'];
 		$role  = (string) ( $input['role'] ?? 'subscriber' );

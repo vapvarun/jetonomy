@@ -62,6 +62,32 @@ class PMPro_Adapter implements Membership_Adapter {
 		return $levels;
 	}
 
+	/**
+	 * Where a visitor buys this level: the PMPro checkout for it.
+	 *
+	 * `pmpro_url( 'checkout', '?level=N' )` is PMPro's own way of linking a
+	 * specific level's checkout, so a member lands on the right plan already
+	 * selected instead of a pricing table they have to re-read. Optional
+	 * across the adapter interface (see
+	 * Adapter_Registry::membership_level_url); returns '' when PMPro is not
+	 * loaded so the gate shows the requirement without a dead button.
+	 *
+	 * @param string $level_id Stored rule value, e.g. `pmpro_3`.
+	 * @return string
+	 */
+	public function get_level_url( string $level_id ): string {
+		if ( ! str_starts_with( $level_id, 'pmpro_' ) || ! function_exists( 'pmpro_url' ) ) {
+			return '';
+		}
+
+		$id = (int) str_replace( 'pmpro_', '', $level_id );
+		if ( $id <= 0 ) {
+			return '';
+		}
+
+		return (string) pmpro_url( 'checkout', '?level=' . $id );
+	}
+
 	public function get_level_label( string $level_id ): string {
 		if ( ! $this->is_active() ) {
 			return $level_id;

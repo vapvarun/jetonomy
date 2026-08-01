@@ -76,7 +76,7 @@ WP REST dispatch
 └──────────────────┘
 ```
 
-16 controllers, 43 endpoints. All registered under `jetonomy/v1`.
+22 controllers, 80 endpoints. All registered under `jetonomy/v1`.
 
 ### Outbound oEmbed (v1.3.0)
 
@@ -145,7 +145,6 @@ Universal interfaces for swappable providers:
 |-----------|----------------------|---------|
 | `Membership_Adapter` | WP Roles | Map external memberships to space access |
 | `Search_Adapter` | MySQL FULLTEXT | Pluggable search backend |
-| `Realtime_Adapter` | Polling | Live updates (WebSocket-ready) |
 | `Email_Adapter` | wp_mail | Email delivery |
 | `AI_Adapter` | Ollama | Content moderation, spam detection |
 

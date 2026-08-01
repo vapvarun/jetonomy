@@ -42,12 +42,76 @@
 	var iframe = document.getElementById('jetonomy-email-preview-iframe');
 	var subjEl = document.getElementById('jetonomy-email-preview-subject');
 
-	function closeModal() { modal.style.display = 'none'; }
-	function openModal() { modal.style.display = ''; }
+	// Dialog keyboard contract (Basecamp 10146440810 a11y addendum): remember
+	// the opener, move focus into the dialog on open, trap Tab inside it, and
+	// restore focus on close. The markup carries role="dialog" + aria-modal.
+	var lastOpener = null;
+	function focusables() {
+		return modal.querySelectorAll('button, [href], iframe, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+	}
+	function closeModal() {
+		modal.style.display = 'none';
+		if (lastOpener && lastOpener.focus) { lastOpener.focus(); }
+		lastOpener = null;
+	}
+	/**
+	 * @param {Element} [opener] The control that asked for the dialog.
+	 *
+	 * The opener must be passed in, not read from document.activeElement:
+	 * this runs inside the preview request's .then(), by which point focus
+	 * has long since returned to <body>, so the dialog remembered the body
+	 * and Escape restored focus to nothing (Basecamp 10146440810, a11y
+	 * addendum, second pass).
+	 */
+	function openModal( opener ) {
+		lastOpener = opener || document.activeElement;
+		modal.style.display = '';
+		// Focus the Close button, not the first focusable: DOM order put the
+		// preview IFRAME first, which swallowed the dialog's key handling and
+		// read poorly to screen readers (QA 2026-07-30, card 10146440810).
+		var close = modal.querySelector('.jetonomy-modal-close');
+		var f = focusables();
+		if (close) { close.focus(); } else if (f.length) { f[0].focus(); }
+	}
+
+	// Escape must close the dialog even while focus is INSIDE the preview
+	// iframe: the parent document's keydown listeners never fire there
+	// because the srcdoc iframe owns its own document. Rebind per load -
+	// srcdoc replaces the document on every preview.
+	if (iframe) {
+		iframe.addEventListener('load', function () {
+			try {
+				iframe.contentDocument.addEventListener('keydown', function (e) {
+					if ('Escape' === e.key) { closeModal(); }
+				});
+			} catch (err) { /* cross-origin guard - srcdoc is same-origin, never expected */ }
+		});
+	}
+	modal.addEventListener('keydown', function (e) {
+		if ('Tab' !== e.key) { return; }
+		var f = focusables();
+		if (!f.length) { return; }
+		var first = f[0], last = f[f.length - 1];
+		if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+		else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+	});
 
 	modal.querySelectorAll('.jetonomy-modal-close, .jetonomy-modal__overlay').forEach(function (el) {
 		el.addEventListener('click', closeModal);
 	});
+
+	// Restore focus on EVERY close, not just the ones this file handles.
+	// admin.js ships a generic dialog enhancer that also binds Escape (capture
+	// phase, so it wins) and hides the dialog itself. Whichever handler gets
+	// there first, the outcome has to be the same: focus returns to the button
+	// that opened the preview. Watching the element decouples that promise from
+	// which code path did the closing (Basecamp 10146440810, a11y addendum -
+	// Escape was leaving focus on <body> while the Close button was fine).
+	new MutationObserver(function () {
+		if ('none' !== modal.style.display) { return; }
+		if (lastOpener && lastOpener.focus) { lastOpener.focus(); }
+		lastOpener = null;
+	}).observe(modal, { attributes: true, attributeFilter: ['style'] });
 	document.addEventListener('keydown', function (e) {
 		if ('Escape' === e.key && 'none' !== modal.style.display) { closeModal(); }
 	});
@@ -80,7 +144,7 @@
 				}
 				subjEl.textContent = json.data.subject || (i18n.emailPreviewTitle || 'Email Preview');
 				iframe.srcdoc = json.data.html;
-				openModal();
+				openModal( btn );
 			});
 		});
 	});

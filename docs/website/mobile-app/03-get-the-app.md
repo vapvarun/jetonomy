@@ -63,5 +63,5 @@ The app is open source (GPL): **[github.com/vapvarun/jetonomy-app](https://githu
 
 ## Next steps
 
-- [Brand Your App](brand-your-app) - set your logo, color, and name
-- [Connect Members](connect-members) - how members sign in
+- [Brand Your App](01-brand-your-app.md) - set your logo, color, and name
+- [Connect Members](02-connect-members.md) - how members sign in

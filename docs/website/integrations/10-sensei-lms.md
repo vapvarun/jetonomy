@@ -21,10 +21,10 @@ Jetonomy Pro detects Sensei LMS automatically when both plugins are active. A **
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **Sensei Course** from the rule type dropdown.
 3. Start typing the course name - a searchable dropdown shows all published Sensei courses (see the [course picker screenshot](04-learndash.md#gating-a-space-by-course-enrollment)).
-4. Select the course, set **Grants** to **Participate** and **Space Role** to **Member**.
+4. Select the course, set the **Access level** to **Participate**.
 5. Click **Add Rule**.
 
-For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
+For what each **Access level** means, see [Access level](01-memberpress.md#access-level).
 
 ## Syncing Existing Students
 

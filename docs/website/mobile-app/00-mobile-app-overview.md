@@ -35,7 +35,7 @@ When the app opens your community it reads your branding from `GET /wp-json/jeto
 | **Open-source Jetonomy app** | Trying it out, smaller communities, members who belong to several communities | A generic app they point at your site; it themes itself with your branding |
 | **Your own branded app** | Established communities that want their own store presence | Your icon and name in the App Store / Play Store, published under your own developer accounts |
 
-Both use the same codebase. You set the in-app branding (logo, color, name) the same way in either case - see [Brand Your App](brand-your-app).
+Both use the same codebase. You set the in-app branding (logo, color, name) the same way in either case - see [Brand Your App](01-brand-your-app.md).
 
 ## What members can do
 
@@ -49,8 +49,8 @@ Both use the same codebase. You set the in-app branding (logo, color, name) the 
 
 ## Next steps
 
-- [Brand Your App](brand-your-app) - set your logo, color, and community name
-- [Connect Members](connect-members) - how admins and members sign in
-- [Get the App](get-the-app) - use the open-source app or publish your own
+- [Brand Your App](01-brand-your-app.md) - set your logo, color, and community name
+- [Connect Members](02-connect-members.md) - how admins and members sign in
+- [Get the App](03-get-the-app.md) - use the open-source app or publish your own
 
 The app is open source (GPL): [github.com/vapvarun/jetonomy-app](https://github.com/vapvarun/jetonomy-app). Full step-by-step guides live in its [wiki](https://github.com/vapvarun/jetonomy-app/wiki).

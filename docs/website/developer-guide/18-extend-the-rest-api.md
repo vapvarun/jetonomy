@@ -236,7 +236,7 @@ add_filter( 'jetonomy_check_content', function ( $action, array $data, int $spac
 }, 10, 4 );
 ```
 
-> Note: the `jetonomy_check_content` filter described here differs from the `jetonomy_check_content` filter in [Hooks Reference §Filter Hooks](./02-hooks-reference.md#jetonomy_check_content) which returns `true|WP_Error`. That filter is the older surface; this filter returns a string action and is the one used by the controllers for moderation routing.
+> Note: the `jetonomy_check_content` filter described here differs from the `jetonomy_check_content` filter in [Hooks Reference §Filter Hooks](./02-hooks-reference.md#templates--layout) which returns `true|WP_Error`. That filter is the older surface; this filter returns a string action and is the one used by the controllers for moderation routing.
 
 ---
 
@@ -244,4 +244,4 @@ add_filter( 'jetonomy_check_content', function ( $action, array $data, int $spac
 
 - [Hooks Reference](./02-hooks-reference.md) - action and filter hooks fired around every lifecycle event
 - [Extend the Frontend](./17-extend-the-frontend.md) - call your new endpoint from JavaScript
-- [Adapters](./05-adapters.md) - replace the email, search, or real-time adapter with a custom implementation
+- [Adapters](./05-adapters.md) - replace the email or search adapter with a custom implementation

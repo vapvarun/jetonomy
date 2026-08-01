@@ -130,7 +130,7 @@ if ( 'detail' === $mode ) :
 											esc_attr( $created ),
 											esc_html(
 												sprintf(
-													/* translators: %s: human-readable time difference */
+													/* translators: %s: human-readable time difference. */
 													__( '%s ago', 'jetonomy' ),
 													human_time_diff( $ts, time() )
 												)
@@ -229,10 +229,12 @@ else :
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
 			<input type="hidden" name="page" value="jetonomy-revisions" />
-			<?php
-			$list_table->render_filters();
-			$list_table->display();
-			?>
+			<div class="jt-content-table-wrap">
+				<?php
+				$list_table->render_filters();
+				$list_table->display();
+				?>
+			</div>
 		</form>
 	</div>
 	<?php

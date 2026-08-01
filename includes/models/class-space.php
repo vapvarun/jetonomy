@@ -293,6 +293,43 @@ class Space extends Model {
 	}
 
 	/**
+	 * Should this space's EXISTENCE be concealed from the viewer?
+	 *
+	 * A `hidden` space promises "only members can find this space". Listings
+	 * already honour that (listing_visibility_sql), but a direct URL used to
+	 * answer HTTP 200 with the space's title — disclosing that the space
+	 * exists and what it is called (Basecamp 10105630168; product decision:
+	 * a non-member gets a 404, the stronger reading of "hidden").
+	 *
+	 * Semantics deliberately mirror the single-post space gate
+	 * (templates/views/single-post.php): visible to members and
+	 * `manage_options` only. `private` spaces stay discoverable by design —
+	 * this concerns `hidden` exclusively.
+	 *
+	 * @param object   $space   Space row (needs ->id and ->visibility).
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 * @return bool True when the viewer must see a 404, not a gate page.
+	 */
+	public static function concealed_from_viewer( object $space, ?int $user_id ): bool {
+		if ( 'hidden' !== ( $space->visibility ?? '' ) ) {
+			return false;
+		}
+		if ( user_can( (int) $user_id, 'manage_options' ) ) {
+			return false;
+		}
+		if ( ! $user_id ) {
+			return true;
+		}
+		// A viewer admitted by an access rule (e.g. a paid tier) is not a
+		// stranger - concealing the space from them would 404 the very people
+		// the rule exists to let in.
+		return ! (
+			SpaceMember::is_member( (int) $space->id, (int) $user_id )
+			|| AccessRule::grants_access( (int) $user_id, (int) $space->id )
+		);
+	}
+
+	/**
 	 * List top-level spaces in a category for a given viewer.
 	 *
 	 * @param int      $category_id Category row ID.
@@ -616,6 +653,63 @@ class Space extends Model {
 
 		$global = get_option( 'jetonomy_settings', [] );
 		return (int) ( $global['posts_per_page'] ?? 20 );
+	}
+
+	/**
+	 * Merge incoming settings into a space's stored settings, normalized.
+	 *
+	 * Every writer (wp-admin AJAX, REST PATCH, CLI) goes through here so the
+	 * stored JSON has one shape. Two rules it enforces, both learned the hard
+	 * way:
+	 *
+	 * - MERGE, never replace. A caller sending one key must not wipe prefixes,
+	 *   SEO overrides, or feature toggles it never mentioned.
+	 * - A cleared `posts_per_page` DROPS the key instead of storing `""` or 0.
+	 *   The front-end edit form sends `""` for "use the default"; storing that
+	 *   left a phantom per-space value that read back as a limit of 1 on any
+	 *   surface resolving it with `??` (Basecamp 10118693115). Absent means
+	 *   "fall through to global", and only absent says it unambiguously.
+	 *
+	 * @param int   $space_id Space ID.
+	 * @param array $incoming Settings keys the caller wants to change.
+	 * @return array Merged, normalized settings ready to encode.
+	 */
+	public static function merge_settings( int $space_id, array $incoming ): array {
+		if ( isset( $incoming['prefixes'] ) && is_array( $incoming['prefixes'] ) ) {
+			$clean_prefixes = [];
+			foreach ( $incoming['prefixes'] as $prefix ) {
+				$name  = sanitize_text_field( $prefix['name'] ?? '' );
+				$color = sanitize_hex_color( $prefix['color'] ?? '' );
+				if ( $name && $color ) {
+					$clean_prefixes[] = [
+						'name'  => $name,
+						'color' => $color,
+					];
+				}
+			}
+			$incoming['prefixes'] = $clean_prefixes;
+		}
+
+		$clear_per_page = false;
+		if ( array_key_exists( 'posts_per_page', $incoming ) ) {
+			$per_page = $incoming['posts_per_page'];
+			if ( null === $per_page || '' === $per_page || (int) $per_page <= 0 ) {
+				unset( $incoming['posts_per_page'] );
+				$clear_per_page = true;
+			} else {
+				$incoming['posts_per_page'] = max( 1, min( 100, (int) $per_page ) );
+			}
+		}
+
+		$merged = array_merge( self::get_settings( $space_id ), $incoming );
+
+		// The key was cleared, so strip what the merge carried over from the
+		// previously stored value — otherwise "clear this" silently no-ops.
+		if ( $clear_per_page ) {
+			unset( $merged['posts_per_page'] );
+		}
+
+		return $merged;
 	}
 
 	/**

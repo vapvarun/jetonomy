@@ -59,9 +59,9 @@ which returns your `app_name` (Community Title), `accent_color`, and `logo_url`.
 ## In-app branding vs the home-screen icon
 
 - **In-app branding** (logo, color, name) is what these settings control. It themes the inside of the app and works on the open-source app for every community.
-- **The phone home-screen icon and app name** are baked into the app binary. They only change when you publish **your own branded app** - see [Get the App](get-the-app).
+- **The phone home-screen icon and app name** are baked into the app binary. They only change when you publish **your own branded app** - see [Get the App](03-get-the-app.md).
 
 ## Next steps
 
-- [Connect Members](connect-members) - how members sign in
-- [Get the App](get-the-app) - use the open-source app or publish your own
+- [Connect Members](02-connect-members.md) - how members sign in
+- [Get the App](03-get-the-app.md) - use the open-source app or publish your own
