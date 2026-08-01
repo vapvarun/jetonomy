@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PHPUnit-226%20tests-brightgreen?logo=testing-library&logoColor=white" alt="226 Tests">
+  <img src="https://img.shields.io/badge/PHPUnit-476%20tests-brightgreen?logo=testing-library&logoColor=white" alt="476 Tests">
   <img src="https://img.shields.io/badge/PHPStan-Level%205-brightgreen?logo=php&logoColor=white" alt="PHPStan Level 5">
   <img src="https://img.shields.io/badge/REST%20API-80%20endpoints-blue?logo=json&logoColor=white" alt="80 REST API Endpoints">
   <img src="https://img.shields.io/badge/Security-OWASP%20tested-blue?logo=owasp&logoColor=white" alt="Security Tested">
@@ -23,7 +23,7 @@
   &nbsp;
   <a href="https://store.wbcomdesigns.com/jetonomy/"><img src="https://img.shields.io/badge/Download-Free-brightgreen?style=for-the-badge&logo=wordpress&logoColor=white" alt="Download Free"></a>
   &nbsp;
-  <a href="https://store.wbcomdesigns.com/jetonomy-pro/"><img src="https://img.shields.io/badge/Pro-14%20Extensions-7C3AED?style=for-the-badge" alt="Jetonomy Pro"></a>
+  <a href="https://store.wbcomdesigns.com/jetonomy-pro/"><img src="https://img.shields.io/badge/Pro-17%20Extensions-7C3AED?style=for-the-badge" alt="Jetonomy Pro - 17 Extensions"></a>
   &nbsp;
   <a href="https://store.wbcomdesigns.com/jetonomy/docs/"><img src="https://img.shields.io/badge/Docs-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
 </p>
@@ -154,11 +154,45 @@ Full documentation is available at [store.wbcomdesigns.com/jetonomy/docs/](https
 - [Support](https://wbcomdesigns.com/support/)
 - [Feature Requests & Bug Reports](https://github.com/vapvarun/jetonomy/issues)
 
+## Quality gates
+
+Every push and pull request runs six jobs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+| Gate | What it does |
+|---|---|
+| `php-lint` | `php -l` across the tree on PHP 8.1–8.4 |
+| `phpunit` | Free standalone — every non-Pro testsuite |
+| `phpunit-with-pro` | Checks out Pro alongside free and runs the combined suite |
+| `phpstan` | Static analysis at level 5, honouring the committed baseline |
+| `wpcs` | WordPress Coding Standards |
+| `plugin-check` | WordPress.org Plugin Check (PCP) |
+
+Locally, `bin/local-ci.sh` runs the blocking set in one command (PHPStan, WPCS on
+free *and* Pro, and the unit suite inside wp-env). Prefer the Docker suite over a
+host run: the host database is usually already seeded, and a clean database has
+caught bugs the host run reported green.
+
+Three further gates run outside CI, before a tag:
+
+- `php bin/audit-rest-routes.php includes/` — every mutation route must go through
+  `REST_Auth`. Run it for `../jetonomy-pro/includes/` too.
+- `wp jetonomy qa-actions` — live-stack smoke across REST, model, Pro and journey
+  layers.
+- `bin/build-release.sh` — the only supported way to build a release zip. It
+  regenerates assets, triangulates the version across the header, the constant and
+  `readme.txt`, boots the plugin in a WP stub to catch load-time fatals, and refuses
+  to package if the browser-smoke report does not match the version being built.
+
 ## Contributing
 
 Contributions are welcome. Please open an issue first to discuss what you'd like to change.
 
 ## Changelog
+
+> **[`readme.txt`](readme.txt) is the canonical changelog**, and the
+> [GitHub releases](https://github.com/vapvarun/jetonomy/releases) mirror it. The
+> entries below stop at 1.4.2 and are kept only as history — 1.5.0 through 1.9.0
+> are not repeated here. Read `readme.txt` for the current release.
 
 ### 1.4.2 (May 2026)
 
