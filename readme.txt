@@ -270,6 +270,7 @@ Sell access to a space with a membership plan, and be told which plan opens it. 
 
 * New      - Gate a space on a membership plan, and people holding that plan get in automatically. Access starts when the plan becomes active and ends when it lapses, with nothing to sync by hand.
 * New      - A visitor who cannot enter a paid space is told which plan includes it and given a link to buy it, instead of a generic "this space is private".
+* New      - Connect the mobile app to your account: approve the connection once in the browser and the app gets its own access key for that account, visible and revocable any time from your profile.
 * New      - Keyboard shortcuts l (upvote the focused post) and r (reply to it), which the FAQ has always documented.
 * Improve  - The buy link on a gated space works with Paid Memberships Pro, MemberPress, WooCommerce Memberships, Restrict Content Pro, LearnDash, Tutor LMS, LifterLMS, Sensei, MasterStudy and Learnomy, sending people to the right plan or course. Levels that are granted rather than sold, such as a WordPress role or a CRM tag, state the requirement without a link.
 * Improve  - The Access Rules screen explains what each access level unlocks, and reads your rule back in plain English as you build it.
@@ -289,6 +290,8 @@ Sell access to a space with a membership plan, and be told which plan opens it. 
 * Fix      - The "Read the full guide" link on the Users screen resolves.
 * Security - An access rule could grant more than it advertised: a rule set to "Read" could record people as space admins, and running Sync Members then gave them moderation powers, including deleting other people's posts. The role a rule assigns is now capped by what the rule allows, and a membership rule can never make somebody a moderator. Rules already saved on your site are covered; no action is needed.
 * Dev      - New filters: jetonomy_compose_label (the create verb per space type) and jetonomy_membership_upgrade_url (where a plan is bought). Membership adapters may implement get_level_url() to link a plan directly.
+* Dev      - New filters for app connection: jetonomy_app_connect_schemes (which app URL schemes may receive a credential) and jetonomy_app_connect_bridge (which plugin owns the connect screen when several are installed). Add a scheme only for an app you ship, never a wildcard.
+* Compat   - Removed a finfo_close() call that PHP 8.4 deprecates, so upload checks no longer emit a notice on 8.4.
 
 = 1.8.0 - July 2026 =
 
