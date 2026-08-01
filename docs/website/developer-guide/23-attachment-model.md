@@ -15,6 +15,41 @@ primer so rendering N reply cards issues zero per-row queries. Table:
 Pro still shows its attachments; Pro adds the upload composer, size/type
 limits, and richer previews on top of the same table.
 
+### `hydrate()`
+
+```php
+Attachment::hydrate( object $row ): ?array
+```
+
+Turns a `jt_attachments` link row into the canonical attachment shape. There is
+exactly ONE shape, used by both the frontend renderer and the REST payload, so
+the web and the app cannot drift apart.
+
+Returns `null` when the underlying media item has been deleted, so a dangling
+link renders nothing rather than a broken card.
+
+```php
+[
+    'id'       => 0,     // the MEDIA id
+    'link_id'  => 0,     // the jt_attachments row id
+    'url'      => '',
+    'thumb'    => '',    // 'medium' for images, 'thumbnail' otherwise
+    'mime'     => '',
+    'name'     => '',    // real filename WITH extension, e.g. "sample.pdf"
+    'size'     => 0,     // bytes; 0 when the file is not on disk
+    'type'     => '',    // 'image' | 'pdf' | 'file'
+    'ext'      => '',    // uppercased, e.g. "PDF"
+    'is_image' => false,
+]
+```
+
+`id` being the media id while `link_id` is the row id reads backwards, but it is
+the established contract the app already consumes and is not worth breaking
+clients over. Pro enriches each item through
+[`jetonomy_rest_attachment_data`](24-attachment-hooks.md#jetonomy_rest_attachment_data)
+(it swaps in its own download URL for non-images), so a Pro site's payload shape
+is unchanged.
+
 ### `link()`
 
 ```php
@@ -93,7 +128,7 @@ Turns a `jt_attachments` row into the canonical attachment shape consumed by
 both the frontend card renderer and the REST payload — one shape, so the web
 and the app can never drift. Returns `null` when the underlying media item
 was deleted (render nothing rather than a broken card). See the shape table
-in [Hooks Reference — REST payload](hooks.md#rest-payload--attachments).
+in [Hooks Reference — REST payload](24-attachment-hooks.md#rest-payload--attachments).
 
 ### `payload_for()`
 
@@ -102,7 +137,7 @@ Attachment::payload_for( string $object_type, int $object_id ): array
 ```
 
 Hydrates every attachment on an object and runs each through the
-[`jetonomy_rest_attachment_data`](hooks.md#jetonomy_rest_attachment_data)
+[`jetonomy_rest_attachment_data`](24-attachment-hooks.md#jetonomy_rest_attachment_data)
 filter. Backs both `Attachments::render()` and the REST `attachments` field.
 
 ## Usage example

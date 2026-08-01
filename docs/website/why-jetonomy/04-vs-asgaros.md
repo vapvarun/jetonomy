@@ -14,7 +14,7 @@ How Jetonomy compares to Asgaros Forum - moving up from a lightweight forum to a
 
 | Feature | Asgaros Forum | Jetonomy |
 |---------|---------------|----------|
-| Data storage | Custom tables | Custom tables (20 tables) |
+| Data storage | Custom tables | Custom tables (22 tables) |
 | Forum formats | Forums + sub-forums | 4 space types (forum, Q&A, ideas, feed) |
 | Threaded replies | Flat | 3-level threading |
 | Voting | Not built-in | Built-in upvote/downvote with reputation |
@@ -26,7 +26,7 @@ How Jetonomy compares to Asgaros Forum - moving up from a lightweight forum to a
 | Moderation | Approve / unapprove topics | Flag system + queue + auto-rules (Pro) |
 | Anti-spam | reCAPTCHA / honeypot | Akismet + reCAPTCHA v3 + Turnstile (invisible) |
 | Membership gating | Not built-in | Adapter system (MemberPress, PMPro free; WooCommerce, LMS Pro) |
-| REST API | Limited | 68+ endpoints (127+ with Pro) |
+| REST API | Limited | 80 endpoints (153 with Pro) |
 | Private messaging | Not built-in | Built-in (Pro) |
 | Polls | Not built-in | Built-in (Pro) |
 | Analytics | Basic stats | Dashboard with export (Pro) |

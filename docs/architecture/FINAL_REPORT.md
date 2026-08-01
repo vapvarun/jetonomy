@@ -1,9 +1,16 @@
 # Architecture Documentation - Final Report
 
+> **SNAPSHOT 2026-03-24 - history, not current state. Verify before use.**
+> This records what one audit pass found on that date and is deliberately
+> left unedited. Its counts (42 hooks, 42 REST endpoints, 12 admin pages,
+> 4 cron jobs) describe the plugin as it was then; as of 1.9.0 the figures
+> are 214 hooks, 80 REST endpoints, 15 admin pages and 6 cron hooks. For
+> current state read `audit/manifest.json`, then the code.
+
 **Plugin:** Jetonomy (free)
 **Date:** 2026-03-24
 **Scope:** hybrid
-**Status:** ✅ COMPLETE
+**Status:** ✅ COMPLETE (as of the snapshot date)
 
 ---
 

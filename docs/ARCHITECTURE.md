@@ -76,7 +76,7 @@ WP REST dispatch
 └──────────────────┘
 ```
 
-16 controllers, 43 endpoints. All registered under `jetonomy/v1`.
+22 controllers, 80 endpoints. All registered under `jetonomy/v1`.
 
 ### Outbound oEmbed (v1.3.0)
 

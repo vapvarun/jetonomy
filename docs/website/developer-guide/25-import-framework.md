@@ -70,7 +70,7 @@ link_attachment( string $object_type, int $object_id, int $attachment_id, int $s
 ```
 
 Links a recovered media item to an imported post/reply via
-[`Attachment::link()`](models.md#link). Always available since attachments
+[`Attachment::link()`](23-attachment-model.md#link). Always available since attachments
 moved to free in 1.8.0 — no Pro dependency, no filter round-trip.
 
 ### `sort_rows_parents_first()`

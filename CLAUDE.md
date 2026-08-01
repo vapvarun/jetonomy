@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 79 REST routes, 43 AJAX handlers, 201 hooks fired, 21 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 80 REST routes, 43 AJAX handlers, 214 hooks fired (102 actions, 112 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-01 for 1.9.0; if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -120,7 +120,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 - **WP**: 6.7+ required
 - **Namespace**: `Jetonomy\`
 - **Table prefix**: `jt_` (22 custom tables)
-- **REST API**: `jetonomy/v1` (42 endpoints, 15 controllers)
+- **REST API**: `jetonomy/v1` (80 endpoints, 22 controllers; 153 endpoints with Pro)
 
 ## Architecture
 - **Database**: Custom MySQL tables via `dbDelta()` - NOT WordPress CPTs
@@ -217,12 +217,23 @@ wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
 composer test              # PHPUnit (free + pro combo)
 composer test:free         # PHPUnit free-only (JETONOMY_TEST_SKIP_PRO=1)
 composer test:combo        # PHPUnit with Pro loaded
-composer test:usability    # Playwright browser tests (250 flows)
+composer test:pro          # PHPUnit Pro suite
+composer test:unit         # PHPUnit unit suite only
+composer test:docker:unit  # Unit suite inside wp-env (pinned WP + PHP; the honest signal
+                           # when the host DB is already seeded - a clean DB has caught
+                           # bugs the host run reported green)
+composer test:docker:start # Bring wp-env up   (test:docker:stop tears it down)
 ```
+
+To run the Docker suite against a specific theme (e.g. Reign or BuddyX for a
+theme-integration pass), add it in a local `.wp-env.override.json` rather than
+`.wp-env.json`, then `npx wp-env start --update`. The override is gitignored on
+purpose: those theme paths only resolve on a machine that has the theme checked
+out beside the plugin, so committing them breaks `wp-env start` for everyone else.
 
 ## Testing strategy
 
-The browser-level Playwright usability suite (`tests/usability/`) was removed because it surfaced zero product UX bugs and primarily exposed test-infrastructure drift. Real UX validation runs through manual browser testing + Basecamp triage. The layers that actually find bugs:
+The browser-level Playwright usability suite was retired because it surfaced zero product UX bugs and primarily exposed test-infrastructure drift. Its `composer test:usability` script is gone. Note the retirement is not finished: `tests/usability/` still holds ~1.9 MB of tracked report artefacts (trace viewer bundles). They ship to nobody - the release zip excludes `tests/` - but they are dead weight in the repo and should be deleted. Real UX validation runs through manual browser testing + Basecamp triage. The layers that actually find bugs:
 
 1. **PHPUnit** - `composer test` (free + pro combo). Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
 2. **`wp jetonomy qa-actions`** - live-stack smoke checks across REST + Model + Pro + Journey layers. Runs in ~30s, surfaces config gaps.

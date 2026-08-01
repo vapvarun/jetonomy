@@ -41,7 +41,7 @@ Jetonomy is a next-gen discussion platform for WordPress. It provides **forums, 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Storage | Custom MySQL tables (22) | Performance at 10,000+ posts/space; CPTs cannot scale |
-| API | WP REST API (`jetonomy/v1`) | 42 endpoints - clean decoupling of data from views |
+| API | WP REST API (`jetonomy/v1`) | 80 endpoints - clean decoupling of data from views |
 | Frontend | PHP templates + WP Interactivity API | SSR for SEO; reactive for UX |
 | Permissions | 3-layer engine (ban → WP caps → space roles) | Fine-grained control without custom role plugins |
 | Integrations | Universal adapter interfaces | Swap membership/search/email/AI providers without touching core (there is no realtime adapter - live updates are REST polling) |
@@ -191,7 +191,7 @@ jetonomy/
 │   ├── api/
 │   │   ├── class-api.php         # Registers all controllers at rest_api_init
 │   │   ├── class-base-controller.php # Shared helpers (auth, pagination, error codes)
-│   │   └── class-*-controller.php    # 13 controllers
+│   │   └── class-*-controller.php    # 22 controllers
 │   ├── models/
 │   │   ├── class-model.php       # Abstract: find/insert/update/delete/count
 │   │   └── class-*.php           # 18 concrete models

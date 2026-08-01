@@ -54,6 +54,6 @@ with the device's Expo push token and platform (`ios` or `android`). When a memb
 
 ## Next steps
 
-- [Brand Your App](brand-your-app) - set your logo, color, and name
-- [Connect Members](connect-members) - how members sign in
-- [Get the App](get-the-app) - use the open-source app or publish your own
+- [Brand Your App](01-brand-your-app.md) - set your logo, color, and name
+- [Connect Members](02-connect-members.md) - how members sign in
+- [Get the App](03-get-the-app.md) - use the open-source app or publish your own

@@ -266,7 +266,7 @@ This is used internally by the Load More pagination handler (`assets/js/paginati
 
 ## Compliance checklist
 
-Before shipping any frontend feature, verify against the [Frontend Interactivity Standard](../standards/frontend-interactivity.md):
+Before shipping any frontend feature, verify against the [Frontend Interactivity Standard](../../standards/frontend-interactivity.md):
 
 - [ ] No `DOMContentLoaded`-only handler targeting region content without a `jetonomy:navigated` pair.
 - [ ] No `wp_add_inline_script` / inline `<script>` driving region behavior.
