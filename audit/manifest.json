@@ -3,7 +3,7 @@
 	"plugin": {
 		"slug": "jetonomy",
 		"name": "Jetonomy",
-		"version": "1.8.0",
+		"version": "1.8.1",
 		"namespace": "Jetonomy",
 		"main_file": "jetonomy.php",
 		"text_domain": "jetonomy",
@@ -945,6 +945,19 @@
 				"audit_notes": "Login endpoint (rate-limited). 1.5.0: accepts optional captcha_token, verified via Captcha_Manager::verify_or_skip(0, ...) - parity with register/lost-password (#9977126420)."
 			},
 			{
+				"route": "/auth/app-connect",
+				"methods": [
+					"POST"
+				],
+				"handler": "Auth_Controller::app_connect",
+				"permission": "REST_Auth::auth_mutation( 'read' )",
+				"purpose": "Mint step of the site app-connect bridge: exchanges a live one-time bridge token for a WP Application Password, returned inside the app deep link.",
+				"auth": "cookie + wp_rest nonce (member signed in IN THIS BROWSER)",
+				"capability": "read",
+				"ownership_check": "Bridge token must be live and issued to the current user by a freshly rendered approve screen; scheme must pass App_Connect::allowed_scheme().",
+				"audit_notes": "1.8.1 Wbcom App Auth standard. Registered ONLY when BuddyNext is absent (class_exists BuddyNext\\App\\AppConnectService) - when BN is active it owns the single bridge for the site and Jetonomy joins its scheme allowlist instead, so this must not exist as a second door. The credential is returned in the RESPONSE BODY and the approve screen navigates client-side; never a server 302, because a Location header carrying a credential is written to proxy and access logs."
+			},
+			{
 				"route": "/auth/register",
 				"methods": [
 					"POST"
@@ -1741,6 +1754,10 @@
 					"file": "includes/db/migrations/class-migration_1_7_1.php"
 				}
 			]
+		},
+		{
+			"name": "{prefix}jt_attachments",
+			"purpose": "Files attached to a post or reply (1.7.1). Defined in Schema::create_tables(), not only in Migration_1_7_1 - a fresh install never runs a migration, so a migration-only table would be missing on every new site."
 		}
 	],
 	"capabilities": [
@@ -3413,6 +3430,78 @@
 			"where": "includes/integrations/class-app-connect.php (App_Connect::bridge_info)",
 			"consumed_by": null,
 			"notes": "1.8.2. The resolved app-connect bridge advertised on GET /app/config `auth`. One door per site: BuddyNext's bridge when BN is active (Jetonomy also joins buddynext_app_connect_schemes at boot), else Jetonomy's own. Tests + unusual auth topologies override here."
+		},
+		{
+			"name": "jetonomy_attachment_card",
+			"type": "filter",
+			"args": "$card (string HTML), $attachment (array), $object_type (string), $object_id (int)",
+			"where": "includes/class-attachments.php (Attachments::render)",
+			"consumed_by": null,
+			"notes": "Markup of a single attachment card. Return altered HTML to restyle or add per-file affordances. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
+		},
+		{
+			"name": "jetonomy_attachments_class",
+			"type": "filter",
+			"args": "$class (string, default 'jt-attachments')",
+			"where": "includes/class-attachments.php (Attachments::render)",
+			"consumed_by": null,
+			"notes": "Wrapper class on the attachment list, for themes that need their own grid. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
+		},
+		{
+			"name": "jetonomy_erase_batch_size",
+			"type": "filter",
+			"args": "$size (int, default 1000)",
+			"where": "includes/class-privacy.php (Privacy::erase_data)",
+			"consumed_by": null,
+			"notes": "Rows erased per personal-data erasure batch. Lower it on hosts with short max_execution_time. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
+		},
+		{
+			"name": "jetonomy_import_batch_seconds",
+			"type": "filter",
+			"args": "$seconds (float, default 15.0)",
+			"where": "includes/import/class-importer.php (Importer::run_batch)",
+			"consumed_by": null,
+			"notes": "Wall-clock budget for one import batch before it yields and reschedules. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
+		},
+		{
+			"name": "jetonomy_rest_attachment_data",
+			"type": "filter",
+			"args": "$data (array), $object_type (string), $object_id (int)",
+			"where": "includes/models/class-attachment.php (Attachment::for_rest)",
+			"consumed_by": null,
+			"notes": "Per-attachment payload as returned to REST/app clients. Add or redact fields here. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
+		},
+		{
+			"name": "jetonomy_sitemap_changefreq",
+			"type": "filter",
+			"args": "$changefreq (string), $type (string), $row (array), $space_id (int)",
+			"where": "includes/seo/class-sitemap-emitter.php (Sitemap_Emitter::emit)",
+			"consumed_by": null,
+			"notes": "changefreq for one sitemap URL. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
+		},
+		{
+			"name": "jetonomy_sitemap_exclude_space",
+			"type": "filter",
+			"args": "$exclude (bool, default false), $space_id (int)",
+			"where": "includes/seo/class-sitemap-emitter.php (Sitemap_Emitter::emit)",
+			"consumed_by": null,
+			"notes": "Return true to keep a space and its topics out of the sitemap entirely. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
+		},
+		{
+			"name": "jetonomy_sitemap_prime_spaces",
+			"type": "action",
+			"args": "$space_ids (int[])",
+			"where": "includes/seo/class-sitemap-emitter.php (Sitemap_Emitter::emit)",
+			"consumed_by": null,
+			"notes": "Fires once per sitemap request with every space id about to be emitted, so a listener can warm its own caches in one batch instead of per URL. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
+		},
+		{
+			"name": "jetonomy_sitemap_priority",
+			"type": "filter",
+			"args": "$priority (float), $type (string), $row (array), $space_id (int)",
+			"where": "includes/seo/class-sitemap-emitter.php (Sitemap_Emitter::emit)",
+			"consumed_by": null,
+			"notes": "priority for one sitemap URL. Recorded 2026-08-01 during the 1.8.1 manifest reconcile; the hook itself predates it."
 		}
 	],
 	"buddypress_integration": {
@@ -3758,7 +3847,7 @@
 		"delta_2026_07_04": "Post-refresh deltas + security-audit fixes. 3996dc0: Cache::remember_object() coerces empty-string persistent-cache hits to null (Redis/Memcached TypeError fix); free SEO baseline defers to seo-pro on post + space family (dupe og-tag fix). b46c84f: /app/config gains app_enabled (Pro mobile gate, fail closed) + app_name. Security fixes (2026-07-04 expectation audit): closed 5 private/hidden-space content leaks (Space::list_visible visibility-param bypass; space-members.php + space-roadmap.php missing read gate; search.php advanced-filter branch missing Space::content_visibility_sql; Schema_Markup space CollectionPage + breadcrumb JSON-LD). jetonomy_email_headers widened to 5 args ($object_type,$object_id) so pro reply-by-email can mint a post-scoped Reply-To token (was hooking the wrong adapter-level filter and fataling).",
 		"refresh_2026_06_28": "1.6.0 mobile-app refresh + plugin.version 1.4.3->1.6.0. Verified the mobile surface is captured: GET /app/config (App_Config_Controller; serves app_name from Community Title, accent_color, logo_url + feature_flags map) and GET /feed (Feed_Controller; sort hot|new|top, cursor after/before + offset + window_days) present; logo_url added to Settings -> Appearance. REST 73/73 exact vs register_rest_route grep. App-side: the login screen now applies the discovered site accent+logo pre-auth (no plugin surface change). Native push device registration lives in jetonomy-pro web-push (/push/register-device), not free.",
 		"refresh_2026_06_11": "Coverage-gated refresh after the full-audit fix series (audit/full-audit-2026-06-11.md). wppqa baseline: audit/wppqa-baseline-2026-06-11. All categories within gate vs ground-truth grep: rest 68/69 calls (multi-config registrations), ajax 40/40 (comment-text hits excluded), hooks_fired 142/140+dynamic, tables 20 (3 dead tables dropped in Migration_1_5_0), blocks 8/8, shortcodes 8/8 (stale jetonomy_recent_activity entry removed), cron 6 (Action Scheduler map in class-cron.php - wp_schedule_event grep finds 0 by design), wp_cli 14 (dynamic dispatcher loop), admin_pages 14/14.",
-		"at": "2026-07-21T00:00:00Z",
+		"at": "2026-08-01T00:00:00Z",
 		"from": "wp-plugin-onboard --refresh (1.4.3 feature-drop delta: admin bar + notifications redesign + configurable reputation + Pro extension hooks)",
 		"branch": "1.8.1-dev",
 		"schema_version": "v2",
@@ -3779,7 +3868,8 @@
 		"refresh_2026_07_21_1_8_1_dev": "1.8.1-dev refresh (commits 638149f..11e2a18). Registry-pattern plugin — deterministic generator verified-then-rejected again this round: it matches rest exactly (79/79 incl. the 2 new routes) but zeroes wp_cli (0 vs 14 dispatcher-loop commands) and capabilities (0 vs 23) and undercounts ajax (14 vs 44) + cron (2 vs 6 AS-map). Curated manifest retained. DELTA already synced at commit time: GET /users (Users_Controller::list_members, require_moderate — moderator members directory with restriction context via Restriction::active_map_for_users batch) and GET /moderation/ban (Moderation_Controller::list_bans, require_moderate). NEW model methods Restriction::list_active()/count_active()/active_filters()/active_map_for_users() (batch, ORDER BY FIELD type precedence). NEW helper Jetonomy\\to_iso8601_z(). REST RESPONSE-SHAPE ADDITION (non-breaking): posts/replies/notifications serializers now emit created_at_gmt/updated_at_gmt UTC-ISO twins alongside the site-local fields (Basecamp 10109015081; app consumes GMT, web keeps site-local). FRONTEND: member moderation UI on user-profile.php (Ban/Silence/Lift, gated by Moderation_Permissions::can_view_admin_dashboard + target-protected mirror of server guards) + Banned-members tab on moderation.php (?view=banned) + view.js actions restrictMember/liftRestriction; layout density now emits data-jt-density (comfortable/spacious wired); leaderboard + sidebar render real avatars. No new hooks fired, tables, ajax, caps, blocks, shortcodes, cron, or admin pages (verified via git diff 9b1f02b..HEAD grep). wppqa baseline: audit/wppqa-baseline-2026-07-21/SUMMARY.md — zero real security findings; REST mutation auth gate OK free+pro.",
 		"delta_2026_07_21_private_replies": "Private replies (Basecamp 9804279999). NEW jt_replies.is_private column + post_private index via Migration_1_8_1 (JETONOMY_DB_VERSION 1.8.0->1.8.1; schema updated for fresh installs). NEW Permission_Engine::can_read_reply(viewer, reply, post) - author, TOPIC author, manage_options, space staff; deliberately mirrors the private-POST rule (site-wide jetonomy_moderate does NOT bypass). NEW Reply::set_private()/apply_private_tombstone() - read surfaces TOMBSTONE (never row-filter), same contract as the blocked-author rule, so reply counts and reply_permalink() page math stay viewer-independent; wired into list_by_post + get_threaded (one Post fetch per call). REST: POST /posts/{id}/replies accepts is_private (bool, default false); PATCH /replies/{id} accepts is_private (author-or-editor gated, only applied when sent); serializer emits is_private + is_private_hidden with content blanked for unauthorized viewers. UI: composer 'Private reply' checkbox (logged-in only), lock tombstone card, amber Private pill for authorized viewers, Make Private/Public in the reply menu (view.js toggleReplyPrivacy). NOTIFICATIONS: parent-commenter notification gated on can_read_reply; subscriber fan-out skipped entirely for private replies (topic author alone is notified). E2E verified in browser: composed private as member -> guest gets tombstone + blanked REST + 0 secret occurrences; topic author reads with pill; permission matrix (author/topic-author/plain-member/site-mod/guest) all to spec; exactly 1 notification row. qa-actions 254/254.",
 		"refresh_2026_07_30_zero_bugs": "Zero-Bugs-column refresh (commits 11e2a18..6ca9d25, ~40 commits over three QA deep-audit waves; Bugs column drained 26 -> 0). Coverage re-verified vs ground truth: rest 79 entries / 77 real register calls (2 multi-config registrations; grep's 80 includes 2 docblock + 1 regex-string false hits), ajax 43 (grep's 2 extras are comment-only references to DELETED legacy handlers jetonomy_quick_login/jetonomy_upload_image, replaced by REST auth/media controllers), hooks_fired 201 after this refresh added jetonomy_notification_should_send (the one drift found; the other 8 hooks new since 07-21 were already synced at commit time per the manifest-first rule), tables 21, caps 23, admin_pages 15, blocks 8, shortcodes 8, wp_cli 14, cron 6 (registry-pattern plugin - deterministic generator still not used). SURFACE DELTA this round: NEW jetonomy_admin_table() responsive admin-table renderer (includes/helpers.php) emitting WP core list-table collapse semantics + static guard bin/audit-admin-tables.php (shrink-only baseline 6 free/13 pro, table-balance check) wired into build-release step 5c2; build step 0b gates hooks-index drift (bin/gen-hooks-reference.php). NEW jetonomy_normalize_editor_html() + jetonomy_first_paragraph_text() (jetonomy.php) - contenteditable div-soup normalized to real paragraphs at every content write (REST posts create/update, CLI content journey, Pro reply-by-email inbound) with byte-identical fast path for attributed-div/embed HTML. NEW Avatar::prime() public batch-prime seam + avatar initials fallback (partials/avatar.php + view.js error listener). NEW editable role->caps mapping (see settings.jetonomy_role_caps). NEW registry-driven membership label resolution (Adapter_Registry::membership_labels/membership_level_owners/describe_membership_level + filter jetonomy_membership_adapter_labels) replacing the stale hardcoded prefix map. REST /flags contract corrected (POST-only, REST_Auth::auth_mutation('jetonomy_flag')); create_flag gained 404 jetonomy_flag_target_missing + 400 jetonomy_flag_self; openapi.json /flags reconciled against live probes. Frontend /mod/ Banned tab gated to jetonomy_moderate + own pagination; wp-admin moderation tabs migrated to jetonomy_admin_table(). Capabilities::register() gained a function_exists('wp_roles') boot guard (WP-stub smoke). qa-actions now 257/257 (E25 flag-contract tests rewritten + E25b/c/d added; RoleCapsMappingTest, NormalizeEditorHtmlTest, AvatarPrimeTest, AdapterRegistryLevelLabelTest new). wppqa baseline: audit/wppqa-baseline-2026-07-30/SUMMARY.md - same known-FP shape as 07-21, zero real security findings (class-admin.php flags are cap-before-nonce ordering; class-rest-tests.php flag is the QA harness asserting nonce behaviour). STALE DOCS PRUNED this refresh: docs/qa/open-issues-cards.json + OPEN-ISSUES-INDEX.md + fixed-cards/ (QA-round tracking artifacts; Bugs column is 0, cards live in Basecamp) and docs/qa/v1.4.0-browser-checklist.md (superseded by AGENT_SMOKE_RUNBOOK.md).",
-		"delta_2026_07_30_wave4": "QA wave-4 reopen fixes (8 bounced cards). SECURITY: role_caps save branch + matrix render now require manage_options (jetonomy_manage_settings alone could self-escalate; RoleCapsMappingTest covers both sides). NEW jetonomy_sanitize_editor_content() (jetonomy.php) = normalize+kses, enforced as THE choke point inside Model::sanitize_content_fields() called by Post/Reply::create+update - covers wp-admin Content_Handler, Abilities, all three importers, Pro reply-by-email; derives content_plain when a writer omits it. Per-writer persistence tests: tests/unit/NormalizeChokePointTest.php. PROFILE CREATION: UserProfile::update_last_seen() now find_or_create()s (throttled) so lurkers get a row and is_online works - makes the 'created on first visit' copy true. RESPONSIVE: jetonomy_admin_table() ALWAYS emits a scroll container (.jt-content-table-wrap overflow-x:auto at every width; wrap=false sites get .jt-table-scroll) - kills the 783-960px squeeze-band document overflow (Auto-Rules 840px at 783). Touch floors ≤782px: .jt-btn/.button/row-actions/pagination min-height 40px; tablenav wraps (Content 371px-at-320 fix). tags.php made core-collapse-compliant by hand (toggle-row + data-colname; guard baseline 6->5). Role-caps matrix scrolls in .jt-matrix-scroll at desktop. A11Y: toggle-row carries aria-expanded synced by admin.js delegate; :focus-visible outline; email-preview modal focuses Close on open, Escape binds INSIDE the srcdoc iframe, opener focus restored. CONTRACTS: openapi /flags reason enum + description documented; 01-rest-api.md /flags body shows user target + error paths; MissingObjectTest asserts strict 404 (tolerant 201/400/404 assertion removed). NEW bin/audit-docs-consistency.php (phantom-feature claim grep, realtime patterns) wired as build-release step 0c exit 24; the 3 resurfaced realtime see-also lines fixed. Users-screen guide URL now points at the public GitHub doc (jetonomy.org docs deploy deferred); 08-users-roles-and-trust.md describes the editable Settings->Permissions mapping instead of activation-time grants."
+		"delta_2026_07_30_wave4": "QA wave-4 reopen fixes (8 bounced cards). SECURITY: role_caps save branch + matrix render now require manage_options (jetonomy_manage_settings alone could self-escalate; RoleCapsMappingTest covers both sides). NEW jetonomy_sanitize_editor_content() (jetonomy.php) = normalize+kses, enforced as THE choke point inside Model::sanitize_content_fields() called by Post/Reply::create+update - covers wp-admin Content_Handler, Abilities, all three importers, Pro reply-by-email; derives content_plain when a writer omits it. Per-writer persistence tests: tests/unit/NormalizeChokePointTest.php. PROFILE CREATION: UserProfile::update_last_seen() now find_or_create()s (throttled) so lurkers get a row and is_online works - makes the 'created on first visit' copy true. RESPONSIVE: jetonomy_admin_table() ALWAYS emits a scroll container (.jt-content-table-wrap overflow-x:auto at every width; wrap=false sites get .jt-table-scroll) - kills the 783-960px squeeze-band document overflow (Auto-Rules 840px at 783). Touch floors ≤782px: .jt-btn/.button/row-actions/pagination min-height 40px; tablenav wraps (Content 371px-at-320 fix). tags.php made core-collapse-compliant by hand (toggle-row + data-colname; guard baseline 6->5). Role-caps matrix scrolls in .jt-matrix-scroll at desktop. A11Y: toggle-row carries aria-expanded synced by admin.js delegate; :focus-visible outline; email-preview modal focuses Close on open, Escape binds INSIDE the srcdoc iframe, opener focus restored. CONTRACTS: openapi /flags reason enum + description documented; 01-rest-api.md /flags body shows user target + error paths; MissingObjectTest asserts strict 404 (tolerant 201/400/404 assertion removed). NEW bin/audit-docs-consistency.php (phantom-feature claim grep, realtime patterns) wired as build-release step 0c exit 24; the 3 resurfaced realtime see-also lines fixed. Users-screen guide URL now points at the public GitHub doc (jetonomy.org docs deploy deferred); 08-users-roles-and-trust.md describes the editable Settings->Permissions mapping instead of activation-time grants.",
+		"delta_2026_08_01_1_8_1_reconcile": "Manifest reconciled against ground truth for the 1.8.1 release. Verified every category by grep rather than regenerating: ajax (43), shortcodes (8), blocks (8), admin_pages (15) and capabilities (23) already matched. Added: {prefix}jt_attachments (in Schema::create_tables since 1.7.1, never recorded); POST /auth/app-connect (1.8.1 app-auth bridge, registered only when BuddyNext is absent); and 9 filters/actions that were live in code but unlisted - jetonomy_attachment_card, jetonomy_attachments_class, jetonomy_erase_batch_size, jetonomy_import_batch_seconds, jetonomy_rest_attachment_data, jetonomy_sitemap_changefreq, jetonomy_sitemap_exclude_space, jetonomy_sitemap_prime_spaces, jetonomy_sitemap_priority. Third-party hooks the plugin fires into (asgarosforum_filter_upload_folder, the fluent_community/* set) stay OUT of hooks_fired, matching the existing convention that this list documents Jetonomy extension points only. Note for future refreshes: bin/write-manifest.mjs from the wppqa MCP emits a DIFFERENT schema (drops plugin, capabilities, wp_cli, security, settings and 11 other top-level keys, and under-counts ajax 43->14 and cron 6->2). Four scripts read this file - gen-hooks-reference.php, qa-stub-gen.php, qa-coverage-check.php and build-release.sh - so running that generator against this manifest breaks the release gate. Reconcile by targeted delta instead."
 	},
 	"static_analysis": {
 		"dead_listeners": [

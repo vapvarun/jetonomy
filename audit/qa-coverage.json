@@ -2,17 +2,17 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.8.0"
+        "version": "1.8.1"
     },
     "generated": {
-        "at": "2026-07-31T17:13:04+00:00",
-        "manifest_at": "2026-07-21T00:00:00Z",
+        "at": "2026-08-01T05:42:29+00:00",
+        "manifest_at": "2026-08-01T00:00:00Z",
         "manifest_branch": "1.8.1-dev"
     },
     "categories": {
         "rest": {
-            "total": 99,
-            "covered": 43,
+            "total": 100,
+            "covered": 44,
             "uncovered": 56,
             "skipped": 0,
             "covered_items": [
@@ -183,6 +183,10 @@
                 {
                     "method": "POST",
                     "route": "/moderation/flags/(?P<id>\\d+)/resolve"
+                },
+                {
+                    "method": "POST",
+                    "route": "/auth/app-connect"
                 },
                 {
                     "method": "GET",
@@ -654,7 +658,7 @@
             "total": 9,
             "covered": 5,
             "uncovered": 4,
-            "skipped": 196,
+            "skipped": 205,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -798,15 +802,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 171,
-        "items_covered": 57,
+        "items_total": 172,
+        "items_covered": 58,
         "items_uncovered": 114,
-        "items_skipped": 196,
-        "coverage_percent": 33.299999999999997
+        "items_skipped": 205,
+        "coverage_percent": 33.700000000000003
     },
     "drift": {
-        "previous_uncovered": 114,
+        "previous_uncovered": 115,
         "current_uncovered": 114,
-        "delta": 0
+        "delta": -1
     }
 }
