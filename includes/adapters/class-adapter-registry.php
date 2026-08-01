@@ -180,7 +180,7 @@ class Adapter_Registry {
 			/**
 			 * Filter the purchase/upgrade URL for a membership level.
 			 *
-			 * @since 1.8.1
+			 * @since 1.9.0
 			 *
 			 * @param string $url        Resolved URL ('' when the adapter offers none).
 			 * @param string $level_id   Stored rule value.

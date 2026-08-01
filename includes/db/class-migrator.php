@@ -55,6 +55,14 @@ class Migrator {
 			'1.6.1'   => '1_6_1',
 			'1.7.0'   => '1_7_0',
 			'1.7.1'   => '1_7_1',
+			// Deliberately keyed 1.8.1 even though no 1.8.1 was ever released -
+			// the work shipped as 1.9.0. These keys are schema milestones, not
+			// release numbers: run() compares them against the STORED
+			// jetonomy_db_version, so this still fires for every site coming
+			// from 1.8.0 or earlier, and the internal sites that ran the
+			// 1.8.1 dev builds already have it recorded under this exact key.
+			// Renumbering it would re-run the migration on those sites (it is
+			// idempotent, so harmless) but buys nothing. Do not "fix" it.
 			'1.8.1'   => '1_8_1',
 		];
 	}

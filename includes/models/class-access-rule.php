@@ -126,7 +126,7 @@ class AccessRule extends Model {
 	 * Does any access rule admit this user to this space?
 	 *
 	 * The question a GATE asks, as opposed to `is_member()`, which asks whether
-	 * someone is on the roster. Before 1.8.1 the two were conflated: private and
+	 * someone is on the roster. Before 1.9.0 the two were conflated: private and
 	 * hidden spaces demanded roster membership BEFORE access rules were read, so
 	 * a rule could only ever upgrade an existing member's grants and could never
 	 * admit anyone. A site owner who pointed a space at a membership tier got a

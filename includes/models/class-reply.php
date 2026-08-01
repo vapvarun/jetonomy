@@ -340,7 +340,7 @@ class Reply extends Model {
 			) ?: array();
 		}
 
-		// Private replies tombstone per-viewer (1.8.1) — one post fetch for the
+		// Private replies tombstone per-viewer (1.9.0) — one post fetch for the
 		// whole list, then O(1) per row. Same never-row-filter contract as the
 		// block tombstone above.
 		$viewer_id   = get_current_user_id();
@@ -528,7 +528,7 @@ class Reply extends Model {
 		// tree (not per-row) — see build_tree()'s tombstone step.
 		$blocked_ids = BlockedUser::blocked_ids( get_current_user_id() );
 
-		// Private replies tombstone per-viewer (1.8.1): one post fetch for the
+		// Private replies tombstone per-viewer (1.9.0): one post fetch for the
 		// whole tree, applied on the flat set BEFORE nesting so every depth is
 		// covered without threading the post through build_tree().
 		$parent_post = \Jetonomy\Models\Post::find( $post_id );
@@ -642,7 +642,7 @@ class Reply extends Model {
 	}
 
 	/**
-	 * Tombstone a PRIVATE reply for an unauthorized viewer (1.8.1).
+	 * Tombstone a PRIVATE reply for an unauthorized viewer (1.9.0).
 	 *
 	 * Same shape as the blocked-author tombstone and for the same reasons:
 	 * the row stays in the payload (children keep their parent, counts and

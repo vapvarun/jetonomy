@@ -391,7 +391,7 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 		$columns = isset( $args['columns'] ) && is_array( $args['columns'] ) ? $args['columns'] : array();
 		$cell    = $args['cell'] ?? null;
 		if ( ! $columns || ! is_callable( $cell ) ) {
-			_doing_it_wrong( __FUNCTION__, 'columns and a cell renderer are required.', '1.8.1' );
+			_doing_it_wrong( __FUNCTION__, 'columns and a cell renderer are required.', '1.9.0' );
 			return;
 		}
 

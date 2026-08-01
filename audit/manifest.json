@@ -3,7 +3,7 @@
 	"plugin": {
 		"slug": "jetonomy",
 		"name": "Jetonomy",
-		"version": "1.8.1",
+		"version": "1.9.0",
 		"namespace": "Jetonomy",
 		"main_file": "jetonomy.php",
 		"text_domain": "jetonomy",

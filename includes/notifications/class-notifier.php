@@ -550,7 +550,7 @@ class Notifier {
 		// 2. Notify parent reply author (reply-to-reply) — single recipient.
 		if ( ! empty( $reply->parent_id ) ) {
 			$parent_reply = Reply::find( (int) $reply->parent_id );
-			// Private-reply gate (1.8.1): the parent commenter is NOT
+			// Private-reply gate (1.9.0): the parent commenter is NOT
 			// automatically allowed to read a private reply (only the topic
 			// author, staff, and the reply author are) — never notify someone
 			// about words they will only ever see as a tombstone.
@@ -576,7 +576,7 @@ class Notifier {
 		}
 
 		// 3. Notify post subscribers — inline for small threads, deferred for large.
-		// Private replies never fan out (1.8.1): the audience is the topic
+		// Private replies never fan out (1.9.0): the audience is the topic
 		// author (branch 1), who was already notified. Subscribers would only
 		// receive a link to a tombstone.
 		if ( ! empty( $reply->is_private ) ) {

@@ -422,7 +422,7 @@ class Permission_Engine {
 	}
 
 	/**
-	 * May this viewer read a PRIVATE reply's text? (1.8.1, Basecamp 9804279999)
+	 * May this viewer read a PRIVATE reply's text? (1.9.0, Basecamp 9804279999)
 	 *
 	 * Companion to {@see self::can_read_post()}'s private-post branch, with one
 	 * addition: the PARENT TOPIC's author always sees private replies on their

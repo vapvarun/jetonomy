@@ -43,7 +43,7 @@ final class Journey_Input {
 		/**
 		 * Filters whether journeys reject payload keys they do not understand.
 		 *
-		 * Returning false restores the pre-1.8.1 behaviour of silently ignoring
+		 * Returning false restores the pre-1.9.0 behaviour of silently ignoring
 		 * them. Intended as a compatibility escape hatch for an integration that
 		 * passes extra keys on purpose, not as a default.
 		 *

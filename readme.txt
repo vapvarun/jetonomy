@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.8.1
+Stable tag: 1.9.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -264,7 +264,7 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
-= 1.8.1 - July 2026 =
+= 1.9.0 - August 2026 =
 
 Sell access to a space with a membership plan, and be told which plan opens it. Closes a permissions issue where an access rule could grant more than it said.
 

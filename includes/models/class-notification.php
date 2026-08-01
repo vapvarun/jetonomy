@@ -37,7 +37,7 @@ class Notification extends Model {
 		 * honoured by Notifier::should_email(), so one veto silences rows
 		 * and emails together.
 		 *
-		 * @since 1.8.1
+		 * @since 1.9.0
 		 *
 		 * @param bool $should_send Whether to create the notification.
 		 */

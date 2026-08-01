@@ -723,7 +723,7 @@ class REST_Tests {
 		$this->check( 'E31: refreshed nonce verifies for wp_rest', false !== wp_verify_nonce( $nonce, 'wp_rest' ), 'wp_verify_nonce failed' );
 
 		// 31b. POST /auth/app-connect — the app-connect bridge mint step
-		// (1.8.1, Wbcom App Auth standard). @covers POST /auth/app-connect
+		// (1.9.0, Wbcom App Auth standard). @covers POST /auth/app-connect
 		//
 		// This route is CONDITIONALLY registered, and which branch is correct
 		// depends on the site, so the test asserts the topology it is actually

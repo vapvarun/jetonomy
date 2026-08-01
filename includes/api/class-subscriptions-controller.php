@@ -121,7 +121,7 @@ class Subscriptions_Controller extends Base_Controller {
 	 * @return array[]
 	 */
 	private function attach_subscription_targets( array $items ): array {
-		// Moved to the model (1.8.1) so the My Subscriptions template and this
+		// Moved to the model (1.9.0) so the My Subscriptions template and this
 		// controller share ONE resolver - including the soft-delete and
 		// title-column lessons documented there.
 		return Subscription::attach_targets( $items );
