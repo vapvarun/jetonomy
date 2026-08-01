@@ -112,6 +112,17 @@ class Capabilities {
 		// (hand-granted custom roles included) into the option, so syncing
 		// never changes a site's effective permissions out from under it -
 		// same seeding discipline roles_with_create_spaces() established.
+		//
+		// A role holding NO Jetonomy caps is deliberately NOT seeded. On a
+		// fresh install that is every role, and an empty snapshot is not a
+		// preserved permission set - it is an override saying "this role gets
+		// nothing", which effective_map() then honours and the sync loop below
+		// enforces. Seeding it turned every new site into one where subscribers
+		// could not read and editors could not moderate, permanently, because
+		// the option now exists and this branch never runs again. There is
+		// nothing to preserve for a role with no caps, so it falls through to
+		// the defaults; only a role that actually HOLDS Jetonomy caps has a
+		// permission set worth protecting from the sync.
 		if ( false === get_option( self::ROLE_CAPS_OPTION, false ) ) {
 			$defaults = self::default_map();
 			$seed     = [];
@@ -120,7 +131,10 @@ class Capabilities {
 					continue;
 				}
 				$live = array_values( array_filter( self::all(), static fn( $cap ) => $role->has_cap( $cap ) ) );
-				$def  = $defaults[ $slug ] ?? [];
+				if ( empty( $live ) ) {
+					continue;
+				}
+				$def = $defaults[ $slug ] ?? [];
 				sort( $live );
 				$def_sorted = $def;
 				sort( $def_sorted );

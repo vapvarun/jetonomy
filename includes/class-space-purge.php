@@ -66,9 +66,9 @@ final class Space_Purge {
 	/**
 	 * Action adapter for `jetonomy_purge_orphan_space`.
 	 *
-	 * purge() returns its per-table counts because callers want them; an action
-	 * callback must not return anything. Rather than make purge() void and lose
-	 * the report, the hook gets a void adapter.
+	 * The purge() method returns its per-table counts because callers want
+	 * them; an action callback must not return anything. Rather than make
+	 * purge() void and lose the report, the hook gets a void adapter.
 	 *
 	 * @param mixed $space_id Space id, as passed by do_action().
 	 */
@@ -92,12 +92,36 @@ final class Space_Purge {
 	public static function relations(): array {
 		$rel = [
 			// Direct space references.
-			[ 'table' => table( 'posts' ), 'column' => 'space_id', 'ref' => 'space' ],
-			[ 'table' => table( 'space_members' ), 'column' => 'space_id', 'ref' => 'space' ],
-			[ 'table' => table( 'join_requests' ), 'column' => 'space_id', 'ref' => 'space' ],
-			[ 'table' => table( 'access_rules' ), 'column' => 'space_id', 'ref' => 'space' ],
-			[ 'table' => table( 'invite_links' ), 'column' => 'space_id', 'ref' => 'space' ],
-			[ 'table' => table( 'restrictions' ), 'column' => 'space_id', 'ref' => 'space' ],
+			[
+				'table'  => table( 'posts' ),
+				'column' => 'space_id',
+				'ref'    => 'space',
+			],
+			[
+				'table'  => table( 'space_members' ),
+				'column' => 'space_id',
+				'ref'    => 'space',
+			],
+			[
+				'table'  => table( 'join_requests' ),
+				'column' => 'space_id',
+				'ref'    => 'space',
+			],
+			[
+				'table'  => table( 'access_rules' ),
+				'column' => 'space_id',
+				'ref'    => 'space',
+			],
+			[
+				'table'  => table( 'invite_links' ),
+				'column' => 'space_id',
+				'ref'    => 'space',
+			],
+			[
+				'table'  => table( 'restrictions' ),
+				'column' => 'space_id',
+				'ref'    => 'space',
+			],
 
 			// Polymorphic rows pointing AT the space.
 			[
@@ -120,10 +144,26 @@ final class Space_Purge {
 			],
 
 			// One hop out: rows hanging off the space's topics.
-			[ 'table' => table( 'replies' ), 'column' => 'post_id', 'ref' => 'post' ],
-			[ 'table' => table( 'post_tags' ), 'column' => 'post_id', 'ref' => 'post' ],
-			[ 'table' => table( 'read_status' ), 'column' => 'post_id', 'ref' => 'post' ],
-			[ 'table' => table( 'bookmarks' ), 'column' => 'post_id', 'ref' => 'post' ],
+			[
+				'table'  => table( 'replies' ),
+				'column' => 'post_id',
+				'ref'    => 'post',
+			],
+			[
+				'table'  => table( 'post_tags' ),
+				'column' => 'post_id',
+				'ref'    => 'post',
+			],
+			[
+				'table'  => table( 'read_status' ),
+				'column' => 'post_id',
+				'ref'    => 'post',
+			],
+			[
+				'table'  => table( 'bookmarks' ),
+				'column' => 'post_id',
+				'ref'    => 'post',
+			],
 		];
 
 		// Polymorphic rows pointing at those topics, and at their replies. Same
@@ -208,7 +248,7 @@ final class Space_Purge {
 		$slug        = $space->slug ?? null;
 		$category_id = (int) ( $space->category_id ?? 0 );
 
-		$ids = [
+		$ids          = [
 			'space' => [ $space_id ],
 			'post'  => self::post_ids( $space_id ),
 		];

@@ -31,6 +31,52 @@ class RoleCapsMappingTest extends WP_UnitTestCase {
 		$this->assertFalse( get_role( 'subscriber' )->has_cap( 'jetonomy_moderate' ) );
 	}
 
+	/**
+	 * A FRESH install must end up with the default mapping live.
+	 *
+	 * The seeding branch in register() exists to protect an existing site's
+	 * hand-tuned permissions from the sync. It used to snapshot every role
+	 * whose live caps differed from the defaults - and on a fresh install
+	 * every role differs, because it holds nothing yet. So a brand-new site
+	 * seeded "editor => [], subscriber => [], ..." as if the owner had
+	 * deliberately revoked everything, effective_map() honoured it, and the
+	 * sync loop then enforced it: no role could read, post or moderate, with
+	 * no way back because the option now existed and the branch never ran
+	 * again.
+	 *
+	 * test_defaults_apply_without_overrides above only caught this on a
+	 * pristine database. It passed on any environment where the roles already
+	 * carried the caps from an earlier run - which is exactly where it was
+	 * usually run, so it reported green while a fresh install was broken.
+	 * This strips the roles bare first, so it fails on ANY database if the
+	 * fresh-install path regresses.
+	 */
+	public function test_fresh_install_grants_the_defaults(): void {
+		// Simulate a site that has never seen Jetonomy: no option, and no
+		// role carrying any Jetonomy capability.
+		delete_option( Capabilities::ROLE_CAPS_OPTION );
+		foreach ( wp_roles()->role_objects as $role ) {
+			foreach ( Capabilities::all() as $cap ) {
+				$role->remove_cap( $cap );
+			}
+		}
+
+		Capabilities::register();
+
+		$this->assertTrue(
+			get_role( 'subscriber' )->has_cap( 'jetonomy_read' ),
+			'a fresh install must let subscribers read - seeding an empty snapshot locked every role out'
+		);
+		$this->assertTrue( get_role( 'subscriber' )->has_cap( 'jetonomy_flag' ) );
+		$this->assertTrue( get_role( 'editor' )->has_cap( 'jetonomy_moderate' ) );
+
+		$this->assertSame(
+			array(),
+			(array) get_option( Capabilities::ROLE_CAPS_OPTION ),
+			'a role with no caps has no permission set worth preserving, so it must not be seeded as an override'
+		);
+	}
+
 	public function test_override_grants_and_unticking_revokes(): void {
 		Capabilities::register(); // ensure option seeded + defaults live
 

@@ -112,7 +112,8 @@ $crumbs = [
 				<span class="jt-leader-you-rank">#<?php echo (int) $jt_my_rank; ?></span>
 				<span class="jt-leader-you-label">
 					<?php esc_html_e( 'Your rank', 'jetonomy' ); ?>
-					<small><?php
+					<small>
+					<?php
 						echo esc_html(
 							sprintf(
 								/* translators: %d: total members on the leaderboard. */
@@ -120,7 +121,8 @@ $crumbs = [
 								$_jt_total
 							)
 						);
-					?></small>
+					?>
+					</small>
 				</span>
 			</div>
 		<?php endif; ?>

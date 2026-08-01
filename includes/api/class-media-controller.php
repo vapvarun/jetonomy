@@ -272,11 +272,13 @@ class Media_Controller extends Base_Controller {
 		}
 
 		if ( function_exists( 'finfo_open' ) && is_readable( (string) $file['tmp_name'] ) ) {
+			// No finfo_close(): since PHP 8.1 finfo_open() returns a finfo
+			// OBJECT rather than a resource, so it frees itself when it goes
+			// out of scope, and PHP 8.4 deprecates the explicit close. The
+			// plugin requires 8.1+, so dropping the call is safe on every
+			// supported version and keeps 8.4 free of deprecation notices.
 			$finfo = finfo_open( FILEINFO_MIME_TYPE );
 			$real  = $finfo ? finfo_file( $finfo, (string) $file['tmp_name'] ) : '';
-			if ( $finfo ) {
-				finfo_close( $finfo );
-			}
 			if ( $real && ! in_array( $real, $allowed, true ) ) {
 				return new WP_Error( 'jetonomy_upload_type', __( 'File contents do not match its extension.', 'jetonomy' ), array( 'status' => 400 ) );
 			}
