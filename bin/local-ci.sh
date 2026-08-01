@@ -122,14 +122,28 @@ if [ "$DO_STAN" -eq 1 ]; then
         FAILED_GATES+=("phpstan-free")
     fi
 
-    if [ -n "$PRO" ] && [ -f "$PRO/phpstan.neon.dist" ]; then
-        step "PHPStan — pro"
-        if (cd "$PRO" && phpstan_clean vendor/bin/phpstan analyse --memory-limit=2G --no-progress); then
-            ok "PHPStan pro clean"
+    # Accept either config name. This used to test only phpstan.neon.dist while
+    # jetonomy-pro ships phpstan.neon, so the Pro gate never ran once - and the
+    # script still printed "All blocking gates passed", which is worse than
+    # having no gate. When it was finally run it found 5 real findings.
+    # A gate that can silently not-run must announce itself, hence the explicit
+    # skip messages below.
+    if [ -n "$PRO" ] && { [ -f "$PRO/phpstan.neon.dist" ] || [ -f "$PRO/phpstan.neon" ]; }; then
+        if [ ! -x "$PRO/vendor/bin/phpstan" ]; then
+            fail "PHPStan pro SKIPPED — $PRO/vendor/bin/phpstan missing (run 'composer install' in the pro repo)"
+            FAILED_GATES+=("phpstan-pro-missing-deps")
         else
-            fail "PHPStan pro reported errors"
-            FAILED_GATES+=("phpstan-pro")
+            step "PHPStan — pro"
+            if (cd "$PRO" && phpstan_clean vendor/bin/phpstan analyse --memory-limit=2G --no-progress); then
+                ok "PHPStan pro clean"
+            else
+                fail "PHPStan pro reported errors"
+                FAILED_GATES+=("phpstan-pro")
+            fi
         fi
+    elif [ -n "$PRO" ]; then
+        fail "PHPStan pro SKIPPED — no phpstan.neon(.dist) found in $PRO"
+        FAILED_GATES+=("phpstan-pro-no-config")
     fi
 fi
 
