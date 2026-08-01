@@ -26,3 +26,8 @@ docs/website/image-mapping.json
 
 # Playwright MCP scratch (screenshots, snapshots, console logs)
 .playwright-mcp/
+
+# Local-only wp-env overrides (e.g. mounting a private theme such as Reign
+# for a theme-integration test run). Never committed: the paths only exist
+# on a machine that has those themes checked out beside the plugin.
+.wp-env.override.json
