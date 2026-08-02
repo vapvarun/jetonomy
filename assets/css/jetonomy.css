@@ -777,6 +777,12 @@
     .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .jt-space-head { flex-direction: column; align-items: center; text-align: center; }
+    /* The header centres itself here with text-align, which reached the action
+       buttons for free while __meta was display:block and they were inline.
+       They are flex items now, and a flex item is placed by justify-content -
+       text-align does not touch it - so without this the buttons sat hard left
+       under a centred title, description, stat block and Follow button. */
+    .jt-space-head__meta { justify-content: center; }
     .jt-space-nums { margin-left: 0; }
     .jt-header { padding: 10px 16px; }
     .jt-mobile-toggle { display: flex; }
