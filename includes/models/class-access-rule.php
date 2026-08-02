@@ -10,6 +10,7 @@ namespace Jetonomy\Models;
 defined( 'ABSPATH' ) || exit;
 
 use function Jetonomy\now;
+use function Jetonomy\table;
 
 class AccessRule extends Model {
 
@@ -49,6 +50,93 @@ class AccessRule extends Model {
 				$space_id
 			)
 		) ?: [];
+	}
+
+	/**
+	 * Space IDs gated by one membership level.
+	 *
+	 * The inverse of list_for_space(): given "lrn_course_42", which spaces does
+	 * holding it open? Every consumer that wants to link FROM the product TO the
+	 * community needs this - a course page asking "is there a discussion for
+	 * me?", a space page asking "which course is this attached to?", the
+	 * auto-create path asking "does one already exist?".
+	 *
+	 * It also replaces thirteen hand-written copies of this query living inside
+	 * the adapters, which is a plain violation of the models-only rule and drifts
+	 * the moment one of them learns something the others do not.
+	 *
+	 * Reads `(rule_type, rule_value)`, which is indexed - the lookup runs on
+	 * course and account pageviews, so an unindexed scan here is a scan on every
+	 * request a logged-in student makes.
+	 *
+	 * @param string $rule_value Level identifier, e.g. 'lrn_course_42'.
+	 * @param string $rule_type  Rule type. Defaults to the membership adapters' type.
+	 * @return int[] Space IDs, ascending, unique.
+	 */
+	public static function spaces_for_level( string $rule_value, string $rule_type = 'membership' ): array {
+		if ( '' === $rule_value ) {
+			return [];
+		}
+
+		$ids = static::db()->get_col(
+			static::db()->prepare(
+				'SELECT DISTINCT space_id FROM ' . static::table() . ' WHERE rule_type = %s AND rule_value = %s ORDER BY space_id ASC',
+				$rule_type,
+				$rule_value
+			)
+		);
+
+		return array_map( 'intval', $ids ?: [] );
+	}
+
+	/**
+	 * Spaces a user belongs to that some product's entitlement unlocked.
+	 *
+	 * Powers the "your discussions" list. Deliberately NOT "every space the user
+	 * is in" - that is the community's own My Spaces, and duplicating it adds
+	 * nothing. What earns a place in the product's account area is the set the
+	 * user could not have found on their own: a hidden space has no directory
+	 * entry, no search result and no URL they were ever shown, so without a list
+	 * like this their only route back is a link somebody sent them once.
+	 *
+	 * Matches by level PREFIX so one call covers everything a single product
+	 * grants - courses, plans, teams, departments - rather than one query per
+	 * entitlement type. Membership is required, so a rule the user does not
+	 * satisfy contributes nothing.
+	 *
+	 * @param int    $user_id   Member.
+	 * @param string $prefix    Level prefix, e.g. 'lrn_'. Must be non-empty.
+	 * @param string $rule_type Rule type. Defaults to the membership adapters' type.
+	 * @return object[] Space rows, each with the `rule_value` that granted it.
+	 */
+	public static function member_spaces_for_level_prefix( int $user_id, string $prefix, string $rule_type = 'membership' ): array {
+		if ( $user_id <= 0 || '' === $prefix ) {
+			return [];
+		}
+
+		$spaces  = table( 'spaces' );
+		$members = table( 'space_members' );
+
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				'SELECT s.*, r.rule_value
+				 FROM ' . $members . ' m
+				 INNER JOIN ' . $spaces . ' s ON s.id = m.space_id
+				 INNER JOIN ' . static::table() . ' r ON r.space_id = s.id
+				 WHERE m.user_id = %d
+				   AND r.rule_type = %s
+				   AND r.rule_value LIKE %s
+				   AND s.status = %s
+				 GROUP BY s.id
+				 ORDER BY s.title ASC',
+				$user_id,
+				$rule_type,
+				static::db()->esc_like( $prefix ) . '%',
+				'active'
+			)
+		);
+
+		return $rows ?: [];
 	}
 
 	/**

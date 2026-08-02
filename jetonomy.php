@@ -17,7 +17,12 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'JETONOMY_VERSION', '1.9.0' );
-define( 'JETONOMY_DB_VERSION', '1.9.0' );
+// Schema milestone, deliberately ahead of JETONOMY_VERSION. Migration 1_9_1
+// adds the rule_lookup index; run() compares this against the STORED
+// jetonomy_db_version, so it must move for the migration to fire. The two
+// constants are independent - the plugin version is a release number and stays
+// where the release rule puts it.
+define( 'JETONOMY_DB_VERSION', '1.9.1' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );

@@ -64,6 +64,7 @@ class Migrator {
 			// Renumbering it would re-run the migration on those sites (it is
 			// idempotent, so harmless) but buys nothing. Do not "fix" it.
 			'1.8.1'   => '1_8_1',
+			'1.9.1'   => '1_9_1',
 		];
 	}
 }
