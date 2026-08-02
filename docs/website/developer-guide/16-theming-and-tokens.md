@@ -106,7 +106,7 @@ Adopting an arbitrary theme brand colour and painting hard-coded white text on i
 
 It pulls the lightness (`l`) out of the accent, snaps it across the `0.57` threshold, and forces chroma `0` - so the text resolves to pure black on light accents and pure white on dark ones. The threshold is derived, not chosen: sweeping `0.40–0.80` against 11 real theme accents, `0.56–0.58` is the only band where all 11 clear AA. Hover gets its own derivation because `--jt-accent-hover` is the accent mixed 85% toward black and can flip the black/white choice. Buttons consume it - `.jt-btn-fill { color: var(--jt-accent-fg); }` in `assets/css/jetonomy.css`. The rule is feature-gated behind `@supports`; engines without relative-colour syntax fall back to the plain `--jt-accent-fg: var(--jt-white)` default declared in `:root`, so behaviour is never worse than before. The theme's brand colour itself is untouched; only the text on top of it adapts.
 
-See [`docs/standards/host-theme-color-adoption.md`](../../standards/host-theme-color-adoption.md) for the full verified token map per theme, the compliance checklist, and guidance on themes that expose no recognizable brand token.
+See `docs/standards/host-theme-color-adoption.md` in the plugin repo for the full verified token map per theme, the compliance checklist, and guidance on themes that expose no recognizable brand token.
 
 ---
 
