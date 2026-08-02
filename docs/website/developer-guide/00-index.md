@@ -45,7 +45,7 @@ Make the community discoverable to search engines and feed readers.
 Read and write community data from another application, agent, or platform.
 
 - [REST API Reference](./01-rest-api.md) - the full `jetonomy/v1` endpoint listing with methods, payloads, responses, and permission contracts.
-- [OpenAPI Spec + Full REST Reference](./api/) - the complete machine-readable `openapi.json` (load into Swagger UI / Redoc) plus a human-readable companion covering every free and Pro route, generated from 1.8.0 source.
+- [OpenAPI Spec + Full REST Reference](./api/rest-api-reference.md) - the complete machine-readable `openapi.json` (load into Swagger UI / Redoc) plus a human-readable companion covering every free and Pro route, generated from 1.8.0 source.
 - [Attachment Model](./23-attachment-model.md) - `Jetonomy\Models\Attachment` (link, get_for, get_for_many, prime_for_post, hydrate, payload_for) and the `jt_attachments` table.
 - [Import Framework](./25-import-framework.md) - the `Jetonomy\Import\Importer` base contract (media migration, error surfacing, the per-batch time budget) and how to add a source importer.
 - [Abilities API](./11-abilities-api.md) - expose the community to AI agents and automation tools through the WordPress Abilities API.
