@@ -330,6 +330,28 @@ function replies_per_page(): int {
  * @param int|null $page       Known 1-based page, or null to compute it.
  * @return string Deep-link URL, or '' when the slugs are unusable.
  */
+/**
+ * A space's front URL.
+ *
+ * `base_url()` already keeps the configurable base slug in one place, but the
+ * `/s/` segment after it is a literal repeated in ~90 places. That is fine for
+ * a template inside this plugin, which moves whenever the router does, and not
+ * fine for an integration in another plugin, which would keep pointing at a
+ * path this one no longer serves.
+ *
+ * Same shape as reply_permalink() below. Existing call sites are deliberately
+ * left alone - sweeping ninety of them is a change of its own - but nothing new
+ * should compose this by hand.
+ *
+ * @param string $space_slug Space slug.
+ * @return string Front URL, or '' when the slug is unusable.
+ */
+function space_permalink( string $space_slug ): string {
+	$space_slug = trim( $space_slug, '/' );
+
+	return '' === $space_slug ? '' : base_url() . '/s/' . $space_slug . '/';
+}
+
 function reply_permalink( string $space_slug, string $post_slug, int $reply_id, ?int $page = null ): string {
 	if ( '' === $space_slug || '' === $post_slug || $reply_id < 1 ) {
 		return '';

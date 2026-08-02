@@ -206,14 +206,23 @@
   /* Derive readable text on the adopted accent. Split from the block above
      because relative colour syntax must be feature-gated: engines without it
      would drop the declaration and fall back to --jt-white, which is exactly
-     the current (broken-on-light-accents) behaviour — never worse. */
+     the current (broken-on-light-accents) behaviour - never worse.
+
+     The threshold is 0.7, not the mathematical crossover. White and black reach
+     equal WCAG contrast at roughly L 0.62, so a "pick whichever scores higher"
+     rule flips to black for ordinary brand colours - #1d76da, a plain blue,
+     computes to L 0.57065 and lost the old 0.57 comparison by 0.00065, painting
+     black text on a blue button. Both choices technically pass there; only one
+     of them looks like a working button. 0.7 keeps white on every normal brand
+     blue, green, purple and red, and hands black to the colours that genuinely
+     need it - yellows, ambers and pastels, which sit above 0.75. */
   @supports (color: oklch(from red l c h)) {
     :root {
-      --jt-accent-fg: oklch(from var(--jt-accent) clamp(0, (0.57 - l) * 1000, 1) 0 h);
+      --jt-accent-fg: oklch(from var(--jt-accent) clamp(0, (0.7 - l) * 1000, 1) 0 h);
       /* Hover is the accent mixed 85% toward black, i.e. strictly darker, so the
          black/white choice can flip against it. Derive it from the hover colour
          rather than reusing --jt-accent-fg and hoping. */
-      --jt-accent-hover-fg: oklch(from var(--jt-accent-hover) clamp(0, (0.57 - l) * 1000, 1) 0 h);
+      --jt-accent-hover-fg: oklch(from var(--jt-accent-hover) clamp(0, (0.7 - l) * 1000, 1) 0 h);
     }
   }
 

@@ -17,7 +17,19 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'JETONOMY_VERSION', '1.9.0' );
-define( 'JETONOMY_DB_VERSION', '1.9.0' );
+// Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
+//
+// The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
+// dbDelta and needs no migration. An install already running 1.9.0 does not:
+// dbDelta only runs for it through the version-change path, and if this
+// constant read 1.9.0 too, run() would compare 1.9.0 against a stored 1.9.0,
+// decide there was nothing to do, and leave that site doing a full table scan
+// on every course and account pageview - silently, because nothing errors.
+//
+// So both routes are covered: CREATE TABLE for new sites, migration 1_9_1 for
+// existing ones. The two constants are independent; the plugin version is a
+// release number and stays at 1.9.0 where the release rule puts it.
+define( 'JETONOMY_DB_VERSION', '1.9.1' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );

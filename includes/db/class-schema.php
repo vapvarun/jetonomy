@@ -360,7 +360,8 @@ class Schema {
   priority int(11) NOT NULL DEFAULT 0,
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
-  KEY space_priority (space_id,priority)
+  KEY space_priority (space_id,priority),
+  KEY rule_lookup (rule_type,rule_value)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 16. jt_flags
