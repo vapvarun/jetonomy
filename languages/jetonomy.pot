@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.9.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-08-01 08:22:02+00:00\n"
+"POT-Creation-Date: 2026-08-02 08:40:35+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1631,13 +1631,13 @@ msgstr ""
 
 #: includes/admin/views/content.php:222 includes/admin/views/moderation.php:135
 #: includes/admin/views/moderation.php:246 includes/admin/views/replies.php:263
-#: includes/functions.php:702
+#: includes/functions.php:724
 msgid "Trash"
 msgstr ""
 
 #: includes/admin/views/content.php:233 includes/admin/views/moderation.php:134
 #: includes/admin/views/moderation.php:245 includes/admin/views/replies.php:276
-#: includes/functions.php:701 templates/partials/moderation/flag-card.php:25
+#: includes/functions.php:723 templates/partials/moderation/flag-card.php:25
 #: templates/views/moderation.php:130
 msgid "Spam"
 msgstr ""
@@ -4037,32 +4037,32 @@ msgid "Join Policy"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:118 includes/admin/views/spaces.php:82
-#: includes/functions.php:755 templates/partials/feed-card.php:104
+#: includes/functions.php:777 templates/partials/feed-card.php:104
 msgid "Open"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:119 includes/admin/views/spaces.php:83
-#: includes/functions.php:757
+#: includes/functions.php:779
 msgid "Requires Approval"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:120 includes/admin/views/spaces.php:84
-#: includes/functions.php:759 templates/views/space.php:327
+#: includes/functions.php:781 templates/views/space.php:327
 msgid "Invite Only"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:128 includes/admin/views/spaces.php:92
-#: includes/admin/views/spaces.php:169 includes/functions.php:732
+#: includes/admin/views/spaces.php:169 includes/functions.php:754
 msgid "Active"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:129 includes/admin/views/spaces.php:93
-#: includes/admin/views/spaces.php:170 includes/functions.php:734
+#: includes/admin/views/spaces.php:170 includes/functions.php:756
 msgid "Archived"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:130 includes/admin/views/spaces.php:94
-#: includes/admin/views/spaces.php:171 includes/functions.php:736
+#: includes/admin/views/spaces.php:171 includes/functions.php:758
 msgid "Locked"
 msgstr ""
 
@@ -6814,15 +6814,15 @@ msgstr ""
 msgid "New Topic"
 msgstr ""
 
-#: includes/functions.php:699
+#: includes/functions.php:721
 msgid "Published"
 msgstr ""
 
-#: includes/functions.php:700
+#: includes/functions.php:722
 msgid "Pending"
 msgstr ""
 
-#: includes/functions.php:705 templates/views/notifications.php:75
+#: includes/functions.php:727 templates/views/notifications.php:75
 #: templates/views/search.php:214
 msgid "All"
 msgstr ""
@@ -7973,28 +7973,28 @@ msgstr ""
 msgid "My Stats"
 msgstr ""
 
-#: jetonomy.php:378 templates/views/space-roadmap.php:101
+#: jetonomy.php:390 templates/views/space-roadmap.php:101
 msgid "Planned"
 msgstr ""
 
-#: jetonomy.php:379 templates/views/space-roadmap.php:106
+#: jetonomy.php:391 templates/views/space-roadmap.php:106
 msgid "In Progress"
 msgstr ""
 
-#: jetonomy.php:380 templates/views/space-roadmap.php:111
+#: jetonomy.php:392 templates/views/space-roadmap.php:111
 msgid "Shipped"
 msgstr ""
 
-#: jetonomy.php:381 templates/views/space-roadmap.php:116
+#: jetonomy.php:393 templates/views/space-roadmap.php:116
 msgid "Declined"
 msgstr ""
 
-#: jetonomy.php:459 templates/views/new-space.php:97
+#: jetonomy.php:471 templates/views/new-space.php:97
 #: templates/views/space-edit.php:170
 msgid "Approval required"
 msgstr ""
 
-#: jetonomy.php:461 templates/views/new-space.php:98
+#: jetonomy.php:473 templates/views/new-space.php:98
 #: templates/views/space-edit.php:171
 msgid "Invite only"
 msgstr ""
@@ -9873,28 +9873,28 @@ msgstr ""
 msgid "https://wbcomdesigns.com/"
 msgstr ""
 
-#: includes/functions.php:658
+#: includes/functions.php:680
 #. translators: 1: visibility level, e.g. "Private". 2: what it means.
 msgctxt "space visibility option"
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: jetonomy.php:417
+#: jetonomy.php:429
 msgctxt "space type label"
 msgid "Q&A"
 msgstr ""
 
-#: jetonomy.php:419
+#: jetonomy.php:431
 msgctxt "space type label"
 msgid "Ideas"
 msgstr ""
 
-#: jetonomy.php:421
+#: jetonomy.php:433
 msgctxt "space type label"
 msgid "Feed"
 msgstr ""
 
-#: jetonomy.php:424
+#: jetonomy.php:436
 msgctxt "space type label"
 msgid "Forum"
 msgstr ""
