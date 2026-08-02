@@ -203,7 +203,17 @@
 
   /* ── Space header (below the cover) — description + stats + follow ── */
   .jt-space-head { display: flex; align-items: flex-start; gap: 16px; padding: var(--jt-space-4) 4px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
-  .jt-space-head__meta { flex: 1 1 auto; min-width: 0; }
+  /* Description on its own row, then every action beside every other action.
+     This was `display: block`, and the owner's "Edit space" ships wrapped in a
+     <p>, so a block element sat between the actions and forced each onto its
+     own line - two buttons of different widths stacked and left-ragged. It read
+     as a layout bug because it was one, and it would repeat for any integration
+     that adds an action here (an LMS "Open the course", a store "View product"),
+     since none of them can un-block a sibling they do not own.
+     The row wraps, so a narrow viewport stacks them deliberately instead. */
+  .jt-space-head__meta { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); }
+  .jt-space-head__meta > .jt-space-desc { flex: 1 1 100%; }
+  .jt-space-head__meta > .jt-space-edit-cta { margin: 0; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
   .jt-space-nums { display: flex; gap: 20px; margin-right: auto; }
   .jt-num { text-align: center; }
@@ -767,6 +777,12 @@
     .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .jt-space-head { flex-direction: column; align-items: center; text-align: center; }
+    /* The header centres itself here with text-align, which reached the action
+       buttons for free while __meta was display:block and they were inline.
+       They are flex items now, and a flex item is placed by justify-content -
+       text-align does not touch it - so without this the buttons sat hard left
+       under a centred title, description, stat block and Follow button. */
+    .jt-space-head__meta { justify-content: center; }
     .jt-space-nums { margin-right: 0; }
     .jt-header { padding: 10px 16px; }
     .jt-mobile-toggle { display: flex; }
