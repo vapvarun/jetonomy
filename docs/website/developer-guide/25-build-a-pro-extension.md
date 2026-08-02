@@ -76,7 +76,7 @@ Enable/disable state lives in the `jetonomy_pro_extensions` option and is toggle
 3. **REST permission callbacks**: use `$this->rest_auth_mutation( $caps )` from the base class for mutation routes — it resolves free's `REST_Auth` lazily and fails closed (never reference `\Jetonomy\API\REST_Auth` directly at registration time).
 4. **Background jobs** go through `Jetonomy_Pro\Queue` (`async()` / `recurring()` / `cancel()`) — Action-Scheduler-first with WP-Cron fallback; cancel your hooks in `deactivate()`.
 5. **Licensing is yours**: the customer's Jetonomy Pro license never disables your extension. If yours is paid, check your own license at the top of `boot()` and return early.
-6. **Frontend surfaces** must follow the [Frontend Interactivity Standard](../../standards/frontend-interactivity.md) (declarative store actions, `restFetch`, re-init on `jetonomy:navigated`) and use the [`--jt-*` design tokens](16-theming-and-tokens.md).
+6. **Frontend surfaces** must follow the Frontend Interactivity Standard (`docs/standards/frontend-interactivity.md` in the plugin repo) (declarative store actions, `restFetch`, re-init on `jetonomy:navigated`) and use the [`--jt-*` design tokens](16-theming-and-tokens.md).
 
 ## Hooking free instead
 

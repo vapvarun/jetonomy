@@ -66,7 +66,7 @@ Starting in 1.5.0, Jetonomy extends automatic brand-color adoption to four widel
 
 **Themes with no recognizable brand token.** Stock block themes that expose numbered palette slugs (such as `accent-1` or `palette3`) are deliberately not auto-adopted - an accidentally adopted low-contrast color is worse than a clean default. For these themes, Jetonomy falls back to its own neutral accent. The site owner can override it under **Jetonomy → Settings → Appearance → Color Palette**.
 
-For the full technical specification of the `var()` chain, the complete verified token map, and the checklist for adding a new theme, see [`docs/standards/host-theme-color-adoption.md`](../../standards/host-theme-color-adoption.md).
+For the full technical specification of the `var()` chain, the complete verified token map, and the checklist for adding a new theme, see `docs/standards/host-theme-color-adoption.md` in the plugin repo.
 
 ## Using Other Themes
 
