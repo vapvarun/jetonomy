@@ -940,25 +940,26 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function prepare_post( object $post ): array {
 		return [
-			'id'            => (int) $post->id,
-			'space_id'      => (int) $post->space_id,
-			'space_title'   => $post->space_title ?? null,
-			'space_slug'    => $post->space_slug ?? null,
-			'title'         => $post->title ?? '',
-			'slug'          => $post->slug ?? '',
-			'type'          => $post->type ?? 'topic',
-			'status'        => $post->status ?? 'publish',
-			'vote_score'    => (int) ( $post->vote_score ?? 0 ),
-			'reply_count'   => (int) ( $post->reply_count ?? 0 ),
-			'view_count'    => (int) ( $post->view_count ?? 0 ),
-			'created_at'    => $post->created_at ?? null,
+			'id'                  => (int) $post->id,
+			'space_id'            => (int) $post->space_id,
+			'space_title'         => $post->space_title ?? null,
+			'space_slug'          => $post->space_slug ?? null,
+			'title'               => $post->title ?? '',
+			'slug'                => $post->slug ?? '',
+			'type'                => $post->type ?? 'topic',
+			'status'              => $post->status ?? 'publish',
+			'vote_score'          => (int) ( $post->vote_score ?? 0 ),
+			'reply_count'         => (int) ( $post->reply_count ?? 0 ),
+			'view_count'          => (int) ( $post->view_count ?? 0 ),
+			'created_at'          => $post->created_at ?? null,
 			// Author fields populated by enrich_with_author() above, so profile post
 			// cards match the /feed shape (name + avatar + relative time + space)
 			// instead of rendering a blank "?" row.
-			'author_id'     => (int) ( $post->author_id ?? 0 ),
-			'author_name'   => $post->author_name ?? '',
-			'author_avatar' => $post->author_avatar ?? '',
-			'time_ago'      => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'author_id'           => (int) ( $post->author_id ?? 0 ),
+			'author_name'         => $post->author_name ?? '',
+			'author_avatar'       => $post->author_avatar ?? '',
+			'author_last_seen_at' => $post->author_last_seen_at ?? null,
+			'time_ago'            => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 		];
 	}
 

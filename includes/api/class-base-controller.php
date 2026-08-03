@@ -526,15 +526,18 @@ abstract class Base_Controller extends WP_REST_Controller {
 			$author_name = \Jetonomy\Author::for_display( $uid, $item_obj, $user )['name'];
 
 			$enrichment = [
-				'author_name'   => $author_name ?: __( 'Anonymous', 'jetonomy' ),
+				'author_name'         => $author_name ?: __( 'Anonymous', 'jetonomy' ),
 				// display_url() returns '' when the member has no real avatar, so
 				// API clients (mobile app) render initials from author_name — the
 				// same fallback the web templates use. Never the Gravatar mystery-man.
-				'author_avatar' => $user ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
-				'author_login'  => $user ? $user->user_login : '',
-				'trust_level'   => $profile ? (int) $profile->trust_level : 0,
-				'reputation'    => $profile ? (int) $profile->reputation : 0,
-				'profile_url'   => $uid ? \Jetonomy\get_profile_url( $uid ) : '',
+				'author_avatar'       => $user ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
+				'author_login'        => $user ? $user->user_login : '',
+				'trust_level'         => $profile ? (int) $profile->trust_level : 0,
+				'reputation'          => $profile ? (int) $profile->reputation : 0,
+				'profile_url'         => $uid ? \Jetonomy\get_profile_url( $uid ) : '',
+				// Presence source for API clients: the app derives an "online" dot
+				// from this (last_seen_at within 5 min), matching the web's badge.
+				'author_last_seen_at' => $profile ? $profile->last_seen_at : null,
 			];
 
 			if ( is_object( $item ) ) {
