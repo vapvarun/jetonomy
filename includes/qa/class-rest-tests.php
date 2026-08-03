@@ -432,6 +432,8 @@ class REST_Tests {
 		} else {
 			$this->check( 'B12: split (skipped — second reply not created)', true );
 		}
+
+		$this->test_media_B13();
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
@@ -1641,5 +1643,37 @@ class REST_Tests {
 			}
 			wp_delete_user( $uid );
 		}
+	}
+
+
+	/**
+	 * @covers GET /media
+	 *
+	 * Endpoint purpose: list uploaded media (the READ half; POST /media uploads).
+	 * Permission:       current_user_can( 'jetonomy_manage_settings' )
+	 *
+	 * Added in 1.9.1. The route has registered GET + POST for some time, but the
+	 * manifest listed only POST, so the app's `GET /media` call (api/media.ts)
+	 * showed up as a call to a nonexistent route once the parity check started
+	 * verifying methods (Basecamp 10161335087). Covering the GET keeps the
+	 * manifest entry honest instead of relying on it being remembered.
+	 */
+	private function test_media_B13(): void {
+		$r    = $this->rest( 'GET', '/media', [ 'per_page' => 5 ], $this->admin_id );
+		$data = $r->get_data();
+		$this->check( 'B13: GET /media as admin → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		$items = is_array( $data ) ? ( $data['data'] ?? $data['items'] ?? null ) : null;
+		$this->check( 'B13: GET /media returns a list payload', is_array( $items ), 'no array payload' );
+
+		// Gated on jetonomy_manage_settings, not merely on being logged in.
+		$r = $this->rest( 'GET', '/media', [], 0 );
+		$this->check(
+			'B13: GET /media as guest → 401/403',
+			in_array( $r->get_status(), array( 401, 403 ), true ),
+			"HTTP {$r->get_status()}"
+		);
+
+		wp_set_current_user( $this->admin_id );
 	}
 }

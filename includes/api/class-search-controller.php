@@ -173,10 +173,10 @@ class Search_Controller extends Base_Controller {
 					'data' => [
 						'posts'  => array_map(
 							function ( $row ) {
-								$item         = (array) $row;
+								$item         = $this->prepare_post( $row );
 								$item['type'] = 'post';
 								return $item; },
-							$posts
+							$this->enrich_with_author( $posts )
 						),
 						// Shared serializer, not `(array) $row` — see
 						// Base_Controller::prepare_space(). Casting the raw row here
@@ -238,14 +238,35 @@ class Search_Controller extends Base_Controller {
 			$total   = $this->count_tags( $wpdb, $q );
 		}
 
+		// Batch-load author data before serializing so prepare_post()/prepare_reply()
+		// read pre-enriched fields instead of falling back to a per-row lookup.
+		if ( 'post' === $type || 'reply' === $type ) {
+			$results = $this->enrich_with_author( $results );
+		}
+
 		$items = array_map(
 			function ( $row ) use ( $type ) {
-				// Spaces go through the shared serializer so `?type=space` and the
-				// grouped `?type=all` response cannot return two different shapes
-				// for the same object (Basecamp 10161324553). Other row types keep
-				// their raw shape for now; unifying post/reply search onto
-				// prepare_post() is tracked separately.
-				$item         = 'space' === $type ? $this->prepare_space( $row ) : (array) $row;
+				// Every row type goes through the SAME serializer the dedicated
+				// endpoints use, so an object cannot have one shape from /search and
+				// a different one from /feed or /spaces/{id}/posts. Casting the raw
+				// DB row here shipped string-typed numerics, no _gmt twins and no
+				// author enrichment (Basecamp 10161324553).
+				switch ( $type ) {
+					case 'space':
+						$item = $this->prepare_space( $row );
+						break;
+					case 'post':
+						$item = $this->prepare_post( $row );
+						break;
+					default:
+						// Replies and tags: replies carry joined post/space columns
+						// the reply serializer does not model, and tags are a flat
+						// {id,name,slug,post_count} row with no serializer of their
+						// own. Cast, but normalize the numerics so a typed client
+						// never receives "12" where it expects 12.
+						$item = $this->normalize_row_numerics( (array) $row );
+						break;
+				}
 				$item['type'] = $type;
 				return $item;
 			},

@@ -35,30 +35,10 @@ parameters:
 			count: 1
 			path: includes/api/class-api.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$author_avatar\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$author_login\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$profile_url\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$reputation\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$trust_level\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
 		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_avatar\\.$#"

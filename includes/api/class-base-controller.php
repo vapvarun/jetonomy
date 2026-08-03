@@ -574,6 +574,39 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * Cast the numeric columns of a raw DB row to int.
+	 *
+	 * Every wpdb column comes back as a string, so a row handed straight to
+	 * json_encode ships `"id":"1","post_count":"12"`. A typed client doing
+	 * `post_count > 0` or sorting numerically then gets wrong answers
+	 * (Basecamp 10161324553).
+	 *
+	 * For rows that have a real serializer, use it — this is the fallback for
+	 * shapes that do not (search's reply rows carry joined post/space columns;
+	 * tag rows are flat). Matching is by column-name convention, which is why it
+	 * stays a narrow fallback rather than the general path.
+	 *
+	 * @param array $row Raw row as an associative array.
+	 * @return array
+	 */
+	protected function normalize_row_numerics( array $row ): array {
+		foreach ( $row as $key => $value ) {
+			if ( ! is_string( $value ) || ! is_numeric( $value ) ) {
+				continue;
+			}
+			if ( 'id' === $key
+				|| str_ends_with( $key, '_id' )
+				|| str_ends_with( $key, '_count' )
+				|| str_ends_with( $key, '_score' )
+				|| str_starts_with( $key, 'is_' )
+			) {
+				$row[ $key ] = (int) $value;
+			}
+		}
+		return $row;
+	}
+
+	/**
 	 * Serialize a space row for API output.
 	 *
 	 * Lives here, not on Spaces_Controller, because more than one controller
@@ -628,5 +661,182 @@ abstract class Base_Controller extends WP_REST_Controller {
 		 * @param null   $request WP_REST_Request (null in non-request contexts).
 		 */
 		return apply_filters( 'jetonomy_rest_prepare_space', $data, $space, null );
+	}
+
+	/**
+	 * Serialize a post row for API output.
+	 *
+	 * Promoted here from Posts_Controller in 1.9.1 so /search can emit the same
+	 * shape as /feed and /spaces/{id}/posts instead of casting the raw DB row.
+	 * Raw rows meant string-typed numerics, no _gmt twins and no author
+	 * enrichment, so the same post had two shapes depending on which endpoint
+	 * returned it (Basecamp 10161324553).
+	 *
+	 * Self-contained by design - it calls no $this-> helpers, and falls back to
+	 * per-item author lookup when the row was not batch-enriched.
+	 */
+	protected function prepare_post( object $post ): array {
+		$author_id = (int) ( $post->author_id ?? 0 );
+		$space     = \Jetonomy\Models\Space::find( (int) $post->space_id );
+
+		// Blocked-author tombstone — applied to the ROW, before any field is
+		// read into $data, so every caller of this shape (list, feed, get_item)
+		// is scrubbed by construction rather than by each one remembering to.
+		// blocked_ids() is memoized per request, so this is not an N+1 on lists.
+		\Jetonomy\Models\Post::apply_block_tombstone(
+			$post,
+			\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
+		);
+
+		// Use pre-enriched data if present, otherwise fall back to per-item lookup.
+		// The companions are read with `??` rather than bare property access: only
+		// author_name is isset-guarded, and enrich_with_author() is not the only
+		// thing that can set it, so a partially-enriched row must not fatal.
+		if ( isset( $post->author_name ) ) {
+			$author_name   = $post->author_name;
+			$author_avatar = $post->author_avatar ?? '';
+			$author_login  = $post->author_login ?? '';
+			$trust_level   = $post->trust_level ?? 0;
+			$reputation    = $post->reputation ?? 0;
+			$profile_url   = $post->profile_url ?? '';
+		} else {
+			$author  = $author_id ? get_userdata( $author_id ) : null;
+			$profile = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
+			// Routed through the same seam as everywhere else so a deleted
+			// account (author_id = 0, tombstoned by Privacy::on_user_delete())
+			// reads "[deleted]" here too instead of "Anonymous". $author is
+			// already fetched above — passed through to avoid a second query.
+			$author_name   = \Jetonomy\Author::for_display( $author_id, $post, $author ?: null )['name'] ?: __( 'Anonymous', 'jetonomy' );
+			$author_avatar = $author ? \Jetonomy\Avatar::display_url( $author_id, 64 ) : '';
+			$author_login  = $author ? $author->user_login : '';
+			$trust_level   = $profile ? (int) $profile->trust_level : 0;
+			$reputation    = $profile ? (int) $profile->reputation : 0;
+			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
+		}
+
+		// Anonymous masking — one place, overrides both the enriched batch path
+		// and the per-item lookup above. Real author_id is kept on the row.
+		$display = \Jetonomy\Author::for_display( $author_id, $post );
+		if ( ! empty( $post->is_anonymous ) && 0 === $display['id'] ) {
+			$author_id     = 0;
+			$author_name   = $display['name'];
+			$author_avatar = $display['avatar'];
+			$author_login  = '';
+			$trust_level   = 0;
+			$reputation    = 0;
+			$profile_url   = $display['url'];
+		}
+
+		// Resolve prefix color from space settings.
+		$prefix_name  = $post->prefix ?? null;
+		$prefix_color = null;
+		if ( $prefix_name && $space ) {
+			$space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
+			$prefix_list    = $space_settings['prefixes'] ?? array();
+			foreach ( $prefix_list as $pfx ) {
+				if ( ( $pfx['name'] ?? '' ) === $prefix_name ) {
+					$prefix_color = $pfx['color'] ?? null;
+					break;
+				}
+			}
+		}
+
+		$data = array(
+			'id'                      => (int) $post->id,
+			'space_id'                => (int) $post->space_id,
+			'author_id'               => $author_id,
+			'prefix'                  => $prefix_name,
+			'prefix_color'            => $prefix_color,
+			'title'                   => $post->title ?? '',
+			'slug'                    => $post->slug ?? '',
+			'content'                 => \Jetonomy\Embeds::process( $post->content ?? '' ),
+			'content_plain'           => $post->content_plain ?? '',
+			'type'                    => $post->type ?? 'topic',
+			'status'                  => $post->status ?? 'publish',
+			'is_sticky'               => (bool) ( $post->is_sticky ?? false ),
+			'is_private'              => (bool) ( $post->is_private ?? false ),
+			'is_closed'               => (bool) ( $post->is_closed ?? false ),
+			'is_resolved'             => (bool) ( $post->is_resolved ?? false ),
+			'idea_status'             => isset( $post->idea_status ) && '' !== (string) $post->idea_status ? (string) $post->idea_status : null,
+			'accepted_reply_id'       => $post->accepted_reply_id ? (int) $post->accepted_reply_id : null,
+			'view_count'              => (int) ( $post->view_count ?? 0 ),
+			'reply_count'             => (int) ( $post->reply_count ?? 0 ),
+			'vote_score'              => (int) ( $post->vote_score ?? 0 ),
+			'last_reply_at'           => $post->last_reply_at ?? null,
+			'edited_at'               => $post->edited_at ?? null,
+			'edited_by'               => $post->edited_by ? (int) $post->edited_by : null,
+			'published_at'            => $post->published_at ?? null,
+			'created_at'              => $post->created_at ?? null,
+			'updated_at'              => $post->updated_at ?? null,
+			// Additive UTC ISO-8601 (`Z`) instants for app clients; columns are already UTC.
+			'created_at_gmt'          => \Jetonomy\to_iso8601_z( $post->created_at ?? null ),
+			'updated_at_gmt'          => \Jetonomy\to_iso8601_z( $post->updated_at ?? null ),
+			'last_reply_at_gmt'       => \Jetonomy\to_iso8601_z( $post->last_reply_at ?? null ),
+			'edited_at_gmt'           => \Jetonomy\to_iso8601_z( $post->edited_at ?? null ),
+			'published_at_gmt'        => \Jetonomy\to_iso8601_z( $post->published_at ?? null ),
+			// Enriched author data (for app clients + JS rendering)
+			'author_name'             => $author_name,
+			'author_avatar'           => $author_avatar,
+			'author_login'            => $author_login,
+			'author_last_seen_at'     => $post->author_last_seen_at ?? null,
+			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $post->author_last_seen_at ?? null ),
+			'trust_level'             => $trust_level,
+			'reputation'              => $reputation,
+			'time_ago'                => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'profile_url'             => $profile_url,
+			// Space context
+			'space_title'             => $space ? $space->title : '',
+			'space_slug'              => $space ? $space->slug : '',
+			// Has the VIEWER blocked this post's (real, pre-anonymization) author?
+			// Deep-link / by-ID fetches (get_item()) bypass the list-query SQL
+			// filters entirely, so the client needs this flag to render a
+			// tombstone instead of a 404 — deep links and moderation must still
+			// work. The flag is now advisory ONLY: as of 1.8.0 the title and body
+			// above are already empty when it is true, so a client that ignores
+			// it still cannot show the blocked author's words.
+			'blocked_author'          => ! empty( $post->is_blocked_author ),
+		);
+
+		// Viewer-relative state (additive, 1.6.0). Null-safe for logged-out
+		// callers. When a batch enrich pre-set the values on the row
+		// (enrich_viewer_state, used by list + feed) use them; otherwise fall
+		// back to a per-item lookup for the single get_item path.
+		$uid                   = get_current_user_id();
+		$data['is_bookmarked'] = isset( $post->is_bookmarked )
+			? (bool) $post->is_bookmarked
+			: ( $uid ? \Jetonomy\Models\Bookmark::is_bookmarked( $uid, (int) $post->id ) : false );
+		$data['viewer_vote']   = isset( $post->viewer_vote )
+			? (int) $post->viewer_vote
+			: ( $uid ? (int) ( \Jetonomy\Models\Vote::get_user_vote( $uid, 'post', (int) $post->id ) ?? 0 ) : 0 );
+
+		/**
+		 * Filter the REST response data for a single post.
+		 *
+		 * @param array  $data    Prepared response data.
+		 * @param object $post    Raw post row object.
+		 * @param null   $request WP_REST_Request (null in non-request contexts).
+		 */
+		$data = apply_filters( 'jetonomy_rest_prepare_post', $data, $post, null );
+
+		/**
+		 * Alias filter matching the Pro custom-fields listener contract —
+		 * lets extensions append per-post payload (custom field values, etc.)
+		 * to the API response. Context carries object_type + object_id so
+		 * generic extensions can route on type.
+		 *
+		 * @since 1.4.1
+		 * @param array $data    Prepared response data.
+		 * @param array $context { object_type: 'post', object_id: int }
+		 */
+		$data = apply_filters(
+			'jetonomy_post_response',
+			$data,
+			array(
+				'object_type' => 'post',
+				'object_id'   => (int) $post->id,
+			)
+		);
+
+		return $data;
 	}
 }

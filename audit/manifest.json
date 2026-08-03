@@ -922,15 +922,16 @@
       {
         "route": "/media",
         "methods": [
+          "GET",
           "POST"
         ],
-        "handler": "Media_Controller::upload_image",
+        "handler": "Media_Controller::upload_image,list_items",
         "permission": "REST_Auth::auth_mutation (cap-OR closure)",
         "purpose": "Upload media (image, video, file)",
         "auth": "login_required",
         "capability": "upload_files | jetonomy_upload_media | jetonomy_create_posts | jetonomy_create_replies (ANY)",
         "ownership_check": null,
-        "audit_notes": "Upload media. Capability matrix enforced in the permission_callback (was auth_mutation('read') \u2014 any logged-in user; F13); upload_image() additionally re-checks Restriction::is_banned/is_silenced and returns 403."
+        "audit_notes": "Upload media. Capability matrix enforced in the permission_callback (was auth_mutation('read') \u2014 any logged-in user; F13); upload_image() additionally re-checks Restriction::is_banned/is_silenced and returns 403. 1.9.1: GET was registered in code but missing from this entry; the app calls GET /media (api/media.ts) and the app->plugin parity check flagged it as a broken call. Verified against the live route table (GET,POST)."
       },
       {
         "route": "/auth/login",

@@ -5,15 +5,15 @@
         "version": "1.9.0"
     },
     "generated": {
-        "at": "2026-08-03T20:19:28+00:00",
+        "at": "2026-08-03T20:45:47+00:00",
         "manifest_at": "2026-08-01T00:00:00Z",
         "manifest_branch": "1.8.1-dev"
     },
     "categories": {
         "rest": {
-            "total": 101,
+            "total": 102,
             "covered": 45,
-            "uncovered": 56,
+            "uncovered": 57,
             "skipped": 0,
             "covered_items": [
                 {
@@ -429,6 +429,11 @@
                     "stub_command": "bin/qa-stub-gen.php rest GET \"/oembed\""
                 },
                 {
+                    "method": "GET",
+                    "route": "/media",
+                    "stub_command": "bin/qa-stub-gen.php rest GET \"/media\""
+                },
+                {
                     "method": "POST",
                     "route": "/media",
                     "stub_command": "bin/qa-stub-gen.php rest POST \"/media\""
@@ -806,15 +811,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 173,
+        "items_total": 174,
         "items_covered": 59,
-        "items_uncovered": 114,
+        "items_uncovered": 115,
         "items_skipped": 205,
-        "coverage_percent": 34.100000000000001
+        "coverage_percent": 33.899999999999999
     },
     "drift": {
         "previous_uncovered": 114,
-        "current_uncovered": 114,
-        "delta": 0
+        "current_uncovered": 115,
+        "delta": 1
     }
 }
