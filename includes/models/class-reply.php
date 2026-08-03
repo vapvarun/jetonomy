@@ -317,28 +317,24 @@ class Reply extends Model {
 		// per viewer.
 		$blocked_ids = BlockedUser::blocked_ids( get_current_user_id() );
 
-		// Cursor: prefer id-based over offset when $after is provided.
-		if ( $after > 0 ) {
-			$rows = static::db()->get_results(
-				static::db()->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' AND id > %d ORDER BY {$order_by} LIMIT %d",
-					$post_id,
-					$after,
-					$limit
-				)
-			) ?: array();
-		} else {
-			$rows = static::db()->get_results(
-				static::db()->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' ORDER BY {$order_by} LIMIT %d OFFSET %d",
-					$post_id,
-					$limit,
-					$offset
-				)
-			) ?: array();
-		}
+		// $after is a forward cursor carrying an OFFSET, not a row id.
+		//
+		// The old `id > %d` keyset branch was wrong for every sort but 'oldest':
+		// under `created_at DESC` or `vote_score DESC` an id filter does not follow
+		// the sort, so each next page re-served the head of the thread
+		// (Basecamp 10161324235). Offset matches how has_more/cursor_next are
+		// computed in paginated_response(), so the two can no longer disagree.
+		$offset = $after > 0 ? $after : $offset;
+
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' ORDER BY {$order_by} LIMIT %d OFFSET %d",
+				$post_id,
+				$limit,
+				$offset
+			)
+		) ?: array();
 
 		// Private replies tombstone per-viewer (1.9.0) — one post fetch for the
 		// whole list, then O(1) per row. Same never-row-filter contract as the
@@ -456,7 +452,7 @@ class Reply extends Model {
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
-				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
 				...$params
 			)
 		) ?: array();

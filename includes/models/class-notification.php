@@ -67,7 +67,7 @@ class Notification extends Model {
 	public static function list_for_user( int $user_id, int $limit = 20, int $offset = 0 ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
 				$user_id,
 				$limit,
 				$offset

@@ -66,14 +66,14 @@ class Feed_Controller extends Posts_Controller {
 		$sort       = in_array( $sort, array( 'hot', 'new', 'top' ), true ) ? $sort : 'hot';
 		$limit      = max( 1, min( 50, (int) $pagination['limit'] ) );
 
-		// The global feed is offset-paginated (hot/top/new are not id-ordered, so an
-		// id cursor cannot advance a keyset). `cursor_next` below is therefore the
-		// NEXT OFFSET, and the client sends it back as `after`. Prefer `after`, fall
-		// back to an explicit `offset`. Without this the controller read only offset,
-		// the client only ever sent `after`, so offset stayed 0, every page returned
-		// page 1, and the app looped forever on cursor_next = last post id.
-		$after  = max( 0, (int) $pagination['after'] );
-		$offset = $after > 0 ? $after : max( 0, (int) $pagination['offset'] );
+		// Offset-paginated: hot/top/new are not id-ordered, so an id cursor cannot
+		// advance a keyset. get_pagination() folds the `after` cursor into `offset`
+		// and paginated_response() derives `cursor_next` as the next offset — both
+		// now live in the base controller so every list endpoint shares one
+		// implementation. This controller used to carry its own private copy, which
+		// is exactly why /feed got fixed in 1.9.1 while /users/{id}/posts and
+		// /spaces/{id}/posts stayed broken (Basecamp 10161324385 / 10161324235).
+		$offset = max( 0, (int) $pagination['offset'] );
 
 		$result = Post::list_global_feed(
 			get_current_user_id(),
@@ -89,16 +89,11 @@ class Feed_Controller extends Posts_Controller {
 		$posts = $this->enrich_viewer_state( $posts );
 		$items = array_map( array( $this, 'prepare_post' ), $posts );
 
-		$total       = (int) $result['total'];
-		$next_offset = $offset + count( $items );
-		$response    = $this->paginated_response(
+		$response = $this->paginated_response(
 			$items,
 			array(
-				'total'       => $total,
-				'offset'      => $offset,
-				// Offset cursor, not a post id — null once the feed is exhausted so
-				// the client stops instead of re-requesting the same tail forever.
-				'cursor_next' => $next_offset < $total ? $next_offset : null,
+				'total'  => (int) $result['total'],
+				'offset' => $offset,
 			)
 		);
 

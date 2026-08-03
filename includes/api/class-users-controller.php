@@ -860,10 +860,16 @@ class Users_Controller extends Base_Controller {
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// `p.id DESC` is a tiebreaker, not decoration: created_at is
+				// second-granular and bulk-created posts routinely share one second
+				// (25 of 26 here), so ORDER BY created_at alone lets MySQL return
+				// tied rows in any order. Consecutive pages then repeat some rows
+				// and skip others — this list served id 10 on both page 3 and
+				// page 4 while dropping id 1 entirely (Basecamp 10161324385).
 				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$tbl} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
 				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
-				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
+				 ORDER BY p.created_at DESC, p.id DESC LIMIT %d OFFSET %d",
 				$id,
 				...array_merge( $gate_params, [ $limit, $offset ] )
 			)
@@ -940,26 +946,27 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function prepare_post( object $post ): array {
 		return [
-			'id'                  => (int) $post->id,
-			'space_id'            => (int) $post->space_id,
-			'space_title'         => $post->space_title ?? null,
-			'space_slug'          => $post->space_slug ?? null,
-			'title'               => $post->title ?? '',
-			'slug'                => $post->slug ?? '',
-			'type'                => $post->type ?? 'topic',
-			'status'              => $post->status ?? 'publish',
-			'vote_score'          => (int) ( $post->vote_score ?? 0 ),
-			'reply_count'         => (int) ( $post->reply_count ?? 0 ),
-			'view_count'          => (int) ( $post->view_count ?? 0 ),
-			'created_at'          => $post->created_at ?? null,
+			'id'                      => (int) $post->id,
+			'space_id'                => (int) $post->space_id,
+			'space_title'             => $post->space_title ?? null,
+			'space_slug'              => $post->space_slug ?? null,
+			'title'                   => $post->title ?? '',
+			'slug'                    => $post->slug ?? '',
+			'type'                    => $post->type ?? 'topic',
+			'status'                  => $post->status ?? 'publish',
+			'vote_score'              => (int) ( $post->vote_score ?? 0 ),
+			'reply_count'             => (int) ( $post->reply_count ?? 0 ),
+			'view_count'              => (int) ( $post->view_count ?? 0 ),
+			'created_at'              => $post->created_at ?? null,
 			// Author fields populated by enrich_with_author() above, so profile post
 			// cards match the /feed shape (name + avatar + relative time + space)
 			// instead of rendering a blank "?" row.
-			'author_id'           => (int) ( $post->author_id ?? 0 ),
-			'author_name'         => $post->author_name ?? '',
-			'author_avatar'       => $post->author_avatar ?? '',
-			'author_last_seen_at' => $post->author_last_seen_at ?? null,
-			'time_ago'            => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'author_id'               => (int) ( $post->author_id ?? 0 ),
+			'author_name'             => $post->author_name ?? '',
+			'author_avatar'           => $post->author_avatar ?? '',
+			'author_last_seen_at'     => $post->author_last_seen_at ?? null,
+			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $post->author_last_seen_at ?? null ),
+			'time_ago'                => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 		];
 	}
 

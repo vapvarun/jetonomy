@@ -195,10 +195,23 @@ abstract class Base_Controller extends WP_REST_Controller {
 			);
 		}
 
-		$last_item   = end( $items );
-		$cursor_next = $last_item
-			? ( is_object( $last_item ) ? (int) $last_item->id : (int) ( $last_item['id'] ?? 0 ) )
-			: null;
+		// cursor_next is the NEXT OFFSET, never a row id.
+		//
+		// It used to be the last item's id, which is only meaningful if the query
+		// filters on `id > cursor`. None of our list queries can: they sort by
+		// is_sticky/vote_score/last_reply_at/created_at (and `hot` is computed at
+		// query time and has no column at all), so an id cursor cannot advance a
+		// keyset. Worse, the id filter ran as `id > %d` against a DESC sort — the
+		// filter direction contradicted the sort direction, so every "next page"
+		// returned the top of the list again and the client looped forever
+		// (Basecamp 10161324385 / 10161324235).
+		//
+		// Offset is the only scheme that works uniformly here, so it lives in the
+		// shared helper rather than being re-derived per controller — that
+		// divergence is exactly how /feed ended up fixed while /users/{id}/posts
+		// and /spaces/{id}/posts stayed broken.
+		$offset   = (int) ( $meta['offset'] ?? 0 );
+		$has_more = isset( $meta['total'] ) ? ( $offset + count( $items ) ) < (int) $meta['total'] : false;
 
 		$response = new WP_REST_Response(
 			[
@@ -206,8 +219,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 				'meta' => array_merge(
 					[
 						'count'       => count( $items ),
-						'has_more'    => isset( $meta['total'] ) ? ( ( $meta['offset'] ?? 0 ) + count( $items ) ) < (int) $meta['total'] : false,
-						'cursor_next' => $cursor_next,
+						'has_more'    => $has_more,
+						'cursor_next' => $has_more ? $offset + count( $items ) : null,
 					],
 					$meta
 				),
@@ -225,11 +238,19 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Get pagination params from request (supports cursor + legacy offset).
 	 */
 	protected function get_pagination( WP_REST_Request $request ): array {
+		$after  = (int) ( $request->get_param( 'after' ) ?? 0 );
+		$offset = (int) ( $request->get_param( 'offset' ) ?? 0 );
+
+		// `after` is the forward cursor handed back by paginated_response(), and it
+		// carries an OFFSET (see the note there). Fold it into `offset` here so every
+		// controller gets cursor support for free by reading `offset` alone — several
+		// (e.g. /users/{id}/posts) only ever read `offset`, so a client paginating
+		// with `after` was pinned to page 1 forever. `after` wins when both are sent.
 		return [
 			'limit'  => (int) ( $request->get_param( 'limit' ) ?? 20 ),
-			'offset' => (int) ( $request->get_param( 'offset' ) ?? 0 ),
+			'offset' => $after > 0 ? $after : $offset,
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
-			'after'  => (int) ( $request->get_param( 'after' ) ?? 0 ),
+			'after'  => $after,
 			'before' => (int) ( $request->get_param( 'before' ) ?? 0 ),
 		];
 	}
@@ -318,7 +339,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'after'  => [
 				'type'        => 'integer',
 				'default'     => 0,
-				'description' => 'Return items after this ID (cursor-based pagination)',
+				'description' => 'Forward cursor: send back the `meta.cursor_next` from the previous page. Opaque to clients — treat it as a token, not a row ID.',
 			],
 			'before' => [
 				'type'        => 'integer',
@@ -550,5 +571,62 @@ abstract class Base_Controller extends WP_REST_Controller {
 		}
 
 		return $items;
+	}
+
+	/**
+	 * Serialize a space row for API output.
+	 *
+	 * Lives here, not on Spaces_Controller, because more than one controller
+	 * emits spaces. /search used to return `(array) $row` straight from the DB,
+	 * which meant every numeric came out as a STRING ("id":"1","post_count":"1")
+	 * and internal columns (`settings` as a raw JSON string, `sort_order`,
+	 * `parent_id`) leaked to clients — a typed client doing `post_count > 0` or
+	 * sorting numerically got wrong answers (Basecamp 10161324553). One
+	 * serializer means a space cannot have two different shapes depending on
+	 * which endpoint returned it.
+	 *
+	 * @param object $space Raw space row.
+	 * @return array
+	 */
+	protected function prepare_space( object $space ): array {
+		$data = [
+			'id'               => (int) $space->id,
+			'category_id'      => $space->category_id ? (int) $space->category_id : null,
+			'title'            => $space->title,
+			'slug'             => $space->slug,
+			'description'      => $space->description ?? '',
+			'type'             => $space->type ?? 'forum',
+			'visibility'       => $space->visibility ?? 'public',
+			'join_policy'      => $space->join_policy ?? 'open',
+			'icon'             => $space->icon ?? '',
+			'cover_image'      => $space->cover_image ?? '',
+			'settings'         => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : [],
+			'member_count'     => (int) ( $space->member_count ?? 0 ),
+			'post_count'       => (int) ( $space->post_count ?? 0 ),
+			'sort_order'       => (int) ( $space->sort_order ?? 0 ),
+			'author_id'        => $space->author_id ? (int) $space->author_id : null,
+			'created_at'       => $space->created_at ?? null,
+			'created_at_gmt'   => \Jetonomy\to_iso8601_z( $space->created_at ?? null ),
+			'updated_at'       => $space->updated_at ?? null,
+			'last_activity_at' => $space->last_activity_at ?? null,
+		];
+
+		// Viewer-relative membership context (additive, 1.6.0). All three are
+		// null-safe for logged-out callers and resolve to indexed point
+		// lookups, so the per-row cost on the spaces list (≤ page size) stays
+		// bounded.
+		$uid                   = get_current_user_id();
+		$data['is_member']     = $uid ? \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $uid ) : false;
+		$data['viewer_role']   = $uid ? \Jetonomy\Models\SpaceMember::get_role( (int) $space->id, $uid ) : null;
+		$data['is_subscribed'] = $uid ? \Jetonomy\Models\Subscription::is_subscribed( $uid, 'space', (int) $space->id ) : false;
+
+		/**
+		 * Filter the REST response data for a single space.
+		 *
+		 * @param array  $data    Prepared response data.
+		 * @param object $space   Raw space row object.
+		 * @param null   $request WP_REST_Request (null in non-request contexts).
+		 */
+		return apply_filters( 'jetonomy_rest_prepare_space', $data, $space, null );
 	}
 }

@@ -352,16 +352,17 @@
       {
         "route": "/replies/(?P<id>\\d+)",
         "methods": [
+          "GET",
           "PATCH",
           "DELETE"
         ],
-        "handler": "Replies_Controller::update_item,delete_item",
-        "permission": "REST_Auth::auth_mutation (closure)",
-        "purpose": "Update or delete a reply",
-        "auth": "login_required",
+        "handler": "Replies_Controller::get_item,update_item,delete_item",
+        "permission": "GET: Visibility::rest_check | PATCH/DELETE: REST_Auth::auth_mutation (closure)",
+        "purpose": "Read, update or delete a reply",
+        "auth": "GET: visibility_gated | PATCH/DELETE: login_required",
         "capability": "ownership_or_edit_others",
         "ownership_check": "handler_enforces",
-        "audit_notes": "1.6.0 drift fix: no GET is registered on this route (only PATCH + DELETE) - the stale GET/get_item entry was removed."
+        "audit_notes": "1.9.1: GET/get_item re-registered deliberately. The 1.6.0 note recorded its absence as correct drift-removal, but the absence was itself the bug - a reply notification carries only the reply id, so with no GET the app could not resolve the parent thread and every reply notification was a dead tap (Basecamp 10159720057 / 10161329157). GET returns post_id and is gated on the PARENT post via Permission_Engine::can_read_post. Prior note: \"1.6.0 drift fix: no GET is registered on this route (only PATCH + DELETE) - the stale GET/get_item entry was removed.\""
       },
       {
         "route": "/replies/(?P<id>\\d+)/accept",

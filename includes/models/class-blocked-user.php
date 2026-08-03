@@ -275,7 +275,7 @@ class BlockedUser extends Model {
 	public static function list_by_blocker( int $blocker_id, int $limit = 20, int $offset = 0 ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT blocked_id, created_at FROM ' . static::table() . ' WHERE blocker_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				'SELECT blocked_id, created_at FROM ' . static::table() . ' WHERE blocker_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
 				$blocker_id,
 				$limit,
 				$offset

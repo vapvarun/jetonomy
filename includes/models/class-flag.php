@@ -139,7 +139,7 @@ class Flag extends Model {
 	public static function list_by_status( string $status = 'pending', int $limit = 50, int $offset = 0 ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
 				$status,
 				$limit,
 				$offset
@@ -157,7 +157,7 @@ class Flag extends Model {
 	public static function list_all( int $limit = 50, int $offset = 0 ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				'SELECT * FROM ' . static::table() . ' ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
 				$limit,
 				$offset
 			)

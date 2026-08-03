@@ -305,21 +305,26 @@ class Post extends Model {
 
 		$extra_where = '';
 
+		// Every ORDER BY ends in `id` as a tiebreaker. The leading keys are all
+		// non-unique — 25 of 26 seeded posts shared a single created_at second —
+		// and without a unique final key MySQL may return tied rows in any order,
+		// so consecutive pages of the same list could repeat or skip rows
+		// (Basecamp 10161324235). Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC';
+				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
 				break;
 
 			case 'oldest':
-				$order_by = 'is_sticky DESC, created_at ASC';
+				$order_by = 'is_sticky DESC, created_at ASC, id ASC';
 				break;
 
 			case 'newest':
-				$order_by = 'is_sticky DESC, created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
 				break;
 
 			case 'unanswered':
-				$order_by = 'is_sticky DESC, created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
 				// On Q&A spaces "unanswered" means "no accepted answer yet";
 				// elsewhere it means "no replies yet". The same pill label
 				// covers both because each space type's contract makes the
@@ -332,7 +337,7 @@ class Post extends Model {
 
 			case 'latest':
 			default:
-				$order_by = 'is_sticky DESC, last_reply_at DESC';
+				$order_by = 'is_sticky DESC, last_reply_at DESC, id DESC';
 				break;
 		}
 
@@ -360,18 +365,15 @@ class Post extends Model {
 		$offset      = (int) $args['offset'];
 		$after       = (int) $args['after'];
 
-		// Cursor: prefer id-based over offset when $after is provided.
-		if ( $after > 0 ) {
-			$params  = array( $space_id, $after, $limit );
-			$results = static::db()->get_results(
-				static::db()->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} AND id > %d ORDER BY {$order_by} LIMIT %d",
-					...$params
-				)
-			);
-			return $results ? $results : array();
-		}
+		// $after is a forward cursor carrying an OFFSET, not a row id.
+		//
+		// This used to run `... AND id > %d ORDER BY {$order_by}` as a keyset. That
+		// could never work here: $order_by leads with is_sticky/vote_score/
+		// last_reply_at/created_at, so an id filter does not follow the sort at all,
+		// and `id >` against a DESC sort actively contradicts it — every "next page"
+		// returned the top of the list again and clients looped forever
+		// (Basecamp 10161324235). Offset is the only scheme these sorts support.
+		$offset = $after > 0 ? $after : $offset;
 
 		$results = static::db()->get_results(
 			static::db()->prepare(
@@ -408,21 +410,26 @@ class Post extends Model {
 
 		$extra_where = '';
 
+		// Every ORDER BY ends in `id` as a tiebreaker. The leading keys are all
+		// non-unique — 25 of 26 seeded posts shared a single created_at second —
+		// and without a unique final key MySQL may return tied rows in any order,
+		// so consecutive pages of the same list could repeat or skip rows
+		// (Basecamp 10161324235). Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC';
+				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
 				break;
 
 			case 'oldest':
-				$order_by = 'is_sticky DESC, created_at ASC';
+				$order_by = 'is_sticky DESC, created_at ASC, id ASC';
 				break;
 
 			case 'newest':
-				$order_by = 'is_sticky DESC, created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
 				break;
 
 			case 'unanswered':
-				$order_by = 'is_sticky DESC, created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
 				// On Q&A spaces "unanswered" means "no accepted answer yet";
 				// elsewhere it means "no replies yet". The same pill label
 				// covers both because each space type's contract makes the
@@ -435,7 +442,7 @@ class Post extends Model {
 
 			case 'latest':
 			default:
-				$order_by = 'is_sticky DESC, last_reply_at DESC';
+				$order_by = 'is_sticky DESC, last_reply_at DESC, id DESC';
 				break;
 		}
 
@@ -454,17 +461,9 @@ class Post extends Model {
 			$extra_where .= ' AND ' . $block_sql;
 		}
 
-		if ( $after > 0 ) {
-			$params  = array( $space_id, $after, $limit );
-			$results = static::db()->get_results(
-				static::db()->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} AND id > %d ORDER BY {$order_by} LIMIT %d",
-					...$params
-				)
-			);
-			return $results ? $results : array();
-		}
+		// $after carries an OFFSET, not a row id — see list_by_space() for why the
+		// old `id > %d` keyset could not work against these sorts.
+		$offset = $after > 0 ? $after : $offset;
 
 		$results = static::db()->get_results(
 			static::db()->prepare(
@@ -566,7 +565,7 @@ class Post extends Model {
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
-				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
 				...$params
 			)
 		) ?: array();
@@ -699,7 +698,7 @@ class Post extends Model {
 				"SELECT p.* FROM {$table} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
 				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
-				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
+				 ORDER BY p.created_at DESC, p.id DESC LIMIT %d OFFSET %d",
 				$user_id,
 				...array_merge( $gate_params, array( $limit, $offset ) )
 			)

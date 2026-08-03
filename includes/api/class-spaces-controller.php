@@ -1222,51 +1222,6 @@ class Spaces_Controller extends Base_Controller {
 		);
 	}
 
-	/**
-	 * Format a space object for API output.
-	 */
-	private function prepare_space( object $space ): array {
-		$data = [
-			'id'               => (int) $space->id,
-			'category_id'      => $space->category_id ? (int) $space->category_id : null,
-			'title'            => $space->title,
-			'slug'             => $space->slug,
-			'description'      => $space->description ?? '',
-			'type'             => $space->type ?? 'forum',
-			'visibility'       => $space->visibility ?? 'public',
-			'join_policy'      => $space->join_policy ?? 'open',
-			'icon'             => $space->icon ?? '',
-			'cover_image'      => $space->cover_image ?? '',
-			'settings'         => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : [],
-			'member_count'     => (int) ( $space->member_count ?? 0 ),
-			'post_count'       => (int) ( $space->post_count ?? 0 ),
-			'sort_order'       => (int) ( $space->sort_order ?? 0 ),
-			'author_id'        => $space->author_id ? (int) $space->author_id : null,
-			'created_at'       => $space->created_at ?? null,
-			'updated_at'       => $space->updated_at ?? null,
-			'last_activity_at' => $space->last_activity_at ?? null,
-		];
-
-		// Viewer-relative membership context (additive, 1.6.0). All three are
-		// null-safe for logged-out callers and resolve to indexed point
-		// lookups, so the per-row cost on the spaces list (≤ page size) stays
-		// bounded.
-		$uid                   = get_current_user_id();
-		$data['is_member']     = $uid ? SpaceMember::is_member( (int) $space->id, $uid ) : false;
-		$data['viewer_role']   = $uid ? SpaceMember::get_role( (int) $space->id, $uid ) : null;
-		$data['is_subscribed'] = $uid ? \Jetonomy\Models\Subscription::is_subscribed( $uid, 'space', (int) $space->id ) : false;
-
-		/**
-		 * Filter the REST response data for a single space.
-		 *
-		 * @param array  $data    Prepared response data.
-		 * @param object $space   Raw space row object.
-		 * @param null   $request WP_REST_Request (null in non-request contexts).
-		 */
-		$data = apply_filters( 'jetonomy_rest_prepare_space', $data, $space, null );
-
-		return $data;
-	}
 
 	/**
 	 * Format a space member row for API output.
