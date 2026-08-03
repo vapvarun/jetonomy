@@ -2,17 +2,17 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.8.1"
+        "version": "1.9.0"
     },
     "generated": {
-        "at": "2026-08-01T05:42:29+00:00",
+        "at": "2026-08-03T20:19:28+00:00",
         "manifest_at": "2026-08-01T00:00:00Z",
         "manifest_branch": "1.8.1-dev"
     },
     "categories": {
         "rest": {
-            "total": 100,
-            "covered": 44,
+            "total": 101,
+            "covered": 45,
             "uncovered": 56,
             "skipped": 0,
             "covered_items": [
@@ -91,6 +91,10 @@
                 {
                     "method": "POST",
                     "route": "/posts/(?P<post_id>\\d+)/replies"
+                },
+                {
+                    "method": "GET",
+                    "route": "/replies/(?P<id>\\d+)"
                 },
                 {
                     "method": "PATCH",
@@ -802,15 +806,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 172,
-        "items_covered": 58,
+        "items_total": 173,
+        "items_covered": 59,
         "items_uncovered": 114,
         "items_skipped": 205,
-        "coverage_percent": 33.700000000000003
+        "coverage_percent": 34.100000000000001
     },
     "drift": {
-        "previous_uncovered": 115,
+        "previous_uncovered": 114,
         "current_uncovered": 114,
-        "delta": -1
+        "delta": 0
     }
 }
