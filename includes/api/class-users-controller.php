@@ -199,16 +199,16 @@ class Users_Controller extends Base_Controller {
 			$rtype   = $restrictions[ $uid ] ?? null;
 
 			$items[] = array(
-				'id'          => $uid,
+				'id'           => $uid,
 				'display_name' => $user->display_name,
-				'user_login'  => $user->user_login,
-				'avatar_url'  => \Jetonomy\Avatar::display_url( $uid, 64 ),
-				'trust_level' => $profile ? (int) $profile->trust_level : 0,
-				'reputation'  => $profile ? (int) $profile->reputation : 0,
+				'user_login'   => $user->user_login,
+				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 64 ),
+				'trust_level'  => $profile ? (int) $profile->trust_level : 0,
+				'reputation'   => $profile ? (int) $profile->reputation : 0,
 				// Most-severe active restriction, or null. is_banned is the strong
 				// (global) case the app badges most prominently.
-				'restriction' => $rtype,
-				'is_banned'   => 'global_ban' === $rtype,
+				'restriction'  => $rtype,
+				'is_banned'    => 'global_ban' === $rtype,
 			);
 		}
 
@@ -860,7 +860,7 @@ class Users_Controller extends Base_Controller {
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.* FROM {$tbl} p
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$tbl} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
 				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
 				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
@@ -881,6 +881,10 @@ class Users_Controller extends Base_Controller {
 			)
 		);
 
+		// Match the feed's batch author enrichment (base controller) so profile post
+		// cards render the author avatar/name instead of a blank "?" row — the same
+		// prepared shape /feed returns, not the minimal columns this route used to.
+		$posts = $this->enrich_with_author( $posts, 'author_id' );
 		$items = array_map( [ $this, 'prepare_post' ], $posts );
 
 		return $this->paginated_response(
@@ -936,16 +940,25 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function prepare_post( object $post ): array {
 		return [
-			'id'          => (int) $post->id,
-			'space_id'    => (int) $post->space_id,
-			'title'       => $post->title ?? '',
-			'slug'        => $post->slug ?? '',
-			'type'        => $post->type ?? 'topic',
-			'status'      => $post->status ?? 'publish',
-			'vote_score'  => (int) ( $post->vote_score ?? 0 ),
-			'reply_count' => (int) ( $post->reply_count ?? 0 ),
-			'view_count'  => (int) ( $post->view_count ?? 0 ),
-			'created_at'  => $post->created_at ?? null,
+			'id'            => (int) $post->id,
+			'space_id'      => (int) $post->space_id,
+			'space_title'   => $post->space_title ?? null,
+			'space_slug'    => $post->space_slug ?? null,
+			'title'         => $post->title ?? '',
+			'slug'          => $post->slug ?? '',
+			'type'          => $post->type ?? 'topic',
+			'status'        => $post->status ?? 'publish',
+			'vote_score'    => (int) ( $post->vote_score ?? 0 ),
+			'reply_count'   => (int) ( $post->reply_count ?? 0 ),
+			'view_count'    => (int) ( $post->view_count ?? 0 ),
+			'created_at'    => $post->created_at ?? null,
+			// Author fields populated by enrich_with_author() above, so profile post
+			// cards match the /feed shape (name + avatar + relative time + space)
+			// instead of rendering a blank "?" row.
+			'author_id'     => (int) ( $post->author_id ?? 0 ),
+			'author_name'   => $post->author_name ?? '',
+			'author_avatar' => $post->author_avatar ?? '',
+			'time_ago'      => $post->created_at ? human_time_diff( strtotime( $post->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 		];
 	}
 

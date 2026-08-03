@@ -65,7 +65,15 @@ class Feed_Controller extends Posts_Controller {
 		$sort       = sanitize_key( (string) $request->get_param( 'sort' ) );
 		$sort       = in_array( $sort, array( 'hot', 'new', 'top' ), true ) ? $sort : 'hot';
 		$limit      = max( 1, min( 50, (int) $pagination['limit'] ) );
-		$offset     = max( 0, (int) $pagination['offset'] );
+
+		// The global feed is offset-paginated (hot/top/new are not id-ordered, so an
+		// id cursor cannot advance a keyset). `cursor_next` below is therefore the
+		// NEXT OFFSET, and the client sends it back as `after`. Prefer `after`, fall
+		// back to an explicit `offset`. Without this the controller read only offset,
+		// the client only ever sent `after`, so offset stayed 0, every page returned
+		// page 1, and the app looped forever on cursor_next = last post id.
+		$after  = max( 0, (int) $pagination['after'] );
+		$offset = $after > 0 ? $after : max( 0, (int) $pagination['offset'] );
 
 		$result = Post::list_global_feed(
 			get_current_user_id(),
@@ -81,11 +89,16 @@ class Feed_Controller extends Posts_Controller {
 		$posts = $this->enrich_viewer_state( $posts );
 		$items = array_map( array( $this, 'prepare_post' ), $posts );
 
-		$response = $this->paginated_response(
+		$total       = (int) $result['total'];
+		$next_offset = $offset + count( $items );
+		$response    = $this->paginated_response(
 			$items,
 			array(
-				'total'  => (int) $result['total'],
-				'offset' => $offset,
+				'total'       => $total,
+				'offset'      => $offset,
+				// Offset cursor, not a post id — null once the feed is exhausted so
+				// the client stops instead of re-requesting the same tail forever.
+				'cursor_next' => $next_offset < $total ? $next_offset : null,
 			)
 		);
 
