@@ -288,9 +288,15 @@ Sell access to a space with a membership plan, and be told which plan opens it. 
 * Fix      - Activity Log and Revisions rows identify themselves on a phone rather than showing only a date or a type.
 * Fix      - Roadmap columns no longer use the same colour for Planned and In Progress.
 * Fix      - The "Read the full guide" link on the Users screen resolves.
+* Fix      - Filled buttons rendered black text on ordinary brand colours, so New Topic, New Post and Join read wrong on a plain blue. The auto-contrast threshold moved to 0.7, and white now stays on every normal brand blue, green, purple and red.
+* Fix      - Actions in a space header could not share a row with the owner's Edit space button, so each one dropped onto a line of its own. The header is a wrapping row now, centred on mobile.
 * Security - An access rule could grant more than it advertised: a rule set to "Read" could record people as space admins, and running Sync Members then gave them moderation powers, including deleting other people's posts. The role a rule assigns is now capped by what the rule allows, and a membership rule can never make somebody a moderator. Rules already saved on your site are covered; no action is needed.
 * Dev      - New filters: jetonomy_compose_label (the create verb per space type) and jetonomy_membership_upgrade_url (where a plan is bought). Membership adapters may implement get_level_url() to link a plan directly.
 * Dev      - New filters for app connection: jetonomy_app_connect_schemes (which app URL schemes may receive a credential) and jetonomy_app_connect_bridge (which plugin owns the connect screen when several are installed). Add a scheme only for an app you ship, never a wildcard.
+* Dev      - New AccessRule::spaces_for_level() answers which spaces a membership level opens, replacing thirteen hand-written copies of the same query living inside individual adapters.
+* Dev      - New AccessRule::member_spaces_for_level_prefix() lists the gated spaces one member can reach, for products that want to surface them in their own account area.
+* Dev      - New space_permalink() builds a space URL, so an integration in another plugin stops composing the path by hand.
+* Dev      - New index rule_lookup (rule_type, rule_value) on jt_access_rules, because both lookups above were full table scans and now run on page views rather than only during provisioning. Schema milestone 1.9.1 covers sites already on 1.9.0; fresh installs get the index from CREATE TABLE.
 * Compat   - Removed a finfo_close() call that PHP 8.4 deprecates, so upload checks no longer emit a notice on 8.4.
 
 = 1.8.0 - July 2026 =
