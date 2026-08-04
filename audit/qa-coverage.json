@@ -5,7 +5,7 @@
         "version": "1.9.0"
     },
     "generated": {
-        "at": "2026-08-03T20:50:23+00:00",
+        "at": "2026-08-04T10:48:22+00:00",
         "manifest_at": "2026-08-01T00:00:00Z",
         "manifest_branch": "1.8.1-dev"
     },
@@ -817,8 +817,8 @@
         "coverage_percent": 34.5
     },
     "drift": {
-        "previous_uncovered": 115,
+        "previous_uncovered": 117,
         "current_uncovered": 114,
-        "delta": -1
+        "delta": -3
     }
 }

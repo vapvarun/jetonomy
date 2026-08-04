@@ -348,6 +348,26 @@ class REST_Tests {
 		$this->check( 'B9: PATCH /replies/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'B9: response has id', isset( $data['id'] ), 'response missing id' );
 
+		// 14–16. Single-item detail reads on the fixtures Group A/B created.
+		// These endpoints previously had no direct test — they were marked
+		// covered only by a stem-match against Pro extension tests, which
+		// moved to the Pro repo (Basecamp 10161768864).
+		$r    = $this->rest( 'GET', "/posts/{$this->post_id}" );
+		$data = $r->get_data();
+		$this->check( 'B14: GET /posts/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'B14: response id matches fixture', (int) ( $data['id'] ?? 0 ) === $this->post_id, 'id mismatch' );
+		$this->check( 'B14: response has title + space_id', isset( $data['title'], $data['space_id'] ), 'missing title/space_id' );
+
+		$r    = $this->rest( 'GET', "/replies/{$this->reply_id}" );
+		$data = $r->get_data();
+		$this->check( 'B15: GET /replies/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'B15: response id matches fixture', (int) ( $data['id'] ?? 0 ) === $this->reply_id, 'id mismatch' );
+
+		$r    = $this->rest( 'GET', "/users/{$this->admin_id}" );
+		$data = $r->get_data();
+		$this->check( 'B16: GET /users/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'B16: response has display_name + post_count', isset( $data['display_name'], $data['post_count'] ), 'missing display_name/post_count' );
+
 		// 10. Accept reply as answer. Accepted answers are a Q&A-only workflow —
 		// accept_reply() returns 400 on forum/discussion spaces by design, and the
 		// shared fixture space is a discussion space. Stand up a dedicated Q&A
