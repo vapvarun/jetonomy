@@ -494,26 +494,89 @@ class Reply extends Model {
 	 * @return array Threaded reply tree.
 	 */
 	public static function get_threaded( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = 0, int $offset = 0 ): array {
-		// Fetch ALL replies for this post (we need full tree to build hierarchy).
-		//
-		// `id ASC` is a required tiebreak, not decoration: page_of() breaks
-		// created_at ties on id, and if this query left ties to MySQL's
-		// undefined ordering the two could disagree and land a deep link on
-		// the wrong page. Ties are not hypothetical — bulk imports (bbPress,
-		// wpForo) routinely write a whole thread with one timestamp.
-		$all = static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT * FROM ' . static::table() . " WHERE post_id = %d AND status = 'publish' ORDER BY created_at ASC, id ASC",
-				$post_id
-			)
-		);
+		// SQL-side pagination (caching plan WP1.1). The old shape fetched the
+		// WHOLE thread — every reply row incl. longtext bodies — into PHP and
+		// array_slice()d the top level, so a 500-reply topic transferred all
+		// 500 bodies to render 30. Now: one bounded top-level page, then the
+		// page's descendants level by level. Behavior contracts preserved:
+		// - DEFAULT_SORT ordering stays byte-identical to page_of()'s
+		// correlated COUNT (created_at ASC, id ASC) — the deep-link
+		// contract the journey test asserts, incl. tied created_at.
+		// - 'newest'/'best' carry explicit id tiebreaks; without them a
+		// LIMIT/OFFSET repeats or skips tied rows between pages (the
+		// Basecamp 10161324235 bug class). Note 'best' pages can shift
+		// as votes land mid-pagination — the old whole-thread snapshot
+		// couldn't; accepted and documented in the plan.
+		// - Children always render oldest-first regardless of top sort
+		// (the old flat query's order), and orphans (rows whose parent
+		// is pending/trashed/deleted) stay dropped — the level walk
+		// never reaches them, exactly like the old 0-rooted tree walk.
+		$order_by = 'created_at ASC, id ASC';
+		if ( 'newest' === $sort ) {
+			$order_by = 'created_at DESC, id DESC';
+		} elseif ( 'best' === $sort ) {
+			$order_by = 'vote_score DESC, created_at ASC, id ASC';
+		}
 
-		if ( empty( $all ) ) {
+		$top_sql = 'SELECT * FROM ' . static::table()
+			. " WHERE post_id = %d AND status = 'publish' AND ( parent_id IS NULL OR parent_id = 0 )"
+			. " ORDER BY {$order_by}";
+		$params  = array( $post_id );
+		if ( $limit > 0 ) {
+			$top_sql .= ' LIMIT %d OFFSET %d';
+			$params[] = $limit;
+			$params[] = max( 0, $offset );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$top = static::db()->get_results( static::db()->prepare( $top_sql, $params ) ) ?: array();
+
+		if ( empty( $top ) ) {
 			return array();
 		}
 
-		// Build tree: group by parent_id.
+		// Descendants of THIS page's top-level rows, one query per depth
+		// level. Nesting is unbounded in the data model (the depth cap only
+		// caps the CSS label), so a single parent_id IN (top ids) fetch would
+		// silently drop grandchildren — the level loop walks until a level
+		// comes back empty. post_id stays in the predicate so the
+		// post_created index serves it (jt_replies has no parent_id index).
+		// Termination is guaranteed by the seen-id dedupe below: every level
+		// holds only never-before-seen ids and the row set is finite, so even
+		// corrupt cyclic parent_id data cannot loop.
+		$all       = $top;
+		$level_ids = array_map( static fn( $r ) => (int) $r->id, $top );
+		$seen_ids  = array_flip( $level_ids );
+
+		while ( ! empty( $level_ids ) ) {
+			$placeholders = implode( ',', array_fill( 0, count( $level_ids ), '%d' ) );
+			// Children always oldest-first — matches the old flat query's
+			// created_at ASC, id ASC order that build_tree() consumed.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$children = static::db()->get_results(
+				static::db()->prepare(
+					'SELECT * FROM ' . static::table()
+						. " WHERE post_id = %d AND status = 'publish' AND parent_id IN ({$placeholders})"
+						. ' ORDER BY created_at ASC, id ASC',
+					array_merge( array( $post_id ), $level_ids )
+				)
+			) ?: array();
+
+			$level_ids = array();
+			foreach ( $children as $child ) {
+				$cid = (int) $child->id;
+				if ( isset( $seen_ids[ $cid ] ) ) {
+					continue; // Corrupt self/cyclic parent_id — never re-walk.
+				}
+				$seen_ids[ $cid ] = true;
+				$all[]            = $child;
+				$level_ids[]      = $cid;
+			}
+		}
+
+		// Build tree: group by parent_id. Top-level rows land in $by_parent[0]
+		// in SQL order, so build_tree() emits the final ordering directly —
+		// no post-sort, no post-slice.
 		$by_parent = array();
 		foreach ( $all as $reply ) {
 			$pid                 = (int) ( $reply->parent_id ?? 0 );
@@ -535,22 +598,8 @@ class Reply extends Model {
 			}
 		}
 
-		// Recursively attach children (max 3 levels).
-		$tree = self::build_tree( $by_parent, 0, 0, 3, $blocked_ids );
-
-		// Sort top-level based on sort param.
-		if ( 'newest' === $sort ) {
-			$tree = array_reverse( $tree );
-		} elseif ( 'best' === $sort ) {
-			usort( $tree, fn( $a, $b ) => (int) $b->vote_score - (int) $a->vote_score );
-		}
-
-		// Apply offset/limit to top-level replies only.
-		if ( $limit > 0 ) {
-			$tree = array_slice( $tree, $offset, $limit );
-		}
-
-		return $tree;
+		// Recursively attach children (depth label capped at 3).
+		return self::build_tree( $by_parent, 0, 0, 3, $blocked_ids );
 	}
 
 	/**
