@@ -55,6 +55,9 @@ class Space extends Model {
 		// The decoded-settings memo sits above the row cache — clear it with
 		// the row or merge_settings()'s read-modify-write reads stale (WP2.6).
 		unset( self::$settings_memo[ $id ] );
+		// The category tree holds row COPIES (title, visibility, counts) —
+		// a rename/visibility change must go cold with the row (WP4.4).
+		self::bump_tree_generation();
 		// Visibility / join-policy / settings changes alter permission
 		// verdicts — clear the request-scope verdict memo (WP0.1).
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
@@ -159,6 +162,9 @@ class Space extends Model {
 		if ( ! empty( $data['slug'] ) ) {
 			Cache::delete( 'space:slug:' . (string) $data['slug'] );
 		}
+
+		// A new space must appear in the cached category tree (WP4.4).
+		self::bump_tree_generation();
 
 		if ( ! empty( $data['category_id'] ) ) {
 			Category::increment_space_count( (int) $data['category_id'] );
@@ -351,6 +357,81 @@ class Space extends Model {
 	 * @param int|null $user_id     Viewer ID; null = current user.
 	 * @return object[]
 	 */
+	/**
+	 * ALL top-level spaces visible to the viewer, grouped by category_id in
+	 * ONE query (plan WP3.9). Key 0 collects uncategorized spaces. Replaces
+	 * the per-category list_by_category()/list_visible() loops on the home
+	 * page, the navigation block (which also ran a discarded COUNT per
+	 * category) and GET /categories.
+	 *
+	 * Cached 600s per viewer bucket via a generation key (plan WP4.4):
+	 * guest and admin are shared classes, every other viewer gets a
+	 * per-user key (the membership subquery binds their id). The key
+	 * embeds cat_tree_gen, bumped by bump_tree_generation() from
+	 * Space::bust_cache()/create() and the Category admin CRUD — a space
+	 * rename busts space:{id} but this tree holds row COPIES, so without
+	 * the bump it would keep serving the old name. Caching is SKIPPED
+	 * entirely when a third party filters
+	 * jetonomy_space_listing_visibility_sql — the bucket cannot model an
+	 * arbitrary predicate (safety review, WP4.4).
+	 *
+	 * @param int|null $user_id Viewer ID; null = current user.
+	 * @return array<int, object[]> category_id => space rows (sort_order, title).
+	 */
+	public static function visible_by_category( ?int $user_id = null ): array {
+		$user_id   = $user_id ?? get_current_user_id();
+		$cacheable = ! has_filter( 'jetonomy_space_listing_visibility_sql' );
+
+		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
+
+		$key = '';
+		if ( $cacheable ) {
+			$bucket = 'guest';
+			if ( $user_id > 0 ) {
+				$bucket = ( '1=1' === $vis_where ) ? 'admin' : "u{$user_id}";
+			}
+			$gen = (int) Cache::get( 'cat_tree_gen' );
+			$key = "cat_tree:{$gen}:{$bucket}";
+
+			$cached = Cache::get( $key );
+			if ( is_array( $cached ) ) {
+				return $cached;
+			}
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
+		$sql  = 'SELECT * FROM ' . static::table() . " WHERE (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$rows = empty( $vis_values )
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			? static::db()->get_results( $sql )
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			: static::db()->get_results( static::db()->prepare( $sql, ...$vis_values ) );
+
+		$grouped = array();
+		foreach ( $rows ?: array() as $row ) {
+			$grouped[ (int) ( $row->category_id ?? 0 ) ][] = $row;
+		}
+
+		if ( $cacheable ) {
+			Cache::set( $key, $grouped, 600 );
+		}
+
+		return $grouped;
+	}
+
+	/**
+	 * Bump the tree generation so every cat_tree:{gen}:{bucket} key goes
+	 * cold (plan WP4.4) — the per-user bucket set is unenumerable, so a
+	 * generation bump is the sanctioned versioned-key invalidation. A
+	 * missing/evicted gen re-seeds at 1; a lingering old key under a reused
+	 * gen is bounded by the 600s data TTL (documented, same worst case as
+	 * TTL-only).
+	 */
+	public static function bump_tree_generation(): void {
+		$gen = (int) Cache::get( 'cat_tree_gen' );
+		Cache::set( 'cat_tree_gen', $gen + 1, 0 );
+	}
+
 	public static function list_by_category( int $category_id, ?int $user_id = null ): array {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 

@@ -70,15 +70,33 @@ class Categories_Controller extends Base_Controller {
 
 	/**
 	 * GET /categories — List all top-level categories with nested children.
+	 *
+	 * Batched (plan WP3.9): the old shape ran one Space::list_by_category
+	 * per top-level category plus one Category::list_children per NODE of
+	 * the tree, unbounded depth — the community landing page's endpoint at
+	 * 30-50 queries. Now: one categories fetch grouped by parent_id (the
+	 * recursion walks PHP arrays) + the shared, tree-cached space grouping.
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response {
-		$top_level = Category::list_top_level();
-		$items     = [];
+		global $wpdb;
 
-		foreach ( $top_level as $category ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$all_categories = $wpdb->get_results(
+			'SELECT * FROM ' . \Jetonomy\table( 'categories' ) . ' ORDER BY sort_order ASC, name ASC'
+		) ?: [];
+
+		$by_parent = [];
+		foreach ( $all_categories as $cat ) {
+			$by_parent[ (int) ( $cat->parent_id ?? 0 ) ][] = $cat;
+		}
+
+		$spaces_by_cat = Space::visible_by_category();
+
+		$items = [];
+		foreach ( $by_parent[0] ?? [] as $category ) {
 			$item             = $this->prepare_category( $category );
-			$item['spaces']   = Space::list_by_category( (int) $category->id );
-			$item['children'] = $this->get_nested_children( (int) $category->id );
+			$item['spaces']   = $spaces_by_cat[ (int) $category->id ] ?? [];
+			$item['children'] = $this->build_children( $by_parent, (int) $category->id );
 			$items[]          = $item;
 		}
 
@@ -86,15 +104,25 @@ class Categories_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Recursively fetch and format child categories.
+	 * Recursively format child categories from the pre-grouped map — no
+	 * queries inside the recursion (plan WP3.9). The seen-guard makes a
+	 * corrupt cyclic parent_id terminate instead of recursing forever.
+	 *
+	 * @param array<int, object[]> $by_parent Categories grouped by parent_id.
+	 * @param int                  $parent_id Current parent.
+	 * @param array<int, true>     $seen      Visited category ids.
 	 */
-	private function get_nested_children( int $parent_id ): array {
-		$children = Category::list_children( $parent_id );
-		$result   = [];
+	private function build_children( array $by_parent, int $parent_id, array $seen = [] ): array {
+		$result = [];
 
-		foreach ( $children as $child ) {
+		foreach ( $by_parent[ $parent_id ] ?? [] as $child ) {
+			$cid = (int) $child->id;
+			if ( isset( $seen[ $cid ] ) ) {
+				continue;
+			}
+			$seen[ $cid ]     = true;
 			$item             = $this->prepare_category( $child );
-			$item['children'] = $this->get_nested_children( (int) $child->id );
+			$item['children'] = $this->build_children( $by_parent, $cid, $seen );
 			$result[]         = $item;
 		}
 

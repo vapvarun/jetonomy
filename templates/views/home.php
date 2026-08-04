@@ -148,8 +148,13 @@ if ( ! is_user_logged_in() ) :
 				);
 				?>
 			<?php else : ?>
+				<?php
+				// One grouped query (+ the WP4.4 tree cache) for every
+				// category section instead of one query per category (WP3.9).
+				$jt_spaces_by_cat = \Jetonomy\Models\Space::visible_by_category();
+				?>
 				<?php foreach ( $categories as $category ) : ?>
-					<?php $spaces = \Jetonomy\Models\Space::list_by_category( (int) $category->id ); ?>
+					<?php $spaces = $jt_spaces_by_cat[ (int) $category->id ] ?? []; ?>
 					<section class="jt-mb-md">
 						<div class="jt-cat-row">
 							<?php if ( ! empty( $category->icon ) ) : ?>

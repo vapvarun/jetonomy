@@ -83,11 +83,22 @@ if ( ! empty( $space ) && isset( $space->id ) ) {
 // Top members by reputation. Deliberately NOT block-filtered — this is a
 // ranking/leaderboard, not a content feed; per-viewer filtering would
 // re-rank the board and leak "you blocked someone" via rank gaps.
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$leaders = $wpdb->get_results(
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT 5"
-) ?: [];
+//
+// Cached 600s under ONE global key (plan WP4.2) — zero viewer variance,
+// runs on 100% of page views, and the bare ORDER BY reputation filesorts.
+// TTL-only by design: a 10-minute-stale Top Members widget is invisible,
+// and busting on every reputation write would defeat the point.
+$leaders = \Jetonomy\Cache::remember(
+	'sidebar:leaders',
+	static function () use ( $wpdb, $profiles_tbl ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT 5"
+		) ?: [];
+	},
+	600
+);
 
 // Warm the profile cache for the Top Members widget in one query so the avatar
 // partial below does not fire a per-row SELECT on a cold cache.
@@ -95,8 +106,16 @@ if ( ! empty( $leaders ) ) {
 	\Jetonomy\Models\UserProfile::prime( array_map( static fn( $r ) => (int) $r->user_id, $leaders ) );
 }
 
-// Popular tags.
-$popular_tags = \Jetonomy\Models\Tag::list_popular( 15 );
+// Popular tags. Cached 900s under one global key (plan WP4.3) — fully
+// shared, ordered by post_count (indexed since 1.9.2), moves only on
+// post publish. TTL-only: staleness is invisible on a tag cloud.
+$popular_tags = \Jetonomy\Cache::remember(
+	'tags:popular:15',
+	static function () {
+		return \Jetonomy\Models\Tag::list_popular( 15 );
+	},
+	900
+);
 
 // When BuddyNext is active, use its sidebar card skeleton so all sidebar
 // widgets across BuddyNext, Jetonomy, and WPMediaVerse look identical.

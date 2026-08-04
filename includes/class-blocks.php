@@ -560,6 +560,15 @@ class Blocks {
 
 		$categories = Category::list_top_level();
 
+		// One grouped, tree-cached query for the whole block (plan
+		// WP3.9/4.4) — this ran a list_visible() PER CATEGORY, each of
+		// which also ran a COUNT this block never read (2N+2 queries).
+		// Same visibility predicate as before (both paths resolve to
+		// listing_visibility_sql). The active-space highlight is applied
+		// per render below, AFTER the cache — the cache holds space DATA,
+		// never per-page HTML (safety review, WP4.4).
+		$spaces_by_cat = Space::visible_by_category( $user_id );
+
 		$sections = array();
 
 		foreach ( $categories as $category ) {
@@ -567,11 +576,8 @@ class Blocks {
 			if ( ! $category_id ) {
 				continue;
 			}
-			// list_visible() already filters by viewer permissions (public
-			// for guests, public + membership for members, all for admins).
-			// per_page capped to 200 so a single category can't run away.
-			$result = Space::list_visible( $user_id, $category_id, null, null, 200, 0 );
-			$spaces = $result['spaces'];
+			// Same per-category runaway cap the old list_visible carried.
+			$spaces = array_slice( $spaces_by_cat[ $category_id ] ?? array(), 0, 200 );
 			if ( $hide_empty && empty( $spaces ) ) {
 				continue;
 			}
@@ -602,15 +608,13 @@ class Blocks {
 
 		// "Uncategorized" bucket — any spaces with category_id = 0 that the
 		// viewer can see. Renders last, un-headed, so site owners who
-		// don't use categories still get a flat tree.
-		$orphan_result = Space::list_visible( $user_id, null, null, null, 200, 0 );
-		$orphans       = $orphan_result['spaces'];
+		// don't use categories still get a flat tree. Group 0 of the same
+		// grouped fetch — the old shape ran ANOTHER full list_visible just
+		// to filter it down to category_id = 0 in PHP.
+		$orphans = array_slice( $spaces_by_cat[0] ?? array(), 0, 200 );
 		if ( ! empty( $orphans ) ) {
 			$orphan_items = '';
 			foreach ( $orphans as $space ) {
-				if ( (int) ( $space->category_id ?? 0 ) !== 0 ) {
-					continue;
-				}
 				$orphan_items .= self::render_space_item( $space, $active_slug, $show_count );
 			}
 			if ( '' !== $orphan_items ) {
