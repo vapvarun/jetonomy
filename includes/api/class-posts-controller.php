@@ -316,42 +316,6 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Seed viewer-relative state (is_bookmarked, viewer_vote) onto a list of
-	 * post rows in two batched queries, so prepare_post() can read the
-	 * pre-resolved value instead of running a per-row lookup (N+1).
-	 *
-	 * No-op for logged-out callers — prepare_post() then falls back to the
-	 * safe defaults (false / 0). Shared by the space-scoped list and the
-	 * global feed (item 2).
-	 *
-	 * @since 1.6.0
-	 * @param object[] $posts Post row objects (mutated in place).
-	 * @return object[] The same array with viewer_vote + is_bookmarked set.
-	 */
-	protected function enrich_viewer_state( array $posts ): array {
-		$uid = get_current_user_id();
-		if ( ! $uid || empty( $posts ) ) {
-			return $posts;
-		}
-
-		$ids = array_map( static fn( $p ) => (int) $p->id, $posts );
-
-		$bookmarked = array_fill_keys(
-			\Jetonomy\Models\Bookmark::bookmarked_ids( $uid, $ids ),
-			true
-		);
-		$votes      = \Jetonomy\Models\Vote::user_votes_map( $uid, 'post', $ids );
-
-		foreach ( $posts as $post ) {
-			$pid                 = (int) $post->id;
-			$post->is_bookmarked = isset( $bookmarked[ $pid ] );
-			$post->viewer_vote   = isset( $votes[ $pid ] ) ? (int) $votes[ $pid ] : 0;
-		}
-
-		return $posts;
-	}
-
-	/**
 	 * GET /posts/{id} — Retrieve a single post.
 	 */
 	public function get_item( $request ) {

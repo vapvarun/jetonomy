@@ -506,6 +506,55 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * Seed viewer-relative state (is_bookmarked, viewer_vote) onto a list of
+	 * POST rows in two batched queries, so prepare_post() can read the
+	 * pre-resolved value instead of running a per-row lookup (N+1).
+	 *
+	 * Lives on the base class (moved from Posts_Controller, plan WP3.4) so
+	 * the search and user-posts lists can batch too. TYPE-GATED to post
+	 * rows: the vote map is keyed object_type='post', and search's reply/
+	 * space rows carry their own `id` column — enriching those would pin a
+	 * false "you voted" state onto any reply whose id collides with a post
+	 * id the viewer voted on (safety review, WP3.4). Rows without space_id
+	 * are not post rows; bail rather than mislabel.
+	 *
+	 * No-op for logged-out callers — prepare_post() then falls back to the
+	 * safe defaults (false / 0).
+	 *
+	 * @since 1.6.0
+	 * @param object[] $posts Post row objects (mutated in place).
+	 * @return object[] The same array with viewer_vote + is_bookmarked set.
+	 */
+	protected function enrich_viewer_state( array $posts ): array {
+		$uid = get_current_user_id();
+		if ( ! $uid || empty( $posts ) ) {
+			return $posts;
+		}
+
+		foreach ( $posts as $p ) {
+			if ( ! is_object( $p ) || ! property_exists( $p, 'space_id' ) ) {
+				return $posts;
+			}
+		}
+
+		$ids = array_map( static fn( $p ) => (int) $p->id, $posts );
+
+		$bookmarked = array_fill_keys(
+			\Jetonomy\Models\Bookmark::bookmarked_ids( $uid, $ids ),
+			true
+		);
+		$votes      = \Jetonomy\Models\Vote::user_votes_map( $uid, 'post', $ids );
+
+		foreach ( $posts as $post ) {
+			$pid                 = (int) $post->id;
+			$post->is_bookmarked = isset( $bookmarked[ $pid ] );
+			$post->viewer_vote   = isset( $votes[ $pid ] ) ? (int) $votes[ $pid ] : 0;
+		}
+
+		return $posts;
+	}
+
+	/**
 	 * Enrich a list of post/reply objects with author data in a single batch.
 	 *
 	 * Skips enrichment if the data already exists on the object (e.g., previously

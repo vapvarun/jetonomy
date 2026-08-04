@@ -41,6 +41,10 @@ class Subscription extends Model {
 			)
 		);
 
+		// A toggle mid-request must be visible to the next is_subscribed()
+		// in the same process (WP3.8 memo).
+		self::reset_memo();
+
 		return (int) static::db()->insert_id;
 	}
 
@@ -171,7 +175,7 @@ class Subscription extends Model {
 	}
 
 	public static function unsubscribe( int $user_id, string $object_type, int $object_id ): bool {
-		return false !== static::db()->delete(
+		$result = false !== static::db()->delete(
 			static::table(),
 			[
 				'user_id'     => $user_id,
@@ -179,10 +183,83 @@ class Subscription extends Model {
 				'object_id'   => $object_id,
 			]
 		);
+		self::reset_memo();
+		return $result;
+	}
+
+	/**
+	 * Per-request memo for is_subscribed(), filled per-row on miss and in
+	 * bulk by warm_viewer_subscriptions(). Cleared on subscribe/unsubscribe
+	 * and via Cache::flush() (plan U1) so a toggle mid-request reads fresh.
+	 *
+	 * @var array<string, bool>
+	 */
+	private static array $memo = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Empty the subscription memo. Called from subscribe()/unsubscribe().
+	 */
+	public static function reset_memo(): void {
+		self::$memo = [];
+	}
+
+	/**
+	 * Bulk-fill the is_subscribed() memo for one viewer over a set of
+	 * objects (plan WP3.8). One IN-query, negatives included, so a list
+	 * serializer's per-row is_subscribed() calls cost zero further queries.
+	 *
+	 * @param int    $user_id     Viewer.
+	 * @param string $object_type 'space' or 'post'.
+	 * @param int[]  $object_ids  Object ids about to be serialized.
+	 */
+	public static function warm_viewer_subscriptions( int $user_id, string $object_type, array $object_ids ): void {
+		self::register_memo_reset();
+
+		$object_ids = array_values( array_unique( array_filter( array_map( 'intval', $object_ids ) ) ) );
+		if ( $user_id <= 0 || empty( $object_ids ) ) {
+			return;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $object_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$subscribed = static::db()->get_col(
+			static::db()->prepare(
+				'SELECT object_id FROM ' . static::table() . " WHERE user_id = %d AND object_type = %s AND object_id IN ({$placeholders})",
+				array_merge( [ $user_id, $object_type ], $object_ids )
+			)
+		) ?: [];
+
+		$hit = array_fill_keys( array_map( 'intval', $subscribed ), true );
+		foreach ( $object_ids as $oid ) {
+			self::$memo[ "{$user_id}|{$object_type}|{$oid}" ] = isset( $hit[ $oid ] );
+		}
+	}
+
+	/**
+	 * Register the memo reset with the shared registry once (plan U1).
+	 */
+	private static function register_memo_reset(): void {
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$memo = [];
+				}
+			);
+		}
 	}
 
 	/**
 	 * Check whether a user is subscribed to an object.
+	 *
+	 * Memoized per request — see $memo.
 	 *
 	 * @param int    $user_id
 	 * @param string $object_type
@@ -190,6 +267,13 @@ class Subscription extends Model {
 	 * @return bool
 	 */
 	public static function is_subscribed( int $user_id, string $object_type, int $object_id ): bool {
+		self::register_memo_reset();
+
+		$key = "{$user_id}|{$object_type}|{$object_id}";
+		if ( array_key_exists( $key, self::$memo ) ) {
+			return self::$memo[ $key ];
+		}
+
 		$row = static::db()->get_row(
 			static::db()->prepare(
 				'SELECT id FROM ' . static::table() . ' WHERE user_id = %d AND object_type = %s AND object_id = %d LIMIT 1',
@@ -199,7 +283,8 @@ class Subscription extends Model {
 			)
 		);
 
-		return null !== $row;
+		self::$memo[ $key ] = null !== $row;
+		return self::$memo[ $key ];
 	}
 
 	/**

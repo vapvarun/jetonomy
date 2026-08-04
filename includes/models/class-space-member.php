@@ -232,6 +232,40 @@ class SpaceMember extends Model {
 	private static bool $memo_registered = false;
 
 	/**
+	 * Bulk-fill the get_role() memo for ONE viewer across many spaces
+	 * (plan WP3.8) — the inverse axis of warm_role_cache(), which warms
+	 * many users in one space. One IN-query, negatives included, so the
+	 * spaces-list serializer's per-row is_member()/get_role() pair costs
+	 * zero further queries.
+	 *
+	 * @param int   $user_id   Viewer.
+	 * @param int[] $space_ids Space ids about to be serialized.
+	 */
+	public static function warm_viewer_roles( int $user_id, array $space_ids ): void {
+		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
+		if ( $user_id <= 0 || empty( $space_ids ) ) {
+			return;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				'SELECT space_id, role FROM ' . static::table() . " WHERE user_id = %d AND space_id IN ({$placeholders})",
+				array_merge( [ $user_id ], $space_ids )
+			)
+		) ?: [];
+
+		$found = [];
+		foreach ( $rows as $row ) {
+			$found[ (int) $row->space_id ] = (string) $row->role;
+		}
+		foreach ( $space_ids as $sid ) {
+			self::$role_cache[ $sid . '|' . $user_id ] = $found[ $sid ] ?? null;
+		}
+	}
+
+	/**
 	 * Return the role of a user in a space, or null if they are not a member.
 	 *
 	 * Memoized per request — see $role_cache.

@@ -176,7 +176,7 @@ class Search_Controller extends Base_Controller {
 								$item         = $this->prepare_post( $row );
 								$item['type'] = 'post';
 								return $item; },
-							$this->enrich_with_author( $posts )
+							$this->enrich_viewer_state( $this->enrich_with_author( $posts ) )
 						),
 						// Shared serializer, not `(array) $row` — see
 						// Base_Controller::prepare_space(). Casting the raw row here
@@ -242,6 +242,12 @@ class Search_Controller extends Base_Controller {
 		// read pre-enriched fields instead of falling back to a per-row lookup.
 		if ( 'post' === $type || 'reply' === $type ) {
 			$results = $this->enrich_with_author( $results );
+		}
+		// Viewer state (bookmark/vote) batched too — without this prepare_post()
+		// fell through to 2 point queries PER ROW (plan WP3.4). Post rows only;
+		// the base method's type-gate additionally refuses reply/space rows.
+		if ( 'post' === $type ) {
+			$results = $this->enrich_viewer_state( $results );
 		}
 
 		$items = array_map(

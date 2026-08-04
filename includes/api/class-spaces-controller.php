@@ -344,6 +344,16 @@ class Spaces_Controller extends Base_Controller {
 			$total  = $result['total'];
 		}
 
+		// Batch the viewer flags before serializing (plan WP3.8):
+		// prepare_space() reads is_member/viewer_role (get_role memo) and
+		// is_subscribed (subscription memo) per row — 30 spaces cost 90 point
+		// queries before these two warms; now 2 IN-queries for the page.
+		if ( $user_id ) {
+			$space_ids = array_map( static fn( $s ) => (int) $s->id, $spaces );
+			SpaceMember::warm_viewer_roles( $user_id, $space_ids );
+			\Jetonomy\Models\Subscription::warm_viewer_subscriptions( $user_id, 'space', $space_ids );
+		}
+
 		$items       = array_map( [ $this, 'prepare_space' ], $spaces );
 		$total_pages = (int) ceil( $total / max( 1, $pagination['limit'] ) );
 
@@ -708,7 +718,14 @@ class Spaces_Controller extends Base_Controller {
 		$pagination = $this->get_pagination( $request );
 		$total      = SpaceMember::count_by_space( $id );
 		$members    = SpaceMember::list_by_space( $id, $pagination['limit'], $pagination['offset'] );
-		$items      = array_map( [ $this, 'prepare_member' ], $members );
+
+		// Batch-warm the users before the per-row serializer — prepare_member()
+		// does get_userdata + profile + avatar per row, ~3 cold queries x 50
+		// rows per roster page (plan WP3.6). batch_load_users() transitively
+		// primes the WP user cache + UserProfile::prime.
+		$this->batch_load_users( array_map( static fn( $m ) => (int) $m->user_id, $members ) );
+
+		$items = array_map( [ $this, 'prepare_member' ], $members );
 
 		$response = $this->paginated_response(
 			$items,

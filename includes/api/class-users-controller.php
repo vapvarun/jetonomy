@@ -903,6 +903,9 @@ class Users_Controller extends Base_Controller {
 		// cards render the author avatar/name instead of a blank "?" row — the same
 		// prepared shape /feed returns, not the minimal columns this route used to.
 		$posts = $this->enrich_with_author( $posts, 'author_id' );
+		// Batch viewer state too — prepare_post() otherwise runs 2 point
+		// queries per row for the bookmark/vote flags (plan WP3.4).
+		$posts = $this->enrich_viewer_state( $posts );
 		$items = array_map( [ $this, 'prepare_post' ], $posts );
 
 		return $this->paginated_response(
