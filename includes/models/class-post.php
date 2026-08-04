@@ -1250,9 +1250,11 @@ class Post extends Model {
 			)
 		);
 
-		// Trash the source post and decrement its space counter.
+		// Trash the source post. The publish→trash transition inside update()
+		// already decrements the space's post_count and the author's post_count
+		// — an explicit decrement here double-counted (-2 per merge), the same
+		// bug class as Reply::split_to_post (Basecamp 10161324705 / plan WP0.8).
 		static::update( $source_id, array( 'status' => 'trash' ) );
-		Space::increment_post_count( (int) $source->space_id, -1 );
 
 		do_action( 'jetonomy_post_merged', $source_id, $target_id );
 
