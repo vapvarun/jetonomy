@@ -208,6 +208,16 @@ if ( $jt_accepted_reply_id && ! $jt_accepted_on_page ) {
 }
 \Jetonomy\Models\Attachment::prime_rendered_replies( (int) $post->id, $jt_prime_ids );
 
+// WP3.7: batch the per-reply-card lookups over the SAME rendered set —
+// author profiles and the viewer's reply votes. The walker covers nested
+// children, so reply-card.php's per-row Vote::get_user_vote (30+ point
+// queries on a full page) reads the memo instead.
+\Jetonomy\Models\UserProfile::prime( $jt_role_warm_ids );
+$jt_vote_viewer = get_current_user_id();
+if ( $jt_vote_viewer > 0 && ! empty( $jt_prime_ids ) ) {
+	\Jetonomy\Models\Vote::user_votes_map( $jt_vote_viewer, 'reply', $jt_prime_ids );
+}
+
 // Current user vote on post.
 $user_id        = get_current_user_id();
 $user_post_vote = $user_id ? \Jetonomy\Models\Vote::get_user_vote( $user_id, 'post', (int) $post->id ) : null;

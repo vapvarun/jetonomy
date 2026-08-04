@@ -555,6 +555,19 @@ $crumbs[] = [
 					array_map( static fn( $p ) => (int) $p->author_id, $posts )
 				);
 
+				// WP3.7: batch the remaining per-card lookups for the page —
+				// author profiles (fills the profile:{id} keys the cards
+				// read), tag pills (Tag::list_for_post memo) and the viewer's
+				// votes (Vote::get_user_vote memo). Each card then costs zero
+				// per-row queries for these; unprimed surfaces (drafts / tag /
+				// bookmarks views, theme-overridden partials) keep the
+				// per-row fallback inside the models.
+				$jt_page_post_ids = array_map( static fn( $p ) => (int) $p->id, $posts );
+				\Jetonomy\Models\UserProfile::prime(
+					array_map( static fn( $p ) => (int) $p->author_id, $posts )
+				);
+				\Jetonomy\Models\Tag::for_posts( $jt_page_post_ids );
+
 				// 1.4.0 C.5: bulk-load the viewer's last-read reply id per
 				// post so each card can render a "new replies" pill in O(1).
 				$jt_read_map = array();
@@ -562,8 +575,9 @@ $crumbs[] = [
 				if ( $jt_viewer > 0 ) {
 					$jt_read_map = \Jetonomy\Models\ReadStatus::last_read_for_posts(
 						$jt_viewer,
-						array_map( static fn( $p ) => (int) $p->id, $posts )
+						$jt_page_post_ids
 					);
+					\Jetonomy\Models\Vote::user_votes_map( $jt_viewer, 'post', $jt_page_post_ids );
 				}
 				?>
 				<?php
