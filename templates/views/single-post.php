@@ -173,9 +173,11 @@ $replies_have_more = ( $reply_page * $replies_per_page ) < $top_level_count;
 // is O(1). Without this a 200-reply thread would issue 200 SpaceMember
 // queries during render. Single bulk query covers the whole tree.
 $jt_role_warm_ids = [ (int) $post->author_id ];
-$jt_role_walker   = function ( array $list ) use ( &$jt_role_warm_ids, &$jt_role_walker ): void {
+$jt_reply_ids     = [];
+$jt_role_walker   = function ( array $list ) use ( &$jt_role_warm_ids, &$jt_reply_ids, &$jt_role_walker ): void {
 	foreach ( $list as $reply ) {
 		$jt_role_warm_ids[] = (int) ( $reply->author_id ?? 0 );
+		$jt_reply_ids[]     = (int) ( $reply->id ?? 0 );
 		if ( ! empty( $reply->children ) ) {
 			$jt_role_walker( $reply->children );
 		}
@@ -195,6 +197,16 @@ $jt_role_walker( $reply_batch );
 $jt_accepted_reply_id = (int) ( $post->accepted_reply_id ?? 0 );
 $jt_accepted_on_page  = $jt_accepted_reply_id
 	&& \Jetonomy\Models\Reply::tree_contains( $reply_batch, $jt_accepted_reply_id );
+
+// Prime attachments for exactly what this page renders: the paged tree
+// (walked above) plus the off-page accepted-answer card, which is by
+// construction NOT in $reply_batch when the callout shows (plan WP1.3).
+// The hook-driven whole-thread primes then no-op for this post.
+$jt_prime_ids = $jt_reply_ids;
+if ( $jt_accepted_reply_id && ! $jt_accepted_on_page ) {
+	$jt_prime_ids[] = $jt_accepted_reply_id;
+}
+\Jetonomy\Models\Attachment::prime_rendered_replies( (int) $post->id, $jt_prime_ids );
 
 // Current user vote on post.
 $user_id        = get_current_user_id();

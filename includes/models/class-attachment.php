@@ -178,10 +178,49 @@ class Attachment {
 	}
 
 	/**
+	 * Posts whose RENDERED replies were already primed by the view this
+	 * request (see prime_rendered_replies). Lets prime_for_post() skip its
+	 * whole-thread work when the scoped prime has it covered.
+	 *
+	 * @var array<int, true>
+	 */
+	protected static array $view_primed = array();
+
+	/**
+	 * Prime exactly the reply ids a view is about to render (plan WP1.3).
+	 *
+	 * The single-post view knows the paged tree it renders (incl. the
+	 * off-page accepted-answer card), so it primes THAT set instead of every
+	 * reply on the post — prime_for_post()'s whole-thread scope scaled with
+	 * thread size, which is exactly what the paged get_threaded() stopped
+	 * doing. get_for_many() seeds empties, so rendered replies without
+	 * attachments never re-query either.
+	 *
+	 * @param int   $post_id   Parent post id.
+	 * @param int[] $reply_ids Reply ids the view will render.
+	 */
+	public static function prime_rendered_replies( int $post_id, array $reply_ids ): void {
+		$reply_ids = array_values( array_unique( array_filter( array_map( 'intval', $reply_ids ) ) ) );
+		if ( ! empty( $reply_ids ) ) {
+			static::get_for_many( 'reply', $reply_ids );
+		}
+		static::$view_primed[ $post_id ] = true;
+	}
+
+	/**
 	 * Prime every reply on a post in ONE query, so rendering N reply cards issues
 	 * zero per-row attachment queries.
+	 *
+	 * Skipped when prime_rendered_replies() already covered this post — the
+	 * hook-driven callers (free jetonomy_after_post_content, Pro
+	 * jetonomy_before_replies) fire after the view's scoped prime, and
+	 * re-running the whole-thread query would undo the WP1.3 bound. The
+	 * whole-post path stays for direct callers and free/pro version skew.
 	 */
 	public static function prime_for_post( int $post_id ): void {
+		if ( isset( static::$view_primed[ $post_id ] ) ) {
+			return;
+		}
 		global $wpdb;
 		$replies_table = $wpdb->prefix . 'jt_replies';
 
