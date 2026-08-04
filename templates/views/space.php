@@ -224,7 +224,13 @@ $offset = ( $paged - 1 ) * $limit;
 // including subscribers who were never supposed to see them (Basecamp 9803998504).
 $_jt_is_priv = $_jt_user_id
 	&& ( $_jt_is_admin || \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $_jt_user_id, (int) $space->id ) );
-$posts       = \Jetonomy\Models\Post::list_by_space_visible(
+// Card projection for topic-card spaces (plan WP5.4): those cards render
+// title + trimmed excerpt only, so drop `content` LONGTEXT and truncate
+// content_plain. FEED spaces render the full body inline (feed-card.php)
+// and stay on the SELECT * method — trimming it was the safety review's
+// confirmed break.
+$_jt_list_fn = ( 'feed' === ( $space->type ?? '' ) ) ? 'list_by_space_visible' : 'list_cards_by_space_visible';
+$posts       = \Jetonomy\Models\Post::$_jt_list_fn(
 	(int) $space->id,
 	(int) $_jt_user_id,
 	(bool) $_jt_is_priv,

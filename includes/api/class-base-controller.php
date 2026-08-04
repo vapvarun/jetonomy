@@ -544,6 +544,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 			true
 		);
 		$votes      = \Jetonomy\Models\Vote::user_votes_map( $uid, 'post', $ids );
+		// Warm the subscription memo so prepare_post()'s is_subscribed flag
+		// (plan WP6.2) costs zero per-row queries on every list path.
+		\Jetonomy\Models\Subscription::warm_viewer_subscriptions( $uid, 'post', $ids );
 
 		foreach ( $posts as $post ) {
 			$pid                 = (int) $post->id;
@@ -857,6 +860,14 @@ abstract class Base_Controller extends WP_REST_Controller {
 		$data['viewer_vote']   = isset( $post->viewer_vote )
 			? (int) $post->viewer_vote
 			: ( $uid ? (int) ( \Jetonomy\Models\Vote::get_user_vote( $uid, 'post', (int) $post->id ) ?? 0 ) : 0 );
+		// Additive (plan WP6.2): the web JS fetched a whole /subscriptions
+		// list per topic view just to render the follow toggle. Batched on
+		// list paths by enrich_viewer_state()'s subscription warm; the memo
+		// keeps unwarmed single-item paths at one query. prepare_space
+		// already ships the same flag — posts now match.
+		$data['is_subscribed'] = $uid
+			? \Jetonomy\Models\Subscription::is_subscribed( $uid, 'post', (int) $post->id )
+			: false;
 
 		/**
 		 * Filter the REST response data for a single post.

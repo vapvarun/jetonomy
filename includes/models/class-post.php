@@ -568,6 +568,102 @@ class Post extends Model {
 	}
 
 	/**
+	 * Card-projection variant of list_by_space_visible() (plan WP5.4).
+	 *
+	 * The topic-card templates render title + a trimmed excerpt — never the
+	 * body — yet the full method dragged `content` LONGTEXT for every row.
+	 * This drops `content` and truncates `content_plain` to the excerpt
+	 * window. Used ONLY by post-card template paths; the original stays
+	 * SELECT * because four consumers genuinely need the full columns
+	 * (feed-card renders the whole body, RSS descriptions, the REST list
+	 * payload's content/content_plain contract, BuddyPress) — trimming
+	 * them was the safety review's confirmed break. Rows injected by the
+	 * jetonomy_post_list_results_for_space filter (Pro announcements) are
+	 * `p.*` and merge fine — the card templates read a SUBSET of this
+	 * projection, so heterogeneous rows only over-carry, never break.
+	 *
+	 * Same signature, ordering, gating and filter as the original.
+	 *
+	 * @param int    $space_id      Space.
+	 * @param int    $user_id       Viewer (0 guest).
+	 * @param bool   $is_privileged Whether viewer sees private content.
+	 * @param string $sort          Sort flag.
+	 * @param int    $limit         Page size (-1 = space setting).
+	 * @param int    $offset        Offset.
+	 * @param int    $after         Legacy offset alias.
+	 * @return object[]
+	 */
+	public static function list_cards_by_space_visible( int $space_id, int $user_id, bool $is_privileged, string $sort = 'latest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
+		if ( -1 === $limit ) {
+			$limit = Space::get_posts_per_page( $space_id );
+		}
+		$table = static::table();
+
+		$extra_where = '';
+		switch ( $sort ) {
+			case 'popular':
+				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
+				break;
+			case 'oldest':
+				$order_by = 'is_sticky DESC, created_at ASC, id ASC';
+				break;
+			case 'newest':
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
+				break;
+			case 'unanswered':
+				$order_by    = 'is_sticky DESC, created_at DESC, id DESC';
+				$_jt_space   = Space::find( $space_id );
+				$extra_where = ( $_jt_space && 'qa' === ( $_jt_space->type ?? '' ) )
+					? ' AND accepted_reply_id IS NULL'
+					: ' AND reply_count = 0';
+				break;
+			case 'latest':
+			default:
+				$order_by = 'is_sticky DESC, last_reply_at DESC, id DESC';
+				break;
+		}
+
+		if ( ! $is_privileged ) {
+			if ( $user_id > 0 ) {
+				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
+			} else {
+				$extra_where .= ' AND is_private = 0';
+			}
+		}
+
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$extra_where .= ' AND ' . $block_sql;
+		}
+
+		$offset = $after > 0 ? $after : $offset;
+
+		// Every column except the two longtexts; content_plain truncated to
+		// the excerpt window (jetonomy_post_title_or_excerpt trims to words
+		// well inside 300 chars). `content` is intentionally ABSENT — a card
+		// consumer reading it is a bug, and the helpers all isset()-guard.
+		$card_columns = 'id, space_id, author_id, is_anonymous, type, prefix, title, slug, status,
+			published_at, is_sticky, is_private, is_closed, is_resolved, idea_status,
+			vote_score, reply_count, view_count, flag_count, last_reply_at, last_reply_by,
+			accepted_reply_id, edited_at, edited_by, updated_at, created_at,
+			LEFT(content_plain, 300) AS content_plain';
+
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT {$card_columns} FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} ORDER BY {$order_by} LIMIT %d OFFSET %d",
+				$space_id,
+				$limit,
+				$offset
+			)
+		);
+		$results = $results ? $results : array();
+
+		/** This filter is documented in includes/models/class-post.php (list_by_space_visible). */
+		return apply_filters( 'jetonomy_post_list_results_for_space', $results, $space_id, $user_id, $is_privileged, $sort, $offset );
+	}
+
+	/**
 	 * Count visible posts in a space — viewer-aware companion to
 	 * list_by_space_visible(). Used by abilities/REST listings to report
 	 * accurate totals for cursor-based pagination instead of guessing

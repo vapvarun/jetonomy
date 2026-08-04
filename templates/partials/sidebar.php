@@ -55,30 +55,50 @@ if ( '1=1' !== $_jt_space_vis_sql ) {
 [ $_jt_trend_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
 $_jt_trend_block_clause  = '' !== $_jt_trend_block_sql ? ' AND ' . $_jt_trend_block_sql : '';
 
-if ( ! empty( $space ) && isset( $space->id ) ) {
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$trending = $wpdb->get_results(
-		$wpdb->prepare(
+// Cached 300s per exact viewer class (plan WP4.1) — the unindexed
+// vote_score/reply_count filesort ran on 100% of page views. Bucket
+// covers EVERY viewer-dependent clause above (U2): privileged viewers
+// of the scope share 'priv' (no private/visibility filtering), guests
+// share 'guest' (no blocks by definition), and any other logged-in
+// viewer gets a per-user key (own-private + blocks bind their id).
+// TTL-only: 5-minute staleness on a trending widget is invisible.
+// NOTE (plan WP4.1): unifying this all-time-top query onto
+// Post::list_trending()'s 7-day hot ranking is a PRODUCT decision —
+// it changes what every sidebar shows — and is deferred, not smuggled
+// in with the cache; queries are byte-identical to before.
+$_jt_trend_bucket = $_jt_trend_is_priv ? 'priv' : ( $_jt_trend_user ? "u{$_jt_trend_user}" : 'guest' );
+$_jt_trend_scope  = ( ! empty( $space ) && isset( $space->id ) ) ? (int) $space->id : 0;
+
+$trending = \Jetonomy\Cache::remember(
+	"sidebar:trending:{$_jt_trend_scope}:{$_jt_trend_bucket}",
+	static function () use ( $wpdb, $posts_tbl, $spaces_tbl, $space, $_jt_trend_priv_clause, $_jt_trend_space_clause, $_jt_trend_block_clause ) {
+		if ( ! empty( $space ) && isset( $space->id ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return $wpdb->get_results(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
+					 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+					 WHERE p.space_id = %d AND p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_block_clause . '
+					 ORDER BY p.vote_score DESC, p.reply_count DESC
+					 LIMIT 5',
+					(int) $space->id
+				)
+			) ?: [];
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
 			 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-			 WHERE p.space_id = %d AND p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_block_clause . '
+			 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_space_clause . $_jt_trend_block_clause . '
 			 ORDER BY p.vote_score DESC, p.reply_count DESC
-			 LIMIT 5',
-			(int) $space->id
-		)
-	) ?: [];
-} else {
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$trending = $wpdb->get_results(
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
-		 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_space_clause . $_jt_trend_block_clause . '
-		 ORDER BY p.vote_score DESC, p.reply_count DESC
-		 LIMIT 5'
-	) ?: [];
-}
+			 LIMIT 5'
+		) ?: [];
+	},
+	300
+);
 
 // Top members by reputation. Deliberately NOT block-filtered — this is a
 // ranking/leaderboard, not a content feed; per-viewer filtering would
