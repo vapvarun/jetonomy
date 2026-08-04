@@ -248,25 +248,31 @@ class Users_Controller extends Base_Controller {
 
 		$users = array();
 		if ( $space_id > 0 ) {
-			global $wpdb;
-			$members_tbl = table( 'space_members' );
-			$ids         = (array) $wpdb->get_col(
-				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT user_id FROM {$members_tbl} WHERE space_id = %d",
-					$space_id
-				)
-			);
-			if ( empty( $ids ) ) {
-				return new WP_REST_Response( array(), 200 );
-			}
+			// Membership scoping via a JOIN inside WP_User_Query (plan WP1.4).
+			// The old shape fetched EVERY member id unbounded (a 500-member
+			// space materialized 500 ids into PHP and fed them back as a
+			// 500-element IN) — and a LIMIT there would have made results
+			// depend on physical row order. WP_User_Query has no join param,
+			// so hook the GLOBAL pre_user_query filter and remove it in the
+			// same call so it cannot leak into any other user query.
+			//
 			// search_columns must match the global branch below — without it
 			// WP_User_Query's default set includes user_email, which lets a
 			// space member fish for other members' email addresses by typing
 			// an address prefix and seeing it resolve (Basecamp: WP0.10).
+			global $wpdb;
+			$members_tbl = table( 'space_members' );
+			$join_member = static function ( $query ) use ( $wpdb, $members_tbl, $space_id ): void {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$query->query_from .= $wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					" INNER JOIN {$members_tbl} jt_sm ON jt_sm.user_id = {$wpdb->users}.ID AND jt_sm.space_id = %d",
+					$space_id
+				);
+			};
+			add_action( 'pre_user_query', $join_member );
 			$users = get_users(
 				array(
-					'include'        => array_map( 'intval', $ids ),
 					'exclude'        => $blocked_ids,
 					'search'         => '*' . $q . '*',
 					'search_columns' => array( 'user_login', 'display_name' ),
@@ -274,6 +280,7 @@ class Users_Controller extends Base_Controller {
 					'orderby'        => 'display_name',
 				)
 			);
+			remove_action( 'pre_user_query', $join_member );
 		} else {
 			// Don't search user_email — that lets a logged-in member
 			// fish for other members' email addresses by typing the
