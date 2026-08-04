@@ -88,8 +88,29 @@ add_action(
 );
 
 // SDK lives at libs/ (committed, ships in zip). Pro reads it via the same path.
-if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' ) ) {
+//
+// Load the vendored EDD SL SDK only when the package is COMPLETE. A partial
+// build or extract that keeps the entry file but drops libs/edd-sl-sdk/src
+// would fatal inside the SDK the moment it instantiates a src class — the
+// entry file registers callbacks against \EasyDigitalDownloads\Updater\Versions
+// with no guard of its own, so requiring it half-present white-screened every
+// page (Basecamp 10163871548; the WB Listora 1.2.1 stripped-SDK shape). Guard
+// on the source being present and degrade to "updates disabled" with a soft
+// admin notice instead — licensing only gates updates, never features, so the
+// community keeps working. Mirrors BuddyNext (the portfolio reference for this
+// SDK's loading) and Learnomy 1.9.1.
+if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' )
+	&& file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/src/Versions.php' ) ) {
 	require_once JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php';
+} elseif ( is_admin() ) {
+	add_action(
+		'admin_notices',
+		static function () {
+			echo '<div class="notice notice-warning"><p>'
+				. esc_html__( 'Jetonomy: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally.', 'jetonomy' )
+				. '</p></div>';
+		}
+	);
 }
 
 // Update-screen icon. WordPress only auto-resolves icons for wp.org-hosted
