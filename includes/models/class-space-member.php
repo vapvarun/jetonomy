@@ -206,22 +206,65 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Per-request memo of TRUE roles, keyed `{space_id}|{user_id}`.
+	 *
+	 * Distinct from $role_label_cache on purpose: that map collapses
+	 * member/viewer to null for the role-pill template, so sharing it here
+	 * would make is_member() deny real members of private spaces after a
+	 * warm_role_cache() pass seeded the viewer's own id (caching plan WP2.1).
+	 * This map stores the exact role ('admin'/'moderator'/'member'/'viewer')
+	 * and null only for genuine non-members. get_role() is called 5-10x per
+	 * space-scoped page with identical args (is_member, Permission_Engine
+	 * layers, templates) — one query now serves them all.
+	 *
+	 * Both maps reset together in bust_privileged_cache() (fired by
+	 * add/remove/set_role after their writes) and via Cache::flush() (U1).
+	 *
+	 * @var array<string, ?string>
+	 */
+	private static array $role_cache = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
 	 * Return the role of a user in a space, or null if they are not a member.
+	 *
+	 * Memoized per request — see $role_cache.
 	 *
 	 * @param int $space_id
 	 * @param int $user_id
 	 * @return string|null
 	 */
 	public static function get_role( int $space_id, int $user_id ): ?string {
-		$value = static::db()->get_var(
-			static::db()->prepare(
-				'SELECT role FROM ' . static::table() . ' WHERE space_id = %d AND user_id = %d',
-				$space_id,
-				$user_id
-			)
-		);
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$role_cache       = [];
+					self::$role_label_cache = [];
+				}
+			);
+		}
 
-		return null !== $value ? (string) $value : null;
+		$key = $space_id . '|' . $user_id;
+		if ( ! array_key_exists( $key, self::$role_cache ) ) {
+			$value = static::db()->get_var(
+				static::db()->prepare(
+					'SELECT role FROM ' . static::table() . ' WHERE space_id = %d AND user_id = %d',
+					$space_id,
+					$user_id
+				)
+			);
+
+			self::$role_cache[ $key ] = null !== $value ? (string) $value : null;
+		}
+
+		return self::$role_cache[ $key ];
 	}
 
 	/**
@@ -342,7 +385,13 @@ class SpaceMember extends Model {
 		\Jetonomy\Cache::delete( 'priv_members_' . $space_id );
 		// A role change also changes permission verdicts (Layer 0d mod bypass
 		// + Layer 2 space-role perms) — clear the request-scope verdict memo
-		// so a promotion/demotion applies within the same request (WP0.1).
+		// so a promotion/demotion applies within the same request (WP0.1),
+		// and both role memos so get_role()/role_label() re-read (WP2.1).
+		// Full-map reset, not per-key: add() reads is_member() BEFORE its
+		// write, and the callers of this method don't all know which user
+		// changed.
+		self::$role_cache       = [];
+		self::$role_label_cache = [];
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 

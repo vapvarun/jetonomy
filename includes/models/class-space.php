@@ -52,6 +52,9 @@ class Space extends Model {
 			$keys[] = "space:slug:{$slug}";
 		}
 		Cache::delete_many( $keys );
+		// The decoded-settings memo sits above the row cache — clear it with
+		// the row or merge_settings()'s read-modify-write reads stale (WP2.6).
+		unset( self::$settings_memo[ $id ] );
 		// Visibility / join-policy / settings changes alter permission
 		// verdicts — clear the request-scope verdict memo (WP0.1).
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
@@ -636,19 +639,55 @@ class Space extends Model {
 	}
 
 	/**
+	 * Per-request memo of DECODED settings arrays, keyed by space id.
+	 *
+	 * The row itself rides the space:{id} cache; this only avoids
+	 * re-json_decode-ing the same blob 20x per space page (one per card).
+	 * Reset inside bust_cache() — merge_settings() is read-modify-write, so
+	 * a memo the existing bust cannot reach would silently revert the first
+	 * of two settings writes in one process (caching plan WP2.6).
+	 *
+	 * @var array<int, array>
+	 */
+	private static array $settings_memo = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $settings_memo_registered = false;
+
+	/**
 	 * Return the decoded settings array for a space.
 	 *
 	 * @param int $id Space ID.
 	 * @return array Settings key/value pairs, or empty array if none.
 	 */
 	public static function get_settings( int $id ): array {
-		$row = static::find( $id );
-		if ( ! $row || empty( $row->settings ) ) {
-			return [];
+		if ( ! self::$settings_memo_registered ) {
+			self::$settings_memo_registered = true;
+			Cache::register_memo_reset(
+				static function (): void {
+					self::$settings_memo = [];
+				}
+			);
 		}
 
-		$decoded = json_decode( $row->settings, true );
-		return is_array( $decoded ) ? $decoded : [];
+		if ( array_key_exists( $id, self::$settings_memo ) ) {
+			return self::$settings_memo[ $id ];
+		}
+
+		$row = static::find( $id );
+		if ( ! $row || empty( $row->settings ) ) {
+			$decoded = [];
+		} else {
+			$decoded = json_decode( $row->settings, true );
+			$decoded = is_array( $decoded ) ? $decoded : [];
+		}
+
+		self::$settings_memo[ $id ] = $decoded;
+		return $decoded;
 	}
 
 	/**

@@ -222,15 +222,18 @@ class Permission_Engine {
 		// a paid tier got a space their subscribers could not enter, and the
 		// only workaround (the per-rule "Sync Members" button) wrote roster
 		// rows that nothing ever removed when the subscription lapsed.
+		// Resolve access rules ONCE. grants_access() is just
+		// resolve_access() !== null, and calling both re-ran the membership
+		// adapter fan-out (LearnDash/Woo/MemberPress lookups) twice for every
+		// non-member view of a private space (caching plan WP2.3).
+		$access = AccessRule::resolve_access( $user_id, $space_id );
+
 		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
 			if ( ! SpaceMember::is_member( $space_id, $user_id )
-				&& ! AccessRule::grants_access( $user_id, $space_id ) ) {
+				&& null === $access ) {
 				return false;
 			}
 		}
-
-		// Check access rules (membership, capability, trust level rules).
-		$access = AccessRule::resolve_access( $user_id, $space_id );
 		if ( $access ) {
 			// Access rule grants access — check if sufficient for the action.
 			$grants_map      = array(

@@ -180,6 +180,7 @@ class Post extends Model {
 		}
 
 		$result = parent::update( $id, $data );
+		self::reset_slug_memo();
 
 		if ( 0 !== $delta && $post ) {
 			if ( ! empty( $post->space_id ) ) {
@@ -243,6 +244,7 @@ class Post extends Model {
 		// mechanism. Mirrors Reply::delete().
 		$post   = self::find( $id );
 		$result = parent::delete( $id );
+		self::reset_slug_memo();
 
 		if ( true === $result && $post && 'publish' === ( $post->status ?? '' ) ) {
 			if ( ! empty( $post->space_id ) ) {
@@ -283,19 +285,69 @@ class Post extends Model {
 	}
 
 	/**
+	 * Per-request memo for find_by_slug(), POSITIVE hits only.
+	 *
+	 * A single-post view resolves the same slug 6-7x (template loader x4,
+	 * the view, schema markup x2). Misses are deliberately never memoized:
+	 * unique_post_slug() loops `while ( find_by_slug() )` as its duplicate
+	 * guard, and a cached miss there mints duplicate slugs — the exact bug
+	 * Space's negative slug cache had (caching plan WP2.2 / graveyard #5).
+	 * Reset on every post write (update/delete) and via Cache::flush() (U1).
+	 *
+	 * @var array<string, object>
+	 */
+	private static array $slug_memo = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $slug_memo_registered = false;
+
+	/**
+	 * Empty the slug memo. Called from update()/delete() — a mid-request
+	 * status change or slug rename must be visible to the next lookup.
+	 */
+	public static function reset_slug_memo(): void {
+		self::$slug_memo = [];
+	}
+
+	/**
 	 * Find a post by its slug.
 	 *
 	 * @param string $slug Post slug.
 	 * @return object|null
 	 */
 	public static function find_by_slug( string $slug ): ?object {
+		if ( ! self::$slug_memo_registered ) {
+			self::$slug_memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$slug_memo = [];
+				}
+			);
+		}
+
+		if ( isset( self::$slug_memo[ $slug ] ) ) {
+			// Clone so caller-side mutation (block/private tombstoning blanks
+			// content in place) never leaks into the next call site's copy.
+			return clone self::$slug_memo[ $slug ];
+		}
+
 		$row = static::db()->get_row(
 			static::db()->prepare(
 				'SELECT * FROM ' . static::table() . ' WHERE slug = %s',
 				$slug
 			)
 		);
-		return $row ? $row : null;
+
+		if ( $row ) {
+			self::$slug_memo[ $slug ] = clone $row;
+			return $row;
+		}
+
+		return null;
 	}
 
 	/**
