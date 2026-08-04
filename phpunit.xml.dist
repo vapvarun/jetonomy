@@ -4,6 +4,10 @@
     backupGlobals="false"
     colors="true"
 >
+    <extensions>
+        <!-- One test = one request = one static-memo lifetime (see the class docblock). -->
+        <extension class="Jetonomy_Memo_Reset_Extension"/>
+    </extensions>
     <testsuites>
         <testsuite name="unit">
             <directory suffix="Test.php">./tests/unit</directory>

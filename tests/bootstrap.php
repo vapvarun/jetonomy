@@ -12,6 +12,10 @@ if ( ! defined( 'SAVEQUERIES' ) ) {
 	define( 'SAVEQUERIES', true );
 }
 
+// Registered in phpunit.xml.dist <extensions>; must be loadable before the
+// runner instantiates it, which is earlier than the WP test lib bootstraps.
+require_once __DIR__ . '/class-memo-reset-extension.php';
+
 $_tests_dir = getenv( 'WP_TESTS_DIR' ) ?: '/tmp/wordpress-tests-lib';
 
 if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {

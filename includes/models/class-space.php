@@ -52,6 +52,9 @@ class Space extends Model {
 			$keys[] = "space:slug:{$slug}";
 		}
 		Cache::delete_many( $keys );
+		// Visibility / join-policy / settings changes alter permission
+		// verdicts — clear the request-scope verdict memo (WP0.1).
+		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 
 	/**

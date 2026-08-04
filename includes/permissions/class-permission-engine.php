@@ -29,12 +29,36 @@ use Jetonomy\Models\UserProfile;
 class Permission_Engine {
 
 	/**
-	 * Seconds a can() verdict is cached per (user, action, space). A permission
-	 * or role change is reflected within this window — the accepted hot-read
-	 * trade-off (Caching Standard §4b lists can() as a sanctioned short-TTL cache),
-	 * so the key is not busted on role change; it ages out.
+	 * Per-request verdict memo, keyed "{user}:{action}:{space}".
+	 *
+	 * Replaces the old 60s persistent perm:{} object cache, which was never
+	 * busted anywhere — a ban, silence, or role demotion kept granting for up
+	 * to a minute across every web node (caching plan WP0.1). What a verdict
+	 * costs to recompute is a handful of single-row indexed lookups, and the
+	 * shared Restriction primitives are themselves memoized per request — so
+	 * a request-scope memo is as fast on the pages that matter and is
+	 * instantly correct on the next request. Writers that change a verdict
+	 * mid-request (Restriction::ban/remove_ban, SpaceMember role changes,
+	 * Space::bust_cache, UserProfile::update_profile) call reset_memo().
+	 *
+	 * @var array<string, bool>
 	 */
-	private const PERM_TTL = 60;
+	private static array $memo = array();
+
+	/**
+	 * Whether the reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Empty the verdict memo. Called from every write path that can change a
+	 * verdict, and from Cache::flush() via the memo registry.
+	 */
+	public static function reset_memo(): void {
+		self::$memo = array();
+	}
 
 	/**
 	 * Moderation actions a space-level admin / moderator can perform on
@@ -93,7 +117,7 @@ class Permission_Engine {
 	/**
 	 * Determine whether a user is allowed to perform an action.
 	 *
-	 * Results are cached for 60 seconds per user/action/space combination.
+	 * Memoized per (user, action, space) for the duration of the request.
 	 *
 	 * @param int      $user_id  WP user ID to check.
 	 * @param string   $action   Action name (without 'jetonomy_' prefix for WP cap check).
@@ -101,16 +125,20 @@ class Permission_Engine {
 	 * @return bool
 	 */
 	public static function can( int $user_id, string $action, ?int $space_id = null ): bool {
-		$cache_key = "perm:{$user_id}:{$action}:" . ( $space_id ?? 0 );
-		$cached    = Cache::get( $cache_key );
-		if ( false !== $cached ) {
-			return (bool) $cached;
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			Cache::register_memo_reset(
+				static function (): void {
+					self::$memo = array();
+				}
+			);
 		}
 
-		$result = self::resolve( $user_id, $action, $space_id );
-		// Store as 1/0 so we can distinguish a cached false from a cache miss.
-		Cache::set( $cache_key, $result ? 1 : 0, self::PERM_TTL );
-		return $result;
+		$key = "{$user_id}:{$action}:" . ( $space_id ?? 0 );
+		if ( ! array_key_exists( $key, self::$memo ) ) {
+			self::$memo[ $key ] = self::resolve( $user_id, $action, $space_id );
+		}
+		return self::$memo[ $key ];
 	}
 
 	/**

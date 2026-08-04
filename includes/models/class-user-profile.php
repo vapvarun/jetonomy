@@ -146,6 +146,11 @@ class UserProfile extends Model {
 			[ 'user_id' => $user_id ]
 		);
 		Cache::delete( "profile:{$user_id}" );
+		// trust_level feeds the permission trust gates — clear the verdict
+		// memo so a promotion applies within the same request (WP0.1).
+		if ( array_key_exists( 'trust_level', $data ) ) {
+			\Jetonomy\Permissions\Permission_Engine::reset_memo();
+		}
 		return $result;
 	}
 

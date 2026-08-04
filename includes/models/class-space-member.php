@@ -340,6 +340,10 @@ class SpaceMember extends Model {
 	 */
 	public static function bust_privileged_cache( int $space_id ): void {
 		\Jetonomy\Cache::delete( 'priv_members_' . $space_id );
+		// A role change also changes permission verdicts (Layer 0d mod bypass
+		// + Layer 2 space-role perms) — clear the request-scope verdict memo
+		// so a promotion/demotion applies within the same request (WP0.1).
+		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 
 	/**
