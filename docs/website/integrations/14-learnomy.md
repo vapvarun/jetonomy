@@ -30,6 +30,7 @@ One rule type, **Learnomy Course**, covers every Learnomy object. The picker tel
 | Course | `(Learnomy Course)` | Everyone enrolled in the course, for as long as they stay enrolled |
 | Cohort | `(Learnomy Cohort)` | Only the people in that one run of the course - not everyone who has ever taken it |
 | Membership plan | `(Learnomy Membership)` | Everyone on the plan, from the moment it becomes active until it lapses |
+| Learnomy Space | `(Learnomy Space)` | Everyone holding an active seat in that organisation, across every course assigned to it |
 
 **Course or cohort is the choice most people get wrong.** A course rule is right for a permanent space where every past and present student belongs. A cohort rule is right for a class going through together on a schedule - the twenty people on the spring run, talking to each other, without last year's students in the same thread.
 
@@ -73,6 +74,18 @@ Learnomy membership plans appear in the same **Learnomy Course** picker alongsid
 
 Members with an active subscription to that plan gain access. When the subscription is cancelled or expires, access is removed.
 
+## Gating a Space by Learnomy Space
+
+A Learnomy Space is an organisation with a pool of seats - the shape you use when a company buys access for its people. Gating by Space gives that whole organisation one discussion area.
+
+1. Select **Learnomy Course** from the rule type dropdown.
+2. Type the organisation name and pick the result ending `(Learnomy Space)`.
+3. Set the **Access level** and click **Add Rule**.
+
+Everyone holding an **active** seat gets in.
+
+**A suspended seat loses access straight away.** When you suspend someone in the Learnomy Space, they keep their place on the roster - so restoring them later brings back their role and their history - but they lose the space's courses and its discussion together, which is what suspension is for. Restoring them gives both back.
+
 ## Syncing Existing Students
 
 If students are already enrolled or subscribed before the rule was created, click the **Sync Members** button on the rule. This checks every user against the linked course or plan and adds the ones who currently hold it. The button reports how many members were synced.
@@ -89,6 +102,10 @@ New enrollments, subscriptions, and removals are handled automatically after the
 | Membership plan subscription created | Given access to linked spaces at the rule's access level |
 | Membership plan subscription cancelled | Removed from linked spaces |
 | Membership plan subscription expires | Removed from linked spaces |
+| Seat taken in a Learnomy Space | Given access to spaces gated on that Space |
+| Seat given up or reclaimed | Removed from those spaces |
+| Seat **suspended** | Removed - the roster place is kept, the access is not |
+| Seat **restored** | Access comes back |
 | Student added to a cohort | Given access to spaces gated on that cohort |
 | Student removed from a cohort | Removed from spaces gated on that cohort |
 | Cohort marked completed or archived | **Nothing** - members keep the space |
@@ -103,9 +120,9 @@ Learnomy owns who has access to what. Jetonomy reads that; it never writes back,
    LEARNOMY  (owns access)              JETONOMY  (reads it)
    ─────────────────────────            ──────────────────────────
    Course      enrollments  ─┐
-   Cohort      roster       ─┼─ event ─▶ Access Rule ─▶ Space
-   Membership  subscriptions─┘           lrn_course_12
-                                         lrn_cohort_4
+   Cohort      roster       ─┤           lrn_course_12
+   Space       seats        ─┼─ event ─▶ lrn_cohort_4   ─▶ Access Rule ─▶ Space
+   Membership  subscriptions─┘           lrn_space_7
                                          lrn_membership_3
 
    one direction only. Jetonomy never writes into Learnomy,
@@ -140,7 +157,9 @@ Nothing to configure. On a site without BuddyNext nothing changes at all.
 
 **A course, cohort, or plan is missing from the picker** - The picker lists up to 500 entries across all three kinds together, so a large catalog reaches the cap sooner than you would expect. Raise it with the `jetonomy_learnomy_max_levels` filter, or confirm the plan is active in Learnomy - inactive plans are not returned.
 
-**No cohorts in the picker** - Cohorts need Learnomy Pro with the Cohorts extension enabled. With only free Learnomy, courses and plans appear and cohorts do not.
+**No cohorts or Learnomy Spaces in the picker** - Both need Learnomy Pro with their extension enabled. With only free Learnomy, courses and plans appear and the other two do not.
+
+**Someone in a Learnomy Space cannot get in** - Check their seat is *active* rather than suspended. A suspended seat is still on the roster but has no access, by design.
 
 **A cohort rule stopped letting anyone in** - Check the Cohorts extension is still enabled. A cohort rule on a site where the extension is off grants nobody, by design, rather than erroring.
 
