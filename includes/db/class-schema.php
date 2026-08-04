@@ -186,6 +186,7 @@ class Schema {
   KEY author_created (author_id,created_at),
   KEY status_created (status,created_at),
   KEY sitemap_status_id (status,id),
+  KEY slug (slug),
   FULLTEXT KEY ft_title_content (title,content_plain)
 ) ENGINE=InnoDB $charset_collate;";
 
@@ -246,7 +247,8 @@ class Schema {
   verification_reminder_sent_at datetime DEFAULT NULL,
   PRIMARY KEY  (user_id),
   KEY trust_reputation (trust_level,reputation),
-  KEY trust_user (trust_level,user_id)
+  KEY trust_user (trust_level,user_id),
+  KEY seen_reputation (last_seen_at,reputation)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 7. jt_notifications
@@ -305,7 +307,8 @@ class Schema {
   slug varchar(255) NOT NULL DEFAULT '',
   post_count int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY  (id),
-  UNIQUE KEY slug (slug)
+  UNIQUE KEY slug (slug),
+  KEY post_count (post_count)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 12. jt_post_tags

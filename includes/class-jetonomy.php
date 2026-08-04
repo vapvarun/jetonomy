@@ -443,6 +443,19 @@ final class Jetonomy {
 		$current = get_option( 'jetonomy_db_version', '0.0.0' );
 
 		if ( version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
+			// Concurrency guard (caching plan WP5.0): after an update, every
+			// in-flight request reads the old version and enters this block.
+			// MySQL serialises the ALTERs so the losers used to pile up on the
+			// table metadata lock instead of serving pages. First requester
+			// takes the lock and migrates; everyone else serves on the old
+			// (still valid) schema and re-checks next request. The transient
+			// self-expires so a fatal mid-migration can't wedge the site.
+			$lock = 'jetonomy_migration_lock';
+			if ( get_transient( $lock ) ) {
+				return;
+			}
+			set_transient( $lock, 1, 5 * MINUTE_IN_SECONDS );
+
 			// 1) Run any registered data migrations from the stored version forward.
 			require_once JETONOMY_DIR . 'includes/db/class-migrator.php';
 			DB\Migrator::run( $current );
@@ -454,6 +467,7 @@ final class Jetonomy {
 			DB\Schema::create_tables();
 
 			update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
+			delete_transient( $lock );
 			return;
 		}
 
