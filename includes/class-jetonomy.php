@@ -48,6 +48,21 @@ final class Jetonomy {
 		// the Login block, so the visitor doesn't think their password was
 		// wrong.
 		add_filter( 'authenticate', array( $this, 'reject_pending_verification_login' ), 31, 1 );
+
+		// Bust the REST layer's user:{id} row cache (Base_Controller::
+		// batch_load_users) when core mutates the user. Registered HERE at
+		// boot — not in the API classes — because those only load on
+		// rest_api_init, and the writes being tracked (a wp-admin profile
+		// save, a role change) happen on requests where they never load.
+		// Before this, only the GDPR erase path busted the key, so a
+		// display-name change stayed stale in every REST-rendered author
+		// block for up to 300s (caching plan WP0.3).
+		$bust_user_row = static function ( $user_id ): void {
+			Cache::delete( 'user:' . (int) $user_id );
+		};
+		add_action( 'profile_update', $bust_user_row );
+		add_action( 'deleted_user', $bust_user_row );
+		add_action( 'set_user_role', $bust_user_row );
 	}
 
 	/**

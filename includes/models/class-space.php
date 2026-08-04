@@ -145,6 +145,15 @@ class Space extends Model {
 			return 0;
 		}
 
+		// find_by_slug() caches the slug->id mapping INCLUDING the id=0 miss.
+		// Without this bust, a probe for a slug that didn't exist yet (the
+		// REST unique_slug() duplicate guard does exactly that) left a cached
+		// "no such slug" for 300s — so a second create in that window minted a
+		// duplicate slug on persistent-cache installs (caching plan WP0.9).
+		if ( ! empty( $data['slug'] ) ) {
+			Cache::delete( 'space:slug:' . (string) $data['slug'] );
+		}
+
 		if ( ! empty( $data['category_id'] ) ) {
 			Category::increment_space_count( (int) $data['category_id'] );
 		}

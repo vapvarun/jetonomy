@@ -651,15 +651,14 @@ class Blocks {
 		$profile     = class_exists( \Jetonomy\Models\UserProfile::class ) ? \Jetonomy\Models\UserProfile::find_by_user( $user_id ) : null;
 		$trust_level = $profile ? (int) ( $profile->trust_level ?? 0 ) : 0;
 
-		// Unread notifications count (bounded query — uses the index on
-		// user_id + is_read so it stays cheap at 10k+ notifications).
-		$unread = 0;
-		if ( class_exists( \Jetonomy\Models\Notification::class ) ) {
-			global $wpdb;
-			$notifications_tbl = \Jetonomy\table( 'notifications' );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$unread = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_tbl} WHERE user_id = %d AND is_read = 0", $user_id ) );
-		}
+		// Unread notifications count — through the model, not raw SQL. The
+		// hand-rolled query here skipped the blocked-actor exclusion the model
+		// applies, so this badge and the header badge could disagree for any
+		// viewer with blocks (caching plan WP0.11). One implementation, one
+		// future cache/bust point.
+		$unread = class_exists( \Jetonomy\Models\Notification::class )
+			? \Jetonomy\Models\Notification::unread_count( $user_id )
+			: 0;
 
 		$profile_url   = \Jetonomy\get_profile_url( $user_id );
 		$edit_url      = $base . '/u/' . rawurlencode( $user->user_login ) . '/edit/';
