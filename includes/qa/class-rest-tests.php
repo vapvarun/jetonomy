@@ -1622,13 +1622,17 @@ class REST_Tests {
 		$this->check( 'K9: votes purged', 0 === $votes_after, "votes_after={$votes_after}" );
 
 		// Cleanup — the fixture rows are now anonymized (author_id = 0), not
-		// owned by any session, so remove them directly rather than via REST.
+		// owned by any session, so remove them via the models rather than REST.
+		// Model deletes (not raw $wpdb->delete) so the space's post_count and the
+		// post's reply_count decrement — raw row deletes leaked +1 space
+		// post_count per run (Basecamp 10161324705). Reply first, then post, so
+		// the reply's parent-post decrement lands on a row that still exists.
 		wp_set_current_user( $this->admin_id );
 		if ( $reply_id ) {
-			$wpdb->delete( table( 'replies' ), [ 'id' => $reply_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			\Jetonomy\Models\Reply::delete( $reply_id );
 		}
 		if ( $post_id ) {
-			$wpdb->delete( table( 'posts' ), [ 'id' => $post_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			\Jetonomy\Models\Post::delete( $post_id );
 		}
 
 		// Safety net: never leave the fixture ACCOUNT behind in the live

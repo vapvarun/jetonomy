@@ -1086,11 +1086,16 @@ class Reply extends Model {
 			Post::update( $new_post_id, array( 'reply_count' => $moved_count ) );
 		}
 
-		// Delete original reply from source post (soft-delete).
+		// Delete original reply from source post (soft-delete). The publish→trash
+		// transition inside update() already decrements the source post's
+		// reply_count and the author's reply_count by 1 for the split reply itself.
 		static::update( $reply_id, array( 'status' => 'trash' ) );
 
-		// Decrement source post reply count (the split reply + its children).
-		Post::increment_reply_count( (int) $reply->post_id, -1 * ( 1 + $moved_count ) );
+		// Decrement source post reply count for the moved children only — the
+		// split reply's own -1 was handled by the trash transition above.
+		if ( $moved_count > 0 ) {
+			Post::increment_reply_count( (int) $reply->post_id, -1 * $moved_count );
+		}
 
 		do_action( 'jetonomy_reply_split', $reply_id, $new_post_id, (int) $reply->post_id );
 

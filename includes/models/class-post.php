@@ -235,7 +235,28 @@ class Post extends Model {
 			return $proceed;
 		}
 
-		return parent::delete( $id );
+		// Load before deletion so a hard delete reverses the same counters a
+		// published post incremented in create(). REST deletes go through
+		// update( status => trash ), which already handles this; the direct
+		// delete path (CLI content journey, QA fixtures, abilities) must mirror
+		// it so space + author post_count stay consistent across every delete
+		// mechanism. Mirrors Reply::delete().
+		$post   = self::find( $id );
+		$result = parent::delete( $id );
+
+		if ( true === $result && $post && 'publish' === ( $post->status ?? '' ) ) {
+			if ( ! empty( $post->space_id ) ) {
+				Space::increment_post_count( (int) $post->space_id, -1 );
+			}
+			if ( ! empty( $post->author_id ) ) {
+				UserProfile::increment_post_count( (int) $post->author_id, -1 );
+			}
+
+			/** This action is documented in includes/models/class-post.php (Post::create) */
+			do_action( 'jetonomy_post_publish_transition', $id, -1, (string) ( $post->created_at ?? '' ) );
+		}
+
+		return $result;
 	}
 
 	/**
