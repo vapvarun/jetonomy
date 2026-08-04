@@ -1132,8 +1132,11 @@ class Fluent_Community {
 			return;
 		}
 
-		$pairs       = $this->get_pair_map();
-		$jt_spaces   = Space::list_all( 'active' );
+		$pairs = $this->get_pair_map();
+		// Explicit cap (plan WP1.5): this feeds the pairing <select>; a site
+		// with 500+ active spaces has outgrown a dropdown anyway, and the
+		// unbounded default materialized every row on each settings render.
+		$jt_spaces   = Space::list_all( 'active', 500 );
 		$fc_spaces   = $this->list_fc_spaces();
 		$label       = $this->get_tab_label();
 		$sync_on     = $this->member_sync_enabled();

@@ -199,7 +199,21 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			</div>
 
 			<?php /* translators: %d: number of members */ ?>
-		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), (int) count( $members ) ); ?></h2>
+		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), (int) ( $space->member_count ?? count( $members ) ) ); ?></h2>
+		<?php if ( ! empty( $members_capped ) ) : ?>
+			<div class="notice notice-warning inline">
+				<p>
+					<?php
+					printf(
+						/* translators: 1: number of member rows shown, 2: total member count. */
+						esc_html__( 'Showing the first %1$d of %2$d members. Manage the rest from the front-end members page, which is paginated.', 'jetonomy' ),
+						(int) count( $members ),
+						(int) ( $space->member_count ?? 0 )
+					);
+					?>
+				</p>
+			</div>
+		<?php endif; ?>
 			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-members-table">
 				<thead>
 					<tr>

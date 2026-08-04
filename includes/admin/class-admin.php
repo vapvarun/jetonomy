@@ -1189,8 +1189,15 @@ class Admin {
 				/* translators: %s: the singular space label. */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
-			$categories     = $this->get_all_categories_flat();
-			$members        = SpaceMember::list_by_space( $space_id );
+			$categories = $this->get_all_categories_flat();
+			// Explicit cap (plan WP1.5): the unbounded default rendered every
+			// member row on one screen. 1000 keeps this management surface
+			// functional; when the space is larger the view shows a notice so
+			// members past the cap are never SILENTLY hidden from the only
+			// admin surface that can remove them (the frontend members page
+			// is paginated and covers the tail).
+			$members        = SpaceMember::list_by_space( $space_id, 1000 );
+			$members_capped = ( (int) ( $space->member_count ?? 0 ) ) > count( $members ) && count( $members ) >= 1000;
 			$access_rules   = AccessRule::list_for_space( $space_id );
 			$space_settings = Space::get_settings( $space_id );
 			$join_requests  = JoinRequest::list_pending_for_space( $space_id );
