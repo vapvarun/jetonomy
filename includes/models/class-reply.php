@@ -603,6 +603,38 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Reply ids the single-post view is rendering this request, per post
+	 * (paged tree + off-page accepted answer). Published by the view so
+	 * hook-driven batch primes (Pro reactions on jetonomy_before_replies,
+	 * plan WP3.1) can scope to the rendered set without a new public hook
+	 * carrying ids. Request-scope by nature; empty on non-view requests,
+	 * in which case consumers keep their per-row fallback.
+	 *
+	 * @var array<int, int[]>
+	 */
+	private static array $rendered_ids = array();
+
+	/**
+	 * Record the reply ids a view is about to render for a post.
+	 *
+	 * @param int   $post_id Parent post id.
+	 * @param int[] $ids     Rendered reply ids.
+	 */
+	public static function set_rendered_ids( int $post_id, array $ids ): void {
+		self::$rendered_ids[ $post_id ] = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+	}
+
+	/**
+	 * Reply ids the current request's view renders for a post ([] if unknown).
+	 *
+	 * @param int $post_id Parent post id.
+	 * @return int[]
+	 */
+	public static function rendered_ids( int $post_id ): array {
+		return self::$rendered_ids[ $post_id ] ?? array();
+	}
+
+	/**
 	 * Whether a reply id appears anywhere in a threaded tree (any nesting depth).
 	 *
 	 * Canonical membership test for a `get_threaded()` result so callers don't

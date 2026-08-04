@@ -207,6 +207,9 @@ if ( $jt_accepted_reply_id && ! $jt_accepted_on_page ) {
 	$jt_prime_ids[] = $jt_accepted_reply_id;
 }
 \Jetonomy\Models\Attachment::prime_rendered_replies( (int) $post->id, $jt_prime_ids );
+// Publish the rendered set for hook-driven primes (Pro reactions reads it
+// on jetonomy_before_replies — plan WP3.1).
+\Jetonomy\Models\Reply::set_rendered_ids( (int) $post->id, $jt_prime_ids );
 
 // WP3.7: batch the per-reply-card lookups over the SAME rendered set —
 // author profiles and the viewer's reply votes. The walker covers nested
