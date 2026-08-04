@@ -9,6 +9,7 @@ namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Cache;
 use function Jetonomy\now;
 
 /**
@@ -580,6 +581,25 @@ class Post extends Model {
 	 * @return int
 	 */
 	public static function count_by_space_visible( int $space_id, int $user_id, bool $is_privileged, string $sort = 'latest' ): int {
+		// Cached 120s per viewer bucket (plan WP4.10): the COUNT doubles the
+		// query cost of the hottest list on the site for a pager number that
+		// barely moves. Bucket honors EVERY viewer-dependent clause below
+		// (U2): privileged viewers share 'priv' (they see everything),
+		// guests share 'guest' (no blocks by definition), and any logged-in
+		// non-privileged viewer gets a per-user key — the own-private clause
+		// binds their literal id. TTL-ONLY by design: the sort+bucket key
+		// set is unbounded per space, so no write can enumerate it, and a
+		// ≤120s-stale pager count is invisible. The denormalized
+		// jt_spaces.post_count is a DIFFERENT population and is never
+		// substituted here (the reverted Basecamp 10118693115 bug —
+		// plan graveyard #1).
+		$bucket = $is_privileged ? 'priv' : ( $user_id > 0 ? "u{$user_id}" : 'guest' );
+		$key    = "postcount:{$space_id}:{$sort}:{$bucket}";
+		$cached = Cache::get( $key );
+		if ( false !== $cached ) {
+			return (int) $cached;
+		}
+
 		$table       = static::table();
 		$extra_where = '';
 
@@ -605,13 +625,16 @@ class Post extends Model {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (int) static::db()->get_var(
+		$count = (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT COUNT(*) FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where}",
 				$space_id
 			)
 		);
+
+		Cache::set( $key, $count, 120 );
+		return $count;
 	}
 
 	/**
@@ -915,6 +938,67 @@ class Post extends Model {
 				break;
 		}
 
+		// hot/top ORDERING cache (plan WP4.5). hot_score is computed per row
+		// and unindexable — every feed request full-scanned the visible post
+		// set TWICE (COUNT + filesort). Cache the id ORDER + total only,
+		// 90s, TTL-only (decay-ranked sorts make staleness invisible; 'new'
+		// stays uncached — index-served and freshness-expected). Buckets:
+		// 'guest' and 'admin' are shared classes; any other viewer gets a
+		// per-user key (their member-space set + block list shape the WHERE).
+		// LEAK-PROOF HYDRATION is the load-bearing part: the safety review
+		// showed a cached id list re-fetched by bare id serves just-privated
+		// / trashed / moved posts for the TTL — so the hydrate below re-runs
+		// the FULL visibility predicate and drops misses, caching only the
+		// ordering, never the rows.
+		$feed_cacheable = in_array( $sort, array( 'hot', 'top' ), true );
+		$feed_key       = '';
+		if ( $feed_cacheable ) {
+			$bucket = 'guest';
+			if ( $user_id > 0 ) {
+				$bucket = ( '1=1' === $vis_sql ) ? 'admin' : "u{$user_id}";
+			}
+			$feed_key = "feed:{$sort}:{$window_days}:{$limit}:{$offset}:{$bucket}";
+			$cached   = Cache::get( $feed_key );
+			if ( is_array( $cached ) && isset( $cached['ids'], $cached['total'] ) ) {
+				$ids = array_map( 'intval', (array) $cached['ids'] );
+				if ( empty( $ids ) ) {
+					return array(
+						'posts' => array(),
+						'total' => (int) $cached['total'],
+					);
+				}
+
+				$ph = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$hydrate_sql  = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title,
+						(p.vote_score + p.reply_count * 2) / POW(TIMESTAMPDIFF(HOUR, p.created_at, NOW()) + 2, 1.5) AS hot_score
+					FROM {$table} p
+					LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+					WHERE p.id IN ({$ph}) AND {$where}";
+				$hydrate_rows = static::db()->get_results(
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					static::db()->prepare( $hydrate_sql, ...array_merge( $ids, $where_args ) )
+				) ?: array();
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+				$by_id = array();
+				foreach ( $hydrate_rows as $row ) {
+					$by_id[ (int) $row->id ] = $row;
+				}
+				$posts = array();
+				foreach ( $ids as $id ) {
+					if ( isset( $by_id[ $id ] ) ) {
+						$posts[] = $by_id[ $id ]; // Cached order; gate-failing ids drop.
+					}
+				}
+
+				return array(
+					'posts' => $posts,
+					'total' => (int) $cached['total'],
+				);
+			}
+		}
+
 		// Total via a parallel COUNT(*) with the same WHERE (drives X-WP-Total).
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$count_sql = "SELECT COUNT(*) FROM {$table} p LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE {$where}";
@@ -940,8 +1024,21 @@ class Post extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
+		$results = $results ? $results : array();
+
+		if ( $feed_cacheable ) {
+			Cache::set(
+				$feed_key,
+				array(
+					'ids'   => array_map( static fn( $r ) => (int) $r->id, $results ),
+					'total' => $total,
+				),
+				90
+			);
+		}
+
 		return array(
-			'posts' => $results ? $results : array(),
+			'posts' => $results,
 			'total' => $total,
 		);
 	}

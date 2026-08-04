@@ -53,7 +53,13 @@ class Notification extends Model {
 			$data
 		);
 
-		return static::insert( $data );
+		$id = static::insert( $data );
+
+		if ( $id > 0 && ! empty( $data['user_id'] ) ) {
+			self::bust_user_cache( (int) $data['user_id'] );
+		}
+
+		return $id;
 	}
 
 	/**
@@ -82,7 +88,13 @@ class Notification extends Model {
 	 * @return bool True on success.
 	 */
 	public static function mark_read( int $id ): bool {
-		return static::update( $id, [ 'is_read' => 1 ] );
+		// Load first: the row id alone can't name whose counters to bust.
+		$row    = static::find( $id );
+		$result = static::update( $id, [ 'is_read' => 1 ] );
+		if ( $row && ! empty( $row->user_id ) ) {
+			self::bust_user_cache( (int) $row->user_id );
+		}
+		return $result;
 	}
 
 	/**
@@ -99,6 +111,7 @@ class Notification extends Model {
 				'is_read' => 0,
 			]
 		);
+		self::bust_user_cache( $user_id );
 	}
 
 	/**
@@ -108,17 +121,51 @@ class Notification extends Model {
 	 * @return int
 	 */
 	public static function unread_count( int $user_id ): int {
+		// Cached 60s (plan WP4.7): the highest-QPS query in the plugin —
+		// the header bell reads it on EVERY page view for every logged-in
+		// user. Busted by every named write path via bust_user_cache();
+		// the cron bulk mark-read/prune, space purge and privacy erase have
+		// no per-user loop and are TTL-BOUNDED (≤60s stale badge) — do not
+		// claim they bust.
+		$cached = \Jetonomy\Cache::get( "notif:unread:{$user_id}" );
+		if ( false !== $cached ) {
+			return (int) $cached;
+		}
+
 		// Must match list_for_user_with_targets()'s block exclusion or the
 		// header badge count disagrees with what the notifications list shows.
+		// (Blocking therefore busts this key — see BlockedUser::bust_cache.)
 		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'actor_id' );
 		$block_where   = '' !== $block_sql ? " AND {$block_sql}" : '';
 		$table         = static::table();
 
-		return (int) static::db()->get_var(
+		$count = (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND is_read = 0{$block_where}",
 				$user_id
+			)
+		);
+
+		\Jetonomy\Cache::set( "notif:unread:{$user_id}", $count, 60 );
+		return $count;
+	}
+
+	/**
+	 * Bust the cached notification counters for one user (plan WP4.7).
+	 *
+	 * The single bust point for notif:unread:{id} + notif:counts:{id} —
+	 * called from create(), mark_read(), mark_all_read(), delete_for_user(),
+	 * mark_read_for_user(), and BlockedUser::bust_cache() (the counts apply
+	 * the block exclusion, so blocking changes them).
+	 *
+	 * @param int $user_id Recipient whose counters changed.
+	 */
+	public static function bust_user_cache( int $user_id ): void {
+		\Jetonomy\Cache::delete_many(
+			array(
+				"notif:unread:{$user_id}",
+				"notif:counts:{$user_id}",
 			)
 		);
 	}
@@ -232,9 +279,11 @@ class Notification extends Model {
 		$sql          = 'DELETE FROM ' . static::table() . ' WHERE user_id = %d AND id IN (' . $placeholders . ')';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders generated above; values passed via prepare.
-		return (int) static::db()->query(
+		$deleted = (int) static::db()->query(
 			static::db()->prepare( $sql, array_merge( [ $user_id ], $ids ) )
 		);
+		self::bust_user_cache( $user_id );
+		return $deleted;
 	}
 
 	/**
@@ -257,9 +306,11 @@ class Notification extends Model {
 		$sql          = 'UPDATE ' . static::table() . ' SET is_read = 1 WHERE user_id = %d AND is_read = 0 AND id IN (' . $placeholders . ')';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders generated above; values passed via prepare.
-		return (int) static::db()->query(
+		$updated = (int) static::db()->query(
 			static::db()->prepare( $sql, array_merge( [ $user_id ], $ids ) )
 		);
+		self::bust_user_cache( $user_id );
+		return $updated;
 	}
 
 	/**
@@ -277,6 +328,14 @@ class Notification extends Model {
 	 * @return array<string,int>
 	 */
 	public static function counts_by_filter( int $user_id ): array {
+		// Cached 60s alongside notif:unread (plan WP4.7) — this single-pass
+		// SUM(CASE) walks the user's ENTIRE notification history per render.
+		// Same bust point (bust_user_cache), same TTL-bounded exceptions.
+		$cached = \Jetonomy\Cache::get( "notif:counts:{$user_id}" );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
 		// The filter-tab badges — same block exclusion as the list/unread
 		// counts so a badge never advertises a blocked user's content.
 		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'actor_id' );
@@ -304,25 +363,24 @@ class Notification extends Model {
 			)
 		);
 
-		if ( ! $row ) {
-			return [
-				'all'      => 0,
-				'unread'   => 0,
-				'mentions' => 0,
-				'replies'  => 0,
-				'votes'    => 0,
-				'badges'   => 0,
-			];
-		}
-
-		return [
+		$counts = $row ? [
 			'all'      => (int) $row->c_all,
 			'unread'   => (int) $row->c_unread,
 			'mentions' => (int) $row->c_mentions,
 			'replies'  => (int) $row->c_replies,
 			'votes'    => (int) $row->c_votes,
 			'badges'   => (int) $row->c_badges,
+		] : [
+			'all'      => 0,
+			'unread'   => 0,
+			'mentions' => 0,
+			'replies'  => 0,
+			'votes'    => 0,
+			'badges'   => 0,
 		];
+
+		\Jetonomy\Cache::set( "notif:counts:{$user_id}", $counts, 60 );
+		return $counts;
 	}
 
 	/**

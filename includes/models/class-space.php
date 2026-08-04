@@ -415,6 +415,10 @@ class Space extends Model {
 			)
 		);
 		self::bust_cache( $id );
+		// The space's cached JSON-LD lists its recent posts + post_count —
+		// every publish transition and move lands here with the space id in
+		// hand, making this the single bust point for it (plan WP4.9).
+		Cache::delete( "schema:space:{$id}" );
 	}
 
 	/**

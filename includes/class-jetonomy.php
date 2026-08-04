@@ -59,6 +59,9 @@ final class Jetonomy {
 		// block for up to 300s (caching plan WP0.3).
 		$bust_user_row = static function ( $user_id ): void {
 			Cache::delete( 'user:' . (int) $user_id );
+			// The REST capabilities map (caps:{id}, plan WP4.13) derives from
+			// the user's roles — bust it alongside the row.
+			Cache::delete( 'caps:' . (int) $user_id );
 		};
 		add_action( 'profile_update', $bust_user_row );
 		add_action( 'deleted_user', $bust_user_row );

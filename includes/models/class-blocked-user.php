@@ -350,5 +350,8 @@ class BlockedUser extends Model {
 	private static function bust_cache( int $blocker_id ): void {
 		\Jetonomy\Cache::delete( "blocks:{$blocker_id}" );
 		unset( self::$memo[ $blocker_id ] );
+		// The notification counters apply the block exclusion on actor_id,
+		// so a block/unblock changes them for the blocker (plan WP4.7).
+		Notification::bust_user_cache( $blocker_id );
 	}
 }

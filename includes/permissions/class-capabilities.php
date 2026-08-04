@@ -294,10 +294,23 @@ class Capabilities {
 	 * @return array<string, bool>
 	 */
 	public static function map_for_user( int $user_id ): array {
+		// Cached 60s per user (plan WP4.13) — /users/me runs on app boot and
+		// screen mounts, and this walks the whole capability set through
+		// user_can() each time. A whole-payload /users/me cache was rejected
+		// by the ownership map (it would stack over the profile/user row
+		// caches); this is the one genuinely uncached expensive part. Busted
+		// on role change by the boot-level set_user_role hook (caps:{id}).
+		$cached = \Jetonomy\Cache::get( "caps:{$user_id}" );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
 		$out = [];
 		foreach ( array_merge( self::all(), [ 'manage_options' ] ) as $cap ) {
 			$out[ $cap ] = user_can( $user_id, $cap );
 		}
+
+		\Jetonomy\Cache::set( "caps:{$user_id}", $out, 60 );
 		return $out;
 	}
 }

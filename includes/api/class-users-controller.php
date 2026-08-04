@@ -327,7 +327,7 @@ class Users_Controller extends Base_Controller {
 		$trust_level  = (int) ( $profile->trust_level ?? 0 );
 		$spaces_count = SpaceMember::count_user_spaces( $user_id );
 
-		return new WP_REST_Response(
+		$response = new WP_REST_Response(
 			array_merge(
 				$this->prepare_profile( $profile ),
 				[
@@ -350,6 +350,11 @@ class Users_Controller extends Base_Controller {
 			),
 			200
 		);
+		// Client-tier only (plan WP4.13): app screen mounts re-fetch /users/me
+		// constantly; a short private cache absorbs the churn without a
+		// server-side payload cache stacking over the row caches.
+		$response->header( 'Cache-Control', 'private, max-age=30' );
+		return $response;
 	}
 
 	/**
