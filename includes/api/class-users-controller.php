@@ -260,13 +260,18 @@ class Users_Controller extends Base_Controller {
 			if ( empty( $ids ) ) {
 				return new WP_REST_Response( array(), 200 );
 			}
+			// search_columns must match the global branch below — without it
+			// WP_User_Query's default set includes user_email, which lets a
+			// space member fish for other members' email addresses by typing
+			// an address prefix and seeing it resolve (Basecamp: WP0.10).
 			$users = get_users(
 				array(
-					'include' => array_map( 'intval', $ids ),
-					'exclude' => $blocked_ids,
-					'search'  => '*' . $q . '*',
-					'number'  => 10,
-					'orderby' => 'display_name',
+					'include'        => array_map( 'intval', $ids ),
+					'exclude'        => $blocked_ids,
+					'search'         => '*' . $q . '*',
+					'search_columns' => array( 'user_login', 'display_name' ),
+					'number'         => 10,
+					'orderby'        => 'display_name',
 				)
 			);
 		} else {
