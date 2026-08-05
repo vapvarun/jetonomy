@@ -723,20 +723,65 @@
 					if (!query || query.length < 1) { $results.hide(); return; }
 					var q = query.toLowerCase();
 					var matches = activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; });
+
 					if (!matches.length) {
 						$results.append('<div class="jetonomy-ac-empty">No matches</div>');
-					} else {
-						var limit = Math.min(matches.length, 20);
-						for (var i = 0; i < limit; i++) {
-							$results.append(
-								'<div class="jetonomy-ac-item" data-id="' + matches[i].id + '">' +
-								$('<span>').text(matches[i].label).html() +
-								'</div>'
-							);
+						$results.show();
+						return;
+					}
+
+					// Group by the optional 'kind'. Adapters that have not
+					// adopted it render exactly as before - one flat list.
+					var grouped = matches.some(function(l) { return !!l.kind; });
+
+					if (grouped) {
+						// Order kinds by first appearance in the adapter's own
+						// list, not alphabetically, so the adapter decides which
+						// kind an owner is most likely to want first. Sort BEFORE
+						// the cap, otherwise a kind can be split across the
+						// boundary and appear twice.
+						var kindOrder = {};
+						activeLevels.forEach(function(l) {
+							if (l.kind && !(l.kind in kindOrder)) {
+								kindOrder[l.kind] = Object.keys(kindOrder).length;
+							}
+						});
+						// Rows with no kind sort LAST, never between two headed
+						// groups - sitting under someone else's heading with no
+						// heading of their own reads as belonging to it. Only
+						// reachable on an adapter that half-adopted 'kind'.
+						function rank(l) { return l.kind ? kindOrder[l.kind] : Number.MAX_SAFE_INTEGER; }
+						matches = matches.slice().sort(function(a, b) { return rank(a) - rank(b); });
+					}
+
+					// The cap is on the LIST, never per group: capping per group
+					// would make the "N more" count a lie and could hide a whole
+					// kind without saying so.
+					var shown = matches.slice(0, 20);
+					var lastKind = null;
+
+					shown.forEach(function(level) {
+						if (grouped) {
+							var kind = level.kind || '';
+							if (kind !== lastKind) {
+								lastKind = kind;
+								if (kind) {
+									var $head = $('<div class="jetonomy-ac-group"/>');
+									$head.append($('<span class="jetonomy-ac-group__kind"/>').text(kind));
+									if (level.note) {
+										$head.append($('<span class="jetonomy-ac-group__note"/>').text(level.note));
+									}
+									$results.append($head);
+								}
+							}
 						}
-						if (matches.length > 20) {
-							$results.append('<div class="jetonomy-ac-empty">' + (matches.length - 20) + ' more — refine search</div>');
-						}
+						$results.append(
+							$('<div class="jetonomy-ac-item"/>').attr('data-id', level.id).text(level.label)
+						);
+					});
+
+					if (matches.length > shown.length) {
+						$results.append('<div class="jetonomy-ac-empty">' + (matches.length - shown.length) + ' more — refine search</div>');
 					}
 					$results.show();
 				}
@@ -762,8 +807,17 @@
 				$(document).on('change', '#rule-type', function() {
 					var val = $(this).val();
 					var isAdapter = val.indexOf('membership:') === 0;
+					// 'everyone' and 'logged_in' match on the type alone -
+					// AccessRule ignores rule_value for both, and the handler
+					// stores null. Showing a value box for them invited an
+					// owner to type something that was silently discarded.
+					var takesValue = !isAdapter && val !== 'everyone' && val !== 'logged_in';
 
-					$('#rule-value').toggle(!isAdapter).val('');
+					$('#rule-value').toggle(takesValue).val('');
+					if (takesValue) {
+						var placeholders = (self.i18n && self.i18n.rulePreview && self.i18n.rulePreview.typePlaceholders) || {};
+						$('#rule-value').attr('placeholder', placeholders[val] || '');
+					}
 					$wrap.toggle(isAdapter);
 					$input.val('');
 					$hidden.val('');
@@ -814,9 +868,18 @@
 					// from the access level, so the two can no longer disagree.
 					var warn = '';
 
+					// The "who matches" half. Keyed off the raw type, so an
+					// adapter option ("membership:learndash") falls through to
+					// no note rather than showing a built-in type's sentence.
+					var typeNotes = i18n.typeNotes || {};
+					var note      = typeNotes[$('#rule-type').val()] || '';
+
 					$out.html('').append($('<span/>').text(sentence));
 					if (warn) {
 						$out.append($('<span class="jt-rule-preview__warn"/>').text(' ' + warn));
+					}
+					if (note) {
+						$out.append($('<span class="jt-rule-preview__note"/>').text(note));
 					}
 				}
 
@@ -834,6 +897,11 @@
 
 				$(document).on('change', '#rule-grants, #rule-space-role', renderRulePreview);
 				$(document).on('input', '#rule-value, #rule-value-membership-search', renderRulePreview);
+				// Apply the type rules to whatever is selected on load, not just
+				// on the first change. The form opens on 'Everyone', which takes
+				// no value, so without this the owner is shown an empty value box
+				// for a rule that ignores it.
+				$ruleType.trigger('change');
 				renderRulePreview();
 			})();
 

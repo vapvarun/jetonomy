@@ -355,7 +355,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<tbody>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'View posts and replies. Cannot take part.', 'jetonomy' ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'Lets people in to read. It does not hold anyone back - on a public space that anyone may join, a signed-in member can still post, because the rule admits and only visibility and join policy restrict.', 'jetonomy' ); ?></td>
 						</tr>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
