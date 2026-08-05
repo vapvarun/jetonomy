@@ -155,7 +155,9 @@ Nothing to configure. On a site without BuddyNext nothing changes at all.
 | Learnomy + Jetonomy + BuddyNext, community on this course | One link, to the community, which carries on to the discussion |
 | Learnomy + Jetonomy + BuddyNext, no community on this course | The **Course discussion** link, unchanged |
 
-**The middle row is one destination, not two.** A BuddyNext community linked to a course points at the *same* Jetonomy space the course rule gates - BuddyNext stores it as the community's discussion, rather than creating a second one. The community's **Discussions** tab renders that space's topics in place, with an **Open in Community** link through to the full Jetonomy view. So a learner who follows the single course link reaches everything; nothing is stranded behind the choice.
+**The middle row reaches the discussion, not a dead end.** A BuddyNext community that has a linked discussion renders that space's topics in its own **Discussions** tab, with an **Open in Community** link through to the full Jetonomy view. So a learner who follows the single course link reaches the conversation.
+
+> **Known limitation.** BuddyNext does not yet *adopt* the Jetonomy space a course already has - it provisions its own. Whether the community's discussion and the course's Jetonomy space are the same space therefore depends on the order they were created in. Turn on Jetonomy's auto-create AND give the same course a BuddyNext community and you can end up with two Jetonomy spaces for one course: the one carrying the `lrn_course_{id}` rule, and the community's. Tracked on the BuddyNext board; until it lands, pick one auto-create rather than both.
 
 If you would rather the course link always went straight to the Jetonomy discussion on such a site, return an answer from `jetonomy_pro_learnomy_course_link_pre` at a later priority than BuddyNext's, or use `jetonomy_pro_learnomy_dashboard_widget_taken` for the dashboard equivalent.
 
