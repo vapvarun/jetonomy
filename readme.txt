@@ -278,6 +278,7 @@ A speed release for busy communities, and members whose role comes from another 
 * Fix      - Someone admitted to a space by an access rule rather than by joining could be let in by the browser and refused by the API for the same space.
 * Fix      - Space and topic counts could drift after merging topics or moving content between spaces.
 * Fix      - A partly installed licence library no longer white-screens the site. The plugin loads and reports the problem instead.
+* Fix      - The sidebar no longer writes a PHP warning to the error log on every page outside a space, including the community home, search, leaderboard, notifications and member profiles.
 * Security - Member suggestions could be searched by email address, so a member could confirm whether an address had an account. Suggestions now match on username and display name only.
 * Dev      - One serializer produces post and space payloads for every endpoint, so a feed, a search result and a single read return the same shape.
 * Dev      - New GET /replies/{id}. List endpoints share one pagination contract, and post and reply payloads carry author_last_seen_at.

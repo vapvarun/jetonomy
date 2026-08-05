@@ -71,8 +71,16 @@ $_jt_trend_scope  = ( ! empty( $space ) && isset( $space->id ) ) ? (int) $space-
 
 $trending = \Jetonomy\Cache::remember(
 	"sidebar:trending:{$_jt_trend_scope}:{$_jt_trend_bucket}",
-	static function () use ( $wpdb, $posts_tbl, $spaces_tbl, $space, $_jt_trend_priv_clause, $_jt_trend_space_clause, $_jt_trend_block_clause ) {
-		if ( ! empty( $space ) && isset( $space->id ) ) {
+	// Captures $_jt_trend_scope, NOT $space. $space is only in scope on the
+	// space-scoped templates, so a use($space) capture raised "Undefined
+	// variable" on every other page that renders this sidebar - home,
+	// category, leaderboard, search, notifications, profile. The capture
+	// happens when the closure is CREATED, so it fired on cache hits too.
+	// $_jt_trend_scope is the same value, already derived safely on the line
+	// above, and keying the branch off it means the cache key and the query
+	// can no longer disagree about which scope this is.
+	static function () use ( $wpdb, $posts_tbl, $spaces_tbl, $_jt_trend_scope, $_jt_trend_priv_clause, $_jt_trend_space_clause, $_jt_trend_block_clause ) {
+		if ( $_jt_trend_scope > 0 ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return $wpdb->get_results(
 				$wpdb->prepare(
@@ -82,7 +90,7 @@ $trending = \Jetonomy\Cache::remember(
 					 WHERE p.space_id = %d AND p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_block_clause . '
 					 ORDER BY p.vote_score DESC, p.reply_count DESC
 					 LIMIT 5',
-					(int) $space->id
+					$_jt_trend_scope
 				)
 			) ?: [];
 		}
