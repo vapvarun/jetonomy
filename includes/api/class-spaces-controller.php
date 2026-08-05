@@ -383,11 +383,12 @@ class Spaces_Controller extends Base_Controller {
 
 		$user_id = get_current_user_id();
 
-		// Private/hidden spaces require membership.
-		if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
-			if ( ! $user_id || ! SpaceMember::is_member( $id, $user_id ) ) {
-				return $this->permission_error();
-			}
+		// Admission, not the roster. Asking SpaceMember alone refused a 403 to
+		// exactly the learners a course's access rule exists to admit - the web
+		// page let them in and the API did not, so the app could not show a room
+		// the browser could.
+		if ( ! Space::readable_by_viewer( $space, (int) $user_id ) ) {
+			return $this->permission_error();
 		}
 
 		return new WP_REST_Response( $this->prepare_space( $space ), 200 );
@@ -704,11 +705,12 @@ class Spaces_Controller extends Base_Controller {
 
 		$user_id = get_current_user_id();
 
-		// Private/hidden spaces: only members can see the member list.
-		if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
-			if ( ! $user_id || ! SpaceMember::is_member( $id, $user_id ) ) {
-				return $this->permission_error();
-			}
+		// Same admission test as the space itself: someone who may read the space
+		// may see who is in it. Gating this on the roster hid the member list
+		// from rule-admitted viewers who could already read the space and post
+		// in it, which reads as a broken page rather than a permission.
+		if ( ! Space::readable_by_viewer( $space, (int) $user_id ) ) {
+			return $this->permission_error();
 		}
 
 		// Paginate: a large space can have tens of thousands of members, so

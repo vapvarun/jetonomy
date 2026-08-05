@@ -344,10 +344,61 @@ class Space extends Model {
 		// A viewer admitted by an access rule (e.g. a paid tier) is not a
 		// stranger - concealing the space from them would 404 the very people
 		// the rule exists to let in.
-		return ! (
-			SpaceMember::is_member( (int) $space->id, (int) $user_id )
-			|| AccessRule::grants_access( (int) $user_id, (int) $space->id )
-		);
+		return ! self::admitted( (int) $space->id, (int) $user_id );
+	}
+
+	/**
+	 * Is this viewer admitted to this space?
+	 *
+	 * THE admission question, and the only place the answer is spelled out.
+	 *
+	 * Jetonomy derives access from the rule at read time and deliberately keeps
+	 * no copy of the roster - that is why a rule added later works
+	 * retroactively, and why a roster row is not the test. A learner enrolled
+	 * BEFORE a course got its space has no membership row and never will, yet
+	 * the rule admits them and the space itself lets them straight in.
+	 *
+	 * @param int $space_id Space.
+	 * @param int $user_id  Viewer; 0 for anonymous.
+	 * @return bool
+	 */
+	public static function admitted( int $space_id, int $user_id ): bool {
+		if ( $space_id <= 0 || $user_id <= 0 ) {
+			return false;
+		}
+
+		return SpaceMember::is_member( $space_id, $user_id )
+			|| AccessRule::grants_access( $user_id, $space_id );
+	}
+
+	/**
+	 * May this viewer READ this space and the things that describe it?
+	 *
+	 * Public spaces are readable by anyone. Private and hidden ones require
+	 * admission - which is membership OR a rule, never membership alone.
+	 *
+	 * It exists because the REST layer answered this question in its own words
+	 * and got it wrong in the direction that matters: a learner holding the
+	 * course's access rule was admitted by the web page and refused a 403 by
+	 * the API for the same space, so the app could not show a room the browser
+	 * could. Two surfaces disagreeing about one viewer is the defect, and one
+	 * predicate is what stops a third surface inventing a third answer.
+	 *
+	 * NOT for roster questions. "Are you already a member", "is this user on
+	 * the roster to remove or promote" are about the membership row itself and
+	 * must keep asking SpaceMember directly - a rule-admitted viewer has no row
+	 * to remove, and answering those with admission would be wrong.
+	 *
+	 * @param object $space   Space row (needs ->id and ->visibility).
+	 * @param int    $user_id Viewer; 0 for anonymous.
+	 * @return bool
+	 */
+	public static function readable_by_viewer( object $space, int $user_id ): bool {
+		if ( ! in_array( (string) ( $space->visibility ?? '' ), array( 'private', 'hidden' ), true ) ) {
+			return true;
+		}
+
+		return self::admitted( (int) ( $space->id ?? 0 ), $user_id );
 	}
 
 	/**
