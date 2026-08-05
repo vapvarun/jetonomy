@@ -152,10 +152,12 @@ Nothing to configure. On a site without BuddyNext nothing changes at all.
 | What you run | What a learner sees |
 |---|---|
 | Learnomy + Jetonomy | The **Course discussion** link, on the course and lesson pages |
-| Learnomy + Jetonomy + BuddyNext, community on this course | One link, to the community |
+| Learnomy + Jetonomy + BuddyNext, community on this course | One link, to the community, which carries on to the discussion |
 | Learnomy + Jetonomy + BuddyNext, no community on this course | The **Course discussion** link, unchanged |
 
-> **Note.** In the middle row the learner is a member of the Jetonomy space *as well* - both plugins acted on the enrolment. They just are not routed to it from the course, because the community takes that one link. They can still reach it from the community area. If you would rather the course link always went to the Jetonomy discussion on such a site, return `null` from `jetonomy_pro_learnomy_course_link_pre` at a later priority than BuddyNext's, or use `jetonomy_pro_learnomy_dashboard_widget_taken` for the dashboard equivalent.
+**The middle row is one destination, not two.** A BuddyNext community linked to a course points at the *same* Jetonomy space the course rule gates - BuddyNext stores it as the community's discussion, rather than creating a second one. The community's **Discussions** tab renders that space's topics in place, with an **Open in Community** link through to the full Jetonomy view. So a learner who follows the single course link reaches everything; nothing is stranded behind the choice.
+
+If you would rather the course link always went straight to the Jetonomy discussion on such a site, return an answer from `jetonomy_pro_learnomy_course_link_pre` at a later priority than BuddyNext's, or use `jetonomy_pro_learnomy_dashboard_widget_taken` for the dashboard equivalent.
 
 ### Without Jetonomy
 

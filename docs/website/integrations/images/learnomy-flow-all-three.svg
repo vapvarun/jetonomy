@@ -58,9 +58,9 @@
   <text class="cap" x="888" y="188" text-anchor="middle">passes here</text>
 
   <rect class="note" x="30" y="332" width="900" height="70" rx="6"/>
-  <text class="capb" x="46" y="354">Both act. The learner is added to the BuddyNext community AND the Jetonomy space.</text>
-  <text class="cap"  x="46" y="374">On the course page BuddyNext answers jetonomy_pro_learnomy_course_link_pre and Jetonomy stands down,</text>
-  <text class="cap"  x="46" y="392">so the learner sees exactly ONE link: "Open the community". Same rule on the dashboard widget.</text>
+  <text class="capb" x="46" y="354">Both act, and it is ONE destination: the community's discussion IS this Jetonomy space.</text>
+  <text class="cap"  x="46" y="374">On the course page BuddyNext answers jetonomy_pro_learnomy_course_link_pre and Jetonomy stands down, so the</text>
+  <text class="cap"  x="46" y="392">learner sees one link. The community's Discussions tab renders these topics, and links on to the full view.</text>
 
   <text class="cap" x="30" y="424">Verified: enrol -&gt; jt_member=1 and bn_communities=1; one CTA on course and lesson pages; one list on the dashboard.</text>
 </svg>
