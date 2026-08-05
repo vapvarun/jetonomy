@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.9.0
+Stable tag: 1.9.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,26 @@ Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abil
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.9.1 - August 2026 =
+
+A speed release for busy communities, and members whose role comes from another plugin can finally take part.
+
+* Improve  - Busy communities do far less database work per page. Topic lists, sidebars, notification counts, the category tree, feeds and leaderboards are cached, and the hottest screens fetch their data in batches instead of one query per row.
+* Improve  - A long topic loads only the replies on the page you are reading rather than the whole thread, so a 500-reply topic opens as quickly as a short one.
+* Improve  - A space roadmap loads each column on its own instead of every idea at once.
+* Improve  - New database indexes speed up topic lists, member search and access rules on large sites.
+* Improve  - A member whose WordPress role comes from another plugin, such as an LMS student or a membership tier, can now take part in a space they have been added to or admitted to by a rule. Before this they could open the space and do nothing in it.
+* Improve  - The Access Rules screen says who each rule type catches, gives each value box its own example instead of one generic hint, and groups membership levels under what they are.
+* Improve  - Rules no longer imply they restrict people. The screen states plainly that a rule lets people in, and only visibility and join policy hold anyone back.
+* Fix      - Someone admitted to a space by an access rule rather than by joining could be let in by the browser and refused by the API for the same space.
+* Fix      - Space and topic counts could drift after merging topics or moving content between spaces.
+* Fix      - A partly installed licence library no longer white-screens the site. The plugin loads and reports the problem instead.
+* Security - Member suggestions could be searched by email address, so a member could confirm whether an address had an account. Suggestions now match on username and display name only.
+* Dev      - One serializer produces post and space payloads for every endpoint, so a feed, a search result and a single read return the same shape.
+* Dev      - New GET /replies/{id}. List endpoints share one pagination contract, and post and reply payloads carry author_last_seen_at.
+* Dev      - Membership adapters may return optional kind and note keys from get_all_levels() to group and describe their levels in the Access Rules picker. Adapters that do not return them are unaffected.
+* Compat   - Aligned with Jetonomy Pro 1.9.1. Install both updates together.
 
 = 1.9.0 - August 2026 =
 
