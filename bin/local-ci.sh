@@ -171,6 +171,32 @@ if [ "$DO_CS" -eq 1 ]; then
     fi
 fi
 
+# --- Gate 2b: Cross-plugin guards (free + pro) --------------------------
+# Every call into ANOTHER suite plugin must be guarded, in the same function,
+# against the class it ACTUALLY calls. A guard that names a sibling class reads
+# as careful, passes WPCS and PHPStan above, and fatals only on a site with the
+# partner deactivated -- the one configuration nobody develops on. Calls into
+# free Jetonomy from Pro are exempt: Pro cannot run without its base.
+#
+# Pro has no runner of its own, so it is gated from here alongside free.
+step "Cross-plugin guards (free)"
+if php bin/check-cross-plugin-guards.php; then
+    ok "cross-plugin guards free clean"
+else
+    fail "unguarded partner call in free"
+    FAILED_GATES+=("cross-plugin-guards-free")
+fi
+
+if [ -n "$PRO" ] && [ -f "$PRO/bin/check-cross-plugin-guards.php" ]; then
+    step "Cross-plugin guards (pro)"
+    if (cd "$PRO" && php bin/check-cross-plugin-guards.php); then
+        ok "cross-plugin guards pro clean"
+    else
+        fail "unguarded partner call in pro"
+        FAILED_GATES+=("cross-plugin-guards-pro")
+    fi
+fi
+
 # --- Gate 3: PHPUnit unit suite ----------------------------------------
 # Accepts: "OK (N tests...)" and "OK, but incomplete, skipped, or risky tests!"
 # Skipped-only results (e.g. multisite tests on single-site bootstrap) are
