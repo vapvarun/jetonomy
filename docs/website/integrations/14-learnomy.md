@@ -38,20 +38,24 @@ You can use both. A course-wide space for everyone, plus a private space per coh
 
 ### What each object does, and does not, do for you
 
-The four behave identically once a rule exists. They differ in how much is **automatic**, and that is the part that surprises people: publishing a course can create its space for you, but creating a cohort never does. Nothing is missing when that happens - it is the designed difference.
+A course, a cohort and a Learnomy Space each carry the same **Community** switch, in the same words, wherever you edit them. Turn it on and the object gets its room; everything after that is automatic.
+
+![The Community switch on Learnomy's course screen: a heading reading Community, a toggle labelled "Members get a place to talk", and the note "People are added automatically as they join. Turning this off hides it; nothing posted is deleted."](images/community-control.png)
 
 | | Course | Cohort | Learnomy Space | Membership plan |
 |---|---|---|---|---|
+| The **Community** switch | Yes | Yes | Yes | - |
 | Gate a Jetonomy space by it | Yes | Yes | Yes | Yes |
 | Rule value written | `lrn_course_{id}` | `lrn_cohort_{id}` | `lrn_space_{id}` | `lrn_membership_{id}` |
-| Space created **automatically** | Yes, on publish, if you turn it on | **No** | **No** | **No** |
 | Members kept in step automatically | Yes | Yes | Yes | Yes |
 | Access removed when they leave | On unenrol | On removal from the cohort | When the seat is suspended or removed | When the plan lapses |
 | Needs Learnomy Pro | No | Yes | Yes | No |
 
-**So for a cohort, a Learnomy Space or a plan, you create the space yourself and add the rule.** That is the only manual step; from then on membership rides the same events a course does, and nothing needs re-syncing.
+**A membership plan has no switch**, because a plan is not a place - it is a thing people hold. Gate a space by a plan from the space's own Access Rules instead.
 
-**Turning a cohort or Learnomy Space into a BuddyNext community works the same way** and needs no rule of its own: link the community to the object and BuddyNext handles the discussion. See *When BuddyNext Is Also Installed*.
+**Turning the switch off hides the room; it never deletes it.** Everything posted stays, and the people in it keep what they wrote. Turn it back on and it returns.
+
+You will also see a **Linked community** panel on these screens. That is the occasional case: pointing this object at a community that already exists, rather than making a new one. The switch above it is the decision; the panel is only for reusing something you built earlier.
 
 ## Gating a Space by Course Enrollment
 
