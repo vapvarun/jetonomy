@@ -36,6 +36,23 @@ One rule type, **Learnomy Course**, covers every Learnomy object. The picker tel
 
 You can use both. A course-wide space for everyone, plus a private space per cohort, is a normal setup.
 
+### What each object does, and does not, do for you
+
+The four behave identically once a rule exists. They differ in how much is **automatic**, and that is the part that surprises people: publishing a course can create its space for you, but creating a cohort never does. Nothing is missing when that happens - it is the designed difference.
+
+| | Course | Cohort | Learnomy Space | Membership plan |
+|---|---|---|---|---|
+| Gate a Jetonomy space by it | Yes | Yes | Yes | Yes |
+| Rule value written | `lrn_course_{id}` | `lrn_cohort_{id}` | `lrn_space_{id}` | `lrn_membership_{id}` |
+| Space created **automatically** | Yes, on publish, if you turn it on | **No** | **No** | **No** |
+| Members kept in step automatically | Yes | Yes | Yes | Yes |
+| Access removed when they leave | On unenrol | On removal from the cohort | When the seat is suspended or removed | When the plan lapses |
+| Needs Learnomy Pro | No | Yes | Yes | No |
+
+**So for a cohort, a Learnomy Space or a plan, you create the space yourself and add the rule.** That is the only manual step; from then on membership rides the same events a course does, and nothing needs re-syncing.
+
+**Turning a cohort or Learnomy Space into a BuddyNext community works the same way** and needs no rule of its own: link the community to the object and BuddyNext handles the discussion. See *When BuddyNext Is Also Installed*.
+
 ## Gating a Space by Course Enrollment
 
 ![The Access Rules course picker with a searchable dropdown autocompleting course names as you type](images/course-search-autocomplete.png)
@@ -157,7 +174,16 @@ Nothing to configure. On a site without BuddyNext nothing changes at all.
 
 **The middle row reaches the discussion, not a dead end.** A BuddyNext community that has a linked discussion renders that space's topics in its own **Discussions** tab, with an **Open in Community** link through to the full Jetonomy view. So a learner who follows the single course link reaches the conversation.
 
-> **Known limitation.** BuddyNext does not yet *adopt* the Jetonomy space a course already has - it provisions its own. Whether the community's discussion and the course's Jetonomy space are the same space therefore depends on the order they were created in. Turn on Jetonomy's auto-create AND give the same course a BuddyNext community and you can end up with two Jetonomy spaces for one course: the one carrying the `lrn_course_{id}` rule, and the community's. Tracked on the BuddyNext board; until it lands, pick one auto-create rather than both.
+### One room per object, whichever plugin got there first
+
+A course, cohort or Learnomy Space has **exactly one** Jetonomy discussion, no matter which order things were set up in. The `lrn_*` access rule is what both plugins use to recognise it, so:
+
+- If Jetonomy already provisioned the space (or you added the rule yourself), a BuddyNext community linked to that same object **adopts** it rather than making a second.
+- If the BuddyNext community came first, the discussion it provisions is **claimed** for the object - the rule is written onto it, so Jetonomy finds it and stands down, and the object's learners are admitted to it.
+
+Verified for all three: course, cohort and Learnomy Space, in both orders.
+
+You do not have to think about ordering, and you do not have to pick only one auto-create. Set things up in whatever order suits you.
 
 If you would rather the course link always went straight to the Jetonomy discussion on such a site, return an answer from `jetonomy_pro_learnomy_course_link_pre` at a later priority than BuddyNext's, or use `jetonomy_pro_learnomy_dashboard_widget_taken` for the dashboard equivalent.
 
