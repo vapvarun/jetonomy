@@ -116,6 +116,8 @@ On each add or remove, Jetonomy fires `jetonomy_membership_activated` or `jetono
 
 Learnomy owns who has access to what. Jetonomy reads that; it never writes back, and it never keeps its own copy of the roster. Access is worked out from the rule at the moment someone tries to read the space, which is why it is always correct and never needs re-syncing.
 
+![A learner enrols in a Learnomy course. Learnomy writes the enrolment and fires learnomy_student_enrolled. Jetonomy adds the learner to the linked space, and the course page shows a single Course discussion link.](images/learnomy-flow-jetonomy.svg)
+
 ```
    LEARNOMY  (owns access)              JETONOMY  (reads it)
    ─────────────────────────            ──────────────────────────
@@ -139,15 +141,84 @@ The practical consequences:
 
 BuddyNext and Jetonomy do different jobs for the same course: BuddyNext gives it a community with a member list and a feed, Jetonomy gives it a discussion space. A site running both used to show learners two buttons, going to two places, for what feels to them like one destination.
 
-Now there is one. When BuddyNext has a community for the course, the course and lesson pages link to **that**, because a BuddyNext community also carries a link through to the Jetonomy discussion - so it reaches both. When BuddyNext has no community for the course, the link is Jetonomy's, exactly as before.
+Now there is one. Both plugins listen to the same Learnomy event independently - it is a fan-out, not a chain, and no message passes between them:
+
+![Learnomy fires one enrolment event. BuddyNext and Jetonomy each act on it independently with no message passing between them. The learner is added to both. On the course page BuddyNext answers the link filter and Jetonomy stands down, so the learner sees exactly one link.](images/learnomy-flow-all-three.svg)
+
+When BuddyNext has a community for the course, the course and lesson pages link to **that** and Jetonomy stands down. When BuddyNext has no community for the course, the link is Jetonomy's, exactly as before. The same rule governs the student dashboard, so there is never a second list of rooms beside the first.
 
 Nothing to configure. On a site without BuddyNext nothing changes at all.
 
 | What you run | What a learner sees |
 |---|---|
-| Learnomy + Jetonomy | The discussion link, on the course and lesson pages |
-| Learnomy + Jetonomy + BuddyNext, community on this course | One link, to the community, which carries on to the discussion |
-| Learnomy + Jetonomy + BuddyNext, no community on this course | The discussion link, unchanged |
+| Learnomy + Jetonomy | The **Course discussion** link, on the course and lesson pages |
+| Learnomy + Jetonomy + BuddyNext, community on this course | One link, to the community |
+| Learnomy + Jetonomy + BuddyNext, no community on this course | The **Course discussion** link, unchanged |
+
+> **Note.** In the middle row the learner is a member of the Jetonomy space *as well* - both plugins acted on the enrolment. They just are not routed to it from the course, because the community takes that one link. They can still reach it from the community area. If you would rather the course link always went to the Jetonomy discussion on such a site, return `null` from `jetonomy_pro_learnomy_course_link_pre` at a later priority than BuddyNext's, or use `jetonomy_pro_learnomy_dashboard_widget_taken` for the dashboard equivalent.
+
+### Without Jetonomy
+
+For completeness, this is the same journey on a site running Learnomy and BuddyNext only. Nothing in this integration is involved, and no Jetonomy space is created:
+
+![A learner enrols in a Learnomy course. Learnomy fires learnomy_student_enrolled. BuddyNext adds the learner to the linked community, and the course page shows a single Open the community link.](images/learnomy-flow-buddynext.svg)
+
+## For Developers
+
+Everything above runs on native WordPress hooks. There is no wrapper API to learn.
+
+### What Jetonomy listens to
+
+Learnomy fires these; Jetonomy Pro consumes them. Anything that enrols or removes a student through Learnomy's own enrollment API triggers the integration - custom code that writes the enrollment table directly will not.
+
+| Hook | Type | Why Jetonomy uses it |
+|---|---|---|
+| `learnomy_student_enrolled` | action | Add the learner to the linked space |
+| `learnomy_course_published` | action | Create the space, when auto-create is on |
+| `learnomy_course_editor_fields` | action | Draw the per-course Discussion toggle in wp-admin |
+| `learnomy_pro_course_builder_settings_slot` | action | The same toggle in the front-end course builder |
+| `learnomy_course_sidebar_card_footer` | action | The course-page link |
+| `learnomy_lesson_sidebar_bottom` | action | The lesson-page link |
+| `learnomy_dashboard_widgets` | filter | The **Your discussions** dashboard widget |
+| `learnomy_account_nav_items` | filter | The Discussions item in the account nav |
+
+### What Jetonomy offers you
+
+| Hook | Type | Use it to |
+|---|---|---|
+| `jetonomy_pro_learnomy_course_link_pre` | filter | Answer with your own `['url' => …, 'label' => …]` to own the course link, or return `null` to leave it to Jetonomy. This is how BuddyNext takes the link on a full-stack site. Answering here skips the opt-in check, the space lookup and the membership test entirely. |
+| `jetonomy_pro_learnomy_dashboard_widget_taken` | filter | Return `true` to suppress the **Your discussions** widget because you are drawing your own list of rooms. Defaults to `true` when BuddyNext Pro's widget is present *and reports it has rows*. |
+| `jetonomy_learnomy_max_levels` | filter | Raise the 500-entry cap on the access-rule value picker. |
+| `jetonomy_membership_activated` | action | Fires with source `learnomy` when a rule grants someone access. |
+| `jetonomy_membership_deactivated` | action | The same, on removal. |
+
+Taking over the course link:
+
+```php
+add_filter(
+    'jetonomy_pro_learnomy_course_link_pre',
+    function ( $link, $course_id, $user_id ) {
+        if ( $link ) {
+            return $link; // Somebody ahead of you already answered.
+        }
+
+        return array(
+            'url'   => 'https://example.com/course/' . $course_id . '/chat',
+            'label' => __( 'Course chat', 'your-plugin' ),
+        );
+    },
+    10,
+    3
+);
+```
+
+### REST
+
+| Route | Method | Purpose |
+|---|---|---|
+| `jetonomy/v1/learnomy/course-discussion` | POST | Turn a course's discussion on or off. Body: `course_id`, `enabled`. Requires the `wp_rest` nonce and ownership of the course. |
+
+Both Discussion toggles (wp-admin and the course builder) post to this one route, so there is a single permission path rather than two that could drift apart.
 
 ## Troubleshooting
 
