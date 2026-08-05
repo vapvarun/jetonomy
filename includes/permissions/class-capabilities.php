@@ -93,6 +93,43 @@ class Capabilities {
 	}
 
 	/**
+	 * Whether the owner has deliberately configured any of this user's roles
+	 * on the Permissions screen.
+	 *
+	 * Reads the ROLE_CAPS_OPTION key semantics literally: a role ABSENT from
+	 * the option was never configured (it predates the screen, or another
+	 * plugin registered it); a role PRESENT — even with an empty cap list —
+	 * is a choice the owner made and typed.
+	 *
+	 * Permission_Engine needs the difference. Its space-scoped fallback exists
+	 * for roles nobody ever mapped, and must not quietly reinstate a cap an
+	 * owner unticked on purpose. "Never mapped" gets the fallback; "the owner
+	 * said no" does not.
+	 *
+	 * @param int $user_id User to test.
+	 * @return bool True when at least one of the user's roles is explicitly stored.
+	 */
+	public static function has_explicit_role_mapping( int $user_id ): bool {
+		$stored = get_option( self::ROLE_CAPS_OPTION, [] );
+		if ( ! is_array( $stored ) || ! $stored ) {
+			return false;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return false;
+		}
+
+		foreach ( (array) $user->roles as $slug ) {
+			if ( array_key_exists( (string) $slug, $stored ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Register all Jetonomy capabilities on WordPress roles.
 	 *
 	 * Defaults are cumulative per ROLE_MAP; the owner's saved overrides

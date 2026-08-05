@@ -371,8 +371,14 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<?php esc_html_e( 'Members lists show a matching role - Read is listed as Viewer, Participate as Member, Full as Moderator. To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ); ?>
 				</p>
 				<p class="description">
-					<strong><?php esc_html_e( 'A rule can never exceed a WordPress role.', 'jetonomy' ); ?></strong>
-					<?php esc_html_e( 'Grants filter what someone may do here; they cannot hand out an ability the person\'s WordPress role does not already carry. Moderation abilities come from the role - set those under Jetonomy - Settings - Permissions.', 'jetonomy' ); ?>
+					<strong><?php esc_html_e( 'A rule can never hand out moderation.', 'jetonomy' ); ?></strong>
+					<?php
+					printf(
+						/* translators: %s: the singular space label the site owner configured, lowercase (e.g. space, group). */
+						esc_html__( 'Editing, closing or pinning other people\'s topics comes from the person\'s WordPress role - set those under Jetonomy - Settings - Permissions. Ordinary taking part is different: being admitted to a %s, by a rule or by the roster, carries reading, posting, replying, voting and reporting on its own. That holds for roles Jetonomy does not map, such as the ones a course or membership plugin creates for its own members.', 'jetonomy' ),
+						esc_html( \Jetonomy\space_label( false, true ) )
+					);
+					?>
 				</p>
 				<p class="description">
 					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
