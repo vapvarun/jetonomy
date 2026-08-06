@@ -321,6 +321,26 @@ interface Membership_Adapter {
 
 The `register_hooks()` method is where you fire `jetonomy_membership_activated` and `jetonomy_membership_deactivated` - see [02-hooks-reference.md](./02-hooks-reference.md).
 
+### Grouping and describing your levels (1.9.1)
+
+`get_all_levels()` may return two optional keys per level. Both are ignored if you omit them, so existing adapters keep working unchanged:
+
+| Key | Type | Effect |
+|---|---|---|
+| `kind` | string | Groups the level under a heading in the Access Rules picker. Levels sharing a `kind` are listed together, which stops a long flat list of unrelated products, tiers and courses. |
+| `note` | string | A short line shown under the level name, for when the name alone does not identify it. |
+
+```php
+public function get_all_levels(): array {
+    return array(
+        array( 'id' => 'gold', 'name' => 'Gold', 'kind' => 'Subscriptions', 'note' => 'Renews monthly' ),
+        array( 'id' => 'wb-101', 'name' => 'Workshop 101', 'kind' => 'Courses' ),
+    );
+}
+```
+
+> **A membership rule tops out at Member** whatever access level the owner picks, so your adapter cannot be used to appoint moderators. See [Access level](../integrations/01-memberpress.md#access-level).
+
 ### Example: Custom Membership Adapter
 
 ```php

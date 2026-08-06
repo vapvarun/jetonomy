@@ -99,6 +99,10 @@ Every space object - in both the list and the single-space response - carries th
 
 Posts are individual discussion threads (topics) inside a Space.
 
+> **One shape per resource (1.9.1).** A post or space is serialized by one shared routine, so the same resource comes back identical whether you read it from a list, a feed, a search result or a single-item route. Previously each controller assembled its own payload and they had drifted - a field present in a single read could be missing from the same object in a search result. If you were compensating for that in a client, you can stop.
+>
+> Post and reply payloads also carry **`author_last_seen_at`** (ISO 8601 string, or `null` when the author is anonymized or the value is unknown), so a client can show presence without a second request per row.
+
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/spaces/{space_id}/posts` | Public | List posts in a space |

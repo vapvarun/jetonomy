@@ -91,11 +91,11 @@ This means you can configure a sensible default globally and only override the s
 
 ## Access Rules for Membership-Gated Spaces
 
-Access rules restrict a space based on external membership status - not just whether someone has joined the space. They apply to Private and Hidden spaces, where non-members are already blocked from the content and the rule decides who among them gets in.
+**An access rule lets people in. It never keeps anyone out.** What holds people back is the space's visibility and its join policy; a rule is the door you open in that wall for a group you name - an active membership, a WordPress role, a trust level. A space with no rules is not "unrestricted", and adding a second rule never narrows the first. They apply to Private and Hidden spaces, where non-members cannot already reach the content and the rule decides who among them gets in.
 
 Go to the **Access Rules** tab on the space edit screen to add rules.
 
-> **Adding a restrictive rule to a Public space converts it to Private automatically.** A Public space is readable by everyone, so a membership, role, capability, or trust-level rule attached to it would silently do nothing - the content stays open. To stop that "configured but still accessible" trap, Jetonomy switches the space to Private the moment you save such a rule, so the rule can actually gate access. The admin screen tells you it happened. If you did not intend to make the space Private, remove the rule and the space stays Public.
+> **Adding a rule that names a group converts a Public space to Private automatically.** A Public space is readable by everyone, so a membership, role, capability, or trust-level rule attached to it would silently do nothing - the content stays open. To stop that "configured but still accessible" trap, Jetonomy switches the space to Private the moment you save such a rule, so the rule can actually gate access. The admin screen tells you it happened. If you did not intend to make the space Private, remove the rule and the space stays Public.
 
 Each rule has three parts:
 
@@ -116,9 +116,21 @@ Each rule has three parts:
 |-------|--------|
 | Read | Can view posts and replies, cannot participate |
 | Participate | Can read, post, and reply |
-| Full | All participate abilities plus moderator actions |
+| Full | Everything Participate allows, plus the moderator actions the person's own WordPress capabilities already permit |
 
-**Auto-Assign Role** - Optionally assign the member a space role (Member, Moderator, Admin) automatically when the access rule is satisfied. This is useful when you want MemberPress Gold members to automatically become space moderators.
+> **Full does not hand out moderation by itself.** A rule can open a space to someone; it cannot give them a power their WordPress role does not carry. For an ordinary member matched by a Full rule, Full and Participate come to the same thing in practice - closing and pinning topics and editing other people's posts still require the matching capability. Grant moderation deliberately, by setting the person's role on the space's **Members** tab.
+
+**Recorded space role** - not a separate choice. The role a matching member is recorded as follows from the access grant above, and a *membership* rule tops out at Member however you set it:
+
+| Access grant | Membership rule records | Role / capability / trust rule records |
+|---|---|---|
+| Read | Viewer | Viewer |
+| Participate | Member | Member |
+| Full | **Member** | Moderator |
+
+> **Removed in 1.8.1: the Auto-Assign Role dropdown.** This page used to describe a separate role picker and suggested using it so that paid members "automatically become space moderators". That combination is what made a rule labelled Read hand out post deletion, so the picker is gone and the role now follows the grant. **1.9.1** extended the same cap to enrolment itself, which had still been writing a rule's stored role directly onto the space. Rules already saved on your site are covered and need no action.
+>
+> To appoint a moderator, set that person's role on the space's **Members** tab. It is a per-person decision, not something a plan should confer.
 
 Multiple rules can be stacked. Jetonomy grants the highest matching permission level.
 

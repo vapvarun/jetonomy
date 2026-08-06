@@ -44,7 +44,7 @@ When enabled, a member who leaves the space has the linked access groups revoked
 
 The SureMembers tab creates the access rule at **Participate**, which records access-group holders as Members. To change what the rule grants, open the **Access Rules** tab on the same space and change its **Access level**. Both tabs share the same underlying rule. The **Current access linkage** summary at the bottom of the SureMembers tab lists which access groups currently grant access to the space.
 
-> **Changed in 1.8.1.** The space role is no longer picked separately - it is derived from the access level (Read → Viewer, Participate → Member, Full → Moderator) so a rule can never grant more than it says. See [Access level](01-memberpress.md#access-level).
+> **The space role is derived from the access level**, not picked separately, so a rule can never grant more than it says. An access-group rule is a *membership* rule, so it tops out at Member however you set it - it cannot make anyone a moderator. See [Access level](01-memberpress.md#access-level) for the full mapping.
 
 ## How Reconciliation Works
 

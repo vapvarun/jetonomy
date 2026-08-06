@@ -52,3 +52,7 @@ Defaults are seeded per role and fully editable in the **Jetonomy → Settings �
 | `jetonomy_create_spaces` | Creating spaces from the frontend |
 
 Tick the capabilities for any role - custom roles included - in the **Jetonomy → Settings → Permissions** matrix; every check falls back safely to `manage_options`, so Administrators are never locked out.
+
+> **Custom roles do not need this just to take part.** The capabilities above are for the *site-wide* powers they describe - moderating, managing settings and spaces. Reading, posting, replying and voting inside a space a member belongs to are decided by their membership of that space, so a member whose WordPress role comes from another plugin - an LMS student role, a membership tier - can take part without appearing in this matrix at all.
+>
+> **Changed in 1.9.1.** Before this, only the five roles that ship with WordPress carried Jetonomy capabilities, and every other plugin's role was turned away at the capability check before their space membership was ever read. Such a member could open a space and do nothing in it - worse off than a logged-out visitor, who is judged on the space's visibility instead. Membership is now consulted for those actions. This grants nothing on its own: the space's visibility, its who-can-post and who-can-reply settings, bans and trust-level gates all still apply exactly as before.
