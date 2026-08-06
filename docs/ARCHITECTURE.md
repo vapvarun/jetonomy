@@ -126,6 +126,10 @@ Layer 0: Global Ban Check
 Layer 1: WordPress Capabilities
   │  user_can( $user_id, "jetonomy_{$action}" )
   │  WP admins (manage_options) → ALLOW (bypass remaining)
+  │  Cap missing → DENY, except: space-scoped + member-grade action
+  │    + viewer holds a claim (roster row or matching rule)
+  │    + owner has never configured the role→cap matrix
+  │    → FALL THROUGH to Layer 2 (grants nothing by itself)
   ▼
 Layer 2: Space Role Check
   │  SpaceMember role for this user in this space
@@ -134,6 +138,21 @@ Layer 2: Space Role Check
   ▼
 Result: ALLOW or DENY
 ```
+
+**The Layer 1 fall-through (1.9.1).** Only the five roles WordPress ships carry
+`jetonomy_*` capabilities, so every other plugin's role — an LMS student, a
+membership tier — was rejected here before its space membership was ever read.
+Such a member could open a space and do nothing in it, worse off than a
+logged-out visitor, who skips this check and is judged on visibility instead.
+
+Falling through **grants nothing**. Layer 2 still applies space visibility, the
+per-space `who_can_post` / `who_can_reply` settings, bans and trust gates. The
+fall-through only stops the answer being decided before those run, and it is
+limited to `MEMBER_GRADE_ACTIONS` — read, create_posts, create_replies, vote,
+flag, edit_own_posts, delete_own_posts. Moderation actions are never in that
+set, so no rule or roster row can confer them. It is also skipped entirely once
+the owner has configured the role→capability matrix, since that is an explicit
+decision the plugin must not second-guess.
 
 Trust levels (0-5) are separate from space roles. They gate features like messaging (requires TL >= 1) and are evaluated by the cron-based auto-evaluator.
 
