@@ -25,14 +25,22 @@ class SpaceMember extends Model {
 	}
 
 	/**
-	 * Add a user to a space (or update their role if already a member).
+	 * Add a user to a space, or raise their role if they are already a member.
 	 *
-	 * Uses REPLACE INTO so re-adding an existing member updates the row.
-	 * Increments the space's member_count after a successful insert.
+	 * This is the JOIN-OR-GRANT path. It never LOWERS an existing role: an
+	 * adapter re-firing its enrolment sync on a renewal or a payment retry must
+	 * not undo a promotion an owner made by hand. For a deliberate change,
+	 * including a demotion, use set_role() - it validates, fires its own veto
+	 * filter, and leaves an audit trail, none of which this method does.
 	 *
-	 * @param int    $space_id
-	 * @param int    $user_id
-	 * @param string $role
+	 * An existing row is UPDATED in place, so joined_at keeps the date the
+	 * person actually joined. member_count is incremented only on a real
+	 * insert, never on a re-add.
+	 *
+	 * @param int    $space_id Space to add them to.
+	 * @param int    $user_id  User being added.
+	 * @param string $role     Role to grant; ignored if they already hold a higher one.
+	 * @return \WP_Error|bool  WP_Error if a filter vetoed the join, true otherwise.
 	 */
 	/**
 	 * Where a role sits on the ladder, for "never lower an existing role".
