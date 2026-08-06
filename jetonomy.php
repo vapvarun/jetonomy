@@ -396,6 +396,40 @@ function jetonomy_space_allows_voting( $space ): bool {
 }
 
 /**
+ * May THIS viewer cast a vote in this space?
+ *
+ * Note that jetonomy_space_allows_voting() answers a different question -
+ * whether the space has voting switched on at all - and it is still the right
+ * gate for whether the vote column exists. Templates were then using "is
+ * someone logged in" to decide whether to render the BUTTONS, which is not the
+ * same as being allowed to press them: a member admitted by a Read-grant rule
+ * got working vote buttons, and clicking one returned 403 with nothing on
+ * screen.
+ *
+ * Permission_Engine::can() already accounts for the rule's grant level, the
+ * space's allow_voting setting, bans and silences, so a template that asks this
+ * cannot drift out of step with what the server will accept.
+ *
+ * Returning false does not hide the score - the templates already have a
+ * read-only branch for logged-out visitors, and this simply routes read-only
+ * members into it. Counts stay visible; only the controls go.
+ *
+ * @param object|null $space Space row.
+ * @return bool
+ */
+function jetonomy_viewer_can_vote( $space ): bool {
+	if ( ! is_user_logged_in() || ! jetonomy_space_allows_voting( $space ) ) {
+		return false;
+	}
+
+	return \Jetonomy\Permissions\Permission_Engine::can(
+		get_current_user_id(),
+		'vote',
+		( $space && ! empty( $space->id ) ) ? (int) $space->id : null
+	);
+}
+
+/**
  * Resolve a customer-facing label for an idea roadmap status enum value.
  *
  * Mirrors the column labels in `templates/views/space-roadmap.php`. Used

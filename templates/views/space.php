@@ -484,7 +484,22 @@ $crumbs[] = [
 				</div>
 				<?php if ( $is_restricted ) : ?>
 					<?php /* No new-post button for archived/locked spaces. */ ?>
-				<?php elseif ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || $_jt_rule_admits || 'open' === $_jt_join_policy ) ) : ?>
+					<?php
+					/*
+					 * Ask whether this viewer may POST, not whether they were
+					 * let in. $_jt_rule_admits is binary - it says "admitted",
+					 * not "admitted to do what" - so a Read-grant rule put a
+					 * New Topic button in front of people the server then
+					 * refused, and the refusal produced no message at all.
+					 *
+					 * Permission_Engine::can() already folds in membership,
+					 * the rule's grant level, the public+open shortcut, bans,
+					 * silences and the per-space who_can_post setting, so this
+					 * is the one question worth asking and the conditions it
+					 * replaces were an incomplete re-derivation of it.
+					 */
+					?>
+				<?php elseif ( \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id ) ) : ?>
 					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
 						<?php
 						// Shared label, so the button and the composer heading it

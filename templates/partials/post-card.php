@@ -55,7 +55,8 @@ if ( $prefix_name && $space ) {
 	data-wp-interactive="jetonomy">
 	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 		<div class="jt-votes" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
-			<?php if ( $viewer_id ) : ?>
+			<?php // Not "is logged in" - "may actually vote here". A Read-grant rule admits without granting the vote. ?>
+			<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 				<button type="button" class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
 					data-wp-on--click="actions.voteUp"
 					data-post-id="<?php echo absint( $post->id ); ?>"
