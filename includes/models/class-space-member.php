@@ -34,6 +34,23 @@ class SpaceMember extends Model {
 	 * @param int    $user_id
 	 * @param string $role
 	 */
+	/**
+	 * Where a role sits on the ladder, for "never lower an existing role".
+	 *
+	 * VALID_ROLES is already ordered viewer < member < moderator < admin, so
+	 * its index IS the rank - no second ladder to drift out of step with it.
+	 * An unknown role ranks lowest, so a bad value can never win a comparison
+	 * and silently promote someone.
+	 *
+	 * @param string $role Role slug.
+	 * @return int Rank; 0 when unrecognised.
+	 */
+	private static function role_rank( string $role ): int {
+		$pos = array_search( $role, self::VALID_ROLES, true );
+
+		return false === $pos ? 0 : (int) $pos + 1;
+	}
+
 	public static function add( int $space_id, int $user_id, string $role = 'member' ): \WP_Error|bool {
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
@@ -49,17 +66,49 @@ class SpaceMember extends Model {
 			return $proceed;
 		}
 
-		$exists = self::is_member( $space_id, $user_id );
+		$current = self::get_role( $space_id, $user_id );
+		$exists  = null !== $current;
 
-		static::db()->query(
-			static::db()->prepare(
-				'REPLACE INTO ' . static::table() . ' (space_id, user_id, role, joined_at) VALUES (%d, %d, %s, %s)',
-				$space_id,
-				$user_id,
-				$role,
-				now()
-			)
-		);
+		if ( $exists ) {
+			/*
+			 * A grant must never LOWER a role somebody was deliberately given.
+			 *
+			 * This used to be an unconditional REPLACE INTO, so any adapter
+			 * re-firing its enrolment sync - a renewal, a payment retry, a
+			 * subscription status change - put a hand-promoted moderator back
+			 * to 'member'. Silently: the row already existed, so the join
+			 * hooks did not fire and set_role()'s logging was never reached,
+			 * and the owner had nothing to look at.
+			 *
+			 * This does not block a deliberate demotion. set_role() is the
+			 * intentional path and writes directly, with its own validation,
+			 * veto filter and audit trail. add() is join-or-grant only.
+			 */
+			if ( self::role_rank( (string) $current ) > self::role_rank( $role ) ) {
+				$role = (string) $current;
+			}
+
+			// Role only. REPLACE INTO also reset joined_at on every re-sync,
+			// losing the date the person actually joined.
+			static::db()->update(
+				static::table(),
+				array( 'role' => $role ),
+				array(
+					'space_id' => $space_id,
+					'user_id'  => $user_id,
+				)
+			);
+		} else {
+			static::db()->query(
+				static::db()->prepare(
+					'INSERT INTO ' . static::table() . ' (space_id, user_id, role, joined_at) VALUES (%d, %d, %s, %s)',
+					$space_id,
+					$user_id,
+					$role,
+					now()
+				)
+			);
+		}
 
 		if ( ! $exists ) {
 			Space::increment_member_count( $space_id );

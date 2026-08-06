@@ -226,6 +226,40 @@ class AccessRulePromisesTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * PROMISE, same sentence as above read the other way: "change it on the
+	 * Members tab; that keeps it a visible, per-person decision rather than a
+	 * side effect of a rule."
+	 *
+	 * A rule must not GRANT an elevated role - asserted above - and it must
+	 * not TAKE ONE AWAY either. An adapter re-firing its sync on a renewal or
+	 * a payment retry used to put a hand-promoted moderator back to member,
+	 * silently: the roster row already existed, so no join hook fired and
+	 * set_role()'s logging was never reached.
+	 */
+	public function test_a_membership_sync_does_not_undo_a_per_person_promotion(): void {
+		$user = $this->subscriber();
+		SpaceMember::add( $this->private_space, $user, 'member' );
+		SpaceMember::set_role( $this->private_space, $user, 'moderator' );
+		\Jetonomy\Cache::flush();
+
+		// What an adapter does on every renewal / retry / status change.
+		SpaceMember::add( $this->private_space, $user, 'member' );
+		\Jetonomy\Cache::flush();
+
+		$this->assertSame(
+			'moderator',
+			SpaceMember::get_role( $this->private_space, $user ),
+			'a membership sync silently undid a per-person promotion'
+		);
+
+		// And a deliberate demotion must still work - the Members tab is the
+		// path that IS allowed to lower a role.
+		SpaceMember::set_role( $this->private_space, $user, 'member' );
+		\Jetonomy\Cache::flush();
+		$this->assertSame( 'member', SpaceMember::get_role( $this->private_space, $user ) );
+	}
+
+	/**
 	 * PROMISE: "'Sync Members' is only needed if you also want these people
 	 * listed on the roster."
 	 *
