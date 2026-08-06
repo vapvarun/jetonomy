@@ -30,5 +30,13 @@
         <testsuite name="pro">
             <directory suffix="Test.php">./tests/pro</directory>
         </testsuite>
+        <!--
+            Promises the product makes to a site owner, asserted. Expectations
+            come from the admin copy and the docs, never from the code under
+            test - a test written from the implementation encodes its bugs.
+        -->
+        <testsuite name="functional">
+            <directory suffix="Test.php">./tests/functional</directory>
+        </testsuite>
     </testsuites>
 </phpunit>
