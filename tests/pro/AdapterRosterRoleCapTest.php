@@ -142,13 +142,29 @@ class AdapterRosterRoleCapTest extends WP_UnitTestCase {
 	 * precisely because nothing checked for it.
 	 */
 	public function test_no_adapter_writes_a_rules_raw_space_role(): void {
-		$dir = defined( 'JETONOMY_PRO_DIR' ) ? JETONOMY_PRO_DIR . 'includes/adapters' : '';
-		if ( '' === $dir || ! is_dir( $dir ) ) {
-			$this->markTestSkipped( 'Pro adapters directory not found.' );
+		/*
+		 * BOTH plugins. The first version of this guard scanned only Pro, and
+		 * so it passed while MemberPress_Adapter and PMPro_Adapter - which live
+		 * in FREE - still wrote a raw space_role. Nine of eleven adapters were
+		 * fixed and the test agreed, because the test could not see the other
+		 * two. A guard scoped narrower than the defect is worse than none: it
+		 * reports safety it never checked.
+		 */
+		$dirs = array( dirname( __DIR__, 2 ) . '/includes/adapters' );
+		if ( defined( 'JETONOMY_PRO_DIR' ) ) {
+			$dirs[] = JETONOMY_PRO_DIR . 'includes/adapters';
 		}
 
+		$files = array();
+		foreach ( $dirs as $dir ) {
+			if ( is_dir( $dir ) ) {
+				$files = array_merge( $files, (array) glob( $dir . '/class-*-adapter.php' ) );
+			}
+		}
+		$this->assertNotEmpty( $files, 'found no adapter files to scan; the guard would pass vacuously' );
+
 		$offenders = array();
-		foreach ( (array) glob( $dir . '/class-*-adapter.php' ) as $file ) {
+		foreach ( $files as $file ) {
 			$src = (string) file_get_contents( $file );
 
 			// Look at each roster write on its own. Testing the whole file for

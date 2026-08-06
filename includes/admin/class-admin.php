@@ -974,7 +974,13 @@ class Admin {
 						/* translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as. */
 						'sentence'         => __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
 						'grants'           => array(
-							'read'        => __( 'read posts and replies, but not take part', 'jetonomy' ),
+							// NOT "but not take part". A rule admits; it does not
+							// restrict. On a public space anyone may join, a
+							// signed-in member posts whether or not a Read rule
+							// matches them, so the old wording contradicted the
+							// help table one screen away and promised a cap the
+							// rule cannot deliver.
+							'read'        => __( 'read posts and replies', 'jetonomy' ),
 							'participate' => __( 'read, post, reply, vote and report', 'jetonomy' ),
 							'full'        => __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s topics', 'jetonomy' ),
 						),
