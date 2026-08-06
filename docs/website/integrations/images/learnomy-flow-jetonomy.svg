@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 320" width="940" height="320" role="img" aria-labelledby="t d">
+  <title id="t">Learnomy with Jetonomy: enrolment grants space access</title>
+  <desc id="d">A learner enrols in a Learnomy course. Learnomy writes the enrolment and fires learnomy_student_enrolled. Jetonomy adds the learner to the linked space, and the course page shows a Course discussion link.</desc>
+
+  <style>
+    .bg    { fill: #ffffff; stroke: #e2e8f0; }
+    .lrn   { fill: #17707d; }
+    .jt    { fill: #4e7a35; }
+    .actor { fill: #f1f5f9; stroke: #cbd5e1; }
+    .n     { font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #ffffff; }
+    .na    { font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #1e293b; }
+    .sub   { font: 400 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e8eef0; }
+    .lbl   { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #334155; }
+    .cap   { font: 400 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #475569; }
+    .arrow { stroke: #64748b; stroke-width: 1.6; fill: none; }
+  </style>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0.5" y="0.5" width="939" height="319" rx="8"/>
+
+  <rect class="actor" x="30" y="112" width="110" height="56" rx="6"/>
+  <text class="na" x="85" y="145" text-anchor="middle">Learner</text>
+
+  <rect class="lrn" x="215" y="98" width="190" height="84" rx="8"/>
+  <text class="n"   x="310" y="130" text-anchor="middle">Learnomy</text>
+  <text class="sub" x="310" y="150" text-anchor="middle">course + enrolment authority</text>
+  <text class="sub" x="310" y="166" text-anchor="middle">writes lrn_enrollments</text>
+
+  <rect class="jt"  x="625" y="98" width="230" height="84" rx="8"/>
+  <text class="n"   x="740" y="130" text-anchor="middle">Jetonomy</text>
+  <text class="sub" x="740" y="150" text-anchor="middle">space membership + topics</text>
+  <text class="sub" x="740" y="166" text-anchor="middle">rule lrn_course_{id}</text>
+
+  <path class="arrow" d="M 142 140 L 211 140" marker-end="url(#a)"/>
+  <text class="cap" x="176" y="131" text-anchor="middle">enrols</text>
+
+  <path class="arrow" d="M 407 140 L 621 140" marker-end="url(#a)"/>
+  <text class="lbl" x="514" y="131" text-anchor="middle">learnomy_student_enrolled</text>
+
+  <path class="arrow" d="M 740 186 L 740 230" marker-end="url(#a)" stroke-dasharray="4 3"/>
+  <text class="cap" x="740" y="252" text-anchor="middle">learner is added to the space, and the course page</text>
+  <text class="cap" x="740" y="270" text-anchor="middle">shows a single link: "Course discussion"</text>
+
+  <text class="cap" x="30" y="300">Verified: enrol -&gt; jt_member=1, jt_access=1; link resolves to /discuss/s/{slug}/</text>
+</svg>

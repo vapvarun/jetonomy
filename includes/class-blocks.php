@@ -560,6 +560,15 @@ class Blocks {
 
 		$categories = Category::list_top_level();
 
+		// One grouped, tree-cached query for the whole block (plan
+		// WP3.9/4.4) — this ran a list_visible() PER CATEGORY, each of
+		// which also ran a COUNT this block never read (2N+2 queries).
+		// Same visibility predicate as before (both paths resolve to
+		// listing_visibility_sql). The active-space highlight is applied
+		// per render below, AFTER the cache — the cache holds space DATA,
+		// never per-page HTML (safety review, WP4.4).
+		$spaces_by_cat = Space::visible_by_category( $user_id );
+
 		$sections = array();
 
 		foreach ( $categories as $category ) {
@@ -567,11 +576,8 @@ class Blocks {
 			if ( ! $category_id ) {
 				continue;
 			}
-			// list_visible() already filters by viewer permissions (public
-			// for guests, public + membership for members, all for admins).
-			// per_page capped to 200 so a single category can't run away.
-			$result = Space::list_visible( $user_id, $category_id, null, null, 200, 0 );
-			$spaces = $result['spaces'];
+			// Same per-category runaway cap the old list_visible carried.
+			$spaces = array_slice( $spaces_by_cat[ $category_id ] ?? array(), 0, 200 );
 			if ( $hide_empty && empty( $spaces ) ) {
 				continue;
 			}
@@ -602,15 +608,13 @@ class Blocks {
 
 		// "Uncategorized" bucket — any spaces with category_id = 0 that the
 		// viewer can see. Renders last, un-headed, so site owners who
-		// don't use categories still get a flat tree.
-		$orphan_result = Space::list_visible( $user_id, null, null, null, 200, 0 );
-		$orphans       = $orphan_result['spaces'];
+		// don't use categories still get a flat tree. Group 0 of the same
+		// grouped fetch — the old shape ran ANOTHER full list_visible just
+		// to filter it down to category_id = 0 in PHP.
+		$orphans = array_slice( $spaces_by_cat[0] ?? array(), 0, 200 );
 		if ( ! empty( $orphans ) ) {
 			$orphan_items = '';
 			foreach ( $orphans as $space ) {
-				if ( (int) ( $space->category_id ?? 0 ) !== 0 ) {
-					continue;
-				}
 				$orphan_items .= self::render_space_item( $space, $active_slug, $show_count );
 			}
 			if ( '' !== $orphan_items ) {
@@ -651,15 +655,14 @@ class Blocks {
 		$profile     = class_exists( \Jetonomy\Models\UserProfile::class ) ? \Jetonomy\Models\UserProfile::find_by_user( $user_id ) : null;
 		$trust_level = $profile ? (int) ( $profile->trust_level ?? 0 ) : 0;
 
-		// Unread notifications count (bounded query — uses the index on
-		// user_id + is_read so it stays cheap at 10k+ notifications).
-		$unread = 0;
-		if ( class_exists( \Jetonomy\Models\Notification::class ) ) {
-			global $wpdb;
-			$notifications_tbl = \Jetonomy\table( 'notifications' );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$unread = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_tbl} WHERE user_id = %d AND is_read = 0", $user_id ) );
-		}
+		// Unread notifications count — through the model, not raw SQL. The
+		// hand-rolled query here skipped the blocked-actor exclusion the model
+		// applies, so this badge and the header badge could disagree for any
+		// viewer with blocks (caching plan WP0.11). One implementation, one
+		// future cache/bust point.
+		$unread = class_exists( \Jetonomy\Models\Notification::class )
+			? \Jetonomy\Models\Notification::unread_count( $user_id )
+			: 0;
 
 		$profile_url   = \Jetonomy\get_profile_url( $user_id );
 		$edit_url      = $base . '/u/' . rawurlencode( $user->user_login ) . '/edit/';

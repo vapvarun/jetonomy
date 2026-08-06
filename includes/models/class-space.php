@@ -52,6 +52,15 @@ class Space extends Model {
 			$keys[] = "space:slug:{$slug}";
 		}
 		Cache::delete_many( $keys );
+		// The decoded-settings memo sits above the row cache — clear it with
+		// the row or merge_settings()'s read-modify-write reads stale (WP2.6).
+		unset( self::$settings_memo[ $id ] );
+		// The category tree holds row COPIES (title, visibility, counts) —
+		// a rename/visibility change must go cold with the row (WP4.4).
+		self::bump_tree_generation();
+		// Visibility / join-policy / settings changes alter permission
+		// verdicts — clear the request-scope verdict memo (WP0.1).
+		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 
 	/**
@@ -144,6 +153,18 @@ class Space extends Model {
 		if ( $id <= 0 ) {
 			return 0;
 		}
+
+		// find_by_slug() caches the slug->id mapping INCLUDING the id=0 miss.
+		// Without this bust, a probe for a slug that didn't exist yet (the
+		// REST unique_slug() duplicate guard does exactly that) left a cached
+		// "no such slug" for 300s — so a second create in that window minted a
+		// duplicate slug on persistent-cache installs (caching plan WP0.9).
+		if ( ! empty( $data['slug'] ) ) {
+			Cache::delete( 'space:slug:' . (string) $data['slug'] );
+		}
+
+		// A new space must appear in the cached category tree (WP4.4).
+		self::bump_tree_generation();
 
 		if ( ! empty( $data['category_id'] ) ) {
 			Category::increment_space_count( (int) $data['category_id'] );
@@ -323,10 +344,61 @@ class Space extends Model {
 		// A viewer admitted by an access rule (e.g. a paid tier) is not a
 		// stranger - concealing the space from them would 404 the very people
 		// the rule exists to let in.
-		return ! (
-			SpaceMember::is_member( (int) $space->id, (int) $user_id )
-			|| AccessRule::grants_access( (int) $user_id, (int) $space->id )
-		);
+		return ! self::admitted( (int) $space->id, (int) $user_id );
+	}
+
+	/**
+	 * Is this viewer admitted to this space?
+	 *
+	 * THE admission question, and the only place the answer is spelled out.
+	 *
+	 * Jetonomy derives access from the rule at read time and deliberately keeps
+	 * no copy of the roster - that is why a rule added later works
+	 * retroactively, and why a roster row is not the test. A learner enrolled
+	 * BEFORE a course got its space has no membership row and never will, yet
+	 * the rule admits them and the space itself lets them straight in.
+	 *
+	 * @param int $space_id Space.
+	 * @param int $user_id  Viewer; 0 for anonymous.
+	 * @return bool
+	 */
+	public static function admitted( int $space_id, int $user_id ): bool {
+		if ( $space_id <= 0 || $user_id <= 0 ) {
+			return false;
+		}
+
+		return SpaceMember::is_member( $space_id, $user_id )
+			|| AccessRule::grants_access( $user_id, $space_id );
+	}
+
+	/**
+	 * May this viewer READ this space and the things that describe it?
+	 *
+	 * Public spaces are readable by anyone. Private and hidden ones require
+	 * admission - which is membership OR a rule, never membership alone.
+	 *
+	 * It exists because the REST layer answered this question in its own words
+	 * and got it wrong in the direction that matters: a learner holding the
+	 * course's access rule was admitted by the web page and refused a 403 by
+	 * the API for the same space, so the app could not show a room the browser
+	 * could. Two surfaces disagreeing about one viewer is the defect, and one
+	 * predicate is what stops a third surface inventing a third answer.
+	 *
+	 * NOT for roster questions. "Are you already a member", "is this user on
+	 * the roster to remove or promote" are about the membership row itself and
+	 * must keep asking SpaceMember directly - a rule-admitted viewer has no row
+	 * to remove, and answering those with admission would be wrong.
+	 *
+	 * @param object $space   Space row (needs ->id and ->visibility).
+	 * @param int    $user_id Viewer; 0 for anonymous.
+	 * @return bool
+	 */
+	public static function readable_by_viewer( object $space, int $user_id ): bool {
+		if ( ! in_array( (string) ( $space->visibility ?? '' ), array( 'private', 'hidden' ), true ) ) {
+			return true;
+		}
+
+		return self::admitted( (int) ( $space->id ?? 0 ), $user_id );
 	}
 
 	/**
@@ -336,6 +408,81 @@ class Space extends Model {
 	 * @param int|null $user_id     Viewer ID; null = current user.
 	 * @return object[]
 	 */
+	/**
+	 * ALL top-level spaces visible to the viewer, grouped by category_id in
+	 * ONE query (plan WP3.9). Key 0 collects uncategorized spaces. Replaces
+	 * the per-category list_by_category()/list_visible() loops on the home
+	 * page, the navigation block (which also ran a discarded COUNT per
+	 * category) and GET /categories.
+	 *
+	 * Cached 600s per viewer bucket via a generation key (plan WP4.4):
+	 * guest and admin are shared classes, every other viewer gets a
+	 * per-user key (the membership subquery binds their id). The key
+	 * embeds cat_tree_gen, bumped by bump_tree_generation() from
+	 * Space::bust_cache()/create() and the Category admin CRUD — a space
+	 * rename busts space:{id} but this tree holds row COPIES, so without
+	 * the bump it would keep serving the old name. Caching is SKIPPED
+	 * entirely when a third party filters
+	 * jetonomy_space_listing_visibility_sql — the bucket cannot model an
+	 * arbitrary predicate (safety review, WP4.4).
+	 *
+	 * @param int|null $user_id Viewer ID; null = current user.
+	 * @return array<int, object[]> category_id => space rows (sort_order, title).
+	 */
+	public static function visible_by_category( ?int $user_id = null ): array {
+		$user_id   = $user_id ?? get_current_user_id();
+		$cacheable = ! has_filter( 'jetonomy_space_listing_visibility_sql' );
+
+		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
+
+		$key = '';
+		if ( $cacheable ) {
+			$bucket = 'guest';
+			if ( $user_id > 0 ) {
+				$bucket = ( '1=1' === $vis_where ) ? 'admin' : "u{$user_id}";
+			}
+			$gen = (int) Cache::get( 'cat_tree_gen' );
+			$key = "cat_tree:{$gen}:{$bucket}";
+
+			$cached = Cache::get( $key );
+			if ( is_array( $cached ) ) {
+				return $cached;
+			}
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
+		$sql  = 'SELECT * FROM ' . static::table() . " WHERE (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$rows = empty( $vis_values )
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			? static::db()->get_results( $sql )
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			: static::db()->get_results( static::db()->prepare( $sql, ...$vis_values ) );
+
+		$grouped = array();
+		foreach ( $rows ?: array() as $row ) {
+			$grouped[ (int) ( $row->category_id ?? 0 ) ][] = $row;
+		}
+
+		if ( $cacheable ) {
+			Cache::set( $key, $grouped, 600 );
+		}
+
+		return $grouped;
+	}
+
+	/**
+	 * Bump the tree generation so every cat_tree:{gen}:{bucket} key goes
+	 * cold (plan WP4.4) — the per-user bucket set is unenumerable, so a
+	 * generation bump is the sanctioned versioned-key invalidation. A
+	 * missing/evicted gen re-seeds at 1; a lingering old key under a reused
+	 * gen is bounded by the 600s data TTL (documented, same worst case as
+	 * TTL-only).
+	 */
+	public static function bump_tree_generation(): void {
+		$gen = (int) Cache::get( 'cat_tree_gen' );
+		Cache::set( 'cat_tree_gen', $gen + 1, 0 );
+	}
+
 	public static function list_by_category( int $category_id, ?int $user_id = null ): array {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
@@ -400,6 +547,10 @@ class Space extends Model {
 			)
 		);
 		self::bust_cache( $id );
+		// The space's cached JSON-LD lists its recent posts + post_count —
+		// every publish transition and move lands here with the space id in
+		// hand, making this the single bust point for it (plan WP4.9).
+		Cache::delete( "schema:space:{$id}" );
 	}
 
 	/**
@@ -624,19 +775,55 @@ class Space extends Model {
 	}
 
 	/**
+	 * Per-request memo of DECODED settings arrays, keyed by space id.
+	 *
+	 * The row itself rides the space:{id} cache; this only avoids
+	 * re-json_decode-ing the same blob 20x per space page (one per card).
+	 * Reset inside bust_cache() — merge_settings() is read-modify-write, so
+	 * a memo the existing bust cannot reach would silently revert the first
+	 * of two settings writes in one process (caching plan WP2.6).
+	 *
+	 * @var array<int, array>
+	 */
+	private static array $settings_memo = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $settings_memo_registered = false;
+
+	/**
 	 * Return the decoded settings array for a space.
 	 *
 	 * @param int $id Space ID.
 	 * @return array Settings key/value pairs, or empty array if none.
 	 */
 	public static function get_settings( int $id ): array {
-		$row = static::find( $id );
-		if ( ! $row || empty( $row->settings ) ) {
-			return [];
+		if ( ! self::$settings_memo_registered ) {
+			self::$settings_memo_registered = true;
+			Cache::register_memo_reset(
+				static function (): void {
+					self::$settings_memo = [];
+				}
+			);
 		}
 
-		$decoded = json_decode( $row->settings, true );
-		return is_array( $decoded ) ? $decoded : [];
+		if ( array_key_exists( $id, self::$settings_memo ) ) {
+			return self::$settings_memo[ $id ];
+		}
+
+		$row = static::find( $id );
+		if ( ! $row || empty( $row->settings ) ) {
+			$decoded = [];
+		} else {
+			$decoded = json_decode( $row->settings, true );
+			$decoded = is_array( $decoded ) ? $decoded : [];
+		}
+
+		self::$settings_memo[ $id ] = $decoded;
+		return $decoded;
 	}
 
 	/**

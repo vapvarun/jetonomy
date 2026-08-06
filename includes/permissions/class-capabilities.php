@@ -93,6 +93,43 @@ class Capabilities {
 	}
 
 	/**
+	 * Whether the owner has deliberately configured any of this user's roles
+	 * on the Permissions screen.
+	 *
+	 * Reads the ROLE_CAPS_OPTION key semantics literally: a role ABSENT from
+	 * the option was never configured (it predates the screen, or another
+	 * plugin registered it); a role PRESENT — even with an empty cap list —
+	 * is a choice the owner made and typed.
+	 *
+	 * Permission_Engine needs the difference. Its space-scoped fallback exists
+	 * for roles nobody ever mapped, and must not quietly reinstate a cap an
+	 * owner unticked on purpose. "Never mapped" gets the fallback; "the owner
+	 * said no" does not.
+	 *
+	 * @param int $user_id User to test.
+	 * @return bool True when at least one of the user's roles is explicitly stored.
+	 */
+	public static function has_explicit_role_mapping( int $user_id ): bool {
+		$stored = get_option( self::ROLE_CAPS_OPTION, [] );
+		if ( ! is_array( $stored ) || ! $stored ) {
+			return false;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return false;
+		}
+
+		foreach ( (array) $user->roles as $slug ) {
+			if ( array_key_exists( (string) $slug, $stored ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Register all Jetonomy capabilities on WordPress roles.
 	 *
 	 * Defaults are cumulative per ROLE_MAP; the owner's saved overrides
@@ -294,10 +331,23 @@ class Capabilities {
 	 * @return array<string, bool>
 	 */
 	public static function map_for_user( int $user_id ): array {
+		// Cached 60s per user (plan WP4.13) — /users/me runs on app boot and
+		// screen mounts, and this walks the whole capability set through
+		// user_can() each time. A whole-payload /users/me cache was rejected
+		// by the ownership map (it would stack over the profile/user row
+		// caches); this is the one genuinely uncached expensive part. Busted
+		// on role change by the boot-level set_user_role hook (caps:{id}).
+		$cached = \Jetonomy\Cache::get( "caps:{$user_id}" );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
 		$out = [];
 		foreach ( array_merge( self::all(), [ 'manage_options' ] ) as $cap ) {
 			$out[ $cap ] = user_can( $user_id, $cap );
 		}
+
+		\Jetonomy\Cache::set( "caps:{$user_id}", $out, 60 );
 		return $out;
 	}
 }

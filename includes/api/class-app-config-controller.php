@@ -113,7 +113,14 @@ class App_Config_Controller extends Base_Controller {
 		 */
 		$data = apply_filters( 'jetonomy_app_config', $data, $request );
 
-		return new WP_REST_Response( $data, 200 );
+		$response = new WP_REST_Response( $data, 200 );
+		// Client-tier caching only (plan WP4.15): the payload is public,
+		// shared, and read once per app launch PRE-LOGIN — a client cache
+		// hit removes a full WP bootstrap, where a server-side cache would
+		// save three autoloaded option reads. No server cache on top
+		// (ownership map: one tier per datum).
+		$response->header( 'Cache-Control', 'public, max-age=300' );
+		return $response;
 	}
 
 	/**

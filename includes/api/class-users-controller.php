@@ -199,16 +199,16 @@ class Users_Controller extends Base_Controller {
 			$rtype   = $restrictions[ $uid ] ?? null;
 
 			$items[] = array(
-				'id'          => $uid,
+				'id'           => $uid,
 				'display_name' => $user->display_name,
-				'user_login'  => $user->user_login,
-				'avatar_url'  => \Jetonomy\Avatar::display_url( $uid, 64 ),
-				'trust_level' => $profile ? (int) $profile->trust_level : 0,
-				'reputation'  => $profile ? (int) $profile->reputation : 0,
+				'user_login'   => $user->user_login,
+				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 64 ),
+				'trust_level'  => $profile ? (int) $profile->trust_level : 0,
+				'reputation'   => $profile ? (int) $profile->reputation : 0,
 				// Most-severe active restriction, or null. is_banned is the strong
 				// (global) case the app badges most prominently.
-				'restriction' => $rtype,
-				'is_banned'   => 'global_ban' === $rtype,
+				'restriction'  => $rtype,
+				'is_banned'    => 'global_ban' === $rtype,
 			);
 		}
 
@@ -248,27 +248,39 @@ class Users_Controller extends Base_Controller {
 
 		$users = array();
 		if ( $space_id > 0 ) {
+			// Membership scoping via a JOIN inside WP_User_Query (plan WP1.4).
+			// The old shape fetched EVERY member id unbounded (a 500-member
+			// space materialized 500 ids into PHP and fed them back as a
+			// 500-element IN) — and a LIMIT there would have made results
+			// depend on physical row order. WP_User_Query has no join param,
+			// so hook the GLOBAL pre_user_query filter and remove it in the
+			// same call so it cannot leak into any other user query.
+			//
+			// search_columns must match the global branch below — without it
+			// WP_User_Query's default set includes user_email, which lets a
+			// space member fish for other members' email addresses by typing
+			// an address prefix and seeing it resolve (Basecamp: WP0.10).
 			global $wpdb;
 			$members_tbl = table( 'space_members' );
-			$ids         = (array) $wpdb->get_col(
-				$wpdb->prepare(
+			$join_member = static function ( $query ) use ( $wpdb, $members_tbl, $space_id ): void {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$query->query_from .= $wpdb->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT user_id FROM {$members_tbl} WHERE space_id = %d",
+					" INNER JOIN {$members_tbl} jt_sm ON jt_sm.user_id = {$wpdb->users}.ID AND jt_sm.space_id = %d",
 					$space_id
-				)
-			);
-			if ( empty( $ids ) ) {
-				return new WP_REST_Response( array(), 200 );
-			}
+				);
+			};
+			add_action( 'pre_user_query', $join_member );
 			$users = get_users(
 				array(
-					'include' => array_map( 'intval', $ids ),
-					'exclude' => $blocked_ids,
-					'search'  => '*' . $q . '*',
-					'number'  => 10,
-					'orderby' => 'display_name',
+					'exclude'        => $blocked_ids,
+					'search'         => '*' . $q . '*',
+					'search_columns' => array( 'user_login', 'display_name' ),
+					'number'         => 10,
+					'orderby'        => 'display_name',
 				)
 			);
+			remove_action( 'pre_user_query', $join_member );
 		} else {
 			// Don't search user_email — that lets a logged-in member
 			// fish for other members' email addresses by typing the
@@ -315,7 +327,7 @@ class Users_Controller extends Base_Controller {
 		$trust_level  = (int) ( $profile->trust_level ?? 0 );
 		$spaces_count = SpaceMember::count_user_spaces( $user_id );
 
-		return new WP_REST_Response(
+		$response = new WP_REST_Response(
 			array_merge(
 				$this->prepare_profile( $profile ),
 				[
@@ -338,6 +350,11 @@ class Users_Controller extends Base_Controller {
 			),
 			200
 		);
+		// Client-tier only (plan WP4.13): app screen mounts re-fetch /users/me
+		// constantly; a short private cache absorbs the churn without a
+		// server-side payload cache stacking over the row caches.
+		$response->header( 'Cache-Control', 'private, max-age=30' );
+		return $response;
 	}
 
 	/**
@@ -860,10 +877,16 @@ class Users_Controller extends Base_Controller {
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.* FROM {$tbl} p
+				// `p.id DESC` is a tiebreaker, not decoration: created_at is
+				// second-granular and bulk-created posts routinely share one second
+				// (25 of 26 here), so ORDER BY created_at alone lets MySQL return
+				// tied rows in any order. Consecutive pages then repeat some rows
+				// and skip others — this list served id 10 on both page 3 and
+				// page 4 while dropping id 1 entirely (Basecamp 10161324385).
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$tbl} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
 				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
-				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
+				 ORDER BY p.created_at DESC, p.id DESC LIMIT %d OFFSET %d",
 				$id,
 				...array_merge( $gate_params, [ $limit, $offset ] )
 			)
@@ -881,6 +904,13 @@ class Users_Controller extends Base_Controller {
 			)
 		);
 
+		// Match the feed's batch author enrichment (base controller) so profile post
+		// cards render the author avatar/name instead of a blank "?" row — the same
+		// prepared shape /feed returns, not the minimal columns this route used to.
+		$posts = $this->enrich_with_author( $posts, 'author_id' );
+		// Batch viewer state too — prepare_post() otherwise runs 2 point
+		// queries per row for the bookmark/vote flags (plan WP3.4).
+		$posts = $this->enrich_viewer_state( $posts );
 		$items = array_map( [ $this, 'prepare_post' ], $posts );
 
 		return $this->paginated_response(
@@ -931,23 +961,6 @@ class Users_Controller extends Base_Controller {
 		return $data;
 	}
 
-	/**
-	 * Format a post row for inclusion in user post listings.
-	 */
-	private function prepare_post( object $post ): array {
-		return [
-			'id'          => (int) $post->id,
-			'space_id'    => (int) $post->space_id,
-			'title'       => $post->title ?? '',
-			'slug'        => $post->slug ?? '',
-			'type'        => $post->type ?? 'topic',
-			'status'      => $post->status ?? 'publish',
-			'vote_score'  => (int) ( $post->vote_score ?? 0 ),
-			'reply_count' => (int) ( $post->reply_count ?? 0 ),
-			'view_count'  => (int) ( $post->view_count ?? 0 ),
-			'created_at'  => $post->created_at ?? null,
-		];
-	}
 
 	/**
 	 * Args for PATCH /users/me.

@@ -275,7 +275,9 @@ class BlockedUser extends Model {
 	public static function list_by_blocker( int $blocker_id, int $limit = 20, int $offset = 0 ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT blocked_id, created_at FROM ' . static::table() . ' WHERE blocker_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				// Tiebreaker is blocked_id, NOT id: this table has a composite
+				// primary key (blocker_id, blocked_id) and no id column at all.
+				'SELECT blocked_id, created_at FROM ' . static::table() . ' WHERE blocker_id = %d ORDER BY created_at DESC, blocked_id DESC LIMIT %d OFFSET %d',
 				$blocker_id,
 				$limit,
 				$offset
@@ -348,5 +350,8 @@ class BlockedUser extends Model {
 	private static function bust_cache( int $blocker_id ): void {
 		\Jetonomy\Cache::delete( "blocks:{$blocker_id}" );
 		unset( self::$memo[ $blocker_id ] );
+		// The notification counters apply the block exclusion on actor_id,
+		// so a block/unblock changes them for the blocker (plan WP4.7).
+		Notification::bust_user_cache( $blocker_id );
 	}
 }

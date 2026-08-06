@@ -199,7 +199,21 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			</div>
 
 			<?php /* translators: %d: number of members */ ?>
-		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), (int) count( $members ) ); ?></h2>
+		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), (int) ( $space->member_count ?? count( $members ) ) ); ?></h2>
+		<?php if ( ! empty( $members_capped ) ) : ?>
+			<div class="notice notice-warning inline">
+				<p>
+					<?php
+					printf(
+						/* translators: 1: number of member rows shown, 2: total member count. */
+						esc_html__( 'Showing the first %1$d of %2$d members. Manage the rest from the front-end members page, which is paginated.', 'jetonomy' ),
+						(int) count( $members ),
+						(int) ( $space->member_count ?? 0 )
+					);
+					?>
+				</p>
+			</div>
+		<?php endif; ?>
 			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-members-table">
 				<thead>
 					<tr>
@@ -341,7 +355,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<tbody>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'View posts and replies. Cannot take part.', 'jetonomy' ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php esc_html_e( 'Lets people in to read. It does not hold anyone back - on a public space that anyone may join, a signed-in member can still post, because the rule admits and only visibility and join policy restrict.', 'jetonomy' ); ?></td>
 						</tr>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
@@ -357,8 +371,14 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<?php esc_html_e( 'Members lists show a matching role - Read is listed as Viewer, Participate as Member, Full as Moderator. To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule.', 'jetonomy' ); ?>
 				</p>
 				<p class="description">
-					<strong><?php esc_html_e( 'A rule can never exceed a WordPress role.', 'jetonomy' ); ?></strong>
-					<?php esc_html_e( 'Grants filter what someone may do here; they cannot hand out an ability the person\'s WordPress role does not already carry. Moderation abilities come from the role - set those under Jetonomy - Settings - Permissions.', 'jetonomy' ); ?>
+					<strong><?php esc_html_e( 'A rule can never hand out moderation.', 'jetonomy' ); ?></strong>
+					<?php
+					printf(
+						/* translators: %s: the singular space label the site owner configured, lowercase (e.g. space, group). */
+						esc_html__( 'Editing, closing or pinning other people\'s topics comes from the person\'s WordPress role - set those under Jetonomy - Settings - Permissions. Ordinary taking part is different: being admitted to a %s, by a rule or by the roster, carries reading, posting, replying, voting and reporting on its own. That holds for roles Jetonomy does not map, such as the ones a course or membership plugin creates for its own members.', 'jetonomy' ),
+						esc_html( \Jetonomy\space_label( false, true ) )
+					);
+					?>
 				</p>
 				<p class="description">
 					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>

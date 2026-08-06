@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="t d">
+  <title id="t">Learnomy with BuddyNext and Jetonomy: one event, two consumers, one link</title>
+  <desc id="d">Learnomy fires one enrolment event. BuddyNext and Jetonomy each act on it independently, with no message passing between them. The learner is added to both. On the course page BuddyNext answers the link filter and Jetonomy stands down, so the learner sees exactly one link.</desc>
+
+  <style>
+    .bg    { fill: #ffffff; stroke: #e2e8f0; }
+    .lrn   { fill: #17707d; }
+    .bn    { fill: #c1592c; }
+    .jt    { fill: #4e7a35; }
+    .actor { fill: #f1f5f9; stroke: #cbd5e1; }
+    .note  { fill: #fefce8; stroke: #fde68a; }
+    .n     { font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #ffffff; }
+    .na    { font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #1e293b; }
+    .sub   { font: 400 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #eef2f5; }
+    .lbl   { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #334155; }
+    .cap   { font: 400 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #475569; }
+    .capb  { font: 600 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #334155; }
+    .arrow { stroke: #64748b; stroke-width: 1.6; fill: none; }
+    .none  { stroke: #94a3b8; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+  </style>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0.5" y="0.5" width="959" height="439" rx="8"/>
+
+  <rect class="actor" x="30" y="150" width="110" height="52" rx="6"/>
+  <text class="na" x="85" y="181" text-anchor="middle">Learner</text>
+
+  <rect class="lrn" x="195" y="136" width="185" height="80" rx="8"/>
+  <text class="n"   x="287" y="166" text-anchor="middle">Learnomy</text>
+  <text class="sub" x="287" y="186" text-anchor="middle">course + enrolment</text>
+  <text class="sub" x="287" y="202" text-anchor="middle">the single authority</text>
+
+  <path class="arrow" d="M 142 176 L 191 176" marker-end="url(#a)"/>
+
+  <path class="arrow" d="M 382 160 C 470 160 470 92 596 92" marker-end="url(#a)"/>
+  <path class="arrow" d="M 382 192 C 470 192 470 262 596 262" marker-end="url(#a)"/>
+  <text class="lbl" x="480" y="116" text-anchor="middle">learnomy_student_enrolled</text>
+  <text class="lbl" x="480" y="304" text-anchor="middle">learnomy_student_enrolled</text>
+
+  <rect class="bn"  x="600" y="54" width="215" height="76" rx="8"/>
+  <text class="n"   x="707" y="82" text-anchor="middle">BuddyNext</text>
+  <text class="sub" x="707" y="102" text-anchor="middle">community roster + feed</text>
+  <text class="sub" x="707" y="118" text-anchor="middle">bn_space_members</text>
+
+  <rect class="jt"  x="600" y="224" width="215" height="76" rx="8"/>
+  <text class="n"   x="707" y="252" text-anchor="middle">Jetonomy</text>
+  <text class="sub" x="707" y="272" text-anchor="middle">space membership + topics</text>
+  <text class="sub" x="707" y="288" text-anchor="middle">rule lrn_course_{id}</text>
+
+  <path class="none" d="M 707 134 L 707 220"/>
+  <rect class="note" x="832" y="158" width="112" height="38" rx="5"/>
+  <text class="cap" x="888" y="174" text-anchor="middle">no message</text>
+  <text class="cap" x="888" y="188" text-anchor="middle">passes here</text>
+
+  <rect class="note" x="30" y="332" width="900" height="70" rx="6"/>
+  <text class="capb" x="46" y="354">Both act, and it is ONE destination: the community's discussion IS this Jetonomy space.</text>
+  <text class="cap"  x="46" y="374">On the course page BuddyNext answers jetonomy_pro_learnomy_course_link_pre and Jetonomy stands down, so the</text>
+  <text class="cap"  x="46" y="392">learner sees one link. The community's Discussions tab renders these topics, and links on to the full view.</text>
+
+  <text class="cap" x="30" y="424">Verified: enrol -&gt; jt_member=1 and bn_communities=1; one CTA on course and lesson pages; one list on the dashboard.</text>
+</svg>

@@ -146,6 +146,11 @@ class UserProfile extends Model {
 			[ 'user_id' => $user_id ]
 		);
 		Cache::delete( "profile:{$user_id}" );
+		// trust_level feeds the permission trust gates — clear the verdict
+		// memo so a promotion applies within the same request (WP0.1).
+		if ( array_key_exists( 'trust_level', $data ) ) {
+			\Jetonomy\Permissions\Permission_Engine::reset_memo();
+		}
 		return $result;
 	}
 
@@ -250,7 +255,10 @@ class UserProfile extends Model {
 			)
 		);
 
-		// Bust the profile cache so is_online() reads a fresh last_seen_at.
+		// Bust the profile row cache so profile READERS see the fresh
+		// last_seen_at. Note this does NOT refresh is_online() — that reads
+		// its own online_{id} key first and short-circuits; its ≤60s lag is
+		// intentional (see the ONLINE_TTL note below).
 		Cache::delete( "profile:{$user_id}" );
 
 		set_transient( $key, 1, MINUTE_IN_SECONDS );

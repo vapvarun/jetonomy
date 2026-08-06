@@ -344,6 +344,16 @@ class Spaces_Controller extends Base_Controller {
 			$total  = $result['total'];
 		}
 
+		// Batch the viewer flags before serializing (plan WP3.8):
+		// prepare_space() reads is_member/viewer_role (get_role memo) and
+		// is_subscribed (subscription memo) per row — 30 spaces cost 90 point
+		// queries before these two warms; now 2 IN-queries for the page.
+		if ( $user_id ) {
+			$space_ids = array_map( static fn( $s ) => (int) $s->id, $spaces );
+			SpaceMember::warm_viewer_roles( $user_id, $space_ids );
+			\Jetonomy\Models\Subscription::warm_viewer_subscriptions( $user_id, 'space', $space_ids );
+		}
+
 		$items       = array_map( [ $this, 'prepare_space' ], $spaces );
 		$total_pages = (int) ceil( $total / max( 1, $pagination['limit'] ) );
 
@@ -373,11 +383,12 @@ class Spaces_Controller extends Base_Controller {
 
 		$user_id = get_current_user_id();
 
-		// Private/hidden spaces require membership.
-		if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
-			if ( ! $user_id || ! SpaceMember::is_member( $id, $user_id ) ) {
-				return $this->permission_error();
-			}
+		// Admission, not the roster. Asking SpaceMember alone refused a 403 to
+		// exactly the learners a course's access rule exists to admit - the web
+		// page let them in and the API did not, so the app could not show a room
+		// the browser could.
+		if ( ! Space::readable_by_viewer( $space, (int) $user_id ) ) {
+			return $this->permission_error();
 		}
 
 		return new WP_REST_Response( $this->prepare_space( $space ), 200 );
@@ -694,11 +705,12 @@ class Spaces_Controller extends Base_Controller {
 
 		$user_id = get_current_user_id();
 
-		// Private/hidden spaces: only members can see the member list.
-		if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
-			if ( ! $user_id || ! SpaceMember::is_member( $id, $user_id ) ) {
-				return $this->permission_error();
-			}
+		// Same admission test as the space itself: someone who may read the space
+		// may see who is in it. Gating this on the roster hid the member list
+		// from rule-admitted viewers who could already read the space and post
+		// in it, which reads as a broken page rather than a permission.
+		if ( ! Space::readable_by_viewer( $space, (int) $user_id ) ) {
+			return $this->permission_error();
 		}
 
 		// Paginate: a large space can have tens of thousands of members, so
@@ -708,7 +720,14 @@ class Spaces_Controller extends Base_Controller {
 		$pagination = $this->get_pagination( $request );
 		$total      = SpaceMember::count_by_space( $id );
 		$members    = SpaceMember::list_by_space( $id, $pagination['limit'], $pagination['offset'] );
-		$items      = array_map( [ $this, 'prepare_member' ], $members );
+
+		// Batch-warm the users before the per-row serializer — prepare_member()
+		// does get_userdata + profile + avatar per row, ~3 cold queries x 50
+		// rows per roster page (plan WP3.6). batch_load_users() transitively
+		// primes the WP user cache + UserProfile::prime.
+		$this->batch_load_users( array_map( static fn( $m ) => (int) $m->user_id, $members ) );
+
+		$items = array_map( [ $this, 'prepare_member' ], $members );
 
 		$response = $this->paginated_response(
 			$items,
@@ -1222,51 +1241,6 @@ class Spaces_Controller extends Base_Controller {
 		);
 	}
 
-	/**
-	 * Format a space object for API output.
-	 */
-	private function prepare_space( object $space ): array {
-		$data = [
-			'id'               => (int) $space->id,
-			'category_id'      => $space->category_id ? (int) $space->category_id : null,
-			'title'            => $space->title,
-			'slug'             => $space->slug,
-			'description'      => $space->description ?? '',
-			'type'             => $space->type ?? 'forum',
-			'visibility'       => $space->visibility ?? 'public',
-			'join_policy'      => $space->join_policy ?? 'open',
-			'icon'             => $space->icon ?? '',
-			'cover_image'      => $space->cover_image ?? '',
-			'settings'         => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : [],
-			'member_count'     => (int) ( $space->member_count ?? 0 ),
-			'post_count'       => (int) ( $space->post_count ?? 0 ),
-			'sort_order'       => (int) ( $space->sort_order ?? 0 ),
-			'author_id'        => $space->author_id ? (int) $space->author_id : null,
-			'created_at'       => $space->created_at ?? null,
-			'updated_at'       => $space->updated_at ?? null,
-			'last_activity_at' => $space->last_activity_at ?? null,
-		];
-
-		// Viewer-relative membership context (additive, 1.6.0). All three are
-		// null-safe for logged-out callers and resolve to indexed point
-		// lookups, so the per-row cost on the spaces list (≤ page size) stays
-		// bounded.
-		$uid                   = get_current_user_id();
-		$data['is_member']     = $uid ? SpaceMember::is_member( (int) $space->id, $uid ) : false;
-		$data['viewer_role']   = $uid ? SpaceMember::get_role( (int) $space->id, $uid ) : null;
-		$data['is_subscribed'] = $uid ? \Jetonomy\Models\Subscription::is_subscribed( $uid, 'space', (int) $space->id ) : false;
-
-		/**
-		 * Filter the REST response data for a single space.
-		 *
-		 * @param array  $data    Prepared response data.
-		 * @param object $space   Raw space row object.
-		 * @param null   $request WP_REST_Request (null in non-request contexts).
-		 */
-		$data = apply_filters( 'jetonomy_rest_prepare_space', $data, $space, null );
-
-		return $data;
-	}
 
 	/**
 	 * Format a space member row for API output.

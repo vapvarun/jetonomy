@@ -224,12 +224,74 @@ class Fulltext_Search implements Search_Adapter {
 		$required = [];
 		foreach ( $tokens as $t ) {
 			$len = function_exists( 'mb_strlen' ) ? mb_strlen( $t ) : strlen( $t );
-			if ( $len < 4 ) {
+			if ( $len < self::MIN_TOKEN_LEN ) {
 				continue;
 			}
 			$required[] = '+' . $t . '*';
 		}
 
 		return $required ? implode( ' ', $required ) : $query;
+	}
+
+	/**
+	 * Shortest token the FULLTEXT index will actually match.
+	 *
+	 * Conservative on purpose: InnoDB's innodb_ft_min_token_size defaults to 3
+	 * and MyISAM's ft_min_word_len to 4, so 4 is the value correct on both.
+	 */
+	public const MIN_TOKEN_LEN = 4;
+
+	/**
+	 * True when at least one token in $query is long enough to be indexed.
+	 */
+	public static function has_indexable_token( string $query ): bool {
+		$cleaned = preg_replace( '/[+\-<>()~*"@]/', ' ', $query );
+		foreach ( preg_split( '/\s+/', (string) $cleaned, -1, PREG_SPLIT_NO_EMPTY ) ?: [] as $t ) {
+			$len = function_exists( 'mb_strlen' ) ? mb_strlen( $t ) : strlen( $t );
+			if ( $len >= self::MIN_TOKEN_LEN ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Build the text-matching predicate for a search query.
+	 *
+	 * Returns [ sql, params, used_like ].
+	 *
+	 * build_boolean_query() drops every token below MIN_TOKEN_LEN and, when
+	 * nothing survives, hands the RAW query to MATCH ... AGAINST anyway — which
+	 * can never match, because the index holds no tokens that short. The result
+	 * was a silent empty result set: `q=QA` returned 0 against 26 posts titled
+	 * "QA Post N", while `q=Post` returned all 26. Short queries are common in a
+	 * forum (acronyms, product codes, "v2"), so members reasonably concluded
+	 * search was broken (Basecamp 10161324553).
+	 *
+	 * Below the floor we scan with LIKE instead. That cannot use the FULLTEXT
+	 * index, but a query this short is rare and correctness beats the plan.
+	 *
+	 * @param string[] $columns Fully-qualified column names to match against.
+	 * @param string   $q       Raw user query.
+	 * @return array{0:string,1:array,2:bool}
+	 */
+	public static function match_predicate( array $columns, string $q ): array {
+		if ( self::has_indexable_token( $q ) ) {
+			return [
+				'MATCH(' . implode( ', ', $columns ) . ') AGAINST(%s IN BOOLEAN MODE)',
+				[ self::build_boolean_query( $q ) ],
+				false,
+			];
+		}
+
+		global $wpdb;
+		$like  = '%' . $wpdb->esc_like( $q ) . '%';
+		$parts = array_map( static fn( $c ) => $c . ' LIKE %s', $columns );
+
+		return [
+			'(' . implode( ' OR ', $parts ) . ')',
+			array_fill( 0, count( $columns ), $like ),
+			true,
+		];
 	}
 }

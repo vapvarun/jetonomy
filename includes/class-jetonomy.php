@@ -48,6 +48,24 @@ final class Jetonomy {
 		// the Login block, so the visitor doesn't think their password was
 		// wrong.
 		add_filter( 'authenticate', array( $this, 'reject_pending_verification_login' ), 31, 1 );
+
+		// Bust the REST layer's user:{id} row cache (Base_Controller::
+		// batch_load_users) when core mutates the user. Registered HERE at
+		// boot — not in the API classes — because those only load on
+		// rest_api_init, and the writes being tracked (a wp-admin profile
+		// save, a role change) happen on requests where they never load.
+		// Before this, only the GDPR erase path busted the key, so a
+		// display-name change stayed stale in every REST-rendered author
+		// block for up to 300s (caching plan WP0.3).
+		$bust_user_row = static function ( $user_id ): void {
+			Cache::delete( 'user:' . (int) $user_id );
+			// The REST capabilities map (caps:{id}, plan WP4.13) derives from
+			// the user's roles — bust it alongside the row.
+			Cache::delete( 'caps:' . (int) $user_id );
+		};
+		add_action( 'profile_update', $bust_user_row );
+		add_action( 'deleted_user', $bust_user_row );
+		add_action( 'set_user_role', $bust_user_row );
 	}
 
 	/**
@@ -428,6 +446,19 @@ final class Jetonomy {
 		$current = get_option( 'jetonomy_db_version', '0.0.0' );
 
 		if ( version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
+			// Concurrency guard (caching plan WP5.0): after an update, every
+			// in-flight request reads the old version and enters this block.
+			// MySQL serialises the ALTERs so the losers used to pile up on the
+			// table metadata lock instead of serving pages. First requester
+			// takes the lock and migrates; everyone else serves on the old
+			// (still valid) schema and re-checks next request. The transient
+			// self-expires so a fatal mid-migration can't wedge the site.
+			$lock = 'jetonomy_migration_lock';
+			if ( get_transient( $lock ) ) {
+				return;
+			}
+			set_transient( $lock, 1, 5 * MINUTE_IN_SECONDS );
+
 			// 1) Run any registered data migrations from the stored version forward.
 			require_once JETONOMY_DIR . 'includes/db/class-migrator.php';
 			DB\Migrator::run( $current );
@@ -439,6 +470,7 @@ final class Jetonomy {
 			DB\Schema::create_tables();
 
 			update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
+			delete_transient( $lock );
 			return;
 		}
 

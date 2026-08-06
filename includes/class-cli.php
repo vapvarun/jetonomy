@@ -23,7 +23,7 @@ class CLI {
 	 * ## OPTIONS
 	 *
 	 * [--type=<type>]
-	 * : What to recount. Options: all, posts, spaces, votes. Default: all.
+	 * : What to recount. Options: all, posts, spaces, votes, users. Default: all.
 	 *
 	 * ## EXAMPLES
 	 *     wp jetonomy recount

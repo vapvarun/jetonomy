@@ -208,6 +208,17 @@ class Schema_Markup {
 		$base      = \Jetonomy\base_url();
 		$space_url = $base . '/s/' . $space->slug . '/';
 
+		// Cached 900s per space (plan WP4.9). The viewer is hard-coded to the
+		// guest path below (crawler-facing payload), so the whole schema is
+		// globally shareable — yet it re-ran a full post listing on every
+		// space view purely for JSON-LD humans never see. Busted from
+		// Space::increment_post_count() — every publish transition and move
+		// lands there with the space id in hand (schema:space:{id}).
+		$cached = \Jetonomy\Cache::get( 'schema:space:' . (int) $space->id );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
 		// Top 10 recent posts in this space — gives the schema a real
 		// mainEntity ItemList rather than an empty container. Stays well
 		// inside the extreme-scale rule because of the LIMIT 10. Uses the
@@ -224,7 +235,7 @@ class Schema_Markup {
 			);
 		}
 
-		return array(
+		$schema = array(
 			'@context'    => 'https://schema.org',
 			'@type'       => 'CollectionPage',
 			'name'        => $space->title,
@@ -236,6 +247,9 @@ class Schema_Markup {
 				'itemListElement' => $item_entries,
 			),
 		);
+
+		\Jetonomy\Cache::set( 'schema:space:' . (int) $space->id, $schema, 900 );
+		return $schema;
 	}
 
 	/**

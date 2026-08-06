@@ -173,14 +173,18 @@ class Search_Controller extends Base_Controller {
 					'data' => [
 						'posts'  => array_map(
 							function ( $row ) {
-								$item         = (array) $row;
+								$item         = $this->prepare_post( $row );
 								$item['type'] = 'post';
 								return $item; },
-							$posts
+							$this->enrich_viewer_state( $this->enrich_with_author( $posts ) )
 						),
+						// Shared serializer, not `(array) $row` — see
+						// Base_Controller::prepare_space(). Casting the raw row here
+						// shipped string-typed numerics and internal columns to
+						// clients (Basecamp 10161324553).
 						'spaces' => array_map(
 							function ( $row ) {
-								$item         = (array) $row;
+								$item         = $this->prepare_space( $row );
 								$item['type'] = 'space';
 								return $item; },
 							$spaces
@@ -234,9 +238,41 @@ class Search_Controller extends Base_Controller {
 			$total   = $this->count_tags( $wpdb, $q );
 		}
 
+		// Batch-load author data before serializing so prepare_post()/prepare_reply()
+		// read pre-enriched fields instead of falling back to a per-row lookup.
+		if ( 'post' === $type || 'reply' === $type ) {
+			$results = $this->enrich_with_author( $results );
+		}
+		// Viewer state (bookmark/vote) batched too — without this prepare_post()
+		// fell through to 2 point queries PER ROW (plan WP3.4). Post rows only;
+		// the base method's type-gate additionally refuses reply/space rows.
+		if ( 'post' === $type ) {
+			$results = $this->enrich_viewer_state( $results );
+		}
+
 		$items = array_map(
 			function ( $row ) use ( $type ) {
-				$item         = (array) $row;
+				// Every row type goes through the SAME serializer the dedicated
+				// endpoints use, so an object cannot have one shape from /search and
+				// a different one from /feed or /spaces/{id}/posts. Casting the raw
+				// DB row here shipped string-typed numerics, no _gmt twins and no
+				// author enrichment (Basecamp 10161324553).
+				switch ( $type ) {
+					case 'space':
+						$item = $this->prepare_space( $row );
+						break;
+					case 'post':
+						$item = $this->prepare_post( $row );
+						break;
+					default:
+						// Replies and tags: replies carry joined post/space columns
+						// the reply serializer does not model, and tags are a flat
+						// {id,name,slug,post_count} row with no serializer of their
+						// own. Cast, but normalize the numerics so a typed client
+						// never receives "12" where it expects 12.
+						$item = $this->normalize_row_numerics( (array) $row );
+						break;
+				}
 				$item['type'] = $type;
 				return $item;
 			},
@@ -294,8 +330,9 @@ class Search_Controller extends Base_Controller {
 		// behavior for short queries that would otherwise return nothing.
 		$boolean_q = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
 
-		$where  = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
-		$params = [ $boolean_q ];
+		[ $match_sql, $match_params, $used_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], $q );
+		$where                                    = [ $match_sql, "p.status = 'publish'" ];
+		$params                                   = $match_params;
 
 		// Private post visibility: exclude private posts unless viewer is author or
 		// privileged. Shared guard (single source of truth) — see Fulltext_Search.
@@ -346,14 +383,22 @@ class Search_Controller extends Base_Controller {
 		// - votes:     vote_score DESC.
 		switch ( $sort ) {
 			case 'votes':
-				$order_by = 'p.vote_score DESC';
+				$order_by = 'p.vote_score DESC, p.id DESC';
 				break;
 			case 'newest':
-				$order_by = 'p.created_at DESC';
+				$order_by = 'p.created_at DESC, p.id DESC';
 				break;
 			case 'relevance':
 			default:
-				$order_by    = 'match_score DESC, p.created_at DESC';
+				if ( $used_like ) {
+					// The LIKE fallback (short query, below the FULLTEXT token
+					// floor) produces no match score, so there is nothing to rank
+					// on — fall back to recency rather than selecting a MATCH
+					// expression that would return 0 for every row.
+					$order_by = 'p.created_at DESC, p.id DESC';
+					break;
+				}
+				$order_by    = 'match_score DESC, p.created_at DESC, p.id DESC';
 				$order_match = true;
 				break;
 		}
@@ -428,8 +473,9 @@ class Search_Controller extends Base_Controller {
 		$boolean_q = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
 
 		// Always JOIN posts to filter out replies on private posts.
-		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
-		$r_params = [ $boolean_q ];
+		[ $r_match_sql, $r_match_params, $r_used_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'r.content_plain' ], $q );
+		$r_where                                        = [ $r_match_sql, "r.status = 'publish'", "p.status = 'publish'" ];
+		$r_params                                       = $r_match_params;
 
 		// Private post visibility for replies — shared guard (single source of truth).
 		[ $r_vis_sql, $r_vis_params ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( $space_id, 'p' );
@@ -558,8 +604,9 @@ class Search_Controller extends Base_Controller {
 		$spaces_table = table( 'spaces' );
 		$boolean_q    = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
 
-		$where  = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
-		$params = [ $boolean_q ];
+		[ $match_sql, $match_params, $used_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], $q );
+		$where                                    = [ $match_sql, "p.status = 'publish'" ];
+		$params                                   = $match_params;
 
 		// Shared visibility guard (single source of truth) — see Fulltext_Search.
 		[ $vis_sql, $vis_params ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( $space_id, 'p' );
@@ -635,8 +682,9 @@ class Search_Controller extends Base_Controller {
 		$spaces_table  = table( 'spaces' );
 		$boolean_q     = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
 
-		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
-		$r_params = [ $boolean_q ];
+		[ $r_match_sql, $r_match_params, $r_used_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'r.content_plain' ], $q );
+		$r_where                                        = [ $r_match_sql, "r.status = 'publish'", "p.status = 'publish'" ];
+		$r_params                                       = $r_match_params;
 
 		// Shared visibility guard (single source of truth) — see Fulltext_Search.
 		[ $r_vis_sql, $r_vis_params ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( $space_id, 'p' );

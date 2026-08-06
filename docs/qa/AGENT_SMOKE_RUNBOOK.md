@@ -2,6 +2,24 @@
 
 **Audience:** a browser-capable agent (Claude Sonnet or equivalent) with Playwright MCP + WP-CLI Bash access, OR a human QA person with the same access. Both should be able to execute every step of this runbook.
 
+## If you are a human tester, read this and skip the rest of the machinery
+
+You do **not** need to produce the JSON in "Agent output contract" - that exists so an agent's run can gate the build. Work through the sections, and for anything that fails, file a card using the template in **Failure protocol** at the bottom. Everything else here is for the agent.
+
+**Three things make a card actionable, and cards without them cost a round trip:**
+
+1. **The URL and who you were signed in as.** Half of what we ship is permission-shaped, so "logged out", "a normal member", "a space moderator" or "admin" changes the answer completely.
+2. **What you expected, in the product's own words.** Most steps quote the promise the screen makes. Paste that line as "Expected". It is the strongest possible bug report, because it makes the disagreement between what we say and what we do impossible to argue with.
+3. **`from` or `for`.** `from` = our plugin is at fault. `for` = it broke while our plugin was running but the cause looks like the theme, another plugin, the browser or old imported data. Guessing is fine - say which you think and why in one line. It stops theme quirks landing in the Bugs column, and it is the single most useful thing you can add.
+
+**Worth filing even when nothing looks broken:**
+
+- The screen says one thing and the site does another. That is a bug even if the behaviour seems reasonable - one of the two is wrong and we need to know which.
+- Two places disagree about the same thing. A space that opens in the browser but 403s in the app, a count that differs between two screens, a member visible in one list and missing from another.
+- It works but nobody could have guessed it would. Silent misconfiguration costs us more support time than crashes do.
+
+**Not worth filing:** styling on a theme we do not ship, anything you can only reproduce with the browser console open, and pre-existing demo data that is simply odd. If unsure, file it as `for` with a note - a wrong guess costs nothing, a missing report costs a customer.
+
 ## How to read this runbook
 
 Each C and E step describes a **customer contract**: what the feature promises, why it matters, the surfaces it touches, and what "working" looks like in customer terms. It does NOT prescribe the exact Playwright calls, selectors, REST paths, or DB queries. Read the relevant plugin code, pick the right mechanism, and verify the contract. This freedom is the point: the verifier is expected to notice bugs we did not pre-imagine.
@@ -238,6 +256,62 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ---
 
+## C.gating - Access rules and who gets in
+
+**This whole section was missing until 1.9.1, and a privilege escalation shipped through the gap** (Basecamp 10169081143). Gating is how owners sell access; it is the subsystem where being wrong costs money or trust.
+
+**Every expected result below is quoted from what the product tells the owner** on the space Access Rules tab. That is deliberate: if a step fails, either the code broke a promise we display, or the promise is wrong and the copy needs changing. Both are worth filing. You do not need to know how permissions work internally to run this section - if the screen says it and the site does not do it, that is a bug.
+
+Setup once: a **public** space with open joining, a **private** space with invite-only joining, and a plain subscriber-role test user who is a member of neither.
+
+### C.gating.rule-never-locks-out
+**What to verify:** note what the subscriber can do in the public space. Add any access rule to that space. Everything they could do before, they can still do.
+**Promise:** "A rule lets people in to this space. It never locks anyone out on its own - visibility and join policy do that."
+**Why it matters:** owners reach for rules to restrict. They do not restrict, and an owner who believes otherwise has left a space open while thinking it is closed.
+
+### C.gating.read-on-public
+**What to verify:** with a **Read** rule on the public open-join space, the subscriber can still post.
+**Promise:** "Read ... does not hold anyone back - on a public space that anyone may join, a signed-in member can still post."
+
+### C.gating.read-on-private
+**What to verify:** with a **Read** rule on the private space, the subscriber can read it and cannot post, reply or vote.
+
+### C.gating.participate
+**What to verify:** with a **Participate** rule on the private space, the subscriber can read, post, reply, vote and report - all five.
+**Promise:** "Participate - Read, plus post, reply, vote and report."
+
+### C.gating.full-is-not-moderation
+**What to verify:** with a **Full** rule on the private space, an ordinary subscriber gets exactly what Participate gives and cannot edit, delete, close or pin anyone else's topic.
+**Promise:** "For an ordinary member this behaves exactly like Participate."
+**Why it matters:** "Full" reads like "everything". It is not, and never has been.
+
+### C.gating.no-rule-hands-out-moderation
+**What to verify:** try every grant level, and set the rule's Space Role as high as the screen allows. A subscriber matched by that rule still cannot moderate, edit others' posts, delete others' posts, or pin.
+**Promise:** "A rule can never hand out moderation."
+**Why it matters:** **this is the 1.9.1 escalation.** Before the fix, a rule set to Read with an elevated space role made every matched person a space admin. If this step ever fails again, it is a security bug - file it immediately and say so in the title.
+
+### C.gating.roster-role-is-a-per-person-decision
+**What to verify:** after anyone is admitted by a rule - including via an LMS or membership plugin enrolment if one is installed - open the space **Members** tab. Nobody added by a rule is listed as Moderator or Admin.
+**Promise:** "To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule."
+
+### C.gating.admission-without-a-roster-row
+**What to verify:** a person matched by a rule can use the space **without** appearing on the Members tab, unless Sync Members was pressed.
+**Promise:** "'Sync Members' is only needed if you also want these people listed on the roster."
+
+### C.gating.access-ends-by-itself
+**What to verify:** remove the rule (or let the membership lapse where a plugin provides one). Access closes on the next page load, with no admin action.
+**Promise:** "Access begins the moment a plan becomes active and ends when it lapses - there is nothing to sync and nothing to undo by hand."
+
+### C.gating.builder-explains-itself
+**What to verify:** on the Access Rules tab, step through every entry in the Rule type dropdown. Each shows a second sentence under the live preview saying **who** the rule catches, and the value box carries an example for that type. **Everyone** and **Logged In** show no value box at all.
+**Why it matters:** picking the wrong rule is silent - it saves, the space looks configured, and the mistake only surfaces when the wrong people are in the room.
+
+### C.gating.surfaces-agree
+**What to verify:** for a person who is NOT admitted to a private space, confirm every surface agrees they cannot see it: the space page, its topics, site search, the community home feed, and the sidebar. A surface that shows content another surface refuses is a bug even when neither is obviously "wrong".
+**Why it matters:** admission is answered in more than one place in the code. Several past bugs were one surface disagreeing with another, and only a human comparing screens catches that.
+
+---
+
 ## D - Known-regression guards
 
 Each row is a repro of a past bug that caused customer pain. These rows stay specific on purpose: the exact fixture IS the contract.
@@ -262,6 +336,9 @@ Each row is a repro of a past bug that caused customer pain. These rows stay spe
 | D.space-title-dark-mode-contrast | Reign theme inline customizer hardcoded h1..h6 colour; plugin had no .jt-dark override, so space titles rendered near-black on near-black in Reign dark mode (contrast ~1.01:1) | On a Reign-active site with body class `jt-dark`, navigate to `/community/s/welcome/`; assert `getComputedStyle(document.querySelector('.jt-app h1')).color` yields a WCAG AA-passing contrast (>= 4.5:1) against body background. Plugin CSS override `.jt-dark .jt-app h1..h6 { color: var(--jt-text) }` must stay scoped to `.jt-app` so theme pages outside plugin surfaces are not affected. |
 | D.accent-tint-dark-mode | `--jt-accent-light` / `--jt-accent-muted` tokens mixed accent with white in the light-mode defaults, and the dark-mode block did not re-derive them, so every surface using them (unread notifications, pinned rows, vote hover, composer focus, tag hover, accent badges) rendered a bright mint patch on the dark panel | With body `jt-dark`, open `/community/notifications/` and inspect `.jt-notif-item.unread` computed background: average RGB channel must be under 100 (dark tint), not near-white. Dark-mode block in `assets/css/jetonomy.css` must override both tokens to mix accent with the dark panel colour, not white. |
 | D.warn-notice-dark-contrast | `--jt-warn-dark` used as text on dark-mode `--jt-warn-light` bg (locked-space banner, `.jt-notice-warning`) failed WCAG AA contrast at 3.28:1 | In dark mode, inject a `.jt-status-banner--locked` into `.jt-app`, read its `getComputedStyle` text and background colours, compute WCAG contrast ratio; assert >= 4.5:1. Dark-mode override for `--jt-warn-dark` must re-derive against white so the warm text stays legible on the dark warn background. |
+| D.rule-role-escalation | 1.9.1 SECURITY. All nine membership adapters wrote the access rule's raw `space_role` onto the roster, so a rule set to Read with `space_role=admin` made every enrolling learner a space admin. `Permission_Engine` Layer 0d reads the roster role and grants moderation before the capability check | Store a membership rule with `grants=read, space_role=admin`. Activate a matching level for a plain subscriber (fire the adapter's enrolment hook; no LMS need be installed - `apply_level()` only reads `jt_access_rules` and writes the Jetonomy roster). Assert the roster role is `viewer`, and that `moderate`, `edit_others_posts`, `delete_others_posts` and `pin_posts` are all denied. Repeat with `grants=participate` and assert the roster role is `member` and the person CAN post and reply |
+| D.reaction-chip-delegation | 1.9.1. The reaction chip carried its own `data-wp-on--click`. The Interactivity API wires those during its render pass, so the chip the optimistic path builds with `createElement()` after that pass had the attribute and no live listener - it looked right and did nothing until a reload. The handler now lives on the always-server-rendered `.jt-reactions` wrapper and resolves the clicked control from the event, so no descendant may carry a `toggleReaction` binding (a second one would fire the action twice and cancel the reaction out) | On a post with no reactions: open the picker, pick an emoji, then click the chip that appears WITHOUT reloading - assert it disappears and, after a reload, the server still shows no chip. Then react again, reload so the chip is server-rendered, click it, reload - assert gone. Assert the picker click persists exactly one reaction (count 1 after reload, not 0 - a double-fire toggles on then off). Structurally: `.jt-reactions[data-wp-on--click]` is present and `.jt-reactions [data-wp-on--click="actions.toggleReaction"]` matches ZERO descendants |
+| D.sidebar-undefined-space | 1.9.1. The trending-widget cache captured `$space` in a closure `use()` clause. `$space` only exists on space-scoped templates, so every other page rendering the sidebar raised `Undefined variable $space`. The capture happens at closure creation, so cache hits produced it too - one log line per page view on any site with logging on | With `WP_DEBUG_LOG` on, load community home, category, leaderboard, search, notifications, member profile and tag. Assert ZERO occurrences of `Undefined variable $space` in `debug.log`, and that the Trending widget still returns items on BOTH a space page and a non-space page |
 
 | D.email-optout-wiring | 1.5.0: the verification reminder honours `jetonomy_email_opt_out` user meta, which previously had no surface to set it. Three entry points must all write the same meta | Frontend: on `/community/u/{me}/edit/` the notification card shows a "Pause all email notifications" checkbox; checking it + Save sets the meta to 1, unchecking + Save clears it (verify via `wp eval` get_user_meta). REST: `PATCH /jetonomy/v1/users/me {email_opt_out:true}` sets the meta and `GET /users/me` echoes `email_opt_out:true`; `false` clears it (qa-actions E27b). Admin: `wp-admin/user-edit.php?user_id=N` shows a "Jetonomy > Community emails" checkbox that saves the same meta (nonce + edit_user gated). |
 | D.bp-integration-toggles | 1.5.0: `jetonomy_bp_broadcast` and `jetonomy_bp_comment_bridge` options (default ON) had no UI - only `wp option update` could disable them | With BuddyPress Groups active, Settings shows an "Integrations" sidebar tab (absent when BuddyPress is inactive) with two checkboxes in a BuddyPress card, both checked by default. Unchecking either + Save writes `'0'` to the matching option (verify via `wp option get`); the read methods `Integrations\BuddyPress::broadcast_enabled()` / `comment_bridge_enabled()` return false. The options live in their own `jetonomy_integrations` settings group, so saving any other settings tab does NOT reset them. |
@@ -285,7 +362,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set.
 
 ### E.reactions
-**What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; the reactor's avatar appears in the hover-card listing reactors.
+**What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; the reactor's avatar appears in the hover-card listing reactors. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
 
 ### E.analytics
 **What to verify:** an admin sees a dashboard with non-zero metrics on a site with demo data, can switch date range, and can export the underlying data as CSV. Widget values are internally consistent (total posts ≥ posts in last 30d, etc.).

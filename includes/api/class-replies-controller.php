@@ -70,6 +70,11 @@ class Replies_Controller extends Base_Controller {
 			'/replies/(?P<id>\d+)',
 			array(
 				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				),
+				array(
 					'methods'             => 'PATCH',
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
@@ -380,6 +385,41 @@ class Replies_Controller extends Base_Controller {
 		$reply = Reply::find( $reply_id );
 
 		return new WP_REST_Response( $this->prepare_reply( $reply ), 201 );
+	}
+
+	/**
+	 * GET /replies/{id} — a single reply.
+	 *
+	 * Exists so a client holding only a reply id can resolve its parent thread:
+	 * the payload carries `post_id`. Reply notifications carry the reply id and
+	 * nothing else, so without this route the app had no way to route the tap and
+	 * every reply notification was a dead end (Basecamp 10159720057 / 10161329157).
+	 *
+	 * Read gate is the parent post's, not the reply's — a reply is only as visible
+	 * as the thread it lives in, and Permission_Engine::can_read_post already
+	 * encodes space visibility, membership and private-topic rules. Mirrors the
+	 * check list_items() runs before returning a thread's replies.
+	 */
+	public function get_item( $request ) {
+		$id    = absint( $request->get_param( 'id' ) );
+		$reply = Reply::find( $id );
+
+		if ( ! $reply || 'publish' !== ( $reply->status ?? '' ) ) {
+			return $this->not_found( 'Reply' );
+		}
+
+		$post = Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return $this->not_found( 'Post' );
+		}
+
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+			return $this->permission_error();
+		}
+
+		$enriched = $this->enrich_with_author( array( $reply ) );
+
+		return new WP_REST_Response( $this->prepare_reply( $enriched[0] ), 200 );
 	}
 
 	/**
@@ -816,43 +856,45 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$data = array(
-			'id'                => (int) $reply->id,
-			'post_id'           => (int) $reply->post_id,
-			'parent_id'         => $reply->parent_id ? (int) $reply->parent_id : null,
-			'author_id'         => $author_id,
-			'content'           => \Jetonomy\Embeds::process( $reply->content ?? '' ),
-			'content_plain'     => $reply->content_plain ?? '',
-			'status'            => $reply->status ?? 'publish',
-			'is_accepted'       => (bool) ( $reply->is_accepted ?? false ),
-			'vote_score'        => (int) ( $reply->vote_score ?? 0 ),
-			'edited_at'         => $reply->edited_at ?? null,
-			'edited_by'         => $reply->edited_by ? (int) $reply->edited_by : null,
-			'created_at'        => $reply->created_at ?? null,
+			'id'                      => (int) $reply->id,
+			'post_id'                 => (int) $reply->post_id,
+			'parent_id'               => $reply->parent_id ? (int) $reply->parent_id : null,
+			'author_id'               => $author_id,
+			'content'                 => \Jetonomy\Embeds::process( $reply->content ?? '' ),
+			'content_plain'           => $reply->content_plain ?? '',
+			'status'                  => $reply->status ?? 'publish',
+			'is_accepted'             => (bool) ( $reply->is_accepted ?? false ),
+			'vote_score'              => (int) ( $reply->vote_score ?? 0 ),
+			'edited_at'               => $reply->edited_at ?? null,
+			'edited_by'               => $reply->edited_by ? (int) $reply->edited_by : null,
+			'created_at'              => $reply->created_at ?? null,
 			// Aliased from created_at since jt_replies has no separate published_at column.
-			'published_at'      => $reply->created_at ?? null,
+			'published_at'            => $reply->created_at ?? null,
 			// Additive UTC ISO-8601 (`Z`) instants for app clients; columns are already UTC.
-			'created_at_gmt'    => \Jetonomy\to_iso8601_z( $reply->created_at ?? null ),
-			'published_at_gmt'  => \Jetonomy\to_iso8601_z( $reply->created_at ?? null ),
-			'edited_at_gmt'     => \Jetonomy\to_iso8601_z( $reply->edited_at ?? null ),
+			'created_at_gmt'          => \Jetonomy\to_iso8601_z( $reply->created_at ?? null ),
+			'published_at_gmt'        => \Jetonomy\to_iso8601_z( $reply->created_at ?? null ),
+			'edited_at_gmt'           => \Jetonomy\to_iso8601_z( $reply->edited_at ?? null ),
 			// Enriched author data (for app clients + JS rendering)
-			'author_name'       => $author_name,
-			'author_avatar'     => $author_avatar,
-			'author_login'      => $author_login,
-			'trust_level'       => $trust_level,
-			'reputation'        => $reputation,
-			'time_ago'          => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
-			'profile_url'       => $profile_url,
+			'author_name'             => $author_name,
+			'author_avatar'           => $author_avatar,
+			'author_login'            => $author_login,
+			'author_last_seen_at'     => $reply->author_last_seen_at ?? null,
+			'author_last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $reply->author_last_seen_at ?? null ),
+			'trust_level'             => $trust_level,
+			'reputation'              => $reputation,
+			'time_ago'                => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'profile_url'             => $profile_url,
 			// True when the viewer has blocked this author. Reply::list_by_post()
 			// and build_tree() keep the node (with its content emptied) rather than
 			// dropping the row, so the children of a blocked author still render;
 			// clients use this flag to draw a tombstone in place of the body.
-			'is_blocked_author' => ! empty( $reply->is_blocked_author ),
+			'is_blocked_author'       => ! empty( $reply->is_blocked_author ),
 			// Private-reply contract (1.9.0): is_private marks the row for
 			// authorized viewers (badge + toggle UI); is_private_hidden means
 			// THIS viewer may not read it — content arrives blanked (the model
 			// tombstone already stripped it) and clients draw a tombstone.
-			'is_private'        => ! empty( $reply->is_private ),
-			'is_private_hidden' => ! empty( $reply->is_private_hidden ),
+			'is_private'              => ! empty( $reply->is_private ),
+			'is_private_hidden'       => ! empty( $reply->is_private_hidden ),
 		);
 
 		/**

@@ -25,15 +25,40 @@ class SpaceMember extends Model {
 	}
 
 	/**
-	 * Add a user to a space (or update their role if already a member).
+	 * Add a user to a space, or raise their role if they are already a member.
 	 *
-	 * Uses REPLACE INTO so re-adding an existing member updates the row.
-	 * Increments the space's member_count after a successful insert.
+	 * This is the JOIN-OR-GRANT path. It never LOWERS an existing role: an
+	 * adapter re-firing its enrolment sync on a renewal or a payment retry must
+	 * not undo a promotion an owner made by hand. For a deliberate change,
+	 * including a demotion, use set_role() - it validates, fires its own veto
+	 * filter, and leaves an audit trail, none of which this method does.
 	 *
-	 * @param int    $space_id
-	 * @param int    $user_id
-	 * @param string $role
+	 * An existing row is UPDATED in place, so joined_at keeps the date the
+	 * person actually joined. member_count is incremented only on a real
+	 * insert, never on a re-add.
+	 *
+	 * @param int    $space_id Space to add them to.
+	 * @param int    $user_id  User being added.
+	 * @param string $role     Role to grant; ignored if they already hold a higher one.
+	 * @return \WP_Error|bool  WP_Error if a filter vetoed the join, true otherwise.
 	 */
+	/**
+	 * Where a role sits on the ladder, for "never lower an existing role".
+	 *
+	 * VALID_ROLES is already ordered viewer < member < moderator < admin, so
+	 * its index IS the rank - no second ladder to drift out of step with it.
+	 * An unknown role ranks lowest, so a bad value can never win a comparison
+	 * and silently promote someone.
+	 *
+	 * @param string $role Role slug.
+	 * @return int Rank; 0 when unrecognised.
+	 */
+	private static function role_rank( string $role ): int {
+		$pos = array_search( $role, self::VALID_ROLES, true );
+
+		return false === $pos ? 0 : (int) $pos + 1;
+	}
+
 	public static function add( int $space_id, int $user_id, string $role = 'member' ): \WP_Error|bool {
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
@@ -49,17 +74,49 @@ class SpaceMember extends Model {
 			return $proceed;
 		}
 
-		$exists = self::is_member( $space_id, $user_id );
+		$current = self::get_role( $space_id, $user_id );
+		$exists  = null !== $current;
 
-		static::db()->query(
-			static::db()->prepare(
-				'REPLACE INTO ' . static::table() . ' (space_id, user_id, role, joined_at) VALUES (%d, %d, %s, %s)',
-				$space_id,
-				$user_id,
-				$role,
-				now()
-			)
-		);
+		if ( $exists ) {
+			/*
+			 * A grant must never LOWER a role somebody was deliberately given.
+			 *
+			 * This used to be an unconditional REPLACE INTO, so any adapter
+			 * re-firing its enrolment sync - a renewal, a payment retry, a
+			 * subscription status change - put a hand-promoted moderator back
+			 * to 'member'. Silently: the row already existed, so the join
+			 * hooks did not fire and set_role()'s logging was never reached,
+			 * and the owner had nothing to look at.
+			 *
+			 * This does not block a deliberate demotion. set_role() is the
+			 * intentional path and writes directly, with its own validation,
+			 * veto filter and audit trail. add() is join-or-grant only.
+			 */
+			if ( self::role_rank( (string) $current ) > self::role_rank( $role ) ) {
+				$role = (string) $current;
+			}
+
+			// Role only. REPLACE INTO also reset joined_at on every re-sync,
+			// losing the date the person actually joined.
+			static::db()->update(
+				static::table(),
+				array( 'role' => $role ),
+				array(
+					'space_id' => $space_id,
+					'user_id'  => $user_id,
+				)
+			);
+		} else {
+			static::db()->query(
+				static::db()->prepare(
+					'INSERT INTO ' . static::table() . ' (space_id, user_id, role, joined_at) VALUES (%d, %d, %s, %s)',
+					$space_id,
+					$user_id,
+					$role,
+					now()
+				)
+			);
+		}
 
 		if ( ! $exists ) {
 			Space::increment_member_count( $space_id );
@@ -206,22 +263,99 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Per-request memo of TRUE roles, keyed `{space_id}|{user_id}`.
+	 *
+	 * Distinct from $role_label_cache on purpose: that map collapses
+	 * member/viewer to null for the role-pill template, so sharing it here
+	 * would make is_member() deny real members of private spaces after a
+	 * warm_role_cache() pass seeded the viewer's own id (caching plan WP2.1).
+	 * This map stores the exact role ('admin'/'moderator'/'member'/'viewer')
+	 * and null only for genuine non-members. get_role() is called 5-10x per
+	 * space-scoped page with identical args (is_member, Permission_Engine
+	 * layers, templates) — one query now serves them all.
+	 *
+	 * Both maps reset together in bust_privileged_cache() (fired by
+	 * add/remove/set_role after their writes) and via Cache::flush() (U1).
+	 *
+	 * @var array<string, ?string>
+	 */
+	private static array $role_cache = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Bulk-fill the get_role() memo for ONE viewer across many spaces
+	 * (plan WP3.8) — the inverse axis of warm_role_cache(), which warms
+	 * many users in one space. One IN-query, negatives included, so the
+	 * spaces-list serializer's per-row is_member()/get_role() pair costs
+	 * zero further queries.
+	 *
+	 * @param int   $user_id   Viewer.
+	 * @param int[] $space_ids Space ids about to be serialized.
+	 */
+	public static function warm_viewer_roles( int $user_id, array $space_ids ): void {
+		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
+		if ( $user_id <= 0 || empty( $space_ids ) ) {
+			return;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				'SELECT space_id, role FROM ' . static::table() . " WHERE user_id = %d AND space_id IN ({$placeholders})",
+				array_merge( [ $user_id ], $space_ids )
+			)
+		) ?: [];
+
+		$found = [];
+		foreach ( $rows as $row ) {
+			$found[ (int) $row->space_id ] = (string) $row->role;
+		}
+		foreach ( $space_ids as $sid ) {
+			self::$role_cache[ $sid . '|' . $user_id ] = $found[ $sid ] ?? null;
+		}
+	}
+
+	/**
 	 * Return the role of a user in a space, or null if they are not a member.
+	 *
+	 * Memoized per request — see $role_cache.
 	 *
 	 * @param int $space_id
 	 * @param int $user_id
 	 * @return string|null
 	 */
 	public static function get_role( int $space_id, int $user_id ): ?string {
-		$value = static::db()->get_var(
-			static::db()->prepare(
-				'SELECT role FROM ' . static::table() . ' WHERE space_id = %d AND user_id = %d',
-				$space_id,
-				$user_id
-			)
-		);
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$role_cache       = [];
+					self::$role_label_cache = [];
+				}
+			);
+		}
 
-		return null !== $value ? (string) $value : null;
+		$key = $space_id . '|' . $user_id;
+		if ( ! array_key_exists( $key, self::$role_cache ) ) {
+			$value = static::db()->get_var(
+				static::db()->prepare(
+					'SELECT role FROM ' . static::table() . ' WHERE space_id = %d AND user_id = %d',
+					$space_id,
+					$user_id
+				)
+			);
+
+			self::$role_cache[ $key ] = null !== $value ? (string) $value : null;
+		}
+
+		return self::$role_cache[ $key ];
 	}
 
 	/**
@@ -340,6 +474,16 @@ class SpaceMember extends Model {
 	 */
 	public static function bust_privileged_cache( int $space_id ): void {
 		\Jetonomy\Cache::delete( 'priv_members_' . $space_id );
+		// A role change also changes permission verdicts (Layer 0d mod bypass
+		// + Layer 2 space-role perms) — clear the request-scope verdict memo
+		// so a promotion/demotion applies within the same request (WP0.1),
+		// and both role memos so get_role()/role_label() re-read (WP2.1).
+		// Full-map reset, not per-key: add() reads is_member() BEFORE its
+		// write, and the callers of this method don't all know which user
+		// changed.
+		self::$role_cache       = [];
+		self::$role_label_cache = [];
+		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 
 	/**

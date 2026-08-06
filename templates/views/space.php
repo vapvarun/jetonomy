@@ -224,7 +224,13 @@ $offset = ( $paged - 1 ) * $limit;
 // including subscribers who were never supposed to see them (Basecamp 9803998504).
 $_jt_is_priv = $_jt_user_id
 	&& ( $_jt_is_admin || \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $_jt_user_id, (int) $space->id ) );
-$posts       = \Jetonomy\Models\Post::list_by_space_visible(
+// Card projection for topic-card spaces (plan WP5.4): those cards render
+// title + trimmed excerpt only, so drop `content` LONGTEXT and truncate
+// content_plain. FEED spaces render the full body inline (feed-card.php)
+// and stay on the SELECT * method — trimming it was the safety review's
+// confirmed break.
+$_jt_list_fn = ( 'feed' === ( $space->type ?? '' ) ) ? 'list_by_space_visible' : 'list_cards_by_space_visible';
+$posts       = \Jetonomy\Models\Post::$_jt_list_fn(
 	(int) $space->id,
 	(int) $_jt_user_id,
 	(bool) $_jt_is_priv,
@@ -478,7 +484,22 @@ $crumbs[] = [
 				</div>
 				<?php if ( $is_restricted ) : ?>
 					<?php /* No new-post button for archived/locked spaces. */ ?>
-				<?php elseif ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || $_jt_rule_admits || 'open' === $_jt_join_policy ) ) : ?>
+					<?php
+					/*
+					 * Ask whether this viewer may POST, not whether they were
+					 * let in. $_jt_rule_admits is binary - it says "admitted",
+					 * not "admitted to do what" - so a Read-grant rule put a
+					 * New Topic button in front of people the server then
+					 * refused, and the refusal produced no message at all.
+					 *
+					 * Permission_Engine::can() already folds in membership,
+					 * the rule's grant level, the public+open shortcut, bans,
+					 * silences and the per-space who_can_post setting, so this
+					 * is the one question worth asking and the conditions it
+					 * replaces were an incomplete re-derivation of it.
+					 */
+					?>
+				<?php elseif ( \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id ) ) : ?>
 					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
 						<?php
 						// Shared label, so the button and the composer heading it
@@ -555,6 +576,19 @@ $crumbs[] = [
 					array_map( static fn( $p ) => (int) $p->author_id, $posts )
 				);
 
+				// WP3.7: batch the remaining per-card lookups for the page —
+				// author profiles (fills the profile:{id} keys the cards
+				// read), tag pills (Tag::list_for_post memo) and the viewer's
+				// votes (Vote::get_user_vote memo). Each card then costs zero
+				// per-row queries for these; unprimed surfaces (drafts / tag /
+				// bookmarks views, theme-overridden partials) keep the
+				// per-row fallback inside the models.
+				$jt_page_post_ids = array_map( static fn( $p ) => (int) $p->id, $posts );
+				\Jetonomy\Models\UserProfile::prime(
+					array_map( static fn( $p ) => (int) $p->author_id, $posts )
+				);
+				\Jetonomy\Models\Tag::for_posts( $jt_page_post_ids );
+
 				// 1.4.0 C.5: bulk-load the viewer's last-read reply id per
 				// post so each card can render a "new replies" pill in O(1).
 				$jt_read_map = array();
@@ -562,8 +596,9 @@ $crumbs[] = [
 				if ( $jt_viewer > 0 ) {
 					$jt_read_map = \Jetonomy\Models\ReadStatus::last_read_for_posts(
 						$jt_viewer,
-						array_map( static fn( $p ) => (int) $p->id, $posts )
+						$jt_page_post_ids
 					);
+					\Jetonomy\Models\Vote::user_votes_map( $jt_viewer, 'post', $jt_page_post_ids );
 				}
 				?>
 				<?php

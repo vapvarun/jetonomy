@@ -677,6 +677,11 @@ class Privacy {
 			// site. We DO know the ids, so bust each. (Row change only, id key.)
 			foreach ( $space_ids as $sid ) {
 				\Jetonomy\Models\Space::bust_cache( (int) $sid );
+				// The purge also deleted this user's space_members rows. If they
+				// held admin/moderator, the "Managed by" sidebar card served the
+				// deleted user from priv_members_{sid} for up to its TTL
+				// (caching plan WP0.4).
+				\Jetonomy\Models\SpaceMember::bust_privileged_cache( (int) $sid );
 			}
 		}
 	}

@@ -137,6 +137,22 @@ class Notifications_Controller extends Base_Controller {
 		// which page it drew; a notification list has to ask. Ask once.
 		$this->prime_reply_pages( $notifications );
 
+		// Batch-warm the actor users before the per-row serializer runs —
+		// prepare_notification() does get_userdata + avatar + profile-url per
+		// row, which was ~3 cold queries x 20 rows on every bell fetch (plan
+		// WP3.5), and the bell fires on every web page view. Built from the
+		// ALREADY-MASKED actor id (anonymous rows contribute 0, which
+		// batch_load_users drops) so the batch never warms caches for
+		// identities this response deliberately hides.
+		$this->batch_load_users(
+			array_filter(
+				array_map(
+					static fn( $n ) => empty( $n->actor_anonymous ) ? (int) ( $n->actor_id ?? 0 ) : 0,
+					$notifications
+				)
+			)
+		);
+
 		$items = array_map( [ $this, 'prepare_notification' ], $notifications );
 
 		return $this->paginated_response(
@@ -327,24 +343,24 @@ class Notifications_Controller extends Base_Controller {
 		$object_id   = $notification->object_id ? (int) $notification->object_id : 0;
 
 		$data = [
-			'id'           => (int) $notification->id,
-			'user_id'      => (int) $notification->user_id,
-			'type'         => $notification->type ?? '',
-			'object_type'  => $object_type ?: null,
-			'object_id'    => $object_id ?: null,
-			'actor_id'     => $actor_id ?: null,
-			'is_read'      => (bool) ( $notification->is_read ?? false ),
-			'created_at'   => $notification->created_at ?? null,
+			'id'             => (int) $notification->id,
+			'user_id'        => (int) $notification->user_id,
+			'type'           => $notification->type ?? '',
+			'object_type'    => $object_type ?: null,
+			'object_id'      => $object_id ?: null,
+			'actor_id'       => $actor_id ?: null,
+			'is_read'        => (bool) ( $notification->is_read ?? false ),
+			'created_at'     => $notification->created_at ?? null,
 			// Additive UTC ISO-8601 (`Z`) instant for app clients; column is already UTC.
 			'created_at_gmt' => \Jetonomy\to_iso8601_z( $notification->created_at ?? null ),
 			// Enriched actor data (for app clients + JS rendering)
-			'message'      => $notification->message ?? '',
-			'actor_name'   => $is_actor_anonymous ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'System', 'jetonomy' ) ),
-			'actor_avatar' => $actor ? \Jetonomy\Avatar::display_url( $actor_id, 64 ) : '',
-			'actor_login'  => $actor ? $actor->user_login : '',
-			'time_ago'     => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
-			'profile_url'  => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
-			'object_url'   => $this->resolve_notification_url( $notification, $object_type, $object_id ),
+			'message'        => $notification->message ?? '',
+			'actor_name'     => $is_actor_anonymous ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'System', 'jetonomy' ) ),
+			'actor_avatar'   => $actor ? \Jetonomy\Avatar::display_url( $actor_id, 64 ) : '',
+			'actor_login'    => $actor ? $actor->user_login : '',
+			'time_ago'       => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'profile_url'    => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
+			'object_url'     => $this->resolve_notification_url( $notification, $object_type, $object_id ),
 		];
 
 		/**

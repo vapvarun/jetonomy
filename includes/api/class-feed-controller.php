@@ -65,7 +65,15 @@ class Feed_Controller extends Posts_Controller {
 		$sort       = sanitize_key( (string) $request->get_param( 'sort' ) );
 		$sort       = in_array( $sort, array( 'hot', 'new', 'top' ), true ) ? $sort : 'hot';
 		$limit      = max( 1, min( 50, (int) $pagination['limit'] ) );
-		$offset     = max( 0, (int) $pagination['offset'] );
+
+		// Offset-paginated: hot/top/new are not id-ordered, so an id cursor cannot
+		// advance a keyset. get_pagination() folds the `after` cursor into `offset`
+		// and paginated_response() derives `cursor_next` as the next offset — both
+		// now live in the base controller so every list endpoint shares one
+		// implementation. This controller used to carry its own private copy, which
+		// is exactly why /feed got fixed in 1.9.1 while /users/{id}/posts and
+		// /spaces/{id}/posts stayed broken (Basecamp 10161324385 / 10161324235).
+		$offset = max( 0, (int) $pagination['offset'] );
 
 		$result = Post::list_global_feed(
 			get_current_user_id(),

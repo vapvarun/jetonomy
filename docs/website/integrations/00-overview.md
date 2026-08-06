@@ -21,7 +21,7 @@ These connect an external "who has paid / who is enrolled" system to Jetonomy's 
 | [LifterLMS](09-lifterlms.md) | Pro | LifterLMS course or membership enrolment |
 | [Sensei LMS](10-sensei-lms.md) | Pro | Sensei course enrolment |
 | [MasterStudy LMS](11-masterstudy-lms.md) | Pro | MasterStudy course enrolment |
-| [Learnomy](14-learnomy.md) | Pro | Learnomy course or membership plan |
+| [Learnomy](14-learnomy.md) | Pro | Learnomy course, cohort, Space, or membership plan |
 | [WP Fusion](15-wp-fusion.md) | **Pro** | WP Fusion CRM tag |
 | [SureMembers](16-suremembers.md) | **Pro** | SureMembers access group |
 

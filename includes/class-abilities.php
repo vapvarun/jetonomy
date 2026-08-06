@@ -1383,8 +1383,14 @@ class Abilities {
 
 	public function execute_list_spaces( $input ) {
 		$category_id = (int) ( $input['category_id'] ?? 0 );
-		$spaces      = $category_id ? Space::list_by_category( $category_id ) : Space::list_all();
-		$items       = [];
+		// Explicit cap (plan WP1.5): list_all()'s 0-default is unbounded and
+		// this payload has no pagination, so an agent on a huge network would
+		// materialize every row. The payload shape stays a flat array (a
+		// conditional wrapper would break consumers exactly when a big site
+		// first hits the cap); 200 covers any realistic community.
+		$cap    = 200;
+		$spaces = $category_id ? Space::list_by_category( $category_id ) : Space::list_all( 'active', $cap );
+		$items  = [];
 
 		foreach ( $spaces as $s ) {
 			// Skip spaces the user can't read.
@@ -1445,7 +1451,10 @@ class Abilities {
 	}
 
 	public function execute_list_space_members( $input ) {
-		$members = SpaceMember::list_by_space( (int) $input['space_id'] );
+		// Explicit cap (plan WP1.5) — same reasoning as execute_list_spaces:
+		// unbounded default + per-row get_userdata/profile below = a 5000-member
+		// space materializes and enriches every row for one agent call.
+		$members = SpaceMember::list_by_space( (int) $input['space_id'], 200 );
 		$items   = [];
 		foreach ( $members as $m ) {
 			$user    = get_userdata( (int) $m->user_id );

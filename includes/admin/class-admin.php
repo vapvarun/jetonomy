@@ -886,10 +886,21 @@ class Admin {
 			if ( $adapter->is_active() && 'wp-roles' !== $adapter_id ) {
 				$levels = array();
 				foreach ( $adapter->get_all_levels() as $level ) {
-					$levels[] = array(
+					// kind + note are optional (see Membership_Adapter). Absent
+					// keys stay absent rather than becoming '', so the picker can
+					// tell "this adapter has not adopted grouping" apart from
+					// "this row has an empty kind" and fall back to the flat list.
+					$row = array(
 						'id'    => $level['id'],
 						'label' => $level['label'],
 					);
+					if ( ! empty( $level['kind'] ) ) {
+						$row['kind'] = (string) $level['kind'];
+					}
+					if ( ! empty( $level['note'] ) ) {
+						$row['note'] = (string) $level['note'];
+					}
+					$levels[] = $row;
 				}
 				$membership_adapters[] = array(
 					'id'     => $adapter_id,
@@ -959,23 +970,50 @@ class Admin {
 					// Access-rule composer preview. Keyed so the sentence and its
 					// mismatch warnings are translatable like everything else.
 					'rulePreview'             => array(
-						'whoFallback'     => __( 'People who match this rule', 'jetonomy' ),
+						'whoFallback'      => __( 'People who match this rule', 'jetonomy' ),
 						/* translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as. */
-						'sentence'        => __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
-						'grants'          => array(
-							'read'        => __( 'read posts and replies, but not take part', 'jetonomy' ),
+						'sentence'         => __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
+						'grants'           => array(
+							// NOT "but not take part". A rule admits; it does not
+							// restrict. On a public space anyone may join, a
+							// signed-in member posts whether or not a Read rule
+							// matches them, so the old wording contradicted the
+							// help table one screen away and promised a cap the
+							// rule cannot deliver.
+							'read'        => __( 'read posts and replies', 'jetonomy' ),
 							'participate' => __( 'read, post, reply, vote and report', 'jetonomy' ),
 							'full'        => __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s topics', 'jetonomy' ),
 						),
+						// The "who matches" half of the sentence. The grants map
+						// above says what someone may do; without this the owner
+						// got no help at all deciding WHO a rule catches, and the
+						// value field was a bare box with one placeholder for five
+						// different kinds of value. Write the consequence, not the
+						// definition, and say when the match ends where it can.
+						'typeNotes'        => array(
+							'everyone'    => __( 'Matches every visitor, signed in or not. Nobody is asked to log in first.', 'jetonomy' ),
+							'logged_in'   => __( 'Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.', 'jetonomy' ),
+							'role'        => __( 'Matches anyone holding this WordPress role. Most members hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ),
+							'capability'  => __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
+							'trust_level' => __( 'Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ),
+						),
+						// Per-type placeholder for the value box. One generic
+						// example cannot serve a role slug, a capability and a
+						// number at the same time.
+						'typePlaceholders' => array(
+							'role'        => __( 'subscriber', 'jetonomy' ),
+							'capability'  => __( 'edit_posts', 'jetonomy' ),
+							'trust_level' => __( '2', 'jetonomy' ),
+						),
 						// Roster-role labels for the derived value in the preview.
-						'roles'           => array(
+						'roles'            => array(
 							'viewer'    => __( 'Viewer', 'jetonomy' ),
 							'member'    => __( 'Member', 'jetonomy' ),
 							'moderator' => __( 'Moderator', 'jetonomy' ),
 							'admin'     => __( 'Admin', 'jetonomy' ),
 						),
-						'warnRoleHigher'  => __( 'Heads up: the Space Role is more powerful than the Grants. Anyone added to the roster by "Sync Members" gets the role\'s abilities too.', 'jetonomy' ),
-						'warnGrantHigher' => __( 'Heads up: the Grants are broader than the Space Role, so member lists will understate what these people can do.', 'jetonomy' ),
+						'warnRoleHigher'   => __( 'Heads up: the Space Role is more powerful than the Grants. Anyone added to the roster by "Sync Members" gets the role\'s abilities too.', 'jetonomy' ),
+						'warnGrantHigher'  => __( 'Heads up: the Grants are broader than the Space Role, so member lists will understate what these people can do.', 'jetonomy' ),
 					),
 					'copy'                    => esc_html__( 'Copy', 'jetonomy' ),
 					'revoke'                  => esc_html__( 'Revoke', 'jetonomy' ),
@@ -1189,8 +1227,15 @@ class Admin {
 				/* translators: %s: the singular space label. */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
-			$categories     = $this->get_all_categories_flat();
-			$members        = SpaceMember::list_by_space( $space_id );
+			$categories = $this->get_all_categories_flat();
+			// Explicit cap (plan WP1.5): the unbounded default rendered every
+			// member row on one screen. 1000 keeps this management surface
+			// functional; when the space is larger the view shows a notice so
+			// members past the cap are never SILENTLY hidden from the only
+			// admin surface that can remove them (the frontend members page
+			// is paginated and covers the tail).
+			$members        = SpaceMember::list_by_space( $space_id, 1000 );
+			$members_capped = ( (int) ( $space->member_count ?? 0 ) ) > count( $members ) && count( $members ) >= 1000;
 			$access_rules   = AccessRule::list_for_space( $space_id );
 			$space_settings = Space::get_settings( $space_id );
 			$join_requests  = JoinRequest::list_pending_for_space( $space_id );

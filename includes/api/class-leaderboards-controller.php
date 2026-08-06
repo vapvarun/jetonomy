@@ -83,6 +83,32 @@ class Leaderboards_Controller extends Base_Controller {
 		$limit        = (int) $args['limit'];
 		$offset       = (int) $args['offset'];
 
+		// Cached 300s per page (plan WP4.6) — the board is fully shared by
+		// design (deliberately not per-viewer filtered) and changes only on
+		// reputation events; a 5-minute-stale ranking is invisible (TTL-only).
+		// Skipped entirely when a third party filters the QUERY SHAPE via
+		// jetonomy_users_query_args — the key cannot model an arbitrary
+		// filter (same rule as the category tree). The per-request
+		// jetonomy_leaderboard_items enrichment filter below runs on every
+		// response, cached or not, so host-plugin rows never freeze.
+		$lb_cacheable = ! has_filter( 'jetonomy_users_query_args' );
+		$lb_cache_key = "lb:{$period}:{$limit}:{$offset}";
+		if ( $lb_cacheable ) {
+			$cached = \Jetonomy\Cache::get( $lb_cache_key );
+			if ( is_array( $cached ) && isset( $cached['items'], $cached['total'] ) ) {
+				$items = (array) apply_filters( 'jetonomy_leaderboard_items', $cached['items'], $request );
+
+				return $this->paginated_response(
+					$items,
+					[
+						'total'  => (int) $cached['total'],
+						'offset' => $offset,
+						'period' => $period,
+					]
+				);
+			}
+		}
+
 		// Total + page slice come from the shared model methods so this endpoint
 		// and the server-rendered leaderboard view stay in lockstep on both the
 		// population (period filter) and the ordering. The period filter was
@@ -147,6 +173,19 @@ class Leaderboards_Controller extends Base_Controller {
 			];
 
 			++$rank;
+		}
+
+		// Cache the UNFILTERED rows (plan WP4.6) — the enrichment filter
+		// below is per-request by contract and must never be frozen.
+		if ( $lb_cacheable ) {
+			\Jetonomy\Cache::set(
+				$lb_cache_key,
+				[
+					'items' => $items,
+					'total' => $total,
+				],
+				300
+			);
 		}
 
 		/**

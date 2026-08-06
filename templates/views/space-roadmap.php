@@ -79,16 +79,28 @@ if ( '' !== $jt_block_sql ) {
 	$jt_private_sql .= ' AND ' . $jt_block_sql;
 }
 
+// Bounded per-column fetch (caching plan WP1.2). The old single query had
+// no LIMIT — every idea in the space, longtext bodies included, loaded to
+// bucket into 4 columns in PHP; fatal on a 10k-post space. Now: one
+// GROUP BY for the TRUE column counts (the jt-col-n badges must not lie
+// about the page size), then one bounded query per column. Columns past
+// the cap render a "+N more" note.
+$jt_roadmap_col_cap = 50;
+
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$all_ideas = $wpdb->get_results(
+$jt_status_count_rows = $wpdb->get_results(
 	$wpdb->prepare(
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		"SELECT * FROM {$posts_tbl}
-		 WHERE space_id = %d AND status = 'publish'{$jt_private_sql}
-		 ORDER BY vote_score DESC, created_at DESC",
+		"SELECT idea_status, COUNT(*) AS n FROM {$posts_tbl}
+		 WHERE space_id = %d AND status = 'publish' AND idea_status IS NOT NULL{$jt_private_sql}
+		 GROUP BY idea_status",
 		...$jt_private_params
 	)
 ) ?: [];
+$jt_status_counts = [];
+foreach ( $jt_status_count_rows as $jt_count_row ) {
+	$jt_status_counts[ (string) $jt_count_row->idea_status ] = (int) $jt_count_row->n;
+}
 
 // Canonical column order (mirrors Post::valid_idea_statuses()). Owners
 // move ideas left to right; "declined" sits at the end as the off-ramp.
@@ -119,14 +131,26 @@ $columns = array(
 	),
 );
 
-foreach ( $all_ideas as $idea ) {
-	$status = isset( $idea->idea_status ) ? (string) $idea->idea_status : '';
-	if ( '' === $status || ! isset( $columns[ $status ] ) ) {
-		// Ideas without a curated status stay off the roadmap; owners
-		// see them in the space's regular feed instead.
-		continue;
-	}
-	$columns[ $status ]['posts'][] = $idea;
+foreach ( array_keys( $columns ) as $jt_col_status ) {
+	// One bounded query per column. The id tiebreak keeps the cap window
+	// deterministic across ties (the same rule as every paged list).
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$columns[ $jt_col_status ]['posts'] = $wpdb->get_results(
+		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"SELECT * FROM {$posts_tbl}
+			 WHERE space_id = %d AND status = 'publish' AND idea_status = %s{$jt_private_sql}
+			 ORDER BY vote_score DESC, created_at DESC, id DESC
+			 LIMIT %d",
+			array_merge(
+				array( (int) $space->id, $jt_col_status ),
+				array_slice( $jt_private_params, 1 ),
+				array( $jt_roadmap_col_cap )
+			)
+		)
+	) ?: [];
+
+	$columns[ $jt_col_status ]['total'] = $jt_status_counts[ $jt_col_status ] ?? count( $columns[ $jt_col_status ]['posts'] );
 }
 
 $category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
@@ -178,7 +202,7 @@ $space_url = $base . '/s/' . $space->slug . '/';
 				<span class="jt-col-title" style="color:<?php echo esc_attr( $col['color'] ); ?>;">
 					<?php echo esc_html( $col['label'] ); ?>
 				</span>
-				<span class="jt-col-n"><?php echo esc_html( count( $col['posts'] ) ); ?></span>
+				<span class="jt-col-n"><?php echo esc_html( $col['total'] ?? count( $col['posts'] ) ); ?></span>
 			</div>
 			<?php if ( empty( $col['posts'] ) ) : ?>
 				<p class="jt-kanban-empty"><?php esc_html_e( 'No ideas here yet.', 'jetonomy' ); ?></p>
@@ -200,6 +224,19 @@ $space_url = $base . '/s/' . $space->slug . '/';
 						</div>
 					</div>
 				<?php endforeach; ?>
+				<?php if ( ( $col['total'] ?? 0 ) > count( $col['posts'] ) ) : ?>
+					<p class="jt-kanban-more">
+						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
+							<?php
+							printf(
+								/* translators: %d: number of additional ideas not shown in this column. */
+								esc_html( _n( '+%d more idea in the space feed', '+%d more ideas in the space feed', (int) ( $col['total'] - count( $col['posts'] ) ), 'jetonomy' ) ),
+								(int) ( $col['total'] - count( $col['posts'] ) )
+							);
+							?>
+						</a>
+					</p>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 	<?php endforeach; ?>

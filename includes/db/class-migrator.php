@@ -17,6 +17,17 @@ class Migrator {
 	 * @param string $from_version The currently installed DB version.
 	 */
 	public static function run( string $from_version ): void {
+		// Migrations run inline on plugins_loaded — whichever request arrives
+		// first after an update, including anonymous frontend hits on shared
+		// hosts with tight max_execution_time. An ALTER that outlives the PHP
+		// limit completes server-side but the version never gets stamped, so
+		// every subsequent request re-enters the whole loop. Lift the limits
+		// for the migration pass (caching plan WP5.0).
+		ignore_user_abort( true );
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- disabled_functions on some hosts.
+		}
+
 		$migrations = self::get_migrations();
 
 		foreach ( $migrations as $version => $class ) {
@@ -65,6 +76,7 @@ class Migrator {
 			// idempotent, so harmless) but buys nothing. Do not "fix" it.
 			'1.8.1'   => '1_8_1',
 			'1.9.1'   => '1_9_1',
+			'1.9.2'   => '1_9_2',
 		];
 	}
 }

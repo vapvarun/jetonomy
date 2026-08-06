@@ -40,7 +40,7 @@ class ActivityLog extends Model {
 	public static function list_for_user( int $user_id, int $limit = 20, int $offset = 0 ): array {
 		return self::db()->get_results(
 			self::db()->prepare(
-				'SELECT * FROM ' . self::table() . ' WHERE user_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				'SELECT * FROM ' . self::table() . ' WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
 				$user_id,
 				$limit,
 				$offset
@@ -54,7 +54,7 @@ class ActivityLog extends Model {
 	public static function list_recent( int $limit = 20, int $offset = 0 ): array {
 		return self::db()->get_results(
 			self::db()->prepare(
-				'SELECT * FROM ' . self::table() . ' ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				'SELECT * FROM ' . self::table() . ' ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
 				$limit,
 				$offset
 			)

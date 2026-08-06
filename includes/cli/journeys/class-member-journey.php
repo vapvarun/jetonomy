@@ -194,7 +194,10 @@ final class Member_Journey {
 			return Journey_Result::fail( 'space_id must be positive.' );
 		}
 
-		$rows  = SpaceMember::list_by_space( $space_id );
+		// Explicit cap (plan WP1.5): journeys assert their own small fixture
+		// sets; the unbounded default would materialize a live site's whole
+		// roster if pointed at a real space.
+		$rows  = SpaceMember::list_by_space( $space_id, 200 );
 		$items = [];
 		foreach ( $rows as $row ) {
 			$items[] = [

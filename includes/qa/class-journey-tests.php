@@ -244,9 +244,12 @@ class Journey_Tests {
 					'author_id' => $author,
 					'content'   => 'probe top-level ' . $i,
 					'status'    => 'publish',
-					// Distinct, ordered timestamps: this test asserts the
-					// page mapping, not MySQL's tie behaviour.
-					'created_at' => gmdate( 'Y-m-d H:i:s', time() + $i ),
+					// Replies 3 and 4 share a created_at ON PURPOSE: the page
+					// mapping must stay deterministic across ties via the id
+					// tiebreak on BOTH sides of the contract. SQL-side paging
+					// without the id tiebreak repeats/skips tied rows between
+					// pages — the Basecamp 10161324235 bug class (plan WP1.1b).
+					'created_at' => gmdate( 'Y-m-d H:i:s', time() + min( $i, 3 ) ),
 				]
 			);
 			if ( ! is_int( $rid ) || $rid <= 0 ) {
@@ -273,8 +276,28 @@ class Journey_Tests {
 			return;
 		}
 
+		// Depth-2 grandchild (child OF the child). Nesting is unbounded in
+		// the data model — the depth cap only caps the CSS label — so any
+		// SQL-side children fetch that stops at depth 1 silently drops this
+		// row from the rendered thread (plan WP1.1a). It must render on its
+		// top-level ancestor's page like every other descendant.
+		$grandchild = \Jetonomy\Models\Reply::create(
+			[
+				'post_id'    => $post_id,
+				'author_id'  => $author,
+				'parent_id'  => $child,
+				'content'    => 'probe nested grandchild',
+				'status'     => 'publish',
+				'created_at' => gmdate( 'Y-m-d H:i:s', time() + 100 ),
+			]
+		);
+		if ( ! is_int( $grandchild ) || $grandchild <= 0 ) {
+			$this->record( $label, false, 'grandchild reply create failed' );
+			return;
+		}
+
 		$mismatch = [];
-		foreach ( array_merge( $top, [ $child ] ) as $rid ) {
+		foreach ( array_merge( $top, [ $child, $grandchild ] ) as $rid ) {
 			$claimed = \Jetonomy\Models\Reply::page_of( $rid, $per_page );
 
 			// Where does the reply ACTUALLY render? Walk the pages the view
@@ -304,10 +327,12 @@ class Journey_Tests {
 		// Nested child specifically resolves to its ancestor's page.
 		$child_page  = \Jetonomy\Models\Reply::page_of( $child, $per_page );
 		$parent_page = \Jetonomy\Models\Reply::page_of( $top[3], $per_page );
+		$gc_page = \Jetonomy\Models\Reply::page_of( $grandchild, $per_page );
+		$gc_ok   = $child_page === $parent_page && $gc_page === $parent_page;
 		$this->record(
 			'content: nested reply deep link resolves to its top-level ancestor page',
-			$child_page === $parent_page,
-			$child_page === $parent_page ? '' : sprintf( 'child page %d != ancestor page %d', $child_page, $parent_page )
+			$gc_ok,
+			$gc_ok ? '' : sprintf( 'child page %d / grandchild page %d != ancestor page %d', $child_page, $gc_page, $parent_page )
 		);
 	}
 

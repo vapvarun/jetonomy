@@ -78,7 +78,7 @@ class Subscriptions_Controller extends Base_Controller {
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE user_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT * FROM {$tbl} WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
 				$user_id,
 				$limit,
 				$offset

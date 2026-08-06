@@ -9,6 +9,7 @@ namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Cache;
 use function Jetonomy\now;
 
 /**
@@ -180,6 +181,7 @@ class Post extends Model {
 		}
 
 		$result = parent::update( $id, $data );
+		self::reset_slug_memo();
 
 		if ( 0 !== $delta && $post ) {
 			if ( ! empty( $post->space_id ) ) {
@@ -235,7 +237,29 @@ class Post extends Model {
 			return $proceed;
 		}
 
-		return parent::delete( $id );
+		// Load before deletion so a hard delete reverses the same counters a
+		// published post incremented in create(). REST deletes go through
+		// update( status => trash ), which already handles this; the direct
+		// delete path (CLI content journey, QA fixtures, abilities) must mirror
+		// it so space + author post_count stay consistent across every delete
+		// mechanism. Mirrors Reply::delete().
+		$post   = self::find( $id );
+		$result = parent::delete( $id );
+		self::reset_slug_memo();
+
+		if ( true === $result && $post && 'publish' === ( $post->status ?? '' ) ) {
+			if ( ! empty( $post->space_id ) ) {
+				Space::increment_post_count( (int) $post->space_id, -1 );
+			}
+			if ( ! empty( $post->author_id ) ) {
+				UserProfile::increment_post_count( (int) $post->author_id, -1 );
+			}
+
+			/** This action is documented in includes/models/class-post.php (Post::create) */
+			do_action( 'jetonomy_post_publish_transition', $id, -1, (string) ( $post->created_at ?? '' ) );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -262,19 +286,69 @@ class Post extends Model {
 	}
 
 	/**
+	 * Per-request memo for find_by_slug(), POSITIVE hits only.
+	 *
+	 * A single-post view resolves the same slug 6-7x (template loader x4,
+	 * the view, schema markup x2). Misses are deliberately never memoized:
+	 * unique_post_slug() loops `while ( find_by_slug() )` as its duplicate
+	 * guard, and a cached miss there mints duplicate slugs — the exact bug
+	 * Space's negative slug cache had (caching plan WP2.2 / graveyard #5).
+	 * Reset on every post write (update/delete) and via Cache::flush() (U1).
+	 *
+	 * @var array<string, object>
+	 */
+	private static array $slug_memo = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $slug_memo_registered = false;
+
+	/**
+	 * Empty the slug memo. Called from update()/delete() — a mid-request
+	 * status change or slug rename must be visible to the next lookup.
+	 */
+	public static function reset_slug_memo(): void {
+		self::$slug_memo = [];
+	}
+
+	/**
 	 * Find a post by its slug.
 	 *
 	 * @param string $slug Post slug.
 	 * @return object|null
 	 */
 	public static function find_by_slug( string $slug ): ?object {
+		if ( ! self::$slug_memo_registered ) {
+			self::$slug_memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$slug_memo = [];
+				}
+			);
+		}
+
+		if ( isset( self::$slug_memo[ $slug ] ) ) {
+			// Clone so caller-side mutation (block/private tombstoning blanks
+			// content in place) never leaks into the next call site's copy.
+			return clone self::$slug_memo[ $slug ];
+		}
+
 		$row = static::db()->get_row(
 			static::db()->prepare(
 				'SELECT * FROM ' . static::table() . ' WHERE slug = %s',
 				$slug
 			)
 		);
-		return $row ? $row : null;
+
+		if ( $row ) {
+			self::$slug_memo[ $slug ] = clone $row;
+			return $row;
+		}
+
+		return null;
 	}
 
 	/**
@@ -305,21 +379,26 @@ class Post extends Model {
 
 		$extra_where = '';
 
+		// Every ORDER BY ends in `id` as a tiebreaker. The leading keys are all
+		// non-unique — 25 of 26 seeded posts shared a single created_at second —
+		// and without a unique final key MySQL may return tied rows in any order,
+		// so consecutive pages of the same list could repeat or skip rows
+		// (Basecamp 10161324235). Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC';
+				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
 				break;
 
 			case 'oldest':
-				$order_by = 'is_sticky DESC, created_at ASC';
+				$order_by = 'is_sticky DESC, created_at ASC, id ASC';
 				break;
 
 			case 'newest':
-				$order_by = 'is_sticky DESC, created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
 				break;
 
 			case 'unanswered':
-				$order_by = 'is_sticky DESC, created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
 				// On Q&A spaces "unanswered" means "no accepted answer yet";
 				// elsewhere it means "no replies yet". The same pill label
 				// covers both because each space type's contract makes the
@@ -332,7 +411,7 @@ class Post extends Model {
 
 			case 'latest':
 			default:
-				$order_by = 'is_sticky DESC, last_reply_at DESC';
+				$order_by = 'is_sticky DESC, last_reply_at DESC, id DESC';
 				break;
 		}
 
@@ -360,18 +439,15 @@ class Post extends Model {
 		$offset      = (int) $args['offset'];
 		$after       = (int) $args['after'];
 
-		// Cursor: prefer id-based over offset when $after is provided.
-		if ( $after > 0 ) {
-			$params  = array( $space_id, $after, $limit );
-			$results = static::db()->get_results(
-				static::db()->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} AND id > %d ORDER BY {$order_by} LIMIT %d",
-					...$params
-				)
-			);
-			return $results ? $results : array();
-		}
+		// $after is a forward cursor carrying an OFFSET, not a row id.
+		//
+		// This used to run `... AND id > %d ORDER BY {$order_by}` as a keyset. That
+		// could never work here: $order_by leads with is_sticky/vote_score/
+		// last_reply_at/created_at, so an id filter does not follow the sort at all,
+		// and `id >` against a DESC sort actively contradicts it — every "next page"
+		// returned the top of the list again and clients looped forever
+		// (Basecamp 10161324235). Offset is the only scheme these sorts support.
+		$offset = $after > 0 ? $after : $offset;
 
 		$results = static::db()->get_results(
 			static::db()->prepare(
@@ -408,21 +484,26 @@ class Post extends Model {
 
 		$extra_where = '';
 
+		// Every ORDER BY ends in `id` as a tiebreaker. The leading keys are all
+		// non-unique — 25 of 26 seeded posts shared a single created_at second —
+		// and without a unique final key MySQL may return tied rows in any order,
+		// so consecutive pages of the same list could repeat or skip rows
+		// (Basecamp 10161324235). Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC';
+				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
 				break;
 
 			case 'oldest':
-				$order_by = 'is_sticky DESC, created_at ASC';
+				$order_by = 'is_sticky DESC, created_at ASC, id ASC';
 				break;
 
 			case 'newest':
-				$order_by = 'is_sticky DESC, created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
 				break;
 
 			case 'unanswered':
-				$order_by = 'is_sticky DESC, created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
 				// On Q&A spaces "unanswered" means "no accepted answer yet";
 				// elsewhere it means "no replies yet". The same pill label
 				// covers both because each space type's contract makes the
@@ -435,7 +516,7 @@ class Post extends Model {
 
 			case 'latest':
 			default:
-				$order_by = 'is_sticky DESC, last_reply_at DESC';
+				$order_by = 'is_sticky DESC, last_reply_at DESC, id DESC';
 				break;
 		}
 
@@ -454,17 +535,9 @@ class Post extends Model {
 			$extra_where .= ' AND ' . $block_sql;
 		}
 
-		if ( $after > 0 ) {
-			$params  = array( $space_id, $after, $limit );
-			$results = static::db()->get_results(
-				static::db()->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} AND id > %d ORDER BY {$order_by} LIMIT %d",
-					...$params
-				)
-			);
-			return $results ? $results : array();
-		}
+		// $after carries an OFFSET, not a row id — see list_by_space() for why the
+		// old `id > %d` keyset could not work against these sorts.
+		$offset = $after > 0 ? $after : $offset;
 
 		$results = static::db()->get_results(
 			static::db()->prepare(
@@ -495,6 +568,102 @@ class Post extends Model {
 	}
 
 	/**
+	 * Card-projection variant of list_by_space_visible() (plan WP5.4).
+	 *
+	 * The topic-card templates render title + a trimmed excerpt — never the
+	 * body — yet the full method dragged `content` LONGTEXT for every row.
+	 * This drops `content` and truncates `content_plain` to the excerpt
+	 * window. Used ONLY by post-card template paths; the original stays
+	 * SELECT * because four consumers genuinely need the full columns
+	 * (feed-card renders the whole body, RSS descriptions, the REST list
+	 * payload's content/content_plain contract, BuddyPress) — trimming
+	 * them was the safety review's confirmed break. Rows injected by the
+	 * jetonomy_post_list_results_for_space filter (Pro announcements) are
+	 * `p.*` and merge fine — the card templates read a SUBSET of this
+	 * projection, so heterogeneous rows only over-carry, never break.
+	 *
+	 * Same signature, ordering, gating and filter as the original.
+	 *
+	 * @param int    $space_id      Space.
+	 * @param int    $user_id       Viewer (0 guest).
+	 * @param bool   $is_privileged Whether viewer sees private content.
+	 * @param string $sort          Sort flag.
+	 * @param int    $limit         Page size (-1 = space setting).
+	 * @param int    $offset        Offset.
+	 * @param int    $after         Legacy offset alias.
+	 * @return object[]
+	 */
+	public static function list_cards_by_space_visible( int $space_id, int $user_id, bool $is_privileged, string $sort = 'latest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
+		if ( -1 === $limit ) {
+			$limit = Space::get_posts_per_page( $space_id );
+		}
+		$table = static::table();
+
+		$extra_where = '';
+		switch ( $sort ) {
+			case 'popular':
+				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
+				break;
+			case 'oldest':
+				$order_by = 'is_sticky DESC, created_at ASC, id ASC';
+				break;
+			case 'newest':
+				$order_by = 'is_sticky DESC, created_at DESC, id DESC';
+				break;
+			case 'unanswered':
+				$order_by    = 'is_sticky DESC, created_at DESC, id DESC';
+				$_jt_space   = Space::find( $space_id );
+				$extra_where = ( $_jt_space && 'qa' === ( $_jt_space->type ?? '' ) )
+					? ' AND accepted_reply_id IS NULL'
+					: ' AND reply_count = 0';
+				break;
+			case 'latest':
+			default:
+				$order_by = 'is_sticky DESC, last_reply_at DESC, id DESC';
+				break;
+		}
+
+		if ( ! $is_privileged ) {
+			if ( $user_id > 0 ) {
+				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
+			} else {
+				$extra_where .= ' AND is_private = 0';
+			}
+		}
+
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$extra_where .= ' AND ' . $block_sql;
+		}
+
+		$offset = $after > 0 ? $after : $offset;
+
+		// Every column except the two longtexts; content_plain truncated to
+		// the excerpt window (jetonomy_post_title_or_excerpt trims to words
+		// well inside 300 chars). `content` is intentionally ABSENT — a card
+		// consumer reading it is a bug, and the helpers all isset()-guard.
+		$card_columns = 'id, space_id, author_id, is_anonymous, type, prefix, title, slug, status,
+			published_at, is_sticky, is_private, is_closed, is_resolved, idea_status,
+			vote_score, reply_count, view_count, flag_count, last_reply_at, last_reply_by,
+			accepted_reply_id, edited_at, edited_by, updated_at, created_at,
+			LEFT(content_plain, 300) AS content_plain';
+
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT {$card_columns} FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} ORDER BY {$order_by} LIMIT %d OFFSET %d",
+				$space_id,
+				$limit,
+				$offset
+			)
+		);
+		$results = $results ? $results : array();
+
+		/** This filter is documented in includes/models/class-post.php (list_by_space_visible). */
+		return apply_filters( 'jetonomy_post_list_results_for_space', $results, $space_id, $user_id, $is_privileged, $sort, $offset );
+	}
+
+	/**
 	 * Count visible posts in a space — viewer-aware companion to
 	 * list_by_space_visible(). Used by abilities/REST listings to report
 	 * accurate totals for cursor-based pagination instead of guessing
@@ -508,6 +677,25 @@ class Post extends Model {
 	 * @return int
 	 */
 	public static function count_by_space_visible( int $space_id, int $user_id, bool $is_privileged, string $sort = 'latest' ): int {
+		// Cached 120s per viewer bucket (plan WP4.10): the COUNT doubles the
+		// query cost of the hottest list on the site for a pager number that
+		// barely moves. Bucket honors EVERY viewer-dependent clause below
+		// (U2): privileged viewers share 'priv' (they see everything),
+		// guests share 'guest' (no blocks by definition), and any logged-in
+		// non-privileged viewer gets a per-user key — the own-private clause
+		// binds their literal id. TTL-ONLY by design: the sort+bucket key
+		// set is unbounded per space, so no write can enumerate it, and a
+		// ≤120s-stale pager count is invisible. The denormalized
+		// jt_spaces.post_count is a DIFFERENT population and is never
+		// substituted here (the reverted Basecamp 10118693115 bug —
+		// plan graveyard #1).
+		$bucket = $is_privileged ? 'priv' : ( $user_id > 0 ? "u{$user_id}" : 'guest' );
+		$key    = "postcount:{$space_id}:{$sort}:{$bucket}";
+		$cached = Cache::get( $key );
+		if ( false !== $cached ) {
+			return (int) $cached;
+		}
+
 		$table       = static::table();
 		$extra_where = '';
 
@@ -533,13 +721,16 @@ class Post extends Model {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (int) static::db()->get_var(
+		$count = (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT COUNT(*) FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where}",
 				$space_id
 			)
 		);
+
+		Cache::set( $key, $count, 120 );
+		return $count;
 	}
 
 	/**
@@ -566,7 +757,7 @@ class Post extends Model {
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
-				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
 				...$params
 			)
 		) ?: array();
@@ -699,7 +890,7 @@ class Post extends Model {
 				"SELECT p.* FROM {$table} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
 				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
-				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
+				 ORDER BY p.created_at DESC, p.id DESC LIMIT %d OFFSET %d",
 				$user_id,
 				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
@@ -843,6 +1034,67 @@ class Post extends Model {
 				break;
 		}
 
+		// hot/top ORDERING cache (plan WP4.5). hot_score is computed per row
+		// and unindexable — every feed request full-scanned the visible post
+		// set TWICE (COUNT + filesort). Cache the id ORDER + total only,
+		// 90s, TTL-only (decay-ranked sorts make staleness invisible; 'new'
+		// stays uncached — index-served and freshness-expected). Buckets:
+		// 'guest' and 'admin' are shared classes; any other viewer gets a
+		// per-user key (their member-space set + block list shape the WHERE).
+		// LEAK-PROOF HYDRATION is the load-bearing part: the safety review
+		// showed a cached id list re-fetched by bare id serves just-privated
+		// / trashed / moved posts for the TTL — so the hydrate below re-runs
+		// the FULL visibility predicate and drops misses, caching only the
+		// ordering, never the rows.
+		$feed_cacheable = in_array( $sort, array( 'hot', 'top' ), true );
+		$feed_key       = '';
+		if ( $feed_cacheable ) {
+			$bucket = 'guest';
+			if ( $user_id > 0 ) {
+				$bucket = ( '1=1' === $vis_sql ) ? 'admin' : "u{$user_id}";
+			}
+			$feed_key = "feed:{$sort}:{$window_days}:{$limit}:{$offset}:{$bucket}";
+			$cached   = Cache::get( $feed_key );
+			if ( is_array( $cached ) && isset( $cached['ids'], $cached['total'] ) ) {
+				$ids = array_map( 'intval', (array) $cached['ids'] );
+				if ( empty( $ids ) ) {
+					return array(
+						'posts' => array(),
+						'total' => (int) $cached['total'],
+					);
+				}
+
+				$ph = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$hydrate_sql  = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title,
+						(p.vote_score + p.reply_count * 2) / POW(TIMESTAMPDIFF(HOUR, p.created_at, NOW()) + 2, 1.5) AS hot_score
+					FROM {$table} p
+					LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+					WHERE p.id IN ({$ph}) AND {$where}";
+				$hydrate_rows = static::db()->get_results(
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					static::db()->prepare( $hydrate_sql, ...array_merge( $ids, $where_args ) )
+				) ?: array();
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+				$by_id = array();
+				foreach ( $hydrate_rows as $row ) {
+					$by_id[ (int) $row->id ] = $row;
+				}
+				$posts = array();
+				foreach ( $ids as $id ) {
+					if ( isset( $by_id[ $id ] ) ) {
+						$posts[] = $by_id[ $id ]; // Cached order; gate-failing ids drop.
+					}
+				}
+
+				return array(
+					'posts' => $posts,
+					'total' => (int) $cached['total'],
+				);
+			}
+		}
+
 		// Total via a parallel COUNT(*) with the same WHERE (drives X-WP-Total).
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$count_sql = "SELECT COUNT(*) FROM {$table} p LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE {$where}";
@@ -868,8 +1120,21 @@ class Post extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
+		$results = $results ? $results : array();
+
+		if ( $feed_cacheable ) {
+			Cache::set(
+				$feed_key,
+				array(
+					'ids'   => array_map( static fn( $r ) => (int) $r->id, $results ),
+					'total' => $total,
+				),
+				90
+			);
+		}
+
 		return array(
-			'posts' => $results ? $results : array(),
+			'posts' => $results,
 			'total' => $total,
 		);
 	}
@@ -1230,9 +1495,11 @@ class Post extends Model {
 			)
 		);
 
-		// Trash the source post and decrement its space counter.
+		// Trash the source post. The publish→trash transition inside update()
+		// already decrements the space's post_count and the author's post_count
+		// — an explicit decrement here double-counted (-2 per merge), the same
+		// bug class as Reply::split_to_post (Basecamp 10161324705 / plan WP0.8).
 		static::update( $source_id, array( 'status' => 'trash' ) );
-		Space::increment_post_count( (int) $source->space_id, -1 );
 
 		do_action( 'jetonomy_post_merged', $source_id, $target_id );
 

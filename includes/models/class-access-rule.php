@@ -34,22 +34,86 @@ class AccessRule extends Model {
 			$data
 		);
 
-		return static::insert( $data );
+		$id = static::insert( $data );
+
+		// A rule written mid-request must be visible to the next
+		// list_for_space() in the same process — the Pro course provisioner
+		// creates a rule and the integration reads the list in one flow
+		// (caching plan WP2.3).
+		self::reset_memo();
+
+		return $id;
+	}
+
+	/**
+	 * Delete a rule and clear the per-request rule-list memo.
+	 *
+	 * @param int $id Rule row ID.
+	 * @return bool|\WP_Error
+	 */
+	public static function delete( int $id ): bool|\WP_Error {
+		$result = parent::delete( $id );
+		self::reset_memo();
+		return $result;
+	}
+
+	/**
+	 * Per-request memo of rule lists per space.
+	 *
+	 * A space page resolves the rules ~5x (grants_access,
+	 * unmet_membership_requirements, concealed_from_viewer — each from
+	 * several call sites), and every pass re-fans-out to the membership
+	 * adapters. Only the DB list is memoized; resolve_access() itself stays
+	 * live so third-party entitlements granted mid-request (a checkout
+	 * completing) are never frozen (caching plan WP2.3).
+	 *
+	 * @var array<int, object[]>
+	 */
+	private static array $memo = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Empty the rule-list memo. Called from create()/delete() and
+	 * Cache::flush().
+	 */
+	public static function reset_memo(): void {
+		self::$memo = [];
 	}
 
 	/**
 	 * List all access rules for a space, ordered by priority descending.
 	 *
+	 * Memoized per request — see $memo.
+	 *
 	 * @param int $space_id
 	 * @return object[]
 	 */
 	public static function list_for_space( int $space_id ): array {
-		return static::db()->get_results(
-			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC',
-				$space_id
-			)
-		) ?: [];
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$memo = [];
+				}
+			);
+		}
+
+		if ( ! array_key_exists( $space_id, self::$memo ) ) {
+			self::$memo[ $space_id ] = static::db()->get_results(
+				static::db()->prepare(
+					'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC',
+					$space_id
+				)
+			) ?: [];
+		}
+
+		return self::$memo[ $space_id ];
 	}
 
 	/**

@@ -9,6 +9,7 @@ namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Models\UserProfile;
 use Jetonomy\Notifications\Verification_Reminder;
 use Jetonomy\Trust\Trust_Evaluator;
 use function Jetonomy\table;
@@ -265,7 +266,12 @@ class Cron {
 			$new_level = (int) apply_filters( 'jetonomy_trust_level_pre_change', $new_level, (int) $profile->user_id, $stats );
 
 			if ( $new_level > (int) $profile->trust_level ) {
-				$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
+				// Through the model, not raw $wpdb: update_profile() busts
+				// profile:{id} BEFORE the action below fires, so its four
+				// listeners (activity tracker, notifier, Pro badges, Pro
+				// webhooks) re-read the promoted level instead of a cached
+				// stale row (caching plan WP0.2).
+				UserProfile::update_profile( (int) $profile->user_id, [ 'trust_level' => $new_level ] );
 				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
 				++$promoted;
 			}

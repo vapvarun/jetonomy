@@ -35,30 +35,10 @@ parameters:
 			count: 1
 			path: includes/api/class-api.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$author_avatar\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$author_login\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$profile_url\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$reputation\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$trust_level\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
 
 		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_avatar\\.$#"
@@ -254,16 +234,6 @@ parameters:
 			message: "#^Call to static method http_post\\(\\) on an unknown class Akismet\\.$#"
 			count: 1
 			path: includes/moderation/class-akismet.php
-
-		-
-			message: "#^Call to function is_wp_error\\(\\) with WP_REST_Response will always evaluate to false\\.$#"
-			count: 1
-			path: includes/qa/class-pro-tests.php
-
-		-
-			message: "#^is_wp_error\\(WP_REST_Response\\) will always evaluate to false\\.$#"
-			count: 1
-			path: includes/qa/class-pro-tests.php
 
 		-
 			message: "#^Call to function is_wp_error\\(\\) with WP_REST_Response will always evaluate to false\\.$#"

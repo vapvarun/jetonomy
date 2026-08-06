@@ -9,6 +9,7 @@ namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Cache;
 use function Jetonomy\now;
 
 class Restriction extends Model {
@@ -53,7 +54,65 @@ class Restriction extends Model {
 			$data['expires_at'] = $expires_at;
 		}
 
-		return static::insert( $data );
+		$id = static::insert( $data );
+
+		// A restriction issued mid-request must be honored by the next
+		// permission check in the same process (moderation flows re-check
+		// after banning; the QA suite bans then asserts denial).
+		self::reset_memo();
+		\Jetonomy\Permissions\Permission_Engine::reset_memo();
+
+		return $id;
+	}
+
+	/**
+	 * Per-request memo for the four hot restriction primitives.
+	 *
+	 * Permission_Engine::can() consults these on EVERY verdict, and a page
+	 * asks ~5 distinct actions — without the memo that is 15-20 identical
+	 * single-row lookups per request. Request-scoped only (never the object
+	 * cache): a ban must take effect on the very next request, and within
+	 * this request ban()/remove_ban() reset it (caching plan WP0.1).
+	 *
+	 * @var array<string, bool>
+	 */
+	private static array $memo = array();
+
+	/**
+	 * Whether the reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Memoize one primitive check for the rest of the request.
+	 *
+	 * @param string   $key     Memo key.
+	 * @param callable $resolve Uncached resolver.
+	 */
+	private static function memo( string $key, callable $resolve ): bool {
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			Cache::register_memo_reset(
+				static function (): void {
+					self::$memo = array();
+				}
+			);
+		}
+		if ( ! array_key_exists( $key, self::$memo ) ) {
+			self::$memo[ $key ] = (bool) $resolve();
+		}
+		return self::$memo[ $key ];
+	}
+
+	/**
+	 * Empty the primitive memo. Called by ban()/remove_ban() so a restriction
+	 * written mid-request (moderation action, QA fixture) is honored by the
+	 * next can() in the same process.
+	 */
+	public static function reset_memo(): void {
+		self::$memo = array();
 	}
 
 	/**
@@ -63,21 +122,26 @@ class Restriction extends Model {
 	 * @return bool
 	 */
 	public static function is_banned( int $user_id ): bool {
-		$now = now();
-		$row = static::db()->get_row(
-			static::db()->prepare(
-				'SELECT id FROM ' . static::table() . '
-				WHERE user_id = %d
-				  AND type = %s
-				  AND (expires_at IS NULL OR expires_at > %s)
-				LIMIT 1',
-				$user_id,
-				'global_ban',
-				$now
-			)
-		);
+		return self::memo(
+			"banned:{$user_id}",
+			static function () use ( $user_id ): bool {
+				$now = now();
+				$row = static::db()->get_row(
+					static::db()->prepare(
+						'SELECT id FROM ' . static::table() . '
+						WHERE user_id = %d
+						  AND type = %s
+						  AND (expires_at IS NULL OR expires_at > %s)
+						LIMIT 1',
+						$user_id,
+						'global_ban',
+						$now
+					)
+				);
 
-		return null !== $row;
+				return null !== $row;
+			}
+		);
 	}
 
 	/**
@@ -88,23 +152,28 @@ class Restriction extends Model {
 	 * @return bool
 	 */
 	public static function is_space_banned( int $user_id, int $space_id ): bool {
-		$now = now();
-		$row = static::db()->get_row(
-			static::db()->prepare(
-				'SELECT id FROM ' . static::table() . '
-				WHERE user_id = %d
-				  AND type = %s
-				  AND space_id = %d
-				  AND (expires_at IS NULL OR expires_at > %s)
-				LIMIT 1',
-				$user_id,
-				'space_ban',
-				$space_id,
-				$now
-			)
-		);
+		return self::memo(
+			"space_banned:{$user_id}:{$space_id}",
+			static function () use ( $user_id, $space_id ): bool {
+				$now = now();
+				$row = static::db()->get_row(
+					static::db()->prepare(
+						'SELECT id FROM ' . static::table() . '
+						WHERE user_id = %d
+						  AND type = %s
+						  AND space_id = %d
+						  AND (expires_at IS NULL OR expires_at > %s)
+						LIMIT 1',
+						$user_id,
+						'space_ban',
+						$space_id,
+						$now
+					)
+				);
 
-		return null !== $row;
+				return null !== $row;
+			}
+		);
 	}
 
 	/**
@@ -114,21 +183,26 @@ class Restriction extends Model {
 	 * @return bool
 	 */
 	public static function is_silenced( int $user_id ): bool {
-		$now = now();
-		$row = static::db()->get_row(
-			static::db()->prepare(
-				'SELECT id FROM ' . static::table() . '
-				WHERE user_id = %d
-				  AND type = %s
-				  AND (expires_at IS NULL OR expires_at > %s)
-				LIMIT 1',
-				$user_id,
-				'silence',
-				$now
-			)
-		);
+		return self::memo(
+			"silenced:{$user_id}",
+			static function () use ( $user_id ): bool {
+				$now = now();
+				$row = static::db()->get_row(
+					static::db()->prepare(
+						'SELECT id FROM ' . static::table() . '
+						WHERE user_id = %d
+						  AND type = %s
+						  AND (expires_at IS NULL OR expires_at > %s)
+						LIMIT 1',
+						$user_id,
+						'silence',
+						$now
+					)
+				);
 
-		return null !== $row;
+				return null !== $row;
+			}
+		);
 	}
 
 	/**
@@ -140,16 +214,21 @@ class Restriction extends Model {
 	 * @return bool
 	 */
 	public static function is_ip_banned( string $ip ): bool {
-		$now = now();
-		return (bool) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . "
-				WHERE type = 'ip_ban'
-				  AND reason = %s
-				  AND (expires_at IS NULL OR expires_at > %s)",
-				$ip,
-				$now
-			)
+		return self::memo(
+			"ip_banned:{$ip}",
+			static function () use ( $ip ): bool {
+				$now = now();
+				return (bool) static::db()->get_var(
+					static::db()->prepare(
+						'SELECT COUNT(*) FROM ' . static::table() . "
+						WHERE type = 'ip_ban'
+						  AND reason = %s
+						  AND (expires_at IS NULL OR expires_at > %s)",
+						$ip,
+						$now
+					)
+				);
+			}
 		);
 	}
 
@@ -283,6 +362,9 @@ class Restriction extends Model {
 	 * @return bool True if a row was deleted.
 	 */
 	public static function remove_ban( int $id ): bool {
-		return static::delete( $id );
+		$result = static::delete( $id );
+		self::reset_memo();
+		\Jetonomy\Permissions\Permission_Engine::reset_memo();
+		return $result;
 	}
 }

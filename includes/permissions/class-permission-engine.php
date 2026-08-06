@@ -29,12 +29,36 @@ use Jetonomy\Models\UserProfile;
 class Permission_Engine {
 
 	/**
-	 * Seconds a can() verdict is cached per (user, action, space). A permission
-	 * or role change is reflected within this window — the accepted hot-read
-	 * trade-off (Caching Standard §4b lists can() as a sanctioned short-TTL cache),
-	 * so the key is not busted on role change; it ages out.
+	 * Per-request verdict memo, keyed "{user}:{action}:{space}".
+	 *
+	 * Replaces the old 60s persistent perm:{} object cache, which was never
+	 * busted anywhere — a ban, silence, or role demotion kept granting for up
+	 * to a minute across every web node (caching plan WP0.1). What a verdict
+	 * costs to recompute is a handful of single-row indexed lookups, and the
+	 * shared Restriction primitives are themselves memoized per request — so
+	 * a request-scope memo is as fast on the pages that matter and is
+	 * instantly correct on the next request. Writers that change a verdict
+	 * mid-request (Restriction::ban/remove_ban, SpaceMember role changes,
+	 * Space::bust_cache, UserProfile::update_profile) call reset_memo().
+	 *
+	 * @var array<string, bool>
 	 */
-	private const PERM_TTL = 60;
+	private static array $memo = array();
+
+	/**
+	 * Whether the reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Empty the verdict memo. Called from every write path that can change a
+	 * verdict, and from Cache::flush() via the memo registry.
+	 */
+	public static function reset_memo(): void {
+		self::$memo = array();
+	}
 
 	/**
 	 * Moderation actions a space-level admin / moderator can perform on
@@ -53,6 +77,33 @@ class Permission_Engine {
 		'move_posts',
 		'merge_posts',
 		'split_replies',
+	);
+
+	/**
+	 * Actions a space-scoped claim may stand in for when the viewer's
+	 * WordPress role carries no matching `jetonomy_*` capability.
+	 *
+	 * Capabilities::ROLE_MAP maps five core roles. A role registered by any
+	 * other plugin — an LMS student, a membership tier, a marketplace vendor —
+	 * holds ZERO Jetonomy caps, so Layer 1 rejected those users before Layer 2
+	 * could consider their roster row or a matching access rule. An owner could
+	 * put someone on a space roster, or gate a space on a paid tier, and the
+	 * people who matched still could not take part (Basecamp 10168260921).
+	 *
+	 * Deliberately member-grade ONLY. Every moderation action is absent and
+	 * must stay absent: a rule stored with space_role=admin, or a roster row
+	 * carrying an elevated role, must never reach `moderate` or
+	 * `edit_others_*` through this path. SPACE_MOD_ACTIONS above is the
+	 * separate, deliberate route for that, and it requires a real mod role.
+	 */
+	private const MEMBER_GRADE_ACTIONS = array(
+		'read',
+		'create_posts',
+		'create_replies',
+		'vote',
+		'flag',
+		'edit_own_posts',
+		'delete_own_posts',
 	);
 
 	/**
@@ -93,7 +144,7 @@ class Permission_Engine {
 	/**
 	 * Determine whether a user is allowed to perform an action.
 	 *
-	 * Results are cached for 60 seconds per user/action/space combination.
+	 * Memoized per (user, action, space) for the duration of the request.
 	 *
 	 * @param int      $user_id  WP user ID to check.
 	 * @param string   $action   Action name (without 'jetonomy_' prefix for WP cap check).
@@ -101,16 +152,20 @@ class Permission_Engine {
 	 * @return bool
 	 */
 	public static function can( int $user_id, string $action, ?int $space_id = null ): bool {
-		$cache_key = "perm:{$user_id}:{$action}:" . ( $space_id ?? 0 );
-		$cached    = Cache::get( $cache_key );
-		if ( false !== $cached ) {
-			return (bool) $cached;
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			Cache::register_memo_reset(
+				static function (): void {
+					self::$memo = array();
+				}
+			);
 		}
 
-		$result = self::resolve( $user_id, $action, $space_id );
-		// Store as 1/0 so we can distinguish a cached false from a cache miss.
-		Cache::set( $cache_key, $result ? 1 : 0, self::PERM_TTL );
-		return $result;
+		$key = "{$user_id}:{$action}:" . ( $space_id ?? 0 );
+		if ( ! array_key_exists( $key, self::$memo ) ) {
+			self::$memo[ $key ] = self::resolve( $user_id, $action, $space_id );
+		}
+		return self::$memo[ $key ];
 	}
 
 	/**
@@ -164,8 +219,45 @@ class Permission_Engine {
 		// Layer 1: WordPress capability.
 		// Guest users (user_id=0) skip the WP cap check for 'read' actions;
 		// public space visibility is evaluated in Layer 2 instead.
+		//
+		// A logged-in viewer whose role carries no `jetonomy_*` cap is not
+		// rejected outright when the question is scoped to a space and the
+		// action is member-grade. See MEMBER_GRADE_ACTIONS for why: only the
+		// five core roles are mapped, so every other plugin's role failed here
+		// and Layer 2 never got to read the roster row or the access rule that
+		// was supposed to let them in. It also left a logged-in member worse
+		// off than a logged-out guest, who skips this check entirely.
+		//
+		// Falling through GRANTS NOTHING. Layer 2 still applies space
+		// visibility, per-space who_can_* settings, bans and trust gates; this
+		// only stops the answer being decided before they run.
+		$jt_access          = null;
+		$jt_access_resolved = false;
+
 		if ( $user_id && ! user_can( $user_id, 'jetonomy_' . $action ) ) {
-			return false;
+			$jt_has_claim = false;
+
+			if ( null !== $space_id
+				&& in_array( $action, self::MEMBER_GRADE_ACTIONS, true )
+				&& ! Capabilities::has_explicit_role_mapping( $user_id )
+			) {
+				if ( 'read' === $action || SpaceMember::is_member( $space_id, $user_id ) ) {
+					// Read is decided by visibility in Layer 2, exactly as it
+					// is for a guest. Membership is the cheap memoised claim.
+					$jt_has_claim = true;
+				} else {
+					// Resolved here and reused by Layer 2 below. The membership
+					// adapter fan-out must not run twice for one check
+					// (caching plan WP2.3).
+					$jt_access          = AccessRule::resolve_access( $user_id, $space_id );
+					$jt_access_resolved = true;
+					$jt_has_claim       = null !== $jt_access;
+				}
+			}
+
+			if ( ! $jt_has_claim ) {
+				return false;
+			}
 		}
 
 		// Guests may only read — reject any non-read action immediately.
@@ -194,15 +286,18 @@ class Permission_Engine {
 		// a paid tier got a space their subscribers could not enter, and the
 		// only workaround (the per-rule "Sync Members" button) wrote roster
 		// rows that nothing ever removed when the subscription lapsed.
+		// Resolve access rules ONCE. grants_access() is just
+		// resolve_access() !== null, and calling both re-ran the membership
+		// adapter fan-out (LearnDash/Woo/MemberPress lookups) twice for every
+		// non-member view of a private space (caching plan WP2.3).
+		$access = $jt_access_resolved ? $jt_access : AccessRule::resolve_access( $user_id, $space_id );
+
 		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
 			if ( ! SpaceMember::is_member( $space_id, $user_id )
-				&& ! AccessRule::grants_access( $user_id, $space_id ) ) {
+				&& null === $access ) {
 				return false;
 			}
 		}
-
-		// Check access rules (membership, capability, trust level rules).
-		$access = AccessRule::resolve_access( $user_id, $space_id );
 		if ( $access ) {
 			// Access rule grants access — check if sufficient for the action.
 			$grants_map      = array(

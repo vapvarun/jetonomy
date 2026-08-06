@@ -56,6 +56,11 @@ class Vote extends Model {
 			)
 		);
 
+		// The write below (insert / flip / retract) must be visible to the
+		// next get_user_vote() in this request — clear the memo before the
+		// transaction so post-cast reads repopulate fresh (plan WP3.7).
+		self::reset_memo();
+
 		$started = static::db()->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		if ( false === $started ) {
 			// Proceed without transaction — graceful degradation.
@@ -195,6 +200,13 @@ class Vote extends Model {
 	 * @return int|null The vote value, or null if no vote exists.
 	 */
 	public static function get_user_vote( int $user_id, string $object_type, int $object_id ): ?int {
+		self::register_memo_reset();
+
+		$key = "{$user_id}|{$object_type}|{$object_id}";
+		if ( array_key_exists( $key, self::$memo ) ) {
+			return self::$memo[ $key ];
+		}
+
 		$value = static::db()->get_var(
 			static::db()->prepare(
 				'SELECT value FROM ' . static::table() . ' WHERE user_id = %d AND object_type = %s AND object_id = %d',
@@ -204,7 +216,49 @@ class Vote extends Model {
 			)
 		);
 
-		return null !== $value ? (int) $value : null;
+		self::$memo[ $key ] = null !== $value ? (int) $value : null;
+		return self::$memo[ $key ];
+	}
+
+	/**
+	 * Per-request memo for get_user_vote(), filled per-row on miss and in
+	 * bulk (negatives included) by user_votes_map() — the memo-in-model
+	 * design from plan WP3.7: templates call user_votes_map() once for the
+	 * page's ids, and every per-row get_user_vote() in the card partials
+	 * (including theme-overridden copies and unprimed surfaces like drafts /
+	 * tag / bookmarks views) reads the memo or falls back per-row. Cleared
+	 * by cast() and via Cache::flush() (plan U1).
+	 *
+	 * @var array<string, ?int>
+	 */
+	private static array $memo = array();
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Empty the vote memo. Called from cast().
+	 */
+	public static function reset_memo(): void {
+		self::$memo = array();
+	}
+
+	/**
+	 * Register the memo reset with the shared registry once (plan U1).
+	 */
+	private static function register_memo_reset(): void {
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$memo = array();
+				}
+			);
+		}
 	}
 
 	/**
@@ -241,6 +295,14 @@ class Vote extends Model {
 		foreach ( $rows ?: array() as $row ) {
 			$map[ (int) $row->object_id ] = (int) $row->value;
 		}
+
+		// Fill the get_user_vote() memo, negatives included, so per-row
+		// lookups over these ids cost zero further queries (plan WP3.7).
+		self::register_memo_reset();
+		foreach ( $object_ids as $oid ) {
+			self::$memo[ "{$user_id}|{$object_type}|{$oid}" ] = $map[ $oid ] ?? null;
+		}
+
 		return $map;
 	}
 

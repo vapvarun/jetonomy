@@ -336,6 +336,14 @@ class Demo_Seeder {
 			$demo = array_merge( $demo, $pro );
 		}
 
+		// ── Recount ────────────────────────────────────────────────────────────
+		// Rebuild every denormalized counter from the canonical tables so the
+		// seeded site never ships drifted stats (Basecamp 10161324705). The
+		// content above goes through the models, but votes/backdating touch rows
+		// directly, and a bulk seed is exactly the "explicit recount after bulk"
+		// path the Recount service exists for.
+		\Jetonomy\Recount::run( 'all' );
+
 		return $demo;
 	}
 

@@ -9,6 +9,7 @@ namespace Jetonomy\Adapters;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Models\AccessRule;
 use Jetonomy\Models\SpaceMember;
 
 class MemberPress_Adapter implements Membership_Adapter {
@@ -169,7 +170,7 @@ class MemberPress_Adapter implements Membership_Adapter {
 
 		foreach ( $rules as $rule ) {
 			if ( $activate ) {
-				$result = SpaceMember::add( (int) $rule->space_id, $user_id, $rule->space_role ?? 'member' );
+				$result = SpaceMember::add( (int) $rule->space_id, $user_id, AccessRule::cap_space_role( $rule->grants ?? 'read', $rule->space_role ?? 'member', 'membership' ) );
 				if ( is_wp_error( $result ) ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( '[Jetonomy] MemberPress adapter: failed to add user ' . $user_id . ' to space ' . $rule->space_id . ' — ' . $result->get_error_message() );

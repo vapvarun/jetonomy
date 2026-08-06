@@ -348,6 +348,26 @@ class REST_Tests {
 		$this->check( 'B9: PATCH /replies/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'B9: response has id', isset( $data['id'] ), 'response missing id' );
 
+		// 14–16. Single-item detail reads on the fixtures Group A/B created.
+		// These endpoints previously had no direct test — they were marked
+		// covered only by a stem-match against Pro extension tests, which
+		// moved to the Pro repo (Basecamp 10161768864).
+		$r    = $this->rest( 'GET', "/posts/{$this->post_id}" );
+		$data = $r->get_data();
+		$this->check( 'B14: GET /posts/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'B14: response id matches fixture', (int) ( $data['id'] ?? 0 ) === $this->post_id, 'id mismatch' );
+		$this->check( 'B14: response has title + space_id', isset( $data['title'], $data['space_id'] ), 'missing title/space_id' );
+
+		$r    = $this->rest( 'GET', "/replies/{$this->reply_id}" );
+		$data = $r->get_data();
+		$this->check( 'B15: GET /replies/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'B15: response id matches fixture', (int) ( $data['id'] ?? 0 ) === $this->reply_id, 'id mismatch' );
+
+		$r    = $this->rest( 'GET', "/users/{$this->admin_id}" );
+		$data = $r->get_data();
+		$this->check( 'B16: GET /users/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'B16: response has display_name + post_count', isset( $data['display_name'], $data['post_count'] ), 'missing display_name/post_count' );
+
 		// 10. Accept reply as answer. Accepted answers are a Q&A-only workflow —
 		// accept_reply() returns 400 on forum/discussion spaces by design, and the
 		// shared fixture space is a discussion space. Stand up a dedicated Q&A
@@ -432,6 +452,8 @@ class REST_Tests {
 		} else {
 			$this->check( 'B12: split (skipped — second reply not created)', true );
 		}
+
+		$this->test_media_B13();
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
@@ -1620,13 +1642,17 @@ class REST_Tests {
 		$this->check( 'K9: votes purged', 0 === $votes_after, "votes_after={$votes_after}" );
 
 		// Cleanup — the fixture rows are now anonymized (author_id = 0), not
-		// owned by any session, so remove them directly rather than via REST.
+		// owned by any session, so remove them via the models rather than REST.
+		// Model deletes (not raw $wpdb->delete) so the space's post_count and the
+		// post's reply_count decrement — raw row deletes leaked +1 space
+		// post_count per run (Basecamp 10161324705). Reply first, then post, so
+		// the reply's parent-post decrement lands on a row that still exists.
 		wp_set_current_user( $this->admin_id );
 		if ( $reply_id ) {
-			$wpdb->delete( table( 'replies' ), [ 'id' => $reply_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			\Jetonomy\Models\Reply::delete( $reply_id );
 		}
 		if ( $post_id ) {
-			$wpdb->delete( table( 'posts' ), [ 'id' => $post_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			\Jetonomy\Models\Post::delete( $post_id );
 		}
 
 		// Safety net: never leave the fixture ACCOUNT behind in the live
@@ -1641,5 +1667,37 @@ class REST_Tests {
 			}
 			wp_delete_user( $uid );
 		}
+	}
+
+
+	/**
+	 * @covers GET /media
+	 *
+	 * Endpoint purpose: list uploaded media (the READ half; POST /media uploads).
+	 * Permission:       current_user_can( 'jetonomy_manage_settings' )
+	 *
+	 * Added in 1.9.1. The route has registered GET + POST for some time, but the
+	 * manifest listed only POST, so the app's `GET /media` call (api/media.ts)
+	 * showed up as a call to a nonexistent route once the parity check started
+	 * verifying methods (Basecamp 10161335087). Covering the GET keeps the
+	 * manifest entry honest instead of relying on it being remembered.
+	 */
+	private function test_media_B13(): void {
+		$r    = $this->rest( 'GET', '/media', [ 'per_page' => 5 ], $this->admin_id );
+		$data = $r->get_data();
+		$this->check( 'B13: GET /media as admin → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		$items = is_array( $data ) ? ( $data['data'] ?? $data['items'] ?? null ) : null;
+		$this->check( 'B13: GET /media returns a list payload', is_array( $items ), 'no array payload' );
+
+		// Gated on jetonomy_manage_settings, not merely on being logged in.
+		$r = $this->rest( 'GET', '/media', [], 0 );
+		$this->check(
+			'B13: GET /media as guest → 401/403',
+			in_array( $r->get_status(), array( 401, 403 ), true ),
+			"HTTP {$r->get_status()}"
+		);
+
+		wp_set_current_user( $this->admin_id );
 	}
 }

@@ -13,6 +13,35 @@ class Cache {
 	private const GROUP       = 'jetonomy';
 	private const DEFAULT_TTL = 300; // 5 minutes
 
+	/**
+	 * Per-request static-memo reset callbacks.
+	 *
+	 * A `static` memo inside a model is invisible to wp_cache_* — flush() and
+	 * the per-key busts cannot reach it. Any class that keeps a request-scope
+	 * memo registers a reset here, so the one-shot recompute paths that call
+	 * flush() mid-process (importers, recount, migrations) clear BOTH layers
+	 * and never read a memo primed before their bulk writes (caching plan U1).
+	 *
+	 * @var callable[]
+	 */
+	private static array $memo_resets = array();
+
+	/**
+	 * Register a callback that empties one class's per-request memo.
+	 */
+	public static function register_memo_reset( callable $reset ): void {
+		self::$memo_resets[] = $reset;
+	}
+
+	/**
+	 * Empty every registered per-request memo.
+	 */
+	public static function reset_memos(): void {
+		foreach ( self::$memo_resets as $reset ) {
+			$reset();
+		}
+	}
+
 	public static function get( string $key ) {
 		return wp_cache_get( $key, self::GROUP );
 	}
@@ -85,6 +114,11 @@ class Cache {
 	 * flush (wp_cache_* is request-local).
 	 */
 	public static function flush(): void {
+		// Memos first — they exist regardless of whether a persistent object
+		// cache does, and the flush() callers (importers, recount) rely on the
+		// NEXT read being fresh in the same process.
+		self::reset_memos();
+
 		if ( function_exists( 'wp_cache_supports' ) && wp_cache_supports( 'flush_group' ) ) {
 			wp_cache_flush_group( self::GROUP );
 		} elseif ( wp_using_ext_object_cache() ) {

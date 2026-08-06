@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     1.9.0
+ * Version:     1.9.1
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '1.9.0' );
+define( 'JETONOMY_VERSION', '1.9.1' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -29,7 +29,7 @@ define( 'JETONOMY_VERSION', '1.9.0' );
 // So both routes are covered: CREATE TABLE for new sites, migration 1_9_1 for
 // existing ones. The two constants are independent; the plugin version is a
 // release number and stays at 1.9.0 where the release rule puts it.
-define( 'JETONOMY_DB_VERSION', '1.9.1' );
+define( 'JETONOMY_DB_VERSION', '1.9.2' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -88,8 +88,29 @@ add_action(
 );
 
 // SDK lives at libs/ (committed, ships in zip). Pro reads it via the same path.
-if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' ) ) {
+//
+// Load the vendored EDD SL SDK only when the package is COMPLETE. A partial
+// build or extract that keeps the entry file but drops libs/edd-sl-sdk/src
+// would fatal inside the SDK the moment it instantiates a src class — the
+// entry file registers callbacks against \EasyDigitalDownloads\Updater\Versions
+// with no guard of its own, so requiring it half-present white-screened every
+// page (Basecamp 10163871548; the WB Listora 1.2.1 stripped-SDK shape). Guard
+// on the source being present and degrade to "updates disabled" with a soft
+// admin notice instead — licensing only gates updates, never features, so the
+// community keeps working. Mirrors BuddyNext (the portfolio reference for this
+// SDK's loading) and Learnomy 1.9.1.
+if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' )
+	&& file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/src/Versions.php' ) ) {
 	require_once JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php';
+} elseif ( is_admin() ) {
+	add_action(
+		'admin_notices',
+		static function () {
+			echo '<div class="notice notice-warning"><p>'
+				. esc_html__( 'Jetonomy: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally.', 'jetonomy' )
+				. '</p></div>';
+		}
+	);
 }
 
 // Update-screen icon. WordPress only auto-resolves icons for wp.org-hosted
@@ -372,6 +393,40 @@ function jetonomy_space_allows_voting( $space ): bool {
 		return true;
 	}
 	return '1' === (string) $settings['allow_voting'];
+}
+
+/**
+ * May THIS viewer cast a vote in this space?
+ *
+ * Note that jetonomy_space_allows_voting() answers a different question -
+ * whether the space has voting switched on at all - and it is still the right
+ * gate for whether the vote column exists. Templates were then using "is
+ * someone logged in" to decide whether to render the BUTTONS, which is not the
+ * same as being allowed to press them: a member admitted by a Read-grant rule
+ * got working vote buttons, and clicking one returned 403 with nothing on
+ * screen.
+ *
+ * Permission_Engine::can() already accounts for the rule's grant level, the
+ * space's allow_voting setting, bans and silences, so a template that asks this
+ * cannot drift out of step with what the server will accept.
+ *
+ * Returning false does not hide the score - the templates already have a
+ * read-only branch for logged-out visitors, and this simply routes read-only
+ * members into it. Counts stay visible; only the controls go.
+ *
+ * @param object|null $space Space row.
+ * @return bool
+ */
+function jetonomy_viewer_can_vote( $space ): bool {
+	if ( ! is_user_logged_in() || ! jetonomy_space_allows_voting( $space ) ) {
+		return false;
+	}
+
+	return \Jetonomy\Permissions\Permission_Engine::can(
+		get_current_user_id(),
+		'vote',
+		( $space && ! empty( $space->id ) ) ? (int) $space->id : null
+	);
 }
 
 /**

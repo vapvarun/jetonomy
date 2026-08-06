@@ -83,6 +83,7 @@ class Tag extends Model {
 				)
 			);
 		}
+		self::reset_memo();
 	}
 
 	/**
@@ -111,6 +112,7 @@ class Tag extends Model {
 				)
 			);
 		}
+		self::reset_memo();
 	}
 
 	/**
@@ -128,11 +130,17 @@ class Tag extends Model {
 	 * @return object[]
 	 */
 	public static function list_for_post( int $post_id, int $limit = 200 ): array {
+		// Memo hit only at the default cap — a caller asking for a custom
+		// limit gets a live query rather than a differently-capped memo.
+		if ( 200 === $limit && array_key_exists( $post_id, self::$post_memo ) ) {
+			return self::$post_memo[ $post_id ];
+		}
+
 		$post_tags = table( 'post_tags' );
 		$tags      = static::table();
 		$limit     = max( 1, $limit );
 
-		return static::db()->get_results(
+		$rows = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT t.* FROM {$tags} t INNER JOIN {$post_tags} pt ON pt.tag_id = t.id WHERE pt.post_id = %d ORDER BY t.name ASC LIMIT %d",
@@ -140,6 +148,94 @@ class Tag extends Model {
 				$limit
 			)
 		) ?: [];
+
+		if ( 200 === $limit ) {
+			self::register_memo_reset();
+			self::$post_memo[ $post_id ] = $rows;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Per-request memo of per-post tag lists (default cap only), filled
+	 * per-row on miss and in bulk by for_posts(). Cleared on attach/detach
+	 * and via Cache::flush() (plan U1).
+	 *
+	 * @var array<int, object[]>
+	 */
+	private static array $post_memo = [];
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Empty the per-post tag memo. Called from attach/detach.
+	 */
+	public static function reset_memo(): void {
+		self::$post_memo = [];
+	}
+
+	/**
+	 * Register the memo reset with the shared registry once (plan U1).
+	 */
+	private static function register_memo_reset(): void {
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$post_memo = [];
+				}
+			);
+		}
+	}
+
+	/**
+	 * Batch-fill the list_for_post() memo for a page of posts (plan WP3.7).
+	 *
+	 * One IN-query for the whole page — the space listing called
+	 * list_for_post() per card (20 JOINs per page). Empties are seeded so
+	 * tagless posts never re-query. Mirrors ReadStatus::last_read_for_posts.
+	 *
+	 * @param int[] $post_ids Post ids about to be rendered.
+	 */
+	public static function for_posts( array $post_ids ): void {
+		self::register_memo_reset();
+
+		$post_ids = array_values( array_unique( array_filter( array_map( 'intval', $post_ids ) ) ) );
+		if ( empty( $post_ids ) ) {
+			return;
+		}
+
+		$post_tags    = table( 'post_tags' );
+		$tags         = static::table();
+		$placeholders = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT pt.post_id AS jt_post_id, t.* FROM {$tags} t INNER JOIN {$post_tags} pt ON pt.tag_id = t.id WHERE pt.post_id IN ({$placeholders}) ORDER BY t.name ASC",
+				...$post_ids
+			)
+		) ?: [];
+
+		$grouped = array_fill_keys( $post_ids, [] );
+		foreach ( $rows as $row ) {
+			$pid = (int) $row->jt_post_id;
+			unset( $row->jt_post_id );
+			// Same defensive per-post cap as list_for_post()'s default.
+			if ( count( $grouped[ $pid ] ) < 200 ) {
+				$grouped[ $pid ][] = $row;
+			}
+		}
+
+		foreach ( $grouped as $pid => $list ) {
+			self::$post_memo[ $pid ] = $list;
+		}
 	}
 
 	/**

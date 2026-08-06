@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.9.0
+Stable tag: 1.9.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -264,6 +264,27 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 1.9.1 - August 2026 =
+
+A speed release for busy communities, and members whose role comes from another plugin can finally take part.
+
+* Improve  - Busy communities do far less database work per page. Topic lists, sidebars, notification counts, the category tree, feeds and leaderboards are cached, and the hottest screens fetch their data in batches instead of one query per row.
+* Improve  - A long topic loads only the replies on the page you are reading rather than the whole thread, so a 500-reply topic opens as quickly as a short one.
+* Improve  - A space roadmap loads each column on its own instead of every idea at once.
+* Improve  - New database indexes speed up topic lists, member search and access rules on large sites.
+* Improve  - A member whose WordPress role comes from another plugin, such as an LMS student or a membership tier, can now take part in a space they have been added to or admitted to by a rule. Before this they could open the space and do nothing in it.
+* Improve  - The Access Rules screen says who each rule type catches, gives each value box its own example instead of one generic hint, and groups membership levels under what they are.
+* Improve  - Rules no longer imply they restrict people. The screen states plainly that a rule lets people in, and only visibility and join policy hold anyone back.
+* Fix      - Someone admitted to a space by an access rule rather than by joining could be let in by the browser and refused by the API for the same space.
+* Fix      - Space and topic counts could drift after merging topics or moving content between spaces.
+* Fix      - A partly installed licence library no longer white-screens the site. The plugin loads and reports the problem instead.
+* Fix      - The sidebar no longer writes a PHP warning to the error log on every page outside a space, including the community home, search, leaderboard, notifications and member profiles.
+* Security - Member suggestions could be searched by email address, so a member could confirm whether an address had an account. Suggestions now match on username and display name only.
+* Dev      - One serializer produces post and space payloads for every endpoint, so a feed, a search result and a single read return the same shape.
+* Dev      - New GET /replies/{id}. List endpoints share one pagination contract, and post and reply payloads carry author_last_seen_at.
+* Dev      - Membership adapters may return optional kind and note keys from get_all_levels() to group and describe their levels in the Access Rules picker. Adapters that do not return them are unaffected.
+* Compat   - Aligned with Jetonomy Pro 1.9.1. Install both updates together.
+
 = 1.9.0 - August 2026 =
 
 Sell access to a space with a membership plan, and be told which plan opens it. Closes a permissions issue where an access rule could grant more than it said.
@@ -288,9 +309,15 @@ Sell access to a space with a membership plan, and be told which plan opens it. 
 * Fix      - Activity Log and Revisions rows identify themselves on a phone rather than showing only a date or a type.
 * Fix      - Roadmap columns no longer use the same colour for Planned and In Progress.
 * Fix      - The "Read the full guide" link on the Users screen resolves.
+* Fix      - Filled buttons rendered black text on ordinary brand colours, so New Topic, New Post and Join read wrong on a plain blue. The auto-contrast threshold moved to 0.7, and white now stays on every normal brand blue, green, purple and red.
+* Fix      - Actions in a space header could not share a row with the owner's Edit space button, so each one dropped onto a line of its own. The header is a wrapping row now, centred on mobile.
 * Security - An access rule could grant more than it advertised: a rule set to "Read" could record people as space admins, and running Sync Members then gave them moderation powers, including deleting other people's posts. The role a rule assigns is now capped by what the rule allows, and a membership rule can never make somebody a moderator. Rules already saved on your site are covered; no action is needed.
 * Dev      - New filters: jetonomy_compose_label (the create verb per space type) and jetonomy_membership_upgrade_url (where a plan is bought). Membership adapters may implement get_level_url() to link a plan directly.
 * Dev      - New filters for app connection: jetonomy_app_connect_schemes (which app URL schemes may receive a credential) and jetonomy_app_connect_bridge (which plugin owns the connect screen when several are installed). Add a scheme only for an app you ship, never a wildcard.
+* Dev      - New AccessRule::spaces_for_level() answers which spaces a membership level opens, replacing thirteen hand-written copies of the same query living inside individual adapters.
+* Dev      - New AccessRule::member_spaces_for_level_prefix() lists the gated spaces one member can reach, for products that want to surface them in their own account area.
+* Dev      - New space_permalink() builds a space URL, so an integration in another plugin stops composing the path by hand.
+* Dev      - New index rule_lookup (rule_type, rule_value) on jt_access_rules, because both lookups above were full table scans and now run on page views rather than only during provisioning. Schema milestone 1.9.1 covers sites already on 1.9.0; fresh installs get the index from CREATE TABLE.
 * Compat   - Removed a finfo_close() call that PHP 8.4 deprecates, so upload checks no longer emit a notice on 8.4.
 
 = 1.8.0 - July 2026 =
