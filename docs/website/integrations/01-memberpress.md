@@ -42,19 +42,23 @@ An Access Rule has **one** setting that decides what a matching member can do:
 |---|---|
 | Read | View topics and replies, but not post or reply |
 | Participate | Read, post topics, and reply (the usual choice for a course or paid space) |
-| Full | Participate, plus close and pin topics and edit other people's posts |
+| Full | Participate, plus the moderator actions the member's own WordPress capabilities already permit |
 
-The space role a matching member is recorded as is **derived from the access level**, not chosen separately:
+> **Full does not hand out moderation by itself.** Closing and pinning topics and editing other people's posts still require the matching WordPress capability, which an ordinary member does not have - so for most paid members Full and Participate come to the same thing in practice. A rule can open a space to someone; it cannot give them a power their role does not carry. Appoint moderators on the space's **Members** tab.
 
-| Access level | Recorded as |
-|---|---|
-| Read | Viewer |
-| Participate | Member |
-| Full | Moderator |
+The space role a matching member is recorded as is **derived from the access level**, not chosen separately. What a membership tier can record someone as is capped one step lower than what a role, capability or trust-level rule can, because a membership is something a visitor can buy:
 
-> **Changed in 1.8.1.** This used to be two dropdowns - an access level *and* a space role - which could contradict each other. A rule labelled "Read" could be set to record people as space Admins, and that combination handed out post deletion and moderation. The role is now derived from the access level and capped by it, so a rule can never grant more than it advertises. **Rules already saved on your site are capped automatically; you do not need to change anything.**
+| Access level | Membership rule records | Role / capability / trust rule records |
+|---|---|---|
+| Read | Viewer | Viewer |
+| Participate | Member | Member |
+| Full | **Member** | Moderator |
 
-> **Membership rules never create moderators.** Whatever access level you pick, a rule based on a *membership* tier tops out at Member. Moderation is an appointment you make per person on the space's Members tab - nobody should be able to buy it. Role, capability and trust-level rules keep the full range, because those are deliberate decisions about a known group rather than anything a visitor can purchase.
+> **Membership rules never create moderators.** Whatever access level you pick, a rule based on a *membership* tier tops out at Member - which is why the Full row differs between the two columns above. Moderation is an appointment you make per person on the space's **Members** tab; nobody should be able to buy it. Role, capability and trust-level rules keep the full range, because those are deliberate decisions about a known group rather than anything a visitor can purchase.
+
+> **Changed in 1.8.1.** This used to be two dropdowns - an access level *and* a space role - which could contradict each other. A rule labelled "Read" could be set to record people as space Admins, and that combination handed out post deletion and moderation. The role is now derived from the access level and capped by it, so a rule can never grant more than it advertises.
+
+> **Changed in 1.9.1.** 1.8.1 capped what the Access Rules *screen* could save, but enrolment itself still wrote the rule's stored role straight onto the space. On a rule saved before 1.8.1, or written by the API, every member who enrolled took that role - including the ability to edit and delete other people's posts. Every membership integration now applies the cap at enrolment, so the table above is what actually happens rather than what the screen intended. **Rules already saved on your site are covered and you do not need to change anything.** If someone was given a raised role this way, correct it on the space's **Members** tab.
 
 > **Note:** There is no separate "Grant vs Revoke" switch. A rule always *grants* the access you choose to members who match it; members who match no rule simply do not get in. To take a level's access away, delete its rule.
 
