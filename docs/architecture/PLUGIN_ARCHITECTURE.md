@@ -363,7 +363,14 @@ can($user_id, $action, $space_id?)
 ├── Layer 0: Global ban check
 │   └── Restriction::is_banned($user_id) → FALSE immediately if banned
 ├── Layer 1: WordPress capability
-│   └── user_can($user_id, 'jetonomy_' . $action) → FALSE if cap missing
+│   └── user_can($user_id, 'jetonomy_' . $action) → FALSE if cap missing,
+│       EXCEPT (1.9.1) space-scoped + action in MEMBER_GRADE_ACTIONS
+│       + viewer holds a claim (roster row or matching access rule)
+│       + Capabilities::has_explicit_role_mapping() is false
+│       → falls through to Layer 2 instead of denying. Grants nothing on
+│         its own; visibility, who_can_*, bans and trust gates still apply.
+│         Moderation actions are not member-grade, so this can never
+│         confer them.
 │   └── manage_options → SKIP layers 1+2 (admin bypass)
 └── Layer 2: Space role check (if $space_id provided)
     └── SpaceMember::get_role($space_id, $user_id) → checked against SPACE_ROLE_PERMS
