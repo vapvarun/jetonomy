@@ -67,9 +67,63 @@ $test_globs = array(
 );
 
 $test_files = collect_files( $plugin_dir, $test_globs );
+
+/*
+ * The corpus is deliberately NOT the raw file text.
+ *
+ * Coverage used to mean "this identifier appears as a quoted string somewhere
+ * in the test sources". That counted a docblock - `@covers do_action( 'x' )`
+ * marked x covered - and it counted the TODO stubs bin/qa-stub-gen.php emits,
+ * which contain the identifier and assert nothing. The number could therefore
+ * be driven to 100% without testing anything, which makes it useless as a
+ * release gate.
+ *
+ * So: strip comments, split each file into functions, and keep only the
+ * functions that actually assert something. An identifier counts as covered
+ * when it appears inside one of those. Three assertion idioms are in use and
+ * all three are honoured - PHPUnit's assert*, the QA harness's $this->check()
+ * / ->record(), and the CLI journeys' Journey_Result.
+ */
 $test_corpus = '';
 foreach ( $test_files as $f ) {
-	$test_corpus .= "\n" . file_get_contents( $f );
+	$test_corpus .= "\n" . assertive_source( (string) file_get_contents( $f ) );
+}
+
+/**
+ * Reduce one test file to just the bodies of functions that assert.
+ *
+ * @param string $src Raw PHP source.
+ * @return string Concatenated assertive function bodies, comments removed.
+ */
+function assertive_source( string $src ): string {
+	// 1. Drop comments so prose can never satisfy a coverage check.
+	$stripped = '';
+	foreach ( token_get_all( $src ) as $token ) {
+		if ( is_array( $token ) ) {
+			if ( T_COMMENT === $token[0] || T_DOC_COMMENT === $token[0] ) {
+				continue;
+			}
+			$stripped .= $token[1];
+			continue;
+		}
+		$stripped .= $token;
+	}
+
+	// 2. Split on function boundaries. Crude, but it only needs to be tight
+	//    enough that a mention in test A cannot vouch for test B.
+	$parts = preg_split( '/\bfunction\s/', $stripped );
+	if ( ! is_array( $parts ) ) {
+		return '';
+	}
+
+	$keep = '';
+	foreach ( $parts as $part ) {
+		if ( preg_match( '/assert[A-Za-z]*\s*\(|\$this->check\s*\(|->record\s*\(|Journey_Result::/', $part ) ) {
+			$keep .= "\n" . $part;
+		}
+	}
+
+	return $keep;
 }
 
 // ─────────────────────────────────────────────────────────
