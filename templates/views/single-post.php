@@ -45,7 +45,13 @@ $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
 if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	$user_id = get_current_user_id();
-	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
+	// Admission is membership OR an access rule, never membership alone -
+	// Space::admitted() is the one answer (its own docblock says so). This
+	// gate asked SpaceMember::is_member() directly, so a viewer admitted by
+	// a rule (a Learnomy course or learning-space level, a membership plan)
+	// could browse the space and post through the Permission Engine, then
+	// hit "private space" opening the very post they wrote (2026-08-06).
+	if ( ! $user_id || ! \Jetonomy\Models\Space::admitted( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
