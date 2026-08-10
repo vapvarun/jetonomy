@@ -33,9 +33,12 @@ class Search_Controller extends Base_Controller {
 				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				'args'                => [
 					'q'         => [
+						// Optional: a tag/space/author scope is a valid listing on its
+						// own (e.g. a tag page). The 2-char minimum is enforced in the
+						// handler only when there is no scope to narrow by.
 						'type'              => 'string',
-						'required'          => true,
-						'minLength'         => 2,
+						'required'          => false,
+						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
 					'type'      => [
@@ -130,8 +133,17 @@ class Search_Controller extends Base_Controller {
 		$tag_slug = $request->get_param( 'tag' ) ? sanitize_text_field( $request->get_param( 'tag' ) ) : null;
 		$sort     = $request->get_param( 'sort' ) ?? 'relevance';
 
+		// A tag / space / author scope is a valid listing on its own (tag pages,
+		// "posts in this space", "posts by this author"). Only require the 2-char
+		// free-text minimum when there is no scope to narrow by; a too-short query
+		// alongside a scope is treated as "no query" (scope-only listing) rather
+		// than an error.
+		$has_scope = $tag_slug || $space_id || $author_id;
 		if ( strlen( $q ) < 2 ) {
-			return $this->validation_error( __( 'Search query must be at least 2 characters.', 'jetonomy' ) );
+			if ( ! $has_scope ) {
+				return $this->validation_error( __( 'Search query must be at least 2 characters.', 'jetonomy' ) );
+			}
+			$q = '';
 		}
 
 		// Pagination — mirrors Feed_Controller::list_items() (get_pagination() +
@@ -328,11 +340,22 @@ class Search_Controller extends Base_Controller {
 		// innodb_ft_min_token_size AND dominated by stop words. If all tokens
 		// drop out the raw query is passed through, preserving the old
 		// behavior for short queries that would otherwise return nothing.
-		$boolean_q = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
-
-		[ $match_sql, $match_params, $used_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], $q );
-		$where                                    = [ $match_sql, "p.status = 'publish'" ];
-		$params                                   = $match_params;
+		// Scope-only listing (empty $q, e.g. a tag page): skip the full-text MATCH
+		// entirely and rank by recency — there is nothing to score against, and
+		// forcing a MATCH on an empty query would return zero rows.
+		$boolean_q = '';
+		$used_like = false;
+		$where     = [ "p.status = 'publish'" ];
+		$params    = [];
+		if ( '' !== $q ) {
+			$boolean_q                                = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
+			[ $match_sql, $match_params, $used_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], $q );
+			$where[]                                  = $match_sql;
+			$params                                   = $match_params;
+		} elseif ( 'relevance' === $sort ) {
+			// No query to rank against — recency is the only sensible order.
+			$sort = 'newest';
+		}
 
 		// Private post visibility: exclude private posts unless viewer is author or
 		// privileged. Shared guard (single source of truth) — see Fulltext_Search.
@@ -602,11 +625,16 @@ class Search_Controller extends Base_Controller {
 	private function count_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null ): int {
 		$posts_table  = table( 'posts' );
 		$spaces_table = table( 'spaces' );
-		$boolean_q    = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
 
-		[ $match_sql, $match_params, $used_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], $q );
-		$where                                    = [ $match_sql, "p.status = 'publish'" ];
-		$params                                   = $match_params;
+		// Mirror search_posts(): skip the MATCH for a scope-only listing (empty $q)
+		// so meta.total counts the tag/space/author rows, not zero.
+		$where  = [ "p.status = 'publish'" ];
+		$params = [];
+		if ( '' !== $q ) {
+			[ $match_sql, $match_params ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], $q );
+			$where[]                      = $match_sql;
+			$params                       = $match_params;
+		}
 
 		// Shared visibility guard (single source of truth) — see Fulltext_Search.
 		[ $vis_sql, $vis_params ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( $space_id, 'p' );
