@@ -1985,6 +1985,50 @@ const { state, actions } = store( 'jetonomy', {
             } );
         },
 
+        // ── Leave space ──
+        // The join flow had no matching exit, so a member could join a space
+        // from the front end but had no way to leave it, even though
+        // DELETE /spaces/{id}/members/{user_id} (self-removal) already exists.
+        // Confirm, self-remove, then reload so the whole page — join button,
+        // member count, and any membership gate — reflects the non-member state.
+        *leaveSpace() {
+            const el      = getElement();
+            const btnEl   = el.ref;
+            const spaceId = btnEl.dataset.spaceId;
+            const userId  = btnEl.dataset.userId;
+            if ( ! spaceId || ! userId ) return;
+
+            const confirmed = 'function' === typeof window.jetonomyConfirm
+                ? yield window.jetonomyConfirm(
+                    state.i18n?.confirmLeaveSpace || 'Leave this space? You can rejoin at any time.',
+                    {
+                        title: state.i18n?.leaveSpace || 'Leave space',
+                        confirmLabel: state.i18n?.leave || 'Leave',
+                        cancelLabel: state.i18n?.cancelLabel || 'Cancel',
+                    }
+                )
+                : true;
+            if ( ! confirmed ) return;
+
+            btnEl.disabled = true;
+            const res = yield window.jetonomyRest.restFetch(
+                '/spaces/' + spaceId + '/members/' + userId,
+                { method: 'DELETE' }
+            );
+            btnEl.disabled = false;
+
+            // 200 = left; 404/410 = already not a member (multi-actor safe). All
+            // mean "you are out", so reload to show the non-member view.
+            if ( res.ok || 404 === res.status || 410 === res.status ) {
+                window.location.reload();
+                return;
+            }
+
+            if ( window.bnToast ) {
+                window.bnToast( ( res.data && res.data.message ) || state.i18n?.leaveFailed || 'Could not leave. Please try again.' );
+            }
+        },
+
         // ── Share post ──
         //
         // [Basecamp 9808920407] — Previously the dropdown was inserted as a

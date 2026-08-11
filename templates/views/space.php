@@ -374,6 +374,23 @@ $crumbs[] = [
 							data-following="<?php echo esc_attr( $is_following_space ? '1' : '0' ); ?>">
 							<?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
 						</button>
+						<?php
+						// Leave space: only for an actual ROSTER member (has a row to
+						// remove) who is not the space author (the owner can't leave
+						// their own space). Follow (a subscription) is separate and
+						// stays. Rule-admitted-only viewers have no roster row, so
+						// $_jt_is_member is false for them and no Leave is offered.
+						if ( $_jt_is_member && (int) $space->author_id !== (int) $_jt_user_id ) :
+							?>
+							<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost jt-leave-space-btn"
+								data-wp-interactive="jetonomy"
+								data-wp-on--click="actions.leaveSpace"
+								data-space-id="<?php echo absint( $space->id ); ?>"
+								data-user-id="<?php echo absint( $_jt_user_id ); ?>">
+								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+								<?php echo esc_html( sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
+							</button>
+						<?php endif; ?>
 					<?php endif; ?>
 				<?php endif; ?>
 			</div>
@@ -553,7 +570,12 @@ $crumbs[] = [
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
 				];
 				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? __( 'New Post', 'jetonomy' );
-				$_jt_can_post    = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || $_jt_rule_admits || 'open' === $_jt_join_policy );
+				// Mirror the space-header New Topic gate (Permission_Engine::can,
+				// which folds in membership, admin, trust AND the access rule's
+				// grant LEVEL) instead of the binary $_jt_rule_admits - a Read-only
+				// rule-admit is admitted but cannot post, and the server refuses
+				// it, so it must not get a New Post CTA either.
+				$_jt_can_post = is_user_logged_in() && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					[

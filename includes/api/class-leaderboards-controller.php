@@ -159,17 +159,25 @@ class Leaderboards_Controller extends Base_Controller {
 				continue;
 			}
 
+			// Presence (profiles were primed above, so this is a cache hit, not an
+			// N+1). Note: the board is cached 300s, so the dot can lag presence by
+			// up to the same 5-minute window it represents — it only ever shows an
+			// online member as offline for a few minutes, never the reverse.
+			$lb_profile = \Jetonomy\Models\UserProfile::find_by_user( $user_id );
+
 			$items[] = [
-				'rank'         => $rank,
-				'user_id'      => $user_id,
-				'display_name' => $user->display_name,
-				'user_login'   => $user->user_login,
-				'avatar_url'   => \Jetonomy\Avatar::display_url( $user_id, 64 ),
-				'profile_url'  => \Jetonomy\get_profile_url( $user_id ),
-				'reputation'   => (int) $leader->reputation,
-				'post_count'   => (int) $leader->post_count,
-				'reply_count'  => (int) $leader->reply_count,
-				'trust_level'  => (int) $leader->trust_level,
+				'rank'             => $rank,
+				'user_id'          => $user_id,
+				'display_name'     => $user->display_name,
+				'user_login'       => $user->user_login,
+				'avatar_url'       => \Jetonomy\Avatar::display_url( $user_id, 64 ),
+				'profile_url'      => \Jetonomy\get_profile_url( $user_id ),
+				'reputation'       => (int) $leader->reputation,
+				'post_count'       => (int) $leader->post_count,
+				'reply_count'      => (int) $leader->reply_count,
+				'trust_level'      => (int) $leader->trust_level,
+				'last_seen_at'     => $lb_profile ? $lb_profile->last_seen_at : null,
+				'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $lb_profile ? $lb_profile->last_seen_at : null ),
 			];
 
 			++$rank;

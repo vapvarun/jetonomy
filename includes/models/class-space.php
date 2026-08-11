@@ -207,6 +207,30 @@ class Space extends Model {
 	}
 
 	/**
+	 * A slug guaranteed unique among spaces — appends -1, -2, … until free.
+	 *
+	 * The single source of truth for slug uniqueness. The `slug` column has a
+	 * UNIQUE key, so any caller that inserts a space MUST route its slug through
+	 * here first; inserting a colliding slug silently fails the INSERT (returns
+	 * 0). Used by the REST create path and the Pro course→space provisioner so
+	 * neither can drift.
+	 *
+	 * @param string $base_slug Sanitized starting slug (e.g. sanitize_title($title)).
+	 * @return string A slug with no existing space.
+	 */
+	public static function unique_slug( string $base_slug ): string {
+		$slug    = $base_slug;
+		$counter = 1;
+
+		while ( self::find_by_slug( $slug ) ) {
+			$slug = $base_slug . '-' . $counter;
+			++$counter;
+		}
+
+		return $slug;
+	}
+
+	/**
 	 * Canonical CONTENT-visibility predicate — "can this viewer READ content in the space."
 	 *
 	 * SQL form of {@see \Jetonomy\Permissions\Permission_Engine::can()} with

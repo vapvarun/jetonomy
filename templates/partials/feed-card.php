@@ -68,26 +68,35 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 
 	<footer class="jt-feed-card-foot">
 		<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
+			<?php // "may actually vote here", not just "allows voting": a Read-grant admits without granting the vote, and the server 403s it. ?>
+			<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 		<button type="button"
 			class="jt-feed-act <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
 			data-wp-on--click="actions.voteUp"
 			data-post-id="<?php echo absint( $post->id ); ?>"
 			aria-label="<?php esc_attr_e( 'Upvote', 'jetonomy' ); ?>">
-			<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+				<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 			<span class="n jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 		</button>
-			<?php
-			// Downvote — keep both directions available (respect negative voices),
-			// hidden only on the member's own post to block self-downvote.
-			if ( (int) $post->author_id !== $viewer_id ) :
-				?>
+				<?php
+				// Downvote — keep both directions available (respect negative voices),
+				// hidden only on the member's own post to block self-downvote.
+				if ( (int) $post->author_id !== $viewer_id ) :
+					?>
 		<button type="button"
 			class="jt-feed-act <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
 			data-wp-on--click="actions.voteDown"
 			data-post-id="<?php echo absint( $post->id ); ?>"
 			aria-label="<?php esc_attr_e( 'Downvote', 'jetonomy' ); ?>">
-				<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 		</button>
+				<?php endif; ?>
+			<?php else : ?>
+				<?php // Read-grant / guest: inert score, no clickable control the server would refuse. ?>
+		<span class="jt-feed-act" aria-hidden="true">
+				<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+			<span class="n jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+		</span>
 			<?php endif; ?>
 		<?php endif; ?>
 

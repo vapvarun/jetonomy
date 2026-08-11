@@ -1251,15 +1251,20 @@ class Spaces_Controller extends Base_Controller {
 		$profile = UserProfile::find_by_user( $user_id );
 
 		return [
-			'space_id'     => (int) $member->space_id,
-			'user_id'      => $user_id,
-			'role'         => $member->role,
-			'joined_at'    => $member->joined_at ?? null,
-			'display_name' => $user ? $user->display_name : '',
-			'avatar_url'   => \Jetonomy\Avatar::display_url( $user_id, 48 ),
-			'trust_level'  => $profile ? (int) $profile->trust_level : 0,
-			'reputation'   => $profile ? (int) $profile->reputation : 0,
-			'profile_url'  => \Jetonomy\base_url() . '/u/' . ( $user ? $user->user_login : $user_id ) . '/',
+			'space_id'         => (int) $member->space_id,
+			'user_id'          => $user_id,
+			'role'             => $member->role,
+			'joined_at'        => $member->joined_at ?? null,
+			'display_name'     => $user ? $user->display_name : '',
+			'avatar_url'       => \Jetonomy\Avatar::display_url( $user_id, 48 ),
+			'trust_level'      => $profile ? (int) $profile->trust_level : 0,
+			'reputation'       => $profile ? (int) $profile->reputation : 0,
+			// Presence: mirrors the feed/reply author fields so the app can render
+			// the same "online" dot on member avatars. GMT variant is the
+			// clock-safe one the app prefers (see utils/presence.ts).
+			'last_seen_at'     => $profile ? $profile->last_seen_at : null,
+			'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $profile ? $profile->last_seen_at : null ),
+			'profile_url'      => \Jetonomy\base_url() . '/u/' . ( $user ? $user->user_login : $user_id ) . '/',
 		];
 	}
 
@@ -1277,15 +1282,9 @@ class Spaces_Controller extends Base_Controller {
 	 * Generate a unique space slug.
 	 */
 	private function unique_slug( string $base_slug ): string {
-		$slug    = $base_slug;
-		$counter = 1;
-
-		while ( Space::find_by_slug( $slug ) ) {
-			$slug = $base_slug . '-' . $counter;
-			++$counter;
-		}
-
-		return $slug;
+		// Delegates to the model so REST and the Pro provisioner share one
+		// uniqueness rule (Space::unique_slug) instead of drifting copies.
+		return Space::unique_slug( $base_slug );
 	}
 
 	/**

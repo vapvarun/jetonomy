@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.9.1
+Stable tag: 1.9.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,19 @@ Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abil
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.9.2 - August 2026 =
+
+Read-only members stop being shown controls the server then refuses, and a member can leave a space from the same place they joined it.
+
+* New      - A member can leave a space from the front end, the same place they joined it, instead of only being able to join.
+* Fix      - A member admitted to a space by a read-only access rule was shown Vote controls, a New Topic button, the empty-space call to action and a reply box, then refused by the server on use. Each control now appears only when the member is actually allowed to use it, so a read-only member sees the content without the dead buttons.
+* Fix      - A single topic in a private space now opens for a member admitted by an access rule, matching what the server allows.
+* Fix      - Tag, space and author listings open again when there is no search text, instead of returning nothing.
+* Dev      - Member and leaderboard payloads carry author_last_seen_at so a client can show the online dot under an avatar.
+* Dev      - New AccessRule::spaces_with_level_prefix() lists every space gated on a membership-level rule, so an integration can show the spaces a member can reach by access rather than only those they have formally joined.
+* Dev      - New Space::unique_slug() is the one rule for space-slug uniqueness, shared by every path that creates a space.
+* Compat   - Aligned with Jetonomy Pro 1.9.2. Install both updates together.
 
 = 1.9.1 - August 2026 =
 

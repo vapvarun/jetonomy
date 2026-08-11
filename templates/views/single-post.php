@@ -45,7 +45,13 @@ $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
 if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	$user_id = get_current_user_id();
-	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
+	// Admission is membership OR an access rule, never membership alone -
+	// Space::admitted() is the one answer (its own docblock says so). This
+	// gate asked SpaceMember::is_member() directly, so a viewer admitted by
+	// a rule (a Learnomy course or learning-space level, a membership plan)
+	// could browse the space and post through the Permission Engine, then
+	// hit "private space" opening the very post they wrote (2026-08-06).
+	if ( ! $user_id || ! \Jetonomy\Models\Space::admitted( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
@@ -535,7 +541,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 						<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
-							<?php if ( is_user_logged_in() ) : ?>
+							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
+							<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 								data-wp-on--click="actions.voteUp"
 								data-post-id="<?php echo absint( $post->id ); ?>"
@@ -557,7 +564,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 							</button>
 								<?php endif; ?>
-							<?php else : ?>
+							<?php elseif ( ! is_user_logged_in() ) : ?>
 								<?php
 								// Logged-out: the vote control was an inert read-only
 								// span — clicking it did nothing, leaving a visitor who
@@ -570,6 +577,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</a>
+							<?php else : ?>
+								<?php // Logged in but not allowed to vote here (Read-grant). Inert score, no clickable control the server would refuse. ?>
+							<span class="jt-act" aria-hidden="true">
+								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+							</span>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
@@ -865,11 +878,20 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			</div>
 
 			<!-- Composer -->
+			<?php
+			// "may actually reply here", not merely "is logged in": a Read-grant admits
+			// a member to the space without granting create_replies, and POST /replies
+			// then 403s. Gate the composer on the same permission the server enforces so
+			// a read-only member never sees a Post Reply box they cannot submit - the
+			// Vote / New-Topic seam, applied to the reply surface.
+			$jt_can_reply_here = $jt_viewer_id
+				&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
+			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
 					<?php esc_html_e( 'This post is closed and no longer accepts replies.', 'jetonomy' ); ?>
 				</div>
-			<?php elseif ( is_user_logged_in() ) : ?>
+			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>
 					<div class="jt-closed-notice jt-closed-notice--staff">
 						<?php esc_html_e( 'This topic is closed. As a moderator, you can still add a reply.', 'jetonomy' ); ?>
@@ -889,7 +911,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					);
 					?>
 				</div>
-			<?php else : ?>
+			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<div class="jt-login-prompt">
 					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?></a>
 				</div>
