@@ -1282,15 +1282,9 @@ class Spaces_Controller extends Base_Controller {
 	 * Generate a unique space slug.
 	 */
 	private function unique_slug( string $base_slug ): string {
-		$slug    = $base_slug;
-		$counter = 1;
-
-		while ( Space::find_by_slug( $slug ) ) {
-			$slug = $base_slug . '-' . $counter;
-			++$counter;
-		}
-
-		return $slug;
+		// Delegates to the model so REST and the Pro provisioner share one
+		// uniqueness rule (Space::unique_slug) instead of drifting copies.
+		return Space::unique_slug( $base_slug );
 	}
 
 	/**
