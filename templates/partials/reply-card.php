@@ -194,7 +194,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		?>
 		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
 		<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this reply', 'jetonomy' ); ?>">
-			<?php if ( is_user_logged_in() ) : ?>
+			<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
+			<?php if ( jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyUp"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -213,7 +214,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 				<?php endif; ?>
-			<?php else : ?>
+			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<?php
 				// Logged-out: reply votes were clickable buttons that silently
 				// failed on click (no auth). Match the post-vote control — a
@@ -225,6 +226,9 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				aria-label="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</a>
+			<?php else : ?>
+				<?php // Logged in but not allowed to vote here (Read-grant). Inert score, no clickable control the server would refuse. ?>
+			<span class="jt-act" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span></span>
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>

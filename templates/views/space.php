@@ -570,7 +570,12 @@ $crumbs[] = [
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
 				];
 				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? __( 'New Post', 'jetonomy' );
-				$_jt_can_post    = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || $_jt_rule_admits || 'open' === $_jt_join_policy );
+				// Mirror the space-header New Topic gate (Permission_Engine::can,
+				// which folds in membership, admin, trust AND the access rule's
+				// grant LEVEL) instead of the binary $_jt_rule_admits - a Read-only
+				// rule-admit is admitted but cannot post, and the server refuses
+				// it, so it must not get a New Post CTA either.
+				$_jt_can_post = is_user_logged_in() && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					[

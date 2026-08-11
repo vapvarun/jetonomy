@@ -541,7 +541,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 						<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
-							<?php if ( is_user_logged_in() ) : ?>
+							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
+							<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 								data-wp-on--click="actions.voteUp"
 								data-post-id="<?php echo absint( $post->id ); ?>"
@@ -563,7 +564,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 							</button>
 								<?php endif; ?>
-							<?php else : ?>
+							<?php elseif ( ! is_user_logged_in() ) : ?>
 								<?php
 								// Logged-out: the vote control was an inert read-only
 								// span — clicking it did nothing, leaving a visitor who
@@ -576,6 +577,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</a>
+							<?php else : ?>
+								<?php // Logged in but not allowed to vote here (Read-grant). Inert score, no clickable control the server would refuse. ?>
+							<span class="jt-act" aria-hidden="true">
+								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+							</span>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
