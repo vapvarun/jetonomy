@@ -371,7 +371,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 **What to verify:** an admin can create a badge (name, icon, description, criteria), award it manually to a user, and that badge appears on the recipient's profile AND in the public badge list.
 
 ### E.white-label
-**What to verify:** when an admin changes the brand color, the change actually flows through to the front-end (the `--jt-accent` token reflects the new color on public pages). Logo replacement works similarly.
+**What to verify:** the White Label extension is BACKEND-ONLY by design (its own class docblock: "Backend-only; it does not touch the community frontend or emails"). It renames the Jetonomy presence in wp-admin only. Set `community_name`, `admin_label`, `admin_icon`, `footer_text`, then confirm each is reflected in wp-admin: the sidebar menu label, the plugin name on the Plugins page, and the admin footer. Confirm the public `/community/` render is UNCHANGED — there is no brand-color or frontend-logo field, and none is expected. (A frontend brand-color/logo capability would be a new paid feature to scope, not a bug in this extension.)
 
 ### E.advanced-moderation
 **What to verify:** an admin can create a moderation rule (pattern + action), posting content matching the rule triggers the action (hold / spam / auto-delete), and rule stats reflect hits over time.
