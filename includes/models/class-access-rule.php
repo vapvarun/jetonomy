@@ -204,6 +204,47 @@ class AccessRule extends Model {
 	}
 
 	/**
+	 * Every ACTIVE space gated on a rule whose level starts with $prefix,
+	 * regardless of roster membership — the access-based companion to
+	 * {@see member_spaces_for_level_prefix()}.
+	 *
+	 * Access is derived from the rule at read time (a learner enrolled before
+	 * the space existed has no roster row but IS admitted), so a caller that
+	 * wants "the course spaces this viewer can reach" must enumerate by the rule
+	 * and test grants_access() per row — not filter by the roster, which drops
+	 * the pre-enrolled. Returns s.* plus r.rule_value (the level).
+	 *
+	 * @param string $prefix    Level-value prefix, e.g. 'lrn_course_'.
+	 * @param string $rule_type Rule type (default 'membership').
+	 * @return object[] Space rows, each carrying rule_value.
+	 */
+	public static function spaces_with_level_prefix( string $prefix, string $rule_type = 'membership' ): array {
+		if ( '' === $prefix ) {
+			return [];
+		}
+
+		$spaces = table( 'spaces' );
+
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				'SELECT s.*, r.rule_value
+				 FROM ' . static::table() . ' r
+				 INNER JOIN ' . $spaces . ' s ON s.id = r.space_id
+				 WHERE r.rule_type = %s
+				   AND r.rule_value LIKE %s
+				   AND s.status = %s
+				 GROUP BY s.id
+				 ORDER BY s.title ASC',
+				$rule_type,
+				static::db()->esc_like( $prefix ) . '%',
+				'active'
+			)
+		);
+
+		return $rows ?: [];
+	}
+
+	/**
 	 * Evaluate access rules for a user in a space.
 	 *
 	 * Iterates rules in priority order (highest first) and returns the first
