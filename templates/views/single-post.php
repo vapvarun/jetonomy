@@ -878,11 +878,20 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			</div>
 
 			<!-- Composer -->
+			<?php
+			// "may actually reply here", not merely "is logged in": a Read-grant admits
+			// a member to the space without granting create_replies, and POST /replies
+			// then 403s. Gate the composer on the same permission the server enforces so
+			// a read-only member never sees a Post Reply box they cannot submit - the
+			// Vote / New-Topic seam, applied to the reply surface.
+			$jt_can_reply_here = $jt_viewer_id
+				&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
+			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
 					<?php esc_html_e( 'This post is closed and no longer accepts replies.', 'jetonomy' ); ?>
 				</div>
-			<?php elseif ( is_user_logged_in() ) : ?>
+			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>
 					<div class="jt-closed-notice jt-closed-notice--staff">
 						<?php esc_html_e( 'This topic is closed. As a moderator, you can still add a reply.', 'jetonomy' ); ?>
@@ -902,7 +911,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					);
 					?>
 				</div>
-			<?php else : ?>
+			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<div class="jt-login-prompt">
 					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?></a>
 				</div>
