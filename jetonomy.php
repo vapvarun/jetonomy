@@ -809,12 +809,66 @@ function jetonomy_first_paragraph_text( string $content ): string {
 	return '';
 }
 
+/**
+ * Render markdown image syntax as a real image.
+ *
+ * The mobile app inserted `![alt](url)` into the body until 1.9.3. The app has
+ * its own markdown-image parser so the picture showed there, but nothing on the
+ * web side ever understood the syntax - so the same topic showed the image in
+ * the app and a line of raw `![alt](http://...)` text on the website (Basecamp
+ * 10199514340). The app now writes `<img>`, which both renderers already
+ * handle, but every post and reply ALREADY stored carries the old syntax, and
+ * fixing the writer does not fix those rows.
+ *
+ * So the reader learns the syntax. No stored content is rewritten, every
+ * existing row renders correctly on every site the moment this ships, and a
+ * client that writes markdown in future still works.
+ *
+ * Two stored shapes, because the save-time autolinker rewrote the URL inside
+ * the parens on its way in:
+ *
+ *   ![alt](https://example.com/x.png)
+ *   ![alt](<a href="https://example.com/x.png" ...>https://example.com/x.png</a>)
+ *
+ * A URL that esc_url rejects (javascript:, data:, anything not http/https) is
+ * left as the original text rather than emitted as a broken or hostile tag.
+ *
+ * @since 1.9.3
+ * @param string $content Stored body content.
+ * @return string Content with markdown images replaced by <img> tags.
+ */
+function jetonomy_render_markdown_images( string $content ): string {
+	if ( false === strpos( $content, '![' ) ) {
+		return $content;
+	}
+
+	return (string) preg_replace_callback(
+		// 1 = alt text, 2 = url. The optional <a ...> / </a> around the url
+		// absorbs the autolinked variant; the url itself cannot contain
+		// whitespace, '<' or ')'.
+		'/!\[([^\]]*)\]\(\s*(?:<a\b[^>]*>)?\s*([^)<>\s]+)\s*(?:<\/a>)?\s*\)/i',
+		static function ( array $m ): string {
+			$url = esc_url( html_entity_decode( $m[2], ENT_QUOTES, 'UTF-8' ), array( 'http', 'https' ) );
+			if ( '' === $url ) {
+				return $m[0]; // Not a safe http(s) URL - leave the text alone.
+			}
+			return '<img src="' . $url . '" alt="' . esc_attr( $m[1] ) . '" loading="lazy" />';
+		},
+		$content
+	);
+}
+
 function jetonomy_format_content( string $content ): string {
 	$base = \Jetonomy\base_url();
 
 	// Repair div-soup that older releases stored verbatim (see
 	// jetonomy_normalize_editor_html) - a no-op for clean content.
 	$content = jetonomy_normalize_editor_html( $content );
+
+	// Markdown images written by pre-1.9.3 app clients become real <img> tags
+	// BEFORE wpautop and the mention/hashtag pass, so the result is treated as
+	// markup by the tag splitter below rather than scanned as text.
+	$content = jetonomy_render_markdown_images( $content );
 
 	// Normalize paragraphs: wpautop converts \n\n to <p>…</p> for plain-text
 	// storage, and is a no-op when content is already block-wrapped. This is
