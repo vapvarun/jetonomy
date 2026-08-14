@@ -241,7 +241,7 @@
         "auth": "public_with_handler",
         "capability": "ownership_or_edit_others",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1). 1.8.0: can_read_post now also gates STATUS - a non-publish post (trash/pending/spam) is readable only by its author or a moderator, everyone else gets 403; delete is a soft delete so this is what makes DELETE /posts/{id} actually stop serving the content. 1.8.0: blocked_author is ADVISORY ONLY - title/content/content_plain now come back empty server-side (Post::apply_block_tombstone) when it is true, so a client that ignores the flag still cannot render the blocked author's words."
+        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1). 1.8.0: can_read_post now also gates STATUS - a non-publish post (trash/pending/spam) is readable only by its author or a moderator, everyone else gets 403; delete is a soft delete so this is what makes DELETE /posts/{id} actually stop serving the content. 1.8.0: blocked_author is ADVISORY ONLY - title/content/content_plain now come back empty server-side (Post::apply_block_tombstone) when it is true, so a client that ignores the flag still cannot render the blocked author's words. 1.9.3: response adds can_downvote - the server rejects a self-downvote with 400 and the web templates already hide the control on own content; computed from the pre-anonymised author so anonymous posts stay correct."
       },
       {
         "route": "/posts/(?P<id>\\d+)/close",
@@ -347,7 +347,7 @@
         "auth": "public_with_handler",
         "capability": "create_replies",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: can_read_post on the PARENT post; POST: create_replies. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.8.0: GET was space-read only, which left the whole thread under a trashed/pending/private post readable; it now gates on the parent post so deleting a topic takes its conversation with it."
+        "audit_notes": "GET: can_read_post on the PARENT post; POST: create_replies. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.8.0: GET was space-read only, which left the whole thread under a trashed/pending/private post readable; it now gates on the parent post so deleting a topic takes its conversation with it. 1.9.3: reply shape now carries viewer_vote (previously post-only, so app clients seeded every reply at 0 and an upvote tap toggled the existing vote OFF) plus can_downvote; list_items warms Vote::user_votes_map for the page, so this stays one vote query rather than one per reply."
       },
       {
         "route": "/replies/(?P<id>\\d+)",
@@ -362,7 +362,7 @@
         "auth": "GET: visibility_gated | PATCH/DELETE: login_required",
         "capability": "ownership_or_edit_others",
         "ownership_check": "handler_enforces",
-        "audit_notes": "1.9.1: GET/get_item re-registered deliberately. The 1.6.0 note recorded its absence as correct drift-removal, but the absence was itself the bug - a reply notification carries only the reply id, so with no GET the app could not resolve the parent thread and every reply notification was a dead tap (Basecamp 10159720057 / 10161329157). GET returns post_id and is gated on the PARENT post via Permission_Engine::can_read_post. Prior note: \"1.6.0 drift fix: no GET is registered on this route (only PATCH + DELETE) - the stale GET/get_item entry was removed.\""
+        "audit_notes": "1.9.1: GET/get_item re-registered deliberately. The 1.6.0 note recorded its absence as correct drift-removal, but the absence was itself the bug - a reply notification carries only the reply id, so with no GET the app could not resolve the parent thread and every reply notification was a dead tap (Basecamp 10159720057 / 10161329157). GET returns post_id and is gated on the PARENT post via Permission_Engine::can_read_post. Prior note: \"1.6.0 drift fix: no GET is registered on this route (only PATCH + DELETE) - the stale GET/get_item entry was removed.\" 1.9.3: response adds viewer_vote + can_downvote (see the /posts/{id}/replies note)."
       },
       {
         "route": "/replies/(?P<id>\\d+)/accept",

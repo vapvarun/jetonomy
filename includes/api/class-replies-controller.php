@@ -163,6 +163,19 @@ class Replies_Controller extends Base_Controller {
 		// Eager-load all author data in a single batch before preparing items.
 		$replies = $this->enrich_with_author( $replies );
 
+		// Warm the viewer's vote map for this page in ONE query. prepare_reply()
+		// reads viewer_vote through Vote::get_user_vote(), which user_votes_map()
+		// memoizes for exactly these ids — so the per-row read below costs no
+		// further queries and a 200-reply thread stays at one vote query, not 200.
+		$uid = get_current_user_id();
+		if ( $uid ) {
+			\Jetonomy\Models\Vote::user_votes_map(
+				$uid,
+				'reply',
+				array_map( static fn( $r ) => (int) $r->id, $replies )
+			);
+		}
+
 		$items = array_map( array( $this, 'prepare_reply' ), $replies );
 
 		return $this->paginated_response(
@@ -819,6 +832,10 @@ class Replies_Controller extends Base_Controller {
 	private function prepare_reply( object $reply ): array {
 		$author_id = (int) ( $reply->author_id ?? 0 );
 
+		// The REAL author, captured before the anonymous mask below rewrites
+		// $author_id to 0 — see the identical note in prepare_post().
+		$real_author_id = $author_id;
+
 		// Use pre-enriched data if present, otherwise fall back to per-item lookup.
 		if ( isset( $reply->author_name ) ) {
 			$author_name   = $reply->author_name;
@@ -896,6 +913,19 @@ class Replies_Controller extends Base_Controller {
 			'is_private'              => ! empty( $reply->is_private ),
 			'is_private_hidden'       => ! empty( $reply->is_private_hidden ),
 		);
+
+		// Viewer-relative state (additive, 1.9.3). prepare_post() has shipped
+		// viewer_vote since 1.6.0 but replies never did, so app clients seeded
+		// every reply's vote control at 0: a reply the viewer had ALREADY upvoted
+		// rendered un-voted, and tapping upvote re-sent value=1, which the server
+		// reads as a toggle and REMOVES the vote — the tap did the opposite of
+		// what it showed. Batched by list_items()' user_votes_map() warm above;
+		// single-item paths (create/update/accept) cost one memoized read.
+		$uid                  = get_current_user_id();
+		$data['viewer_vote']  = isset( $reply->viewer_vote )
+			? (int) $reply->viewer_vote
+			: ( $uid ? (int) ( \Jetonomy\Models\Vote::get_user_vote( $uid, 'reply', (int) $reply->id ) ?? 0 ) : 0 );
+		$data['can_downvote'] = $uid > 0 && $real_author_id !== $uid;
 
 		/**
 		 * Filter the REST response data for a single reply.
