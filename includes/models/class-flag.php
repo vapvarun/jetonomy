@@ -18,6 +18,121 @@ class Flag extends Model {
 	}
 
 	/**
+	 * Per-request memo for has_reported(), filled per-row on miss and in bulk
+	 * (negatives included) by reporter_flag_map(). Mirrors the Vote memo: list
+	 * paths warm the whole page in one query, and every per-row read after that
+	 * is free. Cleared by create() and via Cache::flush().
+	 *
+	 * @var array<string, bool>
+	 */
+	private static array $memo = array();
+
+	/**
+	 * Whether the memo reset is registered with Cache::flush().
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
+	/**
+	 * Empty the flag memo. Called from create().
+	 */
+	public static function reset_memo(): void {
+		self::$memo = array();
+	}
+
+	/**
+	 * Register the memo reset with the shared registry once.
+	 */
+	private static function register_memo_reset(): void {
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$memo = array();
+				}
+			);
+		}
+	}
+
+	/**
+	 * Batch reporter lookup — which of these objects has this user reported?
+	 *
+	 * One query for a whole page so list enrichment never runs a per-row
+	 * lookup. Uses the `reporter` index; misses are memoized as false too, so
+	 * a later has_reported() over the same ids costs nothing.
+	 *
+	 * @since 1.9.3
+	 * @param int    $reporter_id Reporting user.
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int[]  $object_ids  Object row IDs on the current page.
+	 * @return array<int, bool> Map of object_id => true for reported rows.
+	 */
+	public static function reporter_flag_map( int $reporter_id, string $object_type, array $object_ids ): array {
+		$object_ids = array_values( array_unique( array_filter( array_map( 'intval', $object_ids ) ) ) );
+		if ( $reporter_id <= 0 || empty( $object_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $object_ids ), '%d' ) );
+		$rows         = static::db()->get_col(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT object_id FROM ' . static::table() . " WHERE reporter_id = %d AND object_type = %s AND object_id IN ({$placeholders})",
+				$reporter_id,
+				$object_type,
+				...$object_ids
+			)
+		);
+
+		$map = array();
+		foreach ( $rows ?: array() as $oid ) {
+			$map[ (int) $oid ] = true;
+		}
+
+		// Fill the memo, negatives included, so per-row reads over these ids
+		// cost zero further queries.
+		self::register_memo_reset();
+		foreach ( $object_ids as $oid ) {
+			self::$memo[ "{$reporter_id}|{$object_type}|{$oid}" ] = isset( $map[ $oid ] );
+		}
+
+		return $map;
+	}
+
+	/**
+	 * Has this user already reported this object?
+	 *
+	 * The duplicate-report rule already existed server-side (the moderation
+	 * controller answers a second report with 409 jetonomy_already_flagged),
+	 * but the API published nothing a client could read it from - so the app
+	 * tracked "reported" in local component state, lost it on refresh, drew an
+	 * un-reported flag icon, and the re-tap silently 409'd (Basecamp
+	 * 10202766654). Server-owned rule, server-published state.
+	 *
+	 * @since 1.9.3
+	 * @param int    $reporter_id Reporting user.
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int    $object_id   Object row ID.
+	 * @return bool
+	 */
+	public static function has_reported( int $reporter_id, string $object_type, int $object_id ): bool {
+		if ( $reporter_id <= 0 || $object_id <= 0 ) {
+			return false;
+		}
+
+		self::register_memo_reset();
+
+		$key = "{$reporter_id}|{$object_type}|{$object_id}";
+		if ( array_key_exists( $key, self::$memo ) ) {
+			return self::$memo[ $key ];
+		}
+
+		self::$memo[ $key ] = null !== static::find_by_reporter_and_object( $reporter_id, $object_type, $object_id );
+		return self::$memo[ $key ];
+	}
+
+	/**
 	 * Create a new flag report.
 	 *
 	 * Automatically sets status to 'pending' and created_at if absent.
@@ -35,6 +150,10 @@ class Flag extends Model {
 		);
 
 		$id = static::insert( $data );
+
+		// A new report invalidates any memoized "not reported" answer for this
+		// request (e.g. the response shaped after the write).
+		self::reset_memo();
 
 		// Keep the post's denormalised open-flag counter in step (post targets,
 		// pending only). Caller-agnostic so REST, Abilities, and CLI all maintain it.

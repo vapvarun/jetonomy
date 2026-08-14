@@ -169,11 +169,10 @@ class Replies_Controller extends Base_Controller {
 		// further queries and a 200-reply thread stays at one vote query, not 200.
 		$uid = get_current_user_id();
 		if ( $uid ) {
-			\Jetonomy\Models\Vote::user_votes_map(
-				$uid,
-				'reply',
-				array_map( static fn( $r ) => (int) $r->id, $replies )
-			);
+			$reply_ids = array_map( static fn( $r ) => (int) $r->id, $replies );
+			\Jetonomy\Models\Vote::user_votes_map( $uid, 'reply', $reply_ids );
+			// Same one-query-per-page warm for the viewer_flagged flag below.
+			\Jetonomy\Models\Flag::reporter_flag_map( $uid, 'reply', $reply_ids );
 		}
 
 		$items = array_map( array( $this, 'prepare_reply' ), $replies );
@@ -926,6 +925,10 @@ class Replies_Controller extends Base_Controller {
 			? (int) $reply->viewer_vote
 			: ( $uid ? (int) ( \Jetonomy\Models\Vote::get_user_vote( $uid, 'reply', (int) $reply->id ) ?? 0 ) : 0 );
 		$data['can_downvote'] = $uid > 0 && $real_author_id !== $uid;
+		// See the identical note in prepare_post() — Basecamp 10202766654.
+		$data['viewer_flagged'] = isset( $reply->viewer_flagged )
+			? (bool) $reply->viewer_flagged
+			: \Jetonomy\Models\Flag::has_reported( $uid, 'reply', (int) $reply->id );
 
 		/**
 		 * Filter the REST response data for a single reply.

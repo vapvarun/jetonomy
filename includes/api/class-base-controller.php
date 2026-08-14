@@ -544,14 +544,18 @@ abstract class Base_Controller extends WP_REST_Controller {
 			true
 		);
 		$votes      = \Jetonomy\Models\Vote::user_votes_map( $uid, 'post', $ids );
+		// Warms the Flag memo for the page so prepare_post()'s viewer_flagged
+		// costs one query per page rather than one per row.
+		$flagged = \Jetonomy\Models\Flag::reporter_flag_map( $uid, 'post', $ids );
 		// Warm the subscription memo so prepare_post()'s is_subscribed flag
 		// (plan WP6.2) costs zero per-row queries on every list path.
 		\Jetonomy\Models\Subscription::warm_viewer_subscriptions( $uid, 'post', $ids );
 
 		foreach ( $posts as $post ) {
-			$pid                 = (int) $post->id;
-			$post->is_bookmarked = isset( $bookmarked[ $pid ] );
-			$post->viewer_vote   = isset( $votes[ $pid ] ) ? (int) $votes[ $pid ] : 0;
+			$pid                  = (int) $post->id;
+			$post->is_bookmarked  = isset( $bookmarked[ $pid ] );
+			$post->viewer_vote    = isset( $votes[ $pid ] ) ? (int) $votes[ $pid ] : 0;
+			$post->viewer_flagged = isset( $flagged[ $pid ] );
 		}
 
 		return $posts;
@@ -875,6 +879,15 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// 10199587514). Server-owned rule, server-published flag: no client
 		// re-derives it, and the anonymous case stays correct.
 		$data['can_downvote'] = $uid > 0 && $real_author_id !== $uid;
+		// Additive (1.9.3): has THIS viewer already reported this post? A second
+		// report is answered 409 jetonomy_already_flagged, but the API published
+		// nothing to read that state from, so the app kept "reported" in local
+		// component state - lost on every refresh, after which the control drew
+		// itself un-reported and the re-tap silently 409'd (Basecamp
+		// 10202766654). Batched by enrich_viewer_state() on list paths.
+		$data['viewer_flagged'] = isset( $post->viewer_flagged )
+			? (bool) $post->viewer_flagged
+			: \Jetonomy\Models\Flag::has_reported( $uid, 'post', (int) $post->id );
 		// Additive (plan WP6.2): the web JS fetched a whole /subscriptions
 		// list per topic view just to render the follow toggle. Batched on
 		// list paths by enrich_viewer_state()'s subscription warm; the memo
