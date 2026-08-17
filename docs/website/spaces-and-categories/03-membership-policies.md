@@ -70,6 +70,8 @@ When a user clicks **Join**, they submit a join request. The request goes to the
 
 In wp-admin, moderators see pending requests on the space's own edit screen: **Jetonomy → Spaces → [space] → Edit → Join Requests**. They can approve or decline each request, and the user gets a notification when their request is reviewed.
 
+![The Join Requests tab on the wp-admin space edit screen, listing pending requests with the requester, their message, how long ago they asked, and Approve and Deny buttons](../images/admin-space-join-requests.png)
+
 > **Do not see a Join Requests tab?** It only appears when the space's join policy is set to **Approval Required**, or when the space already has pending requests. On an Open space there is nothing to approve, so the tab stays hidden. Set the policy first, on the **General** tab of the same screen.
 
 Since 1.5.0, space moderators can also handle requests from the community front-end, without opening wp-admin. On the space **Members** page (`/community/s/:slug/members/`), a "Pending join requests" panel lists each requester with **Approve** and **Deny** buttons. Approving admits the member instantly and emails the requester that they are in; denying clears the request. This is the same approve/admit path as the wp-admin tab, so a space moderator who has no wp-admin access can still run an Approval Required space end to end.
@@ -88,6 +90,8 @@ You can create invite links from either surface:
 - **wp-admin** - open the space at **Jetonomy → Spaces → [space] → Edit** and use the **Invite Links** section.
 
 Each link has a configurable usage limit and optional expiry date, and you can see how many times each link has been used.
+
+![The Invite links panel on the front-end space Members page, with Max uses and Expires fields, a Generate invite link button, and an existing link showing its usage count alongside Copy and Revoke buttons](../images/space-members-invite-panel.png)
 
 > **Invite links are space-admin only - moderators cannot see them.** This is deliberate, and it is a stricter rule than the one for join requests: an invite link is a bearer credential into a space that may be hidden, so listing the links discloses them. Space moderators can approve join requests but cannot view or mint invite links. The REST API applies the same rule server-side, so this is a real permission boundary, not just a hidden panel.
 
