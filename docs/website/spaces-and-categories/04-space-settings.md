@@ -140,9 +140,15 @@ Multiple rules can be stacked. Jetonomy grants the highest matching permission l
 
 Invite links let you bring specific people into a space without opening up general membership.
 
-> **Where to manage invite links:** invite links are created and tracked from the **wp-admin** space edit screen (**Jetonomy → Spaces → [space] → Edit → Invite Links**), not from the front-end Edit Space page. A space owner without wp-admin access can run an Invite Only space, but a site administrator generates and shares the links on their behalf.
+> **Where to manage invite links:** either surface works. In wp-admin, use the space edit screen (**Jetonomy → Spaces → [space] → Edit → Invite Links**). On the front-end, use the **Invite links** panel on the space **Members** page (`/community/s/:slug/members/`). A space owner with no wp-admin access can generate, copy, and revoke links entirely from the front-end.
+>
+> **Space admins only.** Unlike join requests - which space moderators can also handle - invite links are visible only to space admins. An invite link is a bearer credential into a space that may be hidden, so listing the links discloses them. The REST API enforces the same rule, so this is a genuine permission boundary rather than a hidden panel.
 
 ### Creating an Invite Link
+
+**From the front-end:** open the space **Members** page, find the **Invite links** panel, and generate a link. You can copy or revoke any existing link from the same panel.
+
+**From wp-admin:**
 
 1. Open the space for editing in wp-admin and go to the **Invite Links** section.
 2. Click **Create Invite Link**.
