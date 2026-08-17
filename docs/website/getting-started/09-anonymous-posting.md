@@ -1,7 +1,7 @@
 ---
 title: "Anonymous Posting"
 category: "getting-started"
-order: 8
+order: 9
 ---
 
 # Anonymous Posting
