@@ -1,6 +1,6 @@
 # Build a Pro Extension
 
-Since Jetonomy Pro 1.8.1, the extension system that powers all bundled Pro modules (Private Messaging, Polls, Analytics, and the rest) is open to third-party developers. Your plugin can register an extension that gets the exact same lifecycle the bundled ones do: an admin toggle on the Extensions screen, table creation on the migration guard, `boot()` when enabled, and cleanup on deactivation.
+Since Jetonomy Pro 1.9.0, the extension system that powers all bundled Pro modules (Private Messaging, Polls, Analytics, and the rest) is open to third-party developers. Your plugin can register an extension that gets the exact same lifecycle the bundled ones do: an admin toggle on the Extensions screen, table creation on the migration guard, `boot()` when enabled, and cleanup on deactivation.
 
 Requires: Jetonomy Pro active (the SDK classes ship with Pro). Your extension is **not** gated by the customer's Jetonomy Pro license — if you sell your extension separately, gate your own `boot()`.
 
