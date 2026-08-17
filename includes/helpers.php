@@ -352,6 +352,62 @@ if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
 	}
 }
 
+if ( ! function_exists( 'jetonomy_reorder_offset' ) ) {
+	/**
+	 * Absolute index of the first row on a paginated admin screen.
+	 *
+	 * Drag-reorder handlers must persist ABSOLUTE positions. Writing the row's
+	 * index within the submitted batch looks right on page 1 and silently
+	 * corrupts every later page: the batch index restarts at 0, so page 2 is
+	 * renumbered over the top of page 1 and the two collide (Basecamp
+	 * 10210539659 - reproduced with 28 categories, where a drop-in-place on
+	 * page 2 rewrote sort_order 20-27 to 0-7).
+	 *
+	 * @param int $paged    1-based page number from the request.
+	 * @param int $per_page Rows per page from the request.
+	 * @return int Offset to add to each batch index.
+	 */
+	function jetonomy_reorder_offset( int $paged, int $per_page ): int {
+		$paged = max( 1, $paged );
+		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
+			$per_page = 20;
+		}
+
+		return ( $paged - 1 ) * $per_page;
+	}
+}
+
+if ( ! function_exists( 'jetonomy_apply_manual_order' ) ) {
+	/**
+	 * Persist a drag-reorder as absolute positions.
+	 *
+	 * THE shared reorder primitive. Categories and spaces both sort by a
+	 * `sort_order` column and both expose drag handles on paginated screens, so
+	 * they share this rather than each hand-rolling the index arithmetic - which
+	 * is how the page-relative bug reached production in the first place.
+	 *
+	 * @param array    $ordered_ids Row ids in their new on-screen order.
+	 * @param int      $offset      Absolute index of the first row. {@see jetonomy_reorder_offset()}
+	 * @param callable $persist     function( int $id, int $position ): void
+	 * @return int Number of rows written.
+	 */
+	function jetonomy_apply_manual_order( array $ordered_ids, int $offset, callable $persist ): int {
+		$written = 0;
+
+		foreach ( array_values( $ordered_ids ) as $index => $row_id ) {
+			$row_id = absint( $row_id );
+			if ( ! $row_id ) {
+				continue;
+			}
+
+			$persist( $row_id, $offset + (int) $index );
+			++$written;
+		}
+
+		return $written;
+	}
+}
+
 if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	/**
 	 * Render an admin data table that satisfies the responsive contract.

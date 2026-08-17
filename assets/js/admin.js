@@ -21,6 +21,22 @@
 			this.bindSlugGeneration();
 		},
 
+		// ── List page context ──
+
+		// Drag-reorder submits only the rows the browser rendered, so any handler
+		// persisting a position needs to know which page those rows came from.
+		// Read from the URL rather than the DOM: it is the same source the server
+		// paginated with, so the two can never disagree.
+		listPageContext: function() {
+			var params = new URLSearchParams(window.location.search);
+			var paged = parseInt(params.get('paged'), 10);
+			var perPage = parseInt(params.get('per_page'), 10);
+			return {
+				paged: paged > 0 ? paged : 1,
+				perPage: [20, 50, 100].indexOf(perPage) !== -1 ? perPage : 20
+			};
+		},
+
 		// ── AJAX Helper ──
 
 		ajax: function(action, data) {
@@ -310,7 +326,15 @@
 						$('#jetonomy-categories-list tr[data-id]').each(function() {
 							order.push($(this).data('id'));
 						});
-						self.ajax('jetonomy_reorder_categories', { order: order }).done(function(res) {
+						// Only the rendered page is submitted, so the handler needs the
+						// page context to turn these into absolute positions. Without it
+						// page 2 renumbers from 0 and collides with page 1.
+						var ctx = self.listPageContext();
+						self.ajax('jetonomy_reorder_categories', {
+							order: order,
+							paged: ctx.paged,
+							per_page: ctx.perPage
+						}).done(function(res) {
 							if (res.success) {
 								self.toast(res.data.message);
 							}

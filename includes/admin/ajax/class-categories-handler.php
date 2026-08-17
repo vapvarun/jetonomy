@@ -161,14 +161,26 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$order = array_map( 'absint', wp_unslash( $_POST['order'] ?? [] ) );
-		if ( ! is_array( $order ) ) {
+		$order = array_map( 'absint', (array) wp_unslash( $_POST['order'] ?? [] ) );
+		if ( ! $order ) {
 			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
 		}
 
-		foreach ( $order as $index => $cat_id ) {
-			Category::update( absint( $cat_id ), [ 'sort_order' => absint( $index ) ] );
-		}
+		// Absolute positions, never the batch index. The browser only submits
+		// the rows it rendered, so on page 2 the index restarts at 0 and would
+		// renumber those rows over the top of page 1 (Basecamp 10210539659).
+		$offset = jetonomy_reorder_offset(
+			absint( $_POST['paged'] ?? 1 ),
+			absint( $_POST['per_page'] ?? 20 )
+		);
+
+		jetonomy_apply_manual_order(
+			$order,
+			$offset,
+			static function ( int $cat_id, int $position ): void {
+				Category::update( $cat_id, [ 'sort_order' => $position ] );
+			}
+		);
 
 		wp_send_json_success( [ 'message' => __( 'Order saved.', 'jetonomy' ) ] );
 	}
