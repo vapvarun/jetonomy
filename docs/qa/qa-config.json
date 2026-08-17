@@ -4,8 +4,8 @@
     "name": "Jetonomy",
     "version_constant": "JETONOMY_VERSION",
     "main_file": "jetonomy.php",
-    "base_url": "http://buddynext.local",
-    "wp_path": "/Users/vapvarun/Local Sites/buddynext/app/public",
+    "base_url": "http://forums.local",
+    "wp_path": "/Users/varundubey/Local Sites/forums/app/public",
     "autologin_param": "autologin",
     "rest_namespace": "jetonomy/v1",
     "front_routes": [
