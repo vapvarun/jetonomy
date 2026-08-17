@@ -1,3 +1,9 @@
+---
+title: "Users, Roles, and Trust Levels"
+category: "getting-started"
+order: 8
+---
+
 # Users, Roles, and Trust Levels
 
 The single most common question from new site owners: *"How does someone become a Jetonomy user?"* The answer is that **they already are one**. This page explains the three layers that decide what a person can do in your community, and which one to reach for.
@@ -21,12 +27,12 @@ Nothing else to configure. If your membership plugin gates registration, that ga
 | Layer | Set by | Controls | Where to manage |
 |---|---|---|---|
 | **WordPress role** (Subscriber, Editor, Administrator…) | You / WordPress | wp-admin access and Jetonomy **capabilities** (`jetonomy_moderate`, `jetonomy_manage_settings`…) per the editable role mapping | Assign roles on the WordPress **Users** screen; edit the role → capability mapping under **Jetonomy → Settings → Permissions** |
-| **Trust level** (0–5: New → Elder) | **Earned automatically** by participation (posts, replies, likes received, days visited) — or pinned manually | Community privileges that should be earned, not assigned: posting links/images, editing wikis, flag weight, rate limits | **Jetonomy → Users** (filter by level, override per user) |
+| **Trust level** (0–5: Newcomer → Moderator) | **Earned automatically** by participation (posts, replies, likes received, days visited) — or pinned manually | Community privileges that should be earned, not assigned: posting links/images, editing wikis, flag weight, rate limits | **Jetonomy → Users** (filter by level, override per user) |
 | **Space role** (member, moderator, admin) | Space owners/admins | Powers *inside one space only*: moderating its topics, managing its members | Each space's **Members** screen |
 
 The three are deliberately independent:
 
-- A **Subscriber** (WP role) can be a **Trust Level 5 Elder** and a **space admin** — a star community member with zero wp-admin access.
+- A **Subscriber** (WP role) can be a **Trust Level 5 Moderator** and a **space admin** — a star community member with zero wp-admin access.
 - An **Administrator** always bypasses trust gates and holds every capability.
 - Making someone a **space moderator** gives them power in that space only — it never grants wp-admin or site-wide moderation.
 
@@ -36,7 +42,7 @@ The three are deliberately independent:
 |---|---|
 | Let someone moderate the whole community from the frontend | Tick `jetonomy_moderate` for their role in the **Settings → Permissions** capability matrix |
 | Let someone run one space | Make them that space's admin/moderator on its Members screen |
-| Let regulars post links/images sooner (or later) | Adjust trust-level thresholds in **Jetonomy → Settings → Trust** |
+| Let regulars post links/images sooner (or later) | Adjust the **Trust Level Thresholds** table in **Jetonomy → Settings → Permissions** |
 | Promote one specific person past the gates | Pin their trust level on **Jetonomy → Users** |
 | Give a client access to Jetonomy settings without full admin | Tick `jetonomy_manage_settings` for their role in **Settings → Permissions** (the role → capability mapping itself stays admin-only) |
 
