@@ -75,7 +75,7 @@ Jetonomy adds a fast, self-moderating discussion platform to any WordPress site.
 - Searchable autocomplete for 1000+ courses in access rules
 
 ### Moderation
-- Trust-based behavior gates (rate limits, link blocks for new accounts)
+- Trust-based behavior gates for new accounts (rate limits on posts, replies and votes, plus upload and space-creation locks)
 - Content flagging with one-click moderation actions
 - Banned users management
 - Space-level access rules and join policies
