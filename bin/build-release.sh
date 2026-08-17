@@ -202,9 +202,12 @@ Gruntfile.js
 .editorconfig
 .eslintrc*
 .prettierrc*
-README.md
-CONTRIBUTING.md
-CHANGELOG.md
+# Every Markdown file is a developer artifact - none is read at runtime.
+# This was a named list (README/CONTRIBUTING/CHANGELOG), which is why
+# CAPABILITIES.md still shipped in the zip (Basecamp 10208076128): the list
+# only ever grew after someone spotted a leak. The pattern closes the class.
+# readme.txt is NOT matched by *.md and still ships, as WordPress.org needs it.
+*.md
 .DS_Store
 .vscode/
 .idea/
