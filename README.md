@@ -55,7 +55,6 @@ Jetonomy adds a fast, self-moderating discussion platform to any WordPress site.
 - **Topic prefixes** -- colored labels (Bug, Suggestion, Solved) configurable per space
 - **Similar topic detection** -- see related topics as you type, before posting duplicates
 - **Quote replies** -- click Quote on any reply for attributed blockquotes
-- **Polls** -- add polls to any topic with real-time voting
 
 ### BuddyPress Integration (v1.2+)
 - Link BuddyPress groups to forum spaces with automatic member sync
@@ -121,7 +120,7 @@ Your community will be live at `yoursite.com/community/`.
 
 ## Jetonomy Pro
 
-For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesigns.com/jetonomy-pro/) adds 14 modular extensions:
+For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesigns.com/jetonomy-pro/) adds 17 modular extensions:
 
 | Extension | What it does |
 |-----------|-------------|
@@ -129,6 +128,9 @@ For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesign
 | Emoji Reactions | Slack-style reactions on posts and replies |
 | Private Messaging | 1:1 and group conversations |
 | Polls | Community voting within posts |
+| File Attachments | Attach images, PDFs, and Office docs to posts and replies |
+| Anonymous Posting | Let members author topics and replies without showing their identity |
+| Site Announcements | Super-sticky announcements pinned across the community |
 | Analytics Dashboard | Engagement graphs, top spaces, CSV export |
 | Email Digests | Daily/weekly activity summaries |
 | Web Push | Browser notifications |
