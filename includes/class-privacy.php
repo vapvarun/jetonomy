@@ -41,6 +41,128 @@ class Privacy {
 	}
 
 	/**
+	 * Hand every space owned by a departing user to the site admin.
+	 *
+	 * Deleting a member's WP account used to strand their space: `spaces` is
+	 * anonymized (author_id -> 0) while `space_members` is purged, and space
+	 * privilege comes from `space_members.role`, not `spaces.author_id`. If the
+	 * departing owner was the only space admin, the space kept running with its
+	 * members and content but nobody could manage it.
+	 *
+	 * The successor is deliberately simple (decision, Varun 2026-08-17): the
+	 * lowest-id site administrator. On the overwhelming majority of installs the
+	 * site admin created the spaces anyway, and a precedence chain through space
+	 * admins then moderators buys complexity nobody asked for.
+	 *
+	 * The space is ARCHIVED rather than deleted or hidden. Deleting would
+	 * destroy other members' topics and replies over one person's departure,
+	 * which contradicts the plugin's own account-deletion policy. Hidden was
+	 * rejected because `Space::validate_visibility_join_policy()` requires a
+	 * hidden space to be `invite`-only, silently changing who can join. Archiving
+	 * parks the space for the new owner to decide on, touching neither
+	 * visibility nor membership.
+	 *
+	 * Reached from delete_user, remove_user_from_blog and wpmu_delete_user, and
+	 * from `jetonomy_purge_orphan_user`, so spaces stranded before this existed
+	 * are repaired by the backfill through the same body.
+	 *
+	 * @param int $user_id The departing user.
+	 */
+	private function transfer_spaces_to_site_admin( int $user_id ): void {
+		global $wpdb;
+
+		$spaces_table = table( 'spaces' );
+		$space_ids    = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$spaces_table} WHERE author_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+		if ( ! $space_ids ) {
+			return;
+		}
+
+		$successor = $this->resolve_site_admin( $user_id );
+		if ( ! $successor ) {
+			// No other administrator exists. Leave author_id alone rather than
+			// point it at nobody - a wrong owner is worse than a stale one, and
+			// the backfill will retry once an admin exists.
+			return;
+		}
+
+		$members_table = table( 'space_members' );
+
+		foreach ( $space_ids as $space_id ) {
+			$space_id = (int) $space_id;
+
+			$wpdb->update(
+				$spaces_table,
+				[
+					'author_id' => $successor,
+					'status'    => 'archived',
+				],
+				[ 'id' => $space_id ]
+			);
+
+			// author_id is attribution; the space_members admin row is the
+			// actual power. Moving one without the other produces a space that
+			// looks transferred and is still unmanageable.
+			$has_row = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_table} WHERE space_id = %d AND user_id = %d", $space_id, $successor ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+
+			if ( $has_row ) {
+				$wpdb->update(
+					$members_table,
+					[ 'role' => 'admin' ],
+					[
+						'space_id' => $space_id,
+						'user_id'  => $successor,
+					]
+				);
+			} else {
+				$wpdb->insert(
+					$members_table,
+					[
+						'space_id'  => $space_id,
+						'user_id'   => $successor,
+						'role'      => 'admin',
+						'joined_at' => current_time( 'mysql', true ),
+					]
+				);
+			}
+
+			\Jetonomy\Models\Space::bust_cache( $space_id );
+
+			/**
+			 * Fires after an ownerless space is handed to the site admin.
+			 *
+			 * @since 1.9.3
+			 *
+			 * @param int $space_id     The transferred space.
+			 * @param int $from_user_id The departing owner.
+			 * @param int $to_user_id   The site admin receiving it.
+			 */
+			do_action( 'jetonomy_space_transferred', $space_id, $user_id, $successor );
+		}
+	}
+
+	/**
+	 * Lowest-id site administrator, excluding the departing user.
+	 *
+	 * @param int $exclude_user_id User being removed.
+	 * @return int Admin user id, or 0 when the site has no other administrator.
+	 */
+	private function resolve_site_admin( int $exclude_user_id ): int {
+		$admins = get_users(
+			[
+				'role'    => 'administrator',
+				'exclude' => [ $exclude_user_id ],
+				'orderby' => 'ID',
+				'order'   => 'ASC',
+				'number'  => 1,
+				'fields'  => 'ID',
+			]
+		);
+
+		return $admins ? (int) $admins[0] : 0;
+	}
+
+	/**
 	 * Every (table, column) free can leave a user id in, derived from the same
 	 * constants the erase and delete paths use.
 	 *
@@ -709,6 +831,18 @@ class Privacy {
 	 */
 	public function on_user_delete( int $user_id ): void {
 		global $wpdb;
+
+		// Hand any space this user owned to the site admin BEFORE anything
+		// else. A space must never be left ownerless, and the anonymize step
+		// below would otherwise tombstone its author_id to 0 while the purge
+		// deleted the owner's space_members admin row - leaving the space
+		// running with content and members intact and nobody except a
+		// manage_options admin able to change a setting.
+		//
+		// Running first also makes the `spaces` entry in ANON_TABLES a no-op
+		// on this path (no rows still match the departing user), while keeping
+		// it as a backstop for the GDPR erase path.
+		$this->transfer_spaces_to_site_admin( $user_id );
 
 		// Anonymize content (rows kept so threads + denormalized counters stay
 		// intact), using the same shared list as erase_data().

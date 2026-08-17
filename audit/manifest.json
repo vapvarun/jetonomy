@@ -2286,6 +2286,12 @@
       "consumed_by": "jetonomy-pro"
     },
     {
+      "name": "jetonomy_space_transferred",
+      "type": "action",
+      "args": "space_id, from_user_id, to_user_id",
+      "where": "includes/class-privacy.php"
+    },
+    {
       "name": "jetonomy_space_edit_fields",
       "type": "action",
       "args": "space",
