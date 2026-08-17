@@ -356,6 +356,31 @@
 		bindSpaceActions: function() {
 			var self = this;
 
+			// Drag-sort Spaces. Only rendered when one category is filtered —
+			// manual order is per-category, matching Space::list_by_category().
+			if ($('#jetonomy-spaces-list').length && $('#jetonomy-spaces-list .jetonomy-drag-handle').length) {
+				$('#jetonomy-spaces-list').sortable({
+					handle: '.jetonomy-drag-handle',
+					placeholder: 'ui-sortable-placeholder',
+					update: function() {
+						var order = [];
+						$('#jetonomy-spaces-list tr[data-id]').each(function() {
+							order.push($(this).data('id'));
+						});
+						var ctx = self.listPageContext();
+						self.ajax('jetonomy_reorder_spaces', {
+							order: order,
+							paged: ctx.paged,
+							per_page: ctx.perPage
+						}).done(function(res) {
+							if (res.success) {
+								self.toast(res.data.message);
+							}
+						});
+					}
+				});
+			}
+
 			// Visibility ↔ Join Policy coupling: hidden spaces must be
 			// invite-only. Server-side validation rejects the bad combo;
 			// this handler stops the user from tripping the rejection in

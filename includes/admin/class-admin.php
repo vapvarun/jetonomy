@@ -1267,21 +1267,35 @@ class Admin {
 			$where[] = $wpdb->prepare( 'status = %s', $filter_status );
 		}
 
-		$where_sql   = implode( ' AND ', $where );
-		$spaces_t    = table( 'spaces' );
-		$paged       = max( 1, absint( $_GET['paged'] ?? 1 ) );
-		$per_page    = 20;
-		$offset      = ( $paged - 1 ) * $per_page;
+		$where_sql = implode( ' AND ', $where );
+		$spaces_t  = table( 'spaces' );
+		$paged     = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page  = absint( $_GET['per_page'] ?? 20 );
+		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
+			$per_page = 20;
+		}
+		$offset = ( $paged - 1 ) * $per_page;
+
+		// Manual ordering is only meaningful inside one category - that is the
+		// unit the front end renders (Space::list_by_category). With a single
+		// category filtered we sort the way members see it, so the admin is a
+		// preview and drag-reorder has somewhere coherent to write. Otherwise
+		// the list stays alphabetical, which is what you want when browsing
+		// every space across categories.
+		$can_reorder = $filter_category > 0 && ! $filter_type && ! $filter_status;
+		$order_sql   = $can_reorder ? 'sort_order ASC, title ASC' : 'title ASC';
+
 		$total       = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE {$where_sql}" );
 		$total_pages = (int) ceil( $total / $per_page );
 		$spaces      = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$spaces_t} WHERE {$where_sql} ORDER BY title ASC LIMIT %d OFFSET %d",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_sql is one of two literals above.
+				"SELECT * FROM {$spaces_t} WHERE {$where_sql} ORDER BY {$order_sql} LIMIT %d OFFSET %d",
 				$per_page,
 				$offset
 			)
 		) ?: array();
-		$categories  = $this->get_all_categories_flat();
+		$categories = $this->get_all_categories_flat();
 
 		include JETONOMY_DIR . 'includes/admin/views/spaces.php';
 	}

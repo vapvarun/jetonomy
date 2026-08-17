@@ -138,6 +138,25 @@ class Space extends Model {
 	 *                                  to skip seeding entirely.
 	 * @return int Inserted row ID.
 	 */
+	/**
+	 * Next free manual-order position within a category.
+	 *
+	 * @param int $category_id Category the space belongs to (0 = uncategorised).
+	 * @return int One past the highest position currently in use.
+	 */
+	protected static function next_sort_order( int $category_id ): int {
+		$table = static::table();
+		$max   = static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from static::table().
+				"SELECT MAX(sort_order) FROM {$table} WHERE category_id = %d",
+				$category_id
+			)
+		);
+
+		return null === $max ? 0 : ( (int) $max + 1 );
+	}
+
 	public static function create( array $data, ?int $creator_user_id = null ): int {
 		$now  = now();
 		$data = array_merge(
@@ -147,6 +166,16 @@ class Space extends Model {
 			],
 			$data
 		);
+
+		// Land new spaces at the END of their category's manual order. The
+		// column defaults to 0, and listings sort `sort_order ASC, title ASC`,
+		// so without this a space created after an owner arranged their
+		// category would jump straight to the front - ahead of everything they
+		// deliberately placed. Only computed when the caller did not set a
+		// position explicitly.
+		if ( ! isset( $data['sort_order'] ) ) {
+			$data['sort_order'] = static::next_sort_order( (int) ( $data['category_id'] ?? 0 ) );
+		}
 
 		$id = static::insert( $data );
 

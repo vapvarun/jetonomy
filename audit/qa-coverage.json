@@ -2,10 +2,10 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.9.0"
+        "version": "1.9.1"
     },
     "generated": {
-        "at": "2026-08-04T10:48:22+00:00",
+        "at": "2026-08-17T18:06:38+00:00",
         "manifest_at": "2026-08-01T00:00:00Z",
         "manifest_branch": "1.8.1-dev"
     },
@@ -666,7 +666,7 @@
             "total": 9,
             "covered": 5,
             "uncovered": 4,
-            "skipped": 205,
+            "skipped": 206,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -813,12 +813,12 @@
         "items_total": 174,
         "items_covered": 60,
         "items_uncovered": 114,
-        "items_skipped": 205,
+        "items_skipped": 206,
         "coverage_percent": 34.5
     },
     "drift": {
-        "previous_uncovered": 117,
+        "previous_uncovered": 114,
         "current_uncovered": 114,
-        "delta": -3
+        "delta": 0
     }
 }
