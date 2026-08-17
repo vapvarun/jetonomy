@@ -383,6 +383,8 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	 *                               (colspan is filled in automatically).
 	 *     @type string   $class     Extra classes for the <table>.
 	 *     @type string   $table_id  Optional id="" for the <table> (JS hooks).
+	 *     @type array    $table_attrs Optional attr => value pairs for the <table>
+	 *                               (JS hooks that read off the table node).
 	 *     @type string   $tbody_id  Optional id="" for the <tbody> (JS hooks).
 	 *     @type bool     $wrap      Wrap in .jt-content-table-wrap. Default true.
 	 * }
@@ -421,7 +423,20 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 		echo $wrap ? '<div class="jt-content-table-wrap">' : '<div class="jt-table-scroll">';
 		$table_id = ! empty( $args['table_id'] ) ? ' id="' . esc_attr( (string) $args['table_id'] ) . '"' : '';
 		$tbody_id = ! empty( $args['tbody_id'] ) ? ' id="' . esc_attr( (string) $args['tbody_id'] ) . '"' : '';
-		echo '<table' . $table_id . ' class="wp-list-table widefat fixed striped' . ( ! empty( $args['class'] ) ? ' ' . esc_attr( (string) $args['class'] ) : '' ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- id escaped above.
+
+		// Extra attributes for the <table> itself, for views whose JS reads a
+		// value off the table node (e.g. the invite list's data-space-id).
+		// Without this a call site would have to keep a hand-rolled <table>
+		// purely to carry one attribute, which is how views drift back out of
+		// the responsive contract.
+		$table_attrs = '';
+		if ( ! empty( $args['table_attrs'] ) && is_array( $args['table_attrs'] ) ) {
+			foreach ( $args['table_attrs'] as $attr => $value ) {
+				$table_attrs .= ' ' . esc_attr( (string) $attr ) . '="' . esc_attr( (string) $value ) . '"';
+			}
+		}
+
+		echo '<table' . $table_id . $table_attrs . ' class="wp-list-table widefat fixed striped' . ( ! empty( $args['class'] ) ? ' ' . esc_attr( (string) $args['class'] ) : '' ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- id and attrs escaped above.
 
 		echo '<thead><tr>';
 		foreach ( $columns as $key => $col ) {

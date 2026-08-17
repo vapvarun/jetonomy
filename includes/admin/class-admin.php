@@ -967,6 +967,14 @@ class Admin {
 					'inviteUnlimited'         => esc_html__( 'Unlimited', 'jetonomy' ),
 					'inviteNever'             => esc_html__( 'Never', 'jetonomy' ),
 					'inviteExpired'           => esc_html__( 'Expired', 'jetonomy' ),
+					// Column labels for JS-injected invite rows. They must match
+					// the headings jetonomy_admin_table() renders, because the
+					// responsive layout shows them as each cell's label on mobile.
+					'inviteLink'              => esc_html__( 'Invite Link', 'jetonomy' ),
+					'inviteUses'              => esc_html__( 'Uses', 'jetonomy' ),
+					'inviteExpires'           => esc_html__( 'Expires', 'jetonomy' ),
+					'actions'                 => esc_html__( 'Actions', 'jetonomy' ),
+					'showMoreDetails'         => esc_html__( 'Show more details', 'jetonomy' ),
 					// Access-rule composer preview. Keyed so the sentence and its
 					// mismatch warnings are translatable like everything else.
 					'rulePreview'             => array(

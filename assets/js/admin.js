@@ -1059,11 +1059,23 @@
 				if (!invite.is_valid) {
 					expires = (i18n.inviteExpired || 'Expired');
 				}
+				// These rows are injected after the shell renders, so they must
+				// carry the same core small-screen contract jetonomy_admin_table()
+				// emits server-side (column-primary + toggle-row on the primary
+				// cell, data-colname everywhere). Without it the responsive CSS
+				// has nothing to collapse and the row stays a wide strip.
 				var $tr = $('<tr>').attr('data-invite-id', invite.id);
-				$('<td>').append($('<code>').text(invite.invite_url)).appendTo($tr);
-				$('<td>').text(uses).appendTo($tr);
-				$('<td>').text(expires).appendTo($tr);
-				var $actions = $('<td>');
+				$('<td>', { 'class': 'column-link column-primary', 'data-colname': i18n.inviteLink || 'Invite Link' })
+					.append($('<code>').text(invite.invite_url))
+					.append($('<button>', {
+						type: 'button',
+						'class': 'toggle-row',
+						'aria-expanded': 'false'
+					}).append($('<span>', { 'class': 'screen-reader-text' }).text(i18n.showMoreDetails || 'Show more details')))
+					.appendTo($tr);
+				$('<td>', { 'class': 'column-uses', 'data-colname': i18n.inviteUses || 'Uses' }).text(uses).appendTo($tr);
+				$('<td>', { 'class': 'column-expires', 'data-colname': i18n.inviteExpires || 'Expires' }).text(expires).appendTo($tr);
+				var $actions = $('<td>', { 'class': 'column-actions', 'data-colname': i18n.actions || 'Actions' });
 				$('<button>', { type: 'button', 'class': 'button button-small jetonomy-copy-invite' })
 					.attr('data-url', invite.invite_url)
 					.text(i18n.copy || 'Copy')
