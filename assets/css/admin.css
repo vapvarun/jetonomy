@@ -3664,6 +3664,16 @@ tr.jetonomy-moderated td {
 	}
 }
 
+/* These rows mix short text with action buttons, and WP core's widefat
+   default is vertical-align: top. On the invite links row that left the
+   21px <code> URL hugging the cell top while the 34px Copy/Revoke buttons
+   centred 9px lower, so the row read as misaligned (Basecamp 10203615939).
+   Centring every cell in the shared list class fixes it once for invites,
+   members and join requests rather than per table. */
+.jetonomy-admin .jt-spacedit-list td {
+	vertical-align: middle;
+}
+
 /* Grouped field pairs in settings (Basecamp 10150582271): sibling inputs
    used to touch with 0px gap and the second field's only "label" was its
    placeholder. The pair primitive gives each field a visible label and a
