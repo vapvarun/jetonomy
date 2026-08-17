@@ -910,13 +910,13 @@ class Notifier {
 			return; // Only notify on promotion
 		}
 
-		$level_names = [
-			1 => __( 'Member', 'jetonomy' ),
-			2 => __( 'Regular', 'jetonomy' ),
-			3 => __( 'Trusted', 'jetonomy' ),
-			4 => __( 'Leader', 'jetonomy' ),
-			5 => __( 'Moderator', 'jetonomy' ),
-		];
+		// Single source of truth - see Trust_Levels::label(). This list used to be
+		// a copy, which is how the admin Users screen drifted a level away from
+		// what this email says (Basecamp 10210059424).
+		$level_names = [];
+		for ( $lvl = 1; $lvl <= 5; $lvl++ ) {
+			$level_names[ $lvl ] = \Jetonomy\Trust\Trust_Levels::label( $lvl );
+		}
 
 		$name = $level_names[ $new_level ] ?? __( 'Unknown', 'jetonomy' );
 

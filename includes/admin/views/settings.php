@@ -367,11 +367,18 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			$rate_limits = $settings['rate_limits'] ?? [];
 			$tl_defaults = \Jetonomy\Trust\Trust_Levels::defaults();
 			$rl_defaults = \Jetonomy\Permissions\Rate_Limiter::defaults();
-			$level_names = [
-				1 => __( 'Level 1: Member', 'jetonomy' ),
-				2 => __( 'Level 2: Regular', 'jetonomy' ),
-				3 => __( 'Level 3: Trusted', 'jetonomy' ),
-			];
+			// Built from Trust_Levels::label() so renaming the ladder in one
+			// place updates this tab, the Users screen and the promotion email
+			// together (Basecamp 10210059424).
+			$level_names = [];
+			foreach ( [ 1, 2, 3 ] as $jt_lvl ) {
+				$level_names[ $jt_lvl ] = sprintf(
+					/* translators: 1: trust level number, 2: trust level name. */
+					__( 'Level %1$d: %2$s', 'jetonomy' ),
+					$jt_lvl,
+					\Jetonomy\Trust\Trust_Levels::label( $jt_lvl )
+				);
+			}
 			?>
 
 			<!-- Trust Levels -->

@@ -15,14 +15,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$trust_labels = array(
-	0 => __( 'New', 'jetonomy' ),
-	1 => __( 'Basic', 'jetonomy' ),
-	2 => __( 'Member', 'jetonomy' ),
-	3 => __( 'Regular', 'jetonomy' ),
-	4 => __( 'Leader', 'jetonomy' ),
-	5 => __( 'Elder', 'jetonomy' ),
-);
+// Read from Trust_Levels, never a local copy. This screen used to carry its own
+// list (New / Basic / Member / Regular / Leader / Elder) which sat a full level
+// off the names the promotion email and Permissions tab used, so a member
+// promoted to level 2 was emailed "Regular" and listed here as "Member"
+// (Basecamp 10210059424).
+$trust_labels = array();
+for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
+	$trust_labels[ $jt_tl ] = \Jetonomy\Trust\Trust_Levels::label( $jt_tl );
+}
 ?>
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Users', 'jetonomy' ); ?></h1>
