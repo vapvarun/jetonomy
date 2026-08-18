@@ -776,7 +776,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
             var login = document.createElement( 'span' );
             login.className = 'jt-mention-login';
-            login.textContent = '@' + ( m.login || '' );
+            login.textContent = '@' + ( m.handle || m.login || '' );
             row.appendChild( login );
 
             row.addEventListener( 'mousedown', function ( e ) {
@@ -836,8 +836,11 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var before = node.textContent.slice( 0, caret );
         var after  = node.textContent.slice( caret );
         var stripped = before.replace( /@[a-zA-Z0-9_\-\.]{0,30}$/, '' );
-        node.textContent = stripped + '@' + pick.login + ' ' + after;
-        var newOffset = stripped.length + ( '@' + pick.login + ' ' ).length;
+        // Insert the HANDLE (user_nicename), which is what the server
+            // resolves. Falls back to login only for an older API response.
+            var pickHandle = pick.handle || pick.login;
+            node.textContent = stripped + '@' + pickHandle + ' ' + after;
+        var newOffset = stripped.length + ( '@' + pickHandle + ' ' ).length;
         var newRange = document.createRange();
         newRange.setStart( node, newOffset );
         newRange.setEnd( node, newOffset );

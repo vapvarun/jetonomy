@@ -12,63 +12,79 @@ defined( 'ABSPATH' ) || exit;
 class Mentions {
 
 	/**
-	 * Regex matching a linkifiable @mention in rendered content.
+	 * Regex matching an @mention, for BOTH linking and notifying.
 	 *
-	 * The negative lookbehind prevents matching inside URL paths like
-	 * `tiktok.com/@username/video/...` — a `/`, `.`, `:`, `-`, or word
-	 * character immediately before the `@` blocks the match.
+	 * One pattern on purpose. There used to be two - a strict LINK_PATTERN and
+	 * a looser NOTIFY_PATTERN - and they disagreed, so a login containing a dot
+	 * was notified but rendered a link to the wrong user: `@john.smith`
+	 * notified `john.smith` while the link resolved `john` (Basecamp
+	 * 10212719567). Splitting them was meant to protect dotted logins, but only
+	 * half the pipeline learned about dots.
+	 *
+	 * The lookbehind keeps an email address or a URL from reading as a mention -
+	 * `contact@example.com` and `tiktok.com/@someone` must match neither. The
+	 * old NOTIFY_PATTERN lacked it and fired a user lookup for every email in a
+	 * post.
+	 *
+	 * Dots are allowed only BETWEEN segments, never trailing, so
+	 * "thanks @john.smith." captures `john.smith` rather than an unresolvable
+	 * `john.smith.`. WordPress permits dots in user_login even under
+	 * sanitize_user( $login, true ), so this is a real account shape, commonly
+	 * seen where logins are seeded from email addresses.
 	 */
-	private const LINK_PATTERN = '/(?<![\w\/.:-])@([a-zA-Z0-9_-]+)/u';
+	private const MENTION_PATTERN = '/(?<![\w\/.:-])@([a-zA-Z0-9_-]+)/u';
 
 	/**
-	 * Regex matching an @mention for notification purposes.
+	 * Resolve a list of @handles to user IDs in ONE query.
 	 *
-	 * Deliberately looser than LINK_PATTERN (it accepts `.` inside the login)
-	 * so logins containing a dot still notify. Kept separate on purpose:
-	 * tightening it would silently stop notifying those users.
-	 */
-	private const NOTIFY_PATTERN = '/@([a-zA-Z0-9_\-\.]+)/';
-
-	/**
-	 * Resolve a list of @logins to user IDs in ONE query.
+	 * A handle is `user_nicename`, NOT `user_login`. That is the contract the
+	 * Wbcom family shares: BuddyNext's Profile\Handle documents it as "the
+	 * string members type after an `@`... WordPress's user_nicename, the field
+	 * core designates as a user's public slug", and names Jetonomy as one of the
+	 * partners that must agree. Resolving on user_login instead meant a handle
+	 * typed in BuddyNext did not resolve here whenever the two differ - which is
+	 * exactly the imported-user case: a login of `john.smith` gets the nicename
+	 * `john-smith`, so `@john-smith` worked in BuddyNext and nowhere else.
 	 *
-	 * The whole point of this helper: mention rendering used to be either
-	 * per-mention `get_user_by()` (an N+1 on a busy topic) or no validation at
-	 * all. One WP_User_Query with `login__in` resolves every login in the
-	 * render pass, regardless of how many mentions the content carries.
+	 * It also retires the dotted-handle problem rather than working around it.
+	 * A nicename is sanitize_title() output and cannot contain a dot, so the
+	 * pattern needs no special case and an email address can never read as a
+	 * mention.
 	 *
-	 * `blog_id => 0` keeps the lookup network-wide, matching the
-	 * `get_user_by( 'login', ... )` semantics this replaces.
+	 * One WP_User_Query with `nicename__in` resolves every handle in the render
+	 * pass, regardless of how many mentions the content carries.
+	 *
+	 * `blog_id => 0` keeps the lookup network-wide.
 	 *
 	 * `fields => all_with_meta` is deliberate: it primes the user cache, so the
 	 * `get_userdata()` inside get_profile_url() is served from cache instead of
 	 * costing a query per resolved user. Measured on a 40-mention body: 17
-	 * queries with a lean `[ID, user_login]` select vs 3 with this one, and 3
-	 * stays flat as the mention count grows.
+	 * queries with a lean select vs 3 with this one, and 3 stays flat as the
+	 * mention count grows.
 	 *
-	 * @param string[] $logins Raw @logins (no leading `@`), may repeat.
-	 * @return array<string,int> Map of lowercased login => user ID. Logins that
-	 *                           don't resolve to a real user are absent.
+	 * @param string[] $handles Raw @handles (no leading `@`), may repeat.
+	 * @return array<string,int> Map of lowercased nicename => user ID. Handles
+	 *                           that don't resolve to a real user are absent.
 	 */
-	private static function resolve_logins( array $logins ): array {
-		$logins = array_values( array_unique( array_filter( $logins ) ) );
-		if ( empty( $logins ) ) {
+	private static function resolve_handles( array $handles ): array {
+		$handles = array_values( array_unique( array_filter( $handles ) ) );
+		if ( empty( $handles ) ) {
 			return [];
 		}
 
 		$query = new \WP_User_Query(
 			[
-				'login__in'   => $logins,
-				'fields'      => 'all_with_meta',
-				'number'      => count( $logins ),
-				'blog_id'     => 0,
-				'count_total' => false,
+				'nicename__in' => $handles,
+				'fields'       => 'all_with_meta',
+				'number'       => count( $handles ),
+				'blog_id'      => 0,
+				'count_total'  => false,
 			]
 		);
 
 		$map = [];
 		foreach ( $query->get_results() as $user ) {
-			$map[ strtolower( $user->user_login ) ] = (int) $user->ID;
+			$map[ strtolower( $user->user_nicename ) ] = (int) $user->ID;
 		}
 		return $map;
 	}
@@ -85,13 +101,13 @@ class Mentions {
 	 * @return array<string,string> Map of lowercased login => profile URL.
 	 */
 	public static function link_map( string $content ): array {
-		if ( ! preg_match_all( self::LINK_PATTERN, $content, $matches ) || empty( $matches[1] ) ) {
+		if ( ! preg_match_all( self::MENTION_PATTERN, $content, $matches ) || empty( $matches[1] ) ) {
 			return [];
 		}
 
 		$urls = [];
-		foreach ( self::resolve_logins( $matches[1] ) as $login => $user_id ) {
-			$urls[ $login ] = get_profile_url( $user_id );
+		foreach ( self::resolve_handles( $matches[1] ) as $handle => $user_id ) {
+			$urls[ $handle ] = get_profile_url( $user_id );
 		}
 		return $urls;
 	}
@@ -113,7 +129,7 @@ class Mentions {
 		}
 
 		return preg_replace_callback(
-			self::LINK_PATTERN,
+			self::MENTION_PATTERN,
 			function ( $matches ) use ( $urls ) {
 				$username = $matches[1];
 				$url      = $urls[ strtolower( $username ) ] ?? '';
@@ -130,12 +146,12 @@ class Mentions {
 	 * Extract mentioned user IDs from content.
 	 */
 	public static function extract_user_ids( string $content ): array {
-		preg_match_all( self::NOTIFY_PATTERN, $content, $matches );
+		preg_match_all( self::MENTION_PATTERN, $content, $matches );
 		if ( empty( $matches[1] ) ) {
 			return [];
 		}
 
-		return array_values( self::resolve_logins( $matches[1] ) );
+		return array_values( self::resolve_handles( $matches[1] ) );
 	}
 
 	/**

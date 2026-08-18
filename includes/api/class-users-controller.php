@@ -275,7 +275,7 @@ class Users_Controller extends Base_Controller {
 				array(
 					'exclude'        => $blocked_ids,
 					'search'         => '*' . $q . '*',
-					'search_columns' => array( 'user_login', 'display_name' ),
+					'search_columns' => array( 'user_nicename', 'user_login', 'display_name' ),
 					'number'         => 10,
 					'orderby'        => 'display_name',
 				)
@@ -289,7 +289,7 @@ class Users_Controller extends Base_Controller {
 			$users = get_users(
 				array(
 					'search'         => '*' . $q . '*',
-					'search_columns' => array( 'user_login', 'display_name' ),
+					'search_columns' => array( 'user_nicename', 'user_login', 'display_name' ),
 					'exclude'        => $blocked_ids,
 					'number'         => 10,
 					'orderby'        => 'display_name',
@@ -301,6 +301,14 @@ class Users_Controller extends Base_Controller {
 		foreach ( $users as $u ) {
 			$out[] = array(
 				'id'           => (int) $u->ID,
+				// The handle is user_nicename - the string the mention parser
+				// resolves, and the field the whole Wbcom family agrees on.
+				// Offering user_login here let the typeahead insert a mention
+				// the server could not resolve whenever the two differ (a login
+				// of `john.smith` has the nicename `john-smith`).
+				'handle'       => $u->user_nicename,
+				// Kept for third-party consumers that already read it. Not what
+				// the composer inserts.
 				'login'        => $u->user_login,
 				'display_name' => $u->display_name,
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $u->ID, 48 ),
