@@ -2305,6 +2305,16 @@
       ]
     },
     {
+      "name": "jetonomy_space_purge_batch",
+      "type": "action",
+      "args_count": 1,
+      "args_signature": [
+        "array $args"
+      ],
+      "where": "includes/class-space-purge.php:58",
+      "notes": "Action Scheduler continuation hook; re-enqueued until the space drains."
+    },
+    {
       "name": "jetonomy_reserved_display_names",
       "type": "filter",
       "args_count": 2,

@@ -677,23 +677,27 @@ class Spaces_Controller extends Base_Controller {
 				);
 			}
 
-			// Reuses the Phase 1 derived column map - no second hand-written
-			// table list - and removes children before the space row, so an
-			// interrupted purge is resumable.
-			$counts = \Jetonomy\Space_Purge::purge( $id );
+			// Queued, not inline. A space with 50k topics and their replies
+			// cannot be deleted inside one request, and this endpoint is
+			// reachable from a browser - the caller must not be holding the
+			// connection while it drains (Basecamp 10119343634).
+			//
+			// Space_Purge removes children before the space row, so the space
+			// stays discoverable until the last batch and an interrupted purge
+			// resumes rather than stranding rows.
+			$queued = \Jetonomy\Space_Purge::queue( $id );
 
-			if ( ! empty( $space->category_id ) ) {
-				Category::increment_space_count( (int) $space->category_id, -1 );
-			}
-
+			// category.space_count is decremented by the purge itself when it
+			// reaches the space row, so it is NOT adjusted here - doing both
+			// would double-count.
 			return new WP_REST_Response(
 				[
 					'deleted' => true,
 					'mode'    => 'purge',
 					'id'      => $id,
-					'removed' => $counts,
+					'queued'  => $queued,
 				],
-				200
+				202
 			);
 		}
 
