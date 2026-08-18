@@ -177,6 +177,17 @@ final class Space_Command extends Base_Command {
 	 * <id>
 	 * : Space ID.
 	 *
+	 * [--mode=<mode>]
+	 * : What to do with the space. `transfer` hands it to its successor and
+	 * archives it, keeping every topic and reply. `purge` permanently destroys
+	 * the space and all of its content.
+	 * ---
+	 * default: transfer
+	 * options:
+	 *   - transfer
+	 *   - purge
+	 * ---
+	 *
 	 * [--format=<format>]
 	 * : Output format.
 	 * ---
@@ -187,11 +198,26 @@ final class Space_Command extends Base_Command {
 	 * ---
 	 *
 	 * ## EXAMPLES
+	 *     # Transfer and archive (default - nothing is destroyed).
 	 *     wp jetonomy space delete 5
+	 *
+	 *     # Permanently destroy the space and everything in it.
+	 *     wp jetonomy space delete 5 --mode=purge
 	 */
 	public function delete( $args, $assoc ): void {
-		$id     = (int) ( $args[0] ?? 0 );
-		$result = ( new Space_Journey() )->delete( $id );
+		$id   = (int) ( $args[0] ?? 0 );
+		$mode = (string) ( $assoc['mode'] ?? 'transfer' );
+
+		// Destroying other members' content deserves a prompt, and --yes is the
+		// documented way to mean it from a script.
+		if ( 'purge' === $mode ) {
+			\WP_CLI::confirm(
+				sprintf( 'Permanently delete space %d and every topic, reply and member association in it?', $id ),
+				$assoc
+			);
+		}
+
+		$result = ( new Space_Journey() )->delete( $id, $mode );
 		$this->render( $result, $assoc );
 	}
 

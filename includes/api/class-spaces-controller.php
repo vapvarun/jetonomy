@@ -712,17 +712,9 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		Space::update(
-			$id,
-			[
-				'author_id' => $successor,
-				'status'    => 'archived',
-			]
-		);
-		\Jetonomy\Models\SpaceMember::add( $id, $successor, 'admin' );
-
-		/** This action is documented in includes/class-privacy.php. */
-		do_action( 'jetonomy_space_transferred', $id, $user_id, $successor );
+		// Archive as well as reassign: the owner asked for this space to go, and
+		// parking it is the non-destructive reading of that request.
+		Space::hand_over( $id, $successor, $user_id, true );
 
 		return new WP_REST_Response(
 			[

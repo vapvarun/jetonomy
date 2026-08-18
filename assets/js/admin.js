@@ -527,13 +527,27 @@
 				e.preventDefault();
 				var $row = $(this).closest('tr');
 				var id = $(this).data('id');
+				var mode = $(this).data('mode') || 'transfer';
 
-				self.confirmAsync(self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+				// The two outcomes are not comparable, so they do not share a
+				// warning. Archiving keeps every topic; purging destroys other
+				// members' content too, and says so.
+				var warning = mode === 'purge'
+					? (self.i18n.confirmPurgeSpace || self.i18n.confirmDelete)
+					: (self.i18n.confirmArchiveSpace || self.i18n.confirmDelete);
+
+				self.confirmAsync(warning, { danger: mode === 'purge' }).then(function(ok) {
 					if (!ok) return;
-					self.ajax('jetonomy_delete_space', { id: id }).done(function(res) {
+					self.ajax('jetonomy_delete_space', { id: id, mode: mode }).done(function(res) {
 						if (res.success) {
 							self.toast(res.data.message);
-							$row.fadeOut(300, function() { $(this).remove(); });
+							// An archived space still exists, so the row stays and
+							// is reloaded; only a purge removes it from the list.
+							if (res.data && res.data.removed) {
+								$row.fadeOut(300, function() { $(this).remove(); });
+							} else {
+								window.location.reload();
+							}
 						} else {
 							self.toast(res.data || self.i18n.error, 'error');
 						}

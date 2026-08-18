@@ -295,17 +295,42 @@ class Spaces_Handler {
 			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
-		// Decrement category space count
-		if ( $space->category_id ) {
-			Category::increment_space_count( (int) $space->category_id, -1 );
+		// Same contract as DELETE /spaces/{id}: transfer unless purge is asked
+		// for AND allowed. Space::delete() is deliberately not used here - it
+		// removes the row and orphans every child across the 21 relations.
+		$mode = sanitize_key( (string) ( $_POST['mode'] ?? 'transfer' ) );
+
+		if ( 'purge' === $mode ) {
+			$settings = get_option( 'jetonomy_settings', array() );
+			if ( ! current_user_can( 'manage_options' ) && empty( $settings['allow_space_admin_purge'] ) ) {
+				wp_send_json_error( __( 'Permanently deleting a space is restricted to site administrators on this community.', 'jetonomy' ) );
+			}
+
+			\Jetonomy\Space_Purge::queue( $id );
+
+			wp_send_json_success(
+				array(
+					'message' => __( 'Space and all its content are being deleted.', 'jetonomy' ),
+					'mode'    => 'purge',
+					'removed' => true,
+				)
+			);
 		}
 
-		$result = Space::delete( $id );
-		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to delete space.', 'jetonomy' ) );
+		$successor = Space::resolve_successor( $id, get_current_user_id() );
+		if ( ! $successor ) {
+			wp_send_json_error( __( 'No one else can take over this space. Delete it permanently instead.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Space deleted.', 'jetonomy' ) ) );
+		Space::hand_over( $id, $successor, get_current_user_id(), true );
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Space archived and transferred. Its content was kept.', 'jetonomy' ),
+				'mode'    => 'transfer',
+				'removed' => false,
+			)
+		);
 	}
 
 	public function ajax_add_space_member(): void {

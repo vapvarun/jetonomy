@@ -180,6 +180,51 @@ class Space extends Model {
 	}
 
 	/**
+	 * Move ownership of a space to another member.
+	 *
+	 * The MECHANICS of a hand-over, shared by the three paths that need it:
+	 * account deletion, an explicit "delete space" that chose transfer, and the
+	 * CLI. The policy differs between them - account deletion leaves a space
+	 * running when another admin survives, an explicit delete always parks it -
+	 * but the steps do not, and getting the steps half right is the failure this
+	 * whole area keeps producing.
+	 *
+	 * Both writes matter and neither is sufficient alone: `author_id` is
+	 * attribution, the `space_members` admin row is the actual power. A space
+	 * given one without the other looks transferred and is unmanageable.
+	 *
+	 * @param int  $space_id     Space to hand over.
+	 * @param int  $to_user_id   New owner.
+	 * @param int  $from_user_id Previous owner, for the hook payload.
+	 * @param bool $archive      Park the space as well as reassigning it.
+	 * @return bool False when either id is unusable.
+	 */
+	public static function hand_over( int $space_id, int $to_user_id, int $from_user_id = 0, bool $archive = false ): bool {
+		if ( $space_id <= 0 || $to_user_id <= 0 ) {
+			return false;
+		}
+
+		$data = [ 'author_id' => $to_user_id ];
+		if ( $archive ) {
+			$data['status'] = 'archived';
+		}
+
+		self::update( $space_id, $data );
+		SpaceMember::add( $space_id, $to_user_id, 'admin' );
+
+		/**
+		 * A space changed hands.
+		 *
+		 * @param int $space_id     The space.
+		 * @param int $from_user_id Previous owner (0 when unknown).
+		 * @param int $to_user_id   New owner.
+		 */
+		do_action( 'jetonomy_space_transferred', $space_id, $from_user_id, $to_user_id );
+
+		return true;
+	}
+
+	/**
 	 * Who should own this space if the current owner goes away.
 	 *
 	 * ONE definition, shared by the two paths that need it: account deletion

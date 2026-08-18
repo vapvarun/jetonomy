@@ -78,8 +78,7 @@ class Privacy {
 			return;
 		}
 
-		$members_table = table( 'space_members' );
-		$site_admin    = $this->resolve_site_admin( $user_id );
+		$site_admin = $this->resolve_site_admin( $user_id );
 
 		foreach ( $space_ids as $space_id ) {
 			$space_id = (int) $space_id;
@@ -96,12 +95,9 @@ class Privacy {
 			$heir = ( $heir && $heir !== $site_admin ) ? $heir : 0;
 
 			if ( $heir ) {
-				// They already hold the admin row, so author_id is all that moves.
-				$wpdb->update( $spaces_table, [ 'author_id' => $heir ], [ 'id' => $space_id ] );
-				\Jetonomy\Models\Space::bust_cache( $space_id );
-
-				/** This filter is documented below. */
-				do_action( 'jetonomy_space_transferred', $space_id, $user_id, $heir );
+				// NOT archived: another admin is still running this space, so
+				// nothing is stranded and it keeps working.
+				\Jetonomy\Models\Space::hand_over( $space_id, $heir, $user_id, false );
 				continue;
 			}
 
@@ -116,53 +112,11 @@ class Privacy {
 				continue;
 			}
 
-			$wpdb->update(
-				$spaces_table,
-				[
-					'author_id' => $successor,
-					'status'    => 'archived',
-				],
-				[ 'id' => $space_id ]
-			);
-
-			// author_id is attribution; the space_members admin row is the
-			// actual power. Moving one without the other produces a space that
-			// looks transferred and is still unmanageable.
-			$has_row = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_table} WHERE space_id = %d AND user_id = %d", $space_id, $successor ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-
-			if ( $has_row ) {
-				$wpdb->update(
-					$members_table,
-					[ 'role' => 'admin' ],
-					[
-						'space_id' => $space_id,
-						'user_id'  => $successor,
-					]
-				);
-			} else {
-				$wpdb->insert(
-					$members_table,
-					[
-						'space_id'  => $space_id,
-						'user_id'   => $successor,
-						'role'      => 'admin',
-						'joined_at' => current_time( 'mysql', true ),
-					]
-				);
-			}
-
-			\Jetonomy\Models\Space::bust_cache( $space_id );
-
-			/**
-			 * Fires after an ownerless space is handed to the site admin.
-			 *
-			 * @since 1.9.3
-			 *
-			 * @param int $space_id     The transferred space.
-			 * @param int $from_user_id The departing owner.
-			 * @param int $to_user_id   The site admin receiving it.
-			 */
-			do_action( 'jetonomy_space_transferred', $space_id, $user_id, $successor );
+			// Archived, because nobody is left running it - an owner should
+			// decide what happens to it rather than it quietly continuing with
+			// no one able to manage it. hand_over() writes BOTH author_id and
+			// the admin row; attribution without the row leaves it unmanageable.
+			\Jetonomy\Models\Space::hand_over( $space_id, $successor, $user_id, true );
 		}
 	}
 

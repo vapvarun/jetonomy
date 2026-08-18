@@ -278,7 +278,20 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 							<div class="row-actions">
 								<span class="edit"><a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
 								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
-								<span class="delete"><a href="#" class="jetonomy-delete-space" data-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
+								<?php
+								// Two separate actions rather than one Delete with a
+								// mode picker: the safe one and the irreversible one
+								// should not be a dropdown apart. Archive is always
+								// offered; permanent deletion appears only for whoever
+								// the site owner has allowed to do it, so the setting
+								// is visible in the UI and not just enforced on POST.
+								$jt_may_purge = current_user_can( 'manage_options' )
+									|| ! empty( get_option( 'jetonomy_settings', array() )['allow_space_admin_purge'] );
+								?>
+								<span class="archive"><a href="#" class="jetonomy-delete-space" data-id="<?php echo absint( $space->id ); ?>" data-mode="transfer"><?php esc_html_e( 'Archive', 'jetonomy' ); ?></a><?php echo $jt_may_purge ? ' | ' : ''; ?></span>
+								<?php if ( $jt_may_purge ) : ?>
+									<span class="delete"><a href="#" class="jetonomy-delete-space jt-danger" data-id="<?php echo absint( $space->id ); ?>" data-mode="purge"><?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?></a></span>
+								<?php endif; ?>
 							</div>
 							<?php
 							break;

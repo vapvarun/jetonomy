@@ -129,14 +129,22 @@ final class Space_Purge {
 		// whole purge, not whichever slice happened to finish it. Short TTL
 		// because it is progress state, not data: losing it costs an accurate
 		// count in one hook payload, never a row.
-		$tally_key = 'jetonomy_purge_tally_' . $space_id;
-		$tally     = (array) get_transient( $tally_key );
+		$tally_key   = 'jetonomy_purge_tally_' . $space_id;
+		$authors_key = 'jetonomy_purge_authors_' . $space_id;
+		$tally       = (array) get_transient( $tally_key );
+		$authors     = (array) get_transient( $authors_key );
+
 		foreach ( $step['removed'] as $key => $n ) {
 			$tally[ $key ] = ( $tally[ $key ] ?? 0 ) + $n;
 		}
+		$authors = array_values( array_unique( array_merge( $authors, $step['authors'] ) ) );
 
 		if ( $step['done'] ) {
 			delete_transient( $tally_key );
+			delete_transient( $authors_key );
+
+			// Counters last: the rows are gone, so a recount now sees the truth.
+			self::recount_authors( $authors );
 
 			/** This action is documented in purge(). */
 			do_action( 'jetonomy_space_purged', $space_id, $tally );
@@ -144,6 +152,7 @@ final class Space_Purge {
 		}
 
 		set_transient( $tally_key, $tally, DAY_IN_SECONDS );
+		set_transient( $authors_key, $authors, DAY_IN_SECONDS );
 
 		if ( function_exists( 'as_enqueue_async_action' ) ) {
 			as_enqueue_async_action( self::BATCH_HOOK, [ 'space_id' => $space_id ], self::AS_GROUP );
@@ -153,6 +162,27 @@ final class Space_Purge {
 		// AS vanished mid-purge (deactivated between batches). Finish inline
 		// rather than leaving a half-deleted space behind.
 		self::purge( $space_id );
+	}
+
+	/**
+	 * Rebuild post/reply totals for members who lost content to a purge.
+	 *
+	 * Deleting a space silently invalidates every affected author's
+	 * post_count and reply_count, which are denormalised counters the profile
+	 * and leaderboard read directly - so without this a purge leaves members
+	 * credited for topics that no longer exist.
+	 *
+	 * Scoped to the affected members via Recount::for_users() rather than
+	 * Recount::run( 'users' ), which rewrites every profile row and flushes the
+	 * whole cache.
+	 *
+	 * @param int[] $authors Members whose content was removed.
+	 */
+	private static function recount_authors( array $authors ): void {
+		$authors = array_values( array_unique( array_filter( array_map( 'intval', $authors ) ) ) );
+		if ( $authors ) {
+			Recount::for_users( $authors );
+		}
 	}
 
 	/**
@@ -355,7 +385,7 @@ final class Space_Purge {
 	 *
 	 * @param int $space_id Space being purged.
 	 * @param int $limit    Max parent rows to process this call.
-	 * @return array{done:bool,removed:array<string,int>}
+	 * @return array{done:bool,removed:array<string,int>,authors:int[]}
 	 */
 	public static function purge_step( int $space_id, int $limit = self::CHUNK ): array {
 		$space_id = (int) $space_id;
@@ -366,6 +396,7 @@ final class Space_Purge {
 			return [
 				'done'    => true,
 				'removed' => $removed,
+				'authors' => [],
 			];
 		}
 
@@ -379,6 +410,12 @@ final class Space_Purge {
 			// Ids first, exactly as purge() does: the rows that identify
 			// replies are themselves in the delete set.
 			$reply_slice = self::reply_ids( $post_slice );
+
+			// Authors BEFORE the rows go, so their post_count / reply_count can
+			// be rebuilt once the purge finishes. Collected per slice and
+			// deduped by the caller, which keeps the recount to the members who
+			// actually lost content instead of every profile on the site.
+			$authors = self::author_ids( $post_slice, $reply_slice );
 
 			foreach ( self::relations() as $r ) {
 				if ( 'reply' === $r['ref'] && $reply_slice ) {
@@ -420,6 +457,7 @@ final class Space_Purge {
 			return [
 				'done'    => false,
 				'removed' => $removed,
+				'authors' => $authors,
 			];
 		}
 
@@ -461,6 +499,7 @@ final class Space_Purge {
 		return [
 			'done'    => true,
 			'removed' => $removed,
+			'authors' => [],
 		];
 	}
 
@@ -475,12 +514,16 @@ final class Space_Purge {
 		// could drift from it. Callers who cannot afford a long request should
 		// use queue(); this one runs to completion.
 		$removed = [];
+		$authors = [];
 		do {
 			$step = self::purge_step( $space_id );
 			foreach ( $step['removed'] as $key => $n ) {
 				$removed[ $key ] = ( $removed[ $key ] ?? 0 ) + $n;
 			}
+			$authors = array_merge( $authors, $step['authors'] );
 		} while ( ! $step['done'] );
+
+		self::recount_authors( $authors );
 
 		/**
 		 * A space and everything it owned has been removed.
@@ -491,6 +534,32 @@ final class Space_Purge {
 		do_action( 'jetonomy_space_purged', $space_id, $removed );
 
 		return $removed;
+	}
+
+	/**
+	 * Distinct authors of the rows about to be deleted.
+	 *
+	 * @param int[] $post_ids  Topic ids in this slice.
+	 * @param int[] $reply_ids Reply ids in this slice.
+	 * @return int[]
+	 */
+	private static function author_ids( array $post_ids, array $reply_ids ): array {
+		global $wpdb;
+
+		$out = [];
+
+		foreach ( [ [ table( 'posts' ), $post_ids ], [ table( 'replies' ), $reply_ids ] ] as [ $tbl, $ids ] ) {
+			if ( ! $ids || ! self::table_exists( $tbl ) ) {
+				continue;
+			}
+			foreach ( array_chunk( $ids, self::CHUNK ) as $chunk ) {
+				$in = implode( ',', array_map( 'intval', $chunk ) );
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$out = array_merge( $out, (array) $wpdb->get_col( "SELECT DISTINCT author_id FROM {$tbl} WHERE id IN ({$in})" ) );
+			}
+		}
+
+		return array_values( array_unique( array_filter( array_map( 'intval', $out ) ) ) );
 	}
 
 	/**
