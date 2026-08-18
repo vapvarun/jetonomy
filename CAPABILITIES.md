@@ -2,14 +2,14 @@
 
 Buyer-level roll-up: what this plugin can actually do, in the words a site owner
 would use. The [manifest](audit/manifest.json) lists the parts (80 REST routes,
-214 hooks, 22 tables); this file says what the parts add up to.
+225 hooks, 22 tables); this file says what the parts add up to.
 
 Every row is verified against code, with the file that delivers it. Status
 values: **YES** shipped and complete, **YES-beta** shipped but young,
 **PARTIAL** works with a real caveat stated in the row, **NO** not in the free
 plugin (Pro rows live in `../jetonomy-pro/CAPABILITIES.md`).
 
-Verified 2026-08-01 against 1.9.0. When you add or remove a capability, update
+Verified 2026-08-18 against 1.9.3. When you add or remove a capability, update
 this file in the same commit.
 
 ## Running a community
@@ -30,6 +30,10 @@ this file in the same commit.
 | Make a space public, private or hidden | YES | `includes/class-visibility.php` |
 | Require approval or an invite to join a space | YES | `includes/models/class-join-request.php`, `class-invite-link.php` |
 | Generate and revoke invite links from the front end | YES | `includes/api/class-spaces-controller.php` (invites routes) |
+| Remove a space without destroying other members' topics and replies | YES | `DELETE /spaces/{id}` defaults to `mode=transfer`; `includes/models/class-space.php` (`hand_over`, `resolve_successor`) |
+| Permanently delete a space and everything in it, as a controlled opt-in | YES | `mode=purge` gated on `allow_space_admin_purge`; `includes/class-space-purge.php` batches it through Action Scheduler |
+| Keep a space manageable when its owner deletes their account | YES | `includes/class-privacy.php` transfers to a surviving space admin, or parks it with the site admin |
+| Order spaces deliberately within a category | YES | `sort_order` on `POST`/`PATCH /spaces`, drag-reorder in `includes/admin/views/spaces.php` |
 | Gate a space behind a membership plan | YES | `includes/adapters/interface-membership-adapter.php` with MemberPress (`class-member-press-adapter.php`) and Paid Memberships Pro (`class-pmpro-adapter.php`) |
 | Gate on any other membership plugin | PARTIAL | The adapter interface is public and Pro ships more adapters; free ships MemberPress and PMPro only. Anything else needs an adapter. |
 | Tell a blocked visitor which plan opens the space | YES | 1.9.0 upgrade-link path, `jetonomy_membership_upgrade_url` |
@@ -42,6 +46,11 @@ this file in the same commit.
 |---|---|---|
 | Give moderators a queue of flagged content | YES | `includes/api/class-moderation-controller.php`, `/community/mod/` |
 | Let a space have its own moderators, separate from site admins | YES | `includes/api/class-space-moderation-controller.php`, space roles |
+| Stop members publishing under a reserved or impersonating name | YES | `includes/functions.php` (`display_name_choices`, `is_reserved_display_name`), enforced in `PATCH /users/me` |
+| Let members choose a public name from their own fields, WordPress-style | YES | `templates/views/edit-profile.php` first/last/nickname plus a "Display name publicly as" select |
+| Lock member names to administrators | YES | `lock_member_names` setting, enforced in `includes/api/class-users-controller.php` |
+| Rename every member on screen without touching stored data | YES | `jetonomy_user_display_name` filter, honoured by ~39 display surfaces |
+| Agree with a partner plugin on what an @handle is | YES | `jetonomy_user_handle` (emit) paired with `jetonomy_resolve_mention_handles` (resolve), both on `user_nicename` |
 | Ban or silence a member | YES | `includes/models/class-restriction.php` (ban blocks login, silence blocks posting) |
 | Auto-promote members as they participate | YES | Trust levels 0-5, `includes/trust/class-trust-evaluator.php` |
 | Catch spam automatically | PARTIAL | Akismet is wired in free; AI-based detection is Pro. |
