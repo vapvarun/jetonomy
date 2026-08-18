@@ -48,6 +48,32 @@ class Import_Manager {
 		return $available;
 	}
 
+	/**
+	 * Whether a registered importer can preview without writing.
+	 *
+	 * @param string $id Importer id.
+	 * @return bool
+	 */
+	public static function supports_dry_run( string $id ): bool {
+		return isset( self::$importers[ $id ] ) && self::$importers[ $id ]->supports_dry_run();
+	}
+
+	/**
+	 * Ids of every importer that can preview, for telling the user which do.
+	 *
+	 * @return string[]
+	 */
+	public static function dry_run_sources(): array {
+		$ids = array();
+		foreach ( self::$importers as $id => $importer ) {
+			if ( $importer->supports_dry_run() ) {
+				$ids[] = $id;
+			}
+		}
+
+		return $ids;
+	}
+
 	public static function run( string $id, array $options = [] ): ?array {
 		if ( ! isset( self::$importers[ $id ] ) ) {
 			return null;
