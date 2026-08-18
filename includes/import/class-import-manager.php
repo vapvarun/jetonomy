@@ -56,6 +56,27 @@ class Import_Manager {
 		$importer = self::$importers[ $id ];
 
 		if ( ! empty( $options['dry_run'] ) ) {
+			// Refuse rather than run for real. An importer that ignores the flag
+			// would otherwise treat "show me what would happen" as "do it"
+			// (Basecamp 10210057225 follow-up).
+			if ( ! $importer->supports_dry_run() ) {
+				return array(
+					'imported' => 0,
+					'skipped'  => 0,
+					'errors'   => array(
+						array(
+							'type'    => 'importer',
+							'id'      => $id,
+							'message' => sprintf(
+								/* translators: %s: importer id, e.g. asgaros. */
+								__( 'The %s importer does not support dry runs yet. Aborting so nothing is written - run without --dry-run to import for real.', 'jetonomy' ),
+								$id
+							),
+						),
+					),
+				);
+			}
+
 			$importer->set_dry_run( true );
 		}
 
