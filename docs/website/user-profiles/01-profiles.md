@@ -71,7 +71,8 @@ Members can edit their own profile at `/community/u/their-username/edit/`. This 
 
 Editable fields:
 
-- Display name
+- First name, last name, and nickname
+- **Display name publicly as** - a dropdown of the names above, plus the member's username
 - Bio
 - Avatar - upload a JPG, PNG, GIF, or WebP. After choosing a non-GIF image, a crop dialog opens: drag to reposition, use the slider to zoom, then **Crop and upload** saves a square avatar (animated GIFs upload as-is to preserve animation). The "Remove photo" button reverts to the Gravatar.
 - Notification preferences (email and in-app toggles per type)
@@ -79,6 +80,25 @@ Editable fields:
 ![Avatar crop dialog open with the image preview, zoom slider, and Crop and upload button](../images/edit-profile-avatar-crop.png)
 
 WordPress Administrators can edit any member's profile from the standard WordPress Users admin as well.
+
+### How the display name works (changed in 1.9.3)
+
+Members do not type a display name freely. They fill in their first name, last name and nickname, then pick which combination to show publicly from a dropdown - the same model the WordPress user profile screen uses.
+
+This matters for two reasons:
+
+- **Nobody can publish under a name they do not own.** A member cannot set their display name to "Administrator", "Support", your site's name, or another member's name, because the only options offered are built from their own fields. Reserved names are rejected even if a member puts one in their own nickname first.
+- **It agrees with WordPress.** The display name a member picks here is the same value the WordPress user profile screen shows, so the two no longer overwrite each other.
+
+The member's current display name always stays available as an option, so upgrading from an earlier version never renames anyone.
+
+> **Locking names.** Turn on **Settings → Members → Only administrators can change member names** if your community needs verified real names. Members then cannot edit any of the name fields, and the Edit Profile page tells them so instead of showing controls that will not save. Administrators can still change names from the WordPress Users screen. This is off by default.
+
+### Handles and @mentions
+
+A member's **handle** is separate from their display name. It is the WordPress user slug - the `john-smith` in `/community/u/john-smith/` - and it is what the composer inserts when someone picks a name from the `@` autocomplete.
+
+Keeping the two separate means a community can show real names in bylines while members still mention each other by a short, stable handle. It also means Jetonomy and BuddyNext agree on what a handle is, so a mention typed in one is understood by the other.
 
 ## Deleting Your Account (1.8.0+)
 

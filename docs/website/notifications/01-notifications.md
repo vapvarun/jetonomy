@@ -36,7 +36,7 @@ Jetonomy ships with ten notification types. The **Channels** column shows the de
 |-------|-----------------|---------|
 | Someone replies to your topic | Topic author | In-app, email |
 | Someone replies to your reply (threaded) | Reply author | In-app |
-| Someone mentions you with @username | Mentioned member | In-app, email |
+| Someone mentions you with @handle | Mentioned member | In-app, email |
 | Your reply is accepted as an answer (Q&A) | Reply author | In-app, email |
 | An idea's status changes (Ideas spaces) | Idea author | In-app, email |
 | A new topic is posted in a space you follow | All followers of that space | In-app |

@@ -78,6 +78,9 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_before_join_space`<br>_filter_ | Filter whether a user should be allowed to join a space. | `user_id, space_id` | `includes/models/class-space-member.php` |
 | `jetonomy_import_space_visibility`<br>_filter_ | - | `access, source, forum` | `includes/import/class-asgaros-importer.php` |
 | `jetonomy_join_request_approved`<br>_action_ | - | - | `includes/models/class-join-request.php` |
+| `jetonomy_space_transferred`<br>_action_ | A space changed hands - owner account deleted, or an explicit delete that chose transfer. | `space_id, from_user_id, to_user_id` | `includes/models/class-space.php` |
+| `jetonomy_space_purged`<br>_action_ | A space and everything it owned was permanently removed. `removed` maps `table.column:ref` to rows deleted. | `space_id, removed` | `includes/class-space-purge.php` |
+| `jetonomy_space_purge_batch`<br>_action_ | Action Scheduler continuation for a batched purge; re-enqueued until the space drains. Not intended as an extension point. | `args{space_id}` | `includes/class-space-purge.php` |
 | `jetonomy_join_request_created`<br>_action_ | - | `request_id` | `includes/cli/journeys/class-member-journey.php` |
 | `jetonomy_join_request_denied`<br>_action_ | - | - | `includes/models/class-join-request.php` |
 | `jetonomy_max_space_pins`<br>_filter_ | - | - | `includes/api/class-posts-controller.php` |
@@ -116,6 +119,11 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_profile_response`<br>_filter_ | Filter the user profile REST response. | `response, user` | `includes/api/class-users-controller.php` |
 | `jetonomy_profile_tabs`<br>_filter_ | Add, remove, reorder, or relabel the tabs shown under a member's profile header. | `$tabs, $user, $is_own` | `templates/views/user-profile.php` |
 | `jetonomy_profile_url`<br>_filter_ | Allows third-party plugins (BuddyPress, BuddyBoss, Ultimate Member) to override where user profile links point to. | `url, user_id` | `includes/functions.php` |
+| `jetonomy_display_name_choices`<br>_filter_ | The names a member may publish as. **Security boundary** - `PATCH /users/me` rejects anything not in this list, so never add unvalidated input. | `choices, user` | `includes/functions.php` |
+| `jetonomy_reserved_display_names`<br>_filter_ | Names nobody may publish as (admin, support, moderator, the site title...). Compared lowercased and whitespace-collapsed, exact match only. | `reserved, normalized` | `includes/functions.php` |
+| `jetonomy_user_display_name`<br>_filter_ | The name shown for a member on every display surface - bylines, member lists, the name beside an avatar. Return `user_nicename` to show handles instead of real names. Does **not** affect REST/CLI payloads. | `name, user` | `includes/functions.php` |
+| `jetonomy_user_handle`<br>_filter_ | The `@handle` shown for a member - typeahead, profile title, schema. **Must be paired with `jetonomy_resolve_mention_handles`**, or the composer offers a mention the parser cannot resolve. | `handle, user` | `includes/functions.php` |
+| `jetonomy_resolve_mention_handles`<br>_filter_ | Claim a typed `@handle` for a user before core fields are tried. This is how a partner plugin resolves its own custom profile slug. | `map, handles` | `includes/class-mentions.php` |
 
 ## Roadmap
 
@@ -215,6 +223,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | Hook | What it does | Args | Source |
 |---|---|---|---|
 | `jetonomy_seo_meta`<br>_filter_ | @type string $title         OG/Twitter title. | - | `includes/class-template-loader.php` |
+| `jetonomy_schema`<br>_filter_ | The primary schema.org entity for a route. A page gets ONE primary entity - adjust it here rather than emitting a competing one. Return `null` to suppress. | `schema, route` | `includes/seo/class-schema-markup.php` |
 
 ## Media & Uploads
 

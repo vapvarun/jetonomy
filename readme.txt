@@ -264,6 +264,36 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 1.9.3 - August 2026 =
+
+Removing a space keeps its content by default, members pick a display name instead of typing one, and @mentions reach members whose account was imported.
+
+* New      - Removing a space now offers Archive or Delete permanently as separate actions, and archiving keeps every topic, reply and vote.
+* New      - Setting to let space admins permanently delete a space and everything in it, off by default so only site administrators can destroy content.
+* New      - Setting to stop members changing their own name, for communities that need verified real names.
+* New      - Edit Profile collects a first name, last name and nickname, and members choose which combination to display publicly.
+* New      - Spaces can be dragged into a deliberate order within a category, instead of always sorting alphabetically.
+* Improve  - Permanently deleting a large space now runs in the background in batches, so it no longer times out.
+* Improve  - The Revisions and Activity admin screens now collapse correctly on a phone instead of squeezing a column to a single letter per line.
+* Improve  - Member post and reply counts are corrected automatically when a space is permanently deleted.
+* Fix      - @mentions now resolve on a member's handle, so members whose account was imported or created from an email address are notified instead of silently missed.
+* Fix      - Deleting a space left its topics, replies and member records behind in the database; both removal actions now handle a space's contents properly, and earlier damage is cleaned up automatically.
+* Fix      - Deleting the account of a member who owned a space no longer leaves that space with nobody able to manage it.
+* Fix      - Dragging to reorder categories on page two no longer scrambles the order of page one.
+* Fix      - A Q&A or Ideas space converted from another type now produces the right search-engine markup for its posts.
+* Fix      - Trust level names are now the same on the Users screen, the promotion email and the Permissions tab.
+* Fix      - The bbPress and wpForo importers no longer offer a dry run they cannot honour, and the bbPress dry run no longer reports an error for every topic and reply.
+* Fix      - The report control on a post now stays visible after a page refresh.
+* Fix      - Invite link rows sit on one line again, and the duplicate trust level pill is gone from the profile header.
+* Security - Members can no longer publish under a reserved name such as Administrator, Support or your site's name, or take another member's exact name.
+* Dev      - DELETE /spaces/{id} accepts mode=transfer (default) or mode=purge, and POST/PATCH /spaces accept sort_order.
+* Dev      - wp jetonomy space delete accepts --mode=transfer|purge and prompts before destroying content.
+* Dev      - New filters jetonomy_user_display_name, jetonomy_user_handle, jetonomy_display_name_choices and jetonomy_reserved_display_names control how members are named and identified.
+* Dev      - New filter jetonomy_schema lets an extension adjust a page's primary schema.org entity instead of emitting a competing one.
+* Dev      - New actions jetonomy_space_transferred and jetonomy_space_purged fire when a space changes hands or is destroyed.
+* Dev      - Vote and flag state for the current viewer is published on the API, so clients stop inferring it.
+* Compat   - Aligned with Jetonomy Pro 1.9.3. Install both updates together.
+
 = 1.9.2 - August 2026 =
 
 Read-only members stop being shown controls the server then refuses, and a member can leave a space from the same place they joined it.

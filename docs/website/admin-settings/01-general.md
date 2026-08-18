@@ -114,6 +114,26 @@ This controls how many hours after registration the reminder email is sent. The 
 
 > **Note:** If you use a third-party registration flow (WooCommerce, Restrict Content Pro, LearnDash) instead of Jetonomy's Login block, those plugins handle their own email verification. This setting only applies to registrations that go through the Jetonomy Login block.
 
+## Member Names
+
+**Settings → General → Member names**
+
+Off by default. When on, members cannot edit their first name, last name, nickname, or the name they display publicly. The Edit Profile page shows them the name they are published under instead of the fields, so nobody is offered a control that will not save.
+
+Turn this on if your community requires verified real names, or if you set names yourself when you create accounts. Administrators can still change any member's name from the WordPress Users screen.
+
+Members can never publish under a reserved name - "Administrator", "Support", "Moderator", your site's name and similar - whether this setting is on or off.
+
+## Deleting Spaces
+
+**Settings → General → Deleting spaces**
+
+Off by default. Controls whether **space admins** can permanently destroy a space and everything in it, or only archive it.
+
+Archiving keeps every topic and reply and can be undone. Permanent deletion cannot. Because a space contains other members' contributions, permanent deletion stays restricted unless you deliberately allow it.
+
+Site administrators can always do either, regardless of this setting. See [Removing a Space](../spaces-and-categories/01-creating-spaces.md#removing-a-space).
+
 ## Rebuild Counters
 
 **Location:** Dashboard → Quick Actions, or via WP-CLI / REST API
