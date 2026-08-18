@@ -78,18 +78,47 @@ class Privacy {
 			return;
 		}
 
-		$successor = $this->resolve_site_admin( $user_id );
-		if ( ! $successor ) {
-			// No other administrator exists. Leave author_id alone rather than
-			// point it at nobody - a wrong owner is worse than a stale one, and
-			// the backfill will retry once an admin exists.
-			return;
-		}
-
 		$members_table = table( 'space_members' );
+		$site_admin    = $this->resolve_site_admin( $user_id );
 
 		foreach ( $space_ids as $space_id ) {
 			$space_id = (int) $space_id;
+
+			// A space is only STRANDED if the leaver was its last admin. If
+			// another space admin survives, the space is still fully manageable
+			// by them and nothing needs rescuing - archiving it would take a
+			// healthy space read-only for its whole membership because one
+			// unrelated member closed their account (Basecamp 10119343043, QA
+			// case B). Hand over attribution, leave the space running.
+			$heir = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
+					"SELECT user_id FROM {$members_table} WHERE space_id = %d AND user_id <> %d AND role = 'admin' ORDER BY joined_at ASC, user_id ASC LIMIT 1",
+					$space_id,
+					$user_id
+				)
+			);
+
+			if ( $heir ) {
+				// They already hold the admin row, so author_id is all that moves.
+				$wpdb->update( $spaces_table, [ 'author_id' => $heir ], [ 'id' => $space_id ] );
+				\Jetonomy\Models\Space::bust_cache( $space_id );
+
+				/** This filter is documented below. */
+				do_action( 'jetonomy_space_transferred', $space_id, $user_id, $heir );
+				continue;
+			}
+
+			// Genuinely stranded: no admin remains. Fall back to the site admin
+			// and park the space, so an owner decides what happens to it rather
+			// than it quietly running with nobody able to manage it.
+			$successor = $site_admin;
+			if ( ! $successor ) {
+				// No other administrator exists at all. Leave author_id alone
+				// rather than point it at nobody - a wrong owner is worse than a
+				// stale one, and the backfill retries once an admin exists.
+				continue;
+			}
 
 			$wpdb->update(
 				$spaces_table,

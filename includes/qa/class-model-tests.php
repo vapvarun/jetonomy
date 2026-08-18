@@ -218,8 +218,124 @@ class Model_Tests {
 		$this->check( 'TE14: evaluate_level with L1 stats → >= 1', $level_1 >= 1, "got {$level_1}" );
 
 		$this->test_reorder();
+		$this->test_space_ownership_transfer();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail ];
+	}
+
+	/**
+	 * Space ownership when a member's account is deleted.
+	 *
+	 * Two outcomes, and telling them apart is the whole point. A space is only
+	 * STRANDED if the leaver was its last admin; one with another admin is still
+	 * fully manageable and must keep running. The first version of this fix
+	 * archived both, so one member closing their account took healthy spaces
+	 * read-only for their entire membership (Basecamp 10119343043, QA case B).
+	 *
+	 * Drives real wp_delete_user() rather than calling the private transfer
+	 * directly, because the hook wiring is half of what is being asserted.
+	 */
+	private function test_space_ownership_transfer(): void {
+		global $wpdb;
+
+		if ( ! function_exists( 'wp_delete_user' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+		}
+
+		$spaces_t  = table( 'spaces' );
+		$members_t = table( 'space_members' );
+		$suffix    = (string) time();
+
+		$owner  = wp_insert_user(
+			[
+				'user_login' => 'qa_owner_' . $suffix,
+				'user_email' => 'qa_owner_' . $suffix . '@example.com',
+				'user_pass'  => wp_generate_password(),
+				'role'       => 'subscriber',
+			]
+		);
+		$co_admin = wp_insert_user(
+			[
+				'user_login' => 'qa_coadmin_' . $suffix,
+				'user_email' => 'qa_coadmin_' . $suffix . '@example.com',
+				'user_pass'  => wp_generate_password(),
+				'role'       => 'subscriber',
+			]
+		);
+
+		if ( is_wp_error( $owner ) || is_wp_error( $co_admin ) ) {
+			$this->check( 'ST0: transfer fixtures created', false, 'could not create users' );
+			return;
+		}
+
+		// Pass the author as the creator explicitly. Space::create() otherwise
+		// seeds get_current_user_id() as space admin, which under WP-CLI is
+		// whoever the runner is - that silently gave both fixtures a SECOND
+		// admin and made the stranded case look survivable.
+		$make_space = static function ( string $slug, int $author ): int {
+			return (int) \Jetonomy\Models\Space::create(
+				[
+					'title'     => 'QA Transfer ' . $slug,
+					'slug'      => $slug,
+					'type'      => 'forum',
+					'author_id' => $author,
+				],
+				$author
+			);
+		};
+
+		// A: sole admin leaves -> stranded, so transfer + park it.
+		$sole = $make_space( 'qa-transfer-sole-' . $suffix, (int) $owner );
+
+		// B: a second admin remains -> nothing is stranded, leave it running.
+		$shared = $make_space( 'qa-transfer-shared-' . $suffix, (int) $owner );
+		$wpdb->insert(
+			$members_t,
+			[
+				'space_id'  => $shared,
+				'user_id'   => (int) $co_admin,
+				'role'      => 'admin',
+				'joined_at' => current_time( 'mysql', true ),
+			]
+		);
+
+		$fired = [];
+		$spy   = static function ( $space_id, $from, $to ) use ( &$fired ): void {
+			$fired[ (int) $space_id ] = [ (int) $from, (int) $to ];
+		};
+		add_action( 'jetonomy_space_transferred', $spy, 10, 3 );
+
+		wp_delete_user( (int) $owner );
+
+		remove_action( 'jetonomy_space_transferred', $spy, 10 );
+
+		$row = static function ( int $id ) use ( $wpdb, $spaces_t ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+			return $wpdb->get_row( $wpdb->prepare( "SELECT author_id, status FROM {$spaces_t} WHERE id = %d", $id ) );
+		};
+
+		$a = $row( $sole );
+		$b = $row( $shared );
+
+		$this->check( 'ST1: stranded space gets a new author', $a && (int) $a->author_id !== (int) $owner );
+		$this->check( 'ST2: stranded space is parked', $a && 'archived' === $a->status, $a->status ?? 'missing' );
+		$this->check(
+			'ST3: successor holds an admin row (author_id alone is unmanageable)',
+			$a && (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_t} WHERE space_id = %d AND user_id = %d AND role = 'admin'", $sole, (int) $a->author_id ) ) > 0 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		);
+
+		// The regression guard.
+		$this->check( 'ST4: space with a surviving admin is NOT archived', $b && 'archived' !== $b->status, $b->status ?? 'missing' );
+		$this->check( 'ST5: surviving admin inherits attribution', $b && (int) $b->author_id === (int) $co_admin, 'author_id=' . ( $b->author_id ?? '?' ) );
+
+		$this->check( 'ST6: transfer hook fired for both spaces', isset( $fired[ $sole ], $fired[ $shared ] ) );
+
+		// Cleanup.
+		foreach ( [ $sole, $shared ] as $sid ) {
+			$wpdb->delete( $members_t, [ 'space_id' => $sid ] );
+			$wpdb->delete( $spaces_t, [ 'id' => $sid ] );
+		}
+		wp_delete_user( (int) $co_admin );
 	}
 
 	/**
