@@ -433,13 +433,31 @@ fi
 #
 # Emergency bypass: --skip-browser-smoke (logs a warning to the zip manifest).
 #
-# The smoke skill writes the per-mode artefact (.last-smoke-pass-free.json)
-# in current runs; legacy runs wrote .last-smoke-pass.json. Try the per-mode
-# name first, fall back to the legacy single-file name.
-SMOKE_REPORT="$ROOT/docs/qa/.last-smoke-pass-free.json"
-if [ ! -f "$SMOKE_REPORT" ]; then
-	SMOKE_REPORT="$ROOT/docs/qa/.last-smoke-pass.json"
-fi
+# WHERE the report lives is docs/qa/qa-config.json's business, not this
+# script's. This used to prefer a per-mode name (.last-smoke-pass-free.json)
+# and fall back to the config's name - but nothing has written the per-mode
+# name since the smoke skill started honouring report_path, so the preference
+# was vestigial AND dangerous: on the 1.9.3 release a leftover -free file from
+# 1.8.0 (five weeks and two releases old) shadowed the report that had just
+# been written, and the gate compared the release against a stale artefact.
+#
+# One file, named by the config, no fallback chain. A sibling can no longer
+# shadow the real report because siblings are not consulted.
+SMOKE_REPORT_REL="$(python3 -c "
+import json, sys
+try:
+    print(json.load(open('$ROOT/docs/qa/qa-config.json')).get('report_path') or 'docs/qa/.last-smoke-pass.json')
+except Exception:
+    print('docs/qa/.last-smoke-pass.json')
+" 2>/dev/null)"
+SMOKE_REPORT="$ROOT/${SMOKE_REPORT_REL:-docs/qa/.last-smoke-pass.json}"
+
+# A stale sibling is no longer READ, but it still misleads a human who goes
+# looking. Say so rather than leaving it lying there silently.
+for _stale in "$ROOT"/docs/qa/.last-smoke-pass-*.json; do
+	[ -e "$_stale" ] || continue
+	echo "    NOTE: ignoring $(basename "$_stale") - the gate reads $SMOKE_REPORT_REL (qa-config.json report_path)."
+done
 if [ "$SKIP_BROWSER_SMOKE" -eq 1 ]; then
 	echo "WARN: browser smoke gate skipped (--skip-browser-smoke). Not for customer releases."
 elif [ ! -f "$SMOKE_REPORT" ]; then
@@ -463,12 +481,14 @@ except Exception as e:
     print('PARSE_FAIL ' + str(e))
     sys.exit(0)
 release = d.get('release_version', '')
+mode = d.get('mode', '')
 failures = d.get('failures') or []
 debug_issues = d.get('debug_log_issues') or []
 ran_at = d.get('ran_at', '')
 from_failures = [f for f in failures if (f.get('origin') or 'from') == 'from']
 from_issues = [i for i in debug_issues if (i.get('origin') or 'from') == 'from']
 print('VERSION=' + release)
+print('MODE=' + mode)
 print('FROM_FAILURES=' + str(len(from_failures)))
 print('FROM_ISSUES=' + str(len(from_issues)))
 print('RAN_AT=' + ran_at)
@@ -482,6 +502,29 @@ print('RAN_AT=' + ran_at)
 	FROM_FAILURES="$(echo "$REPORT_JSON_CHECK" | grep -oE '^FROM_FAILURES=.*' | sed 's/^FROM_FAILURES=//')"
 	FROM_ISSUES="$(echo "$REPORT_JSON_CHECK" | grep -oE '^FROM_ISSUES=.*' | sed 's/^FROM_ISSUES=//')"
 	RAN_AT="$(echo "$REPORT_JSON_CHECK" | grep -oE '^RAN_AT=.*' | sed 's/^RAN_AT=//')"
+	REPORT_MODE="$(echo "$REPORT_JSON_CHECK" | grep -oE '^MODE=.*' | sed 's/^MODE=//')"
+
+	# The filename used to imply the mode; now the report states it, so check it.
+	# A report is only a valid gate for a mode this plugin actually declares -
+	# otherwise a run against some other scope silently passes for this one.
+	ALLOWED_MODES="$(python3 -c "
+import json
+try:
+    print(' '.join(json.load(open('$ROOT/docs/qa/qa-config.json')).get('modes') or []))
+except Exception:
+    print('')
+" 2>/dev/null)"
+	if [ -n "$ALLOWED_MODES" ] && [ -n "$REPORT_MODE" ]; then
+		case " $ALLOWED_MODES " in
+			*" $REPORT_MODE "*) : ;;
+			*)
+				echo "FAIL: smoke report mode '$REPORT_MODE' is not one this plugin declares ($ALLOWED_MODES)." >&2
+				echo "      Rerun the smoke in a declared mode before packaging." >&2
+				exit 30
+				;;
+		esac
+	fi
+
 	if [ "$REPORT_VERSION" != "$VERSION" ]; then
 		echo "FAIL: smoke report version ($REPORT_VERSION) doesn't match release version ($VERSION)" >&2
 		echo "      Rerun the jetonomy-smoke skill against HEAD before packaging." >&2
@@ -496,7 +539,7 @@ print('RAN_AT=' + ran_at)
 		exit 30
 	fi
 	if [ -n "$RAN_AT" ]; then
-		echo "    smoke report dated $RAN_AT - OK"
+		echo "    smoke report dated $RAN_AT (mode: ${REPORT_MODE:-unknown}) - OK"
 	fi
 fi
 
