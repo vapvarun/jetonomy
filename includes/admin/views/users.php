@@ -52,8 +52,15 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 			<p class="jt-roles-explainer__foot">
 				<?php
 				printf(
-					/* translators: %s: link to the full guide */
-					esc_html__( 'A Subscriber can be a Level 5 Elder and a space admin — community standing and wp-admin access are separate on purpose. %s', 'jetonomy' ),
+					/* translators: 1: name of the highest trust level, 2: link to the full guide */
+					esc_html__( 'A Subscriber can be a Level 5 %1$s and a space admin — community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
+					// Read from $trust_labels for the same reason the rest of
+					// this screen does: the sentence used to hardcode "Elder",
+					// a name level 5 has not carried since the ladder was
+					// renamed, so the one surface that had just been fixed to
+					// stop keeping a local copy still shipped one in its own
+					// explainer (Basecamp 10212758778).
+					$trust_labels[5],
 					// Directory, not the deep link to 08-users-roles-and-trust.md.
 					// `blob/HEAD` resolves against the DEFAULT branch, and that
 					// file lands there only when the release branch merges - so
