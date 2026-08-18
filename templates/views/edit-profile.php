@@ -53,8 +53,41 @@ if ( ! $cancel_url ) {
 			data-wp-on--submit="actions.saveProfile"
 			data-wp-context='<?php echo wp_json_encode( [ 'profileUrl' => $profile_url ] ); ?>'>
 		<div class="jt-form-group">
-			<label class="jt-label"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></label>
-			<input type="text" name="display_name" class="jt-input" value="<?php echo esc_attr( $current_user->display_name ); ?>" required>
+			<label class="jt-label" for="jt-first-name"><?php esc_html_e( 'First Name', 'jetonomy' ); ?></label>
+			<input type="text" id="jt-first-name" name="first_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'first_name', true ) ); ?>">
+		</div>
+
+		<div class="jt-form-group">
+			<label class="jt-label" for="jt-last-name"><?php esc_html_e( 'Last Name', 'jetonomy' ); ?></label>
+			<input type="text" id="jt-last-name" name="last_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'last_name', true ) ); ?>">
+		</div>
+
+		<div class="jt-form-group">
+			<label class="jt-label" for="jt-nickname"><?php esc_html_e( 'Nickname', 'jetonomy' ); ?></label>
+			<input type="text" id="jt-nickname" name="nickname" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'nickname', true ) ); ?>" required>
+			<p class="jt-field-hint"><?php esc_html_e( 'Required. Only shown if you pick it below.', 'jetonomy' ); ?></p>
+		</div>
+
+		<div class="jt-form-group">
+			<?php
+			// A select of names the member already owns, not a free-text box: a
+			// free field let anyone publish as "Administrator" or copy another
+			// member's name, and it wrote through to wp_users.display_name
+			// site-wide. Options come from display_name_choices() so the form and
+			// PATCH /users/me agree on what is allowed. JS re-builds these live as
+			// the three fields above change; this server render is the no-JS state.
+			$jt_name_choices = \Jetonomy\display_name_choices( $current_user );
+			?>
+			<label class="jt-label" for="jt-display-name"><?php esc_html_e( 'Display name publicly as', 'jetonomy' ); ?></label>
+			<select id="jt-display-name" name="display_name" class="jt-input" data-jt-display-name required
+				data-jt-current="<?php echo esc_attr( $current_user->display_name ); ?>"
+				data-jt-login="<?php echo esc_attr( $current_user->user_login ); ?>">
+				<?php foreach ( $jt_name_choices as $jt_choice ) : ?>
+					<option value="<?php echo esc_attr( $jt_choice ); ?>" <?php selected( $jt_choice, $current_user->display_name ); ?>>
+						<?php echo esc_html( $jt_choice ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
 		</div>
 
 		<div class="jt-form-group">

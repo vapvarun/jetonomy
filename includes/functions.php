@@ -244,6 +244,61 @@ function client_ip(): string {
 }
 
 /**
+ * The set of names a member is allowed to publish as.
+ *
+ * WordPress does not let a member author an arbitrary display name: wp-admin
+ * offers a "Display name publicly as" select built from permutations of fields
+ * they already own. Jetonomy's front-end editor used to be a free-text box that
+ * wrote straight through to wp_users.display_name, which meant a member could
+ * publish as "Administrator", could take another member's exact name, and could
+ * silently overwrite a value the site owner had chosen in wp-admin - the stored
+ * name then matched none of core's own options.
+ *
+ * Shared by the form that renders the select and the endpoint that validates the
+ * submission, so the two cannot disagree about what is allowed.
+ *
+ * The member's CURRENT display_name is always included, exactly as core does.
+ * Sites upgrading from the free-text era have members whose stored name is not a
+ * permutation of anything; excluding it would make simply saving the form fail,
+ * or silently rename them. New arbitrary values still cannot be introduced.
+ *
+ * @param \WP_User $user User to build choices for.
+ * @return string[] Unique, non-empty candidate names.
+ */
+function display_name_choices( \WP_User $user ): array {
+	$first = (string) get_user_meta( $user->ID, 'first_name', true );
+	$last  = (string) get_user_meta( $user->ID, 'last_name', true );
+	$nick  = (string) get_user_meta( $user->ID, 'nickname', true );
+
+	$choices = array(
+		(string) $user->display_name,
+		(string) $user->user_login,
+		$nick,
+		$first,
+		$last,
+		trim( $first . ' ' . $last ),
+		trim( $last . ' ' . $first ),
+	);
+
+	/**
+	 * Filter the names a member may publish as.
+	 *
+	 * Add to this to offer another form (e.g. a pseudonym field); remove from it
+	 * to stop offering the raw username. Anything not in the returned list is
+	 * rejected by PATCH /users/me, so this is a security boundary, not a
+	 * cosmetic one - do not add unvalidated user input.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string[] $choices Candidate names.
+	 * @param \WP_User $user    The user.
+	 */
+	$choices = (array) apply_filters( 'jetonomy_display_name_choices', $choices, $user );
+
+	return array_values( array_unique( array_filter( array_map( 'trim', array_map( 'strval', $choices ) ) ) ) );
+}
+
+/**
  * The name to show for a member on any display surface.
  *
  * THE single source of truth for "what do we call this person on screen",

@@ -3693,6 +3693,45 @@ const { state, actions } = store( 'jetonomy', {
             btn?.setAttribute( 'hidden', '' );
         },
 
+        // Mirror of PHP display_name_choices(): rebuild the "Display name
+        // publicly as" options as the member types, so the select never offers
+        // a stale permutation and never omits one they just created. The server
+        // re-derives and re-validates the same list - this is convenience, not
+        // the security boundary.
+        refreshDisplayNameChoices() {
+            const form = getElement().ref.closest( 'form' );
+            if ( ! form ) return;
+            const select = form.querySelector( '[data-jt-display-name]' );
+            if ( ! select ) return;
+
+            const val = name => ( form.querySelector( '[name="' + name + '"]' )?.value || '' ).trim();
+            const first = val( 'first_name' );
+            const last  = val( 'last_name' );
+
+            const choices = [
+                select.dataset.jtCurrent || select.value,
+                select.dataset.jtLogin || '',
+                val( 'nickname' ),
+                first,
+                last,
+                ( first + ' ' + last ).trim(),
+                ( last + ' ' + first ).trim(),
+            ].map( s => s.trim() ).filter( Boolean );
+
+            const unique = [ ...new Set( choices ) ];
+            const keep = select.value;
+            select.textContent = '';
+            unique.forEach( name => {
+                const opt = document.createElement( 'option' );
+                opt.value = name;
+                opt.textContent = name;
+                select.appendChild( opt );
+            } );
+            // Keep the member's current pick if it survived the edit, else fall
+            // back to the first option rather than leaving the select blank.
+            select.value = unique.includes( keep ) ? keep : ( unique[ 0 ] || '' );
+        },
+
         *saveProfile( event ) {
             event.preventDefault();
             const ctx = getContext();
@@ -3720,6 +3759,15 @@ const { state, actions } = store( 'jetonomy', {
             const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
 
             const payload = { display_name: displayName, bio };
+            // Name parts travel with the save so the server can validate the
+            // chosen display name against what the member is submitting, not
+            // only against what is already stored.
+            [ 'first_name', 'last_name', 'nickname' ].forEach( key => {
+                const field = form.querySelector( '[name="' + key + '"]' );
+                if ( field ) {
+                    payload[ key ] = field.value;
+                }
+            } );
             // Local avatar (#9966775705): the hidden input carries the URL of
             // the uploaded attachment ('' = removed → Gravatar fallback).
             const avatarInput = form.querySelector( '[name="avatar_url"]' );

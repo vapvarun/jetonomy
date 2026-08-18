@@ -514,10 +514,35 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
-		// update display_name via wp_update_user.
+		// Name parts first, so display_name is validated against the values the
+		// member is submitting rather than the ones already stored - otherwise
+		// setting a first name and selecting "First Last" in one save would be
+		// rejected for a permutation that does not exist yet.
+		foreach ( [ 'first_name', 'last_name', 'nickname' ] as $meta_key ) {
+			if ( null !== $request->get_param( $meta_key ) ) {
+				update_user_meta( $user_id, $meta_key, sanitize_text_field( (string) $request->get_param( $meta_key ) ) );
+			}
+		}
+
+		// display_name must be one the member already owns. This used to accept
+		// any string and write it straight to wp_users, so a member could publish
+		// as "Administrator", take another member's exact name, and override the
+		// value the owner picked in wp-admin - site-wide, not just in the forum.
 		if ( null !== $request->get_param( 'display_name' ) ) {
 			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
 			if ( ! empty( $display_name ) ) {
+				$wp_user_now = get_userdata( $user_id );
+				$allowed     = $wp_user_now ? \Jetonomy\display_name_choices( $wp_user_now ) : [];
+				if ( ! in_array( $display_name, $allowed, true ) ) {
+					return new WP_Error(
+						'jetonomy_invalid_display_name',
+						__( 'Choose a display name from your own name fields.', 'jetonomy' ),
+						[
+							'status'  => 400,
+							'allowed' => $allowed,
+						]
+					);
+				}
 				wp_update_user(
 					[
 						'ID'           => $user_id,
@@ -976,6 +1001,18 @@ class Users_Controller extends Base_Controller {
 	private function get_update_args(): array {
 		return [
 			'display_name'  => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'first_name'    => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'last_name'     => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'nickname'      => [
 				'type'     => 'string',
 				'required' => false,
 			],
