@@ -1179,7 +1179,11 @@ class Template_Loader {
 						$parts['title'] = $slug_pretty;
 						break;
 					case 'profile':
-						$parts['title'] = '@' . (string) $data['slug'];
+						// Resolve the slug to the member's real handle rather
+						// than echoing whatever the URL was hit with, so the
+						// title agrees with the typeahead and the schema.
+						$jt_pu          = get_user_by( 'login', (string) $data['slug'] );
+						$parts['title'] = '@' . ( $jt_pu ? \Jetonomy\user_handle( $jt_pu ) : (string) $data['slug'] );
 						break;
 					case 'tag':
 						$parts['title'] = '#' . (string) $data['slug'];

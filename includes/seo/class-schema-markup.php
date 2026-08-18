@@ -477,8 +477,10 @@ class Schema_Markup {
 			$user = get_user_by( 'login', $slug );
 			if ( $user ) {
 				$items[] = array(
-					'name' => '@' . $user->user_login,
-					'url'  => $base . 'u/' . rawurlencode( $user->user_login ) . '/',
+					// The handle, not the login - this is the name a crawler
+					// shows, and it must match what the product calls them.
+					'name' => '@' . \Jetonomy\user_handle( $user ),
+					'url'  => \Jetonomy\get_profile_url( (int) $user->ID ),
 				);
 			}
 		}

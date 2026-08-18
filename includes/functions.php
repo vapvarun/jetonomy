@@ -300,6 +300,66 @@ function is_reserved_display_name( string $name ): bool {
 }
 
 /**
+ * The @handle to show for a member.
+ *
+ * The EMIT half of the mention contract. `jetonomy_resolve_mention_handles`
+ * turns a typed handle back into a user; this decides what handle we put in
+ * front of them in the first place - the composer typeahead, the profile page
+ * title, schema alternateName.
+ *
+ * Both halves are needed and they must agree. Jetonomy shipped only the resolve
+ * half, so a member whose partner plugin gives them a custom slug was offered
+ * as `@their-nicename` here and `@their-slug` there. Mentions still resolved,
+ * because resolution was already filterable - but the two products showed a
+ * different handle for the same person, which is the split the nicename work
+ * was meant to close.
+ *
+ * Default is `user_nicename`: WordPress's own public slug, and the field
+ * BuddyNext documents as the shared contract. Falls back to `user_login` only
+ * when nicename is somehow empty.
+ *
+ * Distinct from user_display_name(): the handle is an IDENTIFIER people type
+ * after an `@`, the display name is a label. A site may well show real names
+ * and still mention by handle.
+ *
+ * @param int|\WP_User|object $user User ID, WP_User, or a row carrying user_id.
+ * @return string Handle without the leading `@`, or '' when unresolvable.
+ */
+function user_handle( $user ): string {
+	if ( ! $user instanceof \WP_User ) {
+		$user_id = is_object( $user )
+			? (int) ( $user->user_id ?? $user->ID ?? 0 )
+			: (int) $user;
+
+		$user = $user_id > 0 ? get_userdata( $user_id ) : null;
+	}
+	if ( ! $user instanceof \WP_User ) {
+		return '';
+	}
+
+	$handle = (string) $user->user_nicename;
+	if ( '' === trim( $handle ) ) {
+		$handle = (string) $user->user_login;
+	}
+
+	/**
+	 * Filter the @handle shown for a member.
+	 *
+	 * MUST be paired with `jetonomy_resolve_mention_handles`. Anything returned
+	 * here will be typed back at us by members, so whatever claims a handle on
+	 * emit has to claim it on resolve too - otherwise the composer offers a
+	 * mention the parser cannot resolve, which is the exact failure BuddyNext's
+	 * Handle contract warns about.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string   $handle Resolved handle, no leading '@'.
+	 * @param \WP_User $user   The user.
+	 */
+	return (string) apply_filters( 'jetonomy_user_handle', $handle, $user );
+}
+
+/**
  * The set of names a member is allowed to publish as.
  *
  * WordPress does not let a member author an arbitrary display name: wp-admin

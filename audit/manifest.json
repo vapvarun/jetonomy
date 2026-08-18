@@ -2335,6 +2335,17 @@
       "where": "includes/functions.php:296"
     },
     {
+      "name": "jetonomy_user_handle",
+      "type": "filter",
+      "args_count": 2,
+      "args_signature": [
+        "string $handle",
+        "WP_User $user"
+      ],
+      "where": "includes/functions.php:359",
+      "notes": "Emit half of the mention contract; must be paired with jetonomy_resolve_mention_handles."
+    },
+    {
       "name": "jetonomy_user_display_name",
       "type": "filter",
       "args_count": 2,

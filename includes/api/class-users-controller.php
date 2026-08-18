@@ -306,7 +306,7 @@ class Users_Controller extends Base_Controller {
 				// Offering user_login here let the typeahead insert a mention
 				// the server could not resolve whenever the two differ (a login
 				// of `john.smith` has the nicename `john-smith`).
-				'handle'       => $u->user_nicename,
+				'handle'       => \Jetonomy\user_handle( $u ),
 				// Kept for third-party consumers that already read it. Not what
 				// the composer inserts.
 				'login'        => $u->user_login,
