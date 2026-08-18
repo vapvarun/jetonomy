@@ -275,7 +275,7 @@ class BBPress_Importer extends Importer {
 						[
 							'space_id'      => $space_id,
 							'author_id'     => (int) $topic->post_author,
-							'type'          => 'topic',
+							'type'          => \Jetonomy\compose_post_type( 'forum' ),
 							'title'         => $topic->post_title,
 							'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
 							'content'       => wp_kses_post( $topic->post_content ),
@@ -496,7 +496,7 @@ class BBPress_Importer extends Importer {
 					[
 						'space_id'      => $space_id,
 						'author_id'     => (int) $topic->post_author,
-						'type'          => 'topic',
+						'type'          => \Jetonomy\compose_post_type( 'forum' ),
 						'title'         => $topic->post_title,
 						'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
 						'content'       => wp_kses_post( $topic->post_content ),

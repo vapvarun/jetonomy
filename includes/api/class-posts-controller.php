@@ -413,13 +413,11 @@ class Posts_Controller extends Base_Controller {
 		// Derive post type from space type if not provided.
 		$type = sanitize_text_field( (string) $request->get_param( 'type' ) );
 		if ( empty( $type ) ) {
-			$space_type_to_post_type = array(
-				'qa'    => 'question',
-				'ideas' => 'idea',
-				'feed'  => 'status',
-			);
-			$space_type              = $space->type ?? 'forum';
-			$type                    = $space_type_to_post_type[ $space_type ] ?? 'topic';
+			// One map, in \Jetonomy\compose_post_type(). This used to be an
+			// inline copy that happened to agree with the helper - the same
+			// shape of duplication that let the trust-level names drift a full
+			// level apart across three surfaces.
+			$type = \Jetonomy\compose_post_type( (string) ( $space->type ?? 'forum' ) );
 		}
 
 		$content_plain = wp_strip_all_tags( $content );

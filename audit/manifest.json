@@ -2292,6 +2292,18 @@
       "where": "includes/trust/class-trust-levels.php"
     },
     {
+      "name": "jetonomy_space_posts_retyped",
+      "type": "action",
+      "args": "space_id, post_type, updated",
+      "where": "includes/models/class-space.php"
+    },
+    {
+      "name": "jetonomy_posts_retyped_migration",
+      "type": "action",
+      "args": "total",
+      "where": "includes/db/migrations/class-migration_1_9_3.php"
+    },
+    {
       "name": "jetonomy_space_transferred",
       "type": "action",
       "args": "space_id, from_user_id, to_user_id",

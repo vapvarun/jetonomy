@@ -587,7 +587,7 @@ class Asgaros_Importer extends Importer {
 				[
 					'space_id'      => $space_id,
 					'author_id'     => (int) ( $topic->author_id ?? 1 ),
-					'type'          => 'topic',
+					'type'          => \Jetonomy\compose_post_type( 'forum' ),
 					'title'         => $topic->name,
 					'slug'          => sanitize_title( $topic->name ) ?: 'topic-' . $topic->id,
 					'content'       => wp_kses_post( $content ),
