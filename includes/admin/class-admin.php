@@ -919,6 +919,12 @@ class Admin {
 				'membershipAdapters' => $membership_adapters,
 				'i18n'               => array(
 					'confirmDelete'           => esc_html__( 'Are you sure? This cannot be undone.', 'jetonomy' ),
+					'confirmArchiveSpace'     => esc_html__( 'Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.', 'jetonomy' ),
+					'confirmPurgeSpace'       => esc_html__( 'Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.', 'jetonomy' ),
+					/* translators: %s: the space name the operator must retype. */
+					'purgeTypeToConfirm'      => esc_html__( 'This destroys every topic, reply and attachment in %s, including content written by other members. It cannot be undone. Type the space name to confirm.', 'jetonomy' ),
+					'purgeConfirmLabel'       => esc_html__( 'Delete permanently', 'jetonomy' ),
+					'purgeNameMismatch'       => esc_html__( 'That name did not match, so nothing was deleted.', 'jetonomy' ),
 					'confirmBan'              => esc_html__( 'Are you sure you want to ban this user?', 'jetonomy' ),
 					'confirmSpam'             => esc_html__( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
 					'confirmTrash'            => esc_html__( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
@@ -967,6 +973,14 @@ class Admin {
 					'inviteUnlimited'         => esc_html__( 'Unlimited', 'jetonomy' ),
 					'inviteNever'             => esc_html__( 'Never', 'jetonomy' ),
 					'inviteExpired'           => esc_html__( 'Expired', 'jetonomy' ),
+					// Column labels for JS-injected invite rows. They must match
+					// the headings jetonomy_admin_table() renders, because the
+					// responsive layout shows them as each cell's label on mobile.
+					'inviteLink'              => esc_html__( 'Invite Link', 'jetonomy' ),
+					'inviteUses'              => esc_html__( 'Uses', 'jetonomy' ),
+					'inviteExpires'           => esc_html__( 'Expires', 'jetonomy' ),
+					'actions'                 => esc_html__( 'Actions', 'jetonomy' ),
+					'showMoreDetails'         => esc_html__( 'Show more details', 'jetonomy' ),
 					// Access-rule composer preview. Keyed so the sentence and its
 					// mismatch warnings are translatable like everything else.
 					'rulePreview'             => array(
@@ -1259,21 +1273,35 @@ class Admin {
 			$where[] = $wpdb->prepare( 'status = %s', $filter_status );
 		}
 
-		$where_sql   = implode( ' AND ', $where );
-		$spaces_t    = table( 'spaces' );
-		$paged       = max( 1, absint( $_GET['paged'] ?? 1 ) );
-		$per_page    = 20;
-		$offset      = ( $paged - 1 ) * $per_page;
+		$where_sql = implode( ' AND ', $where );
+		$spaces_t  = table( 'spaces' );
+		$paged     = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page  = absint( $_GET['per_page'] ?? 20 );
+		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
+			$per_page = 20;
+		}
+		$offset = ( $paged - 1 ) * $per_page;
+
+		// Manual ordering is only meaningful inside one category - that is the
+		// unit the front end renders (Space::list_by_category). With a single
+		// category filtered we sort the way members see it, so the admin is a
+		// preview and drag-reorder has somewhere coherent to write. Otherwise
+		// the list stays alphabetical, which is what you want when browsing
+		// every space across categories.
+		$can_reorder = $filter_category > 0 && ! $filter_type && ! $filter_status;
+		$order_sql   = $can_reorder ? 'sort_order ASC, title ASC' : 'title ASC';
+
 		$total       = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE {$where_sql}" );
 		$total_pages = (int) ceil( $total / $per_page );
 		$spaces      = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$spaces_t} WHERE {$where_sql} ORDER BY title ASC LIMIT %d OFFSET %d",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_sql is one of two literals above.
+				"SELECT * FROM {$spaces_t} WHERE {$where_sql} ORDER BY {$order_sql} LIMIT %d OFFSET %d",
 				$per_page,
 				$offset
 			)
 		) ?: array();
-		$categories  = $this->get_all_categories_flat();
+		$categories = $this->get_all_categories_flat();
 
 		include JETONOMY_DIR . 'includes/admin/views/spaces.php';
 	}

@@ -50,7 +50,7 @@ Create and manage spaces (forums, Q&A boards, ideas boards, feeds).
 | `create` | Create a new space |
 | `list` | List spaces |
 | `update <id>` | Update space settings |
-| `delete <id>` | Delete a space |
+| `delete <id>` | Remove a space. `--mode=transfer` (default) archives it and keeps every topic and reply; `--mode=purge` permanently destroys the space and all its content, and prompts first (`--yes` to skip). |
 | `add-member` | Add a member to a space |
 | `remove-member` | Remove a member from a space |
 
@@ -63,6 +63,12 @@ Types: `forum` (default), `qa`, `ideas`, `feed`. Visibility: `public`, `private`
 ```bash
 wp jetonomy space create --title="General" --slug=general --category=1
 wp jetonomy space create --title="Q&A" --slug=qa --category=1 --type=qa --visibility=private --join-policy=approval
+
+# Archive a space and hand it to an administrator - nothing is deleted.
+wp jetonomy space delete 5
+
+# Permanently destroy a space and everything in it.
+wp jetonomy space delete 5 --mode=purge --yes
 wp jetonomy space update 5 --visibility=private
 wp jetonomy space list --format=table
 ```

@@ -77,9 +77,23 @@ class Space extends Model {
 	 */
 	public static function update( int $id, array $data ): bool {
 		$slug_changing = ! empty( $data['slug'] );
-		$old_slug      = $slug_changing ? ( parent::find( $id )->slug ?? null ) : null;
+		$type_changing = ! empty( $data['type'] );
+
+		// One read covers both comparisons.
+		$existing = ( $slug_changing || $type_changing ) ? parent::find( $id ) : null;
+		$old_slug = $slug_changing ? ( $existing->slug ?? null ) : null;
+		$old_type = $type_changing ? ( $existing->type ?? null ) : null;
 
 		$result = parent::update( $id, $data );
+
+		// Retype the posts inside when the space changes what it is. Post type
+		// drives real behaviour, not just a label: schema markup only emits
+		// QAPage with acceptedAnswer for `question`, so a forum space switched
+		// to Q&A used to keep every post as `topic` and silently lose the rich
+		// result (Basecamp 10210058401). Ideas spaces had the same gap.
+		if ( $type_changing && $old_type && $old_type !== $data['type'] ) {
+			self::retype_posts( $id, (string) $data['type'] );
+		}
 
 		self::bust_cache( $id );
 		if ( $slug_changing && $data['slug'] !== $old_slug ) {
@@ -90,6 +104,59 @@ class Space extends Model {
 			Cache::delete_many( $keys );
 		}
 		return $result;
+	}
+
+	/**
+	 * Rewrite every post in a space to the type its new space type creates.
+	 *
+	 * Post type is behavioural, not cosmetic: schema markup emits QAPage with
+	 * acceptedAnswer only for `question`, the composer and roadmap key off it,
+	 * and listings label by it. A space switched to Q&A whose posts stayed
+	 * `topic` therefore looked converted and behaved like a forum.
+	 *
+	 * Uses \Jetonomy\compose_post_type() rather than a local map so this can
+	 * never disagree with what the composer and REST create.
+	 *
+	 * @param int    $space_id   Space whose posts to retype.
+	 * @param string $space_type New space type.
+	 * @return int Rows updated.
+	 */
+	protected static function retype_posts( int $space_id, string $space_type ): int {
+		$post_type = \Jetonomy\compose_post_type( $space_type );
+		$table     = \Jetonomy\table( 'posts' );
+
+		$updated = (int) static::db()->query(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- table name from table().
+				"UPDATE {$table} SET type = %s WHERE space_id = %d AND type <> %s",
+				$post_type,
+				$space_id,
+				$post_type
+			)
+		);
+
+		if ( $updated > 0 ) {
+			// Post's own object caches (postcount:*, feed:*) are TTL-only by
+			// design - their key space is unbounded per space, so no write can
+			// enumerate them. A retype therefore surfaces within the ≤120s TTL,
+			// same as any other bulk post change. What DOES need clearing is the
+			// request-scope slug memo, since a row this request already read now
+			// carries a different type.
+			Post::reset_slug_memo();
+
+			/**
+			 * Fires after a space type change retypes the posts inside it.
+			 *
+			 * @since 1.9.3
+			 *
+			 * @param int    $space_id  The space.
+			 * @param string $post_type The type every post now carries.
+			 * @param int    $updated   Rows changed.
+			 */
+			do_action( 'jetonomy_space_posts_retyped', $space_id, $post_type, $updated );
+		}
+
+		return $updated;
 	}
 
 	/**
@@ -110,6 +177,118 @@ class Space extends Model {
 		$result = parent::delete( $id );
 		self::bust_cache( $id, $slug );
 		return $result;
+	}
+
+	/**
+	 * Move ownership of a space to another member.
+	 *
+	 * The MECHANICS of a hand-over, shared by the three paths that need it:
+	 * account deletion, an explicit "delete space" that chose transfer, and the
+	 * CLI. The policy differs between them - account deletion leaves a space
+	 * running when another admin survives, an explicit delete always parks it -
+	 * but the steps do not, and getting the steps half right is the failure this
+	 * whole area keeps producing.
+	 *
+	 * Both writes matter and neither is sufficient alone: `author_id` is
+	 * attribution, the `space_members` admin row is the actual power. A space
+	 * given one without the other looks transferred and is unmanageable.
+	 *
+	 * @param int  $space_id     Space to hand over.
+	 * @param int  $to_user_id   New owner.
+	 * @param int  $from_user_id Previous owner, for the hook payload.
+	 * @param bool $archive      Park the space as well as reassigning it.
+	 * @return bool False when either id is unusable.
+	 */
+	public static function hand_over( int $space_id, int $to_user_id, int $from_user_id = 0, bool $archive = false ): bool {
+		if ( $space_id <= 0 || $to_user_id <= 0 ) {
+			return false;
+		}
+
+		$data = [ 'author_id' => $to_user_id ];
+		if ( $archive ) {
+			$data['status'] = 'archived';
+		}
+
+		self::update( $space_id, $data );
+		SpaceMember::add( $space_id, $to_user_id, 'admin' );
+
+		/**
+		 * A space changed hands.
+		 *
+		 * @param int $space_id     The space.
+		 * @param int $from_user_id Previous owner (0 when unknown).
+		 * @param int $to_user_id   New owner.
+		 */
+		do_action( 'jetonomy_space_transferred', $space_id, $from_user_id, $to_user_id );
+
+		return true;
+	}
+
+	/**
+	 * Who should own this space if the current owner goes away.
+	 *
+	 * ONE definition, shared by the two paths that need it: account deletion
+	 * (Privacy) and an explicit "delete space" that chooses transfer over purge.
+	 * They were about to grow separate copies, and a successor rule that
+	 * disagrees with itself is how a space ends up owned by someone who cannot
+	 * manage it.
+	 *
+	 * Precedence:
+	 *   1. A surviving space admin - earliest joined_at, user_id as tiebreak.
+	 *      They already hold the admin row, so the space keeps working as-is.
+	 *   2. The lowest-id site administrator.
+	 *
+	 * @param int $space_id  Space to find an heir for.
+	 * @param int $excluding User to exclude (the departing owner).
+	 * @return int Successor user ID, or 0 when nobody qualifies.
+	 */
+	public static function resolve_successor( int $space_id, int $excluding = 0 ): int {
+		$members = \Jetonomy\table( 'space_members' );
+
+		$heir = (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
+				"SELECT user_id FROM {$members} WHERE space_id = %d AND user_id <> %d AND role = 'admin' ORDER BY joined_at ASC, user_id ASC LIMIT 1",
+				$space_id,
+				$excluding
+			)
+		);
+
+		if ( $heir ) {
+			return $heir;
+		}
+
+		$admins = get_users(
+			[
+				'capability' => 'manage_options',
+				'exclude'    => $excluding ? [ $excluding ] : [],
+				'orderby'    => 'ID',
+				'order'      => 'ASC',
+				'number'     => 1,
+				'fields'     => 'ID',
+			]
+		);
+
+		return (int) ( $admins[0] ?? 0 );
+	}
+
+	/**
+	 * Next free manual-order position within a category.
+	 *
+	 * @param int $category_id Category the space belongs to (0 = uncategorised).
+	 * @return int One past the highest position currently in use.
+	 */
+	protected static function next_sort_order( int $category_id ): int {
+		$table = static::table();
+		$max   = static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from static::table().
+				"SELECT MAX(sort_order) FROM {$table} WHERE category_id = %d",
+				$category_id
+			)
+		);
+
+		return null === $max ? 0 : ( (int) $max + 1 );
 	}
 
 	/**
@@ -147,6 +326,16 @@ class Space extends Model {
 			],
 			$data
 		);
+
+		// Land new spaces at the END of their category's manual order. The
+		// column defaults to 0, and listings sort `sort_order ASC, title ASC`,
+		// so without this a space created after an owner arranged their
+		// category would jump straight to the front - ahead of everything they
+		// deliberately placed. Only computed when the caller did not set a
+		// position explicitly.
+		if ( ! isset( $data['sort_order'] ) ) {
+			$data['sort_order'] = static::next_sort_order( (int) ( $data['category_id'] ?? 0 ) );
+		}
 
 		$id = static::insert( $data );
 

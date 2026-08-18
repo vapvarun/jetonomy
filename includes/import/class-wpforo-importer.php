@@ -736,7 +736,7 @@ class WPForo_Importer extends Importer {
 				[
 					'space_id'      => $space_id,
 					'author_id'     => (int) $topic->userid,
-					'type'          => 'topic',
+					'type'          => \Jetonomy\compose_post_type( 'forum' ),
 					'title'         => $topic->title,
 					'slug'          => $topic->slug ?: sanitize_title( $topic->title ),
 					'content'       => wp_kses_post( $content ),

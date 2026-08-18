@@ -122,14 +122,47 @@ class SpaceJourneyTest extends WP_UnitTestCase {
 		$this->assertSame( $this->category_id, (int) $space->category_id );
 	}
 
-	public function test_delete_removes_row(): void {
+	/**
+	 * Default delete TRANSFERS - it does not remove the row.
+	 *
+	 * This test previously asserted the row was gone, which was the old
+	 * contract: delete() dropped the spaces row and orphaned every child row
+	 * across the 21 declared relations. 1.9.3 made transfer the default because
+	 * a space holds other members' topics and replies (Basecamp 10119343634),
+	 * so the row surviving in an archived state IS the expected result now.
+	 */
+	public function test_delete_defaults_to_transfer_and_keeps_the_space(): void {
 		$space_id = $this->make_space();
 
 		$result = $this->journey->delete( $space_id );
 
 		$this->assertTrue( $result->is_success() );
 		$this->assertSame( $space_id, $result->data['id'] );
+		$this->assertSame( 'transfer', $result->data['mode'] );
+
+		$space = Space::find( $space_id );
+		$this->assertNotNull( $space, 'transfer must not delete the space' );
+		$this->assertSame( 'archived', $space->status );
+		$this->assertNotSame( 0, (int) $space->author_id, 'a transferred space must have an owner' );
+	}
+
+	public function test_delete_purge_removes_the_row(): void {
+		$space_id = $this->make_space();
+
+		$result = $this->journey->delete( $space_id, 'purge' );
+
+		$this->assertTrue( $result->is_success() );
+		$this->assertSame( 'purge', $result->data['mode'] );
 		$this->assertNull( Space::find( $space_id ) );
+	}
+
+	public function test_delete_rejects_an_unknown_mode(): void {
+		$space_id = $this->make_space();
+
+		$result = $this->journey->delete( $space_id, 'nuke' );
+
+		$this->assertFalse( $result->is_success() );
+		$this->assertNotNull( Space::find( $space_id ), 'a rejected mode must not touch the space' );
 	}
 
 	public function test_get_returns_row(): void {

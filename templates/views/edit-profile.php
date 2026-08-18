@@ -10,8 +10,7 @@ defined( 'ABSPATH' ) || exit;
 // Auth check is handled by Template_Loader before output.
 $current_user = wp_get_current_user();
 $profile      = \Jetonomy\Models\UserProfile::find_or_create( $current_user->ID );
-$base         = \Jetonomy\base_url();
-$profile_url  = $base . '/u/' . $current_user->user_login . '/';
+$profile_url  = \Jetonomy\get_profile_url( (int) $current_user->ID );
 
 // Cancel returns the member to wherever they opened the editor from — a member
 // who arrived from a topic or notification was being force-navigated to their
@@ -32,8 +31,8 @@ if ( ! $cancel_url ) {
 	[
 		'crumbs' => [
 			[
-				'label' => $current_user->display_name,
-				'url'   => $base . '/u/' . $current_user->user_login . '/',
+				'label' => \Jetonomy\user_display_name( $current_user ),
+				'url'   => $profile_url,
 			],
 			[
 				'label' => __( 'Edit Profile', 'jetonomy' ),
@@ -54,9 +53,63 @@ if ( ! $cancel_url ) {
 			data-wp-on--submit="actions.saveProfile"
 			data-wp-context='<?php echo wp_json_encode( [ 'profileUrl' => $profile_url ] ); ?>'>
 		<div class="jt-form-group">
-			<label class="jt-label"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></label>
-			<input type="text" name="display_name" class="jt-input" value="<?php echo esc_attr( $current_user->display_name ); ?>" required>
+			<?php
+			// When the owner has locked names, don't render controls the server
+			// will 403. The lock is enforced in PATCH /users/me - this is the
+			// honest UI for it, not the control itself.
+			$jt_names_locked = ! empty( get_option( 'jetonomy_settings', array() )['lock_member_names'] );
+			if ( $jt_names_locked ) :
+				?>
+				<label class="jt-label"><?php esc_html_e( 'Name', 'jetonomy' ); ?></label>
+				<p class="jt-field-hint">
+					<?php
+					printf(
+						/* translators: %s: the member's current display name. */
+						esc_html__( 'You are shown as %s. Names are managed by the site administrator on this community.', 'jetonomy' ),
+						'<strong>' . esc_html( \Jetonomy\user_display_name( $current_user ) ) . '</strong>'
+					);
+					?>
+				</p>
 		</div>
+			<?php else : ?>
+			<label class="jt-label" for="jt-first-name"><?php esc_html_e( 'First Name', 'jetonomy' ); ?></label>
+			<input type="text" id="jt-first-name" name="first_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'first_name', true ) ); ?>">
+		</div>
+
+		<div class="jt-form-group">
+			<label class="jt-label" for="jt-last-name"><?php esc_html_e( 'Last Name', 'jetonomy' ); ?></label>
+			<input type="text" id="jt-last-name" name="last_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'last_name', true ) ); ?>">
+		</div>
+
+		<div class="jt-form-group">
+			<label class="jt-label" for="jt-nickname"><?php esc_html_e( 'Nickname', 'jetonomy' ); ?></label>
+			<input type="text" id="jt-nickname" name="nickname" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'nickname', true ) ); ?>" required>
+			<p class="jt-field-hint"><?php esc_html_e( 'Required. Only shown if you pick it below.', 'jetonomy' ); ?></p>
+		</div>
+
+		<div class="jt-form-group">
+				<?php
+				// A select of names the member already owns, not a free-text box: a
+				// free field let anyone publish as "Administrator" or copy another
+				// member's name, and it wrote through to wp_users.display_name
+				// site-wide. Options come from display_name_choices() so the form and
+				// PATCH /users/me agree on what is allowed. JS re-builds these live as
+				// the three fields above change; this server render is the no-JS state.
+				$jt_name_choices = \Jetonomy\display_name_choices( $current_user );
+				?>
+			<label class="jt-label" for="jt-display-name"><?php esc_html_e( 'Display name publicly as', 'jetonomy' ); ?></label>
+			<select id="jt-display-name" name="display_name" class="jt-input" data-jt-display-name required
+				data-jt-current="<?php echo esc_attr( $current_user->display_name ); ?>"
+				data-jt-login="<?php echo esc_attr( $current_user->user_login ); ?>">
+				<?php foreach ( $jt_name_choices as $jt_choice ) : ?>
+					<option value="<?php echo esc_attr( $jt_choice ); ?>" <?php selected( $jt_choice, $current_user->display_name ); ?>>
+						<?php echo esc_html( $jt_choice ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+
+		<?php endif; // $jt_names_locked ?>
 
 		<div class="jt-form-group">
 			<label class="jt-label"><?php esc_html_e( 'Bio', 'jetonomy' ); ?></label>

@@ -21,7 +21,6 @@ use WP_REST_Server;
 use WP_Error;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Space;
-use Jetonomy\Models\UserProfile;
 
 class OEmbed_Controller extends Base_Controller {
 
@@ -139,10 +138,7 @@ class OEmbed_Controller extends Base_Controller {
 
 		$author_id     = (int) $post->author_id;
 		$author        = $author_id ? get_userdata( $author_id ) : null;
-		$profile       = $author_id ? UserProfile::find_by_user( $author_id ) : null;
-		$author_name   = ( $profile && ! empty( $profile->display_name ) )
-			? $profile->display_name
-			: ( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
+		$author_name   = $author ? \Jetonomy\user_display_name( $author ) : __( 'Anonymous', 'jetonomy' );
 		$author_url    = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
 		$author_avatar = $author_id ? get_avatar_url( $author_id, array( 'size' => 80 ) ) : '';
 

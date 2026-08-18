@@ -12,6 +12,7 @@
  * @var int|null $filter_category
  * @var string   $filter_status
  * @var string   $filter_type
+ * @var bool     $can_reorder Whether manual drag-ordering applies to this view.
  *
  * @package Jetonomy
  */
@@ -170,6 +171,16 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<option value="archived" <?php selected( $filter_status, 'archived' ); ?>><?php esc_html_e( 'Archived', 'jetonomy' ); ?></option>
 					<option value="locked" <?php selected( $filter_status, 'locked' ); ?>><?php esc_html_e( 'Locked', 'jetonomy' ); ?></option>
 				</select>
+				<select name="per_page" onchange="this.form.submit()" aria-label="<?php esc_attr_e( 'Spaces per page', 'jetonomy' ); ?>">
+					<?php foreach ( array( 20, 50, 100 ) as $jt_pp ) : ?>
+						<option value="<?php echo (int) $jt_pp; ?>" <?php selected( (int) $per_page, $jt_pp ); ?>>
+							<?php
+							/* translators: %d: per-page count. */
+							printf( esc_html__( '%d per page', 'jetonomy' ), (int) $jt_pp );
+							?>
+						</option>
+					<?php endforeach; ?>
+				</select>
 				<div class="jt-content-toolbar__right">
 					<?php if ( $total ) : ?>
 					<span class="displaying-num">
@@ -209,6 +220,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 		// 10146405861, root cause 10146443346).
 		jetonomy_admin_table(
 			array(
+				'tbody_id'  => 'jetonomy-spaces-list',
 				'columns'   => array(
 					'title'      => array(
 						'label'   => __( 'Title', 'jetonomy' ),
@@ -249,17 +261,37 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					'title' => __( 'No spaces yet', 'jetonomy' ),
 					'body'  => __( 'Spaces group your topics. Create one to start organizing the community.', 'jetonomy' ),
 				),
-				'cell'      => static function ( $space, string $key ) use ( $jt_cat_names, $jt_type_labels ): void {
+				'cell'      => static function ( $space, string $key ) use ( $jt_cat_names, $jt_type_labels, $can_reorder ): void {
 					switch ( $key ) {
 						case 'title':
 							$edit_url = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id );
+							// The handle lives inside the primary cell, matching
+							// categories: a dedicated column has no label to
+							// collapse under on mobile and breaks the
+							// one-primary-cell contract.
+							if ( $can_reorder ) {
+								echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
+							}
 							echo '<strong><a href="' . esc_url( $edit_url ) . '">' . esc_html( $space->title ) . '</a></strong>';
 							echo '<br><code>/community/s/' . esc_html( $space->slug ) . '/</code>';
 							?>
 							<div class="row-actions">
 								<span class="edit"><a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
 								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
-								<span class="delete"><a href="#" class="jetonomy-delete-space" data-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
+								<?php
+								// Two separate actions rather than one Delete with a
+								// mode picker: the safe one and the irreversible one
+								// should not be a dropdown apart. Archive is always
+								// offered; permanent deletion appears only for whoever
+								// the site owner has allowed to do it, so the setting
+								// is visible in the UI and not just enforced on POST.
+								$jt_may_purge = current_user_can( 'manage_options' )
+									|| ! empty( get_option( 'jetonomy_settings', array() )['allow_space_admin_purge'] );
+								?>
+								<span class="archive"><a href="#" class="jetonomy-delete-space" data-id="<?php echo absint( $space->id ); ?>" data-mode="transfer"><?php esc_html_e( 'Archive', 'jetonomy' ); ?></a><?php echo $jt_may_purge ? ' | ' : ''; ?></span>
+								<?php if ( $jt_may_purge ) : ?>
+									<span class="delete"><a href="#" class="jetonomy-delete-space jt-danger" data-id="<?php echo absint( $space->id ); ?>" data-mode="purge" data-title="<?php echo esc_attr( $space->title ); ?>"><?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?></a></span>
+								<?php endif; ?>
 							</div>
 							<?php
 							break;

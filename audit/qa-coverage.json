@@ -2,10 +2,10 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.9.0"
+        "version": "1.9.1"
     },
     "generated": {
-        "at": "2026-08-04T10:48:22+00:00",
+        "at": "2026-08-18T10:54:19+00:00",
         "manifest_at": "2026-08-01T00:00:00Z",
         "manifest_branch": "1.8.1-dev"
     },
@@ -663,10 +663,10 @@
             ]
         },
         "hooks_fired": {
-            "total": 9,
+            "total": 10,
             "covered": 5,
-            "uncovered": 4,
-            "skipped": 205,
+            "uncovered": 5,
+            "skipped": 215,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -690,6 +690,11 @@
                 }
             ],
             "uncovered_items": [
+                {
+                    "name": "jetonomy_schema",
+                    "consumer_count": 1,
+                    "stub_command": "bin/qa-stub-gen.php hook jetonomy_schema"
+                },
                 {
                     "name": "jetonomy_user_left_space",
                     "consumer_count": 1,
@@ -810,15 +815,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 174,
+        "items_total": 175,
         "items_covered": 60,
-        "items_uncovered": 114,
-        "items_skipped": 205,
-        "coverage_percent": 34.5
+        "items_uncovered": 115,
+        "items_skipped": 215,
+        "coverage_percent": 34.299999999999997
     },
     "drift": {
-        "previous_uncovered": 117,
-        "current_uncovered": 114,
-        "delta": -3
+        "previous_uncovered": 115,
+        "current_uncovered": 115,
+        "delta": 0
     }
 }

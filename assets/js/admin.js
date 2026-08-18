@@ -21,6 +21,22 @@
 			this.bindSlugGeneration();
 		},
 
+		// ── List page context ──
+
+		// Drag-reorder submits only the rows the browser rendered, so any handler
+		// persisting a position needs to know which page those rows came from.
+		// Read from the URL rather than the DOM: it is the same source the server
+		// paginated with, so the two can never disagree.
+		listPageContext: function() {
+			var params = new URLSearchParams(window.location.search);
+			var paged = parseInt(params.get('paged'), 10);
+			var perPage = parseInt(params.get('per_page'), 10);
+			return {
+				paged: paged > 0 ? paged : 1,
+				perPage: [20, 50, 100].indexOf(perPage) !== -1 ? perPage : 20
+			};
+		},
+
 		// ── AJAX Helper ──
 
 		ajax: function(action, data) {
@@ -307,10 +323,23 @@
 					placeholder: 'ui-sortable-placeholder',
 					update: function() {
 						var order = [];
-						$('#jetonomy-categories-list tr[data-id]').each(function() {
+						// Parent rows only. Children render inline on their parent's
+						// page, so counting them would make the batch larger than
+						// per_page and its tail would overwrite the next page's
+						// positions - the same corruption this handler was fixed for,
+						// reachable from page 1 (Basecamp 10210539659).
+						$('#jetonomy-categories-list tr[data-id]').not('.jetonomy-category-child').each(function() {
 							order.push($(this).data('id'));
 						});
-						self.ajax('jetonomy_reorder_categories', { order: order }).done(function(res) {
+						// Only the rendered page is submitted, so the handler needs the
+						// page context to turn these into absolute positions. Without it
+						// page 2 renumbers from 0 and collides with page 1.
+						var ctx = self.listPageContext();
+						self.ajax('jetonomy_reorder_categories', {
+							order: order,
+							paged: ctx.paged,
+							per_page: ctx.perPage
+						}).done(function(res) {
 							if (res.success) {
 								self.toast(res.data.message);
 							}
@@ -331,6 +360,31 @@
 
 		bindSpaceActions: function() {
 			var self = this;
+
+			// Drag-sort Spaces. Only rendered when one category is filtered —
+			// manual order is per-category, matching Space::list_by_category().
+			if ($('#jetonomy-spaces-list').length && $('#jetonomy-spaces-list .jetonomy-drag-handle').length) {
+				$('#jetonomy-spaces-list').sortable({
+					handle: '.jetonomy-drag-handle',
+					placeholder: 'ui-sortable-placeholder',
+					update: function() {
+						var order = [];
+						$('#jetonomy-spaces-list tr[data-id]').each(function() {
+							order.push($(this).data('id'));
+						});
+						var ctx = self.listPageContext();
+						self.ajax('jetonomy_reorder_spaces', {
+							order: order,
+							paged: ctx.paged,
+							per_page: ctx.perPage
+						}).done(function(res) {
+							if (res.success) {
+								self.toast(res.data.message);
+							}
+						});
+					}
+				});
+			}
 
 			// Visibility ↔ Join Policy coupling: hidden spaces must be
 			// invite-only. Server-side validation rejects the bad combo;
@@ -473,13 +527,53 @@
 				e.preventDefault();
 				var $row = $(this).closest('tr');
 				var id = $(this).data('id');
+				var mode = $(this).data('mode') || 'transfer';
+				var title = String($(this).data('title') || '');
 
-				self.confirmAsync(self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+				// Purge has no undo, so it asks the operator to TYPE the space
+				// name rather than click through a dialog. Archive keeps every
+				// topic and stays a plain confirm - matching the weight of the
+				// warning to the weight of the action is the point.
+				var gate;
+				if (mode === 'purge' && title && typeof window.jetonomyPrompt === 'function') {
+					gate = window.jetonomyPrompt(
+						(self.i18n.purgeTypeToConfirm || '%s').replace('%s', title),
+						{
+							danger: true,
+							requireMatch: title,
+							placeholder: title,
+							confirmLabel: self.i18n.purgeConfirmLabel
+						}
+					).then(function(typed) {
+						// null = cancelled. A mismatch cannot reach here (the
+						// button stays disabled), but re-check anyway: the
+						// dialog is convenience, never the control.
+						if (typed === null) return false;
+						if (String(typed).trim() !== title) {
+							self.toast(self.i18n.purgeNameMismatch || self.i18n.error, 'error');
+							return false;
+						}
+						return true;
+					});
+				} else {
+					var warning = mode === 'purge'
+						? (self.i18n.confirmPurgeSpace || self.i18n.confirmDelete)
+						: (self.i18n.confirmArchiveSpace || self.i18n.confirmDelete);
+					gate = self.confirmAsync(warning, { danger: mode === 'purge' });
+				}
+
+				gate.then(function(ok) {
 					if (!ok) return;
-					self.ajax('jetonomy_delete_space', { id: id }).done(function(res) {
+					self.ajax('jetonomy_delete_space', { id: id, mode: mode }).done(function(res) {
 						if (res.success) {
 							self.toast(res.data.message);
-							$row.fadeOut(300, function() { $(this).remove(); });
+							// An archived space still exists, so the row stays and
+							// is reloaded; only a purge removes it from the list.
+							if (res.data && res.data.removed) {
+								$row.fadeOut(300, function() { $(this).remove(); });
+							} else {
+								window.location.reload();
+							}
 						} else {
 							self.toast(res.data || self.i18n.error, 'error');
 						}
@@ -1059,11 +1153,23 @@
 				if (!invite.is_valid) {
 					expires = (i18n.inviteExpired || 'Expired');
 				}
+				// These rows are injected after the shell renders, so they must
+				// carry the same core small-screen contract jetonomy_admin_table()
+				// emits server-side (column-primary + toggle-row on the primary
+				// cell, data-colname everywhere). Without it the responsive CSS
+				// has nothing to collapse and the row stays a wide strip.
 				var $tr = $('<tr>').attr('data-invite-id', invite.id);
-				$('<td>').append($('<code>').text(invite.invite_url)).appendTo($tr);
-				$('<td>').text(uses).appendTo($tr);
-				$('<td>').text(expires).appendTo($tr);
-				var $actions = $('<td>');
+				$('<td>', { 'class': 'column-link column-primary', 'data-colname': i18n.inviteLink || 'Invite Link' })
+					.append($('<code>').text(invite.invite_url))
+					.append($('<button>', {
+						type: 'button',
+						'class': 'toggle-row',
+						'aria-expanded': 'false'
+					}).append($('<span>', { 'class': 'screen-reader-text' }).text(i18n.showMoreDetails || 'Show more details')))
+					.appendTo($tr);
+				$('<td>', { 'class': 'column-uses', 'data-colname': i18n.inviteUses || 'Uses' }).text(uses).appendTo($tr);
+				$('<td>', { 'class': 'column-expires', 'data-colname': i18n.inviteExpires || 'Expires' }).text(expires).appendTo($tr);
+				var $actions = $('<td>', { 'class': 'column-actions', 'data-colname': i18n.actions || 'Actions' });
 				$('<button>', { type: 'button', 'class': 'button button-small jetonomy-copy-invite' })
 					.attr('data-url', invite.invite_url)
 					.text(i18n.copy || 'Copy')

@@ -275,7 +275,7 @@ class Users_Controller extends Base_Controller {
 				array(
 					'exclude'        => $blocked_ids,
 					'search'         => '*' . $q . '*',
-					'search_columns' => array( 'user_login', 'display_name' ),
+					'search_columns' => array( 'user_nicename', 'user_login', 'display_name' ),
 					'number'         => 10,
 					'orderby'        => 'display_name',
 				)
@@ -289,7 +289,7 @@ class Users_Controller extends Base_Controller {
 			$users = get_users(
 				array(
 					'search'         => '*' . $q . '*',
-					'search_columns' => array( 'user_login', 'display_name' ),
+					'search_columns' => array( 'user_nicename', 'user_login', 'display_name' ),
 					'exclude'        => $blocked_ids,
 					'number'         => 10,
 					'orderby'        => 'display_name',
@@ -301,6 +301,14 @@ class Users_Controller extends Base_Controller {
 		foreach ( $users as $u ) {
 			$out[] = array(
 				'id'           => (int) $u->ID,
+				// The handle is user_nicename - the string the mention parser
+				// resolves, and the field the whole Wbcom family agrees on.
+				// Offering user_login here let the typeahead insert a mention
+				// the server could not resolve whenever the two differ (a login
+				// of `john.smith` has the nicename `john-smith`).
+				'handle'       => \Jetonomy\user_handle( $u ),
+				// Kept for third-party consumers that already read it. Not what
+				// the composer inserts.
 				'login'        => $u->user_login,
 				'display_name' => $u->display_name,
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $u->ID, 48 ),
@@ -506,10 +514,59 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
-		// update display_name via wp_update_user.
+		// Owner lock. The presales customer asked for either a read-only field or
+		// a setting; this is the setting. Enforced HERE rather than by disabling
+		// the input, because the route accepts these params independently of the
+		// form - a front-end readonly attribute is not a control (Basecamp
+		// 10210055850). Covers the parts too: leaving those writable while
+		// locking display_name would just move the hole one level down.
+		$jt_settings   = get_option( 'jetonomy_settings', array() );
+		$name_locked   = isset( $jt_settings['lock_member_names'] ) && $jt_settings['lock_member_names'];
+		$name_params   = array( 'display_name', 'first_name', 'last_name', 'nickname' );
+		$sent_any_name = false;
+		foreach ( $name_params as $jt_param ) {
+			if ( null !== $request->get_param( $jt_param ) ) {
+				$sent_any_name = true;
+				break;
+			}
+		}
+		if ( $name_locked && $sent_any_name ) {
+			return new WP_Error(
+				'jetonomy_name_locked',
+				__( 'Names are managed by the site administrator.', 'jetonomy' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		// Name parts first, so display_name is validated against the values the
+		// member is submitting rather than the ones already stored - otherwise
+		// setting a first name and selecting "First Last" in one save would be
+		// rejected for a permutation that does not exist yet.
+		foreach ( [ 'first_name', 'last_name', 'nickname' ] as $meta_key ) {
+			if ( null !== $request->get_param( $meta_key ) ) {
+				update_user_meta( $user_id, $meta_key, sanitize_text_field( (string) $request->get_param( $meta_key ) ) );
+			}
+		}
+
+		// display_name must be one the member already owns. This used to accept
+		// any string and write it straight to wp_users, so a member could publish
+		// as "Administrator", take another member's exact name, and override the
+		// value the owner picked in wp-admin - site-wide, not just in the forum.
 		if ( null !== $request->get_param( 'display_name' ) ) {
 			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
 			if ( ! empty( $display_name ) ) {
+				$wp_user_now = get_userdata( $user_id );
+				$allowed     = $wp_user_now ? \Jetonomy\display_name_choices( $wp_user_now ) : [];
+				if ( ! in_array( $display_name, $allowed, true ) ) {
+					return new WP_Error(
+						'jetonomy_invalid_display_name',
+						__( 'Choose a display name from your own name fields.', 'jetonomy' ),
+						[
+							'status'  => 400,
+							'allowed' => $allowed,
+						]
+					);
+				}
 				wp_update_user(
 					[
 						'ID'           => $user_id,
@@ -968,6 +1025,18 @@ class Users_Controller extends Base_Controller {
 	private function get_update_args(): array {
 		return [
 			'display_name'  => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'first_name'    => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'last_name'     => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'nickname'      => [
 				'type'     => 'string',
 				'required' => false,
 			],

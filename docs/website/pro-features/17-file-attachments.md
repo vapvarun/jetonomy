@@ -95,7 +95,7 @@ Posts and replies also carry an `attachments[]` array directly on their normal `
 ## Related
 
 - [Extensions](../admin-settings/13-extensions.md) - where File Attachments is enabled or disabled
-- [File Attachments (Getting Started)](../getting-started/file-attachments.md) - the quick member-facing overview
+- [File Attachments (Getting Started)](../getting-started/10-file-attachments.md) - the quick member-facing overview
 
 ## What's Next?
 

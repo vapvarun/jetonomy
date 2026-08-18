@@ -28,10 +28,10 @@
 // class. Adding an entry requires the same justification as baselining a
 // phpstan error - a card reference, not convenience.
 $baseline = array(
-	// Free (tranche 2 of Basecamp 10146443346):
-	'includes/admin/views/revisions.php',
-	'includes/admin/views/space-edit.php',
-	'includes/admin/views/users.php', // already core-compliant by hand; migrate for uniformity.
+	// Free: EMPTY. Every free admin view now renders through
+	// jetonomy_admin_table() or carries an annotated jetonomy-audit-table-ok
+	// opt-out (Basecamp 10209452981). Do not re-add a free path here - migrate
+	// the view instead.
 	// Pro (tranche 3 - paths relative to the DIRECTORY ARGUMENT given):
 	'includes/extensions/anonymous-posting/views/space-setting.php',
 	'includes/extensions/ai/class-extension.php',

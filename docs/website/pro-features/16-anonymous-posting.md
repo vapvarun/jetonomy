@@ -65,7 +65,7 @@ Anonymous Posting registers this endpoint under `jetonomy/v1`:
 
 - [Extensions](../admin-settings/13-extensions.md) - where Anonymous Posting is enabled or disabled
 - [Activity Log](../admin-settings/08-activity-log.md) - where every author reveal is recorded
-- [Anonymous Posting (Getting Started)](../getting-started/anonymous-posting.md) - the quick member-facing overview
+- [Anonymous Posting (Getting Started)](../getting-started/09-anonymous-posting.md) - the quick member-facing overview
 
 ## What's Next?
 

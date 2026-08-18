@@ -46,12 +46,12 @@ if ( ! $author_id && '' !== $author_name ) {
 	}
 	if ( $jt_author_user ) {
 		$author_id   = (int) $jt_author_user->ID;
-		$author_name = $jt_author_user->display_name;
+		$author_name = \Jetonomy\user_display_name( $jt_author_user );
 	}
 } elseif ( $author_id && '' === $author_name ) {
 	// author_id came from the URL — show the name in the input.
 	$jt_author_user = get_userdata( $author_id );
-	$author_name    = $jt_author_user ? $jt_author_user->display_name : '';
+	$author_name    = $jt_author_user ? \Jetonomy\user_display_name( $jt_author_user ) : '';
 }
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $tag_slug = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';

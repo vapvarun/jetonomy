@@ -131,6 +131,20 @@
 		actions.appendChild( okBtn );
 		box.appendChild( actions );
 
+		// Type-to-confirm. For an action with no undo, a confirm dialog is not a
+		// guard - it is clicked reflexively. Requiring the operator to type the
+		// thing's own name turns a reflex into a deliberate act, which is why
+		// GitHub asks for the repo name before deleting one.
+		//
+		// Comparison is trimmed but case-SENSITIVE and exact: a near-miss must
+		// not pass, or the guard is theatre.
+		if ( input && opts.requireMatch ) {
+			okBtn.disabled = true;
+			input.addEventListener( 'input', function () {
+				okBtn.disabled = input.value.trim() !== String( opts.requireMatch );
+			} );
+		}
+
 		overlay.appendChild( box );
 
 		return { overlay: overlay, okBtn: okBtn, cancelBtn: cancelBtn, input: input };
@@ -189,7 +203,7 @@
 					return;
 				}
 				// Prompt: Enter inside a single-line input submits.
-				if ( e.key === 'Enter' && opts.kind === 'prompt' && ! opts.multiline && document.activeElement === dom.input ) {
+				if ( e.key === 'Enter' && opts.kind === 'prompt' && ! opts.multiline && document.activeElement === dom.input && ! dom.okBtn.disabled ) {
 					e.preventDefault();
 					close( dom.input.value );
 					return;
@@ -277,6 +291,8 @@
 			placeholder:  opts.placeholder,
 			defaultValue: opts.defaultValue,
 			multiline:    !! opts.multiline,
+			requireMatch: opts.requireMatch,
+			danger:       !! opts.danger,
 			confirmLabel: opts.confirmLabel,
 			cancelLabel:  opts.cancelLabel,
 		} );

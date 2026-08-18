@@ -24,6 +24,21 @@ abstract class Importer {
 	protected array $errors = [];
 	protected int $imported = 0;
 	protected int $skipped  = 0;
+	/**
+	 * Placeholder id recorded in the id map during a dry run.
+	 *
+	 * A dry run creates nothing, so there is no real id to map - but the map is
+	 * still how a child row checks that its parent was handled. Mapping 0 made
+	 * every one of those checks fail: `! $mapped` cannot tell "parent was never
+	 * imported" from "dry run, nothing was created", so a clean dry run reported
+	 * an error per topic and per reply (Basecamp 10210057225).
+	 *
+	 * Negative so it can never collide with a real auto-increment id, and truthy
+	 * so the existing parent checks read correctly without touching each one.
+	 * Only ever reaches the map: every create is already guarded by $dry_run.
+	 */
+	protected const DRY_RUN_ID = -1;
+
 	protected bool $dry_run = false;
 
 	/**
@@ -32,6 +47,21 @@ abstract class Importer {
 	 * In dry-run mode, no records are written to the database.
 	 * Import counts are still incremented to simulate the result.
 	 */
+	/**
+	 * Whether this importer actually honours a dry run.
+	 *
+	 * Import_Manager sets dry_run on whatever importer it is handed, but only
+	 * bbPress guards its writes with it. Asgaros and wpforo contain no dry_run
+	 * reference at all, so `--dry-run` there ran a REAL import - Asgaros calls
+	 * Category::create() as the first statement of run(). An importer must
+	 * opt in by overriding this, so the default can only ever fail safe.
+	 *
+	 * @return bool
+	 */
+	public function supports_dry_run(): bool {
+		return false;
+	}
+
 	public function set_dry_run( bool $dry_run ): void {
 		$this->dry_run = $dry_run;
 	}

@@ -665,7 +665,7 @@ class Blocks {
 			: 0;
 
 		$profile_url   = \Jetonomy\get_profile_url( $user_id );
-		$edit_url      = $base . '/u/' . rawurlencode( $user->user_login ) . '/edit/';
+		$edit_url      = \Jetonomy\get_profile_url( (int) $user->ID ) . 'edit/';
 		$notifs_url    = $base . '/notifications/';
 		$messages_url  = $base . '/messages/';
 		$my_spaces_url = $base . '/my-spaces/';

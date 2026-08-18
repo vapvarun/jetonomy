@@ -76,7 +76,8 @@ This comparison is honest. Where competitors do something well, that is noted. T
 |---|---|---|---|
 | Reputation points system | Yes | No | Yes |
 | Trust levels (automated) | Yes - 6 levels | No | No |
-| Automatic behavior gates (rate limits, link blocks) | Yes - no configuration needed | No | No |
+| Automatic behavior gates (rate limits, upload and space-creation locks) | Yes - no configuration needed | No | No |
+| Link-count limits on new posts | Jetonomy Pro - Advanced Moderation rule | No | No |
 | Trust badges on avatars | Yes | No | Partial |
 | Custom badges with criteria engine | Jetonomy Pro | No | No |
 | Leaderboard | Yes | No | Yes |

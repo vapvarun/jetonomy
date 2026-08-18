@@ -31,7 +31,7 @@ $p_count         = $profile ? (int) $profile->post_count : 0;
 $r_count         = $profile ? (int) $profile->reply_count : 0;
 $profile_user_id = (int) $user->ID;
 $base            = \Jetonomy\base_url();
-$initials        = strtoupper( substr( $user->display_name, 0, 2 ) );
+$initials        = strtoupper( substr( \Jetonomy\user_display_name( $user ), 0, 2 ) );
 
 // Frontend member moderation (parity with the app + wp-admin, since a community
 // moderator cannot reach wp-admin). Shows Ban / Silence / Lift on a member's
@@ -171,7 +171,7 @@ if ( 'drafts' === $current_tab && $is_own ) {
 
 $crumbs = [
 	[
-		'label' => $user->display_name,
+		'label' => \Jetonomy\user_display_name( $user ),
 		'url'   => '',
 	],
 ];
@@ -198,15 +198,13 @@ $crumbs = [
 				</span>
 					<div class="jt-flex jt-items-start jt-justify-between jt-w-full jt-profile-headrow">
 						<h1 class="jt-profile-name">
-							<?php echo esc_html( $user->display_name ); ?>
+							<?php echo esc_html( \Jetonomy\user_display_name( $user ) ); ?>
 							<?php /* translators: %d: trust level number (0-5). */ ?>
 							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
-							<?php /* translators: %d: trust level number (0-5). */ ?>
-							<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>
 						</h1>
 						<div class="jt-flex jt-items-center jt-gap-sm jt-flex-shrink-0 jt-profile-head-actions">
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
-							<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/edit/' ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
+							<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $user->ID ) . 'edit/' ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
 							</a>
 						<?php elseif ( is_user_logged_in() && \Jetonomy\messaging_active() ) : ?>
@@ -231,7 +229,7 @@ $crumbs = [
 							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
 								data-wp-on--click="actions.liftRestriction"
 								data-restriction-id="<?php echo absint( $jt_restriction->id ); ?>"
-								data-user-name="<?php echo esc_attr( $user->display_name ); ?>"
+								data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $user ) ); ?>"
 								title="<?php esc_attr_e( 'Lift this restriction', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
 								<?php esc_html_e( 'Lift', 'jetonomy' ); ?>
@@ -240,7 +238,7 @@ $crumbs = [
 							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
 								data-wp-on--click="actions.restrictMember"
 								data-user-id="<?php echo absint( $profile_user_id ); ?>"
-								data-user-name="<?php echo esc_attr( $user->display_name ); ?>"
+								data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $user ) ); ?>"
 								data-restrict-type="silence"
 								title="<?php esc_attr_e( 'Silence this member', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'hand', 14 ); ?>
@@ -249,7 +247,7 @@ $crumbs = [
 							<button class="jt-btn jt-btn-ghost jt-btn-danger jt-flex-shrink-0"
 								data-wp-on--click="actions.restrictMember"
 								data-user-id="<?php echo absint( $profile_user_id ); ?>"
-								data-user-name="<?php echo esc_attr( $user->display_name ); ?>"
+								data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $user ) ); ?>"
 								data-restrict-type="global_ban"
 								title="<?php esc_attr_e( 'Ban this member from the community', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
@@ -322,7 +320,7 @@ $crumbs = [
 
 			<!-- Profile tabs -->
 			<?php
-			$jt_profile_url = $base . '/u/' . $user->user_login;
+			$jt_profile_url = untrailingslashit( \Jetonomy\get_profile_url( (int) $user->ID ) );
 
 			// Built-in tabs as an ordered, filterable map. Each entry:
 			// slug => [ 'label' => string, 'url' => string ]. The 'posts' tab is

@@ -26,11 +26,6 @@ parameters:
 			path: includes/admin/views/space-edit.php
 
 		-
-			message: "#^Access to an undefined property object\\{user_id\\: int, role\\: string, space_role\\?\\: string, joined_at\\?\\: string, display_name\\?\\: string\\}\\:\\:\\$joined_at\\.$#"
-			count: 1
-			path: includes/admin/views/space-edit.php
-
-		-
 			message: "#^Property Jetonomy\\\\API\\\\Api\\:\\:\\$controllers is never read, only written\\.$#"
 			count: 1
 			path: includes/api/class-api.php
@@ -129,11 +124,6 @@ parameters:
 			message: "#^Parameter \\#3 \\$deps of function wp_enqueue_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…', 'jetonomy\\-view'\\} given\\.$#"
 			count: 1
 			path: includes/class-template-loader.php
-
-		-
-			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
-			count: 2
-			path: includes/integrations/class-buddypress.php
 
 		-
 			message: "#^Negated boolean expression is always false\\.$#"

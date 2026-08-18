@@ -68,7 +68,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<p class="jt-settings-card__desc"><?php echo esc_html( sprintf( __( 'Name, category, visibility, and appearance of this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 		<form id="jetonomy-edit-space-form" class="jetonomy-space-form" data-space-id="<?php echo absint( $space->id ); ?>">
-			<table class="form-table">
+			<table class="form-table"><!-- jetonomy-audit-table-ok: WP core settings form, not a data list; core stacks form-table th/td below 782px -->
 				<tr>
 					<th scope="row"><label for="space-title"><?php esc_html_e( 'Title', 'jetonomy' ); ?> <span class="required">*</span></label></th>
 					<td><input type="text" id="space-title" class="regular-text" value="<?php echo esc_attr( $space->title ); ?>" required></td>
@@ -214,60 +214,84 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</p>
 			</div>
 		<?php endif; ?>
-			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-members-table">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
-						<th style="width:150px;"><?php esc_html_e( 'Role', 'jetonomy' ); ?></th>
-						<th style="width:150px;"><?php esc_html_e( 'Joined', 'jetonomy' ); ?></th>
-						<th style="width:100px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php if ( empty( $members ) ) : ?>
-						<?php
-						jetonomy_admin_empty_state(
-							array(
-								'colspan' => 4,
-								'variant' => 'compact',
-								'icon'    => 'groups',
-								'title'   => __( 'No members yet', 'jetonomy' ),
-								/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-								'body'    => sprintf( __( 'Invite members or open this %s to the wider community.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-							)
-						);
-						?>
-					<?php else : ?>
-						<?php
-						foreach ( $members as $member ) :
-							$user = get_userdata( $member->user_id );
-							if ( ! $user ) {
-								continue;
-							}
-							?>
-							<tr data-user-id="<?php echo absint( $member->user_id ); ?>">
-								<td>
-									<?php echo get_avatar( $member->user_id, 24 ); ?>
-									<strong><?php echo esc_html( $user->display_name ); ?></strong>
-									<span class="description">(<?php echo esc_html( $user->user_login ); ?>)</span>
-								</td>
-								<td>
-									<select class="jetonomy-change-member-role" data-space-id="<?php echo absint( $space->id ); ?>" data-user-id="<?php echo absint( $member->user_id ); ?>">
-										<option value="viewer" <?php selected( $member->role, 'viewer' ); ?>><?php esc_html_e( 'Viewer', 'jetonomy' ); ?></option>
-										<option value="member" <?php selected( $member->role, 'member' ); ?>><?php esc_html_e( 'Member', 'jetonomy' ); ?></option>
-										<option value="moderator" <?php selected( $member->role, 'moderator' ); ?>><?php esc_html_e( 'Moderator', 'jetonomy' ); ?></option>
-										<option value="admin" <?php selected( $member->role, 'admin' ); ?>><?php esc_html_e( 'Admin', 'jetonomy' ); ?></option>
-									</select>
-								</td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $member->joined_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
-								<td>
-									<button type="button" class="button button-small jetonomy-remove-member" data-space-id="<?php echo absint( $space->id ); ?>" data-user-id="<?php echo absint( $member->user_id ); ?>"><?php esc_html_e( 'Remove', 'jetonomy' ); ?></button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
-				</tbody>
-			</table></div><!-- /.jt-content-table-wrap -->
+			<?php
+			// Drop members whose WP account has since gone rather than
+			// rendering a blank row. The cell renderer re-reads the user from
+			// WP's own cache, so this costs no extra queries and avoids
+			// attaching an undeclared property to the member row.
+			$jt_member_rows = array_values(
+				array_filter(
+					$members,
+					static function ( $member ): bool {
+						return (bool) get_userdata( $member->user_id );
+					}
+				)
+			);
+
+			jetonomy_admin_table(
+				array(
+					'table_id'  => 'jetonomy-members-table',
+					'class'     => 'jt-spacedit-list',
+					'columns'   => array(
+						'user'    => array(
+							'label'   => __( 'User', 'jetonomy' ),
+							'primary' => true,
+						),
+						'role'    => array(
+							'label' => __( 'Role', 'jetonomy' ),
+							'width' => 'm',
+						),
+						'joined'  => array(
+							'label' => __( 'Joined', 'jetonomy' ),
+							'width' => 'm',
+						),
+						'actions' => array(
+							'label' => __( 'Actions', 'jetonomy' ),
+							'width' => 's',
+						),
+					),
+					'rows'      => $jt_member_rows,
+					'row_attrs' => static function ( $member ): array {
+						return array( 'data-user-id' => (int) $member->user_id );
+					},
+					'empty'     => array(
+						'variant' => 'compact',
+						'icon'    => 'groups',
+						'title'   => __( 'No members yet', 'jetonomy' ),
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						'body'    => sprintf( __( 'Invite members or open this %s to the wider community.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					),
+					'cell'      => static function ( $member, string $key ) use ( $space ): void {
+						switch ( $key ) {
+							case 'user':
+								$jt_user = get_userdata( $member->user_id );
+								echo get_avatar( (int) $member->user_id, 24 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core returns escaped markup.
+								echo ' <strong>' . esc_html( $jt_user ? $jt_user->display_name : '' ) . '</strong> ';
+								echo '<span class="description">(' . esc_html( $jt_user ? $jt_user->user_login : '' ) . ')</span>';
+								break;
+							case 'role':
+								?>
+								<select class="jetonomy-change-member-role" data-space-id="<?php echo absint( $space->id ); ?>" data-user-id="<?php echo absint( $member->user_id ); ?>">
+									<option value="viewer" <?php selected( $member->role, 'viewer' ); ?>><?php esc_html_e( 'Viewer', 'jetonomy' ); ?></option>
+									<option value="member" <?php selected( $member->role, 'member' ); ?>><?php esc_html_e( 'Member', 'jetonomy' ); ?></option>
+									<option value="moderator" <?php selected( $member->role, 'moderator' ); ?>><?php esc_html_e( 'Moderator', 'jetonomy' ); ?></option>
+									<option value="admin" <?php selected( $member->role, 'admin' ); ?>><?php esc_html_e( 'Admin', 'jetonomy' ); ?></option>
+								</select>
+								<?php
+								break;
+							case 'joined':
+								echo esc_html( human_time_diff( strtotime( $member->joined_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+								break;
+							case 'actions':
+								?>
+								<button type="button" class="button button-small jetonomy-remove-member" data-space-id="<?php echo absint( $space->id ); ?>" data-user-id="<?php echo absint( $member->user_id ); ?>"><?php esc_html_e( 'Remove', 'jetonomy' ); ?></button>
+								<?php
+								break;
+						}
+					},
+				)
+			);
+		?>
 
 			<hr>
 
@@ -289,30 +313,47 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<p class="description"><?php esc_html_e( 'Max uses 0 means unlimited. Leave Expires blank for no expiry.', 'jetonomy' ); ?></p>
 			</div>
 
-			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-invites-table" data-space-id="<?php echo absint( $space->id ); ?>">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'Invite Link', 'jetonomy' ); ?></th>
-						<th style="width:120px;"><?php esc_html_e( 'Uses', 'jetonomy' ); ?></th>
-						<th style="width:140px;"><?php esc_html_e( 'Expires', 'jetonomy' ); ?></th>
-						<th style="width:120px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php
-					jetonomy_admin_empty_state(
-						array(
-							'colspan' => 4,
-							'variant' => 'compact',
-							'icon'    => 'admin-links',
-							'title'   => __( 'No invite links yet', 'jetonomy' ),
-							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-							'body'    => sprintf( __( 'Generate a link to invite people directly into this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-						)
-					);
-					?>
-				</tbody>
-			</table></div><!-- /.jt-content-table-wrap -->
+			<?php
+			// Rows are injected by admin.js after an AJAX fetch, so this
+			// renders the shell and the empty state only. The column order
+			// here is the contract admin.js builds rows against.
+			jetonomy_admin_table(
+				array(
+					'table_id'    => 'jetonomy-invites-table',
+					'table_attrs' => array( 'data-space-id' => (int) $space->id ),
+					'class'       => 'jt-spacedit-list',
+					'columns'     => array(
+						'link'    => array(
+							'label'   => __( 'Invite Link', 'jetonomy' ),
+							'primary' => true,
+						),
+						'uses'    => array(
+							'label' => __( 'Uses', 'jetonomy' ),
+							'width' => 's',
+						),
+						'expires' => array(
+							'label' => __( 'Expires', 'jetonomy' ),
+							'width' => 'm',
+						),
+						'actions' => array(
+							'label' => __( 'Actions', 'jetonomy' ),
+							'width' => 'm',
+						),
+					),
+					'rows'        => array(),
+					'empty'       => array(
+						'variant' => 'compact',
+						'icon'    => 'admin-links',
+						'title'   => __( 'No invite links yet', 'jetonomy' ),
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						'body'    => sprintf( __( 'Generate a link to invite people directly into this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					),
+					'cell'        => static function (): void {
+						// Unreachable: rows are always empty server-side.
+					},
+				)
+			);
+			?>
 		</div>
 
 	<?php elseif ( 'access' === $active_tab ) : ?>
@@ -465,59 +506,80 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 
 			<?php /* translators: %d: number of access rules */ ?>
 		<h2><?php printf( esc_html__( 'Access Rules (%d)', 'jetonomy' ), (int) count( $access_rules ) ); ?></h2>
-			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-rules-table">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'Type', 'jetonomy' ); ?></th>
-						<th><?php esc_html_e( 'Value', 'jetonomy' ); ?></th>
-						<th><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
-						<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-						<th><?php echo esc_html( sprintf( __( '%s Role', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></th>
-						<th><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php if ( empty( $access_rules ) ) : ?>
-						<?php
-						jetonomy_admin_empty_state(
-							array(
-								'colspan' => 5,
-								'variant' => 'compact',
-								'icon'    => 'lock',
-								'title'   => __( 'No access rules', 'jetonomy' ),
-								'body'    => __( 'Default permissions apply. Add a rule to limit access by role, membership, or trust level.', 'jetonomy' ),
-							)
-						);
-						?>
-					<?php else : ?>
-						<?php foreach ( $access_rules as $rule ) : ?>
-							<?php
-							// Resolve human-readable labels for membership rules.
-							$display_type  = ucfirst( str_replace( '_', ' ', $rule->rule_type ) );
-							$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
+			<?php
+			jetonomy_admin_table(
+				array(
+					'table_id'  => 'jetonomy-rules-table',
+					'class'     => 'jt-spacedit-list',
+					'columns'   => array(
+						'type'    => array(
+							'label'   => __( 'Type', 'jetonomy' ),
+							'primary' => true,
+						),
+						'value'   => array( 'label' => __( 'Value', 'jetonomy' ) ),
+						'grants'  => array(
+							'label' => __( 'Grants', 'jetonomy' ),
+							'width' => 's',
+						),
+						'role'    => array(
+							/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+							'label' => sprintf( __( '%s Role', 'jetonomy' ), \Jetonomy\space_label() ),
+							'width' => 'm',
+						),
+						'actions' => array(
+							'label' => __( 'Actions', 'jetonomy' ),
+							'width' => 'l',
+						),
+					),
+					'rows'      => $access_rules,
+					'row_attrs' => static function ( $rule ): array {
+						return array( 'data-rule-id' => (int) $rule->id );
+					},
+					'empty'     => array(
+						'variant' => 'compact',
+						'icon'    => 'lock',
+						'title'   => __( 'No access rules', 'jetonomy' ),
+						'body'    => __( 'Default permissions apply. Add a rule to limit access by role, membership, or trust level.', 'jetonomy' ),
+					),
+					'cell'      => static function ( $rule, string $key ) use ( $space ): void {
+						// Membership rules store a raw level id; the adapter
+						// registry turns it back into something a human reads.
+						$display_type  = ucfirst( str_replace( '_', ' ', $rule->rule_type ) );
+						$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
+						if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
+							$described     = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
+							$display_type  = $described['type'];
+							$display_value = $described['value'];
+						}
 
-							if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
-								$described     = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
-								$display_type  = $described['type'];
-								$display_value = $described['value'];
-							}
-							?>
-							<tr data-rule-id="<?php echo absint( $rule->id ); ?>">
-								<td><code><?php echo esc_html( $display_type ); ?></code></td>
-								<td><?php echo esc_html( $display_value ); ?></td>
-								<td><span class="jetonomy-badge jetonomy-badge--<?php echo esc_attr( $rule->grants ); ?>"><?php echo esc_html( ucfirst( $rule->grants ) ); ?></span></td>
-								<td><?php echo esc_html( ucfirst( $rule->space_role ) ); ?></td>
-								<td class="jetonomy-rule-actions">
-									<?php if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) : ?>
-										<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>" data-role="<?php echo esc_attr( $rule->space_role ); ?>"><span class="dashicons dashicons-update"></span> <?php esc_html_e( 'Sync Members', 'jetonomy' ); ?></button>
-									<?php endif; ?>
-									<button type="button" class="button button-small button-link-delete jetonomy-delete-rule" data-id="<?php echo absint( $rule->id ); ?>"><span class="dashicons dashicons-trash"></span> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
-				</tbody>
-			</table></div><!-- /.jt-content-table-wrap -->
+						switch ( $key ) {
+							case 'type':
+								echo '<code>' . esc_html( $display_type ) . '</code>';
+								break;
+							case 'value':
+								echo esc_html( $display_value );
+								break;
+							case 'grants':
+								echo '<span class="jetonomy-badge jetonomy-badge--' . esc_attr( $rule->grants ) . '">' . esc_html( ucfirst( $rule->grants ) ) . '</span>';
+								break;
+							case 'role':
+								echo esc_html( ucfirst( $rule->space_role ) );
+								break;
+							case 'actions':
+								if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) :
+									?>
+									<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>" data-role="<?php echo esc_attr( $rule->space_role ); ?>"><span class="dashicons dashicons-update"></span> <?php esc_html_e( 'Sync Members', 'jetonomy' ); ?></button>
+									<?php
+								endif;
+								?>
+								<button type="button" class="button button-small button-link-delete jetonomy-delete-rule" data-id="<?php echo absint( $rule->id ); ?>"><span class="dashicons dashicons-trash"></span> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
+								<?php
+								break;
+						}
+					},
+				)
+			);
+		?>
 		</div>
 
 	<?php elseif ( 'settings' === $active_tab ) : ?>
@@ -531,7 +593,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<p class="jt-settings-card__desc"><?php echo esc_html( sprintf( __( 'These settings override the global defaults for this %s only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
 			<form id="jetonomy-space-settings-form" data-space-id="<?php echo absint( $space->id ); ?>">
-				<table class="form-table">
+				<table class="form-table"><!-- jetonomy-audit-table-ok: WP core settings form, not a data list; core stacks form-table th/td below 782px -->
 					<tr>
 						<th scope="row"><label for="ss-who-can-post"><?php esc_html_e( 'Who Can Post', 'jetonomy' ); ?></label></th>
 						<td>
@@ -677,54 +739,73 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<div class="jetonomy-tab-content">
 			<?php /* translators: %d: number of pending join requests */ ?>
 		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), (int) count( $join_requests ) ); ?></h2>
-			<div class="jt-content-table-wrap"><table class="wp-list-table widefat striped jt-spacedit-list" id="jetonomy-join-requests-table">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
-						<th><?php esc_html_e( 'Message', 'jetonomy' ); ?></th>
-						<th style="width:150px;"><?php esc_html_e( 'Requested', 'jetonomy' ); ?></th>
-						<th style="width:180px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php if ( empty( $join_requests ) ) : ?>
-						<?php
-						jetonomy_admin_empty_state(
-							array(
-								'colspan' => 4,
-								'variant' => 'success',
-								'icon'    => 'yes-alt',
-								'title'   => __( 'No pending join requests', 'jetonomy' ),
-								/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-								'body'    => sprintf( __( 'New requests to join this %s will appear here for review.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-							)
-						);
-						?>
-					<?php else : ?>
-						<?php
-						foreach ( $join_requests as $request ) :
-							$user = get_userdata( $request->user_id );
-							if ( ! $user ) {
-								continue;
-							}
-							?>
-							<tr data-request-id="<?php echo absint( $request->id ); ?>">
-								<td>
-									<?php echo get_avatar( $request->user_id, 24 ); ?>
-									<strong><?php echo esc_html( $user->display_name ); ?></strong>
-									<span class="description">(<?php echo esc_html( $user->user_login ); ?>)</span>
-								</td>
-								<td><?php echo esc_html( ! empty( $request->message ) ? $request->message : '—' ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $request->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
-								<td>
-									<button type="button" class="button button-small button-primary jetonomy-approve-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
-									<button type="button" class="button button-small jetonomy-deny-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Deny', 'jetonomy' ); ?></button>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
-				</tbody>
-			</table></div><!-- /.jt-content-table-wrap -->
+			<?php
+			// Same filter as the members table: drop requests whose WP account
+			// has since gone, and let the cell renderer re-read from WP's cache.
+			$jt_request_rows = array_values(
+				array_filter(
+					$join_requests,
+					static function ( $request ): bool {
+						return (bool) get_userdata( $request->user_id );
+					}
+				)
+			);
+
+			jetonomy_admin_table(
+				array(
+					'table_id'  => 'jetonomy-join-requests-table',
+					'class'     => 'jt-spacedit-list',
+					'columns'   => array(
+						'user'      => array(
+							'label'   => __( 'User', 'jetonomy' ),
+							'primary' => true,
+						),
+						'message'   => array( 'label' => __( 'Message', 'jetonomy' ) ),
+						'requested' => array(
+							'label' => __( 'Requested', 'jetonomy' ),
+							'width' => 'm',
+						),
+						'actions'   => array(
+							'label' => __( 'Actions', 'jetonomy' ),
+							'width' => 'l',
+						),
+					),
+					'rows'      => $jt_request_rows,
+					'row_attrs' => static function ( $request ): array {
+						return array( 'data-request-id' => (int) $request->id );
+					},
+					'empty'     => array(
+						'variant' => 'success',
+						'icon'    => 'yes-alt',
+						'title'   => __( 'No pending join requests', 'jetonomy' ),
+						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						'body'    => sprintf( __( 'New requests to join this %s will appear here for review.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					),
+					'cell'      => static function ( $request, string $key ) use ( $space ): void {
+						switch ( $key ) {
+							case 'user':
+								$jt_user = get_userdata( $request->user_id );
+								echo get_avatar( (int) $request->user_id, 24 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core returns escaped markup.
+								echo ' <strong>' . esc_html( $jt_user ? $jt_user->display_name : '' ) . '</strong> ';
+								echo '<span class="description">(' . esc_html( $jt_user ? $jt_user->user_login : '' ) . ')</span>';
+								break;
+							case 'message':
+								echo esc_html( ! empty( $request->message ) ? $request->message : '—' );
+								break;
+							case 'requested':
+								echo esc_html( human_time_diff( strtotime( $request->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) );
+								break;
+							case 'actions':
+								?>
+								<button type="button" class="button button-small button-primary jetonomy-approve-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
+								<button type="button" class="button button-small jetonomy-deny-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Deny', 'jetonomy' ); ?></button>
+								<?php
+								break;
+						}
+					},
+				)
+			);
+		?>
 		</div>
 
 	<?php endif; ?>

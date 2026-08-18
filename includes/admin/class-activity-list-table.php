@@ -61,9 +61,19 @@ class Activity_List_Table extends \WP_List_Table {
 	 * @return array<string, string>
 	 */
 	public function get_columns(): array {
+		// Actor FIRST, because it is the primary. Core hides small-screen columns
+		// with `td.column-primary ~ td`, a sibling combinator that only reaches
+		// columns AFTER the primary cell. With Date first and the primary
+		// overridden to Actor, Date stayed display:table-cell, table-layout:fixed
+		// squeezed it to 0 width, and at 390px it spilled a character per line.
+		//
+		// Same defect the Revisions screen had (Basecamp 10212987797): both
+		// overrode the primary in the 10146443346 batch without reordering.
+		// Do not reorder these two without re-checking 390px - the browser gate
+		// in tests/browser/admin-tables.spec.js asserts it.
 		return array(
-			'created_at' => __( 'Date', 'jetonomy' ),
 			'actor'      => __( 'Actor', 'jetonomy' ),
+			'created_at' => __( 'Date', 'jetonomy' ),
 			'action'     => __( 'Type', 'jetonomy' ),
 			'object'     => __( 'Object', 'jetonomy' ),
 			'snippet'    => __( 'Details', 'jetonomy' ),
@@ -77,6 +87,10 @@ class Activity_List_Table extends \WP_List_Table {
 	 * so every collapsed row on a phone read "22 minutes ago" and nothing
 	 * distinguished one entry from the next (Basecamp 10146443346). The actor
 	 * is the identity in an activity log; the rest expands behind the toggle.
+	 *
+	 * Actor is now first, so this restates WP's default rather than changing it.
+	 * Kept deliberately: it pins the intent, so reordering the columns cannot
+	 * silently move the primary back onto the date.
 	 */
 	protected function get_default_primary_column_name(): string {
 		return 'actor';

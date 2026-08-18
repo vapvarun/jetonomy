@@ -15,14 +15,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$trust_labels = array(
-	0 => __( 'New', 'jetonomy' ),
-	1 => __( 'Basic', 'jetonomy' ),
-	2 => __( 'Member', 'jetonomy' ),
-	3 => __( 'Regular', 'jetonomy' ),
-	4 => __( 'Leader', 'jetonomy' ),
-	5 => __( 'Elder', 'jetonomy' ),
-);
+// Read from Trust_Levels, never a local copy. This screen used to carry its own
+// list (New / Basic / Member / Regular / Leader / Elder) which sat a full level
+// off the names the promotion email and Permissions tab used, so a member
+// promoted to level 2 was emailed "Regular" and listed here as "Member"
+// (Basecamp 10210059424).
+$trust_labels = array();
+for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
+	$trust_labels[ $jt_tl ] = \Jetonomy\Trust\Trust_Levels::label( $jt_tl );
+}
 ?>
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Users', 'jetonomy' ); ?></h1>
@@ -51,8 +52,15 @@ $trust_labels = array(
 			<p class="jt-roles-explainer__foot">
 				<?php
 				printf(
-					/* translators: %s: link to the full guide */
-					esc_html__( 'A Subscriber can be a Level 5 Elder and a space admin — community standing and wp-admin access are separate on purpose. %s', 'jetonomy' ),
+					/* translators: 1: name of the highest trust level, 2: link to the full guide */
+					esc_html__( 'A Subscriber can be a Level 5 %1$s and a space admin — community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
+					// Read from $trust_labels for the same reason the rest of
+					// this screen does: the sentence used to hardcode "Elder",
+					// a name level 5 has not carried since the ladder was
+					// renamed, so the one surface that had just been fixed to
+					// stop keeping a local copy still shipped one in its own
+					// explainer (Basecamp 10212758778).
+					$trust_labels[5],
 					// Directory, not the deep link to 08-users-roles-and-trust.md.
 					// `blob/HEAD` resolves against the DEFAULT branch, and that
 					// file lands there only when the release branch merges - so
@@ -92,72 +100,94 @@ $trust_labels = array(
 		</div>
 	</div>
 
-	<div class="jt-content-table-wrap">
-		<table class="wp-list-table widefat fixed striped">
-		<thead>
-			<tr>
-				<?php
-				// Core responsive list-table pattern: column-primary + data-colname
-						// + toggle-row give us WP core's own small-screen UX (primary column
-						// with a per-row expander) via core CSS/JS - no custom code.
-				?>
-				<th scope="col" class="manage-column column-username column-primary"><?php esc_html_e( 'Username', 'jetonomy' ); ?></th>
-				<th scope="col" class="manage-column column-display-name"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></th>
-				<th scope="col" class="manage-column column-trust" style="width:120px;"><?php esc_html_e( 'Trust Level', 'jetonomy' ); ?></th>
-				<th scope="col" class="manage-column column-reputation" style="width:90px;"><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></th>
-				<th scope="col" class="manage-column column-posts" style="width:60px;"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></th>
-				<th scope="col" class="manage-column column-replies" style="width:70px;"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
-				<th scope="col" class="manage-column column-joined" style="width:110px;"><?php esc_html_e( 'Joined', 'jetonomy' ); ?></th>
-				<th scope="col" class="manage-column column-last-seen" style="width:110px;"><?php esc_html_e( 'Last Seen', 'jetonomy' ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-			<?php if ( empty( $users ) ) : ?>
-				<?php
-				jetonomy_admin_empty_state(
-					array(
-						'colspan' => 8,
-						'icon'    => 'admin-users',
-						'title'   => __( 'No users match these filters', 'jetonomy' ),
-						'body'    => __( 'Try clearing a filter or broadening your search to see more members.', 'jetonomy' ),
-					)
-				);
-				?>
-			<?php else : ?>
-				<?php foreach ( $users as $u ) : ?>
-					<tr data-user-id="<?php echo absint( $u->user_id ); ?>">
-						<td class="column-username column-primary" data-colname="<?php esc_attr_e( 'Username', 'jetonomy' ); ?>">
-							<?php echo get_avatar( $u->user_id, 24 ); ?>
-							<strong><?php echo esc_html( $u->user_login ); ?></strong>
-							<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
-							<div class="row-actions">
-								<span class="edit"><a href="<?php echo esc_url( get_edit_user_link( $u->user_id ) ); ?>"><?php esc_html_e( 'View Profile', 'jetonomy' ); ?></a> | </span>
-								<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a> | </span>
-								<span class="ban"><a href="#" class="jetonomy-ban-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-username="<?php echo esc_attr( $u->user_login ); ?>"><?php esc_html_e( 'Ban', 'jetonomy' ); ?></a> | </span>
-								<span class="silence"><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a></span>
-							</div>
-						</td>
-						<td class="column-display-name" data-colname="<?php esc_attr_e( 'Display Name', 'jetonomy' ); ?>"><?php echo esc_html( $u->wp_display_name ?: $u->display_name ); ?></td>
-						<td class="column-trust" data-colname="<?php esc_attr_e( 'Trust Level', 'jetonomy' ); ?>">
-							<span class="jetonomy-trust-badge jetonomy-trust-badge--<?php echo absint( $u->trust_level ); ?>" data-user-id="<?php echo absint( $u->user_id ); ?>">
-								<?php echo esc_html( ( $trust_labels[ (int) $u->trust_level ] ?? __( 'Unknown', 'jetonomy' ) ) . ' (' . $u->trust_level . ')' ); ?>
-							</span>
-						</td>
-						<td class="column-reputation" data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><?php echo esc_html( number_format_i18n( $u->reputation ) ); ?></td>
-						<td class="column-posts" data-colname="<?php esc_attr_e( 'Posts', 'jetonomy' ); ?>"><?php echo absint( $u->post_count ); ?></td>
-						<td class="column-replies" data-colname="<?php esc_attr_e( 'Replies', 'jetonomy' ); ?>"><?php echo absint( $u->reply_count ); ?></td>
-						<td class="column-joined" data-colname="<?php esc_attr_e( 'Joined', 'jetonomy' ); ?>">
-							<?php echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '&mdash;' ); ?>
-						</td>
-						<td class="column-last-seen" data-colname="<?php esc_attr_e( 'Last Seen', 'jetonomy' ); ?>">
-							<?php echo esc_html( $u->last_seen_at ? human_time_diff( strtotime( $u->last_seen_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : __( 'Never', 'jetonomy' ) ); ?>
-						</td>
-					</tr>
-				<?php endforeach; ?>
-			<?php endif; ?>
-		</tbody>
-	</table>
-	</div><!-- /.jt-content-table-wrap -->
+	<?php
+	jetonomy_admin_table(
+		array(
+			'rows'      => $users ?? array(),
+			'row_attrs' => fn( $u ) => array( 'data-user-id' => absint( $u->user_id ) ),
+			'columns'   => array(
+				'username'     => array(
+					'label'   => __( 'Username', 'jetonomy' ),
+					'primary' => true,
+				),
+				'display-name' => array( 'label' => __( 'Display Name', 'jetonomy' ) ),
+				// Widths snap to the shared xs/s/m/l scale rather than the inline
+				// px this table used to carry; the scale drops to auto below
+				// 782px, which a hardcoded width does not.
+				'trust'        => array(
+					'label' => __( 'Trust Level', 'jetonomy' ),
+					'width' => 'm',
+				),
+				'reputation'   => array(
+					'label' => __( 'Reputation', 'jetonomy' ),
+					'width' => 's',
+				),
+				'posts'        => array(
+					'label' => __( 'Posts', 'jetonomy' ),
+					'width' => 'xs',
+				),
+				'replies'      => array(
+					'label' => __( 'Replies', 'jetonomy' ),
+					'width' => 's',
+				),
+				'joined'       => array(
+					'label' => __( 'Joined', 'jetonomy' ),
+					'width' => 'm',
+				),
+				'last-seen'    => array(
+					'label' => __( 'Last Seen', 'jetonomy' ),
+					'width' => 'm',
+				),
+			),
+			'empty'     => array(
+				'icon'  => 'admin-users',
+				'title' => __( 'No users match these filters', 'jetonomy' ),
+				'body'  => __( 'Try clearing a filter or broadening your search to see more members.', 'jetonomy' ),
+			),
+			'cell'      => function ( $u, $col ) use ( $trust_labels ) {
+				switch ( $col ) {
+					case 'username':
+						echo get_avatar( $u->user_id, 24 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core markup.
+						echo '<strong>' . esc_html( $u->user_login ) . '</strong>';
+						?>
+						<div class="row-actions">
+							<span class="edit"><a href="<?php echo esc_url( get_edit_user_link( $u->user_id ) ); ?>"><?php esc_html_e( 'View Profile', 'jetonomy' ); ?></a> | </span>
+							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a> | </span>
+							<span class="ban"><a href="#" class="jetonomy-ban-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-username="<?php echo esc_attr( $u->user_login ); ?>"><?php esc_html_e( 'Ban', 'jetonomy' ); ?></a> | </span>
+							<span class="silence"><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a></span>
+						</div>
+						<?php
+						break;
+					case 'display-name':
+						echo esc_html( $u->wp_display_name ?: $u->display_name );
+						break;
+					case 'trust':
+						?>
+						<span class="jetonomy-trust-badge jetonomy-trust-badge--<?php echo absint( $u->trust_level ); ?>" data-user-id="<?php echo absint( $u->user_id ); ?>">
+							<?php echo esc_html( ( $trust_labels[ (int) $u->trust_level ] ?? __( 'Unknown', 'jetonomy' ) ) . ' (' . $u->trust_level . ')' ); ?>
+						</span>
+						<?php
+						break;
+					case 'reputation':
+						echo esc_html( number_format_i18n( $u->reputation ) );
+						break;
+					case 'posts':
+						echo absint( $u->post_count );
+						break;
+					case 'replies':
+						echo absint( $u->reply_count );
+						break;
+					case 'joined':
+						echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '—' );
+						break;
+					case 'last-seen':
+						echo esc_html( $u->last_seen_at ? human_time_diff( strtotime( $u->last_seen_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : __( 'Never', 'jetonomy' ) );
+						break;
+				}
+			},
+		)
+	);
+	?>
 
 	<!-- Pagination -->
 	<?php if ( $total_pages > 1 ) : ?>
@@ -200,7 +230,7 @@ $trust_labels = array(
 			<h2><?php esc_html_e( 'Ban User', 'jetonomy' ); ?></h2>
 			<input type="hidden" id="ban-user-id" value="">
 			<p id="ban-user-label"></p>
-			<table class="form-table">
+			<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table in the ban modal, not a data list; wp-admin stacks label/field rows below 782px -->
 				<tr>
 					<th scope="row"><label for="ban-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label></th>
 					<td>

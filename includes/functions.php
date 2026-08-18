@@ -244,6 +244,253 @@ function client_ip(): string {
 }
 
 /**
+ * Whether a name impersonates the site or its staff.
+ *
+ * Compared case-insensitively after trimming and collapsing whitespace, so
+ * "  ADMIN  " and "Admin" are both caught. Substring matching is deliberately
+ * NOT used: "Adminah" and "Support Sarah" are legitimate names, and blocking
+ * them would be a worse failure than the one this prevents.
+ *
+ * The site title is included because impersonating the community itself is the
+ * same attack with a different word.
+ *
+ * @param string $name Candidate name.
+ * @return bool
+ */
+function is_reserved_display_name( string $name ): bool {
+	$normalized = strtolower( trim( preg_replace( '/\s+/', ' ', $name ) ?? '' ) );
+	if ( '' === $normalized ) {
+		return false;
+	}
+
+	$reserved = array(
+		'admin',
+		'administrator',
+		'moderator',
+		'mod',
+		'staff',
+		'support',
+		'owner',
+		'root',
+		'system',
+		'webmaster',
+		'official',
+	);
+
+	$site_title = strtolower( trim( (string) get_bloginfo( 'name' ) ) );
+	if ( '' !== $site_title ) {
+		$reserved[] = $site_title;
+	}
+
+	/**
+	 * Filter the reserved names members may not publish as.
+	 *
+	 * Security boundary: PATCH /users/me rejects anything matching this list,
+	 * so entries are enforced server-side. Values are compared lowercased and
+	 * whitespace-collapsed.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string[] $reserved   Reserved names, lowercase.
+	 * @param string   $normalized The name being checked, normalized.
+	 */
+	$reserved = (array) apply_filters( 'jetonomy_reserved_display_names', $reserved, $normalized );
+
+	return in_array( $normalized, array_map( 'strtolower', $reserved ), true );
+}
+
+/**
+ * The @handle to show for a member.
+ *
+ * The EMIT half of the mention contract. `jetonomy_resolve_mention_handles`
+ * turns a typed handle back into a user; this decides what handle we put in
+ * front of them in the first place - the composer typeahead, the profile page
+ * title, schema alternateName.
+ *
+ * Both halves are needed and they must agree. Jetonomy shipped only the resolve
+ * half, so a member whose partner plugin gives them a custom slug was offered
+ * as `@their-nicename` here and `@their-slug` there. Mentions still resolved,
+ * because resolution was already filterable - but the two products showed a
+ * different handle for the same person, which is the split the nicename work
+ * was meant to close.
+ *
+ * Default is `user_nicename`: WordPress's own public slug, and the field
+ * BuddyNext documents as the shared contract. Falls back to `user_login` only
+ * when nicename is somehow empty.
+ *
+ * Distinct from user_display_name(): the handle is an IDENTIFIER people type
+ * after an `@`, the display name is a label. A site may well show real names
+ * and still mention by handle.
+ *
+ * @param int|\WP_User|object $user User ID, WP_User, or a row carrying user_id.
+ * @return string Handle without the leading `@`, or '' when unresolvable.
+ */
+function user_handle( $user ): string {
+	if ( ! $user instanceof \WP_User ) {
+		$user_id = is_object( $user )
+			? (int) ( $user->user_id ?? $user->ID ?? 0 )
+			: (int) $user;
+
+		$user = $user_id > 0 ? get_userdata( $user_id ) : null;
+	}
+	if ( ! $user instanceof \WP_User ) {
+		return '';
+	}
+
+	$handle = (string) $user->user_nicename;
+	if ( '' === trim( $handle ) ) {
+		$handle = (string) $user->user_login;
+	}
+
+	/**
+	 * Filter the @handle shown for a member.
+	 *
+	 * MUST be paired with `jetonomy_resolve_mention_handles`. Anything returned
+	 * here will be typed back at us by members, so whatever claims a handle on
+	 * emit has to claim it on resolve too - otherwise the composer offers a
+	 * mention the parser cannot resolve, which is the exact failure BuddyNext's
+	 * Handle contract warns about.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string   $handle Resolved handle, no leading '@'.
+	 * @param \WP_User $user   The user.
+	 */
+	return (string) apply_filters( 'jetonomy_user_handle', $handle, $user );
+}
+
+/**
+ * The set of names a member is allowed to publish as.
+ *
+ * WordPress does not let a member author an arbitrary display name: wp-admin
+ * offers a "Display name publicly as" select built from permutations of fields
+ * they already own. Jetonomy's front-end editor used to be a free-text box that
+ * wrote straight through to wp_users.display_name, which meant a member could
+ * publish as "Administrator", could take another member's exact name, and could
+ * silently overwrite a value the site owner had chosen in wp-admin - the stored
+ * name then matched none of core's own options.
+ *
+ * Shared by the form that renders the select and the endpoint that validates the
+ * submission, so the two cannot disagree about what is allowed.
+ *
+ * The member's CURRENT display_name is always included, exactly as core does.
+ * Sites upgrading from the free-text era have members whose stored name is not a
+ * permutation of anything; excluding it would make simply saving the form fail,
+ * or silently rename them. New arbitrary values still cannot be introduced.
+ *
+ * @param \WP_User $user User to build choices for.
+ * @return string[] Unique, non-empty candidate names.
+ */
+function display_name_choices( \WP_User $user ): array {
+	$first = (string) get_user_meta( $user->ID, 'first_name', true );
+	$last  = (string) get_user_meta( $user->ID, 'last_name', true );
+	$nick  = (string) get_user_meta( $user->ID, 'nickname', true );
+
+	$choices = array(
+		(string) $user->display_name,
+		(string) $user->user_login,
+		$nick,
+		$first,
+		$last,
+		trim( $first . ' ' . $last ),
+		trim( $last . ' ' . $first ),
+	);
+
+	// Strip names that impersonate the site or its staff. This is applied to the
+	// CHOICES, not just to the submitted value, so the select never offers one
+	// and PATCH /users/me - which validates against this same list - rejects it.
+	//
+	// It has to live here rather than on display_name alone, because the parts
+	// are member-writable through the same endpoint: setting
+	// nickname="Administrator" and then selecting it was a two-call
+	// impersonation that the first version of this check missed entirely
+	// (Basecamp 10210055850, QA bounce).
+	$choices = array_filter(
+		$choices,
+		static fn( $name ) => ! is_reserved_display_name( (string) $name )
+	);
+
+	/**
+	 * Filter the names a member may publish as.
+	 *
+	 * Add to this to offer another form (e.g. a pseudonym field); remove from it
+	 * to stop offering the raw username. Anything not in the returned list is
+	 * rejected by PATCH /users/me, so this is a security boundary, not a
+	 * cosmetic one - do not add unvalidated user input.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string[] $choices Candidate names.
+	 * @param \WP_User $user    The user.
+	 */
+	$choices = (array) apply_filters( 'jetonomy_display_name_choices', $choices, $user );
+
+	return array_values( array_unique( array_filter( array_map( 'trim', array_map( 'strval', $choices ) ) ) ) );
+}
+
+/**
+ * The name to show for a member on any display surface.
+ *
+ * THE single source of truth for "what do we call this person on screen",
+ * paired with get_profile_url() for "where does their name link to". Every
+ * byline, member row, mention chip, and moderation card resolves through here,
+ * so a site that wants handles instead of real names changes one filter rather
+ * than hunting ~40 templates.
+ *
+ * Default chain is display_name -> user_nicename -> user_login. The fallbacks
+ * matter: display_name can be empty on users created by an importer or a raw
+ * SQL insert, and an empty byline reads as a broken row.
+ *
+ * NOT for API/CLI payloads. Those carry the canonical stored value and must not
+ * vary with a site's display preference, for the same reason
+ * Trust_Levels::name() is separate from label() - a client comparing the value
+ * would break. Filter the display surface, not the data surface.
+ *
+ * @param int|\WP_User|object $user User ID, WP_User, or a row from one of our own
+ *                                  tables carrying user_id (or ID).
+ * @return string Display name, or '' when the user does not exist.
+ */
+function user_display_name( $user ): string {
+	if ( ! $user instanceof \WP_User ) {
+		// Callers legitimately hold three different things: a user ID, a WP_User,
+		// or a row from one of Jetonomy's own tables (space_members joins, member
+		// lists) which is a stdClass carrying user_id. Casting a stdClass to int
+		// emits a warning and yields 0, so a member row rendered an EMPTY name -
+		// which is how the managed-by card lost its names. Resolve by id and let
+		// get_userdata()'s cache absorb the lookup.
+		$user_id = is_object( $user )
+			? (int) ( $user->user_id ?? $user->ID ?? 0 )
+			: (int) $user;
+
+		$user = $user_id > 0 ? get_userdata( $user_id ) : null;
+	}
+	if ( ! $user instanceof \WP_User ) {
+		return '';
+	}
+
+	$name = (string) $user->display_name;
+	if ( '' === trim( $name ) ) {
+		$name = (string) $user->user_nicename;
+	}
+	if ( '' === trim( $name ) ) {
+		$name = (string) $user->user_login;
+	}
+
+	/**
+	 * Filter the name shown for a member on display surfaces.
+	 *
+	 * Return $user->user_nicename to show handles, $user->user_login to show
+	 * usernames, or compose anything else. Does not affect REST/CLI payloads.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string   $name Resolved display name.
+	 * @param \WP_User $user The user.
+	 */
+	return (string) apply_filters( 'jetonomy_user_display_name', $name, $user );
+}
+
+/**
  * Get the profile URL for a user.
  *
  * Returns the Jetonomy profile URL by default, but can be filtered
@@ -261,7 +508,9 @@ function get_profile_url( int $user_id ): string {
 
 	$settings  = get_option( 'jetonomy_settings', [] );
 	$base_slug = $settings['base_slug'] ?? 'community';
-	$default   = home_url( '/' . $base_slug . '/u/' . $user->user_login . '/' );
+	// rawurlencode because a login may legally contain a space or non-ASCII;
+	// most call sites that hand-built this URL already did, the helper did not.
+	$default = home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
 
 	/**
 	 * Filter the user profile URL.
@@ -496,7 +745,7 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 	}
 
 	$url  = get_profile_url( $user_id );
-	$name = $user->display_name;
+	$name = user_display_name( $user );
 	// Resolve through Avatar::display_url() so a real uploaded avatar (local /
 	// BuddyPress / Gravatar-that-exists) is shown, and members with no real
 	// avatar fall back to initials instead of Gravatar's generic mystery-person.

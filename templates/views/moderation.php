@@ -208,8 +208,8 @@ $crumbs = [
 					<li class="jt-mod-flag-row">
 						<div class="jt-mod-flag-row-head">
 							<span class="jt-badge jt-badge-danger"><?php echo esc_html( $jt_ban_label ); ?></span>
-							<a class="jt-mod-flag-space" href="<?php echo esc_url( $base . '/u/' . ( $jt_banned_user ? $jt_banned_user->user_login : '' ) . '/' ); ?>">
-								<?php echo esc_html( $jt_banned_user ? $jt_banned_user->display_name : __( '[deleted]', 'jetonomy' ) ); ?>
+							<a class="jt-mod-flag-space" href="<?php echo esc_url( $jt_banned_user ? \Jetonomy\get_profile_url( (int) $jt_banned_user->ID ) : '' ); ?>">
+								<?php echo esc_html( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : __( '[deleted]', 'jetonomy' ) ); ?>
 							</a>
 							<?php if ( $jt_ban_space ) : ?>
 								<span class="jt-mod-flag-type"><?php echo esc_html( $jt_ban_space->title ); ?></span>
@@ -217,7 +217,7 @@ $crumbs = [
 							<span class="jt-mod-flag-age">
 								<?php
 								/* translators: 1: issuing moderator name, 2: human-readable time since the restriction */
-								echo esc_html( sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_issuer ? $jt_issuer->display_name : __( 'System', 'jetonomy' ), $jt_ban_age ) );
+								echo esc_html( sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_issuer ? \Jetonomy\user_display_name( $jt_issuer ) : __( 'System', 'jetonomy' ), $jt_ban_age ) );
 								?>
 							</span>
 						</div>
@@ -229,7 +229,7 @@ $crumbs = [
 								class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
 								data-wp-on--click="actions.liftRestriction"
 								data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
-								data-user-name="<?php echo esc_attr( $jt_banned_user ? $jt_banned_user->display_name : '' ); ?>">
+								data-user-name="<?php echo esc_attr( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : '' ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
 								<?php esc_html_e( 'Lift', 'jetonomy' ); ?>
 							</button>
@@ -290,7 +290,7 @@ $crumbs = [
 					continue;
 				}
 				$reporter      = get_userdata( (int) $flag->reporter_id );
-				$reporter_name = $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' );
+				$reporter_name = $reporter ? \Jetonomy\user_display_name( $reporter ) : __( 'Unknown', 'jetonomy' );
 				$age           = human_time_diff( strtotime( $flag->created_at ), time() );
 				$content_plain = (string) ( $obj->content_plain ?? wp_strip_all_tags( (string) ( $obj->content ?? '' ) ) );
 				$excerpt       = trim( mb_substr( $content_plain, 0, 140 ) );

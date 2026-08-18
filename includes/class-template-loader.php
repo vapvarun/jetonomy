@@ -15,9 +15,7 @@ class Template_Loader {
 		// ── /u/me/ redirect to actual user profile ──
 		if ( 'profile' === $data['route'] && 'me' === $data['slug'] ) {
 			if ( is_user_logged_in() ) {
-				$settings  = get_option( 'jetonomy_settings', array() );
-				$base_slug = $settings['base_slug'] ?? 'community';
-				wp_safe_redirect( home_url( '/' . $base_slug . '/u/' . wp_get_current_user()->user_login . '/' ) );
+				wp_safe_redirect( \Jetonomy\get_profile_url( get_current_user_id() ) );
 			} else {
 				wp_safe_redirect( wp_login_url( current_url() ) );
 			}
@@ -1181,7 +1179,11 @@ class Template_Loader {
 						$parts['title'] = $slug_pretty;
 						break;
 					case 'profile':
-						$parts['title'] = '@' . (string) $data['slug'];
+						// Resolve the slug to the member's real handle rather
+						// than echoing whatever the URL was hit with, so the
+						// title agrees with the typeahead and the schema.
+						$jt_pu          = get_user_by( 'login', (string) $data['slug'] );
+						$parts['title'] = '@' . ( $jt_pu ? \Jetonomy\user_handle( $jt_pu ) : (string) $data['slug'] );
 						break;
 					case 'tag':
 						$parts['title'] = '#' . (string) $data['slug'];
@@ -1389,16 +1391,12 @@ class Template_Loader {
 								$image = esc_url_raw( $m[1] );
 							}
 
-							$author_name = '';
-							if ( ! empty( $post->author_id ) ) {
-								$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
-								if ( $profile && ! empty( $profile->display_name ) ) {
-									$author_name = $profile->display_name;
-								} else {
-									$author      = get_userdata( (int) $post->author_id );
-									$author_name = $author ? $author->display_name : '';
-								}
-							}
+							// jt_user_profiles.display_name is never written by free or
+							// Pro, so the branch that preferred it was dead and only
+							// made this read disagree with every other byline.
+							$author_name                            = ! empty( $post->author_id )
+								? \Jetonomy\user_display_name( (int) $post->author_id )
+								: '';
 							$article_meta['article:author']         = $author_name;
 							$article_meta['article:published_time'] = ! empty( $post->created_at )
 								? gmdate( 'c', strtotime( (string) $post->created_at ) )
@@ -1429,7 +1427,7 @@ class Template_Loader {
 							$title   = $user->display_name;
 							/* translators: 1: user login, 2: site title. */
 							$desc      = $bio !== '' ? $bio : sprintf( __( 'Community profile for @%1$s on %2$s.', 'jetonomy' ), $user->user_login, $site_name );
-							$url       = $base . '/u/' . rawurlencode( $user->user_login ) . '/';
+							$url       = \Jetonomy\get_profile_url( (int) $user->ID );
 							$image     = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
 							$image_alt = $user->display_name;
 						}

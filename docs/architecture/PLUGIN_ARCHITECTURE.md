@@ -405,28 +405,50 @@ WP capabilities synced by `Capabilities::register()` (activation, version change
 
 ## 8. Trust & Reputation System
 
-**Trust levels 0–5** - auto-evaluated by `Trust_Evaluator` (runs twicedaily via cron).
+**Trust levels 0–5** - swept every 12 hours by the `jetonomy_trust_evaluation` job
+(Action Scheduler where available, WP-Cron fallback), which fans out to batched
+`jetonomy_trust_evaluation_batch` actions over a keyset cursor.
 
-| Level | Label | Typical threshold |
-|-------|-------|-------------------|
-| 0 | New Member | Default |
-| 1 | Basic | Has read posts + time on site |
-| 2 | Member | Regular contributor |
-| 3 | Regular | High engagement |
-| 4 | Trusted | Long-term active |
-| 5 | Leader | Top community contributor |
+`Trust_Levels::LEVELS` is the source of truth for names and thresholds; the
+table below is a copy and will rot, so read the constant when it matters.
+Levels 1-3 are earned automatically, 4 and 5 are granted by an admin.
 
-**Reputation points** (`Reputation::award($user_id, $action)`):
+| Level | Name | Requirements |
+|-------|------|--------------|
+| 0 | Newcomer | Automatic on signup |
+| 1 | Member | 5 posts, 3 days active, 10 replies received |
+| 2 | Regular | 30 posts, 20 days active, 50 reputation |
+| 3 | Trusted | 100 posts, 60 days active, 200 reputation |
+| 4 | Leader | Granted manually |
+| 5 | Moderator | Granted manually |
+
+Two accessors, and the difference is load-bearing: `name()` returns the
+canonical untranslated string and is what `trust_level_name` carries in REST
+payloads and CLI journeys, so it must never be translated - a client comparing
+it would break under a different admin locale. `label()` is display-only, is
+translated, and is filterable via `jetonomy_trust_level_label`. Every
+user-visible surface reads `label()`; none carries its own list.
+
+**Reputation points** - `Reputation::POINTS_MAP`, awarded via
+`Reputation::award($user_id, $action)`:
 
 | Action | Points |
 |--------|--------|
-| Post created | +5 |
-| Reply created | +2 |
-| Vote received (up) | +10 |
-| Vote received (down) | -2 |
-| Reply accepted | +15 |
+| `post_created` | +2 |
+| `reply_created` | +1 |
+| `post_upvoted` | +10 |
+| `reply_upvoted` | +5 |
+| `post_downvoted` | -2 |
+| `reply_downvoted` | -2 |
+| `reply_accepted` | +15 |
+| `idea_planned` | +20 |
+| `flag_validated` | +5 |
+| `post_reported` | -10 |
+| `post_removed` | -20 |
 
-Hook fired on change: `do_action('jetonomy_reputation_changed', $user_id, $action, $delta)`
+The map is filterable via `jetonomy_reputation_points_map`.
+
+Hook fired on change: `do_action('jetonomy_reputation_changed', $user_id, $action, $delta, $context)`
 
 Trust level change fires: `do_action('jetonomy_trust_level_changed', $user_id, $old_level, $new_level)`
 

@@ -28,7 +28,7 @@ Yes. Space owners and moderators can create and edit a space from the front-end,
 A Private space is still discoverable in listings and search, with a Join or Request to Join button, but only members can read its posts. A Hidden space appears in no listing, search, or navigation, and members reach it only by invite link. See [Membership & Join Policies](../spaces-and-categories/03-membership-policies.md).
 
 **How are join requests approved?**
-When a space uses the Approval Required join policy, requests go to space moderators and admins, who can approve or decline them from the space Members page on the community front-end or under Jetonomy -> Moderation -> Join Requests in wp-admin. Approving admits the member and notifies them by email. See [Membership & Join Policies](../spaces-and-categories/03-membership-policies.md).
+When a space uses the Approval Required join policy, requests go to space moderators and admins, who can approve or decline them from the space Members page on the community front-end (`/community/s/{slug}/members/`), or in wp-admin under Jetonomy -> Spaces -> [space] -> Edit -> Join Requests. Approving admits the member and notifies them by email. If you cannot find the Join Requests tab, it only appears once the space's join policy is Approval Required or the space has pending requests. See [Membership & Join Policies](../spaces-and-categories/03-membership-policies.md).
 
 **Does each space have an RSS feed?**
 Every public space publishes an RSS 2.0 feed at `/community/s/{slug}/feed/`, auto-discovered by feed readers. Private and hidden spaces return a 404 so gated content never leaks. See [Space RSS Feeds](../discussions/11-space-rss-feeds.md).

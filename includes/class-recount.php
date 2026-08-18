@@ -17,6 +17,50 @@ use function Jetonomy\table;
 class Recount {
 
 	/**
+	 * Recount post/reply totals for specific members only.
+	 *
+	 * The full run( 'users' ) rewrites EVERY profile row in one set-based
+	 * UPDATE, which is right for an admin "fix my counters" action and wrong as
+	 * a side effect
+	 * of deleting one space: a 100k-member site would rewrite 100k rows and
+	 * flush the whole cache because a purge touched a dozen authors.
+	 *
+	 * Same two statements, scoped. Kept here beside run() so the definition of
+	 * "what post_count means" lives in one file - a second copy would be free
+	 * to drift on the status filter, which is the part that is easy to get
+	 * wrong.
+	 *
+	 * @param int[] $user_ids Members whose totals to rebuild.
+	 * @return array<string,int> Rows updated per counter.
+	 */
+	public static function for_users( array $user_ids ): array {
+		global $wpdb;
+
+		$user_ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
+		if ( ! $user_ids ) {
+			return [];
+		}
+
+		$profiles_t = table( 'user_profiles' );
+		$posts_t    = table( 'posts' );
+		$replies_t  = table( 'replies' );
+		$in         = implode( ',', $user_ids );
+
+		$stats = [];
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$stats['user_post_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.author_id = u.user_id AND p.status = 'publish') WHERE u.user_id IN ({$in})" );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$stats['user_reply_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.author_id = u.user_id AND r.status = 'publish') WHERE u.user_id IN ({$in})" );
+
+		// Named rows, so the profile caches drop precisely rather than flushing
+		// the whole group the way run() has to. Same key UserProfile writes.
+		Cache::delete_many( array_map( static fn( $uid ) => "profile:{$uid}", $user_ids ) );
+
+		return $stats;
+	}
+
+	/**
 	 * Rebuild denormalized counters.
 	 *
 	 * @param string $type One of: all, posts, spaces, votes, users.

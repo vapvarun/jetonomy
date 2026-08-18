@@ -42,10 +42,14 @@ $role_labels = [
 			<ul class="jt-managed-by-list">
 				<?php foreach ( $members as $member ) : ?>
 					<?php
-					$user      = get_userdata( (int) $member->user_id );
+					$user = get_userdata( (int) $member->user_id );
+					// Resolve from the WP_User already fetched above, not from the
+					// $member row: the row is a space_members join, and its own
+					// display_name column is not the canonical one.
+					$user_name = $user ? \Jetonomy\user_display_name( $user ) : '';
 					$role_key  = (string) ( $member->role ?? '' );
 					$role_text = $role_labels[ $role_key ] ?? ucfirst( $role_key );
-					$profile   = $user ? $base . '/u/' . rawurlencode( $user->user_login ) . '/' : '';
+					$profile   = $user ? \Jetonomy\get_profile_url( (int) $user->ID ) : '';
 					?>
 					<li class="jt-managed-by-row">
 						<?php if ( $profile ) : ?>
@@ -53,18 +57,18 @@ $role_labels = [
 								<?php if ( ! empty( $member->avatar_url ) ) : ?>
 									<img class="jt-managed-by-avatar"
 										src="<?php echo esc_url( $member->avatar_url ); ?>"
-										alt="<?php echo esc_attr( (string) ( $member->display_name ?? '' ) ); ?>"
+										alt="<?php echo esc_attr( $user_name ); ?>"
 										width="32"
 										height="32"
 										loading="lazy" />
 								<?php endif; ?>
 								<span class="jt-managed-by-name">
-									<?php echo esc_html( (string) ( $member->display_name ?? '' ) ); ?>
+									<?php echo esc_html( $user_name ); ?>
 								</span>
 							</a>
 						<?php else : ?>
 							<span class="jt-managed-by-name">
-								<?php echo esc_html( (string) ( $member->display_name ?? '' ) ); ?>
+								<?php echo esc_html( $user_name ); ?>
 							</span>
 						<?php endif; ?>
 						<span class="jt-managed-by-role jt-managed-by-role--<?php echo esc_attr( $role_key ); ?>">

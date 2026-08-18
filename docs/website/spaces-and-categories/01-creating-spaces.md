@@ -85,7 +85,19 @@ To archive a space, open it for editing and set its **Status** to **Archived**. 
 
 Archived spaces do not count toward activity stats on the community home page.
 
-To permanently remove a space, click **Delete** in the space list. This action also deletes all posts, replies, votes, and member records inside that space. It cannot be undone.
+## Removing a Space
+
+A space holds other members' topics and replies, not just the owner's, so removing one defaults to keeping that content rather than destroying it. The space list offers two separate actions.
+
+**Archive** hands the space to an administrator and sets it to read-only. Every topic, reply and vote is kept, and members can still read the space. Nothing is deleted, and you can set the space back to Active at any time. This is what you want in almost every case.
+
+**Delete permanently** destroys the space and everything inside it - every topic, every reply, every attachment, every member record - including content written by other members. This cannot be undone.
+
+> **Who sees "Delete permanently".** Site administrators always do. Space admins only see it if you have turned on **Settings → Members → Let space admins permanently delete a space and everything in it**, which is off by default. If it is off, a space admin can archive a space but not destroy it.
+
+On a large space, permanent deletion runs in the background and can take a few minutes to finish. The space stays visible until the last of its content is removed, so an interrupted deletion resumes rather than leaving the community in a half-deleted state.
+
+> **Changed in 1.9.3.** Deleting a space previously removed the space itself but left its topics, replies and member records behind as unreachable rows in the database. Both actions above now handle a space's contents properly. If you deleted spaces on an earlier version, Jetonomy cleans up what those deletions left behind automatically in the background.
 
 ## What's Next?
 

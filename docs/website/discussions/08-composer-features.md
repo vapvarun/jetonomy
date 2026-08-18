@@ -22,6 +22,10 @@ Type `@` anywhere in the composer and Jetonomy opens a dropdown of matching peop
 
 The inserted mention is a clickable link to the user's profile, and the moment your post or reply is published, Jetonomy fires a notification to the mentioned member. They see it in the bell menu and, if they have email notifications on, in their inbox.
 
+What gets inserted is the member's **handle** - the WordPress user slug, the `john-smith` in `/community/u/john-smith/` - not their display name. Handles have no spaces, so a mention never breaks across a name with one, and a member's display name can change without breaking mentions already written.
+
+> **Changed in 1.9.3.** Mentions previously resolved against the WordPress username, which differs from the handle on any member whose account was imported or created from an email address - `john.smith` against `john-smith`. Those members could be suggested by the autocomplete and then not notified. Mentions now resolve on the handle, and older mentions written against a username keep working.
+
 ### Where It Works
 
 | Surface | Mentions supported |

@@ -352,6 +352,62 @@ if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
 	}
 }
 
+if ( ! function_exists( 'jetonomy_reorder_offset' ) ) {
+	/**
+	 * Absolute index of the first row on a paginated admin screen.
+	 *
+	 * Drag-reorder handlers must persist ABSOLUTE positions. Writing the row's
+	 * index within the submitted batch looks right on page 1 and silently
+	 * corrupts every later page: the batch index restarts at 0, so page 2 is
+	 * renumbered over the top of page 1 and the two collide (Basecamp
+	 * 10210539659 - reproduced with 28 categories, where a drop-in-place on
+	 * page 2 rewrote sort_order 20-27 to 0-7).
+	 *
+	 * @param int $paged    1-based page number from the request.
+	 * @param int $per_page Rows per page from the request.
+	 * @return int Offset to add to each batch index.
+	 */
+	function jetonomy_reorder_offset( int $paged, int $per_page ): int {
+		$paged = max( 1, $paged );
+		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
+			$per_page = 20;
+		}
+
+		return ( $paged - 1 ) * $per_page;
+	}
+}
+
+if ( ! function_exists( 'jetonomy_apply_manual_order' ) ) {
+	/**
+	 * Persist a drag-reorder as absolute positions.
+	 *
+	 * THE shared reorder primitive. Categories and spaces both sort by a
+	 * `sort_order` column and both expose drag handles on paginated screens, so
+	 * they share this rather than each hand-rolling the index arithmetic - which
+	 * is how the page-relative bug reached production in the first place.
+	 *
+	 * @param array    $ordered_ids Row ids in their new on-screen order.
+	 * @param int      $offset      Absolute index of the first row. {@see jetonomy_reorder_offset()}
+	 * @param callable $persist     function( int $id, int $position ): void
+	 * @return int Number of rows written.
+	 */
+	function jetonomy_apply_manual_order( array $ordered_ids, int $offset, callable $persist ): int {
+		$written = 0;
+
+		foreach ( array_values( $ordered_ids ) as $index => $row_id ) {
+			$row_id = absint( $row_id );
+			if ( ! $row_id ) {
+				continue;
+			}
+
+			$persist( $row_id, $offset + (int) $index );
+			++$written;
+		}
+
+		return $written;
+	}
+}
+
 if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	/**
 	 * Render an admin data table that satisfies the responsive contract.
@@ -383,6 +439,8 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	 *                               (colspan is filled in automatically).
 	 *     @type string   $class     Extra classes for the <table>.
 	 *     @type string   $table_id  Optional id="" for the <table> (JS hooks).
+	 *     @type array    $table_attrs Optional attr => value pairs for the <table>
+	 *                               (JS hooks that read off the table node).
 	 *     @type string   $tbody_id  Optional id="" for the <tbody> (JS hooks).
 	 *     @type bool     $wrap      Wrap in .jt-content-table-wrap. Default true.
 	 * }
@@ -398,6 +456,15 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 		$rows      = $args['rows'] ?? array();
 		$row_attrs = isset( $args['row_attrs'] ) && is_callable( $args['row_attrs'] ) ? $args['row_attrs'] : null;
 		$wrap      = ! isset( $args['wrap'] ) || (bool) $args['wrap'];
+
+		// Optional full-width row emitted after each data row - the expandable
+		// detail pattern (revisions' inline diff). The callback owns the <tr>
+		// so it can carry its own id/hidden/class, and is handed the colspan so
+		// it cannot drift when a column is added or removed. Without this a
+		// view needing a detail row had to keep a hand-rolled <table> and fall
+		// out of the responsive contract entirely, which is the drift this
+		// helper exists to stop.
+		$after_row = isset( $args['after_row'] ) && is_callable( $args['after_row'] ) ? $args['after_row'] : null;
 
 		// Resolve the primary column: exactly one, defaulting to the first.
 		$primary = '';
@@ -421,7 +488,20 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 		echo $wrap ? '<div class="jt-content-table-wrap">' : '<div class="jt-table-scroll">';
 		$table_id = ! empty( $args['table_id'] ) ? ' id="' . esc_attr( (string) $args['table_id'] ) . '"' : '';
 		$tbody_id = ! empty( $args['tbody_id'] ) ? ' id="' . esc_attr( (string) $args['tbody_id'] ) . '"' : '';
-		echo '<table' . $table_id . ' class="wp-list-table widefat fixed striped' . ( ! empty( $args['class'] ) ? ' ' . esc_attr( (string) $args['class'] ) : '' ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- id escaped above.
+
+		// Extra attributes for the <table> itself, for views whose JS reads a
+		// value off the table node (e.g. the invite list's data-space-id).
+		// Without this a call site would have to keep a hand-rolled <table>
+		// purely to carry one attribute, which is how views drift back out of
+		// the responsive contract.
+		$table_attrs = '';
+		if ( ! empty( $args['table_attrs'] ) && is_array( $args['table_attrs'] ) ) {
+			foreach ( $args['table_attrs'] as $attr => $value ) {
+				$table_attrs .= ' ' . esc_attr( (string) $attr ) . '="' . esc_attr( (string) $value ) . '"';
+			}
+		}
+
+		echo '<table' . $table_id . $table_attrs . ' class="wp-list-table widefat fixed striped' . ( ! empty( $args['class'] ) ? ' ' . esc_attr( (string) $args['class'] ) : '' ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- id and attrs escaped above.
 
 		echo '<thead><tr>';
 		foreach ( $columns as $key => $col ) {
@@ -468,6 +548,10 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 				}
 			}
 			echo '</tr>';
+
+			if ( $after_row ) {
+				$after_row( $row, count( $columns ) );
+			}
 		}
 
 		if ( 0 === $row_count ) {

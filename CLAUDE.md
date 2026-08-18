@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 80 REST routes, 43 AJAX handlers, 214 hooks fired (102 actions, 112 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-06 for 1.9.1 (re-checked across v1.9.0..HEAD: no surface this line counts changed); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 80 REST routes, 43 AJAX handlers, 225 hooks fired (106 actions, 119 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-06 for 1.9.1 (re-checked across v1.9.0..HEAD: no surface this line counts changed); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -43,7 +43,7 @@ extra careful; never fix blindly.
    is Q&A-only). Don't "fix" a correct guard.
 5. **Local CI before declaring done** (not just the pre-commit hook):
    - `php bin/audit-rest-routes.php includes/` and `... ../jetonomy-pro/includes/` → both OK
-   - `wp jetonomy qa-actions` → 257/257
+   - `wp jetonomy qa-actions` → 301/301
    - free+pro boot smoke (`../jetonomy-pro/tools/smoke-test.php`)
    - browser-verify every frontend/template change (incl. 390px mobile)
 
@@ -191,7 +191,7 @@ Journey-based CLI architecture for headless testing + automation. Every user/adm
 ```
 wp jetonomy <subject> <subcommand>       # 13 free command roots
 wp jetonomy-pro <subject> <subcommand>   # 15 Pro command roots
-wp jetonomy qa-actions                   # 257/257 smoke tests (4 phases)
+wp jetonomy qa-actions                   # 301/301 smoke tests (4 phases)
 wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
 ```
 
@@ -233,7 +233,16 @@ out beside the plugin, so committing them breaks `wp-env start` for everyone els
 
 ## Testing strategy
 
-The browser-level Playwright usability suite was retired because it surfaced zero product UX bugs and primarily exposed test-infrastructure drift. The retirement is complete: the `composer test:usability` script and the `tests/usability/` tree (1.9 MB of leftover trace-viewer bundles and result JSON, no actual tests) are both gone as of the post-1.9.0 cleanup. Real UX validation runs through manual browser testing + Basecamp triage. The layers that actually find bugs:
+The browser-level Playwright usability suite was retired because it surfaced zero product UX bugs and primarily exposed test-infrastructure drift.
+
+**One narrow exception, added deliberately:** `tests/browser/admin-tables.spec.js`
+(`npm run test:admin-tables`) asserts that no admin list table has a laid-out cell
+with zero width at 390px. This exists because that bug class is invisible to every
+static gate - the markup comes from `WP_List_Table::display()` and the width is
+decided by core CSS at layout time - and it had already shipped twice
+(Basecamp 10212987797 Revisions, and the Activity screen, which this gate caught on
+its first run). It is one file, one assertion, screens as data, no fixtures. If it
+grows a helper directory or a second concern, the retired suite is growing back. The retirement is complete: the `composer test:usability` script and the `tests/usability/` tree (1.9 MB of leftover trace-viewer bundles and result JSON, no actual tests) are both gone as of the post-1.9.0 cleanup. Real UX validation runs through manual browser testing + Basecamp triage. The layers that actually find bugs:
 
 1. **PHPUnit** - `composer test` (free + pro combo). Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
 2. **`wp jetonomy qa-actions`** - live-stack smoke checks across REST + Model + Pro + Journey layers. Runs in ~30s, surfaces config gaps.

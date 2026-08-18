@@ -165,10 +165,7 @@ $role_labels = [
 							<?php
 							$jt_req_uid  = (int) $jt_req->user_id;
 							$jt_req_user = get_userdata( $jt_req_uid );
-							$jt_req_prof = \Jetonomy\Models\UserProfile::find_by_user( $jt_req_uid );
-							$jt_req_name = ( $jt_req_prof && ! empty( $jt_req_prof->display_name ) )
-								? $jt_req_prof->display_name
-								: ( $jt_req_user ? $jt_req_user->display_name : __( 'Unknown member', 'jetonomy' ) );
+							$jt_req_name = $jt_req_user ? \Jetonomy\user_display_name( $jt_req_user ) : __( 'Unknown member', 'jetonomy' );
 							?>
 							<div class="jt-member-item jt-pending-item" data-jt-pending-row data-request-id="<?php echo absint( $jt_req->id ); ?>">
 								<?php echo \Jetonomy\get_user_link( $jt_req_uid, 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -359,7 +356,7 @@ $role_labels = [
 						}
 						$mp         = \Jetonomy\Models\UserProfile::find_by_user( (int) $member->user_id );
 						$trust      = $mp ? (int) $mp->trust_level : 0;
-						$initials   = strtoupper( substr( $mu->display_name, 0, 2 ) );
+						$initials   = strtoupper( substr( \Jetonomy\user_display_name( $mu ), 0, 2 ) );
 						$joined     = date_i18n( get_option( 'date_format' ), strtotime( $member->joined_at ) );
 						$role_label = $role_labels[ $member->role ] ?? $member->role;
 						?>
@@ -371,7 +368,7 @@ $role_labels = [
 							<div class="jt-flex-1">
 								<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $member->user_id ) ); ?>"
 									class="jt-member-name">
-									<?php echo esc_html( $mu->display_name ); ?>
+									<?php echo esc_html( \Jetonomy\user_display_name( $mu ) ); ?>
 								</a>
 								<?php
 								// 1.4.1 byline cleanup: trust-level number removed
@@ -394,7 +391,7 @@ $role_labels = [
 								<label class="screen-reader-text" for="jt-member-role-<?php echo absint( $member->user_id ); ?>">
 									<?php
 									/* translators: %s: member display name */
-									echo esc_html( sprintf( __( 'Change role for %s', 'jetonomy' ), $mu->display_name ) );
+									echo esc_html( sprintf( __( 'Change role for %s', 'jetonomy' ), \Jetonomy\user_display_name( $mu ) ) );
 									?>
 								</label>
 								<select
@@ -426,7 +423,7 @@ $role_labels = [
 									class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
 									data-space-id="<?php echo absint( $space->id ); ?>"
 									data-user-id="<?php echo absint( $member->user_id ); ?>"
-									data-user-name="<?php echo esc_attr( $mu->display_name ); ?>">
+									data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $mu ) ); ?>">
 									<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
 									<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 									<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>

@@ -297,6 +297,26 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<p class="description"><?php esc_html_e( 'When on, the Login block sends a confirmation email after sign-up. Members can\'t log in until they click the link. Existing members are not affected.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Deleting spaces', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[allow_space_admin_purge]" value="1" <?php checked( ! empty( $settings['allow_space_admin_purge'] ) ); ?>>
+								<?php esc_html_e( 'Let space admins permanently delete a space and everything in it', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Off by default. Deleting a space normally transfers it and archives it, because a space holds other members\' topics and replies - destroying it destroys their contributions too. With this on, a space admin can choose permanent deletion instead. Site administrators can always do either.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Member names', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[lock_member_names]" value="1" <?php checked( ! empty( $settings['lock_member_names'] ) ); ?>>
+								<?php esc_html_e( 'Only administrators can change member names', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'When on, members cannot edit their first name, last name, nickname, or the name they display publicly. Use this if your community requires verified real names. Names are still editable in the WordPress Users screen. Off by default.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
 				</table>
 			</div>
 
@@ -367,11 +387,18 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			$rate_limits = $settings['rate_limits'] ?? [];
 			$tl_defaults = \Jetonomy\Trust\Trust_Levels::defaults();
 			$rl_defaults = \Jetonomy\Permissions\Rate_Limiter::defaults();
-			$level_names = [
-				1 => __( 'Level 1: Member', 'jetonomy' ),
-				2 => __( 'Level 2: Regular', 'jetonomy' ),
-				3 => __( 'Level 3: Trusted', 'jetonomy' ),
-			];
+			// Built from Trust_Levels::label() so renaming the ladder in one
+			// place updates this tab, the Users screen and the promotion email
+			// together (Basecamp 10210059424).
+			$level_names = [];
+			foreach ( [ 1, 2, 3 ] as $jt_lvl ) {
+				$level_names[ $jt_lvl ] = sprintf(
+					/* translators: 1: trust level number, 2: trust level name. */
+					__( 'Level %1$d: %2$s', 'jetonomy' ),
+					$jt_lvl,
+					\Jetonomy\Trust\Trust_Levels::label( $jt_lvl )
+				);
+			}
 			?>
 
 			<!-- Trust Levels -->

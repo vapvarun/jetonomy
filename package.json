@@ -1,13 +1,14 @@
 {
   "name": "jetonomy",
-  "version": "1.8.0",
+  "version": "1.9.3",
   "private": true,
   "scripts": {
     "build": "wp-scripts build",
     "start": "wp-scripts start",
     "lint:js": "eslint assets/js/ --ext .js",
     "lint:css": "wp-scripts lint-style",
-    "check:i18n": "bash bin/check-i18n.sh"
+    "check:i18n": "bash bin/check-i18n.sh",
+    "test:admin-tables": "playwright test"
   },
   "devDependencies": {
     "@wbcom/i18n-ai": "^0.1.3",

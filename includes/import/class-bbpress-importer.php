@@ -22,6 +22,13 @@ class BBPress_Importer extends Importer {
 		return 'bbPress';
 	}
 
+	/**
+	 * bbPress guards every create with $dry_run, so a dry run here is real.
+	 */
+	public function supports_dry_run(): bool {
+		return true;
+	}
+
 	public function is_source_available(): bool {
 		global $wpdb;
 		// Check if bbPress post types exist
@@ -268,7 +275,7 @@ class BBPress_Importer extends Importer {
 						[
 							'space_id'      => $space_id,
 							'author_id'     => (int) $topic->post_author,
-							'type'          => 'topic',
+							'type'          => \Jetonomy\compose_post_type( 'forum' ),
 							'title'         => $topic->post_title,
 							'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
 							'content'       => wp_kses_post( $topic->post_content ),
@@ -412,7 +419,7 @@ class BBPress_Importer extends Importer {
 				]
 			);
 		} else {
-			$cat_id = 0; // Simulate
+			$cat_id = self::DRY_RUN_ID; // Simulate
 		}
 
 		// 2. Import forums as spaces
@@ -452,7 +459,7 @@ class BBPress_Importer extends Importer {
 			if ( ! $this->dry_run ) {
 				$space_id = $this->create_space_from_forum( $forum, $cat_id );
 			} else {
-				$space_id = 0; // Simulate
+				$space_id = self::DRY_RUN_ID; // Simulate
 			}
 
 			if ( $space_id || $this->dry_run ) {
@@ -489,7 +496,7 @@ class BBPress_Importer extends Importer {
 					[
 						'space_id'      => $space_id,
 						'author_id'     => (int) $topic->post_author,
-						'type'          => 'topic',
+						'type'          => \Jetonomy\compose_post_type( 'forum' ),
 						'title'         => $topic->post_title,
 						'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
 						'content'       => wp_kses_post( $topic->post_content ),
@@ -506,7 +513,7 @@ class BBPress_Importer extends Importer {
 					continue;
 				}
 			} else {
-				$post_id = 0; // Simulate
+				$post_id = self::DRY_RUN_ID; // Simulate
 			}
 
 			if ( $post_id || $this->dry_run ) {
@@ -557,7 +564,7 @@ class BBPress_Importer extends Importer {
 					continue;
 				}
 			} else {
-				$reply_id = 0; // Simulate
+				$reply_id = self::DRY_RUN_ID; // Simulate
 			}
 
 			if ( $reply_id || $this->dry_run ) {

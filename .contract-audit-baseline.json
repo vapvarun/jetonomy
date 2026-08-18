@@ -289,7 +289,12 @@
     {
       "id": "post_meta-written-never-read:_jetonomy_media_checked",
       "reason": "False positive. Read via meta_query in includes/class-media-library.php:351-358 (one-shot backfill guard). Scanner only recognizes get_post_meta() reads, not meta_query key usage."
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_space_purge_batch",
+      "reason": "Fired by Action Scheduler, not by our code: Space_Purge::queue() calls as_enqueue_async_action() and AS invokes the hook from libs/action-scheduler, which the scanner does not treat as a fire site. Verified on 2026-08-18 by queueing a real purge and running `wp action-scheduler run`: AS dispatched jetonomy_space_purge_batch twice and the space plus its topics were fully removed. A do_action in our own code would be wrong here - it would run the batch synchronously, which is exactly what the batching exists to avoid.",
+      "severity": "error"
     }
   ],
-  "triaged": "2026-06-11 - first run on the pair; full triage in commit message. Real findings carded: 9985243886 (email opt-out unsettable), 9985243976 (BP toggles no UI)."
+  "triaged": "2026-06-11 - first run on the pair; full triage in commit message. Real findings carded: 9985243886 (email opt-out unsettable), 9985243976 (BP toggles no UI). 2026-08-18 - added the AS continuation hook (verified dispatching, see its reason)."
 }

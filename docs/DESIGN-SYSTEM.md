@@ -203,8 +203,8 @@ This pattern applies to **every** meta line in the plugin - post header, reply c
 
 - `.jt-tag` - semantic tag pill. `font-size: 0.75rem` desktop, `0.6875rem` mobile. `padding: 2px 8px`. `border-radius: var(--jt-radius-full)`.
 - `.jt-badge-*` - status badges (private, resolved, closed, draft, scheduled). Same shape as tag pill, different background colors.
-- `.jt-tl` - trust level circle. `18×18px` desktop, `16×16px` mobile. Never word-wraps.
-- `.jt-level-tag` - full profile "Level X" badge. `white-space: nowrap`, `display: inline-block`.
+- `.jt-tl` - trust level circle. `18×18px` desktop, `16×16px` mobile. Never word-wraps. The **only** trust-level indicator: used on post cards, the user panel, the profile header, shortcodes and blocks. Colour comes from the `data-jt-tl` attribute, not a modifier class.
+- `.jt-pill` - selectable filter pill, grouped in `.jt-pills` (sort controls, roadmap status filters). Add `.on` plus `aria-current="true"` to the active one. Text-only, never icon.
 
 ### Community nav
 
@@ -251,8 +251,8 @@ Use `grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))` for space/cat
 1. **Theme header** - site logo, global search (out of plugin scope).
 2. **Community nav** (`.jt-community-nav`) - Jetonomy's internal nav (Community, Search, Leaderboard, Profile, Moderation, Messages). Icons + labels.
 3. **Breadcrumb** (`.jt-breadcrumb`) - Home / Category / Space / Thread. Truncated with ellipsis on mobile.
-4. **Sort tabs** (`.jt-sort-tabs`) - Latest / Popular / Unanswered. Text-only (never icon).
-5. **Page action** (`.jt-bar`) - primary CTA button (+ New Post, Submit). Full width on mobile.
+4. **Sort pills** (`.jt-pills` > `.jt-pill`) - Latest / Popular / Unanswered. Text-only (never icon). Active pill carries `.on` and `aria-current="true"`.
+5. **Action bar** (`.jt-bar`) - the row holding the sort pills and the primary CTA (+ New Post, Submit). CTA goes full width on mobile.
 6. **List / grid** - the actual content (topic rows, space cards, etc.).
 
 Every frontend page follows this order top-to-bottom. Don't reorder or skip levels.

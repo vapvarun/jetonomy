@@ -89,6 +89,14 @@ class Spaces_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'delete_item' ],
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					'args'                => [
+						'mode' => [
+							'type'     => 'string',
+							'required' => false,
+							'enum'     => [ 'transfer', 'purge' ],
+							'default'  => 'transfer',
+						],
+					],
 				],
 			]
 		);
@@ -461,9 +469,20 @@ class Spaces_Controller extends Base_Controller {
 			'cover_image' => esc_url_raw( (string) $request->get_param( 'cover_image' ) ),
 			'settings'    => $settings,
 			'author_id'   => get_current_user_id(),
+			// Only carried when the client actually sent it. Left null it is
+			// stripped below, and Space::create() assigns MAX(sort_order)+1 for
+			// the category so new spaces append. Note this is NOT the same as
+			// the categories controller, which passes absint() unconditionally:
+			// Category::create() defaults to 0, so writing 0 there matches the
+			// model. Doing that here would pin every API-created space to the
+			// top of its category and lose the append behaviour.
+			'sort_order'  => null !== $request->get_param( 'sort_order' )
+				? absint( $request->get_param( 'sort_order' ) )
+				: null,
 		];
 
-		// Remove empty optional fields so DB defaults apply.
+		// Remove empty optional fields so DB defaults apply. absint() of an
+		// explicit 0 survives this - the callback rejects only null and ''.
 		$data = array_filter( $data, fn( $v ) => null !== $v && '' !== $v );
 
 		$id = Space::create( $data );
@@ -555,6 +574,9 @@ class Spaces_Controller extends Base_Controller {
 				return $combo;
 			}
 		}
+		if ( null !== $request->get_param( 'sort_order' ) ) {
+			$data['sort_order'] = absint( $request->get_param( 'sort_order' ) );
+		}
 		if ( null !== $request->get_param( 'icon' ) ) {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );
 		}
@@ -631,25 +653,75 @@ class Spaces_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Decrement category space_count before deleting.
-		if ( ! empty( $space->category_id ) ) {
-			Category::increment_space_count( (int) $space->category_id, -1 );
-		}
+		// Deleting a space defaults to TRANSFER, never to destroying content.
+		// A space contains other members' topics and replies; dropping it
+		// destroys their contributions, not just the owner's. This mirrors
+		// delete_account(), which already defaults to anonymize-not-destroy for
+		// the same reason (Basecamp 10119343634).
+		$mode = (string) ( $request->get_param( 'mode' ) ?: 'transfer' );
 
-		$deleted = Space::delete( $id );
+		if ( 'purge' === $mode ) {
+			// Who may destroy content is a site-owner decision. Space admins can
+			// purge only when the owner has allowed it; manage_options always
+			// can. Enforced here rather than in the UI - the route accepts the
+			// param whatever the form renders.
+			$settings      = get_option( 'jetonomy_settings', [] );
+			$admins_may    = ! empty( $settings['allow_space_admin_purge'] );
+			$is_site_admin = current_user_can( 'manage_options' );
 
-		if ( ! $deleted ) {
-			return new WP_Error(
-				'jetonomy_delete_failed',
-				__( 'Failed to delete space.', 'jetonomy' ),
-				[ 'status' => 500 ]
+			if ( ! $is_site_admin && ! $admins_may ) {
+				return new WP_Error(
+					'jetonomy_purge_not_allowed',
+					__( 'Permanently deleting a space is restricted to site administrators on this community.', 'jetonomy' ),
+					[ 'status' => 403 ]
+				);
+			}
+
+			// Queued, not inline. A space with 50k topics and their replies
+			// cannot be deleted inside one request, and this endpoint is
+			// reachable from a browser - the caller must not be holding the
+			// connection while it drains (Basecamp 10119343634).
+			//
+			// Space_Purge removes children before the space row, so the space
+			// stays discoverable until the last batch and an interrupted purge
+			// resumes rather than stranding rows.
+			$queued = \Jetonomy\Space_Purge::queue( $id );
+
+			// category.space_count is decremented by the purge itself when it
+			// reaches the space row, so it is NOT adjusted here - doing both
+			// would double-count.
+			return new WP_REST_Response(
+				[
+					'deleted' => true,
+					'mode'    => 'purge',
+					'id'      => $id,
+					'queued'  => $queued,
+				],
+				202
 			);
 		}
 
+		// Transfer: the space survives, parked, owned by its successor.
+		$successor = Space::resolve_successor( $id, $user_id );
+
+		if ( ! $successor ) {
+			return new WP_Error(
+				'jetonomy_no_successor',
+				__( 'No one else can take over this space, so it cannot be transferred. An administrator must delete it permanently instead.', 'jetonomy' ),
+				[ 'status' => 409 ]
+			);
+		}
+
+		// Archive as well as reassign: the owner asked for this space to go, and
+		// parking it is the non-destructive reading of that request.
+		Space::hand_over( $id, $successor, $user_id, true );
+
 		return new WP_REST_Response(
 			[
-				'deleted' => true,
-				'id'      => $id,
+				'deleted'   => false,
+				'mode'      => 'transfer',
+				'id'        => $id,
+				'successor' => $successor,
 			],
 			200
 		);
@@ -887,13 +959,10 @@ class Spaces_Controller extends Base_Controller {
 		foreach ( JoinRequest::list_pending_for_space( $id ) as $row ) {
 			$uid     = (int) $row->user_id;
 			$user    = get_userdata( $uid );
-			$profile = UserProfile::find_by_user( $uid );
 			$items[] = [
 				'id'           => (int) $row->id,
 				'user_id'      => $uid,
-				'display_name' => ( $profile && ! empty( $profile->display_name ) )
-					? $profile->display_name
-					: ( $user ? $user->display_name : __( 'Unknown member', 'jetonomy' ) ),
+				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : __( 'Unknown member', 'jetonomy' ),
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 48 ),
 				'profile_url'  => \Jetonomy\get_profile_url( $uid ),
 				'message'      => (string) ( $row->message ?? '' ),
@@ -1264,7 +1333,7 @@ class Spaces_Controller extends Base_Controller {
 			// clock-safe one the app prefers (see utils/presence.ts).
 			'last_seen_at'     => $profile ? $profile->last_seen_at : null,
 			'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $profile ? $profile->last_seen_at : null ),
-			'profile_url'      => \Jetonomy\base_url() . '/u/' . ( $user ? $user->user_login : $user_id ) . '/',
+			'profile_url'      => \Jetonomy\get_profile_url( (int) $user_id ),
 		];
 	}
 
@@ -1357,6 +1426,11 @@ class Spaces_Controller extends Base_Controller {
 				'type'     => 'string',
 				'required' => false,
 				'format'   => 'uri',
+			],
+			'sort_order'  => [
+				'type'     => 'integer',
+				'required' => false,
+				'minimum'  => 0,
 			],
 			'settings'    => [ 'required' => false ],
 		];

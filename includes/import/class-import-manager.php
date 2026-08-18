@@ -48,6 +48,32 @@ class Import_Manager {
 		return $available;
 	}
 
+	/**
+	 * Whether a registered importer can preview without writing.
+	 *
+	 * @param string $id Importer id.
+	 * @return bool
+	 */
+	public static function supports_dry_run( string $id ): bool {
+		return isset( self::$importers[ $id ] ) && self::$importers[ $id ]->supports_dry_run();
+	}
+
+	/**
+	 * Ids of every importer that can preview, for telling the user which do.
+	 *
+	 * @return string[]
+	 */
+	public static function dry_run_sources(): array {
+		$ids = array();
+		foreach ( self::$importers as $id => $importer ) {
+			if ( $importer->supports_dry_run() ) {
+				$ids[] = $id;
+			}
+		}
+
+		return $ids;
+	}
+
 	public static function run( string $id, array $options = [] ): ?array {
 		if ( ! isset( self::$importers[ $id ] ) ) {
 			return null;
@@ -56,6 +82,27 @@ class Import_Manager {
 		$importer = self::$importers[ $id ];
 
 		if ( ! empty( $options['dry_run'] ) ) {
+			// Refuse rather than run for real. An importer that ignores the flag
+			// would otherwise treat "show me what would happen" as "do it"
+			// (Basecamp 10210057225 follow-up).
+			if ( ! $importer->supports_dry_run() ) {
+				return array(
+					'imported' => 0,
+					'skipped'  => 0,
+					'errors'   => array(
+						array(
+							'type'    => 'importer',
+							'id'      => $id,
+							'message' => sprintf(
+								/* translators: %s: importer id, e.g. asgaros. */
+								__( 'The %s importer does not support dry runs yet. Aborting so nothing is written - run without --dry-run to import for real.', 'jetonomy' ),
+								$id
+							),
+						),
+					),
+				);
+			}
+
 			$importer->set_dry_run( true );
 		}
 

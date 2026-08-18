@@ -66,9 +66,19 @@ class Revisions_List_Table extends \WP_List_Table {
 	 * @return array<string, string>
 	 */
 	public function get_columns(): array {
+		// Title FIRST. Core hides small-screen columns with `td.column-primary ~ td`
+		// (wp-admin/css/list-tables.css), a sibling combinator that can only
+		// reach columns AFTER the primary. With Type first and the primary
+		// overridden to Title, Type sat ahead of the rule's reach: it stayed
+		// display:table-cell, table-layout:fixed squeezed it to 0 width, and at
+		// 390px the header rendered as T Y P E down the page with every row
+		// spelling P o s t beneath it (Basecamp 10212987797).
+		//
+		// Every core list table puts its primary first for this reason. Do not
+		// reorder these two without re-checking 390px.
 		return array(
-			'object_type'    => __( 'Type', 'jetonomy' ),
 			'object_title'   => __( 'Title', 'jetonomy' ),
+			'object_type'    => __( 'Type', 'jetonomy' ),
 			'revision_count' => __( 'Revisions', 'jetonomy' ),
 			'last_edited'    => __( 'Last Edited', 'jetonomy' ),
 			'last_edited_by' => __( 'Last Edited By', 'jetonomy' ),
@@ -78,9 +88,13 @@ class Revisions_List_Table extends \WP_List_Table {
 	/**
 	 * Collapse mobile rows around WHICH object was edited, not its type.
 	 *
-	 * The first column - and therefore WP's default primary - was Type, so a
+	 * Type used to be the first column and therefore WP's default primary, so a
 	 * phone showed a column of "Post" / "Reply" with no way to tell the rows
 	 * apart (Basecamp 10146443346). The title is the identity.
+	 *
+	 * Title is now first, so this override restates WP's default rather than
+	 * changing it. Kept deliberately: it pins the intent, so reordering the
+	 * columns cannot silently move the primary back onto Type.
 	 */
 	protected function get_default_primary_column_name(): string {
 		return 'object_title';

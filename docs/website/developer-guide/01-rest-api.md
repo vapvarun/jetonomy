@@ -56,13 +56,13 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | GET | `/spaces` | Public | List spaces (paginated) |
 | POST | `/spaces` | `manage_options` | Create a space |
 | GET | `/spaces/{id}` | Public | Get a single space |
-| PATCH | `/spaces/{id}` | Moderator / Admin | Update space settings |
-| DELETE | `/spaces/{id}` | `manage_options` | Delete a space |
+| PATCH | `/spaces/{id}` | Moderator / Admin | Update space settings. Accepts `sort_order` to place the space within its category. |
+| DELETE | `/spaces/{id}` | Space admin | Remove a space. `?mode=transfer` (default) hands it to a successor and archives it, keeping all content, and returns `deleted:false`. `?mode=purge` destroys it and everything in it, returns `202`, and runs in the background. Purge additionally requires `manage_options` unless the site owner has allowed space admins to purge. |
 | GET | `/spaces/{id}/members` | Public / Members only if private | List space members |
 | POST | `/spaces/{id}/members` | Logged in | Join a space |
 | PATCH | `/spaces/{id}/members/{user_id}` | Moderator / Admin | Change a member's role |
 | DELETE | `/spaces/{id}/members/{user_id}` | Moderator / Admin | Remove a member |
-| POST | `/spaces/{id}/invite` | Moderator / Admin | Generate an invite link |
+| POST | `/spaces/{id}/invite` | Space admin | Generate an invite link |
 | GET | `/invite/{token}` | Public | Resolve an invite token |
 | GET | `/spaces/{id}/privileged-members` | Public | List admins and moderators of a space |
 

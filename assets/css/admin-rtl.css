@@ -3655,13 +3655,21 @@ tr.jetonomy-moderated td {
    at 320 (152px document overflow) and Access Rules letter-wrapped its
    headings. Inside their scroll container the tables keep a readable
    natural width and single-line headings; the container absorbs the rest. */
-@media screen and (max-width: 782px) {
-	.jetonomy-admin .jt-spacedit-list {
-		min-width: 560px;
-	}
-	.jetonomy-admin .jt-spacedit-list th {
-		white-space: nowrap;
-	}
+/* The 560px min-width and nowrap headings that used to live here propped up
+   four hand-rolled tables that had no small-screen markup: they kept the
+   columns readable by forcing a horizontal scroll inside the wrapper. All
+   four now render through jetonomy_admin_table(), which collapses natively
+   at 782px, so the min-width only fought that collapse and pinned the table
+   at 560px in a 390px viewport. Removed with the conversion. */
+
+/* These rows mix short text with action buttons, and WP core's widefat
+   default is vertical-align: top. On the invite links row that left the
+   21px <code> URL hugging the cell top while the 34px Copy/Revoke buttons
+   centred 9px lower, so the row read as misaligned (Basecamp 10203615939).
+   Centring every cell in the shared list class fixes it once for invites,
+   members and join requests rather than per table. */
+.jetonomy-admin .jt-spacedit-list td {
+	vertical-align: middle;
 }
 
 /* Grouped field pairs in settings (Basecamp 10150582271): sibling inputs

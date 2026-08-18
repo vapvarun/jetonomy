@@ -164,7 +164,19 @@ defined( 'ABSPATH' ) || exit;
 							// Drag handle lives inside the identity cell now: a
 							// dedicated 30px column had no label to collapse
 							// under and broke the one-primary-cell contract.
-							echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
+							//
+							// PARENTS ONLY. Pagination counts top-level rows and
+							// hydrates children inline on the parent's page, so a
+							// page can render more rows than per_page. Including
+							// children in the drag batch made it overflow into the
+							// next page's band and collide (Basecamp 10210539659).
+							// A child's sort_order is only ever compared against its
+							// siblings - list_children() orders WHERE parent_id = %d
+							// - so a position drawn from the parent sequence is
+							// meaningless for it in the first place.
+							if ( ! $cat->jt_is_child ) {
+								echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
+							}
 							if ( $cat->jt_is_child ) {
 								echo '<span class="jetonomy-child-indent"></span>';
 							}

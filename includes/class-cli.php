@@ -78,7 +78,8 @@ class CLI {
 	 * : Import source: bbpress, wpforo, or asgaros
 	 *
 	 * [--dry-run]
-	 * : Validate and count without importing any data.
+	 * : Validate and count without importing any data. Supported by bbpress
+	 * only; wpforo and asgaros import for real and will refuse this flag.
 	 *
 	 * ## EXAMPLES
 	 *     wp jetonomy import bbpress
@@ -93,6 +94,21 @@ class CLI {
 
 		if ( ! Import_Manager::get_available() ) {
 			\WP_CLI::error( 'No import sources available.' );
+			return;
+		}
+
+		// Check support BEFORE promising anything. This used to print "no data
+		// will be written" and then hand off to an importer that ignored the
+		// flag entirely, so wpforo and asgaros ran a real import under a dry-run
+		// banner (Basecamp 10210057225). Never advertise what we cannot honour.
+		if ( $dry_run && ! Import_Manager::supports_dry_run( $source ) ) {
+			\WP_CLI::error(
+				sprintf(
+					'The %s importer cannot preview yet, so --dry-run is refused rather than silently importing for real. Supported by: %s.',
+					$source,
+					implode( ', ', Import_Manager::dry_run_sources() )
+				)
+			);
 			return;
 		}
 

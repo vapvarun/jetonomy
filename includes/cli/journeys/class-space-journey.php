@@ -170,29 +170,65 @@ final class Space_Journey {
 	}
 
 	/**
-	 * Delete a space by ID.
+	 * Delete a space by ID - transferring it by default.
 	 *
-	 * Space does not override Model::delete(), so this resolves to the
-	 * inherited method which returns bool|WP_Error.
+	 * This used to call Space::delete(), which removes the space ROW and
+	 * nothing else: it lost the owner and orphaned every child row across the
+	 * 21 declared relations. Same defect the REST route had, and the CLI is the
+	 * path most likely to be pointed at a large space (Basecamp 10119343634).
 	 *
-	 * @param int $id Space row ID.
+	 * `transfer` hands the space to its successor and archives it. `purge`
+	 * destroys it and everything in it, and runs SYNCHRONOUSLY here rather than
+	 * queueing: an operator at a terminal wants the command to finish having
+	 * done the thing, and CLI has no request timeout to protect.
+	 *
+	 * @param int    $id   Space row ID.
+	 * @param string $mode transfer (default) or purge.
 	 */
-	public function delete( int $id ): Journey_Result {
+	public function delete( int $id, string $mode = 'transfer' ): Journey_Result {
 		$start = microtime( true );
 
 		if ( $id <= 0 ) {
 			return Journey_Result::fail( 'Space id must be positive.' );
 		}
-
-		$result = Space::delete( $id );
-		if ( is_wp_error( $result ) ) {
-			return Journey_Result::from_wp_error( $result );
+		if ( ! in_array( $mode, [ 'transfer', 'purge' ], true ) ) {
+			return Journey_Result::fail( sprintf( 'Unknown mode "%s". Use transfer or purge.', $mode ) );
 		}
-		if ( ! $result ) {
-			return Journey_Result::fail( sprintf( 'Space::delete(%d) returned false.', $id ) );
+		if ( ! Space::find( $id ) ) {
+			return Journey_Result::fail( sprintf( 'Space %d not found.', $id ) );
 		}
 
-		return Journey_Result::ok( [ 'id' => $id ], [], $this->duration_ms( $start ) );
+		if ( 'purge' === $mode ) {
+			$removed = \Jetonomy\Space_Purge::purge( $id );
+			return Journey_Result::ok(
+				[
+					'id'      => $id,
+					'mode'    => 'purge',
+					'removed' => $removed,
+				],
+				[],
+				$this->duration_ms( $start )
+			);
+		}
+
+		$successor = Space::resolve_successor( $id, get_current_user_id() );
+		if ( ! $successor ) {
+			return Journey_Result::fail(
+				sprintf( 'Space %d has no one to transfer to. Use --mode=purge to delete it permanently.', $id )
+			);
+		}
+
+		Space::hand_over( $id, $successor, get_current_user_id(), true );
+
+		return Journey_Result::ok(
+			[
+				'id'        => $id,
+				'mode'      => 'transfer',
+				'successor' => $successor,
+			],
+			[],
+			$this->duration_ms( $start )
+		);
 	}
 
 	/**

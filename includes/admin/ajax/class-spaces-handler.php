@@ -24,6 +24,7 @@ class Spaces_Handler {
 		add_action( 'wp_ajax_jetonomy_create_space', array( $this, 'ajax_create_space' ) );
 		add_action( 'wp_ajax_jetonomy_update_space', array( $this, 'ajax_update_space' ) );
 		add_action( 'wp_ajax_jetonomy_delete_space', array( $this, 'ajax_delete_space' ) );
+		add_action( 'wp_ajax_jetonomy_reorder_spaces', array( $this, 'ajax_reorder_spaces' ) );
 		// Space Members AJAX
 		add_action( 'wp_ajax_jetonomy_add_space_member', array( $this, 'ajax_add_space_member' ) );
 		add_action( 'wp_ajax_jetonomy_remove_space_member', array( $this, 'ajax_remove_space_member' ) );
@@ -238,6 +239,45 @@ class Spaces_Handler {
 		);
 	}
 
+	/**
+	 * Persist a manual space order inside one category.
+	 *
+	 * Ordering is per-category because that is the unit the front end renders
+	 * (Space::list_by_category orders by `sort_order ASC, title ASC`). The
+	 * column and the read path already existed; nothing ever wrote to it, so
+	 * every space sat at 0 and the front end silently fell back to alphabetical.
+	 *
+	 * Positions are absolute via the shared reorder primitive, so a drag on
+	 * page 2 cannot renumber over page 1 - the defect this shipped alongside
+	 * fixing for categories (Basecamp 10210539659).
+	 */
+	public function ajax_reorder_spaces(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$order = array_map( 'absint', (array) wp_unslash( $_POST['order'] ?? array() ) );
+		if ( ! $order ) {
+			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
+		}
+
+		$offset = jetonomy_reorder_offset(
+			absint( $_POST['paged'] ?? 1 ),
+			absint( $_POST['per_page'] ?? 20 )
+		);
+
+		jetonomy_apply_manual_order(
+			$order,
+			$offset,
+			static function ( int $space_id, int $position ): void {
+				Space::update( $space_id, array( 'sort_order' => $position ) );
+			}
+		);
+
+		wp_send_json_success( array( 'message' => __( 'Order saved.', 'jetonomy' ) ) );
+	}
+
 	public function ajax_delete_space(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
 		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
@@ -255,17 +295,42 @@ class Spaces_Handler {
 			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
-		// Decrement category space count
-		if ( $space->category_id ) {
-			Category::increment_space_count( (int) $space->category_id, -1 );
+		// Same contract as DELETE /spaces/{id}: transfer unless purge is asked
+		// for AND allowed. Space::delete() is deliberately not used here - it
+		// removes the row and orphans every child across the 21 relations.
+		$mode = sanitize_key( (string) ( $_POST['mode'] ?? 'transfer' ) );
+
+		if ( 'purge' === $mode ) {
+			$settings = get_option( 'jetonomy_settings', array() );
+			if ( ! current_user_can( 'manage_options' ) && empty( $settings['allow_space_admin_purge'] ) ) {
+				wp_send_json_error( __( 'Permanently deleting a space is restricted to site administrators on this community.', 'jetonomy' ) );
+			}
+
+			\Jetonomy\Space_Purge::queue( $id );
+
+			wp_send_json_success(
+				array(
+					'message' => __( 'Space and all its content are being deleted.', 'jetonomy' ),
+					'mode'    => 'purge',
+					'removed' => true,
+				)
+			);
 		}
 
-		$result = Space::delete( $id );
-		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to delete space.', 'jetonomy' ) );
+		$successor = Space::resolve_successor( $id, get_current_user_id() );
+		if ( ! $successor ) {
+			wp_send_json_error( __( 'No one else can take over this space. Delete it permanently instead.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Space deleted.', 'jetonomy' ) ) );
+		Space::hand_over( $id, $successor, get_current_user_id(), true );
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Space archived and transferred. Its content was kept.', 'jetonomy' ),
+				'mode'    => 'transfer',
+				'removed' => false,
+			)
+		);
 	}
 
 	public function ajax_add_space_member(): void {
