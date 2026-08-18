@@ -901,13 +901,10 @@ class Spaces_Controller extends Base_Controller {
 		foreach ( JoinRequest::list_pending_for_space( $id ) as $row ) {
 			$uid     = (int) $row->user_id;
 			$user    = get_userdata( $uid );
-			$profile = UserProfile::find_by_user( $uid );
 			$items[] = [
 				'id'           => (int) $row->id,
 				'user_id'      => $uid,
-				'display_name' => ( $profile && ! empty( $profile->display_name ) )
-					? $profile->display_name
-					: ( $user ? $user->display_name : __( 'Unknown member', 'jetonomy' ) ),
+				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : __( 'Unknown member', 'jetonomy' ),
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 48 ),
 				'profile_url'  => \Jetonomy\get_profile_url( $uid ),
 				'message'      => (string) ( $row->message ?? '' ),
@@ -1278,7 +1275,7 @@ class Spaces_Controller extends Base_Controller {
 			// clock-safe one the app prefers (see utils/presence.ts).
 			'last_seen_at'     => $profile ? $profile->last_seen_at : null,
 			'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $profile ? $profile->last_seen_at : null ),
-			'profile_url'      => \Jetonomy\base_url() . '/u/' . ( $user ? $user->user_login : $user_id ) . '/',
+			'profile_url'      => \Jetonomy\get_profile_url( (int) $user_id ),
 		];
 	}
 

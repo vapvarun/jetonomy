@@ -10,8 +10,7 @@ defined( 'ABSPATH' ) || exit;
 // Auth check is handled by Template_Loader before output.
 $current_user = wp_get_current_user();
 $profile      = \Jetonomy\Models\UserProfile::find_or_create( $current_user->ID );
-$base         = \Jetonomy\base_url();
-$profile_url  = $base . '/u/' . $current_user->user_login . '/';
+$profile_url  = \Jetonomy\get_profile_url( (int) $current_user->ID );
 
 // Cancel returns the member to wherever they opened the editor from — a member
 // who arrived from a topic or notification was being force-navigated to their
@@ -32,8 +31,8 @@ if ( ! $cancel_url ) {
 	[
 		'crumbs' => [
 			[
-				'label' => $current_user->display_name,
-				'url'   => $base . '/u/' . $current_user->user_login . '/',
+				'label' => \Jetonomy\user_display_name( $current_user ),
+				'url'   => $profile_url,
 			],
 			[
 				'label' => __( 'Edit Profile', 'jetonomy' ),

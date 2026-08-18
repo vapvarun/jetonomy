@@ -885,7 +885,7 @@ class Fluent_Community {
 		$label       = $this->get_tab_label();
 		$base        = $this->jetonomy_base_slug();
 		$user        = get_userdata( $user_id );
-		$profile_url = $user ? home_url( '/' . $base . '/u/' . $user->user_login . '/' ) : '';
+		$profile_url = $user ? \Jetonomy\get_profile_url( (int) $user->ID ) : '';
 
 		ob_start();
 		?>

@@ -244,6 +244,57 @@ function client_ip(): string {
 }
 
 /**
+ * The name to show for a member on any display surface.
+ *
+ * THE single source of truth for "what do we call this person on screen",
+ * paired with get_profile_url() for "where does their name link to". Every
+ * byline, member row, mention chip, and moderation card resolves through here,
+ * so a site that wants handles instead of real names changes one filter rather
+ * than hunting ~40 templates.
+ *
+ * Default chain is display_name -> user_nicename -> user_login. The fallbacks
+ * matter: display_name can be empty on users created by an importer or a raw
+ * SQL insert, and an empty byline reads as a broken row.
+ *
+ * NOT for API/CLI payloads. Those carry the canonical stored value and must not
+ * vary with a site's display preference, for the same reason
+ * Trust_Levels::name() is separate from label() - a client comparing the value
+ * would break. Filter the display surface, not the data surface.
+ *
+ * @param int|\WP_User $user User ID or object.
+ * @return string Display name, or '' when the user does not exist.
+ */
+function user_display_name( $user ): string {
+	if ( ! $user instanceof \WP_User ) {
+		$user = get_userdata( (int) $user );
+	}
+	if ( ! $user instanceof \WP_User ) {
+		return '';
+	}
+
+	$name = (string) $user->display_name;
+	if ( '' === trim( $name ) ) {
+		$name = (string) $user->user_nicename;
+	}
+	if ( '' === trim( $name ) ) {
+		$name = (string) $user->user_login;
+	}
+
+	/**
+	 * Filter the name shown for a member on display surfaces.
+	 *
+	 * Return $user->user_nicename to show handles, $user->user_login to show
+	 * usernames, or compose anything else. Does not affect REST/CLI payloads.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string   $name Resolved display name.
+	 * @param \WP_User $user The user.
+	 */
+	return (string) apply_filters( 'jetonomy_user_display_name', $name, $user );
+}
+
+/**
  * Get the profile URL for a user.
  *
  * Returns the Jetonomy profile URL by default, but can be filtered
@@ -261,7 +312,9 @@ function get_profile_url( int $user_id ): string {
 
 	$settings  = get_option( 'jetonomy_settings', [] );
 	$base_slug = $settings['base_slug'] ?? 'community';
-	$default   = home_url( '/' . $base_slug . '/u/' . $user->user_login . '/' );
+	// rawurlencode because a login may legally contain a space or non-ASCII;
+	// most call sites that hand-built this URL already did, the helper did not.
+	$default = home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
 
 	/**
 	 * Filter the user profile URL.
@@ -496,7 +549,7 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 	}
 
 	$url  = get_profile_url( $user_id );
-	$name = $user->display_name;
+	$name = user_display_name( $user );
 	// Resolve through Avatar::display_url() so a real uploaded avatar (local /
 	// BuddyPress / Gravatar-that-exists) is shown, and members with no real
 	// avatar fall back to initials instead of Gravatar's generic mystery-person.

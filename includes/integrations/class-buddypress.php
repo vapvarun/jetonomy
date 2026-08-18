@@ -887,7 +887,7 @@ class BuddyPress {
 		$user    = bp_is_my_profile() ? wp_get_current_user() : get_userdata( bp_displayed_user_id() );
 		$bp_url  = $user ? self::get_member_url( $user->ID ) : '';
 		$jt_base = \Jetonomy\base_url();
-		$jt_url  = $user ? $jt_base . '/u/' . $user->user_login . '/' : $jt_base;
+		$jt_url  = $user ? \Jetonomy\get_profile_url( (int) $user->ID ) : $jt_base;
 
 		bp_core_new_nav_item(
 			array(
@@ -1121,7 +1121,7 @@ class BuddyPress {
 	private function render_profile_link( int $user_id ): void {
 		$user   = get_userdata( $user_id );
 		$base   = \Jetonomy\base_url();
-		$jt_url = $user ? $base . '/u/' . $user->user_login . '/' : $base;
+		$jt_url = $user ? \Jetonomy\get_profile_url( (int) $user->ID ) : $base;
 
 		echo '<p class="jt-bp-profile-link"><a href="' . esc_url( $jt_url ) . '" class="button">' . esc_html__( 'View Full Forum Profile', 'jetonomy' ) . ' &rarr;</a></p>';
 	}

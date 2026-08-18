@@ -2292,6 +2292,16 @@
       "where": "includes/trust/class-trust-levels.php"
     },
     {
+      "name": "jetonomy_user_display_name",
+      "type": "filter",
+      "args_count": 2,
+      "args_signature": [
+        "string $name",
+        "WP_User $user"
+      ],
+      "where": "includes/functions.php:294"
+    },
+    {
       "name": "jetonomy_resolve_mention_handles",
       "type": "filter",
       "args_count": 2,

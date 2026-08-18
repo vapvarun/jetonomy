@@ -95,7 +95,7 @@ $empty_copy = array(
 
 // Settings deep-link points at the existing notification-preferences block on
 // the Edit Profile page so we don't ship a parallel settings surface.
-$settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login ) . '/edit/#notification-preferences';
+$settings_url = \Jetonomy\get_profile_url( get_current_user_id() ) . 'edit/#notification-preferences';
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
 
@@ -183,7 +183,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 				// leaking beside an "Anonymous replied…" message.
 				$jt_notif_anon = ! empty( $notif->actor_anonymous );
 				$actor         = ( $notif->actor_id && ! $jt_notif_anon ) ? get_userdata( (int) $notif->actor_id ) : null;
-				$actor_name    = $jt_notif_anon ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'Someone', 'jetonomy' ) );
+				$actor_name    = $jt_notif_anon ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? \Jetonomy\user_display_name( $actor ) : __( 'Someone', 'jetonomy' ) );
 				$action_label  = ! empty( $notif->message )
 					? $notif->message
 					: ( $type_labels[ $notif->type ] ?? $notif->type );
@@ -203,7 +203,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 						// badge" notification lands on the achievement, not the profile
 						// top. Degrades to the profile root when no badges section is
 						// present (e.g. free-only site).
-						$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/#jt-badges';
+						$notif_url = \Jetonomy\get_profile_url( (int) $badge_user->ID ) . '#jt-badges';
 					}
 				} elseif ( 'space' === $notif->object_type && 'join_request' === $notif->type ) {
 					// Shared resolver, so the link on this page, the link in the
@@ -247,7 +247,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 						if ( $actor ) :
 							?>
 							<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
-								<?php echo esc_html( strtoupper( mb_substr( $actor->display_name, 0, 2 ) ) ); ?>
+								<?php echo esc_html( strtoupper( mb_substr( \Jetonomy\user_display_name( $actor ), 0, 2 ) ) ); ?>
 							</span>
 						<?php elseif ( $jt_notif_anon ) : ?>
 							<span class="jt-avatar jt-avatar-anon jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">

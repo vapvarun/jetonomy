@@ -301,7 +301,7 @@ class Schema_Markup {
 
 		$profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
 		$bio         = $profile && ! empty( $profile->bio ) ? wp_strip_all_tags( (string) $profile->bio ) : '';
-		$profile_url = \Jetonomy\base_url() . '/u/' . rawurlencode( $user->user_login ) . '/';
+		$profile_url = \Jetonomy\get_profile_url( (int) $user->ID );
 		$avatar_url  = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
 
 		$same_as = array();

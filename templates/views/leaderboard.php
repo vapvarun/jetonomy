@@ -206,7 +206,7 @@ $crumbs = [
 						?>
 						<span class="jt-leader-name">
 							<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
-								<?php echo esc_html( $lu->display_name ); ?>
+								<?php echo esc_html( \Jetonomy\user_display_name( $lu ) ); ?>
 							</a>
 							<?php
 							// 1.4.1 byline cleanup: trust-level number removed.

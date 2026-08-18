@@ -45,7 +45,7 @@ $role_labels = [
 					$user      = get_userdata( (int) $member->user_id );
 					$role_key  = (string) ( $member->role ?? '' );
 					$role_text = $role_labels[ $role_key ] ?? ucfirst( $role_key );
-					$profile   = $user ? $base . '/u/' . rawurlencode( $user->user_login ) . '/' : '';
+					$profile   = $user ? \Jetonomy\get_profile_url( (int) $user->ID ) : '';
 					?>
 					<li class="jt-managed-by-row">
 						<?php if ( $profile ) : ?>
@@ -53,18 +53,18 @@ $role_labels = [
 								<?php if ( ! empty( $member->avatar_url ) ) : ?>
 									<img class="jt-managed-by-avatar"
 										src="<?php echo esc_url( $member->avatar_url ); ?>"
-										alt="<?php echo esc_attr( (string) ( $member->display_name ?? '' ) ); ?>"
+										alt="<?php echo esc_attr( \Jetonomy\user_display_name( $member ) ); ?>"
 										width="32"
 										height="32"
 										loading="lazy" />
 								<?php endif; ?>
 								<span class="jt-managed-by-name">
-									<?php echo esc_html( (string) ( $member->display_name ?? '' ) ); ?>
+									<?php echo esc_html( \Jetonomy\user_display_name( $member ) ); ?>
 								</span>
 							</a>
 						<?php else : ?>
 							<span class="jt-managed-by-name">
-								<?php echo esc_html( (string) ( $member->display_name ?? '' ) ); ?>
+								<?php echo esc_html( \Jetonomy\user_display_name( $member ) ); ?>
 							</span>
 						<?php endif; ?>
 						<span class="jt-managed-by-role jt-managed-by-role--<?php echo esc_attr( $role_key ); ?>">

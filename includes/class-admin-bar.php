@@ -88,7 +88,7 @@ class Admin_Bar {
 					'parent' => 'jetonomy-community',
 					'id'     => 'jetonomy-community-profile',
 					'title'  => __( 'My profile', 'jetonomy' ),
-					'href'   => esc_url( $base . '/u/' . rawurlencode( $user->user_login ) . '/' ),
+					'href'   => esc_url( \Jetonomy\get_profile_url( (int) $user->ID ) ),
 				)
 			);
 
@@ -97,7 +97,7 @@ class Admin_Bar {
 					'parent' => 'jetonomy-community',
 					'id'     => 'jetonomy-community-edit-profile',
 					'title'  => __( 'Edit profile', 'jetonomy' ),
-					'href'   => esc_url( $base . '/u/' . rawurlencode( $user->user_login ) . '/edit/' ),
+					'href'   => esc_url( \Jetonomy\get_profile_url( (int) $user->ID ) . 'edit/' ),
 				)
 			);
 		}
