@@ -323,7 +323,12 @@
 					placeholder: 'ui-sortable-placeholder',
 					update: function() {
 						var order = [];
-						$('#jetonomy-categories-list tr[data-id]').each(function() {
+						// Parent rows only. Children render inline on their parent's
+						// page, so counting them would make the batch larger than
+						// per_page and its tail would overwrite the next page's
+						// positions - the same corruption this handler was fixed for,
+						// reachable from page 1 (Basecamp 10210539659).
+						$('#jetonomy-categories-list tr[data-id]').not('.jetonomy-category-child').each(function() {
 							order.push($(this).data('id'));
 						});
 						// Only the rendered page is submitted, so the handler needs the

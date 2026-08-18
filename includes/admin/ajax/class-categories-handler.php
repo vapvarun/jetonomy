@@ -166,6 +166,31 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
 		}
 
+		// TOP-LEVEL ONLY, enforced server-side rather than trusting the batch.
+		// Pagination counts top-level categories and renders children inline on
+		// the parent's page, so a submitted batch containing children is longer
+		// than per_page and its tail overwrites the next page's positions. The
+		// client now excludes them, but the client is not the control: a stale
+		// cached admin.js would silently corrupt ordering again.
+		//
+		// Dropping them is also correct on its own terms - a child's sort_order
+		// is only ever compared against its siblings (list_children() orders
+		// WHERE parent_id = %d), so a position taken from the parent sequence
+		// means nothing for it.
+		$order = array_values(
+			array_filter(
+				$order,
+				static function ( int $cat_id ): bool {
+					$cat = Category::find( $cat_id );
+					return $cat && empty( $cat->parent_id );
+				}
+			)
+		);
+
+		if ( ! $order ) {
+			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
+		}
+
 		// Absolute positions, never the batch index. The browser only submits
 		// the rows it rendered, so on page 2 the index restarts at 0 and would
 		// renumber those rows over the top of page 1 (Basecamp 10210539659).

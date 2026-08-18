@@ -43,7 +43,7 @@ extra careful; never fix blindly.
    is Q&A-only). Don't "fix" a correct guard.
 5. **Local CI before declaring done** (not just the pre-commit hook):
    - `php bin/audit-rest-routes.php includes/` and `... ../jetonomy-pro/includes/` → both OK
-   - `wp jetonomy qa-actions` → 257/257
+   - `wp jetonomy qa-actions` → 295/295
    - free+pro boot smoke (`../jetonomy-pro/tools/smoke-test.php`)
    - browser-verify every frontend/template change (incl. 390px mobile)
 
@@ -191,7 +191,7 @@ Journey-based CLI architecture for headless testing + automation. Every user/adm
 ```
 wp jetonomy <subject> <subcommand>       # 13 free command roots
 wp jetonomy-pro <subject> <subcommand>   # 15 Pro command roots
-wp jetonomy qa-actions                   # 257/257 smoke tests (4 phases)
+wp jetonomy qa-actions                   # 295/295 smoke tests (4 phases)
 wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
 ```
 

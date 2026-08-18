@@ -217,7 +217,64 @@ class Model_Tests {
 		] );
 		$this->check( 'TE14: evaluate_level with L1 stats → >= 1', $level_1 >= 1, "got {$level_1}" );
 
+		$this->test_reorder();
+
 		return [ 'pass' => $this->pass, 'fail' => $this->fail ];
+	}
+
+	/**
+	 * Manual-reorder primitive, shared by categories and spaces.
+	 *
+	 * Had no coverage at all, which is why two corruptions shipped in a row on
+	 * the categories screen (Basecamp 10210539659): first the batch index was
+	 * written as an absolute position, then the batch itself turned out to be
+	 * longer than per_page because child rows render inline on the parent's page.
+	 * Both silently overwrote the next page's positions.
+	 *
+	 * These assert the arithmetic and the invariant that actually matters -
+	 * a page's writes must stay inside that page's band.
+	 */
+	private function test_reorder(): void {
+		// RO1: offset is absolute, derived from page and page size.
+		$this->check( 'RO1: page 1 offset is 0', 0 === jetonomy_reorder_offset( 1, 20 ) );
+		$this->check( 'RO2: page 3 at 20/page starts at 40', 40 === jetonomy_reorder_offset( 3, 20 ) );
+		$this->check( 'RO3: page 2 at 50/page starts at 50', 50 === jetonomy_reorder_offset( 2, 50 ) );
+
+		// RO4: a nonsense page size cannot invent a band. Falls back rather than
+		// multiplying by an attacker-supplied number.
+		$this->check( 'RO4: unsupported per_page falls back', jetonomy_reorder_offset( 2, 999 ) >= 0 );
+
+		// RO5: positions are offset + index, contiguous and in submitted order.
+		$written = [];
+		jetonomy_apply_manual_order(
+			[ 11, 22, 33 ],
+			20,
+			static function ( int $id, int $pos ) use ( &$written ): void {
+				$written[ $id ] = $pos;
+			}
+		);
+		$this->check(
+			'RO5: apply_manual_order writes offset+index',
+			[ 11 => 20, 22 => 21, 33 => 22 ] === $written,
+			wp_json_encode( $written )
+		);
+
+		// RO6: THE invariant. A full page of writes must not reach the next band.
+		$per_page = 20;
+		$ids      = range( 1, $per_page );
+		$max      = -1;
+		jetonomy_apply_manual_order(
+			$ids,
+			jetonomy_reorder_offset( 1, $per_page ),
+			static function ( int $id, int $pos ) use ( &$max ): void {
+				$max = max( $max, $pos );
+			}
+		);
+		$this->check(
+			'RO6: a page-1 batch never writes into page 2\'s band',
+			$max < jetonomy_reorder_offset( 2, $per_page ),
+			"highest position {$max}, page 2 starts at " . jetonomy_reorder_offset( 2, $per_page )
+		);
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
