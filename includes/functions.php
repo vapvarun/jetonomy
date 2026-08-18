@@ -316,12 +316,23 @@ function display_name_choices( \WP_User $user ): array {
  * Trust_Levels::name() is separate from label() - a client comparing the value
  * would break. Filter the display surface, not the data surface.
  *
- * @param int|\WP_User $user User ID or object.
+ * @param int|\WP_User|object $user User ID, WP_User, or a row from one of our own
+ *                                  tables carrying user_id (or ID).
  * @return string Display name, or '' when the user does not exist.
  */
 function user_display_name( $user ): string {
 	if ( ! $user instanceof \WP_User ) {
-		$user = get_userdata( (int) $user );
+		// Callers legitimately hold three different things: a user ID, a WP_User,
+		// or a row from one of Jetonomy's own tables (space_members joins, member
+		// lists) which is a stdClass carrying user_id. Casting a stdClass to int
+		// emits a warning and yields 0, so a member row rendered an EMPTY name -
+		// which is how the managed-by card lost its names. Resolve by id and let
+		// get_userdata()'s cache absorb the lookup.
+		$user_id = is_object( $user )
+			? (int) ( $user->user_id ?? $user->ID ?? 0 )
+			: (int) $user;
+
+		$user = $user_id > 0 ? get_userdata( $user_id ) : null;
 	}
 	if ( ! $user instanceof \WP_User ) {
 		return '';

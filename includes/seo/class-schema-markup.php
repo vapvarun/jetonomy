@@ -82,6 +82,25 @@ class Schema_Markup {
 			$this->print_jsonld( $breadcrumb );
 		}
 
+		/**
+		 * Filter the primary schema entity for a Jetonomy route.
+		 *
+		 * A page gets ONE primary entity. This filter exists so an extension can
+		 * adjust that entity rather than emit a competing one: SEO Pro used to
+		 * print its own DiscussionForumPosting from wp_head, so a Q&A topic
+		 * carried both QAPage and DiscussionForumPosting and told Google two
+		 * different things about the same page (Basecamp 10212231937). There was
+		 * no seam here, which is precisely why it re-implemented instead.
+		 *
+		 * Return null to suppress emission entirely.
+		 *
+		 * @since 1.9.3
+		 *
+		 * @param array|null $schema Schema array, or null when the route has none.
+		 * @param string     $route  Jetonomy route: post, space, home, profile, tag.
+		 */
+		$schema = apply_filters( 'jetonomy_schema', $schema, $route );
+
 		if ( $schema ) {
 			$this->print_jsonld( $schema );
 		}
@@ -114,8 +133,11 @@ class Schema_Markup {
 			return null;
 		}
 
-		$author      = get_userdata( (int) $post->author_id );
-		$author_name = $author ? $author->display_name : 'Anonymous';
+		$author = get_userdata( (int) $post->author_id );
+		// Same resolver the page byline uses. Google compares structured data
+		// against visible content, so a site that renames members via
+		// jetonomy_user_display_name must not have its schema disagree.
+		$author_name = $author ? \Jetonomy\user_display_name( $author ) : 'Anonymous';
 		$base        = \Jetonomy\base_url() . '/s/' . $space_slug . '/t/' . $slug . '/';
 
 		if ( 'question' === $post->type && $post->accepted_reply_id ) {
@@ -143,7 +165,7 @@ class Schema_Markup {
 						'upvoteCount' => max( 0, (int) $accepted->vote_score ),
 						'author'      => [
 							'@type' => 'Person',
-							'name'  => $answer_author ? $answer_author->display_name : 'Anonymous',
+							'name'  => $answer_author ? \Jetonomy\user_display_name( $answer_author ) : 'Anonymous',
 						],
 						'url'         => \Jetonomy\reply_permalink( $space_slug, $slug, (int) $accepted->id ),
 					] : null,

@@ -2292,6 +2292,19 @@
       "where": "includes/trust/class-trust-levels.php"
     },
     {
+      "name": "jetonomy_schema",
+      "type": "filter",
+      "args_count": 2,
+      "args_signature": [
+        "array|null $schema",
+        "string $route"
+      ],
+      "where": "includes/seo/class-schema-markup.php:102",
+      "consumed_by": [
+        "jetonomy-pro"
+      ]
+    },
+    {
       "name": "jetonomy_display_name_choices",
       "type": "filter",
       "args_count": 2,
