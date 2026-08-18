@@ -233,7 +233,16 @@ out beside the plugin, so committing them breaks `wp-env start` for everyone els
 
 ## Testing strategy
 
-The browser-level Playwright usability suite was retired because it surfaced zero product UX bugs and primarily exposed test-infrastructure drift. The retirement is complete: the `composer test:usability` script and the `tests/usability/` tree (1.9 MB of leftover trace-viewer bundles and result JSON, no actual tests) are both gone as of the post-1.9.0 cleanup. Real UX validation runs through manual browser testing + Basecamp triage. The layers that actually find bugs:
+The browser-level Playwright usability suite was retired because it surfaced zero product UX bugs and primarily exposed test-infrastructure drift.
+
+**One narrow exception, added deliberately:** `tests/browser/admin-tables.spec.js`
+(`npm run test:admin-tables`) asserts that no admin list table has a laid-out cell
+with zero width at 390px. This exists because that bug class is invisible to every
+static gate - the markup comes from `WP_List_Table::display()` and the width is
+decided by core CSS at layout time - and it had already shipped twice
+(Basecamp 10212987797 Revisions, and the Activity screen, which this gate caught on
+its first run). It is one file, one assertion, screens as data, no fixtures. If it
+grows a helper directory or a second concern, the retired suite is growing back. The retirement is complete: the `composer test:usability` script and the `tests/usability/` tree (1.9 MB of leftover trace-viewer bundles and result JSON, no actual tests) are both gone as of the post-1.9.0 cleanup. Real UX validation runs through manual browser testing + Basecamp triage. The layers that actually find bugs:
 
 1. **PHPUnit** - `composer test` (free + pro combo). Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
 2. **`wp jetonomy qa-actions`** - live-stack smoke checks across REST + Model + Pro + Journey layers. Runs in ~30s, surfaces config gaps.

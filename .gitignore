@@ -31,3 +31,7 @@ docs/website/image-mapping.json
 # for a theme-integration test run). Never committed: the paths only exist
 # on a machine that has those themes checked out beside the plugin.
 .wp-env.override.json
+
+# Playwright output from the admin-tables responsive gate (tests/browser/).
+test-results/
+playwright-report/
