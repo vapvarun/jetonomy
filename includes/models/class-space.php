@@ -180,6 +180,54 @@ class Space extends Model {
 	}
 
 	/**
+	 * Who should own this space if the current owner goes away.
+	 *
+	 * ONE definition, shared by the two paths that need it: account deletion
+	 * (Privacy) and an explicit "delete space" that chooses transfer over purge.
+	 * They were about to grow separate copies, and a successor rule that
+	 * disagrees with itself is how a space ends up owned by someone who cannot
+	 * manage it.
+	 *
+	 * Precedence:
+	 *   1. A surviving space admin - earliest joined_at, user_id as tiebreak.
+	 *      They already hold the admin row, so the space keeps working as-is.
+	 *   2. The lowest-id site administrator.
+	 *
+	 * @param int $space_id  Space to find an heir for.
+	 * @param int $excluding User to exclude (the departing owner).
+	 * @return int Successor user ID, or 0 when nobody qualifies.
+	 */
+	public static function resolve_successor( int $space_id, int $excluding = 0 ): int {
+		$members = \Jetonomy\table( 'space_members' );
+
+		$heir = (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
+				"SELECT user_id FROM {$members} WHERE space_id = %d AND user_id <> %d AND role = 'admin' ORDER BY joined_at ASC, user_id ASC LIMIT 1",
+				$space_id,
+				$excluding
+			)
+		);
+
+		if ( $heir ) {
+			return $heir;
+		}
+
+		$admins = get_users(
+			[
+				'capability' => 'manage_options',
+				'exclude'    => $excluding ? [ $excluding ] : [],
+				'orderby'    => 'ID',
+				'order'      => 'ASC',
+				'number'     => 1,
+				'fields'     => 'ID',
+			]
+		);
+
+		return (int) ( $admins[0] ?? 0 );
+	}
+
+	/**
 	 * Next free manual-order position within a category.
 	 *
 	 * @param int $category_id Category the space belongs to (0 = uncategorised).

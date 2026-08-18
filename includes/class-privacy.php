@@ -90,14 +90,10 @@ class Privacy {
 			// healthy space read-only for its whole membership because one
 			// unrelated member closed their account (Basecamp 10119343043, QA
 			// case B). Hand over attribution, leave the space running.
-			$heir = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
-					"SELECT user_id FROM {$members_table} WHERE space_id = %d AND user_id <> %d AND role = 'admin' ORDER BY joined_at ASC, user_id ASC LIMIT 1",
-					$space_id,
-					$user_id
-				)
-			);
+			// Same successor rule the explicit delete flow uses, so the two
+			// cannot disagree about who inherits a space.
+			$heir = \Jetonomy\Models\Space::resolve_successor( $space_id, $user_id );
+			$heir = ( $heir && $heir !== $site_admin ) ? $heir : 0;
 
 			if ( $heir ) {
 				// They already hold the admin row, so author_id is all that moves.

@@ -89,6 +89,14 @@ class Spaces_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'delete_item' ],
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					'args'                => [
+						'mode' => [
+							'type'     => 'string',
+							'required' => false,
+							'enum'     => [ 'transfer', 'purge' ],
+							'default'  => 'transfer',
+						],
+					],
 				],
 			]
 		);
@@ -645,25 +653,79 @@ class Spaces_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Decrement category space_count before deleting.
-		if ( ! empty( $space->category_id ) ) {
-			Category::increment_space_count( (int) $space->category_id, -1 );
-		}
+		// Deleting a space defaults to TRANSFER, never to destroying content.
+		// A space contains other members' topics and replies; dropping it
+		// destroys their contributions, not just the owner's. This mirrors
+		// delete_account(), which already defaults to anonymize-not-destroy for
+		// the same reason (Basecamp 10119343634).
+		$mode = (string) ( $request->get_param( 'mode' ) ?: 'transfer' );
 
-		$deleted = Space::delete( $id );
+		if ( 'purge' === $mode ) {
+			// Who may destroy content is a site-owner decision. Space admins can
+			// purge only when the owner has allowed it; manage_options always
+			// can. Enforced here rather than in the UI - the route accepts the
+			// param whatever the form renders.
+			$settings      = get_option( 'jetonomy_settings', [] );
+			$admins_may    = ! empty( $settings['allow_space_admin_purge'] );
+			$is_site_admin = current_user_can( 'manage_options' );
 
-		if ( ! $deleted ) {
-			return new WP_Error(
-				'jetonomy_delete_failed',
-				__( 'Failed to delete space.', 'jetonomy' ),
-				[ 'status' => 500 ]
+			if ( ! $is_site_admin && ! $admins_may ) {
+				return new WP_Error(
+					'jetonomy_purge_not_allowed',
+					__( 'Permanently deleting a space is restricted to site administrators on this community.', 'jetonomy' ),
+					[ 'status' => 403 ]
+				);
+			}
+
+			// Reuses the Phase 1 derived column map - no second hand-written
+			// table list - and removes children before the space row, so an
+			// interrupted purge is resumable.
+			$counts = \Jetonomy\Space_Purge::purge( $id );
+
+			if ( ! empty( $space->category_id ) ) {
+				Category::increment_space_count( (int) $space->category_id, -1 );
+			}
+
+			return new WP_REST_Response(
+				[
+					'deleted' => true,
+					'mode'    => 'purge',
+					'id'      => $id,
+					'removed' => $counts,
+				],
+				200
 			);
 		}
 
+		// Transfer: the space survives, parked, owned by its successor.
+		$successor = Space::resolve_successor( $id, $user_id );
+
+		if ( ! $successor ) {
+			return new WP_Error(
+				'jetonomy_no_successor',
+				__( 'No one else can take over this space, so it cannot be transferred. An administrator must delete it permanently instead.', 'jetonomy' ),
+				[ 'status' => 409 ]
+			);
+		}
+
+		Space::update(
+			$id,
+			[
+				'author_id' => $successor,
+				'status'    => 'archived',
+			]
+		);
+		\Jetonomy\Models\SpaceMember::add( $id, $successor, 'admin' );
+
+		/** This action is documented in includes/class-privacy.php. */
+		do_action( 'jetonomy_space_transferred', $id, $user_id, $successor );
+
 		return new WP_REST_Response(
 			[
-				'deleted' => true,
-				'id'      => $id,
+				'deleted'   => false,
+				'mode'      => 'transfer',
+				'id'        => $id,
+				'successor' => $successor,
 			],
 			200
 		);

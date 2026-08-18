@@ -298,6 +298,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><?php esc_html_e( 'Deleting spaces', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[allow_space_admin_purge]" value="1" <?php checked( ! empty( $settings['allow_space_admin_purge'] ) ); ?>>
+								<?php esc_html_e( 'Let space admins permanently delete a space and everything in it', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Off by default. Deleting a space normally transfers it and archives it, because a space holds other members\' topics and replies - destroying it destroys their contributions too. With this on, a space admin can choose permanent deletion instead. Site administrators can always do either.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Member names', 'jetonomy' ); ?></th>
 						<td>
 							<label>
