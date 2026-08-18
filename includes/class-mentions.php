@@ -35,35 +35,38 @@ class Mentions {
 	private const MENTION_PATTERN = '/(?<![\w\/.:-])@([a-zA-Z0-9_-]+)/u';
 
 	/**
-	 * Resolve a list of @handles to user IDs in ONE query.
+	 * Resolve a list of @handles to user IDs, batched.
 	 *
 	 * A handle is `user_nicename`, NOT `user_login`. That is the contract the
 	 * Wbcom family shares: BuddyNext's Profile\Handle documents it as "the
 	 * string members type after an `@`... WordPress's user_nicename, the field
 	 * core designates as a user's public slug", and names Jetonomy as one of the
-	 * partners that must agree. Resolving on user_login instead meant a handle
-	 * typed in BuddyNext did not resolve here whenever the two differ - which is
-	 * exactly the imported-user case: a login of `john.smith` gets the nicename
-	 * `john-smith`, so `@john-smith` worked in BuddyNext and nowhere else.
+	 * partners that must agree. Resolving on login alone meant a handle typed in
+	 * BuddyNext did not resolve here whenever the two differ - the imported-user
+	 * case: a login of `john.smith` gets the nicename `john-smith`.
 	 *
 	 * It also retires the dotted-handle problem rather than working around it.
 	 * A nicename is sanitize_title() output and cannot contain a dot, so the
 	 * pattern needs no special case and an email address can never read as a
 	 * mention.
 	 *
-	 * One WP_User_Query with `nicename__in` resolves every handle in the render
-	 * pass, regardless of how many mentions the content carries.
+	 * Resolution order, deliberately mirroring BuddyNext's Handle::resolve() so
+	 * the two agree on the same install - the pair ships together on most sites:
 	 *
-	 * `blog_id => 0` keeps the lookup network-wide.
+	 *   1. `jetonomy_resolve_mention_handles` filter - a partner's own handle
+	 *      vocabulary. BuddyNext's custom slug (`bn_profile_slug`) and its
+	 *      reserved `user-{id}` form both live here rather than being hardcoded,
+	 *      because free Jetonomy must not depend on a plugin that may be absent.
+	 *   2. user_nicename - the shared contract.
+	 *   3. user_login - last resort, for content written before 1.9.3 when login
+	 *      WAS the handle. BuddyNext keeps the same fallback for the same reason.
 	 *
-	 * `fields => all_with_meta` is deliberate: it primes the user cache, so the
-	 * `get_userdata()` inside get_profile_url() is served from cache instead of
-	 * costing a query per resolved user. Measured on a 40-mention body: 17
-	 * queries with a lean select vs 3 with this one, and 3 stays flat as the
-	 * mention count grows.
+	 * Each step is one query over whatever is still unresolved, so a body full
+	 * of mentions costs a fixed handful of queries rather than one per mention,
+	 * and the common case (all nicenames) never runs the login query at all.
 	 *
 	 * @param string[] $handles Raw @handles (no leading `@`), may repeat.
-	 * @return array<string,int> Map of lowercased nicename => user ID. Handles
+	 * @return array<string,int> Map of lowercased handle => user ID. Handles
 	 *                           that don't resolve to a real user are absent.
 	 */
 	private static function resolve_handles( array $handles ): array {
@@ -72,20 +75,106 @@ class Mentions {
 			return [];
 		}
 
-		$query = new \WP_User_Query(
-			[
-				'nicename__in' => $handles,
-				'fields'       => 'all_with_meta',
-				'number'       => count( $handles ),
-				'blog_id'      => 0,
-				'count_total'  => false,
-			]
-		);
-
 		$map = [];
-		foreach ( $query->get_results() as $user ) {
-			$map[ strtolower( $user->user_nicename ) ] = (int) $user->ID;
+
+		/**
+		 * Resolve @handles to user IDs before Jetonomy's own lookup.
+		 *
+		 * The escape hatch for a partner that owns a handle Jetonomy cannot see.
+		 * BuddyNext lets a member choose a custom slug (`bn_profile_slug`
+		 * usermeta) which takes precedence over their nicename everywhere it
+		 * renders, so without this that member is `@theirslug` in BuddyNext and
+		 * unresolvable here. Jetonomy deliberately does NOT read that meta key
+		 * itself - free must not depend on a plugin that may not be installed -
+		 * so the BuddyNext bridge hooks this instead.
+		 *
+		 * Return a map of LOWERCASED handle => user ID. Handles already present
+		 * are left alone; anything still unresolved falls through to nicename
+		 * and then login below.
+		 *
+		 * @since 1.9.3
+		 *
+		 * @param array<string,int> $map     Handle => user ID, empty to start.
+		 * @param string[]          $handles Raw handles found in the content.
+		 */
+		$filtered = apply_filters( 'jetonomy_resolve_mention_handles', $map, $handles );
+		if ( is_array( $filtered ) ) {
+			foreach ( $filtered as $handle => $user_id ) {
+				$user_id = (int) $user_id;
+				if ( $user_id > 0 && is_string( $handle ) && '' !== $handle ) {
+					$map[ strtolower( $handle ) ] = $user_id;
+				}
+			}
 		}
+
+		$map = self::resolve_by_field( $handles, $map, 'nicename__in', 'user_nicename' );
+
+		// Last resort: user_login. Jetonomy resolved mentions by login until
+		// 1.9.3, so years of existing content spells handles that way. Dropping
+		// it outright would silently stop notifying on every one of those posts.
+		// Mirrors BuddyNext's own step 4 - never reached for a handle any
+		// current surface displays, since the typeahead inserts the nicename.
+		$map = self::resolve_by_field( $handles, $map, 'login__in', 'user_login' );
+
+		return $map;
+	}
+
+	/**
+	 * Resolve whatever handles are still unmapped against one user field.
+	 *
+	 * One WP_User_Query per field, never one per handle - the whole point of
+	 * batching here. Returns early when nothing is left to look up, so the
+	 * common case (every handle already resolved by nicename) costs no extra
+	 * query at all.
+	 *
+	 * `blog_id => 0` keeps the lookup network-wide.
+	 *
+	 * `fields => all_with_meta` primes the user cache, so the get_userdata()
+	 * inside get_profile_url() is served from cache instead of costing a query
+	 * per resolved user. Measured on a 40-mention body: 17 queries with a lean
+	 * select vs 3 with this one, and 3 stays flat as the mention count grows.
+	 *
+	 * @param string[]          $handles   Every handle found in the content.
+	 * @param array<string,int> $map       Resolutions so far, keyed lowercased.
+	 * @param string            $query_arg WP_User_Query arg: nicename__in|login__in.
+	 * @param string            $field     User property to key the result on.
+	 * @return array<string,int> The map, with any new resolutions merged in.
+	 */
+	private static function resolve_by_field( array $handles, array $map, string $query_arg, string $field ): array {
+		$pending = [];
+		foreach ( $handles as $handle ) {
+			if ( ! isset( $map[ strtolower( $handle ) ] ) ) {
+				$pending[] = $handle;
+			}
+		}
+
+		if ( empty( $pending ) ) {
+			return $map;
+		}
+
+		// Explicit branches rather than a dynamic key: WP_User_Query's arg shape
+		// is typed, and a variable key defeats static analysis of it.
+		$args = [
+			'fields'      => 'all_with_meta',
+			'number'      => count( $pending ),
+			'blog_id'     => 0,
+			'count_total' => false,
+		];
+		if ( 'login__in' === $query_arg ) {
+			$args['login__in'] = $pending;
+		} else {
+			$args['nicename__in'] = $pending;
+		}
+
+		$query = new \WP_User_Query( $args );
+
+		foreach ( $query->get_results() as $user ) {
+			$key = strtolower( (string) $user->{$field} );
+			if ( '' !== $key && ! isset( $map[ $key ] ) ) {
+				$map[ $key ] = (int) $user->ID;
+			}
+		}
+
 		return $map;
 	}
 
