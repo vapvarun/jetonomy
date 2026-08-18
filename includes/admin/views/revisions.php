@@ -72,76 +72,71 @@ if ( 'detail' === $mode ) :
 			<?php esc_html_e( 'Each row compares against the previous snapshot. The oldest entry has no diff.', 'jetonomy' ); ?>
 		</p>
 
-		<?php if ( empty( $revisions ) ) : ?>
-			<div class="notice notice-info inline">
-				<p><?php esc_html_e( 'No revisions have been recorded for this object yet.', 'jetonomy' ); ?></p>
-			</div>
-		<?php else : ?>
-			<table class="widefat striped jt-revisions-detail">
-				<thead>
-					<tr>
-						<th scope="col" style="width: 22%;"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
-						<th scope="col" style="width: 22%;"><?php esc_html_e( 'Edited By', 'jetonomy' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Edit Summary', 'jetonomy' ); ?></th>
-						<th scope="col" style="width: 12%;"><?php esc_html_e( 'Diff', 'jetonomy' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php
-					// Revisions arrive newest-first. Each row diffs against the
-					// snapshot that came BEFORE it chronologically (i.e. the
-					// next index in the array). The last entry has no
-					// predecessor — its diff cell shows the original copy.
-					$total = count( $revisions );
-					foreach ( $revisions as $idx => $rev ) :
-						$rev_id    = (int) ( $rev->id ?? 0 );
-						$author_id = (int) ( $rev->author_id ?? 0 );
-						$author    = $author_id > 0 ? get_userdata( $author_id ) : null;
-						$created   = (string) ( $rev->created_at ?? '' );
-						$summary   = (string) ( $rev->edit_summary ?? '' );
-						$has_prev  = $idx < ( $total - 1 );
-						$prev_rev  = $has_prev ? $revisions[ $idx + 1 ] : null;
-						$diff_id   = 'jt-rev-diff-' . $rev_id;
+			<?php
+			// Revisions arrive newest-first. Each row diffs against the snapshot
+			// that came BEFORE it chronologically (i.e. the next index), so the
+			// last entry has no predecessor and shows "Original" instead of a
+			// toggle. Precomputed here so the cell and after_row callbacks agree
+			// on which rows have a diff without recomputing the lookup twice.
+			$jt_total = count( $revisions );
+			$jt_prev  = static function ( $rev ) use ( $revisions, $jt_total ) {
+				$idx = array_search( $rev, $revisions, true );
+				return ( false !== $idx && $idx < ( $jt_total - 1 ) ) ? $revisions[ $idx + 1 ] : null;
+			};
 
-						$prev_title   = $has_prev ? (string) ( $prev_rev->title ?? '' ) : '';
-						$prev_content = $has_prev ? (string) ( $prev_rev->content ?? '' ) : '';
-						$curr_title   = (string) ( $rev->title ?? '' );
-						$curr_content = (string) ( $rev->content ?? '' );
-
-						// Compose left/right copies that include both the
-						// title (if any) and the content — wp_text_diff
-						// processes them as one block per side, which is
-						// exactly the layout admins want.
-						$left_text  = trim( $prev_title . "\n\n" . $prev_content );
-						$right_text = trim( $curr_title . "\n\n" . $curr_content );
-						?>
-						<tr>
-							<td>
-								<?php
+			jetonomy_admin_table(
+				array(
+					'rows'      => $revisions,
+					'class'     => 'jt-revisions-detail',
+					'columns'   => array(
+						'date'    => array(
+							'label'   => __( 'Date', 'jetonomy' ),
+							'primary' => true,
+							'width'   => 'm',
+						),
+						'author'  => array(
+							'label' => __( 'Edited By', 'jetonomy' ),
+							'width' => 'm',
+						),
+						'summary' => array( 'label' => __( 'Edit Summary', 'jetonomy' ) ),
+						'diff'    => array(
+							'label' => __( 'Diff', 'jetonomy' ),
+							'width' => 's',
+						),
+					),
+					'empty'     => array(
+						'icon'  => 'backup',
+						'title' => __( 'No revisions have been recorded for this object yet.', 'jetonomy' ),
+					),
+					'cell'      => function ( $rev, $col ) use ( $jt_prev ) {
+						switch ( $col ) {
+							case 'date':
+								$created = (string) ( $rev->created_at ?? '' );
 								if ( '' === $created || '0000-00-00 00:00:00' === $created ) {
-									echo '&mdash;';
-								} else {
-									$ts = strtotime( $created );
-									if ( false === $ts ) {
-										echo esc_html( $created );
-									} else {
-										printf(
-											'<span title="%1$s">%2$s</span>',
-											esc_attr( $created ),
-											esc_html(
-												sprintf(
-													/* translators: %s: human-readable time difference. */
-													__( '%s ago', 'jetonomy' ),
-													human_time_diff( $ts, time() )
-												)
-											)
-										);
-									}
+									echo '—';
+									break;
 								}
-								?>
-							</td>
-							<td>
-								<?php
+								$ts = strtotime( $created );
+								if ( false === $ts ) {
+									echo esc_html( $created );
+									break;
+								}
+								printf(
+									'<span title="%1$s">%2$s</span>',
+									esc_attr( $created ),
+									esc_html(
+										sprintf(
+											/* translators: %s: human-readable time difference. */
+											__( '%s ago', 'jetonomy' ),
+											human_time_diff( $ts, time() )
+										)
+									)
+								);
+								break;
+
+							case 'author':
+								$author_id = (int) ( $rev->author_id ?? 0 );
+								$author    = $author_id > 0 ? get_userdata( $author_id ) : null;
 								if ( $author ) {
 									echo esc_html( $author->display_name ?: $author->user_login );
 								} elseif ( $author_id > 0 ) {
@@ -153,67 +148,79 @@ if ( 'detail' === $mode ) :
 								} else {
 									echo '<em>' . esc_html__( 'Unknown', 'jetonomy' ) . '</em>';
 								}
+								break;
+
+							case 'summary':
+								$summary = (string) ( $rev->edit_summary ?? '' );
+								echo '' === $summary ? '—' : esc_html( wp_trim_words( $summary, 30, '…' ) );
+								break;
+
+							case 'diff':
+								if ( ! $jt_prev( $rev ) ) {
+									echo '<em class="description">' . esc_html__( 'Original', 'jetonomy' ) . '</em>';
+									break;
+								}
+								$diff_id = 'jt-rev-diff-' . (int) ( $rev->id ?? 0 );
 								?>
-							</td>
-							<td>
+								<button
+									type="button"
+									class="button button-secondary jt-rev-diff-toggle"
+									aria-expanded="false"
+									aria-controls="<?php echo esc_attr( $diff_id ); ?>"
+									data-target="<?php echo esc_attr( $diff_id ); ?>"
+								>
+									<?php esc_html_e( 'View diff', 'jetonomy' ); ?>
+								</button>
 								<?php
-								if ( '' === $summary ) {
-									echo '&mdash;';
+								break;
+						}
+					},
+					'after_row' => function ( $rev, $colspan ) use ( $jt_prev ) {
+						$prev_rev = $jt_prev( $rev );
+						if ( ! $prev_rev ) {
+							return;
+						}
+						$diff_id = 'jt-rev-diff-' . (int) ( $rev->id ?? 0 );
+
+						// Compose left/right copies that include both the title
+						// (if any) and the content — wp_text_diff processes them
+						// as one block per side, which is the layout admins want.
+						$left_text  = trim( (string) ( $prev_rev->title ?? '' ) . "\n\n" . (string) ( $prev_rev->content ?? '' ) );
+						$right_text = trim( (string) ( $rev->title ?? '' ) . "\n\n" . (string) ( $rev->content ?? '' ) );
+						?>
+						<tr id="<?php echo esc_attr( $diff_id ); ?>" class="jt-rev-diff-row" hidden>
+							<td colspan="<?php echo absint( $colspan ); ?>">
+								<?php
+								$diff_html = wp_text_diff(
+									$left_text,
+									$right_text,
+									array(
+										'show_split_view' => true,
+										'title_left'      => __( 'Previous', 'jetonomy' ),
+										'title_right'     => __( 'This revision', 'jetonomy' ),
+									)
+								);
+								if ( ! $diff_html ) {
+									?>
+									<p class="description">
+										<?php esc_html_e( 'No textual difference between this revision and the previous one.', 'jetonomy' ); ?>
+									</p>
+									<?php
 								} else {
-									echo esc_html( wp_trim_words( $summary, 30, '…' ) );
+									// wp_text_diff returns admin-safe HTML built from a
+									// known table template; echo it directly so the diff
+									// styling renders. Esc would mangle the markup.
+									echo $diff_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 								}
 								?>
 							</td>
-							<td>
-								<?php if ( $has_prev ) : ?>
-									<button
-										type="button"
-										class="button button-secondary jt-rev-diff-toggle"
-										aria-expanded="false"
-										aria-controls="<?php echo esc_attr( $diff_id ); ?>"
-										data-target="<?php echo esc_attr( $diff_id ); ?>"
-									>
-										<?php esc_html_e( 'View diff', 'jetonomy' ); ?>
-									</button>
-								<?php else : ?>
-									<em class="description"><?php esc_html_e( 'Original', 'jetonomy' ); ?></em>
-								<?php endif; ?>
-							</td>
 						</tr>
-						<?php if ( $has_prev ) : ?>
-							<tr id="<?php echo esc_attr( $diff_id ); ?>" class="jt-rev-diff-row" hidden>
-								<td colspan="4">
-									<?php
-									$diff_html = wp_text_diff(
-										$left_text,
-										$right_text,
-										array(
-											'show_split_view' => true,
-											'title_left'  => __( 'Previous', 'jetonomy' ),
-											'title_right' => __( 'This revision', 'jetonomy' ),
-										)
-									);
-									if ( ! $diff_html ) {
-										?>
-										<p class="description">
-											<?php esc_html_e( 'No textual difference between this revision and the previous one.', 'jetonomy' ); ?>
-										</p>
-										<?php
-									} else {
-										// wp_text_diff returns admin-safe HTML built from a
-										// known table template; echo it directly so the
-										// diff styling renders. Esc would mangle the markup.
-										echo $diff_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-									}
-									?>
-								</td>
-							</tr>
-						<?php endif; ?>
-					<?php endforeach; ?>
-				</tbody>
-			</table>
+						<?php
+					},
+				)
+			);
+	?>
 
-		<?php endif; ?>
 	</div>
 	<?php
 else :

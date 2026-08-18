@@ -457,6 +457,15 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 		$row_attrs = isset( $args['row_attrs'] ) && is_callable( $args['row_attrs'] ) ? $args['row_attrs'] : null;
 		$wrap      = ! isset( $args['wrap'] ) || (bool) $args['wrap'];
 
+		// Optional full-width row emitted after each data row - the expandable
+		// detail pattern (revisions' inline diff). The callback owns the <tr>
+		// so it can carry its own id/hidden/class, and is handed the colspan so
+		// it cannot drift when a column is added or removed. Without this a
+		// view needing a detail row had to keep a hand-rolled <table> and fall
+		// out of the responsive contract entirely, which is the drift this
+		// helper exists to stop.
+		$after_row = isset( $args['after_row'] ) && is_callable( $args['after_row'] ) ? $args['after_row'] : null;
+
 		// Resolve the primary column: exactly one, defaulting to the first.
 		$primary = '';
 		foreach ( $columns as $key => $col ) {
@@ -539,6 +548,10 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 				}
 			}
 			echo '</tr>';
+
+			if ( $after_row ) {
+				$after_row( $row, count( $columns ) );
+			}
 		}
 
 		if ( 0 === $row_count ) {
