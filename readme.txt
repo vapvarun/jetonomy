@@ -269,6 +269,7 @@ Each site in a Multisite network gets its own independent community. Network act
 Removing a space keeps its content by default, members pick a display name instead of typing one, and @mentions reach members whose account was imported.
 
 * New      - Removing a space now offers Archive or Delete permanently as separate actions, and archiving keeps every topic, reply and vote.
+* New      - Permanently deleting a space asks you to type the space name first, so an irreversible action cannot be triggered by a single click.
 * New      - Setting to let space admins permanently delete a space and everything in it, off by default so only site administrators can destroy content.
 * New      - Setting to stop members changing their own name, for communities that need verified real names.
 * New      - Edit Profile collects a first name, last name and nickname, and members choose which combination to display publicly.
