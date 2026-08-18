@@ -11,8 +11,14 @@ parameters:
     scanFiles:
         - jetonomy.php
         - libs/action-scheduler/functions.php
-    scanDirectories:
-        - /tmp/bp-stubs/buddypress
+        # BuddyPress symbols for the integration layer. A committed stub file,
+        # NOT a scanDirectories pointed at a real checkout: scanning BuddyPress
+        # meant parsing 687 files purely for symbol discovery, which exhausted
+        # memory in a parallel worker and made the full-tree run crash with
+        # "Result is incomplete" (Basecamp 10212939583). The old path was also
+        # a hand-made /tmp symlink into another Local site, so the config only
+        # resolved on one machine and did not survive a reboot.
+        - phpstan-stubs/buddypress.php
     ignoreErrors:
         # Third-party plugin classes not available in CI
         -

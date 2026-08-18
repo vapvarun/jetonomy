@@ -126,11 +126,6 @@ parameters:
 			path: includes/class-template-loader.php
 
 		-
-			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
-			count: 2
-			path: includes/integrations/class-buddypress.php
-
-		-
 			message: "#^Negated boolean expression is always false\\.$#"
 			count: 4
 			path: includes/integrations/class-buddypress.php
