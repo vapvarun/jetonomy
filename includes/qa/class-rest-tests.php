@@ -1196,7 +1196,12 @@ class REST_Tests {
 					break;
 
 				case 'space_rest':
-					$this->rest( 'DELETE', "/spaces/{$item['id']}" );
+					// mode=purge, explicitly. DELETE now defaults to TRANSFER,
+					// which archives the space and keeps its content - correct
+					// for a customer, wrong for teardown. Without this every
+					// qa-actions run left an archived "QA REST Accept Space"
+					// behind and they accumulated one per run.
+					$this->rest( 'DELETE', "/spaces/{$item['id']}", [ 'mode' => 'purge' ] );
 					break;
 
 				case 'flag_db':
