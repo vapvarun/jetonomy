@@ -128,9 +128,9 @@ Every member of a space has one of three roles:
 
 **Member** - Can read, post, and reply within the space's configured restrictions. Can vote, follow, and bookmark topics.
 
-**Moderator** - All member abilities plus: approve pending posts, pin topics, close topics, move topics, delete posts and replies, manage join requests, create invite links, and review flagged content within the space.
+**Moderator** - All member abilities plus: approve pending posts, pin topics, close topics, move topics, delete posts and replies, manage join requests, and review flagged content within the space. Moderators **cannot** view or create invite links - see the note above.
 
-**Admin** - All moderator abilities plus: change space settings, assign moderator and admin roles to other members, manage access rules, and archive or delete the space.
+**Admin** - All moderator abilities plus: change space settings, assign moderator and admin roles to other members, manage access rules, view and create invite links, and archive or delete the space.
 
 > **Note:** WordPress site admins can perform all admin-level actions on any space, regardless of their space role.
 

@@ -62,7 +62,7 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | POST | `/spaces/{id}/members` | Logged in | Join a space |
 | PATCH | `/spaces/{id}/members/{user_id}` | Moderator / Admin | Change a member's role |
 | DELETE | `/spaces/{id}/members/{user_id}` | Moderator / Admin | Remove a member |
-| POST | `/spaces/{id}/invite` | Moderator / Admin | Generate an invite link |
+| POST | `/spaces/{id}/invite` | Space admin | Generate an invite link |
 | GET | `/invite/{token}` | Public | Resolve an invite token |
 | GET | `/spaces/{id}/privileged-members` | Public | List admins and moderators of a space |
 
