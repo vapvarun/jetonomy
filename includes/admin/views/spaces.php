@@ -175,7 +175,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<?php foreach ( array( 20, 50, 100 ) as $jt_pp ) : ?>
 						<option value="<?php echo (int) $jt_pp; ?>" <?php selected( (int) $per_page, $jt_pp ); ?>>
 							<?php
-							/* translators: %d: number of rows shown per page. */
+							/* translators: %d: per-page count. */
 							printf( esc_html__( '%d per page', 'jetonomy' ), (int) $jt_pp );
 							?>
 						</option>
