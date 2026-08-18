@@ -290,7 +290,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 								?>
 								<span class="archive"><a href="#" class="jetonomy-delete-space" data-id="<?php echo absint( $space->id ); ?>" data-mode="transfer"><?php esc_html_e( 'Archive', 'jetonomy' ); ?></a><?php echo $jt_may_purge ? ' | ' : ''; ?></span>
 								<?php if ( $jt_may_purge ) : ?>
-									<span class="delete"><a href="#" class="jetonomy-delete-space jt-danger" data-id="<?php echo absint( $space->id ); ?>" data-mode="purge"><?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?></a></span>
+									<span class="delete"><a href="#" class="jetonomy-delete-space jt-danger" data-id="<?php echo absint( $space->id ); ?>" data-mode="purge" data-title="<?php echo esc_attr( $space->title ); ?>"><?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?></a></span>
 								<?php endif; ?>
 							</div>
 							<?php

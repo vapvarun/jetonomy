@@ -528,15 +528,41 @@
 				var $row = $(this).closest('tr');
 				var id = $(this).data('id');
 				var mode = $(this).data('mode') || 'transfer';
+				var title = String($(this).data('title') || '');
 
-				// The two outcomes are not comparable, so they do not share a
-				// warning. Archiving keeps every topic; purging destroys other
-				// members' content too, and says so.
-				var warning = mode === 'purge'
-					? (self.i18n.confirmPurgeSpace || self.i18n.confirmDelete)
-					: (self.i18n.confirmArchiveSpace || self.i18n.confirmDelete);
+				// Purge has no undo, so it asks the operator to TYPE the space
+				// name rather than click through a dialog. Archive keeps every
+				// topic and stays a plain confirm - matching the weight of the
+				// warning to the weight of the action is the point.
+				var gate;
+				if (mode === 'purge' && title && typeof window.jetonomyPrompt === 'function') {
+					gate = window.jetonomyPrompt(
+						(self.i18n.purgeTypeToConfirm || '%s').replace('%s', title),
+						{
+							danger: true,
+							requireMatch: title,
+							placeholder: title,
+							confirmLabel: self.i18n.purgeConfirmLabel
+						}
+					).then(function(typed) {
+						// null = cancelled. A mismatch cannot reach here (the
+						// button stays disabled), but re-check anyway: the
+						// dialog is convenience, never the control.
+						if (typed === null) return false;
+						if (String(typed).trim() !== title) {
+							self.toast(self.i18n.purgeNameMismatch || self.i18n.error, 'error');
+							return false;
+						}
+						return true;
+					});
+				} else {
+					var warning = mode === 'purge'
+						? (self.i18n.confirmPurgeSpace || self.i18n.confirmDelete)
+						: (self.i18n.confirmArchiveSpace || self.i18n.confirmDelete);
+					gate = self.confirmAsync(warning, { danger: mode === 'purge' });
+				}
 
-				self.confirmAsync(warning, { danger: mode === 'purge' }).then(function(ok) {
+				gate.then(function(ok) {
 					if (!ok) return;
 					self.ajax('jetonomy_delete_space', { id: id, mode: mode }).done(function(res) {
 						if (res.success) {
