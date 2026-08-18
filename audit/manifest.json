@@ -2305,6 +2305,16 @@
       ]
     },
     {
+      "name": "jetonomy_reserved_display_names",
+      "type": "filter",
+      "args_count": 2,
+      "args_signature": [
+        "string[] $reserved",
+        "string $normalized"
+      ],
+      "where": "includes/functions.php:297"
+    },
+    {
       "name": "jetonomy_display_name_choices",
       "type": "filter",
       "args_count": 2,

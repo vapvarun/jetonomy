@@ -514,6 +514,30 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
+		// Owner lock. The presales customer asked for either a read-only field or
+		// a setting; this is the setting. Enforced HERE rather than by disabling
+		// the input, because the route accepts these params independently of the
+		// form - a front-end readonly attribute is not a control (Basecamp
+		// 10210055850). Covers the parts too: leaving those writable while
+		// locking display_name would just move the hole one level down.
+		$jt_settings   = get_option( 'jetonomy_settings', array() );
+		$name_locked   = isset( $jt_settings['lock_member_names'] ) && $jt_settings['lock_member_names'];
+		$name_params   = array( 'display_name', 'first_name', 'last_name', 'nickname' );
+		$sent_any_name = false;
+		foreach ( $name_params as $jt_param ) {
+			if ( null !== $request->get_param( $jt_param ) ) {
+				$sent_any_name = true;
+				break;
+			}
+		}
+		if ( $name_locked && $sent_any_name ) {
+			return new WP_Error(
+				'jetonomy_name_locked',
+				__( 'Names are managed by the site administrator.', 'jetonomy' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		// Name parts first, so display_name is validated against the values the
 		// member is submitting rather than the ones already stored - otherwise
 		// setting a first name and selecting "First Last" in one save would be

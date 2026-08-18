@@ -297,6 +297,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<p class="description"><?php esc_html_e( 'When on, the Login block sends a confirmation email after sign-up. Members can\'t log in until they click the link. Existing members are not affected.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Member names', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[lock_member_names]" value="1" <?php checked( ! empty( $settings['lock_member_names'] ) ); ?>>
+								<?php esc_html_e( 'Only administrators can change member names', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'When on, members cannot edit their first name, last name, nickname, or the name they display publicly. Use this if your community requires verified real names. Names are still editable in the WordPress Users screen. Off by default.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
 				</table>
 			</div>
 

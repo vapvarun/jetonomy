@@ -244,6 +244,62 @@ function client_ip(): string {
 }
 
 /**
+ * Whether a name impersonates the site or its staff.
+ *
+ * Compared case-insensitively after trimming and collapsing whitespace, so
+ * "  ADMIN  " and "Admin" are both caught. Substring matching is deliberately
+ * NOT used: "Adminah" and "Support Sarah" are legitimate names, and blocking
+ * them would be a worse failure than the one this prevents.
+ *
+ * The site title is included because impersonating the community itself is the
+ * same attack with a different word.
+ *
+ * @param string $name Candidate name.
+ * @return bool
+ */
+function is_reserved_display_name( string $name ): bool {
+	$normalized = strtolower( trim( preg_replace( '/\s+/', ' ', $name ) ?? '' ) );
+	if ( '' === $normalized ) {
+		return false;
+	}
+
+	$reserved = array(
+		'admin',
+		'administrator',
+		'moderator',
+		'mod',
+		'staff',
+		'support',
+		'owner',
+		'root',
+		'system',
+		'webmaster',
+		'official',
+	);
+
+	$site_title = strtolower( trim( (string) get_bloginfo( 'name' ) ) );
+	if ( '' !== $site_title ) {
+		$reserved[] = $site_title;
+	}
+
+	/**
+	 * Filter the reserved names members may not publish as.
+	 *
+	 * Security boundary: PATCH /users/me rejects anything matching this list,
+	 * so entries are enforced server-side. Values are compared lowercased and
+	 * whitespace-collapsed.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param string[] $reserved   Reserved names, lowercase.
+	 * @param string   $normalized The name being checked, normalized.
+	 */
+	$reserved = (array) apply_filters( 'jetonomy_reserved_display_names', $reserved, $normalized );
+
+	return in_array( $normalized, array_map( 'strtolower', $reserved ), true );
+}
+
+/**
  * The set of names a member is allowed to publish as.
  *
  * WordPress does not let a member author an arbitrary display name: wp-admin
@@ -278,6 +334,20 @@ function display_name_choices( \WP_User $user ): array {
 		$last,
 		trim( $first . ' ' . $last ),
 		trim( $last . ' ' . $first ),
+	);
+
+	// Strip names that impersonate the site or its staff. This is applied to the
+	// CHOICES, not just to the submitted value, so the select never offers one
+	// and PATCH /users/me - which validates against this same list - rejects it.
+	//
+	// It has to live here rather than on display_name alone, because the parts
+	// are member-writable through the same endpoint: setting
+	// nickname="Administrator" and then selecting it was a two-call
+	// impersonation that the first version of this check missed entirely
+	// (Basecamp 10210055850, QA bounce).
+	$choices = array_filter(
+		$choices,
+		static fn( $name ) => ! is_reserved_display_name( (string) $name )
 	);
 
 	/**
