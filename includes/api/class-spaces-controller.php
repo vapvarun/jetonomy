@@ -461,9 +461,20 @@ class Spaces_Controller extends Base_Controller {
 			'cover_image' => esc_url_raw( (string) $request->get_param( 'cover_image' ) ),
 			'settings'    => $settings,
 			'author_id'   => get_current_user_id(),
+			// Only carried when the client actually sent it. Left null it is
+			// stripped below, and Space::create() assigns MAX(sort_order)+1 for
+			// the category so new spaces append. Note this is NOT the same as
+			// the categories controller, which passes absint() unconditionally:
+			// Category::create() defaults to 0, so writing 0 there matches the
+			// model. Doing that here would pin every API-created space to the
+			// top of its category and lose the append behaviour.
+			'sort_order'  => null !== $request->get_param( 'sort_order' )
+				? absint( $request->get_param( 'sort_order' ) )
+				: null,
 		];
 
-		// Remove empty optional fields so DB defaults apply.
+		// Remove empty optional fields so DB defaults apply. absint() of an
+		// explicit 0 survives this - the callback rejects only null and ''.
 		$data = array_filter( $data, fn( $v ) => null !== $v && '' !== $v );
 
 		$id = Space::create( $data );
@@ -554,6 +565,9 @@ class Spaces_Controller extends Base_Controller {
 			if ( is_wp_error( $combo ) ) {
 				return $combo;
 			}
+		}
+		if ( null !== $request->get_param( 'sort_order' ) ) {
+			$data['sort_order'] = absint( $request->get_param( 'sort_order' ) );
 		}
 		if ( null !== $request->get_param( 'icon' ) ) {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );
@@ -1357,6 +1371,11 @@ class Spaces_Controller extends Base_Controller {
 				'type'     => 'string',
 				'required' => false,
 				'format'   => 'uri',
+			],
+			'sort_order'  => [
+				'type'     => 'integer',
+				'required' => false,
+				'minimum'  => 0,
 			],
 			'settings'    => [ 'required' => false ],
 		];
