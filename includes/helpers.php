@@ -564,3 +564,44 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 		echo '</div>'; // Closes .jt-content-table-wrap or .jt-table-scroll.
 	}
 }
+
+if ( ! function_exists( 'jetonomy_register_token_style' ) ) {
+	/**
+	 * Register the shared --jt-* token stylesheet and return its handle.
+	 *
+	 * THE single registration point for `jetonomy-tokens`. Every stylesheet
+	 * Jetonomy ships consumes `--jt-*` custom properties but declares none of
+	 * them (jetonomy-tokens.css is the one place they are declared), so any
+	 * surface that enqueues one of those stylesheets without this handle in its
+	 * dependency array renders with every token unresolved: `var(--jt-bg)`
+	 * computes to nothing, the element falls back to transparent, and the
+	 * screen looks empty rather than broken.
+	 *
+	 * That is exactly how the space-delete dialog shipped invisible in wp-admin
+	 * in 1.9.3 (Basecamp 10217204334) - the front end declared the dependency,
+	 * wp-admin did not, and the two enqueues had drifted apart because each one
+	 * open-coded its own wp_register_style() call. Registration is idempotent
+	 * (WordPress dedupes by handle), so every caller can call this
+	 * unconditionally and no caller has to know whether another already did.
+	 *
+	 * Call this, then put the returned handle in the `$deps` array:
+	 *
+	 *     wp_enqueue_style( 'jetonomy', $url, array( jetonomy_register_token_style() ), $ver );
+	 *
+	 * @since 1.9.3
+	 *
+	 * @return string The token stylesheet handle, for use in a $deps array.
+	 */
+	function jetonomy_register_token_style(): string {
+		if ( ! wp_style_is( 'jetonomy-tokens', 'registered' ) ) {
+			wp_register_style(
+				'jetonomy-tokens',
+				JETONOMY_URL . 'assets/css/jetonomy-tokens.css',
+				array(),
+				JETONOMY_VERSION
+			);
+		}
+
+		return 'jetonomy-tokens';
+	}
+}

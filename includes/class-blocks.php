@@ -42,27 +42,21 @@ class Blocks {
 	}
 
 	public static function register_block_assets(): void {
-		// The shared --jt-* token layer. Registered here as well as in
-		// Template_Loader (WordPress dedupes by handle) because blocks render on
-		// pages the community stylesheet never loads on — a page-builder canvas,
-		// a widget area, a landing page. This handle is what makes a block
-		// correct there. It is deliberately a separate, tiny file rather than a
-		// dependency on `jetonomy`: a landing page with one login widget should
-		// not download the whole ~90KB community stylesheet to get its colours.
-		wp_register_style(
-			'jetonomy-tokens',
-			JETONOMY_URL . 'assets/css/jetonomy-tokens.css',
-			array(),
-			JETONOMY_VERSION
-		);
-
+		// The shared --jt-* token layer. Blocks render on pages the community
+		// stylesheet never loads on — a page-builder canvas, a widget area, a
+		// landing page — and this handle is what makes a block correct there. It
+		// is deliberately a separate, tiny file rather than a dependency on
+		// `jetonomy`: a landing page with one login widget should not download
+		// the whole ~90KB community stylesheet to get its colours.
+		//
 		// Dedicated, compact stylesheet for the Navigation and Login blocks.
 		// Declares no tokens of its own — it consumes `jetonomy-tokens`, so the
 		// dependency below is load-bearing, not cosmetic.
+		// {@see jetonomy_register_token_style()} - the one registration point.
 		wp_register_style(
 			'jetonomy-blocks',
 			JETONOMY_URL . 'assets/css/blocks.css',
-			array( 'jetonomy-tokens' ),
+			array( jetonomy_register_token_style() ),
 			JETONOMY_VERSION
 		);
 

@@ -166,20 +166,13 @@ class Template_Loader {
 
 		// Enqueue styles. The --jt-* token layer is its own handle: blocks render
 		// on pages this stylesheet never loads on, so the tokens cannot live in
-		// it (see the header of jetonomy-tokens.css). Registering is idempotent —
-		// Blocks::register_block_assets() registers the same handle and WordPress
-		// dedupes — but jetonomy.css consumes tokens it does not declare, so the
-		// dependency below is what guarantees they are parsed first.
-		wp_register_style(
-			'jetonomy-tokens',
-			JETONOMY_URL . 'assets/css/jetonomy-tokens.css',
-			array(),
-			JETONOMY_VERSION
-		);
+		// it (see the header of jetonomy-tokens.css). jetonomy.css consumes
+		// tokens it does not declare, so the dependency below is load-bearing.
+		// {@see jetonomy_register_token_style()} - the one registration point.
 		wp_enqueue_style(
 			'jetonomy',
 			JETONOMY_URL . 'assets/css/jetonomy.css',
-			array( 'jetonomy-tokens' ),
+			array( jetonomy_register_token_style() ),
 			JETONOMY_VERSION
 		);
 
