@@ -301,11 +301,19 @@ class Spaces_Handler {
 		$mode = sanitize_key( (string) ( $_POST['mode'] ?? 'transfer' ) );
 
 		if ( 'purge' === $mode ) {
-			$settings = get_option( 'jetonomy_settings', array() );
-			if ( ! current_user_can( 'manage_options' ) && empty( $settings['allow_space_admin_purge'] ) ) {
-				wp_send_json_error( __( 'Permanently deleting a space is restricted to site administrators on this community.', 'jetonomy' ) );
-			}
-
+			// No allow_space_admin_purge check here. Reaching this method at all
+			// requires jetonomy_manage_spaces (asserted at the top), a capability
+			// the owner hands out deliberately in the Permissions tab. Asking a
+			// second time whether the owner "really" meant it - via a setting
+			// that exists to gate FRONT-END space admins, who hold no capability
+			// at all - only ever produced one of two outcomes: nothing, for an
+			// administrator who passes it regardless, or a refusal for the
+			// Community Manager role the owner had just granted Manage all
+			// spaces to. The capability is the decision; this screen honours it.
+			//
+			// The setting still governs the front-end/REST path, where a space
+			// admin is a member with a space-level role rather than a WordPress
+			// one. See Spaces_Controller::delete_item().
 			\Jetonomy\Space_Purge::queue( $id );
 
 			wp_send_json_success(
@@ -315,8 +323,24 @@ class Spaces_Handler {
 					'removed' => true,
 				)
 			);
+		} else {
+			$this->transfer_space( $id );
 		}
+	}
 
+	/**
+	 * Archive a space and hand it to a successor, keeping every topic.
+	 *
+	 * Split out of ajax_delete_space() so the transfer path is the explicit
+	 * ELSE of the purge branch rather than code that merely happens to sit
+	 * after it. wp_send_json_success() ends the request, so the two could never
+	 * both run - but that relies on a die() several call frames away, and a
+	 * reader should not have to know it to see that a space cannot be handed to
+	 * a successor moments after it was destroyed.
+	 *
+	 * @param int $id Space to archive and transfer.
+	 */
+	private function transfer_space( int $id ): void {
 		$successor = Space::resolve_successor( $id, get_current_user_id() );
 		if ( ! $successor ) {
 			wp_send_json_error( __( 'No one else can take over this space. Delete it permanently instead.', 'jetonomy' ) );

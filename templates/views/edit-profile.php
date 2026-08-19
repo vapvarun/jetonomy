@@ -53,25 +53,6 @@ if ( ! $cancel_url ) {
 			data-wp-on--submit="actions.saveProfile"
 			data-wp-context='<?php echo wp_json_encode( [ 'profileUrl' => $profile_url ] ); ?>'>
 		<div class="jt-form-group">
-			<?php
-			// When the owner has locked names, don't render controls the server
-			// will 403. The lock is enforced in PATCH /users/me - this is the
-			// honest UI for it, not the control itself.
-			$jt_names_locked = ! empty( get_option( 'jetonomy_settings', array() )['lock_member_names'] );
-			if ( $jt_names_locked ) :
-				?>
-				<label class="jt-label"><?php esc_html_e( 'Name', 'jetonomy' ); ?></label>
-				<p class="jt-field-hint">
-					<?php
-					printf(
-						/* translators: %s: the member's current display name. */
-						esc_html__( 'You are shown as %s. Names are managed by the site administrator on this community.', 'jetonomy' ),
-						'<strong>' . esc_html( \Jetonomy\user_display_name( $current_user ) ) . '</strong>'
-					);
-					?>
-				</p>
-		</div>
-			<?php else : ?>
 			<label class="jt-label" for="jt-first-name"><?php esc_html_e( 'First Name', 'jetonomy' ); ?></label>
 			<input type="text" id="jt-first-name" name="first_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'first_name', true ) ); ?>">
 		</div>
@@ -108,8 +89,6 @@ if ( ! $cancel_url ) {
 				<?php endforeach; ?>
 			</select>
 		</div>
-
-		<?php endif; // $jt_names_locked ?>
 
 		<div class="jt-form-group">
 			<label class="jt-label"><?php esc_html_e( 'Bio', 'jetonomy' ); ?></label>

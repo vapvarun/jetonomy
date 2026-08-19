@@ -81,16 +81,27 @@ final class Space_Purge {
 	 * community space - a space with 50k topics and their replies cannot be
 	 * deleted inside one PHP request (Basecamp 10119343634).
 	 *
-	 * Hands the work to Action Scheduler when it is available, which it always
-	 * is here because the plugin bundles it (libs/action-scheduler). The inline
-	 * fallback exists for the case where the library failed to load rather than
-	 * as a supported path - draining synchronously is exactly what this method
-	 * is for avoiding, so it is a last resort, not an alternative.
+	 * THE FIRST BATCH RUNS IN THIS REQUEST. Handing the whole job to Action
+	 * Scheduler and returning "queued" was silently a no-op wherever the AS
+	 * queue never runs - a host that blocks loopback requests, DISABLE_WP_CRON
+	 * with no system cron, a firewalled staging box. On those sites the
+	 * operator saw "Space and all its content are being deleted", the row
+	 * faded out, and the space was still there on reload. Forever: nothing
+	 * ever drained the queue (Basecamp 10217204334, reproduced with 9 AS
+	 * actions stuck pending after 20 front-end requests).
 	 *
-	 * Idempotent: a space already queued is not queued twice.
+	 * CHUNK is 500 topics, so a space smaller than that - which is nearly all
+	 * of them - is completely gone before the response is sent and the
+	 * "deleted" the UI reports is simply true. Only a genuinely large space
+	 * continues in the background, and run_batch() falls back to finishing
+	 * inline if it cannot hand off. The result is a purge that always makes
+	 * progress, on every host, rather than one that depends on infrastructure
+	 * the plugin cannot see.
+	 *
+	 * Idempotent: a space already queued is left to the runner.
 	 *
 	 * @param int $space_id Space to purge.
-	 * @return bool True when the work was queued, false when it ran inline.
+	 * @return bool True when the purge started (or was already under way).
 	 */
 	public static function queue( int $space_id ): bool {
 		$space_id = (int) $space_id;
@@ -100,16 +111,42 @@ final class Space_Purge {
 
 		$args = [ 'space_id' => $space_id ];
 
-		if ( function_exists( 'as_enqueue_async_action' ) && function_exists( 'as_has_scheduled_action' ) ) {
-			if ( as_has_scheduled_action( self::BATCH_HOOK, $args, self::AS_GROUP ) ) {
-				return true;
-			}
-			as_enqueue_async_action( self::BATCH_HOOK, $args, self::AS_GROUP );
+		// Already handed off by an earlier request - let the runner have it
+		// rather than deleting the same slice from two directions.
+		if ( function_exists( 'as_has_scheduled_action' )
+			&& as_has_scheduled_action( self::BATCH_HOOK, $args, self::AS_GROUP ) ) {
 			return true;
 		}
 
+		// Is this space actually big enough to need batching? Ask for one slice
+		// more than a batch holds: the answer is "no" for all but the largest
+		// spaces, and it costs a bounded id lookup rather than a COUNT(*) over
+		// a 50k-row table.
+		$oversized = count( self::post_ids( $space_id, self::CHUNK + 1 ) ) > self::CHUNK;
+
+		if ( ! $oversized ) {
+			// Deleted here, now, in this request. A space this size is well
+			// inside what one request can drain, and doing it inline means the
+			// operator's next page load shows the truth instead of a space that
+			// was reported deleted and is still sitting in the list.
+			self::purge( $space_id );
+			return true;
+		}
+
+		// Genuinely large: batch it, and only trust the hand-off if the store
+		// accepted the job.
+		if ( function_exists( 'as_enqueue_async_action' )
+			&& as_enqueue_async_action( self::BATCH_HOOK, $args, self::AS_GROUP ) ) {
+			return true;
+		}
+
+		// No usable queue. Draining a huge space in one request is exactly what
+		// this method exists to avoid, so this is a bad outcome - but it is the
+		// better of the two available ones. Not deleting the space at all,
+		// while telling the operator it is gone, is worse.
 		self::purge( $space_id );
-		return false;
+
+		return true;
 	}
 
 	/**
@@ -154,13 +191,17 @@ final class Space_Purge {
 		set_transient( $tally_key, $tally, DAY_IN_SECONDS );
 		set_transient( $authors_key, $authors, DAY_IN_SECONDS );
 
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( self::BATCH_HOOK, [ 'space_id' => $space_id ], self::AS_GROUP );
+		// The return value is load-bearing: as_enqueue_async_action() answers 0
+		// when the store refuses the job, and treating that as a successful
+		// hand-off is what strands a half-deleted space - its topics gone, its
+		// row still listed, and nothing scheduled to finish the job.
+		if ( function_exists( 'as_enqueue_async_action' )
+			&& as_enqueue_async_action( self::BATCH_HOOK, [ 'space_id' => $space_id ], self::AS_GROUP ) ) {
 			return;
 		}
 
-		// AS vanished mid-purge (deactivated between batches). Finish inline
-		// rather than leaving a half-deleted space behind.
+		// AS vanished mid-purge (deactivated between batches), or refused the
+		// job. Finish inline rather than leaving a half-deleted space behind.
 		self::purge( $space_id );
 	}
 

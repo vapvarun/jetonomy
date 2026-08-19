@@ -476,6 +476,19 @@ class Admin {
 			// gates accounts that ALREADY have the pending meta — flipping
 			// this setting on does NOT retroactively lock existing users.
 			$clean['require_email_verification'] = ! empty( $input['require_email_verification'] );
+
+			// Both of these shipped in 1.9.3 as checkboxes on this tab and were
+			// never added here, so sanitize_settings() dropped them on every
+			// save. $clean starts as $existing, so an unwritten key silently
+			// keeps its old value - the box appeared to tick, the page reloaded
+			// showing it unticked, and the feature behind it stayed off. That is
+			// what made "let space admins delete a space" impossible to turn on:
+			// the AJAX guard reads allow_space_admin_purge, which could never
+			// become true (Basecamp 10217204334).
+			//
+			// An unchecked checkbox submits nothing, so absence inside a
+			// General-tab save means OFF - the same rule front_page above uses.
+			$clean['allow_space_admin_purge'] = ! empty( $input['allow_space_admin_purge'] );
 		}
 
 		// ── Permissions tab ──
