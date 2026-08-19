@@ -2615,7 +2615,10 @@
 @media ( max-width: 640px ) {
 	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
 	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }
-	.jt-modal-actions .jt-btn { min-width: 0; width: 100%; }
+	/* Full-width stack on a phone, and 40px tall - the padding alone leaves the
+	   confirm button at 34px, under the minimum touch target. This is the last
+	   tap before an irreversible delete; it does not get to be the smallest. */
+	.jt-modal-actions .jt-btn { min-width: 0; width: 100%; min-height: 40px; }
 }
 
 /*
