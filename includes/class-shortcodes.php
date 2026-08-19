@@ -95,7 +95,10 @@ class Shortcodes {
 	 */
 	private static function enqueue_styles(): void {
 		if ( ! wp_style_is( 'jetonomy-blocks', 'registered' ) ) {
-			wp_register_style( 'jetonomy-blocks', JETONOMY_URL . 'assets/css/blocks.css', array(), JETONOMY_VERSION );
+			// blocks.css declares no tokens of its own, so this fallback has to
+			// carry the same dependency Blocks::register_block_assets() does or
+			// the shortcode renders with every --jt-* unresolved.
+			wp_register_style( 'jetonomy-blocks', JETONOMY_URL . 'assets/css/blocks.css', array( jetonomy_register_token_style() ), JETONOMY_VERSION );
 		}
 		wp_enqueue_style( 'jetonomy-blocks' );
 	}

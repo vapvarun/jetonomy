@@ -789,10 +789,17 @@ class Admin {
 			return;
 		}
 
+		// admin.css declares its own --jt-admin-* palette but still consumes a
+		// handful of the shared --jt-* tokens, and jetonomy.css below consumes
+		// them wholesale. Neither file declares a single one, so the token layer
+		// is a hard dependency of both - not an optimisation.
+		// {@see jetonomy_register_token_style()}
+		$tokens = jetonomy_register_token_style();
+
 		wp_enqueue_style(
 			'jetonomy-admin',
 			JETONOMY_URL . 'assets/css/admin.css',
-			array(),
+			array( $tokens ),
 			JETONOMY_VERSION
 		);
 
@@ -828,7 +835,7 @@ class Admin {
 		wp_enqueue_style(
 			'jetonomy',
 			JETONOMY_URL . 'assets/css/jetonomy.css',
-			array(),
+			array( $tokens ),
 			JETONOMY_VERSION
 		);
 
