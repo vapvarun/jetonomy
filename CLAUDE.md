@@ -99,11 +99,44 @@ Both must report `OK (no mutation routes missing REST_Auth)` before merging to `
 
 ## Feature Acceptance Rules (enforced for every release)
 
-Three rules hard-gate every new feature. They live as memory entries (`feedback_rest_first_and_rtl_ready.md`, `feedback_frontend_rest_only_backend_ajax_ok.md`, `feedback_readme_txt_customer_facing.md`) so Claude carries them across sessions:
+Five rules hard-gate every new feature. They live as memory entries (`feedback_rest_first_and_rtl_ready.md`, `feedback_frontend_rest_only_backend_ajax_ok.md`, `feedback_readme_txt_customer_facing.md`, `feedback_no_settings_per_customer_request.md`) so Claude carries them across sessions:
 
 1. **REST-first, full CRUD, with documented contract.** Every read AND every mutation is reachable via a `jetonomy/v1/*` endpoint with documented route / method / payload / response / permission_callback. Reuse an existing controller when possible; only add a new one when no endpoint can carry the operation. AJAX-only or form-post-only paths are bugs.
 2. **Frontend REST-only, backend AJAX is acceptable.** Customer-facing surfaces (frontend templates, blocks, app) call REST. wp-admin tooling can keep AJAX where it already exists. The two reasons: customer perf (`admin-ajax.php` triggers full admin bootstrap, defeats caching plugins, kills HTTP/2 multiplexing) and the upcoming app needs REST anyway. Don't refactor working admin AJAX for uniformity; do migrate any `wp_ajax_*` handler called from frontend JS.
-3. **RTL ready out of the gate.** Every new template / partial / block ships with RTL parity from the first commit. Use logical CSS properties (`margin-inline-start`, `padding-inline-end`, `inset-inline-end`, `text-align: start`) so the browser flips for free. Hand-tuned `[dir="rtl"]` overrides only for genuinely asymmetric values. `grunt rtlcss` auto-generates `*-rtl.css` but visual verification under `<html dir="rtl">` is required before marking done.
+3. **A setting must earn its place on general usability - never on "a customer asked".**
+   A per-customer checkbox is permanent surface: rendered, sanitized, read at
+   every consumer, documented, translated, QA'd, and read past by every other
+   owner forever. Ten such requests produce a settings screen nobody can
+   navigate. Before adding an option, reach for a mechanism that already exists
+   - a capability in the Permissions tab, a `filter()` the asking site can
+   override for itself, or a sensible non-configurable default. Add a stored
+   option ONLY when it is a site-wide policy decision that no capability or
+   filter can express AND most owners would want to make it. "Would the typical
+   community owner want to decide this?" is the test; "who asked for it" is not.
+
+   Two 1.9.3 settings failed this test and were removed in the 1.9.3 re-cut:
+   `lock_member_names` (built for one presales request, contradicting the
+   product's own model that members self-manage their profile), and the wp-admin
+   half of `allow_space_admin_purge` (which second-guessed the
+   `jetonomy_manage_spaces` capability the owner had already granted, and whose
+   only effect was to hide the action from a role they had deliberately
+   promoted). Both were also **read but never written** by `sanitize_settings()`,
+   so neither checkbox could ever be switched on - the class of bug this rule
+   prevents by not creating the surface in the first place.
+
+4. **A QA card is an entry point, not the task.**
+   A card names a symptom on one screen; the job is the defect behind it and
+   every other surface that shares it. Fixing exactly what the card describes is
+   how the same bug bounces three times. The 1.9.3 "Space Delete dialog box UI
+   issue" card is the worked example: the reported symptom was a blank dialog,
+   the actual defect was a missing token-layer dependency that four separate
+   enqueues could each forget, and behind THAT sat a purge that reported success
+   while deleting nothing, plus two settings that could never save. Audit the
+   whole class - grep every sibling call site, check free AND pro, check all
+   three entry points (frontend, backend, API) - then fix them together and add
+   the regression test that would have caught it.
+
+5. **RTL ready out of the gate.** Every new template / partial / block ships with RTL parity from the first commit. Use logical CSS properties (`margin-inline-start`, `padding-inline-end`, `inset-inline-end`, `text-align: start`) so the browser flips for free. Hand-tuned `[dir="rtl"]` overrides only for genuinely asymmetric values. `grunt rtlcss` auto-generates `*-rtl.css` but visual verification under `<html dir="rtl">` is required before marking done.
 
 Two further rules apply to every release:
 

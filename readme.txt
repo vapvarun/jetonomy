@@ -270,8 +270,7 @@ Removing a space keeps its content by default, members pick a display name inste
 
 * New      - Removing a space now offers Archive or Delete permanently as separate actions, and archiving keeps every topic, reply and vote.
 * New      - Permanently deleting a space asks you to type the space name first, so an irreversible action cannot be triggered by a single click.
-* New      - Setting to let space admins permanently delete a space and everything in it, off by default so only site administrators can destroy content.
-* New      - Setting to stop members changing their own name, for communities that need verified real names.
+* New      - Setting to let space admins permanently delete their own space from the community pages, off by default. In the admin area, permanent deletion follows the Manage all spaces capability.
 * New      - Edit Profile collects a first name, last name and nickname, and members choose which combination to display publicly.
 * New      - Spaces can be dragged into a deliberate order within a category, instead of always sorting alphabetically.
 * Improve  - Permanently deleting a large space now runs in the background in batches, so it no longer times out.
@@ -288,6 +287,8 @@ Removing a space keeps its content by default, members pick a display name inste
 * Fix      - Invite link rows sit on one line again, and the duplicate trust level pill is gone from the profile header.
 * Fix      - The Archive and Delete permanently dialogs in the admin area opened as a blank grey panel with no readable message, no visible input and no usable buttons; every Jetonomy admin screen now loads the shared style layer those dialogs depend on.
 * Fix      - Dialog buttons on a phone are now full height, so the last tap before an irreversible delete is not the smallest target on the screen.
+* Fix      - Permanently deleting a space reported success and removed nothing on sites where background jobs do not run; the space and its content are now deleted straight away, with only very large spaces continuing in the background.
+* Fix      - The Deleting spaces setting could not be switched on. It was never saved, so the feature behind it stayed off however many times it was ticked.
 * Security - Members can no longer publish under a reserved name such as Administrator, Support or your site's name, or take another member's exact name.
 * Dev      - DELETE /spaces/{id} accepts mode=transfer (default) or mode=purge, and POST/PATCH /spaces accept sort_order.
 * Dev      - wp jetonomy space delete accepts --mode=transfer|purge and prompts before destroying content.
