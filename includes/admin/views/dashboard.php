@@ -12,7 +12,19 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! get_option( 'jetonomy_setup_complete' ) ) : ?>
+/*
+ * Show the first-run banner only when the site really has nothing yet.
+ *
+ * This used to test the wizard flag alone, so any site whose content arrived
+ * by import, migration, CLI or REST - i.e. never ran the wizard - was told to
+ * "create your first community space" forever, directly above stats reading
+ * 51 spaces and 1,507 replies. The flag records whether the WIZARD ran; it was
+ * never a proxy for whether the community exists.
+ */
+$jt_has_content = ( (int) ( $stats['active_spaces'] ?? 0 ) > 0 )
+	|| ( (int) ( $stats['total_posts'] ?? 0 ) > 0 );
+
+if ( ! get_option( 'jetonomy_setup_complete' ) && ! $jt_has_content ) : ?>
 <div class="notice notice-info" style="padding:20px;border-left-color:var(--jt-accent,#3B82F6);">
 	<h3 style="margin:0 0 8px;"><?php esc_html_e( 'Welcome to Jetonomy!', 'jetonomy' ); ?></h3>
 	<p><?php esc_html_e( 'Complete the setup wizard to create your first community space.', 'jetonomy' ); ?></p>

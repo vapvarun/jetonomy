@@ -137,10 +137,15 @@ class Admin {
 			array( $this, 'render_tags' )
 		);
 
+		// Settings -> General lets the owner rename Space/Spaces, and the page
+		// heading already honours it. The menu label was hardcoded, so after a
+		// rename the plugin's own nav contradicted its page content.
+		$jt_spaces_label = \Jetonomy\space_label( true );
+
 		add_submenu_page(
 			'jetonomy',
-			__( 'Spaces', 'jetonomy' ),
-			__( 'Spaces', 'jetonomy' ),
+			$jt_spaces_label,
+			$jt_spaces_label,
 			'jetonomy_manage_settings',
 			'jetonomy-spaces',
 			array( $this, 'render_spaces' )
@@ -349,6 +354,13 @@ class Admin {
 			'new_post_in_sub',
 			'badge_earned',
 			'vote_on_post',
+			// Settings -> Email renders a template row for this type
+			// (views/settings.php), and Notifier looks up an override for
+			// whatever type it is sending. It was missing from this allowlist,
+			// so an owner could write a custom subject/body for "Your idea
+			// roadmap status changed", save, and have it silently discarded
+			// every time. Keep this list in step with $tmpl_types in the view.
+			'idea_status_changed',
 			'reaction',
 			'moderation',
 			'flag_resolved',

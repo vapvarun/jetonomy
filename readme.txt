@@ -277,6 +277,9 @@ Housekeeping release. No customer-facing behaviour changed.
 * Fix      - Two moderators resolving the same report at the same time no longer overwrite each other. The second now sees the report as already handled instead of silently replacing who resolved it.
 * Fix      - The Role Capability Mapping table on Settings > Permissions was unreadable on phones, with role names clipped to their last few letters.
 * Improve  - Faster threaded replies on busy topics, and a faster ban check on every anonymous submission.
+* Fix      - Custom text for the "idea roadmap status changed" email is now saved. It was silently discarded on every save.
+* Fix      - The dashboard no longer tells you to run the setup wizard when your community already has spaces and posts, which affected every site whose content arrived by import or migration.
+* Fix      - Renaming Spaces in Settings now also renames it in the admin menu, instead of the menu contradicting the page.
 
 = 1.9.3 - August 2026 =
 
