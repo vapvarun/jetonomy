@@ -44,9 +44,12 @@ sufficient. Always test with **both plugins active**.
 - [ ] **Private Messaging** (`/messages/`) → conversation list + thread load, send message.
       **Skip on a BuddyNext / WPMediaVerse site.** WPMediaVerse owns messaging there, so
       `Private_Messaging\Extension::is_dormant()` is true and the routes are deliberately not
-      registered; `/messages/` renders a hidden page explaining the dormancy instead
-      (Basecamp 10150583760). Absent DM routes on such a site are correct, not a bug, and
-      enabling the extension in `jetonomy_pro_extensions` does not change it.
+      registered. Gating is at the LINK, not the route: `\Jetonomy\messaging_active()` is
+      false, so free hides every Messages link, and `/community/messages/` 404s if typed by
+      hand — correct, because nothing links to it. The dormancy explainer is a hidden
+      WP-ADMIN page (Jetonomy → Conversations), not a frontend page (Basecamp 10150583760).
+      Absent DM routes on such a site are correct, not a bug, and enabling the extension in
+      `jetonomy_pro_extensions` does not change it.
 - [ ] **Polls** → vote on a poll, result bar updates, no double-vote.
 - [ ] **Reactions** → react/unreact on a post/reply, count updates.
 - [ ] **Custom fields** → render on profile + space; save via PATCH /users/me/fields.

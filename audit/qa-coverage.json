@@ -5,7 +5,7 @@
         "version": "1.9.4"
     },
     "generated": {
-        "at": "2026-08-20T06:07:59+00:00",
+        "at": "2026-08-20T07:12:51+00:00",
         "manifest_at": "2026-08-20T00:00:00Z",
         "manifest_branch": "1.9.4"
     },
@@ -752,8 +752,8 @@
             ]
         },
         "wp_cli": {
-            "total": 14,
-            "covered": 5,
+            "total": 15,
+            "covered": 6,
             "uncovered": 9,
             "skipped": 0,
             "covered_items": [
@@ -771,6 +771,9 @@
                 },
                 {
                     "command": "jetonomy config"
+                },
+                {
+                    "command": "jetonomy privacy"
                 }
             ],
             "uncovered_items": [
@@ -815,11 +818,11 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 175,
-        "items_covered": 60,
+        "items_total": 176,
+        "items_covered": 61,
         "items_uncovered": 115,
         "items_skipped": 215,
-        "coverage_percent": 34.299999999999997
+        "coverage_percent": 34.700000000000003
     },
     "drift": {
         "previous_uncovered": 115,

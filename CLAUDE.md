@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 80 REST routes, 43 AJAX handlers, 225 hooks fired (106 actions, 119 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-18 for 1.9.3 and re-confirmed at the 1.9.4 branch cut on 2026-08-20 (`wp jetonomy qa-actions` 286/286); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 80 REST routes, 43 AJAX handlers, 225 hooks fired (106 actions, 119 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 15 WP-CLI command groups (14 subject roots + the bare `wp jetonomy` utility set), 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-18 for 1.9.3 and re-confirmed at the 1.9.4 branch cut on 2026-08-20 (`wp jetonomy qa-actions` 286/286); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -223,7 +223,7 @@ Derived from `CREATE TABLE` in `includes/db/class-schema.php` on 2026-08-20 and 
 Journey-based CLI architecture for headless testing + automation. Every user/admin action is driveable from the terminal AND unit-testable via PHPUnit.
 
 ```
-wp jetonomy <subject> <subcommand>       # 13 free command roots
+wp jetonomy <subject> <subcommand>       # 14 free command roots
 wp jetonomy-pro <subject> <subcommand>   # 15 Pro command roots
 wp jetonomy qa-actions                   # full action smoke, 4 phases (total in docs/qa/qa-config.json)
 wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
@@ -231,9 +231,9 @@ wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
 
 **Key files:**
 - `includes/cli/class-journey-result.php` - shared DTO (ok/fail/from_wp_error)
-- `includes/cli/class-cli-dispatcher.php` - registers 13 free command slugs
+- `includes/cli/class-cli-dispatcher.php` - registers 14 free command slugs
 - `includes/cli/journeys/` - 8 journey classes (pure PHP, no WP_CLI coupling)
-- `includes/cli/commands/` - 13 command classes (thin WP_CLI wrappers extending Base_Command)
+- `includes/cli/commands/` - 14 command classes (thin WP_CLI wrappers extending Base_Command)
 - `includes/cli/scenarios/` - Scenario_Runner + 5 bundled scenarios
 - `includes/qa/class-journey-tests.php` - Phase 4 of qa-actions, smoke-tests every journey
 - `tests/unit/cli/journeys/` - 8 journey unit test files
