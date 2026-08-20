@@ -282,6 +282,7 @@ Housekeeping release. No customer-facing behaviour changed.
 * Fix      - Renaming Spaces in Settings now also renames it in the admin menu, instead of the menu contradicting the page.
 * New      - Tags can now be created, renamed and deleted through the REST API, so tag management works from the app and from integrations instead of only inside wp-admin.
 * Improve  - The moderation Flags queue now shows what was reported and links to it. Previously it showed only an internal id, so a moderator had to go find the content before deciding.
+* Improve  - Community home and category pages now page through spaces instead of rendering every one of them, so a large directory stays fast. Set the page size with the jetonomy_spaces_per_page filter.
 
 = 1.9.3 - August 2026 =
 

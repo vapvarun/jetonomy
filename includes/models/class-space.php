@@ -696,15 +696,52 @@ class Space extends Model {
 		Cache::set( 'cat_tree_gen', $gen + 1, 0 );
 	}
 
-	public static function list_by_category( int $category_id, ?int $user_id = null ): array {
+	/**
+	 * Top-level spaces in one category, visible to the viewer.
+	 *
+	 * $limit defaults to 0 (no bound) so existing callers are unchanged, but
+	 * every VIEW should pass one: a category page rendered every space it held,
+	 * which is fine at five and unusable at two thousand.
+	 *
+	 * @param int      $category_id Category id.
+	 * @param int|null $user_id     Viewer; null = current user.
+	 * @param int      $limit       0 = all.
+	 * @param int      $offset      Rows to skip.
+	 * @return object[]
+	 */
+	public static function list_by_category( int $category_id, ?int $user_id = null, int $limit = 0, int $offset = 0 ): array {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
 		$sql    = 'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
 		$values = array_merge( [ $category_id ], $vis_values );
 
+		if ( $limit > 0 ) {
+			$sql     .= ' LIMIT %d OFFSET %d';
+			$values[] = $limit;
+			$values[] = max( 0, $offset );
+		}
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above with bound %d values.
 		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: [];
+	}
+
+	/**
+	 * Count top-level spaces in a category, for pagination totals.
+	 *
+	 * @param int      $category_id Category id.
+	 * @param int|null $user_id     Viewer; null = current user.
+	 * @return int
+	 */
+	public static function count_by_category( int $category_id, ?int $user_id = null ): int {
+		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for().
+		$sql    = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where}";
+		$values = array_merge( [ $category_id ], $vis_values );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above.
+		return (int) static::db()->get_var( static::db()->prepare( $sql, ...$values ) );
 	}
 
 	/**
@@ -713,18 +750,45 @@ class Space extends Model {
 	 * @param int|null $user_id Viewer ID; null = current user.
 	 * @return object[]
 	 */
-	public static function list_uncategorized( ?int $user_id = null ): array {
+	public static function list_uncategorized( ?int $user_id = null, int $limit = 0, int $offset = 0 ): array {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
 		$sql = 'SELECT * FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
 
-		if ( empty( $vis_values ) ) {
+		$values = $vis_values;
+		if ( $limit > 0 ) {
+			$sql     .= ' LIMIT %d OFFSET %d';
+			$values[] = $limit;
+			$values[] = max( 0, $offset );
+		}
+
+		if ( empty( $values ) ) {
 			return static::db()->get_results( $sql ) ?: [];
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared with bound %d values.
-		return static::db()->get_results( static::db()->prepare( $sql, ...$vis_values ) ) ?: [];
+		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: [];
+	}
+
+	/**
+	 * Count uncategorized top-level spaces, for pagination totals.
+	 *
+	 * @param int|null $user_id Viewer; null = current user.
+	 * @return int
+	 */
+	public static function count_uncategorized( ?int $user_id = null ): int {
+		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for().
+		$sql = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where}";
+
+		if ( empty( $vis_values ) ) {
+			return (int) static::db()->get_var( $sql );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above.
+		return (int) static::db()->get_var( static::db()->prepare( $sql, ...$vis_values ) );
 	}
 
 	/**

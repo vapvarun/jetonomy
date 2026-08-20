@@ -6,8 +6,19 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-$categories           = \Jetonomy\Models\Category::list_top_level();
-$uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized();
+$categories = \Jetonomy\Models\Category::list_top_level();
+
+/*
+ * Bound the uncategorized grid. It rendered every uncategorized space with no
+ * LIMIT, which on a site that never used categories is the entire directory on
+ * one page.
+ */
+$jt_per_page = (int) apply_filters( 'jetonomy_spaces_per_page', 24 );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
+$jt_uncat_page        = max( 1, (int) ( $_GET['spg'] ?? 1 ) );
+$jt_uncat_total       = \Jetonomy\Models\Space::count_uncategorized();
+$uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized( null, $jt_per_page, ( $jt_uncat_page - 1 ) * $jt_per_page );
+$jt_uncat_has_more    = ( $jt_uncat_page * $jt_per_page ) < $jt_uncat_total;
 $base                 = \Jetonomy\base_url();
 
 /**
@@ -187,6 +198,16 @@ if ( ! is_user_logged_in() ) :
 							<h2 class="jt-cat-name"><?php echo esc_html( sprintf( __( 'Other %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>
 						</div>
 						<?php jetonomy_render_space_grid( $uncategorized_spaces, $base ); ?>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'pagination',
+							array(
+								'has_more'  => $jt_uncat_has_more,
+								'param_key' => 'spg',
+								'target'    => '.jt-space-grid',
+							)
+						);
+						?>
 					</section>
 				<?php endif; ?>
 			<?php endif; ?>

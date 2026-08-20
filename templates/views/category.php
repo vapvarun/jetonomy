@@ -24,8 +24,20 @@ if ( ! $category ) {
 	return;
 }
 
-$spaces = \Jetonomy\Models\Space::list_by_category( (int) $category->id );
-$base   = \Jetonomy\base_url();
+
+/*
+ * Paginate. This page used to render every space in the category with no
+ * LIMIT at all, so its cost grew with the community - fine at five spaces,
+ * unusable at two thousand. `spg` (space page) keeps the key distinct from
+ * the `pg` topic pagination used elsewhere.
+ */
+$jt_per_page = (int) apply_filters( 'jetonomy_spaces_per_page', 24 );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
+$jt_page     = max( 1, (int) ( $_GET['spg'] ?? 1 ) );
+$jt_total    = \Jetonomy\Models\Space::count_by_category( (int) $category->id );
+$spaces      = \Jetonomy\Models\Space::list_by_category( (int) $category->id, null, $jt_per_page, ( $jt_page - 1 ) * $jt_per_page );
+$jt_has_more = ( $jt_page * $jt_per_page ) < $jt_total;
+$base        = \Jetonomy\base_url();
 
 $crumbs = [
 	[
@@ -104,6 +116,16 @@ $crumbs = [
 						?>
 					<?php endforeach; ?>
 				</div>
+				<?php
+				\Jetonomy\Template_Loader::partial(
+					'pagination',
+					array(
+						'has_more'  => $jt_has_more,
+						'param_key' => 'spg',
+						'target'    => '.jt-space-grid',
+					)
+				);
+				?>
 			<?php endif; ?>
 		</main>
 
