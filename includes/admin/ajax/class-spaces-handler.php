@@ -501,12 +501,7 @@ class Spaces_Handler {
 		// "configured but content still accessible" report, #10000074550). When
 		// such a rule is attached to a public space, switch the space to Private
 		// so the rule actually restricts access, and tell the admin what happened.
-		$restrictive_types = array( 'membership', 'role', 'capability', 'trust_level' );
-		$made_private      = false;
-		$space             = Space::find( $space_id );
-		if ( $space && 'public' === $space->visibility && in_array( $rule_type, $restrictive_types, true ) ) {
-			$made_private = Space::update( $space_id, array( 'visibility' => 'private' ) );
-		}
+		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
 
 		$message = $made_private
 			? __( 'Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space.', 'jetonomy' )

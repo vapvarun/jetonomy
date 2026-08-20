@@ -167,9 +167,44 @@
     {
       "name": "Learnomy",
       "description": "Pro extension. Learnomy course-discussion integration."
+    },
+    {
+      "name": "Access Rules",
+      "description": "Who may enter a space. Requires jetonomy_manage_spaces."
     }
   ],
   "paths": {
+    "/access-rules/{id}": {
+      "delete": {
+        "tags": [
+          "Access Rules"
+        ],
+        "summary": "Delete an access rule",
+        "operationId": "deleteAccessRule",
+        "description": "Removes the rule. Space visibility is not reverted. Requires `jetonomy_manage_spaces`.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/admin/digest/stats": {
       "get": {
         "tags": [
@@ -6980,6 +7015,118 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/spaces/{id}/access-rules": {
+      "get": {
+        "tags": [
+          "Access Rules"
+        ],
+        "summary": "List access rules",
+        "operationId": "listAccessRules",
+        "description": "Every rule attached to the space, by priority. Requires `jetonomy_manage_spaces`.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Access Rules"
+        ],
+        "summary": "Create an access rule",
+        "operationId": "createAccessRule",
+        "description": "Creates a rule. A restrictive rule (membership, role, capability, trust_level) on a PUBLIC space switches that space to Private, because a public space is always readable and the rule would otherwise silently do nothing. The response reports this via made_private. Requires `jetonomy_manage_spaces`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "rule_type"
+                ],
+                "properties": {
+                  "rule_type": {
+                    "type": "string",
+                    "enum": [
+                      "membership",
+                      "role",
+                      "capability",
+                      "trust_level",
+                      "logged_in",
+                      "everyone"
+                    ]
+                  },
+                  "rule_value": {
+                    "type": "string"
+                  },
+                  "grants": {
+                    "type": "string",
+                    "enum": [
+                      "read",
+                      "participate",
+                      "full"
+                    ],
+                    "default": "read"
+                  },
+                  "space_role": {
+                    "type": "string",
+                    "enum": [
+                      "viewer",
+                      "member",
+                      "moderator",
+                      "admin"
+                    ],
+                    "default": "viewer"
+                  },
+                  "priority": {
+                    "type": "integer",
+                    "default": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "Not found"
           }
         }
       }

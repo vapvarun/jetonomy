@@ -1108,6 +1108,39 @@
         "capability": "jetonomy_manage_settings",
         "ownership_check": null,
         "purpose": "Delete a tag and detach it from every post (Tag::delete_with_relations). Added 1.9.4."
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/access-rules",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Spaces_Controller::list_access_rules",
+        "permission": "REST_Auth::auth_mutation('jetonomy_manage_spaces')",
+        "capability": "jetonomy_manage_spaces",
+        "ownership_check": null,
+        "purpose": "List a space's access rules. Added 1.9.4."
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/access-rules",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Spaces_Controller::create_access_rule",
+        "permission": "REST_Auth::auth_mutation('jetonomy_manage_spaces')",
+        "capability": "jetonomy_manage_spaces",
+        "ownership_check": null,
+        "purpose": "Create an access rule. Shares AccessRule::enforce_gate_on_public_space() with the wp-admin AJAX path, so a restrictive rule on a PUBLIC space switches that space to Private and says so - without it this route would recreate the 'configured but content still accessible' bug (Basecamp 10000074550) on a second surface. Added 1.9.4."
+      },
+      {
+        "route": "/access-rules/(?P<rule_id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Spaces_Controller::delete_access_rule",
+        "permission": "REST_Auth::auth_mutation('jetonomy_manage_spaces')",
+        "capability": "jetonomy_manage_spaces",
+        "ownership_check": null,
+        "purpose": "Delete an access rule. Added 1.9.4."
       }
     ]
   },
@@ -4017,7 +4050,8 @@
     "provenance_note": "Free was fully reconciled for 1.9.3 on 2026-08-18 (see generated.delta_2026_08_18_1_9_3) and re-confirmed at the 1.9.4 branch cut on 2026-08-20. These four fields (at / branch / from / refreshed_via) had been carried forward untouched since a 1.4.3 feature-drop delta and still read `branch: 1.8.1-dev`, which made qa-coverage.json inherit that stamp and look two releases stale. Re-stamp them on every refresh.",
     "delta_2026_08_20_1_9_4_fixes": "1.9.4 fix pass. (1) JETONOMY_DB_VERSION was still '1.9.2' although Migrator registered a 1.9.3 migration. check_db_version() only enters the upgrade block when the STORED version is strictly less than the constant, so every site already stamped 1.9.2 skipped it entirely and Migration_1_9_3 - which realigns post.type with its space.type and therefore decides QAPage vs DiscussionForumPosting in structured data - NEVER RAN. Reproduced on this 1.9.3 site: 258 rows with an empty type and 42 feed-space rows still typed 'topic'; after bumping the constant to 1.9.4 the migration ran and the count is 0. Keep this constant in step with the newest Migrator key. (2) Two new indexes, also in Migration_1_9_4 and in Schema: jt_replies.post_parent(post_id,parent_id) - threaded-reply children now seek instead of re-examining the post's whole reply set, measured 40 rows -> 3 on the busiest topic; and jt_restrictions.type_reason(type,reason(64)) - the anonymous-submission IP-ban check went from key=NULL full scan to key=type_reason. Table count unchanged at 22; both are new KEYs on existing tables, and tables[] records name and purpose only. (3) Flag::resolve() now compare-and-swaps on the status it read, so a second moderator resolving the same flag can no longer silently overwrite resolved_by/resolved_at. No REST surface changed: still 80 routes, 43 AJAX, 225 hooks, 15 CLI groups. Verified: qa-actions 286/286, PHPUnit 1149/1149 green (clearing a failure standing since 1.9.3), boot smoke OK, contract audit 0 errors.",
     "decision_2026_08_20_global_moderation_routes": "DECISION - the global /moderation/* routes STAY. Do not re-flag them as dead code. The 1.9.4 REST audit reported /moderation/queue, /moderation/bulk, /moderation/approve|spam|trash and the global /moderation/flags family as orphaned because no JavaScript calls them - the web admin uses the space-scoped /spaces/{id}/moderation/* variant instead. That grep was JS-only and the conclusion was wrong three times over: (1) every one of them except /moderation/queue is covered by tests/integration/api/RestAuthMigrationTest.php, a PERMISSION-BOUNDARY test asserting each requires jetonomy_moderate, and /moderation/flags/{id}/resolve is additionally exercised by qa-actions E26 and G34; (2) all 12 are published in docs/website/developer-guide/api/openapi.json, so removing them is a breaking change to a contract customers generate clients from; (3) /moderation/ban is not unconsumed at all - admin JS calls it. Product direction (2026-08-20): the mobile app is the engagement frontend; moderation is a web surface. There is no app moderator console planned NOW, but it is explicitly deferred rather than cancelled, so deleting these would mean rebuilding them later. Keeping them costs nothing - they are gated, tested, and documented. Wire a consumer if and when the app grows a moderation UX.",
-    "delta_2026_08_20_1_9_4_tags_rest": "1.9.4: tag mutations reached REST. POST /tags, PATCH /tags/{id}, DELETE /tags/{id} - create, update and delete previously existed ONLY as wp-admin AJAX (jetonomy_create_tag / update_tag / delete_tag / bulk_delete_tags), a direct violation of the REST-first rule and the reason tag management was impossible from the app. Validation and capability deliberately mirror Admin\\Ajax\\Tags_Handler (jetonomy_manage_settings; name required, slug derived from name when blank, slug unique) so the two write paths cannot drift. Free REST endpoints 80 -> 83. Verified live: 201 create, 409 duplicate slug, 400 blank name, 200 rename, 404 missing, 403 as subscriber, 200 delete, 404 on re-delete. The AJAX handlers stay for now - the admin UI still uses them, and removing them is a separate change."
+    "delta_2026_08_20_1_9_4_tags_rest": "1.9.4: tag mutations reached REST. POST /tags, PATCH /tags/{id}, DELETE /tags/{id} - create, update and delete previously existed ONLY as wp-admin AJAX (jetonomy_create_tag / update_tag / delete_tag / bulk_delete_tags), a direct violation of the REST-first rule and the reason tag management was impossible from the app. Validation and capability deliberately mirror Admin\\Ajax\\Tags_Handler (jetonomy_manage_settings; name required, slug derived from name when blank, slug unique) so the two write paths cannot drift. Free REST endpoints 80 -> 83. Verified live: 201 create, 409 duplicate slug, 400 blank name, 200 rename, 404 missing, 403 as subscriber, 200 delete, 404 on re-delete. The AJAX handlers stay for now - the admin UI still uses them, and removing them is a separate change.",
+    "delta_2026_08_20_1_9_4_access_rules": "1.9.4: jt_access_rules reached REST. GET/POST /spaces/{id}/access-rules and DELETE /access-rules/{id}. The table that decides who may ENTER a space previously had zero REST coverage - configurable only from wp-admin, so no API-driven or app-based space-admin flow could touch it. Capability matches the AJAX handler (jetonomy_manage_spaces). The public-space guard was EXTRACTED to AccessRule::enforce_gate_on_public_space() and both surfaces now call it: a membership/role/capability/trust_level rule on a public space silently does nothing, so the space is flipped to Private and the caller is told. Duplicating that logic - or omitting it, which is likelier - would have recreated Basecamp 10000074550 on REST. Free REST endpoints 83 -> 86. Verified live including the guard firing through REST."
   },
   "static_analysis": {
     "dead_listeners": [

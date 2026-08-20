@@ -19,6 +19,7 @@ use Jetonomy\Models\JoinRequest;
 use Jetonomy\Models\InviteLink;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Models\Category;
+use Jetonomy\Models\AccessRule;
 
 class Spaces_Controller extends Base_Controller {
 
@@ -260,6 +261,145 @@ class Spaces_Controller extends Base_Controller {
 					],
 				],
 			]
+		);
+
+		/*
+		 * Access rules. jt_access_rules is the table that decides who may enter a
+		 * space, and until 1.9.4 it had ZERO REST coverage - configurable only
+		 * from wp-admin, so no API-driven or app-based space-admin flow could
+		 * touch it. Capability matches the AJAX handler (jetonomy_manage_spaces).
+		 */
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/access-rules',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'list_access_rules' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_access_rule' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+					'args'                => [
+						'rule_type'  => [
+							'type'     => 'string',
+							'required' => true,
+							'enum'     => [ 'membership', 'role', 'capability', 'trust_level', 'logged_in', 'everyone' ],
+						],
+						'rule_value' => [ 'type' => 'string' ],
+						'grants'     => [
+							'type'    => 'string',
+							'default' => 'read',
+							'enum'    => [ 'read', 'participate', 'full' ],
+						],
+						'space_role' => [
+							'type'    => 'string',
+							'default' => 'viewer',
+							'enum'    => [ 'viewer', 'member', 'moderator', 'admin' ],
+						],
+						'priority'   => [
+							'type'    => 'integer',
+							'default' => 0,
+						],
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			$ns,
+			'/access-rules/(?P<rule_id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => [ $this, 'delete_access_rule' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+			]
+		);
+	}
+
+	/**
+	 * GET /spaces/{id}/access-rules
+	 */
+	public function list_access_rules( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$space_id = (int) $request->get_param( 'id' );
+		if ( ! Space::find( $space_id ) ) {
+			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), [ 'status' => 404 ] );
+		}
+
+		return new WP_REST_Response( [ 'data' => AccessRule::list_for_space( $space_id ) ], 200 );
+	}
+
+	/**
+	 * POST /spaces/{id}/access-rules
+	 *
+	 * Shares AccessRule::enforce_gate_on_public_space() with the wp-admin AJAX
+	 * path. A restrictive rule on a PUBLIC space silently does nothing, because
+	 * public spaces are always readable - so the space is switched to Private and
+	 * the response says so. Without that shared call this route would have
+	 * recreated the "configured but content still accessible" bug
+	 * (Basecamp 10000074550) on a second surface.
+	 */
+	public function create_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$space_id = (int) $request->get_param( 'id' );
+		if ( ! Space::find( $space_id ) ) {
+			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), [ 'status' => 404 ] );
+		}
+
+		$rule_type  = (string) $request->get_param( 'rule_type' );
+		$rule_value = sanitize_text_field( (string) $request->get_param( 'rule_value' ) );
+
+		$id = AccessRule::create(
+			[
+				'space_id'   => $space_id,
+				'rule_type'  => $rule_type,
+				'rule_value' => '' !== $rule_value ? $rule_value : null,
+				'grants'     => (string) $request->get_param( 'grants' ),
+				'space_role' => (string) $request->get_param( 'space_role' ),
+				'priority'   => (int) $request->get_param( 'priority' ),
+			]
+		);
+
+		if ( ! $id ) {
+			return new WP_Error( 'jetonomy_rule_create_failed', __( 'Failed to create access rule.', 'jetonomy' ), [ 'status' => 500 ] );
+		}
+
+		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
+
+		return new WP_REST_Response(
+			[
+				'data'         => AccessRule::find( (int) $id ),
+				'made_private' => $made_private,
+				'message'      => $made_private
+					? __( 'Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space.', 'jetonomy' )
+					: __( 'Access rule added.', 'jetonomy' ),
+			],
+			201
+		);
+	}
+
+	/**
+	 * DELETE /access-rules/{rule_id}
+	 */
+	public function delete_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$rule_id = (int) $request->get_param( 'rule_id' );
+
+		if ( ! AccessRule::find( $rule_id ) ) {
+			return new WP_Error( 'jetonomy_rule_not_found', __( 'Access rule not found.', 'jetonomy' ), [ 'status' => 404 ] );
+		}
+
+		$deleted = AccessRule::delete( $rule_id );
+		if ( is_wp_error( $deleted ) || ! $deleted ) {
+			return new WP_Error( 'jetonomy_rule_delete_failed', __( 'Failed to delete access rule.', 'jetonomy' ), [ 'status' => 500 ] );
+		}
+
+		return new WP_REST_Response(
+			[
+				'deleted' => true,
+				'id'      => $rule_id,
+			],
+			200
 		);
 	}
 

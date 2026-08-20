@@ -51,6 +51,42 @@ class AccessRule extends Model {
 	 * @param int $id Rule row ID.
 	 * @return bool|\WP_Error
 	 */
+	/**
+	 * Make a restrictive rule actually bite, by privatising a public space.
+	 *
+	 * A public space is always readable, and Permission_Engine stops non-members
+	 * on private/hidden spaces BEFORE rules are consulted. So a membership /
+	 * role / capability / trust-level rule attached to a PUBLIC space silently
+	 * does nothing - the owner configures a gate, sees no error, and the content
+	 * stays open. That is the "configured but content still accessible" report
+	 * (Basecamp 10000074550).
+	 *
+	 * Rather than fail the save, flip the space to Private so the rule means what
+	 * the owner clearly intended, and let the caller tell them it happened.
+	 *
+	 * Extracted to the model in 1.9.4 because the REST path added that release
+	 * would otherwise have reimplemented - or, more likely, omitted - it, and
+	 * recreated the exact bug the guard exists to prevent. One implementation,
+	 * two callers.
+	 *
+	 * @param int    $space_id  Space the rule was attached to.
+	 * @param string $rule_type Rule type just created.
+	 * @return bool True when the space was switched to Private.
+	 */
+	public static function enforce_gate_on_public_space( int $space_id, string $rule_type ): bool {
+		$restrictive = array( 'membership', 'role', 'capability', 'trust_level' );
+		if ( ! in_array( $rule_type, $restrictive, true ) ) {
+			return false;
+		}
+
+		$space = \Jetonomy\Models\Space::find( $space_id );
+		if ( ! $space || 'public' !== $space->visibility ) {
+			return false;
+		}
+
+		return (bool) \Jetonomy\Models\Space::update( $space_id, array( 'visibility' => 'private' ) );
+	}
+
 	public static function delete( int $id ): bool|\WP_Error {
 		$result = parent::delete( $id );
 		self::reset_memo();
