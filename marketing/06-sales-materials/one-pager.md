@@ -21,7 +21,7 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 - **6 trust levels** - new members are rate-limited automatically. Active contributors earn moderation abilities.
 - **Four space types** - Forum, Q&A, Ideas, and Show & Tell. Each with its own rules and access controls.
 - **Theme-adaptive design** - inherits fonts and colors from theme.json automatically.
-- **48+ REST endpoints (90+ with Pro)** - every feature is accessible via API.
+- **80 REST endpoints (155 with Pro)** - every feature is accessible via API.
 - **Multisite-ready** - network activation provisions tables on every existing and future subsite.
 
 ---
@@ -50,7 +50,7 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 | Moderation queue and flagging | Yes | Yes |
 | Full-text search | Yes | Yes |
 | SEO markup and clean URLs | Yes | Yes |
-| 48+ REST API endpoints | Yes | Yes |
+| 80 REST API endpoints | Yes | Yes |
 | bbPress and wpForo importers | Yes | Yes |
 | MemberPress and PMPro integration | Yes | Yes |
 | AI integration (spam detection, moderation, thread summaries - Ollama-ready) | - | Yes |
@@ -65,7 +65,7 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 | WooCommerce, LearnDash, RCP integrations | - | Yes |
 
 **Jetonomy Free** is available at wbcomdesigns.com at no cost. It covers everything a real community needs.
-**Jetonomy Pro** adds 14 modules - including AI Integration (new in 1.3.0) - for larger communities. Pricing at wbcomdesigns.com.
+**Jetonomy Pro** adds 17 modules - including AI Integration (new in 1.3.0) - for larger communities. Pricing at wbcomdesigns.com.
 
 ---
 

@@ -7,7 +7,9 @@ Launch date: March 27, 2026
 - **Headline:** The Modern Forum Plugin for WordPress
 - **Tagline:** Forums, Q&A, and idea boards - built for communities that grow.
 - **Value prop:** Jetonomy adds a fast, self-moderating discussion platform to any WordPress site - custom database tables, trust levels, and a design that adapts to your theme.
-- **Proof point:** 24 custom tables, 6 trust levels, 48+ REST endpoints (90+ with Pro), sub-200ms at 50K topics.
+- **Proof point:** 22 custom tables, 6 trust levels, 80 REST endpoints (155 with Pro), sub-200ms at 50K topics.
+
+> Counts verified against `audit/manifest.json` on 2026-08-20 for 1.9.4. They were last written for 1.4.2 and had drifted (24 tables, 48+/90+ endpoints, 10/14/15 modules). Re-verify before reusing this copy - marketing numbers are a claim to a customer, not a note to ourselves.
 
 ## Content Index
 
@@ -44,8 +46,8 @@ Launch date: March 27, 2026
 - [Short Ads](02-video-scripts/short-ads.md) - 15s, 30s, 60s ad scripts
 
 ### Existing Content (pre-skill)
-- [Changelog](CHANGELOG.md)
+- Changelog: [`../readme.txt`](../readme.txt) is canonical. The old `marketing/CHANGELOG.md` was a hand-maintained duplicate that stopped at 1.4.2 and was removed in 1.9.4.
 - [Launch Email v1.0](LAUNCH-EMAIL.md) - v1.0 launch sequence (March 2026)
-- [Launch Email 1.4.2](LAUNCH-EMAIL-1.4.2.md) - 1.4.2 release sequence (May 2026)
+- [Launch Email 1.4.2](archive/1.4.2/LAUNCH-EMAIL-1.4.2.md) - 1.4.2 release sequence (May 2026)
 - [Social Posts](SOCIAL-POSTS.md) - v1.0 launch posts + 1.4.2 thread appended
-- [Social Posts 1.4.2](SOCIAL-POSTS-1.4.2.md) - standalone 1.4.2 social assets
+- [Social Posts 1.4.2](archive/1.4.2/SOCIAL-POSTS-1.4.2.md) - standalone 1.4.2 social assets

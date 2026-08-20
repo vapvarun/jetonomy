@@ -99,7 +99,7 @@ That might be true. The free version is genuinely complete. Saying otherwise wou
 
 **Address**
 
-The free plugin includes everything you need to run a real community: Forum, Q&A, and Ideas spaces; voting and reputation; 6 trust levels; moderation queue; full-text search; notifications; SEO markup; 48+ REST API endpoints; bbPress and wpForo importers; MemberPress and PMPro integration.
+The free plugin includes everything you need to run a real community: Forum, Q&A, and Ideas spaces; voting and reputation; 6 trust levels; moderation queue; full-text search; notifications; SEO markup; 80 REST API endpoints; bbPress and wpForo importers; MemberPress and PMPro integration.
 
 Pro is not "free but with features removed." It's free plus 14 additional modules for communities with specific needs:
 

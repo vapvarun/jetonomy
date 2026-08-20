@@ -29,7 +29,7 @@ On top of that:
 - Three-layer permission system: WP capabilities, per-space roles, trust levels
 - bbPress and wpForo importer
 
-The free plugin is at wbcomdesigns.com. Jetonomy Pro adds 10 modules (messaging, analytics, polls, custom badges, webhooks, and more) starting at $99/yr.
+The free plugin is at wbcomdesigns.com. Jetonomy Pro adds 17 modules (messaging, analytics, polls, custom badges, webhooks, and more) starting at $99/yr.
 
 If you build community features on WordPress, I'd genuinely value your take on it.
 
@@ -152,7 +152,7 @@ More features than bbPress, more actively developed, more modern-looking UI. Sti
 Not really a forum plugin - it's a social network layer with activity streams, friend connections, groups, and optional discussion components. Powerful and flexible, but it's a bigger commitment than a forum plugin. Builds a parallel user layer on top of WordPress. If you want a full social community (profiles, connections, activity feed, groups, messaging), BuddyPress plus BuddyPress extensions is a reasonable path.
 
 **Jetonomy (what we built)**
-Custom MySQL tables designed specifically for forum query patterns. Trust level system that auto-moderates new users. Three space types (Forum, Q&A, Ideas). WordPress Interactivity API frontend. CSS that inherits from theme.json. 48+ REST API endpoints with cursor pagination.
+Custom MySQL tables designed specifically for forum query patterns. Trust level system that auto-moderates new users. Three space types (Forum, Q&A, Ideas). WordPress Interactivity API frontend. CSS that inherits from theme.json. 80 REST API endpoints with cursor pagination.
 
 Where we're weaker: we're brand new. bbPress and wpForo have years of community support, tutorials, and hosting-provider documentation. We have 1.0 and a commitment to maintain it seriously.
 

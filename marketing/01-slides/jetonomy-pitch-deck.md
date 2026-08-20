@@ -177,7 +177,7 @@ If your theme doesn't publish theme.json, Jetonomy falls back to neutral default
 | Voting, reputation, trust levels | ✓ | ✓ |
 | Moderation queue and flagging | ✓ | ✓ |
 | Full-text search | ✓ | ✓ |
-| 48+ REST API endpoints | ✓ | ✓ |
+| 80 REST API endpoints | ✓ | ✓ |
 | Abilities API (19 abilities) | ✓ | ✓ |
 | bbPress and wpForo importers | ✓ | ✓ |
 | Multisite network activation | ✓ | ✓ |
@@ -260,4 +260,4 @@ See Pro Features → wbcomdesigns.com/downloads/jetonomy-pro/
 
 **On slide 6 (Trust Levels):** When audience members push back with "but my community is different," the response is: every community says that, trust levels ship with no configuration required, and you can always override the thresholds later. Show the admin setting panel in a side screenshot.
 
-**On slide 9 (Free vs Pro):** Never apologize for the Pro price. Pro is one license, 14 modules, lifetime or annual options. It is competitively priced against any single bbPress add-on, let alone against Discourse's hosted plans.
+**On slide 9 (Free vs Pro):** Never apologize for the Pro price. Pro is one license, 17 modules, lifetime or annual options. It is competitively priced against any single bbPress add-on, let alone against Discourse's hosted plans.

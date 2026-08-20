@@ -42,7 +42,7 @@ Migrating from bbPress or wpForo? The importer handles it in a few clicks.
 
 [Download Free from wbcomdesigns.com] [https://wbcomdesigns.com/downloads/jetonomy/]
 
-Want polls, private messaging, analytics, AI-powered moderation, and more? Jetonomy Pro adds 14 modules on top of the free core.
+Want polls, private messaging, analytics, AI-powered moderation, and more? Jetonomy Pro adds 17 modules on top of the free core.
 
 [See Jetonomy Pro] [https://wbcomdesigns.com/downloads/jetonomy-pro/]
 
@@ -100,7 +100,7 @@ Three other things in Jetonomy that competitors don't offer:
 
 3. **Trust levels that actually gate behavior.** New members (Level 0) can't post links and are rate-limited to 3 posts per day - an automatic spam buffer that requires no configuration. As members contribute, they earn higher levels and unlock more capabilities automatically.
 
-[Explore Jetonomy Pro - 14 modules] [https://wbcomdesigns.com/downloads/jetonomy-pro/]
+[Explore Jetonomy Pro - 17 modules] [https://wbcomdesigns.com/downloads/jetonomy-pro/]
 
 Have questions? Just reply to this email.
 

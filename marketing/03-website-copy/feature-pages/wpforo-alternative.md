@@ -1,7 +1,7 @@
 # The Best wpForo Alternative for WordPress
 
 **Meta title:** wpForo Alternative - Jetonomy WordPress Forum Plugin
-**Meta description:** Comparing wpForo alternatives? Jetonomy brings automated trust levels, invisible anti-spam, Q&A spaces, idea boards, and 48+ REST endpoints to WordPress. Free to start, Pro adds analytics, AI moderation, and more.
+**Meta description:** Comparing wpForo alternatives? Jetonomy brings automated trust levels, invisible anti-spam, Q&A spaces, idea boards, and 80 REST endpoints to WordPress. Free to start, Pro adds analytics, AI moderation, and more.
 
 ---
 
@@ -23,7 +23,7 @@ Jetonomy is a WordPress-first community platform that started from the same ques
 
 **You need more than a forum layout.** wpForo gives you four forum layout variants. Jetonomy gives you four fundamentally different space types: Forum (threaded discussion), Q&A (with accepted answers that float to the top), Ideas (a roadmap board where members vote features up and owners move them through status lanes), and Show & Tell (short-form showcase posts). You can run all four on the same community, separated into spaces that each work the way their content should.
 
-**No REST API means no future-proofing.** wpForo has limited REST API support. Jetonomy ships 48 REST endpoints in the free version and 90+ with Pro. Every read, every write, full CRUD, with cursor-based pagination and JSON schema validation. If you want to build a mobile companion app, a custom dashboard, a Slack integration, or feed forum data into an analytics platform, the API is there.
+**No REST API means no future-proofing.** wpForo has limited REST API support. Jetonomy ships 80 REST endpoints in the free version and 155 with Pro. Every read, every write, full CRUD, with cursor-based pagination and JSON schema validation. If you want to build a mobile companion app, a custom dashboard, a Slack integration, or feed forum data into an analytics platform, the API is there.
 
 ---
 
@@ -73,7 +73,7 @@ Every feature below ships in the free version, no license required.
 
 ## What Jetonomy Pro adds
 
-Pro bundles 14 extensions. Activate only what you need.
+Pro bundles 17 extensions. Activate only what you need.
 
 - **Reactions** - Emoji reactions on posts and replies. Configurable reaction set per space.
 - **Private Messaging** - Full inbox with threaded conversations between members.

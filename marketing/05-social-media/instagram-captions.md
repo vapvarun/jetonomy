@@ -165,7 +165,7 @@ Free at wbcomdesigns.com - link in bio.
 ### Image Brief
 
 **Slide 1 (Cover):**
-"Jetonomy Pro - 10 modules." Dark background, accent color title. Subtitle: "For communities that have traction." Clean, minimal.
+"Jetonomy Pro - 17 modules." Dark background, accent color title. Subtitle: "For communities that have traction." Clean, minimal.
 
 **Slide 2:**
 Icon + name + one-line description for: Reactions, Private Messaging, Polls. Three items on one slide in a card layout.
@@ -196,7 +196,7 @@ The free plugin is complete.
 Pro adds the tools that come up when your community is genuinely active:
 reactions, private messaging, polls, analytics, email digest, custom badges, advanced moderation, webhooks.
 
-Swipe to see all 10 modules and pricing.
+Swipe to see all 17 modules and pricing.
 
 Free plugin - link in bio.
 Pro - wbcomdesigns.com/jetonomy-pro

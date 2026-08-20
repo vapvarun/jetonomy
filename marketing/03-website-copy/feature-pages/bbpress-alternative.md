@@ -1,7 +1,7 @@
 # The Best bbPress Alternative for WordPress
 
 **Meta title:** bbPress Alternative - Jetonomy WordPress Forum Plugin
-**Meta description:** Looking for a bbPress alternative? Jetonomy adds forums, Q&A, idea boards, and self-moderating communities to WordPress. Custom database tables, 48+ REST endpoints, and a UI that works on any device. Free.
+**Meta description:** Looking for a bbPress alternative? Jetonomy adds forums, Q&A, idea boards, and self-moderating communities to WordPress. Custom database tables, 80 REST endpoints, and a UI that works on any device. Free.
 
 ---
 
@@ -68,7 +68,7 @@ Everything below ships in the free version - no license required, no feature wal
 
 ## What Jetonomy Pro adds
 
-Pro bundles 14 extensions in a single license. Pick the ones your community needs.
+Pro bundles 17 extensions in a single license. Pick the ones your community needs.
 
 - **Reactions** - Emoji reactions on posts and replies, configurable set per space.
 - **Private Messaging** - Inbox and threaded conversations between members.
