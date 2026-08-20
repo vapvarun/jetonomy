@@ -29,7 +29,13 @@ define( 'JETONOMY_VERSION', '1.9.4' );
 // So both routes are covered: CREATE TABLE for new sites, migration 1_9_1 for
 // existing ones. The two constants are independent; the plugin version is a
 // release number and stays at 1.9.0 where the release rule puts it.
-define( 'JETONOMY_DB_VERSION', '1.9.2' );
+// Bumped 1.9.2 -> 1.9.4 in 1.9.4. This constant was NOT bumped when 1.9.3
+// shipped, and check_db_version() only migrates when the stored version is
+// strictly less than it — so every site already stamped 1.9.2 skipped the
+// upgrade block and Migration_1_9_3 never ran there. Keep this in step with
+// the newest key in Migrator::get_migrations() or the newest migration is
+// silently dead on exactly the sites that need it.
+define( 'JETONOMY_DB_VERSION', '1.9.4' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );

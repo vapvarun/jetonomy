@@ -92,7 +92,7 @@ class Schema {
 	}
 
 	/**
-	 * Build CREATE TABLE SQL strings for all 21 tables.
+	 * Build CREATE TABLE SQL strings for all 22 tables.
 	 *
 	 * @param string $p               Table prefix (e.g. "wp_").
 	 * @param string $charset_collate Charset/collation string from $wpdb.
@@ -208,6 +208,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   KEY post_created (post_id,created_at),
+  KEY post_parent (post_id,parent_id),
   KEY post_private (post_id,is_private),
   KEY post_votes (post_id,vote_score),
   KEY author_created (author_id,created_at),
@@ -349,6 +350,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   KEY user_type_space (user_id,type,space_id),
+  KEY type_reason (type,reason(64)),
   KEY expires (expires_at)
 ) ENGINE=InnoDB $charset_collate;";
 

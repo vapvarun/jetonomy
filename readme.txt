@@ -273,6 +273,10 @@ Housekeeping release. No customer-facing behaviour changed.
 * Dev      - Fixed the QA smoke config, which pointed at a site path that does not exist.
 * Dev      - Corrected table, model, controller and template counts in the contributor documentation.
 * Dev      - Removed dead documentation links and a reference to a plans directory that was never part of this project.
+* Fix      - Sites upgrading from 1.9.2 never received the 1.9.3 content fix that matches a topic's type to the space holding it, so Q&A spaces could still publish the wrong search-engine markup. The fix now applies on upgrade.
+* Fix      - Two moderators resolving the same report at the same time no longer overwrite each other. The second now sees the report as already handled instead of silently replacing who resolved it.
+* Fix      - The Role Capability Mapping table on Settings > Permissions was unreadable on phones, with role names clipped to their last few letters.
+* Improve  - Faster threaded replies on busy topics, and a faster ban check on every anonymous submission.
 
 = 1.9.3 - August 2026 =
 

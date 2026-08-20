@@ -3610,25 +3610,30 @@ tr.jetonomy-moderated td {
    table cells. Markup contract: .jt-settings-matrix on the <table>, every
    body <td> carries data-colname, first cell is the row label. */
 @media screen and (max-width: 782px) {
-	.jetonomy-admin table.jt-settings-matrix,
-	.jetonomy-admin table.jt-settings-matrix tbody,
-	.jetonomy-admin table.jt-settings-matrix tr,
-	.jetonomy-admin table.jt-settings-matrix td,
-	.jetonomy-admin table.jt-settings-matrix th { display: block; width: auto; }
-	.jetonomy-admin table.jt-settings-matrix thead { display: none; }
-	.jetonomy-admin table.jt-settings-matrix tr {
+	/* The --wide variant (Role Capability Mapping) stays in horizontal scroll
+	   inside .jt-matrix-scroll. Without this exclusion these rules stacked it
+	   anyway — this block is LATER in the file than the guarded one above, so
+	   it won the cascade — and the role labels clipped to their last letters
+	   ("Editor" rendered as "ITOR"). Keep the :not() on every selector here. */
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide),
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) tbody,
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) tr,
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) td,
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) th { display: block; width: auto; }
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) thead { display: none; }
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) tr {
 		border: 1px solid var(--jt-admin-border, #dcdcde);
 		border-radius: 6px;
 		padding: 10px 12px;
 		margin-block-end: 10px;
 		background: var(--jt-admin-white, #fff);
 	}
-	.jetonomy-admin table.jt-settings-matrix td:first-child,
-	.jetonomy-admin table.jt-settings-matrix th[scope="row"] {
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:first-child,
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) th[scope="row"] {
 		font-weight: 600;
 		padding-block-end: 6px;
 	}
-	.jetonomy-admin table.jt-settings-matrix td:not(:first-child) {
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:not(:first-child) {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -3641,7 +3646,7 @@ tr.jetonomy-moderated td {
 		min-height: 44px;
 		border-top: 1px solid var(--jt-admin-border-subtle, #f0f0f1);
 	}
-	.jetonomy-admin table.jt-settings-matrix td:not(:first-child)::before {
+	.jetonomy-admin table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:not(:first-child)::before {
 		content: attr(data-colname);
 		font-size: 11px;
 		font-weight: 600;

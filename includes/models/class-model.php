@@ -63,6 +63,25 @@ abstract class Model {
 		return $data;
 	}
 
+	/**
+	 * Update a row by primary key.
+	 *
+	 * CAUTION — this returns true when ZERO rows changed.
+	 * $wpdb->update() returns the affected-row count, or false on error, so
+	 * `false !== 0` is true and a write that matched nothing reports success.
+	 * That is the right default here: re-saving a row with identical values is
+	 * not a failure, and most callers only care that no DB error occurred.
+	 *
+	 * It is the WRONG contract whenever "did I win this race?" matters. If two
+	 * actors can act on the same row and the loser must find out, do NOT rely
+	 * on this method's return — issue a conditional write that includes the
+	 * expected current state in the WHERE and inspect the row count yourself.
+	 * Flag::resolve() is the worked example (moderation attribution, 1.9.4).
+	 *
+	 * @param int   $id   Primary key.
+	 * @param array $data Column => value pairs.
+	 * @return bool False only on a database error.
+	 */
 	public static function update( int $id, array $data ): bool {
 		return false !== static::db()->update( static::table(), $data, [ 'id' => $id ] );
 	}

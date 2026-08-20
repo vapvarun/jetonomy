@@ -44,7 +44,12 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 	public function test_meta_shape(): void {
 		$meta = ( new Extension() )->meta();
 		$this->assertSame( 'attachments', $meta['id'] );
-		$this->assertSame( 'starter', $meta['requires'] );
+		// `requires` was removed in 1.9.4. Nothing ever read it —
+		// License::can_use_extension() ignores the extension id entirely and any
+		// valid licence unlocks everything — so the field only looked
+		// load-bearing. Assert it is GONE, so re-adding a dead tier string has
+		// to be a deliberate act rather than a copy-paste.
+		$this->assertArrayNotHasKey( 'requires', $meta );
 	}
 
 	public function test_link_count_and_get(): void {
@@ -194,9 +199,34 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 		parent::tear_down();
 	}
 
+	/**
+	 * The recurring GC is armed by boot(), not activate().
+	 *
+	 * This test asserted activate() for releases after the code deliberately
+	 * moved the scheduling into boot() (enabled-only, idempotent — see the
+	 * comment at class-extension.php's activate()). It had been failing since
+	 * 1.9.3 as a result: a red test asserting a contract the plugin had
+	 * intentionally abandoned. Re-pointed at boot() in 1.9.4 so it now proves
+	 * the behaviour that actually ships.
+	 */
 	public function test_gc_schedule_and_clear(): void {
 		$ext = new Extension();
-		$ext->activate();
+
+		// boot() is the real arming path, but it also registers ~15 filters and
+		// actions (uploader, REST routes, renderer, composer hooks). Those would
+		// outlive this test and change what LATER tests in the same process see —
+		// which is exactly what happened on the first attempt at this fix:
+		// AttachmentsRestTest started counting a doubly-applied download-URL
+		// filter. Snapshot the hook registry and put it back afterwards so this
+		// test proves the scheduling contract without leaking global state.
+		$hooks_before = $GLOBALS['wp_filter'];
+
+		try {
+			$ext->boot();
+		} finally {
+			$GLOBALS['wp_filter'] = $hooks_before;
+		}
+
 		$scheduled = function_exists( 'as_has_scheduled_action' )
 			? as_has_scheduled_action( Extension::GC_HOOK, array(), 'jetonomy' )
 			: (bool) wp_next_scheduled( Extension::GC_HOOK );
