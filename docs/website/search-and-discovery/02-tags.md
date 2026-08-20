@@ -57,7 +57,9 @@ add_action( 'jetonomy_sidebar_after_popular_tags', function ( $space ) {
 } );
 ```
 
-Headless and app consumers can read the same tag list over REST: `GET /jetonomy/v1/tags` returns tags ordered by popularity (or alphabetically with `?sort=alphabetical`), with a `limit` of up to 100. See the [Hooks Reference](../developer-guide/02-hooks-reference.md) for the full parameter list.
+Headless and app consumers can read the same tag list over REST: `GET /jetonomy/v1/tags` returns tags ordered by popularity (or alphabetically with `?sort=alphabetical`), with a `limit` of up to 100.
+
+Since 1.9.4 tags can also be **managed** over REST, not just read. `POST /tags` creates one, `PATCH /tags/{id}` renames it or changes its slug, and `DELETE /tags/{id}` removes it and detaches it from every post. All three require the `jetonomy_manage_settings` capability, and the slug is derived from the name when you omit it. Before 1.9.4 these actions existed only inside wp-admin, so tag management was impossible from the app or an integration. See the [REST API reference](../developer-guide/api/rest-api-reference.md) for the full parameter list.
 
 ## How Tags Improve Your Community
 
