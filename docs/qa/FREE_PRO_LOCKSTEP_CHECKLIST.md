@@ -42,6 +42,11 @@ sufficient. Always test with **both plugins active**.
 
 ## Pro surfaces (merge into the same store)
 - [ ] **Private Messaging** (`/messages/`) → conversation list + thread load, send message.
+      **Skip on a BuddyNext / WPMediaVerse site.** WPMediaVerse owns messaging there, so
+      `Private_Messaging\Extension::is_dormant()` is true and the routes are deliberately not
+      registered; `/messages/` renders a hidden page explaining the dormancy instead
+      (Basecamp 10150583760). Absent DM routes on such a site are correct, not a bug, and
+      enabling the extension in `jetonomy_pro_extensions` does not change it.
 - [ ] **Polls** → vote on a poll, result bar updates, no double-vote.
 - [ ] **Reactions** → react/unreact on a post/reply, count updates.
 - [ ] **Custom fields** → render on profile + space; save via PATCH /users/me/fields.

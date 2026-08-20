@@ -157,17 +157,63 @@ add_action( 'jetonomy_user_registered', 'my_plugin_send_branded_welcome' );
 
 ## 6. Testing emails
 
-Local by Flywheel ships Mailpit per site. For `forums.local`:
+Local by Flywheel ships Mailpit **per site**, on ports Local assigns per site.
+Do not hardcode them — they differ per machine and change when a site is
+recreated. Look them up:
 
-- **API / UI**: `http://127.0.0.1:10112/`
-- **SMTP**: `127.0.0.1:10113`
+```bash
+python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/Library/Application Support/Local/sites.json')));\
+print({s['name']: s['services']['mailpit']['ports'] for s in d.values()})"
+```
+
+Current values on this machine (verified 2026-08-20):
+
+| Site | Mailpit UI | SMTP |
+| --- | --- | --- |
+| `buddynext.local` (canonical QA site) | `http://127.0.0.1:10005/` | `127.0.0.1:10006` |
+| `forums.local` | `http://127.0.0.1:10050/` | `127.0.0.1:10051` |
+
+The QA site is **buddynext.local** — see `docs/qa/qa-config.json`. This section
+previously named `forums.local` and ports `10112`/`10113`, which matched neither
+site.
 
 Note: `wp-cli` on a Local site does **not** inherit PHP-FPM's `sendmail_path`,
 so any email triggered via `wp --path=… eval …` or a CLI command will not
 reach Mailpit. Always test email flows via the web runtime (admin-ajax,
 REST, or a browser-triggered action) - this is codified in `docs/qa/AGENT_SMOKE_RUNBOOK.md`.
 
-## 7. Default templates reference
+## 7. The master email kill-switch (`jetonomy_email_opt_out`)
+
+Before any per-type preference is consulted, `Notifier` checks a single user
+meta flag. When `jetonomy_email_opt_out` is truthy, **no** community email is
+sent to that user, whatever their per-type toggles say
+(`includes/notifications/class-notifier.php:1167`). The verification reminder
+honours it too (`class-verification-reminder.php:96`).
+
+It has three entry points, and all three write the same meta key — if you add a
+fourth, write this key, do not invent a parallel one:
+
+| Surface | Where | Code |
+| --- | --- | --- |
+| Member (frontend) | `/community/u/{login}/edit/` → "Pause all email notifications" | `templates/views/edit-profile.php:197` |
+| REST | `PATCH /jetonomy/v1/users/me` with `{"email_opt_out": true}`; echoed by `GET /users/me` | `includes/api/class-users-controller.php:511` |
+| Owner (wp-admin) | `user-edit.php` → "Jetonomy → Community emails" (nonce + `edit_user` gated) | `includes/admin/class-admin.php:793` |
+
+```php
+// Read it
+$opted_out = (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true );
+
+// Set / clear it — clear by DELETING, never by writing 0.
+update_user_meta( $user_id, 'jetonomy_email_opt_out', 1 );
+delete_user_meta( $user_id, 'jetonomy_email_opt_out' );
+```
+
+Covered by `wp jetonomy qa-actions` E27b and by the `D.email-optout-wiring` row
+in `docs/qa/AGENT_SMOKE_RUNBOOK.md`.
+
+---
+
+## 8. Default templates reference
 
 For every type, the out-of-the-box subject is:
 
