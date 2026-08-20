@@ -5,15 +5,15 @@
         "version": "1.9.4"
     },
     "generated": {
-        "at": "2026-08-20T07:12:51+00:00",
+        "at": "2026-08-20T09:01:35+00:00",
         "manifest_at": "2026-08-20T00:00:00Z",
         "manifest_branch": "1.9.4"
     },
     "categories": {
         "rest": {
-            "total": 102,
+            "total": 105,
             "covered": 46,
-            "uncovered": 56,
+            "uncovered": 59,
             "skipped": 0,
             "covered_items": [
                 {
@@ -481,6 +481,21 @@
                     "method": "POST",
                     "route": "/notifications/bulk",
                     "stub_command": "bin/qa-stub-gen.php rest POST \"/notifications/bulk\""
+                },
+                {
+                    "method": "POST",
+                    "route": "/tags",
+                    "stub_command": "bin/qa-stub-gen.php rest POST \"/tags\""
+                },
+                {
+                    "method": "PATCH",
+                    "route": "/tags/(?P<id>\\d+)",
+                    "stub_command": "bin/qa-stub-gen.php rest PATCH \"/tags/(?P<id>\\d+)\""
+                },
+                {
+                    "method": "DELETE",
+                    "route": "/tags/(?P<id>\\d+)",
+                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/tags/(?P<id>\\d+)\""
                 }
             ]
         },
@@ -818,15 +833,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 176,
+        "items_total": 179,
         "items_covered": 61,
-        "items_uncovered": 115,
+        "items_uncovered": 118,
         "items_skipped": 215,
-        "coverage_percent": 34.700000000000003
+        "coverage_percent": 34.100000000000001
     },
     "drift": {
         "previous_uncovered": 115,
-        "current_uncovered": 115,
-        "delta": 0
+        "current_uncovered": 118,
+        "delta": 3
     }
 }

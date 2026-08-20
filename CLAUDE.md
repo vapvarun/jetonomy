@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 80 REST routes, 43 AJAX handlers, 225 hooks fired (106 actions, 119 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 15 WP-CLI command groups (14 subject roots + the bare `wp jetonomy` utility set), 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-18 for 1.9.3 and re-confirmed at the 1.9.4 branch cut on 2026-08-20 (`wp jetonomy qa-actions` 286/286); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 83 REST routes, 43 AJAX handlers, 225 hooks fired (106 actions, 119 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 15 WP-CLI command groups (14 subject roots + the bare `wp jetonomy` utility set), 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-18 for 1.9.3 and re-confirmed at the 1.9.4 branch cut on 2026-08-20 (`wp jetonomy qa-actions` 286/286); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -153,7 +153,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 - **WP**: 6.7+ required
 - **Namespace**: `Jetonomy\`
 - **Table prefix**: `jt_` (22 custom tables)
-- **REST API**: `jetonomy/v1` (80 endpoints, 22 controllers; 153 endpoints with Pro)
+- **REST API**: `jetonomy/v1` (83 endpoints, 22 controllers; 158 endpoints with Pro)
 
 ## Architecture
 - **Database**: Custom MySQL tables via `dbDelta()` - NOT WordPress CPTs
@@ -175,7 +175,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/models/` | 22 model classes (Category, Space, Post, Reply, Vote, etc.) |
 | `includes/permissions/class-permission-engine.php` | 3-layer permission resolver |
 | `includes/trust/` | Trust levels (0-5), reputation calculator, auto-evaluator |
-| `includes/api/` | 23 REST API controller classes (80 routes) |
+| `includes/api/` | 23 REST API controller classes (83 routes) |
 | `includes/adapters/` | 4 interfaces (membership, email, search, AI) + Adapter_Registry and the WP Roles, wp_mail, MemberPress, PMPro and Ollama adapters. Pro registers the rest (WooCommerce, RCP, LearnDash, Tutor). |
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |

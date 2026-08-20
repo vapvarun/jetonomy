@@ -280,6 +280,8 @@ Housekeeping release. No customer-facing behaviour changed.
 * Fix      - Custom text for the "idea roadmap status changed" email is now saved. It was silently discarded on every save.
 * Fix      - The dashboard no longer tells you to run the setup wizard when your community already has spaces and posts, which affected every site whose content arrived by import or migration.
 * Fix      - Renaming Spaces in Settings now also renames it in the admin menu, instead of the menu contradicting the page.
+* New      - Tags can now be created, renamed and deleted through the REST API, so tag management works from the app and from integrations instead of only inside wp-admin.
+* Improve  - The moderation Flags queue now shows what was reported and links to it. Previously it showed only an internal id, so a moderator had to go find the content before deciding.
 
 = 1.9.3 - August 2026 =
 
