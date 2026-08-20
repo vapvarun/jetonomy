@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 80 REST routes, 43 AJAX handlers, 225 hooks fired (106 actions, 119 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-06 for 1.9.1 (re-checked across v1.9.0..HEAD: no surface this line counts changed); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 80 REST routes, 43 AJAX handlers, 225 hooks fired (106 actions, 119 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Counts verified against code on 2026-08-18 for 1.9.3 and re-confirmed at the 1.9.4 branch cut on 2026-08-20 (`wp jetonomy qa-actions` 286/286); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -18,7 +18,7 @@
 The manifest deliberately stays in free: four scripts read it (`build-release.sh`, `qa-coverage-check.php`, `qa-stub-gen.php`, `audit-wiring.php`), and a public repo's build must not depend on a private one. Pro's build excludes `audit/` and `docs/` from its zip, so nothing internal ships to customers either.
 
 Interactive graph: `cd audit && python3 -m http.server 8765`, then <http://localhost:8765/graph.html>.
-End-to-end customer flows: runnable PHP scenarios in `includes/cli/scenarios/`, plus the pre-release smoke runbook (`/jetonomy-smoke`).
+End-to-end customer flows: runnable PHP scenarios in `includes/cli/scenarios/`, plus the pre-release smoke runbook (`/wp-plugin-smoke`, which superseded the per-plugin `/jetonomy-smoke` skill in 1.9.4).
 
 ## Stability & Manifest-First Rules (enforced)
 
@@ -43,7 +43,7 @@ extra careful; never fix blindly.
    is Q&A-only). Don't "fix" a correct guard.
 5. **Local CI before declaring done** (not just the pre-commit hook):
    - `php bin/audit-rest-routes.php includes/` and `... ../jetonomy-pro/includes/` → both OK
-   - `wp jetonomy qa-actions` → 301/301
+   - `wp jetonomy qa-actions` → all green (expected total lives in `docs/qa/qa-config.json` → `qa_actions.expected_total`; 286 as of 1.9.4 — never restate it here)
    - free+pro boot smoke (`../jetonomy-pro/tools/smoke-test.php`)
    - browser-verify every frontend/template change (incl. 390px mobile)
 
@@ -170,23 +170,22 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/class-jetonomy.php` | Singleton, activation, dependency loading |
 | `includes/class-router.php` | URL rewrite rules for /community/* |
 | `includes/class-template-loader.php` | Template resolution with theme overrides |
-| `includes/db/class-schema.php` | All 21 table definitions |
+| `includes/db/class-schema.php` | All 22 table definitions |
 | `includes/db/class-migrator.php` | Version-based schema migrations |
-| `includes/models/` | 15 model classes (Category, Space, Post, Reply, Vote, etc.) |
+| `includes/models/` | 22 model classes (Category, Space, Post, Reply, Vote, etc.) |
 | `includes/permissions/class-permission-engine.php` | 3-layer permission resolver |
 | `includes/trust/` | Trust levels (0-5), reputation calculator, auto-evaluator |
-| `includes/api/` | 12 REST API controllers |
-| `includes/adapters/` | 4 interfaces + WP Roles, Polling, wp_mail, MemberPress, PMPro adapters |
+| `includes/api/` | 23 REST API controller classes (80 routes) |
+| `includes/adapters/` | 4 interfaces (membership, email, search, AI) + Adapter_Registry and the WP Roles, wp_mail, MemberPress, PMPro and Ollama adapters. Pro registers the rest (WooCommerce, RCP, LearnDash, Tutor). |
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |
-| `templates/` | 12 views + 6 partials (theme-overridable) |
+| `templates/` | 23 views + 14 partials (theme-overridable) |
 | `assets/css/jetonomy-tokens.css` | The `--jt-*` token layer (`:root` + dark). Dependency of BOTH `jetonomy` and `jetonomy-blocks` |
 | `assets/css/jetonomy.css` | Theme-adaptive CSS for the community app (consumes the tokens; declares none) |
 | `assets/js/view.js` | Interactivity API store (voting, sorting, polling) |
 
 ## Documentation
 - **Implementation Plans**: `../jetonomy-pro/docs/plans/free/` — moved to Pro (private) so the public repo carries customer/developer docs, not working notes. Only future / unshipped plans are kept; shipped ones are pruned each release.
-- **Design Prototypes**: `docs/prototype/` (open HTML files in browser)
 - **Standards**: `docs/standards/` — normative engineering standards every change must honour (canonical sources in `~/.claude/workflows/`).
   - `frontend-interactivity.md` — **Frontend Interactivity & Client-Side Navigation Standard** (WP Interactivity API router, declarative regions, `jetonomy:navigated` re-init, no per-route/inline scripts, restFetch, verify-after-client-nav). Jetonomy is the reference implementation. Any new interactive frontend surface MUST pass its Section 5 checklist before release.
   - `background-jobs.md` — **Background-Jobs Standard** (lazy-on-read first, AS-first with WP-Cron fallback, schedule on `action_scheduler_init` not `plugins_loaded`, one group per plugin, no idle polling, clear both schedulers on deactivate). `includes/class-cron.php` is the reference. Known gap: no cron-health Tools note yet (standard §4). Any new job MUST pass its Section 6 checklist.
@@ -214,8 +213,10 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 /community/messages/:id/        → Conversation thread (Pro)
 ```
 
-## Database Tables
-Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscriptions, ReadStatus, SpaceMembers, Tags, PostTags, SpaceTags, SpaceTagMap, UserInterests, ActivityLog, Restrictions, AccessRules, Flags, Revisions, JoinRequests, InviteLinks
+## Database Tables (22)
+AccessRules, ActivityLog, Attachments, BlockedUsers, Bookmarks, Categories, Flags, InviteLinks, JoinRequests, Notifications, PostTags, Posts, ReadStatus, Replies, Restrictions, Revisions, SpaceMembers, Spaces, Subscriptions, Tags, UserProfiles, Votes
+
+Derived from `CREATE TABLE` in `includes/db/class-schema.php` on 2026-08-20 and matches `audit/manifest.json`. The pre-1.9.4 version of this list named SpaceTags, SpaceTagMap and UserInterests, none of which exist, and omitted Bookmarks, BlockedUsers and Attachments, all of which do.
 
 ## CLI Module (shipped 2026-04-11)
 
@@ -224,7 +225,7 @@ Journey-based CLI architecture for headless testing + automation. Every user/adm
 ```
 wp jetonomy <subject> <subcommand>       # 13 free command roots
 wp jetonomy-pro <subject> <subcommand>   # 15 Pro command roots
-wp jetonomy qa-actions                   # 301/301 smoke tests (4 phases)
+wp jetonomy qa-actions                   # full action smoke, 4 phases (total in docs/qa/qa-config.json)
 wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
 ```
 

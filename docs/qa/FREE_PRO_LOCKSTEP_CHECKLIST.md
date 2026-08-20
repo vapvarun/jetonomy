@@ -12,7 +12,7 @@ sufficient. Always test with **both plugins active**.
 
 ## Pre-flight
 - [ ] `wp plugin list --status=active | grep jetonomy` shows BOTH `jetonomy` and `jetonomy-pro`.
-- [ ] `wp jetonomy qa-actions` → all green (currently 230/230: REST + Model + Pro + Journey).
+- [ ] `wp jetonomy qa-actions` → all green (REST + Model + Pro + Journey). The expected total is not restated here — read `qa_actions.expected_total` in [`qa-config.json`](qa-config.json) (286 as of 1.9.4). The gate is zero FAIL lines, not the number.
 - [ ] Browser console open; auto-login via `?autologin=1`.
 - [ ] Run each surface at desktop AND 390px (mobile).
 

@@ -358,7 +358,7 @@ If you're brand new to this, here's the short version of how to actually set up 
 6. **Set up moderation.** Most plugins have an anti-spam setting - turn it on and add your Akismet key.
 7. **Invite members.** Share the URL. Members already logged into WordPress can post immediately.
 
-For a more detailed walkthrough, I have a longer guide at [my BuddyPress community post](/different-types-of-online-communities/).
+For a more detailed walkthrough, I have a longer guide at [my BuddyPress community post](https://vapvarun.com/different-types-of-online-communities/).
 
 ---
 
@@ -408,7 +408,7 @@ If you found this article useful, the other two pieces I'd point you at are:
 
 - **Honest bbPress review for 2026:** [Full review at wbcomdesigns.com](https://wbcomdesigns.com/bbpress-review/)
 - **Discourse alternatives for WordPress:** [buddyxtheme.com comparison](https://buddyxtheme.com/discourse-alternatives-wordpress/)
-- **Different types of online communities:** [my overview post](/different-types-of-online-communities/) - helps you figure out which space type (forum, Q&A, ideas, social feed) fits your community shape.
+- **Different types of online communities:** [my overview post](https://vapvarun.com/different-types-of-online-communities/) - helps you figure out which space type (forum, Q&A, ideas, social feed) fits your community shape.
 
 - Varun
 

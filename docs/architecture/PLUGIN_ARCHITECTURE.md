@@ -245,7 +245,6 @@ jetonomy/
     ├── architecture/   ← this file lives here
     ├── plans/
     ├── specs/
-    └── superpowers/
         └── plans/
 ```
 
@@ -586,7 +585,7 @@ do_action('jetonomy_admin_render_extensions')   // Extensions submenu placeholde
 do_action('jetonomy_admin_render_license')       // License submenu placeholder
 ```
 
-**⚠️ Known architectural issue:** `Admin` class is currently ~2,100 lines - violates the 750-line rule from CLAUDE.md. **Admin split plan** is at `docs/superpowers/plans/2026-03-24-admin-class-split.md`.
+**⚠️ Known architectural issue:** `Admin` class is currently ~2,100 lines - violates the 750-line rule from CLAUDE.md. The split is tracked on the Basecamp board, not as an in-repo plan doc.
 
 ### Admin Views (`includes/admin/views/`)
 

@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.9.3
+Stable tag: 1.9.4
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,16 @@ Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abil
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.9.4 - August 2026 =
+
+Housekeeping release. No customer-facing behaviour changed.
+
+* Dev      - Corrected the plugin manifest version and provenance stamps, which had lagged two releases behind the shipping version.
+* Dev      - Consolidated the QA gate so the expected `wp jetonomy qa-actions` total is stated in one place instead of four conflicting ones.
+* Dev      - Fixed the QA smoke config, which pointed at a site path that does not exist.
+* Dev      - Corrected table, model, controller and template counts in the contributor documentation.
+* Dev      - Removed dead documentation links and a reference to a plans directory that was never part of this project.
 
 = 1.9.3 - August 2026 =
 
