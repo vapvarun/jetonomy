@@ -79,6 +79,50 @@ At the end of the walk, write exactly one JSON file to
 
 Also emit a Basecamp draft for every failure using the template in the Failure protocol.
 
+## Fixture SEEDING (before every walk) — do this first
+
+The 1.9.4 walk executed 70 rows and skipped 53. Most skips were not judgement
+calls, they were missing fixtures: *"no Q&A-typed space fixture set up this
+run"*, *"exact posts_per_page=1 scroll-to-load fixture"*, *"exact typeahead
+fixture"*. A walker cannot test accept-answer when no space on the site is a
+Q&A space.
+
+Seed the content fixtures before walking anything. Idempotent — it upserts by
+slug, so re-running it changes nothing:
+
+```bash
+wp --path="$WP_PATH" eval-file wp-content/plugins/jetonomy/bin/seed-qa-content.php
+```
+
+It prints one `FIXTURES {json}` line carrying every id, matching the contract
+`seed-qa-users.php` already uses. Parse it with `awk '/^FIXTURES /{print $2}'`.
+
+| Slug | Type | Unblocks |
+|---|---|---|
+| `jt-qa-qna` | qa | `C.member.accept-answer` — ships a question plus an un-accepted answer |
+| `jt-qa-ideas` | ideas | idea-status and roadmap rows |
+| `jt-qa-feed` | feed | short-form feed rendering |
+| `jt-qa-paging` | forum | `C.member.space-pagination` / `D.ppg-stacking` — 3 posts at `posts_per_page = 1`, so Load More is one click rather than 20+ seeded posts |
+
+The paging space's first post is titled with a deliberately unique string
+(`search_needle` in the JSON) so the search-typeahead row has something that
+cannot collide with real content.
+
+Also run the user and page seeders if this site has not had them:
+`bin/seed-qa-users.php` (the five access-matrix users) and
+`bin/seed-qa-pages.php` (one page per shortcode/block).
+
+**Tear down when the walk finishes** — the same script, with `cleanup`:
+
+```bash
+wp --path="$WP_PATH" eval-file wp-content/plugins/jetonomy/bin/seed-qa-content.php cleanup
+```
+
+If a row still has to be skipped after seeding, say WHY in `manual_required[]`
+and make the reason falsifiable. "Firefox not available in this tool" and
+"BuddyPress not active, so the row is N/A" are good reasons. "No fixture" is
+now a bug in the seeder, not a reason.
+
 ## Fixture cleanup (before every walk)
 
 Delete any leftover test data from prior runs. Exact WP-CLI eval script is permitted here because this is infrastructure, not a feature check.

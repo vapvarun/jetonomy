@@ -7,7 +7,7 @@
  * upserts by slug, never duplicates.
  *
  * Usage:
- *   wp --path="/Users/varundubey/Local Sites/forums/app/public" \
+ *   wp --path="/Users/vapvarun/Local Sites/buddynext/app/public" \
  *      eval-file wp-content/plugins/jetonomy/bin/seed-qa-pages.php
  *
  * To clean up:
