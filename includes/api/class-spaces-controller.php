@@ -962,72 +962,41 @@ class Spaces_Controller extends Base_Controller {
 	 * - invite:   not allowed — returns 403.
 	 */
 	public function join_space( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
+		$id      = absint( $request->get_param( 'id' ) );
+		$message = sanitize_textarea_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		/*
+		 * The policy itself lives in SpaceMember::join(). This method only maps
+		 * that decision onto HTTP.
+		 *
+		 * It used to own the rules outright, which is how the WP Abilities
+		 * join-space path came to disagree with it - same request, one refused
+		 * and one admitted (Basecamp 10227908583). Two copies of a rule is one
+		 * copy too many; the facade is now the single answer for every caller.
+		 */
+		$result = SpaceMember::join( $id, get_current_user_id(), $message );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 
-		$user_id = get_current_user_id();
-
-		if ( SpaceMember::is_member( $id, $user_id ) ) {
-			return new WP_Error(
-				'jetonomy_already_member',
-				__( 'You are already a member of this space.', 'jetonomy' ),
-				[ 'status' => 409 ]
-			);
-		}
-
-		$join_policy = $space->join_policy ?? 'open';
-
-		if ( 'invite' === $join_policy ) {
-			return new WP_Error(
-				'jetonomy_invite_only',
-				__( 'This space is invite-only.', 'jetonomy' ),
-				[ 'status' => 403 ]
-			);
-		}
-
-		if ( 'approval' === $join_policy ) {
-			// Check for an existing pending request to avoid duplicates.
-			$existing = JoinRequest::find_pending( $id, $user_id );
-			if ( $existing ) {
-				return new WP_REST_Response(
-					[
-						'status'  => 'pending',
-						'message' => __( 'You already have a pending join request for this space.', 'jetonomy' ),
-					],
-					202
-				);
-			}
-
-			$message = sanitize_textarea_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
-			JoinRequest::create_request( $id, $user_id, $message );
-
-			// Notify space admins about the join request.
-			do_action( 'jetonomy_join_request_created', $id, $user_id, $message );
-
+		if ( 'pending' === $result['status'] ) {
 			return new WP_REST_Response(
 				[
 					'status'  => 'pending',
-					'message' => __( 'Join request submitted. Awaiting approval.', 'jetonomy' ),
+					'message' => empty( $result['already_pending'] )
+						? __( 'Join request submitted. Awaiting approval.', 'jetonomy' )
+						: __( 'You already have a pending join request for this space.', 'jetonomy' ),
 				],
 				202
 			);
-		}
-
-		// open policy: add immediately.
-		$add_result = SpaceMember::add( $id, $user_id, 'member' );
-		if ( is_wp_error( $add_result ) ) {
-			return $add_result;
 		}
 
 		return new WP_REST_Response(
 			[
 				'status'   => 'joined',
 				'space_id' => $id,
-				'user_id'  => $user_id,
+				'user_id'  => get_current_user_id(),
 				'role'     => 'member',
 			],
 			201

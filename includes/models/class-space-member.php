@@ -198,6 +198,108 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Self-service join (facade — the single "a user asks to join" path).
+	 *
+	 * Distinct from add(): add() is the low-level primitive used by invite
+	 * redemption, admin screens, tier sync and auto-join-on-post, all of which
+	 * have already established that the user is entitled to be there. This
+	 * method is for the opposite case — an unprivileged user asking for
+	 * themselves — so it is the one place the join_policy and visibility rules
+	 * are applied.
+	 *
+	 * It exists because those rules were previously duplicated at the callers,
+	 * and one caller never got them: the WP Abilities `jetonomy/join-space`
+	 * ability branched only on `visibility === 'private'` and called
+	 * SpaceMember::add() for everything else, so a subscriber could join a
+	 * HIDDEN or INVITE-ONLY space and read every post in it (Basecamp
+	 * 10227908583). Reproduced before this fix: hidden+invite, public+invite and
+	 * public+approval all returned "joined" and wrote a roster row.
+	 *
+	 * Visibility is checked here even though Space::validate_visibility_join_policy()
+	 * already rejects hidden+open and hidden+approval, because that validator
+	 * runs at the CALLERS of Space::create() and not inside the model — so a row
+	 * written by any path that skips it (or by a direct query, or by an older
+	 * install) is not guaranteed to satisfy the invariant. A guard that depends
+	 * on an invariant nothing enforces is not a guard.
+	 *
+	 * @param int    $space_id Space ID.
+	 * @param int    $user_id  User asking to join.
+	 * @param string $message  Optional note attached to an approval request.
+	 * @return array{status:string,already_pending?:bool}|\WP_Error
+	 *         status is 'joined' or 'pending'.
+	 */
+	public static function join( int $space_id, int $user_id, string $message = '' ): array|\WP_Error {
+		if ( $user_id <= 0 ) {
+			return new \WP_Error(
+				'jetonomy_not_logged_in',
+				__( 'You must be logged in to join.', 'jetonomy' ),
+				[ 'status' => 401 ]
+			);
+		}
+
+		$space = Space::find( $space_id );
+		if ( ! $space ) {
+			return new \WP_Error(
+				'jetonomy_not_found',
+				/* translators: %s: the singular space label. */
+				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		if ( self::is_member( $space_id, $user_id ) ) {
+			return new \WP_Error(
+				'jetonomy_already_member',
+				__( 'You are already a member of this space.', 'jetonomy' ),
+				[ 'status' => 409 ]
+			);
+		}
+
+		$visibility  = (string) ( $space->visibility ?? 'public' );
+		$join_policy = (string) ( $space->join_policy ?? 'open' );
+
+		/*
+		 * A hidden space is not discoverable, so there is no such thing as
+		 * asking it for entry - the only way in is an invite, redeemed through
+		 * InviteLink::redeem(). Same refusal as invite-only, and deliberately
+		 * the same error, so the response cannot be used to tell a hidden space
+		 * apart from an invite-only one by probing ids.
+		 */
+		if ( 'invite' === $join_policy || 'hidden' === $visibility ) {
+			return new \WP_Error(
+				'jetonomy_invite_only',
+				__( 'This space is invite-only.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		if ( 'approval' === $join_policy || 'private' === $visibility ) {
+			if ( JoinRequest::find_pending( $space_id, $user_id ) ) {
+				return [
+					'status'          => 'pending',
+					'already_pending' => true,
+				];
+			}
+
+			JoinRequest::create_request( $space_id, $user_id, $message );
+
+			do_action( 'jetonomy_join_request_created', $space_id, $user_id, $message );
+
+			return [
+				'status'          => 'pending',
+				'already_pending' => false,
+			];
+		}
+
+		$added = self::add( $space_id, $user_id, 'member' );
+		if ( is_wp_error( $added ) ) {
+			return $added;
+		}
+
+		return [ 'status' => 'joined' ];
+	}
+
+	/**
 	 * Change an existing member's role (facade — the single role-update path).
 	 *
 	 * Distinct from add(): this only re-roles an EXISTING member and fires the

@@ -266,7 +266,7 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.9.4 - August 2026 =
 
-Housekeeping release. No customer-facing behaviour changed.
+Security and housekeeping release.
 
 * Dev      - Corrected the plugin manifest version and provenance stamps, which had lagged two releases behind the shipping version.
 * Dev      - Consolidated the QA gate so the expected `wp jetonomy qa-actions` total is stated in one place instead of four conflicting ones.
@@ -286,6 +286,8 @@ Housekeeping release. No customer-facing behaviour changed.
 * New      - Space access rules can now be listed, created and deleted through the REST API, so membership gating can be configured from the app or an integration rather than only in wp-admin.
 * Security - The activity log is no longer readable through the AI-agent interface by members who cannot open it in wp-admin. It now requires the same permission on both.
 * Fix      - Listing spaces by category through the AI-agent interface is now limited like every other listing, instead of loading the whole category.
+* Security - A moderator can no longer restrict an administrator or another moderator. The moderation screen enforced this only through the REST API, so the screen's own save path let an editor lock the site owner out of their account.
+* Security - Joining a space through the WordPress Abilities API now honours the space's join setting. Hidden and invite-only spaces could be joined directly, which exposed every topic inside them.
 
 = 1.9.3 - August 2026 =
 

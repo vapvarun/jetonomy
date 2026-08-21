@@ -61,11 +61,6 @@ parameters:
 			path: includes/api/class-replies-controller.php
 
 		-
-			message: "#^Call to an undefined static method Jetonomy\\\\Models\\\\JoinRequest\\:\\:create\\(\\)\\.$#"
-			count: 1
-			path: includes/class-abilities.php
-
-		-
 			message: "#^Result of static method Jetonomy\\\\Models\\\\Notification\\:\\:mark_all_read\\(\\) \\(void\\) is used\\.$#"
 			count: 1
 			path: includes/class-abilities.php

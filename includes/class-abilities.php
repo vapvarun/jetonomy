@@ -1475,13 +1475,23 @@ class Abilities {
 			return [ 'status' => 'joined' ];
 		}
 
-		if ( 'private' === ( $space->visibility ?? 'public' ) ) {
-			Models\JoinRequest::create( $space_id, $user_id );
-			return [ 'status' => 'pending_approval' ];
+		/*
+		 * Delegate to the one join authority rather than re-deciding here.
+		 *
+		 * This branch used to test only `visibility === 'private'` and call
+		 * SpaceMember::add() for everything else, which let a subscriber join a
+		 * HIDDEN or INVITE-ONLY space and read every post in it, while REST
+		 * refused the identical request (Basecamp 10227908583). It also called
+		 * Models\JoinRequest::create(), which does not exist - the model method
+		 * is create_request() - so the one case it did try to gate fataled
+		 * instead of gating.
+		 */
+		$result = SpaceMember::join( $space_id, $user_id );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 
-		SpaceMember::add( $space_id, $user_id, 'member' );
-		return [ 'status' => 'joined' ];
+		return [ 'status' => 'pending' === $result['status'] ? 'pending_approval' : 'joined' ];
 	}
 
 	public function execute_list_space_members( $input ) {
