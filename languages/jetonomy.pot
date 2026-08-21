@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.9.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-08-21 06:18:47+00:00\n"
+"POT-Creation-Date: 2026-08-21 18:28:52+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -704,7 +704,7 @@ msgstr ""
 #: templates/partials/feed-card.php:59
 #: templates/partials/moderation/flag-card.php:110
 #: templates/partials/post-card.php:170 templates/partials/reply-card.php:141
-#: templates/views/moderation.php:484 templates/views/notifications.php:273
+#: templates/views/moderation.php:484 templates/views/notifications.php:303
 #: templates/views/search.php:328 templates/views/single-post.php:444
 #: templates/views/user-profile.php:436 templates/views/user-profile.php:565
 #: templates/views/user-profile.php:689
@@ -839,7 +839,7 @@ msgstr ""
 #: includes/admin/class-admin.php:225 includes/admin/class-admin.php:226
 #: includes/admin/views/settings.php:88 includes/admin/views/space-edit.php:35
 #: includes/class-admin-bar.php:170 templates/partials/icon-picker.php:134
-#: templates/views/notifications.php:116
+#: templates/views/notifications.php:143
 msgid "Settings"
 msgstr ""
 
@@ -1391,7 +1391,7 @@ msgstr ""
 #: includes/admin/views/users.php:130
 #: includes/integrations/class-buddypress.php:918
 #: includes/integrations/class-buddypress.php:1115
-#: templates/views/moderation.php:356 templates/views/notifications.php:77
+#: templates/views/moderation.php:356 templates/views/notifications.php:104
 #: templates/views/single-post.php:744 templates/views/space-moderation.php:204
 #: templates/views/user-profile.php:291 templates/views/user-profile.php:334
 msgid "Replies"
@@ -1558,7 +1558,7 @@ msgstr ""
 #: includes/admin/views/categories.php:191
 #: includes/admin/views/space-edit.php:588 includes/admin/views/tags.php:81
 #: includes/admin/views/tags.php:154 templates/partials/reply-card.php:286
-#: templates/views/notifications.php:170 templates/views/notifications.php:297
+#: templates/views/notifications.php:197 templates/views/notifications.php:327
 #: templates/views/single-post.php:696
 msgid "Delete"
 msgstr ""
@@ -1787,7 +1787,7 @@ msgstr ""
 #: includes/admin/views/users.php:184
 #: includes/api/class-base-controller.php:848
 #: includes/api/class-notifications-controller.php:361
-#: includes/api/class-replies-controller.php:901
+#: includes/api/class-replies-controller.php:905
 msgid "ago"
 msgstr ""
 
@@ -5013,7 +5013,7 @@ msgstr ""
 #: includes/api/class-base-controller.php:772
 #: includes/api/class-notifications-controller.php:358
 #: includes/api/class-oembed-controller.php:141
-#: includes/api/class-replies-controller.php:853
+#: includes/api/class-replies-controller.php:857
 #: includes/class-abilities.php:1276 includes/class-author.php:60
 #: includes/class-shortcodes.php:183 includes/class-shortcodes.php:239
 #: includes/integrations/class-buddypress.php:235
@@ -5021,7 +5021,7 @@ msgstr ""
 #: templates/partials/avatar.php:17 templates/partials/feed-card.php:32
 #: templates/partials/post-card.php:131 templates/partials/reply-card.php:111
 #: templates/partials/reply-card.php:239 templates/partials/reply-card.php:245
-#: templates/views/notifications.php:186 templates/views/single-post.php:437
+#: templates/views/notifications.php:213 templates/views/single-post.php:437
 msgid "Anonymous"
 msgstr ""
 
@@ -5038,8 +5038,8 @@ msgid "Category name is required."
 msgstr ""
 
 #: includes/api/class-categories-controller.php:231
-#: includes/api/class-posts-controller.php:714
-#: includes/api/class-replies-controller.php:548
+#: includes/api/class-posts-controller.php:718
+#: includes/api/class-replies-controller.php:552
 #: includes/api/class-spaces-controller.php:750
 msgid "No fields provided for update."
 msgstr ""
@@ -5172,78 +5172,72 @@ msgstr ""
 msgid "This space is archived or locked and no longer accepts new posts."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:375
-#: includes/api/class-replies-controller.php:225
-#: includes/api/class-votes-controller.php:131
-msgid "Rate limit exceeded. Please try again later."
-msgstr ""
-
-#: includes/api/class-posts-controller.php:386
-#: includes/api/class-replies-controller.php:236
+#: includes/api/class-posts-controller.php:390
+#: includes/api/class-replies-controller.php:240
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:392
+#: includes/api/class-posts-controller.php:396
 msgid "Post content is required."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:407
+#: includes/api/class-posts-controller.php:411
 msgid "Status update"
 msgstr ""
 
-#: includes/api/class-posts-controller.php:409
+#: includes/api/class-posts-controller.php:413
 msgid "Post title is required."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:529
-#: includes/api/class-posts-controller.php:721
+#: includes/api/class-posts-controller.php:533
+#: includes/api/class-posts-controller.php:725
 msgid "Your post was blocked by our content policy."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:556
+#: includes/api/class-posts-controller.php:560
 #: includes/class-abilities.php:1229
 msgid "Failed to create post."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:574
-#: includes/api/class-posts-controller.php:763
-#: includes/api/class-replies-controller.php:369
-#: includes/api/class-replies-controller.php:504
+#: includes/api/class-posts-controller.php:578
+#: includes/api/class-posts-controller.php:767
+#: includes/api/class-replies-controller.php:373
+#: includes/api/class-replies-controller.php:508
 msgid "Flagged automatically by a moderation rule."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:661
+#: includes/api/class-posts-controller.php:665
 msgid "Could not publish this draft."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:900
+#: includes/api/class-posts-controller.php:904
 msgid "Roadmap status only applies to Ideas spaces."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:916
+#: includes/api/class-posts-controller.php:920
 msgid "Invalid roadmap status."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:968
+#: includes/api/class-posts-controller.php:972
 #. translators: %d: maximum number of pinned topics allowed per space
 msgid "You can pin up to %d topic in a space. Unpin one first."
 msgid_plural "You can pin up to %d topics in a space. Unpin one first."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/api/class-posts-controller.php:1008
+#: includes/api/class-posts-controller.php:1012
 msgid "A valid target_space_id is required."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1012
+#: includes/api/class-posts-controller.php:1016
 msgid "Post is already in the target space."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1065
+#: includes/api/class-posts-controller.php:1069
 msgid "Cannot merge a post with itself."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1082
+#: includes/api/class-posts-controller.php:1086
 #: includes/class-template-loader.php:332
 msgid "Failed to merge topics."
 msgstr ""
@@ -5252,50 +5246,50 @@ msgstr ""
 msgid "This space is archived or locked and no longer accepts new replies."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:243
+#: includes/api/class-replies-controller.php:247
 msgid "This post is closed and cannot receive new replies."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:250
-#: includes/api/class-replies-controller.php:482
+#: includes/api/class-replies-controller.php:254
+#: includes/api/class-replies-controller.php:486
 msgid "Reply content is required."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:311
-#: includes/api/class-replies-controller.php:541
+#: includes/api/class-replies-controller.php:315
+#: includes/api/class-replies-controller.php:545
 msgid "Reply published_at cannot precede the parent post date."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:328
-#: includes/api/class-replies-controller.php:487
+#: includes/api/class-replies-controller.php:332
+#: includes/api/class-replies-controller.php:491
 msgid "Your reply was blocked by our content policy."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:352
+#: includes/api/class-replies-controller.php:356
 #: includes/class-abilities.php:1338
 msgid "Failed to create reply."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:394
+#: includes/api/class-replies-controller.php:398
 #: includes/notifications/class-notifier.php:377
 #: includes/notifications/class-notifier.php:682
 #: includes/notifications/class-notifier.php:779
 msgid "your reply"
 msgstr ""
 
-#: includes/api/class-replies-controller.php:669
+#: includes/api/class-replies-controller.php:673
 msgid "Accepted answers only apply to Q&A spaces."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:741
+#: includes/api/class-replies-controller.php:745
 msgid "This reply is not the accepted answer."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:789
+#: includes/api/class-replies-controller.php:793
 msgid "A title is required for the new topic."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:806
+#: includes/api/class-replies-controller.php:810
 msgid "Failed to split reply into new topic."
 msgstr ""
 
@@ -5441,15 +5435,15 @@ msgstr ""
 msgid "We couldn't delete your account. Please try again or contact support."
 msgstr ""
 
-#: includes/api/class-votes-controller.php:136
+#: includes/api/class-votes-controller.php:140
 msgid "Vote value must be 1 or -1."
 msgstr ""
 
-#: includes/api/class-votes-controller.php:146
+#: includes/api/class-votes-controller.php:150
 msgid "You cannot downvote your own content."
 msgstr ""
 
-#: includes/api/class-votes-controller.php:161
+#: includes/api/class-votes-controller.php:165
 msgid "You cannot upvote your own content."
 msgstr ""
 
@@ -5882,7 +5876,7 @@ msgstr ""
 #: includes/class-template-loader.php:1206
 #: includes/class-template-loader.php:1473 templates/partials/header.php:65
 #: templates/partials/header.php:73 templates/views/notifications.php:39
-#: templates/views/notifications.php:105
+#: templates/views/notifications.php:132
 msgid "Notifications"
 msgstr ""
 
@@ -6008,7 +6002,7 @@ msgstr ""
 #: includes/notifications/class-notifier.php:624
 #: includes/notifications/class-notifier.php:650
 #: includes/notifications/class-notifier.php:1605
-#: templates/views/notifications.php:186
+#: templates/views/notifications.php:213
 msgid "Someone"
 msgstr ""
 
@@ -6994,7 +6988,7 @@ msgstr ""
 msgid "Pending"
 msgstr ""
 
-#: includes/functions.php:976 templates/views/notifications.php:75
+#: includes/functions.php:976 templates/views/notifications.php:102
 #: templates/views/search.php:214
 msgid "All"
 msgstr ""
@@ -7927,6 +7921,7 @@ msgid "Your %1$s was %2$s by a moderator"
 msgstr ""
 
 #: includes/notifications/class-notifier.php:1003
+#: templates/views/notifications.php:74
 msgid "New content flag requires review"
 msgstr ""
 
@@ -8101,6 +8096,56 @@ msgstr ""
 
 #: includes/permissions/class-capabilities.php:307
 msgid "Manage extensions"
+msgstr ""
+
+#: includes/permissions/class-rate-limiter.php:130
+msgid "You have reached a posting limit. Please try again later."
+msgstr ""
+
+#: includes/permissions/class-rate-limiter.php:146
+#. translators: %s: number of topics allowed per day.
+msgid "New members can post %s topic a day."
+msgid_plural "New members can post %s topics a day."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/permissions/class-rate-limiter.php:147
+msgid "You can post again in about %s."
+msgstr ""
+
+#: includes/permissions/class-rate-limiter.php:151
+#. translators: %s: number of replies allowed per day.
+msgid "New members can post %s reply a day."
+msgid_plural "New members can post %s replies a day."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/permissions/class-rate-limiter.php:152
+msgid "You can reply again in about %s."
+msgstr ""
+
+#: includes/permissions/class-rate-limiter.php:156
+#. translators: %s: number of votes allowed per day.
+msgid "New members can cast %s vote a day."
+msgid_plural "New members can cast %s votes a day."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/permissions/class-rate-limiter.php:157
+msgid "You can vote again in about %s."
+msgstr ""
+
+#: includes/permissions/class-rate-limiter.php:161
+#. translators: %s: number of actions allowed per day.
+msgid "New members are limited to %s of these a day."
+msgstr ""
+
+#: includes/permissions/class-rate-limiter.php:162
+msgid "You can try again in about %s."
+msgstr ""
+
+#: includes/permissions/class-rate-limiter.php:172
+msgid "Please try again later."
 msgstr ""
 
 #: includes/seo/class-schema-markup.php:292
@@ -9362,143 +9407,139 @@ msgstr ""
 msgid "Pick the icon that matches what this %s is about."
 msgstr ""
 
-#: templates/views/notifications.php:45
+#: templates/views/notifications.php:65
 msgid "replied to your post"
 msgstr ""
 
-#: templates/views/notifications.php:46
+#: templates/views/notifications.php:66
 msgid "replied to your comment"
 msgstr ""
 
-#: templates/views/notifications.php:47
+#: templates/views/notifications.php:67
 msgid "mentioned you"
 msgstr ""
 
-#: templates/views/notifications.php:48
+#: templates/views/notifications.php:68
 msgid "voted on your post"
 msgstr ""
 
-#: templates/views/notifications.php:49
+#: templates/views/notifications.php:69
 msgid "accepted your reply"
 msgstr ""
 
-#: templates/views/notifications.php:50
+#: templates/views/notifications.php:70
 msgid "updated your idea on the roadmap"
 msgstr ""
 
-#: templates/views/notifications.php:51
-msgid "new activity in a subscribed space"
+#: templates/views/notifications.php:71
+msgid "New activity in a space you follow"
 msgstr ""
 
-#: templates/views/notifications.php:52
-msgid "a moderator acted on your content"
+#: templates/views/notifications.php:72
+msgid "A moderator acted on your content"
 msgstr ""
 
-#: templates/views/notifications.php:53
-msgid "earned a badge"
+#: templates/views/notifications.php:73
+msgid "You earned a badge"
 msgstr ""
 
-#: templates/views/notifications.php:54
-msgid "new content flag requires review"
-msgstr ""
-
-#: templates/views/notifications.php:76 templates/views/notifications.php:278
+#: templates/views/notifications.php:103 templates/views/notifications.php:308
 msgid "Unread"
 msgstr ""
 
-#: templates/views/notifications.php:78
+#: templates/views/notifications.php:105
 msgid "Mentions"
 msgstr ""
 
-#: templates/views/notifications.php:79 templates/views/user-profile.php:338
+#: templates/views/notifications.php:106 templates/views/user-profile.php:338
 msgid "Votes"
 msgstr ""
 
-#: templates/views/notifications.php:84
+#: templates/views/notifications.php:111
 msgid "Badges"
 msgstr ""
 
-#: templates/views/notifications.php:88
+#: templates/views/notifications.php:115
 msgid "No notifications yet"
 msgstr ""
 
-#: templates/views/notifications.php:88
+#: templates/views/notifications.php:115
 msgid "When members reply to your posts or mention you, those updates land here."
 msgstr ""
 
-#: templates/views/notifications.php:89
+#: templates/views/notifications.php:116
 msgid "You're all caught up!"
 msgstr ""
 
-#: templates/views/notifications.php:89
+#: templates/views/notifications.php:116
 msgid "Nothing new since you last checked. Switch to All to see your history."
 msgstr ""
 
-#: templates/views/notifications.php:90
+#: templates/views/notifications.php:117
 msgid "No replies yet"
 msgstr ""
 
-#: templates/views/notifications.php:90
+#: templates/views/notifications.php:117
 msgid "Replies to your posts and comments will show up here."
 msgstr ""
 
-#: templates/views/notifications.php:91
+#: templates/views/notifications.php:118
 msgid "No mentions yet"
 msgstr ""
 
-#: templates/views/notifications.php:91
+#: templates/views/notifications.php:118
 msgid "When someone @-mentions you in a post or reply, you'll see it here."
 msgstr ""
 
-#: templates/views/notifications.php:92
+#: templates/views/notifications.php:119
 msgid "No votes yet"
 msgstr ""
 
-#: templates/views/notifications.php:92
+#: templates/views/notifications.php:119
 msgid "Upvotes on your posts will appear here."
 msgstr ""
 
-#: templates/views/notifications.php:93
+#: templates/views/notifications.php:120
 msgid "No badges yet"
 msgstr ""
 
-#: templates/views/notifications.php:93
+#: templates/views/notifications.php:120
 msgid "Earn badges by contributing to the community."
 msgstr ""
 
-#: templates/views/notifications.php:111
+#: templates/views/notifications.php:138
 msgid "Mark all notifications as read"
 msgstr ""
 
-#: templates/views/notifications.php:112
+#: templates/views/notifications.php:139
 msgid "Mark all as read"
 msgstr ""
 
-#: templates/views/notifications.php:115
+#: templates/views/notifications.php:142
 msgid "Notification settings"
 msgstr ""
 
-#: templates/views/notifications.php:121
+#: templates/views/notifications.php:148
 msgid "Filter notifications"
 msgstr ""
 
-#: templates/views/notifications.php:162
+#: templates/views/notifications.php:189
 msgid "Select all on page"
 msgstr ""
 
-#: templates/views/notifications.php:167
+#: templates/views/notifications.php:194
 msgid "Mark read"
 msgstr ""
 
-#: templates/views/notifications.php:236
+#: templates/views/notifications.php:263
 msgid "Select notification"
 msgstr ""
 
-#: templates/views/notifications.php:284
+#: templates/views/notifications.php:314
 msgid "Notification actions"
 msgstr ""
 
-#: templates/views/notifications.php:291
+#: templates/views/notifications.php:321
 msgid "Mark as read"
 msgstr ""
 

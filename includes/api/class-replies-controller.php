@@ -222,7 +222,11 @@ class Replies_Controller extends Base_Controller {
 		$profile = UserProfile::find_or_create( $user_id );
 		$trust   = (int) ( $profile->trust_level ?? 0 );
 		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_replies', $trust ) ) {
-			return $this->validation_error( __( 'Rate limit exceeded. Please try again later.', 'jetonomy' ) );
+			// Rate_Limiter::message() names the allowance and the real wait.
+			// The old string said "Rate limit exceeded. Please try again
+			// later." to a member who had never been told a limit existed and
+			// could not tell whether "later" meant a minute or a day.
+			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_replies', $trust ) );
 		}
 
 		// CAPTCHA verification (skipped for trust level 2+ users and admins).

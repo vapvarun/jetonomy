@@ -544,7 +544,19 @@
      wrong action. Hover-capable devices (mouse) stay at 36px because
      pointer precision is finer there. */
   @media (hover: none) {
-    .jt-act { min-block-size: 44px; padding-inline: var(--jt-space-4); }
+    .jt-act {
+        /* min-block-size alone left icon-only actions 32px WIDE - Share,
+           Bookmark and More options measured 32x44 at 390px. The height was
+           handled; the inline axis was not, so the tap target failed on the
+           one axis nobody had checked.
+           justify-content matters here too: widening a flex box whose default
+           is flex-start would park the icon on the left with dead space beside
+           it rather than centring it in the new target. */
+        min-block-size: 44px;
+        min-inline-size: 44px;
+        justify-content: center;
+        padding-inline: var(--jt-space-4);
+      }
     /* Small buttons have no min-height for mouse density; on touch they
        need the full tap target so per-row controls (e.g. the member "Ban
        from space" button) are not a slip hazard. Matches the regular

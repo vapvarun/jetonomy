@@ -41,6 +41,26 @@ $crumbs = array(
 	),
 );
 
+/*
+ * Two kinds of notification, and they need different sentences.
+ *
+ * ACTOR-LED: somebody did something to you. The row reads
+ * "<strong>Name</strong> replied to your post", so the label is a verb phrase
+ * that completes the actor's sentence. "Someone" is the right fallback when
+ * the actor has been deleted.
+ *
+ * SELF-CONTAINED: nothing did it TO you - you earned a badge, a space you
+ * follow got busy, a moderator acted. These carry no actor_id, and feeding
+ * them through the actor-led frame produced the fallback as a subject:
+ *
+ *   badge_earned     -> "Someone earned a badge"          (wrong subject: it was YOU)
+ *   new_post_in_sub  -> "Someone new activity in a subscribed space"
+ *   moderation       -> "Someone a moderator acted on your content"
+ *   flag             -> "Someone new content flag requires review"
+ *
+ * Three of those four are not even grammatical. They are whole sentences and
+ * are rendered without an actor prefix.
+ */
 $type_labels = array(
 	'reply_to_post'       => __( 'replied to your post', 'jetonomy' ),
 	'reply_to_reply'      => __( 'replied to your comment', 'jetonomy' ),
@@ -48,11 +68,18 @@ $type_labels = array(
 	'vote_on_post'        => __( 'voted on your post', 'jetonomy' ),
 	'accepted_answer'     => __( 'accepted your reply', 'jetonomy' ),
 	'idea_status_changed' => __( 'updated your idea on the roadmap', 'jetonomy' ),
-	'new_post_in_sub'     => __( 'new activity in a subscribed space', 'jetonomy' ),
-	'moderation'          => __( 'a moderator acted on your content', 'jetonomy' ),
-	'badge_earned'        => __( 'earned a badge', 'jetonomy' ),
-	'flag'                => __( 'new content flag requires review', 'jetonomy' ),
+	'new_post_in_sub'     => __( 'New activity in a space you follow', 'jetonomy' ),
+	'moderation'          => __( 'A moderator acted on your content', 'jetonomy' ),
+	'badge_earned'        => __( 'You earned a badge', 'jetonomy' ),
+	'flag'                => __( 'New content flag requires review', 'jetonomy' ),
 );
+
+/**
+ * Types whose label is a complete sentence and must not take an actor prefix.
+ *
+ * @var array<int,string>
+ */
+$self_contained_types = array( 'new_post_in_sub', 'moderation', 'badge_earned', 'flag' );
 
 // Icon shown in the row's circle when a notification has no actor at all
 // (system events: a flag needing review, an aggregated vote roll-up). Keyed
@@ -262,6 +289,9 @@ $settings_url = \Jetonomy\get_profile_url( get_current_user_id() ) . 'edit/#noti
 							<div class="jt-notif-text">
 								<?php if ( ! empty( $notif->message ) ) : ?>
 									<?php echo esc_html( $notif->message ); ?>
+								<?php elseif ( in_array( (string) $notif->type, $self_contained_types, true ) ) : ?>
+									<?php // Whole sentence - no actor, no prefix. ?>
+									<?php echo esc_html( $action_label ); ?>
 								<?php else : ?>
 									<strong><?php echo esc_html( $actor_name ); ?></strong>
 									<?php echo esc_html( $action_label ); ?>
