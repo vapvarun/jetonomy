@@ -59,7 +59,7 @@ class SpaceMember extends Model {
 		return false === $pos ? 0 : (int) $pos + 1;
 	}
 
-	public static function add( int $space_id, int $user_id, string $role = 'member' ): \WP_Error|bool {
+	public static function add( int $space_id, int $user_id, string $role = 'member', string $source = 'manual' ): \WP_Error|bool {
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
 		 *
@@ -96,8 +96,18 @@ class SpaceMember extends Model {
 				$role = (string) $current;
 			}
 
-			// Role only. REPLACE INTO also reset joined_at on every re-sync,
-			// losing the date the person actually joined.
+			/*
+			 * Role only. REPLACE INTO also reset joined_at on every re-sync,
+			 * losing the date the person actually joined.
+			 *
+			 * `source` is deliberately NOT updated either, and for a sharper
+			 * reason than joined_at: it is what the deactivation listener
+			 * deletes on. Someone who joined this space themselves and LATER
+			 * bought a plan would have their row relabelled 'tier' by the
+			 * activation sync, and then be evicted from a space they joined
+			 * under their own steam the day that plan lapsed. First write
+			 * wins, so provenance records how the row was actually created.
+			 */
 			static::db()->update(
 				static::table(),
 				array( 'role' => $role ),
@@ -107,13 +117,16 @@ class SpaceMember extends Model {
 				)
 			);
 		} else {
+			$source = in_array( $source, array( 'manual', 'invite', 'rule', 'tier' ), true ) ? $source : 'manual';
+
 			static::db()->query(
 				static::db()->prepare(
-					'INSERT INTO ' . static::table() . ' (space_id, user_id, role, joined_at) VALUES (%d, %d, %s, %s)',
+					'INSERT INTO ' . static::table() . ' (space_id, user_id, role, joined_at, source) VALUES (%d, %d, %s, %s, %s)',
 					$space_id,
 					$user_id,
 					$role,
-					now()
+					now(),
+					$source
 				)
 			);
 		}

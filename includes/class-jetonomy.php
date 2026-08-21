@@ -664,6 +664,12 @@ final class Jetonomy {
 		// get_avatar()/get_avatar_url() caller, Gravatar fallback.
 		Avatar::init();
 
+		// Puts paying members on the space roster. Access itself does NOT
+		// depend on this — Permission_Engine resolves membership rules live —
+		// so a failure here costs a Members-list entry, never someone's
+		// access.
+		Membership_Roster_Sync::init();
+
 		new Notifications\Notifier();
 		new Cron();
 		new Privacy();

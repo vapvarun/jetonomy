@@ -99,12 +99,11 @@ final class User_Journey {
 
 		UserProfile::find_or_create( (int) $user_id );
 
-		$patch = [ 'trust_level' => $level ];
-		if ( isset( $input['display_name'] ) && '' !== $input['display_name'] ) {
-			$patch['display_name'] = (string) $input['display_name'];
-		}
-
-		$ok = UserProfile::update_profile( (int) $user_id, $patch );
+		// display_name is NOT patched onto the profile: wp_insert_user() above
+		// already wrote it to wp_users, which is the single source every byline
+		// reads through \Jetonomy\user_display_name(). The profile copy was a
+		// second write to a column nothing read.
+		$ok = UserProfile::update_profile( (int) $user_id, [ 'trust_level' => $level ] );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'UserProfile::update_profile(%d) returned false.', (int) $user_id ) );
 		}
@@ -212,17 +211,42 @@ final class User_Journey {
 			);
 		}
 
+		/*
+		 * display_name lives on wp_users, not on the profile row.
+		 *
+		 * It used to be written to jt_user_profiles.display_name, which no
+		 * byline had read since the identity consolidation - so
+		 * `wp jetonomy user update-profile 42 --display-name="Alice"` reported
+		 * success and changed nothing anyone could see. Routing it to
+		 * wp_update_user() makes the flag do what its name says.
+		 */
+		$updated = array_keys( $patch );
+		if ( array_key_exists( 'display_name', $patch ) ) {
+			$named = wp_update_user(
+				array(
+					'ID'           => $user_id,
+					'display_name' => (string) $patch['display_name'],
+				)
+			);
+			if ( is_wp_error( $named ) ) {
+				return Journey_Result::from_wp_error( $named );
+			}
+			unset( $patch['display_name'] );
+		}
+
 		UserProfile::find_or_create( $user_id );
 
-		$ok = UserProfile::update_profile( $user_id, $patch );
-		if ( ! $ok ) {
-			return Journey_Result::fail( sprintf( 'UserProfile::update_profile(%d) returned false.', $user_id ) );
+		if ( ! empty( $patch ) ) {
+			$ok = UserProfile::update_profile( $user_id, $patch );
+			if ( ! $ok ) {
+				return Journey_Result::fail( sprintf( 'UserProfile::update_profile(%d) returned false.', $user_id ) );
+			}
 		}
 
 		return Journey_Result::ok(
 			[
 				'user_id' => $user_id,
-				'updated' => array_keys( $patch ),
+				'updated' => $updated,
 			],
 			[],
 			$this->duration_ms( $start )
@@ -307,7 +331,7 @@ final class User_Journey {
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT user_id, display_name, trust_level, last_seen_at FROM {$table} WHERE last_seen_at IS NOT NULL AND last_seen_at > %s ORDER BY last_seen_at DESC LIMIT %d",
+				"SELECT user_id, trust_level, last_seen_at FROM {$table} WHERE last_seen_at IS NOT NULL AND last_seen_at > %s ORDER BY last_seen_at DESC LIMIT %d",
 				$threshold,
 				$limit
 			)
@@ -317,7 +341,9 @@ final class User_Journey {
 		foreach ( (array) $rows as $row ) {
 			$items[] = [
 				'user_id'      => (int) $row->user_id,
-				'display_name' => (string) ( $row->display_name ?? '' ),
+				// Resolved from wp_users, the single source, rather than the
+				// profile copy that used to sit unread beside it.
+				'display_name' => \Jetonomy\user_display_name( get_userdata( (int) $row->user_id ) ),
 				'trust_level'  => (int) ( $row->trust_level ?? 0 ),
 				'last_seen_at' => (string) ( $row->last_seen_at ?? '' ),
 			];

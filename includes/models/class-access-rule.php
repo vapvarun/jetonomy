@@ -173,6 +173,36 @@ class AccessRule extends Model {
 	 * @param string $rule_type  Rule type. Defaults to the membership adapters' type.
 	 * @return int[] Space IDs, ascending, unique.
 	 */
+	/**
+	 * Full rule rows for a level, not just the space ids.
+	 *
+	 * Callers that only need to point at the spaces should use
+	 * spaces_for_level(); that answers "which spaces" and is right for them.
+	 * only need to point at them. The roster sync also needs `grants` and
+	 * `space_role` to work out what role to write, and fetching the ids then
+	 * re-reading each space's rules to find them again would be the per-row
+	 * lookup this model exists to avoid.
+	 *
+	 * Reads the same indexed `(rule_type, rule_value)` key.
+	 *
+	 * @param string $rule_value Level identifier, e.g. 'pmpro_3'.
+	 * @param string $rule_type  Rule type. Defaults to the membership adapters' type.
+	 * @return object[] Rule rows, ascending by space id.
+	 */
+	public static function rules_for_level( string $rule_value, string $rule_type = 'membership' ): array {
+		if ( '' === $rule_value ) {
+			return [];
+		}
+
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE rule_type = %s AND rule_value = %s ORDER BY space_id ASC',
+				$rule_type,
+				$rule_value
+			)
+		) ?: [];
+	}
+
 	public static function spaces_for_level( string $rule_value, string $rule_type = 'membership' ): array {
 		if ( '' === $rule_value ) {
 			return [];

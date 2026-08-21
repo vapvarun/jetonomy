@@ -232,7 +232,6 @@ class Schema {
 		// 6. jt_user_profiles
 		$sqls[] = "CREATE TABLE {$p}jt_user_profiles (
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
-  display_name varchar(255) NOT NULL DEFAULT '',
   bio longtext,
   avatar_url varchar(255) DEFAULT NULL,
   trust_level tinyint(3) unsigned NOT NULL DEFAULT 0,
