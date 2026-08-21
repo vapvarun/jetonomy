@@ -264,6 +264,103 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			<div class="jt-form-error" data-jt-error hidden></div>
 		</form>
 
+		<?php
+		/*
+		 * Danger zone.
+		 *
+		 * DELETE /spaces/{id} has supported both modes since 1.4.x and enforces
+		 * allow_space_admin_purge server-side, but nothing on the frontend ever
+		 * called it - the setting's own description promises space admins can
+		 * delete their space, and the only way to do it was wp-admin, which a
+		 * space admin has no reason to be able to reach (Basecamp 10221373732).
+		 *
+		 * Two actions, because the route has two modes and they are not the same
+		 * decision:
+		 *   transfer - the default. The space is archived and handed to a
+		 *              successor; every member's topics and replies survive.
+		 *              Offered only when a successor exists, since the route
+		 *              answers 409 otherwise and a button that cannot work is
+		 *              worse than no button.
+		 *   purge    - destroys the space and everything in it. Gated on exactly
+		 *              what the route gates on, so the UI never renders a
+		 *              control that can only 403.
+		 */
+		$jt_settings  = get_option( 'jetonomy_settings', array() );
+		$jt_may_purge = current_user_can( 'manage_options' ) || ! empty( $jt_settings['allow_space_admin_purge'] );
+		$jt_successor = \Jetonomy\Models\Space::resolve_successor( (int) $space->id, get_current_user_id() );
+		$jt_space_one = \Jetonomy\space_label( false, true );
+
+		/* translators: %s: the singular space label the site owner configured. */
+		$jt_confirm_archive = sprintf( __( 'Archive this %s and hand it over? Members keep everything they posted.', 'jetonomy' ), $jt_space_one );
+		/* translators: %s: the space title the admin must type to confirm. */
+		$jt_confirm_purge = sprintf( __( 'This destroys everything in it and cannot be undone. Type %s to confirm.', 'jetonomy' ), (string) $space->title );
+		?>
+		<?php if ( $jt_may_purge || $jt_successor ) : ?>
+			<section class="jt-danger-zone" aria-labelledby="jt-danger-zone-title">
+				<h2 class="jt-danger-zone-title" id="jt-danger-zone-title">
+					<?php esc_html_e( 'Danger zone', 'jetonomy' ); ?>
+				</h2>
+
+				<?php if ( $jt_successor ) : ?>
+					<div class="jt-danger-row">
+						<div class="jt-danger-copy">
+							<h3 class="jt-danger-heading">
+								<?php
+								/* translators: %s: the singular space label the site owner configured. */
+								echo esc_html( sprintf( __( 'Archive and hand over this %s', 'jetonomy' ), $jt_space_one ) );
+								?>
+							</h3>
+							<p class="jt-danger-desc">
+								<?php
+								/* translators: %s: display name of the member who would take ownership. */
+								echo esc_html( sprintf( __( 'Every topic and reply is kept. Ownership passes to %s and the space is archived.', 'jetonomy' ), \Jetonomy\user_display_name( get_userdata( $jt_successor ) ) ) );
+								?>
+							</p>
+						</div>
+						<button type="button"
+							class="jt-btn jt-btn-ghost jt-space-delete"
+							data-wp-on--click="actions.deleteSpace"
+							data-space-id="<?php echo absint( $space->id ); ?>"
+							data-mode="transfer"
+							data-redirect="<?php echo esc_attr( $base . '/s/' . $space->slug . '/' ); ?>"
+							data-confirm="<?php echo esc_attr( $jt_confirm_archive ); ?>">
+							<?php esc_html_e( 'Archive and hand over', 'jetonomy' ); ?>
+						</button>
+					</div>
+				<?php endif; ?>
+
+				<?php if ( $jt_may_purge ) : ?>
+					<div class="jt-danger-row jt-danger-row--critical">
+						<div class="jt-danger-copy">
+							<h3 class="jt-danger-heading">
+								<?php
+								/* translators: %s: the singular space label the site owner configured. */
+								echo esc_html( sprintf( __( 'Delete this %s permanently', 'jetonomy' ), $jt_space_one ) );
+								?>
+							</h3>
+							<p class="jt-danger-desc">
+								<?php esc_html_e( 'Every topic, reply, and attachment in it is destroyed. This cannot be undone.', 'jetonomy' ); ?>
+							</p>
+						</div>
+						<?php // Type-to-confirm: no dialog to click past, the name must be typed. ?>
+						<button type="button"
+							class="jt-btn jt-btn-fill jt-btn-danger jt-space-delete"
+							data-wp-on--click="actions.deleteSpace"
+							data-space-id="<?php echo absint( $space->id ); ?>"
+							data-mode="purge"
+							data-space-title="<?php echo esc_attr( (string) $space->title ); ?>"
+							data-redirect="<?php echo esc_attr( $base . '/' ); ?>"
+							data-confirm="<?php echo esc_attr( $jt_confirm_purge ); ?>">
+							<?php jetonomy_echo_icon( 'trash', 14 ); ?>
+							<?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?>
+						</button>
+					</div>
+				<?php endif; ?>
+
+				<p class="jt-danger-error" data-jt-delete-error role="alert" hidden></p>
+			</section>
+		<?php endif; ?>
+
 	</main>
 
 	<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => $space ) ); ?>

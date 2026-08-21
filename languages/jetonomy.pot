@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.9.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-08-21 03:42:29+00:00\n"
+"POT-Creation-Date: 2026-08-21 03:55:08+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -704,7 +704,7 @@ msgstr ""
 #: templates/partials/feed-card.php:59
 #: templates/partials/moderation/flag-card.php:98
 #: templates/partials/post-card.php:170 templates/partials/reply-card.php:141
-#: templates/views/moderation.php:503 templates/views/notifications.php:273
+#: templates/views/moderation.php:475 templates/views/notifications.php:273
 #: templates/views/search.php:328 templates/views/single-post.php:444
 #: templates/views/user-profile.php:436 templates/views/user-profile.php:565
 #: templates/views/user-profile.php:689
@@ -812,7 +812,7 @@ msgstr ""
 #: includes/notifications/class-notifier.php:1407
 #: includes/seo/class-schema-markup.php:510 templates/partials/header.php:54
 #: templates/partials/header.php:56 templates/partials/icon-picker.php:98
-#: templates/views/moderation.php:204 templates/views/space-moderation.php:67
+#: templates/views/moderation.php:204 templates/views/space-moderation.php:131
 msgid "Moderation"
 msgstr ""
 
@@ -946,6 +946,7 @@ msgid ""
 msgstr ""
 
 #: includes/admin/class-admin.php:1080 includes/admin/views/spaces.php:297
+#: templates/views/space-edit.php:355
 msgid "Delete permanently"
 msgstr ""
 
@@ -1362,7 +1363,7 @@ msgstr ""
 #: includes/notifications/class-notifier.php:921
 #: templates/partials/moderation/approval-card.php:36
 #: templates/partials/moderation/flag-card.php:95
-#: templates/views/moderation.php:478
+#: templates/views/moderation.php:450
 msgid "Unknown"
 msgstr ""
 
@@ -1376,10 +1377,11 @@ msgstr ""
 #: includes/admin/views/spaces.php:239 includes/admin/views/tags.php:115
 #: includes/admin/views/tags.php:159 includes/admin/views/users.php:126
 #: includes/integrations/class-buddypress.php:906
-#: templates/partials/sidebar.php:190 templates/views/moderation.php:361
+#: templates/partials/sidebar.php:190 templates/views/moderation.php:347
 #: templates/views/search.php:215 templates/views/search.php:303
-#: templates/views/space.php:320 templates/views/space.php:422
-#: templates/views/user-profile.php:287 templates/views/user-profile.php:330
+#: templates/views/space-moderation.php:203 templates/views/space.php:320
+#: templates/views/space.php:422 templates/views/user-profile.php:287
+#: templates/views/user-profile.php:330
 msgid "Posts"
 msgstr ""
 
@@ -1389,9 +1391,9 @@ msgstr ""
 #: includes/admin/views/users.php:130
 #: includes/integrations/class-buddypress.php:918
 #: includes/integrations/class-buddypress.php:1115
-#: templates/views/moderation.php:362 templates/views/notifications.php:77
-#: templates/views/single-post.php:744 templates/views/user-profile.php:291
-#: templates/views/user-profile.php:334
+#: templates/views/moderation.php:348 templates/views/notifications.php:77
+#: templates/views/single-post.php:744 templates/views/space-moderation.php:204
+#: templates/views/user-profile.php:291 templates/views/user-profile.php:334
 msgid "Replies"
 msgstr ""
 
@@ -2389,7 +2391,7 @@ msgstr ""
 #: includes/class-template-loader.php:299
 #: templates/partials/moderation/approval-card.php:71
 #: templates/partials/reply-card.php:240 templates/partials/reply-card.php:241
-#: templates/views/moderation.php:495
+#: templates/views/moderation.php:467
 msgid "Reply"
 msgstr ""
 
@@ -2455,8 +2457,8 @@ msgstr ""
 msgid "Original"
 msgstr ""
 
-#: includes/admin/views/revisions.php:199 templates/views/moderation.php:338
-#: templates/views/moderation.php:435 templates/views/moderation.php:545
+#: includes/admin/views/revisions.php:199
+#: templates/partials/pagination-nav.php:41
 #: templates/views/space-members.php:468 templates/views/subscriptions.php:118
 #: templates/views/tag.php:197
 msgid "Previous"
@@ -2723,6 +2725,7 @@ msgid ""
 msgstr ""
 
 #: includes/admin/views/settings.php:316
+#: templates/partials/pagination-nav.php:35
 msgid "Pagination"
 msgstr ""
 
@@ -8611,12 +8614,12 @@ msgid "No moderators yet."
 msgstr ""
 
 #: templates/partials/moderation/approval-card.php:71
-#: templates/views/moderation.php:495
+#: templates/views/moderation.php:467
 msgid "Post"
 msgstr ""
 
 #: templates/partials/moderation/approval-card.php:74
-#: templates/views/moderation.php:262
+#: templates/views/moderation.php:262 templates/views/space-moderation.php:192
 msgid "Awaiting approval"
 msgstr ""
 
@@ -8667,6 +8670,18 @@ msgstr ""
 
 #: templates/partials/moderation/queue-empty.php:16
 msgid "No pending flags. The community is clean!"
+msgstr ""
+
+#: templates/partials/pagination-nav.php:47
+#: templates/views/space-members.php:474 templates/views/tag.php:203
+#. translators: 1: current page, 2: total pages
+msgid "Page %1$d of %2$d"
+msgstr ""
+
+#: templates/partials/pagination-nav.php:52
+#: templates/views/space-members.php:479 templates/views/subscriptions.php:121
+#: templates/views/tag.php:208
+msgid "Next"
 msgstr ""
 
 #: templates/partials/post-card.php:57 templates/views/single-post.php:543
@@ -9104,8 +9119,9 @@ msgstr ""
 msgid "Moderation Overview"
 msgstr ""
 
-#: templates/views/moderation.php:224
+#: templates/views/moderation.php:224 templates/views/space-moderation.php:156
 #. translators: %d: number of submissions held for approval
+#. translators: %d: number of submissions held for approval.
 msgid "%d submission awaiting approval"
 msgid_plural "%d submissions awaiting approval"
 msgstr[0] ""
@@ -9126,25 +9142,25 @@ msgid_plural "%d pending flags across the spaces you moderate"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/views/moderation.php:239 templates/views/space-moderation.php:100
+#: templates/views/moderation.php:239 templates/views/space-moderation.php:170
 #. translators: %d: number of pending flags.
 msgid "%d pending"
 msgid_plural "%d pending"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/views/moderation.php:246
+#: templates/views/moderation.php:246 templates/views/space-moderation.php:177
 #. translators: %d: number of submissions held for approval.
 msgid "%d held"
 msgid_plural "%d held"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/views/moderation.php:254
+#: templates/views/moderation.php:254 templates/views/space-moderation.php:184
 msgid "Moderation sections"
 msgstr ""
 
-#: templates/views/moderation.php:256
+#: templates/views/moderation.php:256 templates/views/space-moderation.php:186
 msgid "Flags"
 msgstr ""
 
@@ -9156,61 +9172,48 @@ msgstr ""
 msgid "No members are currently banned or silenced."
 msgstr ""
 
-#: templates/views/moderation.php:335
+#: templates/views/moderation.php:336
 msgid "Banned members pagination"
 msgstr ""
 
-#: templates/views/moderation.php:344 templates/views/moderation.php:441
-#: templates/views/moderation.php:551 templates/views/space-members.php:474
-#: templates/views/tag.php:203
-#. translators: 1: current page, 2: total pages
-msgid "Page %1$d of %2$d"
-msgstr ""
-
-#: templates/views/moderation.php:349 templates/views/moderation.php:446
-#: templates/views/moderation.php:556 templates/views/space-members.php:479
-#: templates/views/subscriptions.php:121 templates/views/tag.php:208
-msgid "Next"
-msgstr ""
-
-#: templates/views/moderation.php:358
+#: templates/views/moderation.php:344 templates/views/space-moderation.php:200
 msgid "Held content type"
 msgstr ""
 
-#: templates/views/moderation.php:385
+#: templates/views/moderation.php:371 templates/views/space-moderation.php:227
 msgid "No replies are waiting for approval."
 msgstr ""
 
-#: templates/views/moderation.php:386
+#: templates/views/moderation.php:372 templates/views/space-moderation.php:228
 msgid "No posts are waiting for approval."
 msgstr ""
 
-#: templates/views/moderation.php:431
+#: templates/views/moderation.php:420 templates/views/space-moderation.php:272
 msgid "Awaiting approval pagination"
 msgstr ""
 
-#: templates/views/moderation.php:457
+#: templates/views/moderation.php:429
 msgid "No pending flags anywhere. Your community is clean."
 msgstr ""
 
-#: templates/views/moderation.php:458
+#: templates/views/moderation.php:430
 msgid "No pending flags in the spaces you moderate."
 msgstr ""
 
-#: templates/views/moderation.php:517
+#: templates/views/moderation.php:489
 #. translators: %s: reporter's display name
 msgid "Reported by %s"
 msgstr ""
 
-#: templates/views/moderation.php:523
+#: templates/views/moderation.php:495
 msgid "Note"
 msgstr ""
 
-#: templates/views/moderation.php:527
+#: templates/views/moderation.php:499
 msgid "Review in queue"
 msgstr ""
 
-#: templates/views/moderation.php:541
+#: templates/views/moderation.php:514 templates/views/space-moderation.php:305
 msgid "Moderation queue pagination"
 msgstr ""
 
@@ -9707,6 +9710,47 @@ msgstr ""
 msgid "Saved."
 msgstr ""
 
+#: templates/views/space-edit.php:294
+#. translators: %s: the singular space label the site owner configured.
+msgid "Archive this %s and hand it over? Members keep everything they posted."
+msgstr ""
+
+#: templates/views/space-edit.php:296
+#. translators: %s: the space title the admin must type to confirm.
+msgid "This destroys everything in it and cannot be undone. Type %s to confirm."
+msgstr ""
+
+#: templates/views/space-edit.php:301
+msgid "Danger zone"
+msgstr ""
+
+#: templates/views/space-edit.php:310
+#. translators: %s: the singular space label the site owner configured.
+msgid "Archive and hand over this %s"
+msgstr ""
+
+#: templates/views/space-edit.php:316
+#. translators: %s: display name of the member who would take ownership.
+msgid ""
+"Every topic and reply is kept. Ownership passes to %s and the space is "
+"archived."
+msgstr ""
+
+#: templates/views/space-edit.php:327
+msgid "Archive and hand over"
+msgstr ""
+
+#: templates/views/space-edit.php:338
+#. translators: %s: the singular space label the site owner configured.
+msgid "Delete this %s permanently"
+msgstr ""
+
+#: templates/views/space-edit.php:342
+msgid ""
+"Every topic, reply, and attachment in it is destroyed. This cannot be "
+"undone."
+msgstr ""
+
 #: templates/views/space-members.php:38
 msgid "You need to be a member of this space to see its members."
 msgstr ""
@@ -9817,7 +9861,7 @@ msgstr ""
 msgid "You do not have permission to moderate this %s."
 msgstr ""
 
-#: templates/views/space-moderation.php:90
+#: templates/views/space-moderation.php:159
 #. translators: %d: number of pending flags.
 msgid "%d pending flag"
 msgid_plural "%d pending flags"

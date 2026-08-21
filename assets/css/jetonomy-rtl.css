@@ -1611,6 +1611,30 @@
   .jt-subtab:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-subtab.active .jt-tab-count { background: transparent; color: inherit; padding-inline: 0; }
   .jt-mod-flag-reason--held { background: var(--jt-warn-light); color: var(--jt-warn); }
+
+  /* Space danger zone on /s/{slug}/edit/ (1.9.4).
+     Sits BELOW the form, outside it, so a stray Enter in a text field can
+     never submit a destructive action. The critical row is tinted rather
+     than merely red-bordered so it reads as different in kind from the
+     archive row above it, not just louder. Token-driven throughout, so the
+     dark palette follows without a second definition. */
+  .jt-danger-zone { margin-block-start: var(--jt-space-8); padding: var(--jt-space-5); border: 1px solid var(--jt-danger); border-radius: var(--jt-radius-lg); background: var(--jt-bg); display: flex; flex-direction: column; gap: var(--jt-space-4); }
+  .jt-danger-zone-title { margin: 0; font-size: var(--jt-text-lg); font-weight: 700; color: var(--jt-danger); }
+  .jt-danger-row { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-4); padding: var(--jt-space-3) var(--jt-space-4); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-danger-row--critical { border-color: var(--jt-danger); background: var(--jt-danger-light); }
+  .jt-danger-copy { display: flex; flex-direction: column; gap: var(--jt-space-1); min-width: 0; }
+  .jt-danger-heading { margin: 0; font-size: var(--jt-text-base); font-weight: 600; color: var(--jt-text); }
+  .jt-danger-desc { margin: 0; font-size: var(--jt-text-sm); color: var(--jt-text-secondary); line-height: var(--jt-leading-normal); }
+  .jt-danger-zone .jt-space-delete { flex: 0 0 auto; }
+  .jt-danger-zone .jt-space-delete:disabled { opacity: .6; cursor: progress; }
+  .jt-danger-error { margin: 0; color: var(--jt-danger); font-size: var(--jt-text-sm); font-weight: 500; }
+
+  @media (max-width: 640px) {
+    /* Stack copy above the button so neither the description nor the label
+       gets squeezed; the button goes full-width as a proper tap target. */
+    .jt-danger-row { flex-direction: column; align-items: stretch; }
+    .jt-danger-zone .jt-space-delete { width: 100%; justify-content: center; min-height: var(--jt-tap); }
+  }
   .jt-mod-approval .jt-mod-flag-head { flex-wrap: wrap; gap: var(--jt-space-2); }
   .jt-mod-approval .jt-mod-flag-reporter { margin-inline-start: auto; }
 

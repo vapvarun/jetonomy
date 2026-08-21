@@ -43,7 +43,15 @@ function jetonomyConfirm( message ) {
 	} );
 }
 
-function jetonomyPrompt( message, placeholder ) {
+function jetonomyPrompt( message, options ) {
+	// Back-compat: every caller before 1.9.4 passed a plain placeholder string.
+	const opts = 'string' === typeof options ? { placeholder: options } : ( options || {} );
+	// requireMatch turns this into a type-to-confirm gate: the submit button
+	// stays disabled until the typed text matches exactly. Used for actions
+	// with no undo, so the weight of the confirmation matches the weight of
+	// the action - the same contract admin.js already uses for space purge.
+	const requireMatch = opts.requireMatch ? String( opts.requireMatch ) : '';
+
 	return new Promise( ( resolve ) => {
 		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
@@ -54,10 +62,18 @@ function jetonomyPrompt( message, placeholder ) {
 		msg.className = 'jt-modal-msg';
 		msg.textContent = message;
 		box.appendChild( msg );
-		const input = document.createElement( 'textarea' );
+		// A single-line field when confirming a name: you are copying a label,
+		// not composing a message, and a 3-row textarea invites newlines that
+		// then fail the exact match.
+		const input = document.createElement( requireMatch ? 'input' : 'textarea' );
 		input.className = 'jt-modal-input jt-input';
-		input.placeholder = placeholder || '';
-		input.rows = 3;
+		input.placeholder = opts.placeholder || '';
+		if ( requireMatch ) {
+			input.type = 'text';
+			input.autocomplete = 'off';
+		} else {
+			input.rows = 3;
+		}
 		box.appendChild( input );
 		const actions = document.createElement( 'div' );
 		actions.className = 'jt-modal-actions';
@@ -66,9 +82,18 @@ function jetonomyPrompt( message, placeholder ) {
 		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
 		const okBtn = document.createElement( 'button' );
-		okBtn.className = 'jt-btn jt-btn-fill';
-		okBtn.textContent = t.modalSubmit || 'Submit';
+		okBtn.className = 'jt-btn jt-btn-fill' + ( opts.danger ? ' jt-btn-danger' : '' );
+		okBtn.textContent = opts.confirmLabel || t.modalSubmit || 'Submit';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( input.value.trim() ); } );
+		if ( requireMatch ) {
+			okBtn.disabled = true;
+			input.addEventListener( 'input', () => {
+				okBtn.disabled = input.value.trim() !== requireMatch;
+			} );
+			input.addEventListener( 'keydown', ( e ) => {
+				if ( 'Enter' === e.key && ! okBtn.disabled ) { okBtn.click(); }
+			} );
+		}
 		actions.appendChild( cancelBtn );
 		actions.appendChild( okBtn );
 		box.appendChild( actions );
@@ -3150,6 +3175,71 @@ const { state, actions } = store( 'jetonomy', {
                 wrapper.appendChild( msg );
                 container.parentNode.replaceChild( wrapper, container );
             }
+        },
+
+        // ── Space danger zone (1.9.4) ──
+        // DELETE /spaces/{id} already supported both modes and enforced
+        // allow_space_admin_purge; nothing on the frontend called it, so the
+        // setting promised space admins something only wp-admin could deliver.
+        *deleteSpace() {
+            const btn = getElement().ref;
+            const id   = parseInt( btn.getAttribute( 'data-space-id' ), 10 );
+            const mode = btn.getAttribute( 'data-mode' ) || 'transfer';
+            if ( ! id ) return;
+
+            const i18n    = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const title   = btn.getAttribute( 'data-space-title' ) || '';
+            const message = btn.getAttribute( 'data-confirm' ) || '';
+            const section = btn.closest( '.jt-danger-zone' );
+            const errorEl = section && section.querySelector( '[data-jt-delete-error]' );
+
+            // Purge asks the admin to TYPE the space name; archive is a plain
+            // confirm. Matching the weight of the gate to the weight of the
+            // action is the point — the same split admin.js makes.
+            let confirmed;
+            if ( 'purge' === mode && title && 'function' === typeof window.jetonomyPrompt ) {
+                const typed = yield window.jetonomyPrompt( message, {
+                    requireMatch: title,
+                    placeholder: title,
+                    danger: true,
+                    confirmLabel: i18n.purgeConfirmLabel || 'Delete permanently',
+                } );
+                // null = cancelled. A mismatch cannot reach here (the button
+                // stays disabled) but re-check anyway: the dialog is
+                // convenience, never the control.
+                confirmed = null !== typed && String( typed ).trim() === title;
+            } else if ( 'function' === typeof window.jetonomyConfirm ) {
+                confirmed = yield window.jetonomyConfirm( message );
+            } else {
+                confirmed = false;
+            }
+            if ( ! confirmed ) return;
+
+            if ( errorEl ) { errorEl.hidden = true; errorEl.textContent = ''; }
+            const buttons = section ? section.querySelectorAll( '.jt-space-delete' ) : [ btn ];
+            buttons.forEach( ( b ) => { b.disabled = true; } );
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + id + '?mode=' + encodeURIComponent( mode ), {
+                method: 'DELETE',
+            } );
+
+            if ( ! res.ok ) {
+                buttons.forEach( ( b ) => { b.disabled = false; } );
+                if ( errorEl ) {
+                    // The route's own messages are written for humans — "No one
+                    // else can take over this space", "restricted to site
+                    // administrators" — so surface them rather than a generic.
+                    errorEl.textContent = ( res.data && res.data.message ) || i18n.error || 'Could not delete. Please try again.';
+                    errorEl.hidden = false;
+                } 
+                return;
+            }
+
+            // A purge is QUEUED, not immediate, so the space may still resolve
+            // for a moment. Leaving the admin on an edit form for a space that
+            // is draining is the wrong place to stand — send them to the
+            // community root for a purge, back to the space for an archive.
+            window.location.assign( btn.getAttribute( 'data-redirect' ) || '/' );
         },
 
         // ── Awaiting-approval queue (1.9.4) ──
