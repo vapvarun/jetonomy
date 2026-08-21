@@ -67,7 +67,7 @@ No. The AI layer is multi-provider (OpenAI, Anthropic, self-hosted Ollama, or an
 ## Mobile App
 
 **Is there a mobile app?**
-Yes. Jetonomy has an open-source iOS and Android app built with Expo. Use it as-is or publish your own branded build from the same code. See [Mobile App Overview](../mobile-app/00-mobile-app-overview.md) and [Get the App](../mobile-app/03-get-the-app.md).
+Yes. Jetonomy has an iOS and Android app built with Expo, published under your own developer accounts as your own branded app. The source is not publicly downloadable - contact Wbcom for access. See [Mobile App Overview](../mobile-app/00-mobile-app-overview.md) and [Get the App](../mobile-app/03-get-the-app.md).
 
 **How do members sign in to the app?**
 Through WordPress Application Passwords, a secure feature built into WordPress core, not JWT. The app password is separate from the member's real password and can be revoked at any time. See [Connect Members](../mobile-app/02-connect-members.md).

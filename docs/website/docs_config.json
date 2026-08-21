@@ -51,7 +51,7 @@
     {
       "slug": "mobile-app",
       "name": "Mobile App",
-      "description": "Give your community a native iOS and Android app. Brand it from wp-admin (logo, color, community name), connect members with WordPress Application Passwords, and use the open-source Jetonomy app or publish your own.",
+      "description": "Give your community a native iOS and Android app. Brand it from wp-admin (logo, color, community name), connect members with WordPress Application Passwords, and publish your own branded build.",
       "order": 8
     },
     {

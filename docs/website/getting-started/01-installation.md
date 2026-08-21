@@ -16,7 +16,7 @@ Get Jetonomy running on your WordPress site in under five minutes. This guide co
 - Three ways to install Jetonomy
 - What Jetonomy sets up automatically on first activation
 
-> **See it running first** - [community.wbcomdesigns.com](https://community.wbcomdesigns.com/) is Wbcom's own support community, running Jetonomy in production. Browse the spaces, read the threads, and see how topics, replies, voting, trust levels, and moderation feel on a live site before you install. Public registration is open, so you can sign up and ask a question there if you have one.
+> **See it running first** - launch a [free sandbox site](https://app.instawp.io/launch?s=jetonomy&d=v2) in your browser before you install anything. It is a throwaway Jetonomy install you can click around in to see how spaces, topics, replies and voting behave. The sandbox is disposable and not permanent, so nothing you do there matters - it is for trying the software, not a community to join.
 
 ## Requirements
 

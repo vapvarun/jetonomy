@@ -50,5 +50,5 @@ Anyone can revoke a device from the same **Users -> Profile -> Application Passw
 
 ## Next steps
 
-- [Get the App](03-get-the-app.md) - use the open-source app or publish your own
+- [Get the App](03-get-the-app.md) - how to get a branded app of your own
 - [Brand Your App](01-brand-your-app.md) - set your logo, color, and name
