@@ -102,6 +102,90 @@ class Moderation_Service {
 	}
 
 	/**
+	 * Resolve the space scope for the pending-APPROVAL queries below.
+	 *
+	 * Mirrors the three call shapes of list_pending_flags(), with one
+	 * deliberate difference in how "denied" is expressed: it returns an EMPTY
+	 * array, never null. The model layer reads null as "no filter, every
+	 * space", so returning null on a denial would hand the whole site's held
+	 * content to someone with no rights at all. Denied and
+	 * no-spaces-in-scope are the same answer here - an empty scope, which
+	 * matches nothing.
+	 *
+	 * @param int      $user_id
+	 * @param int|null $space_id
+	 * @return int[]|null Null = unscoped (admin dashboard); array = these spaces only.
+	 */
+	private static function approval_scope( int $user_id, ?int $space_id ): ?array {
+		if ( ! $user_id ) {
+			return array();
+		}
+
+		if ( null !== $space_id ) {
+			return Moderation_Permissions::can_view_space_queue( $user_id, $space_id )
+				? array( $space_id )
+				: array();
+		}
+
+		if ( Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
+			return null;
+		}
+
+		return SpaceMember::moderated_space_ids( $user_id );
+	}
+
+	/**
+	 * List content held by a space's require_approval setting.
+	 *
+	 * This is the queue's SECOND source, and it is a different mechanism from
+	 * flags: a flag is a member REPORTING published content, while an
+	 * approval-hold is the space itself refusing to publish in the first
+	 * place (Base_Controller::should_hold_for_approval() writes
+	 * status = 'pending' and creates no flag row). Because nothing lands in
+	 * jt_flags, the flag-only queue showed "no pending flags" while held
+	 * posts piled up invisibly - reachable only from wp-admin, which is
+	 * exactly what a frontend-first community cannot ask a space moderator
+	 * to use.
+	 *
+	 * Posts and replies are listed separately rather than merged. Merging
+	 * would need a UNION across two tables to paginate honestly, and the
+	 * admin screen already presents them as two tabs - so two lists keeps
+	 * one query per model, one index per query, and the same mental model on
+	 * both surfaces.
+	 *
+	 * @param int      $user_id
+	 * @param string   $kind     'post' or 'reply'.
+	 * @param int|null $space_id Limit to one space, or null for the caller's scope.
+	 * @param int      $limit
+	 * @param int      $offset
+	 * @return object[]
+	 */
+	public static function list_pending_approvals( int $user_id, string $kind, ?int $space_id = null, int $limit = 20, int $offset = 0 ): array {
+		$scope = self::approval_scope( $user_id, $space_id );
+
+		return 'reply' === $kind
+			? Reply::list_by_status( array( 'pending' ), $limit, $offset, $scope )
+			: Post::list_by_status( array( 'pending' ), $limit, $offset, $scope );
+	}
+
+	/**
+	 * Count held content visible to this user - paired with
+	 * list_pending_approvals() for pagination totals and tab badges.
+	 *
+	 * @param int      $user_id
+	 * @param string   $kind     'post' or 'reply'.
+	 * @param int|null $space_id Limit to one space, or null for the caller's scope.
+	 * @return int
+	 */
+	public static function count_pending_approvals( int $user_id, string $kind, ?int $space_id = null ): int {
+		$scope = self::approval_scope( $user_id, $space_id );
+
+		return 'reply' === $kind
+			? Reply::count_by_status( array( 'pending' ), $scope )
+			: Post::count_by_status( array( 'pending' ), $scope );
+	}
+
+	/**
 	 * Count pending flags per space for every space the user may moderate.
 	 *
 	 * Used by the admin cross-space dashboard.

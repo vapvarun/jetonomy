@@ -513,6 +513,8 @@ class Template_Loader {
 				'i18n'          => array(
 					'queueClean'             => esc_html__( 'Queue cleared.', 'jetonomy' ),
 					'resolveFailed'          => esc_html__( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'approvalFailed'         => esc_html__( 'Could not update this submission. It may have been handled by another moderator.', 'jetonomy' ),
+					'approvalsClean'         => esc_html__( 'Nothing left awaiting approval.', 'jetonomy' ),
 					'roleUpdateFailed'       => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
 					'loading'                => esc_html__( 'Loading...', 'jetonomy' ),
 					'loadMore'               => esc_html__( 'Load More', 'jetonomy' ),

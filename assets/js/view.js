@@ -3152,6 +3152,83 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Awaiting-approval queue (1.9.4) ──
+        // Posts to the SPACE-scoped route the card carries, not the site-wide
+        // /moderation/{action}/... one. The site-wide route requires the
+        // jetonomy_moderate capability, which a space moderator does not hold,
+        // so using it here would render Approve buttons that can only 403 for
+        // exactly the people the frontend queue exists to serve.
+        *moderateApproval() {
+            const btn  = getElement().ref;
+            const card = btn.closest( '.jt-mod-approval' );
+            if ( ! card ) return;
+
+            const action   = btn.getAttribute( 'data-action-name' );
+            const kind     = card.getAttribute( 'data-object-kind' );
+            const objectId = parseInt( card.getAttribute( 'data-object-id' ), 10 );
+            const endpoint = card.getAttribute( 'data-act-endpoint' );
+            if ( ! action || ! kind || ! objectId || ! endpoint ) return;
+
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+
+            // Reject is destructive, so its button carries data-confirm.
+            // Approve does not — it is the outcome the author already asked for.
+            const confirmMsg = btn.getAttribute( 'data-confirm' );
+            if ( confirmMsg && 'function' === typeof window.jetonomyConfirm ) {
+                const ok = yield window.jetonomyConfirm( confirmMsg );
+                if ( ! ok ) return;
+            }
+
+            const base = ( ( window.jetonomyData && window.jetonomyData.restBase ) || '' ).replace( /\/+$/, '' );
+            let path = endpoint + action + '/' + kind + '/' + objectId;
+            if ( base && 0 === path.indexOf( base ) ) path = path.slice( base.length );
+
+            const buttons = card.querySelectorAll( '.jt-mod-approve' );
+            buttons.forEach( ( b ) => { b.disabled = true; } );
+
+            const res = yield window.jetonomyRest.restFetch( path, { method: 'POST' } );
+            if ( ! res.ok ) {
+                // Re-enable rather than strand the row: the usual cause is another
+                // moderator having already handled it, and the message says so.
+                buttons.forEach( ( b ) => { b.disabled = false; } );
+                const existing = card.querySelector( '.jt-mod-flag-error' );
+                if ( existing ) existing.remove();
+                const p = document.createElement( 'p' );
+                p.className = 'jt-mod-flag-error';
+                p.setAttribute( 'role', 'alert' );
+                p.textContent = ( res.data && res.data.message ) || i18n.approvalFailed || 'Could not update this submission.';
+                card.appendChild( p );
+                return;
+            }
+
+            const container = card.parentNode;
+            card.remove();
+
+            // Keep the server-rendered counts honest without a reload: the header
+            // badge, this tab's count, and the active sub-tab's count all drop by
+            // one. Replace only the numeric run so localized text survives.
+            const decrement = ( el, removeAtZero ) => {
+                if ( ! el ) return;
+                const next = Math.max( 0, ( parseInt( el.getAttribute( 'data-count' ), 10 ) || parseInt( el.textContent, 10 ) || 0 ) - 1 );
+                if ( removeAtZero && next <= 0 ) { el.remove(); return; }
+                if ( el.hasAttribute( 'data-count' ) ) el.setAttribute( 'data-count', String( next ) );
+                el.textContent = el.textContent.replace( /\d+/, String( next ) );
+            };
+            decrement( document.querySelector( '.jt-held-count' ), true );
+            decrement( document.querySelector( '.jt-profile-tab.active .jt-tab-count' ), true );
+            decrement( document.querySelector( '.jt-subtab.active .jt-tab-count' ), false );
+
+            if ( container && ! container.querySelector( '.jt-mod-approval' ) && container.parentNode ) {
+                const wrapper = document.createElement( 'div' );
+                wrapper.className = 'jt-empty';
+                const msg = document.createElement( 'div' );
+                msg.className = 'jt-empty-text';
+                msg.textContent = i18n.approvalsClean || 'Nothing left awaiting approval.';
+                wrapper.appendChild( msg );
+                container.parentNode.replaceChild( wrapper, container );
+            }
+        },
+
         // ── Reply submission ──
         *submitReply() {
             const el = getElement();

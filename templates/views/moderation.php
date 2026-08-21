@@ -81,8 +81,73 @@ $jt_can_manage_bans = user_can( $user_id, 'jetonomy_moderate' );
 // flags list is already scoped per-viewer by Moderation_Service; the banned
 // list is not, hence the extra gate above.
 $jt_view = sanitize_key( wp_unslash( $_GET['view'] ?? 'flags' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-if ( 'banned' !== $jt_view || ! $jt_can_manage_bans ) {
+if ( ! in_array( $jt_view, [ 'flags', 'approvals', 'banned' ], true ) ) {
 	$jt_view = 'flags';
+}
+if ( 'banned' === $jt_view && ! $jt_can_manage_bans ) {
+	$jt_view = 'flags';
+}
+
+// ── Awaiting approval ────────────────────────────────────────────────────
+// The queue's second source. A flag is a member REPORTING published content;
+// an approval-hold is the space refusing to publish at all
+// (Base_Controller::should_hold_for_approval() writes status = 'pending' and
+// creates no flag row). Because nothing lands in jt_flags, this page used to
+// say "No pending flags anywhere" while held submissions piled up invisibly -
+// approvable only from wp-admin, which a frontend-first community cannot ask
+// a space moderator to open.
+//
+// Both counts run on every render, not just when the tab is open, because the
+// badge has to be honest while the moderator is looking at the flags panel.
+// They are two COUNT(*)s served by status_created (status, created_at), so the
+// cost does not grow with the queue.
+$jt_held_posts   = Moderation_Service::count_pending_approvals( $user_id, 'post' );
+$jt_held_replies = Moderation_Service::count_pending_approvals( $user_id, 'reply' );
+$jt_held_total   = $jt_held_posts + $jt_held_replies;
+
+// Posts and replies are separate sub-tabs rather than one merged list: merging
+// needs a UNION across two tables to paginate honestly, and wp-admin already
+// splits them, so this keeps one query per model and one mental model on both
+// surfaces.
+$jt_kind = sanitize_key( wp_unslash( $_GET['kind'] ?? 'post' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+if ( ! in_array( $jt_kind, [ 'post', 'reply' ], true ) ) {
+	$jt_kind = 'post';
+}
+$jt_held_count = 'reply' === $jt_kind ? $jt_held_replies : $jt_held_posts;
+$jt_held_pages = max( 1, (int) ceil( $jt_held_count / $per_page ) );
+$jt_held_paged = min( $jt_raw_paged, $jt_held_pages );
+$jt_held       = 'approvals' === $jt_view && $jt_held_count > 0
+	? Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page )
+	: [];
+
+// Batch-resolve everything the cards need: parent posts (replies only), spaces,
+// and the WP user cache. Done here rather than inside approval-card.php so a
+// full page of 25 costs three queries instead of seventy-five.
+$jt_held_parents = [];
+$jt_held_spaces  = [];
+if ( $jt_held ) {
+	if ( 'reply' === $jt_kind ) {
+		$jt_held_parents = Post::list_by_ids( array_map( static fn( $r ) => (int) $r->post_id, $jt_held ) );
+		$jt_space_ids    = array_map( static fn( $pp ) => (int) $pp->space_id, $jt_held_parents );
+	} else {
+		$jt_space_ids = array_map( static fn( $r ) => (int) $r->space_id, $jt_held );
+	}
+	foreach ( Space::list_by_ids( array_values( array_unique( $jt_space_ids ) ) ) as $jt_held_space ) {
+		$jt_held_spaces[ (int) $jt_held_space->id ] = $jt_held_space;
+	}
+
+	$jt_held_authors = array_values( array_unique( array_map( static fn( $r ) => (int) $r->author_id, $jt_held ) ) );
+	if ( $jt_held_authors ) {
+		// Primes WP's user cache so each card's get_userdata() is served from memory.
+		get_users(
+			[
+				'include'     => $jt_held_authors,
+				'fields'      => 'all_with_meta',
+				'number'      => count( $jt_held_authors ),
+				'count_total' => false,
+			]
+		);
+	}
 }
 
 // Active member restrictions - the SAME model the app's Banned-members screen
@@ -151,7 +216,13 @@ $crumbs = [
 			</h1>
 			<p class="jt-page-subtitle">
 				<?php
-				if ( $is_admin ) {
+				// The subtitle follows the open panel. Reporting the flag total
+				// while the moderator is reading the approvals list would say
+				// "0 pending flags" over a screen full of held submissions.
+				if ( 'approvals' === $jt_view ) {
+					/* translators: %d: number of submissions held for approval */
+					echo esc_html( sprintf( _n( '%d submission awaiting approval', '%d submissions awaiting approval', $jt_held_total, 'jetonomy' ), $jt_held_total ) );
+				} elseif ( $is_admin ) {
 					/* translators: %d: total pending flag count across every space */
 					echo esc_html( sprintf( _n( '%d pending flag across your community', '%d pending flags across your community', $total, 'jetonomy' ), $total ) );
 				} else {
@@ -161,28 +232,44 @@ $crumbs = [
 				?>
 			</p>
 		</div>
-		<?php if ( $total > 0 ) : ?>
+		<?php if ( 'approvals' !== $jt_view && $total > 0 ) : ?>
 			<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( (string) $total ); ?>">
 				<?php
 				/* translators: %d: number of pending flags. */
 				echo esc_html( sprintf( _n( '%d pending', '%d pending', $total, 'jetonomy' ), $total ) );
 				?>
 			</span>
+		<?php elseif ( 'approvals' === $jt_view && $jt_held_total > 0 ) : ?>
+			<span class="jt-badge-danger jt-held-count" data-count="<?php echo esc_attr( (string) $jt_held_total ); ?>">
+				<?php
+				/* translators: %d: number of submissions held for approval. */
+				echo esc_html( sprintf( _n( '%d held', '%d held', $jt_held_total, 'jetonomy' ), $jt_held_total ) );
+				?>
+			</span>
 		<?php endif; ?>
 	</div>
 
-	<?php // Tabs: Flags overview | Banned members. Reuses the profile tab styling. ?>
-	<?php // A single tab is not a tabset - only render the strip when the viewer can reach both panels. ?>
-	<?php if ( $jt_can_manage_bans ) : ?>
-		<div class="jt-profile-tabs">
-			<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>">
-				<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
-			</a>
-			<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>">
+	<?php // Tabs: Flags | Awaiting approval | Banned members. Reuses the profile tab styling. ?>
+	<?php // Flags and Awaiting approval are always both reachable, so the strip always renders; Banned stays capability-gated. ?>
+	<nav class="jt-profile-tabs" aria-label="<?php esc_attr_e( 'Moderation sections', 'jetonomy' ); ?>">
+		<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>" <?php echo 'flags' === $jt_view ? 'aria-current="page"' : ''; ?>>
+			<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
+			<?php if ( $total > 0 ) : ?>
+				<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $total ) ); ?></span>
+			<?php endif; ?>
+		</a>
+		<a href="<?php echo esc_url( add_query_arg( 'view', 'approvals', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'approvals' === $jt_view ? 'active' : ''; ?>" <?php echo 'approvals' === $jt_view ? 'aria-current="page"' : ''; ?>>
+			<?php esc_html_e( 'Awaiting approval', 'jetonomy' ); ?>
+			<?php if ( $jt_held_total > 0 ) : ?>
+				<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $jt_held_total ) ); ?></span>
+			<?php endif; ?>
+		</a>
+		<?php if ( $jt_can_manage_bans ) : ?>
+			<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>" <?php echo 'banned' === $jt_view ? 'aria-current="page"' : ''; ?>>
 				<?php esc_html_e( 'Banned members', 'jetonomy' ); ?>
 			</a>
-		</div>
-	<?php endif; ?>
+		<?php endif; ?>
+	</nav>
 
 	<?php if ( 'banned' === $jt_view ) : ?>
 		<?php if ( empty( $jt_bans ) ) : ?>
@@ -240,30 +327,100 @@ $crumbs = [
 			<?php
 			// Same pagination contract as the flags queue below, so a site with
 			// more than one page of restrictions can reach every one of them.
-			if ( $jt_ban_pages > 1 ) :
-				$jt_ban_base = add_query_arg( 'view', 'banned', $base . '/mod/' );
-				$jt_ban_prev = add_query_arg( 'paged', max( 1, $jt_ban_paged - 1 ), $jt_ban_base );
-				$jt_ban_next = add_query_arg( 'paged', min( $jt_ban_pages, $jt_ban_paged + 1 ), $jt_ban_base );
+			\Jetonomy\Template_Loader::partial(
+				'pagination-nav',
+				[
+					'paged' => $jt_ban_paged,
+					'pages' => $jt_ban_pages,
+					'base'  => add_query_arg( 'view', 'banned', $base . '/mod/' ),
+					'label' => __( 'Banned members pagination', 'jetonomy' ),
+				]
+			);
+			?>
+		<?php endif; ?>
+
+	<?php elseif ( 'approvals' === $jt_view ) : ?>
+		<?php // Sub-tabs: posts and replies are counted and paginated separately. ?>
+		<nav class="jt-subtabs" aria-label="<?php esc_attr_e( 'Held content type', 'jetonomy' ); ?>">
+			<?php
+			$jt_kind_tabs = [
+				'post'  => [ __( 'Posts', 'jetonomy' ), $jt_held_posts ],
+				'reply' => [ __( 'Replies', 'jetonomy' ), $jt_held_replies ],
+			];
+			foreach ( $jt_kind_tabs as $jt_kind_key => $jt_kind_meta ) :
+				$jt_kind_url = add_query_arg(
+					[
+						'view' => 'approvals',
+						'kind' => $jt_kind_key,
+					],
+					$base . '/mod/'
+				);
 				?>
-				<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Banned members pagination', 'jetonomy' ); ?>">
-					<?php if ( $jt_ban_paged > 1 ) : ?>
-						<a class="jt-pagination-link" href="<?php echo esc_url( $jt_ban_prev ); ?>" rel="prev">
-							<?php esc_html_e( 'Previous', 'jetonomy' ); ?>
-						</a>
-					<?php endif; ?>
-					<span class="jt-pagination-status">
-						<?php
-						/* translators: 1: current page, 2: total pages */
-						echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $jt_ban_paged, $jt_ban_pages ) );
-						?>
-					</span>
-					<?php if ( $jt_ban_paged < $jt_ban_pages ) : ?>
-						<a class="jt-pagination-link" href="<?php echo esc_url( $jt_ban_next ); ?>" rel="next">
-							<?php esc_html_e( 'Next', 'jetonomy' ); ?>
-						</a>
-					<?php endif; ?>
-				</nav>
-			<?php endif; ?>
+				<a href="<?php echo esc_url( $jt_kind_url ); ?>"
+					class="jt-subtab <?php echo $jt_kind === $jt_kind_key ? 'active' : ''; ?>"
+					<?php echo $jt_kind === $jt_kind_key ? 'aria-current="page"' : ''; ?>>
+					<?php echo esc_html( $jt_kind_meta[0] ); ?>
+					<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $jt_kind_meta[1] ) ); ?></span>
+				</a>
+			<?php endforeach; ?>
+		</nav>
+
+		<?php if ( empty( $jt_held ) ) : ?>
+			<?php
+			$jt_held_empty = 'reply' === $jt_kind
+				? __( 'No replies are waiting for approval.', 'jetonomy' )
+				: __( 'No posts are waiting for approval.', 'jetonomy' );
+			\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_held_empty ] );
+			?>
+		<?php else : ?>
+			<div class="jt-card jt-card-flush" data-jt-mod-queue="approvals">
+				<?php
+				foreach ( $jt_held as $jt_item ) :
+					$jt_parent        = 'reply' === $jt_kind
+						? ( $jt_held_parents[ (int) $jt_item->post_id ] ?? null )
+						: null;
+					$jt_item_space_id = 'reply' === $jt_kind
+						? (int) ( $jt_parent->space_id ?? 0 )
+						: (int) ( $jt_item->space_id ?? 0 );
+					$jt_item_space    = $jt_held_spaces[ $jt_item_space_id ] ?? null;
+					// A held item whose space or parent post was deleted underneath
+					// it has nowhere to link and no space route to act through.
+					// Skipping is right: the row is unactionable, and the delete
+					// cascade will clear it.
+					if ( ! $jt_item_space || ( 'reply' === $jt_kind && ! $jt_parent ) ) {
+						continue;
+					}
+					\Jetonomy\Template_Loader::partial(
+						'moderation/approval-card',
+						[
+							'item'        => $jt_item,
+							'kind'        => $jt_kind,
+							'space'       => $jt_item_space,
+							'parent_post' => $jt_parent,
+							'base'        => $base,
+						]
+					);
+				endforeach;
+				?>
+			</div>
+
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'pagination-nav',
+				[
+					'paged' => $jt_held_paged,
+					'pages' => $jt_held_pages,
+					'base'  => add_query_arg(
+						[
+							'view' => 'approvals',
+							'kind' => $jt_kind,
+						],
+						$base . '/mod/'
+					),
+					'label' => __( 'Awaiting approval pagination', 'jetonomy' ),
+				]
+			);
+			?>
 		<?php endif; ?>
 
 	<?php elseif ( empty( $flags ) ) : ?>
@@ -348,31 +505,15 @@ $crumbs = [
 		</ul>
 
 		<?php
-		if ( $total_pages > 1 ) :
-			$jt_base_url = $base . '/mod/';
-			$jt_prev_url = add_query_arg( 'paged', max( 1, $paged - 1 ), $jt_base_url );
-			$jt_next_url = add_query_arg( 'paged', min( $total_pages, $paged + 1 ), $jt_base_url );
-			?>
-			<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Moderation queue pagination', 'jetonomy' ); ?>">
-				<?php if ( $paged > 1 ) : ?>
-					<a class="jt-pagination-link" href="<?php echo esc_url( $jt_prev_url ); ?>" rel="prev">
-						<?php jetonomy_echo_icon( 'chevron-left', 14 ); ?>
-						<?php esc_html_e( 'Previous', 'jetonomy' ); ?>
-					</a>
-				<?php endif; ?>
-				<span class="jt-pagination-status">
-					<?php
-					/* translators: 1: current page, 2: total pages */
-					echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $paged, $total_pages ) );
-					?>
-				</span>
-				<?php if ( $paged < $total_pages ) : ?>
-					<a class="jt-pagination-link" href="<?php echo esc_url( $jt_next_url ); ?>" rel="next">
-						<?php esc_html_e( 'Next', 'jetonomy' ); ?>
-						<?php jetonomy_echo_icon( 'chevron-right', 14 ); ?>
-					</a>
-				<?php endif; ?>
-			</nav>
-		<?php endif; ?>
+		\Jetonomy\Template_Loader::partial(
+			'pagination-nav',
+			[
+				'paged' => $paged,
+				'pages' => $total_pages,
+				'base'  => $base . '/mod/',
+				'label' => __( 'Moderation queue pagination', 'jetonomy' ),
+			]
+		);
+		?>
 	<?php endif; ?>
 </div>

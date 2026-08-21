@@ -1595,6 +1595,33 @@
   .jt-mod-flag-action { display: inline-flex; align-items: center; gap: var(--jt-space-1); margin-inline-start: auto; font-size: 0.875rem; font-weight: 500; color: var(--jt-accent); text-decoration: none; }
   .jt-mod-flag-action:hover { text-decoration: underline; }
 
+  /* Awaiting-approval queue (1.9.4).
+     The moderation page carries two sources now — member-reported flags and
+     content the space itself held via require_approval — so the tab strip
+     gained a third tab and the held panel a post/reply sub-strip. Counts sit
+     in the tab so a moderator can see there is work waiting without opening
+     the panel. Everything is token-driven, so dark mode follows for free, and
+     the strip inherits .jt-profile-tabs' existing ≤640px scroll behaviour. */
+  .jt-tab-count { display: inline-block; margin-inline-start: var(--jt-space-1); padding: 1px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); font-size: 0.6875rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.5; }
+  .jt-profile-tab.active .jt-tab-count { background: var(--jt-accent-light); color: var(--jt-accent); }
+  .jt-subtabs { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); margin-block-end: var(--jt-space-4); }
+  .jt-subtab { display: inline-flex; align-items: center; padding: var(--jt-space-1) var(--jt-space-3); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-full); background: var(--jt-bg); color: var(--jt-text-secondary); font-size: var(--jt-text-sm); font-weight: 500; text-decoration: none; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease); }
+  .jt-subtab:hover { color: var(--jt-text); border-color: var(--jt-border-strong); }
+  .jt-subtab.active { background: var(--jt-accent-light); border-color: var(--jt-accent); color: var(--jt-accent); }
+  .jt-subtab:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-subtab.active .jt-tab-count { background: transparent; color: inherit; padding-inline: 0; }
+  .jt-mod-flag-reason--held { background: var(--jt-warn-light); color: var(--jt-warn); }
+  .jt-mod-approval .jt-mod-flag-head { flex-wrap: wrap; gap: var(--jt-space-2); }
+  .jt-mod-approval .jt-mod-flag-reporter { margin-inline-start: auto; }
+
+  @media (max-width: 480px) {
+    /* Stack the card's actions so Approve / Reject stay full-width tap
+       targets instead of being squeezed onto one line with View. */
+    .jt-mod-approval .jt-mod-flag-actions { flex-wrap: wrap; }
+    .jt-mod-approval .jt-mod-flag-actions .jt-btn { flex: 1 1 auto; justify-content: center; }
+    .jt-mod-approval .jt-mod-flag-reporter { margin-inline-start: 0; flex-basis: 100%; }
+  }
+
   /* Sidebar links column — moderation link sits below "View all members". */
   .jt-sidebar-links { display: flex; flex-direction: column; gap: var(--jt-space-2); margin-top: var(--jt-space-3); }
   .jt-sidebar-link-mod { display: inline-flex; align-items: center; gap: var(--jt-space-1); }

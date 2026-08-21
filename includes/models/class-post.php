@@ -769,38 +769,79 @@ class Post extends Model {
 	 * both read one implementation instead of duplicating raw SQL. Served by the
 	 * status_created (status, created_at) index.
 	 *
-	 * @param string[] $statuses One or more of publish|pending|draft|spam|trash.
-	 * @param int      $limit    Max rows.
-	 * @param int      $offset   Pagination offset.
+	 * @param string[]   $statuses  One or more of publish|pending|draft|spam|trash.
+	 * @param int        $limit     Max rows.
+	 * @param int        $offset    Pagination offset.
+	 * @param int[]|null $space_ids Limit to these spaces, or null for every space.
 	 * @return object[]
 	 */
-	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0 ): array {
+	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0, ?array $space_ids = null ): array {
 		$statuses = array_values( array_filter( array_map( 'strval', $statuses ) ) );
 		if ( empty( $statuses ) ) {
 			return array();
 		}
+		$scope = static::space_scope_sql( $space_ids );
+		if ( null === $scope ) {
+			return array();
+		}
 		$table        = static::table();
 		$placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
-		$params       = array_merge( $statuses, array( $limit, $offset ) );
+		$params       = array_merge( $statuses, $scope['params'], array( $limit, $offset ) );
 
 		return static::db()->get_results(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
-				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders and $scope['sql'] are lists of %s / %d.
+				"SELECT * FROM {$table} WHERE status IN ({$placeholders}){$scope['sql']} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
 				...$params
 			)
 		) ?: array();
 	}
 
 	/**
+	 * Build the optional space filter shared by the two status queries.
+	 *
+	 * The null-vs-empty distinction is the whole point and is easy to get
+	 * wrong: null means "no filter", while an EMPTY array means "the caller
+	 * has no spaces in scope" and must return nothing. Collapsing the two
+	 * would hand a moderator who moderates no space the entire site's
+	 * pending queue - which is the exact privilege boundary the frontend
+	 * queue relies on.
+	 *
+	 * @param int[]|null $space_ids
+	 * @return array{sql:string,params:array<int,int>}|null Null = match nothing.
+	 */
+	protected static function space_scope_sql( ?array $space_ids ): ?array {
+		if ( null === $space_ids ) {
+			return array(
+				'sql'    => '',
+				'params' => array(),
+			);
+		}
+		$ids = array_values( array_unique( array_filter( array_map( 'absint', $space_ids ) ) ) );
+		if ( empty( $ids ) ) {
+			return null;
+		}
+
+		return array(
+			'sql'    => ' AND space_id IN (' . implode( ', ', array_fill( 0, count( $ids ), '%d' ) ) . ')',
+			'params' => $ids,
+		);
+	}
+
+	/**
 	 * Count posts in the given moderation statuses via COUNT(*) (no row load).
 	 *
-	 * @param string[] $statuses
+	 * @param string[]   $statuses
+	 * @param int[]|null $space_ids Limit to these spaces, or null for every space.
 	 * @return int
 	 */
-	public static function count_by_status( array $statuses ): int {
+	public static function count_by_status( array $statuses, ?array $space_ids = null ): int {
 		$statuses = array_values( array_filter( array_map( 'strval', $statuses ) ) );
 		if ( empty( $statuses ) ) {
+			return 0;
+		}
+		$scope = static::space_scope_sql( $space_ids );
+		if ( null === $scope ) {
 			return 0;
 		}
 		$table        = static::table();
@@ -808,11 +849,45 @@ class Post extends Model {
 
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
-				"SELECT COUNT(*) FROM {$table} WHERE status IN ({$placeholders})",
-				...$statuses
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders and $scope['sql'] are lists of %s / %d.
+				"SELECT COUNT(*) FROM {$table} WHERE status IN ({$placeholders}){$scope['sql']}",
+				...array_merge( $statuses, $scope['params'] )
 			)
 		);
+	}
+
+	/**
+	 * Hydrate post rows for a given set of IDs, in the order asked for.
+	 *
+	 * Mirrors Space::list_by_ids(). Exists so callers that start from
+	 * something OTHER than posts - the moderation queue starts from replies
+	 * and needs each reply's parent for its title and permalink - can batch
+	 * one indexed query instead of a find() per row.
+	 *
+	 * @param int[] $ids
+	 * @return array<int,object> Keyed by post id. Sparse: missing ids are absent.
+	 */
+	public static function list_by_ids( array $ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ), static fn ( int $id ): bool => $id > 0 ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+				'SELECT * FROM ' . static::table() . " WHERE id IN ({$placeholders})",
+				...$ids
+			)
+		) ?: array();
+
+		$by_id = array();
+		foreach ( $rows as $row ) {
+			$by_id[ (int) $row->id ] = $row;
+		}
+
+		return $by_id;
 	}
 
 	/**
