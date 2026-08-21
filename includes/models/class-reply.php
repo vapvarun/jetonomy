@@ -9,6 +9,7 @@ namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Cache;
 use function Jetonomy\now;
 
 class Reply extends Model {
@@ -56,7 +57,13 @@ class Reply extends Model {
 	 * @return int New row id.
 	 */
 	public static function insert( array $data ): int {
-		return parent::insert( self::sanitize_content_fields( $data ) );
+		$id = parent::insert( self::sanitize_content_fields( $data ) );
+
+		// After the write, never before: busting first is a re-prime race
+		// where a concurrent read re-caches the pre-insert tree in the gap.
+		self::bust_thread( (int) ( $data['post_id'] ?? 0 ) );
+
+		return $id;
 	}
 
 	public static function create( array $data ): int|\WP_Error {
@@ -147,6 +154,11 @@ class Reply extends Model {
 	public static function update( int $id, array $data ): bool {
 		$data = self::sanitize_content_fields( $data );
 
+		// Resolve the parent BEFORE the write: a split can move a reply to a
+		// different post, and then only the pre-write value identifies the
+		// thread this edit is leaving.
+		$jt_prev_post = (int) ( self::find( $id )->post_id ?? 0 );
+
 		$delta = 0;
 		$reply = null;
 
@@ -175,6 +187,15 @@ class Reply extends Model {
 
 			/** This action is documented in includes/models/class-reply.php (Reply::create) */
 			do_action( 'jetonomy_reply_publish_transition', $id, $delta, (string) ( $reply->created_at ?? '' ) );
+		}
+
+		// Both threads when a split moved the reply: the one it left and the
+		// one it arrived in. bust_thread() no-ops on 0, so the common case
+		// where they are the same post costs one extra call and nothing else.
+		self::bust_thread( $jt_prev_post );
+		$jt_now_post = (int) ( self::find( $id )->post_id ?? 0 );
+		if ( $jt_now_post !== $jt_prev_post ) {
+			self::bust_thread( $jt_now_post );
 		}
 
 		return $result;
@@ -238,6 +259,12 @@ class Reply extends Model {
 
 			/** This action is documented in includes/models/class-reply.php (Reply::create) */
 			do_action( 'jetonomy_reply_publish_transition', $id, -1, (string) ( $reply->created_at ?? '' ) );
+		}
+
+		// $reply was loaded above, before the row went away - the only place
+		// the parent post id is still knowable.
+		if ( $result && $reply ) {
+			self::bust_thread( (int) ( $reply->post_id ?? 0 ) );
 		}
 
 		return $result;
@@ -576,6 +603,81 @@ class Reply extends Model {
 	 * @return array Threaded reply tree.
 	 */
 	public static function get_threaded( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = 0, int $offset = 0 ): array {
+		if ( $post_id <= 0 ) {
+			return array();
+		}
+
+		return Cache::remember(
+			sprintf(
+				'reply_thread:%d:%d:%s:%d:%d',
+				$post_id,
+				self::thread_version( $post_id ),
+				$sort,
+				$limit,
+				$offset
+			),
+			static fn () => self::build_threaded( $post_id, $sort, $limit, $offset ),
+			120
+		);
+	}
+
+	/**
+	 * Current cache namespace for one post's threaded reads.
+	 *
+	 * A thread is cached once per (sort, limit, offset) combination, so a new
+	 * reply would otherwise have to invalidate a key set nobody can enumerate.
+	 * Versioning sidesteps that: every variant carries the version in its key,
+	 * and bumping the version orphans all of them at once.
+	 *
+	 * When the counter is MISSING it seeds from time() rather than from 1. If
+	 * it reset to 1 - because the key expired or Redis was flushed - entries
+	 * written under the previous life of version 1 would still be inside their
+	 * own TTL and would come back as hits. A timestamp can never collide with
+	 * a namespace that has already been used.
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	private static function thread_version( int $post_id ): int {
+		$key     = 'reply_thread_ver:' . $post_id;
+		$version = Cache::get( $key );
+
+		if ( ! is_numeric( $version ) ) {
+			$version = time();
+			Cache::set( $key, $version, 0 );
+		}
+
+		return (int) $version;
+	}
+
+	/**
+	 * Invalidate every cached threaded read for a post.
+	 *
+	 * Called on every reply write. Bumping past the current value rather than
+	 * incrementing keeps it monotonic even if two writers race.
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public static function bust_thread( int $post_id ): void {
+		if ( $post_id <= 0 ) {
+			return;
+		}
+		Cache::set( 'reply_thread_ver:' . $post_id, max( time(), self::thread_version( $post_id ) + 1 ), 0 );
+
+		// The post row carries reply_count / last_reply_at, which this write
+		// has just changed.
+		Post::bust_cache( $post_id );
+	}
+
+	/**
+	 * Uncached body of get_threaded().
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param string $sort    Sort order.
+	 * @param int    $limit   Max top-level replies (0 = all).
+	 * @param int    $offset  Offset for top-level replies.
+	 * @return array Threaded reply tree.
+	 */
+	private static function build_threaded( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = 0, int $offset = 0 ): array {
 		// SQL-side pagination (caching plan WP1.1). The old shape fetched the
 		// WHOLE thread — every reply row incl. longtext bodies — into PHP and
 		// array_slice()d the top level, so a 500-reply topic transferred all

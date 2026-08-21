@@ -386,5 +386,19 @@ class Vote extends Model {
 				$object_id
 			)
 		);
+
+		// Post::find() caches the row, and this writes to it WITHOUT going
+		// through Post::update() - so nothing else would clear it and every
+		// reader would keep seeing the pre-vote score until the TTL expired.
+		// Voting on a reply changes the thread's rendered order under 'best',
+		// so that invalidates the thread rather than a single row.
+		if ( 'post' === $object_type ) {
+			Post::bust_cache( $object_id );
+		} elseif ( 'reply' === $object_type ) {
+			$parent = Reply::find( $object_id );
+			if ( $parent ) {
+				Reply::bust_thread( (int) ( $parent->post_id ?? 0 ) );
+			}
+		}
 	}
 }

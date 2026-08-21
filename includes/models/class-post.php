@@ -190,6 +190,62 @@ class Post extends Model {
 	 *   non-publish → publish     : +1 space.post_count, +1 user.post_count
 	 *   everything else           : no-op
 	 */
+	/**
+	 * Single-post read, served from the object cache.
+	 *
+	 * The hottest read in the product: every thread view starts here, and it
+	 * went straight to MySQL on every request while the profile row rendered
+	 * beside it came from Redis.
+	 *
+	 * remember_object(), NOT remember(). A miss caches null, and Redis
+	 * materialises a stored null as an empty string on the way back out -
+	 * remember() would treat that as a hit and hand '' to a caller whose
+	 * signature says ?object, which is a TypeError at the call site rather
+	 * than here. remember_object() coerces every non-object hit back to null
+	 * so the contract holds. The caching gate exercises this deliberately by
+	 * requesting a deleted post twice.
+	 *
+	 * TTL is short by design. Post rows carry counters (reply_count,
+	 * vote_score, last_reply_at) that other paths bump without going through
+	 * update(), so a long TTL would show stale numbers no invalidation hook
+	 * knows to clear.
+	 *
+	 * @param int $id Post ID.
+	 */
+	public static function find( int $id ): ?object {
+		if ( $id <= 0 ) {
+			return null;
+		}
+
+		return Cache::remember_object(
+			self::cache_key( $id ),
+			static fn () => parent::find( $id ),
+			300
+		);
+	}
+
+	/**
+	 * Cache key for one post row.
+	 *
+	 * @param int $id Post ID.
+	 */
+	private static function cache_key( int $id ): string {
+		return 'post:' . $id;
+	}
+
+	/**
+	 * Drop every cached read that this post appears in.
+	 *
+	 * Called from insert/update/delete so a write is visible on the very next
+	 * read rather than at TTL expiry - the difference between "the cache is
+	 * working" and "the site is lying to people".
+	 *
+	 * @param int $id Post ID.
+	 */
+	public static function bust_cache( int $id ): void {
+		Cache::delete( self::cache_key( $id ) );
+	}
+
 	public static function update( int $id, array $data ): bool {
 		$data = self::sanitize_content_fields( $data );
 
@@ -211,6 +267,17 @@ class Post extends Model {
 
 		$result = parent::update( $id, $data );
 		self::reset_slug_memo();
+
+		/*
+		 * AFTER the write, never before.
+		 *
+		 * Busting first looks safer and is not: this method calls self::find()
+		 * a few lines up to read the pre-write status, which RE-CACHES the old
+		 * row after the bust and leaves the stale value sitting there for the
+		 * whole TTL. Same re-prime race UserProfile::update_profile() already
+		 * documents, arrived at the same way.
+		 */
+		self::bust_cache( $id );
 
 		if ( 0 !== $delta && $post ) {
 			if ( ! empty( $post->space_id ) ) {
@@ -275,6 +342,11 @@ class Post extends Model {
 		$post   = self::find( $id );
 		$result = parent::delete( $id );
 		self::reset_slug_memo();
+
+		// After the delete: the self::find() above re-primes the cache with
+		// the row that is about to disappear, so busting any earlier leaves a
+		// deleted post readable for the rest of its TTL.
+		self::bust_cache( $id );
 
 		if ( true === $result && $post && 'publish' === ( $post->status ?? '' ) ) {
 			if ( ! empty( $post->space_id ) ) {
@@ -913,6 +985,9 @@ class Post extends Model {
 				$id
 			)
 		);
+
+		// reply_count and last_reply_at both live on the cached row.
+		self::bust_cache( $id );
 	}
 
 	/**
@@ -931,6 +1006,9 @@ class Post extends Model {
 				$id
 			)
 		);
+
+		// flag_count is read straight off the cached row by the moderation UI.
+		self::bust_cache( $id );
 	}
 
 	/**
@@ -945,6 +1023,21 @@ class Post extends Model {
 				$id
 			)
 		);
+
+		/*
+		 * Deliberately does NOT bust the cache.
+		 *
+		 * This fires on every single page view, so busting here would clear the
+		 * post row on every read and Post::find() would never serve a warm hit -
+		 * the cache would exist and do nothing, which is worse than not having
+		 * it, because it looks like coverage.
+		 *
+		 * The cost is that view_count can trail by up to the row's TTL. A view
+		 * counter is approximate by nature - it is already racy under
+		 * concurrency and nobody reconciles it - so a few minutes of lag is
+		 * within what the number already means. Every other column on this row
+		 * has a real invalidation path.
+		 */
 	}
 
 	/**

@@ -295,9 +295,11 @@ class Schema {
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
   role ENUM('viewer','member','moderator','admin') NOT NULL DEFAULT 'member',
   joined_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  source ENUM('manual','invite','rule','tier') NOT NULL DEFAULT 'manual',
   PRIMARY KEY  (space_id,user_id),
   KEY user_joined (user_id,joined_at),
-  KEY space_role_joined (space_id,role,joined_at)
+  KEY space_role_joined (space_id,role,joined_at),
+  KEY user_source (user_id,source)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 11. jt_tags
