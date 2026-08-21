@@ -607,9 +607,24 @@ class Reply extends Model {
 			return array();
 		}
 
-		return Cache::remember(
+		/*
+		 * The cached value is the RAW tree - no viewer state in it.
+		 *
+		 * This originally cached the finished tree, which was a
+		 * confidentiality bug: build_threaded() applies per-viewer scrubbing
+		 * (block tombstones, private-reply tombstones) and the key has no
+		 * viewer component, so whoever primed the entry decided what everyone
+		 * else saw for the rest of the TTL. Reproduced: an author primed a
+		 * thread containing their own private reply and a LOGGED-OUT visitor
+		 * read the private body straight out of that entry.
+		 *
+		 * Caching raw and scrubbing per read also fixes the other direction -
+		 * a block now takes effect on the next view instead of waiting out a
+		 * TTL, which is what the caching gate demands.
+		 */
+		$raw = Cache::remember(
 			sprintf(
-				'reply_thread:%d:%d:%s:%d:%d',
+				'reply_thread_raw:%d:%d:%s:%d:%d',
 				$post_id,
 				self::thread_version( $post_id ),
 				$sort,
@@ -619,6 +634,75 @@ class Reply extends Model {
 			static fn () => self::build_threaded( $post_id, $sort, $limit, $offset ),
 			120
 		);
+
+		return self::apply_viewer_state( self::clone_tree( $raw ), $post_id );
+	}
+
+	/**
+	 * Deep-copy a cached tree before anything is allowed to touch it.
+	 *
+	 * Not defensive padding: wp_cache_get() can hand back the SAME object
+	 * graph it is holding - the runtime layer in front of a persistent backend
+	 * does exactly that - so scrubbing in place would write the viewer's
+	 * tombstones into the cached entry and hand them to the next reader. That
+	 * is the original bug wearing a different hat, and it would only show up
+	 * on installs with a drop-in.
+	 *
+	 * @param object[] $nodes Raw tree.
+	 * @return object[] An independent copy.
+	 */
+	private static function clone_tree( array $nodes ): array {
+		$out = array();
+		foreach ( $nodes as $node ) {
+			$copy = clone $node;
+			if ( ! empty( $copy->children ) && is_array( $copy->children ) ) {
+				$copy->children = self::clone_tree( $copy->children );
+			}
+			$out[] = $copy;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Apply everything that depends on WHO is asking.
+	 *
+	 * Runs on every read, against freshly resolved state, so nothing here is
+	 * ever shared between viewers or held past a change.
+	 *
+	 * @param object[] $nodes   Tree copy, safe to mutate.
+	 * @param int      $post_id Parent post, for the private-reply rule.
+	 * @return object[]
+	 */
+	private static function apply_viewer_state( array $nodes, int $post_id ): array {
+		$viewer_id   = get_current_user_id();
+		$blocked_ids = BlockedUser::blocked_ids( $viewer_id );
+		$parent_post = Post::find( $post_id );
+
+		self::scrub_tree( $nodes, $blocked_ids, $parent_post, $viewer_id );
+
+		return $nodes;
+	}
+
+	/**
+	 * Walk a tree applying both tombstone passes at every depth.
+	 *
+	 * @param object[]    $nodes       Nodes to scrub, by reference.
+	 * @param int[]       $blocked_ids Authors this viewer has blocked.
+	 * @param object|null $parent_post Parent post, or null when it is gone.
+	 * @param int         $viewer_id   Current viewer.
+	 */
+	private static function scrub_tree( array &$nodes, array $blocked_ids, ?object $parent_post, int $viewer_id ): void {
+		foreach ( $nodes as $node ) {
+			if ( $parent_post instanceof \stdClass && $node instanceof \stdClass ) {
+				self::apply_private_tombstone( $node, $parent_post, $viewer_id );
+			}
+			self::apply_block_tombstone( $node, $blocked_ids );
+
+			if ( ! empty( $node->children ) && is_array( $node->children ) ) {
+				self::scrub_tree( $node->children, $blocked_ids, $parent_post, $viewer_id );
+			}
+		}
 	}
 
 	/**
@@ -767,23 +851,18 @@ class Reply extends Model {
 			$by_parent[ $pid ][] = $reply;
 		}
 
-		// Blocked-author ids for the current viewer, loaded ONCE for the whole
-		// tree (not per-row) — see build_tree()'s tombstone step.
-		$blocked_ids = BlockedUser::blocked_ids( get_current_user_id() );
-
-		// Private replies tombstone per-viewer (1.9.0): one post fetch for the
-		// whole tree, applied on the flat set BEFORE nesting so every depth is
-		// covered without threading the post through build_tree().
-		$parent_post = \Jetonomy\Models\Post::find( $post_id );
-		if ( $parent_post ) {
-			$viewer_id = get_current_user_id();
-			foreach ( $all as $reply ) {
-				self::apply_private_tombstone( $reply, $parent_post, $viewer_id );
-			}
-		}
+		/*
+		 * NOTHING viewer-dependent happens here. Block tombstones and
+		 * private-reply tombstones used to be applied at this point, which
+		 * baked one viewer's permissions into a cache entry every other viewer
+		 * then read. Both now run in apply_viewer_state(), after the cache.
+		 *
+		 * If you are adding something that calls get_current_user_id(), it
+		 * does not belong in this method.
+		 */
 
 		// Recursively attach children (depth label capped at 3).
-		return self::build_tree( $by_parent, 0, 0, 3, $blocked_ids );
+		return self::build_tree( $by_parent, 0, 0, 3 );
 	}
 
 	/**

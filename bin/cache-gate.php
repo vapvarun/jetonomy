@@ -202,6 +202,88 @@ $check(
 	'survives' === $persisted ? 'read back after dropping the runtime layer' : 'got ' . var_export( $persisted, true )
 );
 
+// ── 7. Per-viewer state must not be shared ────────────────────────────────
+// The gate's original seven checks all passed while a thread cache was handing
+// one viewer's permissions to every other viewer, because none of them read the
+// same key as two different people. This is that check.
+$leak_post  = Post::create(
+	array(
+		'space_id'  => $space_id,
+		'author_id' => 1,
+		'title'     => 'Gate per-viewer probe',
+		'content'   => '<p>q</p>',
+		'status'    => 'publish',
+	)
+);
+$leak_reply = Reply::create(
+	array(
+		'post_id'    => (int) $leak_post,
+		'author_id'  => 1,
+		'content'    => '<p>GATE-PRIVATE-BODY</p>',
+		'status'     => 'publish',
+		'is_private' => 1,
+	)
+);
+
+$body_for = static function ( int $viewer ) use ( $leak_post, $leak_reply ): string {
+	wp_set_current_user( $viewer );
+	foreach ( Reply::get_threaded( (int) $leak_post ) as $node ) {
+		if ( (int) $node->id === (int) $leak_reply ) {
+			return (string) ( $node->content ?? '' );
+		}
+	}
+	return '';
+};
+
+$as_author = $body_for( 1 );  // primes the entry
+$as_guest  = $body_for( 0 );  // reads the same key
+$again     = $body_for( 1 );  // did the guest's read poison it?
+wp_set_current_user( 1 );
+
+$check(
+	'7. private reply not served to a guest from cache',
+	false === strpos( $as_guest, 'GATE-PRIVATE-BODY' ),
+	false === strpos( $as_guest, 'GATE-PRIVATE-BODY' ) ? 'scrubbed per viewer' : 'LEAKED the private body'
+);
+$check(
+	'8. priming viewer keeps their own access',
+	false !== strpos( $as_author, 'GATE-PRIVATE-BODY' ) && false !== strpos( $again, 'GATE-PRIVATE-BODY' ),
+	'author sees it before and after the guest read'
+);
+
+// ── 9. A block applies on the next read, not at TTL ──────────────────────
+$blocker = 1;
+$blocked = (int) $wpdb->get_var( "SELECT author_id FROM {$posts_t} WHERE id = " . (int) $busiest );
+if ( $blocked && $blocked !== $blocker ) {
+	wp_set_current_user( $blocker );
+	Reply::get_threaded( $busiest ); // warm it while NOT blocking
+	\Jetonomy\Models\BlockedUser::block( $blocker, $blocked );
+
+	$tombstoned = false;
+	foreach ( Reply::get_threaded( $busiest ) as $node ) {
+		// BlockedUser::apply_tombstone() sets is_blocked_author and blanks the
+		// body - NOT is_blocked_hidden, which is the private-reply flag.
+		if ( (int) ( $node->author_id ?? 0 ) === $blocked && ! empty( $node->is_blocked_author ) && '' === (string) ( $node->content ?? '' ) ) {
+			$tombstoned = true;
+			break;
+		}
+	}
+	\Jetonomy\Models\BlockedUser::unblock( $blocker, $blocked );
+
+	$check(
+		'9. new block applies to a warm thread immediately',
+		$tombstoned,
+		$tombstoned ? 'tombstoned on the next read' : 'still visible - waiting out the TTL'
+	);
+}
+
+if ( ! is_wp_error( $leak_reply ) ) {
+	Reply::delete( (int) $leak_reply );
+}
+if ( ! is_wp_error( $leak_post ) ) {
+	Post::delete( (int) $leak_post );
+}
+
 echo implode( "\n", $results ) . "\n\n";
 printf( "  %d passed, %d failed\n", $pass, $fail );
 echo $fail > 0
