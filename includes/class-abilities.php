@@ -920,7 +920,25 @@ class Abilities {
 					],
 				],
 				'execute_callback'    => [ $this, 'execute_get_activity' ],
-				'permission_callback' => '__return_true',
+
+				/*
+				 * jt_activity_log is an audit trail - it records moderation
+				 * actions, bans, trust changes and reputation movement across
+				 * every user. wp-admin puts it behind jetonomy_manage_settings
+				 * (Admin::add_menu, the Activity Log submenu). This ability had
+				 * '__return_true' and its handler applies no filtering of its
+				 * own, so the agent surface was the LEAST protected of the
+				 * three for the most sensitive read in the plugin.
+				 *
+				 * Reproduced before the fix: a subscriber for whom
+				 * current_user_can('jetonomy_manage_settings') is false received
+				 * five rows including other members' reputation changes.
+				 * Matched to wp-admin rather than invented - one capability, one
+				 * answer, whichever surface asks.
+				 */
+				'permission_callback' => function () {
+					return current_user_can( 'jetonomy_manage_settings' );
+				},
 				'meta'                => [
 					'annotations'  => [
 						'readonly'    => true,
@@ -1388,8 +1406,14 @@ class Abilities {
 		// materialize every row. The payload shape stays a flat array (a
 		// conditional wrapper would break consumers exactly when a big site
 		// first hits the cap); 200 covers any realistic community.
-		$cap    = 200;
-		$spaces = $category_id ? Space::list_by_category( $category_id ) : Space::list_all( 'active', $cap );
+		$cap = 200;
+		// Both branches must respect the cap. Until 1.9.4 only list_all() got it,
+		// so passing a category_id took the unbounded path - defeating the cap
+		// in exactly the case the comment above describes, since an agent
+		// filtering by category is the normal call, not the exotic one.
+		$spaces = $category_id
+			? Space::list_by_category( $category_id, null, $cap )
+			: Space::list_all( 'active', $cap );
 		$items  = [];
 
 		foreach ( $spaces as $s ) {

@@ -284,6 +284,8 @@ Housekeeping release. No customer-facing behaviour changed.
 * Improve  - The moderation Flags queue now shows what was reported and links to it. Previously it showed only an internal id, so a moderator had to go find the content before deciding.
 * Improve  - Community home and category pages now page through spaces instead of rendering every one of them, so a large directory stays fast. Set the page size with the jetonomy_spaces_per_page filter.
 * New      - Space access rules can now be listed, created and deleted through the REST API, so membership gating can be configured from the app or an integration rather than only in wp-admin.
+* Security - The activity log is no longer readable through the AI-agent interface by members who cannot open it in wp-admin. It now requires the same permission on both.
+* Fix      - Listing spaces by category through the AI-agent interface is now limited like every other listing, instead of loading the whole category.
 
 = 1.9.3 - August 2026 =
 
