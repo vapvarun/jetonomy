@@ -43,7 +43,7 @@ Jetonomy works with any WordPress theme. For the best visual result with zero ex
 
 ### Method 2: Upload a ZIP File
 
-1. Download the Jetonomy ZIP from [jetonomy.com](https://jetonomy.com) or [wordpress.org](https://wordpress.org/plugins/jetonomy/).
+1. Download the Jetonomy ZIP from [jetonomy.org](https://jetonomy.org) or [wordpress.org](https://wordpress.org/plugins/jetonomy/).
 2. Go to **Plugins → Add New Plugin → Upload Plugin**.
 3. Choose the ZIP file and click **Install Now**, then **Activate**.
 

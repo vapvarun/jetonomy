@@ -14,7 +14,7 @@ Since Jetonomy 1.4.0, space owners and moderators can edit their space directly 
 - Every field you can change from the front-end
 - How the cover image upload works without wp-admin permissions
 - The safety rules that prevent a space from being orphaned by accident
-- The difference between archiving and deleting a space
+- The difference between handing a space over and deleting it, and what gates each
 - When to use the front-end editor versus the wp-admin one
 
 ## Where The Edit Button Appears
@@ -76,27 +76,61 @@ The front-end editor is intentionally cautious about anything that could leave a
 
 These rules exist because the most common community support ticket pre-1.4.0 was "I accidentally demoted myself and now nobody can edit the space." The front-end editor blocks that path entirely.
 
-## Archive vs Delete
+## Danger Zone: Handing Over vs Deleting (1.9.4+)
 
-The bottom of the Edit space page has two destructive actions, kept visually separate from the save button.
+The bottom of the Edit space page has a **Danger zone**, kept outside the form
+so a stray Enter in a text field can never trigger it. It holds up to two
+actions, and which ones you see depends on your community's settings and on
+whether the space has another admin.
 
-**Archive space** marks the space read-only. Existing posts and replies stay visible to anyone who could see them before. New posts and replies are disabled. The space disappears from category listings but is still reachable at its original URL. Archive is reversible: re-opening the editor and clicking **Unarchive** restores everything.
+### Archive and hand over
 
-Use archive when:
+Archives the space and passes ownership to another of its admins. Every topic
+and reply is kept - members do not lose anything they posted.
+
+This option **only appears when the space has another admin to hand over to**.
+If you are the only admin, there is nobody to receive it, and the button is not
+shown rather than shown-and-failing.
+
+Use it when:
 
 - A space has run its course but the content is still worth keeping
-- A seasonal event ends and you want the archive of last year's discussion to remain
-- A topic moves to a different space and you want the old discussions preserved
+- A seasonal event ends and you want last year's discussion to remain readable
+- You are stepping away and someone else should own the space
 
-**Delete space** removes the space and every post, reply, vote, flag, and subscription in it. It cannot be undone from the UI. The button asks for explicit confirmation (typing the space title) before it fires.
+> **Note:** This is not reversible from the front end. There is no Unarchive
+> button in the space editor - a site administrator can reopen the space from
+> **wp-admin → Jetonomy → Spaces**.
 
-Use delete when:
+### Delete permanently
+
+Removes the space and every post, reply, vote, flag and subscription in it.
+This cannot be undone.
+
+Because it destroys other members' contributions and not just your own,
+it is gated twice:
+
+1. **The site owner has to allow it.** The button only appears if
+   *Let space admins permanently delete a space and everything in it* is
+   enabled under **Jetonomy → Settings → Permissions**, or if you are a site
+   administrator. On communities where that setting is off, space admins do not
+   see this option at all.
+2. **You have to type the space's name.** A plain confirm dialog is too easy to
+   click through for something with no undo, so the confirm button stays
+   disabled until the typed name matches exactly.
+
+Use it when:
 
 - The space was created by mistake and has no real content
-- The content needs to be removed for legal or moderation reasons
+- The content must be removed for legal or moderation reasons
 - You are cleaning up after a spam attack
 
-If you are unsure, archive instead of delete. Archiving is reversible; deletion is not.
+Deleting a large space is queued rather than done in one go, so a space with
+thousands of topics drains in the background instead of timing out. You are
+returned to the community home page once it starts.
+
+If you are unsure, hand the space over instead. A handover keeps everything;
+a delete keeps nothing.
 
 ## Front-End Edit vs wp-admin Edit
 

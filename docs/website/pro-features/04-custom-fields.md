@@ -1,6 +1,6 @@
 Add structured fields to member profiles - collect the information that matters to your specific community.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Custom fields displayed on a member profile page](../images/pro-custom-fields.png)
 ## What You Will Learn

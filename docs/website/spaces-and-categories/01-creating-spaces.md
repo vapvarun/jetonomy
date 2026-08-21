@@ -44,6 +44,22 @@ Both paths show the same fields and produce the same result. The rest of this se
 
 **Category** - Select which category this space belongs to. A space must be assigned to a category to appear on the community home page.
 
+**Display order** *(1.9.4+, when editing an existing space)* - The space's
+position within its category, lowest first. Spaces that share a number fall
+back to alphabetical order, which is what every space does until you set one.
+
+There are two ways to set this and they write the same value, so they cannot
+disagree:
+
+- **Type a number here** when you want to place one space and would rather not
+  hunt for it in a list.
+- **Drag rows on the Spaces list** when you are arranging a whole category at
+  once. Drag handles appear once you filter the list to a single category -
+  ordering is per-category, so ordering a mixed list would not mean anything.
+
+Leaving the field blank leaves the current position alone; it does not reset
+the space to the top.
+
 ### Space Configuration
 
 **Type** - Choose Forum, Q&A, or Ideas. This controls how posts and replies behave. See [Space Types](02-space-types.md) for a full explanation of each.

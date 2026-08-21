@@ -1,6 +1,6 @@
 Let members post topics and replies without showing their name or avatar to other members, with an audited admin-only reveal.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ## What You Will Learn
 

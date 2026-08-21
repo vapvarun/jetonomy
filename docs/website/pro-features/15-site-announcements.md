@@ -1,6 +1,6 @@
 Feature an important post at the top of every space across your whole community.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ## What You Will Learn
 

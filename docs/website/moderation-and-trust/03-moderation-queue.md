@@ -13,13 +13,21 @@ The moderation queue is your single dashboard for everything that needs human re
 
 ## Accessing the Moderation Queue
 
-Go to **Jetonomy → Moderation** in your WordPress admin. The page is also accessible from the frontend at `/community/mod/` - WordPress Administrators and users with the `jetonomy_moderate` capability can access both routes.
+There are two moderation surfaces, and they do not show the same tabs.
 
-The queue shows a count badge on the admin menu item whenever there are items waiting for review.
+- **wp-admin** - **Jetonomy → Moderation**. For site administrators and anyone
+  with the `jetonomy_moderate` capability. Shows a count badge on the admin
+  menu item whenever items are waiting.
+- **Front end** - `/community/mod/`, plus a per-space queue at
+  `/community/s/{slug}/mod/`. This is where **space moderators** work; they do
+  not need access to the WordPress dashboard at all.
 
-## What Appears in the Queue
+The sections below describe the wp-admin tabs. See
+[The front-end queue](#the-front-end-queue) for what a space moderator sees.
 
-The queue is split into four tabbed views, each with a count of how many items it holds:
+## What Appears in the Queue (wp-admin)
+
+The wp-admin queue is split into four tabbed views, each with a count of how many items it holds:
 
 ### Pending Posts
 
@@ -66,9 +74,33 @@ Actions differ between the pending tabs and the Flags tab.
 
 **The flag counter updates live.** When you resolve a flag (Valid or Dismiss), the resolved row is removed and the "N pending" flag badge decrements immediately, without a page reload. When the last flag is cleared, the badge disappears. You always see the true outstanding count without refreshing.
 
+## The Front-End Queue
+
+Space moderators work at `/community/mod/` (everything they moderate) or
+`/community/s/{slug}/mod/` (one space). The tabs there are:
+
+| Tab | What it holds |
+|---|---|
+| **Flags** | Content other members reported. |
+| **Awaiting approval** | Content the space itself held back, because the space has *New posts require moderator approval* switched on. Split into **Posts** and **Replies** sub-tabs, each with its own count. |
+| **Banned members** | Active bans and silences. Only shown to moderators who hold the site-wide `jetonomy_moderate` capability, since lifting a ban requires it. |
+
+Each tab carries a count so you can see there is work waiting without opening
+it, and each list is paginated.
+
+> **New in 1.9.4:** the **Awaiting approval** tab. Before this, content held by
+> *require approval* never appeared in the front-end queue at all - it only
+> existed in wp-admin. A space moderator without dashboard access had no way to
+> approve it. Approving or rejecting from here works for space moderators; you
+> do not need a site-wide capability.
+
+**Approve** publishes the item. **Reject** moves it to trash. If another
+moderator handles the same item first, the row tells you rather than failing
+silently.
+
 ## Per-Space vs Global Moderation
 
-The queue shows content from all spaces by default. Use the **Space** filter dropdown at the top of the queue to narrow to a single space. This is useful when you have dedicated space moderators - a moderator for your Support space only needs to see Support space items.
+In wp-admin the queue shows content from all spaces by default. Use the **Space** filter dropdown at the top of the queue to narrow to a single space. This is useful when you have dedicated space moderators - a moderator for your Support space only needs to see Support space items.
 
 Space moderators who do not have global admin access see only their own spaces' items when they visit `/community/mod/`. They do not see content from spaces they do not moderate.
 

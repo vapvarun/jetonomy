@@ -1,6 +1,6 @@
 Let members reply to community discussions directly from their email client - no login required for that one reply.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ## What You Will Learn
 

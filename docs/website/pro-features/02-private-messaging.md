@@ -1,6 +1,6 @@
 Let members send direct messages to each other - one-on-one or in small groups - without leaving your community.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Messages inbox showing conversation list](../images/pro-messages-list.png)
 ## What You Will Learn

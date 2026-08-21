@@ -1,6 +1,6 @@
 Connect SureMembers access groups to Jetonomy spaces - when a member is granted an access group, Jetonomy Pro adds them to every linked space, and revoking the group removes them. Joining a space can also grant access groups back to the member, so the link runs both ways.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 SureMembers restricts WordPress post-type content natively. Jetonomy spaces live in custom database tables, not posts, so SureMembers' standard content-restriction settings do not apply to them. This integration is the way to connect a SureMembers access group to a Jetonomy space.
 

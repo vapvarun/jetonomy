@@ -1,6 +1,6 @@
 Attach a poll to any topic and let your community vote - perfect for decisions, feedback, and feature prioritization.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![A poll attached to a community post, showing each option as a horizontal percentage bar with its vote count](../images/pro-polls-result-bars.png)
 ## What You Will Learn
