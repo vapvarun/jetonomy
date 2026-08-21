@@ -75,47 +75,13 @@ $crumbs = [
 				);
 				?>
 			<?php else : ?>
-				<div class="jt-space-grid">
-					<?php foreach ( $spaces as $space ) : ?>
-						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
-							class="jt-card jt-space-card jt-no-underline jt-block">
-							<div class="jt-space-card-inner">
-								<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
-								<div class="jt-space-card-body">
-									<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
-									<div class="jt-space-card-badges">
-										<?php jetonomy_render_space_meta_badges( $space ); ?>
-										<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
-											<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php esc_attr_e( 'Hidden space. Only admins and members can see this listing.', 'jetonomy' ); ?>">
-												<?php jetonomy_echo_icon( 'lock', 12 ); ?>
-												<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
-											</span>
-										<?php endif; ?>
-									</div>
-									<?php if ( ! empty( $space->description ) ) : ?>
-										<div class="jt-space-card-excerpt">
-											<?php echo esc_html( $space->description ); ?>
-										</div>
-									<?php endif; ?>
-									<div class="jt-space-card-stats">
-										<span class="jt-space-card-stat"><strong><?php echo esc_html( (int) $space->post_count ); ?></strong> <?php esc_html_e( 'posts', 'jetonomy' ); ?></span>
-										<span class="jt-space-card-stat"><strong><?php echo esc_html( (int) $space->member_count ); ?></strong> <?php esc_html_e( 'members', 'jetonomy' ); ?></span>
-										<?php
-										$jt_activity = jetonomy_space_activity_label( $space );
-										if ( '' !== $jt_activity ) :
-											?>
-											<span class="jt-space-card-stat jt-space-card-activity"><?php echo esc_html( $jt_activity ); ?></span>
-										<?php endif; ?>
-									</div>
-								</div>
-							</div>
-						</a>
-						<?php
-						/** Fires after each space card; mirror of the home grid hook. @since 1.5.0 @param object $space */
-						do_action( 'jetonomy_space_card_after', $space );
-						?>
-					<?php endforeach; ?>
-				</div>
+				<?php
+				// Shared with the home grid. This view used to carry its own copy,
+				// which had drifted: hardcoded "posts"/"members" instead of _n(), and
+				// a hardcoded "Hidden space" instead of the label the site owner
+				// configured. Both are fixed by using one renderer.
+				jetonomy_render_space_grid( $spaces, $base );
+				?>
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'pagination',

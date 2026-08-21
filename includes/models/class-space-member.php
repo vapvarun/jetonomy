@@ -775,4 +775,51 @@ class SpaceMember extends Model {
 			)
 		);
 	}
+	/**
+	 * The owning admin of each of many spaces, in ONE query.
+	 *
+	 * Per-space callers should use list_privileged(); that is right for a space
+	 * page,
+	 * which renders exactly one. A directory renders dozens, and calling it in
+	 * that loop is a query per card on the first render - the N+1 shape this
+	 * codebase keeps having to remove. Fetching them together keeps a listing
+	 * flat however many spaces it shows.
+	 *
+	 * Admins only. A moderator helps run a space but does not own it, and the
+	 * directory has room for one name.
+	 *
+	 * @param int[] $space_ids Spaces to resolve.
+	 * @return array<int,int> space_id => owning user id. Sparse: a space with
+	 *                        no admin row is simply absent.
+	 */
+	public static function owners_for_spaces( array $space_ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ), static fn ( int $i ): bool => $i > 0 ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+				'SELECT space_id, user_id FROM ' . static::table() . "
+				 WHERE space_id IN ({$placeholders}) AND role = 'admin'
+				 ORDER BY space_id ASC, joined_at ASC, user_id ASC",
+				...$ids
+			)
+		) ?: array();
+
+		// First admin per space wins - the ORDER BY makes that the
+		// longest-standing one, which is the closest thing to an owner the
+		// roster records.
+		$owners = array();
+		foreach ( $rows as $row ) {
+			$sid = (int) $row->space_id;
+			if ( ! isset( $owners[ $sid ] ) ) {
+				$owners[ $sid ] = (int) $row->user_id;
+			}
+		}
+
+		return $owners;
+	}
 }

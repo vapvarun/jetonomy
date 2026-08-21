@@ -1612,6 +1612,12 @@
   .jt-subtab.active .jt-tab-count { background: transparent; color: inherit; padding-inline: 0; }
   .jt-mod-flag-reason--held { background: var(--jt-warn-light); color: var(--jt-warn); }
 
+  /* Space card owner line (1.9.4). The single space page has named its admins
+     in the "Managed by" sidebar card since 1.4.0; the directory - where the
+     decision of which space to open actually happens - did not. Sits under the
+     stats as secondary information, not competing with the title. */
+  .jt-space-card-owner { margin-block-start: var(--jt-space-1); font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   /* Space danger zone on /s/{slug}/edit/ (1.9.4).
      Sits BELOW the form, outside it, so a stray Enter in a text field can
      never submit a destructive action. The critical row is tinted rather
