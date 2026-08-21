@@ -132,6 +132,19 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="space-sort-order"><?php esc_html_e( 'Display order', 'jetonomy' ); ?></label></th>
+					<td>
+						<input type="number" id="space-sort-order" class="small-text" step="1" min="0"
+							value="<?php echo esc_attr( (string) (int) ( $space->sort_order ?? 0 ) ); ?>"
+							aria-describedby="space-sort-order-help">
+						<p class="description" id="space-sort-order-help">
+							<?php esc_html_e( 'Position within its category, lowest first. Spaces sharing a number fall back to alphabetical order.', 'jetonomy' ); ?>
+							<br>
+							<?php esc_html_e( 'Dragging rows on the Spaces list writes this same value, so the two stay in step - filter the list to a single category to drag.', 'jetonomy' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></th>
 					<td>
 						<?php

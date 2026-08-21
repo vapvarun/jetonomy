@@ -191,6 +191,16 @@ class Spaces_Handler {
 				wp_send_json_error( $combo->get_error_message() );
 			}
 		}
+		// Direct entry for the same column ajax_reorder_spaces() writes by drag.
+		// The two are not rivals: dragging is for arranging a category you are
+		// looking at, this is for setting one space's position without hunting
+		// for it in a list. Both land on sort_order, so neither can drift.
+		//
+		// An empty string means "the field was left blank", which is not the
+		// same as 0 - skip it rather than silently sending the space to the top.
+		if ( isset( $_POST['sort_order'] ) && '' !== $_POST['sort_order'] ) {
+			$data['sort_order'] = absint( wp_unslash( $_POST['sort_order'] ) );
+		}
 		if ( isset( $_POST['cover_image'] ) ) {
 			$data['cover_image'] = esc_url_raw( wp_unslash( $_POST['cover_image'] ) ) ?: null;
 		}

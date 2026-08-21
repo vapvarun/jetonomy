@@ -186,6 +186,113 @@ class Moderation_Service {
 	}
 
 	/**
+	 * Resolve everything a page of flag rows needs to render, in a fixed
+	 * number of queries.
+	 *
+	 * Both moderation surfaces used to do this per row. views/moderation.php
+	 * ran Post/Reply::find(), a second Post::find() for a reply's parent,
+	 * Space::find(), and get_userdata() - four queries a row, ~100 on a full
+	 * page of 25. partials/moderation/flag-card.php ran its own permalink join
+	 * plus a get_userdata() on top of that. Neither grew with the number of
+	 * flags a site had, so it stayed invisible until someone opened a busy
+	 * queue.
+	 *
+	 * This resolves the whole page in four queries plus one user query,
+	 * whatever the row count: replies, then every parent post together with
+	 * the directly-flagged posts, then their spaces, then the reporter cache.
+	 * Ordering matters - a reply's space is only knowable once its parent post
+	 * is loaded, which is why replies are fetched before posts.
+	 *
+	 * @param object[] $flags Flag rows.
+	 * @param string   $base  Community base URL, for permalinks.
+	 * @return array<string,object{object:object,space:?object,permalink:string}>
+	 *         Keyed "{object_type}:{object_id}". Flags whose object or space
+	 *         has been deleted are simply absent - callers skip them.
+	 */
+	public static function flag_context( array $flags, string $base = '' ): array {
+		if ( empty( $flags ) ) {
+			return array();
+		}
+
+		$post_ids  = array();
+		$reply_ids = array();
+		$user_ids  = array();
+		foreach ( $flags as $flag ) {
+			$user_ids[] = (int) ( $flag->reporter_id ?? 0 );
+			if ( 'reply' === ( $flag->object_type ?? '' ) ) {
+				$reply_ids[] = (int) $flag->object_id;
+			} elseif ( 'post' === ( $flag->object_type ?? '' ) ) {
+				$post_ids[] = (int) $flag->object_id;
+			}
+		}
+
+		$replies = Reply::list_by_ids( $reply_ids );
+		foreach ( $replies as $reply ) {
+			$post_ids[] = (int) $reply->post_id;
+		}
+
+		$posts     = Post::list_by_ids( $post_ids );
+		$space_ids = array();
+		foreach ( $posts as $post ) {
+			$space_ids[] = (int) $post->space_id;
+		}
+
+		$spaces = array();
+		foreach ( Space::list_by_ids( array_values( array_unique( array_filter( $space_ids ) ) ) ) as $space ) {
+			$spaces[ (int) $space->id ] = $space;
+		}
+
+		$user_ids = array_values( array_unique( array_filter( $user_ids ) ) );
+		if ( $user_ids ) {
+			// Primes WP's user cache so each row's get_userdata() is served
+			// from memory instead of issuing its own query.
+			get_users(
+				array(
+					'include'     => $user_ids,
+					'fields'      => 'all_with_meta',
+					'number'      => count( $user_ids ),
+					'count_total' => false,
+				)
+			);
+		}
+
+		$context = array();
+		foreach ( $flags as $flag ) {
+			$type = (string) ( $flag->object_type ?? '' );
+			$id   = (int) ( $flag->object_id ?? 0 );
+
+			if ( 'reply' === $type ) {
+				$object = $replies[ $id ] ?? null;
+				$parent = $object ? ( $posts[ (int) $object->post_id ] ?? null ) : null;
+			} elseif ( 'post' === $type ) {
+				$object = $posts[ $id ] ?? null;
+				$parent = $object;
+			} else {
+				continue;
+			}
+
+			if ( ! $object || ! $parent ) {
+				continue;
+			}
+
+			$space = $spaces[ (int) $parent->space_id ] ?? null;
+			if ( ! $space ) {
+				continue;
+			}
+
+			$context[ $type . ':' . $id ] = (object) array(
+				'object'    => $object,
+				'space'     => $space,
+				'permalink' => '' !== $base
+					? $base . '/s/' . $space->slug . '/t/' . $parent->slug . '/'
+					: '',
+			);
+		}
+
+		return $context;
+	}
+
+	/**
 	 * Count pending flags per space for every space the user may moderate.
 	 *
 	 * Used by the admin cross-space dashboard.

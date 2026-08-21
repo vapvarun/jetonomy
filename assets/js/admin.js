@@ -506,6 +506,7 @@
 					visibility: $('#space-visibility').val(),
 					join_policy: $('#space-join-policy').val(),
 					status: $('#space-status').val(),
+					sort_order: $('#space-sort-order').val(),
 					icon: ($('input[name="icon"]:checked').val() || ''),
 					cover_image: $('#space-cover-image').val()
 				}).done(function(res) {

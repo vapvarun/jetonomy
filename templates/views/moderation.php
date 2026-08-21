@@ -170,6 +170,14 @@ $jt_bans      = 'banned' === $jt_view && $jt_ban_total > 0
 // Batch-load the banned members in one query. The per-row get_userdata() below
 // was an N+1: a full page of restrictions issued a query per row.
 if ( $jt_bans ) {
+	// Same batching as the reporter cache below: one query for every space
+	// named by this page of restrictions, instead of a Space::find() per row.
+	$jt_ban_spaces    = array();
+	$jt_ban_space_ids = array_values( array_unique( array_filter( array_map( static fn( $r ) => (int) $r->space_id, $jt_bans ) ) ) );
+	foreach ( \Jetonomy\Models\Space::list_by_ids( $jt_ban_space_ids ) as $jt_ban_space_row ) {
+		$jt_ban_spaces[ (int) $jt_ban_space_row->id ] = $jt_ban_space_row;
+	}
+
 	$jt_ban_user_ids = array_values( array_unique( array_map( static fn( $r ) => (int) $r->user_id, $jt_bans ) ) );
 	if ( $jt_ban_user_ids ) {
 		// Primes WP's user cache so get_userdata() below is served from memory.
@@ -290,7 +298,7 @@ $crumbs = [
 					$jt_issuer      = (int) $jt_ban->issued_by ? get_userdata( (int) $jt_ban->issued_by ) : null;
 					$jt_ban_label   = $jt_ban_types[ $jt_ban->type ] ?? $jt_ban_types['global_ban'];
 					$jt_ban_age     = human_time_diff( strtotime( $jt_ban->created_at ), time() );
-					$jt_ban_space   = $jt_ban->space_id ? \Jetonomy\Models\Space::find( (int) $jt_ban->space_id ) : null;
+					$jt_ban_space   = $jt_ban->space_id ? ( $jt_ban_spaces[ (int) $jt_ban->space_id ] ?? null ) : null;
 					?>
 					<li class="jt-mod-flag-row">
 						<div class="jt-mod-flag-row-head">
@@ -431,21 +439,22 @@ $crumbs = [
 		\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_empty_message ] );
 		?>
 	<?php else : ?>
+		<?php
+		// One batched resolve for the whole page instead of four queries a row.
+		$jt_flag_ctx = Moderation_Service::flag_context( $flags, $base );
+		?>
 		<ul class="jt-mod-flag-list">
 			<?php
 			foreach ( $flags as $flag ) :
 				$is_reply = 'reply' === $flag->object_type;
-				$obj      = $is_reply ? Reply::find( (int) $flag->object_id ) : Post::find( (int) $flag->object_id );
-				if ( ! $obj ) {
+				$jt_ctx   = $jt_flag_ctx[ $flag->object_type . ':' . (int) $flag->object_id ] ?? null;
+				// Absent means the flagged object or its space has been deleted
+				// out from under the flag - nothing to show and nothing to act on.
+				if ( ! $jt_ctx ) {
 					continue;
 				}
-				$space_id = $is_reply
-					? (int) ( Post::find( (int) $obj->post_id )->space_id ?? 0 )
-					: (int) ( $obj->space_id ?? 0 );
-				$space    = $space_id ? Space::find( $space_id ) : null;
-				if ( ! $space ) {
-					continue;
-				}
+				$obj           = $jt_ctx->object;
+				$space         = $jt_ctx->space;
 				$reporter      = get_userdata( (int) $flag->reporter_id );
 				$reporter_name = $reporter ? \Jetonomy\user_display_name( $reporter ) : __( 'Unknown', 'jetonomy' );
 				$age           = human_time_diff( strtotime( $flag->created_at ), time() );

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.9.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-08-21 03:55:08+00:00\n"
+"POT-Creation-Date: 2026-08-21 04:15:31+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -29,7 +29,7 @@ msgid "2"
 msgstr ""
 
 #: includes/adapters/class-adapter-registry.php:52
-#: includes/admin/views/space-edit.php:460
+#: includes/admin/views/space-edit.php:473
 msgid "WP Role"
 msgstr ""
 
@@ -111,19 +111,19 @@ msgstr ""
 #: includes/admin/ajax/class-setup-handler.php:144
 #: includes/admin/ajax/class-spaces-handler.php:58
 #: includes/admin/ajax/class-spaces-handler.php:125
-#: includes/admin/ajax/class-spaces-handler.php:257
-#: includes/admin/ajax/class-spaces-handler.php:284
-#: includes/admin/ajax/class-spaces-handler.php:363
-#: includes/admin/ajax/class-spaces-handler.php:403
-#: includes/admin/ajax/class-spaces-handler.php:421
-#: includes/admin/ajax/class-spaces-handler.php:453
-#: includes/admin/ajax/class-spaces-handler.php:523
-#: includes/admin/ajax/class-spaces-handler.php:548
-#: includes/admin/ajax/class-spaces-handler.php:608
-#: includes/admin/ajax/class-spaces-handler.php:638
-#: includes/admin/ajax/class-spaces-handler.php:663
-#: includes/admin/ajax/class-spaces-handler.php:695
-#: includes/admin/ajax/class-spaces-handler.php:724
+#: includes/admin/ajax/class-spaces-handler.php:267
+#: includes/admin/ajax/class-spaces-handler.php:294
+#: includes/admin/ajax/class-spaces-handler.php:373
+#: includes/admin/ajax/class-spaces-handler.php:413
+#: includes/admin/ajax/class-spaces-handler.php:431
+#: includes/admin/ajax/class-spaces-handler.php:463
+#: includes/admin/ajax/class-spaces-handler.php:533
+#: includes/admin/ajax/class-spaces-handler.php:558
+#: includes/admin/ajax/class-spaces-handler.php:618
+#: includes/admin/ajax/class-spaces-handler.php:648
+#: includes/admin/ajax/class-spaces-handler.php:673
+#: includes/admin/ajax/class-spaces-handler.php:705
+#: includes/admin/ajax/class-spaces-handler.php:734
 #: includes/admin/ajax/class-tags-handler.php:26
 #: includes/admin/ajax/class-tags-handler.php:64
 #: includes/admin/ajax/class-tags-handler.php:115
@@ -157,7 +157,7 @@ msgid "Invalid category ID."
 msgstr ""
 
 #: includes/admin/ajax/class-categories-handler.php:110
-#: includes/admin/ajax/class-spaces-handler.php:225
+#: includes/admin/ajax/class-spaces-handler.php:235
 #: includes/admin/ajax/class-tags-handler.php:96
 #: includes/api/class-tags-controller.php:176
 msgid "No data to update."
@@ -192,12 +192,12 @@ msgstr ""
 
 #: includes/admin/ajax/class-categories-handler.php:166
 #: includes/admin/ajax/class-categories-handler.php:191
-#: includes/admin/ajax/class-spaces-handler.php:262
+#: includes/admin/ajax/class-spaces-handler.php:272
 msgid "Invalid order data."
 msgstr ""
 
 #: includes/admin/ajax/class-categories-handler.php:210
-#: includes/admin/ajax/class-spaces-handler.php:278
+#: includes/admin/ajax/class-spaces-handler.php:288
 msgid "Order saved."
 msgstr ""
 
@@ -408,19 +408,19 @@ msgid "Space created."
 msgstr ""
 
 #: includes/admin/ajax/class-spaces-handler.php:130
-#: includes/admin/ajax/class-spaces-handler.php:289
+#: includes/admin/ajax/class-spaces-handler.php:299
 msgid "Invalid space ID."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:232
+#: includes/admin/ajax/class-spaces-handler.php:242
 msgid "Failed to update space."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:237
+#: includes/admin/ajax/class-spaces-handler.php:247
 msgid "Space updated."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:295
+#: includes/admin/ajax/class-spaces-handler.php:305
 #: includes/admin/class-admin.php:1396
 #: includes/api/class-base-controller.php:51 includes/class-abilities.php:1451
 #: includes/class-abilities.php:1471 templates/views/new-post.php:20
@@ -431,121 +431,121 @@ msgstr ""
 msgid "%s not found."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:321
+#: includes/admin/ajax/class-spaces-handler.php:331
 msgid "Space and all its content are being deleted."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:346
+#: includes/admin/ajax/class-spaces-handler.php:356
 msgid "No one else can take over this space. Delete it permanently instead."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:353
+#: includes/admin/ajax/class-spaces-handler.php:363
 msgid "Space archived and transferred. Its content was kept."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:371
-#: includes/admin/ajax/class-spaces-handler.php:410
-#: includes/admin/ajax/class-spaces-handler.php:429
-#: includes/admin/ajax/class-spaces-handler.php:615
-#: includes/admin/ajax/class-spaces-handler.php:644
-#: includes/admin/ajax/class-spaces-handler.php:731
+#: includes/admin/ajax/class-spaces-handler.php:381
+#: includes/admin/ajax/class-spaces-handler.php:420
+#: includes/admin/ajax/class-spaces-handler.php:439
+#: includes/admin/ajax/class-spaces-handler.php:625
+#: includes/admin/ajax/class-spaces-handler.php:654
+#: includes/admin/ajax/class-spaces-handler.php:741
 msgid "Missing required fields."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:380
+#: includes/admin/ajax/class-spaces-handler.php:390
 #: includes/class-abilities.php:1547 includes/models/class-blocked-user.php:70
 #: templates/views/user-profile.php:20
 msgid "User not found."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:391
+#: includes/admin/ajax/class-spaces-handler.php:401
 #. translators: 1: member display name, 2: the space role they were given.
 msgid "%1$s added as %2$s."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:415
+#: includes/admin/ajax/class-spaces-handler.php:425
 msgid "Member removed."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:433
+#: includes/admin/ajax/class-spaces-handler.php:443
 msgid "Invalid role."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:447
+#: includes/admin/ajax/class-spaces-handler.php:457
 msgid "Role updated."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:464
-#: includes/admin/ajax/class-spaces-handler.php:668
-#: includes/admin/ajax/class-spaces-handler.php:700
+#: includes/admin/ajax/class-spaces-handler.php:474
+#: includes/admin/ajax/class-spaces-handler.php:678
+#: includes/admin/ajax/class-spaces-handler.php:710
 msgid "Missing space ID."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:469
+#: includes/admin/ajax/class-spaces-handler.php:479
 msgid "Invalid rule type."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:492
+#: includes/admin/ajax/class-spaces-handler.php:502
 #: includes/api/class-spaces-controller.php:365
 msgid "Failed to create access rule."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:507
+#: includes/admin/ajax/class-spaces-handler.php:517
 #: includes/api/class-spaces-controller.php:375
 msgid ""
 "Access rule added. This space was switched to Private so the rule can "
 "restrict access — a rule cannot gate a public space."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:508
+#: includes/admin/ajax/class-spaces-handler.php:518
 #: includes/api/class-spaces-controller.php:376
 msgid "Access rule added."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:528
+#: includes/admin/ajax/class-spaces-handler.php:538
 msgid "Invalid rule ID."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:533
+#: includes/admin/ajax/class-spaces-handler.php:543
 msgid "Failed to delete rule."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:536
+#: includes/admin/ajax/class-spaces-handler.php:546
 msgid "Access rule deleted."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:557
+#: includes/admin/ajax/class-spaces-handler.php:567
 msgid "Missing parameters."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:596
+#: includes/admin/ajax/class-spaces-handler.php:606
 #. translators: %d: number of members synced
 msgid "Synced %d existing members."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:620
-#: includes/admin/ajax/class-spaces-handler.php:649
+#: includes/admin/ajax/class-spaces-handler.php:630
+#: includes/admin/ajax/class-spaces-handler.php:659
 #: includes/api/class-spaces-controller.php:1196
 msgid "Join request not found or already processed."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:629
+#: includes/admin/ajax/class-spaces-handler.php:639
 msgid "Join request approved."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:654
+#: includes/admin/ajax/class-spaces-handler.php:664
 msgid "Join request denied."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:684
+#: includes/admin/ajax/class-spaces-handler.php:694
 msgid "Invite link generated."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:736
+#: includes/admin/ajax/class-spaces-handler.php:746
 msgid "Failed to revoke invite link."
 msgstr ""
 
-#: includes/admin/ajax/class-spaces-handler.php:739
+#: includes/admin/ajax/class-spaces-handler.php:749
 msgid "Invite link revoked."
 msgstr ""
 
@@ -675,7 +675,7 @@ msgstr ""
 #: includes/admin/class-revisions-list-table.php:81
 #: includes/admin/views/moderation.php:451
 #: includes/admin/views/space-edit.php:96
-#: includes/admin/views/space-edit.php:516 includes/admin/views/spaces.php:54
+#: includes/admin/views/space-edit.php:529 includes/admin/views/spaces.php:54
 #: includes/admin/views/spaces.php:230 includes/admin/views/users.php:235
 #: includes/class-privacy.php:356 templates/views/new-space.php:77
 #: templates/views/space-edit.php:150
@@ -1132,17 +1132,17 @@ msgstr ""
 msgid "Expired"
 msgstr ""
 
-#: includes/admin/class-admin.php:1133 includes/admin/views/space-edit.php:327
+#: includes/admin/class-admin.php:1133 includes/admin/views/space-edit.php:340
 msgid "Invite Link"
 msgstr ""
 
-#: includes/admin/class-admin.php:1134 includes/admin/views/space-edit.php:331
+#: includes/admin/class-admin.php:1134 includes/admin/views/space-edit.php:344
 msgid "Uses"
 msgstr ""
 
 #: includes/admin/class-admin.php:1135 includes/admin/views/moderation.php:456
-#: includes/admin/views/space-edit.php:308
-#: includes/admin/views/space-edit.php:335
+#: includes/admin/views/space-edit.php:321
+#: includes/admin/views/space-edit.php:348
 #: templates/views/space-members.php:247
 msgid "Expires"
 msgstr ""
@@ -1152,10 +1152,10 @@ msgstr ""
 #: includes/admin/views/moderation.php:327
 #: includes/admin/views/moderation.php:464
 #: includes/admin/views/settings.php:768 includes/admin/views/settings.php:796
-#: includes/admin/views/space-edit.php:249
-#: includes/admin/views/space-edit.php:339
-#: includes/admin/views/space-edit.php:530
-#: includes/admin/views/space-edit.php:769
+#: includes/admin/views/space-edit.php:262
+#: includes/admin/views/space-edit.php:352
+#: includes/admin/views/space-edit.php:543
+#: includes/admin/views/space-edit.php:782
 msgid "Actions"
 msgstr ""
 
@@ -1228,30 +1228,30 @@ msgstr ""
 msgid "edit_posts"
 msgstr ""
 
-#: includes/admin/class-admin.php:1178 includes/admin/views/space-edit.php:195
-#: includes/admin/views/space-edit.php:275
+#: includes/admin/class-admin.php:1178 includes/admin/views/space-edit.php:208
+#: includes/admin/views/space-edit.php:288
 #: templates/views/space-members.php:125
 msgid "Viewer"
 msgstr ""
 
-#: includes/admin/class-admin.php:1179 includes/admin/views/space-edit.php:192
-#: includes/admin/views/space-edit.php:276 includes/class-feed.php:91
+#: includes/admin/class-admin.php:1179 includes/admin/views/space-edit.php:205
+#: includes/admin/views/space-edit.php:289 includes/class-feed.php:91
 #: includes/class-template-loader.php:580
 #: includes/trust/class-trust-levels.php:178
 #: templates/views/leaderboard.php:150 templates/views/space-members.php:126
 msgid "Member"
 msgstr ""
 
-#: includes/admin/class-admin.php:1180 includes/admin/views/space-edit.php:193
-#: includes/admin/views/space-edit.php:277
+#: includes/admin/class-admin.php:1180 includes/admin/views/space-edit.php:206
+#: includes/admin/views/space-edit.php:290
 #: includes/class-template-loader.php:581
 #: includes/trust/class-trust-levels.php:182
 #: templates/views/space-members.php:127
 msgid "Moderator"
 msgstr ""
 
-#: includes/admin/class-admin.php:1181 includes/admin/views/space-edit.php:194
-#: includes/admin/views/space-edit.php:278
+#: includes/admin/class-admin.php:1181 includes/admin/views/space-edit.php:207
+#: includes/admin/views/space-edit.php:291
 #: includes/class-template-loader.php:582 templates/partials/feed-card.php:51
 #: templates/partials/managed-by-card.php:23
 #: templates/partials/post-card.php:139 templates/partials/reply-card.php:123
@@ -1478,7 +1478,7 @@ msgstr ""
 
 #: includes/admin/views/categories.php:55
 #: includes/admin/views/categories.php:297
-#: includes/admin/views/space-edit.php:135 includes/admin/views/spaces.php:100
+#: includes/admin/views/space-edit.php:148 includes/admin/views/spaces.php:100
 #: templates/partials/icon-picker.php:41
 msgid "Icon"
 msgstr ""
@@ -1556,7 +1556,7 @@ msgid "View"
 msgstr ""
 
 #: includes/admin/views/categories.php:191
-#: includes/admin/views/space-edit.php:575 includes/admin/views/tags.php:81
+#: includes/admin/views/space-edit.php:588 includes/admin/views/tags.php:81
 #: includes/admin/views/tags.php:154 templates/partials/reply-card.php:286
 #: templates/views/notifications.php:170 templates/views/notifications.php:297
 #: templates/views/single-post.php:696
@@ -1675,7 +1675,7 @@ msgstr ""
 
 #: includes/admin/views/content.php:72 includes/admin/views/moderation.php:133
 #: includes/admin/views/moderation.php:244 includes/admin/views/replies.php:132
-#: includes/admin/views/replies.php:251 includes/admin/views/space-edit.php:800
+#: includes/admin/views/replies.php:251 includes/admin/views/space-edit.php:813
 #: templates/partials/moderation/approval-card.php:115
 #: templates/views/space-members.php:184
 msgid "Approve"
@@ -1782,8 +1782,8 @@ msgstr ""
 #: includes/admin/views/moderation.php:128
 #: includes/admin/views/moderation.php:239
 #: includes/admin/views/moderation.php:377 includes/admin/views/replies.php:307
-#: includes/admin/views/space-edit.php:283
-#: includes/admin/views/space-edit.php:796 includes/admin/views/users.php:181
+#: includes/admin/views/space-edit.php:296
+#: includes/admin/views/space-edit.php:809 includes/admin/views/users.php:181
 #: includes/admin/views/users.php:184
 #: includes/api/class-base-controller.php:848
 #: includes/api/class-notifications-controller.php:361
@@ -1913,8 +1913,8 @@ msgstr ""
 #: includes/admin/views/dashboard.php:116
 #: includes/admin/views/dashboard.php:218
 #: includes/admin/views/moderation.php:447
-#: includes/admin/views/space-edit.php:237
-#: includes/admin/views/space-edit.php:760
+#: includes/admin/views/space-edit.php:250
+#: includes/admin/views/space-edit.php:773
 msgid "User"
 msgstr ""
 
@@ -2734,7 +2734,7 @@ msgid "How many items to show per page on list views."
 msgstr ""
 
 #: includes/admin/views/settings.php:321
-#: includes/admin/views/space-edit.php:637
+#: includes/admin/views/space-edit.php:650
 msgid "Posts Per Page"
 msgstr ""
 
@@ -2938,7 +2938,7 @@ msgid ""
 msgstr ""
 
 #: includes/admin/views/settings.php:507
-#: includes/admin/views/space-edit.php:461
+#: includes/admin/views/space-edit.php:474
 msgid "Capability"
 msgstr ""
 
@@ -2999,7 +2999,7 @@ msgid "Points"
 msgstr ""
 
 #: includes/admin/views/settings.php:562 includes/admin/views/settings.php:585
-#: includes/admin/views/space-edit.php:646 templates/views/space-edit.php:207
+#: includes/admin/views/space-edit.php:659 templates/views/space-edit.php:207
 msgid "Default"
 msgstr ""
 
@@ -3919,7 +3919,7 @@ msgstr ""
 
 #: includes/admin/views/settings.php:1484
 #: includes/admin/views/settings.php:1503
-#: includes/admin/views/space-edit.php:709
+#: includes/admin/views/space-edit.php:722
 msgid "Save Settings"
 msgstr ""
 
@@ -4194,114 +4194,130 @@ msgstr ""
 msgid "Locked"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:151 includes/admin/views/spaces.php:116
+#: includes/admin/views/space-edit.php:135
+msgid "Display order"
+msgstr ""
+
+#: includes/admin/views/space-edit.php:141
+msgid ""
+"Position within its category, lowest first. Spaces sharing a number fall "
+"back to alphabetical order."
+msgstr ""
+
+#: includes/admin/views/space-edit.php:143
+msgid ""
+"Dragging rows on the Spaces list writes this same value, so the two stay in "
+"step - filter the list to a single category to drag."
+msgstr ""
+
+#: includes/admin/views/space-edit.php:164 includes/admin/views/spaces.php:116
 msgid "Cover Image"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:162
-#: includes/admin/views/space-edit.php:287
-#: includes/admin/views/space-edit.php:668 includes/admin/views/spaces.php:125
+#: includes/admin/views/space-edit.php:175
+#: includes/admin/views/space-edit.php:300
+#: includes/admin/views/space-edit.php:681 includes/admin/views/spaces.php:125
 #: templates/partials/moderation/flag-card.php:121
 #: templates/views/new-space.php:126 templates/views/space-edit.php:124
 msgid "Remove"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:168 includes/admin/views/spaces.php:131
+#: includes/admin/views/space-edit.php:181 includes/admin/views/spaces.php:131
 msgid "Select Cover Image"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:176
+#: includes/admin/views/space-edit.php:189
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "Update %s"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:185
+#: includes/admin/views/space-edit.php:198
 msgid "Add Member"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:188
+#: includes/admin/views/space-edit.php:201
 msgid "Search users by name or email..."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:197
+#: includes/admin/views/space-edit.php:210
 msgid "Add"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:202
+#: includes/admin/views/space-edit.php:215
 #. translators: %d: number of members
 msgid "Members (%d)"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:209
+#: includes/admin/views/space-edit.php:222
 #. translators: 1: number of member rows shown, 2: total member count.
 msgid ""
 "Showing the first %1$d of %2$d members. Manage the rest from the front-end "
 "members page, which is paginated."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:241
+#: includes/admin/views/space-edit.php:254
 msgid "Role"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:245 includes/admin/views/users.php:134
+#: includes/admin/views/space-edit.php:258 includes/admin/views/users.php:134
 msgid "Joined"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:260
+#: includes/admin/views/space-edit.php:273
 msgid "No members yet"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:262
+#: includes/admin/views/space-edit.php:275
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "Invite members or open this %s to the wider community."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:298
+#: includes/admin/views/space-edit.php:311
 msgid "Invite Links"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:300
+#: includes/admin/views/space-edit.php:313
 msgid ""
 "Invite links work with any join policy; set Join Policy to 'Invite only' to "
 "require them."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:305
+#: includes/admin/views/space-edit.php:318
 #: templates/views/space-members.php:243
 msgid "Max uses"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:311
+#: includes/admin/views/space-edit.php:324
 #: templates/views/space-members.php:252
 msgid "Generate invite link"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:313
+#: includes/admin/views/space-edit.php:326
 #: templates/views/space-members.php:255
 msgid "Max uses 0 means unlimited. Leave Expires blank for no expiry."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:347
+#: includes/admin/views/space-edit.php:360
 msgid "No invite links yet"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:349
+#: includes/admin/views/space-edit.php:362
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "Generate a link to invite people directly into this %s."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:362
+#: includes/admin/views/space-edit.php:375
 msgid "Add Access Rule"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:381
+#: includes/admin/views/space-edit.php:394
 msgid "How access rules work"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:385
+#: includes/admin/views/space-edit.php:398
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid ""
@@ -4309,56 +4325,56 @@ msgid ""
 "visibility and join policy do that."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:392
-#: includes/admin/views/space-edit.php:398
-#: includes/admin/views/space-edit.php:402
-#: includes/admin/views/space-edit.php:406
-#: includes/admin/views/space-edit.php:471
-#: includes/admin/views/space-edit.php:521
+#: includes/admin/views/space-edit.php:405
+#: includes/admin/views/space-edit.php:411
+#: includes/admin/views/space-edit.php:415
+#: includes/admin/views/space-edit.php:419
+#: includes/admin/views/space-edit.php:484
+#: includes/admin/views/space-edit.php:534
 msgid "Grants"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:393
-#: includes/admin/views/space-edit.php:399
-#: includes/admin/views/space-edit.php:403
-#: includes/admin/views/space-edit.php:407
+#: includes/admin/views/space-edit.php:406
+#: includes/admin/views/space-edit.php:412
+#: includes/admin/views/space-edit.php:416
+#: includes/admin/views/space-edit.php:420
 msgid "What the person can do"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:398
-#: includes/admin/views/space-edit.php:480
+#: includes/admin/views/space-edit.php:411
+#: includes/admin/views/space-edit.php:493
 msgid "Read"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:399
+#: includes/admin/views/space-edit.php:412
 msgid ""
 "Lets people in to read. It does not hold anyone back - on a public space "
 "that anyone may join, a signed-in member can still post, because the rule "
 "admits and only visibility and join policy restrict."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:402
-#: includes/admin/views/space-edit.php:481
+#: includes/admin/views/space-edit.php:415
+#: includes/admin/views/space-edit.php:494
 msgid "Participate"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:403
+#: includes/admin/views/space-edit.php:416
 msgid "Read, plus post, reply, vote and report. The usual choice for a paid plan."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:406
-#: includes/admin/views/space-edit.php:482
+#: includes/admin/views/space-edit.php:419
+#: includes/admin/views/space-edit.php:495
 msgid "Full"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:407
+#: includes/admin/views/space-edit.php:420
 msgid ""
 "Participate, plus edit other people's posts, close and pin topics - but "
 "only for people whose WordPress role already allows moderation. For an "
 "ordinary member this behaves exactly like Participate."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:412
+#: includes/admin/views/space-edit.php:425
 msgid ""
 "Members lists show a matching role - Read is listed as Viewer, Participate "
 "as Member, Full as Moderator. To give one person a different role, change "
@@ -4366,11 +4382,11 @@ msgid ""
 "than a side effect of a rule."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:415
+#: includes/admin/views/space-edit.php:428
 msgid "A rule can never hand out moderation."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:419
+#: includes/admin/views/space-edit.php:432
 #. translators: %s: the singular space label the site owner configured,
 #. lowercase (e.g. space, group).
 msgid ""
@@ -4382,22 +4398,22 @@ msgid ""
 "or membership plugin creates for its own members."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:425
+#: includes/admin/views/space-edit.php:438
 msgid "Membership rules are live."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:426
+#: includes/admin/views/space-edit.php:439
 msgid ""
 "Access begins the moment a plan becomes active and ends when it lapses - "
 "there is nothing to sync and nothing to undo by hand. \"Sync Members\" is "
 "only needed if you also want these people listed on the roster."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:433
+#: includes/admin/views/space-edit.php:446
 msgid "This rule is not restricting anyone yet."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:439
+#: includes/admin/views/space-edit.php:452
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid ""
@@ -4405,11 +4421,11 @@ msgid ""
 "adds access - it cannot take it away."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:442
+#: includes/admin/views/space-edit.php:455
 msgid "The join policy is Open, so anyone signed in can join without the plan."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:448
+#: includes/admin/views/space-edit.php:461
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid ""
@@ -4418,181 +4434,181 @@ msgid ""
 "through this rule."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:456
+#: includes/admin/views/space-edit.php:469
 msgid "Rule type"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:458
+#: includes/admin/views/space-edit.php:471
 msgid "Everyone"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:459
+#: includes/admin/views/space-edit.php:472
 msgid "Logged In"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:462 includes/admin/views/users.php:118
+#: includes/admin/views/space-edit.php:475 includes/admin/views/users.php:118
 #: includes/class-privacy.php:440
 msgid "Trust Level"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:465
+#: includes/admin/views/space-edit.php:478
 msgid "Value (e.g., administrator, 2)"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:467
+#: includes/admin/views/space-edit.php:480
 msgid "Search courses, roles, memberships..."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:497
+#: includes/admin/views/space-edit.php:510
 msgid "Add Rule"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:508
+#: includes/admin/views/space-edit.php:521
 #. translators: %d: number of access rules
 msgid "Access Rules (%d)"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:519
+#: includes/admin/views/space-edit.php:532
 msgid "Value"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:526
+#: includes/admin/views/space-edit.php:539
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "%s Role"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:541
+#: includes/admin/views/space-edit.php:554
 msgid "No access rules"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:542
+#: includes/admin/views/space-edit.php:555
 msgid ""
 "Default permissions apply. Add a rule to limit access by role, membership, "
 "or trust level."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:571
+#: includes/admin/views/space-edit.php:584
 msgid "Sync Members"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:591
+#: includes/admin/views/space-edit.php:604
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "%s-Specific Settings"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:593
+#: includes/admin/views/space-edit.php:606
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "These settings override the global defaults for this %s only."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:598
+#: includes/admin/views/space-edit.php:611
 msgid "Who Can Post"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:601
-#: includes/admin/views/space-edit.php:612
+#: includes/admin/views/space-edit.php:614
+#: includes/admin/views/space-edit.php:625
 msgid "(Use Global Default)"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:602
-#: includes/admin/views/space-edit.php:613
+#: includes/admin/views/space-edit.php:615
+#: includes/admin/views/space-edit.php:626
 msgid "Members Only"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:603
-#: includes/admin/views/space-edit.php:614
+#: includes/admin/views/space-edit.php:616
+#: includes/admin/views/space-edit.php:627
 msgid "Moderators & Admins"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:604
+#: includes/admin/views/space-edit.php:617
 msgid "Admins Only"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:609
+#: includes/admin/views/space-edit.php:622
 msgid "Who Can Reply"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:619
+#: includes/admin/views/space-edit.php:632
 msgid "Require Approval"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:623 templates/views/space-edit.php:178
+#: includes/admin/views/space-edit.php:636 templates/views/space-edit.php:178
 msgid "New posts require moderator approval before publishing"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:628
+#: includes/admin/views/space-edit.php:641
 msgid "Allow Voting"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:632
+#: includes/admin/views/space-edit.php:645
 msgid "Enable upvote/downvote on posts and replies"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:650
+#: includes/admin/views/space-edit.php:663
 msgid "Topic Prefixes"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:655
+#: includes/admin/views/space-edit.php:668
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "Enable topic prefixes for this %s"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:658
+#: includes/admin/views/space-edit.php:671
 msgid "Colored labels members can apply to topics (e.g. Bug, Suggestion, Solved)."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:666
+#: includes/admin/views/space-edit.php:679
 #: includes/class-template-loader.php:531 templates/views/space-edit.php:226
 msgid "Label"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:675
+#: includes/admin/views/space-edit.php:688
 msgid "+ Add Prefix"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:681
+#: includes/admin/views/space-edit.php:694
 msgid "BuddyPress Group"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:695
+#: includes/admin/views/space-edit.php:708
 msgid "(Not linked)"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:703
+#: includes/admin/views/space-edit.php:716
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "Link this %s to a BuddyPress group. Members will be synced automatically."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:741
+#: includes/admin/views/space-edit.php:754
 #. translators: %d: number of pending join requests
 msgid "Pending Join Requests (%d)"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:763 includes/class-privacy.php:357
+#: includes/admin/views/space-edit.php:776 includes/class-privacy.php:357
 #: templates/views/user-profile.php:213
 msgid "Message"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:765
+#: includes/admin/views/space-edit.php:778
 msgid "Requested"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:780
+#: includes/admin/views/space-edit.php:793
 msgid "No pending join requests"
 msgstr ""
 
-#: includes/admin/views/space-edit.php:782
+#: includes/admin/views/space-edit.php:795
 #. translators: %s: the singular space label the site owner configured (e.g.
 #. space, group).
 msgid "New requests to join this %s will appear here for review."
 msgstr ""
 
-#: includes/admin/views/space-edit.php:801
+#: includes/admin/views/space-edit.php:814
 #: includes/class-template-loader.php:620 templates/views/space-members.php:190
 msgid "Deny"
 msgstr ""

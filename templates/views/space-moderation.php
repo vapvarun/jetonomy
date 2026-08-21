@@ -279,6 +279,8 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 			<?php elseif ( empty( $flags ) ) : ?>
 				<?php \Jetonomy\Template_Loader::partial( 'moderation/queue-empty' ); ?>
 			<?php else : ?>
+				<?php // One batched resolve for the page; the card falls back per-row without it. ?>
+				<?php $jt_flag_ctx = Moderation_Service::flag_context( $flags, $base ); ?>
 				<div class="jt-card jt-card-flush" data-jt-mod-queue="space" data-space-id="<?php echo absint( $space->id ); ?>">
 					<?php foreach ( $flags as $flag ) : ?>
 						<?php
@@ -288,6 +290,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 								'flag'             => $flag,
 								'resolve_endpoint' => $resolve_endpoint,
 								'base'             => $base,
+								'context'          => $jt_flag_ctx[ $flag->object_type . ':' . (int) $flag->object_id ] ?? null,
 							]
 						);
 						?>

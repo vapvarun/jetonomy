@@ -531,6 +531,39 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Hydrate reply rows for a given set of IDs.
+	 *
+	 * Mirrors Post::list_by_ids(). The moderation queue starts from flags, so
+	 * it knows the reply ids it needs before it needs the rows - batching them
+	 * is what turns a per-row lookup into one indexed query.
+	 *
+	 * @param int[] $ids
+	 * @return array<int,object> Keyed by reply id. Sparse: missing ids are absent.
+	 */
+	public static function list_by_ids( array $ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ), static fn ( int $id ): bool => $id > 0 ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+				'SELECT * FROM ' . static::table() . " WHERE id IN ({$placeholders})",
+				...$ids
+			)
+		) ?: array();
+
+		$by_id = array();
+		foreach ( $rows as $row ) {
+			$by_id[ (int) $row->id ] = $row;
+		}
+
+		return $by_id;
+	}
+
+	/**
 	 * Get replies as a threaded tree.
 	 *
 	 * Returns top-level replies with nested 'children' arrays.
