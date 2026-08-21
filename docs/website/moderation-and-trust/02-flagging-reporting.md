@@ -6,7 +6,8 @@ Flagging lets any logged-in member report content that breaks your community rul
 
 - How to flag a topic or reply
 - How to report an entire member account
-- How to block a member from the mobile app or the REST API
+- How to block a member, and which surfaces you can do it from
+- The difference between blocking a member and blocking a conversation
 - What information a flag captures
 - What the reason categories mean and where they come from
 - Who can flag content and what the restrictions are
@@ -41,13 +42,65 @@ A user report creates a flag the same way a content report does - it is recorded
 
 ## Blocking a Member (1.8.0+)
 
-Blocking hides a member's replies from your own view without removing them for anyone else - useful when you want to stop seeing someone's content without waiting on a moderator. As of 1.8.0, blocking is available from the mobile app and the REST API.
+Blocking hides a member's replies from your own view without removing them for anyone else - useful when you want to stop seeing someone's content without waiting on a moderator.
 
 You can report the member in the same action - blocking and filing a report travel together in one request, so members do not need to submit them separately.
 
 If the blocked member's reply has other replies nested underneath it, only their own content is hidden; the innocent replies in that nested thread stay visible.
 
 > **Note:** Blocking is a personal, per-viewer preference. It does not stop the blocked member from posting, and moderators and other members still see everything as normal. To remove someone's ability to post at all, a moderator needs to [ban them](05-banning-members.md).
+
+### Where you can block from
+
+This is the part members ask about most, so it is worth being exact:
+
+| Surface | Block a member | Unblock a member |
+|---|---|---|
+| Mobile app | Yes | Yes |
+| REST API | Yes (`POST /jetonomy/v1/blocks`) | Yes |
+| Web (browser) | **Not yet** | Yes |
+
+On the web you will not find a "Block" button on a post or a profile. What you
+*will* see, once a block exists, is the blocked member's content replaced by a
+placeholder reading **"Content hidden - you blocked this user"** with an
+**Unblock this user** button. So the web can show and undo a block, but the
+block itself has to be created from the app or the API today.
+
+If you are on the web and want to stop seeing someone now, the options are to
+block them from the mobile app, or to [report them](#reporting-a-member) so a
+moderator can act.
+
+### Blocking someone vs blocking a conversation
+
+Jetonomy has two separate controls, and they are easy to mix up:
+
+**Blocking a member** (community-wide) is the one described above. It is
+account-level and applies everywhere you would otherwise see them:
+
+- their posts and replies are hidden from your view across the community
+- **direct messages between you are refused in both directions** - not just
+  theirs to you, but yours to them as well
+- it does not affect what anybody else sees
+
+**Blocking a conversation** (Private Messaging, Pro) is narrower. It silences
+one specific direct conversation without touching the rest of the community -
+you keep seeing that member's posts and replies normally, you have simply
+stopped that thread.
+
+Pick the community-wide block when you do not want this person in your
+experience at all. Pick the conversation block when the problem is one thread,
+not the person.
+
+### "How do I stop seeing this person?"
+
+Short answer: block them from the mobile app. That hides their content
+everywhere you would see it and closes direct messages between you in both
+directions, without involving a moderator and without affecting anyone else's
+view.
+
+If they are breaking the community's rules rather than simply being someone you
+would rather not read, [report them](#reporting-a-member) as well - blocking is
+private to you, and a moderator cannot act on something nobody told them about.
 
 ## What a Flag Captures
 
