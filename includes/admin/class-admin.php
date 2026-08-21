@@ -642,6 +642,17 @@ class Admin {
 			}
 		}
 
+		// How members are identified on bylines, member lists and REST.
+		// Allowlisted rather than trusted: this string is read on every name
+		// render, so an unrecognised value must fall back rather than reach
+		// user_display_name().
+		if ( isset( $input['member_name_display'] ) ) {
+			$mode                         = sanitize_key( wp_unslash( $input['member_name_display'] ) );
+			$clean['member_name_display'] = in_array( $mode, array( 'display_name', 'handle', 'both' ), true )
+				? $mode
+				: 'display_name';
+		}
+
 		// Only process if rate_limits is present (Permissions tab was submitted).
 		if ( isset( $input['rate_limits'] ) ) {
 			$raw_limits           = is_array( $input['rate_limits'] ) ? $input['rate_limits'] : array();

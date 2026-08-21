@@ -93,7 +93,7 @@ class Blocks_Controller extends Base_Controller {
 				return [
 					'user_id'      => $blocked_id,
 					'user_login'   => $wp_user->user_login ?? '',
-					'display_name' => $wp_user->display_name ?? '',
+					'display_name' => $wp_user ? \Jetonomy\user_display_name( $wp_user ) : '',
 					'avatar_url'   => \Jetonomy\Avatar::display_url( $blocked_id, 64 ),
 					'created_at'   => $row->created_at ?? null,
 				];

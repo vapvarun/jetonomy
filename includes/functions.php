@@ -450,6 +450,23 @@ function display_name_choices( \WP_User $user ): array {
  *                                  tables carrying user_id (or ID).
  * @return string Display name, or '' when the user does not exist.
  */
+/**
+ * How members are identified across the community.
+ *
+ * One reader for the setting so the templates, REST and CLI cannot disagree -
+ * which is exactly what happened with the jetonomy_user_display_name filter,
+ * whose own docblock admits it "does not affect REST/CLI payloads". A site
+ * using that filter shows handles on the web and display names in the app.
+ *
+ * @return string 'display_name' | 'handle' | 'both'.
+ */
+function name_display_mode(): string {
+	$settings = get_option( 'jetonomy_settings', array() );
+	$mode     = isset( $settings['member_name_display'] ) ? (string) $settings['member_name_display'] : 'display_name';
+
+	return in_array( $mode, array( 'display_name', 'handle', 'both' ), true ) ? $mode : 'display_name';
+}
+
 function user_display_name( $user ): string {
 	if ( ! $user instanceof \WP_User ) {
 		// Callers legitimately hold three different things: a user ID, a WP_User,
@@ -474,6 +491,35 @@ function user_display_name( $user ): string {
 	}
 	if ( '' === trim( $name ) ) {
 		$name = (string) $user->user_login;
+	}
+
+	/*
+	 * Site-owner choice of how members are identified.
+	 *
+	 * display_name is NOT unique - WordPress lets any number of accounts share
+	 * one, and a community with two "Alex Rivera" bylines gives a reader
+	 * nothing to tell them apart. user_nicename is unique (WP enforces it) and
+	 * is already the handle @mentions resolve against, so it is the honest
+	 * identifier; it is just never shown outside the mention picker.
+	 *
+	 * Default stays 'display_name' so nothing changes on update. Applied here,
+	 * BEFORE the filter below, so a developer override still wins over the
+	 * setting rather than the other way round.
+	 */
+	$handle = (string) $user->user_nicename;
+	switch ( name_display_mode() ) {
+		case 'handle':
+			if ( '' !== trim( $handle ) ) {
+				$name = '@' . $handle;
+			}
+			break;
+		case 'both':
+			// Skip the suffix when it would just repeat the name - a member
+			// whose display_name IS their nicename does not need "bob @bob".
+			if ( '' !== trim( $handle ) && strcasecmp( $name, $handle ) !== 0 ) {
+				$name = $name . ' @' . $handle;
+			}
+			break;
 	}
 
 	/**

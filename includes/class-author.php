@@ -84,7 +84,11 @@ class Author {
 
 		return array(
 			'id'     => $author_id,
-			'name'   => $user ? $user->display_name : '',
+			// Through the helper, not the raw column: this is the byline on
+			// every post and reply, so it is the surface the Member Names
+			// setting most needs to reach. Reading display_name directly here
+			// is why the leaderboard honoured the setting and bylines did not.
+			'name'   => $user ? \Jetonomy\user_display_name( $user ) : '',
 			'avatar' => Avatar::display_url( $author_id, 64 ),
 			'url'    => get_profile_url( $author_id ),
 		);

@@ -1495,7 +1495,7 @@ class Abilities {
 			$profile = UserProfile::find_by_user( (int) $m->user_id );
 			$items[] = [
 				'user_id'      => (int) $m->user_id,
-				'display_name' => $user ? $user->display_name : __( 'Unknown', 'jetonomy' ),
+				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : __( 'Unknown', 'jetonomy' ),
 				'role'         => $m->role ?? 'member',
 				'trust_level'  => $profile ? (int) $profile->trust_level : 0,
 				'reputation'   => $profile ? (int) $profile->reputation : 0,
@@ -1549,7 +1549,7 @@ class Abilities {
 		$profile = UserProfile::find_by_user( $user_id );
 		return [
 			'user_id'      => $user_id,
-			'display_name' => $user->display_name,
+			'display_name' => \Jetonomy\user_display_name( $user ),
 			'bio'          => $profile->bio ?? '',
 			'trust_level'  => $profile ? (int) $profile->trust_level : 0,
 			'reputation'   => $profile ? (int) $profile->reputation : 0,

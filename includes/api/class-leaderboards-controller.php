@@ -168,7 +168,7 @@ class Leaderboards_Controller extends Base_Controller {
 			$items[] = [
 				'rank'             => $rank,
 				'user_id'          => $user_id,
-				'display_name'     => $user->display_name,
+				'display_name'     => \Jetonomy\user_display_name( $user ),
 				'user_login'       => $user->user_login,
 				'avatar_url'       => \Jetonomy\Avatar::display_url( $user_id, 64 ),
 				'profile_url'      => \Jetonomy\get_profile_url( $user_id ),

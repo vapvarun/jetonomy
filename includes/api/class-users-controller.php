@@ -200,7 +200,7 @@ class Users_Controller extends Base_Controller {
 
 			$items[] = array(
 				'id'           => $uid,
-				'display_name' => $user->display_name,
+				'display_name' => \Jetonomy\user_display_name( $user ),
 				'user_login'   => $user->user_login,
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 64 ),
 				'trust_level'  => $profile ? (int) $profile->trust_level : 0,
@@ -310,6 +310,10 @@ class Users_Controller extends Base_Controller {
 				// Kept for third-party consumers that already read it. Not what
 				// the composer inserts.
 				'login'        => $u->user_login,
+				// RAW on purpose: the mention picker renders name and handle as
+				// two separate fields (composer.js jt-mention-name /
+				// jt-mention-login), so applying the "both" mode here would
+				// print the handle twice.
 				'display_name' => $u->display_name,
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $u->ID, 48 ),
 			);
@@ -341,7 +345,7 @@ class Users_Controller extends Base_Controller {
 				[
 					'user_login'          => $wp_user->user_login,
 					'email'               => $wp_user->user_email,
-					'display_name'        => $wp_user->display_name,
+					'display_name'        => \Jetonomy\user_display_name( $wp_user ),
 					'trust_level_name'    => Trust_Levels::name( $trust_level ),
 					'spaces_joined_count' => $spaces_count,
 					'settings'            => UserProfile::get_settings( $user_id ),
@@ -381,7 +385,7 @@ class Users_Controller extends Base_Controller {
 
 		$data = [
 			'id'               => $id,
-			'display_name'     => $wp_user->display_name,
+			'display_name'     => \Jetonomy\user_display_name( $wp_user ),
 			'trust_level'      => $trust_level,
 			'trust_level_name' => Trust_Levels::name( $trust_level ),
 			'reputation'       => (int) ( $profile->reputation ?? 0 ),
@@ -429,7 +433,7 @@ class Users_Controller extends Base_Controller {
 
 		$data = [
 			'id'               => $id,
-			'display_name'     => $wp_user->display_name,
+			'display_name'     => \Jetonomy\user_display_name( $wp_user ),
 			'trust_level'      => $trust_level,
 			'trust_level_name' => Trust_Levels::name( $trust_level ),
 			'reputation'       => (int) ( $profile->reputation ?? 0 ),
@@ -568,7 +572,7 @@ class Users_Controller extends Base_Controller {
 				$this->prepare_profile( $profile ),
 				[
 					'email'            => $wp_user->user_email,
-					'display_name'     => $wp_user->display_name,
+					'display_name'     => \Jetonomy\user_display_name( $wp_user ),
 					'trust_level_name' => Trust_Levels::name( (int) ( $profile->trust_level ?? 0 ) ),
 					'settings'         => UserProfile::get_settings( $user_id ),
 					'email_opt_out'    => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),

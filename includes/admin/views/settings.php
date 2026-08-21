@@ -187,6 +187,22 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="member_name_display"><?php esc_html_e( 'Member Names', 'jetonomy' ); ?></label></th>
+						<td>
+							<?php $jt_name_mode = \Jetonomy\name_display_mode(); ?>
+							<select id="member_name_display" name="jetonomy_settings[member_name_display]">
+								<option value="display_name" <?php selected( $jt_name_mode, 'display_name' ); ?>><?php esc_html_e( 'Display name only - Alex Rivera', 'jetonomy' ); ?></option>
+								<option value="handle" <?php selected( $jt_name_mode, 'handle' ); ?>><?php esc_html_e( 'Handle only - @alex-rivera', 'jetonomy' ); ?></option>
+								<option value="both" <?php selected( $jt_name_mode, 'both' ); ?>><?php esc_html_e( 'Both - Alex Rivera @alex-rivera', 'jetonomy' ); ?></option>
+							</select>
+							<p class="description">
+								<?php esc_html_e( 'How members are identified on bylines, member lists and the leaderboard.', 'jetonomy' ); ?>
+								<br>
+								<?php esc_html_e( 'Display names are not unique - WordPress lets any number of accounts share one, so two members called "Alex Rivera" look identical on every post. A handle is the member\'s unique username, and is already what @mentions resolve against. Choose Both if you want readable names that can still be told apart.', 'jetonomy' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Community as Homepage', 'jetonomy' ); ?></th>
 						<td>
 							<label for="front_page">
