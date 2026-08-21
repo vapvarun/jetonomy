@@ -110,7 +110,7 @@ $stat_cards = array(
 				);
 				?>
 			<?php else : ?>
-				<table class="widefat striped"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
+				<table class="wp-list-table widefat striped"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
 					<thead>
 						<tr>
 							<th scope="col" class="column-primary"><?php esc_html_e( 'User', 'jetonomy' ); ?></th>

@@ -82,6 +82,35 @@ class Post extends Model {
 			$data['slug'] = sanitize_title( $data['title'] );
 		}
 
+		/*
+		 * Derive type from the holding space when the caller did not set one.
+		 *
+		 * Post type is behavioural, not cosmetic: Schema_Markup emits QAPage
+		 * with acceptedAnswer only for `question`, so a Q&A post left as
+		 * `topic` silently serves DiscussionForumPosting and loses the rich
+		 * result (the same defect Migration_1_9_3 was written to repair).
+		 *
+		 * Until 1.9.4 the mapping lived only in callers - the REST controller,
+		 * the composer template and the three importers each called
+		 * compose_post_type() themselves. Anything else reached insert() with
+		 * no type and took the column default, `topic`. Measured on one feed
+		 * space: REST create produced `status` correctly, while Post::create()
+		 * and the create-post ABILITY - the path an AI agent uses - both
+		 * produced `topic`. That is why 1.9.3's migration did not hold: it
+		 * repaired existing rows while those two paths kept minting new bad
+		 * ones, 28 of them after the migration ran.
+		 *
+		 * Deriving it here makes the model the single source of truth. Callers
+		 * that pass an explicit type still win, so REST, the importers and any
+		 * deliberate override are unaffected.
+		 */
+		if ( empty( $data['type'] ) && ! empty( $data['space_id'] ) ) {
+			$space = Space::find( (int) $data['space_id'] );
+			if ( $space ) {
+				$data['type'] = \Jetonomy\compose_post_type( (string) ( $space->type ?? 'forum' ) );
+			}
+		}
+
 		$id = static::insert( $data );
 
 		if ( $id > 0 ) {

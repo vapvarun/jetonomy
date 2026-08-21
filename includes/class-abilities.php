@@ -1189,12 +1189,22 @@ class Abilities {
 		$space_id = (int) $input['space_id'];
 		$title    = sanitize_text_field( $input['title'] );
 		$content  = wp_kses_post( $input['content'] );
-		$type     = sanitize_text_field( $input['type'] ?? '' );
 
-		if ( empty( $type ) ) {
-			$space = Space::find( $space_id );
-			$type  = ( $space && 'qa' === ( $space->type ?? '' ) ) ? 'question' : 'topic';
-		}
+		/*
+		 * Leave type empty when the caller did not set one and let
+		 * Post::create() derive it from the space.
+		 *
+		 * This used to carry its own two-branch map - qa => question, and
+		 * everything else => topic - which is a partial copy of
+		 * \Jetonomy\compose_post_type(). It therefore got `feed` and `ideas`
+		 * spaces wrong, writing `topic` for both, while the REST path wrote the
+		 * correct `status` and `idea`. An agent creating a post produced
+		 * different data than a person creating the same post, and a Q&A-adjacent
+		 * space lost the structured-data type Schema_Markup keys off.
+		 *
+		 * One map, in one place. Do not re-add a local branch here.
+		 */
+		$type = sanitize_text_field( $input['type'] ?? '' );
 
 		$slug       = sanitize_title( $title );
 		$is_private = ! empty( $input['is_private'] ) ? 1 : 0;
