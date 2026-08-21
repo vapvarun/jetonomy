@@ -2027,6 +2027,24 @@ tr.jetonomy-moderated td {
 		padding-top: 4px;
 	}
 
+	/* Stack the expanded sheet.
+	   Core sets `.wp-list-table tr { display: flex }` at <=782px, and its own
+	   responsive rules then hide every non-primary cell, so the row only ever
+	   holds one child and the axis never shows. The moment we reveal those
+	   cells (rule below) the row has four children on a ROW axis, and the
+	   primary cell - still display:block - shrink-wraps to ~160px with the
+	   next cell sitting beside it. Measured at 600px before this rule: User
+	   146px and Action 380px sharing y, Object and When full-width below.
+	   Broken from ~482px to 782px; <=481px was fine only because core drops
+	   out of that band.
+	   Changing the AXIS rather than replacing core's display keeps the rest of
+	   core's flex sizing intact - `display:block` on the row also works but
+	   throws away more than the problem needs. (Basecamp 10221440849, QA
+	   bounce after the toggle itself was fixed.) */
+	.jetonomy-admin .wp-list-table tr.is-expanded {
+		flex-direction: column;
+	}
+
 	/* Expanded-row details: settings-sheet presentation. Core renders plain
 	   bold label + value; upgrade to muted uppercase label left, value right,
 	   hairline dividers between rows. display:flex must out-rank core's
