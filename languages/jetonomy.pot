@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.9.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-08-21 18:28:52+00:00\n"
+"POT-Creation-Date: 2026-08-21 19:03:53+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -5912,7 +5912,7 @@ msgid "Join the conversation"
 msgstr ""
 
 #: includes/class-blocks.php:816 includes/class-blocks.php:840
-#: templates/views/home.php:65
+#: templates/views/home.php:97
 msgid "Log in"
 msgstr ""
 
@@ -8109,42 +8109,46 @@ msgid_plural "New members can post %s topics a day."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/permissions/class-rate-limiter.php:147
+#: includes/permissions/class-rate-limiter.php:148
+#. translators: %s: human-readable wait, e.g. "17 hours".
 msgid "You can post again in about %s."
 msgstr ""
 
-#: includes/permissions/class-rate-limiter.php:151
+#: includes/permissions/class-rate-limiter.php:152
 #. translators: %s: number of replies allowed per day.
 msgid "New members can post %s reply a day."
 msgid_plural "New members can post %s replies a day."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/permissions/class-rate-limiter.php:152
+#: includes/permissions/class-rate-limiter.php:154
+#. translators: %s: human-readable wait, e.g. "45 minutes".
 msgid "You can reply again in about %s."
 msgstr ""
 
-#: includes/permissions/class-rate-limiter.php:156
+#: includes/permissions/class-rate-limiter.php:158
 #. translators: %s: number of votes allowed per day.
 msgid "New members can cast %s vote a day."
 msgid_plural "New members can cast %s votes a day."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/permissions/class-rate-limiter.php:157
+#: includes/permissions/class-rate-limiter.php:160
+#. translators: %s: human-readable wait, e.g. "2 minutes".
 msgid "You can vote again in about %s."
 msgstr ""
 
-#: includes/permissions/class-rate-limiter.php:161
+#: includes/permissions/class-rate-limiter.php:164
 #. translators: %s: number of actions allowed per day.
 msgid "New members are limited to %s of these a day."
 msgstr ""
 
-#: includes/permissions/class-rate-limiter.php:162
+#: includes/permissions/class-rate-limiter.php:166
+#. translators: %s: human-readable wait.
 msgid "You can try again in about %s."
 msgstr ""
 
-#: includes/permissions/class-rate-limiter.php:172
+#: includes/permissions/class-rate-limiter.php:176
 msgid "Please try again later."
 msgstr ""
 
@@ -9101,15 +9105,22 @@ msgstr ""
 msgid "this week"
 msgstr ""
 
-#: templates/views/home.php:64
+#: templates/views/home.php:81
+#. translators: 1: singular space label, 2: plural space label.
+msgid ""
+"Open a %1$s to read or start a discussion - topics live inside %2$s, each "
+"with its own members and rules."
+msgstr ""
+
+#: templates/views/home.php:96
 msgid "Create free account"
 msgstr ""
 
-#: templates/views/home.php:77
+#: templates/views/home.php:109
 msgid "No categories yet. Check back soon!"
 msgstr ""
 
-#: templates/views/home.php:118
+#: templates/views/home.php:150
 #. translators: %s: the plural space label the site owner configured (e.g.
 #. spaces, groups).
 msgid "Other %s"

@@ -65,6 +65,39 @@ if ( ! is_user_logged_in() ) :
 			<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( wp_login_url( \Jetonomy\base_url() . '/' ) ); ?>"><?php esc_html_e( 'Log in', 'jetonomy' ); ?></a>
 		</div>
 	</section>
+<?php else : ?>
+	<?php
+	/*
+	 * Members get orientation too, just a much lighter kind.
+	 *
+	 * The logged-out block above exists because the home was a wall of space
+	 * cards with no orientation for a newcomer. Members had the same problem
+	 * for a different reason: posting is the primary member action and there
+	 * is no way to start one from here - 167 links on this page and not one
+	 * of them opens a composer. Nothing said why, so the page read as a dead
+	 * end rather than as a directory.
+	 *
+	 * Deliberately NOT a compose button. A global "New topic" has to answer
+	 * "into which space?", and a picker on the primary landing page is a
+	 * bigger change than the problem warrants (Basecamp 10227705351). Naming
+	 * where posting happens turns the dead end into a signpost, which is the
+	 * whole gap.
+	 */
+	$jt_member_hint = (string) apply_filters(
+		'jetonomy_home_member_hint',
+		sprintf(
+			/* translators: 1: singular space label, 2: plural space label. */
+			__( 'Open a %1$s to read or start a discussion - topics live inside %2$s, each with its own members and rules.', 'jetonomy' ),
+			\Jetonomy\space_label( false, true ),
+			\Jetonomy\space_label( true, true )
+		)
+	);
+	if ( '' !== $jt_member_hint ) :
+		?>
+		<p class="jt-home-member-hint"><?php echo esc_html( $jt_member_hint ); ?></p>
+		<?php
+	endif;
+	?>
 <?php endif; ?>
 <div class="jt-two-col">
 		<main>

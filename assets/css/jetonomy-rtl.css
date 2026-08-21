@@ -1628,6 +1628,12 @@
      in the "Managed by" sidebar card since 1.4.0; the directory - where the
      decision of which space to open actually happens - did not. Sits under the
      stats as secondary information, not competing with the title. */
+  /* Member orientation on the community root (1.9.4). Logged-out visitors get
+     the welcome block above; members got nothing but a wall of cards and no
+     indication that posting happens one level down. One quiet line, sized as
+     secondary text so it orients without competing with the space grid. */
+  .jt-home-member-hint { margin: 0 0 var(--jt-space-5); max-width: 62ch; color: var(--jt-text-secondary); font-size: var(--jt-text-base); line-height: var(--jt-leading-normal); }
+
   .jt-space-card-owner { margin-block-start: var(--jt-space-1); font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* Space danger zone on /s/{slug}/edit/ (1.9.4).
