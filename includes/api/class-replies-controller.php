@@ -204,14 +204,20 @@ class Replies_Controller extends Base_Controller {
 
 		$space_id = (int) $post->space_id;
 
-		// Block replies in archived or locked spaces.
-		$space = \Jetonomy\Models\Space::find( $space_id );
-		if ( $space && in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
-			return new WP_Error(
-				'jetonomy_space_restricted',
-				__( 'This space is archived or locked and no longer accepts new replies.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
+		/*
+		 * Banned/silenced, archived or locked space, closed post, and the
+		 * space-level right to reply - now shared with the inbound-email writer
+		 * through Reply_Gate. These were spelled out here and only here, which
+		 * is exactly why the email path had none of them (Basecamp
+		 * 10228771444). Error codes and statuses are unchanged.
+		 *
+		 * Rate limiting and CAPTCHA stay below: they are per-surface policy
+		 * rather than facts about the post, and a CAPTCHA is meaningless for a
+		 * mail webhook.
+		 */
+		$gate = \Jetonomy\Permissions\Reply_Gate::check( $user_id, $post );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
 		}
 
 		if ( ! $this->check_permission( 'create_replies', $space_id ) ) {
@@ -238,15 +244,6 @@ class Replies_Controller extends Base_Controller {
 		);
 		if ( false === $captcha_result ) {
 			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
-		}
-
-		// Prevent replies to closed posts.
-		if ( ! empty( $post->is_closed ) ) {
-			return new WP_Error(
-				'jetonomy_post_closed',
-				__( 'This post is closed and cannot receive new replies.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
 		}
 
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );

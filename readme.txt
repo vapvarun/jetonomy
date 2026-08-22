@@ -288,6 +288,7 @@ Security and housekeeping release.
 * Fix      - Listing spaces by category through the AI-agent interface is now limited like every other listing, instead of loading the whole category.
 * Security - A moderator can no longer restrict an administrator or another moderator. The moderation screen enforced this only through the REST API, so the screen's own save path let an editor lock the site owner out of their account.
 * Security - Joining a space through the WordPress Abilities API now honours the space's join setting. Hidden and invite-only spaces could be joined directly, which exposed every topic inside them.
+* Security - Replies arriving by email are now subject to the same rules as replies posted on the site. A banned member could still reply by email, and emailed replies could land on closed topics and in archived spaces.
 
 = 1.9.3 - August 2026 =
 

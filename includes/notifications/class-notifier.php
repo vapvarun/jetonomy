@@ -352,6 +352,28 @@ class Notifier {
 			return;
 		}
 
+		/*
+		 * The gates the REST reply path enforces, which this path had none of.
+		 *
+		 * A valid reply token proves WHO is replying and nothing else. Without
+		 * this a banned member could keep posting for as long as they held any
+		 * notification email, and emailed replies landed on closed posts and
+		 * into archived spaces (Basecamp 10228771444, reproduced with correctly
+		 * signed requests so it was not masked by the signature fix).
+		 *
+		 * Reply::create() has no gate of its own, so this is the last point at
+		 * which anything can say no.
+		 */
+		$post = \Jetonomy\Models\Post::find( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+
+		$allowed = \Jetonomy\Permissions\Reply_Gate::check( $user_id, $post );
+		if ( is_wp_error( $allowed ) ) {
+			return;
+		}
+
 		$reply_id = \Jetonomy\Models\Reply::create(
 			[
 				'post_id'       => $post_id,

@@ -118,7 +118,16 @@ class PermissionEngineTest extends WP_UnitTestCase {
 
 	public function test_banned_user_denied_even_with_admin_cap(): void {
 		// A banned WP admin is still denied (ban check is Layer 0).
-		Restriction::ban( $this->admin_user_id, 'global_ban', 1 );
+		//
+		// The issuer is created explicitly rather than assumed to be user 1.
+		// Restriction::ban() now applies actor-relative target rules, so this
+		// fixture depends on the issuer really holding manage_options - and
+		// "user 1 still has its caps" is ambient state this test does not own
+		// (WP_User objects survive the per-test rollback in cache). The sibling
+		// test in FullPermissionFlowTest already creates its issuer this way.
+		// What the test asserts is unchanged: a banned administrator is denied.
+		$issuer = $this->factory()->user->create( [ 'role' => 'administrator' ] );
+		Restriction::ban( $this->admin_user_id, 'global_ban', $issuer );
 
 		$can = Permission_Engine::can( $this->admin_user_id, 'read', $this->public_space_id );
 		$this->assertFalse( $can );
