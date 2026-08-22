@@ -402,6 +402,22 @@ class Users_Controller extends Base_Controller {
 			// Block/Unblock button. blocked_ids() is memoized per-request, so
 			// this is never a fresh query. Always false for guests.
 			'is_blocked'       => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
+
+			/*
+			 * Additive (1.9.4): is this member currently restricted, and how?
+			 *
+			 * The members LIST already carried this ("most-severe active
+			 * restriction", see list_members) so that list could badge banned and
+			 * silenced members. The single-user payload did not, so the profile
+			 * screen had no way to know - and the app drew its Ban control
+			 * identically before and after a ban landed, giving the moderator no
+			 * feedback that their action had taken and inviting them to press it
+			 * again (Basecamp 10217068821).
+			 *
+			 * null when unrestricted. Same server-owned-rule, server-published-flag
+			 * pattern as can_block_author and can_downvote.
+			 */
+			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
 		];
 
 		/**
@@ -445,6 +461,22 @@ class Users_Controller extends Base_Controller {
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 			'is_blocked'       => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
+
+			/*
+			 * Additive (1.9.4): is this member currently restricted, and how?
+			 *
+			 * The members LIST already carried this ("most-severe active
+			 * restriction", see list_members) so that list could badge banned and
+			 * silenced members. The single-user payload did not, so the profile
+			 * screen had no way to know - and the app drew its Ban control
+			 * identically before and after a ban landed, giving the moderator no
+			 * feedback that their action had taken and inviting them to press it
+			 * again (Basecamp 10217068821).
+			 *
+			 * null when unrestricted. Same server-owned-rule, server-published-flag
+			 * pattern as can_block_author and can_downvote.
+			 */
+			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
 		];
 
 		/** This filter is documented in includes/api/class-users-controller.php */
