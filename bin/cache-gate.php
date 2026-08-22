@@ -284,6 +284,120 @@ if ( ! is_wp_error( $leak_post ) ) {
 	Post::delete( (int) $leak_post );
 }
 
+// ── 10-14. The LISTING surface ─────────────────────────────────────────────
+// Post::list_by_space_visible() and friends are not cached yet. These checks
+// exist BEFORE that work, on purpose, and most of them pass today precisely
+// because an uncached read cannot be stale.
+//
+// That is what makes them worth writing now: they are the contract the cache
+// has to keep, captured while the correct behaviour is still free. Written
+// afterwards they would be shaped by whatever the implementation happened to
+// do, which is how a cache ends up with tests that agree with its bugs.
+//
+// Check 12 is the one to watch. list_by_space_visible() takes the viewer as an
+// argument and filters private posts by it, so its result is NOT shareable
+// between viewers. That is the same shape as the bug that shipped in the
+// thread cache - one viewer primed an entry and everybody else read their
+// permissions out of it - and the seven checks in place at the time all
+// passed while it was live, because none of them read one key as two people.
+$second_space = (int) $wpdb->get_var(
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	"SELECT id FROM {$spaces_t} WHERE slug LIKE 'jt-scale-%' AND id <> " . (int) $space_id . ' LIMIT 1'
+);
+
+/** Ids visible to a given viewer in a space listing. */
+$listing_ids = static function ( int $sid, int $viewer, bool $privileged = false ) {
+	$rows = Post::list_by_space_visible( $sid, $viewer, $privileged, 'latest', 100, 0 );
+	return array_map( static fn ( $r ) => (int) $r->id, $rows );
+};
+
+// 10. A new post shows up in its space listing.
+$listing_ids( $space_id, 1 ); // prime
+$fresh_post = Post::create(
+	array(
+		'space_id'  => $space_id,
+		'author_id' => 1,
+		'title'     => 'Gate listing probe',
+		'content'   => '<p>q</p>',
+		'status'    => 'publish',
+	)
+);
+$in_listing = ! is_wp_error( $fresh_post ) && in_array( (int) $fresh_post, $listing_ids( $space_id, 1 ), true );
+$check(
+	'10. new post appears in the space listing',
+	$in_listing,
+	$in_listing ? 'listing invalidated on create' : 'listing still stale after a create'
+);
+
+// 11. Moving a post updates BOTH listings.
+if ( $second_space && ! is_wp_error( $fresh_post ) ) {
+	$listing_ids( $second_space, 1 ); // prime the destination too
+	Post::update( (int) $fresh_post, array( 'space_id' => $second_space ) );
+
+	$gone_from_old = ! in_array( (int) $fresh_post, $listing_ids( $space_id, 1 ), true );
+	$in_new        = in_array( (int) $fresh_post, $listing_ids( $second_space, 1 ), true );
+
+	$check(
+		'11. moved post leaves the old listing and joins the new',
+		$gone_from_old && $in_new,
+		sprintf( 'left old=%s joined new=%s', $gone_from_old ? 'yes' : 'NO', $in_new ? 'yes' : 'NO' )
+	);
+
+	Post::update( (int) $fresh_post, array( 'space_id' => $space_id ) );
+}
+
+// 12. Per-viewer visibility must survive whoever primed the listing.
+$priv_author = (int) $wpdb->get_var( "SELECT ID FROM {$wpdb->users} WHERE ID <> 1 ORDER BY ID DESC LIMIT 1" );
+if ( $priv_author ) {
+	$private_post = Post::create(
+		array(
+			'space_id'   => $space_id,
+			'author_id'  => $priv_author,
+			'title'      => 'Gate private listing probe',
+			'content'    => '<p>q</p>',
+			'status'     => 'publish',
+			'is_private' => 1,
+		)
+	);
+
+	if ( ! is_wp_error( $private_post ) ) {
+		// The author primes the listing - they are allowed to see their own.
+		$author_sees = in_array( (int) $private_post, $listing_ids( $space_id, $priv_author ), true );
+
+		// Somebody else reads the same space listing.
+		$other_id     = 1 === $priv_author ? 0 : 1;
+		$other_sees   = in_array( (int) $private_post, $listing_ids( $space_id, $other_id ), true );
+		$guest_sees   = in_array( (int) $private_post, $listing_ids( $space_id, 0 ), true );
+
+		$check(
+			'12. private post not leaked to another viewer',
+			! $other_sees && ! $guest_sees,
+			( $other_sees || $guest_sees )
+				? 'LEAKED a private post into another viewer/guest listing'
+				: 'listing scoped per viewer'
+		);
+		$check(
+			'13. author still sees their own private post',
+			$author_sees,
+			$author_sees ? 'own private post visible to its author' : 'author lost their own post'
+		);
+
+		Post::delete( (int) $private_post );
+	}
+}
+
+// 14. A deleted post leaves the listing.
+if ( ! is_wp_error( $fresh_post ) ) {
+	$listing_ids( $space_id, 1 ); // prime with it present
+	Post::delete( (int) $fresh_post );
+	$still_listed = in_array( (int) $fresh_post, $listing_ids( $space_id, 1 ), true );
+	$check(
+		'14. deleted post leaves the listing',
+		! $still_listed,
+		$still_listed ? 'deleted post still served from the listing' : 'listing invalidated on delete'
+	);
+}
+
 echo implode( "\n", $results ) . "\n\n";
 printf( "  %d passed, %d failed\n", $pass, $fail );
 echo $fail > 0
