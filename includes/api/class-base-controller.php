@@ -879,6 +879,27 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// 10199587514). Server-owned rule, server-published flag: no client
 		// re-derives it, and the anonymous case stays correct.
 		$data['can_downvote'] = $uid > 0 && $real_author_id !== $uid;
+
+		/*
+		 * Additive (1.9.4): may THIS viewer block this post's author?
+		 *
+		 * BlockedUser::block() refuses two targets outright - yourself, and any
+		 * moderator or administrator, because a member who could block the
+		 * moderators would make them unreachable to themselves. The API
+		 * published nothing to read that rule from, so the app rendered a Block
+		 * control on staff posts and the tap failed
+		 * (Basecamp 10207937443 / 10203753031).
+		 *
+		 * Same shape, and the same fix, as can_downvote directly above: a
+		 * server-owned rule gets a server-published flag rather than every
+		 * client re-deriving it. Clients that predate this field fall back to
+		 * their old behaviour, so the flag is additive, never required.
+		 */
+		$data['can_block_author'] = $uid > 0
+			&& $real_author_id > 0
+			&& $real_author_id !== $uid
+			&& ! user_can( $real_author_id, 'manage_options' )
+			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
 		// Additive (1.9.3): has THIS viewer already reported this post? A second
 		// report is answered 409 jetonomy_already_flagged, but the API published
 		// nothing to read that state from, so the app kept "reported" in local

@@ -926,6 +926,27 @@ class Replies_Controller extends Base_Controller {
 			? (int) $reply->viewer_vote
 			: ( $uid ? (int) ( \Jetonomy\Models\Vote::get_user_vote( $uid, 'reply', (int) $reply->id ) ?? 0 ) : 0 );
 		$data['can_downvote'] = $uid > 0 && $real_author_id !== $uid;
+
+		/*
+		 * Additive (1.9.4): may THIS viewer block this reply's author?
+		 *
+		 * BlockedUser::block() refuses two targets outright - yourself, and any
+		 * moderator or administrator, because a member who could block the
+		 * moderators would make them unreachable to themselves. The API
+		 * published nothing to read that rule from, so the app rendered a Block
+		 * control on staff replys and the tap failed
+		 * (Basecamp 10207937443 / 10203753031).
+		 *
+		 * Same shape, and the same fix, as can_downvote directly above: a
+		 * server-owned rule gets a server-published flag rather than every
+		 * client re-deriving it. Clients that predate this field fall back to
+		 * their old behaviour, so the flag is additive, never required.
+		 */
+		$data['can_block_author'] = $uid > 0
+			&& $real_author_id > 0
+			&& $real_author_id !== $uid
+			&& ! user_can( $real_author_id, 'manage_options' )
+			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
 		// See the identical note in prepare_post() — Basecamp 10202766654.
 		$data['viewer_flagged'] = isset( $reply->viewer_flagged )
 			? (bool) $reply->viewer_flagged
