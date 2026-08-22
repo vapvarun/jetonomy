@@ -6,6 +6,7 @@ use Jetonomy\CLI\Journey_Result;
 use Jetonomy\CLI\Journeys\Space_Journey;
 use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
+use Jetonomy\Models\SpaceMember;
 use Jetonomy\DB\Schema;
 
 /**
@@ -134,11 +135,31 @@ class SpaceJourneyTest extends WP_UnitTestCase {
 	public function test_delete_defaults_to_transfer_and_keeps_the_space(): void {
 		$space_id = $this->make_space();
 
+		/*
+		 * Give the transfer somebody to transfer TO.
+		 *
+		 * Space::resolve_successor() looks for another space admin and then
+		 * falls back to any other user with manage_options, EXCLUDING the
+		 * current user. This fixture created neither, so whether the test
+		 * passed depended on whether some other test happened to have left an
+		 * administrator in the database - ambient state this test does not own.
+		 * It was the suite's most frequent intermittent failure for exactly
+		 * that reason, and it passed in isolation because the default admin was
+		 * then not the current user.
+		 *
+		 * Naming the successor also makes the test assert something stronger:
+		 * not merely that the transfer succeeded, but who it handed the space
+		 * to.
+		 */
+		$heir = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		SpaceMember::add( $space_id, $heir, 'admin' );
+
 		$result = $this->journey->delete( $space_id );
 
-		$this->assertTrue( $result->is_success() );
+		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
 		$this->assertSame( $space_id, $result->data['id'] );
 		$this->assertSame( 'transfer', $result->data['mode'] );
+		$this->assertSame( $heir, (int) $result->data['successor'], 'the space must go to the admin we named' );
 
 		$space = Space::find( $space_id );
 		$this->assertNotNull( $space, 'transfer must not delete the space' );

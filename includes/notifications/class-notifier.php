@@ -369,7 +369,7 @@ class Notifier {
 			return;
 		}
 
-		$allowed = \Jetonomy\Permissions\Reply_Gate::check( $user_id, $post );
+		$allowed = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post );
 		if ( is_wp_error( $allowed ) ) {
 			return;
 		}

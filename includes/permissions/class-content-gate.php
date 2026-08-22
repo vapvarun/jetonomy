@@ -1,6 +1,6 @@
 <?php
 /**
- * The state checks that decide whether a reply may be written at all.
+ * The state checks that decide whether content may be written at all.
  *
  * These are the gates that depend only on WHO is replying and WHAT they are
  * replying to - not on how the request arrived. They were previously written
@@ -25,6 +25,13 @@
  * differently, and a CAPTCHA is meaningless for a mail webhook). What lives
  * here is only what must be true on every surface.
  *
+ * Named for CONTENT, not replies, deliberately. It started as a reply-only
+ * helper and within the hour turned out to be needed for post creation too:
+ * the WP Abilities create-post and create-reply paths could both write into an
+ * ARCHIVED space that REST refuses (Basecamp 10228771444, follow-up audit). A
+ * gate named for one caller is a gate the next caller does not think to look
+ * for, which is the exact failure this whole batch of cards is made of.
+ *
  * @package Jetonomy
  */
 
@@ -35,7 +42,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
 
-class Reply_Gate {
+class Content_Gate {
 
 	/**
 	 * Whether this user may add a reply to this post right now.
@@ -74,13 +81,10 @@ class Reply_Gate {
 		}
 
 		$space_id = (int) ( $post->space_id ?? 0 );
-		$space    = $space_id ? Space::find( $space_id ) : null;
-		if ( $space && in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
-			return new \WP_Error(
-				'jetonomy_space_restricted',
-				__( 'This space is archived or locked and no longer accepts new replies.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
+
+		$open = self::space_accepts_content( $space_id );
+		if ( is_wp_error( $open ) ) {
+			return $open;
 		}
 
 		if ( ! empty( $post->is_closed ) ) {
@@ -100,6 +104,33 @@ class Reply_Gate {
 			return new \WP_Error(
 				'jetonomy_forbidden',
 				__( 'You cannot post in this space.', 'jetonomy' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether a space is in a state that accepts new content at all.
+	 *
+	 * Split out of check() because POST creation needs it too and has no post
+	 * object to hand - the WP Abilities create-post path had no space-status
+	 * check and could start a topic in an archived space, which REST refuses.
+	 *
+	 * @param int $space_id Space ID.
+	 * @return true|\WP_Error True when the space accepts content.
+	 */
+	public static function space_accepts_content( int $space_id ) {
+		if ( $space_id <= 0 ) {
+			return true;
+		}
+
+		$space = Space::find( $space_id );
+		if ( $space && in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
+			return new \WP_Error(
+				'jetonomy_space_restricted',
+				__( 'This space is archived or locked and no longer accepts new content.', 'jetonomy' ),
 				array( 'status' => 403 )
 			);
 		}

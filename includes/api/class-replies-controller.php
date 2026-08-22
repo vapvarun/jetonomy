@@ -207,7 +207,7 @@ class Replies_Controller extends Base_Controller {
 		/*
 		 * Banned/silenced, archived or locked space, closed post, and the
 		 * space-level right to reply - now shared with the inbound-email writer
-		 * through Reply_Gate. These were spelled out here and only here, which
+		 * through Content_Gate. These were spelled out here and only here, which
 		 * is exactly why the email path had none of them (Basecamp
 		 * 10228771444). Error codes and statuses are unchanged.
 		 *
@@ -215,7 +215,7 @@ class Replies_Controller extends Base_Controller {
 		 * rather than facts about the post, and a CAPTCHA is meaningless for a
 		 * mail webhook.
 		 */
-		$gate = \Jetonomy\Permissions\Reply_Gate::check( $user_id, $post );
+		$gate = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post );
 		if ( is_wp_error( $gate ) ) {
 			return $gate;
 		}

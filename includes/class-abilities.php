@@ -165,7 +165,18 @@ class Abilities {
 				],
 				'execute_callback'    => [ $this, 'execute_create_post' ],
 				'permission_callback' => function ( $input ) {
-					return $this->check_auth_and_permission( 'create_posts', (int) $input['space_id'] );
+					$space_id = (int) $input['space_id'];
+
+					// REST_Posts_Controller::create_item() refuses archived and
+					// locked spaces; Permission_Engine::can() does not look at
+					// space status, so this path could start a topic in an
+					// archived space (same audit as create-reply above).
+					$open = \Jetonomy\Permissions\Content_Gate::space_accepts_content( $space_id );
+					if ( is_wp_error( $open ) ) {
+						return $open;
+					}
+
+					return $this->check_auth_and_permission( 'create_posts', $space_id );
 				},
 				'meta'                => [
 					'annotations'  => [
@@ -341,10 +352,20 @@ class Abilities {
 					if ( ! $post ) {
 						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
 					}
-					if ( ! empty( $post->is_closed ) ) {
-						return new WP_Error( 'closed', __( 'Post is closed.', 'jetonomy' ) );
-					}
-					return $this->check_auth_and_permission( 'create_replies', (int) $post->space_id );
+
+					/*
+					 * The same gate REST and the inbound-email writer use.
+					 *
+					 * This callback had its own copy of the rules and the copy
+					 * was short one: it checked is_closed but not whether the
+					 * SPACE was archived or locked, so this ability could reply
+					 * into an archived space that REST refuses with
+					 * jetonomy_space_restricted. Reproduced during the
+					 * follow-up audit on Basecamp 10228771444 - REST returned
+					 * 403 and the ability created reply #2411 in the same
+					 * space, for the same member.
+					 */
+					return \Jetonomy\Permissions\Content_Gate::check( get_current_user_id(), $post );
 				},
 				'meta'                => [
 					'annotations'  => [

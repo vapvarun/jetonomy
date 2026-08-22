@@ -7,7 +7,7 @@ use Jetonomy\Models\Category;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
-use Jetonomy\Permissions\Reply_Gate;
+use Jetonomy\Permissions\Content_Gate;
 
 /**
  * The reply gates, driven at the shared choke point rather than through one
@@ -24,7 +24,7 @@ use Jetonomy\Permissions\Reply_Gate;
  * would prove only what that controller does, and "only that controller does
  * it" was the bug.
  */
-class ReplyGateTest extends WP_UnitTestCase {
+class ContentGateTest extends WP_UnitTestCase {
 
 	private int $category_id;
 	private int $space_id;
@@ -68,7 +68,7 @@ class ReplyGateTest extends WP_UnitTestCase {
 
 	public function test_an_ordinary_member_may_reply(): void {
 		$this->assertTrue(
-			Reply_Gate::check( $this->member_id, $this->post() ),
+			Content_Gate::check( $this->member_id, $this->post() ),
 			'the control case: a guard that refuses everything passes every negative test'
 		);
 	}
@@ -76,7 +76,7 @@ class ReplyGateTest extends WP_UnitTestCase {
 	public function test_a_banned_member_may_not_reply(): void {
 		Restriction::ban( $this->member_id, 'global_ban', 1 );
 
-		$result = Reply_Gate::check( $this->member_id, $this->post() );
+		$result = Content_Gate::check( $this->member_id, $this->post() );
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'jetonomy_user_banned', $result->get_error_code() );
@@ -85,7 +85,7 @@ class ReplyGateTest extends WP_UnitTestCase {
 	public function test_a_silenced_member_may_not_reply(): void {
 		Restriction::ban( $this->member_id, 'silence', 1 );
 
-		$result = Reply_Gate::check( $this->member_id, $this->post() );
+		$result = Content_Gate::check( $this->member_id, $this->post() );
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'jetonomy_user_silenced', $result->get_error_code() );
@@ -95,7 +95,7 @@ class ReplyGateTest extends WP_UnitTestCase {
 		Post::close( $this->post_id );
 		\Jetonomy\Cache::reset_memos();
 
-		$result = Reply_Gate::check( $this->member_id, $this->post() );
+		$result = Content_Gate::check( $this->member_id, $this->post() );
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'jetonomy_post_closed', $result->get_error_code() );
@@ -108,10 +108,48 @@ class ReplyGateTest extends WP_UnitTestCase {
 		// auto-increment ids, the next test to be handed this id inherits it.
 		Space::update( $this->space_id, [ 'status' => 'archived' ] );
 
-		$result = Reply_Gate::check( $this->member_id, $this->post() );
+		$result = Content_Gate::check( $this->member_id, $this->post() );
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'jetonomy_space_restricted', $result->get_error_code() );
+	}
+
+	// ------------------------------------------------- space accepts content --
+
+	/**
+	 * space_accepts_content() is separate from check() because POST creation
+	 * needs it and has no post object. It exists because the WP Abilities
+	 * create-post and create-reply paths both had their own copy of the state
+	 * rules, and both copies were short the space-status check - so either
+	 * could write into an ARCHIVED space that REST refuses. Reproduced during
+	 * the follow-up audit: REST returned 403 jetonomy_space_restricted while
+	 * the ability created reply #2411 in that same space for that same member.
+	 */
+	public function test_an_archived_space_accepts_no_new_content(): void {
+		Space::update( $this->space_id, [ 'status' => 'archived' ] );
+		\Jetonomy\Cache::reset_memos();
+
+		$result = Content_Gate::space_accepts_content( $this->space_id );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'jetonomy_space_restricted', $result->get_error_code() );
+	}
+
+	public function test_a_locked_space_accepts_no_new_content(): void {
+		Space::update( $this->space_id, [ 'status' => 'locked' ] );
+		\Jetonomy\Cache::reset_memos();
+
+		$result = Content_Gate::space_accepts_content( $this->space_id );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'jetonomy_space_restricted', $result->get_error_code() );
+	}
+
+	public function test_an_active_space_accepts_content(): void {
+		$this->assertTrue(
+			Content_Gate::space_accepts_content( $this->space_id ),
+			'the control case - a gate that refuses every space passes both tests above'
+		);
 	}
 
 	/**
@@ -122,13 +160,19 @@ class ReplyGateTest extends WP_UnitTestCase {
 	 * whichever later test is handed the same id. Flush so it cannot.
 	 */
 	public function tear_down(): void {
-		wp_cache_flush();
+		// reset_memos() and nothing more. An earlier version called
+		// wp_cache_flush() here, which fixed this test's own leak by wiping the
+		// whole object cache for every test that followed - trading one
+		// cross-test side effect for a broader one. It is not needed: the ban
+		// and silence state lives in a Restriction memo registered with
+		// Cache::register_memo_reset(), and the archived-space state is written
+		// through Space::update(), which busts its own cached row.
 		\Jetonomy\Cache::reset_memos();
 		parent::tear_down();
 	}
 
 	public function test_a_logged_out_caller_may_not_reply(): void {
-		$result = Reply_Gate::check( 0, $this->post() );
+		$result = Content_Gate::check( 0, $this->post() );
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'jetonomy_not_logged_in', $result->get_error_code() );
