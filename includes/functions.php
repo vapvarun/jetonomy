@@ -429,28 +429,6 @@ function display_name_choices( \WP_User $user ): array {
 }
 
 /**
- * The name to show for a member on any display surface.
- *
- * THE single source of truth for "what do we call this person on screen",
- * paired with get_profile_url() for "where does their name link to". Every
- * byline, member row, mention chip, and moderation card resolves through here,
- * so a site that wants handles instead of real names changes one filter rather
- * than hunting ~40 templates.
- *
- * Default chain is display_name -> user_nicename -> user_login. The fallbacks
- * matter: display_name can be empty on users created by an importer or a raw
- * SQL insert, and an empty byline reads as a broken row.
- *
- * NOT for API/CLI payloads. Those carry the canonical stored value and must not
- * vary with a site's display preference, for the same reason
- * Trust_Levels::name() is separate from label() - a client comparing the value
- * would break. Filter the display surface, not the data surface.
- *
- * @param int|\WP_User|object $user User ID, WP_User, or a row from one of our own
- *                                  tables carrying user_id (or ID).
- * @return string Display name, or '' when the user does not exist.
- */
-/**
  * How members are identified across the community.
  *
  * One reader for the setting so the templates, REST and CLI cannot disagree -
@@ -467,6 +445,24 @@ function name_display_mode(): string {
 	return in_array( $mode, array( 'display_name', 'handle', 'both' ), true ) ? $mode : 'display_name';
 }
 
+/**
+ * The name to show for a member on any display surface.
+ *
+ * THE single source of truth for "what do we call this person on screen",
+ * paired with get_profile_url() for "where does their name link to". Every
+ * byline, member row, mention chip, moderation card AND the REST/CLI payloads
+ * resolve through here (migration 1_9_4_1 routed the data surfaces in too), so
+ * the site-wide member_name_display setting and the jetonomy_user_display_name
+ * filter apply once, uniformly - web and app can no longer disagree.
+ *
+ * Default chain is display_name -> user_nicename -> user_login. The fallbacks
+ * matter: display_name can be empty on users created by an importer or a raw
+ * SQL insert, and an empty byline reads as a broken row.
+ *
+ * @param int|\WP_User|object $user User ID, WP_User, or a row from one of our own
+ *                                  tables carrying user_id (or ID).
+ * @return string Display name, or '' when the user does not exist.
+ */
 function user_display_name( $user ): string {
 	if ( ! $user instanceof \WP_User ) {
 		// Callers legitimately hold three different things: a user ID, a WP_User,
@@ -520,13 +516,31 @@ function user_display_name( $user ): string {
 				$name = $name . ' @' . $handle;
 			}
 			break;
+		default:
+			// 'display_name' mode (the default). WordPress does not make
+			// display_name unique, so two accounts can both read "Alex
+			// Rivera" and leave a reader nothing to tell them apart. Append
+			// the unique handle ONLY when this name is actually shared on the
+			// site - names that collide with no one are left untouched, so
+			// most communities never see an @handle they did not ask for.
+			if (
+				'' !== trim( $handle )
+				&& strcasecmp( $name, $handle ) !== 0
+				&& '' !== trim( (string) $user->display_name )
+				&& $name === (string) $user->display_name
+				&& display_name_is_shared( $name )
+			) {
+				$name = $name . ' @' . $handle;
+			}
+			break;
 	}
 
 	/**
 	 * Filter the name shown for a member on display surfaces.
 	 *
 	 * Return $user->user_nicename to show handles, $user->user_login to show
-	 * usernames, or compose anything else. Does not affect REST/CLI payloads.
+	 * usernames, or compose anything else. Applies uniformly across web, REST
+	 * and CLI - every surface routes through user_display_name().
 	 *
 	 * @since 1.9.3
 	 *
@@ -534,6 +548,54 @@ function user_display_name( $user ): string {
 	 * @param \WP_User $user The user.
 	 */
 	return (string) apply_filters( 'jetonomy_user_display_name', $name, $user );
+}
+
+/**
+ * Whether a member's display_name is shared by another account on this site.
+ *
+ * WordPress does not make display_name unique; user_display_name() appends the
+ * unique @handle for the members whose name actually collides. Backed by a
+ * cached set (see colliding_display_names()) so a member list of N rows costs
+ * one lookup, not N queries.
+ *
+ * @param string $display_name The name being rendered.
+ * @return bool True when 2+ accounts share this display_name.
+ */
+function display_name_is_shared( string $display_name ): bool {
+	$key = strtolower( trim( $display_name ) );
+
+	return '' !== $key && isset( colliding_display_names()[ $key ] );
+}
+
+/**
+ * The set of display_names shared by 2+ accounts, keyed lower-cased for O(1)
+ * lookup. Cached in a transient (object-cache-backed when a persistent drop-in
+ * is present, DB-backed otherwise) and busted whenever a user is registered,
+ * renamed or removed - see the $bust_user_row hook in class-jetonomy.php.
+ *
+ * @return array<string,bool> Map of lower-cased colliding display_name => true.
+ */
+function colliding_display_names(): array {
+	$cached = get_transient( 'jetonomy_display_name_collisions' );
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+
+	global $wpdb;
+	// ponytail: one unindexed GROUP BY scan of wp_users, cached until a user is
+	// added/renamed/removed. Fine at community scale; if a site ever reaches
+	// millions of users, maintain a collisions table on the user-write path.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = $wpdb->get_col(
+		"SELECT LOWER(TRIM(display_name)) FROM {$wpdb->users}
+		 WHERE display_name <> ''
+		 GROUP BY LOWER(TRIM(display_name)) HAVING COUNT(*) > 1"
+	);
+
+	$set = array_fill_keys( array_map( 'strval', (array) $rows ), true );
+	set_transient( 'jetonomy_display_name_collisions', $set, DAY_IN_SECONDS );
+
+	return $set;
 }
 
 /**
