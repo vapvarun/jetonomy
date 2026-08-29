@@ -53,7 +53,7 @@ if ( ! is_user_logged_in() ) :
 			<h2 class="jt-home-welcome-title"><?php echo esc_html( $jt_welcome_heading ); ?></h2>
 			<p class="jt-home-welcome-sub"><?php echo esc_html( $jt_welcome_sub ); ?></p>
 			<div class="jt-home-welcome-pulse">
-				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['members'] ) ); ?></strong> <?php echo esc_html( _n( 'member', 'members', $jt_pulse['members'], 'jetonomy' ) ); ?></span>
+				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['members'] ) ); ?></strong> <?php echo esc_html( \Jetonomy\jetonomy_label( 'member', 1 !== (int) $jt_pulse['members'], true ) ); ?></span>
 				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts'] ) ); ?></strong> <?php echo esc_html( _n( 'post', 'posts', $jt_pulse['posts'], 'jetonomy' ) ); ?></span>
 				<?php if ( $jt_pulse['posts_week'] > 0 ) : ?>
 					<span class="jt-pulse-stat jt-pulse-stat--live"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts_week'] ) ); ?></strong> <?php esc_html_e( 'this week', 'jetonomy' ); ?></span>
@@ -86,10 +86,12 @@ if ( ! is_user_logged_in() ) :
 	$jt_member_hint = (string) apply_filters(
 		'jetonomy_home_member_hint',
 		sprintf(
-			/* translators: 1: singular space label, 2: plural space label. */
-			__( 'Open a %1$s to read or start a discussion - topics live inside %2$s, each with its own members and rules.', 'jetonomy' ),
+			/* translators: 1: singular space label, 2: plural space label, 3: plural topic label, 4: plural member label. */
+			__( 'Open a %1$s to read or start a discussion - %3$s live inside %2$s, each with its own %4$s and rules.', 'jetonomy' ),
 			\Jetonomy\space_label( false, true ),
-			\Jetonomy\space_label( true, true )
+			\Jetonomy\space_label( true, true ),
+			\Jetonomy\jetonomy_label( 'topic', true, true ),
+			\Jetonomy\jetonomy_label( 'member', true, true )
 		)
 	);
 	if ( '' !== $jt_member_hint ) :
@@ -107,7 +109,7 @@ if ( ! is_user_logged_in() ) :
 					'empty-state',
 					[
 						'icon'    => 'empty-posts',
-						'message' => __( 'No categories yet. Check back soon!', 'jetonomy' ),
+						'message' => sprintf( /* translators: %s: plural category label. */ __( 'No %s yet. Check back soon!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
 					]
 				);
 				?>

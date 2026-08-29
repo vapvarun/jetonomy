@@ -333,7 +333,7 @@ $crumbs = [
 									</div>
 									<div class="jt-row-stat">
 										<div class="jt-row-stat-n"><?php echo (int) $post->reply_count; ?></div>
-										<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
+										<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
 									</div>
 									<div class="jt-row-stat">
 										<div class="jt-row-stat-n"><?php echo (int) $post->vote_score; ?></div>

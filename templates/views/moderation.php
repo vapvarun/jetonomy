@@ -274,7 +274,7 @@ $crumbs = [
 		</a>
 		<?php if ( $jt_can_manage_bans ) : ?>
 			<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>" <?php echo 'banned' === $jt_view ? 'aria-current="page"' : ''; ?>>
-				<?php esc_html_e( 'Banned members', 'jetonomy' ); ?>
+				<?php printf( /* translators: %s: plural member label. */ esc_html__( 'Banned %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 			</a>
 		<?php endif; ?>
 	</nav>
@@ -285,7 +285,7 @@ $crumbs = [
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				[
-					'message' => __( 'No members are currently banned or silenced.', 'jetonomy' ),
+					'message' => sprintf( /* translators: %s: plural member label. */ __( 'No %s are currently banned or silenced.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 					'variant' => 'compact',
 				]
 			);
@@ -341,7 +341,7 @@ $crumbs = [
 					'paged' => $jt_ban_paged,
 					'pages' => $jt_ban_pages,
 					'base'  => add_query_arg( 'view', 'banned', $base . '/mod/' ),
-					'label' => __( 'Banned members pagination', 'jetonomy' ),
+					'label' => sprintf( /* translators: %s: plural member label. */ __( 'Banned %s pagination', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 				]
 			);
 			?>
@@ -353,7 +353,7 @@ $crumbs = [
 			<?php
 			$jt_kind_tabs = [
 				'post'  => [ __( 'Posts', 'jetonomy' ), $jt_held_posts ],
-				'reply' => [ __( 'Replies', 'jetonomy' ), $jt_held_replies ],
+				'reply' => [ \Jetonomy\jetonomy_label( 'reply', true ), $jt_held_replies ],
 			];
 			foreach ( $jt_kind_tabs as $jt_kind_key => $jt_kind_meta ) :
 				$jt_kind_url = add_query_arg(
@@ -376,7 +376,7 @@ $crumbs = [
 		<?php if ( empty( $jt_held ) ) : ?>
 			<?php
 			$jt_held_empty = 'reply' === $jt_kind
-				? __( 'No replies are waiting for approval.', 'jetonomy' )
+				? sprintf( /* translators: %s: plural reply label. */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 				: __( 'No posts are waiting for approval.', 'jetonomy' );
 			\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_held_empty ] );
 			?>
@@ -473,7 +473,7 @@ $crumbs = [
 							<?php echo esc_html( $reason_label ); ?>
 						</span>
 						<span class="jt-mod-flag-type">
-							<?php echo $is_reply ? esc_html__( 'Reply', 'jetonomy' ) : esc_html__( 'Post', 'jetonomy' ); ?>
+							<?php echo $is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html__( 'Post', 'jetonomy' ); ?>
 						</span>
 						<a class="jt-mod-flag-space" href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
 							<?php echo esc_html( $space->title ); ?>

@@ -49,35 +49,92 @@ function current_url(): string {
 }
 
 /**
- * The site owner's label for a "Space" (e.g. Space, Forum, Discussion, Channel).
+ * The renamable product nouns and their translated defaults [singular, plural].
  *
- * Single source of truth for the noun so an owner can rename Spaces everywhere
- * from Settings → General. Falls back to the translated default when no custom
- * label is set. Developers can override per context via `jetonomy_space_label`.
+ * Product NOUNS only - never verbs like Save/Delete. Called at runtime (not a
+ * static const) so __() resolves after the textdomain is loaded.
+ *
+ * @return array<string, array{0:string,1:string}>
+ */
+function label_defaults(): array {
+	return array(
+		'space'    => array( __( 'Space', 'jetonomy' ), __( 'Spaces', 'jetonomy' ) ),
+		'topic'    => array( __( 'Topic', 'jetonomy' ), __( 'Topics', 'jetonomy' ) ),
+		'reply'    => array( __( 'Reply', 'jetonomy' ), __( 'Replies', 'jetonomy' ) ),
+		'member'   => array( __( 'Member', 'jetonomy' ), __( 'Members', 'jetonomy' ) ),
+		'category' => array( __( 'Category', 'jetonomy' ), __( 'Categories', 'jetonomy' ) ),
+	);
+}
+
+/**
+ * The site owner's label for a product noun (Space, Topic, Reply, Member,
+ * Category), e.g. Space -> Forum/Channel, Topic -> Thread, Member -> Player.
+ *
+ * Single source of truth for the nouns so an owner can rename them everywhere
+ * from Settings → General. Reads {noun}_label_singular / {noun}_label_plural
+ * from jetonomy_settings and falls back to the translated default. Both forms
+ * are stored explicitly - we never auto-pluralise, because that breaks the
+ * moment an owner types an irregular noun ("Person" -> "Persons").
+ *
+ * A custom label bypasses translation (a German site with an English custom
+ * label renders mixed language). That trade is inherent to the feature and is
+ * called out in the settings field help.
+ *
+ * @param string $noun   One of: space, topic, reply, member, category. Unknown
+ *                        nouns fall back to 'space' rather than fatal.
+ * @param bool   $plural True for the plural form.
+ * @param bool   $lower  True to lowercase (mid-sentence use, e.g. "join this space").
+ * @return string
+ */
+function jetonomy_label( string $noun, bool $plural = false, bool $lower = false ): string {
+	$defaults = label_defaults();
+	$noun     = strtolower( $noun );
+	if ( ! isset( $defaults[ $noun ] ) ) {
+		$noun = 'space';
+	}
+
+	$settings = get_option( 'jetonomy_settings', array() );
+	$key      = $noun . ( $plural ? '_label_plural' : '_label_singular' );
+	$custom   = isset( $settings[ $key ] ) ? trim( (string) $settings[ $key ] ) : '';
+
+	$label = '' !== $custom ? $custom : $defaults[ $noun ][ $plural ? 1 : 0 ];
+
+	/**
+	 * Filter any product-noun label.
+	 *
+	 * @param string $label  Resolved label.
+	 * @param string $noun   The noun key (space|topic|reply|member|category).
+	 * @param bool   $plural Plural form requested.
+	 * @param bool   $lower  Lowercase requested.
+	 */
+	$label = (string) apply_filters( 'jetonomy_label', $label, $noun, $plural, $lower );
+
+	// Back-compat: the Space label predates the generic filter and shipped its
+	// own. Keep it firing so existing jetonomy_space_label consumers still work.
+	if ( 'space' === $noun ) {
+		/**
+		 * Filter the Space label. $plural/$lower give context for per-surface tweaks.
+		 *
+		 * @param string $label  Resolved label.
+		 * @param bool   $plural Plural form requested.
+		 * @param bool   $lower  Lowercase requested.
+		 */
+		$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
+	}
+
+	return $lower ? mb_strtolower( $label ) : $label;
+}
+
+/**
+ * The site owner's label for a "Space". Back-compat wrapper over jetonomy_label()
+ * kept so all existing space_label() call sites (150+) keep working untouched.
  *
  * @param bool $plural True for the plural form.
  * @param bool $lower  True to lowercase (for mid-sentence use, e.g. "join this space").
  * @return string
  */
 function space_label( bool $plural = false, bool $lower = false ): string {
-	$settings = get_option( 'jetonomy_settings', [] );
-	$key      = $plural ? 'space_label_plural' : 'space_label_singular';
-	$custom   = isset( $settings[ $key ] ) ? trim( (string) $settings[ $key ] ) : '';
-
-	$label = '' !== $custom
-		? $custom
-		: ( $plural ? __( 'Spaces', 'jetonomy' ) : __( 'Space', 'jetonomy' ) );
-
-	/**
-	 * Filter the Space label. $plural/$lower give context for per-surface tweaks.
-	 *
-	 * @param string $label  Resolved label.
-	 * @param bool   $plural Plural form requested.
-	 * @param bool   $lower  Lowercase requested.
-	 */
-	$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
-
-	return $lower ? mb_strtolower( $label ) : $label;
+	return jetonomy_label( 'space', $plural, $lower );
 }
 
 function now(): string {
@@ -108,7 +165,8 @@ function compose_label( string $space_type ): string {
 			$label = __( 'New Status', 'jetonomy' );
 			break;
 		default:
-			$label = __( 'New Topic', 'jetonomy' );
+			/* translators: %s: the singular topic label the site owner configured (e.g. Topic, Thread). */
+			$label = sprintf( __( 'New %s', 'jetonomy' ), jetonomy_label( 'topic' ) );
 			break;
 	}
 

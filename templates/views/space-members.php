@@ -35,7 +35,8 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 		'empty-state',
 		[
 			'icon'    => 'lock',
-			'message' => __( 'You need to be a member of this space to see its members.', 'jetonomy' ),
+			/* translators: 1: singular member label; 2: plural member label. */
+			'message' => sprintf( __( 'You need to be a %1$s of this space to see its %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			'tone'    => 'forbidden',
 		]
 	);
@@ -117,7 +118,7 @@ $crumbs[] = [
 	'url'   => $base . '/s/' . $space->slug . '/',
 ];
 $crumbs[] = [
-	'label' => __( 'Members', 'jetonomy' ),
+	'label' => \Jetonomy\jetonomy_label( 'member', true ),
 	'url'   => '',
 ];
 
@@ -147,8 +148,8 @@ $role_labels = [
 					</h1>
 					<p class="jt-page-subtitle">
 						<?php
-						/* translators: %d: member count */
-						echo esc_html( sprintf( _n( '%d member', '%d members', (int) $space->member_count, 'jetonomy' ), (int) $space->member_count ) );
+						/* translators: 1: count; 2: member label. */
+						echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $space->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $space->member_count, true ) ) );
 						?>
 					</p>
 				</div>
@@ -165,7 +166,7 @@ $role_labels = [
 							<?php
 							$jt_req_uid  = (int) $jt_req->user_id;
 							$jt_req_user = get_userdata( $jt_req_uid );
-							$jt_req_name = $jt_req_user ? \Jetonomy\user_display_name( $jt_req_user ) : __( 'Unknown member', 'jetonomy' );
+							$jt_req_name = $jt_req_user ? \Jetonomy\user_display_name( $jt_req_user ) : sprintf( /* translators: %s: singular member label. */ __( 'Unknown %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
 							?>
 							<div class="jt-member-item jt-pending-item" data-jt-pending-row data-request-id="<?php echo absint( $jt_req->id ); ?>">
 								<?php echo \Jetonomy\get_user_link( $jt_req_uid, 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -334,7 +335,7 @@ $role_labels = [
 					'empty-state',
 					[
 						'icon'    => 'empty-members',
-						'message' => __( 'No members yet.', 'jetonomy' ),
+						'message' => sprintf( /* translators: %s: plural member label. */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 					]
 				);
 				?>
@@ -461,7 +462,7 @@ $role_labels = [
 					$jt_members_prev_url = add_query_arg( 'paged', max( 1, $jt_members_paged - 1 ), $jt_members_base_url );
 					$jt_members_next_url = add_query_arg( 'paged', min( $jt_members_pages, $jt_members_paged + 1 ), $jt_members_base_url );
 					?>
-					<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Members pagination', 'jetonomy' ); ?>">
+					<nav class="jt-pagination" aria-label="<?php printf( /* translators: %s: plural member label. */ esc_attr__( '%s pagination', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>">
 						<?php if ( $jt_members_paged > 1 ) : ?>
 							<a class="jt-pagination-link" href="<?php echo esc_url( $jt_members_prev_url ); ?>" rel="prev">
 								<?php jetonomy_echo_icon( 'chevron-left', 14 ); ?>

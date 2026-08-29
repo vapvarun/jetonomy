@@ -60,11 +60,14 @@ class App_Config_Controller extends Base_Controller {
 		$data = array(
 			'app_name'     => $app_name,
 			'space_label'  => array(
-				// Configurable "Space" noun (Settings -> General) so the app
-				// renders the same label as web, not a hardcoded "Space".
+				// Back-compat: the app read space_label before the other nouns
+				// became renamable. Kept so older app builds keep working.
 				'singular' => \Jetonomy\space_label(),
 				'plural'   => \Jetonomy\space_label( true ),
 			),
+			// Every renamable product noun (Settings -> Terminology) so the app
+			// renders the same labels as web, not hardcoded English nouns.
+			'labels'       => $this->noun_labels(),
 			'accent_color' => $branding['accent_color'],
 			'logo_url'     => $branding['logo_url'],
 			'login_bg_url' => $branding['login_bg_url'],
@@ -171,6 +174,23 @@ class App_Config_Controller extends Base_Controller {
 	 */
 	private function terms_url( array $settings ): string {
 		return esc_url_raw( (string) ( $settings['terms_url'] ?? '' ) );
+	}
+
+	/**
+	 * Every renamable product noun as { noun: { singular, plural } }, resolved
+	 * through the one label resolver so the app agrees with web and CLI.
+	 *
+	 * @return array<string, array{singular:string, plural:string}>
+	 */
+	private function noun_labels(): array {
+		$labels = array();
+		foreach ( array_keys( \Jetonomy\label_defaults() ) as $noun ) {
+			$labels[ $noun ] = array(
+				'singular' => \Jetonomy\jetonomy_label( $noun ),
+				'plural'   => \Jetonomy\jetonomy_label( $noun, true ),
+			);
+		}
+		return $labels;
 	}
 
 	/**

@@ -115,12 +115,12 @@ $jt_ip_palette    = isset( $palette ) && is_array( $palette ) && ! empty( $palet
 		),
 		array(
 			'name'     => 'hash',
-			'label'    => __( 'Topic', 'jetonomy' ),
+			'label'    => \Jetonomy\jetonomy_label( 'topic' ),
 			'keywords' => 'hash topic channel tag feed',
 		),
 		array(
 			'name'     => 'folder',
-			'label'    => __( 'Category', 'jetonomy' ),
+			'label'    => \Jetonomy\jetonomy_label( 'category' ),
 			'keywords' => 'folder category group section bucket',
 		),
 		array(

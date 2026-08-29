@@ -88,7 +88,7 @@ $jt_submit_labels = array(
 	'idea'     => __( 'Submit Idea', 'jetonomy' ),
 	'status'   => __( 'Post Status', 'jetonomy' ),
 );
-$jt_submit_label  = $jt_submit_labels[ $post_type ] ?? __( 'Post Topic', 'jetonomy' );
+$jt_submit_label  = $jt_submit_labels[ $post_type ] ?? sprintf( /* translators: %s: singular topic label. */ __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 if ( function_exists( 'wp_interactivity_state' ) ) {
 	wp_interactivity_state( 'jetonomy', array( 'submitLabel' => $jt_submit_label ) );
 }

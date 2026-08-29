@@ -68,7 +68,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 	data-act-endpoint="<?php echo esc_attr( $jt_endpoint ); ?>">
 	<div class="jt-mod-flag-head">
 		<span class="jt-mod-flag-type">
-			<?php echo $jt_is_reply ? esc_html__( 'Reply', 'jetonomy' ) : esc_html__( 'Post', 'jetonomy' ); ?>
+			<?php echo $jt_is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html__( 'Post', 'jetonomy' ); ?>
 		</span>
 		<span class="jt-mod-flag-reason jt-mod-flag-reason--held">
 			<?php esc_html_e( 'Awaiting approval', 'jetonomy' ); ?>

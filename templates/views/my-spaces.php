@@ -125,8 +125,8 @@ $crumbs = array(
 									?>
 									·
 									<?php
-									/* translators: %d: member count */
-									echo esc_html( sprintf( _n( '%d member', '%d members', (int) $sp->member_count, 'jetonomy' ), (int) $sp->member_count ) );
+									/* translators: 1: count; 2: member label. */
+									echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $sp->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $sp->member_count, true ) ) );
 									?>
 								</p>
 							</a>
@@ -143,7 +143,7 @@ $crumbs = array(
 								</a>
 								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/members/' ); ?>">
 									<?php jetonomy_echo_icon( 'users', 14 ); ?>
-									<span><?php esc_html_e( 'Members', 'jetonomy' ); ?></span>
+									<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></span>
 								</a>
 							</div>
 						</li>
@@ -176,8 +176,8 @@ $crumbs = array(
 									?>
 									·
 									<?php
-									/* translators: %d: member count */
-									echo esc_html( sprintf( _n( '%d member', '%d members', (int) $sp->member_count, 'jetonomy' ), (int) $sp->member_count ) );
+									/* translators: 1: count; 2: member label. */
+									echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $sp->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $sp->member_count, true ) ) );
 									?>
 								</p>
 							</a>

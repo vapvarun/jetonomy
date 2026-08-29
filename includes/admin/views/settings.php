@@ -170,20 +170,41 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Space Label', 'jetonomy' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Terminology', 'jetonomy' ); ?></th>
 						<td>
-							<?php // Explicit per-field labels + a 12px gap (Basecamp 10150582271: the two inputs touched with 0px gap and the plural relied on placeholder text as its only name). ?>
-							<div class="jt-field-pair">
-								<div class="jt-field-pair__item">
-									<label for="space_label_singular"><?php esc_html_e( 'Singular', 'jetonomy' ); ?></label>
-									<input type="text" id="space_label_singular" name="jetonomy_settings[space_label_singular]" value="<?php echo esc_attr( $settings['space_label_singular'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
+							<?php
+							// One place for every renamable product noun - nothing scattered
+							// across other sections. Space/Topic/Reply/Member/Category each get a
+							// singular + plural pair; both forms are explicit because we never
+							// auto-pluralise (breaks on irregulars like Person/Persons).
+							// Explicit per-field labels + a 12px gap (Basecamp 10150582271).
+							$jt_defaults    = \Jetonomy\label_defaults();
+							$jt_noun_titles = array(
+								'space'    => esc_html__( 'Space', 'jetonomy' ),
+								'topic'    => esc_html__( 'Topic', 'jetonomy' ),
+								'reply'    => esc_html__( 'Reply', 'jetonomy' ),
+								'member'   => esc_html__( 'Member', 'jetonomy' ),
+								'category' => esc_html__( 'Category', 'jetonomy' ),
+							);
+							foreach ( $jt_noun_titles as $jt_noun => $jt_noun_title ) :
+								$jt_sing = $jt_noun . '_label_singular';
+								$jt_plur = $jt_noun . '_label_plural';
+								?>
+								<div class="jt-term-noun">
+									<span class="jt-term-noun__name"><?php echo esc_html( $jt_noun_title ); ?></span>
+									<div class="jt-field-pair">
+										<div class="jt-field-pair__item">
+											<label for="<?php echo esc_attr( $jt_sing ); ?>"><?php esc_html_e( 'Singular', 'jetonomy' ); ?></label>
+											<input type="text" id="<?php echo esc_attr( $jt_sing ); ?>" name="jetonomy_settings[<?php echo esc_attr( $jt_sing ); ?>]" value="<?php echo esc_attr( $settings[ $jt_sing ] ?? '' ); ?>" class="regular-text" placeholder="<?php echo esc_attr( $jt_defaults[ $jt_noun ][0] ); ?>">
+										</div>
+										<div class="jt-field-pair__item">
+											<label for="<?php echo esc_attr( $jt_plur ); ?>"><?php esc_html_e( 'Plural', 'jetonomy' ); ?></label>
+											<input type="text" id="<?php echo esc_attr( $jt_plur ); ?>" name="jetonomy_settings[<?php echo esc_attr( $jt_plur ); ?>]" value="<?php echo esc_attr( $settings[ $jt_plur ] ?? '' ); ?>" class="regular-text" placeholder="<?php echo esc_attr( $jt_defaults[ $jt_noun ][1] ); ?>">
+										</div>
+									</div>
 								</div>
-								<div class="jt-field-pair__item">
-									<label for="space_label_plural"><?php esc_html_e( 'Plural', 'jetonomy' ); ?></label>
-									<input type="text" id="space_label_plural" name="jetonomy_settings[space_label_plural]" value="<?php echo esc_attr( $settings['space_label_plural'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Spaces', 'jetonomy' ); ?>">
-								</div>
-							</div>
-							<p class="description"><?php esc_html_e( 'What to call a Space across the whole community — singular and plural (e.g. Forum / Forums, Discussion / Discussions). Leave empty to keep "Space / Spaces".', 'jetonomy' ); ?></p>
+							<?php endforeach; ?>
+							<p class="description"><?php esc_html_e( 'Rename the nouns your community uses — singular and plural (e.g. Space → Forum / Forums, Topic → Thread / Threads, Member → Player / Players). Leave a field empty to keep the default. Custom labels are shown exactly as typed and are not translated, so on a non-English site enter them in your own language.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>

@@ -201,7 +201,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 					<?php
 					$jt_kind_tabs = [
 						'post'  => [ __( 'Posts', 'jetonomy' ), $jt_held_posts ],
-						'reply' => [ __( 'Replies', 'jetonomy' ), $jt_held_replies ],
+						'reply' => [ \Jetonomy\jetonomy_label( 'reply', true ), $jt_held_replies ],
 					];
 					foreach ( $jt_kind_tabs as $jt_kind_key => $jt_kind_meta ) :
 						$jt_kind_url = add_query_arg(
@@ -224,7 +224,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<?php if ( empty( $jt_held ) ) : ?>
 					<?php
 					$jt_held_empty = 'reply' === $jt_kind
-						? __( 'No replies are waiting for approval.', 'jetonomy' )
+						? sprintf( /* translators: %s: plural reply label. */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 						: __( 'No posts are waiting for approval.', 'jetonomy' );
 					\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_held_empty ] );
 					?>

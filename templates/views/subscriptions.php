@@ -96,7 +96,8 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 					array(
 						'icon'      => 'bell',
 						'icon_size' => 48,
-						'message'   => __( 'You are not following anything yet. Follow a topic or a space and it will show up here.', 'jetonomy' ),
+						/* translators: %s: singular topic label. */
+						'message'   => sprintf( __( 'You are not following anything yet. Follow a %s or a space and it will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					)
 				);
 				?>
@@ -108,7 +109,7 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 				<?php endif; ?>
 
 				<?php if ( ! empty( $jt_topic_subs ) ) : ?>
-					<h2 class="jt-subs-heading"><?php esc_html_e( 'Topics you follow', 'jetonomy' ); ?></h2>
+					<h2 class="jt-subs-heading"><?php echo esc_html( sprintf( /* translators: %s: plural topic label. */ __( '%s you follow', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></h2>
 					<?php $jt_render_group( $jt_topic_subs, 'post', $jt_base, $jt_via_labels ); ?>
 				<?php endif; ?>
 

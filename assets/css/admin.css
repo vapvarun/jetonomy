@@ -3717,6 +3717,19 @@ tr.jetonomy-moderated td {
 	color: var(--jt-admin-text-3, #646970);
 }
 
+/* Terminology block: one row per renamable noun, name above its singular/plural pair. */
+.jetonomy-admin .jt-term-noun {
+	margin-block-end: 16px;
+}
+.jetonomy-admin .jt-term-noun:last-of-type {
+	margin-block-end: 8px;
+}
+.jetonomy-admin .jt-term-noun__name {
+	display: block;
+	font-weight: 600;
+	margin-block-end: 4px;
+}
+
 /* ── Desktop target ladder (Basecamp 10150582519) ─────────────
    Regular controls meet 40px; dense list rows (row actions, the
    expanded-row action links) carry the documented dense exception and

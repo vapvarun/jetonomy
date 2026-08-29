@@ -42,7 +42,8 @@ if ( ! is_user_logged_in() ) {
 		/* translators: %s: space title. */
 		$_lede = sprintf( __( 'Sign in to start a discussion in %s. Share what you\'re thinking, ask the community a question, or float an idea.', 'jetonomy' ), '<strong>' . esc_html( $_space->title ) . '</strong>' );
 	} else {
-		$_lede = __( 'Sign in to start a discussion. Ask a question, share an idea, or kick off a topic. Replies and reactions arrive in real time.', 'jetonomy' );
+		/* translators: 1: singular topic label; 2: plural reply label. */
+		$_lede = sprintf( __( 'Sign in to start a discussion. Ask a question, share an idea, or kick off a %1$s. %2$s and reactions arrive in real time.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true ) );
 	}
 	?>
 	<div class="jt-compose-topic-embed jt-compose-topic-login" role="region" aria-label="<?php esc_attr_e( 'Start a new discussion', 'jetonomy' ); ?>">
@@ -147,7 +148,8 @@ $_partial_space = $_space ? $_space : (object) array(
 			<?php if ( empty( $_postable ) ) : ?>
 				<small class="jt-compose-topic-empty">
 					<?php /* translators: 1: plural space label, 2: singular space label. */ ?>
-					<?php echo esc_html( sprintf( __( 'You are not a member of any %1$s yet. Join a %2$s to start posting.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?>
+					<?php /* translators: 1: singular member label; 2: singular space label; 3: singular space label. */ ?>
+					<?php echo esc_html( sprintf( __( 'You are not a %1$s of any %2$s yet. Join a %3$s to start posting.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?>
 				</small>
 			<?php endif; ?>
 		</label>
@@ -205,7 +207,7 @@ $_partial_space = $_space ? $_space : (object) array(
 				class="jt-btn jt-btn-fill jt-compose-topic-submit"
 				data-wp-bind--disabled="context.submitting"
 				data-wp-class--is-submitting="context.submitting">
-				<?php esc_html_e( 'Post topic', 'jetonomy' ); ?>
+				<?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Post %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 			</button>
 		</div>
 	</form>

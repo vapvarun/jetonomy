@@ -101,11 +101,11 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 		<?php endif; ?>
 
 		<a class="jt-feed-act" href="<?php echo esc_url( $post_url . '#replies' ); ?>"
-			aria-label="<?php esc_attr_e( 'View replies', 'jetonomy' ); ?>">
+			aria-label="<?php printf( /* translators: %s: plural reply label. */ esc_attr__( 'View %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
 			<?php jetonomy_echo_icon( 'message-circle', 16 ); ?>
 			<span class="jt-feed-act-n"><?php echo esc_html( (int) $post->reply_count ); ?></span>
 			<?php if ( $has_unread ) : ?>
-				<span class="jt-unread-pill" aria-label="<?php esc_attr_e( 'You have unread replies', 'jetonomy' ); ?>"><?php esc_html_e( 'New', 'jetonomy' ); ?></span>
+				<span class="jt-unread-pill" aria-label="<?php printf( /* translators: %s: plural reply label. */ esc_attr__( 'You have unread %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"><?php esc_html_e( 'New', 'jetonomy' ); ?></span>
 			<?php endif; ?>
 		</a>
 

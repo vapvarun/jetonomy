@@ -149,9 +149,9 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			<div class="jt-form-row">
 				<label for="jt-se-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label>
 				<select id="jt-se-type" name="type" class="jt-input">
-					<option value="forum" <?php selected( $space->type, 'forum' ); ?>><?php esc_html_e( 'Forum: discussions and replies', 'jetonomy' ); ?></option>
+					<option value="forum" <?php selected( $space->type, 'forum' ); ?>><?php printf( /* translators: %s: plural reply label. */ esc_html__( 'Forum: discussions and %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></option>
 					<option value="qa" <?php selected( $space->type, 'qa' ); ?>><?php esc_html_e( 'Q&A: questions with accepted answers', 'jetonomy' ); ?></option>
-					<option value="ideas" <?php selected( $space->type, 'ideas' ); ?>><?php esc_html_e( 'Ideas: feedback voted by members', 'jetonomy' ); ?></option>
+					<option value="ideas" <?php selected( $space->type, 'ideas' ); ?>><?php printf( /* translators: %s: plural member label. */ esc_html__( 'Ideas: feedback voted by %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></option>
 					<option value="feed" <?php selected( $space->type, 'feed' ); ?>><?php esc_html_e( 'Feed: short-form posts', 'jetonomy' ); ?></option>
 				</select>
 			</div>
@@ -181,17 +181,17 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			</div>
 
 			<div class="jt-form-row">
-				<label for="jt-se-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></label>
+				<label for="jt-se-category"><?php echo esc_html( \Jetonomy\jetonomy_label( 'category' ) ); ?></label>
 				<select id="jt-se-category" name="category_id" class="jt-input">
-					<option value="0"><?php esc_html_e( 'No category', 'jetonomy' ); ?></option>
+					<option value="0"><?php printf( /* translators: %s: singular category label. */ esc_html__( 'No %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
 						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( (int) ( $space->category_id ?? 0 ), (int) $cat->id ); ?>>
 							<?php echo esc_html( $cat->name ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
-				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %s under a top-level category on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+				<?php /* translators: 1: singular space label (e.g. space, group); 2: singular category label. */ ?>
+				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %1$s under a top-level %2$s on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></p>
 			</div>
 
 			<div class="jt-form-row">
@@ -205,16 +205,16 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					class="jt-input jt-input-narrow"
 					value="<?php echo esc_attr( (string) $posts_per_page ); ?>"
 					placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
-				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'How many topics to show per page in this %s. Leave blank to use the site default.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+				<?php /* translators: 1: plural topic label; 2: singular space label (e.g. space, group). */ ?>
+				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'How many %1$s to show per page in this %2$s. Leave blank to use the site default.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 
 			<div class="jt-form-row jt-prefixes-row">
 				<label class="jt-prefix-toggle">
 					<input type="checkbox" name="enable_prefixes" value="1" <?php checked( $prefixes_on ); ?> data-jt-prefix-toggle data-wp-on--change="actions.togglePrefixConfig">
-					<?php esc_html_e( 'Enable topic prefixes', 'jetonomy' ); ?>
+					<?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Enable %s prefixes', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 				</label>
-				<p class="jt-form-help"><?php esc_html_e( 'Colored labels members can pin to topics, e.g. Bug, Suggestion, Solved.', 'jetonomy' ); ?></p>
+				<p class="jt-form-help"><?php printf( /* translators: 1: plural member label; 2: plural topic label. */ esc_html__( 'Colored labels %1$s can pin to %2$s, e.g. Bug, Suggestion, Solved.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ), esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></p>
 
 				<div class="jt-prefix-config" data-jt-prefix-config <?php echo $prefixes_on ? '' : 'hidden'; ?>>
 					<div class="jt-prefix-list" data-jt-prefix-list>
@@ -290,8 +290,8 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 		$jt_successor = \Jetonomy\Models\Space::resolve_successor( (int) $space->id, get_current_user_id() );
 		$jt_space_one = \Jetonomy\space_label( false, true );
 
-		/* translators: %s: the singular space label the site owner configured. */
-		$jt_confirm_archive = sprintf( __( 'Archive this %s and hand it over? Members keep everything they posted.', 'jetonomy' ), $jt_space_one );
+		/* translators: 1: singular space label the site owner configured; 2: plural member label. */
+		$jt_confirm_archive = sprintf( __( 'Archive this %1$s and hand it over? %2$s keep everything they posted.', 'jetonomy' ), $jt_space_one, \Jetonomy\jetonomy_label( 'member', true ) );
 		/* translators: %s: the space title the admin must type to confirm. */
 		$jt_confirm_purge = sprintf( __( 'This destroys everything in it and cannot be undone. Type %s to confirm.', 'jetonomy' ), (string) $space->title );
 		?>
@@ -312,8 +312,8 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 							</h3>
 							<p class="jt-danger-desc">
 								<?php
-								/* translators: %s: display name of the member who would take ownership. */
-								echo esc_html( sprintf( __( 'Every topic and reply is kept. Ownership passes to %s and the space is archived.', 'jetonomy' ), \Jetonomy\user_display_name( get_userdata( $jt_successor ) ) ) );
+								/* translators: 1: singular topic label; 2: singular reply label; 3: display name of the member who would take ownership. */
+								echo esc_html( sprintf( __( 'Every %1$s and %2$s is kept. Ownership passes to %3$s and the space is archived.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\user_display_name( get_userdata( $jt_successor ) ) ) );
 								?>
 							</p>
 						</div>
@@ -339,7 +339,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 								?>
 							</h3>
 							<p class="jt-danger-desc">
-								<?php esc_html_e( 'Every topic, reply, and attachment in it is destroyed. This cannot be undone.', 'jetonomy' ); ?>
+								<?php printf( /* translators: 1: singular topic label; 2: singular reply label. */ esc_html__( 'Every %1$s, %2$s, and attachment in it is destroyed. This cannot be undone.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
 							</p>
 						</div>
 						<?php // Type-to-confirm: no dialog to click past, the name must be typed. ?>

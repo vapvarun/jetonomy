@@ -59,7 +59,7 @@ $footer_custom = '' !== $ctx['footer_text']
 <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#374151;"><?php echo esc_html( $ctx['message'] ); ?></p>
 
 <?php if ( '' !== $ctx['post_title'] ) : ?>
-	<p style="margin:0 0 6px;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:#9CA3AF;"><?php esc_html_e( 'On topic', 'jetonomy' ); ?></p>
+	<p style="margin:0 0 6px;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:#9CA3AF;"><?php printf( /* translators: %s: singular topic label. */ esc_html__( 'On %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></p>
 	<p style="margin:0 0 16px;font-size:16px;font-weight:600;color:#111827;line-height:1.4;"><?php echo esc_html( $ctx['post_title'] ); ?></p>
 <?php endif; ?>
 

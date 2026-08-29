@@ -575,9 +575,13 @@ class Admin {
 			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
 			$clean['terms_url']   = esc_url_raw( $input['terms_url'] ?? '' );
 			$clean['privacy_url'] = esc_url_raw( $input['privacy_url'] ?? '' );
-			// Space label override (singular / plural). Empty = keep the default.
-			$clean['space_label_singular'] = sanitize_text_field( $input['space_label_singular'] ?? '' );
-			$clean['space_label_plural']   = sanitize_text_field( $input['space_label_plural'] ?? '' );
+			// Product-noun label overrides (singular / plural). Empty = keep the
+			// default. One loop over every renamable noun so the save side cannot
+			// drift from the Terminology settings block that renders them.
+			foreach ( array_keys( \Jetonomy\label_defaults() ) as $jt_noun ) {
+				$clean[ $jt_noun . '_label_singular' ] = sanitize_text_field( $input[ $jt_noun . '_label_singular' ] ?? '' );
+				$clean[ $jt_noun . '_label_plural' ]   = sanitize_text_field( $input[ $jt_noun . '_label_plural' ] ?? '' );
+			}
 			// Clamp to the UI max (100) so a crafted POST can't store a huge
 			// value that flows straight into a SQL LIMIT on a big-site query.
 			$clean['posts_per_page'] = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );

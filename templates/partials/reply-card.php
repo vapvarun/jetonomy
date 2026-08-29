@@ -43,7 +43,7 @@ if ( ! empty( $reply->is_private_hidden ) ) {
 	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-private-hidden" data-wp-interactive="jetonomy">
 		<div class="jt-reply-body jt-reply-tombstone">
 			<?php jetonomy_echo_icon( 'lock', 16 ); ?>
-			<span><?php esc_html_e( 'Private reply — visible to the topic author and moderators.', 'jetonomy' ); ?></span>
+			<span><?php printf( /* translators: 1: singular reply label; 2: singular topic label. */ esc_html__( 'Private %1$s — visible to the %2$s author and moderators.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></span>
 		</div>
 	</div>
 	<?php
@@ -145,7 +145,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			?>
 			<?php if ( '' !== $jt_reply_permalink ) : ?>
 				<a class="jt-reply-permalink" href="<?php echo esc_url( $jt_reply_permalink ); ?>"
-					aria-label="<?php esc_attr_e( 'Permalink to this reply', 'jetonomy' ); ?>">
+					aria-label="<?php printf( /* translators: %s: singular reply label. */ esc_attr__( 'Permalink to this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
 					<time datetime="<?php echo esc_attr( $jt_time_iso ); ?>"><?php echo esc_html( $jt_time_text ); ?></time>
 				</a>
 			<?php else : ?>
@@ -156,7 +156,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<span class="jt-accepted-tag"><?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Accepted', 'jetonomy' ); ?></span>
 		<?php endif; ?>
 		<?php if ( ! empty( $reply->is_private ) ) : ?>
-			<span class="jt-private-tag" title="<?php esc_attr_e( 'Only you, the topic author, and moderators can read this reply.', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
+			<span class="jt-private-tag" title="<?php printf( /* translators: 1: singular topic label; 2: singular reply label. */ esc_attr__( 'Only you, the %1$s author, and moderators can read this %2$s.', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
 		<?php endif; ?>
 	</div>
 	<div class="jt-reply-body">
@@ -193,7 +193,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		// one side. JS bindings are untouched and verified live.
 		?>
 		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
-		<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this reply', 'jetonomy' ); ?>">
+		<div class="jt-vote-cluster" role="group" aria-label="<?php printf( /* translators: %s: singular reply label. */ esc_attr__( 'Vote on this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
 			<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
 			<?php if ( jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
@@ -277,7 +277,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 						data-reply-id="<?php echo (int) $reply->id; ?>"
 						data-post-id="<?php echo (int) $post->id; ?>"
 						data-space-id="<?php echo (int) ( $post->space_id ?? 0 ); ?>">
-						<?php jetonomy_echo_icon( 'split', 14 ); ?> <?php esc_html_e( 'Split to Topic', 'jetonomy' ); ?>
+						<?php jetonomy_echo_icon( 'split', 14 ); ?> <?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Split to %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic' ) ) ); ?>
 					</button>
 					<?php endif; ?>
 					<button class="jt-more-item jt-more-item--danger"

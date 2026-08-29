@@ -17,7 +17,7 @@ if ( ! $category ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Category not found.', 'jetonomy' ),
+			'message'   => sprintf( /* translators: %s: singular category label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
 			'tone'      => 'warn',
 		]
 	);
@@ -69,8 +69,8 @@ $crumbs = [
 					[
 						'icon'      => 'empty-search',
 						'icon_size' => 48,
-						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
-						'message'   => sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+						/* translators: 1: plural space label (e.g. spaces, groups); 2: singular category label. */
+						'message'   => sprintf( __( 'No %1$s in this %2$s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
 					]
 				);
 				?>

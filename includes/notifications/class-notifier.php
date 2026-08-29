@@ -1417,8 +1417,10 @@ class Notifier {
 		$logo_url = \Jetonomy\header_logo( $logo_url );
 
 		$type_labels = [
-			'reply_to_post'       => __( 'New Reply', 'jetonomy' ),
-			'reply_to_reply'      => __( 'New Reply', 'jetonomy' ),
+			/* translators: %s: the singular reply label the site owner configured (e.g. Reply, Response). */
+			'reply_to_post'       => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+			/* translators: %s: the singular reply label the site owner configured (e.g. Reply, Response). */
+			'reply_to_reply'      => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 			'mention'             => __( 'Mention', 'jetonomy' ),
 			'vote_on_post'        => __( 'Vote', 'jetonomy' ),
 			'reaction'            => __( 'Reaction', 'jetonomy' ),
