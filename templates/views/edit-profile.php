@@ -164,7 +164,7 @@ if ( ! $cancel_url ) {
 			'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 		];
 		?>
-		<div class="jt-form-group">
+		<div class="jt-form-group" id="notification-preferences">
 			<label class="jt-label"><?php esc_html_e( 'Notification Preferences', 'jetonomy' ); ?></label>
 			<div class="jt-notif-prefs">
 				<div class="jt-notif-row jt-notif-header">

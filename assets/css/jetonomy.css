@@ -2542,6 +2542,10 @@
 .jt-bookmark-btn.bookmarked { color: var(--jt-accent); }
 
 /* ── Notification preferences grid ── */
+/* Deep-link target from the notifications page "Settings" button. Same
+   scroll-margin treatment as .jt-reply:target so the "Notification Preferences"
+   heading clears the sticky host-theme header instead of tucking under it. */
+#notification-preferences { scroll-margin-top: var(--jt-scroll-offset); }
 .jt-notif-prefs { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
 .jt-notif-optout { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
 .jt-notif-optout input { margin-top: 0.15rem; flex-shrink: 0; }
