@@ -948,7 +948,30 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     region.focus( { preventScroll: true } );
                 }
-                window.scrollTo( 0, 0 );
+                // Honour a destination fragment (#notification-preferences,
+                // #jt-badges, #digest-preferences, …) on soft navigation. A full
+                // page load scrolls to the hash automatically; a region swap does
+                // NOT, so without this EVERY in-app deep-link with a fragment
+                // landed at the top of the new page (Basecamp 10244152181 - the
+                // Notifications "Settings" button). scroll-margin-top on the
+                // target clears the sticky header. Falls back to top when there
+                // is no fragment or nothing matches.
+                var jtHash = window.location.hash;
+                var jtScrolled = false;
+                if ( jtHash && jtHash.length > 1 ) {
+                    try {
+                        var jtTarget = document.querySelector( jtHash );
+                        if ( jtTarget ) {
+                            jtTarget.scrollIntoView();
+                            jtScrolled = true;
+                        }
+                    } catch ( e ) {
+                        // Malformed selector in the hash - ignore, fall back to top.
+                    }
+                }
+                if ( ! jtScrolled ) {
+                    window.scrollTo( 0, 0 );
+                }
                 document.querySelectorAll( '.jt-community-nav-links a, .jt-mobile-tabs a' ).forEach( ( a ) => {
                     a.classList.toggle( 'active', a.pathname === window.location.pathname );
                 } );
