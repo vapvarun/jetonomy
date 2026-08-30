@@ -900,6 +900,18 @@ abstract class Base_Controller extends WP_REST_Controller {
 			&& $real_author_id !== $uid
 			&& ! user_can( $real_author_id, 'manage_options' )
 			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
+		// Server-authoritative ban eligibility (mobile app). Bans are a
+		// moderator action, so unlike can_block_author this also requires the
+		// VIEWER to hold jetonomy_moderate. Staff authors are never bannable -
+		// this is what stops the app offering "Ban" on an admin's post
+		// (Basecamp: ban button shown for administrators). Absent before 1.9.4,
+		// so the app falls back to a local check on older sites.
+		$data['can_ban'] = $uid > 0
+			&& user_can( $uid, 'jetonomy_moderate' )
+			&& $real_author_id > 0
+			&& $real_author_id !== $uid
+			&& ! user_can( $real_author_id, 'manage_options' )
+			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
 		// Additive (1.9.3): has THIS viewer already reported this post? A second
 		// report is answered 409 jetonomy_already_flagged, but the API published
 		// nothing to read that state from, so the app kept "reported" in local

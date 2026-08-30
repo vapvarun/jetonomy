@@ -209,6 +209,14 @@ class Users_Controller extends Base_Controller {
 				// (global) case the app badges most prominently.
 				'restriction'  => $rtype,
 				'is_banned'    => 'global_ban' === $rtype,
+				// Server-authoritative ban eligibility: viewer must moderate;
+				// staff and self are never bannable. Stops the app offering Ban
+				// on an admin (Basecamp: ban button shown for administrators).
+				'can_ban'      => get_current_user_id() > 0
+					&& current_user_can( 'jetonomy_moderate' )
+					&& $uid !== get_current_user_id()
+					&& ! user_can( $uid, 'manage_options' )
+					&& ! user_can( $uid, 'jetonomy_moderate' ),
 			);
 		}
 
@@ -418,6 +426,14 @@ class Users_Controller extends Base_Controller {
 			 * pattern as can_block_author and can_downvote.
 			 */
 			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
+			// Server-authoritative ban eligibility (viewer must moderate; staff
+			// and self are never bannable) so the profile screen hides Ban on an
+			// admin (Basecamp: ban button shown for administrators).
+			'can_ban'          => get_current_user_id() > 0
+				&& current_user_can( 'jetonomy_moderate' )
+				&& $id !== get_current_user_id()
+				&& ! user_can( $id, 'manage_options' )
+				&& ! user_can( $id, 'jetonomy_moderate' ),
 		];
 
 		/**
@@ -477,6 +493,14 @@ class Users_Controller extends Base_Controller {
 			 * pattern as can_block_author and can_downvote.
 			 */
 			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
+			// Server-authoritative ban eligibility (viewer must moderate; staff
+			// and self are never bannable) so the profile screen hides Ban on an
+			// admin (Basecamp: ban button shown for administrators).
+			'can_ban'          => get_current_user_id() > 0
+				&& current_user_can( 'jetonomy_moderate' )
+				&& $id !== get_current_user_id()
+				&& ! user_can( $id, 'manage_options' )
+				&& ! user_can( $id, 'jetonomy_moderate' ),
 		];
 
 		/** This filter is documented in includes/api/class-users-controller.php */
