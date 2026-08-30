@@ -657,16 +657,18 @@ function colliding_display_names(): array {
 }
 
 /**
- * Get the profile URL for a user.
+ * Jetonomy's OWN community profile URL for a user - the internal
+ * /{base}/u/{login}/ route, NEVER routed off-site.
  *
- * Returns the Jetonomy profile URL by default, but can be filtered
- * to point to BuddyPress, BuddyBoss, Ultimate Member, or any other
- * profile system.
+ * This is the base for Jetonomy-owned surfaces (the edit form, notification
+ * settings, the badges section, digest preferences). To LINK TO a member's
+ * profile - which a site may deliberately route to BuddyPress / BuddyNext /
+ * Ultimate Member - use get_profile_url() instead.
  *
  * @param int $user_id The user ID.
- * @return string The profile URL.
+ * @return string The URL, or '' when the user does not exist.
  */
-function get_profile_url( int $user_id ): string {
+function community_profile_url( int $user_id ): string {
 	$user = get_userdata( $user_id );
 	if ( ! $user ) {
 		return '';
@@ -674,9 +676,28 @@ function get_profile_url( int $user_id ): string {
 
 	$settings  = get_option( 'jetonomy_settings', [] );
 	$base_slug = $settings['base_slug'] ?? 'community';
-	// rawurlencode because a login may legally contain a space or non-ASCII;
-	// most call sites that hand-built this URL already did, the helper did not.
-	$default = home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
+	// rawurlencode because a login may legally contain a space or non-ASCII.
+	return home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
+}
+
+/**
+ * Get the profile URL for a user - i.e. where this member's PROFILE lives.
+ *
+ * Returns Jetonomy's own profile URL by default, but is filterable to point at
+ * BuddyPress, BuddyBoss, Ultimate Member or any other profile system. Use this
+ * to LINK TO a member (byline, avatar, "view profile"). For Jetonomy's OWN
+ * edit/settings/badges/digest screens use get_profile_action_url() - those must
+ * not follow this filter off-site (Zoho #41491).
+ *
+ * @param int $user_id The user ID.
+ * @return string The profile URL.
+ */
+function get_profile_url( int $user_id ): string {
+	$default = community_profile_url( $user_id );
+	if ( '' === $default ) {
+		return '';
+	}
+	$user = get_userdata( $user_id );
 
 	/**
 	 * Filter the user profile URL.
@@ -688,7 +709,57 @@ function get_profile_url( int $user_id ): string {
 	 * @param int    $user_id The user ID.
 	 * @param object $user    The WP_User object.
 	 */
-	return apply_filters( 'jetonomy_profile_url', $default, $user_id, $user );
+	return (string) apply_filters( 'jetonomy_profile_url', $default, $user_id, $user );
+}
+
+/**
+ * URL of a Jetonomy-OWNED profile action screen (edit, notification settings,
+ * badges, digest preferences).
+ *
+ * These live on Jetonomy's own community route, so they are built on the
+ * UNFILTERED community_profile_url() and never break when a site routes member
+ * profiles off-site via jetonomy_profile_url (Zoho #41491: the Notifications
+ * Settings button used to land at <foreign-profile>/edit/#notification-preferences,
+ * a page that does not exist).
+ *
+ * Each action is INDEPENDENTLY remappable via the jetonomy_profile_action_url
+ * filter, so an integration (BuddyNext, BuddyPress, Ultimate Member) can later
+ * route, say, notification settings to its own screen while leaving the rest on
+ * Jetonomy - per action, not all-or-nothing.
+ *
+ * @param string $action  One of: profile, edit, notification-settings, badges, digest.
+ * @param int    $user_id The user ID.
+ * @return string The URL, or '' when the user does not exist.
+ */
+function get_profile_action_url( string $action, int $user_id ): string {
+	$base = community_profile_url( $user_id );
+	if ( '' === $base ) {
+		return '';
+	}
+
+	$suffixes = array(
+		'profile'               => '',
+		'edit'                  => 'edit/',
+		'notification-settings' => 'edit/#notification-preferences',
+		'badges'                => '#jt-badges',
+		'digest'                => '#digest-preferences',
+	);
+	$url      = $base . ( $suffixes[ $action ] ?? '' );
+
+	/**
+	 * Filter a Jetonomy-owned profile-action deep-link.
+	 *
+	 * Return your own URL to route a specific action to a foreign profile system
+	 * (BuddyNext, BuddyPress, Ultimate Member). $action is a stable key - branch
+	 * on it to remap only the screens your integration provides and let the rest
+	 * stay on Jetonomy.
+	 *
+	 * @since 1.9.4
+	 * @param string $url     Default Jetonomy-owned action URL.
+	 * @param string $action  Action key (profile|edit|notification-settings|badges|digest).
+	 * @param int    $user_id The user ID.
+	 */
+	return (string) apply_filters( 'jetonomy_profile_action_url', $url, $action, $user_id );
 }
 
 /**

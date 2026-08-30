@@ -122,7 +122,7 @@ $empty_copy = array(
 
 // Settings deep-link points at the existing notification-preferences block on
 // the Edit Profile page so we don't ship a parallel settings surface.
-$settings_url = \Jetonomy\get_profile_url( get_current_user_id() ) . 'edit/#notification-preferences';
+$settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_current_user_id() );
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
 
@@ -230,7 +230,7 @@ $settings_url = \Jetonomy\get_profile_url( get_current_user_id() ) . 'edit/#noti
 						// badge" notification lands on the achievement, not the profile
 						// top. Degrades to the profile root when no badges section is
 						// present (e.g. free-only site).
-						$notif_url = \Jetonomy\get_profile_url( (int) $badge_user->ID ) . '#jt-badges';
+						$notif_url = \Jetonomy\get_profile_action_url( 'badges', (int) $badge_user->ID );
 					}
 				} elseif ( 'space' === $notif->object_type && 'join_request' === $notif->type ) {
 					// Shared resolver, so the link on this page, the link in the

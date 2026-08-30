@@ -204,7 +204,7 @@ $crumbs = [
 						</h1>
 						<div class="jt-flex jt-items-center jt-gap-sm jt-flex-shrink-0 jt-profile-head-actions">
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
-							<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $user->ID ) . 'edit/' ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
+							<a href="<?php echo esc_url( \Jetonomy\get_profile_action_url( 'edit', (int) $user->ID ) ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
 							</a>
 						<?php elseif ( is_user_logged_in() && \Jetonomy\messaging_active() ) : ?>
