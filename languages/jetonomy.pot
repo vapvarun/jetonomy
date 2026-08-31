@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.9.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-08-31 05:04:38+00:00\n"
+"POT-Creation-Date: 2026-08-31 05:17:27+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -428,14 +428,7 @@ msgstr ""
 #: templates/views/space-edit.php:31 templates/views/space-edit.php:48
 #: templates/views/space-members.php:21 templates/views/space-moderation.php:30
 #: templates/views/space-roadmap.php:28 templates/views/space.php:21
-#. translators: %s: the singular space label.
-#. translators: %s: singular category label.
-#. translators: %s: the singular space label.
-#. translators: %s: the singular space label.
-#. translators: %s: the singular space label.
-#. translators: %s: the singular space label.
-#. translators: %s: the singular space label.
-#. translators: %s: the singular space label.
+#. translators: %s: the singular label of the item (the configured noun).
 msgid "%s not found."
 msgstr ""
 
@@ -1532,8 +1525,7 @@ msgstr ""
 
 #: includes/admin/views/categories.php:161
 #: templates/views/notifications.php:117
-#. translators: %s: plural category label (lowercase).
-#. translators: %s: plural reply label.
+#. translators: %s: the plural label of the item (the configured noun).
 msgid "No %s yet"
 msgstr ""
 
@@ -1583,22 +1575,13 @@ msgstr[1] ""
 #: includes/class-template-loader.php:1255
 #: includes/class-template-loader.php:1550 templates/partials/sidebar.php:241
 #: templates/views/space-edit.php:84 templates/views/space.php:312
-#. translators: %s: singular category label.
-#. translators: %s: the singular reply label the site owner configured.
-#. translators: %s: what is being edited - the configured space label, or a
-#. specific space title.
-#. translators: %s: what is being edited - the configured space label, or a
-#. specific space title.
-#. translators: %s: what is being edited - the configured space label, or a
-#. specific space title.
+#. translators: %s: the label of the item being edited (the configured noun).
 msgid "Edit %s"
 msgstr ""
 
 #: includes/admin/views/categories.php:320
 #: includes/admin/views/space-edit.php:189
-#. translators: %s: singular category label.
-#. translators: %s: the singular space label the site owner configured (e.g.
-#. space, group).
+#. translators: %s: the label of the item being saved (the configured noun).
 msgid "Update %s"
 msgstr ""
 
@@ -6203,11 +6186,8 @@ msgstr ""
 #: includes/class-template-loader.php:352
 #: templates/partials/compose-topic-embed.php:210
 #: templates/partials/composer.php:92 templates/views/new-post.php:91
-#. translators: %s: the singular topic label the site owner configured (e.g.
-#. Topic, Thread). "Post" here is the verb.
-#. translators: %s: singular topic label.
-#. translators: %s: singular reply label.
-#. translators: %s: singular topic label.
+#. translators: %s: the label of the item (the configured noun); "Post" is the
+#. verb.
 msgid "Post %s"
 msgstr ""
 
@@ -6297,10 +6277,7 @@ msgstr ""
 
 #: includes/class-template-loader.php:324
 #: includes/class-template-loader.php:326
-#. translators: %s: the singular topic label the site owner configured (e.g.
-#. topic, thread).
-#. translators: %s: the singular reply label the site owner configured (e.g.
-#. reply, comment).
+#. translators: %s: the singular label of the item (the configured noun).
 msgid "Are you sure you want to delete this %s?"
 msgstr ""
 
@@ -6377,10 +6354,8 @@ msgstr ""
 
 #: includes/class-template-loader.php:354
 #: includes/class-template-loader.php:356
-#. translators: %d: number of new replies (always 1 in this singular form); %s
-#. substituted server-side is the singular reply label.
-#. translators: %d: number of new replies; %s substituted server-side is the
-#. plural reply label.
+#. translators: %d: number of new items; %s: the reply label (substituted
+#. server-side).
 msgid "%%d new %s. Click to refresh."
 msgstr ""
 
@@ -6578,8 +6553,7 @@ msgid "Could not publish."
 msgstr ""
 
 #: includes/class-template-loader.php:427 templates/views/single-post.php:301
-#. translators: %s: the plural reply label the site owner configured.
-#. translators: %s: plural reply label.
+#. translators: %s: the plural label of the item (the configured noun).
 msgid "Hide %s"
 msgstr ""
 
@@ -6777,10 +6751,8 @@ msgstr ""
 
 #: includes/class-template-loader.php:601
 #: includes/class-template-loader.php:603
-#. translators: %d: number of replies; %s substituted server-side is the
-#. singular reply label.
-#. translators: %d: number of replies; %s substituted server-side is the plural
-#. reply label.
+#. translators: %d: number of replies; %s: the reply label (substituted
+#. server-side).
 msgid "%%d %s"
 msgstr ""
 
@@ -7035,10 +7007,7 @@ msgstr ""
 
 #: includes/functions.php:169 includes/notifications/class-notifier.php:1421
 #: includes/notifications/class-notifier.php:1423
-#. translators: %s: the singular topic label the site owner configured (e.g.
-#. Topic, Thread).
-#. translators: %s: the singular reply label the site owner configured (e.g.
-#. Reply, Response).
+#. translators: %s: the singular label of the item (the configured noun).
 msgid "New %s"
 msgstr ""
 
@@ -8387,9 +8356,7 @@ msgstr ""
 
 #: templates/partials/compose-fields.php:94 templates/views/new-space.php:65
 #: templates/views/space-edit.php:101
-#. translators: %s: singular topic label.
-#. translators: %s: the singular space label the site owner configured (e.g.
-#. space, group).
+#. translators: %s: the singular label of the item (the configured noun).
 msgid "%s title"
 msgstr ""
 
@@ -8803,9 +8770,7 @@ msgstr ""
 
 #: templates/partials/moderation/approval-card.php:82
 #: templates/views/moderation.php:315
-#. translators: 1: author display name, 2: human-readable time since submission
-#. translators: 1: issuing moderator name, 2: human-readable time since the
-#. restriction
+#. translators: 1: a person's display name; 2: human-readable time elapsed.
 msgid "by %1$s · %2$s ago"
 msgstr ""
 
@@ -8987,8 +8952,7 @@ msgstr ""
 
 #: templates/partials/sidebar.php:341 templates/views/my-spaces.php:129
 #: templates/views/my-spaces.php:180 templates/views/space-members.php:152
-#. translators: 1: count; 2: reply label.
-#. translators: 1: count; 2: member label.
+#. translators: 1: the count; 2: the label of the item (the configured noun).
 msgid "%1$d %2$s"
 msgstr ""
 
@@ -9270,8 +9234,7 @@ msgstr ""
 
 #: templates/views/leaderboard.php:138 templates/views/space-members.php:338
 #: templates/views/user-profile.php:393
-#. translators: %s: plural member label.
-#. translators: %s: plural reply label.
+#. translators: %s: the plural label of the item (the configured noun).
 msgid "No %s yet."
 msgstr ""
 
@@ -9309,7 +9272,6 @@ msgid "Moderation Overview"
 msgstr ""
 
 #: templates/views/moderation.php:232 templates/views/space-moderation.php:156
-#. translators: %d: number of submissions held for approval
 #. translators: %d: number of submissions held for approval.
 msgid "%d submission awaiting approval"
 msgid_plural "%d submissions awaiting approval"
@@ -10266,9 +10228,7 @@ msgid ""
 msgstr ""
 
 #: templates/views/subscriptions.php:107 templates/views/subscriptions.php:112
-#. translators: %s: the plural space label the site owner configured (e.g.
-#. spaces, groups).
-#. translators: %s: plural topic label.
+#. translators: %s: the plural label of the item (the configured noun).
 msgid "%s you follow"
 msgstr ""
 

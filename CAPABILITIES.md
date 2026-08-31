@@ -2,14 +2,14 @@
 
 Buyer-level roll-up: what this plugin can actually do, in the words a site owner
 would use. The [manifest](audit/manifest.json) lists the parts (86 REST routes,
-225 hooks, 22 tables); this file says what the parts add up to.
+229 hooks, 22 tables); this file says what the parts add up to.
 
 Every row is verified against code, with the file that delivers it. Status
 values: **YES** shipped and complete, **YES-beta** shipped but young,
 **PARTIAL** works with a real caveat stated in the row, **NO** not in the free
 plugin (Pro rows live in `../jetonomy-pro/CAPABILITIES.md`).
 
-Verified 2026-08-20 against 1.9.4. When you add or remove a capability, update
+Verified 2026-08-31 against 1.9.4. When you add or remove a capability, update
 this file in the same commit.
 
 ## Running a community
@@ -22,6 +22,8 @@ this file in the same commit.
 | Run a lightweight social feed | YES | `includes/class-feed.php`, `includes/api/class-feed-controller.php` |
 | Organise content into categories and sub-communities (spaces) | YES | `includes/models/class-category.php`, `class-space.php` |
 | Nest spaces inside spaces | YES | parent handling in `includes/models/class-space.php` |
+| Rename the built-in terms (Space, Topic, Reply, Member, Category) to fit the community | YES | Settings > General > Terminology; `jetonomy_label()` + `label_defaults()` in `includes/functions.php`, `jetonomy_label` filter (added 1.9.4) |
+| Identify members by display name, @handle, or both | YES | Settings > General > Member Names; `user_display_name()` in `includes/functions.php` (added 1.9.4) |
 
 ## Access, membership and privacy
 
@@ -35,6 +37,7 @@ this file in the same commit.
 | Keep a space manageable when its owner deletes their account | YES | `includes/class-privacy.php` transfers to a surviving space admin, or parks it with the site admin |
 | Order spaces deliberately within a category | YES | `sort_order` on `POST`/`PATCH /spaces`, drag-reorder in `includes/admin/views/spaces.php` |
 | Gate a space behind a membership plan | YES | `includes/adapters/interface-membership-adapter.php` with MemberPress (`class-member-press-adapter.php`) and Paid Memberships Pro (`class-pmpro-adapter.php`) |
+| Put paying members on the roster of the spaces their plan grants (so they show in Members and count toward members-only posting) | YES | `includes/class-membership-roster-sync.php` (activation listener + hourly `jetonomy_reconcile_rosters` reconcile); provenance via `jt_space_members.source` so a lapsed plan only removes rows it added (added 1.9.4) |
 | Gate on any other membership plugin | PARTIAL | The adapter interface is public and Pro ships more adapters; free ships MemberPress and PMPro only. Anything else needs an adapter. |
 | Tell a blocked visitor which plan opens the space | YES | 1.9.0 upgrade-link path, `jetonomy_membership_upgrade_url` |
 | Let members delete their own account and data | YES | `DELETE /users/me`, `includes/class-privacy.php` |
