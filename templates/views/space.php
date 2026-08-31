@@ -17,7 +17,7 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -308,7 +308,7 @@ $crumbs[] = [
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
 								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
-								<?php /* translators: %s: what is being edited - the configured space label, or a specific space title. */ ?>
+								<?php /* translators: %s: the label of the item being edited (the configured noun). */ ?>
 								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</a>
 						</p>
@@ -317,11 +317,11 @@ $crumbs[] = [
 				<div class="jt-space-nums">
 					<div class="jt-num">
 						<div class="jt-num-val"><?php echo esc_html( (int) $space->post_count ); ?></div>
-						<div class="jt-num-lbl"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></div>
+						<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></div>
 					</div>
 					<div class="jt-num">
 						<div class="jt-num-val"><?php echo esc_html( (int) $space->member_count ); ?></div>
-						<div class="jt-num-lbl"><?php esc_html_e( 'Members', 'jetonomy' ); ?></div>
+						<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></div>
 					</div>
 				</div>
 				<?php
@@ -398,11 +398,11 @@ $crumbs[] = [
 		<?php if ( $is_restricted ) : ?>
 			<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">
 				<?php if ( 'archived' === $space_status ) : ?>
-					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-					<?php echo esc_html( sprintf( __( 'This %s is archived. New posts and replies are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
+					<?php /* translators: 1: singular space label (e.g. space, group); 2: plural reply label. */ ?>
+					<?php echo esc_html( sprintf( __( 'This %1$s is archived. New posts and %2$s are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				<?php else : ?>
-					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-					<?php echo esc_html( sprintf( __( 'This %s is locked. New posts and replies are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
+					<?php /* translators: 1: singular space label (e.g. space, group); 2: plural reply label. */ ?>
+					<?php echo esc_html( sprintf( __( 'This %1$s is locked. New posts and %2$s are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>
@@ -441,7 +441,7 @@ $crumbs[] = [
 			}
 			if ( $jt_show_members ) {
 				$jt_space_tabs['members'] = array(
-					'label' => __( 'Members', 'jetonomy' ),
+					'label' => \Jetonomy\jetonomy_label( 'member', true ),
 					'url'   => $space_url . 'members/',
 				);
 			}
@@ -548,7 +548,7 @@ $crumbs[] = [
 				if ( 'unanswered' === $sort ) {
 					$_jt_no_posts_msg = ( 'qa' === $_jt_space_type )
 						? __( 'Every question has an accepted answer.', 'jetonomy' )
-						: __( 'No posts without replies yet.', 'jetonomy' );
+						: sprintf( /* translators: %s: plural reply label. */ __( 'No posts without %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) );
 				} else {
 					switch ( $_jt_space_type ) {
 						case 'qa':

@@ -35,7 +35,7 @@ Discourse set the benchmark for modern forum UX. Here is how Jetonomy covers the
 
 **Anti-spam that does not annoy members.** Discourse handles spam through rate limits and trust levels. Jetonomy adds reCAPTCHA v3 and Cloudflare Turnstile - both completely invisible - alongside the same trust-based exemptions. Members at Trust Level 2+ skip spam checks entirely.
 
-**A complete REST API.** Discourse has a well-documented API. Jetonomy ships 48+ REST endpoints in the free version (90+ with Pro), every one using WordPress authentication, cursor-based pagination, and JSON schema validation.
+**A complete REST API.** Discourse has a well-documented API. Jetonomy ships 80 REST endpoints in the free version (90+ with Pro), every one using WordPress authentication, cursor-based pagination, and JSON schema validation.
 
 ---
 

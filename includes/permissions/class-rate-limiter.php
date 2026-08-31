@@ -57,6 +57,126 @@ class Rate_Limiter {
 	}
 
 	/**
+	 * Everything a caller needs to explain a refusal to the member.
+	 *
+	 * The old message was "Rate limit exceeded. Please try again later." -
+	 * three separate controllers saying the same unactionable thing. It named
+	 * no limit, so a member could not know they had one until they hit it, and
+	 * "later" concealed a wait that is measured in hours. Every number needed
+	 * to say something useful was already sitting in the transient; nothing
+	 * read it.
+	 *
+	 * Note on the window: increment() rewrites the TTL on every action, so the
+	 * 24 hours runs from the member's LAST action rather than their first.
+	 * retry_after reports the real remaining time rather than the nominal day,
+	 * because telling somebody "24 hours" when it is 3 is its own bug.
+	 *
+	 * @param int    $user_id     Member.
+	 * @param string $action      create_posts | create_replies | vote.
+	 * @param int    $trust_level Their trust level.
+	 * @return array{limit:int,used:int,remaining:int,retry_after:int}
+	 *         limit 0 means no limit applies to this member.
+	 */
+	public static function status( int $user_id, string $action, int $trust_level ): array {
+		$none = array(
+			'limit'       => 0,
+			'used'        => 0,
+			'remaining'   => 0,
+			'retry_after' => 0,
+		);
+
+		if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_moderate' ) ) {
+			return $none;
+		}
+
+		$limits = self::get_limits( $trust_level );
+		if ( ! isset( $limits[ $action ] ) ) {
+			return $none;
+		}
+
+		$limit = (int) $limits[ $action ];
+		$key   = "jetonomy_rate_{$user_id}_{$action}";
+		$used  = (int) get_transient( $key );
+
+		// The timeout row is the only place the remaining window is recorded.
+		$timeout     = (int) get_option( '_transient_timeout_' . $key, 0 );
+		$retry_after = $timeout > 0 ? max( 0, $timeout - time() ) : 0;
+
+		return array(
+			'limit'       => $limit,
+			'used'        => $used,
+			'remaining'   => max( 0, $limit - $used ),
+			'retry_after' => $retry_after,
+		);
+	}
+
+	/**
+	 * The refusal, written for the member rather than the log.
+	 *
+	 * Shared by every controller that enforces a limit so the three cannot
+	 * drift apart, which is how they came to say the same unhelpful sentence
+	 * in the first place.
+	 *
+	 * @param int    $user_id     Member.
+	 * @param string $action      create_posts | create_replies | vote.
+	 * @param int    $trust_level Their trust level.
+	 */
+	public static function message( int $user_id, string $action, int $trust_level ): string {
+		$status = self::status( $user_id, $action, $trust_level );
+
+		if ( $status['limit'] <= 0 ) {
+			// Should not be reachable - the caller only asks after a refusal -
+			// but never leave a member with an empty string.
+			return __( 'You have reached a posting limit. Please try again later.', 'jetonomy' );
+		}
+
+		/*
+		 * Whole sentences per action, not a shared frame with a noun slotted
+		 * in. A shared "can post %s" produced "can post 5 votes a day", and
+		 * you do not post a vote - you cast one. Verbs are part of the string
+		 * so translators get a real sentence rather than a fill-in-the-blank.
+		 */
+		$count     = number_format_i18n( $status['limit'] );
+		$allowance = '';
+		$again     = '';
+
+		switch ( $action ) {
+			case 'create_posts':
+				/* translators: %s: number of topics allowed per day. */
+				$allowance = sprintf( _n( 'New members can post %s topic a day.', 'New members can post %s topics a day.', $status['limit'], 'jetonomy' ), $count );
+				/* translators: %s: human-readable wait, e.g. "17 hours". */
+				$again = __( 'You can post again in about %s.', 'jetonomy' );
+				break;
+			case 'create_replies':
+				/* translators: %s: number of replies allowed per day. */
+				$allowance = sprintf( _n( 'New members can post %s reply a day.', 'New members can post %s replies a day.', $status['limit'], 'jetonomy' ), $count );
+				/* translators: %s: human-readable wait, e.g. "45 minutes". */
+				$again = __( 'You can reply again in about %s.', 'jetonomy' );
+				break;
+			case 'vote':
+				/* translators: %s: number of votes allowed per day. */
+				$allowance = sprintf( _n( 'New members can cast %s vote a day.', 'New members can cast %s votes a day.', $status['limit'], 'jetonomy' ), $count );
+				/* translators: %s: human-readable wait, e.g. "2 minutes". */
+				$again = __( 'You can vote again in about %s.', 'jetonomy' );
+				break;
+			default:
+				/* translators: %s: number of actions allowed per day. */
+				$allowance = sprintf( __( 'New members are limited to %s of these a day.', 'jetonomy' ), $count );
+				/* translators: %s: human-readable wait. */
+				$again = __( 'You can try again in about %s.', 'jetonomy' );
+		}
+
+		if ( $status['retry_after'] > 0 ) {
+			return $allowance . ' ' . sprintf(
+				$again,
+				human_time_diff( time(), time() + $status['retry_after'] )
+			);
+		}
+
+		return $allowance . ' ' . __( 'Please try again later.', 'jetonomy' );
+	}
+
+	/**
 	 * Return the built-in default per-day rate limits for Level 0 users.
 	 *
 	 * Single source of truth consumed by the runtime reader, the admin

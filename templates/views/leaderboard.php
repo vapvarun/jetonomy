@@ -116,9 +116,10 @@ $crumbs = [
 					<?php
 						echo esc_html(
 							sprintf(
-								/* translators: %d: total members on the leaderboard. */
-								__( 'of %d members', 'jetonomy' ),
-								$_jt_total
+								/* translators: 1: count, 2: plural member label. */
+								__( 'of %1$d %2$s', 'jetonomy' ),
+								$_jt_total,
+								\Jetonomy\jetonomy_label( 'member', true, true )
 							)
 						);
 					?>
@@ -134,8 +135,8 @@ $crumbs = [
 				[
 					'icon'        => 'award',
 					'icon_size'   => 48,
-					'message'     => __( 'No members yet.', 'jetonomy' ),
-					'description' => __( 'Reputation is earned by posting, getting replies, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ),
+					'message'     => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+					'description' => sprintf( /* translators: %s: plural reply label. */ __( 'Reputation is earned by posting, getting %s, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					'cta_label'   => __( 'Browse the community', 'jetonomy' ),
 					'cta_url'     => \Jetonomy\base_url() . '/',
 				]
@@ -147,7 +148,7 @@ $crumbs = [
 				<div class="jt-leader jt-leader-head" aria-hidden="true">
 					<span class="jt-leader-rank"></span>
 					<span class="jt-leader-head-spacer"></span>
-					<span class="jt-leader-name"><?php esc_html_e( 'Member', 'jetonomy' ); ?></span>
+					<span class="jt-leader-name"><?php echo esc_html( \Jetonomy\jetonomy_label( 'member' ) ); ?></span>
 					<div class="jt-leader-stats">
 						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'rep', 'jetonomy' ); ?></div>
 						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>

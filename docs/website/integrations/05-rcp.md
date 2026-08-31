@@ -2,7 +2,7 @@ Gate Jetonomy spaces by Restrict Content Pro subscription level - with automatic
 
 ![The Jetonomy admin settings screen](../images/admin-settings.png)
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ## What You Will Learn
 

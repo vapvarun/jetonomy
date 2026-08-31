@@ -41,18 +41,45 @@ $crumbs = array(
 	),
 );
 
+/*
+ * Two kinds of notification, and they need different sentences.
+ *
+ * ACTOR-LED: somebody did something to you. The row reads
+ * "<strong>Name</strong> replied to your post", so the label is a verb phrase
+ * that completes the actor's sentence. "Someone" is the right fallback when
+ * the actor has been deleted.
+ *
+ * SELF-CONTAINED: nothing did it TO you - you earned a badge, a space you
+ * follow got busy, a moderator acted. These carry no actor_id, and feeding
+ * them through the actor-led frame produced the fallback as a subject:
+ *
+ *   badge_earned     -> "Someone earned a badge"          (wrong subject: it was YOU)
+ *   new_post_in_sub  -> "Someone new activity in a subscribed space"
+ *   moderation       -> "Someone a moderator acted on your content"
+ *   flag             -> "Someone new content flag requires review"
+ *
+ * Three of those four are not even grammatical. They are whole sentences and
+ * are rendered without an actor prefix.
+ */
 $type_labels = array(
 	'reply_to_post'       => __( 'replied to your post', 'jetonomy' ),
 	'reply_to_reply'      => __( 'replied to your comment', 'jetonomy' ),
 	'mention'             => __( 'mentioned you', 'jetonomy' ),
 	'vote_on_post'        => __( 'voted on your post', 'jetonomy' ),
-	'accepted_answer'     => __( 'accepted your reply', 'jetonomy' ),
+	'accepted_answer'     => sprintf( /* translators: %s: singular reply label. */ __( 'accepted your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 	'idea_status_changed' => __( 'updated your idea on the roadmap', 'jetonomy' ),
-	'new_post_in_sub'     => __( 'new activity in a subscribed space', 'jetonomy' ),
-	'moderation'          => __( 'a moderator acted on your content', 'jetonomy' ),
-	'badge_earned'        => __( 'earned a badge', 'jetonomy' ),
-	'flag'                => __( 'new content flag requires review', 'jetonomy' ),
+	'new_post_in_sub'     => __( 'New activity in a space you follow', 'jetonomy' ),
+	'moderation'          => __( 'A moderator acted on your content', 'jetonomy' ),
+	'badge_earned'        => __( 'You earned a badge', 'jetonomy' ),
+	'flag'                => __( 'New content flag requires review', 'jetonomy' ),
 );
+
+/**
+ * Types whose label is a complete sentence and must not take an actor prefix.
+ *
+ * @var array<int,string>
+ */
+$self_contained_types = array( 'new_post_in_sub', 'moderation', 'badge_earned', 'flag' );
 
 // Icon shown in the row's circle when a notification has no actor at all
 // (system events: a flag needing review, an aggregated vote roll-up). Keyed
@@ -74,7 +101,7 @@ $type_icons = array(
 $filter_tabs = array(
 	'all'      => __( 'All', 'jetonomy' ),
 	'unread'   => __( 'Unread', 'jetonomy' ),
-	'replies'  => __( 'Replies', 'jetonomy' ),
+	'replies'  => \Jetonomy\jetonomy_label( 'reply', true ),
 	'mentions' => __( 'Mentions', 'jetonomy' ),
 	'votes'    => __( 'Votes', 'jetonomy' ),
 );
@@ -85,17 +112,17 @@ if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
 }
 
 $empty_copy = array(
-	'all'      => array( __( 'No notifications yet', 'jetonomy' ), __( 'When members reply to your posts or mention you, those updates land here.', 'jetonomy' ) ),
+	'all'      => array( __( 'No notifications yet', 'jetonomy' ), sprintf( /* translators: %s: plural member label. */ __( 'When %s reply to your posts or mention you, those updates land here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ),
 	'unread'   => array( __( "You're all caught up!", 'jetonomy' ), __( 'Nothing new since you last checked. Switch to All to see your history.', 'jetonomy' ) ),
-	'replies'  => array( __( 'No replies yet', 'jetonomy' ), __( 'Replies to your posts and comments will show up here.', 'jetonomy' ) ),
-	'mentions' => array( __( 'No mentions yet', 'jetonomy' ), __( "When someone @-mentions you in a post or reply, you'll see it here.", 'jetonomy' ) ),
+	'replies'  => array( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ), sprintf( /* translators: %s: plural reply label. */ __( '%s to your posts and comments will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ),
+	'mentions' => array( __( 'No mentions yet', 'jetonomy' ), sprintf( /* translators: %s: singular reply label. */ __( "When someone @-mentions you in a post or %s, you'll see it here.", 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
 	'votes'    => array( __( 'No votes yet', 'jetonomy' ), __( 'Upvotes on your posts will appear here.', 'jetonomy' ) ),
 	'badges'   => array( __( 'No badges yet', 'jetonomy' ), __( 'Earn badges by contributing to the community.', 'jetonomy' ) ),
 );
 
 // Settings deep-link points at the existing notification-preferences block on
 // the Edit Profile page so we don't ship a parallel settings surface.
-$settings_url = \Jetonomy\get_profile_url( get_current_user_id() ) . 'edit/#notification-preferences';
+$settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_current_user_id() );
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
 
@@ -203,7 +230,7 @@ $settings_url = \Jetonomy\get_profile_url( get_current_user_id() ) . 'edit/#noti
 						// badge" notification lands on the achievement, not the profile
 						// top. Degrades to the profile root when no badges section is
 						// present (e.g. free-only site).
-						$notif_url = \Jetonomy\get_profile_url( (int) $badge_user->ID ) . '#jt-badges';
+						$notif_url = \Jetonomy\get_profile_action_url( 'badges', (int) $badge_user->ID );
 					}
 				} elseif ( 'space' === $notif->object_type && 'join_request' === $notif->type ) {
 					// Shared resolver, so the link on this page, the link in the
@@ -262,6 +289,9 @@ $settings_url = \Jetonomy\get_profile_url( get_current_user_id() ) . 'edit/#noti
 							<div class="jt-notif-text">
 								<?php if ( ! empty( $notif->message ) ) : ?>
 									<?php echo esc_html( $notif->message ); ?>
+								<?php elseif ( in_array( (string) $notif->type, $self_contained_types, true ) ) : ?>
+									<?php // Whole sentence - no actor, no prefix. ?>
+									<?php echo esc_html( $action_label ); ?>
 								<?php else : ?>
 									<strong><?php echo esc_html( $actor_name ); ?></strong>
 									<?php echo esc_html( $action_label ); ?>

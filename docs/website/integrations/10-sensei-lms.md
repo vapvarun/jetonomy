@@ -1,6 +1,6 @@
 Connect Sensei LMS course enrollment to Jetonomy spaces - students get a dedicated discussion area when enrolled, and lose access when withdrawn.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](images/integrations-settings.png)
 

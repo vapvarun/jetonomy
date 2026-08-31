@@ -205,18 +205,59 @@ class Flag extends Model {
 	 */
 	public static function resolve( int $id, int $resolved_by, string $status ): bool {
 		$flag = static::find( $id );
+		if ( ! $flag ) {
+			return false;
+		}
 
-		$ok = static::update(
-			$id,
+		/*
+		 * Compare-and-swap on the status we just read, instead of an
+		 * unconditional update.
+		 *
+		 * Two moderators opening the same queue both see the flag as pending.
+		 * Before 1.9.4 both writes landed: the second silently overwrote
+		 * resolved_by and resolved_at, so the audit trail credited whoever
+		 * clicked last and neither moderator saw an error. Model::update()
+		 * could not surface it either — it returns `false !== $wpdb->update()`,
+		 * and $wpdb->update() returns 0 (not false) for zero rows affected, so
+		 * a no-op write reports success.
+		 *
+		 * Adding status to the WHERE makes the write atomic: the loser matches
+		 * no row and gets false back, and every side effect below is already
+		 * gated on $ok so nothing double-fires.
+		 *
+		 * Re-resolving a flag that is already decided stays supported — the CAS
+		 * is against the status READ a moment ago, not hardcoded to 'pending'.
+		 */
+		$rows = static::db()->update(
+			static::table(),
 			[
 				'status'      => $status,
 				'resolved_by' => $resolved_by,
 				'resolved_at' => now(),
+			],
+			[
+				'id'     => $id,
+				'status' => $flag->status,
 			]
 		);
 
+		if ( false === $rows ) {
+			return false;
+		}
+
+		if ( 0 === $rows ) {
+			// Either someone else resolved it first, or the row already held
+			// exactly these values. Only the former is a failure, so ask.
+			$fresh = static::find( $id );
+			if ( ! $fresh || $fresh->status !== $flag->status ) {
+				return false;
+			}
+		}
+
+		// Past this point the write succeeded and $flag is non-null (guarded
+		// above), so the side effects below only need to test the PRIOR status.
 		// A pending post-flag becoming resolved drops the post's open-flag count.
-		if ( $ok && $flag && 'pending' === $flag->status && 'post' === $flag->object_type ) {
+		if ( 'pending' === $flag->status && 'post' === $flag->object_type ) {
 			Post::increment_flag_count( (int) $flag->object_id, -1 );
 		}
 
@@ -230,8 +271,7 @@ class Flag extends Model {
 		// already-dismissed flag doesn't double-restore. Self-flags (reporter
 		// equals author) are excluded because the original report awarded no
 		// deduction either — symmetry with the report-create path.
-		if ( $ok && $flag
-			&& 'pending' === $flag->status
+		if ( 'pending' === $flag->status
 			&& 'dismissed' === $status
 			&& 'post' === $flag->object_type
 		) {
@@ -245,7 +285,7 @@ class Flag extends Model {
 			}
 		}
 
-		return $ok;
+		return true;
 	}
 
 	/**

@@ -91,7 +91,7 @@ No additional configuration is needed in Jetonomy when you add an SMTP plugin - 
 
 ## Email Digest (Jetonomy Pro)
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 The Email Digest feature bundles all notifications from a configurable time window into a single summary email. Members can choose daily or weekly digests instead of receiving individual emails for each event. This dramatically reduces email volume for active community members while keeping them informed.
 

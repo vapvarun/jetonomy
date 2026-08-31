@@ -191,6 +191,16 @@ class Spaces_Handler {
 				wp_send_json_error( $combo->get_error_message() );
 			}
 		}
+		// Direct entry for the same column ajax_reorder_spaces() writes by drag.
+		// The two are not rivals: dragging is for arranging a category you are
+		// looking at, this is for setting one space's position without hunting
+		// for it in a list. Both land on sort_order, so neither can drift.
+		//
+		// An empty string means "the field was left blank", which is not the
+		// same as 0 - skip it rather than silently sending the space to the top.
+		if ( isset( $_POST['sort_order'] ) && '' !== $_POST['sort_order'] ) {
+			$data['sort_order'] = absint( wp_unslash( $_POST['sort_order'] ) );
+		}
 		if ( isset( $_POST['cover_image'] ) ) {
 			$data['cover_image'] = esc_url_raw( wp_unslash( $_POST['cover_image'] ) ) ?: null;
 		}
@@ -291,7 +301,7 @@ class Spaces_Handler {
 
 		$space = Space::find( $id );
 		if ( ! $space ) {
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
@@ -501,12 +511,7 @@ class Spaces_Handler {
 		// "configured but content still accessible" report, #10000074550). When
 		// such a rule is attached to a public space, switch the space to Private
 		// so the rule actually restricts access, and tell the admin what happened.
-		$restrictive_types = array( 'membership', 'role', 'capability', 'trust_level' );
-		$made_private      = false;
-		$space             = Space::find( $space_id );
-		if ( $space && 'public' === $space->visibility && in_array( $rule_type, $restrictive_types, true ) ) {
-			$made_private = Space::update( $space_id, array( 'visibility' => 'private' ) );
-		}
+		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
 
 		$message = $made_private
 			? __( 'Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space.', 'jetonomy' )
@@ -576,24 +581,49 @@ class Spaces_Handler {
 		$adapters = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
 		$synced   = 0;
 
-		// Get all users and check each against the adapter.
-		$users = get_users( array( 'fields' => 'ID' ) );
+		// Only the active adapters, resolved once (not per user).
+		$adapters = array_filter( $adapters, static fn( $a ) => $a->is_active() );
 
-		foreach ( $users as $user_id ) {
-			$user_id = (int) $user_id;
-			foreach ( $adapters as $adapter ) {
-				if ( $adapter->is_active() && $adapter->user_has_level( $user_id, $rule_value ) ) {
-					if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
-						$add_result = SpaceMember::add( $space_id, $user_id, $space_role );
-						if ( is_wp_error( $add_result ) ) {
-							continue;
+		// Page through users in bounded batches — never load the whole user
+		// table into memory at once (big-site rule: 50k users OOM'd a single
+		// unbounded get_users()). The per-user adapter check is inherent to the
+		// membership adapter interface; the recurring roster reconcile
+		// (Membership_Roster_Sync::reconcile) is the reliable path at very large
+		// scale, this button is the immediate on-demand backfill.
+		$per_page = 500;
+		$paged    = 1;
+		do {
+			$users = get_users(
+				array(
+					'fields'  => 'ID',
+					'number'  => $per_page,
+					'paged'   => $paged,
+					'orderby' => 'ID',
+					'order'   => 'ASC',
+				)
+			);
+			$batch = count( $users );
+			foreach ( $users as $user_id ) {
+				$user_id = (int) $user_id;
+				foreach ( $adapters as $adapter ) {
+					if ( $adapter->user_has_level( $user_id, $rule_value ) ) {
+						if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
+							// Stamp 'tier' so a lapsed plan (or the reconcile
+							// sweep) can later remove it. Without this the row
+							// defaulted to 'manual' and was permanently exempt
+							// from the deactivation sweep - the backfilled members
+							// the button exists for never got cleaned up.
+							$add_result = SpaceMember::add( $space_id, $user_id, $space_role, 'tier' );
+							if ( ! is_wp_error( $add_result ) ) {
+								++$synced;
+							}
 						}
-						++$synced;
+						break;
 					}
-					break;
 				}
 			}
-		}
+			++$paged;
+		} while ( $batch === $per_page );
 
 		wp_send_json_success(
 			array(

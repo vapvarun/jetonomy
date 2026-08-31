@@ -300,7 +300,7 @@ $crumbs = [
 
 					<?php if ( ! empty( $posts ) ) : ?>
 						<h3 class="jt-section-label">
-							<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
+							<?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?>
 						</h3>
 						<div class="jt-topics jt-mb-lg">
 							<?php
@@ -333,7 +333,7 @@ $crumbs = [
 									</div>
 									<div class="jt-row-stat">
 										<div class="jt-row-stat-n"><?php echo (int) $post->reply_count; ?></div>
-										<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
+										<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
 									</div>
 									<div class="jt-row-stat">
 										<div class="jt-row-stat-n"><?php echo (int) $post->vote_score; ?></div>

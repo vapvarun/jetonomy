@@ -41,6 +41,13 @@ class BlockedUser extends Model {
 	 */
 	private static array $memo = [];
 
+	/**
+	 * Whether the per-request memo reset has been registered.
+	 *
+	 * @var bool
+	 */
+	private static bool $memo_registered = false;
+
 	protected static function table_name(): string {
 		return 'blocked_users';
 	}
@@ -225,6 +232,31 @@ class BlockedUser extends Model {
 	public static function blocked_ids( int $viewer_id ): array {
 		if ( $viewer_id <= 0 ) {
 			return [];
+		}
+
+		/*
+		 * Register the reset on first read.
+		 *
+		 * This memo is keyed by VIEWER ID and was never wired into
+		 * Cache::reset_memos(), which made it a cross-test leak: PHPUnit runs
+		 * every test in one process while rolling the DB back, InnoDB reuses
+		 * auto-increment ids, so a block list memoised for user 5 in one test
+		 * was inherited by an unrelated user 5 in the next. Blocked ids feed
+		 * content visibility and permission checks, so the damage showed up as
+		 * permission failures in tests that never mentioned blocking - and
+		 * which test failed depended on which ids happened to collide, so the
+		 * failing NAME moved between runs.
+		 *
+		 * In production a request and a process are the same thing and this
+		 * changes nothing.
+		 */
+		if ( ! self::$memo_registered ) {
+			self::$memo_registered = true;
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$memo = [];
+				}
+			);
 		}
 
 		if ( isset( self::$memo[ $viewer_id ] ) ) {

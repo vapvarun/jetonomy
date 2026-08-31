@@ -119,10 +119,14 @@ class Admin {
 			array( $this, 'render_dashboard' )
 		);
 
+		// Owner can rename Category/Categories under Settings -> General; the
+		// menu label and the page honour it, the same way Spaces already does.
+		$jt_categories_label = \Jetonomy\jetonomy_label( 'category', true );
+
 		add_submenu_page(
 			'jetonomy',
-			__( 'Categories', 'jetonomy' ),
-			__( 'Categories', 'jetonomy' ),
+			$jt_categories_label,
+			$jt_categories_label,
 			'jetonomy_manage_settings',
 			'jetonomy-categories',
 			array( $this, 'render_categories' )
@@ -137,10 +141,15 @@ class Admin {
 			array( $this, 'render_tags' )
 		);
 
+		// Settings -> General lets the owner rename Space/Spaces, and the page
+		// heading already honours it. The menu label was hardcoded, so after a
+		// rename the plugin's own nav contradicted its page content.
+		$jt_spaces_label = \Jetonomy\space_label( true );
+
 		add_submenu_page(
 			'jetonomy',
-			__( 'Spaces', 'jetonomy' ),
-			__( 'Spaces', 'jetonomy' ),
+			$jt_spaces_label,
+			$jt_spaces_label,
 			'jetonomy_manage_settings',
 			'jetonomy-spaces',
 			array( $this, 'render_spaces' )
@@ -328,6 +337,128 @@ class Admin {
 	}
 
 	/**
+	 * Attach a display title and an admin URL to each pending flag row.
+	 *
+	 * The Flags tab used to print `post #217` in a <code> tag - not a link, and
+	 * not the content. A moderator deciding Valid vs Dismiss had to go find the
+	 * item by id somewhere else before they could judge it, which is most of the
+	 * work the queue exists to save.
+	 *
+	 * Batched deliberately: this view is the worked example of an N+1 in this
+	 * codebase, so titles are fetched with ONE query per object type for the
+	 * whole page rather than a find() per row. Replies resolve to their PARENT
+	 * post, so a flagged reply links somewhere useful instead of the generic
+	 * content list the Activity Log has to settle for - its rows store only the
+	 * reply id, whereas a flag row lets us join.
+	 *
+	 * Mutates the row objects in place, adding jt_object_title and
+	 * jt_object_url. Both are '' when the target has since been deleted, which
+	 * the view renders as the old id text rather than a dead link.
+	 *
+	 * @param object[] $flags Pending flag rows.
+	 */
+	private function prime_flag_objects( array $flags ): void {
+		if ( empty( $flags ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$post_ids  = array();
+		$reply_ids = array();
+		$user_ids  = array();
+		foreach ( $flags as $f ) {
+			$id = (int) $f->object_id;
+			if ( $id <= 0 ) {
+				continue;
+			}
+			switch ( $f->object_type ) {
+				case 'post':
+					$post_ids[ $id ] = true;
+					break;
+				case 'reply':
+					$reply_ids[ $id ] = true;
+					break;
+				case 'user':
+					$user_ids[ $id ] = true;
+					break;
+			}
+		}
+
+		$posts_t   = \Jetonomy\table( 'posts' );
+		$replies_t = \Jetonomy\table( 'replies' );
+
+		$post_titles = array();
+		if ( $post_ids ) {
+			$ids = implode( ',', array_map( 'intval', array_keys( $post_ids ) ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			foreach ( (array) $wpdb->get_results( "SELECT id, title FROM {$posts_t} WHERE id IN ({$ids})" ) as $row ) {
+				$post_titles[ (int) $row->id ] = (string) $row->title;
+			}
+		}
+
+		$reply_parents = array();
+		if ( $reply_ids ) {
+			$ids = implode( ',', array_map( 'intval', array_keys( $reply_ids ) ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			foreach ( (array) $wpdb->get_results(
+				"SELECT r.id, r.post_id, p.title FROM {$replies_t} r
+				 LEFT JOIN {$posts_t} p ON p.id = r.post_id
+				 WHERE r.id IN ({$ids})"
+			) as $row ) {
+				$reply_parents[ (int) $row->id ] = array(
+					'post_id' => (int) $row->post_id,
+					'title'   => (string) $row->title,
+				);
+			}
+		}
+
+		$users = array();
+		if ( $user_ids ) {
+			$found = get_users(
+				array(
+					'include' => array_keys( $user_ids ),
+					'fields'  => array( 'ID', 'display_name' ),
+				)
+			);
+			foreach ( $found as $u ) {
+				$users[ (int) $u->ID ] = (string) $u->display_name;
+			}
+		}
+
+		foreach ( $flags as $f ) {
+			$id                 = (int) $f->object_id;
+			$f->jt_object_title = '';
+			$f->jt_object_url   = '';
+
+			switch ( $f->object_type ) {
+				case 'post':
+					if ( isset( $post_titles[ $id ] ) ) {
+						$f->jt_object_title = $post_titles[ $id ];
+						$f->jt_object_url   = admin_url( 'admin.php?page=jetonomy-content&post_id=' . $id );
+					}
+					break;
+				case 'reply':
+					if ( isset( $reply_parents[ $id ] ) ) {
+						$parent = $reply_parents[ $id ];
+						/* translators: %s: title of the topic the flagged reply belongs to. */
+						$f->jt_object_title = sprintf( __( 'Reply on "%s"', 'jetonomy' ), $parent['title'] );
+						$f->jt_object_url   = $parent['post_id']
+							? admin_url( 'admin.php?page=jetonomy-content&post_id=' . $parent['post_id'] )
+							: '';
+					}
+					break;
+				case 'user':
+					if ( isset( $users[ $id ] ) ) {
+						$f->jt_object_title = $users[ $id ];
+						$f->jt_object_url   = admin_url( 'admin.php?page=jetonomy-users&user_id=' . $id );
+					}
+					break;
+			}
+		}
+	}
+
+	/**
 	 * Sanitize the email template overrides option.
 	 * Each row: { subject: string, body: string }. Both fields are plain
 	 * text with supported placeholders — no HTML allowed here.
@@ -349,6 +480,13 @@ class Admin {
 			'new_post_in_sub',
 			'badge_earned',
 			'vote_on_post',
+			// Settings -> Email renders a template row for this type
+			// (views/settings.php), and Notifier looks up an override for
+			// whatever type it is sending. It was missing from this allowlist,
+			// so an owner could write a custom subject/body for "Your idea
+			// roadmap status changed", save, and have it silently discarded
+			// every time. Keep this list in step with $tmpl_types in the view.
+			'idea_status_changed',
 			'reaction',
 			'moderation',
 			'flag_resolved',
@@ -441,9 +579,13 @@ class Admin {
 			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
 			$clean['terms_url']   = esc_url_raw( $input['terms_url'] ?? '' );
 			$clean['privacy_url'] = esc_url_raw( $input['privacy_url'] ?? '' );
-			// Space label override (singular / plural). Empty = keep the default.
-			$clean['space_label_singular'] = sanitize_text_field( $input['space_label_singular'] ?? '' );
-			$clean['space_label_plural']   = sanitize_text_field( $input['space_label_plural'] ?? '' );
+			// Product-noun label overrides (singular / plural). Empty = keep the
+			// default. One loop over every renamable noun so the save side cannot
+			// drift from the Terminology settings block that renders them.
+			foreach ( array_keys( \Jetonomy\label_defaults() ) as $jt_noun ) {
+				$clean[ $jt_noun . '_label_singular' ] = sanitize_text_field( $input[ $jt_noun . '_label_singular' ] ?? '' );
+				$clean[ $jt_noun . '_label_plural' ]   = sanitize_text_field( $input[ $jt_noun . '_label_plural' ] ?? '' );
+			}
 			// Clamp to the UI max (100) so a crafted POST can't store a huge
 			// value that flows straight into a SQL LIMIT on a big-site query.
 			$clean['posts_per_page'] = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
@@ -506,6 +648,17 @@ class Admin {
 					'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
 				);
 			}
+		}
+
+		// How members are identified on bylines, member lists and REST.
+		// Allowlisted rather than trusted: this string is read on every name
+		// render, so an unrecognised value must fall back rather than reach
+		// user_display_name().
+		if ( isset( $input['member_name_display'] ) ) {
+			$mode                         = sanitize_key( wp_unslash( $input['member_name_display'] ) );
+			$clean['member_name_display'] = in_array( $mode, array( 'display_name', 'handle', 'both' ), true )
+				? $mode
+				: 'display_name';
 		}
 
 		// Only process if rate_limits is present (Permissions tab was submitted).
@@ -1258,7 +1411,7 @@ class Admin {
 		if ( 'edit' === $action && $space_id > 0 ) {
 			$space = Space::find( $space_id );
 			if ( ! $space ) {
-				/* translators: %s: the singular space label. */
+				/* translators: %s: the singular label of the item (the configured noun). */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
 			$categories = $this->get_all_categories_flat();
@@ -1393,6 +1546,8 @@ class Admin {
 				( $paged_flags - 1 ) * $per_page
 			)
 		) ?: array();
+
+		$this->prime_flag_objects( $pending_flags );
 
 		$banned_users = $wpdb->get_results(
 			$wpdb->prepare(

@@ -335,7 +335,33 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						'cell'      => static function ( $f, string $key ): void {
 							switch ( $key ) {
 								case 'object':
-									echo '<code>' . esc_html( $f->object_type . ' #' . $f->object_id ) . '</code>';
+									// Link to the content being judged. Titles are
+									// batch-primed in Admin::prime_flag_objects(), so
+									// this costs no query per row. Falls back to the
+									// old id text when the target was already deleted,
+									// which is honest rather than a dead link.
+									$jt_label = (string) ( $f->jt_object_title ?? '' );
+									$jt_url   = (string) ( $f->jt_object_url ?? '' );
+									if ( '' !== $jt_label && '' !== $jt_url ) {
+										printf(
+											'<a href="%s">%s</a><br><code>%s</code>',
+											esc_url( $jt_url ),
+											esc_html( $jt_label ),
+											esc_html( $f->object_type . ' #' . $f->object_id )
+										);
+									} elseif ( '' !== $jt_label ) {
+										printf(
+											'%s<br><code>%s</code>',
+											esc_html( $jt_label ),
+											esc_html( $f->object_type . ' #' . $f->object_id )
+										);
+									} else {
+										printf(
+											'<code>%s</code> <span class="description">%s</span>',
+											esc_html( $f->object_type . ' #' . $f->object_id ),
+											esc_html__( '(deleted)', 'jetonomy' )
+										);
+									}
 									break;
 								case 'reason':
 									echo '<span class="jetonomy-badge jetonomy-badge--flag-' . esc_attr( $f->reason ) . '">' . esc_html( ucfirst( str_replace( '_', ' ', $f->reason ) ) ) . '</span>';

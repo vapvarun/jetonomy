@@ -103,12 +103,20 @@ class RealWriterPersistenceTest extends WP_UnitTestCase {
 			'content'   => '<p>parent</p>',
 		) );
 
+		// The subject of this test is CONTENT NORMALIZATION, not auth - but the
+		// inbound route is public, so it has to be fed an authentic request.
+		// This fixture used to set an empty secret and send no signature, which
+		// passed only because the verifier treated "no signature" as "nothing to
+		// check" (Basecamp 10227904976). It now signs the way Mailgun does, so
+		// the normalization assertions below are reached through the same door
+		// real traffic uses.
+		$secret = 'test-webhook-secret';
 		update_option(
 			'jetonomy_pro_reply_by_email',
 			array(
 				'enabled'        => true,
 				'method'         => 'webhook',
-				'webhook_secret' => '',
+				'webhook_secret' => $secret,
 			)
 		);
 
@@ -123,6 +131,12 @@ class RealWriterPersistenceTest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'POST', '/jetonomy-pro/v1/inbound-email' );
 		$request->set_param( 'To', 'reply+' . $token . '@example.com' );
 		$request->set_param( 'body-plain', "first line\nsecond line\n\nnext paragraph" );
+
+		$timestamp = (string) time();
+		$mg_token  = 'fixture-token';
+		$request->set_param( 'timestamp', $timestamp );
+		$request->set_param( 'token', $mg_token );
+		$request->set_param( 'signature', hash_hmac( 'sha256', $timestamp . $mg_token, $secret ) );
 		$response = $ext->rest_inbound( $request );
 
 		$this->assertFalse( is_wp_error( $response ), is_wp_error( $response ) ? $response->get_error_message() : '' );

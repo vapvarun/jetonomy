@@ -25,7 +25,7 @@ Most WordPress forum plugins store everything in wp_posts and require constant m
 
 - 24 custom database tables (not CPTs)
 - 6 trust levels with automatic promotion
-- 48+ REST API endpoints (90+ with Pro)
+- 80 REST API endpoints (155 with Pro)
 - 4 space types (forum, Q&A, ideas, feed)
 - Sub-200ms page loads with Redis at 50K topics
 - Built-in importers for bbPress and wpForo

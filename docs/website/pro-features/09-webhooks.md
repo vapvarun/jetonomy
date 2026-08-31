@@ -1,6 +1,6 @@
 Automatically send community events to any external URL - connect Jetonomy to Slack, Zapier, your CRM, or any custom pipeline.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Webhook management page listing configured endpoints](../images/pro-webhooks.png)
 ## What You Will Learn

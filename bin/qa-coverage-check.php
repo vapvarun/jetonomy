@@ -200,11 +200,20 @@ if ( is_file( $coverage ) ) {
 	if ( is_array( $existing ) ) {
 		$existing_summary  = $existing['summary'] ?? array();
 		$current_summary   = $result['summary'];
+		// Counts are not the only material fact. plugin.version and the manifest
+		// provenance (manifest_at / manifest_branch) also describe what this file
+		// is a report ABOUT, so a release that moves either must rewrite the file
+		// even when no count changed. Before 1.9.4 they were excluded, and
+		// qa-coverage.json sat at v1.9.1 / manifest_branch 1.8.1-dev for two
+		// releases - reading as stale data when the counts were in fact current.
 		$material_unchanged = (
 			( $existing_summary['items_total']     ?? null ) === $current_summary['items_total']
 			&& ( $existing_summary['items_covered']   ?? null ) === $current_summary['items_covered']
 			&& ( $existing_summary['items_uncovered'] ?? null ) === $current_summary['items_uncovered']
 			&& ( $existing_summary['items_skipped']   ?? null ) === $current_summary['items_skipped']
+			&& ( $existing['plugin']['version']        ?? null ) === ( $result['plugin']['version'] ?? null )
+			&& ( $existing['generated']['manifest_at'] ?? null ) === ( $result['generated']['manifest_at'] ?? null )
+			&& ( $existing['generated']['manifest_branch'] ?? null ) === ( $result['generated']['manifest_branch'] ?? null )
 		);
 		if ( $material_unchanged ) {
 			$should_write = false;

@@ -6,25 +6,28 @@ order: 3
 
 # Get the App
 
-There are two ways to put the Jetonomy app in your members' hands: use the **open-source app** as-is, or **publish your own branded app**. Both use the same code and read your branding from WordPress.
+The Jetonomy app is published under **your** developer accounts, as **your** app - your icon, your name - reading its branding from your WordPress site.
 
 ## What You Will Learn
 
-- How to try the app on a phone without publishing
+- How to get the app source
 - What it takes to publish your own branded app
 - The accounts and tools involved (and the no-EAS alternatives)
 
-![The Communities screen, where a member can switch between several Jetonomy communities or add another - available in the open-source app](../images/mobile-app/07-communities.png)
+![The Communities screen, where a member can switch between several Jetonomy communities or add another](../images/mobile-app/07-communities.png)
 
-## Try it first (no publishing)
+## Getting the app source
 
-The open-source app runs in **Expo Go** so you can see it before committing:
+The app source is **not publicly downloadable**. To get a copy - whether you
+want to build it yourself or have it built for you - contact Wbcom and ask for
+mobile app access.
+
+Once you have the source, it runs in **Expo Go**, so you can see it on a real
+phone before publishing anything:
 
 1. Install **Expo Go** (free) on a phone from the App Store / Play Store
-2. On a computer with [Node.js](https://nodejs.org), run:
+2. On a computer with [Node.js](https://nodejs.org), from the app folder run:
    ```bash
-   git clone https://github.com/vapvarun/jetonomy-app.git
-   cd jetonomy-app
    npm install
    npx expo start
    ```
@@ -41,7 +44,7 @@ This puts **your** app - your icon and name - in the App Store and Google Play u
 - An **Apple Developer** account ($99/year) for the App Store
 - A **Google Play** account ($25 one time) for the Play Store
 
-**Then build and submit** (full walkthrough in the app repo):
+**Then build and submit:**
 
 ```bash
 npm i -g eas-cli
@@ -57,9 +60,13 @@ eas submit
 
 The app is built with Expo, but EAS (Expo's paid cloud build service) is optional. You can build for free with `eas build --local` on your own Mac, or run `npx expo prebuild` and build the native projects in Xcode and Android Studio, or use Fastlane / Codemagic / GitHub Actions. A Mac with Xcode is required for iOS, and the Apple and Google accounts are required to publish (Apple's rules, not Expo's).
 
-## Full guides
+## Getting help
 
-The app is open source (GPL): **[github.com/vapvarun/jetonomy-app](https://github.com/vapvarun/jetonomy-app)**. Detailed, non-technical step-by-step guides - branding, signing in, trying the app, building, and troubleshooting - live in the **[wiki](https://github.com/vapvarun/jetonomy-app/wiki)**.
+Branding and member sign-in are covered here in these docs - see
+[Brand Your App](01-brand-your-app.md) and
+[Connect Members](02-connect-members.md). For anything specific to building and
+submitting your app, contact Wbcom; the same request that gets you the source
+gets you the build walkthrough for your setup.
 
 ## Next steps
 

@@ -209,7 +209,7 @@ This is what I ended up switching to. Full disclosure: Wbcom Designs is the Word
 - **Q&A spaces with accepted answers.** I moved my support section to a Q&A space. Members mark the reply that solved their problem. That reply pins to the top with a green "Accepted Answer" badge and the replier earns reputation. Repeat questions dropped because the canonical answer is visible.
 - **Ideas spaces with a roadmap.** I moved feature requests to an Ideas space. Members vote, and admins move ideas through Open → Planned → In Progress → Done. Replaces the spreadsheet I used to keep.
 - **Six trust levels.** New members start rate-limited (3 posts per day, no links). As they contribute, they earn abilities. This replaced the homegrown "ignore new accounts until they've been around a week" rule I'd been enforcing manually.
-- **48+ REST API endpoints in the free plugin** (90+ with Pro). When I wanted to build a custom dashboard showing community stats, I queried the API instead of writing raw SQL.
+- **80 REST API endpoints in the free plugin** (155 with Pro). When I wanted to build a custom dashboard showing community stats, I queried the API instead of writing raw SQL.
 - **WordPress Abilities API support** (19 abilities). If you're building AI agents on top of WordPress 6.9+, Jetonomy's community operations are discoverable through the standard Abilities registry.
 - **A built-in bbPress importer with dry-run mode.** The migration took about 40 minutes for 15,000 posts. Zero data loss. The importer ran as a batched background job I could resume if anything failed.
 - **AI-powered moderation in Pro (as of v1.3.0)** with support for self-hosted Ollama. This matters if you're in a regulated industry where you can't send member content to a third-party AI API.

@@ -25,7 +25,7 @@
 - **First-person, lived-in.** "I've been running communities since 2018. Here's what actually happened..."
 - **Honest criticism.** Each plugin gets real pain points, not fake problems. bbPress is praised for stability and attacked for architecture. Jetonomy is pitched but also has stated weaknesses ("it's new, smaller tutorial ecosystem").
 - **Earned recommendation.** Jetonomy wins by having the right architectural answers, not by being described as "revolutionary."
-- **Specific numbers over vague claims.** 24 custom tables (not "many"), 48+ REST endpoints (not "full API"), 40-minute 15,000-post migration (not "fast migration").
+- **Specific numbers over vague claims.** 22 custom tables (not "many"), 80 REST endpoints (not "full API"), 40-minute 15,000-post migration (not "fast migration").
 - **Banned words:** revolutionary, game-changing, seamless, leverage, synergy, cutting-edge. Use: fast, clean, automatic, built-in, scales, adapts.
 
 ---

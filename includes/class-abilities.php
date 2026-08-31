@@ -165,7 +165,18 @@ class Abilities {
 				],
 				'execute_callback'    => [ $this, 'execute_create_post' ],
 				'permission_callback' => function ( $input ) {
-					return $this->check_auth_and_permission( 'create_posts', (int) $input['space_id'] );
+					$space_id = (int) $input['space_id'];
+
+					// REST_Posts_Controller::create_item() refuses archived and
+					// locked spaces; Permission_Engine::can() does not look at
+					// space status, so this path could start a topic in an
+					// archived space (same audit as create-reply above).
+					$open = \Jetonomy\Permissions\Content_Gate::space_accepts_content( $space_id );
+					if ( is_wp_error( $open ) ) {
+						return $open;
+					}
+
+					return $this->check_auth_and_permission( 'create_posts', $space_id );
 				},
 				'meta'                => [
 					'annotations'  => [
@@ -341,10 +352,20 @@ class Abilities {
 					if ( ! $post ) {
 						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
 					}
-					if ( ! empty( $post->is_closed ) ) {
-						return new WP_Error( 'closed', __( 'Post is closed.', 'jetonomy' ) );
-					}
-					return $this->check_auth_and_permission( 'create_replies', (int) $post->space_id );
+
+					/*
+					 * The same gate REST and the inbound-email writer use.
+					 *
+					 * This callback had its own copy of the rules and the copy
+					 * was short one: it checked is_closed but not whether the
+					 * SPACE was archived or locked, so this ability could reply
+					 * into an archived space that REST refuses with
+					 * jetonomy_space_restricted. Reproduced during the
+					 * follow-up audit on Basecamp 10228771444 - REST returned
+					 * 403 and the ability created reply #2411 in the same
+					 * space, for the same member.
+					 */
+					return \Jetonomy\Permissions\Content_Gate::check( get_current_user_id(), $post );
 				},
 				'meta'                => [
 					'annotations'  => [
@@ -920,7 +941,25 @@ class Abilities {
 					],
 				],
 				'execute_callback'    => [ $this, 'execute_get_activity' ],
-				'permission_callback' => '__return_true',
+
+				/*
+				 * jt_activity_log is an audit trail - it records moderation
+				 * actions, bans, trust changes and reputation movement across
+				 * every user. wp-admin puts it behind jetonomy_manage_settings
+				 * (Admin::add_menu, the Activity Log submenu). This ability had
+				 * '__return_true' and its handler applies no filtering of its
+				 * own, so the agent surface was the LEAST protected of the
+				 * three for the most sensitive read in the plugin.
+				 *
+				 * Reproduced before the fix: a subscriber for whom
+				 * current_user_can('jetonomy_manage_settings') is false received
+				 * five rows including other members' reputation changes.
+				 * Matched to wp-admin rather than invented - one capability, one
+				 * answer, whichever surface asks.
+				 */
+				'permission_callback' => function () {
+					return current_user_can( 'jetonomy_manage_settings' );
+				},
 				'meta'                => [
 					'annotations'  => [
 						'readonly'    => true,
@@ -1171,12 +1210,22 @@ class Abilities {
 		$space_id = (int) $input['space_id'];
 		$title    = sanitize_text_field( $input['title'] );
 		$content  = wp_kses_post( $input['content'] );
-		$type     = sanitize_text_field( $input['type'] ?? '' );
 
-		if ( empty( $type ) ) {
-			$space = Space::find( $space_id );
-			$type  = ( $space && 'qa' === ( $space->type ?? '' ) ) ? 'question' : 'topic';
-		}
+		/*
+		 * Leave type empty when the caller did not set one and let
+		 * Post::create() derive it from the space.
+		 *
+		 * This used to carry its own two-branch map - qa => question, and
+		 * everything else => topic - which is a partial copy of
+		 * \Jetonomy\compose_post_type(). It therefore got `feed` and `ideas`
+		 * spaces wrong, writing `topic` for both, while the REST path wrote the
+		 * correct `status` and `idea`. An agent creating a post produced
+		 * different data than a person creating the same post, and a Q&A-adjacent
+		 * space lost the structured-data type Schema_Markup keys off.
+		 *
+		 * One map, in one place. Do not re-add a local branch here.
+		 */
+		$type = sanitize_text_field( $input['type'] ?? '' );
 
 		$slug       = sanitize_title( $title );
 		$is_private = ! empty( $input['is_private'] ) ? 1 : 0;
@@ -1388,8 +1437,14 @@ class Abilities {
 		// materialize every row. The payload shape stays a flat array (a
 		// conditional wrapper would break consumers exactly when a big site
 		// first hits the cap); 200 covers any realistic community.
-		$cap    = 200;
-		$spaces = $category_id ? Space::list_by_category( $category_id ) : Space::list_all( 'active', $cap );
+		$cap = 200;
+		// Both branches must respect the cap. Until 1.9.4 only list_all() got it,
+		// so passing a category_id took the unbounded path - defeating the cap
+		// in exactly the case the comment above describes, since an agent
+		// filtering by category is the normal call, not the exotic one.
+		$spaces = $category_id
+			? Space::list_by_category( $category_id, null, $cap )
+			: Space::list_all( 'active', $cap );
 		$items  = [];
 
 		foreach ( $spaces as $s ) {
@@ -1413,7 +1468,7 @@ class Abilities {
 	public function execute_get_space( $input ) {
 		$space = Space::find( (int) $input['space_id'] );
 		if ( ! $space ) {
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 		return [
@@ -1433,7 +1488,7 @@ class Abilities {
 		$space    = Space::find( $space_id );
 
 		if ( ! $space ) {
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
@@ -1441,13 +1496,23 @@ class Abilities {
 			return [ 'status' => 'joined' ];
 		}
 
-		if ( 'private' === ( $space->visibility ?? 'public' ) ) {
-			Models\JoinRequest::create( $space_id, $user_id );
-			return [ 'status' => 'pending_approval' ];
+		/*
+		 * Delegate to the one join authority rather than re-deciding here.
+		 *
+		 * This branch used to test only `visibility === 'private'` and call
+		 * SpaceMember::add() for everything else, which let a subscriber join a
+		 * HIDDEN or INVITE-ONLY space and read every post in it, while REST
+		 * refused the identical request (Basecamp 10227908583). It also called
+		 * Models\JoinRequest::create(), which does not exist - the model method
+		 * is create_request() - so the one case it did try to gate fataled
+		 * instead of gating.
+		 */
+		$result = SpaceMember::join( $space_id, $user_id );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 
-		SpaceMember::add( $space_id, $user_id, 'member' );
-		return [ 'status' => 'joined' ];
+		return [ 'status' => 'pending' === $result['status'] ? 'pending_approval' : 'joined' ];
 	}
 
 	public function execute_list_space_members( $input ) {
@@ -1461,7 +1526,7 @@ class Abilities {
 			$profile = UserProfile::find_by_user( (int) $m->user_id );
 			$items[] = [
 				'user_id'      => (int) $m->user_id,
-				'display_name' => $user ? $user->display_name : __( 'Unknown', 'jetonomy' ),
+				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : __( 'Unknown', 'jetonomy' ),
 				'role'         => $m->role ?? 'member',
 				'trust_level'  => $profile ? (int) $profile->trust_level : 0,
 				'reputation'   => $profile ? (int) $profile->reputation : 0,
@@ -1515,7 +1580,7 @@ class Abilities {
 		$profile = UserProfile::find_by_user( $user_id );
 		return [
 			'user_id'      => $user_id,
-			'display_name' => $user->display_name,
+			'display_name' => \Jetonomy\user_display_name( $user ),
 			'bio'          => $profile->bio ?? '',
 			'trust_level'  => $profile ? (int) $profile->trust_level : 0,
 			'reputation'   => $profile ? (int) $profile->reputation : 0,

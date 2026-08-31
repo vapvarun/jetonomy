@@ -96,19 +96,20 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 					array(
 						'icon'      => 'bell',
 						'icon_size' => 48,
-						'message'   => __( 'You are not following anything yet. Follow a topic or a space and it will show up here.', 'jetonomy' ),
+						/* translators: %s: singular topic label. */
+						'message'   => sprintf( __( 'You are not following anything yet. Follow a %s or a space and it will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					)
 				);
 				?>
 			<?php else : ?>
 				<?php if ( ! empty( $jt_spaces_subs ) ) : ?>
-					<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+					<?php /* translators: %s: the plural label of the item (the configured noun). */ ?>
 					<h2 class="jt-subs-heading"><?php echo esc_html( sprintf( __( '%s you follow', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>
 					<?php $jt_render_group( $jt_spaces_subs, 'space', $jt_base, $jt_via_labels ); ?>
 				<?php endif; ?>
 
 				<?php if ( ! empty( $jt_topic_subs ) ) : ?>
-					<h2 class="jt-subs-heading"><?php esc_html_e( 'Topics you follow', 'jetonomy' ); ?></h2>
+					<h2 class="jt-subs-heading"><?php echo esc_html( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( '%s you follow', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></h2>
 					<?php $jt_render_group( $jt_topic_subs, 'post', $jt_base, $jt_via_labels ); ?>
 				<?php endif; ?>
 

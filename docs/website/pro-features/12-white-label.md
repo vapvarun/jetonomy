@@ -1,6 +1,6 @@
 Remove all Jetonomy branding and present your community as entirely your own product.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ## What You Will Learn
 

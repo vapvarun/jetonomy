@@ -19,6 +19,7 @@ use Jetonomy\Models\JoinRequest;
 use Jetonomy\Models\InviteLink;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Models\Category;
+use Jetonomy\Models\AccessRule;
 
 class Spaces_Controller extends Base_Controller {
 
@@ -260,6 +261,145 @@ class Spaces_Controller extends Base_Controller {
 					],
 				],
 			]
+		);
+
+		/*
+		 * Access rules. jt_access_rules is the table that decides who may enter a
+		 * space, and until 1.9.4 it had ZERO REST coverage - configurable only
+		 * from wp-admin, so no API-driven or app-based space-admin flow could
+		 * touch it. Capability matches the AJAX handler (jetonomy_manage_spaces).
+		 */
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/access-rules',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'list_access_rules' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_access_rule' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+					'args'                => [
+						'rule_type'  => [
+							'type'     => 'string',
+							'required' => true,
+							'enum'     => [ 'membership', 'role', 'capability', 'trust_level', 'logged_in', 'everyone' ],
+						],
+						'rule_value' => [ 'type' => 'string' ],
+						'grants'     => [
+							'type'    => 'string',
+							'default' => 'read',
+							'enum'    => [ 'read', 'participate', 'full' ],
+						],
+						'space_role' => [
+							'type'    => 'string',
+							'default' => 'viewer',
+							'enum'    => [ 'viewer', 'member', 'moderator', 'admin' ],
+						],
+						'priority'   => [
+							'type'    => 'integer',
+							'default' => 0,
+						],
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			$ns,
+			'/access-rules/(?P<rule_id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => [ $this, 'delete_access_rule' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
+			]
+		);
+	}
+
+	/**
+	 * GET /spaces/{id}/access-rules
+	 */
+	public function list_access_rules( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$space_id = (int) $request->get_param( 'id' );
+		if ( ! Space::find( $space_id ) ) {
+			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), [ 'status' => 404 ] );
+		}
+
+		return new WP_REST_Response( [ 'data' => AccessRule::list_for_space( $space_id ) ], 200 );
+	}
+
+	/**
+	 * POST /spaces/{id}/access-rules
+	 *
+	 * Shares AccessRule::enforce_gate_on_public_space() with the wp-admin AJAX
+	 * path. A restrictive rule on a PUBLIC space silently does nothing, because
+	 * public spaces are always readable - so the space is switched to Private and
+	 * the response says so. Without that shared call this route would have
+	 * recreated the "configured but content still accessible" bug
+	 * (Basecamp 10000074550) on a second surface.
+	 */
+	public function create_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$space_id = (int) $request->get_param( 'id' );
+		if ( ! Space::find( $space_id ) ) {
+			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), [ 'status' => 404 ] );
+		}
+
+		$rule_type  = (string) $request->get_param( 'rule_type' );
+		$rule_value = sanitize_text_field( (string) $request->get_param( 'rule_value' ) );
+
+		$id = AccessRule::create(
+			[
+				'space_id'   => $space_id,
+				'rule_type'  => $rule_type,
+				'rule_value' => '' !== $rule_value ? $rule_value : null,
+				'grants'     => (string) $request->get_param( 'grants' ),
+				'space_role' => (string) $request->get_param( 'space_role' ),
+				'priority'   => (int) $request->get_param( 'priority' ),
+			]
+		);
+
+		if ( ! $id ) {
+			return new WP_Error( 'jetonomy_rule_create_failed', __( 'Failed to create access rule.', 'jetonomy' ), [ 'status' => 500 ] );
+		}
+
+		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
+
+		return new WP_REST_Response(
+			[
+				'data'         => AccessRule::find( (int) $id ),
+				'made_private' => $made_private,
+				'message'      => $made_private
+					? __( 'Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space.', 'jetonomy' )
+					: __( 'Access rule added.', 'jetonomy' ),
+			],
+			201
+		);
+	}
+
+	/**
+	 * DELETE /access-rules/{rule_id}
+	 */
+	public function delete_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$rule_id = (int) $request->get_param( 'rule_id' );
+
+		if ( ! AccessRule::find( $rule_id ) ) {
+			return new WP_Error( 'jetonomy_rule_not_found', __( 'Access rule not found.', 'jetonomy' ), [ 'status' => 404 ] );
+		}
+
+		$deleted = AccessRule::delete( $rule_id );
+		if ( is_wp_error( $deleted ) || ! $deleted ) {
+			return new WP_Error( 'jetonomy_rule_delete_failed', __( 'Failed to delete access rule.', 'jetonomy' ), [ 'status' => 500 ] );
+		}
+
+		return new WP_REST_Response(
+			[
+				'deleted' => true,
+				'id'      => $rule_id,
+			],
+			200
 		);
 	}
 
@@ -822,72 +962,41 @@ class Spaces_Controller extends Base_Controller {
 	 * - invite:   not allowed — returns 403.
 	 */
 	public function join_space( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
+		$id      = absint( $request->get_param( 'id' ) );
+		$message = sanitize_textarea_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
 
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		/*
+		 * The policy itself lives in SpaceMember::join(). This method only maps
+		 * that decision onto HTTP.
+		 *
+		 * It used to own the rules outright, which is how the WP Abilities
+		 * join-space path came to disagree with it - same request, one refused
+		 * and one admitted (Basecamp 10227908583). Two copies of a rule is one
+		 * copy too many; the facade is now the single answer for every caller.
+		 */
+		$result = SpaceMember::join( $id, get_current_user_id(), $message );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 
-		$user_id = get_current_user_id();
-
-		if ( SpaceMember::is_member( $id, $user_id ) ) {
-			return new WP_Error(
-				'jetonomy_already_member',
-				__( 'You are already a member of this space.', 'jetonomy' ),
-				[ 'status' => 409 ]
-			);
-		}
-
-		$join_policy = $space->join_policy ?? 'open';
-
-		if ( 'invite' === $join_policy ) {
-			return new WP_Error(
-				'jetonomy_invite_only',
-				__( 'This space is invite-only.', 'jetonomy' ),
-				[ 'status' => 403 ]
-			);
-		}
-
-		if ( 'approval' === $join_policy ) {
-			// Check for an existing pending request to avoid duplicates.
-			$existing = JoinRequest::find_pending( $id, $user_id );
-			if ( $existing ) {
-				return new WP_REST_Response(
-					[
-						'status'  => 'pending',
-						'message' => __( 'You already have a pending join request for this space.', 'jetonomy' ),
-					],
-					202
-				);
-			}
-
-			$message = sanitize_textarea_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
-			JoinRequest::create_request( $id, $user_id, $message );
-
-			// Notify space admins about the join request.
-			do_action( 'jetonomy_join_request_created', $id, $user_id, $message );
-
+		if ( 'pending' === $result['status'] ) {
 			return new WP_REST_Response(
 				[
 					'status'  => 'pending',
-					'message' => __( 'Join request submitted. Awaiting approval.', 'jetonomy' ),
+					'message' => empty( $result['already_pending'] )
+						? __( 'Join request submitted. Awaiting approval.', 'jetonomy' )
+						: __( 'You already have a pending join request for this space.', 'jetonomy' ),
 				],
 				202
 			);
-		}
-
-		// open policy: add immediately.
-		$add_result = SpaceMember::add( $id, $user_id, 'member' );
-		if ( is_wp_error( $add_result ) ) {
-			return $add_result;
 		}
 
 		return new WP_REST_Response(
 			[
 				'status'   => 'joined',
 				'space_id' => $id,
-				'user_id'  => $user_id,
+				'user_id'  => get_current_user_id(),
 				'role'     => 'member',
 			],
 			201

@@ -1,6 +1,6 @@
 Understand what your community is doing, where it is growing, and who is driving it - all from a single admin dashboard.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Analytics dashboard showing charts and top contributor table](../images/pro-analytics.png)
 ## What You Will Learn

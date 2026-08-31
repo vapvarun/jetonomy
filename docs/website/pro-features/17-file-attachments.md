@@ -1,6 +1,6 @@
 Let members attach images, PDFs, and documents to topics and replies, with server-rendered preview cards and a lazy-loaded inline PDF viewer.
 
-> **PRO** - Attaching new files (the composer), the lightbox, the inline PDF viewer, and file type/size limits require [Jetonomy Pro](https://jetonomy.com/pro/). As of 1.8.0, viewing attachments that already exist on a post does not - the free Jetonomy plugin displays them on its own, and keeps displaying them even if Pro is later deactivated.
+> **PRO** - Attaching new files (the composer), the lightbox, the inline PDF viewer, and file type/size limits require [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/). As of 1.8.0, viewing attachments that already exist on a post does not - the free Jetonomy plugin displays them on its own, and keeps displaying them even if Pro is later deactivated.
 
 ## What You Will Learn
 

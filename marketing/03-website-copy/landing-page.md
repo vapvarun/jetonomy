@@ -67,7 +67,7 @@ The importer auto-detects your existing installation, shows you a dry-run summar
 
 Every community page gets Schema.org structured data (DiscussionForumPosting, QAPage with acceptedAnswer, BreadcrumbList), Open Graph tags, Twitter card tags, and clean human-readable URLs. All pages render server-side. Search engines see complete content, not a loading spinner.
 
-### 48+ REST API endpoints (90+ with Pro)
+### 80 REST API endpoints (155 with Pro)
 
 Everything Jetonomy does is available via REST API under the jetonomy/v1 namespace. Cursor-based pagination on every list endpoint. JSON schema validation on every input. Build custom frontends, mobile apps, or integrations without touching PHP.
 
@@ -123,7 +123,7 @@ Top answers surface automatically in Q&A spaces. Flagged content goes to a moder
 | Email notifications | Yes | Yes |
 | bbPress and wpForo importer | Yes | Yes |
 | Schema.org and SEO markup | Yes | Yes |
-| 48+ REST API endpoints (90+ with Pro) | Yes | Yes |
+| 80 REST API endpoints (155 with Pro) | Yes | Yes |
 | Template overrides | Yes | Yes |
 | WordPress Abilities API (20 abilities) | Yes | Yes |
 | Multisite network activation (tables on every subsite) | Yes | Yes |

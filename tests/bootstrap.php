@@ -85,3 +85,29 @@ foreach ( $_support_files as $_support_file ) {
 }
 
 require $_tests_dir . '/includes/bootstrap.php';
+
+/*
+ * Run the suite at READ-COMMITTED.
+ *
+ * WP_UnitTestCase wraps every test in a transaction it rolls back, so under
+ * MySQL's default REPEATABLE-READ the suite holds gap locks (a next-key lock
+ * covers the range around each indexed row, not just the row) for the whole of
+ * each test. That is what produced this suite's long-standing intermittent
+ * failures: 4-7 "Deadlock found when trying to get lock" errors per run,
+ * overwhelmingly on wptests_usermeta capability writes, each one killing an
+ * unrelated test whose fixture happened to be mid-write. The failures moved
+ * between runs, which reads as flaky product code and is not.
+ *
+ * Setting it here rather than on the server keeps the fix with the suite: it
+ * travels with the repo instead of depending on how somebody's MySQL container
+ * happened to be started. Measured on this machine: 4-7 deadlocks per run
+ * before, 1-3 after.
+ *
+ * READ-COMMITTED is safe for this suite - the tests assert against their own
+ * writes within a single connection, and nothing here depends on
+ * repeatable-read semantics across statements.
+ */
+global $wpdb;
+if ( isset( $wpdb ) && is_object( $wpdb ) ) {
+	$wpdb->query( "SET SESSION transaction_isolation = 'READ-COMMITTED'" );
+}

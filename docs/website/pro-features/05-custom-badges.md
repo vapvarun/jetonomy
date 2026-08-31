@@ -1,6 +1,6 @@
 Design your own badges, set the conditions that earn them, and watch members compete to collect them.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Badges displayed on a member profile page](../images/pro-badges.png)
 ## What You Will Learn

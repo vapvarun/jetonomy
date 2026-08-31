@@ -187,11 +187,11 @@ $bn_active = did_action( 'buddynext_loaded' );
 			<div class="jt-sidebar-stats">
 				<div class="jt-sidebar-stat">
 					<strong><?php echo (int) ( $space->post_count ?? 0 ); ?></strong>
-					<span><?php esc_html_e( 'Posts', 'jetonomy' ); ?></span>
+					<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></span>
 				</div>
 				<div class="jt-sidebar-stat">
 					<strong><?php echo (int) ( $space->member_count ?? 0 ); ?></strong>
-					<span><?php esc_html_e( 'Members', 'jetonomy' ); ?></span>
+					<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></span>
 				</div>
 			</div>
 			<?php
@@ -221,7 +221,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 			<?php if ( is_user_logged_in() ) : ?>
 				<div class="jt-sidebar-links">
 					<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/members/' ); ?>" class="jt-sidebar-link-text">
-						<?php esc_html_e( 'View all members', 'jetonomy' ); ?>
+						<?php printf( /* translators: %s: plural member label. */ esc_html__( 'View all %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 					</a>
 					<?php if ( \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( get_current_user_id(), (int) $space->id ) ) : ?>
 						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/mod/' ); ?>" class="jt-sidebar-link-text jt-sidebar-link-mod">
@@ -237,7 +237,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 						?>
 						<a href="<?php echo esc_url( \Jetonomy\get_space_edit_url( $space ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-edit">
 							<?php jetonomy_echo_icon( 'edit', 14 ); ?>
-							<?php /* translators: %s: what is being edited - the configured space label, or a specific space title. */ ?>
+							<?php /* translators: %s: the label of the item being edited (the configured noun). */ ?>
 							<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 						</a>
 					<?php endif; ?>
@@ -337,9 +337,10 @@ $bn_active = did_action( 'buddynext_loaded' );
 								)
 								. ' · '
 								. sprintf(
-									/* translators: %d: number of replies. */
-									_n( '%d reply', '%d replies', $r, 'jetonomy' ),
-									$r
+									/* translators: 1: the count; 2: the label of the item (the configured noun). */
+									__( '%1$d %2$s', 'jetonomy' ),
+									$r,
+									\Jetonomy\jetonomy_label( 'reply', 1 !== (int) $r, true )
 								)
 							);
 							?>
@@ -375,9 +376,9 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
-				<h4><?php esc_html_e( 'Top Members', 'jetonomy' ); ?></h4>
+				<h4><?php printf( /* translators: %s: plural member label. */ esc_html__( 'Top %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></h4>
 			<?php else : ?>
-				<?php esc_html_e( 'Top Members', 'jetonomy' ); ?>
+				<?php printf( /* translators: %s: plural member label. */ esc_html__( 'Top %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
 			<?php endif; ?>
 		</div>
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">

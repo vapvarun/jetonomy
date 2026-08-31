@@ -213,7 +213,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Pro pricing | See wbcomdesigns.com | Add-ons sold separately | Paid plans available |
 | Lifetime license available | Yes (Pro) | N/A | No |
 
-**Honest note:** bbPress itself is free and the add-on ecosystem is broad, but individual add-ons from third parties cost money and add maintenance overhead. wpForo's paid plans bundle add-ons at a set price. Jetonomy Pro bundles all 15 modules (including AI integration and site-wide announcements) in a single license.
+**Honest note:** bbPress itself is free and the add-on ecosystem is broad, but individual add-ons from third parties cost money and add maintenance overhead. wpForo's paid plans bundle add-ons at a set price. Jetonomy Pro bundles all 17 modules (including AI integration and site-wide announcements) in a single license.
 
 ---
 

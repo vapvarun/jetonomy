@@ -91,7 +91,7 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 			'question' => __( 'What is your question?', 'jetonomy' ),
 			'idea'     => __( 'Describe your idea', 'jetonomy' ),
 		);
-		$_title_placeholder  = $_title_placeholders[ $_post_type ] ?? __( 'Topic title', 'jetonomy' );
+		$_title_placeholder  = $_title_placeholders[ $_post_type ] ?? sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s title', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 		?>
 		<input type="text" id="jt-post-title" name="title" class="jt-input jt-compose-topic-title"
 			placeholder="<?php echo esc_attr( $_title_placeholder ); ?>"
@@ -100,7 +100,7 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 		<?php if ( $_submit_label ) : ?>
 			<div id="jt-similar-topics" class="jt-similar" hidden>
 				<div class="jt-similar-head">
-					<span class="jt-similar-label"><?php esc_html_e( 'Similar topics', 'jetonomy' ); ?></span>
+					<span class="jt-similar-label"><?php printf( /* translators: %s: plural topic label. */ esc_html__( 'Similar %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></span>
 					<label class="jt-similar-toggle">
 						<input type="checkbox" id="jt-similar-all-spaces">
 						<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
@@ -186,7 +186,7 @@ do_action( $_fields_hook, $space );
 		<label class="jt-checkbox-label">
 			<input type="checkbox" name="is_private" value="1" id="jt-post-private">
 			<?php jetonomy_echo_icon( 'lock', 14 ); ?>
-			<?php esc_html_e( 'Private: only you and moderators can see this topic', 'jetonomy' ); ?>
+			<?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Private: only you and moderators can see this %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 		</label>
 	</div>
 <?php endif; ?>

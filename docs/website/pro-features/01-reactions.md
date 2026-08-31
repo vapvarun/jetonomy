@@ -1,6 +1,6 @@
 Add expressive emoji reactions to every post and reply - so members can respond instantly without writing a full reply.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Reaction chips below a community post](../images/pro-reactions.png)
 ## What You Will Learn

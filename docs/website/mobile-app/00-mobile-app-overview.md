@@ -15,7 +15,7 @@ Jetonomy communities have a native **iOS and Android app**. Your members get a r
 ## What you will learn
 
 - What the mobile app is and how it connects to your site
-- The two ways to ship it: the open-source app or your own branded app
+- What it takes to ship your own branded app
 - Where to set your branding and how members sign in
 
 ## How it works
@@ -51,6 +51,4 @@ Both use the same codebase. You set the in-app branding (logo, color, name) the 
 
 - [Brand Your App](01-brand-your-app.md) - set your logo, color, and community name
 - [Connect Members](02-connect-members.md) - how admins and members sign in
-- [Get the App](03-get-the-app.md) - use the open-source app or publish your own
-
-The app is open source (GPL): [github.com/vapvarun/jetonomy-app](https://github.com/vapvarun/jetonomy-app). Full step-by-step guides live in its [wiki](https://github.com/vapvarun/jetonomy-app/wiki).
+- [Get the App](03-get-the-app.md) - how to get a branded app of your own

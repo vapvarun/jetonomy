@@ -9,8 +9,6 @@ namespace Jetonomy\Adapters;
 
 defined( 'ABSPATH' ) || exit;
 
-use Jetonomy\Models\AccessRule;
-use Jetonomy\Models\SpaceMember;
 
 class MemberPress_Adapter implements Membership_Adapter {
 
@@ -119,8 +117,6 @@ class MemberPress_Adapter implements Membership_Adapter {
 		$user_id  = (int) $txn->user_id;
 		$level_id = 'mepr_' . $txn->product_id;
 
-		$this->sync_user_spaces( $user_id, $level_id, true );
-
 		do_action( 'jetonomy_membership_activated', $user_id, $level_id, 'memberpress' );
 	}
 
@@ -140,7 +136,6 @@ class MemberPress_Adapter implements Membership_Adapter {
 		$active    = $mepr_user->active_product_subscriptions( 'ids' );
 
 		if ( ! in_array( $txn->product_id, $active, true ) ) {
-			$this->sync_user_spaces( $user_id, $level_id, false );
 			do_action( 'jetonomy_membership_deactivated', $user_id, $level_id, 'memberpress' );
 		}
 	}
@@ -150,34 +145,6 @@ class MemberPress_Adapter implements Membership_Adapter {
 			$txn = $subscription->latest_txn();
 			if ( $txn ) {
 				$this->on_membership_deactivated( $txn );
-			}
-		}
-	}
-
-	/**
-	 * Sync user's space memberships based on access rules.
-	 */
-	private function sync_user_spaces( int $user_id, string $level_id, bool $activate ): void {
-		global $wpdb;
-
-		$table = \Jetonomy\table( 'access_rules' );
-		$rules = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE rule_type = 'membership' AND rule_value = %s",
-				$level_id
-			)
-		);
-
-		foreach ( $rules as $rule ) {
-			if ( $activate ) {
-				$result = SpaceMember::add( (int) $rule->space_id, $user_id, AccessRule::cap_space_role( $rule->grants ?? 'read', $rule->space_role ?? 'member', 'membership' ) );
-				if ( is_wp_error( $result ) ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( '[Jetonomy] MemberPress adapter: failed to add user ' . $user_id . ' to space ' . $rule->space_id . ' — ' . $result->get_error_message() );
-					continue;
-				}
-			} else {
-				SpaceMember::remove( (int) $rule->space_id, $user_id );
 			}
 		}
 	}

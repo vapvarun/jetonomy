@@ -6,90 +6,21 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-$categories           = \Jetonomy\Models\Category::list_top_level();
-$uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized();
+$categories = \Jetonomy\Models\Category::list_top_level();
+
+/*
+ * Bound the uncategorized grid. It rendered every uncategorized space with no
+ * LIMIT, which on a site that never used categories is the entire directory on
+ * one page.
+ */
+$jt_per_page = (int) apply_filters( 'jetonomy_spaces_per_page', 24 );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
+$jt_uncat_page        = max( 1, (int) ( $_GET['spg'] ?? 1 ) );
+$jt_uncat_total       = \Jetonomy\Models\Space::count_uncategorized();
+$uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized( null, $jt_per_page, ( $jt_uncat_page - 1 ) * $jt_per_page );
+$jt_uncat_has_more    = ( $jt_uncat_page * $jt_per_page ) < $jt_uncat_total;
 $base                 = \Jetonomy\base_url();
 
-/**
- * Render a grid of space cards.
- *
- * @param object[] $spaces
- * @param string   $base Community base URL.
- */
-function jetonomy_render_space_grid( array $spaces, string $base ): void {
-	if ( empty( $spaces ) ) {
-		/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
-		echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</p>';
-		return;
-	}
-	echo '<div class="jt-space-grid">';
-	foreach ( $spaces as $space ) {
-		?>
-		<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
-			class="jt-card jt-space-card jt-no-underline jt-block">
-			<div class="jt-space-card-inner">
-				<?php
-				// Always route through the icon helper so a stored "message-circle"
-				// renders as the Lucide SVG (not as the literal text). The helper
-				// also defends against legacy emoji values and dashicon prefixes.
-				jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' );
-				?>
-				<div class="jt-space-card-body">
-					<div class="jt-space-card-title">
-						<?php echo esc_html( $space->title ); ?>
-					</div>
-					<div class="jt-space-card-badges">
-						<?php jetonomy_render_space_meta_badges( $space ); ?>
-						<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
-							<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-							<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php echo esc_attr( sprintf( __( 'Hidden %s. Only admins and members can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>">
-								<?php jetonomy_echo_icon( 'lock', 12 ); ?>
-								<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
-							</span>
-						<?php endif; ?>
-					</div>
-					<?php if ( ! empty( $space->description ) ) : ?>
-						<div class="jt-space-card-excerpt">
-							<?php echo esc_html( $space->description ); ?>
-						</div>
-					<?php endif; ?>
-					<div class="jt-space-card-stats">
-						<span class="jt-space-card-stat">
-							<strong><?php echo (int) $space->post_count; ?></strong>
-							<?php echo esc_html( _n( 'post', 'posts', (int) $space->post_count, 'jetonomy' ) ); ?>
-						</span>
-						<span class="jt-space-card-stat">
-							<strong><?php echo (int) $space->member_count; ?></strong>
-							<?php echo esc_html( _n( 'member', 'members', (int) $space->member_count, 'jetonomy' ) ); ?>
-						</span>
-						<?php
-						// Recency tells a newcomer the space is alive — totals alone
-						// can't distinguish a dormant space from a thriving one.
-						$jt_activity = jetonomy_space_activity_label( $space );
-						if ( '' !== $jt_activity ) :
-							?>
-							<span class="jt-space-card-stat jt-space-card-activity"><?php echo esc_html( $jt_activity ); ?></span>
-						<?php endif; ?>
-					</div>
-				</div>
-			</div>
-		</a>
-		<?php
-		/**
-		 * Fires after each space card in the community home grid.
-		 *
-		 * Append a custom badge, button, or note after a space card. Fires
-		 * OUTSIDE the card's <a> wrapper so interactive markup (buttons,
-		 * forms) is valid. The same hook fires from the category view.
-		 *
-		 * @since 1.5.0
-		 *
-		 * @param object $space The space being rendered.
-		 */
-		do_action( 'jetonomy_space_card_after', $space );
-	}
-	echo '</div>';
-}
 ?>
 <?php
 $settings        = get_option( 'jetonomy_settings', array() );
@@ -122,8 +53,8 @@ if ( ! is_user_logged_in() ) :
 			<h2 class="jt-home-welcome-title"><?php echo esc_html( $jt_welcome_heading ); ?></h2>
 			<p class="jt-home-welcome-sub"><?php echo esc_html( $jt_welcome_sub ); ?></p>
 			<div class="jt-home-welcome-pulse">
-				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['members'] ) ); ?></strong> <?php echo esc_html( _n( 'member', 'members', $jt_pulse['members'], 'jetonomy' ) ); ?></span>
-				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts'] ) ); ?></strong> <?php echo esc_html( _n( 'post', 'posts', $jt_pulse['posts'], 'jetonomy' ) ); ?></span>
+				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['members'] ) ); ?></strong> <?php echo esc_html( \Jetonomy\jetonomy_label( 'member', 1 !== (int) $jt_pulse['members'], true ) ); ?></span>
+				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts'] ) ); ?></strong> <?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $jt_pulse['posts'], true ) ); ?></span>
 				<?php if ( $jt_pulse['posts_week'] > 0 ) : ?>
 					<span class="jt-pulse-stat jt-pulse-stat--live"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts_week'] ) ); ?></strong> <?php esc_html_e( 'this week', 'jetonomy' ); ?></span>
 				<?php endif; ?>
@@ -134,6 +65,41 @@ if ( ! is_user_logged_in() ) :
 			<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( wp_login_url( \Jetonomy\base_url() . '/' ) ); ?>"><?php esc_html_e( 'Log in', 'jetonomy' ); ?></a>
 		</div>
 	</section>
+<?php else : ?>
+	<?php
+	/*
+	 * Members get orientation too, just a much lighter kind.
+	 *
+	 * The logged-out block above exists because the home was a wall of space
+	 * cards with no orientation for a newcomer. Members had the same problem
+	 * for a different reason: posting is the primary member action and there
+	 * is no way to start one from here - 167 links on this page and not one
+	 * of them opens a composer. Nothing said why, so the page read as a dead
+	 * end rather than as a directory.
+	 *
+	 * Deliberately NOT a compose button. A global "New topic" has to answer
+	 * "into which space?", and a picker on the primary landing page is a
+	 * bigger change than the problem warrants (Basecamp 10227705351). Naming
+	 * where posting happens turns the dead end into a signpost, which is the
+	 * whole gap.
+	 */
+	$jt_member_hint = (string) apply_filters(
+		'jetonomy_home_member_hint',
+		sprintf(
+			/* translators: 1: singular space label, 2: plural space label, 3: plural topic label, 4: plural member label. */
+			__( 'Open a %1$s to read or start a discussion - %3$s live inside %2$s, each with its own %4$s and rules.', 'jetonomy' ),
+			\Jetonomy\space_label( false, true ),
+			\Jetonomy\space_label( true, true ),
+			\Jetonomy\jetonomy_label( 'topic', true, true ),
+			\Jetonomy\jetonomy_label( 'member', true, true )
+		)
+	);
+	if ( '' !== $jt_member_hint ) :
+		?>
+		<p class="jt-home-member-hint"><?php echo esc_html( $jt_member_hint ); ?></p>
+		<?php
+	endif;
+	?>
 <?php endif; ?>
 <div class="jt-two-col">
 		<main>
@@ -143,7 +109,7 @@ if ( ! is_user_logged_in() ) :
 					'empty-state',
 					[
 						'icon'    => 'empty-posts',
-						'message' => __( 'No categories yet. Check back soon!', 'jetonomy' ),
+						'message' => sprintf( /* translators: %s: plural category label. */ __( 'No %s yet. Check back soon!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
 					]
 				);
 				?>
@@ -187,6 +153,16 @@ if ( ! is_user_logged_in() ) :
 							<h2 class="jt-cat-name"><?php echo esc_html( sprintf( __( 'Other %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>
 						</div>
 						<?php jetonomy_render_space_grid( $uncategorized_spaces, $base ); ?>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'pagination',
+							array(
+								'has_more'  => $jt_uncat_has_more,
+								'param_key' => 'spg',
+								'target'    => '.jt-space-grid',
+							)
+						);
+						?>
 					</section>
 				<?php endif; ?>
 			<?php endif; ?>

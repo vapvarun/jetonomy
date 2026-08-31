@@ -82,6 +82,35 @@ class Post extends Model {
 			$data['slug'] = sanitize_title( $data['title'] );
 		}
 
+		/*
+		 * Derive type from the holding space when the caller did not set one.
+		 *
+		 * Post type is behavioural, not cosmetic: Schema_Markup emits QAPage
+		 * with acceptedAnswer only for `question`, so a Q&A post left as
+		 * `topic` silently serves DiscussionForumPosting and loses the rich
+		 * result (the same defect Migration_1_9_3 was written to repair).
+		 *
+		 * Until 1.9.4 the mapping lived only in callers - the REST controller,
+		 * the composer template and the three importers each called
+		 * compose_post_type() themselves. Anything else reached insert() with
+		 * no type and took the column default, `topic`. Measured on one feed
+		 * space: REST create produced `status` correctly, while Post::create()
+		 * and the create-post ABILITY - the path an AI agent uses - both
+		 * produced `topic`. That is why 1.9.3's migration did not hold: it
+		 * repaired existing rows while those two paths kept minting new bad
+		 * ones, 28 of them after the migration ran.
+		 *
+		 * Deriving it here makes the model the single source of truth. Callers
+		 * that pass an explicit type still win, so REST, the importers and any
+		 * deliberate override are unaffected.
+		 */
+		if ( empty( $data['type'] ) && ! empty( $data['space_id'] ) ) {
+			$space = Space::find( (int) $data['space_id'] );
+			if ( $space ) {
+				$data['type'] = \Jetonomy\compose_post_type( (string) ( $space->type ?? 'forum' ) );
+			}
+		}
+
 		$id = static::insert( $data );
 
 		if ( $id > 0 ) {
@@ -161,6 +190,62 @@ class Post extends Model {
 	 *   non-publish → publish     : +1 space.post_count, +1 user.post_count
 	 *   everything else           : no-op
 	 */
+	/**
+	 * Single-post read, served from the object cache.
+	 *
+	 * The hottest read in the product: every thread view starts here, and it
+	 * went straight to MySQL on every request while the profile row rendered
+	 * beside it came from Redis.
+	 *
+	 * remember_object(), NOT remember(). A miss caches null, and Redis
+	 * materialises a stored null as an empty string on the way back out -
+	 * remember() would treat that as a hit and hand '' to a caller whose
+	 * signature says ?object, which is a TypeError at the call site rather
+	 * than here. remember_object() coerces every non-object hit back to null
+	 * so the contract holds. The caching gate exercises this deliberately by
+	 * requesting a deleted post twice.
+	 *
+	 * TTL is short by design. Post rows carry counters (reply_count,
+	 * vote_score, last_reply_at) that other paths bump without going through
+	 * update(), so a long TTL would show stale numbers no invalidation hook
+	 * knows to clear.
+	 *
+	 * @param int $id Post ID.
+	 */
+	public static function find( int $id ): ?object {
+		if ( $id <= 0 ) {
+			return null;
+		}
+
+		return Cache::remember_object(
+			self::cache_key( $id ),
+			static fn () => parent::find( $id ),
+			300
+		);
+	}
+
+	/**
+	 * Cache key for one post row.
+	 *
+	 * @param int $id Post ID.
+	 */
+	private static function cache_key( int $id ): string {
+		return 'post:' . $id;
+	}
+
+	/**
+	 * Drop every cached read that this post appears in.
+	 *
+	 * Called from insert/update/delete so a write is visible on the very next
+	 * read rather than at TTL expiry - the difference between "the cache is
+	 * working" and "the site is lying to people".
+	 *
+	 * @param int $id Post ID.
+	 */
+	public static function bust_cache( int $id ): void {
+		Cache::delete( self::cache_key( $id ) );
+	}
+
 	public static function update( int $id, array $data ): bool {
 		$data = self::sanitize_content_fields( $data );
 
@@ -182,6 +267,17 @@ class Post extends Model {
 
 		$result = parent::update( $id, $data );
 		self::reset_slug_memo();
+
+		/*
+		 * AFTER the write, never before.
+		 *
+		 * Busting first looks safer and is not: this method calls self::find()
+		 * a few lines up to read the pre-write status, which RE-CACHES the old
+		 * row after the bust and leaves the stale value sitting there for the
+		 * whole TTL. Same re-prime race UserProfile::update_profile() already
+		 * documents, arrived at the same way.
+		 */
+		self::bust_cache( $id );
 
 		if ( 0 !== $delta && $post ) {
 			if ( ! empty( $post->space_id ) ) {
@@ -246,6 +342,11 @@ class Post extends Model {
 		$post   = self::find( $id );
 		$result = parent::delete( $id );
 		self::reset_slug_memo();
+
+		// After the delete: the self::find() above re-primes the cache with
+		// the row that is about to disappear, so busting any earlier leaves a
+		// deleted post readable for the rest of its TTL.
+		self::bust_cache( $id );
 
 		if ( true === $result && $post && 'publish' === ( $post->status ?? '' ) ) {
 			if ( ! empty( $post->space_id ) ) {
@@ -740,38 +841,79 @@ class Post extends Model {
 	 * both read one implementation instead of duplicating raw SQL. Served by the
 	 * status_created (status, created_at) index.
 	 *
-	 * @param string[] $statuses One or more of publish|pending|draft|spam|trash.
-	 * @param int      $limit    Max rows.
-	 * @param int      $offset   Pagination offset.
+	 * @param string[]   $statuses  One or more of publish|pending|draft|spam|trash.
+	 * @param int        $limit     Max rows.
+	 * @param int        $offset    Pagination offset.
+	 * @param int[]|null $space_ids Limit to these spaces, or null for every space.
 	 * @return object[]
 	 */
-	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0 ): array {
+	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0, ?array $space_ids = null ): array {
 		$statuses = array_values( array_filter( array_map( 'strval', $statuses ) ) );
 		if ( empty( $statuses ) ) {
 			return array();
 		}
+		$scope = static::space_scope_sql( $space_ids );
+		if ( null === $scope ) {
+			return array();
+		}
 		$table        = static::table();
 		$placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
-		$params       = array_merge( $statuses, array( $limit, $offset ) );
+		$params       = array_merge( $statuses, $scope['params'], array( $limit, $offset ) );
 
 		return static::db()->get_results(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
-				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders and $scope['sql'] are lists of %s / %d.
+				"SELECT * FROM {$table} WHERE status IN ({$placeholders}){$scope['sql']} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
 				...$params
 			)
 		) ?: array();
 	}
 
 	/**
+	 * Build the optional space filter shared by the two status queries.
+	 *
+	 * The null-vs-empty distinction is the whole point and is easy to get
+	 * wrong: null means "no filter", while an EMPTY array means "the caller
+	 * has no spaces in scope" and must return nothing. Collapsing the two
+	 * would hand a moderator who moderates no space the entire site's
+	 * pending queue - which is the exact privilege boundary the frontend
+	 * queue relies on.
+	 *
+	 * @param int[]|null $space_ids
+	 * @return array{sql:string,params:array<int,int>}|null Null = match nothing.
+	 */
+	protected static function space_scope_sql( ?array $space_ids ): ?array {
+		if ( null === $space_ids ) {
+			return array(
+				'sql'    => '',
+				'params' => array(),
+			);
+		}
+		$ids = array_values( array_unique( array_filter( array_map( 'absint', $space_ids ) ) ) );
+		if ( empty( $ids ) ) {
+			return null;
+		}
+
+		return array(
+			'sql'    => ' AND space_id IN (' . implode( ', ', array_fill( 0, count( $ids ), '%d' ) ) . ')',
+			'params' => $ids,
+		);
+	}
+
+	/**
 	 * Count posts in the given moderation statuses via COUNT(*) (no row load).
 	 *
-	 * @param string[] $statuses
+	 * @param string[]   $statuses
+	 * @param int[]|null $space_ids Limit to these spaces, or null for every space.
 	 * @return int
 	 */
-	public static function count_by_status( array $statuses ): int {
+	public static function count_by_status( array $statuses, ?array $space_ids = null ): int {
 		$statuses = array_values( array_filter( array_map( 'strval', $statuses ) ) );
 		if ( empty( $statuses ) ) {
+			return 0;
+		}
+		$scope = static::space_scope_sql( $space_ids );
+		if ( null === $scope ) {
 			return 0;
 		}
 		$table        = static::table();
@@ -779,11 +921,45 @@ class Post extends Model {
 
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
-				"SELECT COUNT(*) FROM {$table} WHERE status IN ({$placeholders})",
-				...$statuses
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders and $scope['sql'] are lists of %s / %d.
+				"SELECT COUNT(*) FROM {$table} WHERE status IN ({$placeholders}){$scope['sql']}",
+				...array_merge( $statuses, $scope['params'] )
 			)
 		);
+	}
+
+	/**
+	 * Hydrate post rows for a given set of IDs, in the order asked for.
+	 *
+	 * Mirrors Space::list_by_ids(). Exists so callers that start from
+	 * something OTHER than posts - the moderation queue starts from replies
+	 * and needs each reply's parent for its title and permalink - can batch
+	 * one indexed query instead of a find() per row.
+	 *
+	 * @param int[] $ids
+	 * @return array<int,object> Keyed by post id. Sparse: missing ids are absent.
+	 */
+	public static function list_by_ids( array $ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ), static fn ( int $id ): bool => $id > 0 ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+				'SELECT * FROM ' . static::table() . " WHERE id IN ({$placeholders})",
+				...$ids
+			)
+		) ?: array();
+
+		$by_id = array();
+		foreach ( $rows as $row ) {
+			$by_id[ (int) $row->id ] = $row;
+		}
+
+		return $by_id;
 	}
 
 	/**
@@ -809,6 +985,9 @@ class Post extends Model {
 				$id
 			)
 		);
+
+		// reply_count and last_reply_at both live on the cached row.
+		self::bust_cache( $id );
 	}
 
 	/**
@@ -827,6 +1006,9 @@ class Post extends Model {
 				$id
 			)
 		);
+
+		// flag_count is read straight off the cached row by the moderation UI.
+		self::bust_cache( $id );
 	}
 
 	/**
@@ -841,6 +1023,21 @@ class Post extends Model {
 				$id
 			)
 		);
+
+		/*
+		 * Deliberately does NOT bust the cache.
+		 *
+		 * This fires on every single page view, so busting here would clear the
+		 * post row on every read and Post::find() would never serve a warm hit -
+		 * the cache would exist and do nothing, which is worse than not having
+		 * it, because it looks like coverage.
+		 *
+		 * The cost is that view_count can trail by up to the row's TTL. A view
+		 * counter is approximate by nature - it is already racy under
+		 * concurrency and nobody reconciles it - so a few minutes of lag is
+		 * within what the number already means. Every other column on this row
+		 * has a real invalidation path.
+		 */
 	}
 
 	/**

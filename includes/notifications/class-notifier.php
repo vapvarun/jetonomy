@@ -352,6 +352,28 @@ class Notifier {
 			return;
 		}
 
+		/*
+		 * The gates the REST reply path enforces, which this path had none of.
+		 *
+		 * A valid reply token proves WHO is replying and nothing else. Without
+		 * this a banned member could keep posting for as long as they held any
+		 * notification email, and emailed replies landed on closed posts and
+		 * into archived spaces (Basecamp 10228771444, reproduced with correctly
+		 * signed requests so it was not masked by the signature fix).
+		 *
+		 * Reply::create() has no gate of its own, so this is the last point at
+		 * which anything can say no.
+		 */
+		$post = \Jetonomy\Models\Post::find( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+
+		$allowed = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post );
+		if ( is_wp_error( $allowed ) ) {
+			return;
+		}
+
 		$reply_id = \Jetonomy\Models\Reply::create(
 			[
 				'post_id'       => $post_id,
@@ -1395,8 +1417,10 @@ class Notifier {
 		$logo_url = \Jetonomy\header_logo( $logo_url );
 
 		$type_labels = [
-			'reply_to_post'       => __( 'New Reply', 'jetonomy' ),
-			'reply_to_reply'      => __( 'New Reply', 'jetonomy' ),
+			/* translators: %s: the singular label of the item (the configured noun). */
+			'reply_to_post'       => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+			/* translators: %s: the singular label of the item (the configured noun). */
+			'reply_to_reply'      => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 			'mention'             => __( 'Mention', 'jetonomy' ),
 			'vote_on_post'        => __( 'Vote', 'jetonomy' ),
 			'reaction'            => __( 'Reaction', 'jetonomy' ),

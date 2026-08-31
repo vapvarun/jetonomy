@@ -200,7 +200,7 @@ class Users_Controller extends Base_Controller {
 
 			$items[] = array(
 				'id'           => $uid,
-				'display_name' => $user->display_name,
+				'display_name' => \Jetonomy\user_display_name( $user ),
 				'user_login'   => $user->user_login,
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 64 ),
 				'trust_level'  => $profile ? (int) $profile->trust_level : 0,
@@ -209,6 +209,14 @@ class Users_Controller extends Base_Controller {
 				// (global) case the app badges most prominently.
 				'restriction'  => $rtype,
 				'is_banned'    => 'global_ban' === $rtype,
+				// Server-authoritative ban eligibility: viewer must moderate;
+				// staff and self are never bannable. Stops the app offering Ban
+				// on an admin (Basecamp: ban button shown for administrators).
+				'can_ban'      => get_current_user_id() > 0
+					&& current_user_can( 'jetonomy_moderate' )
+					&& $uid !== get_current_user_id()
+					&& ! user_can( $uid, 'manage_options' )
+					&& ! user_can( $uid, 'jetonomy_moderate' ),
 			);
 		}
 
@@ -310,6 +318,10 @@ class Users_Controller extends Base_Controller {
 				// Kept for third-party consumers that already read it. Not what
 				// the composer inserts.
 				'login'        => $u->user_login,
+				// RAW on purpose: the mention picker renders name and handle as
+				// two separate fields (composer.js jt-mention-name /
+				// jt-mention-login), so applying the "both" mode here would
+				// print the handle twice.
 				'display_name' => $u->display_name,
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $u->ID, 48 ),
 			);
@@ -341,7 +353,7 @@ class Users_Controller extends Base_Controller {
 				[
 					'user_login'          => $wp_user->user_login,
 					'email'               => $wp_user->user_email,
-					'display_name'        => $wp_user->display_name,
+					'display_name'        => \Jetonomy\user_display_name( $wp_user ),
 					'trust_level_name'    => Trust_Levels::name( $trust_level ),
 					'spaces_joined_count' => $spaces_count,
 					'settings'            => UserProfile::get_settings( $user_id ),
@@ -381,7 +393,7 @@ class Users_Controller extends Base_Controller {
 
 		$data = [
 			'id'               => $id,
-			'display_name'     => $wp_user->display_name,
+			'display_name'     => \Jetonomy\user_display_name( $wp_user ),
 			'trust_level'      => $trust_level,
 			'trust_level_name' => Trust_Levels::name( $trust_level ),
 			'reputation'       => (int) ( $profile->reputation ?? 0 ),
@@ -398,6 +410,30 @@ class Users_Controller extends Base_Controller {
 			// Block/Unblock button. blocked_ids() is memoized per-request, so
 			// this is never a fresh query. Always false for guests.
 			'is_blocked'       => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
+
+			/*
+			 * Additive (1.9.4): is this member currently restricted, and how?
+			 *
+			 * The members LIST already carried this ("most-severe active
+			 * restriction", see list_members) so that list could badge banned and
+			 * silenced members. The single-user payload did not, so the profile
+			 * screen had no way to know - and the app drew its Ban control
+			 * identically before and after a ban landed, giving the moderator no
+			 * feedback that their action had taken and inviting them to press it
+			 * again (Basecamp 10217068821).
+			 *
+			 * null when unrestricted. Same server-owned-rule, server-published-flag
+			 * pattern as can_block_author and can_downvote.
+			 */
+			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
+			// Server-authoritative ban eligibility (viewer must moderate; staff
+			// and self are never bannable) so the profile screen hides Ban on an
+			// admin (Basecamp: ban button shown for administrators).
+			'can_ban'          => get_current_user_id() > 0
+				&& current_user_can( 'jetonomy_moderate' )
+				&& $id !== get_current_user_id()
+				&& ! user_can( $id, 'manage_options' )
+				&& ! user_can( $id, 'jetonomy_moderate' ),
 		];
 
 		/**
@@ -429,7 +465,7 @@ class Users_Controller extends Base_Controller {
 
 		$data = [
 			'id'               => $id,
-			'display_name'     => $wp_user->display_name,
+			'display_name'     => \Jetonomy\user_display_name( $wp_user ),
 			'trust_level'      => $trust_level,
 			'trust_level_name' => Trust_Levels::name( $trust_level ),
 			'reputation'       => (int) ( $profile->reputation ?? 0 ),
@@ -441,6 +477,30 @@ class Users_Controller extends Base_Controller {
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 			'is_blocked'       => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
+
+			/*
+			 * Additive (1.9.4): is this member currently restricted, and how?
+			 *
+			 * The members LIST already carried this ("most-severe active
+			 * restriction", see list_members) so that list could badge banned and
+			 * silenced members. The single-user payload did not, so the profile
+			 * screen had no way to know - and the app drew its Ban control
+			 * identically before and after a ban landed, giving the moderator no
+			 * feedback that their action had taken and inviting them to press it
+			 * again (Basecamp 10217068821).
+			 *
+			 * null when unrestricted. Same server-owned-rule, server-published-flag
+			 * pattern as can_block_author and can_downvote.
+			 */
+			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
+			// Server-authoritative ban eligibility (viewer must moderate; staff
+			// and self are never bannable) so the profile screen hides Ban on an
+			// admin (Basecamp: ban button shown for administrators).
+			'can_ban'          => get_current_user_id() > 0
+				&& current_user_can( 'jetonomy_moderate' )
+				&& $id !== get_current_user_id()
+				&& ! user_can( $id, 'manage_options' )
+				&& ! user_can( $id, 'jetonomy_moderate' ),
 		];
 
 		/** This filter is documented in includes/api/class-users-controller.php */
@@ -568,7 +628,7 @@ class Users_Controller extends Base_Controller {
 				$this->prepare_profile( $profile ),
 				[
 					'email'            => $wp_user->user_email,
-					'display_name'     => $wp_user->display_name,
+					'display_name'     => \Jetonomy\user_display_name( $wp_user ),
 					'trust_level_name' => Trust_Levels::name( (int) ( $profile->trust_level ?? 0 ) ),
 					'settings'         => UserProfile::get_settings( $user_id ),
 					'email_opt_out'    => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),

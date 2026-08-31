@@ -19,6 +19,72 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * Whether an actor is entitled to restrict this target.
+	 *
+	 * The cap matrix only ever checked that the ACTOR could moderate, never who
+	 * they were allowed to moderate. The editor role carries jetonomy_moderate
+	 * by default, so an editor could issue a global_ban against the site
+	 * administrator; reject_banned_login() then refuses that account at
+	 * wp_signon(), locking the owner out of their own site with recovery only
+	 * by DB edit or WP-CLI. Reproduced end to end (Basecamp 10227908469): the
+	 * AJAX handler returned {"success":true}, a jt_restrictions row was written
+	 * against user 1, and the authenticate filter then returned
+	 * jetonomy_user_banned.
+	 *
+	 * REST_Moderation_Controller had already grown these rules, but only there -
+	 * the AJAX handler the Moderation screen actually posts to, and the CLI
+	 * journey, both went straight to the model. Hence the check living here,
+	 * where no entry point can route around it.
+	 *
+	 * The rule is ACTOR-RELATIVE, not an absolute "admins are unbannable":
+	 * an administrator may still restrict a peer, and a system-issued
+	 * restriction ($issued_by <= 0, e.g. automated moderation) is not
+	 * second-guessed. What is refused is escalation - restricting yourself out
+	 * of a decision, or a moderator reaching someone at or above their own
+	 * level.
+	 *
+	 * @param int $target_id User being restricted.
+	 * @param int $issued_by Actor issuing it; 0 or less means system-issued.
+	 * @return true|\WP_Error True when allowed.
+	 */
+	public static function actor_may_restrict( int $target_id, int $issued_by ) {
+		if ( $issued_by <= 0 ) {
+			return true;
+		}
+
+		if ( $target_id === $issued_by ) {
+			return new \WP_Error(
+				'jetonomy_cannot_ban_self',
+				__( 'You cannot restrict your own account.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$actor_is_admin = user_can( $issued_by, 'manage_options' );
+		if ( $actor_is_admin ) {
+			return true;
+		}
+
+		if ( user_can( $target_id, 'manage_options' ) ) {
+			return new \WP_Error(
+				'jetonomy_cannot_ban_admin',
+				__( 'Administrators cannot be restricted.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		if ( user_can( $target_id, 'jetonomy_moderate' ) ) {
+			return new \WP_Error(
+				'jetonomy_cannot_ban_peer_moderator',
+				__( 'Only an administrator can restrict another moderator.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		return true;
+	}
+
+	/**
 	 * Issue a ban or silence restriction.
 	 *
 	 * @param int         $user_id    Target user.
@@ -37,6 +103,11 @@ class Restriction extends Model {
 		?string $reason = null,
 		?string $expires_at = null
 	): int {
+		$blocked = self::actor_may_restrict( $user_id, $issued_by );
+		if ( is_wp_error( $blocked ) ) {
+			return 0;
+		}
+
 		$data = [
 			'user_id'    => $user_id,
 			'type'       => $type,

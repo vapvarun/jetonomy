@@ -298,7 +298,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				data-wp-context='{"collapsed": false, "childCount": <?php echo (int) count( $reply->children ); ?>}'>
 				<button class="jt-thread-toggle-btn" data-wp-on--click="actions.toggleThread"
 					data-wp-text="state.threadToggleLabel">
-					&minus; <?php esc_html_e( 'Hide replies', 'jetonomy' ); ?>
+					&minus; <?php printf( /* translators: %s: the plural label of the item (the configured noun). */ esc_html__( 'Hide %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				</button>
 				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
 					<?php foreach ( $reply->children as $child ) : ?>
@@ -677,7 +677,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
 									<button class="jt-more-item"
 										data-wp-on--click="actions.toggleClose"
-										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html__( 'Reopen topic', 'jetonomy' ) : esc_html__( 'Close topic', 'jetonomy' ); ?></button>
+										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Reopen %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) : esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_moderate_here ) : ?>
 								<button class="jt-more-item"
@@ -741,7 +741,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 
 				<div class="jt-replies-head">
 					<h2>
-						<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
+						<?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?>
 						<span class="jt-count-pill"><?php echo esc_html( (int) $total_replies ); ?></span>
 					</h2>
 					<div class="jt-replies-controls">
@@ -829,7 +829,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						'empty-state',
 						[
 							'icon'    => 'empty-replies',
-							'message' => __( 'No replies yet. Be the first to reply!', 'jetonomy' ),
+							'message' => sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet. Be the first to reply!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 						]
 					);
 					?>
@@ -889,17 +889,17 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
-					<?php esc_html_e( 'This post is closed and no longer accepts replies.', 'jetonomy' ); ?>
+					<?php printf( /* translators: %s: plural reply label. */ esc_html__( 'This post is closed and no longer accepts %s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				</div>
 			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>
 					<div class="jt-closed-notice jt-closed-notice--staff">
-						<?php esc_html_e( 'This topic is closed. As a moderator, you can still add a reply.', 'jetonomy' ); ?>
+						<?php printf( /* translators: 1: singular topic label; 2: singular reply label. */ esc_html__( 'This %1$s is closed. As a moderator, you can still add a %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
 					</div>
 				<?php endif; ?>
 				<div class="jt-reply-composer" id="jt-composer">
 					<h3>
-						<?php esc_html_e( 'Your Reply', 'jetonomy' ); ?>
+						<?php printf( /* translators: %s: singular reply label. */ esc_html__( 'Your %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>
 					</h3>
 					<?php
 					\Jetonomy\Template_Loader::partial(

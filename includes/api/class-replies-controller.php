@@ -204,14 +204,20 @@ class Replies_Controller extends Base_Controller {
 
 		$space_id = (int) $post->space_id;
 
-		// Block replies in archived or locked spaces.
-		$space = \Jetonomy\Models\Space::find( $space_id );
-		if ( $space && in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
-			return new WP_Error(
-				'jetonomy_space_restricted',
-				__( 'This space is archived or locked and no longer accepts new replies.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
+		/*
+		 * Banned/silenced, archived or locked space, closed post, and the
+		 * space-level right to reply - now shared with the inbound-email writer
+		 * through Content_Gate. These were spelled out here and only here, which
+		 * is exactly why the email path had none of them (Basecamp
+		 * 10228771444). Error codes and statuses are unchanged.
+		 *
+		 * Rate limiting and CAPTCHA stay below: they are per-surface policy
+		 * rather than facts about the post, and a CAPTCHA is meaningless for a
+		 * mail webhook.
+		 */
+		$gate = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
 		}
 
 		if ( ! $this->check_permission( 'create_replies', $space_id ) ) {
@@ -222,7 +228,11 @@ class Replies_Controller extends Base_Controller {
 		$profile = UserProfile::find_or_create( $user_id );
 		$trust   = (int) ( $profile->trust_level ?? 0 );
 		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_replies', $trust ) ) {
-			return $this->validation_error( __( 'Rate limit exceeded. Please try again later.', 'jetonomy' ) );
+			// Rate_Limiter::message() names the allowance and the real wait.
+			// The old string said "Rate limit exceeded. Please try again
+			// later." to a member who had never been told a limit existed and
+			// could not tell whether "later" meant a minute or a day.
+			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_replies', $trust ) );
 		}
 
 		// CAPTCHA verification (skipped for trust level 2+ users and admins).
@@ -234,15 +244,6 @@ class Replies_Controller extends Base_Controller {
 		);
 		if ( false === $captcha_result ) {
 			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
-		}
-
-		// Prevent replies to closed posts.
-		if ( ! empty( $post->is_closed ) ) {
-			return new WP_Error(
-				'jetonomy_post_closed',
-				__( 'This post is closed and cannot receive new replies.', 'jetonomy' ),
-				array( 'status' => 403 )
-			);
 		}
 
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
@@ -925,6 +926,27 @@ class Replies_Controller extends Base_Controller {
 			? (int) $reply->viewer_vote
 			: ( $uid ? (int) ( \Jetonomy\Models\Vote::get_user_vote( $uid, 'reply', (int) $reply->id ) ?? 0 ) : 0 );
 		$data['can_downvote'] = $uid > 0 && $real_author_id !== $uid;
+
+		/*
+		 * Additive (1.9.4): may THIS viewer block this reply's author?
+		 *
+		 * BlockedUser::block() refuses two targets outright - yourself, and any
+		 * moderator or administrator, because a member who could block the
+		 * moderators would make them unreachable to themselves. The API
+		 * published nothing to read that rule from, so the app rendered a Block
+		 * control on staff replys and the tap failed
+		 * (Basecamp 10207937443 / 10203753031).
+		 *
+		 * Same shape, and the same fix, as can_downvote directly above: a
+		 * server-owned rule gets a server-published flag rather than every
+		 * client re-deriving it. Clients that predate this field fall back to
+		 * their old behaviour, so the flag is additive, never required.
+		 */
+		$data['can_block_author'] = $uid > 0
+			&& $real_author_id > 0
+			&& $real_author_id !== $uid
+			&& ! user_can( $real_author_id, 'manage_options' )
+			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
 		// See the identical note in prepare_post() — Basecamp 10202766654.
 		$data['viewer_flagged'] = isset( $reply->viewer_flagged )
 			? (bool) $reply->viewer_flagged

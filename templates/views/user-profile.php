@@ -204,7 +204,7 @@ $crumbs = [
 						</h1>
 						<div class="jt-flex jt-items-center jt-gap-sm jt-flex-shrink-0 jt-profile-head-actions">
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
-							<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $user->ID ) . 'edit/' ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
+							<a href="<?php echo esc_url( \Jetonomy\get_profile_action_url( 'edit', (int) $user->ID ) ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
 							</a>
 						<?php elseif ( is_user_logged_in() && \Jetonomy\messaging_active() ) : ?>
@@ -240,7 +240,7 @@ $crumbs = [
 								data-user-id="<?php echo absint( $profile_user_id ); ?>"
 								data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $user ) ); ?>"
 								data-restrict-type="silence"
-								title="<?php esc_attr_e( 'Silence this member', 'jetonomy' ); ?>">
+								title="<?php printf( /* translators: %s: singular member label. */ esc_attr__( 'Silence this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?>">
 								<?php jetonomy_echo_icon( 'hand', 14 ); ?>
 								<?php esc_html_e( 'Silence', 'jetonomy' ); ?>
 							</button>
@@ -249,7 +249,7 @@ $crumbs = [
 								data-user-id="<?php echo absint( $profile_user_id ); ?>"
 								data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $user ) ); ?>"
 								data-restrict-type="global_ban"
-								title="<?php esc_attr_e( 'Ban this member from the community', 'jetonomy' ); ?>">
+								title="<?php printf( /* translators: %s: singular member label. */ esc_attr__( 'Ban this %s from the community', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?>">
 								<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
 								<?php esc_html_e( 'Ban', 'jetonomy' ); ?>
 							</button>
@@ -284,11 +284,11 @@ $crumbs = [
 						</div>
 						<div class="jt-stat">
 							<div class="jt-stat-n"><?php echo esc_html( (int) $p_count ); ?></div>
-							<div class="jt-stat-l"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></div>
+							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></div>
 						</div>
 						<div class="jt-stat">
 							<div class="jt-stat-n"><?php echo esc_html( (int) $r_count ); ?></div>
-							<div class="jt-stat-l"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></div>
+							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></div>
 						</div>
 						<div class="jt-stat">
 							<div class="jt-stat-n"><?php echo esc_html( (int) $trust ); ?></div>
@@ -331,7 +331,7 @@ $crumbs = [
 					'url'   => $jt_profile_url . '/',
 				),
 				'replies' => array(
-					'label' => __( 'Replies', 'jetonomy' ),
+					'label' => \Jetonomy\jetonomy_label( 'reply', true ),
 					'url'   => $jt_profile_url . '/replies/',
 				),
 				'votes'   => array(
@@ -389,8 +389,8 @@ $crumbs = [
 						'empty-state',
 						[
 							'message' => $is_own
-								? __( 'You have not replied to anything yet — jump into a discussion and your replies will show here.', 'jetonomy' )
-								: __( 'No replies yet.', 'jetonomy' ),
+								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not replied to anything yet — jump into a discussion and your %s will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+								: sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 							'variant' => 'compact',
 						]
 					);
@@ -450,7 +450,7 @@ $crumbs = [
 						'empty-state',
 						[
 							'message' => $is_own
-								? __( 'You have not voted yet — upvote posts and replies you find helpful and they will show here.', 'jetonomy' )
+								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not voted yet — upvote posts and %s you find helpful and they will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 								: __( 'No votes yet.', 'jetonomy' ),
 							'variant' => 'compact',
 						]
@@ -478,7 +478,7 @@ $crumbs = [
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-stat-n"><?php echo esc_html( (int) $uv->reply_count ); ?></div>
-									<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
+									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-time">
@@ -629,7 +629,7 @@ $crumbs = [
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-stat-n"><?php echo esc_html( (int) $bk_post->reply_count ); ?></div>
-									<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
+									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-time">
@@ -680,7 +680,7 @@ $crumbs = [
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-stat-n"><?php echo esc_html( (int) $r_post->reply_count ); ?></div>
-									<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
+									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-time">

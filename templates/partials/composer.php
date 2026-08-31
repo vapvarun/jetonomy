@@ -23,7 +23,7 @@ if ( ! is_user_logged_in() ) {
 
 $_post_id     = isset( $post_id ) ? (int) $post_id : 0;
 $_reply_to    = isset( $reply_to ) ? (int) $reply_to : 0;
-$_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… (Markdown supported)', 'jetonomy' );
+$_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: %s: singular reply label. */ __( 'Write your %s… (Markdown supported)', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) );
 ?>
 <div class="jt-editor"
 	data-wp-interactive="jetonomy"
@@ -56,7 +56,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 		data-placeholder="<?php echo esc_attr( $_placeholder ); ?>"
 		data-wp-on--input="actions.onEditorInput"
 		id="jt-composer-<?php echo (int) $_post_id; ?>"
-		aria-label="<?php esc_attr_e( 'Reply editor', 'jetonomy' ); ?>"></div>
+		aria-label="<?php printf( /* translators: %s: singular reply label. */ esc_attr__( '%s editor', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>"></div>
 	<?php
 	// The replies endpoint verifies CAPTCHA for low-trust users; Turnstile
 	// needs this container to render and produce its token. Empty string
@@ -74,9 +74,9 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 		?>
 		<span class="jt-editor-hint"><?php echo esc_html( $_jt_composer_hint ); ?></span>
 		<?php if ( is_user_logged_in() ) : ?>
-			<label class="jt-reply-private-toggle" title="<?php esc_attr_e( 'Only you, the topic author, and moderators will be able to read it.', 'jetonomy' ); ?>">
+			<label class="jt-reply-private-toggle" title="<?php printf( /* translators: %s: singular topic label. */ esc_attr__( 'Only you, the %s author, and moderators will be able to read it.', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
 				<input type="checkbox" data-jt-reply-private>
-				<?php esc_html_e( 'Private reply', 'jetonomy' ); ?>
+				<?php printf( /* translators: %s: singular reply label. */ esc_html__( 'Private %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
 			</label>
 		<?php endif; ?>
 		<div class="jt-flex jt-items-center jt-gap-sm">
@@ -89,7 +89,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 				data-post-id="<?php echo (int) $_post_id; ?>"
 				data-reply-to="<?php echo (int) $_reply_to; ?>"
 				data-wp-bind--disabled="context.submitting">
-				<?php esc_html_e( 'Post Reply', 'jetonomy' ); ?>
+				<?php printf( /* translators: %s: the label of the item (the configured noun); "Post" is the verb. */ esc_html__( 'Post %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>
 			</button>
 		</div>
 	</div>

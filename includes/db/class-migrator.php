@@ -78,6 +78,14 @@ class Migrator {
 			'1.9.1'   => '1_9_1',
 			'1.9.2'   => '1_9_2',
 			'1.9.3'   => '1_9_3',
+			'1.9.4'   => '1_9_4',
+			// Keyed past 1.9.4 on purpose. These landed after internal sites
+			// were already stamped 1.9.4, and run() compares against the
+			// STORED version - folding them into '1_9_4' would mean they
+			// never fire on exactly the installs testing this release. Same
+			// schema-milestone convention as 1.4.2.1 / 1.5.0.1 above.
+			'1.9.4.1' => '1_9_4_1',
+			'1.9.4.2' => '1_9_4_2',
 		];
 	}
 }

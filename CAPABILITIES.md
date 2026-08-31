@@ -1,7 +1,7 @@
 # Jetonomy - Capabilities
 
 Buyer-level roll-up: what this plugin can actually do, in the words a site owner
-would use. The [manifest](audit/manifest.json) lists the parts (80 REST routes,
+would use. The [manifest](audit/manifest.json) lists the parts (86 REST routes,
 225 hooks, 22 tables); this file says what the parts add up to.
 
 Every row is verified against code, with the file that delivers it. Status
@@ -9,7 +9,7 @@ values: **YES** shipped and complete, **YES-beta** shipped but young,
 **PARTIAL** works with a real caveat stated in the row, **NO** not in the free
 plugin (Pro rows live in `../jetonomy-pro/CAPABILITIES.md`).
 
-Verified 2026-08-18 against 1.9.3. When you add or remove a capability, update
+Verified 2026-08-20 against 1.9.4. When you add or remove a capability, update
 this file in the same commit.
 
 ## Running a community
@@ -70,10 +70,10 @@ this file in the same commit.
 
 | Can it... | Status | Delivered by |
 |---|---|---|
-| Be driven entirely over REST | YES | 80 routes under `jetonomy/v1`, `includes/api/` |
+| Be driven entirely over REST | YES | 86 routes under `jetonomy/v1`, `includes/api/`. 1.9.4 closed the last two write gaps: tags and space access rules were previously admin-AJAX only |
 | Back a mobile app | YES | `includes/api/class-app-config-controller.php`; app sign-in via Application Password, `includes/integrations/class-app-connect.php` |
 | Be automated from the terminal | YES | 14 WP-CLI command roots, `includes/cli/` |
-| Be extended without forking | YES | 214 hooks (102 actions, 112 filters), see `docs/website/developer-guide/02a-hooks-index.md` |
+| Be extended without forking | YES | 225 hooks (106 actions, 119 filters), see `docs/website/developer-guide/02a-hooks-index.md` |
 | Be themed to match the site | YES | `--jt-*` token layer in `assets/css/jetonomy-tokens.css`, adopts the host theme's brand colour |
 | Have its templates overridden | YES | `includes/class-template-loader.php`, drop files in `your-theme/jetonomy/` |
 | Work right-to-left | YES | Logical CSS properties plus generated `*-rtl.css` |
@@ -85,7 +85,7 @@ this file in the same commit.
 | Can it... | Status | Delivered by |
 |---|---|---|
 | Hold a large community without slowing down | YES | 22 purpose-built tables with indexes and denormalised counters, not `wp_posts`; `includes/db/class-schema.php` |
-| Paginate large lists cheaply | YES | Cursor-based pagination on list endpoints |
+| Paginate large lists cheaply | YES | Cursor-based pagination on list endpoints; space directories page with `LIMIT`/`OFFSET` plus a real `COUNT(*)` since 1.9.4 (`jetonomy_spaces_per_page`) |
 | Use Redis or Memcached when present | YES | `includes/class-cache.php` (auto-detects an external object cache) |
 | Survive an upgrade without manual DB work | YES | Versioned migrations, `includes/db/class-migrator.php` |
 | Be checked before release | YES | `wp jetonomy qa-actions` (259 live checks), 476 unit tests, six CI jobs - see README "Quality gates" |

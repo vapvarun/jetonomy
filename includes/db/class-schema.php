@@ -92,7 +92,7 @@ class Schema {
 	}
 
 	/**
-	 * Build CREATE TABLE SQL strings for all 21 tables.
+	 * Build CREATE TABLE SQL strings for all 22 tables.
 	 *
 	 * @param string $p               Table prefix (e.g. "wp_").
 	 * @param string $charset_collate Charset/collation string from $wpdb.
@@ -208,6 +208,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   KEY post_created (post_id,created_at),
+  KEY post_parent (post_id,parent_id),
   KEY post_private (post_id,is_private),
   KEY post_votes (post_id,vote_score),
   KEY author_created (author_id,created_at),
@@ -231,7 +232,6 @@ class Schema {
 		// 6. jt_user_profiles
 		$sqls[] = "CREATE TABLE {$p}jt_user_profiles (
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
-  display_name varchar(255) NOT NULL DEFAULT '',
   bio longtext,
   avatar_url varchar(255) DEFAULT NULL,
   trust_level tinyint(3) unsigned NOT NULL DEFAULT 0,
@@ -295,9 +295,11 @@ class Schema {
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
   role ENUM('viewer','member','moderator','admin') NOT NULL DEFAULT 'member',
   joined_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  source ENUM('manual','invite','rule','tier') NOT NULL DEFAULT 'manual',
   PRIMARY KEY  (space_id,user_id),
   KEY user_joined (user_id,joined_at),
-  KEY space_role_joined (space_id,role,joined_at)
+  KEY space_role_joined (space_id,role,joined_at),
+  KEY user_source (user_id,source)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 11. jt_tags
@@ -349,6 +351,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   KEY user_type_space (user_id,type,space_id),
+  KEY type_reason (type,reason(64)),
   KEY expires (expires_at)
 ) ENGINE=InnoDB $charset_collate;";
 

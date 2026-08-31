@@ -544,7 +544,19 @@
      wrong action. Hover-capable devices (mouse) stay at 36px because
      pointer precision is finer there. */
   @media (hover: none) {
-    .jt-act { min-block-size: 44px; padding-inline: var(--jt-space-4); }
+    .jt-act {
+        /* min-block-size alone left icon-only actions 32px WIDE - Share,
+           Bookmark and More options measured 32x44 at 390px. The height was
+           handled; the inline axis was not, so the tap target failed on the
+           one axis nobody had checked.
+           justify-content matters here too: widening a flex box whose default
+           is flex-start would park the icon on the left with dead space beside
+           it rather than centring it in the new target. */
+        min-block-size: 44px;
+        min-inline-size: 44px;
+        justify-content: center;
+        padding-inline: var(--jt-space-4);
+      }
     /* Small buttons have no min-height for mouse density; on touch they
        need the full tap target so per-row controls (e.g. the member "Ban
        from space" button) are not a slip hazard. Matches the regular
@@ -1595,6 +1607,69 @@
   .jt-mod-flag-action { display: inline-flex; align-items: center; gap: var(--jt-space-1); margin-inline-start: auto; font-size: 0.875rem; font-weight: 500; color: var(--jt-accent); text-decoration: none; }
   .jt-mod-flag-action:hover { text-decoration: underline; }
 
+  /* Awaiting-approval queue (1.9.4).
+     The moderation page carries two sources now — member-reported flags and
+     content the space itself held via require_approval — so the tab strip
+     gained a third tab and the held panel a post/reply sub-strip. Counts sit
+     in the tab so a moderator can see there is work waiting without opening
+     the panel. Everything is token-driven, so dark mode follows for free, and
+     the strip inherits .jt-profile-tabs' existing ≤640px scroll behaviour. */
+  .jt-tab-count { display: inline-block; margin-inline-start: var(--jt-space-1); padding: 1px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); font-size: 0.6875rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.5; }
+  .jt-profile-tab.active .jt-tab-count { background: var(--jt-accent-light); color: var(--jt-accent); }
+  .jt-subtabs { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); margin-block-end: var(--jt-space-4); }
+  .jt-subtab { display: inline-flex; align-items: center; padding: var(--jt-space-1) var(--jt-space-3); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-full); background: var(--jt-bg); color: var(--jt-text-secondary); font-size: var(--jt-text-sm); font-weight: 500; text-decoration: none; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease); }
+  .jt-subtab:hover { color: var(--jt-text); border-color: var(--jt-border-strong); }
+  .jt-subtab.active { background: var(--jt-accent-light); border-color: var(--jt-accent); color: var(--jt-accent); }
+  .jt-subtab:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-subtab.active .jt-tab-count { background: transparent; color: inherit; padding-inline: 0; }
+  .jt-mod-flag-reason--held { background: var(--jt-warn-light); color: var(--jt-warn); }
+
+  /* Space card owner line (1.9.4). The single space page has named its admins
+     in the "Managed by" sidebar card since 1.4.0; the directory - where the
+     decision of which space to open actually happens - did not. Sits under the
+     stats as secondary information, not competing with the title. */
+  /* Member orientation on the community root (1.9.4). Logged-out visitors get
+     the welcome block above; members got nothing but a wall of cards and no
+     indication that posting happens one level down. One quiet line, sized as
+     secondary text so it orients without competing with the space grid. */
+  .jt-home-member-hint { margin: 0 0 var(--jt-space-5); max-width: 62ch; color: var(--jt-text-secondary); font-size: var(--jt-text-base); line-height: var(--jt-leading-normal); }
+
+  .jt-space-card-owner { margin-block-start: var(--jt-space-1); font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Space danger zone on /s/{slug}/edit/ (1.9.4).
+     Sits BELOW the form, outside it, so a stray Enter in a text field can
+     never submit a destructive action. The critical row is tinted rather
+     than merely red-bordered so it reads as different in kind from the
+     archive row above it, not just louder. Token-driven throughout, so the
+     dark palette follows without a second definition. */
+  .jt-danger-zone { margin-block-start: var(--jt-space-8); padding: var(--jt-space-5); border: 1px solid var(--jt-danger); border-radius: var(--jt-radius-lg); background: var(--jt-bg); display: flex; flex-direction: column; gap: var(--jt-space-4); }
+  .jt-danger-zone-title { margin: 0; font-size: var(--jt-text-lg); font-weight: 700; color: var(--jt-danger); }
+  .jt-danger-row { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-4); padding: var(--jt-space-3) var(--jt-space-4); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-danger-row--critical { border-color: var(--jt-danger); background: var(--jt-danger-light); }
+  .jt-danger-copy { display: flex; flex-direction: column; gap: var(--jt-space-1); min-width: 0; }
+  .jt-danger-heading { margin: 0; font-size: var(--jt-text-base); font-weight: 600; color: var(--jt-text); }
+  .jt-danger-desc { margin: 0; font-size: var(--jt-text-sm); color: var(--jt-text-secondary); line-height: var(--jt-leading-normal); }
+  .jt-danger-zone .jt-space-delete { flex: 0 0 auto; }
+  .jt-danger-zone .jt-space-delete:disabled { opacity: .6; cursor: progress; }
+  .jt-danger-error { margin: 0; color: var(--jt-danger); font-size: var(--jt-text-sm); font-weight: 500; }
+
+  @media (max-width: 640px) {
+    /* Stack copy above the button so neither the description nor the label
+       gets squeezed; the button goes full-width as a proper tap target. */
+    .jt-danger-row { flex-direction: column; align-items: stretch; }
+    .jt-danger-zone .jt-space-delete { width: 100%; justify-content: center; min-height: var(--jt-tap); }
+  }
+  .jt-mod-approval .jt-mod-flag-head { flex-wrap: wrap; gap: var(--jt-space-2); }
+  .jt-mod-approval .jt-mod-flag-reporter { margin-inline-start: auto; }
+
+  @media (max-width: 480px) {
+    /* Stack the card's actions so Approve / Reject stay full-width tap
+       targets instead of being squeezed onto one line with View. */
+    .jt-mod-approval .jt-mod-flag-actions { flex-wrap: wrap; }
+    .jt-mod-approval .jt-mod-flag-actions .jt-btn { flex: 1 1 auto; justify-content: center; }
+    .jt-mod-approval .jt-mod-flag-reporter { margin-inline-start: 0; flex-basis: 100%; }
+  }
+
   /* Sidebar links column — moderation link sits below "View all members". */
   .jt-sidebar-links { display: flex; flex-direction: column; gap: var(--jt-space-2); margin-top: var(--jt-space-3); }
   .jt-sidebar-link-mod { display: inline-flex; align-items: center; gap: var(--jt-space-1); }
@@ -2466,6 +2541,10 @@
 .jt-bookmark-btn.bookmarked { color: var(--jt-accent); }
 
 /* ── Notification preferences grid ── */
+/* Deep-link target from the notifications page "Settings" button. Same
+   scroll-margin treatment as .jt-reply:target so the "Notification Preferences"
+   heading clears the sticky host-theme header instead of tucking under it. */
+#notification-preferences { scroll-margin-top: var(--jt-scroll-offset); }
 .jt-notif-prefs { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
 .jt-notif-optout { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
 .jt-notif-optout input { margin-top: 0.15rem; flex-shrink: 0; }

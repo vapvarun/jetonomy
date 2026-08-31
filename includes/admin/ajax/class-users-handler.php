@@ -41,6 +41,20 @@ class Users_Handler {
 			$type = 'global_ban';
 		}
 
+		/*
+		 * WHO may be targeted, not just who may moderate.
+		 *
+		 * The cap check above is satisfied by the editor role out of the box, so
+		 * without this an editor could global_ban user 1 and lock the owner out
+		 * of their own site (Basecamp 10227908469). Restriction::ban() enforces
+		 * the same rule as a backstop; this call is here so the moderator gets
+		 * the reason instead of a bare failure.
+		 */
+		$allowed = Restriction::actor_may_restrict( $user_id, get_current_user_id() );
+		if ( is_wp_error( $allowed ) ) {
+			wp_send_json_error( $allowed->get_error_message() );
+		}
+
 		$expires_at = null;
 		switch ( $duration ) {
 			case '1d':

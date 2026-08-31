@@ -59,7 +59,7 @@ class SpaceMember extends Model {
 		return false === $pos ? 0 : (int) $pos + 1;
 	}
 
-	public static function add( int $space_id, int $user_id, string $role = 'member' ): \WP_Error|bool {
+	public static function add( int $space_id, int $user_id, string $role = 'member', string $source = 'manual' ): \WP_Error|bool {
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
 		 *
@@ -96,8 +96,18 @@ class SpaceMember extends Model {
 				$role = (string) $current;
 			}
 
-			// Role only. REPLACE INTO also reset joined_at on every re-sync,
-			// losing the date the person actually joined.
+			/*
+			 * Role only. REPLACE INTO also reset joined_at on every re-sync,
+			 * losing the date the person actually joined.
+			 *
+			 * `source` is deliberately NOT updated either, and for a sharper
+			 * reason than joined_at: it is what the deactivation listener
+			 * deletes on. Someone who joined this space themselves and LATER
+			 * bought a plan would have their row relabelled 'tier' by the
+			 * activation sync, and then be evicted from a space they joined
+			 * under their own steam the day that plan lapsed. First write
+			 * wins, so provenance records how the row was actually created.
+			 */
 			static::db()->update(
 				static::table(),
 				array( 'role' => $role ),
@@ -107,13 +117,16 @@ class SpaceMember extends Model {
 				)
 			);
 		} else {
+			$source = in_array( $source, array( 'manual', 'invite', 'rule', 'tier' ), true ) ? $source : 'manual';
+
 			static::db()->query(
 				static::db()->prepare(
-					'INSERT INTO ' . static::table() . ' (space_id, user_id, role, joined_at) VALUES (%d, %d, %s, %s)',
+					'INSERT INTO ' . static::table() . ' (space_id, user_id, role, joined_at, source) VALUES (%d, %d, %s, %s, %s)',
 					$space_id,
 					$user_id,
 					$role,
-					now()
+					now(),
+					$source
 				)
 			);
 		}
@@ -182,6 +195,108 @@ class SpaceMember extends Model {
 
 		// G1 cache invalidation — see add() comment.
 		self::bust_privileged_cache( $space_id );
+	}
+
+	/**
+	 * Self-service join (facade — the single "a user asks to join" path).
+	 *
+	 * Distinct from add(): add() is the low-level primitive used by invite
+	 * redemption, admin screens, tier sync and auto-join-on-post, all of which
+	 * have already established that the user is entitled to be there. This
+	 * method is for the opposite case — an unprivileged user asking for
+	 * themselves — so it is the one place the join_policy and visibility rules
+	 * are applied.
+	 *
+	 * It exists because those rules were previously duplicated at the callers,
+	 * and one caller never got them: the WP Abilities `jetonomy/join-space`
+	 * ability branched only on `visibility === 'private'` and called
+	 * SpaceMember::add() for everything else, so a subscriber could join a
+	 * HIDDEN or INVITE-ONLY space and read every post in it (Basecamp
+	 * 10227908583). Reproduced before this fix: hidden+invite, public+invite and
+	 * public+approval all returned "joined" and wrote a roster row.
+	 *
+	 * Visibility is checked here even though Space::validate_visibility_join_policy()
+	 * already rejects hidden+open and hidden+approval, because that validator
+	 * runs at the CALLERS of Space::create() and not inside the model — so a row
+	 * written by any path that skips it (or by a direct query, or by an older
+	 * install) is not guaranteed to satisfy the invariant. A guard that depends
+	 * on an invariant nothing enforces is not a guard.
+	 *
+	 * @param int    $space_id Space ID.
+	 * @param int    $user_id  User asking to join.
+	 * @param string $message  Optional note attached to an approval request.
+	 * @return array{status:string,already_pending?:bool}|\WP_Error
+	 *         status is 'joined' or 'pending'.
+	 */
+	public static function join( int $space_id, int $user_id, string $message = '' ): array|\WP_Error {
+		if ( $user_id <= 0 ) {
+			return new \WP_Error(
+				'jetonomy_not_logged_in',
+				__( 'You must be logged in to join.', 'jetonomy' ),
+				[ 'status' => 401 ]
+			);
+		}
+
+		$space = Space::find( $space_id );
+		if ( ! $space ) {
+			return new \WP_Error(
+				'jetonomy_not_found',
+				/* translators: %s: the singular label of the item (the configured noun). */
+				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		if ( self::is_member( $space_id, $user_id ) ) {
+			return new \WP_Error(
+				'jetonomy_already_member',
+				__( 'You are already a member of this space.', 'jetonomy' ),
+				[ 'status' => 409 ]
+			);
+		}
+
+		$visibility  = (string) ( $space->visibility ?? 'public' );
+		$join_policy = (string) ( $space->join_policy ?? 'open' );
+
+		/*
+		 * A hidden space is not discoverable, so there is no such thing as
+		 * asking it for entry - the only way in is an invite, redeemed through
+		 * InviteLink::redeem(). Same refusal as invite-only, and deliberately
+		 * the same error, so the response cannot be used to tell a hidden space
+		 * apart from an invite-only one by probing ids.
+		 */
+		if ( 'invite' === $join_policy || 'hidden' === $visibility ) {
+			return new \WP_Error(
+				'jetonomy_invite_only',
+				__( 'This space is invite-only.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		if ( 'approval' === $join_policy || 'private' === $visibility ) {
+			if ( JoinRequest::find_pending( $space_id, $user_id ) ) {
+				return [
+					'status'          => 'pending',
+					'already_pending' => true,
+				];
+			}
+
+			JoinRequest::create_request( $space_id, $user_id, $message );
+
+			do_action( 'jetonomy_join_request_created', $space_id, $user_id, $message );
+
+			return [
+				'status'          => 'pending',
+				'already_pending' => false,
+			];
+		}
+
+		$added = self::add( $space_id, $user_id, 'member' );
+		if ( is_wp_error( $added ) ) {
+			return $added;
+		}
+
+		return [ 'status' => 'joined' ];
 	}
 
 	/**
@@ -761,5 +876,52 @@ class SpaceMember extends Model {
 				$user_id
 			)
 		);
+	}
+	/**
+	 * The owning admin of each of many spaces, in ONE query.
+	 *
+	 * Per-space callers should use list_privileged(); that is right for a space
+	 * page,
+	 * which renders exactly one. A directory renders dozens, and calling it in
+	 * that loop is a query per card on the first render - the N+1 shape this
+	 * codebase keeps having to remove. Fetching them together keeps a listing
+	 * flat however many spaces it shows.
+	 *
+	 * Admins only. A moderator helps run a space but does not own it, and the
+	 * directory has room for one name.
+	 *
+	 * @param int[] $space_ids Spaces to resolve.
+	 * @return array<int,int> space_id => owning user id. Sparse: a space with
+	 *                        no admin row is simply absent.
+	 */
+	public static function owners_for_spaces( array $space_ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ), static fn ( int $i ): bool => $i > 0 ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+				'SELECT space_id, user_id FROM ' . static::table() . "
+				 WHERE space_id IN ({$placeholders}) AND role = 'admin'
+				 ORDER BY space_id ASC, joined_at ASC, user_id ASC",
+				...$ids
+			)
+		) ?: array();
+
+		// First admin per space wins - the ORDER BY makes that the
+		// longest-standing one, which is the closest thing to an owner the
+		// roster records.
+		$owners = array();
+		foreach ( $rows as $row ) {
+			$sid = (int) $row->space_id;
+			if ( ! isset( $owners[ $sid ] ) ) {
+				$owners[ $sid ] = (int) $row->user_id;
+			}
+		}
+
+		return $owners;
 	}
 }

@@ -74,7 +74,7 @@
 
 | Severity | Issue | Plan |
 |----------|-------|------|
-| High | `Admin` class is 2,132 lines - violates 750-line rule | `docs/superpowers/plans/2026-03-24-admin-class-split.md` |
+| High | `Admin` class is 2,132 lines - violates 750-line rule | Tracked on the Basecamp board; no plan doc in-repo |
 
 ---
 

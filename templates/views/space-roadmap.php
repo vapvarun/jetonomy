@@ -24,7 +24,7 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -42,8 +42,8 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 		'empty-state',
 		[
 			'icon'    => 'lock',
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			'message' => sprintf( __( 'You need to be a member of this %s to see its roadmap.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			/* translators: 1: singular member label; 2: singular space label (e.g. space, group). */
+			'message' => sprintf( __( 'You need to be a %1$s of this %2$s to see its roadmap.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
 		]
 	);
@@ -220,7 +220,7 @@ $space_url = $base . '/s/' . $space->slug . '/';
 							<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 								<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo esc_html( (int) $idea->vote_score ); ?></span>
 							<?php endif; ?>
-							<span><?php echo esc_html( (int) $idea->reply_count ); ?> <?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
+							<span><?php echo esc_html( (int) $idea->reply_count ); ?> <?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></span>
 						</div>
 					</div>
 				<?php endforeach; ?>

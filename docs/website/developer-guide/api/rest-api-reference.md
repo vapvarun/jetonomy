@@ -95,6 +95,43 @@ PATCH  /spaces/{id}/members/{user_id}                      Change role (space ad
 DELETE /spaces/{id}/members/{user_id}                       Leave/remove
 POST   /spaces/{id}/invite                                  Generate invite link (space admin)
 GET    /invite/{token}                                     Accept invite
+GET    /spaces/{id}/access-rules                           List access rules (jetonomy_manage_spaces)
+POST   /spaces/{id}/access-rules                           Create an access rule (jetonomy_manage_spaces)
+DELETE /access-rules/{id}                                   Delete an access rule (jetonomy_manage_spaces)
+```
+
+#### Access rules (1.9.4)
+
+Access rules decide who may enter a space. Until 1.9.4 they were configurable
+only from wp-admin, so an API-driven or app-based space-admin flow could not
+touch them.
+
+`rule_type` is one of `membership`, `role`, `capability`, `trust_level`,
+`logged_in`, `everyone`. `grants` is `read`, `participate` or `full`, and
+`space_role` (`viewer`, `member`, `moderator`, `admin`) is the roster role a
+matching member receives.
+
+**A restrictive rule on a PUBLIC space switches that space to Private.** Public
+spaces are always readable, and the permission engine stops non-members on
+private spaces *before* rules are consulted — so a `membership` / `role` /
+`capability` / `trust_level` rule attached to a public space would silently do
+nothing. Rather than accept a gate that does not gate, the space is made private
+and the response says so via `made_private`. The wp-admin path has always
+behaved this way; both surfaces now share one implementation
+(`AccessRule::enforce_gate_on_public_space()`).
+
+```bash
+curl -X POST https://your-site.com/wp-json/jetonomy/v1/spaces/42/access-rules \
+  -H "Content-Type: application/json" -H "X-WP-Nonce: $NONCE" --cookie "$COOKIES" \
+  -d '{"rule_type":"trust_level","rule_value":"2","grants":"participate","space_role":"member"}'
+```
+
+```json
+{
+  "data": { "id": 7, "space_id": 42, "rule_type": "trust_level", "rule_value": "2", "grants": "participate", "space_role": "member", "priority": 0 },
+  "made_private": true,
+  "message": "Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space."
+}
 ```
 
 Example — create a space:
@@ -236,7 +273,9 @@ MySQL FULLTEXT boolean-mode search. `type=all` returns `{posts, spaces, tags}` g
 ```
 GET/POST     /categories                 List (nested) / create (jetonomy_manage_categories)
 GET/PATCH/DELETE /categories/{id}        Get / update / delete (jetonomy_manage_categories)
-GET          /tags                       List post tags (GET only — no write routes)
+GET          /tags                       List post tags
+POST         /tags                       Create a tag (jetonomy_manage_settings)
+PATCH/DELETE /tags/{id}                  Rename/re-slug, or delete and detach from every post
 GET          /leaderboards               Reputation ranking (period=all|month|week)
 GET/POST     /bookmarks                  List mine / toggle a bookmark
 DELETE       /bookmarks/{post_id}         Remove

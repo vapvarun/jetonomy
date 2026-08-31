@@ -20,7 +20,7 @@
  * runner targets so the matrix has a stable URL set even on a fresh DB.
  *
  * Usage:
- *   wp --path="/Users/varundubey/Local Sites/forums/app/public" \
+ *   wp --path="/Users/vapvarun/Local Sites/buddynext/app/public" \
  *      eval-file wp-content/plugins/jetonomy/bin/seed-qa-users.php
  *
  * To clean up:

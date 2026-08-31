@@ -2,18 +2,18 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.9.1"
+        "version": "1.9.4"
     },
     "generated": {
-        "at": "2026-08-18T10:54:19+00:00",
-        "manifest_at": "2026-08-01T00:00:00Z",
-        "manifest_branch": "1.8.1-dev"
+        "at": "2026-08-31T03:58:52+00:00",
+        "manifest_at": "2026-08-20T00:00:00Z",
+        "manifest_branch": "1.9.4"
     },
     "categories": {
         "rest": {
-            "total": 102,
+            "total": 108,
             "covered": 46,
-            "uncovered": 56,
+            "uncovered": 62,
             "skipped": 0,
             "covered_items": [
                 {
@@ -481,6 +481,36 @@
                     "method": "POST",
                     "route": "/notifications/bulk",
                     "stub_command": "bin/qa-stub-gen.php rest POST \"/notifications/bulk\""
+                },
+                {
+                    "method": "POST",
+                    "route": "/tags",
+                    "stub_command": "bin/qa-stub-gen.php rest POST \"/tags\""
+                },
+                {
+                    "method": "PATCH",
+                    "route": "/tags/(?P<id>\\d+)",
+                    "stub_command": "bin/qa-stub-gen.php rest PATCH \"/tags/(?P<id>\\d+)\""
+                },
+                {
+                    "method": "DELETE",
+                    "route": "/tags/(?P<id>\\d+)",
+                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/tags/(?P<id>\\d+)\""
+                },
+                {
+                    "method": "GET",
+                    "route": "/spaces/(?P<id>\\d+)/access-rules",
+                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/access-rules\""
+                },
+                {
+                    "method": "POST",
+                    "route": "/spaces/(?P<id>\\d+)/access-rules",
+                    "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/access-rules\""
+                },
+                {
+                    "method": "DELETE",
+                    "route": "/access-rules/(?P<rule_id>\\d+)",
+                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/access-rules/(?P<rule_id>\\d+)\""
                 }
             ]
         },
@@ -666,7 +696,7 @@
             "total": 10,
             "covered": 5,
             "uncovered": 5,
-            "skipped": 215,
+            "skipped": 217,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -719,11 +749,15 @@
             "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
         },
         "cron": {
-            "total": 6,
-            "covered": 0,
+            "total": 7,
+            "covered": 1,
             "uncovered": 6,
             "skipped": 0,
-            "covered_items": [],
+            "covered_items": [
+                {
+                    "hook": "jetonomy_reconcile_rosters"
+                }
+            ],
             "uncovered_items": [
                 {
                     "hook": "jetonomy_trust_evaluation",
@@ -752,8 +786,8 @@
             ]
         },
         "wp_cli": {
-            "total": 14,
-            "covered": 5,
+            "total": 15,
+            "covered": 6,
             "uncovered": 9,
             "skipped": 0,
             "covered_items": [
@@ -771,6 +805,9 @@
                 },
                 {
                     "command": "jetonomy config"
+                },
+                {
+                    "command": "jetonomy privacy"
                 }
             ],
             "uncovered_items": [
@@ -815,15 +852,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 175,
-        "items_covered": 60,
-        "items_uncovered": 115,
-        "items_skipped": 215,
-        "coverage_percent": 34.299999999999997
+        "items_total": 183,
+        "items_covered": 62,
+        "items_uncovered": 121,
+        "items_skipped": 217,
+        "coverage_percent": 33.9
     },
     "drift": {
-        "previous_uncovered": 115,
-        "current_uncovered": 115,
-        "delta": 0
+        "previous_uncovered": 122,
+        "current_uncovered": 121,
+        "delta": -1
     }
 }

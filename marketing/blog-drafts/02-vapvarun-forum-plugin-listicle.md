@@ -74,7 +74,7 @@ I'll put my cards on the table: this is what I'm installing on every new communi
 - **Four space types in one plugin.** Forum (threaded discussion), Q&A (with accepted answers), Ideas (with roadmap view and status tracking), and Social Feed (Twitter-like short form). You can mix them on the same site. This is the first plugin I've seen that handles all four without you installing three separate plugins and gluing them together.
 - **Six trust levels with auto-promotion.** New members are rate-limited automatically (3 posts/day, no links). As they participate, they earn higher trust levels and unlock more abilities. By the time someone reaches Trust Level 4, the community has already vetted them. I used to enforce this manually; now the plugin does it.
 - **Theme integration via `theme.json`.** Jetonomy reads your active theme's font, color, and spacing tokens and adapts automatically. This is the first forum plugin I've installed in years that didn't need custom CSS to look right.
-- **48+ REST API endpoints in free** (90+ with Pro), cursor-based pagination, JSON schema validation. If you want to build a mobile app or a headless frontend, everything's there.
+- **80 REST API endpoints in free** (155 with Pro), cursor-based pagination, JSON schema validation. If you want to build a mobile app or a headless frontend, everything's there.
 - **WordPress Abilities API support** - 19 abilities across 5 categories. AI agents can discover and operate the community without custom integration. This is a 2026 feature, and no other forum plugin ships with it today.
 - **Built-in importers for bbPress, wpForo, and Asgaros.** Dry run first, then batched import with resume-on-failure. The bbPress import I ran moved 15,000 posts in about 40 minutes with zero data loss.
 - **AI-powered moderation in Pro 1.3.0** - spam detection, content moderation, reply suggestions, and thread summaries. Four providers supported, including self-hosted Ollama. If you're in a regulated industry where you can't send member content to a third-party AI, this is a genuine option.
@@ -358,7 +358,7 @@ If you're brand new to this, here's the short version of how to actually set up 
 6. **Set up moderation.** Most plugins have an anti-spam setting - turn it on and add your Akismet key.
 7. **Invite members.** Share the URL. Members already logged into WordPress can post immediately.
 
-For a more detailed walkthrough, I have a longer guide at [my BuddyPress community post](/different-types-of-online-communities/).
+For a more detailed walkthrough, I have a longer guide at [my BuddyPress community post](https://vapvarun.com/different-types-of-online-communities/).
 
 ---
 
@@ -374,7 +374,7 @@ bbPress still works for small, stable forums with no growth plans. But developme
 
 ### What's the best free WordPress forum plugin?
 
-Both Jetonomy and bbPress have genuinely complete free versions. Jetonomy's free plugin includes forum/Q&A/ideas space types, trust levels, moderation queue, 48+ REST endpoints, bbPress importer, and WP Abilities API support. bbPress is completely free with no Pro version at all. For new projects, Jetonomy free. For tiny forums where you just need something simple, bbPress or Asgaros.
+Both Jetonomy and bbPress have genuinely complete free versions. Jetonomy's free plugin includes forum/Q&A/ideas space types, trust levels, moderation queue, 80 REST endpoints, bbPress importer, and WP Abilities API support. bbPress is completely free with no Pro version at all. For new projects, Jetonomy free. For tiny forums where you just need something simple, bbPress or Asgaros.
 
 ### Which WordPress forum plugin is fastest?
 
@@ -408,7 +408,7 @@ If you found this article useful, the other two pieces I'd point you at are:
 
 - **Honest bbPress review for 2026:** [Full review at wbcomdesigns.com](https://wbcomdesigns.com/bbpress-review/)
 - **Discourse alternatives for WordPress:** [buddyxtheme.com comparison](https://buddyxtheme.com/discourse-alternatives-wordpress/)
-- **Different types of online communities:** [my overview post](/different-types-of-online-communities/) - helps you figure out which space type (forum, Q&A, ideas, social feed) fits your community shape.
+- **Different types of online communities:** [my overview post](https://vapvarun.com/different-types-of-online-communities/) - helps you figure out which space type (forum, Q&A, ideas, social feed) fits your community shape.
 
 - Varun
 

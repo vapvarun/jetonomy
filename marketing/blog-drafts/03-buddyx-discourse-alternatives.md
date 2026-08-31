@@ -93,7 +93,7 @@ Full disclosure: Jetonomy is from Wbcom Designs, the studio behind BuddyX theme 
 - **Six trust levels, like Discourse.** Jetonomy's trust level system is conceptually similar to Discourse's - new members are rate-limited, and trust is earned through participation. I didn't lose the trust-level moderation story when I migrated.
 - **Theme integration via `theme.json`.** Jetonomy reads your active WordPress theme's fonts, colors, and spacing automatically. I did zero CSS work to match my site's brand. This was the first time I didn't have to maintain a separate theme repository.
 - **Built-in importers** for bbPress and wpForo (and I hear a Discourse importer is on the roadmap). For communities migrating from another WordPress forum, the path is low-risk: dry run first, then batched background import with resume-on-failure.
-- **48+ REST API endpoints in free, 90+ with Pro.** Everything Jetonomy does is accessible via REST API. I built a custom dashboard showing community growth metrics in an afternoon.
+- **80 REST API endpoints in free, 155 with Pro.** Everything Jetonomy does is accessible via REST API. I built a custom dashboard showing community growth metrics in an afternoon.
 - **WordPress Abilities API support** (19 abilities in 5 categories). Requires WordPress 6.9+. AI agents can discover and interact with the community programmatically - this is something Discourse doesn't offer.
 - **AI-powered moderation in Pro 1.3.0** with four providers including self-hosted Ollama. If your community has privacy requirements (mine did), you can run the moderation model entirely on your own server with no content leaving your machine.
 

@@ -9,7 +9,7 @@
 
 ### Character limit: 150 characters
 
-Forums, Q&A, idea boards, Show & Tell, and Social Feed for WordPress. Custom tables, 6 trust levels, 90+ REST endpoints, and a design that fits any theme.
+Forums, Q&A, idea boards, Show & Tell, and Social Feed for WordPress. Custom tables, 6 trust levels, 155 REST endpoints, and a design that fits any theme.
 
 *(156 characters - trim "and Social Feed" if the directory enforces 150)*
 
@@ -81,7 +81,7 @@ Built-in importers for both. Auto-detects your source, runs a dry run first, sho
 - In-community and email notifications, subscriptions
 - Leaderboard and user profiles
 - Schema.org markup, sitemaps, Open Graph, and clean URLs
-- 48+ REST API endpoints with cursor-based pagination
+- 80 REST API endpoints with cursor-based pagination
 - Template overrides via your-theme/jetonomy/ directory
 - bbPress and wpForo importers with dry run and progress tracking
 - WordPress Abilities API support (20 abilities)
@@ -93,7 +93,7 @@ Built-in importers for both. Auto-detects your source, runs a dry run first, sho
 
 **Jetonomy Pro (sold separately)**
 
-Pro adds 15 modules on top of the free core: emoji reactions, private messaging, polls, community analytics dashboard, email digest, custom badges with a criteria engine, advanced auto-moderation rules, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, site-wide announcements (pin a post to every space simultaneously), and AI integration (spam detection, content moderation, reply suggestions, thread summaries - with OpenAI, Anthropic, and self-hosted Ollama support). Pro also unlocks integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+Pro adds 17 modules on top of the free core: emoji reactions, private messaging, polls, community analytics dashboard, email digest, custom badges with a criteria engine, advanced auto-moderation rules, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, site-wide announcements (pin a post to every space simultaneously), and AI integration (spam detection, content moderation, reply suggestions, thread summaries - with OpenAI, Anthropic, and self-hosted Ollama support). Pro also unlocks integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
 **Requirements**
 

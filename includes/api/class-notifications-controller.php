@@ -391,7 +391,7 @@ class Notifications_Controller extends Base_Controller {
 				// #jt-badges anchor = the profile badges section (Pro custom-badges).
 				// Mirrors templates/views/notifications.php so the web page and the
 				// REST/app dropdown resolve badge notifications identically.
-				return \Jetonomy\get_profile_url( (int) $user->ID ) . '#jt-badges';
+				return \Jetonomy\get_profile_action_url( 'badges', (int) $user->ID );
 			}
 			return '';
 		}

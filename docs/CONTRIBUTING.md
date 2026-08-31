@@ -2,17 +2,17 @@
 
 ## Branch Workflow
 
-All work happens on version branches (e.g. `v1.3.0`). **Never develop on `main`.**
+All work happens on version branches named for the release, without a `v` prefix (e.g. `1.9.4`). **Never develop on `main`.** Tags DO carry the prefix (`v1.9.4`); branches do not.
 
 ```
 main (production)
- └── v1.3.0 (current version branch)
+ └── 1.9.4 (current version branch)
       ├── feature/private-topics
       ├── fix/vote-state-indicator
       └── refactor/cache-layer
 ```
 
-1. Create feature branch off the version branch: `git checkout -b feature/my-feature v1.3.0`
+1. Create feature branch off the version branch: `git checkout -b feature/my-feature 1.9.4`
 2. Make changes, commit, push
 3. PR into the version branch (never directly into `main`)
 4. Version branch merges into `main` at release
@@ -131,7 +131,7 @@ Suites: `unit`, `integration`, `security`, `error-paths`, `concurrency`, `pro`.
 
 ## CI Pipeline
 
-GitHub Actions runs on push to `main`/`v*` branches and all PRs:
+GitHub Actions runs on push to `main` and version branches, and on all PRs:
 
 | Job | What it checks |
 |-----|----------------|

@@ -1,6 +1,6 @@
 Send a curated summary of community activity to members' inboxes - daily or weekly - so they never feel out of the loop.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Email digest preview showing top posts from the week](../images/pro-email-digest.png)
 ## What You Will Learn

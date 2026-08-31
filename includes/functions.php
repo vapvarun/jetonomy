@@ -49,35 +49,92 @@ function current_url(): string {
 }
 
 /**
- * The site owner's label for a "Space" (e.g. Space, Forum, Discussion, Channel).
+ * The renamable product nouns and their translated defaults [singular, plural].
  *
- * Single source of truth for the noun so an owner can rename Spaces everywhere
- * from Settings → General. Falls back to the translated default when no custom
- * label is set. Developers can override per context via `jetonomy_space_label`.
+ * Product NOUNS only - never verbs like Save/Delete. Called at runtime (not a
+ * static const) so __() resolves after the textdomain is loaded.
+ *
+ * @return array<string, array{0:string,1:string}>
+ */
+function label_defaults(): array {
+	return array(
+		'space'    => array( __( 'Space', 'jetonomy' ), __( 'Spaces', 'jetonomy' ) ),
+		'topic'    => array( __( 'Topic', 'jetonomy' ), __( 'Topics', 'jetonomy' ) ),
+		'reply'    => array( __( 'Reply', 'jetonomy' ), __( 'Replies', 'jetonomy' ) ),
+		'member'   => array( __( 'Member', 'jetonomy' ), __( 'Members', 'jetonomy' ) ),
+		'category' => array( __( 'Category', 'jetonomy' ), __( 'Categories', 'jetonomy' ) ),
+	);
+}
+
+/**
+ * The site owner's label for a product noun (Space, Topic, Reply, Member,
+ * Category), e.g. Space -> Forum/Channel, Topic -> Thread, Member -> Player.
+ *
+ * Single source of truth for the nouns so an owner can rename them everywhere
+ * from Settings → General. Reads {noun}_label_singular / {noun}_label_plural
+ * from jetonomy_settings and falls back to the translated default. Both forms
+ * are stored explicitly - we never auto-pluralise, because that breaks the
+ * moment an owner types an irregular noun ("Person" -> "Persons").
+ *
+ * A custom label bypasses translation (a German site with an English custom
+ * label renders mixed language). That trade is inherent to the feature and is
+ * called out in the settings field help.
+ *
+ * @param string $noun   One of: space, topic, reply, member, category. Unknown
+ *                        nouns fall back to 'space' rather than fatal.
+ * @param bool   $plural True for the plural form.
+ * @param bool   $lower  True to lowercase (mid-sentence use, e.g. "join this space").
+ * @return string
+ */
+function jetonomy_label( string $noun, bool $plural = false, bool $lower = false ): string {
+	$defaults = label_defaults();
+	$noun     = strtolower( $noun );
+	if ( ! isset( $defaults[ $noun ] ) ) {
+		$noun = 'space';
+	}
+
+	$settings = get_option( 'jetonomy_settings', array() );
+	$key      = $noun . ( $plural ? '_label_plural' : '_label_singular' );
+	$custom   = isset( $settings[ $key ] ) ? trim( (string) $settings[ $key ] ) : '';
+
+	$label = '' !== $custom ? $custom : $defaults[ $noun ][ $plural ? 1 : 0 ];
+
+	/**
+	 * Filter any product-noun label.
+	 *
+	 * @param string $label  Resolved label.
+	 * @param string $noun   The noun key (space|topic|reply|member|category).
+	 * @param bool   $plural Plural form requested.
+	 * @param bool   $lower  Lowercase requested.
+	 */
+	$label = (string) apply_filters( 'jetonomy_label', $label, $noun, $plural, $lower );
+
+	// Back-compat: the Space label predates the generic filter and shipped its
+	// own. Keep it firing so existing jetonomy_space_label consumers still work.
+	if ( 'space' === $noun ) {
+		/**
+		 * Filter the Space label. $plural/$lower give context for per-surface tweaks.
+		 *
+		 * @param string $label  Resolved label.
+		 * @param bool   $plural Plural form requested.
+		 * @param bool   $lower  Lowercase requested.
+		 */
+		$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
+	}
+
+	return $lower ? mb_strtolower( $label ) : $label;
+}
+
+/**
+ * The site owner's label for a "Space". Back-compat wrapper over jetonomy_label()
+ * kept so all existing space_label() call sites (150+) keep working untouched.
  *
  * @param bool $plural True for the plural form.
  * @param bool $lower  True to lowercase (for mid-sentence use, e.g. "join this space").
  * @return string
  */
 function space_label( bool $plural = false, bool $lower = false ): string {
-	$settings = get_option( 'jetonomy_settings', [] );
-	$key      = $plural ? 'space_label_plural' : 'space_label_singular';
-	$custom   = isset( $settings[ $key ] ) ? trim( (string) $settings[ $key ] ) : '';
-
-	$label = '' !== $custom
-		? $custom
-		: ( $plural ? __( 'Spaces', 'jetonomy' ) : __( 'Space', 'jetonomy' ) );
-
-	/**
-	 * Filter the Space label. $plural/$lower give context for per-surface tweaks.
-	 *
-	 * @param string $label  Resolved label.
-	 * @param bool   $plural Plural form requested.
-	 * @param bool   $lower  Lowercase requested.
-	 */
-	$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
-
-	return $lower ? mb_strtolower( $label ) : $label;
+	return jetonomy_label( 'space', $plural, $lower );
 }
 
 function now(): string {
@@ -108,7 +165,8 @@ function compose_label( string $space_type ): string {
 			$label = __( 'New Status', 'jetonomy' );
 			break;
 		default:
-			$label = __( 'New Topic', 'jetonomy' );
+			/* translators: %s: the singular label of the item (the configured noun). */
+			$label = sprintf( __( 'New %s', 'jetonomy' ), jetonomy_label( 'topic' ) );
 			break;
 	}
 
@@ -429,22 +487,35 @@ function display_name_choices( \WP_User $user ): array {
 }
 
 /**
+ * How members are identified across the community.
+ *
+ * One reader for the setting so the templates, REST and CLI cannot disagree -
+ * which is exactly what happened with the jetonomy_user_display_name filter,
+ * whose own docblock admits it "does not affect REST/CLI payloads". A site
+ * using that filter shows handles on the web and display names in the app.
+ *
+ * @return string 'display_name' | 'handle' | 'both'.
+ */
+function name_display_mode(): string {
+	$settings = get_option( 'jetonomy_settings', array() );
+	$mode     = isset( $settings['member_name_display'] ) ? (string) $settings['member_name_display'] : 'display_name';
+
+	return in_array( $mode, array( 'display_name', 'handle', 'both' ), true ) ? $mode : 'display_name';
+}
+
+/**
  * The name to show for a member on any display surface.
  *
  * THE single source of truth for "what do we call this person on screen",
  * paired with get_profile_url() for "where does their name link to". Every
- * byline, member row, mention chip, and moderation card resolves through here,
- * so a site that wants handles instead of real names changes one filter rather
- * than hunting ~40 templates.
+ * byline, member row, mention chip, moderation card AND the REST/CLI payloads
+ * resolve through here (migration 1_9_4_1 routed the data surfaces in too), so
+ * the site-wide member_name_display setting and the jetonomy_user_display_name
+ * filter apply once, uniformly - web and app can no longer disagree.
  *
  * Default chain is display_name -> user_nicename -> user_login. The fallbacks
  * matter: display_name can be empty on users created by an importer or a raw
  * SQL insert, and an empty byline reads as a broken row.
- *
- * NOT for API/CLI payloads. Those carry the canonical stored value and must not
- * vary with a site's display preference, for the same reason
- * Trust_Levels::name() is separate from label() - a client comparing the value
- * would break. Filter the display surface, not the data surface.
  *
  * @param int|\WP_User|object $user User ID, WP_User, or a row from one of our own
  *                                  tables carrying user_id (or ID).
@@ -476,11 +547,58 @@ function user_display_name( $user ): string {
 		$name = (string) $user->user_login;
 	}
 
+	/*
+	 * Site-owner choice of how members are identified.
+	 *
+	 * display_name is NOT unique - WordPress lets any number of accounts share
+	 * one, and a community with two "Alex Rivera" bylines gives a reader
+	 * nothing to tell them apart. user_nicename is unique (WP enforces it) and
+	 * is already the handle @mentions resolve against, so it is the honest
+	 * identifier; it is just never shown outside the mention picker.
+	 *
+	 * Default stays 'display_name' so nothing changes on update. Applied here,
+	 * BEFORE the filter below, so a developer override still wins over the
+	 * setting rather than the other way round.
+	 */
+	$handle = (string) $user->user_nicename;
+	switch ( name_display_mode() ) {
+		case 'handle':
+			if ( '' !== trim( $handle ) ) {
+				$name = '@' . $handle;
+			}
+			break;
+		case 'both':
+			// Skip the suffix when it would just repeat the name - a member
+			// whose display_name IS their nicename does not need "bob @bob".
+			if ( '' !== trim( $handle ) && strcasecmp( $name, $handle ) !== 0 ) {
+				$name = $name . ' @' . $handle;
+			}
+			break;
+		default:
+			// 'display_name' mode (the default). WordPress does not make
+			// display_name unique, so two accounts can both read "Alex
+			// Rivera" and leave a reader nothing to tell them apart. Append
+			// the unique handle ONLY when this name is actually shared on the
+			// site - names that collide with no one are left untouched, so
+			// most communities never see an @handle they did not ask for.
+			if (
+				'' !== trim( $handle )
+				&& strcasecmp( $name, $handle ) !== 0
+				&& '' !== trim( (string) $user->display_name )
+				&& $name === (string) $user->display_name
+				&& display_name_is_shared( $name )
+			) {
+				$name = $name . ' @' . $handle;
+			}
+			break;
+	}
+
 	/**
 	 * Filter the name shown for a member on display surfaces.
 	 *
 	 * Return $user->user_nicename to show handles, $user->user_login to show
-	 * usernames, or compose anything else. Does not affect REST/CLI payloads.
+	 * usernames, or compose anything else. Applies uniformly across web, REST
+	 * and CLI - every surface routes through user_display_name().
 	 *
 	 * @since 1.9.3
 	 *
@@ -491,16 +609,66 @@ function user_display_name( $user ): string {
 }
 
 /**
- * Get the profile URL for a user.
+ * Whether a member's display_name is shared by another account on this site.
  *
- * Returns the Jetonomy profile URL by default, but can be filtered
- * to point to BuddyPress, BuddyBoss, Ultimate Member, or any other
- * profile system.
+ * WordPress does not make display_name unique; user_display_name() appends the
+ * unique @handle for the members whose name actually collides. Backed by a
+ * cached set (see colliding_display_names()) so a member list of N rows costs
+ * one lookup, not N queries.
+ *
+ * @param string $display_name The name being rendered.
+ * @return bool True when 2+ accounts share this display_name.
+ */
+function display_name_is_shared( string $display_name ): bool {
+	$key = strtolower( trim( $display_name ) );
+
+	return '' !== $key && isset( colliding_display_names()[ $key ] );
+}
+
+/**
+ * The set of display_names shared by 2+ accounts, keyed lower-cased for O(1)
+ * lookup. Cached in a transient (object-cache-backed when a persistent drop-in
+ * is present, DB-backed otherwise) and busted whenever a user is registered,
+ * renamed or removed - see the $bust_user_row hook in class-jetonomy.php.
+ *
+ * @return array<string,bool> Map of lower-cased colliding display_name => true.
+ */
+function colliding_display_names(): array {
+	$cached = get_transient( 'jetonomy_display_name_collisions' );
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+
+	global $wpdb;
+	// ponytail: one unindexed GROUP BY scan of wp_users, cached until a user is
+	// added/renamed/removed. Fine at community scale; if a site ever reaches
+	// millions of users, maintain a collisions table on the user-write path.
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = $wpdb->get_col(
+		"SELECT LOWER(TRIM(display_name)) FROM {$wpdb->users}
+		 WHERE display_name <> ''
+		 GROUP BY LOWER(TRIM(display_name)) HAVING COUNT(*) > 1"
+	);
+
+	$set = array_fill_keys( array_map( 'strval', (array) $rows ), true );
+	set_transient( 'jetonomy_display_name_collisions', $set, DAY_IN_SECONDS );
+
+	return $set;
+}
+
+/**
+ * Jetonomy's OWN community profile URL for a user - the internal
+ * /{base}/u/{login}/ route, NEVER routed off-site.
+ *
+ * This is the base for Jetonomy-owned surfaces (the edit form, notification
+ * settings, the badges section, digest preferences). To LINK TO a member's
+ * profile - which a site may deliberately route to BuddyPress / BuddyNext /
+ * Ultimate Member - use get_profile_url() instead.
  *
  * @param int $user_id The user ID.
- * @return string The profile URL.
+ * @return string The URL, or '' when the user does not exist.
  */
-function get_profile_url( int $user_id ): string {
+function community_profile_url( int $user_id ): string {
 	$user = get_userdata( $user_id );
 	if ( ! $user ) {
 		return '';
@@ -508,9 +676,28 @@ function get_profile_url( int $user_id ): string {
 
 	$settings  = get_option( 'jetonomy_settings', [] );
 	$base_slug = $settings['base_slug'] ?? 'community';
-	// rawurlencode because a login may legally contain a space or non-ASCII;
-	// most call sites that hand-built this URL already did, the helper did not.
-	$default = home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
+	// rawurlencode because a login may legally contain a space or non-ASCII.
+	return home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
+}
+
+/**
+ * Get the profile URL for a user - i.e. where this member's PROFILE lives.
+ *
+ * Returns Jetonomy's own profile URL by default, but is filterable to point at
+ * BuddyPress, BuddyBoss, Ultimate Member or any other profile system. Use this
+ * to LINK TO a member (byline, avatar, "view profile"). For Jetonomy's OWN
+ * edit/settings/badges/digest screens use get_profile_action_url() - those must
+ * not follow this filter off-site (Zoho #41491).
+ *
+ * @param int $user_id The user ID.
+ * @return string The profile URL.
+ */
+function get_profile_url( int $user_id ): string {
+	$default = community_profile_url( $user_id );
+	if ( '' === $default ) {
+		return '';
+	}
+	$user = get_userdata( $user_id );
 
 	/**
 	 * Filter the user profile URL.
@@ -522,7 +709,57 @@ function get_profile_url( int $user_id ): string {
 	 * @param int    $user_id The user ID.
 	 * @param object $user    The WP_User object.
 	 */
-	return apply_filters( 'jetonomy_profile_url', $default, $user_id, $user );
+	return (string) apply_filters( 'jetonomy_profile_url', $default, $user_id, $user );
+}
+
+/**
+ * URL of a Jetonomy-OWNED profile action screen (edit, notification settings,
+ * badges, digest preferences).
+ *
+ * These live on Jetonomy's own community route, so they are built on the
+ * UNFILTERED community_profile_url() and never break when a site routes member
+ * profiles off-site via jetonomy_profile_url (Zoho #41491: the Notifications
+ * Settings button used to land at <foreign-profile>/edit/#notification-preferences,
+ * a page that does not exist).
+ *
+ * Each action is INDEPENDENTLY remappable via the jetonomy_profile_action_url
+ * filter, so an integration (BuddyNext, BuddyPress, Ultimate Member) can later
+ * route, say, notification settings to its own screen while leaving the rest on
+ * Jetonomy - per action, not all-or-nothing.
+ *
+ * @param string $action  One of: profile, edit, notification-settings, badges, digest.
+ * @param int    $user_id The user ID.
+ * @return string The URL, or '' when the user does not exist.
+ */
+function get_profile_action_url( string $action, int $user_id ): string {
+	$base = community_profile_url( $user_id );
+	if ( '' === $base ) {
+		return '';
+	}
+
+	$suffixes = array(
+		'profile'               => '',
+		'edit'                  => 'edit/',
+		'notification-settings' => 'edit/#notification-preferences',
+		'badges'                => '#jt-badges',
+		'digest'                => '#digest-preferences',
+	);
+	$url      = $base . ( $suffixes[ $action ] ?? '' );
+
+	/**
+	 * Filter a Jetonomy-owned profile-action deep-link.
+	 *
+	 * Return your own URL to route a specific action to a foreign profile system
+	 * (BuddyNext, BuddyPress, Ultimate Member). $action is a stable key - branch
+	 * on it to remap only the screens your integration provides and let the rest
+	 * stay on Jetonomy.
+	 *
+	 * @since 1.9.4
+	 * @param string $url     Default Jetonomy-owned action URL.
+	 * @param string $action  Action key (profile|edit|notification-settings|badges|digest).
+	 * @param int    $user_id The user ID.
+	 */
+	return (string) apply_filters( 'jetonomy_profile_action_url', $url, $action, $user_id );
 }
 
 /**

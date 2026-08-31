@@ -8,7 +8,7 @@ Most WordPress forum plugins do one thing: threaded discussions. Jetonomy gives 
 
 It is built WordPress-first (custom database tables, the WordPress REST API, real-time updates with no page reload, and theme colors that adapt automatically) so it scales from a handful of members to a community with tens of thousands of topics without slowing down the rest of your site.
 
-> **Try a live Jetonomy community before you commit** - Wbcom runs its own public support community on Jetonomy at [community.wbcomdesigns.com](https://community.wbcomdesigns.com/). Browse spaces, read real support threads, and get a feel for the voting, trust-level badges, reply threading, and moderation flow on a production site.
+> **Try Jetonomy before you commit** - launch a [free sandbox site](https://app.instawp.io/launch?s=jetonomy&d=v2) in your browser. Nothing to install. You get a throwaway Jetonomy install to click around in, so you can see how spaces, topics, threaded replies and voting actually behave rather than reading about them. It is a disposable demo, not a live community - post whatever you like, it is not permanent.
 
 ## Who Jetonomy Is For
 

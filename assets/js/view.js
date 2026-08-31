@@ -43,7 +43,15 @@ function jetonomyConfirm( message ) {
 	} );
 }
 
-function jetonomyPrompt( message, placeholder ) {
+function jetonomyPrompt( message, options ) {
+	// Back-compat: every caller before 1.9.4 passed a plain placeholder string.
+	const opts = 'string' === typeof options ? { placeholder: options } : ( options || {} );
+	// requireMatch turns this into a type-to-confirm gate: the submit button
+	// stays disabled until the typed text matches exactly. Used for actions
+	// with no undo, so the weight of the confirmation matches the weight of
+	// the action - the same contract admin.js already uses for space purge.
+	const requireMatch = opts.requireMatch ? String( opts.requireMatch ) : '';
+
 	return new Promise( ( resolve ) => {
 		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
@@ -54,10 +62,18 @@ function jetonomyPrompt( message, placeholder ) {
 		msg.className = 'jt-modal-msg';
 		msg.textContent = message;
 		box.appendChild( msg );
-		const input = document.createElement( 'textarea' );
+		// A single-line field when confirming a name: you are copying a label,
+		// not composing a message, and a 3-row textarea invites newlines that
+		// then fail the exact match.
+		const input = document.createElement( requireMatch ? 'input' : 'textarea' );
 		input.className = 'jt-modal-input jt-input';
-		input.placeholder = placeholder || '';
-		input.rows = 3;
+		input.placeholder = opts.placeholder || '';
+		if ( requireMatch ) {
+			input.type = 'text';
+			input.autocomplete = 'off';
+		} else {
+			input.rows = 3;
+		}
 		box.appendChild( input );
 		const actions = document.createElement( 'div' );
 		actions.className = 'jt-modal-actions';
@@ -66,9 +82,18 @@ function jetonomyPrompt( message, placeholder ) {
 		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
 		const okBtn = document.createElement( 'button' );
-		okBtn.className = 'jt-btn jt-btn-fill';
-		okBtn.textContent = t.modalSubmit || 'Submit';
+		okBtn.className = 'jt-btn jt-btn-fill' + ( opts.danger ? ' jt-btn-danger' : '' );
+		okBtn.textContent = opts.confirmLabel || t.modalSubmit || 'Submit';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( input.value.trim() ); } );
+		if ( requireMatch ) {
+			okBtn.disabled = true;
+			input.addEventListener( 'input', () => {
+				okBtn.disabled = input.value.trim() !== requireMatch;
+			} );
+			input.addEventListener( 'keydown', ( e ) => {
+				if ( 'Enter' === e.key && ! okBtn.disabled ) { okBtn.click(); }
+			} );
+		}
 		actions.appendChild( cancelBtn );
 		actions.appendChild( okBtn );
 		box.appendChild( actions );
@@ -923,7 +948,30 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     region.focus( { preventScroll: true } );
                 }
-                window.scrollTo( 0, 0 );
+                // Honour a destination fragment (#notification-preferences,
+                // #jt-badges, #digest-preferences, …) on soft navigation. A full
+                // page load scrolls to the hash automatically; a region swap does
+                // NOT, so without this EVERY in-app deep-link with a fragment
+                // landed at the top of the new page (Basecamp 10244152181 - the
+                // Notifications "Settings" button). scroll-margin-top on the
+                // target clears the sticky header. Falls back to top when there
+                // is no fragment or nothing matches.
+                var jtHash = window.location.hash;
+                var jtScrolled = false;
+                if ( jtHash && jtHash.length > 1 ) {
+                    try {
+                        var jtTarget = document.querySelector( jtHash );
+                        if ( jtTarget ) {
+                            jtTarget.scrollIntoView();
+                            jtScrolled = true;
+                        }
+                    } catch ( e ) {
+                        // Malformed selector in the hash - ignore, fall back to top.
+                    }
+                }
+                if ( ! jtScrolled ) {
+                    window.scrollTo( 0, 0 );
+                }
                 document.querySelectorAll( '.jt-community-nav-links a, .jt-mobile-tabs a' ).forEach( ( a ) => {
                     a.classList.toggle( 'active', a.pathname === window.location.pathname );
                 } );
@@ -3147,6 +3195,148 @@ const { state, actions } = store( 'jetonomy', {
                 const msg = document.createElement( 'div' );
                 msg.className = 'jt-empty-text';
                 msg.textContent = i18n.queueClean || 'Queue cleared.';
+                wrapper.appendChild( msg );
+                container.parentNode.replaceChild( wrapper, container );
+            }
+        },
+
+        // ── Space danger zone (1.9.4) ──
+        // DELETE /spaces/{id} already supported both modes and enforced
+        // allow_space_admin_purge; nothing on the frontend called it, so the
+        // setting promised space admins something only wp-admin could deliver.
+        *deleteSpace() {
+            const btn = getElement().ref;
+            const id   = parseInt( btn.getAttribute( 'data-space-id' ), 10 );
+            const mode = btn.getAttribute( 'data-mode' ) || 'transfer';
+            if ( ! id ) return;
+
+            const i18n    = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const title   = btn.getAttribute( 'data-space-title' ) || '';
+            const message = btn.getAttribute( 'data-confirm' ) || '';
+            const section = btn.closest( '.jt-danger-zone' );
+            const errorEl = section && section.querySelector( '[data-jt-delete-error]' );
+
+            // Purge asks the admin to TYPE the space name; archive is a plain
+            // confirm. Matching the weight of the gate to the weight of the
+            // action is the point — the same split admin.js makes.
+            let confirmed;
+            if ( 'purge' === mode && title && 'function' === typeof window.jetonomyPrompt ) {
+                const typed = yield window.jetonomyPrompt( message, {
+                    requireMatch: title,
+                    placeholder: title,
+                    danger: true,
+                    confirmLabel: i18n.purgeConfirmLabel || 'Delete permanently',
+                } );
+                // null = cancelled. A mismatch cannot reach here (the button
+                // stays disabled) but re-check anyway: the dialog is
+                // convenience, never the control.
+                confirmed = null !== typed && String( typed ).trim() === title;
+            } else if ( 'function' === typeof window.jetonomyConfirm ) {
+                confirmed = yield window.jetonomyConfirm( message );
+            } else {
+                confirmed = false;
+            }
+            if ( ! confirmed ) return;
+
+            if ( errorEl ) { errorEl.hidden = true; errorEl.textContent = ''; }
+            const buttons = section ? section.querySelectorAll( '.jt-space-delete' ) : [ btn ];
+            buttons.forEach( ( b ) => { b.disabled = true; } );
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + id + '?mode=' + encodeURIComponent( mode ), {
+                method: 'DELETE',
+            } );
+
+            if ( ! res.ok ) {
+                buttons.forEach( ( b ) => { b.disabled = false; } );
+                if ( errorEl ) {
+                    // The route's own messages are written for humans — "No one
+                    // else can take over this space", "restricted to site
+                    // administrators" — so surface them rather than a generic.
+                    errorEl.textContent = ( res.data && res.data.message ) || i18n.error || 'Could not delete. Please try again.';
+                    errorEl.hidden = false;
+                } 
+                return;
+            }
+
+            // A purge is QUEUED, not immediate, so the space may still resolve
+            // for a moment. Leaving the admin on an edit form for a space that
+            // is draining is the wrong place to stand — send them to the
+            // community root for a purge, back to the space for an archive.
+            window.location.assign( btn.getAttribute( 'data-redirect' ) || '/' );
+        },
+
+        // ── Awaiting-approval queue (1.9.4) ──
+        // Posts to the SPACE-scoped route the card carries, not the site-wide
+        // /moderation/{action}/... one. The site-wide route requires the
+        // jetonomy_moderate capability, which a space moderator does not hold,
+        // so using it here would render Approve buttons that can only 403 for
+        // exactly the people the frontend queue exists to serve.
+        *moderateApproval() {
+            const btn  = getElement().ref;
+            const card = btn.closest( '.jt-mod-approval' );
+            if ( ! card ) return;
+
+            const action   = btn.getAttribute( 'data-action-name' );
+            const kind     = card.getAttribute( 'data-object-kind' );
+            const objectId = parseInt( card.getAttribute( 'data-object-id' ), 10 );
+            const endpoint = card.getAttribute( 'data-act-endpoint' );
+            if ( ! action || ! kind || ! objectId || ! endpoint ) return;
+
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+
+            // Reject is destructive, so its button carries data-confirm.
+            // Approve does not — it is the outcome the author already asked for.
+            const confirmMsg = btn.getAttribute( 'data-confirm' );
+            if ( confirmMsg && 'function' === typeof window.jetonomyConfirm ) {
+                const ok = yield window.jetonomyConfirm( confirmMsg );
+                if ( ! ok ) return;
+            }
+
+            const base = ( ( window.jetonomyData && window.jetonomyData.restBase ) || '' ).replace( /\/+$/, '' );
+            let path = endpoint + action + '/' + kind + '/' + objectId;
+            if ( base && 0 === path.indexOf( base ) ) path = path.slice( base.length );
+
+            const buttons = card.querySelectorAll( '.jt-mod-approve' );
+            buttons.forEach( ( b ) => { b.disabled = true; } );
+
+            const res = yield window.jetonomyRest.restFetch( path, { method: 'POST' } );
+            if ( ! res.ok ) {
+                // Re-enable rather than strand the row: the usual cause is another
+                // moderator having already handled it, and the message says so.
+                buttons.forEach( ( b ) => { b.disabled = false; } );
+                const existing = card.querySelector( '.jt-mod-flag-error' );
+                if ( existing ) existing.remove();
+                const p = document.createElement( 'p' );
+                p.className = 'jt-mod-flag-error';
+                p.setAttribute( 'role', 'alert' );
+                p.textContent = ( res.data && res.data.message ) || i18n.approvalFailed || 'Could not update this submission.';
+                card.appendChild( p );
+                return;
+            }
+
+            const container = card.parentNode;
+            card.remove();
+
+            // Keep the server-rendered counts honest without a reload: the header
+            // badge, this tab's count, and the active sub-tab's count all drop by
+            // one. Replace only the numeric run so localized text survives.
+            const decrement = ( el, removeAtZero ) => {
+                if ( ! el ) return;
+                const next = Math.max( 0, ( parseInt( el.getAttribute( 'data-count' ), 10 ) || parseInt( el.textContent, 10 ) || 0 ) - 1 );
+                if ( removeAtZero && next <= 0 ) { el.remove(); return; }
+                if ( el.hasAttribute( 'data-count' ) ) el.setAttribute( 'data-count', String( next ) );
+                el.textContent = el.textContent.replace( /\d+/, String( next ) );
+            };
+            decrement( document.querySelector( '.jt-held-count' ), true );
+            decrement( document.querySelector( '.jt-profile-tab.active .jt-tab-count' ), true );
+            decrement( document.querySelector( '.jt-subtab.active .jt-tab-count' ), false );
+
+            if ( container && ! container.querySelector( '.jt-mod-approval' ) && container.parentNode ) {
+                const wrapper = document.createElement( 'div' );
+                wrapper.className = 'jt-empty';
+                const msg = document.createElement( 'div' );
+                msg.className = 'jt-empty-text';
+                msg.textContent = i18n.approvalsClean || 'Nothing left awaiting approval.';
                 wrapper.appendChild( msg );
                 container.parentNode.replaceChild( wrapper, container );
             }

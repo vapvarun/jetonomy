@@ -1,6 +1,6 @@
 Connect WP Fusion CRM tags to Jetonomy spaces - when a member gains or loses a tag in your CRM, Jetonomy Pro adds or removes them from every linked space automatically. Joining a space can also apply tags back to the CRM, so the link runs both ways.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 Jetonomy spaces live in custom database tables, not WordPress posts, so WP Fusion's built-in content-restriction meta box does not reach them. This integration is the seam that connects a CRM tag to a space.
 

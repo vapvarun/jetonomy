@@ -1,6 +1,6 @@
 Activate your license, switch on the extensions you need, and understand which capabilities gate each Pro feature.
 
-> **PRO** - This section covers [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This section covers [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ## What You Will Learn
 
@@ -41,7 +41,7 @@ Disable an extension at any time from the same page. Disabling stops the feature
 | **Agency** | Builders running Pro across many client sites |
 | **Lifetime** | One-time purchase with ongoing updates |
 
-All seventeen extensions are available on the paid tiers. Higher tiers raise the activation limits (number of sites) and support level rather than locking individual features behind a paywall. The exact site limits per tier are listed on your account page and on the [pricing page](https://jetonomy.com/pro/).
+All seventeen extensions are available on the paid tiers. Higher tiers raise the activation limits (number of sites) and support level rather than locking individual features behind a paywall. The exact site limits per tier are listed on your account page and on the [pricing page](https://jetonomy.org/pricing/).
 
 ## Capabilities
 

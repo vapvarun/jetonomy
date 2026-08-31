@@ -9,8 +9,6 @@ namespace Jetonomy\Adapters;
 
 defined( 'ABSPATH' ) || exit;
 
-use Jetonomy\Models\AccessRule;
-use Jetonomy\Models\SpaceMember;
 
 class PMPro_Adapter implements Membership_Adapter {
 
@@ -121,39 +119,12 @@ class PMPro_Adapter implements Membership_Adapter {
 	public function on_level_change( int $level_id, int $user_id, $cancel_level = 0 ): void {
 		// If new level assigned, activate
 		if ( $level_id > 0 ) {
-			$this->sync_spaces_for_level( $user_id, 'pmpro_' . $level_id, true );
 			do_action( 'jetonomy_membership_activated', $user_id, 'pmpro_' . $level_id, 'pmpro' );
 		}
 
 		// If old level cancelled, deactivate
 		if ( $cancel_level > 0 ) {
-			$this->sync_spaces_for_level( $user_id, 'pmpro_' . $cancel_level, false );
 			do_action( 'jetonomy_membership_deactivated', $user_id, 'pmpro_' . $cancel_level, 'pmpro' );
-		}
-	}
-
-	private function sync_spaces_for_level( int $user_id, string $level_id, bool $activate ): void {
-		global $wpdb;
-
-		$table = \Jetonomy\table( 'access_rules' );
-		$rules = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE rule_type = 'membership' AND rule_value = %s",
-				$level_id
-			)
-		);
-
-		foreach ( $rules as $rule ) {
-			if ( $activate ) {
-				$result = SpaceMember::add( (int) $rule->space_id, $user_id, AccessRule::cap_space_role( $rule->grants ?? 'read', $rule->space_role ?? 'member', 'membership' ) );
-				if ( is_wp_error( $result ) ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( '[Jetonomy] PMPro adapter: failed to add user ' . $user_id . ' to space ' . $rule->space_id . ' — ' . $result->get_error_message() );
-					continue;
-				}
-			} else {
-				SpaceMember::remove( (int) $rule->space_id, $user_id );
-			}
 		}
 	}
 }

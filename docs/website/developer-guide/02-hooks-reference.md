@@ -104,6 +104,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_space_pending_requests_shown`<br>_filter_ | - | - | `templates/views/space-members.php` |
 | `jetonomy_space_role_permissions`<br>_filter_ | Filter the permissions granted to a space role. | `permissions, role` | `includes/permissions/class-permission-engine.php` |
 | `jetonomy_space_tabs`<br>_filter_ | Add, remove, reorder, or relabel the tabs on a space page. | `$tabs, $space, $show_members` | `templates/views/space.php` |
+| `jetonomy_spaces_per_page`<br>_filter_ | How many spaces a directory page renders before Load More. Default 24. Applies to the community home's uncategorized grid and to category pages, both of which rendered every space with no limit before 1.9.4. | `24` | `templates/views/home.php`, `templates/views/category.php` |
 | `jetonomy_spaces_query_args`<br>_filter_ | Filter space query parameters before execution. | - | `includes/models/class-space.php` |
 | `jetonomy_use_frontend_space_edit`<br>_filter_ | Default true since G5 shipped in 1.4.0. | `use_frontend` | `includes/functions.php` |
 | `jetonomy_user_joined_space`<br>_action_ | - | `user_id, space_id` | `includes/models/class-space-member.php` |

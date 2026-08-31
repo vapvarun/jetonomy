@@ -64,7 +64,11 @@ class UserJourneyTest extends WP_UnitTestCase {
 		$profile = UserProfile::find_by_user( $user_id );
 		$this->assertNotNull( $profile );
 		$this->assertSame( 2, (int) $profile->trust_level );
-		$this->assertSame( 'Journey Alice', (string) $profile->display_name );
+		// display_name lives on wp_users, not on the profile row. Asserting it
+		// here used to pass against jt_user_profiles.display_name — a column
+		// nothing read, so the test proved the name was stored somewhere no
+		// byline would ever look.
+		$this->assertSame( 'Journey Alice', (string) get_userdata( $user_id )->display_name );
 	}
 
 	public function test_create_fails_when_login_or_email_missing(): void {
@@ -155,7 +159,9 @@ class UserJourneyTest extends WP_UnitTestCase {
 
 		$profile = UserProfile::find_by_user( $this->user_id );
 		$this->assertSame( 'hello', (string) $profile->bio );
-		$this->assertSame( 'UJ Test', (string) $profile->display_name );
+		// Routed to wp_users: `--display-name` now changes what people see,
+		// where before it wrote a profile column no byline read.
+		$this->assertSame( 'UJ Test', (string) get_userdata( $this->user_id )->display_name );
 		// trust_level remained at the default 0, not 5.
 		$this->assertSame( 0, (int) $profile->trust_level );
 	}

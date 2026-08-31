@@ -89,7 +89,7 @@ Jetonomy Free includes:
 - bbPress/wpForo import
 - Full-text search + SEO
 
-Jetonomy Pro adds 14 modules: AI integration, messaging, polls, reactions, analytics, badges, email digest, webhooks, and more.
+Jetonomy Pro adds 17 modules: AI integration, messaging, polls, reactions, analytics, badges, email digest, webhooks, and more.
 
 Free at wbcomdesigns.com. Pro also at wbcomdesigns.com.
 
@@ -103,7 +103,7 @@ https://wbcomdesigns.com/downloads/jetonomy/
 
 Jetonomy for developers:
 
-- 48+ REST API endpoints (jetonomy/v1)
+- 80 REST API endpoints (jetonomy/v1)
 - Cursor-based pagination on every list
 - 3-layer permission engine (WP Caps + Space Roles + Trust Levels)
 - Template overrides via theme/jetonomy/
@@ -158,13 +158,13 @@ What's in v1.0:
 
 - Forum, Q&A, and Ideas space types
 - Three-layer permission system (WordPress roles, per-space roles, trust levels)
-- 48+ REST API endpoints with cursor pagination
+- 80 REST API endpoints with cursor pagination
 - WordPress Interactivity API frontend - SEO-friendly, no jQuery
 - Schema.org markup for every page type
 - bbPress and wpForo importer
 - WordPress Abilities API support - AI agents can discover and operate your community
 
-The free plugin is at wbcomdesigns.com. Jetonomy Pro (14 modules including AI integration, messaging, analytics, polls, and badges) is also at wbcomdesigns.com.
+The free plugin is at wbcomdesigns.com. Jetonomy Pro (17 modules including AI integration, messaging, analytics, polls, and badges) is also at wbcomdesigns.com.
 
 If you're building community features on WordPress, I'd love to hear what you think.
 

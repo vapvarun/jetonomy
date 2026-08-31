@@ -11,6 +11,12 @@
  *                            Example: "/wp-json/jetonomy/v1/spaces/2/moderation/flags/"
  *                            The JS appends "{id}/resolve".
  *   string $base             Jetonomy base URL for content links.
+ *   object $context          Optional. The row's entry from
+ *                            Moderation_Service::flag_context(), carrying a
+ *                            pre-resolved permalink. Callers rendering a LIST
+ *                            should always pass it: without it this partial
+ *                            falls back to resolving the permalink itself,
+ *                            which is one query per card.
  *
  * @package Jetonomy
  */
@@ -39,9 +45,15 @@ $reason_text = $reason_labels[ $flag->reason ] ?? $flag->reason;
 // Deliberately NOT block-filtered anywhere on this card or the moderation
 // queue it belongs to: a blocked user's flagged content MUST still reach
 // moderators. Hard rule — never filter moderation.
-// Resolve deep link to the flagged object.
-$object_url = '';
-if ( 'post' === $flag->object_type ) {
+//
+// Deep link to the flagged object. Prefer the caller's batched context: the
+// per-card join below is correct but is one query per row, which is ~25 on a
+// full queue page and grew with nothing but the page size, so it stayed
+// invisible until someone opened a busy queue. The fallback is kept because
+// this partial is public API for anyone rendering a single card.
+$object_url = isset( $context->permalink ) ? (string) $context->permalink : '';
+
+if ( '' === $object_url && 'post' === $flag->object_type ) {
 	global $wpdb;
 	$posts_tbl  = \Jetonomy\table( 'posts' );
 	$spaces_tbl = \Jetonomy\table( 'spaces' );
@@ -59,7 +71,7 @@ if ( 'post' === $flag->object_type ) {
 	if ( $row ) {
 		$object_url = $base . '/s/' . $row->space_slug . '/t/' . $row->slug . '/';
 	}
-} elseif ( 'reply' === $flag->object_type ) {
+} elseif ( '' === $object_url && 'reply' === $flag->object_type ) {
 	global $wpdb;
 	$replies_tbl = \Jetonomy\table( 'replies' );
 	$posts_tbl   = \Jetonomy\table( 'posts' );

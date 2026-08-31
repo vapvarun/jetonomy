@@ -97,7 +97,7 @@ class Admin_Bar {
 					'parent' => 'jetonomy-community',
 					'id'     => 'jetonomy-community-edit-profile',
 					'title'  => __( 'Edit profile', 'jetonomy' ),
-					'href'   => esc_url( \Jetonomy\get_profile_url( (int) $user->ID ) . 'edit/' ),
+					'href'   => esc_url( \Jetonomy\get_profile_action_url( 'edit', (int) $user->ID ) ),
 				)
 			);
 		}

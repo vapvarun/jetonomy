@@ -8,7 +8,7 @@ How Jetonomy compares to bbPress - and why communities are switching to a modern
 - Where Jetonomy excels for growing communities
 - What bbPress still does well
 
-> **Try a live Jetonomy community before you commit** - Wbcom runs its own public support community on Jetonomy at [community.wbcomdesigns.com](https://community.wbcomdesigns.com/). Browse spaces, read real support threads, and get a feel for the voting, trust-level badges, reply threading, and moderation flow on a production site.
+> **Try Jetonomy before you commit** - launch a [free sandbox site](https://app.instawp.io/launch?s=jetonomy&d=v2) in your browser. Nothing to install. You get a throwaway Jetonomy install to click around in, so you can see how spaces, topics, threaded replies and voting actually behave rather than reading about them. It is a disposable demo, not a live community - post whatever you like, it is not permanent.
 
 ## Feature Comparison
 

@@ -206,7 +206,7 @@ a ready-to-paste system-cron command built from the site's own URL:
 | Reactive single-shot on earn + safety-net reconcile (6h, above hourly) | `jetonomy-pro/includes/extensions/custom-badges/class-extension.php` |
 | Bundled Action Scheduler (always present, fallback unneeded) | `jetonomy/jetonomy.php` (loads `libs/action-scheduler`) |
 
-**Known gaps (tracked, fix in 1.5.x):**
+**Known gaps — still open as of 1.9.4** (re-verified against code 2026-08-20; originally filed "fix in 1.5.x", carried unfixed through 1.5–1.9, so the milestone was dropped rather than moved again. Both are real; neither is scheduled):
 - **Cron-health Tools note (§4)** — not implemented in free or pro. Add a Tools
   status line that warns only when `DISABLE_WP_CRON` is set AND actions are overdue.
 - **AI batch reviewer idle-polls (§2 anti-pattern)** —

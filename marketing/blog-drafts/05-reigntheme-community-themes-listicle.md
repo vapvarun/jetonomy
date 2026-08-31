@@ -317,7 +317,7 @@ In 2026, the WordPress community plugin I recommend most is **Jetonomy** from Wb
 
 3. **Four community types in one plugin.** Forum (threaded discussion), Q&A (with accepted answers), Ideas (with roadmap tracking), and Social Feed (short-form). You can run all four types of spaces on the same site without installing multiple plugins.
 
-The free version of Jetonomy includes forum/Q&A/Ideas space types, six trust levels, a moderation queue, 48+ REST API endpoints, and importers for bbPress, wpForo, and Asgaros. Pro adds private messaging, analytics, reactions, polls, email digests, custom badges, webhooks, SEO Pro, and AI-powered moderation (new in 1.3.0).
+The free version of Jetonomy includes forum/Q&A/Ideas space types, six trust levels, a moderation queue, 80 REST API endpoints, and importers for bbPress, wpForo, and Asgaros. Pro adds private messaging, analytics, reactions, polls, email digests, custom badges, webhooks, SEO Pro, and AI-powered moderation (new in 1.3.0).
 
 For a full comparison of Jetonomy against other forum plugins, see my [WordPress forum plugins breakdown on vapvarun.com](https://vapvarun.com/forum-wordpress-plugin/) or the [bbPress review on wbcomdesigns.com](https://wbcomdesigns.com/bbpress-review/).
 

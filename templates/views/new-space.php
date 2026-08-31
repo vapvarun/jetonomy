@@ -61,7 +61,7 @@ $crumbs = array(
 		<?php else : ?>
 			<form id="jt-new-space-form" class="jt-form jt-card" data-wp-on--submit="actions.createSpace" data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>" data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-jt-community-base="<?php echo esc_url( $base ); ?>">
 				<div class="jt-form-row">
-					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+					<?php /* translators: %s: the singular label of the item (the configured noun). */ ?>
 					<label for="jt-ns-title"><?php echo esc_html( sprintf( __( '%s title', 'jetonomy' ), \Jetonomy\space_label() ) ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 					<input type="text" id="jt-ns-title" name="title" required maxlength="120" class="jt-input">
 					<p class="jt-form-help"><?php esc_html_e( 'Short, descriptive. What people will look for.', 'jetonomy' ); ?></p>
@@ -76,9 +76,9 @@ $crumbs = array(
 				<div class="jt-form-row">
 					<label for="jt-ns-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label>
 					<select id="jt-ns-type" name="type" class="jt-input">
-						<option value="forum" <?php selected( $default_type, 'forum' ); ?>><?php esc_html_e( 'Forum: discussions and replies', 'jetonomy' ); ?></option>
+						<option value="forum" <?php selected( $default_type, 'forum' ); ?>><?php printf( /* translators: %s: plural reply label. */ esc_html__( 'Forum: discussions and %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></option>
 						<option value="qa" <?php selected( $default_type, 'qa' ); ?>><?php esc_html_e( 'Q&A: questions with accepted answers', 'jetonomy' ); ?></option>
-						<option value="ideas" <?php selected( $default_type, 'ideas' ); ?>><?php esc_html_e( 'Ideas: feedback voted by members', 'jetonomy' ); ?></option>
+						<option value="ideas" <?php selected( $default_type, 'ideas' ); ?>><?php printf( /* translators: %s: plural member label. */ esc_html__( 'Ideas: feedback voted by %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></option>
 						<option value="feed" <?php selected( $default_type, 'feed' ); ?>><?php esc_html_e( 'Feed: short-form posts', 'jetonomy' ); ?></option>
 					</select>
 				</div>
@@ -100,17 +100,17 @@ $crumbs = array(
 				</div>
 
 				<div class="jt-form-row">
-					<label for="jt-ns-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></label>
+					<label for="jt-ns-category"><?php echo esc_html( \Jetonomy\jetonomy_label( 'category' ) ); ?></label>
 					<select id="jt-ns-category" name="category_id" class="jt-input">
-						<option value="0"><?php esc_html_e( 'No category', 'jetonomy' ); ?></option>
+						<option value="0"><?php printf( /* translators: %s: singular category label. */ esc_html__( 'No %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></option>
 						<?php foreach ( $categories as $cat ) : ?>
 							<option value="<?php echo absint( $cat->id ); ?>">
 								<?php echo esc_html( $cat->name ); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>
-					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %s under a top-level category on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+					<?php /* translators: 1: singular space label (e.g. space, group); 2: singular category label. */ ?>
+					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %1$s under a top-level %2$s on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></p>
 				</div>
 
 				<div class="jt-form-row">

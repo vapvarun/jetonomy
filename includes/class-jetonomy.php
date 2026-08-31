@@ -62,7 +62,13 @@ final class Jetonomy {
 			// The REST capabilities map (caps:{id}, plan WP4.13) derives from
 			// the user's roles — bust it alongside the row.
 			Cache::delete( 'caps:' . (int) $user_id );
+			// Registering, renaming or removing a user can create or clear a
+			// display_name collision, so the cached collision set (used by
+			// \Jetonomy\display_name_is_shared() to disambiguate bylines) is
+			// no longer trustworthy — drop it and let it recompute on read.
+			delete_transient( 'jetonomy_display_name_collisions' );
 		};
+		add_action( 'user_register', $bust_user_row );
 		add_action( 'profile_update', $bust_user_row );
 		add_action( 'deleted_user', $bust_user_row );
 		add_action( 'set_user_role', $bust_user_row );
@@ -663,6 +669,12 @@ final class Jetonomy {
 		// Local avatars — resolves jt_user_profiles.avatar_url for every
 		// get_avatar()/get_avatar_url() caller, Gravatar fallback.
 		Avatar::init();
+
+		// Puts paying members on the space roster. Access itself does NOT
+		// depend on this — Permission_Engine resolves membership rules live —
+		// so a failure here costs a Members-list entry, never someone's
+		// access.
+		Membership_Roster_Sync::init();
 
 		new Notifications\Notifier();
 		new Cron();

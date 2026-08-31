@@ -51,6 +51,42 @@ class AccessRule extends Model {
 	 * @param int $id Rule row ID.
 	 * @return bool|\WP_Error
 	 */
+	/**
+	 * Make a restrictive rule actually bite, by privatising a public space.
+	 *
+	 * A public space is always readable, and Permission_Engine stops non-members
+	 * on private/hidden spaces BEFORE rules are consulted. So a membership /
+	 * role / capability / trust-level rule attached to a PUBLIC space silently
+	 * does nothing - the owner configures a gate, sees no error, and the content
+	 * stays open. That is the "configured but content still accessible" report
+	 * (Basecamp 10000074550).
+	 *
+	 * Rather than fail the save, flip the space to Private so the rule means what
+	 * the owner clearly intended, and let the caller tell them it happened.
+	 *
+	 * Extracted to the model in 1.9.4 because the REST path added that release
+	 * would otherwise have reimplemented - or, more likely, omitted - it, and
+	 * recreated the exact bug the guard exists to prevent. One implementation,
+	 * two callers.
+	 *
+	 * @param int    $space_id  Space the rule was attached to.
+	 * @param string $rule_type Rule type just created.
+	 * @return bool True when the space was switched to Private.
+	 */
+	public static function enforce_gate_on_public_space( int $space_id, string $rule_type ): bool {
+		$restrictive = array( 'membership', 'role', 'capability', 'trust_level' );
+		if ( ! in_array( $rule_type, $restrictive, true ) ) {
+			return false;
+		}
+
+		$space = \Jetonomy\Models\Space::find( $space_id );
+		if ( ! $space || 'public' !== $space->visibility ) {
+			return false;
+		}
+
+		return (bool) \Jetonomy\Models\Space::update( $space_id, array( 'visibility' => 'private' ) );
+	}
+
 	public static function delete( int $id ): bool|\WP_Error {
 		$result = parent::delete( $id );
 		self::reset_memo();
@@ -137,6 +173,36 @@ class AccessRule extends Model {
 	 * @param string $rule_type  Rule type. Defaults to the membership adapters' type.
 	 * @return int[] Space IDs, ascending, unique.
 	 */
+	/**
+	 * Full rule rows for a level, not just the space ids.
+	 *
+	 * Callers that only need to point at the spaces should use
+	 * spaces_for_level(); that answers "which spaces" and is right for them.
+	 * only need to point at them. The roster sync also needs `grants` and
+	 * `space_role` to work out what role to write, and fetching the ids then
+	 * re-reading each space's rules to find them again would be the per-row
+	 * lookup this model exists to avoid.
+	 *
+	 * Reads the same indexed `(rule_type, rule_value)` key.
+	 *
+	 * @param string $rule_value Level identifier, e.g. 'pmpro_3'.
+	 * @param string $rule_type  Rule type. Defaults to the membership adapters' type.
+	 * @return object[] Rule rows, ascending by space id.
+	 */
+	public static function rules_for_level( string $rule_value, string $rule_type = 'membership' ): array {
+		if ( '' === $rule_value ) {
+			return [];
+		}
+
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE rule_type = %s AND rule_value = %s ORDER BY space_id ASC',
+				$rule_type,
+				$rule_value
+			)
+		) ?: [];
+	}
+
 	public static function spaces_for_level( string $rule_value, string $rule_type = 'membership' ): array {
 		if ( '' === $rule_value ) {
 			return [];

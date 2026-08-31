@@ -122,7 +122,7 @@ if ( $prefix_name && $space ) {
 			<?php endif; ?>
 			<?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?>
 			<?php if ( $has_unread ) : ?>
-				<span class="jt-unread-pill" aria-label="<?php esc_attr_e( 'You have unread replies', 'jetonomy' ); ?>">
+				<span class="jt-unread-pill" aria-label="<?php printf( /* translators: %s: plural reply label. */ esc_attr__( 'You have unread %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
 					<?php esc_html_e( 'New', 'jetonomy' ); ?>
 				</span>
 			<?php endif; ?>
@@ -161,7 +161,7 @@ if ( $prefix_name && $space ) {
 	</div>
 	<div class="jt-row-stat">
 		<div class="jt-row-stat-n"><?php echo (int) $post->reply_count; ?></div>
-		<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
+		<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
 	</div>
 	<div class="jt-row-stat">
 		<div class="jt-row-time">
