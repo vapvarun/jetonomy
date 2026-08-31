@@ -118,11 +118,33 @@ This controls how many hours after registration the reminder email is sent. The 
 
 **Settings → General → Member names**
 
-Off by default. When on, members cannot edit their first name, last name, nickname, or the name they display publicly. The Edit Profile page shows them the name they are published under instead of the fields, so nobody is offered a control that will not save.
+Choose how members are identified across the community:
 
-Turn this on if your community requires verified real names, or if you set names yourself when you create accounts. Administrators can still change any member's name from the WordPress Users screen.
+- **Display name only** - e.g. "Alex Rivera" (the default; nothing changes).
+- **Handle only** - e.g. "@alex-rivera".
+- **Both** - e.g. "Alex Rivera @alex-rivera".
 
-Members can never publish under a reserved name - "Administrator", "Support", "Moderator", your site's name and similar - whether this setting is on or off.
+Why it matters: a display name is not unique - WordPress lets any number of accounts share one, so two members called "Alex Rivera" look identical on every post. A handle is the member's unique username, and is already what @mentions resolve against. Choose **Both** when you want readable names that can still be told apart. Even on "Display name only", two members who happen to share a name are automatically shown with their @handle so nobody is mistaken for someone else.
+
+Members can never publish under a reserved name - "Administrator", "Support", "Moderator", your site's name and similar - whatever this setting is.
+
+## Terminology
+
+**Settings → General → Terminology**
+
+Rename the built-in words your community uses. Each of the five nouns has a singular and a plural field:
+
+| Default | Rename to (examples) |
+|---|---|
+| Space / Spaces | Group, Forum, Channel, Board |
+| Topic / Topics | Thread, Question, Discussion |
+| Reply / Replies | Comment, Answer, Response |
+| Member / Members | Player, Student, Customer |
+| Category / Categories | Board, Section |
+
+The labels you type are shown exactly as entered, everywhere the community renders that noun - on the front end, in the admin menu, and in the mobile app. Leave a field blank to keep the default.
+
+Note: a custom label bypasses translation, so on a non-English site an English custom label shows in English. Developers can override any label programmatically with the `jetonomy_label` filter (see the Developer Guide → Hooks Reference → Terminology).
 
 ## Deleting Spaces
 

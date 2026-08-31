@@ -105,6 +105,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_space_role_permissions`<br>_filter_ | Filter the permissions granted to a space role. | `permissions, role` | `includes/permissions/class-permission-engine.php` |
 | `jetonomy_space_tabs`<br>_filter_ | Add, remove, reorder, or relabel the tabs on a space page. | `$tabs, $space, $show_members` | `templates/views/space.php` |
 | `jetonomy_spaces_per_page`<br>_filter_ | How many spaces a directory page renders before Load More. Default 24. Applies to the community home's uncategorized grid and to category pages, both of which rendered every space with no limit before 1.9.4. | `24` | `templates/views/home.php`, `templates/views/category.php` |
+| `jetonomy_home_member_hint`<br>_filter_ | The one-line "where posting happens" hint shown to logged-in members on the community home so the root is not a dead end. Return an empty string to hide it, or reword it. Uses the configured space/topic/member labels by default. Added 1.9.4. | `string $hint` | `templates/views/home.php` |
 | `jetonomy_spaces_query_args`<br>_filter_ | Filter space query parameters before execution. | - | `includes/models/class-space.php` |
 | `jetonomy_use_frontend_space_edit`<br>_filter_ | Default true since G5 shipped in 1.4.0. | `use_frontend` | `includes/functions.php` |
 | `jetonomy_user_joined_space`<br>_action_ | - | `user_id, space_id` | `includes/models/class-space-member.php` |
@@ -119,12 +120,22 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_profile_edit_fields`<br>_action_ | Fires after the standard profile edit fields, before submit. | `user_id` | `templates/views/edit-profile.php` |
 | `jetonomy_profile_response`<br>_filter_ | Filter the user profile REST response. | `response, user` | `includes/api/class-users-controller.php` |
 | `jetonomy_profile_tabs`<br>_filter_ | Add, remove, reorder, or relabel the tabs shown under a member's profile header. | `$tabs, $user, $is_own` | `templates/views/user-profile.php` |
-| `jetonomy_profile_url`<br>_filter_ | Allows third-party plugins (BuddyPress, BuddyBoss, Ultimate Member) to override where user profile links point to. | `url, user_id` | `includes/functions.php` |
+| `jetonomy_profile_url`<br>_filter_ | Allows third-party plugins (BuddyPress, BuddyBoss, Ultimate Member) to override where a "view this member" link points to. | `url, user_id` | `includes/functions.php` |
+| `jetonomy_profile_action_url`<br>_filter_ | Override where Jetonomy's OWN profile deep-links point (edit profile, notification settings, badges, digest preferences). Separate from `jetonomy_profile_url` so these stay on the community profile even when member profiles are routed off-site to another plugin. Added 1.9.4. | `url, action, user_id` | `includes/functions.php` |
 | `jetonomy_display_name_choices`<br>_filter_ | The names a member may publish as. **Security boundary** - `PATCH /users/me` rejects anything not in this list, so never add unvalidated input. | `choices, user` | `includes/functions.php` |
 | `jetonomy_reserved_display_names`<br>_filter_ | Names nobody may publish as (admin, support, moderator, the site title...). Compared lowercased and whitespace-collapsed, exact match only. | `reserved, normalized` | `includes/functions.php` |
 | `jetonomy_user_display_name`<br>_filter_ | The name shown for a member on every display surface - bylines, member lists, the name beside an avatar. Return `user_nicename` to show handles instead of real names. Does **not** affect REST/CLI payloads. | `name, user` | `includes/functions.php` |
 | `jetonomy_user_handle`<br>_filter_ | The `@handle` shown for a member - typeahead, profile title, schema. **Must be paired with `jetonomy_resolve_mention_handles`**, or the composer offers a mention the parser cannot resolve. | `handle, user` | `includes/functions.php` |
 | `jetonomy_resolve_mention_handles`<br>_filter_ | Claim a typed `@handle` for a user before core fields are tried. This is how a partner plugin resolves its own custom profile slug. | `map, handles` | `includes/class-mentions.php` |
+
+## Terminology
+
+Owners rename the built-in nouns under Settings > General > Terminology (Space, Topic, Reply, Member, Category). These filters let a plugin override any label programmatically - e.g. to source the Member label from a BuddyPress/BuddyBoss profile component.
+
+| Hook | What it does | Args | Source |
+|---|---|---|---|
+| `jetonomy_label`<br>_filter_ | The resolved label for any product noun (`space`, `topic`, `reply`, `member`, `category`), after the owner's custom label and defaults are applied. The single seam every display surface routes through. Added 1.9.4. | `string $label, string $noun, bool $plural, bool $lower` | `includes/functions.php` |
+| `jetonomy_space_label`<br>_filter_ | Back-compat filter for the Space label only (predates `jetonomy_label`). Still fires for `space`, so existing consumers keep working. | `string $label, bool $plural, bool $lower` | `includes/functions.php` |
 
 ## Roadmap
 

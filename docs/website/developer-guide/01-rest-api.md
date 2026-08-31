@@ -65,6 +65,9 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | POST | `/spaces/{id}/invite` | Space admin | Generate an invite link |
 | GET | `/invite/{token}` | Public | Resolve an invite token |
 | GET | `/spaces/{id}/privileged-members` | Public | List admins and moderators of a space |
+| GET | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | List the membership access rules gating a space. Added 1.9.4. |
+| POST | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | Add an access rule (membership level / role / tag that grants access). Added 1.9.4. |
+| DELETE | `/spaces/{id}/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Added 1.9.4. |
 
 **GET /spaces - parameters**
 
@@ -276,6 +279,11 @@ const data = await res.json();
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/tags` | Public | List all global tags |
+| POST | `/tags` | `jetonomy_manage_settings` | Create a tag (name, optional slug/description). Added 1.9.4. |
+| PATCH | `/tags/{id}` | `jetonomy_manage_settings` | Rename or edit a tag. Added 1.9.4. |
+| DELETE | `/tags/{id}` | `jetonomy_manage_settings` | Delete a tag. Added 1.9.4. |
+
+> **New in 1.9.4:** tag create/rename/delete over REST, so tag management works from the app and from integrations instead of only inside wp-admin.
 
 > **Removed in 1.5.0:** the `GET /space-tags` route. It read tables that were never wired to any feature; tags have always been global. Existing integrations calling it receive a 404 and should switch to `GET /tags`.
 
@@ -452,6 +460,16 @@ The response `meta` carries `total`, `has_more`, `count`, `offset`, and `space_i
 **`avatar_display` (added in 1.7.0)**
 
 Every user object returned by `/users/me`, `/users/{id}`, and `/users/by-login/{login}` carries a read-only `avatar_display` field: the resolved URL a client should render. It is the member's `avatar_url` when set, otherwise the best available real avatar (uploaded, BuddyPress, or a hosted Gravatar). It is an empty string `''` when none of those exist - the signal for the client to render a generated initials avatar instead of a blank placeholder. `avatar_url` remains the writable field on `PATCH`; `avatar_display` is compute-only.
+
+**Viewer-relative moderation fields (added in 1.9.4)**
+
+So a client never offers an action the server will reject, user objects and post/reply author objects carry server-authoritative eligibility flags for the calling user. They are compute-only and account for the real target guards (never self, never an administrator, and - for a non-admin moderator - never another moderator).
+
+| Field | Type | Where | Description |
+|-------|------|-------|-------------|
+| `can_block_author` | boolean | post/reply author, user payload | Whether the viewer may block this member. `false` for the viewer's own account and when blocking is unavailable, so clients stop offering a block that would fail. |
+| `can_ban` | boolean | post/reply author, user payload | Whether the viewer (a moderator) may ban or restrict this member. Mirrors the server-side target guards; the ban endpoint still enforces them. |
+| `restriction` | object \| null | single-user payload | The member's newest active restriction (`{ id, type }`, e.g. `silence`), or `null`. Only populated for viewers who can moderate. |
 
 ---
 
