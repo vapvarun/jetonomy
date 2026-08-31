@@ -148,6 +148,69 @@ class Membership_Roster_Sync {
 	}
 
 	/**
+	 * Recurring backstop: drop 'tier' roster rows whose grant has lapsed.
+	 *
+	 * The on_deactivated() listener handles adapters that FIRE
+	 * jetonomy_membership_deactivated on cancel. But several adapters - BuddyNext
+	 * Pro among them - hold access
+	 * until expires_at and never fire that hook, so a lapsed plan would otherwise
+	 * leave its tier row on the roster forever. This sweep re-asks
+	 * AccessRule::grants_access() for every tier row and removes the ones nothing
+	 * still grants.
+	 *
+	 * Safe by construction: it only ever inspects 'tier' rows, so a manual /
+	 * invite / rule member is never touched; and it never grants access (the live
+	 * Permission_Engine already does that) - it only trims stale roster rows.
+	 * Keyset-paged on the (space_id, user_id) primary key so a large roster is
+	 * never loaded at once and the walk is stable under concurrent deletes.
+	 *
+	 * Scheduled hourly-ish by Cron (jetonomy_reconcile_rosters).
+	 *
+	 * ponytail: full reconcile per run, paged. If a site ever has millions of
+	 * tier rows, carry a cross-run cursor like the trust evaluator does.
+	 */
+	public static function reconcile(): void {
+		global $wpdb;
+
+		// Fresh request (cron), but be explicit: decisions must read current rules.
+		AccessRule::reset_memo();
+
+		$table      = \Jetonomy\table( 'space_members' );
+		$per_page   = 500;
+		$last_space = 0;
+		$last_user  = 0;
+
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows    = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT space_id, user_id FROM {$table}
+					 WHERE source = 'tier'
+					   AND ( space_id > %d OR ( space_id = %d AND user_id > %d ) )
+					 ORDER BY space_id ASC, user_id ASC
+					 LIMIT %d",
+					$last_space,
+					$last_space,
+					$last_user,
+					$per_page
+				)
+			);
+			$fetched = count( $rows );
+
+			foreach ( $rows as $row ) {
+				$space_id   = (int) $row->space_id;
+				$user_id    = (int) $row->user_id;
+				$last_space = $space_id;
+				$last_user  = $user_id;
+
+				if ( ! AccessRule::grants_access( $user_id, $space_id ) ) {
+					SpaceMember::remove( $space_id, $user_id );
+				}
+			}
+		} while ( $fetched === $per_page );
+	}
+
+	/**
 	 * Provenance of one roster row, or null when there is no row.
 	 *
 	 * @param int $space_id Space.

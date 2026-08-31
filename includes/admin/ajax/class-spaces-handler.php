@@ -581,24 +581,49 @@ class Spaces_Handler {
 		$adapters = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
 		$synced   = 0;
 
-		// Get all users and check each against the adapter.
-		$users = get_users( array( 'fields' => 'ID' ) );
+		// Only the active adapters, resolved once (not per user).
+		$adapters = array_filter( $adapters, static fn( $a ) => $a->is_active() );
 
-		foreach ( $users as $user_id ) {
-			$user_id = (int) $user_id;
-			foreach ( $adapters as $adapter ) {
-				if ( $adapter->is_active() && $adapter->user_has_level( $user_id, $rule_value ) ) {
-					if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
-						$add_result = SpaceMember::add( $space_id, $user_id, $space_role );
-						if ( is_wp_error( $add_result ) ) {
-							continue;
+		// Page through users in bounded batches — never load the whole user
+		// table into memory at once (big-site rule: 50k users OOM'd a single
+		// unbounded get_users()). The per-user adapter check is inherent to the
+		// membership adapter interface; the recurring roster reconcile
+		// (Membership_Roster_Sync::reconcile) is the reliable path at very large
+		// scale, this button is the immediate on-demand backfill.
+		$per_page = 500;
+		$paged    = 1;
+		do {
+			$users = get_users(
+				array(
+					'fields'  => 'ID',
+					'number'  => $per_page,
+					'paged'   => $paged,
+					'orderby' => 'ID',
+					'order'   => 'ASC',
+				)
+			);
+			$batch = count( $users );
+			foreach ( $users as $user_id ) {
+				$user_id = (int) $user_id;
+				foreach ( $adapters as $adapter ) {
+					if ( $adapter->user_has_level( $user_id, $rule_value ) ) {
+						if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
+							// Stamp 'tier' so a lapsed plan (or the reconcile
+							// sweep) can later remove it. Without this the row
+							// defaulted to 'manual' and was permanently exempt
+							// from the deactivation sweep - the backfilled members
+							// the button exists for never got cleaned up.
+							$add_result = SpaceMember::add( $space_id, $user_id, $space_role, 'tier' );
+							if ( ! is_wp_error( $add_result ) ) {
+								++$synced;
+							}
 						}
-						++$synced;
+						break;
 					}
-					break;
 				}
 			}
-		}
+			++$paged;
+		} while ( $batch === $per_page );
 
 		wp_send_json_success(
 			array(

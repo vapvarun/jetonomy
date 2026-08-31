@@ -5,7 +5,7 @@
         "version": "1.9.4"
     },
     "generated": {
-        "at": "2026-08-30T17:01:33+00:00",
+        "at": "2026-08-31T03:58:52+00:00",
         "manifest_at": "2026-08-20T00:00:00Z",
         "manifest_branch": "1.9.4"
     },
@@ -749,11 +749,15 @@
             "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
         },
         "cron": {
-            "total": 6,
-            "covered": 0,
+            "total": 7,
+            "covered": 1,
             "uncovered": 6,
             "skipped": 0,
-            "covered_items": [],
+            "covered_items": [
+                {
+                    "hook": "jetonomy_reconcile_rosters"
+                }
+            ],
             "uncovered_items": [
                 {
                     "hook": "jetonomy_trust_evaluation",
@@ -848,15 +852,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 182,
-        "items_covered": 61,
+        "items_total": 183,
+        "items_covered": 62,
         "items_uncovered": 121,
         "items_skipped": 217,
-        "coverage_percent": 33.5
+        "coverage_percent": 33.9
     },
     "drift": {
-        "previous_uncovered": 121,
+        "previous_uncovered": 122,
         "current_uncovered": 121,
-        "delta": 0
+        "delta": -1
     }
 }
