@@ -301,7 +301,7 @@ class Spaces_Handler {
 
 		$space = Space::find( $id );
 		if ( ! $space ) {
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 

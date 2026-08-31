@@ -135,7 +135,7 @@ $crumbs = [
 				[
 					'icon'        => 'award',
 					'icon_size'   => 48,
-					'message'     => sprintf( /* translators: %s: plural member label. */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+					'message'     => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 					'description' => sprintf( /* translators: %s: plural reply label. */ __( 'Reputation is earned by posting, getting %s, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					'cta_label'   => __( 'Browse the community', 'jetonomy' ),
 					'cta_url'     => \Jetonomy\base_url() . '/',

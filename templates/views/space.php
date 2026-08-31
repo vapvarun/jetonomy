@@ -17,7 +17,7 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -308,7 +308,7 @@ $crumbs[] = [
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
 								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
-								<?php /* translators: %s: what is being edited - the configured space label, or a specific space title. */ ?>
+								<?php /* translators: %s: the label of the item being edited (the configured noun). */ ?>
 								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</a>
 						</p>

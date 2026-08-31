@@ -17,7 +17,7 @@ if ( ! $category ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => sprintf( /* translators: %s: singular category label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
+			'message'   => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
 			'tone'      => 'warn',
 		]
 	);

@@ -114,7 +114,7 @@ if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
 $empty_copy = array(
 	'all'      => array( __( 'No notifications yet', 'jetonomy' ), sprintf( /* translators: %s: plural member label. */ __( 'When %s reply to your posts or mention you, those updates land here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ),
 	'unread'   => array( __( "You're all caught up!", 'jetonomy' ), __( 'Nothing new since you last checked. Switch to All to see your history.', 'jetonomy' ) ),
-	'replies'  => array( sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ), sprintf( /* translators: %s: plural reply label. */ __( '%s to your posts and comments will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ),
+	'replies'  => array( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ), sprintf( /* translators: %s: plural reply label. */ __( '%s to your posts and comments will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ),
 	'mentions' => array( __( 'No mentions yet', 'jetonomy' ), sprintf( /* translators: %s: singular reply label. */ __( "When someone @-mentions you in a post or %s, you'll see it here.", 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
 	'votes'    => array( __( 'No votes yet', 'jetonomy' ), __( 'Upvotes on your posts will appear here.', 'jetonomy' ) ),
 	'badges'   => array( __( 'No badges yet', 'jetonomy' ), __( 'Earn badges by contributing to the community.', 'jetonomy' ) ),

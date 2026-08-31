@@ -78,7 +78,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 		</a>
 		<span class="jt-mod-flag-reporter">
 			<?php
-			/* translators: 1: author display name, 2: human-readable time since submission */
+			/* translators: 1: a person's display name; 2: human-readable time elapsed. */
 			echo esc_html( sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_author_name, $jt_age ) );
 			?>
 		</span>

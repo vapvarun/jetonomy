@@ -17,7 +17,7 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -148,7 +148,7 @@ $role_labels = [
 					</h1>
 					<p class="jt-page-subtitle">
 						<?php
-						/* translators: 1: count; 2: member label. */
+						/* translators: 1: the count; 2: the label of the item (the configured noun). */
 						echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $space->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $space->member_count, true ) ) );
 						?>
 					</p>
@@ -335,7 +335,7 @@ $role_labels = [
 					'empty-state',
 					[
 						'icon'    => 'empty-members',
-						'message' => sprintf( /* translators: %s: plural member label. */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+						'message' => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 					]
 				);
 				?>

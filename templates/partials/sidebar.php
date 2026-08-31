@@ -237,7 +237,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 						?>
 						<a href="<?php echo esc_url( \Jetonomy\get_space_edit_url( $space ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-edit">
 							<?php jetonomy_echo_icon( 'edit', 14 ); ?>
-							<?php /* translators: %s: what is being edited - the configured space label, or a specific space title. */ ?>
+							<?php /* translators: %s: the label of the item being edited (the configured noun). */ ?>
 							<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 						</a>
 					<?php endif; ?>
@@ -337,7 +337,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 								)
 								. ' · '
 								. sprintf(
-									/* translators: 1: count; 2: reply label. */
+									/* translators: 1: the count; 2: the label of the item (the configured noun). */
 									__( '%1$d %2$s', 'jetonomy' ),
 									$r,
 									\Jetonomy\jetonomy_label( 'reply', 1 !== (int) $r, true )

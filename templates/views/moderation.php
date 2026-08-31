@@ -228,7 +228,7 @@ $crumbs = [
 				// while the moderator is reading the approvals list would say
 				// "0 pending flags" over a screen full of held submissions.
 				if ( 'approvals' === $jt_view ) {
-					/* translators: %d: number of submissions held for approval */
+					/* translators: %d: number of submissions held for approval. */
 					echo esc_html( sprintf( _n( '%d submission awaiting approval', '%d submissions awaiting approval', $jt_held_total, 'jetonomy' ), $jt_held_total ) );
 				} elseif ( $is_admin ) {
 					/* translators: %d: total pending flag count across every space */
@@ -311,7 +311,7 @@ $crumbs = [
 							<?php endif; ?>
 							<span class="jt-mod-flag-age">
 								<?php
-								/* translators: 1: issuing moderator name, 2: human-readable time since the restriction */
+								/* translators: 1: a person's display name; 2: human-readable time elapsed. */
 								echo esc_html( sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_issuer ? \Jetonomy\user_display_name( $jt_issuer ) : __( 'System', 'jetonomy' ), $jt_ban_age ) );
 								?>
 							</span>

@@ -61,7 +61,7 @@ $crumbs = array(
 		<?php else : ?>
 			<form id="jt-new-space-form" class="jt-form jt-card" data-wp-on--submit="actions.createSpace" data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>" data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-jt-community-base="<?php echo esc_url( $base ); ?>">
 				<div class="jt-form-row">
-					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+					<?php /* translators: %s: the singular label of the item (the configured noun). */ ?>
 					<label for="jt-ns-title"><?php echo esc_html( sprintf( __( '%s title', 'jetonomy' ), \Jetonomy\space_label() ) ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 					<input type="text" id="jt-ns-title" name="title" required maxlength="120" class="jt-input">
 					<p class="jt-form-help"><?php esc_html_e( 'Short, descriptive. What people will look for.', 'jetonomy' ); ?></p>

@@ -298,7 +298,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				data-wp-context='{"collapsed": false, "childCount": <?php echo (int) count( $reply->children ); ?>}'>
 				<button class="jt-thread-toggle-btn" data-wp-on--click="actions.toggleThread"
 					data-wp-text="state.threadToggleLabel">
-					&minus; <?php printf( /* translators: %s: plural reply label. */ esc_html__( 'Hide %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					&minus; <?php printf( /* translators: %s: the plural label of the item (the configured noun). */ esc_html__( 'Hide %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				</button>
 				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
 					<?php foreach ( $reply->children as $child ) : ?>

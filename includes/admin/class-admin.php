@@ -1411,7 +1411,7 @@ class Admin {
 		if ( 'edit' === $action && $space_id > 0 ) {
 			$space = Space::find( $space_id );
 			if ( ! $space ) {
-				/* translators: %s: the singular space label. */
+				/* translators: %s: the singular label of the item (the configured noun). */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
 			$categories = $this->get_all_categories_flat();

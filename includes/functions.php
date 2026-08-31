@@ -165,7 +165,7 @@ function compose_label( string $space_type ): string {
 			$label = __( 'New Status', 'jetonomy' );
 			break;
 		default:
-			/* translators: %s: the singular topic label the site owner configured (e.g. Topic, Thread). */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			$label = sprintf( __( 'New %s', 'jetonomy' ), jetonomy_label( 'topic' ) );
 			break;
 	}

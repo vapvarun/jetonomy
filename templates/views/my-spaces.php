@@ -125,7 +125,7 @@ $crumbs = array(
 									?>
 									·
 									<?php
-									/* translators: 1: count; 2: member label. */
+									/* translators: 1: the count; 2: the label of the item (the configured noun). */
 									echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $sp->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $sp->member_count, true ) ) );
 									?>
 								</p>
@@ -176,7 +176,7 @@ $crumbs = array(
 									?>
 									·
 									<?php
-									/* translators: 1: count; 2: member label. */
+									/* translators: 1: the count; 2: the label of the item (the configured noun). */
 									echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $sp->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $sp->member_count, true ) ) );
 									?>
 								</p>

@@ -47,7 +47,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	protected function not_found( string $what = 'Resource' ): WP_Error {
 		return new WP_Error(
 			'jetonomy_not_found',
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			sprintf( __( '%s not found.', 'jetonomy' ), $what ),
 			[ 'status' => 404 ]
 		);

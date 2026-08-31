@@ -16,7 +16,7 @@ if ( ! $space ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular space label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
@@ -88,7 +88,7 @@ $jt_submit_labels = array(
 	'idea'     => __( 'Submit Idea', 'jetonomy' ),
 	'status'   => __( 'Post Status', 'jetonomy' ),
 );
-$jt_submit_label  = $jt_submit_labels[ $post_type ] ?? sprintf( /* translators: %s: singular topic label. */ __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
+$jt_submit_label  = $jt_submit_labels[ $post_type ] ?? sprintf( /* translators: %s: the label of the item (the configured noun); "Post" is the verb. */ __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 if ( function_exists( 'wp_interactivity_state' ) ) {
 	wp_interactivity_state( 'jetonomy', array( 'submitLabel' => $jt_submit_label ) );
 }

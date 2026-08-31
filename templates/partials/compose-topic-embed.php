@@ -207,7 +207,7 @@ $_partial_space = $_space ? $_space : (object) array(
 				class="jt-btn jt-btn-fill jt-compose-topic-submit"
 				data-wp-bind--disabled="context.submitting"
 				data-wp-class--is-submitting="context.submitting">
-				<?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Post %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
+				<?php printf( /* translators: %s: the label of the item (the configured noun); "Post" is the verb. */ esc_html__( 'Post %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 			</button>
 		</div>
 	</form>

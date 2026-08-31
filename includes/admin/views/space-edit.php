@@ -185,7 +185,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</tr>
 			</table>
 			<p class="submit">
-				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+				<?php /* translators: %s: the label of the item being saved (the configured noun). */ ?>
 				<button type="submit" class="button button-primary"><?php echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></button>
 				<span class="spinner"></span>
 			</p>

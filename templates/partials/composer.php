@@ -89,7 +89,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 				data-post-id="<?php echo (int) $_post_id; ?>"
 				data-reply-to="<?php echo (int) $_reply_to; ?>"
 				data-wp-bind--disabled="context.submitting">
-				<?php printf( /* translators: %s: singular reply label. */ esc_html__( 'Post %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>
+				<?php printf( /* translators: %s: the label of the item (the configured noun); "Post" is the verb. */ esc_html__( 'Post %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>
 			</button>
 		</div>
 	</div>

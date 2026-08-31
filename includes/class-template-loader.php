@@ -289,7 +289,7 @@ class Template_Loader {
 				'isLoggedIn'     => is_user_logged_in(),
 				'loginUrl'       => wp_login_url( current_url() ),
 				'isSubmitting'   => false,
-				/* translators: %s: the singular topic label the site owner configured (e.g. Topic, Thread). "Post" here is the verb. */
+				/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
 				'submitLabel'    => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 				'submitError'    => '',
 				'msgComposeOpen' => false,
@@ -320,9 +320,9 @@ class Template_Loader {
 					'postPinned'            => __( 'Post pinned', 'jetonomy' ),
 					'postUnpinned'          => __( 'Post unpinned', 'jetonomy' ),
 					'failedPin'             => __( 'Failed to toggle pin.', 'jetonomy' ),
-					/* translators: %s: the singular topic label the site owner configured (e.g. topic, thread). */
+					/* translators: %s: the singular label of the item (the configured noun). */
 					'confirmDeletePost'     => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					/* translators: %s: the singular reply label the site owner configured (e.g. reply, comment). */
+					/* translators: %s: the singular label of the item (the configured noun). */
 					'confirmDeleteReply'    => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'failedDelete'          => __( 'Failed to delete.', 'jetonomy' ),
 					/* translators: 1: singular topic label, 2: singular space label the site owner configured. */
@@ -348,11 +348,11 @@ class Template_Loader {
 					'replyingTo'            => __( 'Replying to', 'jetonomy' ),
 					'cancelReply'           => __( 'Cancel reply', 'jetonomy' ),
 					'posting'               => __( 'Posting...', 'jetonomy' ),
-					/* translators: %s: the singular topic label the site owner configured (e.g. Topic, Thread). "Post" here is the verb. */
+					/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
 					'postTopic'             => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					/* translators: %d: number of new replies (always 1 in this singular form); %s substituted server-side is the singular reply label. */
+					/* translators: %d: number of new items; %s: the reply label (substituted server-side). */
 					'newReply'              => sprintf( __( '%%d new %s. Click to refresh.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					/* translators: %d: number of new replies; %s substituted server-side is the plural reply label. */
+					/* translators: %d: number of new items; %s: the reply label (substituted server-side). */
 					'newReplies'            => sprintf( __( '%%d new %s. Click to refresh.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					'linkCopied'            => __( 'Link copied', 'jetonomy' ),
 					'linkCopyFailed'        => __( 'Could not copy the link. Copy it from the address bar.', 'jetonomy' ),
@@ -382,7 +382,7 @@ class Template_Loader {
 					'failedSaveProfile'     => __( 'Failed to save profile.', 'jetonomy' ),
 					'schedule'              => __( 'Schedule', 'jetonomy' ),
 					'editPost'              => __( 'Edit post', 'jetonomy' ),
-					/* translators: %s: the singular reply label the site owner configured. */
+					/* translators: %s: the label of the item being edited (the configured noun). */
 					'editReply'             => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'unaccepted'            => __( 'Marked as unanswered', 'jetonomy' ),
 					// 1.4.4 i18n sweep — keys view.js reads via state.i18n that were
@@ -423,7 +423,7 @@ class Template_Loader {
 					'genericError'          => __( 'Could not publish.', 'jetonomy' ),
 					// Threaded-reply toggle label (single-post.php); the count is
 					// substituted client-side in the state.threadToggleLabel getter.
-					/* translators: %s: the plural reply label the site owner configured. */
+					/* translators: %s: the plural label of the item (the configured noun). */
 					'hideReplies'           => sprintf( __( 'Hide %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					/* translators: %s: the singular reply label the site owner configured. */
 					'showRepliesOne'        => sprintf( __( 'Show 1 %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
@@ -597,9 +597,9 @@ class Template_Loader {
 					// translator picks singular/plural per their locale.
 					'mergeFromLabel'         => esc_html__( 'From', 'jetonomy' ),
 					'pickerHintTwoChars'     => esc_html__( 'Type at least 2 characters to search.', 'jetonomy' ),
-					/* translators: %d: number of replies; %s substituted server-side is the singular reply label. */
+					/* translators: %d: number of replies; %s: the reply label (substituted server-side). */
 					'pickerReplySingular'    => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
-					/* translators: %d: number of replies; %s substituted server-side is the plural reply label. */
+					/* translators: %d: number of replies; %s: the reply label (substituted server-side). */
 					'pickerReplyPlural'      => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ),
 					'roleLabels'             => array(
 						'member'    => esc_html__( 'Member', 'jetonomy' ),
@@ -1251,7 +1251,7 @@ class Template_Loader {
 						$parts['title'] = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'edit-space':
-						/* translators: %s: what is being edited - the configured space label, or a specific space title. */
+						/* translators: %s: the label of the item being edited (the configured noun). */
 						$parts['title'] = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'drafts':
@@ -1546,7 +1546,7 @@ class Template_Loader {
 						$noindex   = true; // Composer page.
 						break;
 					case 'edit-space':
-						/* translators: %s: what is being edited - the configured space label, or a specific space title. */
+						/* translators: %s: the label of the item being edited (the configured noun). */
 						$title = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: %s: singular space label. */
 						$desc      = sprintf( __( 'Edit your community %s settings.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );

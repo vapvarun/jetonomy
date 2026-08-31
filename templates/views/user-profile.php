@@ -390,7 +390,7 @@ $crumbs = [
 						[
 							'message' => $is_own
 								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not replied to anything yet — jump into a discussion and your %s will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
-								: sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+								: sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 							'variant' => 'compact',
 						]
 					);

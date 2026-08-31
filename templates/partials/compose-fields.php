@@ -91,7 +91,7 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 			'question' => __( 'What is your question?', 'jetonomy' ),
 			'idea'     => __( 'Describe your idea', 'jetonomy' ),
 		);
-		$_title_placeholder  = $_title_placeholders[ $_post_type ] ?? sprintf( /* translators: %s: singular topic label. */ __( '%s title', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
+		$_title_placeholder  = $_title_placeholders[ $_post_type ] ?? sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s title', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 		?>
 		<input type="text" id="jt-post-title" name="title" class="jt-input jt-compose-topic-title"
 			placeholder="<?php echo esc_attr( $_title_placeholder ); ?>"
