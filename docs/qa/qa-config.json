@@ -33,10 +33,10 @@
     "supplements_path": null,
     "qa_actions": {
         "command": "wp jetonomy qa-actions",
-        "expected_total": 286,
-        "verified_on": "2026-08-20",
+        "expected_total": 301,
+        "verified_on": "2026-08-31",
         "verified_version": "1.9.4",
-        "verified_on_site": "buddynext.local",
+        "verified_on_site": "jetonomy.local",
         "gate": "ZERO FAIL lines. The total is a tripwire for accidentally-skipped phases, not the pass condition.",
         "environment_dependent": true,
         "note": "286 is the total on a site where BuddyNext/WPMediaVerse is active. WPMediaVerse owns messaging site-wide, so Private_Messaging\\Extension::is_dormant() is true, its REST routes are deliberately not registered, and Phase 3 skips the PM group by design (Basecamp 10150583760) - enabling the extension in jetonomy_pro_extensions does NOT change this and is not a fix. On a site WITHOUT WPMediaVerse the PM group runs and the total is HIGHER. Re-stamp this field, with verified_on_site, whenever a release adds or removes tests or the gate moves to a different site."

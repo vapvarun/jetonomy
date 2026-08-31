@@ -266,29 +266,47 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.9.4 - August 2026 =
 
-Security and housekeeping release.
+Owners can rename the built-in terms and paying members now land on the space roster, alongside member-facing fixes and security hardening.
 
+* New      - Owners can now rename Topic, Reply, Member and Category throughout the community, the same way Space could already be renamed. Set the labels under Settings, or override per site with the jetonomy_label filter.
+* New      - Paying members are now added to the roster of every space their plan grants, so they appear in the Members list and count toward members-only posting. Row provenance means a lapsed plan only ever removes rows it added, never someone who joined the space directly.
+* New      - Members can be identified by display name, @handle, or both, chosen under Settings > General > Member Names. Display names are not unique in WordPress; the handle always is.
+* New      - Space admins can now delete or archive-and-transfer their own space from the frontend, not only from wp-admin.
+* New      - Tags can now be created, renamed and deleted through the REST API, so tag management works from the app and from integrations instead of only inside wp-admin.
+* New      - Space access rules can now be listed, created and deleted through the REST API, so membership gating can be configured from the app or an integration rather than only in wp-admin.
+* Improve  - Members who share a display name are now told apart by their unique @handle wherever names appear.
+* Improve  - The community home now tells members where posting happens instead of reading as a dead end. Reword or hide the hint with the jetonomy_home_member_hint filter.
+* Improve  - Space directory cards now name the space owner.
+* Improve  - A member who hits a posting rate limit now sees how many they can post and roughly when they can post again, instead of "try again later."
+* Improve  - The moderation Flags queue now shows what was reported and links to it. Previously it showed only an internal id, so a moderator had to go find the content before deciding.
+* Improve  - Community home and category pages now page through spaces instead of rendering every one of them, so a large directory stays fast. Set the page size with the jetonomy_spaces_per_page filter.
+* Improve  - Faster threaded replies on busy topics, and a faster ban check on every anonymous submission.
+* Fix      - The Settings link in notifications now scrolls to the notification preferences section instead of jumping to the top of the page, including after in-app navigation.
+* Fix      - Jetonomy's own profile links (edit profile, notification settings, badges, digest) now stay on the community profile even when member profiles are pointed at another profile plugin.
+* Fix      - Notifications that have no actor now read as whole sentences instead of "Someone earned a badge" and similar broken phrasing.
+* Fix      - Icon-only action buttons on posts and replies now meet the 44px touch-target size on phones.
+* Fix      - New topics created directly through the model or the agent interface now always take their space's type, so they no longer get the wrong type and search-engine markup after creation.
+* Fix      - Sites upgrading from 1.9.2 never received the 1.9.3 content fix that matches a topic's type to the space holding it, so Q&A spaces could still publish the wrong search-engine markup. The fix now applies on upgrade.
+* Fix      - The space edit form in wp-admin now has the Display order field it was missing, and the moderation queue no longer runs a separate query per row.
+* Fix      - Posts held for approval now appear in the frontend moderation queue.
+* Fix      - Two moderators resolving the same report at the same time no longer overwrite each other. The second now sees the report as already handled instead of silently replacing who resolved it.
+* Fix      - The Role Capability Mapping table on Settings > Permissions was unreadable on phones, with role names clipped to their last few letters.
+* Fix      - An expanded admin table row no longer overlaps its own cells between 482px and 782px wide.
+* Fix      - Custom text for the "idea roadmap status changed" email is now saved. It was silently discarded on every save.
+* Fix      - The dashboard no longer tells you to run the setup wizard when your community already has spaces and posts, which affected every site whose content arrived by import or migration.
+* Fix      - Renaming Spaces in Settings now also renames it in the admin menu, instead of the menu contradicting the page.
+* Fix      - Listing spaces by category through the AI-agent interface is now limited like every other listing, instead of loading the whole category.
+* Security - A private reply could be read from a topic's cache by another viewer, including a logged-out visitor, because the cached thread was not keyed per viewer. Threads are now cached per viewer, so one member's permissions never decide what another sees.
+* Security - The activity log is no longer readable through the AI-agent interface by members who cannot open it in wp-admin. It now requires the same permission on both.
+* Security - A moderator can no longer restrict an administrator or another moderator. The moderation screen enforced this only through the REST API, so the screen's own save path let an editor lock the site owner out of their account.
+* Security - Joining a space through the WordPress Abilities API now honours the space's join setting. Hidden and invite-only spaces could be joined directly, which exposed every topic inside them.
+* Security - Replies arriving by email are now subject to the same rules as replies posted on the site. A banned member could still reply by email, and emailed replies could land on closed topics and in archived spaces.
+* Dev      - REST user and author payloads now publish can_ban, can_block_author and any active restriction, so app clients do not offer an action that will fail.
 * Dev      - Corrected the plugin manifest version and provenance stamps, which had lagged two releases behind the shipping version.
 * Dev      - Consolidated the QA gate so the expected `wp jetonomy qa-actions` total is stated in one place instead of four conflicting ones.
 * Dev      - Fixed the QA smoke config, which pointed at a site path that does not exist.
 * Dev      - Corrected table, model, controller and template counts in the contributor documentation.
 * Dev      - Removed dead documentation links and a reference to a plans directory that was never part of this project.
-* Fix      - Sites upgrading from 1.9.2 never received the 1.9.3 content fix that matches a topic's type to the space holding it, so Q&A spaces could still publish the wrong search-engine markup. The fix now applies on upgrade.
-* Fix      - Two moderators resolving the same report at the same time no longer overwrite each other. The second now sees the report as already handled instead of silently replacing who resolved it.
-* Fix      - The Role Capability Mapping table on Settings > Permissions was unreadable on phones, with role names clipped to their last few letters.
-* Improve  - Faster threaded replies on busy topics, and a faster ban check on every anonymous submission.
-* Fix      - Custom text for the "idea roadmap status changed" email is now saved. It was silently discarded on every save.
-* Fix      - The dashboard no longer tells you to run the setup wizard when your community already has spaces and posts, which affected every site whose content arrived by import or migration.
-* Fix      - Renaming Spaces in Settings now also renames it in the admin menu, instead of the menu contradicting the page.
-* New      - Tags can now be created, renamed and deleted through the REST API, so tag management works from the app and from integrations instead of only inside wp-admin.
-* Improve  - The moderation Flags queue now shows what was reported and links to it. Previously it showed only an internal id, so a moderator had to go find the content before deciding.
-* Improve  - Community home and category pages now page through spaces instead of rendering every one of them, so a large directory stays fast. Set the page size with the jetonomy_spaces_per_page filter.
-* New      - Space access rules can now be listed, created and deleted through the REST API, so membership gating can be configured from the app or an integration rather than only in wp-admin.
-* Security - The activity log is no longer readable through the AI-agent interface by members who cannot open it in wp-admin. It now requires the same permission on both.
-* Fix      - Listing spaces by category through the AI-agent interface is now limited like every other listing, instead of loading the whole category.
-* Security - A moderator can no longer restrict an administrator or another moderator. The moderation screen enforced this only through the REST API, so the screen's own save path let an editor lock the site owner out of their account.
-* Security - Joining a space through the WordPress Abilities API now honours the space's join setting. Hidden and invite-only spaces could be joined directly, which exposed every topic inside them.
-* Security - Replies arriving by email are now subject to the same rules as replies posted on the site. A banned member could still reply by email, and emailed replies could land on closed topics and in archived spaces.
 
 = 1.9.3 - August 2026 =
 
