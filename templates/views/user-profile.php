@@ -284,7 +284,7 @@ $crumbs = [
 						</div>
 						<div class="jt-stat">
 							<div class="jt-stat-n"><?php echo esc_html( (int) $p_count ); ?></div>
-							<div class="jt-stat-l"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></div>
+							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></div>
 						</div>
 						<div class="jt-stat">
 							<div class="jt-stat-n"><?php echo esc_html( (int) $r_count ); ?></div>

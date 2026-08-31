@@ -119,10 +119,14 @@ class Admin {
 			array( $this, 'render_dashboard' )
 		);
 
+		// Owner can rename Category/Categories under Settings -> General; the
+		// menu label and the page honour it, the same way Spaces already does.
+		$jt_categories_label = \Jetonomy\jetonomy_label( 'category', true );
+
 		add_submenu_page(
 			'jetonomy',
-			__( 'Categories', 'jetonomy' ),
-			__( 'Categories', 'jetonomy' ),
+			$jt_categories_label,
+			$jt_categories_label,
 			'jetonomy_manage_settings',
 			'jetonomy-categories',
 			array( $this, 'render_categories' )

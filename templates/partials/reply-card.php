@@ -238,7 +238,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				data-reply-author="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"
 				title="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"
-				aria-label="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></span></button>
+				aria-label="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></span></button>
 			<button class="jt-act"
 				data-wp-on--click="actions.quoteReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"

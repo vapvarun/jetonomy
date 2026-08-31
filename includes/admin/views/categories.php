@@ -12,14 +12,14 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <div class="wrap jetonomy-admin">
-	<h1><?php esc_html_e( 'Categories', 'jetonomy' ); ?></h1>
+	<h1><?php echo esc_html( \Jetonomy\jetonomy_label( 'category', true ) ); ?></h1>
 
 	<div class="jetonomy-categories-layout">
 
 	<!-- Add New Category Form -->
 	<div class="jt-settings-card" id="jetonomy-add-category-form">
 		<div class="jt-settings-card__head">
-			<h2 class="jt-settings-card__title"><?php esc_html_e( 'Add New Category', 'jetonomy' ); ?></h2>
+			<h2 class="jt-settings-card__title"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Add New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></h2>
 		</div>
 		<div class="jetonomy-form-grid">
 			<div class="jetonomy-form-field">
@@ -35,7 +35,7 @@ defined( 'ABSPATH' ) || exit;
 				<textarea id="cat-description" rows="2" class="large-text"></textarea>
 			</div>
 			<div class="jetonomy-form-field">
-				<label for="cat-parent"><?php esc_html_e( 'Parent Category', 'jetonomy' ); ?></label>
+				<label for="cat-parent"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Parent %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></label>
 				<select id="cat-parent">
 					<option value="0"><?php esc_html_e( '(None - Top Level)', 'jetonomy' ); ?></option>
 					<?php foreach ( $all_categories as $cat ) : ?>
@@ -71,7 +71,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		</div>
 		<p>
-			<button type="button" class="button button-primary" id="jetonomy-save-category"><?php esc_html_e( 'Add Category', 'jetonomy' ); ?></button>
+			<button type="button" class="button button-primary" id="jetonomy-save-category"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Add %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></button>
 			<span class="spinner"></span>
 		</p>
 	</div>
@@ -150,13 +150,17 @@ defined( 'ABSPATH' ) || exit;
 				'empty'     => ! empty( $search )
 					? array(
 						'icon'  => 'search',
-						'title' => __( 'No categories match that search', 'jetonomy' ),
-						'body'  => __( 'Try a different keyword or clear the search to see all categories.', 'jetonomy' ),
+						/* translators: %s: plural category label (lowercase). */
+						'title' => sprintf( __( 'No %s match that search', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
+						/* translators: %s: plural category label (lowercase). */
+						'body'  => sprintf( __( 'Try a different keyword or clear the search to see all %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
 					)
 					: array(
 						'icon'  => 'category',
-						'title' => __( 'No categories yet', 'jetonomy' ),
-						'body'  => __( 'Categories let you group related spaces. Create your first one using the form above.', 'jetonomy' ),
+						/* translators: %s: plural category label (lowercase). */
+						'title' => sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
+						/* translators: 1: plural category label; 2: plural space label (lowercase). */
+						'body'  => sprintf( __( '%1\$s let you group related %2\$s. Create your first one using the form above.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\space_label( true, true ) ),
 					),
 				'cell'      => static function ( $cat, string $key ): void {
 					switch ( $key ) {
@@ -261,7 +265,7 @@ defined( 'ABSPATH' ) || exit;
 	<div class="jetonomy-modal" id="jetonomy-edit-category-modal" style="display:none;">
 		<div class="jetonomy-modal__overlay"></div>
 		<div class="jetonomy-modal__content">
-			<h2><?php esc_html_e( 'Edit Category', 'jetonomy' ); ?></h2>
+			<h2><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></h2>
 			<input type="hidden" id="edit-cat-id">
 			<div class="jetonomy-form-grid">
 				<div class="jetonomy-form-field">
@@ -277,7 +281,7 @@ defined( 'ABSPATH' ) || exit;
 					<textarea id="edit-cat-description" rows="2" class="large-text"></textarea>
 				</div>
 				<div class="jetonomy-form-field">
-					<label for="edit-cat-parent"><?php esc_html_e( 'Parent Category', 'jetonomy' ); ?></label>
+					<label for="edit-cat-parent"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Parent %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></label>
 					<select id="edit-cat-parent">
 						<option value="0"><?php esc_html_e( '(None - Top Level)', 'jetonomy' ); ?></option>
 						<?php foreach ( $all_categories as $cat ) : ?>
@@ -313,7 +317,7 @@ defined( 'ABSPATH' ) || exit;
 				</div>
 			</div>
 			<p class="jetonomy-modal__actions">
-				<button type="button" class="button button-primary" id="jetonomy-update-category"><?php esc_html_e( 'Update Category', 'jetonomy' ); ?></button>
+				<button type="button" class="button button-primary" id="jetonomy-update-category"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></button>
 				<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></button>
 				<span class="spinner"></span>
 			</p>

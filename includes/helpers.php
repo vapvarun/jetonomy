@@ -668,11 +668,11 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 						<div class="jt-space-card-stats">
 							<span class="jt-space-card-stat">
 								<strong><?php echo (int) $space->post_count; ?></strong>
-								<?php echo esc_html( _n( 'post', 'posts', (int) $space->post_count, 'jetonomy' ) ); ?>
+								<?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', (int) $space->post_count !== 1, true ) ); ?>
 							</span>
 							<span class="jt-space-card-stat">
 								<strong><?php echo (int) $space->member_count; ?></strong>
-								<?php echo esc_html( _n( 'member', 'members', (int) $space->member_count, 'jetonomy' ) ); ?>
+								<?php echo esc_html( \Jetonomy\jetonomy_label( 'member', (int) $space->member_count !== 1, true ) ); ?>
 							</span>
 							<?php
 							// Recency tells a newcomer the space is alive — totals alone

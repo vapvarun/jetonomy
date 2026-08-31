@@ -187,7 +187,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 			<div class="jt-sidebar-stats">
 				<div class="jt-sidebar-stat">
 					<strong><?php echo (int) ( $space->post_count ?? 0 ); ?></strong>
-					<span><?php esc_html_e( 'Posts', 'jetonomy' ); ?></span>
+					<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></span>
 				</div>
 				<div class="jt-sidebar-stat">
 					<strong><?php echo (int) ( $space->member_count ?? 0 ); ?></strong>

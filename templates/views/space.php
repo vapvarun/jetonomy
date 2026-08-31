@@ -317,7 +317,7 @@ $crumbs[] = [
 				<div class="jt-space-nums">
 					<div class="jt-num">
 						<div class="jt-num-val"><?php echo esc_html( (int) $space->post_count ); ?></div>
-						<div class="jt-num-lbl"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></div>
+						<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></div>
 					</div>
 					<div class="jt-num">
 						<div class="jt-num-val"><?php echo esc_html( (int) $space->member_count ); ?></div>

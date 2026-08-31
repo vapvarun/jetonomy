@@ -300,7 +300,7 @@ $crumbs = [
 
 					<?php if ( ! empty( $posts ) ) : ?>
 						<h3 class="jt-section-label">
-							<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
+							<?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?>
 						</h3>
 						<div class="jt-topics jt-mb-lg">
 							<?php
