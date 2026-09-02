@@ -149,10 +149,16 @@ class Router {
 	 * registered first in add_rewrite_rules() keep their precedence over the
 	 * looser ones. Everything else follows in its original order.
 	 *
-	 * @param array<string,string> $rules Assembled rewrite rules.
-	 * @return array<string,string>
+	 * No return type declaration on purpose: `option_rewrite_rules` fires on
+	 * every read of the option, including before any rules exist, when the
+	 * stored value is an empty string rather than an array. A filter must hand
+	 * back whatever it was given in that case, so declaring `: array` turned an
+	 * ordinary empty-option read into a TypeError during flush_rewrite_rules().
+	 *
+	 * @param array<string,string>|mixed $rules Assembled rewrite rules, or whatever the option currently holds.
+	 * @return array<string,string>|mixed
 	 */
-	public function prioritize_rules( $rules ): array {
+	public function prioritize_rules( $rules ) {
 		if ( ! is_array( $rules ) ) {
 			return $rules;
 		}

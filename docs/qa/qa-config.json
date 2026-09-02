@@ -4,8 +4,8 @@
     "name": "Jetonomy",
     "version_constant": "JETONOMY_VERSION",
     "main_file": "jetonomy.php",
-    "base_url": "http://buddynext.local",
-    "wp_path": "/Users/vapvarun/Local Sites/buddynext/app/public",
+    "base_url": "http://forums.local",
+    "wp_path": null,
     "autologin_param": "autologin",
     "rest_namespace": "jetonomy/v1",
     "front_routes": [
@@ -40,5 +40,6 @@
         "gate": "ZERO FAIL lines. The total is a tripwire for accidentally-skipped phases, not the pass condition.",
         "environment_dependent": true,
         "note": "286 is the total on a site where BuddyNext/WPMediaVerse is active. WPMediaVerse owns messaging site-wide, so Private_Messaging\\Extension::is_dormant() is true, its REST routes are deliberately not registered, and Phase 3 skips the PM group by design (Basecamp 10150583760) - enabling the extension in jetonomy_pro_extensions does NOT change this and is not a fix. On a site WITHOUT WPMediaVerse the PM group runs and the total is HIGHER. Re-stamp this field, with verified_on_site, whenever a release adds or removes tests or the gate moves to a different site."
-    }
+    },
+    "_wp_path_note": "Deliberately null. This field is machine-specific and fails SILENTLY when stale: it previously pointed at /Users/vapvarun/Local Sites/buddynext/app/public, which does not exist on other machines, while base_url pointed at buddynext.local - a site carrying its OWN jetonomy copy at 1.9.2 on main. A smoke run would have certified 1.9.2 and stamped the report with the release version. Derive the WP root three levels up from the plugin directory instead, per the wp-plugin-smoke skill."
 }
