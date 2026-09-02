@@ -43,6 +43,27 @@ class Shortcodes {
 	 * the widget instance settings, so per-widget options are accepted as
 	 * shortcode attributes.
 	 */
+	/**
+	 * Explain a misconfigured shortcode to whoever can fix it.
+	 *
+	 * These paths used to `return ''`, so a site owner who mistyped an
+	 * attribute got a blank region and no way to tell a broken shortcode from
+	 * an empty one - while the very same file renders a `jt-shortcode-empty`
+	 * message for genuinely-empty data. Only users who can edit see this:
+	 * visitors keep the silent output, so a misconfiguration never surfaces
+	 * editor guidance on a public page.
+	 *
+	 * @param string $message What the author needs to change.
+	 * @return string
+	 */
+	private static function config_notice( string $message ): string {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return '';
+		}
+
+		return '<div class="jt-shortcode-empty jt-shortcode-notice">' . esc_html( $message ) . '</div>';
+	}
+
 	public static function widget_embed( $atts ): string {
 		// shortcode_atts would strip every key except those in defaults — but
 		// each widget has its own instance keys (count, title, etc.), so we
@@ -50,7 +71,9 @@ class Shortcodes {
 		$user_atts = is_array( $atts ) ? $atts : array();
 		$id_base   = isset( $user_atts['id'] ) ? (string) $user_atts['id'] : '';
 		if ( '' === $id_base || 0 !== strpos( $id_base, 'jetonomy_' ) ) {
-			return '';
+			return self::config_notice(
+				__( 'jetonomy_widget needs an id attribute, e.g. [jetonomy_widget id="jetonomy_recent_posts"].', 'jetonomy' )
+			);
 		}
 
 		// Class names match what `register_widget()` was called with — leading
@@ -62,7 +85,14 @@ class Shortcodes {
 			'jetonomy_user_stats'    => Widgets\User_Stats_Widget::class,
 		);
 		if ( ! isset( $class_map[ $id_base ] ) || ! class_exists( $class_map[ $id_base ] ) ) {
-			return '';
+			return self::config_notice(
+				sprintf(
+					/* translators: 1: the id that was passed, 2: comma-separated list of valid ids. */
+					__( 'jetonomy_widget: unknown id "%1$s". Valid ids are %2$s.', 'jetonomy' ),
+					$id_base,
+					implode( ', ', array_keys( $class_map ) )
+				)
+			);
 		}
 
 		// Pass everything except `id` straight through as the widget instance.
@@ -364,7 +394,9 @@ class Shortcodes {
 
 		$user_id = absint( $atts['user_id'] ) ?: get_current_user_id();
 		if ( ! $user_id ) {
-			return '';
+			return self::config_notice(
+				__( 'jetonomy_user_profile needs a user_id attribute when nobody is logged in, e.g. [jetonomy_user_profile user_id="1"].', 'jetonomy' )
+			);
 		}
 
 		self::enqueue_styles();
@@ -372,7 +404,13 @@ class Shortcodes {
 		$user    = get_userdata( $user_id );
 		$profile = Models\UserProfile::find_by_user( $user_id );
 		if ( ! $user ) {
-			return '';
+			return self::config_notice(
+				sprintf(
+					/* translators: %d: the user ID that was passed. */
+					__( 'jetonomy_user_profile: no user with ID %d.', 'jetonomy' ),
+					$user_id
+				)
+			);
 		}
 
 		$trust = (int) ( $profile->trust_level ?? 0 );
@@ -400,16 +438,38 @@ class Shortcodes {
 	public static function space_members( $atts ): string {
 		$atts = shortcode_atts(
 			array(
-				'space_id' => 0,
+				'space_id' => '',
 				'count'    => 10,
 			),
 			$atts,
 			'jetonomy_space_members'
 		);
 
-		$space_id = absint( $atts['space_id'] );
+		// Accept a slug as well as a numeric id. Nothing in the admin UI ever
+		// shows a space's numeric ID, so requiring one asked the site owner for
+		// a value they had no way to look up; the slug is what Jetonomy > Spaces
+		// and every community URL already display.
+		$space_ref = trim( (string) $atts['space_id'] );
+		$space_id  = 0;
+		if ( '' !== $space_ref && ctype_digit( $space_ref ) ) {
+			$space_id = absint( $space_ref );
+		} elseif ( '' !== $space_ref ) {
+			$space    = Models\Space::find_by_slug( $space_ref );
+			$space_id = $space ? absint( $space->id ) : 0;
+			if ( ! $space_id ) {
+				return self::config_notice(
+					sprintf(
+						/* translators: %s: the space slug or id that was passed. */
+						__( 'jetonomy_space_members: no space matching "%s".', 'jetonomy' ),
+						$space_ref
+					)
+				);
+			}
+		}
 		if ( ! $space_id ) {
-			return '';
+			return self::config_notice(
+				__( 'jetonomy_space_members needs a space_id attribute - the space slug or its numeric id, e.g. [jetonomy_space_members space_id="announcements"].', 'jetonomy' )
+			);
 		}
 
 		self::enqueue_styles();
