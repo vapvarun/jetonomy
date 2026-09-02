@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.9.4
+Stable tag: 1.9.5
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,16 @@ Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abil
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.9.5 - September 2026 =
+
+Hotfix for a fatal on the Categories admin page in 1.9.4, plus a sitemap that was silently 404ing on any site with an SEO plugin. Update straight away.
+
+* Improve  - The jetonomy_space_members shortcode now accepts a space slug, not only a numeric ID that no admin screen ever displayed.
+* Fix      - The Categories admin page no longer fails with a fatal error. A backslash-escaped format specifier made sprintf() throw on every 1.9.4 site, whether or not any categories existed.
+* Fix      - The community sitemap no longer returns 404 on sites running Yoast SEO, Rank Math or AIOSEO. Those plugins register a broad sitemap rule that took precedence over ours, so spaces and posts were missing from search engines.
+* Fix      - Misconfigured shortcodes now explain what to change instead of rendering nothing. The message is shown only to users who can edit posts, so visitors see no change.
+* Dev      - Added a format-string check to the build so an invalid sprintf specifier fails CI instead of reaching a page. Run it with npm run check:format-strings.
 
 = 1.9.4 - August 2026 =
 
