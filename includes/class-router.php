@@ -24,6 +24,23 @@ class Router {
 		// less-looking /…-sitemap.xml URL (301 -> …/) before handle_request emits.
 		// Skip it for the sitemap route so the XML is served directly.
 		add_filter( 'redirect_canonical', [ $this, 'skip_canonical_for_sitemap' ] );
+
+		// `add_rewrite_rule( …, 'top' )` only prepends against the rules that
+		// exist WHEN IT RUNS, so 'top' is a last-writer-wins race, not a
+		// guarantee. Yoast registers a catch-all `([^/]+?)-sitemap([0-9]+)?.xml$`
+		// after our init:10, which landed ahead of ours and swallowed
+		// /community-sitemap.xml into Yoast's own (non-existent) `community`
+		// sitemap - a hard 404 on every site running an SEO plugin. Rank Math
+		// and AIOSEO register the same shape. `rewrite_rules_array` sees the
+		// fully assembled set after every registrant has had its turn, so
+		// reordering here is the only placement that actually wins.
+		add_filter( 'rewrite_rules_array', [ $this, 'prioritize_rules' ], 99 );
+		// Yoast does not use rewrite_rules_array at all - it filters
+		// `option_rewrite_rules`, injecting its dynamic rules every time the
+		// option is READ, which is after any generation-time ordering we do.
+		// So the read filter is the one that decides, and we have to run
+		// later than its default priority to land in front.
+		add_filter( 'option_rewrite_rules', [ $this, 'prioritize_rules' ], 99 );
 	}
 
 	/**
@@ -123,6 +140,34 @@ class Router {
 		$query->is_404            = false;
 		$query->queried_object    = null;
 		$query->queried_object_id = 0;
+	}
+
+	/**
+	 * Force every Jetonomy route ahead of third-party rules.
+	 *
+	 * Ordering is preserved within our own set, so the more specific rules
+	 * registered first in add_rewrite_rules() keep their precedence over the
+	 * looser ones. Everything else follows in its original order.
+	 *
+	 * @param array<string,string> $rules Assembled rewrite rules.
+	 * @return array<string,string>
+	 */
+	public function prioritize_rules( $rules ): array {
+		if ( ! is_array( $rules ) ) {
+			return $rules;
+		}
+
+		$ours   = [];
+		$others = [];
+		foreach ( $rules as $pattern => $query ) {
+			if ( is_string( $query ) && false !== strpos( $query, 'jetonomy_route=' ) ) {
+				$ours[ $pattern ] = $query;
+			} else {
+				$others[ $pattern ] = $query;
+			}
+		}
+
+		return $ours + $others;
 	}
 
 	public function add_rewrite_rules(): void {
