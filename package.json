@@ -8,6 +8,7 @@
     "lint:js": "eslint assets/js/ --ext .js",
     "lint:css": "wp-scripts lint-style",
     "check:i18n": "bash bin/check-i18n.sh",
+    "check:format-strings": "php bin/check-format-strings.php",
     "test:admin-tables": "playwright test"
   },
   "devDependencies": {

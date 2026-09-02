@@ -26,6 +26,12 @@ jobs:
       - name: Check syntax
         run: find includes/ templates/ -name '*.php' -exec php -l {} + 2>&1 | grep -v 'No syntax errors' | head -50; test ${PIPESTATUS[0]} -eq 0
 
+      # php -l and PHPStan L5 both pass a `%1\$s` written inside a SINGLE-quoted
+      # string, but sprintf() throws ValueError at runtime — a hard fatal on the
+      # page. Basecamp #10264484098 shipped that way in 1.9.4.
+      - name: Check PHP format strings
+        run: php bin/check-format-strings.php
+
   # ── PHPUnit matrix: PHP 8.1/8.2/8.3/8.4 × WP 6.7/6.8/6.9 ─────────────
   phpunit:
     runs-on: ubuntu-latest
