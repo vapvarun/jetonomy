@@ -70,7 +70,7 @@ class Shortcodes {
 		// take the raw user atts and only validate the dispatch key here.
 		$user_atts = is_array( $atts ) ? $atts : array();
 		$id_base   = isset( $user_atts['id'] ) ? (string) $user_atts['id'] : '';
-		if ( '' === $id_base || 0 !== strpos( $id_base, 'jetonomy_' ) ) {
+		if ( '' === $id_base ) {
 			return self::config_notice(
 				__( 'jetonomy_widget needs an id attribute, e.g. [jetonomy_widget id="jetonomy_recent_posts"].', 'jetonomy' )
 			);
@@ -84,7 +84,10 @@ class Shortcodes {
 			'jetonomy_active_spaces' => Widgets\Active_Spaces_Widget::class,
 			'jetonomy_user_stats'    => Widgets\User_Stats_Widget::class,
 		);
-		if ( ! isset( $class_map[ $id_base ] ) || ! class_exists( $class_map[ $id_base ] ) ) {
+		// The prefix check belongs here, not on the empty-id branch: an id that is
+		// present but wrong ("bogus_widget") is an unknown id, and the editor needs
+		// the valid-ids list, not "needs an id attribute" for one they did supply.
+		if ( 0 !== strpos( $id_base, 'jetonomy_' ) || ! isset( $class_map[ $id_base ] ) || ! class_exists( $class_map[ $id_base ] ) ) {
 			return self::config_notice(
 				sprintf(
 					/* translators: 1: the id that was passed, 2: comma-separated list of valid ids. */
