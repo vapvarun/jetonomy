@@ -17,6 +17,14 @@ class Router {
 		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
 		add_filter( 'request', [ $this, 'suppress_default_query' ] );
+		// Claim our sitemap URLs before ANY other plugin can. The rewrite table
+		// is not enough: an SEO plugin that answers at request time never
+		// consults it. AIOSEO matches `^(.+)-sitemap\.xml$` on `parse_request`
+		// at priority 10, so `community-sitemap.xml` looked to it like an object
+		// type called "community" and it served its own 404 XML over ours
+		// (Basecamp 10268378037). Priority 0 puts us ahead of that and of
+		// anything else hooking parse_request or template_redirect.
+		add_action( 'parse_request', [ $this, 'claim_sitemap_request' ], 0 );
 		add_action( 'parse_query', [ $this, 'correct_query_state' ], 1 );
 		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
 		add_action( 'template_redirect', [ $this, 'handle_request' ] );
@@ -366,6 +374,48 @@ class Router {
 		// Load the template (template may call status_header(404) inside)
 		Template_Loader::render( $data );
 		exit;
+	}
+
+	/**
+	 * Serve our sitemap directly when the request is one of ours.
+	 *
+	 * Runs on `parse_request` at priority 0 - earlier than any SEO plugin's
+	 * own handler - and renders + exits, so ordering in the rewrite table stops
+	 * being the thing that decides who wins. `Router::prioritize_rules()` still
+	 * handles competitors that DO go through the rewrite layer (Yoast, Rank
+	 * Math); this covers the ones that do not (AIOSEO).
+	 *
+	 * The patterns mirror add_rewrite_rules() exactly and are deliberately
+	 * anchored: `shop-sitemap.xml` belongs to whichever plugin owns "shop", and
+	 * claiming it would make us the bug we are fixing.
+	 *
+	 * @param \WP $wp The main WordPress environment instance.
+	 */
+	public function claim_sitemap_request( $wp ): void {
+		if ( is_admin() ) {
+			return;
+		}
+
+		$slug = (string) $wp->request;
+		if ( '' === $slug && isset( $_SERVER['REQUEST_URI'] ) ) {
+			// Plain permalinks: $wp->request is empty, so fall back to the path.
+			$path = (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
+			$slug = trim( $path, '/' );
+		}
+
+		if ( '' === $slug ) {
+			return;
+		}
+
+		$base = preg_quote( $this->get_base_slug(), '#' );
+
+		if ( preg_match( '#^' . $base . '-sitemap\\.xml$#', $slug ) ) {
+			SEO\Sitemap_Emitter::render( '', 0 );
+		}
+
+		if ( preg_match( '#^' . $base . '-sitemap-(spaces|posts)-([0-9]+)\\.xml$#', $slug, $m ) ) {
+			SEO\Sitemap_Emitter::render( $m[1], (int) $m[2] );
+		}
 	}
 
 	private function get_base_slug(): string {
