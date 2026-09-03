@@ -438,6 +438,18 @@ jobs:
             exit 1
           fi
 
+      # A suite reports what it RAN, not what it PROVED. Three guards shipped
+      # in 1.9.5 that stayed green against the exact bug they were written for
+      # (R1 required the class itself then asserted it existed; R2 checked the
+      # stored row while the bug corrupted the value on the way out; SM1 as
+      # first drafted asserted a 200, and the broken state returned 200).
+      #
+      # This reintroduces each bug and requires the named guard to go red. A
+      # guard that cannot fail is worse than no guard, because the bug then
+      # looks tested and nobody revisits it.
+      - name: Guards must be able to fail (mutation check)
+        run: php bin/check-guards-can-fail.php --wp-path=/tmp/wp
+
       # The Categories fatal rendered fine as source and died as a page. Only
       # requesting the page catches that, so request every one of them.
       - name: Render every admin page and front-end route

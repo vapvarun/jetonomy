@@ -962,6 +962,10 @@ class CLI {
 
 		$total_pass = $r1['pass'] + $r2['pass'] + $r3['pass'] + $r4['pass'];
 		$total_fail = $r1['fail'] + $r2['fail'] + $r3['fail'] + $r4['fail'];
+		// Skips are reported separately and never counted as passes. They used
+		// to be logged as passing checks, so a box where fixtures failed to
+		// build could report a green suite while asserting almost nothing.
+		$total_skip = $r1['skipped'] + $r2['skipped'] + $r3['skipped'] + $r4['skipped'];
 
 		\WP_CLI::log( '' );
 		\WP_CLI::log( '--------------------------------------' );
@@ -970,6 +974,9 @@ class CLI {
 		\WP_CLI::log( sprintf( '  Pro Tests:      %d/%d', $r3['pass'], $r3['pass'] + $r3['fail'] ) );
 		\WP_CLI::log( sprintf( '  Journey Tests:  %d/%d', $r4['pass'], $r4['pass'] + $r4['fail'] ) );
 		\WP_CLI::log( sprintf( '  TOTAL:          %d/%d', $total_pass, $total_pass + $total_fail ) );
+		if ( $total_skip > 0 ) {
+			\WP_CLI::log( sprintf( '  SKIPPED:        %d (not counted as passes)', $total_skip ) );
+		}
 		\WP_CLI::log( '--------------------------------------' );
 
 		if ( $total_fail > 0 ) {

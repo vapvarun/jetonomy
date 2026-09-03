@@ -9,7 +9,8 @@
     "lint:css": "wp-scripts lint-style",
     "check:i18n": "bash bin/check-i18n.sh",
     "check:format-strings": "php bin/check-format-strings.php",
-    "test:admin-tables": "playwright test"
+    "test:admin-tables": "playwright test",
+    "check:guards": "php bin/check-guards-can-fail.php"
   },
   "devDependencies": {
     "@wbcom/i18n-ai": "^0.1.3",

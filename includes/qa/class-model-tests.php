@@ -40,6 +40,13 @@ class Model_Tests {
 	 */
 	private int $fail = 0;
 
+	/**
+	 * Count of checks that could not run.
+	 *
+	 * @var int
+	 */
+	private int $skipped = 0;
+
 	// ──────────────────────────────────────────────────────────────────────────
 	// Public API
 	// ──────────────────────────────────────────────────────────────────────────
@@ -47,7 +54,7 @@ class Model_Tests {
 	/**
 	 * Run all Phase-2 model unit tests.
 	 *
-	 * @return array{ pass: int, fail: int }
+	 * @return array{ pass: int, fail: int, skipped: int }
 	 */
 	public function run(): array {
 		global $wpdb;
@@ -104,8 +111,8 @@ class Model_Tests {
 			$role = SpaceMember::get_role( $space_id, $admin_id );
 			$this->check( 'SM6: get_role returns non-empty string', ! empty( $role ) );
 		} else {
-			$this->check( 'SM5: is_member (skipped — no space)', true );
-			$this->check( 'SM6: get_role (skipped — no space)', true );
+			$this->skip( 'SM5: is_member', 'no space' );
+			$this->skip( 'SM6: get_role', 'no space' );
 		}
 
 		// ── Restriction ───────────────────────────────────────────────────────
@@ -151,18 +158,18 @@ class Model_Tests {
 				$is_sp_unbanned = ! Restriction::is_space_banned( $test_uid, $space_id );
 				$this->check( 'RE9: is_space_banned = false after remove_ban', $is_sp_unbanned );
 			} else {
-				$this->check( 'RE9: is_space_banned (skipped — no space)', true );
-				$this->check( 'RE9: is_space_banned false after remove (skipped)', true );
+				$this->skip( 'RE9: is_space_banned', 'no space' );
+				$this->skip( 'RE9: is_space_banned false after remove', 'precondition not met' );
 			}
 
 			wp_delete_user( $test_uid );
 		} else {
-			$this->check( 'RE7: ban/unban (skipped — test user creation failed)', true );
-			$this->check( 'RE7: unban check (skipped)', true );
-			$this->check( 'RE8: silence/unsilence (skipped)', true );
-			$this->check( 'RE8: unsilence check (skipped)', true );
-			$this->check( 'RE9: space ban (skipped)', true );
-			$this->check( 'RE9: space unban check (skipped)', true );
+			$this->skip( 'RE7: ban/unban', 'test user creation failed' );
+			$this->skip( 'RE7: unban check', 'precondition not met' );
+			$this->skip( 'RE8: silence/unsilence', 'precondition not met' );
+			$this->skip( 'RE8: unsilence check', 'precondition not met' );
+			$this->skip( 'RE9: space ban', 'precondition not met' );
+			$this->skip( 'RE9: space unban check', 'precondition not met' );
 		}
 
 		// ── UserProfile ───────────────────────────────────────────────────────
@@ -223,7 +230,7 @@ class Model_Tests {
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
 
-		return [ 'pass' => $this->pass, 'fail' => $this->fail ];
+		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
 
 	/**
@@ -617,6 +624,28 @@ class Model_Tests {
 	 */
 	private function hook_fire_count(): int {
 		return $this->hook_fires;
+	}
+
+	/**
+	 * Record a check that could NOT run.
+	 *
+	 * A skip used to be logged as `check( '... (skipped)', true )`, which made
+	 * it indistinguishable from a real assertion in the totals. On a box where
+	 * fixtures fail to build, dozens of those turn into "passes" and the suite
+	 * reports green while proving nothing - the failure mode this whole audit
+	 * exists to remove. Skips are counted separately and never inflate the
+	 * pass count.
+	 *
+	 * @param string $label  What did not run.
+	 * @param string $reason Why not.
+	 */
+	private function skip( string $label, string $reason = '' ): void {
+		$msg = "    SKIP  {$label}";
+		if ( $reason ) {
+			$msg .= " — {$reason}";
+		}
+		\WP_CLI::log( $msg );
+		$this->skipped++;
 	}
 
 	private function check( string $label, bool $ok, string $detail = '' ): void {

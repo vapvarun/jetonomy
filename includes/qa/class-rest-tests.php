@@ -34,6 +34,13 @@ class REST_Tests {
 	private int $fail = 0;
 
 	/**
+	 * Count of checks that could not run.
+	 *
+	 * @var int
+	 */
+	private int $skipped = 0;
+
+	/**
 	 * Cleanup stack — items pushed during the run and processed in reverse order.
 	 *
 	 * Each entry: [ 'type' => string, 'id' => int, ... ]
@@ -122,14 +129,14 @@ class REST_Tests {
 	 *
 	 * Sets up fixtures, runs test groups A–G, then cleans up.
 	 *
-	 * @return array{ pass: int, fail: int }
+	 * @return array{ pass: int, fail: int, skipped: int }
 	 */
 	public function run(): array {
 		$this->setup();
 
 		if ( ! isset( $this->space ) ) {
 			\WP_CLI::warning( '  [REST] No active space found — skipping REST tests. Run demo-seed first.' );
-			return [ 'pass' => 0, 'fail' => 1 ];
+			return [ 'pass' => 0, 'fail' => 1, 'skipped' => 0 ];
 		}
 
 		$this->run_group_a();
@@ -155,7 +162,7 @@ class REST_Tests {
 		// Restore admin as the current user.
 		wp_set_current_user( $this->admin_id );
 
-		return [ 'pass' => $this->pass, 'fail' => $this->fail ];
+		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
@@ -305,8 +312,8 @@ class REST_Tests {
 			$this->check( 'A7: POST /posts/{id}/move back → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'A7: space_id restored', isset( $data['space_id'] ) && (int) $data['space_id'] === $space_id, "space_id={$data['space_id']}" );
 		} else {
-			$this->check( 'A6: move post (skipped — only one active space)', true );
-			$this->check( 'A7: move post back (skipped)', true );
+			$this->skip( 'A6: move post', 'only one active space' );
+			$this->skip( 'A7: move post back', 'precondition not met' );
 		}
 	}
 
@@ -451,7 +458,7 @@ class REST_Tests {
 				array_unshift( $this->cleanup, [ 'type' => 'post_rest', 'id' => $this->split_post_id ] );
 			}
 		} else {
-			$this->check( 'B12: split (skipped — second reply not created)', true );
+			$this->skip( 'B12: split', 'second reply not created' );
 		}
 
 		$this->test_media_B13();
@@ -509,8 +516,8 @@ class REST_Tests {
 			$r = $this->rest( 'DELETE', "/replies/{$this->reply_id}/vote" );
 			$this->check( 'C17: DELETE /replies/{id}/vote → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'C16: reply vote (skipped — no reply_id)', true );
-			$this->check( 'C17: reply unvote (skipped)', true );
+			$this->skip( 'C16: reply vote', 'no reply_id' );
+			$this->skip( 'C17: reply unvote', 'precondition not met' );
 		}
 	}
 
@@ -566,7 +573,7 @@ class REST_Tests {
 			$r = $this->rest( 'DELETE', "/subscriptions/{$post_sub_id}" );
 			$this->check( 'D20: DELETE /subscriptions/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'D20: delete post sub (skipped — no sub_id)', true );
+			$this->skip( 'D20: delete post sub', 'no sub_id' );
 		}
 
 		// 21. Subscribe to space.
@@ -586,7 +593,7 @@ class REST_Tests {
 			$r = $this->rest( 'DELETE', "/subscriptions/{$space_sub_id}" );
 			$this->check( 'D22: DELETE /subscriptions/{id} (space) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'D22: delete space sub (skipped — no sub_id)', true );
+			$this->skip( 'D22: delete space sub', 'no sub_id' );
 		}
 	}
 
@@ -675,13 +682,13 @@ class REST_Tests {
 				$this->check( 'E26: POST /moderation/flags/{id}/resolve → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 				$this->check( 'E26: resolved = true', ! empty( $data['resolved'] ), 'resolved was not true' );
 			} else {
-				$this->check( 'E26: resolve flag (skipped — no flag_id)', true );
+				$this->skip( 'E26: resolve flag', 'no flag_id' );
 			}
 		} else {
-			$this->check( 'E23: bookmark on (skipped — no post_id)', true );
-			$this->check( 'E24: bookmark off (skipped)', true );
-			$this->check( 'E25: flag (skipped)', true );
-			$this->check( 'E26: resolve flag (skipped)', true );
+			$this->skip( 'E23: bookmark on', 'no post_id' );
+			$this->skip( 'E24: bookmark off', 'precondition not met' );
+			$this->skip( 'E25: flag', 'precondition not met' );
+			$this->skip( 'E26: resolve flag', 'precondition not met' );
 		}
 
 		// 27. Update user profile (display_name via bio field).
@@ -733,7 +740,7 @@ class REST_Tests {
 				$this->cleanup[] = [ 'type' => 'space_member_db', 'space_id' => $space_id, 'user_id' => $this->test_user_id ];
 			}
 		} else {
-			$this->check( 'E30: space join (skipped — test user not created)', true );
+			$this->skip( 'E30: space join', 'test user not created' );
 		}
 
 		// 31. GET /auth/nonce — session nonce refresh (1.5.0). Backs the
@@ -808,7 +815,7 @@ class REST_Tests {
 			$this->check( 'E32: public space feed → 200 RSS', 200 === $code && false !== strpos( $body, '<rss' ), "HTTP {$code}" );
 			$this->check( 'E32: feed content-type is application/rss+xml', false !== strpos( $type, 'application/rss+xml' ), $type );
 		} else {
-			$this->check( 'E32: space feed (skipped — no public space)', true );
+			$this->skip( 'E32: space feed', 'no public space' );
 		}
 
 		// SM1. Sitemap survives an SEO plugin that claims the URL at request
@@ -858,7 +865,7 @@ class REST_Tests {
 			$code = (int) wp_remote_retrieve_response_code( $feed );
 			$this->check( 'E32: private space feed → 404 (no leak)', 404 === $code, "HTTP {$code}" );
 		} else {
-			$this->check( 'E32: private feed gate (skipped — no private space)', true );
+			$this->skip( 'E32: private feed gate', 'no private space' );
 		}
 
 		// 33. Join-request moderation (1.5.0) — list + approve + deny as a space
@@ -902,7 +909,7 @@ class REST_Tests {
 
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}jt_join_requests WHERE id IN (%d, %d)", $req_id, $req2_id ) );
 		} else {
-			$this->check( 'E33: join-request moderation (skipped — no test user)', true );
+			$this->skip( 'E33: join-request moderation', 'no test user' );
 		}
 	}
 
@@ -924,7 +931,7 @@ class REST_Tests {
 			$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => 1 ], $guest );
 			$this->check( 'F31: POST /posts/{id}/vote as guest → 401', 401 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'F31: guest vote (skipped — no post_id)', true );
+			$this->skip( 'F31: guest vote', 'no post_id' );
 		}
 
 		// 32. Create reply as guest.
@@ -932,7 +939,7 @@ class REST_Tests {
 			$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", [ 'content' => '<p>guest reply</p>' ], $guest );
 			$this->check( 'F32: POST /posts/{id}/replies as guest → 401', 401 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'F32: guest reply (skipped — no post_id)', true );
+			$this->skip( 'F32: guest reply', 'no post_id' );
 		}
 
 		// 33. Update profile as guest.
@@ -954,7 +961,7 @@ class REST_Tests {
 		wp_set_current_user( $this->admin_id );
 
 		if ( ! $this->test_user_id ) {
-			$this->check( 'G34: non-mod resolve flag (skipped — no test user)', true );
+			$this->skip( 'G34: non-mod resolve flag', 'no test user' );
 			return;
 		}
 
@@ -977,10 +984,10 @@ class REST_Tests {
 				$r = $this->rest( 'POST', "/moderation/flags/{$flag_id}/resolve", [ 'status' => 'dismissed' ], $this->test_user_id );
 				$this->check( 'G34: POST /moderation/flags/{id}/resolve as non-mod → 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
 			} else {
-				$this->check( 'G34: permission test flag (skipped — flag creation failed)', true );
+				$this->skip( 'G34: permission test flag', 'flag creation failed' );
 			}
 		} else {
-			$this->check( 'G34: non-mod resolve flag (skipped — no post_id)', true );
+			$this->skip( 'G34: non-mod resolve flag', 'no post_id' );
 		}
 	}
 
@@ -1035,7 +1042,7 @@ class REST_Tests {
 		\WP_CLI::log( '  Group J: User Blocking (1.7.1)' );
 
 		if ( ! $this->test_user_id ) {
-			$this->check( 'J1: block routes (skipped - no test user)', true );
+			$this->skip( 'J1: block routes', 'no test user' );
 			return;
 		}
 
@@ -1286,6 +1293,28 @@ class REST_Tests {
 	 * @param bool   $ok     Whether the assertion passed.
 	 * @param string $detail Optional detail appended on failure.
 	 */
+	/**
+	 * Record a check that could NOT run.
+	 *
+	 * A skip used to be logged as `check( '... (skipped)', true )`, which made
+	 * it indistinguishable from a real assertion in the totals. On a box where
+	 * fixtures fail to build, dozens of those turn into "passes" and the suite
+	 * reports green while proving nothing - the failure mode this whole audit
+	 * exists to remove. Skips are counted separately and never inflate the
+	 * pass count.
+	 *
+	 * @param string $label  What did not run.
+	 * @param string $reason Why not.
+	 */
+	private function skip( string $label, string $reason = '' ): void {
+		$msg = "    SKIP  {$label}";
+		if ( $reason ) {
+			$msg .= " — {$reason}";
+		}
+		\WP_CLI::log( $msg );
+		$this->skipped++;
+	}
+
 	private function check( string $label, bool $ok, string $detail = '' ): void {
 		if ( $ok ) {
 			\WP_CLI::log( "    PASS  {$label}" );
@@ -1619,7 +1648,7 @@ class REST_Tests {
 		delete_transient( 'jt_auth_delete_account_' . md5( \Jetonomy\client_ip() ?: 'unknown' ) );
 
 		if ( ! $this->post_id ) {
-			$this->check( 'K: account deletion (skipped — no fixture post)', true );
+			$this->skip( 'K: account deletion', 'no fixture post' );
 			return;
 		}
 
