@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.9.4
+Stable tag: 1.9.5
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,24 @@ Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abil
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.9.5 - September 2026 =
+
+Hotfix for a fatal on the Categories admin page in 1.9.4, a sitemap that silently 404ed on any site with an SEO plugin, and Pro routes that vanished when both plugins were updated together. Update straight away.
+
+* Improve  - The jetonomy_space_members shortcode now accepts a space slug, not only a numeric ID that no admin screen ever displayed.
+* Improve  - Misconfigured shortcodes now explain what to change instead of rendering nothing. The message is shown only to users who can edit posts, so visitors see no change.
+* Fix      - The Categories admin page no longer fails with a fatal error. A backslash-escaped format specifier made sprintf() throw on every 1.9.4 site, whether or not any categories existed.
+* Fix      - The community sitemap no longer returns 404 on sites running Yoast SEO, Rank Math or All in One SEO. Those plugins claim a broad sitemap URL that took precedence over ours, so spaces and posts were missing from search engines.
+* Fix      - Updating Jetonomy and Jetonomy Pro together no longer drops every Pro route. Private Messaging and other Pro pages silently returned a redirect until permalinks were re-saved, with no error anywhere.
+* Fix      - A shortcode given an ID that does not exist now says so instead of showing an empty result, so a typo is no longer indistinguishable from an empty space.
+* Fix      - The post compose form no longer renders for a space that does not exist, which allowed a topic to be aimed at nothing.
+* Fix      - Attachment records are no longer orphaned when a post or reply is deleted outside the REST API, which left rows pointing at content that no longer exists.
+* Fix      - Updating only custom fields on a post through the REST API now works. It previously returned "No fields provided for update" and discarded the value.
+* Fix      - Renamed Topic, Reply and Member labels now apply to the remaining interface messages, including the moderator confirmation dialogs that still used the built-in words.
+* Dev      - Added a format-string check to the build so an invalid sprintf specifier fails CI instead of reaching a page. Run it with npm run check:format-strings.
+* Dev      - The release battery now exercises an activate, deactivate and reactivate cycle and asserts that no rewrite rule disappears across it.
+* Compat   - Aligned with Jetonomy Pro 1.9.5. Install both updates together.
 
 = 1.9.4 - August 2026 =
 

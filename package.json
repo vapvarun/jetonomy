@@ -1,6 +1,6 @@
 {
   "name": "jetonomy",
-  "version": "1.9.4",
+  "version": "1.9.5",
   "private": true,
   "scripts": {
     "build": "wp-scripts build",
@@ -8,7 +8,9 @@
     "lint:js": "eslint assets/js/ --ext .js",
     "lint:css": "wp-scripts lint-style",
     "check:i18n": "bash bin/check-i18n.sh",
-    "test:admin-tables": "playwright test"
+    "check:format-strings": "php bin/check-format-strings.php",
+    "test:admin-tables": "playwright test",
+    "check:guards": "php bin/check-guards-can-fail.php"
   },
   "devDependencies": {
     "@wbcom/i18n-ai": "^0.1.3",

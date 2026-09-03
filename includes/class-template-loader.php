@@ -346,7 +346,8 @@ class Template_Loader {
 					/* translators: %s: the singular reply label the site owner configured. */
 					'splitFailed'           => sprintf( __( 'Failed to split %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'replyingTo'            => __( 'Replying to', 'jetonomy' ),
-					'cancelReply'           => __( 'Cancel reply', 'jetonomy' ),
+					/* translators: %s: the singular reply label the site owner configured (lowercase). */
+					'cancelReply'           => sprintf( __( 'Cancel %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'posting'               => __( 'Posting...', 'jetonomy' ),
 					/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
 					'postTopic'             => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
@@ -616,8 +617,8 @@ class Template_Loader {
 					'failed'                 => esc_html__( 'Failed', 'jetonomy' ),
 					'failedSaveProfile'      => esc_html__( 'Failed to save profile.', 'jetonomy' ),
 					// WS4-C: space-members ban dialog (translator placeholders).
-					/* translators: %s: member display name. */
-					'banConfirmFormat'       => sprintf( __( 'Ban %1$s from this %2$s? They will lose access to its posts and replies until you lift the ban.', 'jetonomy' ), '%s', \Jetonomy\space_label( false, true ) ),
+					/* translators: 1: member display name (substituted client-side); 2: singular space label; 3: plural topic label; 4: plural reply label. */
+					'banConfirmFormat'       => sprintf( __( 'Ban %1$s from this %2$s? They will lose access to its %3$s and %4$s until you lift the ban.', 'jetonomy' ), '%s', \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					/* translators: %s: the singular member label the site owner configured. */
 					'banMemberTitle'         => esc_html( sprintf( __( 'Ban %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
@@ -627,8 +628,8 @@ class Template_Loader {
 					'banSiteConfirmFormat'   => esc_html__( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ),
 					/* translators: %s: the singular member label the site owner configured. */
 					'banSiteTitle'           => esc_html( sprintf( __( 'Ban %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
-					/* translators: %s: member display name. */
-					'silenceConfirmFormat'   => esc_html__( 'Silence %s? They stay a member but cannot post, reply, or file reports until you lift it.', 'jetonomy' ),
+					/* translators: 1: member display name (substituted client-side); 2: singular member label (lowercase). "post, reply, file" stay verbs on purpose. */
+					'silenceConfirmFormat'   => esc_html( sprintf( __( 'Silence %1$s? They stay a %2$s but cannot post, reply, or file reports until you lift it.', 'jetonomy' ), '%s', \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					/* translators: %s: the singular member label the site owner configured. */
 					'silenceTitle'           => esc_html( sprintf( __( 'Silence %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					'silenceLabel'           => esc_html__( 'Silence', 'jetonomy' ),
@@ -643,7 +644,8 @@ class Template_Loader {
 					'confirmRoleChangeTitle' => esc_html__( 'Change role', 'jetonomy' ),
 					'confirmLabel'           => esc_html__( 'Change role', 'jetonomy' ),
 					'cancelLabel'            => esc_html__( 'Cancel', 'jetonomy' ),
-					'denyJoinBody'           => esc_html__( 'Deny this join request? The member can request again later.', 'jetonomy' ),
+					/* translators: %s: the singular member label the site owner configured (lowercase). */
+					'denyJoinBody'           => esc_html( sprintf( __( 'Deny this join request? The %s can request again later.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					'denyJoinTitle'          => esc_html__( 'Deny request', 'jetonomy' ),
 					'denyLabel'              => esc_html__( 'Deny', 'jetonomy' ),
 				),

@@ -4,8 +4,8 @@
     "name": "Jetonomy",
     "version_constant": "JETONOMY_VERSION",
     "main_file": "jetonomy.php",
-    "base_url": "http://buddynext.local",
-    "wp_path": "/Users/vapvarun/Local Sites/buddynext/app/public",
+    "base_url": "http://forums.local",
+    "wp_path": null,
     "autologin_param": "autologin",
     "rest_namespace": "jetonomy/v1",
     "front_routes": [
@@ -33,12 +33,31 @@
     "supplements_path": null,
     "qa_actions": {
         "command": "wp jetonomy qa-actions",
-        "expected_total": 301,
-        "verified_on": "2026-08-31",
-        "verified_version": "1.9.4",
-        "verified_on_site": "jetonomy.local",
+        "expected_total": 313,
+        "verified_on": "2026-09-03",
+        "verified_version": "1.9.5",
+        "verified_on_site": "forums.local",
         "gate": "ZERO FAIL lines. The total is a tripwire for accidentally-skipped phases, not the pass condition.",
         "environment_dependent": true,
-        "note": "286 is the total on a site where BuddyNext/WPMediaVerse is active. WPMediaVerse owns messaging site-wide, so Private_Messaging\\Extension::is_dormant() is true, its REST routes are deliberately not registered, and Phase 3 skips the PM group by design (Basecamp 10150583760) - enabling the extension in jetonomy_pro_extensions does NOT change this and is not a fix. On a site WITHOUT WPMediaVerse the PM group runs and the total is HIGHER. Re-stamp this field, with verified_on_site, whenever a release adds or removes tests or the gate moves to a different site."
+        "note": "286 is the total on a site where BuddyNext/WPMediaVerse is active. WPMediaVerse owns messaging site-wide, so Private_Messaging\\Extension::is_dormant() is true, its REST routes are deliberately not registered, and Phase 3 skips the PM group by design (Basecamp 10150583760) - enabling the extension in jetonomy_pro_extensions does NOT change this and is not a fix. On a site WITHOUT WPMediaVerse the PM group runs and the total is HIGHER. Re-stamp this field, with verified_on_site, whenever a release adds or removes tests or the gate moves to a different site. 2026-09-03: 301 -> 309. Added DC1-DC3 (delete contract fires from the MODEL, and trashing does NOT fire it - a trashed post is restorable), XF1a/XF1b (the jetonomy_post_update_has_extension_data seam, asserted on the filter rather than on Pro's custom_fields so it holds with Pro inactive) and R1-R3 (Spam_Detector loadable, digest last-run is a timestamp not a truncated year, ai_cache index matches its schema). Every one was verified to FAIL with its fix reverted before being counted."
+    },
+    "_wp_path_note": "Deliberately null. This field is machine-specific and fails SILENTLY when stale: it previously pointed at /Users/vapvarun/Local Sites/buddynext/app/public, which does not exist on other machines, while base_url pointed at buddynext.local - a site carrying its OWN jetonomy copy at 1.9.2 on main. A smoke run would have certified 1.9.2 and stamped the report with the release version. Derive the WP root three levels up from the plugin directory instead, per the wp-plugin-smoke skill.",
+    "model_env": {
+        "required_constants": {
+            "JETONOMY_PRO_LICENSE_BYPASS": true
+        },
+        "why": "Without this constant the Pro licence check fails, all 17 extensions never boot, zero jetonomy-pro/v1 REST routes register, and EVERY E and S check is reported as 'skipped' while the run still reads as a pass. The 2026-09-02 smoke skipped all 20 Pro checks for exactly this reason, in a release that shipped a Pro fix. Verify with: wp eval 'printf(\"%d\\n\", count(\\Jetonomy_Pro::instance()->get_extensions()));' - expect 17, not 0.",
+        "preflight_assert": "count(\\Jetonomy_Pro::instance()->get_extensions()) === 17 && pro REST routes > 0"
+    },
+    "coverage_gate": {
+        "required_sections": [
+            "A_fresh_install",
+            "C_core_flows",
+            "D_regression_guards",
+            "E_pro_smoke",
+            "S_pro_supplements"
+        ],
+        "min_pass_per_required_section": 1,
+        "why": "The build gate previously checked only that `failures` held no 'from' entries plus a version match, so a run that skipped 47 of 84 checks - including every Pro check - still satisfied it. Absence of failures is not coverage."
     }
 }

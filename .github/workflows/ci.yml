@@ -5,7 +5,11 @@ on:
     # '*-dev' makes release branches CI-gated BEFORE merge — main sat red
     # for three weeks (2026-05-23 → 06-11) because dev work only met CI
     # after merging.
-    branches: [main, master, 'v*', '*-dev']
+    # '[0-9]*' covers the numeric release branches we actually use (1.9.5).
+    # They matched none of the previous patterns, so a release branch got no
+    # CI at all until a PR was opened - the opposite of the intent in the
+    # comment above.
+    branches: [main, master, 'v*', '*-dev', '[0-9]*']
   pull_request:
     branches: [main, master]
   workflow_dispatch:
@@ -24,7 +28,15 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
       - name: Check syntax
-        run: find includes/ templates/ -name '*.php' -exec php -l {} + 2>&1 | grep -v 'No syntax errors' | head -50; test ${PIPESTATUS[0]} -eq 0
+        # bin/ and tests/ were outside the lint scope, so a parse error in a
+        # release script or a test helper only surfaced when something ran it.
+        run: find includes/ templates/ bin/ tests/ tools/ -name '*.php' -exec php -l {} + 2>&1 | grep -v 'No syntax errors' | head -50; test ${PIPESTATUS[0]} -eq 0
+
+      # php -l and PHPStan L5 both pass a `%1\$s` written inside a SINGLE-quoted
+      # string, but sprintf() throws ValueError at runtime — a hard fatal on the
+      # page. Basecamp #10264484098 shipped that way in 1.9.4.
+      - name: Check PHP format strings
+        run: php bin/check-format-strings.php
 
   # ── PHPUnit matrix: PHP 8.1/8.2/8.3/8.4 × WP 6.7/6.8/6.9 ─────────────
   phpunit:
@@ -119,19 +131,35 @@ jobs:
         with:
           path: jetonomy
 
+      # The pair used to be picked by a hardcoded literal with a comment saying
+      # to bump it each dev cycle. It was never bumped: the literal still read
+      # '1.5.0-dev' at 1.9.5, so every branch silently fell back to Pro master
+      # and the lockstep pairing this job exists to prove had stopped happening.
+      # Resolve it instead - a same-named branch on Pro if one exists, master
+      # otherwise - so it cannot go stale again.
+      - name: Resolve the Pro branch to pair with
+        id: pair
+        env:
+          GH_TOKEN: ${{ secrets.PRO_PAT }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          REF=master
+          if [ -n "$BRANCH" ] && gh api "repos/vapvarun/jetonomy-pro/branches/$BRANCH" >/dev/null 2>&1; then
+            REF="$BRANCH"
+          fi
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "pairing free '$BRANCH' with jetonomy-pro '$REF'"
+
       - name: Checkout jetonomy-pro
         uses: actions/checkout@v4
         with:
           repository: vapvarun/jetonomy-pro
           token: ${{ secrets.PRO_PAT }}
           path: jetonomy-pro
-          # Lockstep pair selection. Both branches of the expression are
-          # HARDCODED literals (github.ref_name is only compared, never
-          # emitted), so no branch-name injection is possible — same
-          # guarantee as the previous fixed pin, without testing free HEAD
-          # against a Pro frozen at v1.3.0 (two minors stale when caught).
-          # Bump the '1.5.0-dev' literal when a new dev cycle opens.
-          ref: ${{ github.ref_name == '1.5.0-dev' && '1.5.0-dev' || 'master' }}
+          # Lockstep pair selection - resolved in the step above, never
+          # interpolated from a branch name into a shell command, so there is
+          # no branch-name injection path.
+          ref: ${{ steps.pair.outputs.ref }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -202,15 +230,297 @@ jobs:
           tools: cs2pr
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist
+      # This gate could not fail. `phpcs --report=json` still writes its
+      # progress dots to STDOUT, so the JSON parse always threw, `|| echo "0"`
+      # swallowed it, and ERRORS was 0 on every run regardless of the code. It
+      # also pointed at .phpcs.xml.dist - a stale ruleset from May that nobody
+      # maintained and that reported 254 errors, while the pre-commit hook used
+      # the auto-discovered phpcs.xml (the maintained one, with the PHP 8.1
+      # allowances). Two rulesets disagreeing by 253 errors, and the gate
+      # incapable of reporting either. `-q` suppresses the progress output;
+      # the stale ruleset is deleted; the standard is now named explicitly so
+      # it can never silently diverge from the hook again.
       - name: Run WPCS
         run: |
-          vendor/bin/phpcs --standard=.phpcs.xml.dist --report=summary || true
-          ERRORS=$(vendor/bin/phpcs --standard=.phpcs.xml.dist --report=json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('totals',{}).get('errors',0))" 2>/dev/null || echo "0")
+          vendor/bin/phpcs -q --standard=phpcs.xml --report=summary || true
+          # phpcs exits 1 when there are only WARNINGS and 2 when there are
+          # errors, so its exit code cannot gate this job - we deliberately do
+          # not block on warnings. Capture the report separately (|| true), then
+          # parse it WITHOUT a fallback: an unparseable report is a real failure
+          # and must fail the step, which is precisely what the old
+          # `|| echo "0"` hid for the entire life of this gate.
+          REPORT=$(vendor/bin/phpcs -q --standard=phpcs.xml --report=json || true)
+          ERRORS=$(printf '%s' "$REPORT" | python3 -c "import json,sys; print(json.load(sys.stdin)['totals']['errors'])")
           echo "WPCS errors: $ERRORS"
           if [ "$ERRORS" -gt 0 ]; then
             echo "::error::WPCS found $ERRORS error(s)"
             exit 1
           fi
+
+  # ── JavaScript lint ─────────────────────────────────────────────────────
+  # No gate had ever executed or analysed JS. eslint was installed in both
+  # plugins; free's config enabled only @wordpress i18n rules (no-undef OFF)
+  # and Pro had no config at all, so `npm run lint:js` exited 0 having checked
+  # nothing. Pro's PDF viewer referenced a variable from a scope where it did
+  # not exist - a hard ReferenceError in an ES module - and the feature was
+  # dead for every user while looking fine (Basecamp 10268067223).
+  #
+  # no-undef is an ERROR because that is the class that ships bugs. The rest of
+  # eslint:recommended is a warning: hygiene should be visible without blocking
+  # a release.
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      - name: Run ESLint
+        run: npx eslint assets/js/ --ext .js
+
+  # ── Runtime surface smoke ───────────────────────────────────────────────
+  # Every other gate here checks PHP SYNTAX or STYLE. None of them executes a
+  # shortcode, a block, an admin page or a deactivation, which is how 1.9.4
+  # shipped two runtime fatals that passed php -l, PHPStan L5, PHPCS and
+  # Plugin Check:
+  #   - a sprintf ValueError that fataled the Categories admin page
+  #   - Pro's deactivate() calling an unloaded class, so Pro could not be
+  #     switched off at all
+  # This job boots a real WordPress, activates the plugin, and RUNS things.
+  surface-smoke:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_surface
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, mbstring
+
+      - name: Setup WP-CLI
+        run: |
+          curl -sO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          sudo mv wp-cli.phar /usr/local/bin/wp
+
+      - name: Install WordPress
+        run: |
+          mkdir -p /tmp/wp
+          curl -sL https://wordpress.org/latest.tar.gz | tar xz -C /tmp/wp --strip-components=1
+          cp /tmp/wp/wp-config-sample.php /tmp/wp/wp-config.php
+          sed -i "s/database_name_here/wp_surface/" /tmp/wp/wp-config.php
+          sed -i "s/username_here/root/" /tmp/wp/wp-config.php
+          sed -i "s/password_here/root/" /tmp/wp/wp-config.php
+          sed -i "s/localhost/127.0.0.1/" /tmp/wp/wp-config.php
+          wp core install --path=/tmp/wp --url=http://127.0.0.1:8080 --title=Surface \
+            --admin_user=admin --admin_password=admin --admin_email=admin@test.com --skip-email
+          # Log every notice/warning/deprecation to a file we can assert on.
+          wp config set WP_DEBUG true --raw --type=constant --path=/tmp/wp
+          wp config set WP_DEBUG_LOG true --raw --type=constant --path=/tmp/wp
+          wp config set WP_DEBUG_DISPLAY false --raw --type=constant --path=/tmp/wp
+          wp rewrite structure '/%postname%/' --path=/tmp/wp
+
+      - name: Activate plugin
+        run: |
+          ln -s "$GITHUB_WORKSPACE" /tmp/wp/wp-content/plugins/jetonomy
+          wp plugin activate jetonomy --path=/tmp/wp
+          wp option update jetonomy_setup_complete 1 --path=/tmp/wp
+          wp rewrite flush --path=/tmp/wp
+
+      # A fatal in activate()/deactivate() was invisible to every previous gate:
+      # the boot smoke only ever ACTIVATES. Pro 1.9.4 could not be deactivated
+      # at all and nothing caught it. This cycle is seconds and kills the class.
+      - name: Lifecycle cycle (activate / deactivate / reactivate)
+        run: |
+          set -e
+          : > /tmp/wp/wp-content/debug.log
+          # Snapshot the rule set before the cycle so we can prove none was lost.
+          RULES_BEFORE=$(wp eval 'foreach (array_filter((array) get_option("rewrite_rules"), fn($q)=>strpos((string)$q,"jetonomy_route")!==false) as $k=>$v) { echo $k,"\n"; }' --path=/tmp/wp | sort)
+          wp plugin deactivate jetonomy --path=/tmp/wp
+          wp plugin activate jetonomy --path=/tmp/wp
+          wp plugin deactivate jetonomy --path=/tmp/wp
+          wp plugin activate jetonomy --path=/tmp/wp
+          if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then
+            echo "::error::Fatal during the activate/deactivate cycle"
+            grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -40
+            exit 1
+          fi
+
+          # Asserting "no fatal" is not enough. A reactivation can silently drop
+          # rewrite rules from the compiled table: the 1.9.5 smoke found that
+          # deactivating and reactivating both plugins in ONE command took
+          # /community/messages/ from 200 to 301 with the rule simply gone, no
+          # error anywhere. An owner updating both plugins loses those routes
+          # until somebody flushes permalinks. So assert the ROUTES still
+          # resolve, not merely that nothing crashed.
+          # A COUNT threshold is not good enough either: the loss is partial.
+          # In the 1.9.5 smoke the total went 29 -> 27 because only the Pro
+          # extension rules were dropped, so any ">= 1" check passes while
+          # /community/messages/ has silently gone 200 -> 301. Compare the rule
+          # SET before and after and assert nothing disappeared.
+          RULES_AFTER=$(wp eval 'foreach (array_filter((array) get_option("rewrite_rules"), fn($q)=>strpos((string)$q,"jetonomy_route")!==false) as $k=>$v) { echo $k,"\n"; }' --path=/tmp/wp | sort)
+          LOST=$(comm -23 <(printf '%s\n' "$RULES_BEFORE") <(printf '%s\n' "$RULES_AFTER") | grep -c . || true)
+          if [ "${LOST:-0}" -gt 0 ]; then
+            echo "::error::${LOST} jetonomy rewrite rule(s) vanished during the lifecycle cycle"
+            comm -23 <(printf '%s\n' "$RULES_BEFORE") <(printf '%s\n' "$RULES_AFTER") | head -10
+            exit 1
+          fi
+          echo "every jetonomy rewrite rule survived the cycle"
+          echo "lifecycle cycle clean"
+
+      - name: Runtime surface gate (shortcodes, blocks, cron, REST)
+        run: |
+          set -e
+          : > /tmp/wp/wp-content/debug.log
+          OUT=$(wp eval-file "$GITHUB_WORKSPACE/bin/check-surfaces.php" --path=/tmp/wp 2>&1)
+          echo "$OUT"
+          echo "$OUT" | grep -q "SURFACE_GATE=PASS" || {
+            echo "::error::Runtime surface gate failed"
+            exit 1
+          }
+
+      # 309 assertions that actually exercise REST round-trips, model contracts
+      # and journey flows against a real database. They existed all along as
+      # `wp jetonomy qa-actions` but nothing ever ran them automatically - they
+      # were a thing a person remembered to type. Pro phases skip themselves
+      # cleanly when Pro is absent, which is the case here.
+      # Started BEFORE the action checks, not after: E32 asserts the space RSS
+      # feed over real HTTP, and with no server listening it reported "HTTP 0"
+      # for every request - a genuine check failing for want of an environment.
+      - name: Start a web server
+        run: |
+          mkdir -p /tmp/wp/wp-content/mu-plugins
+          cat > /tmp/wp/wp-content/mu-plugins/ci-autologin.php <<'MU'
+          <?php
+          // CI only: log in as admin via ?ci_login=1 so admin pages can be fetched.
+          add_action( 'init', function () {
+              if ( ! isset( $_GET['ci_login'] ) || is_user_logged_in() ) { return; }
+              $u = get_user_by( 'login', 'admin' );
+              if ( $u ) { wp_set_current_user( $u->ID ); wp_set_auth_cookie( $u->ID, true ); }
+          }, 1 );
+          MU
+          # -S is single-threaded; WORKERS keeps a sub-request from deadlocking
+          # behind the request that issued it.
+          #
+          # bin/ci-router.php is not optional. Without a router script the
+          # built-in server treats any pretty permalink carrying a file
+          # extension as a static-file request and answers with its OWN 404
+          # before WordPress runs - so /community-sitemap.xml was untestable
+          # here, while extensionless routes like /community/s/x/feed/ fell
+          # through to index.php and passed. Every .xml / .txt / file-shaped
+          # route was silently unverifiable in CI until this was added.
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t /tmp/wp "$GITHUB_WORKSPACE/bin/ci-router.php" >/tmp/php-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8080/ && break; sleep 1; done
+          curl -s -o /dev/null -w 'web server: %{http_code}\n' http://127.0.0.1:8080/
+          # Prove the router actually routes an extension-bearing URL, so this
+          # cannot silently regress to the old behaviour.
+          ext_code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/community-sitemap.xml)
+          echo "sitemap route through the router: $ext_code"
+          if [ "$ext_code" = "404" ]; then
+            echo "::error::ci-router.php is not routing extension-bearing URLs to WordPress"
+            exit 1
+          fi
+
+      - name: Journey + action checks (wp jetonomy qa-actions)
+        run: |
+          set -e
+          # The suite needs real content. On a bare install the REST phase
+          # skips itself outright ("No active space found - run demo-seed
+          # first") and the content/member journeys fail on missing fixtures,
+          # so without this the job would be asserting almost nothing while
+          # looking like it ran 300+ checks.
+          wp jetonomy demo-seed --force --path=/tmp/wp
+          : > /tmp/wp/wp-content/debug.log
+          wp jetonomy qa-actions --path=/tmp/wp
+          if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then
+            echo "::error::Fatal error logged during the action tests"
+            grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -40
+            exit 1
+          fi
+
+      # A suite reports what it RAN, not what it PROVED. Three guards shipped
+      # in 1.9.5 that stayed green against the exact bug they were written for
+      # (R1 required the class itself then asserted it existed; R2 checked the
+      # stored row while the bug corrupted the value on the way out; SM1 as
+      # first drafted asserted a 200, and the broken state returned 200).
+      #
+      # This reintroduces each bug and requires the named guard to go red. A
+      # guard that cannot fail is worse than no guard, because the bug then
+      # looks tested and nobody revisits it.
+      - name: Guards must be able to fail (mutation check)
+        run: php bin/check-guards-can-fail.php --wp-path=/tmp/wp
+
+      # The Categories fatal rendered fine as source and died as a page. Only
+      # requesting the page catches that, so request every one of them.
+      - name: Render every admin page and front-end route
+        run: |
+          set -e
+          : > /tmp/wp/wp-content/debug.log
+          COOKIES=/tmp/ci-cookies.txt
+          curl -s -c "$COOKIES" -o /dev/null "http://127.0.0.1:8080/?ci_login=1"
+
+          FAILED=0
+
+          # Scrape the RENDERED admin menu rather than asking WP-CLI: `wp eval`
+          # never defines WP_ADMIN at plugin-load time, so the admin classes
+          # that call add_menu_page() are not even loaded and do_action(
+          # 'admin_menu' ) returns an empty menu. Reading the real sidebar also
+          # means a page added later is covered with no list to maintain here.
+          curl -s -b "$COOKIES" -o /tmp/admin-home.html "http://127.0.0.1:8080/wp-admin/"
+          PAGES=$(grep -oE 'admin\.php\?page=jetonomy[A-Za-z0-9_-]*' /tmp/admin-home.html \
+                  | sed 's/.*page=//' | sort -u)
+          if [ -z "$PAGES" ]; then
+            echo "::error::Could not enumerate Jetonomy admin pages - the menu registered nothing"
+            exit 1
+          fi
+          echo "admin pages found: $(echo "$PAGES" | wc -l)"
+          for p in $PAGES; do
+            case "$p" in http*) URL="$p" ;; *.php*) URL="http://127.0.0.1:8080/wp-admin/$p" ;; *) URL="http://127.0.0.1:8080/wp-admin/admin.php?page=$p" ;; esac
+            CODE=$(curl -s -b "$COOKIES" -o /tmp/page.html -w '%{http_code}' "$URL")
+            if [ "$CODE" != "200" ] || grep -qi "critical error\|Fatal error" /tmp/page.html; then
+              echo "::error::admin page $p returned $CODE or rendered a fatal"
+              FAILED=1
+            else
+              echo "  ok  admin $p"
+            fi
+          done
+
+          for r in / /community/ /community/leaderboard/ /community/search/ /community-sitemap.xml; do
+            CODE=$(curl -s -o /tmp/page.html -w '%{http_code}' "http://127.0.0.1:8080$r")
+            case "$CODE" in
+              200|301|302|404) echo "  ok  front $r ($CODE)" ;;
+              *) echo "::error::front route $r returned $CODE"; FAILED=1 ;;
+            esac
+            grep -qi "critical error" /tmp/page.html && { echo "::error::front route $r rendered a fatal"; FAILED=1; }
+          done
+
+          if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then
+            echo "::error::Fatal error logged while rendering surfaces"
+            grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -60
+            FAILED=1
+          fi
+          if grep -qE "PHP (Warning|Notice)" /tmp/wp/wp-content/debug.log; then
+            echo "::warning::PHP warnings/notices logged while rendering surfaces"
+            grep -nE "PHP (Warning|Notice)" /tmp/wp/wp-content/debug.log | head -20
+          fi
+
+          exit $FAILED
 
   # ── Plugin Check (PCP) ──────────────────────────────────────────────────
   plugin-check:

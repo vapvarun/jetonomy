@@ -267,6 +267,21 @@ class Reply extends Model {
 			self::bust_thread( (int) ( $reply->post_id ?? 0 ) );
 		}
 
+		if ( true === $result ) {
+			/**
+			 * Fires after a reply row is deleted, whatever deleted it.
+			 *
+			 * Moved here from Replies_Controller::delete_item() in 1.9.5 - see
+			 * the matching note in Post::delete(). Firing from the controller
+			 * only held the contract on the REST path and orphaned Pro's
+			 * attachment rows on every other one (Basecamp 10268067864).
+			 *
+			 * @since 1.4.1
+			 * @param int $id Deleted reply ID.
+			 */
+			do_action( 'jetonomy_after_delete_reply', $id );
+		}
+
 		return $result;
 	}
 

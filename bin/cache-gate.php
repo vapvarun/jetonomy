@@ -61,7 +61,13 @@ $measure = function ( callable $fn ) use ( $wpdb ): array {
 echo "══ Jetonomy caching gate ══\n\n";
 
 // ── 0. Precondition ───────────────────────────────────────────────────────
-$persistent = wp_using_ext_object_cache();
+// Cast: wp_using_ext_object_cache() returns the raw $_wp_using_ext_object_cache
+// global, which is null - not false - on a site that has never had a drop-in.
+// $check()'s $ok is a non-nullable bool, and null into that is a TypeError even
+// in coercive mode, so the no-drop-in path fataled with a stack trace instead of
+// printing the ABORT below. That path is the whole point of check 0, and it had
+// therefore never actually run.
+$persistent = (bool) wp_using_ext_object_cache();
 wp_cache_set( 'jt_gate_boundary', 'x', 'jt', 60 );
 $check(
 	'0. persistent object cache in use',

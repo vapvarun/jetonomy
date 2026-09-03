@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     1.9.4
+ * Version:     1.9.5
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '1.9.4' );
+define( 'JETONOMY_VERSION', '1.9.5' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from

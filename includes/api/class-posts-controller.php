@@ -714,7 +714,28 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
-		if ( empty( $update_data ) ) {
+		/**
+		 * Filters whether an extension has data to persist for this update even
+		 * though no core post column changed.
+		 *
+		 * Without this seam a PATCH carrying only extension-owned data - Pro's
+		 * `custom_fields` being the case that surfaced it - was rejected with
+		 * "No fields provided for update." before `jetonomy_after_update_post`
+		 * could fire, so the value was never saved and the only workaround was
+		 * to send a title you did not want to change (Basecamp 10268069890).
+		 *
+		 * Free deliberately does not learn what `custom_fields` is: an extension
+		 * declares its own interest here, so this holds for any future
+		 * extension-owned field without another change in core.
+		 *
+		 * @since 1.9.5
+		 * @param bool            $has_data Whether an extension will persist something.
+		 * @param WP_REST_Request $request  The update request.
+		 * @param int             $id       Post ID.
+		 */
+		$has_extension_data = (bool) apply_filters( 'jetonomy_post_update_has_extension_data', false, $request, $id );
+
+		if ( empty( $update_data ) && ! $has_extension_data ) {
 			return $this->validation_error( __( 'No fields provided for update.', 'jetonomy' ) );
 		}
 
@@ -753,7 +774,11 @@ class Posts_Controller extends Base_Controller {
 			$update_data['edited_by'] = $user_id;
 		}
 
-		Post::update( $id, $update_data );
+		// May be empty when the request carries only extension-owned data; the
+		// hooks below still have to fire so the extension can persist it.
+		if ( ! empty( $update_data ) ) {
+			Post::update( $id, $update_data );
+		}
 
 		// Auto-flag on edit when a rule asked to flag (mirrors the create path):
 		// the edit stays published but surfaces in the moderation queue.
@@ -830,13 +855,9 @@ class Posts_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_post_deleted', $id, $space_id, $user_id );
 
-		/**
-		 * Fires after a post is deleted. Receives only the deleted post ID.
-		 *
-		 * @since 1.4.1
-		 * @param int $id Deleted post ID.
-		 */
-		do_action( 'jetonomy_after_delete_post', $id );
+		// jetonomy_after_delete_post now fires from the model, so every
+		// delete path carries the contract, not just this one. Firing it
+		// here as well would double-fire for REST callers.
 
 		return new WP_REST_Response(
 			array(

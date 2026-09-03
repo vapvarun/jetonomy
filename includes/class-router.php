@@ -17,6 +17,14 @@ class Router {
 		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
 		add_filter( 'request', [ $this, 'suppress_default_query' ] );
+		// Claim our sitemap URLs before ANY other plugin can. The rewrite table
+		// is not enough: an SEO plugin that answers at request time never
+		// consults it. AIOSEO matches `^(.+)-sitemap\.xml$` on `parse_request`
+		// at priority 10, so `community-sitemap.xml` looked to it like an object
+		// type called "community" and it served its own 404 XML over ours
+		// (Basecamp 10268378037). Priority 0 puts us ahead of that and of
+		// anything else hooking parse_request or template_redirect.
+		add_action( 'parse_request', [ $this, 'claim_sitemap_request' ], 0 );
 		add_action( 'parse_query', [ $this, 'correct_query_state' ], 1 );
 		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
 		add_action( 'template_redirect', [ $this, 'handle_request' ] );
@@ -24,6 +32,23 @@ class Router {
 		// less-looking /…-sitemap.xml URL (301 -> …/) before handle_request emits.
 		// Skip it for the sitemap route so the XML is served directly.
 		add_filter( 'redirect_canonical', [ $this, 'skip_canonical_for_sitemap' ] );
+
+		// `add_rewrite_rule( …, 'top' )` only prepends against the rules that
+		// exist WHEN IT RUNS, so 'top' is a last-writer-wins race, not a
+		// guarantee. Yoast registers a catch-all `([^/]+?)-sitemap([0-9]+)?.xml$`
+		// after our init:10, which landed ahead of ours and swallowed
+		// /community-sitemap.xml into Yoast's own (non-existent) `community`
+		// sitemap - a hard 404 on every site running an SEO plugin. Rank Math
+		// and AIOSEO register the same shape. `rewrite_rules_array` sees the
+		// fully assembled set after every registrant has had its turn, so
+		// reordering here is the only placement that actually wins.
+		add_filter( 'rewrite_rules_array', [ $this, 'prioritize_rules' ], 99 );
+		// Yoast does not use rewrite_rules_array at all - it filters
+		// `option_rewrite_rules`, injecting its dynamic rules every time the
+		// option is READ, which is after any generation-time ordering we do.
+		// So the read filter is the one that decides, and we have to run
+		// later than its default priority to land in front.
+		add_filter( 'option_rewrite_rules', [ $this, 'prioritize_rules' ], 99 );
 	}
 
 	/**
@@ -123,6 +148,40 @@ class Router {
 		$query->is_404            = false;
 		$query->queried_object    = null;
 		$query->queried_object_id = 0;
+	}
+
+	/**
+	 * Force every Jetonomy route ahead of third-party rules.
+	 *
+	 * Ordering is preserved within our own set, so the more specific rules
+	 * registered first in add_rewrite_rules() keep their precedence over the
+	 * looser ones. Everything else follows in its original order.
+	 *
+	 * No return type declaration on purpose: `option_rewrite_rules` fires on
+	 * every read of the option, including before any rules exist, when the
+	 * stored value is an empty string rather than an array. A filter must hand
+	 * back whatever it was given in that case, so declaring `: array` turned an
+	 * ordinary empty-option read into a TypeError during flush_rewrite_rules().
+	 *
+	 * @param array<string,string>|mixed $rules Assembled rewrite rules, or whatever the option currently holds.
+	 * @return array<string,string>|mixed
+	 */
+	public function prioritize_rules( $rules ) {
+		if ( ! is_array( $rules ) ) {
+			return $rules;
+		}
+
+		$ours   = [];
+		$others = [];
+		foreach ( $rules as $pattern => $query ) {
+			if ( is_string( $query ) && false !== strpos( $query, 'jetonomy_route=' ) ) {
+				$ours[ $pattern ] = $query;
+			} else {
+				$others[ $pattern ] = $query;
+			}
+		}
+
+		return $ours + $others;
 	}
 
 	public function add_rewrite_rules(): void {
@@ -315,6 +374,48 @@ class Router {
 		// Load the template (template may call status_header(404) inside)
 		Template_Loader::render( $data );
 		exit;
+	}
+
+	/**
+	 * Serve our sitemap directly when the request is one of ours.
+	 *
+	 * Runs on `parse_request` at priority 0 - earlier than any SEO plugin's
+	 * own handler - and renders + exits, so ordering in the rewrite table stops
+	 * being the thing that decides who wins. `Router::prioritize_rules()` still
+	 * handles competitors that DO go through the rewrite layer (Yoast, Rank
+	 * Math); this covers the ones that do not (AIOSEO).
+	 *
+	 * The patterns mirror add_rewrite_rules() exactly and are deliberately
+	 * anchored: `shop-sitemap.xml` belongs to whichever plugin owns "shop", and
+	 * claiming it would make us the bug we are fixing.
+	 *
+	 * @param \WP $wp The main WordPress environment instance.
+	 */
+	public function claim_sitemap_request( $wp ): void {
+		if ( is_admin() ) {
+			return;
+		}
+
+		$slug = (string) $wp->request;
+		if ( '' === $slug && isset( $_SERVER['REQUEST_URI'] ) ) {
+			// Plain permalinks: $wp->request is empty, so fall back to the path.
+			$path = (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
+			$slug = trim( $path, '/' );
+		}
+
+		if ( '' === $slug ) {
+			return;
+		}
+
+		$base = preg_quote( $this->get_base_slug(), '#' );
+
+		if ( preg_match( '#^' . $base . '-sitemap\\.xml$#', $slug ) ) {
+			SEO\Sitemap_Emitter::render( '', 0 );
+		}
+
+		if ( preg_match( '#^' . $base . '-sitemap-(spaces|posts)-([0-9]+)\\.xml$#', $slug, $m ) ) {
+			SEO\Sitemap_Emitter::render( $m[1], (int) $m[2] );
+		}
 	}
 
 	private function get_base_slug(): string {
