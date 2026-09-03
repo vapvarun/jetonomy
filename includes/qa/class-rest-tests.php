@@ -839,49 +839,55 @@ class REST_Tests {
 			sprintf( 'HTTP %d, type "%s", sitemapindex %s', $code, $type, false !== strpos( $body, '<sitemapindex' ) ? 'present' : 'MISSING' )
 		);
 
-		// MV1. The move-topic picker must be able to reach a space that does not
-		// fit on the first page of GET /spaces. It used to request /spaces with no
-		// params, take the default 20 rows and render them in a bare <select>, so
-		// on a site with 36 spaces 17 were unreachable and a bbPress import - one
-		// space per imported forum - made Move useless (Basecamp 10268682629).
+		// MV1. Every space the viewer can move into must be reachable, not just
+		// the first page. The picker asked for /spaces with no params, took the
+		// default 20 and rendered them in a <select>, so on a bbPress import -
+		// one space per imported forum - most targets were simply absent and
+		// Move was unusable (Basecamp 10268682629).
 		//
-		// Asserts the SEARCH path, not the row count: raising the limit would make
-		// a count-based check pass while an import with hundreds of spaces stayed
-		// broken.
+		// Asserts REACHABILITY, not a row count or a search term: any check tied
+		// to a specific number goes green the moment someone raises the cap while
+		// a site past the new number stays broken.
 		global $wpdb;
 		$spaces_t   = $wpdb->prefix . 'jt_spaces';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$visible_ct = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE visibility = 'public' AND status = 'active'" );
 
 		if ( $visible_ct <= 20 ) {
-			$this->skip( 'MV1: move picker can reach a space past the first page', "only {$visible_ct} visible spaces; need more than 20" );
+			$this->skip( 'MV1: the move picker can reach every movable space', "only {$visible_ct} visible spaces; need more than the 20-row default page" );
 		} else {
-			// The space ranked LAST under the picker's own ordering is by definition
-			// not on page one.
+			// Walk the endpoint the way the picker does and prove the walk ends up
+			// with everything, including the space ranked last.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$last_title = (string) $wpdb->get_var( "SELECT title FROM {$spaces_t} WHERE visibility = 'public' AND status = 'active' ORDER BY sort_order DESC, title DESC LIMIT 1" );
 
-			$unsearched = $this->rest( 'GET', '/spaces' );
-			$searched   = $this->rest( 'GET', '/spaces', [ 'search' => $last_title ] );
+			$titles = array();
+			$offset = 0;
+			do {
+				$resp = $this->rest( 'GET', '/spaces', [ 'movable_by_me' => 1, 'limit' => 100, 'offset' => $offset ] );
+				$body = $resp->get_data();
+				$page = is_array( $body ) && isset( $body['data'] ) && is_array( $body['data'] ) ? $body['data'] : array();
+				$total = (int) ( $body['meta']['total'] ?? 0 );
+				foreach ( $page as $row ) {
+					$titles[] = (string) ( is_array( $row ) ? ( $row['title'] ?? '' ) : ( $row->title ?? '' ) );
+				}
+				$offset += count( $page );
+			} while ( count( $page ) > 0 && count( $titles ) < $total );
 
-			$rows_of = static function ( $resp ): array {
-				$body = $resp instanceof \WP_REST_Response ? $resp->get_data() : $resp;
-				$d    = is_array( $body ) ? ( $body['data'] ?? $body ) : [];
-				return is_array( $d ) ? $d : [];
-			};
-			$titles_of = static function ( array $rows ): array {
-				return array_map( static fn ( $r ) => (string) ( is_array( $r ) ? ( $r['title'] ?? '' ) : ( $r->title ?? '' ) ), $rows );
-			};
-
-			$on_page_one = in_array( $last_title, $titles_of( $rows_of( $unsearched ) ), true );
-			$found       = in_array( $last_title, $titles_of( $rows_of( $searched ) ), true );
+			$single = $this->rest( 'GET', '/spaces' );
+			$sbody  = $single->get_data();
+			$srows  = is_array( $sbody ) && isset( $sbody['data'] ) && is_array( $sbody['data'] ) ? $sbody['data'] : array();
 
 			$this->check(
-				'MV1: move picker can reach a space past the first page',
-				! $on_page_one && $found,
-				$on_page_one
-					? "'{$last_title}' was already on page one; fixture cannot prove the search path"
-					: "search for '{$last_title}' returned it: " . ( $found ? 'yes' : 'NO' )
+				'MV1: the move picker can reach every movable space',
+				count( $srows ) < $visible_ct && in_array( $last_title, $titles, true ),
+				sprintf(
+					'one page returns %d of %d; walking pages reached %d and %s the last-ranked space',
+					count( $srows ),
+					$visible_ct,
+					count( $titles ),
+					in_array( $last_title, $titles, true ) ? 'included' : 'MISSED'
+				)
 			);
 		}
 

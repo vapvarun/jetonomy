@@ -585,8 +585,6 @@ class Template_Loader {
 					'selectSpacePlaceholder' => esc_html( sprintf( __( 'Select a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'noOtherSpaces'          => esc_html( sprintf( __( 'No other %s available', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
-					/* translators: %s: plural space label (lowercase). */
-					'searchSpaces'           => esc_html( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: plural space label. */
 					'failedLoadSpaces'       => esc_html( sprintf( __( 'Failed to load %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: the singular topic label the site owner configured. */

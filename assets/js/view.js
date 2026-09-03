@@ -124,20 +124,6 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		msg.className = 'jt-modal-msg';
 		msg.textContent = title;
 		box.appendChild( msg );
-		// Search field. The list used to be a bare 20-row <select>: GET /spaces
-		// with no params returns the default page, so on a site with 36 spaces
-		// 17 were simply absent and a bbPress import (one space per imported
-		// forum) made the dialog unusable. Searching server-side rather than
-		// raising the cap - an import can produce hundreds, and filtering in JS
-		// would leak the names of spaces the user cannot move into
-		// (Basecamp 10268682629).
-		const search = document.createElement( 'input' );
-		search.type = 'search';
-		search.className = 'jt-modal-input jt-input';
-		search.placeholder = t.searchSpaces || 'Search spaces…';
-		search.setAttribute( 'aria-label', t.searchSpaces || 'Search spaces…' );
-		box.appendChild( search );
-
 		const select = document.createElement( 'select' );
 		select.className = 'jt-modal-input jt-input';
 		const loadingOpt = document.createElement( 'option' );
@@ -164,25 +150,31 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( null ); } } );
 		document.body.appendChild( overlay );
 
-		let seq = 0;
-		const loadSpaces = ( term ) => {
-			const mine = ++seq;
-			const qs = '/spaces?movable_by_me=1'
-				+ ( term ? '&search=' + encodeURIComponent( term ) : '' );
-			return window.jetonomyRest.restFetch( qs )
-			.then( ( r ) => r.data || {} )
-			.then( ( data ) => {
-				// Ignore a slow response overtaken by a newer keystroke.
-				if ( mine !== seq ) return;
-				while ( select.firstChild ) select.removeChild( select.firstChild );
-				const defaultOpt = document.createElement( 'option' );
-				defaultOpt.textContent = t.selectSpacePlaceholder || 'Select a space…';
-				defaultOpt.value = '';
-				defaultOpt.disabled = true;
-				defaultOpt.selected = true;
-				select.appendChild( defaultOpt );
-				// GET /spaces returns { data: [...] } via paginated_response.
-				const spaces = Array.isArray( data.data ) ? data.data : ( Array.isArray( data ) ? data : [] );
+		// Fetch EVERY space the viewer can move into, not the first page.
+		// This asked for /spaces with no params, so it got the default 20 and
+		// silently dropped the rest - on a bbPress import, where each forum
+		// becomes a space, most targets were simply absent from the dialog
+		// (Basecamp 10268682629).
+		//
+		// The endpoint caps `limit` at 100, so pages are followed until the
+		// reported total is reached. No search box: a native <select> already
+		// does type-ahead, so adding one would reimplement the browser.
+		const fetchAllSpaces = ( acc = [], offset = 0 ) =>
+			window.jetonomyRest.restFetch( '/spaces?movable_by_me=1&limit=100&offset=' + offset )
+				.then( ( r ) => r.data || {} )
+				.then( ( data ) => {
+					const page = Array.isArray( data.data ) ? data.data : ( Array.isArray( data ) ? data : [] );
+					const all = acc.concat( page );
+					const total = data.meta && data.meta.total ? Number( data.meta.total ) : all.length;
+					// Stop on a short page too, so a bad total can never loop forever.
+					if ( page.length > 0 && all.length < total ) {
+						return fetchAllSpaces( all, offset + page.length );
+					}
+					return all;
+				} );
+
+		fetchAllSpaces()
+			.then( ( spaces ) => {
 				spaces.forEach( ( s ) => {
 					if ( String( s.id ) === String( excludeSpaceId ) ) return;
 					const opt = document.createElement( 'option' );
@@ -201,23 +193,12 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 				}
 			} )
 			.catch( () => {
-				if ( mine !== seq ) return;
 				while ( select.firstChild ) select.removeChild( select.firstChild );
 				const failOpt = document.createElement( 'option' );
 				failOpt.textContent = t.failedLoadSpaces || 'Failed to load spaces';
 				failOpt.disabled = true;
 				select.appendChild( failOpt );
 			} );
-		};
-
-		let debounce = null;
-		search.addEventListener( 'input', () => {
-			okBtn.disabled = true;
-			window.clearTimeout( debounce );
-			debounce = window.setTimeout( () => loadSpaces( search.value.trim() ), 250 );
-		} );
-
-		loadSpaces( '' );
 	} );
 }
 

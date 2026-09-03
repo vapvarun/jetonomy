@@ -266,10 +266,9 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.9.6 - September 2026 =
 
-Adds search to the move-topic space picker, which previously showed only the first 20 spaces with no way to reach the rest. The remaining changes are internal and make the release gates catch what they previously missed.
+Fixes the move-topic dialog, which showed only the first 20 spaces with no way to reach the rest. The remaining changes are internal and make the release gates catch what they previously missed.
 
-* New      - The move-topic dialog now has a search field, so any space can be found by name.
-* Fix      - Moving a topic is no longer limited to the first 20 spaces. On sites with more than 20 spaces, common after a bbPress import where every forum becomes a space, the rest were silently missing from the dialog and could not be chosen.
+* Fix      - Moving a topic now lists every space you can move into, instead of stopping at the first 20. On sites with more than 20 spaces, common after a bbPress import where each forum becomes a space, the rest were silently missing from the dialog and could not be chosen.
 * Fix      - The move dialog now lists only spaces you are allowed to move topics into, instead of offering targets the move would then refuse.
 * Dev      - Regression guards are now proven to fail when their bug returns. Three guards shipped in 1.9.5 that stayed green against the exact defect they were written for, so a bug could look tested when nothing checked it.
 * Dev      - Added npm run check:guards, which reintroduces each known bug and requires the matching guard to go red.

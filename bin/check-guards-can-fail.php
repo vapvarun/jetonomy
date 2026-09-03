@@ -85,10 +85,10 @@ $mutations = [
 	],
 	[
 		'guard' => 'MV1',
-		'what'  => 'GET /spaces ignores the search term again, so the move picker can only reach page one',
-		'file'  => $plugin_dir . '/includes/models/class-space.php',
-		'find'  => "\t\tif ( null !== \$search && '' !== trim( \$search ) ) {\n\t\t\t\$where[]  = 's.title LIKE %s';\n\t\t\t\$values[] = '%' . \$db->esc_like( trim( \$search ) ) . '%';\n\t\t}",
-		'to'    => '/* guard-mutation */',
+		'what'  => 'the picker goes back to one default page, so spaces past it are unreachable',
+		'file'  => $plugin_dir . '/includes/api/class-spaces-controller.php',
+		'find'  => "\t\t\t\t\$pagination['limit'],\n\t\t\t\t\$pagination['offset'],",
+		'to'    => "\t\t\t\t20,\n\t\t\t\t0,",
 	],
 	[
 		'guard' => 'R1',
@@ -167,8 +167,14 @@ foreach ( $mutations as $m ) {
 	file_put_contents( $m['file'], $source );
 	unset( $restore[ $m['file'] ] );
 
-	$joined = implode( "\n", $out );
-	$failed = (bool) preg_match( '/FAIL\s+' . preg_quote( $m['guard'], '/' ) . ':/', $joined );
+	$joined  = implode( "\n", $out );
+	$failed  = (bool) preg_match( '/FAIL\s+' . preg_quote( $m['guard'], '/' ) . ':/', $joined );
+	// A guard that SKIPPED did not get the chance to fail - the fixtures it
+	// needs were not present. Reporting that as "cannot fail" is a false
+	// accusation, and reporting it as proven is worse. It is inconclusive, and
+	// inconclusive is a failure of this check: an unexercised guard protects
+	// nothing, so the run must not go green on it.
+	$skipped = (bool) preg_match( '/SKIP\s+' . preg_quote( $m['guard'], '/' ) . ':/', $joined );
 
 	if ( 0 !== $lint ) {
 		printf( "  %-5s INVALID        mutation broke syntax, cannot conclude\n", $m['guard'] );
@@ -176,6 +182,9 @@ foreach ( $mutations as $m ) {
 	} elseif ( $failed ) {
 		printf( "  %-5s ok             went red on: %s\n", $m['guard'], $m['what'] );
 		$ok[] = $m['guard'];
+	} elseif ( $skipped ) {
+		printf( "  %-5s UNEXERCISED    skipped for want of fixtures, so it proved nothing\n", $m['guard'] );
+		$bad[] = $m['guard'] . ' (skipped - seed the fixtures it needs)';
 	} else {
 		printf( "  %-5s CANNOT FAIL    stayed green with: %s\n", $m['guard'], $m['what'] );
 		$bad[] = $m['guard'];
@@ -186,7 +195,7 @@ echo "\n";
 printf( "  %d guard(s) proven, %d defective\n", count( $ok ), count( $bad ) );
 
 if ( $bad ) {
-	echo "\nThese guards do not test what they claim:\n";
+	echo "\nThese guards did not prove they can fail:\n";
 	foreach ( $bad as $g ) {
 		echo "  - {$g}\n";
 	}

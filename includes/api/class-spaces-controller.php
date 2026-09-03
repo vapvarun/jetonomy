@@ -441,7 +441,6 @@ class Spaces_Controller extends Base_Controller {
 		$visibility     = $request->get_param( 'visibility' ) ? sanitize_text_field( $request->get_param( 'visibility' ) ) : null;
 		$postable_by_me = (bool) $request->get_param( 'postable_by_me' );
 		$movable_by_me  = (bool) $request->get_param( 'movable_by_me' );
-		$search         = $request->get_param( 'search' ) ? sanitize_text_field( $request->get_param( 'search' ) ) : null;
 		$pagination     = $this->get_pagination( $request );
 
 		if ( $postable_by_me ) {
@@ -487,8 +486,7 @@ class Spaces_Controller extends Base_Controller {
 				$visibility,
 				$pagination['limit'],
 				$pagination['offset'],
-				'sort_order ASC, title ASC',
-				$search
+				'sort_order ASC, title ASC'
 			);
 
 			$spaces = $result['spaces'];
@@ -1506,10 +1504,6 @@ class Spaces_Controller extends Base_Controller {
 				'visibility'     => [
 					'type' => 'string',
 					'enum' => [ 'public', 'private', 'hidden' ],
-				],
-				'search'         => [
-					'type'        => 'string',
-					'description' => 'Filter spaces by title substring.',
 				],
 				'movable_by_me'  => [
 					'type'        => 'boolean',
