@@ -242,9 +242,15 @@ jobs:
       # it can never silently diverge from the hook again.
       - name: Run WPCS
         run: |
-          set -o pipefail
           vendor/bin/phpcs -q --standard=phpcs.xml --report=summary || true
-          ERRORS=$(vendor/bin/phpcs -q --standard=phpcs.xml --report=json | python3 -c "import json,sys; print(json.load(sys.stdin)['totals']['errors'])")
+          # phpcs exits 1 when there are only WARNINGS and 2 when there are
+          # errors, so its exit code cannot gate this job - we deliberately do
+          # not block on warnings. Capture the report separately (|| true), then
+          # parse it WITHOUT a fallback: an unparseable report is a real failure
+          # and must fail the step, which is precisely what the old
+          # `|| echo "0"` hid for the entire life of this gate.
+          REPORT=$(vendor/bin/phpcs -q --standard=phpcs.xml --report=json || true)
+          ERRORS=$(printf '%s' "$REPORT" | python3 -c "import json,sys; print(json.load(sys.stdin)['totals']['errors'])")
           echo "WPCS errors: $ERRORS"
           if [ "$ERRORS" -gt 0 ]; then
             echo "::error::WPCS found $ERRORS error(s)"
