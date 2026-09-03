@@ -321,6 +321,8 @@ jobs:
         run: |
           set -e
           : > /tmp/wp/wp-content/debug.log
+          # Snapshot the rule set before the cycle so we can prove none was lost.
+          RULES_BEFORE=$(wp eval 'foreach (array_filter((array) get_option("rewrite_rules"), fn($q)=>strpos((string)$q,"jetonomy_route")!==false) as $k=>$v) { echo $k,"\n"; }' --path=/tmp/wp | sort)
           wp plugin deactivate jetonomy --path=/tmp/wp
           wp plugin activate jetonomy --path=/tmp/wp
           wp plugin deactivate jetonomy --path=/tmp/wp
@@ -330,6 +332,27 @@ jobs:
             grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -40
             exit 1
           fi
+
+          # Asserting "no fatal" is not enough. A reactivation can silently drop
+          # rewrite rules from the compiled table: the 1.9.5 smoke found that
+          # deactivating and reactivating both plugins in ONE command took
+          # /community/messages/ from 200 to 301 with the rule simply gone, no
+          # error anywhere. An owner updating both plugins loses those routes
+          # until somebody flushes permalinks. So assert the ROUTES still
+          # resolve, not merely that nothing crashed.
+          # A COUNT threshold is not good enough either: the loss is partial.
+          # In the 1.9.5 smoke the total went 29 -> 27 because only the Pro
+          # extension rules were dropped, so any ">= 1" check passes while
+          # /community/messages/ has silently gone 200 -> 301. Compare the rule
+          # SET before and after and assert nothing disappeared.
+          RULES_AFTER=$(wp eval 'foreach (array_filter((array) get_option("rewrite_rules"), fn($q)=>strpos((string)$q,"jetonomy_route")!==false) as $k=>$v) { echo $k,"\n"; }' --path=/tmp/wp | sort)
+          LOST=$(comm -23 <(printf '%s\n' "$RULES_BEFORE") <(printf '%s\n' "$RULES_AFTER") | grep -c . || true)
+          if [ "${LOST:-0}" -gt 0 ]; then
+            echo "::error::${LOST} jetonomy rewrite rule(s) vanished during the lifecycle cycle"
+            comm -23 <(printf '%s\n' "$RULES_BEFORE") <(printf '%s\n' "$RULES_AFTER") | head -10
+            exit 1
+          fi
+          echo "every jetonomy rewrite rule survived the cycle"
           echo "lifecycle cycle clean"
 
       - name: Runtime surface gate (shortcodes, blocks, cron, REST)
