@@ -247,7 +247,10 @@ class Model_Tests {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" );
 		if ( ! $space_id ) {
-			$this->check( 'DC1: delete contract (needs a space)', false, 'no space available' );
+			// Skip rather than fail, matching how the REST phase handles an
+			// unseeded site. A missing fixture is not a broken delete contract,
+			// and reporting it as one buries real failures in noise.
+			\WP_CLI::log( '    SKIP  DC1-DC3: delete contract — no space on this site (run demo-seed)' );
 			return;
 		}
 

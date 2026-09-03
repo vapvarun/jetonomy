@@ -403,6 +403,12 @@ jobs:
       - name: Journey + action checks (wp jetonomy qa-actions)
         run: |
           set -e
+          # The suite needs real content. On a bare install the REST phase
+          # skips itself outright ("No active space found - run demo-seed
+          # first") and the content/member journeys fail on missing fixtures,
+          # so without this the job would be asserting almost nothing while
+          # looking like it ran 300+ checks.
+          wp jetonomy demo-seed --force --path=/tmp/wp
           : > /tmp/wp/wp-content/debug.log
           wp jetonomy qa-actions --path=/tmp/wp
           if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then
