@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.9.4
+Stable tag: 1.9.6
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,37 @@ Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abil
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.9.6 - September 2026 =
+
+Fixes the move-topic dialog, which showed only the first 20 spaces with no way to reach the rest. The remaining changes are internal and make the release gates catch what they previously missed.
+
+* Fix      - Moving a topic now lists every space you can move into, instead of stopping at the first 20. On sites with more than 20 spaces, common after a bbPress import where each forum becomes a space, the rest were silently missing from the dialog and could not be chosen.
+* Fix      - The move dialog now lists only spaces you are allowed to move topics into, instead of offering targets the move would then refuse.
+* Dev      - Regression guards are now proven to fail when their bug returns. Three guards shipped in 1.9.5 that stayed green against the exact defect they were written for, so a bug could look tested when nothing checked it.
+* Dev      - Added npm run check:guards, which reintroduces each known bug and requires the matching guard to go red.
+* Dev      - Test runs no longer count skipped checks as passes. A site where fixtures could not be created previously reported a fully green suite while asserting almost nothing.
+* Dev      - Added checks that the community sitemap serves XML rather than only returning a 200, and that its handler claims the URL ahead of any SEO plugin.
+* Dev      - Continuous integration can now serve URLs that carry a file extension, so sitemap and feed routes are actually exercised instead of silently skipped.
+* Compat   - Aligned with Jetonomy Pro 1.9.6. Install both updates together.
+
+= 1.9.5 - September 2026 =
+
+Hotfix for a fatal on the Categories admin page in 1.9.4, a sitemap that silently 404ed on any site with an SEO plugin, and Pro routes that vanished when both plugins were updated together. Update straight away.
+
+* Improve  - The jetonomy_space_members shortcode now accepts a space slug, not only a numeric ID that no admin screen ever displayed.
+* Improve  - Misconfigured shortcodes now explain what to change instead of rendering nothing. The message is shown only to users who can edit posts, so visitors see no change.
+* Fix      - The Categories admin page no longer fails with a fatal error. A backslash-escaped format specifier made sprintf() throw on every 1.9.4 site, whether or not any categories existed.
+* Fix      - The community sitemap no longer returns 404 on sites running Yoast SEO, Rank Math or All in One SEO. Those plugins claim a broad sitemap URL that took precedence over ours, so spaces and posts were missing from search engines.
+* Fix      - Updating Jetonomy and Jetonomy Pro together no longer drops every Pro route. Private Messaging and other Pro pages silently returned a redirect until permalinks were re-saved, with no error anywhere.
+* Fix      - A shortcode given an ID that does not exist now says so instead of showing an empty result, so a typo is no longer indistinguishable from an empty space.
+* Fix      - The post compose form no longer renders for a space that does not exist, which allowed a topic to be aimed at nothing.
+* Fix      - Attachment records are no longer orphaned when a post or reply is deleted outside the REST API, which left rows pointing at content that no longer exists.
+* Fix      - Updating only custom fields on a post through the REST API now works. It previously returned "No fields provided for update" and discarded the value.
+* Fix      - Renamed Topic, Reply and Member labels now apply to the remaining interface messages, including the moderator confirmation dialogs that still used the built-in words.
+* Dev      - Added a format-string check to the build so an invalid sprintf specifier fails CI instead of reaching a page. Run it with npm run check:format-strings.
+* Dev      - The release battery now exercises an activate, deactivate and reactivate cycle and asserts that no rewrite rule disappears across it.
+* Compat   - Aligned with Jetonomy Pro 1.9.5. Install both updates together.
 
 = 1.9.4 - August 2026 =
 

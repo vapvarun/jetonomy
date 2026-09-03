@@ -160,7 +160,7 @@ defined( 'ABSPATH' ) || exit;
 						/* translators: %s: the plural label of the item (the configured noun). */
 						'title' => sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
 						/* translators: 1: plural category label; 2: plural space label (lowercase). */
-						'body'  => sprintf( __( '%1\$s let you group related %2\$s. Create your first one using the form above.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\space_label( true, true ) ),
+						'body'  => sprintf( __( '%1$s let you group related %2$s. Create your first one using the form above.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\space_label( true, true ) ),
 					),
 				'cell'      => static function ( $cat, string $key ): void {
 					switch ( $key ) {

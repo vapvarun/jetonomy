@@ -150,18 +150,31 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( null ); } } );
 		document.body.appendChild( overlay );
 
-		window.jetonomyRest.restFetch( '/spaces' )
-			.then( ( r ) => r.data || {} )
-			.then( ( data ) => {
-				while ( select.firstChild ) select.removeChild( select.firstChild );
-				const defaultOpt = document.createElement( 'option' );
-				defaultOpt.textContent = t.selectSpacePlaceholder || 'Select a space…';
-				defaultOpt.value = '';
-				defaultOpt.disabled = true;
-				defaultOpt.selected = true;
-				select.appendChild( defaultOpt );
-				// GET /spaces returns { data: [...] } via paginated_response.
-				const spaces = Array.isArray( data.data ) ? data.data : ( Array.isArray( data ) ? data : [] );
+		// Fetch EVERY space the viewer can move into, not the first page.
+		// This asked for /spaces with no params, so it got the default 20 and
+		// silently dropped the rest - on a bbPress import, where each forum
+		// becomes a space, most targets were simply absent from the dialog
+		// (Basecamp 10268682629).
+		//
+		// The endpoint caps `limit` at 100, so pages are followed until the
+		// reported total is reached. No search box: a native <select> already
+		// does type-ahead, so adding one would reimplement the browser.
+		const fetchAllSpaces = ( acc = [], offset = 0 ) =>
+			window.jetonomyRest.restFetch( '/spaces?movable_by_me=1&limit=100&offset=' + offset )
+				.then( ( r ) => r.data || {} )
+				.then( ( data ) => {
+					const page = Array.isArray( data.data ) ? data.data : ( Array.isArray( data ) ? data : [] );
+					const all = acc.concat( page );
+					const total = data.meta && data.meta.total ? Number( data.meta.total ) : all.length;
+					// Stop on a short page too, so a bad total can never loop forever.
+					if ( page.length > 0 && all.length < total ) {
+						return fetchAllSpaces( all, offset + page.length );
+					}
+					return all;
+				} );
+
+		fetchAllSpaces()
+			.then( ( spaces ) => {
 				spaces.forEach( ( s ) => {
 					if ( String( s.id ) === String( excludeSpaceId ) ) return;
 					const opt = document.createElement( 'option' );

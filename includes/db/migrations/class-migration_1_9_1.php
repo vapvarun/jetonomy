@@ -2,7 +2,7 @@
 /**
  * Migration 1.9.1 - index the membership-level lookup.
  *
- * jt_access_rules carried only PRIMARY and KEY space_priority (space_id,
+ * The jt_access_rules table carried only PRIMARY and KEY space_priority (space_id,
  * priority), which serves "what gates this space?" and nothing else. Every
  * question asked the other way - "which spaces does this level open?" - was a
  * full table scan, and thirteen adapters were already asking it by hand.

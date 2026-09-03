@@ -30,17 +30,17 @@ class Pro_Tests {
 	 * Returns immediately with empty counts if Jetonomy Pro is not loaded
 	 * (or is an older Pro build without the QA module).
 	 *
-	 * @return array{ pass: int, fail: int }
+	 * @return array{ pass: int, fail: int, skipped: int }
 	 */
 	public function run(): array {
 		if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) {
 			\WP_CLI::log( '  Pro not active — skipping' );
-			return [ 'pass' => 0, 'fail' => 0 ];
+			return [ 'pass' => 0, 'fail' => 0, 'skipped' => 0 ];
 		}
 
 		if ( ! class_exists( '\Jetonomy_Pro\QA\REST_Tests' ) ) {
 			\WP_CLI::log( '  Pro active but its QA module is missing (pre-1.9.1 Pro build?) — skipping' );
-			return [ 'pass' => 0, 'fail' => 0 ];
+			return [ 'pass' => 0, 'fail' => 0, 'skipped' => 0 ];
 		}
 
 		return ( new \Jetonomy_Pro\QA\REST_Tests() )->run();

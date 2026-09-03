@@ -34,6 +34,13 @@ class REST_Tests {
 	private int $fail = 0;
 
 	/**
+	 * Count of checks that could not run.
+	 *
+	 * @var int
+	 */
+	private int $skipped = 0;
+
+	/**
 	 * Cleanup stack — items pushed during the run and processed in reverse order.
 	 *
 	 * Each entry: [ 'type' => string, 'id' => int, ... ]
@@ -122,14 +129,14 @@ class REST_Tests {
 	 *
 	 * Sets up fixtures, runs test groups A–G, then cleans up.
 	 *
-	 * @return array{ pass: int, fail: int }
+	 * @return array{ pass: int, fail: int, skipped: int }
 	 */
 	public function run(): array {
 		$this->setup();
 
 		if ( ! isset( $this->space ) ) {
 			\WP_CLI::warning( '  [REST] No active space found — skipping REST tests. Run demo-seed first.' );
-			return [ 'pass' => 0, 'fail' => 1 ];
+			return [ 'pass' => 0, 'fail' => 1, 'skipped' => 0 ];
 		}
 
 		$this->run_group_a();
@@ -148,13 +155,14 @@ class REST_Tests {
 		$this->test_ajax_generate_invite_X1();
 		$this->test_ajax_list_invites_X2();
 		$this->test_ajax_revoke_invite_X3();
+		$this->test_extension_only_update_XF1();
 
 		$this->cleanup();
 
 		// Restore admin as the current user.
 		wp_set_current_user( $this->admin_id );
 
-		return [ 'pass' => $this->pass, 'fail' => $this->fail ];
+		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
@@ -304,8 +312,8 @@ class REST_Tests {
 			$this->check( 'A7: POST /posts/{id}/move back → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'A7: space_id restored', isset( $data['space_id'] ) && (int) $data['space_id'] === $space_id, "space_id={$data['space_id']}" );
 		} else {
-			$this->check( 'A6: move post (skipped — only one active space)', true );
-			$this->check( 'A7: move post back (skipped)', true );
+			$this->skip( 'A6: move post', 'only one active space' );
+			$this->skip( 'A7: move post back', 'precondition not met' );
 		}
 	}
 
@@ -450,7 +458,7 @@ class REST_Tests {
 				array_unshift( $this->cleanup, [ 'type' => 'post_rest', 'id' => $this->split_post_id ] );
 			}
 		} else {
-			$this->check( 'B12: split (skipped — second reply not created)', true );
+			$this->skip( 'B12: split', 'second reply not created' );
 		}
 
 		$this->test_media_B13();
@@ -508,8 +516,8 @@ class REST_Tests {
 			$r = $this->rest( 'DELETE', "/replies/{$this->reply_id}/vote" );
 			$this->check( 'C17: DELETE /replies/{id}/vote → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'C16: reply vote (skipped — no reply_id)', true );
-			$this->check( 'C17: reply unvote (skipped)', true );
+			$this->skip( 'C16: reply vote', 'no reply_id' );
+			$this->skip( 'C17: reply unvote', 'precondition not met' );
 		}
 	}
 
@@ -565,7 +573,7 @@ class REST_Tests {
 			$r = $this->rest( 'DELETE', "/subscriptions/{$post_sub_id}" );
 			$this->check( 'D20: DELETE /subscriptions/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'D20: delete post sub (skipped — no sub_id)', true );
+			$this->skip( 'D20: delete post sub', 'no sub_id' );
 		}
 
 		// 21. Subscribe to space.
@@ -585,7 +593,7 @@ class REST_Tests {
 			$r = $this->rest( 'DELETE', "/subscriptions/{$space_sub_id}" );
 			$this->check( 'D22: DELETE /subscriptions/{id} (space) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'D22: delete space sub (skipped — no sub_id)', true );
+			$this->skip( 'D22: delete space sub', 'no sub_id' );
 		}
 	}
 
@@ -674,13 +682,13 @@ class REST_Tests {
 				$this->check( 'E26: POST /moderation/flags/{id}/resolve → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 				$this->check( 'E26: resolved = true', ! empty( $data['resolved'] ), 'resolved was not true' );
 			} else {
-				$this->check( 'E26: resolve flag (skipped — no flag_id)', true );
+				$this->skip( 'E26: resolve flag', 'no flag_id' );
 			}
 		} else {
-			$this->check( 'E23: bookmark on (skipped — no post_id)', true );
-			$this->check( 'E24: bookmark off (skipped)', true );
-			$this->check( 'E25: flag (skipped)', true );
-			$this->check( 'E26: resolve flag (skipped)', true );
+			$this->skip( 'E23: bookmark on', 'no post_id' );
+			$this->skip( 'E24: bookmark off', 'precondition not met' );
+			$this->skip( 'E25: flag', 'precondition not met' );
+			$this->skip( 'E26: resolve flag', 'precondition not met' );
 		}
 
 		// 27. Update user profile (display_name via bio field).
@@ -732,7 +740,7 @@ class REST_Tests {
 				$this->cleanup[] = [ 'type' => 'space_member_db', 'space_id' => $space_id, 'user_id' => $this->test_user_id ];
 			}
 		} else {
-			$this->check( 'E30: space join (skipped — test user not created)', true );
+			$this->skip( 'E30: space join', 'test user not created' );
 		}
 
 		// 31. GET /auth/nonce — session nonce refresh (1.5.0). Backs the
@@ -807,14 +815,109 @@ class REST_Tests {
 			$this->check( 'E32: public space feed → 200 RSS', 200 === $code && false !== strpos( $body, '<rss' ), "HTTP {$code}" );
 			$this->check( 'E32: feed content-type is application/rss+xml', false !== strpos( $type, 'application/rss+xml' ), $type );
 		} else {
-			$this->check( 'E32: space feed (skipped — no public space)', true );
+			$this->skip( 'E32: space feed', 'no public space' );
 		}
+
+		// SM1. Sitemap survives an SEO plugin that claims the URL at request
+		// time. Yoast and Rank Math compete through the rewrite table, so
+		// Router::prioritize_rules() handles them; AIOSEO never registers a
+		// rewrite rule at all - it matches `^(.+)-sitemap\.xml$` on
+		// parse_request and served its own 404 XML over ours until we started
+		// claiming the URL at parse_request priority 0 (Basecamp 10268378037).
+		//
+		// Asserts content-type AND body, never the status code alone. The
+		// broken state returned 200 with an HTML page: a status-only check
+		// passes it, which is exactly how this shipped unnoticed.
+		$sitemap_url = \Jetonomy\base_url() . '-sitemap.xml';
+		$sm   = wp_remote_get( $sitemap_url, [ 'timeout' => 10 ] );
+		$code = (int) wp_remote_retrieve_response_code( $sm );
+		$body = (string) wp_remote_retrieve_body( $sm );
+		$type = (string) wp_remote_retrieve_header( $sm, 'content-type' );
+		$this->check(
+			'SM1: sitemap index serves XML, not just a 200',
+			200 === $code && false !== strpos( $type, 'xml' ) && false !== strpos( $body, '<sitemapindex' ),
+			sprintf( 'HTTP %d, type "%s", sitemapindex %s', $code, $type, false !== strpos( $body, '<sitemapindex' ) ? 'present' : 'MISSING' )
+		);
+
+		// MV1. Every space the viewer can move into must be reachable, not just
+		// the first page. The picker asked for /spaces with no params, took the
+		// default 20 and rendered them in a <select>, so on a bbPress import -
+		// one space per imported forum - most targets were simply absent and
+		// Move was unusable (Basecamp 10268682629).
+		//
+		// Asserts REACHABILITY, not a row count or a search term: any check tied
+		// to a specific number goes green the moment someone raises the cap while
+		// a site past the new number stays broken.
+		global $wpdb;
+		$spaces_t   = $wpdb->prefix . 'jt_spaces';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$visible_ct = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE visibility = 'public' AND status = 'active'" );
+
+		if ( $visible_ct <= 20 ) {
+			$this->skip( 'MV1: the move picker can reach every movable space', "only {$visible_ct} visible spaces; need more than the 20-row default page" );
+		} else {
+			// Walk the endpoint the way the picker does and prove the walk ends up
+			// with everything, including the space ranked last.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$last_title = (string) $wpdb->get_var( "SELECT title FROM {$spaces_t} WHERE visibility = 'public' AND status = 'active' ORDER BY sort_order DESC, title DESC LIMIT 1" );
+
+			$titles = array();
+			$offset = 0;
+			do {
+				$resp = $this->rest( 'GET', '/spaces', [ 'movable_by_me' => 1, 'limit' => 100, 'offset' => $offset ] );
+				$body = $resp->get_data();
+				$page = is_array( $body ) && isset( $body['data'] ) && is_array( $body['data'] ) ? $body['data'] : array();
+				$total = (int) ( $body['meta']['total'] ?? 0 );
+				foreach ( $page as $row ) {
+					$titles[] = (string) ( is_array( $row ) ? ( $row['title'] ?? '' ) : ( $row->title ?? '' ) );
+				}
+				$offset += count( $page );
+			} while ( count( $page ) > 0 && count( $titles ) < $total );
+
+			$single = $this->rest( 'GET', '/spaces' );
+			$sbody  = $single->get_data();
+			$srows  = is_array( $sbody ) && isset( $sbody['data'] ) && is_array( $sbody['data'] ) ? $sbody['data'] : array();
+
+			$this->check(
+				'MV1: the move picker can reach every movable space',
+				count( $srows ) < $visible_ct && in_array( $last_title, $titles, true ),
+				sprintf(
+					'one page returns %d of %d; walking pages reached %d and %s the last-ranked space',
+					count( $srows ),
+					$visible_ct,
+					count( $titles ),
+					in_array( $last_title, $titles, true ) ? 'included' : 'MISSED'
+				)
+			);
+		}
+
+		// SM2. That XML must be ours because we claim the URL EARLY, not by luck
+		// of rewrite ordering. AIOSEO hooks parse_request at priority 10, so a
+		// handler at >= 10 loses to it. Asserting the priority catches a silent
+		// regression (someone "tidying" the hook to default 10) that E33 would
+		// not, because on a site with no SEO plugin installed E33 still passes.
+		$claim_priority = null;
+		if ( isset( $GLOBALS['wp_filter']['parse_request'] ) ) {
+			foreach ( $GLOBALS['wp_filter']['parse_request']->callbacks as $priority => $callbacks ) {
+				foreach ( $callbacks as $cb ) {
+					$fn = $cb['function'] ?? null;
+					if ( is_array( $fn ) && is_object( $fn[0] ) && $fn[0] instanceof \Jetonomy\Router && 'claim_sitemap_request' === ( $fn[1] ?? '' ) ) {
+						$claim_priority = (int) $priority;
+					}
+				}
+			}
+		}
+		$this->check(
+			'SM2: sitemap claim runs before request-level SEO rivals (parse_request < 10)',
+			null !== $claim_priority && $claim_priority < 10,
+			null === $claim_priority ? 'handler not registered on parse_request at all' : "registered at priority {$claim_priority}"
+		);
 		if ( $private_slug ) {
 			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $private_slug ) . '/feed/', [ 'timeout' => 10 ] );
 			$code = (int) wp_remote_retrieve_response_code( $feed );
 			$this->check( 'E32: private space feed → 404 (no leak)', 404 === $code, "HTTP {$code}" );
 		} else {
-			$this->check( 'E32: private feed gate (skipped — no private space)', true );
+			$this->skip( 'E32: private feed gate', 'no private space' );
 		}
 
 		// 33. Join-request moderation (1.5.0) — list + approve + deny as a space
@@ -858,7 +961,7 @@ class REST_Tests {
 
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}jt_join_requests WHERE id IN (%d, %d)", $req_id, $req2_id ) );
 		} else {
-			$this->check( 'E33: join-request moderation (skipped — no test user)', true );
+			$this->skip( 'E33: join-request moderation', 'no test user' );
 		}
 	}
 
@@ -880,7 +983,7 @@ class REST_Tests {
 			$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => 1 ], $guest );
 			$this->check( 'F31: POST /posts/{id}/vote as guest → 401', 401 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'F31: guest vote (skipped — no post_id)', true );
+			$this->skip( 'F31: guest vote', 'no post_id' );
 		}
 
 		// 32. Create reply as guest.
@@ -888,7 +991,7 @@ class REST_Tests {
 			$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", [ 'content' => '<p>guest reply</p>' ], $guest );
 			$this->check( 'F32: POST /posts/{id}/replies as guest → 401', 401 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
-			$this->check( 'F32: guest reply (skipped — no post_id)', true );
+			$this->skip( 'F32: guest reply', 'no post_id' );
 		}
 
 		// 33. Update profile as guest.
@@ -910,7 +1013,7 @@ class REST_Tests {
 		wp_set_current_user( $this->admin_id );
 
 		if ( ! $this->test_user_id ) {
-			$this->check( 'G34: non-mod resolve flag (skipped — no test user)', true );
+			$this->skip( 'G34: non-mod resolve flag', 'no test user' );
 			return;
 		}
 
@@ -933,10 +1036,10 @@ class REST_Tests {
 				$r = $this->rest( 'POST', "/moderation/flags/{$flag_id}/resolve", [ 'status' => 'dismissed' ], $this->test_user_id );
 				$this->check( 'G34: POST /moderation/flags/{id}/resolve as non-mod → 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
 			} else {
-				$this->check( 'G34: permission test flag (skipped — flag creation failed)', true );
+				$this->skip( 'G34: permission test flag', 'flag creation failed' );
 			}
 		} else {
-			$this->check( 'G34: non-mod resolve flag (skipped — no post_id)', true );
+			$this->skip( 'G34: non-mod resolve flag', 'no post_id' );
 		}
 	}
 
@@ -991,7 +1094,7 @@ class REST_Tests {
 		\WP_CLI::log( '  Group J: User Blocking (1.7.1)' );
 
 		if ( ! $this->test_user_id ) {
-			$this->check( 'J1: block routes (skipped - no test user)', true );
+			$this->skip( 'J1: block routes', 'no test user' );
 			return;
 		}
 
@@ -1242,6 +1345,28 @@ class REST_Tests {
 	 * @param bool   $ok     Whether the assertion passed.
 	 * @param string $detail Optional detail appended on failure.
 	 */
+	/**
+	 * Record a check that could NOT run.
+	 *
+	 * A skip used to be logged as `check( '... (skipped)', true )`, which made
+	 * it indistinguishable from a real assertion in the totals. On a box where
+	 * fixtures fail to build, dozens of those turn into "passes" and the suite
+	 * reports green while proving nothing - the failure mode this whole audit
+	 * exists to remove. Skips are counted separately and never inflate the
+	 * pass count.
+	 *
+	 * @param string $label  What did not run.
+	 * @param string $reason Why not.
+	 */
+	private function skip( string $label, string $reason = '' ): void {
+		$msg = "    SKIP  {$label}";
+		if ( $reason ) {
+			$msg .= " — {$reason}";
+		}
+		\WP_CLI::log( $msg );
+		++$this->skipped;
+	}
+
 	private function check( string $label, bool $ok, string $detail = '' ): void {
 		if ( $ok ) {
 			\WP_CLI::log( "    PASS  {$label}" );
@@ -1268,6 +1393,67 @@ class REST_Tests {
 	 * @param int|null $as_user  WP user ID to act as, or null to keep current user.
 	 * @return \WP_REST_Response
 	 */
+	/**
+	 * XF1: an update carrying only extension-owned data must not be rejected.
+	 *
+	 * update_item() bailed with "No fields provided for update." whenever no
+	 * core post column changed, and it did so BEFORE jetonomy_after_update_post
+	 * fired - so Pro's custom-fields listener never ran and the value could not
+	 * be saved on its own. The only workaround was to send a title you did not
+	 * want to change (Basecamp 10268069890).
+	 *
+	 * Free deliberately knows nothing about custom_fields: an extension declares
+	 * interest through jetonomy_post_update_has_extension_data. This asserts the
+	 * SEAM rather than Pro's field, so it holds with Pro inactive, and it pins
+	 * the negative case too - a genuinely empty PATCH must still be rejected
+	 * rather than quietly returning 200.
+	 */
+	private function test_extension_only_update_XF1(): void {
+		// Own fixture, created through the MODEL. The shared $this->post_id has
+		// been trashed by earlier tests before this point, and creating through
+		// the REST collection depends on the fixture space still being valid -
+		// both produced a 404 that looked like a failure of the seam rather than
+		// of the fixture. Only the PATCH needs to go through REST here.
+		global $wpdb;
+		$spaces_t = $wpdb->prefix . 'jt_spaces';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" );
+		if ( $space_id <= 0 ) {
+			$this->check( 'XF1: extension-only update seam', false, 'no space available' );
+			return;
+		}
+
+		$created = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $this->admin_id,
+				'title'     => 'XF1 seam fixture ' . wp_generate_password( 6, false ),
+				'content'   => 'seam fixture body',
+				'status'    => 'publish',
+			]
+		);
+		$post_id = is_wp_error( $created ) ? 0 : (int) $created;
+		if ( $post_id <= 0 ) {
+			$this->check( 'XF1: extension-only update seam', false, 'could not create fixture post' );
+			return;
+		}
+
+		// A genuinely empty update stays rejected, with no claimant.
+		$empty = $this->rest( 'PATCH', "/posts/{$post_id}", [], $this->admin_id );
+		$this->check( 'XF1a: empty update is still rejected', 400 === $empty->get_status(), "HTTP {$empty->get_status()}" );
+
+		// With a claimant, the same empty-of-core-columns request goes through so
+		// the after-update hooks can fire.
+		$claim = static fn() => true;
+		add_filter( 'jetonomy_post_update_has_extension_data', $claim, 10, 1 );
+		$claimed = $this->rest( 'PATCH', "/posts/{$post_id}", [], $this->admin_id );
+		remove_filter( 'jetonomy_post_update_has_extension_data', $claim, 10 );
+
+		$this->check( 'XF1b: a claiming extension lets the update through', 200 === $claimed->get_status(), "HTTP {$claimed->get_status()}" );
+
+		\Jetonomy\Models\Post::delete( $post_id );
+	}
+
 	private function rest( string $method, string $route, array $params = [], ?int $as_user = null ): \WP_REST_Response {
 		$request = new \WP_REST_Request( $method, '/jetonomy/v1' . $route );
 
@@ -1514,7 +1700,7 @@ class REST_Tests {
 		delete_transient( 'jt_auth_delete_account_' . md5( \Jetonomy\client_ip() ?: 'unknown' ) );
 
 		if ( ! $this->post_id ) {
-			$this->check( 'K: account deletion (skipped — no fixture post)', true );
+			$this->skip( 'K: account deletion', 'no fixture post' );
 			return;
 		}
 

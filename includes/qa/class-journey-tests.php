@@ -45,7 +45,7 @@ class Journey_Tests {
 	/**
 	 * Execute every journey smoke test in order and return pass/fail counts.
 	 *
-	 * @return array{pass:int,fail:int}
+	 * @return array{pass:int,fail:int,skipped:int}
 	 */
 	public function run(): array {
 		try {
@@ -83,8 +83,9 @@ class Journey_Tests {
 		}
 
 		return [
-			'pass' => $this->pass,
-			'fail' => $this->fail,
+			'pass'    => $this->pass,
+			'fail'    => $this->fail,
+			'skipped' => 0,
 		];
 	}
 

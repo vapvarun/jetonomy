@@ -40,6 +40,13 @@ class Model_Tests {
 	 */
 	private int $fail = 0;
 
+	/**
+	 * Count of checks that could not run.
+	 *
+	 * @var int
+	 */
+	private int $skipped = 0;
+
 	// ──────────────────────────────────────────────────────────────────────────
 	// Public API
 	// ──────────────────────────────────────────────────────────────────────────
@@ -47,7 +54,7 @@ class Model_Tests {
 	/**
 	 * Run all Phase-2 model unit tests.
 	 *
-	 * @return array{ pass: int, fail: int }
+	 * @return array{ pass: int, fail: int, skipped: int }
 	 */
 	public function run(): array {
 		global $wpdb;
@@ -104,8 +111,8 @@ class Model_Tests {
 			$role = SpaceMember::get_role( $space_id, $admin_id );
 			$this->check( 'SM6: get_role returns non-empty string', ! empty( $role ) );
 		} else {
-			$this->check( 'SM5: is_member (skipped — no space)', true );
-			$this->check( 'SM6: get_role (skipped — no space)', true );
+			$this->skip( 'SM5: is_member', 'no space' );
+			$this->skip( 'SM6: get_role', 'no space' );
 		}
 
 		// ── Restriction ───────────────────────────────────────────────────────
@@ -151,18 +158,18 @@ class Model_Tests {
 				$is_sp_unbanned = ! Restriction::is_space_banned( $test_uid, $space_id );
 				$this->check( 'RE9: is_space_banned = false after remove_ban', $is_sp_unbanned );
 			} else {
-				$this->check( 'RE9: is_space_banned (skipped — no space)', true );
-				$this->check( 'RE9: is_space_banned false after remove (skipped)', true );
+				$this->skip( 'RE9: is_space_banned', 'no space' );
+				$this->skip( 'RE9: is_space_banned false after remove', 'precondition not met' );
 			}
 
 			wp_delete_user( $test_uid );
 		} else {
-			$this->check( 'RE7: ban/unban (skipped — test user creation failed)', true );
-			$this->check( 'RE7: unban check (skipped)', true );
-			$this->check( 'RE8: silence/unsilence (skipped)', true );
-			$this->check( 'RE8: unsilence check (skipped)', true );
-			$this->check( 'RE9: space ban (skipped)', true );
-			$this->check( 'RE9: space unban check (skipped)', true );
+			$this->skip( 'RE7: ban/unban', 'test user creation failed' );
+			$this->skip( 'RE7: unban check', 'precondition not met' );
+			$this->skip( 'RE8: silence/unsilence', 'precondition not met' );
+			$this->skip( 'RE8: unsilence check', 'precondition not met' );
+			$this->skip( 'RE9: space ban', 'precondition not met' );
+			$this->skip( 'RE9: space unban check', 'precondition not met' );
 		}
 
 		// ── UserProfile ───────────────────────────────────────────────────────
@@ -220,7 +227,205 @@ class Model_Tests {
 		$this->test_reorder();
 		$this->test_space_ownership_transfer();
 
-		return [ 'pass' => $this->pass, 'fail' => $this->fail ];
+		$this->check_delete_contract( $admin_id );
+		$this->check_shortcode_ref_contract();
+
+		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
+	}
+
+	/**
+	 * SR1-SR4: a shortcode reference that names nothing must SAY so.
+	 *
+	 * Every shortcode taking a space or category accepts an id or a slug, and
+	 * must answer the same question: does this thing exist? The first pass
+	 * verified only jetonomy_space_members' slug branch, so a non-existent
+	 * NUMERIC id fell through with a truthy value and the owner was shown an
+	 * ordinary empty state - indistinguishable from a real empty space, which is
+	 * the confusion the notices exist to end. jetonomy_compose_topic was worse:
+	 * its check sat inside the 'fixed' branch while the default mode is
+	 * 'picker', so a bogus id rendered a complete working compose form
+	 * (Basecamp 10266123693).
+	 *
+	 * Also pins that a slug and the matching numeric id produce the SAME output,
+	 * because accepting a slug and then absint()-ing it to 0 silently queried
+	 * space 0 and returned nothing.
+	 */
+	private function check_shortcode_ref_contract(): void {
+		global $wpdb;
+
+		$missing = [
+			'jetonomy_recent_posts'   => 'space_id',
+			'jetonomy_trending_posts' => 'space_id',
+			'jetonomy_spaces'         => 'category_id',
+			'jetonomy_compose_topic'  => 'space_id',
+			'jetonomy_space_members'  => 'space_id',
+		];
+
+		$bad = [];
+		foreach ( $missing as $tag => $att ) {
+			$out = do_shortcode( "[{$tag} {$att}=\"99999\"]" );
+			if ( false === strpos( $out, 'jt-shortcode-notice' ) ) {
+				$bad[] = $tag;
+			}
+		}
+		$this->check(
+			'SR1: a non-existent id is reported, not rendered as an empty state',
+			empty( $bad ),
+			'silent for: ' . implode( ', ', $bad )
+		);
+
+		// SR2: visitors never see the editor guidance.
+		$current = get_current_user_id();
+		wp_set_current_user( 0 );
+		$leaked = [];
+		foreach ( $missing as $tag => $att ) {
+			if ( '' !== trim( do_shortcode( "[{$tag} {$att}=\"99999\"]" ) ) ) {
+				$leaked[] = $tag;
+			}
+		}
+		wp_set_current_user( $current );
+		$this->check( 'SR2: the notice is never shown to visitors', empty( $leaked ), 'leaked from: ' . implode( ', ', $leaked ) );
+
+		// SR3/SR4: a slug and its numeric id must resolve identically.
+		$spaces_t = $wpdb->prefix . 'jt_spaces';
+		$cats_t   = $wpdb->prefix . 'jt_categories';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$space = $wpdb->get_row( "SELECT id, slug FROM {$spaces_t} ORDER BY id ASC LIMIT 1", ARRAY_A );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$cat = $wpdb->get_row( "SELECT id, slug FROM {$cats_t} ORDER BY id ASC LIMIT 1", ARRAY_A );
+
+		if ( is_array( $space ) && ! empty( $space['slug'] ) ) {
+			$by_slug = do_shortcode( '[jetonomy_space_members space_id="' . $space['slug'] . '"]' );
+			$by_id   = do_shortcode( '[jetonomy_space_members space_id="' . (int) $space['id'] . '"]' );
+			$this->check( 'SR3: space slug and numeric id resolve identically', $by_slug === $by_id, 'slug and id produced different output' );
+		} else {
+			\WP_CLI::log( '    SKIP  SR3: no space on this site (run demo-seed)' );
+		}
+
+		if ( is_array( $cat ) && ! empty( $cat['slug'] ) ) {
+			$by_slug = do_shortcode( '[jetonomy_spaces category_id="' . $cat['slug'] . '"]' );
+			$by_id   = do_shortcode( '[jetonomy_spaces category_id="' . (int) $cat['id'] . '"]' );
+			$this->check( 'SR4: category slug and numeric id resolve identically', $by_slug === $by_id, 'slug and id produced different output' );
+		} else {
+			\WP_CLI::log( '    SKIP  SR4: no category on this site (run demo-seed)' );
+		}
+	}
+
+	/**
+	 * 1.9.5 regression guards for the delete contract.
+	 *
+	 * `jetonomy_after_delete_post` / `_reply` used to fire from the REST
+	 * controllers only. Two things were wrong with that. The controllers do not
+	 * hard-delete at all - they soft-trash via update( status => trash ) - so the
+	 * hook fired on a RESTORABLE post and Pro's attachments listener dropped its
+	 * link rows; and a genuine hard delete through the model fired nothing, so
+	 * those rows orphaned forever (Basecamp 10268067864).
+	 *
+	 * These assert the contract from the model's side, which is the side every
+	 * caller shares: CLI, journeys, abilities and REST alike.
+	 *
+	 * @param int $admin_id Administrator user ID.
+	 */
+	private function check_delete_contract( int $admin_id ): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" );
+		if ( ! $space_id ) {
+			// Skip rather than fail, matching how the REST phase handles an
+			// unseeded site. A missing fixture is not a broken delete contract,
+			// and reporting it as one buries real failures in noise.
+			\WP_CLI::log( '    SKIP  DC1-DC3: delete contract — no space on this site (run demo-seed)' );
+			return;
+		}
+
+		// Counted on a property, not a local: PHPStan cannot see a by-reference
+		// mutation inside a closure, so a local made `0 === $fired` look like a
+		// comparison that is always false.
+		$this->hook_fires = 0;
+		$spy              = function () {
+			++$this->hook_fires;
+		};
+
+		// DC1: a hard delete through the model fires the hook exactly once.
+		add_action( 'jetonomy_after_delete_post', $spy, 1 );
+		$post = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $admin_id,
+				'title'     => 'QA delete-contract ' . wp_generate_password( 6, false ),
+				'content'   => 'x',
+				'status'    => 'publish',
+			]
+		);
+		$post_id  = is_wp_error( $post ) ? 0 : (int) $post;
+
+		if ( $post_id > 0 ) {
+			\Jetonomy\Models\Post::delete( $post_id );
+			$this->check( 'DC1: Post::delete fires jetonomy_after_delete_post exactly once', 1 === $this->hook_fire_count(), sprintf( 'fired %d time(s)', $this->hook_fire_count() ) );
+		} else {
+			$this->check( 'DC1: Post::delete fires jetonomy_after_delete_post exactly once', false, 'could not create fixture post' );
+		}
+		remove_action( 'jetonomy_after_delete_post', $spy, 1 );
+
+		// DC2: trashing must NOT fire it - a trashed post is restorable
+		// (Moderation "approve" puts it back to publish), and a listener that
+		// drops attachment links on trash destroys them for a post still in use.
+		$this->hook_fires = 0;
+		add_action( 'jetonomy_after_delete_post', $spy, 1 );
+		$post2 = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $admin_id,
+				'title'     => 'QA trash-contract ' . wp_generate_password( 6, false ),
+				'content'   => 'x',
+				'status'    => 'publish',
+			]
+		);
+		$post2_id = is_wp_error( $post2 ) ? 0 : (int) $post2;
+		if ( $post2_id > 0 ) {
+			\Jetonomy\Models\Post::update( $post2_id, [ 'status' => 'trash' ] );
+			$this->check( 'DC2: trashing does NOT fire jetonomy_after_delete_post', 0 === $this->hook_fire_count(), sprintf( 'fired %d time(s)', $this->hook_fire_count() ) );
+			remove_action( 'jetonomy_after_delete_post', $spy, 1 );
+			\Jetonomy\Models\Post::delete( $post2_id );
+		} else {
+			remove_action( 'jetonomy_after_delete_post', $spy, 1 );
+			$this->check( 'DC2: trashing does NOT fire jetonomy_after_delete_post', false, 'could not create fixture post' );
+		}
+
+		// DC3: the same contract for replies.
+		$this->hook_fires = 0;
+		add_action( 'jetonomy_after_delete_reply', $spy, 1 );
+		$host = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $admin_id,
+				'title'     => 'QA reply-contract ' . wp_generate_password( 6, false ),
+				'content'   => 'x',
+				'status'    => 'publish',
+			]
+		);
+		$host_id = is_wp_error( $host ) ? 0 : (int) $host;
+		$reply   = $host_id > 0 ? \Jetonomy\Models\Reply::create(
+			[
+				'post_id'   => $host_id,
+				'author_id' => $admin_id,
+				'content'   => 'y',
+				'status'    => 'publish',
+			]
+		) : 0;
+		$reply_id = is_wp_error( $reply ) ? 0 : (int) $reply;
+		if ( $reply_id > 0 ) {
+			\Jetonomy\Models\Reply::delete( $reply_id );
+			$this->check( 'DC3: Reply::delete fires jetonomy_after_delete_reply exactly once', 1 === $this->hook_fire_count(), sprintf( 'fired %d time(s)', $this->hook_fire_count() ) );
+		} else {
+			$this->check( 'DC3: Reply::delete fires jetonomy_after_delete_reply exactly once', false, 'could not create fixture reply' );
+		}
+		remove_action( 'jetonomy_after_delete_reply', $spy, 1 );
+		if ( $host_id > 0 ) {
+			\Jetonomy\Models\Post::delete( $host_id );
+		}
 	}
 
 	/**
@@ -404,6 +609,45 @@ class Model_Tests {
 	 * @param bool   $ok     Whether the assertion passed.
 	 * @param string $detail Optional detail appended on failure.
 	 */
+	/** Hook-fire counter for the delete-contract guards (see check_delete_contract). */
+	private int $hook_fires = 0;
+
+	/**
+	 * Read the hook-fire counter.
+	 *
+	 * Read through a method on purpose. The counter is incremented inside a
+	 * closure handed to add_action(), which PHPStan cannot follow, so it kept
+	 * the property narrowed to its initial 0 and reported the assertions as
+	 * comparisons that are always false. Going through a method makes it use
+	 * the declared int return type instead - which is accurate - rather than
+	 * needing an ignore annotation over a real assertion.
+	 */
+	private function hook_fire_count(): int {
+		return $this->hook_fires;
+	}
+
+	/**
+	 * Record a check that could NOT run.
+	 *
+	 * A skip used to be logged as `check( '... (skipped)', true )`, which made
+	 * it indistinguishable from a real assertion in the totals. On a box where
+	 * fixtures fail to build, dozens of those turn into "passes" and the suite
+	 * reports green while proving nothing - the failure mode this whole audit
+	 * exists to remove. Skips are counted separately and never inflate the
+	 * pass count.
+	 *
+	 * @param string $label  What did not run.
+	 * @param string $reason Why not.
+	 */
+	private function skip( string $label, string $reason = '' ): void {
+		$msg = "    SKIP  {$label}";
+		if ( $reason ) {
+			$msg .= " — {$reason}";
+		}
+		\WP_CLI::log( $msg );
+		++$this->skipped;
+	}
+
 	private function check( string $label, bool $ok, string $detail = '' ): void {
 		if ( $ok ) {
 			\WP_CLI::log( "    PASS  {$label}" );

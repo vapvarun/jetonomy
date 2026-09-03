@@ -360,6 +360,28 @@ class Post extends Model {
 			do_action( 'jetonomy_post_publish_transition', $id, -1, (string) ( $post->created_at ?? '' ) );
 		}
 
+		if ( true === $result ) {
+			/**
+			 * Fires after a post row is deleted, whatever deleted it.
+			 *
+			 * Moved here from Posts_Controller::delete_item() in 1.9.5. Firing it
+			 * from the REST controller meant the contract only held on ONE path:
+			 * `wp jetonomy content delete`, the QA/journey harness and any
+			 * internal Post::delete() call left Pro's wp_jt_attachments rows
+			 * pointing at posts that no longer existed. Attachment GC did not
+			 * catch them either, because it checks whether the media FILE still
+			 * exists, not the post - so an orphan with a live file was never
+			 * collected (Basecamp 10268067864).
+			 *
+			 * The model is where every caller converges, so this is the only
+			 * place the hook can be guaranteed.
+			 *
+			 * @since 1.4.1
+			 * @param int $id Deleted post ID.
+			 */
+			do_action( 'jetonomy_after_delete_post', $id );
+		}
+
 		return $result;
 	}
 
