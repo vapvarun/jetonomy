@@ -1312,7 +1312,7 @@ class REST_Tests {
 			$msg .= " — {$reason}";
 		}
 		\WP_CLI::log( $msg );
-		$this->skipped++;
+		++$this->skipped;
 	}
 
 	private function check( string $label, bool $ok, string $detail = '' ): void {
