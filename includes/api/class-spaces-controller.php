@@ -440,6 +440,8 @@ class Spaces_Controller extends Base_Controller {
 		$type           = $request->get_param( 'type' ) ? sanitize_text_field( $request->get_param( 'type' ) ) : null;
 		$visibility     = $request->get_param( 'visibility' ) ? sanitize_text_field( $request->get_param( 'visibility' ) ) : null;
 		$postable_by_me = (bool) $request->get_param( 'postable_by_me' );
+		$movable_by_me  = (bool) $request->get_param( 'movable_by_me' );
+		$search         = $request->get_param( 'search' ) ? sanitize_text_field( $request->get_param( 'search' ) ) : null;
 		$pagination     = $this->get_pagination( $request );
 
 		if ( $postable_by_me ) {
@@ -485,11 +487,35 @@ class Spaces_Controller extends Base_Controller {
 				$visibility,
 				$pagination['limit'],
 				$pagination['offset'],
-				'sort_order ASC, title ASC'
+				'sort_order ASC, title ASC',
+				$search
 			);
 
 			$spaces = $result['spaces'];
 			$total  = $result['total'];
+
+			// Target-space filter for the move-topic picker. POST /posts/{id}/move
+			// requires move_posts in BOTH source and target, but the picker used
+			// to list every visible space - so it offered targets the move would
+			// then refuse (Basecamp 10268682629). Filtering here, not in JS,
+			// because doing it client-side would ship the names of spaces the
+			// viewer cannot move into.
+			//
+			// Applied to the returned page, so `total` remains the count of
+			// VISIBLE spaces matching the query, not of movable ones. The picker
+			// is search-driven and does not page, so that is the honest cheap
+			// answer; a movable-aware COUNT would need the permission engine in
+			// SQL, which it is not.
+			if ( $movable_by_me && $user_id ) {
+				$spaces = array_values(
+					array_filter(
+						$spaces,
+						static fn ( $space ): bool => \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'move_posts', (int) $space->id )
+					)
+				);
+			} elseif ( $movable_by_me ) {
+				$spaces = array();
+			}
 		}
 
 		// Batch the viewer flags before serializing (plan WP3.8):
@@ -1480,6 +1506,14 @@ class Spaces_Controller extends Base_Controller {
 				'visibility'     => [
 					'type' => 'string',
 					'enum' => [ 'public', 'private', 'hidden' ],
+				],
+				'search'         => [
+					'type'        => 'string',
+					'description' => 'Filter spaces by title substring.',
+				],
+				'movable_by_me'  => [
+					'type'        => 'boolean',
+					'description' => 'Only spaces the current user may move posts into (move_posts).',
 				],
 				'postable_by_me' => [
 					'type'              => 'boolean',

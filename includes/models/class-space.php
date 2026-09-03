@@ -937,7 +937,8 @@ class Space extends Model {
 		?string $visibility = null,
 		int $per_page = 20,
 		int $offset = 0,
-		string $order_by = 'sort_order ASC, title ASC'
+		string $order_by = 'sort_order ASC, title ASC',
+		?string $search = null
 	): array {
 		$db           = static::db();
 		$spaces_table = static::table();
@@ -959,6 +960,19 @@ class Space extends Model {
 		if ( $type ) {
 			$where[]  = 's.type = %s';
 			$values[] = $type;
+		}
+
+		// Title search. Without it every consumer had to page through the whole
+		// listing to find one space, and the move-topic picker did not page at
+		// all - it asked for the default 20 and silently dropped everything
+		// after that, so on a site with 36 spaces 17 were unreachable and a
+		// bbPress import made the dialog useless (Basecamp 10268682629).
+		// Raising the cap is not the fix: an import can produce hundreds, and
+		// the postable_by_me branch below exists precisely because a previous
+		// "just use LIMIT 200" attempt dropped spaces ranked past 200.
+		if ( null !== $search && '' !== trim( $search ) ) {
+			$where[]  = 's.title LIKE %s';
+			$values[] = '%' . $db->esc_like( trim( $search ) ) . '%';
 		}
 
 		// Explicit visibility filter — NARROWS the result set within what the

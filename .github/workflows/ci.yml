@@ -446,6 +446,24 @@ jobs:
           # so without this the job would be asserting almost nothing while
           # looking like it ran 300+ checks.
           wp jetonomy demo-seed --force --path=/tmp/wp
+          # Top up past the 20-row default page of GET /spaces. Without this the
+          # MV1 move-picker guard SKIPS on every run - and a guard that always
+          # skips protects nothing, which is the same failure as one that cannot
+          # fail. demo-seed alone does not create enough spaces.
+          wp eval '
+            require_once JETONOMY_DIR."includes/models/class-space.php";
+            global $wpdb;
+            $cat = (int) $wpdb->get_var("SELECT id FROM {$wpdb->prefix}jt_categories LIMIT 1");
+            $have = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}jt_spaces WHERE visibility=\"public\" AND status=\"active\"");
+            for ( $i = $have; $i < 26; $i++ ) {
+              \Jetonomy\Models\Space::create([
+                "title"=>sprintf("CI Space %02d",$i), "slug"=>"ci-space-".$i,
+                "visibility"=>"public","status"=>"active","type"=>"forum",
+                "category_id"=>$cat,"author_id"=>1,
+              ]);
+            }
+            echo "public spaces: ".$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}jt_spaces WHERE visibility=\"public\" AND status=\"active\"")."\n";
+          ' --path=/tmp/wp
           : > /tmp/wp/wp-content/debug.log
           wp jetonomy qa-actions --path=/tmp/wp
           if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then

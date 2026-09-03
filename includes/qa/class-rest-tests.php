@@ -839,6 +839,52 @@ class REST_Tests {
 			sprintf( 'HTTP %d, type "%s", sitemapindex %s', $code, $type, false !== strpos( $body, '<sitemapindex' ) ? 'present' : 'MISSING' )
 		);
 
+		// MV1. The move-topic picker must be able to reach a space that does not
+		// fit on the first page of GET /spaces. It used to request /spaces with no
+		// params, take the default 20 rows and render them in a bare <select>, so
+		// on a site with 36 spaces 17 were unreachable and a bbPress import - one
+		// space per imported forum - made Move useless (Basecamp 10268682629).
+		//
+		// Asserts the SEARCH path, not the row count: raising the limit would make
+		// a count-based check pass while an import with hundreds of spaces stayed
+		// broken.
+		global $wpdb;
+		$spaces_t   = $wpdb->prefix . 'jt_spaces';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$visible_ct = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE visibility = 'public' AND status = 'active'" );
+
+		if ( $visible_ct <= 20 ) {
+			$this->skip( 'MV1: move picker can reach a space past the first page', "only {$visible_ct} visible spaces; need more than 20" );
+		} else {
+			// The space ranked LAST under the picker's own ordering is by definition
+			// not on page one.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$last_title = (string) $wpdb->get_var( "SELECT title FROM {$spaces_t} WHERE visibility = 'public' AND status = 'active' ORDER BY sort_order DESC, title DESC LIMIT 1" );
+
+			$unsearched = $this->rest( 'GET', '/spaces' );
+			$searched   = $this->rest( 'GET', '/spaces', [ 'search' => $last_title ] );
+
+			$rows_of = static function ( $resp ): array {
+				$body = $resp instanceof \WP_REST_Response ? $resp->get_data() : $resp;
+				$d    = is_array( $body ) ? ( $body['data'] ?? $body ) : [];
+				return is_array( $d ) ? $d : [];
+			};
+			$titles_of = static function ( array $rows ): array {
+				return array_map( static fn ( $r ) => (string) ( is_array( $r ) ? ( $r['title'] ?? '' ) : ( $r->title ?? '' ) ), $rows );
+			};
+
+			$on_page_one = in_array( $last_title, $titles_of( $rows_of( $unsearched ) ), true );
+			$found       = in_array( $last_title, $titles_of( $rows_of( $searched ) ), true );
+
+			$this->check(
+				'MV1: move picker can reach a space past the first page',
+				! $on_page_one && $found,
+				$on_page_one
+					? "'{$last_title}' was already on page one; fixture cannot prove the search path"
+					: "search for '{$last_title}' returned it: " . ( $found ? 'yes' : 'NO' )
+			);
+		}
+
 		// SM2. That XML must be ours because we claim the URL EARLY, not by luck
 		// of rewrite ordering. AIOSEO hooks parse_request at priority 10, so a
 		// handler at >= 10 loses to it. Asserting the priority catches a silent

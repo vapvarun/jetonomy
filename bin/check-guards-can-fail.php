@@ -84,6 +84,13 @@ $mutations = [
 		'to'    => "add_action( 'parse_request', [ \$this, 'claim_sitemap_request' ], 10 );",
 	],
 	[
+		'guard' => 'MV1',
+		'what'  => 'GET /spaces ignores the search term again, so the move picker can only reach page one',
+		'file'  => $plugin_dir . '/includes/models/class-space.php',
+		'find'  => "\t\tif ( null !== \$search && '' !== trim( \$search ) ) {\n\t\t\t\$where[]  = 's.title LIKE %s';\n\t\t\t\$values[] = '%' . \$db->esc_like( trim( \$search ) ) . '%';\n\t\t}",
+		'to'    => '/* guard-mutation */',
+	],
+	[
 		'guard' => 'R1',
 		'what'  => 'nothing in the product requires Spam_Detector',
 		'file'  => $pro_dir . '/includes/cli/journeys/class-ai-journey.php',
