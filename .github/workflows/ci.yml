@@ -415,11 +415,27 @@ jobs:
               if ( $u ) { wp_set_current_user( $u->ID ); wp_set_auth_cookie( $u->ID, true ); }
           }, 1 );
           MU
-          # -S is single-threaded; the router below keeps a sub-request from
-          # deadlocking behind the request that issued it.
-          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t /tmp/wp >/tmp/php-server.log 2>&1 &
+          # -S is single-threaded; WORKERS keeps a sub-request from deadlocking
+          # behind the request that issued it.
+          #
+          # bin/ci-router.php is not optional. Without a router script the
+          # built-in server treats any pretty permalink carrying a file
+          # extension as a static-file request and answers with its OWN 404
+          # before WordPress runs - so /community-sitemap.xml was untestable
+          # here, while extensionless routes like /community/s/x/feed/ fell
+          # through to index.php and passed. Every .xml / .txt / file-shaped
+          # route was silently unverifiable in CI until this was added.
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t /tmp/wp "$GITHUB_WORKSPACE/bin/ci-router.php" >/tmp/php-server.log 2>&1 &
           for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8080/ && break; sleep 1; done
           curl -s -o /dev/null -w 'web server: %{http_code}\n' http://127.0.0.1:8080/
+          # Prove the router actually routes an extension-bearing URL, so this
+          # cannot silently regress to the old behaviour.
+          ext_code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/community-sitemap.xml)
+          echo "sitemap route through the router: $ext_code"
+          if [ "$ext_code" = "404" ]; then
+            echo "::error::ci-router.php is not routing extension-bearing URLs to WordPress"
+            exit 1
+          fi
 
       - name: Journey + action checks (wp jetonomy qa-actions)
         run: |
