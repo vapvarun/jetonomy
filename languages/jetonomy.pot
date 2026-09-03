@@ -2,9 +2,9 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Jetonomy 1.9.5\n"
+"Project-Id-Version: Jetonomy 1.9.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-09-03 09:51:49+00:00\n"
+"POT-Creation-Date: 2026-09-03 12:26:13+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -398,7 +398,7 @@ msgid "Title is required."
 msgstr ""
 
 #: includes/admin/ajax/class-spaces-handler.php:111
-#: includes/api/class-spaces-controller.php:633
+#: includes/api/class-spaces-controller.php:657
 #: includes/class-abilities.php:1564
 msgid "Failed to create space."
 msgstr ""
@@ -526,7 +526,7 @@ msgstr ""
 
 #: includes/admin/ajax/class-spaces-handler.php:655
 #: includes/admin/ajax/class-spaces-handler.php:684
-#: includes/api/class-spaces-controller.php:1165
+#: includes/api/class-spaces-controller.php:1189
 msgid "Join request not found or already processed."
 msgstr ""
 
@@ -5062,7 +5062,7 @@ msgstr ""
 #: includes/api/class-categories-controller.php:231
 #: includes/api/class-posts-controller.php:739
 #: includes/api/class-replies-controller.php:549
-#: includes/api/class-spaces-controller.php:750
+#: includes/api/class-spaces-controller.php:774
 msgid "No fields provided for update."
 msgstr ""
 
@@ -5344,55 +5344,55 @@ msgstr ""
 msgid "Failed to delete access rule."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:561
+#: includes/api/class-spaces-controller.php:585
 msgid "Space title is required."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:815
+#: includes/api/class-spaces-controller.php:839
 msgid ""
 "Permanently deleting a space is restricted to site administrators on this "
 "community."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:850
+#: includes/api/class-spaces-controller.php:874
 msgid ""
 "No one else can take over this space, so it cannot be transferred. An "
 "administrator must delete it permanently instead."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:988
+#: includes/api/class-spaces-controller.php:1012
 msgid "Join request submitted. Awaiting approval."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:989
+#: includes/api/class-spaces-controller.php:1013
 msgid "You already have a pending join request for this space."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1033
-#: includes/api/class-spaces-controller.php:1204
+#: includes/api/class-spaces-controller.php:1057
+#: includes/api/class-spaces-controller.php:1228
 #: includes/models/class-space-member.php:329
 msgid "User is not a member of this space."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1074
+#: includes/api/class-spaces-controller.php:1098
 msgid "Unknown member"
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1191
+#: includes/api/class-spaces-controller.php:1215
 #: includes/models/class-space-member.php:320
 #. translators: %s: comma-separated list of valid space roles.
 msgid "Invalid role. Allowed: %s."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1220
+#: includes/api/class-spaces-controller.php:1244
 msgid "You cannot remove your own admin role. Ask another admin to do it."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1228
+#: includes/api/class-spaces-controller.php:1252
 msgid "A space must keep at least one admin. Promote someone else first."
 msgstr ""
 
-#: includes/api/class-spaces-controller.php:1487
+#: includes/api/class-spaces-controller.php:1515
 msgid ""
 "Return only spaces the current user is a member of AND can create posts in. "
 "Logged-out callers receive an empty array."
