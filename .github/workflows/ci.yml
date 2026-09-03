@@ -369,9 +369,14 @@ jobs:
 
           FAILED=0
 
-          # Admin pages come from the live menu, so a page added later is
-          # covered automatically and never needs adding to a list here.
-          PAGES=$(wp eval 'wp_set_current_user(1); require_once ABSPATH."wp-admin/includes/plugin.php"; do_action("admin_menu"); global $submenu; $o=[]; foreach((array)$submenu as $p=>$items){ if (strpos($p,"jetonomy")===false) continue; foreach($items as $i){ $o[]=$i[2]; } } echo implode("\n", array_unique($o));' --path=/tmp/wp 2>/dev/null || true)
+          # Scrape the RENDERED admin menu rather than asking WP-CLI: `wp eval`
+          # never defines WP_ADMIN at plugin-load time, so the admin classes
+          # that call add_menu_page() are not even loaded and do_action(
+          # 'admin_menu' ) returns an empty menu. Reading the real sidebar also
+          # means a page added later is covered with no list to maintain here.
+          curl -s -b "$COOKIES" -o /tmp/admin-home.html "http://127.0.0.1:8080/wp-admin/"
+          PAGES=$(grep -oE 'admin\.php\?page=jetonomy[A-Za-z0-9_-]*' /tmp/admin-home.html \
+                  | sed 's/.*page=//' | sort -u)
           if [ -z "$PAGES" ]; then
             echo "::error::Could not enumerate Jetonomy admin pages - the menu registered nothing"
             exit 1
