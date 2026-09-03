@@ -151,13 +151,30 @@ final class Jetonomy {
 
 		// Register rewrite rules synchronously and flush so /community/* URLs resolve
 		// on the very first request after activation — no reliance on a deferred init
-		// callback firing before the user visits a community URL. The deferred
-		// init:99 flush in load_dependencies() still covers version bumps afterwards.
+		// callback firing before the user visits a community URL.
 		require_once JETONOMY_DIR . 'includes/class-router.php';
 		require_once JETONOMY_DIR . 'includes/class-feed.php';
 		( new Router() )->add_rewrite_rules();
 		flush_rewrite_rules();
-		update_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION, true );
+
+		// Deliberately NOT stamping jetonomy_permalinks_flushed_<version> here.
+		//
+		// This flush can only see the rules that exist DURING ACTIVATION, and at
+		// that moment no other plugin's `init` has run - Pro's extensions register
+		// theirs on init:5, which for this request has either already passed or
+		// never fires because Pro has not booted. Stamping the option told
+		// load_dependencies() the flush was done, so its deferred init:99 flush -
+		// the one that runs after EVERY plugin has registered - was skipped, and
+		// the compiled table kept only free's rules.
+		//
+		// Activating both plugins in one command therefore dropped every Pro
+		// extension route: /community/messages/ went 200 -> 301 with the rule
+		// simply absent and nothing logged, until someone flushed permalinks by
+		// hand (Basecamp 10268070986).
+		//
+		// Leaving the option unset costs one extra flush on the next request and
+		// lets the existing deferred mechanism do its job, which fixes this for
+		// ANY plugin that registers rules after us - not just Pro.
 
 		/*
 		 * Only stamp the DB version on a FRESH install, where create_tables() above

@@ -257,6 +257,29 @@ jobs:
             exit 1
           fi
 
+  # ── JavaScript lint ─────────────────────────────────────────────────────
+  # No gate had ever executed or analysed JS. eslint was installed in both
+  # plugins; free's config enabled only @wordpress i18n rules (no-undef OFF)
+  # and Pro had no config at all, so `npm run lint:js` exited 0 having checked
+  # nothing. Pro's PDF viewer referenced a variable from a scope where it did
+  # not exist - a hard ReferenceError in an ES module - and the feature was
+  # dead for every user while looking fine (Basecamp 10268067223).
+  #
+  # no-undef is an ERROR because that is the class that ships bugs. The rest of
+  # eslint:recommended is a warning: hygiene should be visible without blocking
+  # a release.
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      - name: Run ESLint
+        run: npx eslint assets/js/ --ext .js
+
   # ── Runtime surface smoke ───────────────────────────────────────────────
   # Every other gate here checks PHP SYNTAX or STYLE. None of them executes a
   # shortcode, a block, an admin page or a deactivation, which is how 1.9.4

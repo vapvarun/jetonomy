@@ -3,7 +3,9 @@
 	"parserOptions": {
 		"ecmaVersion": 2022,
 		"sourceType": "module",
-		"ecmaFeatures": { "jsx": true }
+		"ecmaFeatures": {
+			"jsx": true
+		}
 	},
 	"env": {
 		"browser": true,
@@ -37,17 +39,36 @@
 		"jetonomyOptimistic": "readonly",
 		"jetonomySmartDropdown": "readonly",
 		"bnToast": "readonly",
-		"Jetonomy": "readonly"
+		"Jetonomy": "readonly",
+		"jetonomyAdmin": "readonly",
+		"jetonomyCmSettings": "readonly"
 	},
-	"plugins": [ "@wordpress" ],
+	"plugins": [
+		"@wordpress"
+	],
 	"rules": {
-		"@wordpress/i18n-text-domain": [ "error", { "allowedTextDomain": "jetonomy" } ],
+		"@wordpress/i18n-text-domain": [
+			"error",
+			{
+				"allowedTextDomain": "jetonomy"
+			}
+		],
 		"@wordpress/valid-sprintf": "error",
 		"@wordpress/i18n-translator-comments": "error",
 		"@wordpress/i18n-no-collapsible-whitespace": "error",
 		"@wordpress/i18n-no-placeholders-only": "error",
 		"@wordpress/i18n-no-variables": "error",
-		"@wordpress/i18n-ellipsis": "error"
+		"@wordpress/i18n-ellipsis": "error",
+		"no-undef": "error",
+		"no-unused-vars": [
+			"warn",
+			{
+				"args": "none"
+			}
+		],
+		"no-inner-declarations": "warn",
+		"no-useless-escape": "warn",
+		"no-mixed-spaces-and-tabs": "warn"
 	},
 	"ignorePatterns": [
 		"**/*.min.js",
@@ -59,5 +80,8 @@
 		"includes/**",
 		"languages/**",
 		"templates/**"
+	],
+	"extends": [
+		"eslint:recommended"
 	]
 }

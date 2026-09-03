@@ -617,13 +617,9 @@ class Replies_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_reply_deleted', $id, $space_id, $user_id );
 
-		/**
-		 * Fires after a reply is deleted. Receives only the deleted reply ID.
-		 *
-		 * @since 1.4.1
-		 * @param int $id Deleted reply ID.
-		 */
-		do_action( 'jetonomy_after_delete_reply', $id );
+		// jetonomy_after_delete_reply now fires from the model, so every
+		// delete path carries the contract, not just this one. Firing it
+		// here as well would double-fire for REST callers.
 
 		return new WP_REST_Response(
 			array(
