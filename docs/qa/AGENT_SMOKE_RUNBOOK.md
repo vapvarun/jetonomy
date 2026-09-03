@@ -372,7 +372,7 @@ Each row is a repro of a past bug that caused customer pain. These rows stay spe
 | D.messaging-trust-asymmetry | TL0 participant could not reply to their own DM | Seed a conversation with a TL0 member, POST a reply from that member, expect HTTP 201 |
 | D.akismet-staff-block | Admin posts routed through Akismet causing lag | `Base_Controller::author_bypasses_spam_check(admin, admin)` returns true |
 | D.mod-queue-spam-filter | `status=spam` filter returned pending too | Seed a spam reply; GET moderation queue with `status=spam` includes only spam, not pending |
-| D.space-titles-entity-encoded | Legacy rows had `&amp;` stored in title | No row in `wp_jt_spaces.title` / `wp_jt_categories.title` / `wp_jt_posts.title` matches `%&amp;%`, `%&quot;%`, `%&#039;%`, `%&lt;%`, `%&gt;%` |
+| D.space-titles-entity-encoded | Legacy rows had `&amp;` stored in title | No row in `wp_jt_spaces.title` / `wp_jt_categories.name` / `wp_jt_posts.title` matches `%&amp;%`, `%&quot;%`, `%&#039;%`, `%&lt;%`, `%&gt;%` |
 | D.search-or-mode-relevance | Similar-topics typeahead returned unrelated posts | Type "E2E time picker test" in new-post title; no returned title's only overlap is "test"; all suggestions share ≥ 2 tokens of length ≥ 4 with the query |
 | D.space-settings-merge | PATCH /spaces/:id replaced settings JSON instead of merging | Pre-fill settings with two keys; PATCH with one key; re-read confirms both keys present |
 | D.custom-fields-fatal-on-create | sanitize_title() received WP_REST_Request object | POST /jetonomy/v1/fields without a slug body param; expect HTTP 201 and no new fatal in debug.log |
