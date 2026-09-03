@@ -538,8 +538,45 @@ except Exception:
 		echo "FAIL: smoke report recorded $FROM_ISSUES \`from\`-origin debug.log entries during the walk. Fix them before packaging." >&2
 		exit 30
 	fi
+	# Coverage gate. "No failures" is not the same as "it ran". The 2026-09-02
+	# walk skipped 47 of 84 checks - including every E_pro_smoke and
+	# S_pro_supplements row, because no Pro licence bypass was set, so all 17
+	# extensions silently never booted - and still satisfied every check above.
+	# A release carrying a Pro fix was one flag away from shipping with the Pro
+	# half of the gate never executed. Assert that each required section
+	# actually produced passes.
+	COVERAGE_CHECK="$(python3 -c "
+import json
+try:
+    cfg = json.load(open('$ROOT/docs/qa/qa-config.json'))
+except Exception:
+    cfg = {}
+gate = cfg.get('coverage_gate') or {}
+required = gate.get('required_sections') or []
+minimum = gate.get('min_pass_per_required_section', 1)
+if not required:
+    print('SKIP')
+else:
+    d = json.load(open('$SMOKE_REPORT'))
+    sections = d.get('sections') or {}
+    bad = []
+    for name in required:
+        got = (sections.get(name) or {}).get('pass', 0)
+        if got < minimum:
+            bad.append('%s (pass=%d, need >=%d)' % (name, got, minimum))
+    print('EMPTY_SECTIONS=' + '; '.join(bad) if bad else 'OK')
+" 2>&1)"
+	if echo "$COVERAGE_CHECK" | grep -q '^EMPTY_SECTIONS='; then
+		echo "FAIL: smoke report has required sections with no passing checks." >&2
+		echo "      ${COVERAGE_CHECK#EMPTY_SECTIONS=}" >&2
+		echo "      A section that skipped everything is not a section that passed." >&2
+		echo "      Check docs/qa/qa-config.json model_env.required_constants first -" >&2
+		echo "      a missing JETONOMY_PRO_LICENSE_BYPASS silently skips all Pro checks." >&2
+		exit 30
+	fi
 	if [ -n "$RAN_AT" ]; then
 		echo "    smoke report dated $RAN_AT (mode: ${REPORT_MODE:-unknown}) - OK"
+		echo "    coverage gate: ${COVERAGE_CHECK}"
 	fi
 fi
 
