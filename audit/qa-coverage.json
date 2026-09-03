@@ -2,12 +2,12 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.9.4"
+        "version": "1.9.6"
     },
     "generated": {
-        "at": "2026-09-03T10:53:02+00:00",
-        "manifest_at": "2026-08-20T00:00:00Z",
-        "manifest_branch": "1.9.4"
+        "at": "2026-09-03T12:59:55+00:00",
+        "manifest_at": "2026-09-03T12:55:15Z",
+        "manifest_branch": "main"
     },
     "categories": {
         "rest": {
@@ -515,14 +515,11 @@
             ]
         },
         "ajax": {
-            "total": 43,
-            "covered": 4,
+            "total": 44,
+            "covered": 5,
             "uncovered": 39,
             "skipped": 0,
             "covered_items": [
-                {
-                    "action": "jetonomy_update_post"
-                },
                 {
                     "action": "jetonomy_generate_invite"
                 },
@@ -530,121 +527,95 @@
                     "action": "jetonomy_list_invites"
                 },
                 {
+                    "action": "jetonomy_reorder_spaces"
+                },
+                {
                     "action": "jetonomy_revoke_invite"
+                },
+                {
+                    "action": "jetonomy_update_post"
                 }
             ],
             "uncovered_items": [
                 {
-                    "action": "jetonomy_create_category",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_category"
-                },
-                {
-                    "action": "jetonomy_update_category",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_category"
-                },
-                {
-                    "action": "jetonomy_delete_category",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_category"
-                },
-                {
-                    "action": "jetonomy_reorder_categories",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_reorder_categories"
-                },
-                {
-                    "action": "jetonomy_create_tag",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_tag"
-                },
-                {
-                    "action": "jetonomy_update_tag",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_tag"
-                },
-                {
-                    "action": "jetonomy_delete_tag",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_tag"
-                },
-                {
-                    "action": "jetonomy_bulk_delete_tags",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_bulk_delete_tags"
-                },
-                {
-                    "action": "jetonomy_create_space",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_space"
-                },
-                {
-                    "action": "jetonomy_update_space",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_space"
-                },
-                {
-                    "action": "jetonomy_delete_space",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_space"
+                    "action": "jetonomy_add_access_rule",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_add_access_rule"
                 },
                 {
                     "action": "jetonomy_add_space_member",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_add_space_member"
                 },
                 {
-                    "action": "jetonomy_remove_space_member",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_remove_space_member"
-                },
-                {
-                    "action": "jetonomy_change_member_role",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_change_member_role"
-                },
-                {
-                    "action": "jetonomy_add_access_rule",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_add_access_rule"
-                },
-                {
-                    "action": "jetonomy_delete_access_rule",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_access_rule"
-                },
-                {
-                    "action": "jetonomy_sync_access_rule",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_sync_access_rule"
-                },
-                {
                     "action": "jetonomy_approve_content",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_content"
                 },
                 {
-                    "action": "jetonomy_spam_content",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_spam_content"
-                },
-                {
-                    "action": "jetonomy_trash_content",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_trash_content"
-                },
-                {
-                    "action": "jetonomy_resolve_flag",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_resolve_flag"
-                },
-                {
-                    "action": "jetonomy_bulk_content_action",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_bulk_content_action"
+                    "action": "jetonomy_approve_join_request",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_join_request"
                 },
                 {
                     "action": "jetonomy_ban_user",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_ban_user"
                 },
                 {
-                    "action": "jetonomy_unban_user",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_unban_user"
+                    "action": "jetonomy_bulk_content_action",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_bulk_content_action"
+                },
+                {
+                    "action": "jetonomy_bulk_delete_tags",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_bulk_delete_tags"
+                },
+                {
+                    "action": "jetonomy_change_member_role",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_change_member_role"
                 },
                 {
                     "action": "jetonomy_change_trust_level",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_change_trust_level"
                 },
                 {
-                    "action": "jetonomy_search_users",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_search_users"
+                    "action": "jetonomy_cleanup_sample_data",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_cleanup_sample_data"
                 },
                 {
-                    "action": "jetonomy_import_batch",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_import_batch"
+                    "action": "jetonomy_create_category",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_category"
                 },
                 {
-                    "action": "jetonomy_test_email",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_test_email"
+                    "action": "jetonomy_create_space",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_space"
+                },
+                {
+                    "action": "jetonomy_create_tag",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_tag"
+                },
+                {
+                    "action": "jetonomy_delete_access_rule",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_access_rule"
+                },
+                {
+                    "action": "jetonomy_delete_category",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_category"
+                },
+                {
+                    "action": "jetonomy_delete_post",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_post"
+                },
+                {
+                    "action": "jetonomy_delete_reply",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_reply"
+                },
+                {
+                    "action": "jetonomy_delete_space",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_space"
+                },
+                {
+                    "action": "jetonomy_delete_tag",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_tag"
+                },
+                {
+                    "action": "jetonomy_deny_join_request",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_deny_join_request"
                 },
                 {
                     "action": "jetonomy_email_preview",
@@ -659,36 +630,68 @@
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_flush_rules"
                 },
                 {
-                    "action": "jetonomy_delete_post",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_post"
+                    "action": "jetonomy_import_batch",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_import_batch"
                 },
                 {
-                    "action": "jetonomy_update_reply",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_reply"
+                    "action": "jetonomy_remove_space_member",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_remove_space_member"
                 },
                 {
-                    "action": "jetonomy_delete_reply",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_reply"
+                    "action": "jetonomy_reorder_categories",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_reorder_categories"
                 },
                 {
-                    "action": "jetonomy_approve_join_request",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_join_request"
+                    "action": "jetonomy_resolve_flag",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_resolve_flag"
                 },
                 {
-                    "action": "jetonomy_deny_join_request",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_deny_join_request"
-                },
-                {
-                    "action": "jetonomy_setup_save",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_setup_save"
+                    "action": "jetonomy_search_users",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_search_users"
                 },
                 {
                     "action": "jetonomy_setup_create_sample",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_setup_create_sample"
                 },
                 {
-                    "action": "jetonomy_cleanup_sample_data",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_cleanup_sample_data"
+                    "action": "jetonomy_setup_save",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_setup_save"
+                },
+                {
+                    "action": "jetonomy_spam_content",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_spam_content"
+                },
+                {
+                    "action": "jetonomy_sync_access_rule",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_sync_access_rule"
+                },
+                {
+                    "action": "jetonomy_test_email",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_test_email"
+                },
+                {
+                    "action": "jetonomy_trash_content",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_trash_content"
+                },
+                {
+                    "action": "jetonomy_unban_user",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_unban_user"
+                },
+                {
+                    "action": "jetonomy_update_category",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_category"
+                },
+                {
+                    "action": "jetonomy_update_reply",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_reply"
+                },
+                {
+                    "action": "jetonomy_update_space",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_space"
+                },
+                {
+                    "action": "jetonomy_update_tag",
+                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_tag"
                 }
             ]
         },
@@ -852,15 +855,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 183,
-        "items_covered": 62,
+        "items_total": 184,
+        "items_covered": 63,
         "items_uncovered": 121,
         "items_skipped": 220,
-        "coverage_percent": 33.899999999999999
+        "coverage_percent": 34.200000000000003
     },
     "drift": {
-        "previous_uncovered": 121,
+        "previous_uncovered": 122,
         "current_uncovered": 121,
-        "delta": 0
+        "delta": -1
     }
 }
