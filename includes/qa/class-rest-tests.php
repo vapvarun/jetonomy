@@ -810,6 +810,49 @@ class REST_Tests {
 		} else {
 			$this->check( 'E32: space feed (skipped — no public space)', true );
 		}
+
+		// SM1. Sitemap survives an SEO plugin that claims the URL at request
+		// time. Yoast and Rank Math compete through the rewrite table, so
+		// Router::prioritize_rules() handles them; AIOSEO never registers a
+		// rewrite rule at all - it matches `^(.+)-sitemap\.xml$` on
+		// parse_request and served its own 404 XML over ours until we started
+		// claiming the URL at parse_request priority 0 (Basecamp 10268378037).
+		//
+		// Asserts content-type AND body, never the status code alone. The
+		// broken state returned 200 with an HTML page: a status-only check
+		// passes it, which is exactly how this shipped unnoticed.
+		$sitemap_url = \Jetonomy\base_url() . '-sitemap.xml';
+		$sm   = wp_remote_get( $sitemap_url, [ 'timeout' => 10 ] );
+		$code = (int) wp_remote_retrieve_response_code( $sm );
+		$body = (string) wp_remote_retrieve_body( $sm );
+		$type = (string) wp_remote_retrieve_header( $sm, 'content-type' );
+		$this->check(
+			'SM1: sitemap index serves XML, not just a 200',
+			200 === $code && false !== strpos( $type, 'xml' ) && false !== strpos( $body, '<sitemapindex' ),
+			sprintf( 'HTTP %d, type "%s", sitemapindex %s', $code, $type, false !== strpos( $body, '<sitemapindex' ) ? 'present' : 'MISSING' )
+		);
+
+		// SM2. That XML must be ours because we claim the URL EARLY, not by luck
+		// of rewrite ordering. AIOSEO hooks parse_request at priority 10, so a
+		// handler at >= 10 loses to it. Asserting the priority catches a silent
+		// regression (someone "tidying" the hook to default 10) that E33 would
+		// not, because on a site with no SEO plugin installed E33 still passes.
+		$claim_priority = null;
+		if ( isset( $GLOBALS['wp_filter']['parse_request'] ) ) {
+			foreach ( $GLOBALS['wp_filter']['parse_request']->callbacks as $priority => $callbacks ) {
+				foreach ( $callbacks as $cb ) {
+					$fn = $cb['function'] ?? null;
+					if ( is_array( $fn ) && is_object( $fn[0] ) && $fn[0] instanceof \Jetonomy\Router && 'claim_sitemap_request' === ( $fn[1] ?? '' ) ) {
+						$claim_priority = (int) $priority;
+					}
+				}
+			}
+		}
+		$this->check(
+			'SM2: sitemap claim runs before request-level SEO rivals (parse_request < 10)',
+			null !== $claim_priority && $claim_priority < 10,
+			null === $claim_priority ? 'handler not registered on parse_request at all' : "registered at priority {$claim_priority}"
+		);
 		if ( $private_slug ) {
 			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $private_slug ) . '/feed/', [ 'timeout' => 10 ] );
 			$code = (int) wp_remote_retrieve_response_code( $feed );
