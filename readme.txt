@@ -273,6 +273,7 @@ Hotfix for a fatal on the Categories admin page in 1.9.4, plus a sitemap that wa
 * Fix      - The community sitemap no longer returns 404 on sites running Yoast SEO, Rank Math or AIOSEO. Those plugins register a broad sitemap rule that took precedence over ours, so spaces and posts were missing from search engines.
 * Fix      - Misconfigured shortcodes now explain what to change instead of rendering nothing. The message is shown only to users who can edit posts, so visitors see no change.
 * Dev      - Added a format-string check to the build so an invalid sprintf specifier fails CI instead of reaching a page. Run it with npm run check:format-strings.
+* Compat   - Aligned with Jetonomy Pro 1.9.5. Install both updates together.
 
 = 1.9.4 - August 2026 =
 

@@ -230,10 +230,21 @@ jobs:
           tools: cs2pr
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist
+      # This gate could not fail. `phpcs --report=json` still writes its
+      # progress dots to STDOUT, so the JSON parse always threw, `|| echo "0"`
+      # swallowed it, and ERRORS was 0 on every run regardless of the code. It
+      # also pointed at .phpcs.xml.dist - a stale ruleset from May that nobody
+      # maintained and that reported 254 errors, while the pre-commit hook used
+      # the auto-discovered phpcs.xml (the maintained one, with the PHP 8.1
+      # allowances). Two rulesets disagreeing by 253 errors, and the gate
+      # incapable of reporting either. `-q` suppresses the progress output;
+      # the stale ruleset is deleted; the standard is now named explicitly so
+      # it can never silently diverge from the hook again.
       - name: Run WPCS
         run: |
-          vendor/bin/phpcs --standard=.phpcs.xml.dist --report=summary || true
-          ERRORS=$(vendor/bin/phpcs --standard=.phpcs.xml.dist --report=json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('totals',{}).get('errors',0))" 2>/dev/null || echo "0")
+          set -o pipefail
+          vendor/bin/phpcs -q --standard=phpcs.xml --report=summary || true
+          ERRORS=$(vendor/bin/phpcs -q --standard=phpcs.xml --report=json | python3 -c "import json,sys; print(json.load(sys.stdin)['totals']['errors'])")
           echo "WPCS errors: $ERRORS"
           if [ "$ERRORS" -gt 0 ]; then
             echo "::error::WPCS found $ERRORS error(s)"
