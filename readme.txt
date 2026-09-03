@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.9.5
+Stable tag: 1.9.6
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,17 @@ Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abil
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.9.6 - September 2026 =
+
+Internal quality release. No change to how the plugin behaves for members or site owners; everything here makes the release gates catch what they previously missed.
+
+* Dev      - Regression guards are now proven to fail when their bug returns. Three guards shipped in 1.9.5 that stayed green against the exact defect they were written for, so a bug could look tested when nothing checked it.
+* Dev      - Added npm run check:guards, which reintroduces each known bug and requires the matching guard to go red.
+* Dev      - Test runs no longer count skipped checks as passes. A site where fixtures could not be created previously reported a fully green suite while asserting almost nothing.
+* Dev      - Added checks that the community sitemap serves XML rather than only returning a 200, and that its handler claims the URL ahead of any SEO plugin.
+* Dev      - Continuous integration can now serve URLs that carry a file extension, so sitemap and feed routes are actually exercised instead of silently skipped.
+* Compat   - Aligned with Jetonomy Pro 1.9.6. Install both updates together.
 
 = 1.9.5 - September 2026 =
 
