@@ -395,6 +395,22 @@ jobs:
             exit 1
           }
 
+      # 309 assertions that actually exercise REST round-trips, model contracts
+      # and journey flows against a real database. They existed all along as
+      # `wp jetonomy qa-actions` but nothing ever ran them automatically - they
+      # were a thing a person remembered to type. Pro phases skip themselves
+      # cleanly when Pro is absent, which is the case here.
+      - name: Journey + action checks (wp jetonomy qa-actions)
+        run: |
+          set -e
+          : > /tmp/wp/wp-content/debug.log
+          wp jetonomy qa-actions --path=/tmp/wp
+          if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then
+            echo "::error::Fatal error logged during the action tests"
+            grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -40
+            exit 1
+          fi
+
       # The Categories fatal rendered fine as source and died as a page. Only
       # requesting the page catches that, so request every one of them.
       - name: Render every admin page and front-end route

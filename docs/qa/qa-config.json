@@ -33,13 +33,13 @@
     "supplements_path": null,
     "qa_actions": {
         "command": "wp jetonomy qa-actions",
-        "expected_total": 301,
-        "verified_on": "2026-08-31",
-        "verified_version": "1.9.4",
-        "verified_on_site": "jetonomy.local",
+        "expected_total": 309,
+        "verified_on": "2026-09-03",
+        "verified_version": "1.9.5",
+        "verified_on_site": "forums.local",
         "gate": "ZERO FAIL lines. The total is a tripwire for accidentally-skipped phases, not the pass condition.",
         "environment_dependent": true,
-        "note": "286 is the total on a site where BuddyNext/WPMediaVerse is active. WPMediaVerse owns messaging site-wide, so Private_Messaging\\Extension::is_dormant() is true, its REST routes are deliberately not registered, and Phase 3 skips the PM group by design (Basecamp 10150583760) - enabling the extension in jetonomy_pro_extensions does NOT change this and is not a fix. On a site WITHOUT WPMediaVerse the PM group runs and the total is HIGHER. Re-stamp this field, with verified_on_site, whenever a release adds or removes tests or the gate moves to a different site."
+        "note": "286 is the total on a site where BuddyNext/WPMediaVerse is active. WPMediaVerse owns messaging site-wide, so Private_Messaging\\Extension::is_dormant() is true, its REST routes are deliberately not registered, and Phase 3 skips the PM group by design (Basecamp 10150583760) - enabling the extension in jetonomy_pro_extensions does NOT change this and is not a fix. On a site WITHOUT WPMediaVerse the PM group runs and the total is HIGHER. Re-stamp this field, with verified_on_site, whenever a release adds or removes tests or the gate moves to a different site. 2026-09-03: 301 -> 309. Added DC1-DC3 (delete contract fires from the MODEL, and trashing does NOT fire it - a trashed post is restorable), XF1a/XF1b (the jetonomy_post_update_has_extension_data seam, asserted on the filter rather than on Pro's custom_fields so it holds with Pro inactive) and R1-R3 (Spam_Detector loadable, digest last-run is a timestamp not a truncated year, ai_cache index matches its schema). Every one was verified to FAIL with its fix reverted before being counted."
     },
     "_wp_path_note": "Deliberately null. This field is machine-specific and fails SILENTLY when stale: it previously pointed at /Users/vapvarun/Local Sites/buddynext/app/public, which does not exist on other machines, while base_url pointed at buddynext.local - a site carrying its OWN jetonomy copy at 1.9.2 on main. A smoke run would have certified 1.9.2 and stamped the report with the release version. Derive the WP root three levels up from the plugin directory instead, per the wp-plugin-smoke skill.",
     "model_env": {

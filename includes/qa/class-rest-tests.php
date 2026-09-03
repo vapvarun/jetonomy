@@ -148,6 +148,7 @@ class REST_Tests {
 		$this->test_ajax_generate_invite_X1();
 		$this->test_ajax_list_invites_X2();
 		$this->test_ajax_revoke_invite_X3();
+		$this->test_extension_only_update_XF1();
 
 		$this->cleanup();
 
@@ -1268,6 +1269,67 @@ class REST_Tests {
 	 * @param int|null $as_user  WP user ID to act as, or null to keep current user.
 	 * @return \WP_REST_Response
 	 */
+	/**
+	 * XF1: an update carrying only extension-owned data must not be rejected.
+	 *
+	 * update_item() bailed with "No fields provided for update." whenever no
+	 * core post column changed, and it did so BEFORE jetonomy_after_update_post
+	 * fired - so Pro's custom-fields listener never ran and the value could not
+	 * be saved on its own. The only workaround was to send a title you did not
+	 * want to change (Basecamp 10268069890).
+	 *
+	 * Free deliberately knows nothing about custom_fields: an extension declares
+	 * interest through jetonomy_post_update_has_extension_data. This asserts the
+	 * SEAM rather than Pro's field, so it holds with Pro inactive, and it pins
+	 * the negative case too - a genuinely empty PATCH must still be rejected
+	 * rather than quietly returning 200.
+	 */
+	private function test_extension_only_update_XF1(): void {
+		// Own fixture, created through the MODEL. The shared $this->post_id has
+		// been trashed by earlier tests before this point, and creating through
+		// the REST collection depends on the fixture space still being valid -
+		// both produced a 404 that looked like a failure of the seam rather than
+		// of the fixture. Only the PATCH needs to go through REST here.
+		global $wpdb;
+		$spaces_t = $wpdb->prefix . 'jt_spaces';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" );
+		if ( $space_id <= 0 ) {
+			$this->check( 'XF1: extension-only update seam', false, 'no space available' );
+			return;
+		}
+
+		$created = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $this->admin_id,
+				'title'     => 'XF1 seam fixture ' . wp_generate_password( 6, false ),
+				'content'   => 'seam fixture body',
+				'status'    => 'publish',
+			]
+		);
+		$post_id = is_wp_error( $created ) ? 0 : (int) $created;
+		if ( $post_id <= 0 ) {
+			$this->check( 'XF1: extension-only update seam', false, 'could not create fixture post' );
+			return;
+		}
+
+		// A genuinely empty update stays rejected, with no claimant.
+		$empty = $this->rest( 'PATCH', "/posts/{$post_id}", [], $this->admin_id );
+		$this->check( 'XF1a: empty update is still rejected', 400 === $empty->get_status(), "HTTP {$empty->get_status()}" );
+
+		// With a claimant, the same empty-of-core-columns request goes through so
+		// the after-update hooks can fire.
+		$claim = static fn() => true;
+		add_filter( 'jetonomy_post_update_has_extension_data', $claim, 10, 1 );
+		$claimed = $this->rest( 'PATCH', "/posts/{$post_id}", [], $this->admin_id );
+		remove_filter( 'jetonomy_post_update_has_extension_data', $claim, 10 );
+
+		$this->check( 'XF1b: a claiming extension lets the update through', 200 === $claimed->get_status(), "HTTP {$claimed->get_status()}" );
+
+		\Jetonomy\Models\Post::delete( $post_id );
+	}
+
 	private function rest( string $method, string $route, array $params = [], ?int $as_user = null ): \WP_REST_Response {
 		$request = new \WP_REST_Request( $method, '/jetonomy/v1' . $route );
 

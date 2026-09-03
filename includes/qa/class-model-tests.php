@@ -220,7 +220,123 @@ class Model_Tests {
 		$this->test_reorder();
 		$this->test_space_ownership_transfer();
 
+		$this->check_delete_contract( $admin_id );
+
 		return [ 'pass' => $this->pass, 'fail' => $this->fail ];
+	}
+
+	/**
+	 * 1.9.5 regression guards for the delete contract.
+	 *
+	 * `jetonomy_after_delete_post` / `_reply` used to fire from the REST
+	 * controllers only. Two things were wrong with that. The controllers do not
+	 * hard-delete at all - they soft-trash via update( status => trash ) - so the
+	 * hook fired on a RESTORABLE post and Pro's attachments listener dropped its
+	 * link rows; and a genuine hard delete through the model fired nothing, so
+	 * those rows orphaned forever (Basecamp 10268067864).
+	 *
+	 * These assert the contract from the model's side, which is the side every
+	 * caller shares: CLI, journeys, abilities and REST alike.
+	 *
+	 * @param int $admin_id Administrator user ID.
+	 */
+	private function check_delete_contract( int $admin_id ): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" );
+		if ( ! $space_id ) {
+			$this->check( 'DC1: delete contract (needs a space)', false, 'no space available' );
+			return;
+		}
+
+		// Counted on a property, not a local: PHPStan cannot see a by-reference
+		// mutation inside a closure, so a local made `0 === $fired` look like a
+		// comparison that is always false.
+		$this->hook_fires = 0;
+		$spy              = function () {
+			++$this->hook_fires;
+		};
+
+		// DC1: a hard delete through the model fires the hook exactly once.
+		add_action( 'jetonomy_after_delete_post', $spy, 1 );
+		$post = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $admin_id,
+				'title'     => 'QA delete-contract ' . wp_generate_password( 6, false ),
+				'content'   => 'x',
+				'status'    => 'publish',
+			]
+		);
+		$post_id  = is_wp_error( $post ) ? 0 : (int) $post;
+
+		if ( $post_id > 0 ) {
+			\Jetonomy\Models\Post::delete( $post_id );
+			$this->check( 'DC1: Post::delete fires jetonomy_after_delete_post exactly once', 1 === $this->hook_fire_count(), sprintf( 'fired %d time(s)', $this->hook_fire_count() ) );
+		} else {
+			$this->check( 'DC1: Post::delete fires jetonomy_after_delete_post exactly once', false, 'could not create fixture post' );
+		}
+		remove_action( 'jetonomy_after_delete_post', $spy, 1 );
+
+		// DC2: trashing must NOT fire it - a trashed post is restorable
+		// (Moderation "approve" puts it back to publish), and a listener that
+		// drops attachment links on trash destroys them for a post still in use.
+		$this->hook_fires = 0;
+		add_action( 'jetonomy_after_delete_post', $spy, 1 );
+		$post2 = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $admin_id,
+				'title'     => 'QA trash-contract ' . wp_generate_password( 6, false ),
+				'content'   => 'x',
+				'status'    => 'publish',
+			]
+		);
+		$post2_id = is_wp_error( $post2 ) ? 0 : (int) $post2;
+		if ( $post2_id > 0 ) {
+			\Jetonomy\Models\Post::update( $post2_id, [ 'status' => 'trash' ] );
+			$this->check( 'DC2: trashing does NOT fire jetonomy_after_delete_post', 0 === $this->hook_fire_count(), sprintf( 'fired %d time(s)', $this->hook_fire_count() ) );
+			remove_action( 'jetonomy_after_delete_post', $spy, 1 );
+			\Jetonomy\Models\Post::delete( $post2_id );
+		} else {
+			remove_action( 'jetonomy_after_delete_post', $spy, 1 );
+			$this->check( 'DC2: trashing does NOT fire jetonomy_after_delete_post', false, 'could not create fixture post' );
+		}
+
+		// DC3: the same contract for replies.
+		$this->hook_fires = 0;
+		add_action( 'jetonomy_after_delete_reply', $spy, 1 );
+		$host = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $admin_id,
+				'title'     => 'QA reply-contract ' . wp_generate_password( 6, false ),
+				'content'   => 'x',
+				'status'    => 'publish',
+			]
+		);
+		$host_id = is_wp_error( $host ) ? 0 : (int) $host;
+		$reply   = $host_id > 0 ? \Jetonomy\Models\Reply::create(
+			[
+				'post_id'   => $host_id,
+				'author_id' => $admin_id,
+				'content'   => 'y',
+				'status'    => 'publish',
+			]
+		) : 0;
+		$reply_id = is_wp_error( $reply ) ? 0 : (int) $reply;
+		if ( $reply_id > 0 ) {
+			\Jetonomy\Models\Reply::delete( $reply_id );
+			$this->check( 'DC3: Reply::delete fires jetonomy_after_delete_reply exactly once', 1 === $this->hook_fire_count(), sprintf( 'fired %d time(s)', $this->hook_fire_count() ) );
+		} else {
+			$this->check( 'DC3: Reply::delete fires jetonomy_after_delete_reply exactly once', false, 'could not create fixture reply' );
+		}
+		remove_action( 'jetonomy_after_delete_reply', $spy, 1 );
+		if ( $host_id > 0 ) {
+			\Jetonomy\Models\Post::delete( $host_id );
+		}
 	}
 
 	/**
@@ -404,6 +520,23 @@ class Model_Tests {
 	 * @param bool   $ok     Whether the assertion passed.
 	 * @param string $detail Optional detail appended on failure.
 	 */
+	/** Hook-fire counter for the delete-contract guards (see check_delete_contract). */
+	private int $hook_fires = 0;
+
+	/**
+	 * Read the hook-fire counter.
+	 *
+	 * Read through a method on purpose. The counter is incremented inside a
+	 * closure handed to add_action(), which PHPStan cannot follow, so it kept
+	 * the property narrowed to its initial 0 and reported the assertions as
+	 * comparisons that are always false. Going through a method makes it use
+	 * the declared int return type instead - which is accurate - rather than
+	 * needing an ignore annotation over a real assertion.
+	 */
+	private function hook_fire_count(): int {
+		return $this->hook_fires;
+	}
+
 	private function check( string $label, bool $ok, string $detail = '' ): void {
 		if ( $ok ) {
 			\WP_CLI::log( "    PASS  {$label}" );
