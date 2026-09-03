@@ -219,6 +219,17 @@ verify-*.png
 verify-*.jpg
 verify-*.log
 *.log
+# Translator SOURCE files. WordPress loads .mo at runtime and never reads .po,
+# so shipping both doubled the languages/ payload for no functional gain -
+# 3.3 MB of the free zip's 15 MB unpacked (Basecamp: zip junk audit). The .pot
+# template still ships so translators have something to start from.
+languages/*.po
+# Static-analysis stubs, browser-test config and QA baselines are developer
+# tooling. None is loaded at runtime.
+phpstan-stubs/
+playwright.config.js
+.contract-audit-baseline.json
+.wbcom-i18n.json
 EOF
 
 rsync -a --exclude-from="$EXCLUDES_FILE" ./ "$STAGE/"
@@ -232,6 +243,12 @@ if [ -f "$STAGE/composer.json" ]; then
 		exit 20
 	}
 	popd > /dev/null
+
+	# composer.json has to survive the EXCLUDES so the install above can run,
+	# and the install regenerates composer.lock. Neither is read at runtime -
+	# vendor/autoload.php is self-contained - so drop both now that vendor/
+	# exists. Leaving them shipped our dependency graph to customers for free.
+	rm -f "$STAGE/composer.json" "$STAGE/composer.lock"
 fi
 
 # --- 5. sanity — required files present -----------------------------------
@@ -311,12 +328,23 @@ for pattern in \
 	"$STAGE/build" \
 	"$STAGE/Gruntfile.js" \
 	"$STAGE/package.json" \
-	"$STAGE/package-lock.json"; do
+	"$STAGE/package-lock.json" \
+	"$STAGE/composer.json" \
+	"$STAGE/composer.lock" \
+	"$STAGE/phpstan-stubs" \
+	"$STAGE/playwright.config.js" \
+	"$STAGE/.contract-audit-baseline.json" \
+	"$STAGE/.wbcom-i18n.json"; do
 	[ -e "$pattern" ] && CRUFT+=( "${pattern#$STAGE/}" )
 done
 while IFS= read -r f; do
 	CRUFT+=( "${f#$STAGE/}" )
 done < <(find "$STAGE" -maxdepth 1 -type f \( -name 'verify-*' -o -name '*.log' -o -name 'phpstan-*.dist' -o -name 'phpstan-*.neon' \) 2>/dev/null)
+# .po files are translator sources, not runtime assets. Checked tree-wide, not
+# just at the top level, because they live under languages/.
+while IFS= read -r f; do
+	CRUFT+=( "${f#$STAGE/}" )
+done < <(find "$STAGE" -type f -name '*.po' 2>/dev/null)
 if [ "${#CRUFT[@]}" -gt 0 ]; then
 	echo "FAIL: dev / temp files leaked into the staged tree:" >&2
 	printf '    %s\n' "${CRUFT[@]}" >&2
