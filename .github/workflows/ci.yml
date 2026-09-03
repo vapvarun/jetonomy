@@ -5,7 +5,11 @@ on:
     # '*-dev' makes release branches CI-gated BEFORE merge — main sat red
     # for three weeks (2026-05-23 → 06-11) because dev work only met CI
     # after merging.
-    branches: [main, master, 'v*', '*-dev']
+    # '[0-9]*' covers the numeric release branches we actually use (1.9.5).
+    # They matched none of the previous patterns, so a release branch got no
+    # CI at all until a PR was opened - the opposite of the intent in the
+    # comment above.
+    branches: [main, master, 'v*', '*-dev', '[0-9]*']
   pull_request:
     branches: [main, master]
   workflow_dispatch:
@@ -24,7 +28,9 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
       - name: Check syntax
-        run: find includes/ templates/ -name '*.php' -exec php -l {} + 2>&1 | grep -v 'No syntax errors' | head -50; test ${PIPESTATUS[0]} -eq 0
+        # bin/ and tests/ were outside the lint scope, so a parse error in a
+        # release script or a test helper only surfaced when something ran it.
+        run: find includes/ templates/ bin/ tests/ tools/ -name '*.php' -exec php -l {} + 2>&1 | grep -v 'No syntax errors' | head -50; test ${PIPESTATUS[0]} -eq 0
 
       # php -l and PHPStan L5 both pass a `%1\$s` written inside a SINGLE-quoted
       # string, but sprintf() throws ValueError at runtime — a hard fatal on the
@@ -125,19 +131,35 @@ jobs:
         with:
           path: jetonomy
 
+      # The pair used to be picked by a hardcoded literal with a comment saying
+      # to bump it each dev cycle. It was never bumped: the literal still read
+      # '1.5.0-dev' at 1.9.5, so every branch silently fell back to Pro master
+      # and the lockstep pairing this job exists to prove had stopped happening.
+      # Resolve it instead - a same-named branch on Pro if one exists, master
+      # otherwise - so it cannot go stale again.
+      - name: Resolve the Pro branch to pair with
+        id: pair
+        env:
+          GH_TOKEN: ${{ secrets.PRO_PAT }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          REF=master
+          if [ -n "$BRANCH" ] && gh api "repos/vapvarun/jetonomy-pro/branches/$BRANCH" >/dev/null 2>&1; then
+            REF="$BRANCH"
+          fi
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "pairing free '$BRANCH' with jetonomy-pro '$REF'"
+
       - name: Checkout jetonomy-pro
         uses: actions/checkout@v4
         with:
           repository: vapvarun/jetonomy-pro
           token: ${{ secrets.PRO_PAT }}
           path: jetonomy-pro
-          # Lockstep pair selection. Both branches of the expression are
-          # HARDCODED literals (github.ref_name is only compared, never
-          # emitted), so no branch-name injection is possible — same
-          # guarantee as the previous fixed pin, without testing free HEAD
-          # against a Pro frozen at v1.3.0 (two minors stale when caught).
-          # Bump the '1.5.0-dev' literal when a new dev cycle opens.
-          ref: ${{ github.ref_name == '1.5.0-dev' && '1.5.0-dev' || 'master' }}
+          # Lockstep pair selection - resolved in the step above, never
+          # interpolated from a branch name into a shell command, so there is
+          # no branch-name injection path.
+          ref: ${{ steps.pair.outputs.ref }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -217,6 +239,164 @@ jobs:
             echo "::error::WPCS found $ERRORS error(s)"
             exit 1
           fi
+
+  # ── Runtime surface smoke ───────────────────────────────────────────────
+  # Every other gate here checks PHP SYNTAX or STYLE. None of them executes a
+  # shortcode, a block, an admin page or a deactivation, which is how 1.9.4
+  # shipped two runtime fatals that passed php -l, PHPStan L5, PHPCS and
+  # Plugin Check:
+  #   - a sprintf ValueError that fataled the Categories admin page
+  #   - Pro's deactivate() calling an unloaded class, so Pro could not be
+  #     switched off at all
+  # This job boots a real WordPress, activates the plugin, and RUNS things.
+  surface-smoke:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_surface
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, mbstring
+
+      - name: Setup WP-CLI
+        run: |
+          curl -sO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          sudo mv wp-cli.phar /usr/local/bin/wp
+
+      - name: Install WordPress
+        run: |
+          mkdir -p /tmp/wp
+          curl -sL https://wordpress.org/latest.tar.gz | tar xz -C /tmp/wp --strip-components=1
+          cp /tmp/wp/wp-config-sample.php /tmp/wp/wp-config.php
+          sed -i "s/database_name_here/wp_surface/" /tmp/wp/wp-config.php
+          sed -i "s/username_here/root/" /tmp/wp/wp-config.php
+          sed -i "s/password_here/root/" /tmp/wp/wp-config.php
+          sed -i "s/localhost/127.0.0.1/" /tmp/wp/wp-config.php
+          wp core install --path=/tmp/wp --url=http://127.0.0.1:8080 --title=Surface \
+            --admin_user=admin --admin_password=admin --admin_email=admin@test.com --skip-email
+          # Log every notice/warning/deprecation to a file we can assert on.
+          wp config set WP_DEBUG true --raw --type=constant --path=/tmp/wp
+          wp config set WP_DEBUG_LOG true --raw --type=constant --path=/tmp/wp
+          wp config set WP_DEBUG_DISPLAY false --raw --type=constant --path=/tmp/wp
+          wp rewrite structure '/%postname%/' --path=/tmp/wp
+
+      - name: Activate plugin
+        run: |
+          ln -s "$GITHUB_WORKSPACE" /tmp/wp/wp-content/plugins/jetonomy
+          wp plugin activate jetonomy --path=/tmp/wp
+          wp option update jetonomy_setup_complete 1 --path=/tmp/wp
+          wp rewrite flush --path=/tmp/wp
+
+      # A fatal in activate()/deactivate() was invisible to every previous gate:
+      # the boot smoke only ever ACTIVATES. Pro 1.9.4 could not be deactivated
+      # at all and nothing caught it. This cycle is seconds and kills the class.
+      - name: Lifecycle cycle (activate / deactivate / reactivate)
+        run: |
+          set -e
+          : > /tmp/wp/wp-content/debug.log
+          wp plugin deactivate jetonomy --path=/tmp/wp
+          wp plugin activate jetonomy --path=/tmp/wp
+          wp plugin deactivate jetonomy --path=/tmp/wp
+          wp plugin activate jetonomy --path=/tmp/wp
+          if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then
+            echo "::error::Fatal during the activate/deactivate cycle"
+            grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -40
+            exit 1
+          fi
+          echo "lifecycle cycle clean"
+
+      - name: Runtime surface gate (shortcodes, blocks, cron, REST)
+        run: |
+          set -e
+          : > /tmp/wp/wp-content/debug.log
+          OUT=$(wp eval-file "$GITHUB_WORKSPACE/bin/check-surfaces.php" --path=/tmp/wp 2>&1)
+          echo "$OUT"
+          echo "$OUT" | grep -q "SURFACE_GATE=PASS" || {
+            echo "::error::Runtime surface gate failed"
+            exit 1
+          }
+
+      # The Categories fatal rendered fine as source and died as a page. Only
+      # requesting the page catches that, so request every one of them.
+      - name: Render every admin page and front-end route
+        run: |
+          set -e
+          cat > /tmp/wp/wp-content/mu-plugins-autologin.php <<'MU'
+          <?php
+          // CI only: log in as admin via ?ci_login=1 so admin pages can be fetched.
+          add_action( 'init', function () {
+              if ( ! isset( $_GET['ci_login'] ) || is_user_logged_in() ) { return; }
+              $u = get_user_by( 'login', 'admin' );
+              if ( $u ) { wp_set_current_user( $u->ID ); wp_set_auth_cookie( $u->ID, true ); }
+          }, 1 );
+          MU
+          mkdir -p /tmp/wp/wp-content/mu-plugins
+          mv /tmp/wp/wp-content/mu-plugins-autologin.php /tmp/wp/wp-content/mu-plugins/ci-autologin.php
+
+          php -S 127.0.0.1:8080 -t /tmp/wp >/tmp/php-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8080/ && break; sleep 1; done
+
+          : > /tmp/wp/wp-content/debug.log
+          COOKIES=/tmp/ci-cookies.txt
+          curl -s -c "$COOKIES" -o /dev/null "http://127.0.0.1:8080/?ci_login=1"
+
+          FAILED=0
+
+          # Admin pages come from the live menu, so a page added later is
+          # covered automatically and never needs adding to a list here.
+          PAGES=$(wp eval 'wp_set_current_user(1); require_once ABSPATH."wp-admin/includes/plugin.php"; do_action("admin_menu"); global $submenu; $o=[]; foreach((array)$submenu as $p=>$items){ if (strpos($p,"jetonomy")===false) continue; foreach($items as $i){ $o[]=$i[2]; } } echo implode("\n", array_unique($o));' --path=/tmp/wp 2>/dev/null || true)
+          if [ -z "$PAGES" ]; then
+            echo "::error::Could not enumerate Jetonomy admin pages - the menu registered nothing"
+            exit 1
+          fi
+          echo "admin pages found: $(echo "$PAGES" | wc -l)"
+          for p in $PAGES; do
+            case "$p" in http*) URL="$p" ;; *.php*) URL="http://127.0.0.1:8080/wp-admin/$p" ;; *) URL="http://127.0.0.1:8080/wp-admin/admin.php?page=$p" ;; esac
+            CODE=$(curl -s -b "$COOKIES" -o /tmp/page.html -w '%{http_code}' "$URL")
+            if [ "$CODE" != "200" ] || grep -qi "critical error\|Fatal error" /tmp/page.html; then
+              echo "::error::admin page $p returned $CODE or rendered a fatal"
+              FAILED=1
+            else
+              echo "  ok  admin $p"
+            fi
+          done
+
+          for r in / /community/ /community/leaderboard/ /community/search/ /community-sitemap.xml; do
+            CODE=$(curl -s -o /tmp/page.html -w '%{http_code}' "http://127.0.0.1:8080$r")
+            case "$CODE" in
+              200|301|302|404) echo "  ok  front $r ($CODE)" ;;
+              *) echo "::error::front route $r returned $CODE"; FAILED=1 ;;
+            esac
+            grep -qi "critical error" /tmp/page.html && { echo "::error::front route $r rendered a fatal"; FAILED=1; }
+          done
+
+          if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then
+            echo "::error::Fatal error logged while rendering surfaces"
+            grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -60
+            FAILED=1
+          fi
+          if grep -qE "PHP (Warning|Notice)" /tmp/wp/wp-content/debug.log; then
+            echo "::warning::PHP warnings/notices logged while rendering surfaces"
+            grep -nE "PHP (Warning|Notice)" /tmp/wp/wp-content/debug.log | head -20
+          fi
+
+          exit $FAILED
 
   # ── Plugin Check (PCP) ──────────────────────────────────────────────────
   plugin-check:
