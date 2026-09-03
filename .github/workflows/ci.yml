@@ -400,6 +400,27 @@ jobs:
       # `wp jetonomy qa-actions` but nothing ever ran them automatically - they
       # were a thing a person remembered to type. Pro phases skip themselves
       # cleanly when Pro is absent, which is the case here.
+      # Started BEFORE the action checks, not after: E32 asserts the space RSS
+      # feed over real HTTP, and with no server listening it reported "HTTP 0"
+      # for every request - a genuine check failing for want of an environment.
+      - name: Start a web server
+        run: |
+          mkdir -p /tmp/wp/wp-content/mu-plugins
+          cat > /tmp/wp/wp-content/mu-plugins/ci-autologin.php <<'MU'
+          <?php
+          // CI only: log in as admin via ?ci_login=1 so admin pages can be fetched.
+          add_action( 'init', function () {
+              if ( ! isset( $_GET['ci_login'] ) || is_user_logged_in() ) { return; }
+              $u = get_user_by( 'login', 'admin' );
+              if ( $u ) { wp_set_current_user( $u->ID ); wp_set_auth_cookie( $u->ID, true ); }
+          }, 1 );
+          MU
+          # -S is single-threaded; the router below keeps a sub-request from
+          # deadlocking behind the request that issued it.
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t /tmp/wp >/tmp/php-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8080/ && break; sleep 1; done
+          curl -s -o /dev/null -w 'web server: %{http_code}\n' http://127.0.0.1:8080/
+
       - name: Journey + action checks (wp jetonomy qa-actions)
         run: |
           set -e
@@ -422,21 +443,6 @@ jobs:
       - name: Render every admin page and front-end route
         run: |
           set -e
-          cat > /tmp/wp/wp-content/mu-plugins-autologin.php <<'MU'
-          <?php
-          // CI only: log in as admin via ?ci_login=1 so admin pages can be fetched.
-          add_action( 'init', function () {
-              if ( ! isset( $_GET['ci_login'] ) || is_user_logged_in() ) { return; }
-              $u = get_user_by( 'login', 'admin' );
-              if ( $u ) { wp_set_current_user( $u->ID ); wp_set_auth_cookie( $u->ID, true ); }
-          }, 1 );
-          MU
-          mkdir -p /tmp/wp/wp-content/mu-plugins
-          mv /tmp/wp/wp-content/mu-plugins-autologin.php /tmp/wp/wp-content/mu-plugins/ci-autologin.php
-
-          php -S 127.0.0.1:8080 -t /tmp/wp >/tmp/php-server.log 2>&1 &
-          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8080/ && break; sleep 1; done
-
           : > /tmp/wp/wp-content/debug.log
           COOKIES=/tmp/ci-cookies.txt
           curl -s -c "$COOKIES" -o /dev/null "http://127.0.0.1:8080/?ci_login=1"
