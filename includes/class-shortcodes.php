@@ -56,6 +56,49 @@ class Shortcodes {
 	 * @param string $message What the author needs to change.
 	 * @return string
 	 */
+	/**
+	 * Resolve a space reference (numeric id or slug) to a row, or null.
+	 *
+	 * Shared so every shortcode answers the same question. The first pass of
+	 * this work verified only the slug branch: a numeric ref was cast and
+	 * trusted, so a non-existent id kept a truthy value, the query matched
+	 * nothing, and the owner was shown an EMPTY state for a space that does not
+	 * exist. That is indistinguishable from a real empty space, which is the
+	 * confusion the notices were added to end (Basecamp 10266123693).
+	 *
+	 * @param string $ref Numeric id or slug. '' and '0' mean "not supplied".
+	 * @return object|null
+	 */
+	private static function resolve_space_ref( string $ref ): ?object {
+		$ref = trim( $ref );
+		if ( '' === $ref || '0' === $ref ) {
+			return null;
+		}
+
+		return ctype_digit( $ref )
+			? Models\Space::find( absint( $ref ) )
+			: Models\Space::find_by_slug( $ref );
+	}
+
+	/**
+	 * The notice shown when a supplied reference does not name anything.
+	 *
+	 * @param string $tag   Shortcode tag, so the editor knows which one to edit.
+	 * @param string $thing What the reference was meant to name ('space', 'category').
+	 * @param string $ref   What the author actually wrote.
+	 */
+	private static function missing_ref_notice( string $tag, string $thing, string $ref ): string {
+		return self::config_notice(
+			sprintf(
+				/* translators: 1: shortcode tag, 2: the kind of thing referenced, 3: the value written. */
+				__( '%1$s: no %2$s matching "%3$s".', 'jetonomy' ),
+				$tag,
+				$thing,
+				$ref
+			)
+		);
+	}
+
 	private static function config_notice( string $message ): string {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return '';
@@ -153,7 +196,22 @@ class Shortcodes {
 		self::enqueue_styles();
 
 		$limit = absint( $atts['count'] ) ?: 5;
-		$base  = base_url();
+
+		// A supplied space reference must name something. Without this the query
+		// matches nothing and the owner sees "No posts yet." for a space that
+		// does not exist - identical to a genuinely empty one.
+		$space_ref = trim( (string) $atts['space_id'] );
+		$space_id  = 0;
+		if ( '' !== $space_ref && '0' !== $space_ref ) {
+			$space = self::resolve_space_ref( $space_ref );
+			if ( ! $space ) {
+				return self::missing_ref_notice( 'jetonomy_recent_posts', 'space', $space_ref );
+			}
+			// Filter on the RESOLVED id. absint() on a slug yields 0, which
+			// silently queried space 0 and returned nothing.
+			$space_id = absint( $space->id );
+		}
+		$base = base_url();
 
 		global $wpdb;
 		$posts_tbl  = table( 'posts' );
@@ -161,9 +219,9 @@ class Shortcodes {
 
 		$where = "p.status = 'publish'";
 		$args  = array();
-		if ( ! empty( $atts['space_id'] ) ) {
+		if ( $space_id > 0 ) {
 			$where .= ' AND p.space_id = %d';
-			$args[] = absint( $atts['space_id'] );
+			$args[] = $space_id;
 		}
 
 		// Space-visibility + per-post is_private gate so the recent-posts
@@ -247,10 +305,21 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit    = absint( $atts['count'] ) ?: 5;
-		$window   = absint( $atts['window'] ) ?: 7;
-		$space_id = absint( $atts['space_id'] );
-		$base     = base_url();
+		$limit = absint( $atts['count'] ) ?: 5;
+
+		// See jetonomy_recent_posts: a reference that names nothing must say so
+		// rather than render the empty state.
+		$space_ref = trim( (string) $atts['space_id'] );
+		$space_id  = 0;
+		if ( '' !== $space_ref && '0' !== $space_ref ) {
+			$space = self::resolve_space_ref( $space_ref );
+			if ( ! $space ) {
+				return self::missing_ref_notice( 'jetonomy_trending_posts', 'space', $space_ref );
+			}
+			$space_id = absint( $space->id );
+		}
+		$window = absint( $atts['window'] ) ?: 7;
+		$base   = base_url();
 
 		$posts = Models\Post::list_trending( $limit, $space_id ?: null, $window );
 
@@ -300,16 +369,29 @@ class Shortcodes {
 		self::enqueue_styles();
 
 		$limit = absint( $atts['count'] ) ?: 6;
-		$base  = base_url();
+
+		// Same contract for the category reference.
+		$category_ref = trim( (string) $atts['category_id'] );
+		$category_id  = 0;
+		if ( '' !== $category_ref && '0' !== $category_ref ) {
+			$category = ctype_digit( $category_ref )
+				? Models\Category::find( absint( $category_ref ) )
+				: Models\Category::find_by_slug( $category_ref );
+			if ( ! $category ) {
+				return self::missing_ref_notice( 'jetonomy_spaces', 'category', $category_ref );
+			}
+			$category_id = absint( $category->id );
+		}
+		$base = base_url();
 
 		global $wpdb;
 		$spaces_tbl = table( 'spaces' );
 
 		$where = "status = 'active' AND visibility = 'public'";
 		$args  = array();
-		if ( ! empty( $atts['category_id'] ) ) {
+		if ( $category_id > 0 ) {
 			$where .= ' AND category_id = %d';
-			$args[] = absint( $atts['category_id'] );
+			$args[] = $category_id;
 		}
 		$args[] = $limit;
 
@@ -452,14 +534,21 @@ class Shortcodes {
 		// shows a space's numeric ID, so requiring one asked the site owner for
 		// a value they had no way to look up; the slug is what Jetonomy > Spaces
 		// and every community URL already display.
+		//
+		// BOTH branches resolve to a real row. The first version only verified
+		// the slug: a numeric ref was cast and trusted, so space_id="99999" kept
+		// a truthy id, the members query matched nothing, and the owner was shown
+		// "No members yet." for a space that does not exist - the exact confusion
+		// this was meant to end, surviving in the one branch nobody probed.
 		$space_ref = trim( (string) $atts['space_id'] );
-		$space_id  = 0;
-		if ( '' !== $space_ref && ctype_digit( $space_ref ) ) {
-			$space_id = absint( $space_ref );
-		} elseif ( '' !== $space_ref ) {
-			$space    = Models\Space::find_by_slug( $space_ref );
-			$space_id = $space ? absint( $space->id ) : 0;
-			if ( ! $space_id ) {
+		$space     = null;
+
+		if ( '' !== $space_ref ) {
+			$space = ctype_digit( $space_ref )
+				? Models\Space::find( absint( $space_ref ) )
+				: Models\Space::find_by_slug( $space_ref );
+
+			if ( ! $space ) {
 				return self::config_notice(
 					sprintf(
 						/* translators: %s: the space slug or id that was passed. */
@@ -469,6 +558,8 @@ class Shortcodes {
 				);
 			}
 		}
+
+		$space_id = $space ? absint( $space->id ) : 0;
 		if ( ! $space_id ) {
 			return self::config_notice(
 				__( 'jetonomy_space_members needs a space_id attribute - the space slug or its numeric id, e.g. [jetonomy_space_members space_id="announcements"].', 'jetonomy' )
@@ -557,12 +648,24 @@ class Shortcodes {
 		$space    = null;
 		$postable = array();
 
-		if ( 'fixed' === $mode && $space_id ) {
-			$space = \Jetonomy\Models\Space::find( $space_id );
-			// If the fixed space is invalid, fall through to picker-mode data.
+		// A supplied space that does not exist is an authoring mistake in EVERY
+		// mode, not just 'fixed'. The check used to live inside the fixed branch
+		// while the default mode is 'picker', so `space_id="99999"` rendered a
+		// complete, working compose form and a member could write a topic aimed
+		// at a space that does not exist. In fixed mode it silently degraded to
+		// a picker instead, giving the owner no clue their id was wrong
+		// (Basecamp 10266123693).
+		$space_ref = trim( (string) $atts['space_id'] );
+		if ( '' !== $space_ref && '0' !== $space_ref ) {
+			$space = self::resolve_space_ref( $space_ref );
 			if ( ! $space ) {
-				$mode = 'picker';
+				return self::missing_ref_notice( 'jetonomy_compose_topic', 'space', $space_ref );
 			}
+			$space_id = absint( $space->id );
+		}
+
+		if ( 'picker' !== $mode && ! $space ) {
+			$mode = 'picker';
 		}
 
 		if ( 'picker' === $mode ) {

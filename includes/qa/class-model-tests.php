@@ -221,8 +221,87 @@ class Model_Tests {
 		$this->test_space_ownership_transfer();
 
 		$this->check_delete_contract( $admin_id );
+		$this->check_shortcode_ref_contract();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail ];
+	}
+
+	/**
+	 * SR1-SR4: a shortcode reference that names nothing must SAY so.
+	 *
+	 * Every shortcode taking a space or category accepts an id or a slug, and
+	 * must answer the same question: does this thing exist? The first pass
+	 * verified only jetonomy_space_members' slug branch, so a non-existent
+	 * NUMERIC id fell through with a truthy value and the owner was shown an
+	 * ordinary empty state - indistinguishable from a real empty space, which is
+	 * the confusion the notices exist to end. jetonomy_compose_topic was worse:
+	 * its check sat inside the 'fixed' branch while the default mode is
+	 * 'picker', so a bogus id rendered a complete working compose form
+	 * (Basecamp 10266123693).
+	 *
+	 * Also pins that a slug and the matching numeric id produce the SAME output,
+	 * because accepting a slug and then absint()-ing it to 0 silently queried
+	 * space 0 and returned nothing.
+	 */
+	private function check_shortcode_ref_contract(): void {
+		global $wpdb;
+
+		$missing = [
+			'jetonomy_recent_posts'   => 'space_id',
+			'jetonomy_trending_posts' => 'space_id',
+			'jetonomy_spaces'         => 'category_id',
+			'jetonomy_compose_topic'  => 'space_id',
+			'jetonomy_space_members'  => 'space_id',
+		];
+
+		$bad = [];
+		foreach ( $missing as $tag => $att ) {
+			$out = do_shortcode( "[{$tag} {$att}=\"99999\"]" );
+			if ( false === strpos( $out, 'jt-shortcode-notice' ) ) {
+				$bad[] = $tag;
+			}
+		}
+		$this->check(
+			'SR1: a non-existent id is reported, not rendered as an empty state',
+			empty( $bad ),
+			'silent for: ' . implode( ', ', $bad )
+		);
+
+		// SR2: visitors never see the editor guidance.
+		$current = get_current_user_id();
+		wp_set_current_user( 0 );
+		$leaked = [];
+		foreach ( $missing as $tag => $att ) {
+			if ( '' !== trim( do_shortcode( "[{$tag} {$att}=\"99999\"]" ) ) ) {
+				$leaked[] = $tag;
+			}
+		}
+		wp_set_current_user( $current );
+		$this->check( 'SR2: the notice is never shown to visitors', empty( $leaked ), 'leaked from: ' . implode( ', ', $leaked ) );
+
+		// SR3/SR4: a slug and its numeric id must resolve identically.
+		$spaces_t = $wpdb->prefix . 'jt_spaces';
+		$cats_t   = $wpdb->prefix . 'jt_categories';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$space = $wpdb->get_row( "SELECT id, slug FROM {$spaces_t} ORDER BY id ASC LIMIT 1", ARRAY_A );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$cat = $wpdb->get_row( "SELECT id, slug FROM {$cats_t} ORDER BY id ASC LIMIT 1", ARRAY_A );
+
+		if ( is_array( $space ) && ! empty( $space['slug'] ) ) {
+			$by_slug = do_shortcode( '[jetonomy_space_members space_id="' . $space['slug'] . '"]' );
+			$by_id   = do_shortcode( '[jetonomy_space_members space_id="' . (int) $space['id'] . '"]' );
+			$this->check( 'SR3: space slug and numeric id resolve identically', $by_slug === $by_id, 'slug and id produced different output' );
+		} else {
+			\WP_CLI::log( '    SKIP  SR3: no space on this site (run demo-seed)' );
+		}
+
+		if ( is_array( $cat ) && ! empty( $cat['slug'] ) ) {
+			$by_slug = do_shortcode( '[jetonomy_spaces category_id="' . $cat['slug'] . '"]' );
+			$by_id   = do_shortcode( '[jetonomy_spaces category_id="' . (int) $cat['id'] . '"]' );
+			$this->check( 'SR4: category slug and numeric id resolve identically', $by_slug === $by_id, 'slug and id produced different output' );
+		} else {
+			\WP_CLI::log( '    SKIP  SR4: no category on this site (run demo-seed)' );
+		}
 	}
 
 	/**
