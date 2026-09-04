@@ -816,7 +816,7 @@ function jetonomy_sanitize_editor_content( string $content ): string {
  * (decoding first would turn a stored "&lt;script&gt;" into a real tag for
  * strip_tags to eat, losing the text a member actually typed).
  *
- * @since 1.9.7
+ * @since TBD  Set at release time - no version is planned for this work yet.
  *
  * @param string $content Stored/normalized body HTML.
  * @return string Plain-text copy: entities decoded, blocks separated by newlines.

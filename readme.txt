@@ -264,7 +264,7 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
-= 1.9.7 - September 2026 =
+= Unreleased =
 
 Fixes link previews, which never loaded, and the plain-text copy of every post and reply, which showed HTML entities and ran paragraphs together.
 

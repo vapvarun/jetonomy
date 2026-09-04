@@ -3730,7 +3730,7 @@
       "args": "$seconds (float, default 15.0)",
       "where": "includes/class-content-backfill.php (Content_Backfill::run_batch)",
       "consumed_by": null,
-      "notes": "1.9.7. Wall-clock budget for one pass of the content_plain re-derivation sweep. Raise it on a host with a generous max_execution_time to drain a large jt_posts/jt_replies in fewer invocations; the sweep is resumable either way, so the only cost of a small value is more runs of `wp jetonomy content backfill-plain`."
+      "notes": "Unreleased. Wall-clock budget for one pass of the content_plain re-derivation sweep. Raise it on a host with a generous max_execution_time to drain a large jt_posts/jt_replies in fewer invocations; the sweep is resumable either way, so the only cost of a small value is more runs of `wp jetonomy content backfill-plain`."
     }
   ],
   "buddypress_integration": {
