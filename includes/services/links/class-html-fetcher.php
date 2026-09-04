@@ -48,6 +48,19 @@ final class HTML_Fetcher {
 				return $guard;
 			}
 
+			// Pin the connection to IPv4 for the duration of this request only.
+			// Url_Guard vets the host's A records through the system resolver;
+			// without this, cURL is free to prefer a AAAA nobody checked, which
+			// is exactly the internal-address hole the guard exists to close.
+			// Scoped add/remove rather than a global filter so a site's other
+			// outbound HTTP is untouched.
+			$pin_ipv4 = static function ( $handle ): void {
+				if ( defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
+					curl_setopt( $handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt -- pinning the transport WP already chose.
+				}
+			};
+			add_action( 'http_api_curl', $pin_ipv4 );
+
 			$response = wp_safe_remote_get(
 				$current,
 				array(
@@ -62,6 +75,8 @@ final class HTML_Fetcher {
 					'limit_response_size' => self::MAX_BYTES,
 				)
 			);
+
+			remove_action( 'http_api_curl', $pin_ipv4 );
 
 			if ( is_wp_error( $response ) ) {
 				return $response;

@@ -591,7 +591,7 @@ class Asgaros_Importer extends Importer {
 					'title'         => $topic->name,
 					'slug'          => sanitize_title( $topic->name ) ?: 'topic-' . $topic->id,
 					'content'       => wp_kses_post( $content ),
-					'content_plain' => wp_strip_all_tags( $content ),
+					'content_plain' => \jetonomy_content_to_plain( $content ),
 					'status'        => $status,
 					'is_sticky'     => (int) ( $topic->sticky ?? 0 ),
 					'is_closed'     => (int) ( $topic->closed ?? 0 ),
@@ -685,7 +685,7 @@ class Asgaros_Importer extends Importer {
 					'parent_id'     => null,
 					'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
 					'content'       => wp_kses_post( $text ),
-					'content_plain' => wp_strip_all_tags( $text ),
+					'content_plain' => \jetonomy_content_to_plain( $text ),
 					'status'        => 'publish',
 					'created_at'    => $asgaros_post->date ?? now(),
 				]

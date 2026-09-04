@@ -251,7 +251,7 @@ class Replies_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
 		}
 
-		$content_plain = wp_strip_all_tags( $content );
+		$content_plain = jetonomy_content_to_plain( $content );
 
 		// Akismet spam check — skip for site admins and space admins/moderators.
 		// Staff replies should never be quarantined by the automatic filter.
@@ -521,7 +521,7 @@ class Replies_Controller extends Base_Controller {
 			);
 
 			$update_data['content']       = $content;
-			$update_data['content_plain'] = wp_strip_all_tags( $content );
+			$update_data['content_plain'] = jetonomy_content_to_plain( $content );
 			$update_data['edited_at']     = current_time( 'mysql' );
 			$update_data['edited_by']     = $user_id;
 		}

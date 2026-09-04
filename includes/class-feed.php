@@ -81,7 +81,7 @@ class Feed {
 			<?php
 			$post_url = $space_url . 't/' . rawurlencode( (string) $post->slug ) . '/';
 			$display  = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
-			$excerpt  = wp_trim_words( (string) ( $post->content_plain ?? wp_strip_all_tags( (string) $post->content ) ), 55 );
+			$excerpt  = wp_trim_words( (string) ( $post->content_plain ?? \jetonomy_content_to_plain( (string) $post->content ) ), 55 );
 			?>
 	<item>
 		<title><?php echo esc_html( wp_specialchars_decode( (string) $post->title, ENT_QUOTES ) ); ?></title>
