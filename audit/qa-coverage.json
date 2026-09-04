@@ -5,7 +5,7 @@
         "version": "1.9.6"
     },
     "generated": {
-        "at": "2026-09-03T12:59:55+00:00",
+        "at": "2026-09-04T13:33:42+00:00",
         "manifest_at": "2026-09-03T12:55:15Z",
         "manifest_branch": "main"
     },
@@ -699,7 +699,7 @@
             "total": 10,
             "covered": 5,
             "uncovered": 5,
-            "skipped": 220,
+            "skipped": 221,
             "covered_items": [
                 {
                     "name": "jetonomy_post_publish_transition",
@@ -789,8 +789,8 @@
             ]
         },
         "wp_cli": {
-            "total": 15,
-            "covered": 6,
+            "total": 16,
+            "covered": 7,
             "uncovered": 9,
             "skipped": 0,
             "covered_items": [
@@ -811,6 +811,9 @@
                 },
                 {
                     "command": "jetonomy privacy"
+                },
+                {
+                    "command": "jetonomy content"
                 }
             ],
             "uncovered_items": [
@@ -855,15 +858,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 184,
-        "items_covered": 63,
+        "items_total": 185,
+        "items_covered": 64,
         "items_uncovered": 121,
-        "items_skipped": 220,
-        "coverage_percent": 34.200000000000003
+        "items_skipped": 221,
+        "coverage_percent": 34.600000000000001
     },
     "drift": {
-        "previous_uncovered": 122,
+        "previous_uncovered": 121,
         "current_uncovered": 121,
-        "delta": -1
+        "delta": 0
     }
 }
