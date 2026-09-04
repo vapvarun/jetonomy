@@ -1236,7 +1236,7 @@ class Abilities {
 				'title'         => $title,
 				'slug'          => $slug,
 				'content'       => $content,
-				'content_plain' => wp_strip_all_tags( $content ),
+				'content_plain' => \jetonomy_content_to_plain( $content ),
 				'type'          => $type,
 				'is_private'    => $is_private,
 			]
@@ -1344,7 +1344,7 @@ class Abilities {
 			'post_id'       => $post_id,
 			'author_id'     => $user_id,
 			'content'       => $content,
-			'content_plain' => wp_strip_all_tags( $content ),
+			'content_plain' => \jetonomy_content_to_plain( $content ),
 		];
 
 		if ( ! empty( $input['parent_id'] ) ) {

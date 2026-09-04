@@ -264,6 +264,17 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 1.9.7 - September 2026 =
+
+Fixes link previews, which never loaded, and the plain-text copy of every post and reply, which showed HTML entities and ran paragraphs together.
+
+* Fix      - Link previews now load. The preview request resolved the linked site's address in a way that ignores the server's own DNS settings and cannot time out, so on many hosts the request never returned and no preview ever appeared. It now resolves through the system, in milliseconds.
+* Fix      - Quoting a reply in the app no longer inserts "&amp;" where the author wrote "&", and no longer welds the end of one paragraph onto the start of the next.
+* Fix      - Feed excerpts, notification text, search snippets and derived headlines share that same corrected plain-text copy, so all of them stop showing raw entities and run-together paragraphs.
+* Fix      - Searching for a phrase that spans a paragraph break now matches, because the stored search copy keeps the break.
+* Security - The link-preview fetch now connects only to an address the internal-address guard has checked, closing a gap where the connection could use an unchecked IPv6 address for the same host.
+* Dev      - Added wp jetonomy content scan-plain and wp jetonomy content backfill-plain to re-derive the stored plain-text copy for content written before this release. Resumable, non-destructive, and owner-triggered rather than run automatically on update.
+
 = 1.9.6 - September 2026 =
 
 Fixes the move-topic dialog, which showed only the first 20 spaces with no way to reach the rest. The remaining changes are internal and make the release gates catch what they previously missed.

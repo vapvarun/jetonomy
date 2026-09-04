@@ -219,7 +219,7 @@ class Demo_Seeder {
 						'title'         => $clean_title,
 						'slug'          => $unique_slug,
 						'content'       => $topic['content'],
-						'content_plain' => wp_strip_all_tags( $topic['content'] ),
+						'content_plain' => \jetonomy_content_to_plain( $topic['content'] ),
 						'status'        => 'publish',
 						'created_at'    => $created_at,
 					)
@@ -288,7 +288,7 @@ class Demo_Seeder {
 							'post_id'       => (int) $post_id,
 							'author_id'     => $answer_author,
 							'content'       => $body,
-							'content_plain' => wp_strip_all_tags( $body ),
+							'content_plain' => \jetonomy_content_to_plain( $body ),
 							'status'        => 'publish',
 							'created_at'    => $answer_at,
 						)
@@ -663,7 +663,7 @@ class Demo_Seeder {
 							'conversation_id' => $conv_id,
 							'sender_id'       => $sender,
 							'content'         => $m['body'],
-							'content_plain'   => wp_strip_all_tags( $m['body'] ),
+							'content_plain'   => \jetonomy_content_to_plain( $m['body'] ),
 							'created_at'      => $now,
 						)
 					);
@@ -893,7 +893,7 @@ class Demo_Seeder {
 					'post_id'       => $post_id,
 					'author_id'     => $author,
 					'content'       => $body,
-					'content_plain' => wp_strip_all_tags( $body ),
+					'content_plain' => \jetonomy_content_to_plain( $body ),
 					'status'        => 'publish',
 					'created_at'    => self::after( $post_dt, $now ),
 				)

@@ -1415,7 +1415,7 @@ class Reply extends Model {
 				'title'         => $new_title,
 				'slug'          => sanitize_title( $new_title ),
 				'content'       => $reply->content ?? '',
-				'content_plain' => $reply->content_plain ?? wp_strip_all_tags( $reply->content ?? '' ),
+				'content_plain' => $reply->content_plain ?? \jetonomy_content_to_plain( $reply->content ?? '' ),
 				'type'          => $source_post->type ?? 'topic',
 				'status'        => 'publish',
 				'created_at'    => $reply->created_at ?? now(),

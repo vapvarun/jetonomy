@@ -740,7 +740,7 @@ class WPForo_Importer extends Importer {
 					'title'         => $topic->title,
 					'slug'          => $topic->slug ?: sanitize_title( $topic->title ),
 					'content'       => wp_kses_post( $content ),
-					'content_plain' => wp_strip_all_tags( $content ),
+					'content_plain' => \jetonomy_content_to_plain( $content ),
 					'status'        => ( 0 === (int) ( $topic->status ?? 0 ) ) ? 'publish' : 'pending',
 					'is_sticky'     => $is_sticky,
 					'is_closed'     => (int) ( $topic->closed ?? 0 ),
@@ -765,7 +765,7 @@ class WPForo_Importer extends Importer {
 							(int) $post_id,
 							[
 								'content'       => wp_kses_post( $result['body'] ),
-								'content_plain' => wp_strip_all_tags( $result['body'] ),
+								'content_plain' => \jetonomy_content_to_plain( $result['body'] ),
 							]
 						);
 					}
@@ -886,7 +886,7 @@ class WPForo_Importer extends Importer {
 					'parent_id'     => $parent_id,
 					'author_id'     => (int) $wf_post->userid,
 					'content'       => wp_kses_post( $body ),
-					'content_plain' => wp_strip_all_tags( $body ),
+					'content_plain' => \jetonomy_content_to_plain( $body ),
 					'status'        => 'publish',
 					'created_at'    => $wf_post->created ?? now(),
 				]
@@ -908,7 +908,7 @@ class WPForo_Importer extends Importer {
 							(int) $reply_id,
 							[
 								'content'       => wp_kses_post( $result['body'] ),
-								'content_plain' => wp_strip_all_tags( $result['body'] ),
+								'content_plain' => \jetonomy_content_to_plain( $result['body'] ),
 							]
 						);
 					}

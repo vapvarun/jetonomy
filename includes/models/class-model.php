@@ -57,7 +57,7 @@ abstract class Model {
 		if ( array_key_exists( 'content', $data ) && null !== $data['content'] ) {
 			$data['content'] = \jetonomy_sanitize_editor_content( (string) $data['content'] );
 			if ( ! array_key_exists( 'content_plain', $data ) ) {
-				$data['content_plain'] = wp_strip_all_tags( $data['content'] );
+				$data['content_plain'] = \jetonomy_content_to_plain( $data['content'] );
 			}
 		}
 		return $data;

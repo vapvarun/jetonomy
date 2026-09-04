@@ -51,7 +51,7 @@ class Content_Handler {
 		}
 		if ( isset( $_POST['content'] ) ) {
 			$data['content']       = wp_kses_post( wp_unslash( $_POST['content'] ) );
-			$data['content_plain'] = wp_strip_all_tags( $data['content'] );
+			$data['content_plain'] = \jetonomy_content_to_plain( $data['content'] );
 		}
 		if ( isset( $_POST['status'] ) ) {
 			$data['status'] = sanitize_text_field( wp_unslash( $_POST['status'] ) );
@@ -108,7 +108,7 @@ class Content_Handler {
 		$data = [];
 		if ( isset( $_POST['content'] ) ) {
 			$data['content']       = wp_kses_post( wp_unslash( $_POST['content'] ) );
-			$data['content_plain'] = wp_strip_all_tags( $data['content'] );
+			$data['content_plain'] = \jetonomy_content_to_plain( $data['content'] );
 		}
 		if ( isset( $_POST['status'] ) ) {
 			$data['status'] = sanitize_text_field( wp_unslash( $_POST['status'] ) );

@@ -45,6 +45,7 @@ final class CLI_Dispatcher {
 		'tag'          => Commands\Tag_Command::class,
 		'user'         => Commands\User_Command::class,
 		'privacy'      => Commands\Privacy_Command::class,
+		'content'      => Commands\Content_Command::class,
 		'scenario'     => Commands\Scenario_Command::class,
 	];
 

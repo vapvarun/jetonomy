@@ -379,7 +379,7 @@ class Notifier {
 				'post_id'       => $post_id,
 				'author_id'     => $user_id,
 				'content'       => $content,
-				'content_plain' => wp_strip_all_tags( $content ),
+				'content_plain' => \jetonomy_content_to_plain( $content ),
 			]
 		);
 

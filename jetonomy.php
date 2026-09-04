@@ -791,6 +791,67 @@ function jetonomy_sanitize_editor_content( string $content ): string {
 }
 
 /**
+ * THE derivation of `content_plain` from stored body HTML.
+ *
+ * Every writer of the `content_plain` column routes through this, for the same
+ * reason {@see jetonomy_sanitize_editor_content()} exists on the write side:
+ * the expression used to be an inline `wp_strip_all_tags( $content )` copied
+ * across eleven call sites, and a bare strip gets plain text wrong twice.
+ *
+ * 1. It does not decode entities. Stored HTML is entity-encoded, so a body
+ *    reading "R&D" is stored as "R&amp;D" and stripped to the literal five
+ *    characters "&amp;". content_plain is the PLAIN-TEXT copy - what a person
+ *    reads - so it must say "&".
+ * 2. It does not separate block-level tags. strip_tags() removes the markup
+ *    and closes the gap, so `…link.</p><blockquote>nested…` becomes
+ *    "link.nested" - two sentences welded into one word.
+ *
+ * Both were visible wherever content_plain surfaces: the mobile app's Quote
+ * action, feed excerpts, notification text, search snippets and FULLTEXT
+ * search itself, which could not match a phrase spanning a block boundary
+ * (Basecamp 10207964048).
+ *
+ * Order matters. Block closers become newlines BEFORE the strip (afterwards
+ * there is no boundary left to find), and entities are decoded AFTER it
+ * (decoding first would turn a stored "&lt;script&gt;" into a real tag for
+ * strip_tags to eat, losing the text a member actually typed).
+ *
+ * @since 1.9.7
+ *
+ * @param string $content Stored/normalized body HTML.
+ * @return string Plain-text copy: entities decoded, blocks separated by newlines.
+ */
+function jetonomy_content_to_plain( string $content ): string {
+	if ( '' === $content ) {
+		return '';
+	}
+
+	// <br> is a line break; a block closer ends a paragraph. Both become
+	// newlines so no two blocks run together once the tags are gone.
+	$text = preg_replace( '#<br\s*/?>#i', "\n", $content );
+	$text = preg_replace(
+		'#</(?:p|div|blockquote|li|ul|ol|h[1-6]|tr|pre|figure|figcaption|section|article|table)>#i',
+		"\n",
+		(string) $text
+	);
+
+	$text = wp_strip_all_tags( (string) $text );
+
+	// ENT_QUOTES so &#039; and &quot; resolve too - the app showed both to the
+	// member composing a quote. ENT_HTML5 so &apos; and the named entities a
+	// pasted-in editor emits resolve rather than surviving as literals.
+	$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+	// Tidy the newlines the substitutions above introduced, without flattening
+	// the paragraph structure a quote or an excerpt reads back.
+	$text = preg_replace( '/[^\S\n]+/u', ' ', $text );
+	$text = preg_replace( '/ *\n */', "\n", (string) $text );
+	$text = preg_replace( '/\n{3,}/', "\n\n", (string) $text );
+
+	return trim( (string) $text );
+}
+
+/**
  * The first paragraph of a content blob, as plain text.
  *
  * The feed-space derived title used to strip the WHOLE body and take the
@@ -802,10 +863,10 @@ function jetonomy_sanitize_editor_content( string $content ): string {
  * @return string First non-empty plain-text paragraph, '' if none.
  */
 function jetonomy_first_paragraph_text( string $content ): string {
-	// Block-level closers become newlines BEFORE tags are stripped, so
-	// `<p>a</p><p>b</p>` splits even without literal newlines in the source.
-	$text = preg_replace( '#</(p|div|li|h[1-6]|blockquote)>#i', "\n", $content );
-	$text = trim( wp_strip_all_tags( (string) $text ) );
+	// One derivation, shared with content_plain: this used to carry its own
+	// half of it (block closers, but no entity decode), so a headline derived
+	// from a body containing "&" displayed the literal "&amp;".
+	$text = jetonomy_content_to_plain( $content );
 	foreach ( preg_split( '/\n+/', $text ) as $line ) {
 		$line = trim( $line );
 		if ( '' !== $line ) {

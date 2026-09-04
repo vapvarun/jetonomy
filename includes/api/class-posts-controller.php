@@ -424,7 +424,7 @@ class Posts_Controller extends Base_Controller {
 			$type = \Jetonomy\compose_post_type( (string) ( $space->type ?? 'forum' ) );
 		}
 
-		$content_plain = wp_strip_all_tags( $content );
+		$content_plain = jetonomy_content_to_plain( $content );
 
 		// Slug generation: title is required (validated above), so slugify
 		// it. If sanitize_title yields nothing (e.g. emoji-only title), fall
@@ -676,7 +676,7 @@ class Posts_Controller extends Base_Controller {
 		if ( null !== $request->get_param( 'content' ) ) {
 			$content                      = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 			$update_data['content']       = $content;
-			$update_data['content_plain'] = wp_strip_all_tags( $content );
+			$update_data['content_plain'] = jetonomy_content_to_plain( $content );
 		}
 
 		if ( null !== $request->get_param( 'is_private' ) ) {
