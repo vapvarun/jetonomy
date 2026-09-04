@@ -150,6 +150,7 @@ class REST_Tests {
 		$this->run_group_j_blocks();
 		$this->run_group_k_delete_account();
 		$this->test_subscriber_actions();
+		$this->test_ajax_reorder_spaces_X4();
 		$this->test_hook_jetonomy_post_publish_transition_H48();
 		$this->test_hook_jetonomy_reply_publish_transition_H49();
 		$this->test_ajax_generate_invite_X1();
@@ -1890,5 +1891,57 @@ class REST_Tests {
 		);
 
 		wp_set_current_user( $this->admin_id );
+	}
+
+
+	/**
+	 * @generated qa-stub-gen — fill in fixture-specific assertions
+	 * @covers wp_ajax_jetonomy_reorder_spaces
+	 *
+	 * Handler:    includes/admin/ajax/class-spaces-handler.php::ajax_reorder_spaces
+	 * Nonce:      jetonomy_admin
+	 * Capability: jetonomy_manage_spaces
+	 */
+	/**
+	 * X4: the Spaces drag-and-drop reorder handler.
+	 *
+	 * Asserts the wiring and the ORDERING MATH, not the AJAX transport. The
+	 * handler exits via wp_send_json_*, which cannot be invoked in-process
+	 * without output buffering and a die-handler swap; the part that can
+	 * actually be wrong is jetonomy_reorder_offset(), because a page-2 reorder
+	 * that computes offset 0 silently rewrites page 1's order.
+	 */
+	private function test_ajax_reorder_spaces_X4(): void {
+		// Source-level, not has_action(): the admin AJAX handlers are only
+		// instantiated behind is_admin(), which is false under WP-CLI, so a
+		// runtime hook check would fail here for an environment reason and
+		// tell us nothing about the product.
+		$action      = 'jetonomy_reorder_spaces';
+		$handler_src = (string) file_get_contents( JETONOMY_DIR . 'includes/admin/ajax/class-spaces-handler.php' );
+		$this->check(
+			'X4: wp_ajax_jetonomy_reorder_spaces is registered',
+			false !== strpos( $handler_src, 'wp_ajax_' . $action ),
+			"no add_action for wp_ajax_{$action} in class-spaces-handler.php"
+		);
+
+		// Page 1 starts at 0; page 3 at 20 per page starts at 40. An offset that
+		// ignores paged would renumber the wrong rows.
+		$this->check(
+			'X4: reorder offset respects the current page',
+			0 === jetonomy_reorder_offset( 1, 20 ) && 40 === jetonomy_reorder_offset( 3, 20 ),
+			sprintf( 'page1=%d page3=%d', jetonomy_reorder_offset( 1, 20 ), jetonomy_reorder_offset( 3, 20 ) )
+		);
+
+		// The handler is capability-gated, not merely nonce-gated. A nonce proves
+		// the request came from our screen, never that the user may reorder.
+		$has_cap = (bool) preg_match(
+			'/function ajax_reorder_spaces.*?current_user_can\(\s*.jetonomy_manage_spaces./s',
+			$handler_src
+		);
+		$this->check(
+			'X4: reorder is gated on jetonomy_manage_spaces, not just a nonce',
+			$has_cap,
+			'no capability check found in ajax_reorder_spaces()'
+		);
 	}
 }

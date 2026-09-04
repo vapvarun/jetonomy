@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "jetonomy",
     "name": "Jetonomy",
-    "version": "1.9.4",
+    "version": "1.9.6",
     "namespace": "Jetonomy",
     "main_file": "jetonomy.php",
     "text_domain": "jetonomy",
@@ -1146,81 +1146,11 @@
   },
   "ajax": [
     {
-      "action": "jetonomy_create_category",
-      "handler": "Admin\\Ajax\\Categories_Handler::create",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_categories",
-      "purpose": "Create category"
-    },
-    {
-      "action": "jetonomy_update_category",
-      "handler": "Admin\\Ajax\\Categories_Handler::update",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_categories",
-      "purpose": "Update category"
-    },
-    {
-      "action": "jetonomy_delete_category",
-      "handler": "Admin\\Ajax\\Categories_Handler::delete",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_categories",
-      "purpose": "Delete category"
-    },
-    {
-      "action": "jetonomy_reorder_categories",
-      "handler": "Admin\\Ajax\\Categories_Handler::reorder",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_categories",
-      "purpose": "Reorder categories"
-    },
-    {
-      "action": "jetonomy_create_tag",
-      "handler": "Admin\\Ajax\\Tags_Handler::create",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Create tag"
-    },
-    {
-      "action": "jetonomy_update_tag",
-      "handler": "Admin\\Ajax\\Tags_Handler::update",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Update tag"
-    },
-    {
-      "action": "jetonomy_delete_tag",
-      "handler": "Admin\\Ajax\\Tags_Handler::delete",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Delete tag"
-    },
-    {
-      "action": "jetonomy_bulk_delete_tags",
-      "handler": "Admin\\Ajax\\Tags_Handler::bulk_delete",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Bulk delete tags"
-    },
-    {
-      "action": "jetonomy_create_space",
-      "handler": "Admin\\Ajax\\Spaces_Handler::create",
+      "action": "jetonomy_add_access_rule",
+      "handler": "Admin\\Ajax\\Spaces_Handler::add_access_rule",
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
-      "purpose": "Create space"
-    },
-    {
-      "action": "jetonomy_update_space",
-      "handler": "Admin\\Ajax\\Spaces_Handler::update",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Update space"
-    },
-    {
-      "action": "jetonomy_delete_space",
-      "handler": "Admin\\Ajax\\Spaces_Handler::delete",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Delete space"
+      "purpose": "Add space access rule"
     },
     {
       "action": "jetonomy_add_space_member",
@@ -1230,41 +1160,6 @@
       "purpose": "Add member to space"
     },
     {
-      "action": "jetonomy_remove_space_member",
-      "handler": "Admin\\Ajax\\Spaces_Handler::remove_member",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Remove member from space"
-    },
-    {
-      "action": "jetonomy_change_member_role",
-      "handler": "Admin\\Ajax\\Spaces_Handler::change_role",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Change member role"
-    },
-    {
-      "action": "jetonomy_add_access_rule",
-      "handler": "Admin\\Ajax\\Spaces_Handler::add_access_rule",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Add space access rule"
-    },
-    {
-      "action": "jetonomy_delete_access_rule",
-      "handler": "Admin\\Ajax\\Spaces_Handler::delete_access_rule",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Delete space access rule"
-    },
-    {
-      "action": "jetonomy_sync_access_rule",
-      "handler": "Admin\\Ajax\\Spaces_Handler::sync_access_rule",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Sync access rules"
-    },
-    {
       "action": "jetonomy_approve_content",
       "handler": "Admin\\Ajax\\Moderation_Handler::approve",
       "nonce": "jetonomy_admin",
@@ -1272,32 +1167,11 @@
       "purpose": "Approve flagged content"
     },
     {
-      "action": "jetonomy_spam_content",
-      "handler": "Admin\\Ajax\\Moderation_Handler::spam",
+      "action": "jetonomy_approve_join_request",
+      "handler": "Admin\\Ajax\\Content_Handler::approve_join_request",
       "nonce": "jetonomy_admin",
-      "capability": "jetonomy_moderate",
-      "purpose": "Mark content as spam"
-    },
-    {
-      "action": "jetonomy_trash_content",
-      "handler": "Admin\\Ajax\\Moderation_Handler::trash",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_moderate",
-      "purpose": "Trash content"
-    },
-    {
-      "action": "jetonomy_resolve_flag",
-      "handler": "Admin\\Ajax\\Moderation_Handler::resolve_flag",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_moderate",
-      "purpose": "Resolve flag"
-    },
-    {
-      "action": "jetonomy_bulk_content_action",
-      "handler": "Admin\\Ajax\\Moderation_Handler::bulk_action",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_moderate",
-      "purpose": "Bulk moderation action"
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Approve join request"
     },
     {
       "action": "jetonomy_ban_user",
@@ -1307,11 +1181,25 @@
       "purpose": "Ban user"
     },
     {
-      "action": "jetonomy_unban_user",
-      "handler": "Admin\\Ajax\\Users_Handler::unban",
+      "action": "jetonomy_bulk_content_action",
+      "handler": "Admin\\Ajax\\Moderation_Handler::bulk_action",
       "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_users",
-      "purpose": "Unban user"
+      "capability": "jetonomy_moderate",
+      "purpose": "Bulk moderation action"
+    },
+    {
+      "action": "jetonomy_bulk_delete_tags",
+      "handler": "Admin\\Ajax\\Tags_Handler::bulk_delete",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Bulk delete tags"
+    },
+    {
+      "action": "jetonomy_change_member_role",
+      "handler": "Admin\\Ajax\\Spaces_Handler::change_role",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Change member role"
     },
     {
       "action": "jetonomy_change_trust_level",
@@ -1321,25 +1209,81 @@
       "purpose": "Change user trust level"
     },
     {
-      "action": "jetonomy_search_users",
-      "handler": "Admin\\Ajax\\Users_Handler::search",
+      "action": "jetonomy_cleanup_sample_data",
+      "handler": "Admin\\Ajax\\Setup_Handler::cleanup_sample",
       "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Search users"
+      "capability": "manage_options",
+      "purpose": "Clean up sample data"
     },
     {
-      "action": "jetonomy_import_batch",
-      "handler": "Admin\\Ajax\\Import_Handler::batch",
+      "action": "jetonomy_create_category",
+      "handler": "Admin\\Ajax\\Categories_Handler::create",
       "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Process import batch"
+      "capability": "jetonomy_manage_categories",
+      "purpose": "Create category"
     },
     {
-      "action": "jetonomy_test_email",
-      "handler": "Admin\\Ajax\\Settings_Handler::test_email",
+      "action": "jetonomy_create_space",
+      "handler": "Admin\\Ajax\\Spaces_Handler::create",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Create space"
+    },
+    {
+      "action": "jetonomy_create_tag",
+      "handler": "Admin\\Ajax\\Tags_Handler::create",
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
-      "purpose": "Send test email"
+      "purpose": "Create tag"
+    },
+    {
+      "action": "jetonomy_delete_access_rule",
+      "handler": "Admin\\Ajax\\Spaces_Handler::delete_access_rule",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Delete space access rule"
+    },
+    {
+      "action": "jetonomy_delete_category",
+      "handler": "Admin\\Ajax\\Categories_Handler::delete",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_categories",
+      "purpose": "Delete category"
+    },
+    {
+      "action": "jetonomy_delete_post",
+      "handler": "Admin\\Ajax\\Content_Handler::delete_post",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Delete post from admin"
+    },
+    {
+      "action": "jetonomy_delete_reply",
+      "handler": "Admin\\Ajax\\Content_Handler::delete_reply",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Delete reply from admin"
+    },
+    {
+      "action": "jetonomy_delete_space",
+      "handler": "Admin\\Ajax\\Spaces_Handler::delete",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Delete space"
+    },
+    {
+      "action": "jetonomy_delete_tag",
+      "handler": "Admin\\Ajax\\Tags_Handler::delete",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Delete tag"
+    },
+    {
+      "action": "jetonomy_deny_join_request",
+      "handler": "Admin\\Ajax\\Content_Handler::deny_join_request",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Deny join request"
     },
     {
       "action": "jetonomy_email_preview",
@@ -1363,74 +1307,18 @@
       "purpose": "Flush rewrite rules"
     },
     {
-      "action": "jetonomy_update_post",
-      "handler": "Admin\\Ajax\\Content_Handler::update_post",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Update post from admin"
-    },
-    {
-      "action": "jetonomy_delete_post",
-      "handler": "Admin\\Ajax\\Content_Handler::delete_post",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Delete post from admin"
-    },
-    {
-      "action": "jetonomy_update_reply",
-      "handler": "Admin\\Ajax\\Content_Handler::update_reply",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Update reply from admin"
-    },
-    {
-      "action": "jetonomy_delete_reply",
-      "handler": "Admin\\Ajax\\Content_Handler::delete_reply",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Delete reply from admin"
-    },
-    {
-      "action": "jetonomy_approve_join_request",
-      "handler": "Admin\\Ajax\\Content_Handler::approve_join_request",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Approve join request"
-    },
-    {
-      "action": "jetonomy_deny_join_request",
-      "handler": "Admin\\Ajax\\Content_Handler::deny_join_request",
-      "nonce": "jetonomy_admin",
-      "capability": "jetonomy_manage_spaces",
-      "purpose": "Deny join request"
-    },
-    {
-      "action": "jetonomy_setup_save",
-      "handler": "Admin\\Ajax\\Setup_Handler::save",
-      "nonce": "jetonomy_setup",
-      "capability": "manage_options",
-      "purpose": "Save setup wizard data"
-    },
-    {
-      "action": "jetonomy_setup_create_sample",
-      "handler": "Admin\\Ajax\\Setup_Handler::create_sample",
-      "nonce": "jetonomy_setup",
-      "capability": "manage_options",
-      "purpose": "Create sample data"
-    },
-    {
-      "action": "jetonomy_cleanup_sample_data",
-      "handler": "Admin\\Ajax\\Setup_Handler::cleanup_sample",
-      "nonce": "jetonomy_admin",
-      "capability": "manage_options",
-      "purpose": "Clean up sample data"
-    },
-    {
       "action": "jetonomy_generate_invite",
       "handler": "Admin\\Ajax\\Spaces_Handler::generate_invite",
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Generate space invite link"
+    },
+    {
+      "action": "jetonomy_import_batch",
+      "handler": "Admin\\Ajax\\Import_Handler::batch",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Process import batch"
     },
     {
       "action": "jetonomy_list_invites",
@@ -1440,11 +1328,130 @@
       "purpose": "List space invite links"
     },
     {
+      "action": "jetonomy_remove_space_member",
+      "handler": "Admin\\Ajax\\Spaces_Handler::remove_member",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Remove member from space"
+    },
+    {
+      "action": "jetonomy_reorder_categories",
+      "handler": "Admin\\Ajax\\Categories_Handler::reorder",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_categories",
+      "purpose": "Reorder categories"
+    },
+    {
+      "action": "jetonomy_reorder_spaces",
+      "handler": "includes/admin/ajax/class-spaces-handler.php::ajax_reorder_spaces",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Persist the drag-and-drop order of spaces from the Spaces admin screen."
+    },
+    {
+      "action": "jetonomy_resolve_flag",
+      "handler": "Admin\\Ajax\\Moderation_Handler::resolve_flag",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_moderate",
+      "purpose": "Resolve flag"
+    },
+    {
       "action": "jetonomy_revoke_invite",
       "handler": "Admin\\Ajax\\Spaces_Handler::revoke_invite",
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Revoke space invite link"
+    },
+    {
+      "action": "jetonomy_search_users",
+      "handler": "Admin\\Ajax\\Users_Handler::search",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Search users"
+    },
+    {
+      "action": "jetonomy_setup_create_sample",
+      "handler": "Admin\\Ajax\\Setup_Handler::create_sample",
+      "nonce": "jetonomy_setup",
+      "capability": "manage_options",
+      "purpose": "Create sample data"
+    },
+    {
+      "action": "jetonomy_setup_save",
+      "handler": "Admin\\Ajax\\Setup_Handler::save",
+      "nonce": "jetonomy_setup",
+      "capability": "manage_options",
+      "purpose": "Save setup wizard data"
+    },
+    {
+      "action": "jetonomy_spam_content",
+      "handler": "Admin\\Ajax\\Moderation_Handler::spam",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_moderate",
+      "purpose": "Mark content as spam"
+    },
+    {
+      "action": "jetonomy_sync_access_rule",
+      "handler": "Admin\\Ajax\\Spaces_Handler::sync_access_rule",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Sync access rules"
+    },
+    {
+      "action": "jetonomy_test_email",
+      "handler": "Admin\\Ajax\\Settings_Handler::test_email",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Send test email"
+    },
+    {
+      "action": "jetonomy_trash_content",
+      "handler": "Admin\\Ajax\\Moderation_Handler::trash",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_moderate",
+      "purpose": "Trash content"
+    },
+    {
+      "action": "jetonomy_unban_user",
+      "handler": "Admin\\Ajax\\Users_Handler::unban",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_users",
+      "purpose": "Unban user"
+    },
+    {
+      "action": "jetonomy_update_category",
+      "handler": "Admin\\Ajax\\Categories_Handler::update",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_categories",
+      "purpose": "Update category"
+    },
+    {
+      "action": "jetonomy_update_post",
+      "handler": "Admin\\Ajax\\Content_Handler::update_post",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Update post from admin"
+    },
+    {
+      "action": "jetonomy_update_reply",
+      "handler": "Admin\\Ajax\\Content_Handler::update_reply",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Update reply from admin"
+    },
+    {
+      "action": "jetonomy_update_space",
+      "handler": "Admin\\Ajax\\Spaces_Handler::update",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Update space"
+    },
+    {
+      "action": "jetonomy_update_tag",
+      "handler": "Admin\\Ajax\\Tags_Handler::update",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Update tag"
     }
   ],
   "admin_pages": [
@@ -4078,9 +4085,9 @@
     "delta_2026_07_04": "Post-refresh deltas + security-audit fixes. 3996dc0: Cache::remember_object() coerces empty-string persistent-cache hits to null (Redis/Memcached TypeError fix); free SEO baseline defers to seo-pro on post + space family (dupe og-tag fix). b46c84f: /app/config gains app_enabled (Pro mobile gate, fail closed) + app_name. Security fixes (2026-07-04 expectation audit): closed 5 private/hidden-space content leaks (Space::list_visible visibility-param bypass; space-members.php + space-roadmap.php missing read gate; search.php advanced-filter branch missing Space::content_visibility_sql; Schema_Markup space CollectionPage + breadcrumb JSON-LD). jetonomy_email_headers widened to 5 args ($object_type,$object_id) so pro reply-by-email can mint a post-scoped Reply-To token (was hooking the wrong adapter-level filter and fataling).",
     "refresh_2026_06_28": "1.6.0 mobile-app refresh + plugin.version 1.4.3->1.6.0. Verified the mobile surface is captured: GET /app/config (App_Config_Controller; serves app_name from Community Title, accent_color, logo_url + feature_flags map) and GET /feed (Feed_Controller; sort hot|new|top, cursor after/before + offset + window_days) present; logo_url added to Settings -> Appearance. REST 73/73 exact vs register_rest_route grep. App-side: the login screen now applies the discovered site accent+logo pre-auth (no plugin surface change). Native push device registration lives in jetonomy-pro web-push (/push/register-device), not free.",
     "refresh_2026_06_11": "Coverage-gated refresh after the full-audit fix series (audit/full-audit-2026-06-11.md). wppqa baseline: audit/wppqa-baseline-2026-06-11. All categories within gate vs ground-truth grep: rest 68/69 calls (multi-config registrations), ajax 40/40 (comment-text hits excluded), hooks_fired 142/140+dynamic, tables 20 (3 dead tables dropped in Migration_1_5_0), blocks 8/8, shortcodes 8/8 (stale jetonomy_recent_activity entry removed), cron 6 (Action Scheduler map in class-cron.php - wp_schedule_event grep finds 0 by design), wp_cli 14 (dynamic dispatcher loop), admin_pages 14/14.",
-    "at": "2026-08-20T00:00:00Z",
-    "from": "1.9.4 branch cut — paperwork/QA reconciliation pass",
-    "branch": "1.9.4",
+    "at": "2026-09-03T12:55:15Z",
+    "from": "wp-plugin-onboard skill (--refresh)",
+    "branch": "main",
     "schema_version": "v2",
     "refresh_note": "Refreshed 2026-05-14 for the 1.4.3 feature drop (commits 16215a2, 6bfebca, e2a3cd0, b0fa218). NEW: Admin_Bar class (includes/class-admin-bar.php, admin_bar_menu priority 60). NEW: jetonomy_admin_empty_state() global helper (includes/helpers.php). NEW: 3 public hooks for Pro consumption (jetonomy_post_list_results_for_space, jetonomy_post_card_after_badges, jetonomy_reputation_points_for). NEW: 2 REST endpoints on Notifications_Controller (DELETE /notifications/{id}, POST /notifications/bulk) plus ?filter= on the existing GET. NEW: configurable reputation via Reputation::action_points_map() + filter + reputation_points settings array. Notifications admin template fully redesigned (filter tabs, bulk toolbar, per-row menu, pagination, empty-state primitive). See audit/wppqa-baseline-2026-05-14/SUMMARY.md for the surface-area delta.",
     "refreshed_via": "manual reconciliation at the 1.9.4 cut, verified against `wp jetonomy qa-actions` 286/286 on buddynext.local",
@@ -4111,7 +4118,8 @@
     "delta_2026_08_20_1_9_4_access_rules": "1.9.4: jt_access_rules reached REST. GET/POST /spaces/{id}/access-rules and DELETE /access-rules/{id}. The table that decides who may ENTER a space previously had zero REST coverage - configurable only from wp-admin, so no API-driven or app-based space-admin flow could touch it. Capability matches the AJAX handler (jetonomy_manage_spaces). The public-space guard was EXTRACTED to AccessRule::enforce_gate_on_public_space() and both surfaces now call it: a membership/role/capability/trust_level rule on a public space silently does nothing, so the space is flipped to Private and the caller is told. Duplicating that logic - or omitting it, which is likelier - would have recreated Basecamp 10000074550 on REST. Free REST endpoints 83 -> 86. Verified live including the guard firing through REST.",
     "delta_2026_08_22_security_boundaries": "Security boundary fixes (Basecamp 10227908583, 10227908469, 10227904976, 10227905070, 10227908705). All five had ONE shape: a rule enforced at one entry point while the others kept their own copy without it. NEW SpaceMember::join() is the single self-service join path (visibility + join_policy); REST join_space and the WP Abilities jetonomy/join-space ability both route through it, deleting ~31 lines of duplicated policy from the controller. add() stays the low-level primitive for invite redemption, admin screens, tier sync and auto-join-on-post. The ability previously branched only on visibility=='private' and called the NONEXISTENT JoinRequest::create() - that call had a phpstan-baseline ignore, i.e. static analysis found the bug and it was silenced; the baseline entry is now removed. NEW Restriction::actor_may_restrict() is enforced inside Restriction::ban() so admin-ajax and the CLI journey cannot skip the target rules REST already had (a default Editor could global_ban user 1). Rule is actor-relative: system-issued (issued_by<=0) and admin-issued are allowed; escalation is not. Pro: reply-by-email inbound now verifies Mailgun's documented signed form fields (timestamp+token) and SendGrid's header, and FAILS CLOSED - previously an absent signature skipped the secret entirely. Attachment download and custom-field GETs now apply the same Permission_Engine::can_read_post() guard polls/reactions use; attach() checks the TARGET's author, not just the file's. private-messaging is_participant() now requires left_at IS NULL. Tests: tests/security/PrivilegeBoundaryTest.php (10).",
     "delta_2026_08_22_reply_gate": "Reply gates + CLI truthfulness (Basecamp 10228771444, 10228771723). NEW Jetonomy\\Permissions\\Reply_Gate::check() is the shared state gate for writing a reply: banned, silenced, archived/locked space, closed post, and Permission_Engine::can(create_replies). REST_Replies_Controller::create_item() and the inbound-email writer (Notifier::on_reply_from_email, reached via jetonomy_reply_from_email) both route through it; the two duplicated blocks in the controller are deleted and its error codes are unchanged. Rate limiting and CAPTCHA stay per-surface by design. Before this the email path had NONE of these gates: a banned member's emailed reply was created, and replies landed on closed posts and in archived spaces, all with valid webhook signatures. Pro: Extension_Journey now reports STORED state (stored_ids) instead of a filtered view, and writes via persist_ids() which neutralises read filters so update_option's own comparison sees stored state - BuddyNext filters option_jetonomy_pro_extensions to suppress private-messaging, which made enable look like a no-op while it persisted, and made disable a genuine no-op while reporting success. Suppressed extensions now warn and report suppressed_by. Tests: tests/security/ReplyGateTest.php (6).",
-    "delta_2026_08_22_content_gate": "Follow-up audit after the security batch (Basecamp 10228771444). Reply_Gate RENAMED to Jetonomy\\Permissions\\Content_Gate because it now serves posts as well as replies; a gate named for one caller is a gate the next caller does not look for. NEW Content_Gate::space_accepts_content() carries the archived/locked space rule for callers that have a space but no post. Audited every caller of Reply::create() and every self-service join path, and found the same bug class still live in the WP Abilities API: jetonomy/create-reply checked is_closed but NOT space status, and jetonomy/create-post checked neither, so both could write into an ARCHIVED space that REST refuses with jetonomy_space_restricted. Reproduced (REST 403 vs ability creating reply #2411 in the same space for the same member) and both permission callbacks now route through Content_Gate. Test fixture: SpaceJourneyTest's transfer test now creates its own successor - Space::resolve_successor() falls back to any OTHER manage_options user, so the test silently depended on another test having left an administrator behind. It was the suite's most frequent intermittent failure. Tests: tests/security/ContentGateTest.php (9)."
+    "delta_2026_08_22_content_gate": "Follow-up audit after the security batch (Basecamp 10228771444). Reply_Gate RENAMED to Jetonomy\\Permissions\\Content_Gate because it now serves posts as well as replies; a gate named for one caller is a gate the next caller does not look for. NEW Content_Gate::space_accepts_content() carries the archived/locked space rule for callers that have a space but no post. Audited every caller of Reply::create() and every self-service join path, and found the same bug class still live in the WP Abilities API: jetonomy/create-reply checked is_closed but NOT space status, and jetonomy/create-post checked neither, so both could write into an ARCHIVED space that REST refuses with jetonomy_space_restricted. Reproduced (REST 403 vs ability creating reply #2411 in the same space for the same member) and both permission callbacks now route through Content_Gate. Test fixture: SpaceJourneyTest's transfer test now creates its own successor - Space::resolve_successor() falls back to any OTHER manage_options user, so the test silently depended on another test having left an administrator behind. It was the suite's most frequent intermittent failure. Tests: tests/security/ContentGateTest.php (9).",
+    "refresh_notes": "Diff-verified against production source. hooks_fired: 0 missing. shortcodes/tables: exact. rest 88 grep vs 86 manifest (2.3%, within gate). ajax +1 real (jetonomy_reorder_spaces); jetonomy_quick_login and jetonomy_upload_image appear only in comments as REST-replaced legacy handlers."
   },
   "static_analysis": {
     "dead_listeners": [
