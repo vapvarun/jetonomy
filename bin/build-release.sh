@@ -459,7 +459,11 @@ fi
 # jetonomy-smoke skill in jetonomy-pro/.claude/skills/) reported zero failures
 # and was dated within the last 24 hours.
 #
-# Emergency bypass: --skip-browser-smoke (logs a warning to the zip manifest).
+# Emergency bypass: --skip-browser-smoke. It warns on stderr and nowhere else -
+# there is no zip manifest and the warning does not survive the terminal, so
+# after the fact the ONLY evidence a release was ungated is a stale
+# release_version in the smoke report. That is how 1.9.6 shipped past this gate
+# unnoticed (Basecamp 10266125068). Check the report's version before tagging.
 #
 # WHERE the report lives is docs/qa/qa-config.json's business, not this
 # script's. This used to prefer a per-mode name (.last-smoke-pass-free.json)
@@ -487,7 +491,9 @@ for _stale in "$ROOT"/docs/qa/.last-smoke-pass-*.json; do
 	echo "    NOTE: ignoring $(basename "$_stale") - the gate reads $SMOKE_REPORT_REL (qa-config.json report_path)."
 done
 if [ "$SKIP_BROWSER_SMOKE" -eq 1 ]; then
-	echo "WARN: browser smoke gate skipped (--skip-browser-smoke). Not for customer releases."
+	# stderr, like every other gate message here: on stdout it vanished into a
+	# pipe and the skip left no trace at all.
+	echo "WARN: browser smoke gate skipped (--skip-browser-smoke). Not for customer releases." >&2
 elif [ ! -f "$SMOKE_REPORT" ]; then
 	echo "FAIL: no browser smoke report at $SMOKE_REPORT" >&2
 	echo "      Run the jetonomy-smoke skill first:" >&2
