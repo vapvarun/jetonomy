@@ -87,7 +87,18 @@ class Content_Gate {
 			return $open;
 		}
 
-		if ( ! empty( $post->is_closed ) ) {
+		/*
+		 * Closing a topic is a member-facing control, not a staff one: a
+		 * moderator still needs to post the ruling that explains the close.
+		 * single-post.php has always promised exactly that - it renders the
+		 * composer plus a "As a moderator, you can still add a reply" notice -
+		 * while this gate rejected everyone, so the UI offered a reply the
+		 * server refused with a 403 (Basecamp 10272481541).
+		 *
+		 * The permission slug must stay `moderate`, the same one the template
+		 * tests, or the display/enforce split just moves rather than closes.
+		 */
+		if ( ! empty( $post->is_closed ) && ! Permission_Engine::can( $user_id, 'moderate', $space_id ) ) {
 			return new \WP_Error(
 				'jetonomy_post_closed',
 				__( 'This post is closed and cannot receive new replies.', 'jetonomy' ),
