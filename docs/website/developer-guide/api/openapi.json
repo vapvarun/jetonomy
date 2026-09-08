@@ -6040,13 +6040,38 @@
       }
     },
     "/replies/{id}": {
+      "get": {
+        "summary": "Get a reply",
+        "description": "Fetch a single reply. Visibility is enforced by Visibility::rest_check, so a reply in a space the caller cannot see returns 401/404 rather than the record.",
+        "tags": [
+          "Replies"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The reply."
+          },
+          "404": {
+            "description": "Not found or not visible to the caller."
+          }
+        }
+      },
       "patch": {
         "tags": [
           "Replies"
         ],
         "summary": "Update a reply",
         "operationId": "updateReply",
-        "description": "Update a reply. Requires author or moderator. (No GET on this route.)",
+        "description": "Update a reply. Requires author or moderator.",
         "responses": {
           "200": {
             "description": "Success",

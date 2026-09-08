@@ -109,6 +109,7 @@ A follow-up reminder is sent automatically if the member has not confirmed withi
 **Setting:** `verification_reminder_hours`
 **Default:** `24`
 **Location:** Stored in `jetonomy_settings['verification_reminder_hours']`
+**Where to change it:** **Settings → Email**, in the "Email Sender" card - not on this General tab, even though the verification toggle it belongs to lives here.
 
 This controls how many hours after registration the reminder email is sent. The reminder runs on an hourly WP-Cron schedule (hook: `jetonomy_verification_reminder`). The email template can be customized on the **Settings → Email** screen under the "Verification reminder" row.
 

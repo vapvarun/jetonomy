@@ -152,8 +152,8 @@ Jetonomy is built to be extended. Everything members can do is reachable through
 
 What is included:
 
-- **REST API** - 48+ free endpoints under `jetonomy/v1`, 90+ with Pro active. See [REST API](../developer-guide/01-rest-api.md).
-- **Hooks** - 58 free hooks plus 9 in Pro for actions and filters. See [Hooks Reference](../developer-guide/02-hooks-reference.md).
+- **REST API** - 86 free endpoints under `jetonomy/v1`, 161 with Pro active. See [REST API](../developer-guide/01-rest-api.md).
+- **Hooks** - 231 hooks in free (106 actions, 125 filters), plus Pro's own. See [Hooks Reference](../developer-guide/02-hooks-reference.md).
 - **WP-CLI** - 14 free command roots and 15 in Pro for headless automation. See [WP-CLI](../developer-guide/10-wp-cli.md).
 - **Blocks and shortcodes** - eight Gutenberg blocks, four classic widgets, and eight shortcodes to embed community content anywhere. The four widgets are Recent Posts, Leaderboard, Active Spaces, and User Stats (Active Spaces and User Stats are reachable only through the `[jetonomy_widget]` shortcode). Most surfaces are available as both a block and a shortcode, with three exceptions each way: Navigation, Login, and User Panel are block-only, while `[jetonomy_user_profile]`, `[jetonomy_space_members]`, and `[jetonomy_widget]` are shortcode-only. See [Shortcodes, Widgets & Blocks](../developer-guide/04-shortcodes-widgets-blocks.md).
 

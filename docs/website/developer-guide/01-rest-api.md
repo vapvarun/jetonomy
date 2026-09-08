@@ -67,7 +67,7 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | GET | `/spaces/{id}/privileged-members` | Public | List admins and moderators of a space |
 | GET | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | List the membership access rules gating a space. Added 1.9.4. |
 | POST | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | Add an access rule (membership level / role / tag that grants access). Added 1.9.4. |
-| DELETE | `/spaces/{id}/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Added 1.9.4. |
+| DELETE | `/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Note the path is top-level, not nested under `/spaces/{id}` - the rule id is globally unique. Added 1.9.4. |
 
 **GET /spaces - parameters**
 
@@ -438,8 +438,7 @@ The response `meta` carries `total`, `has_more`, `count`, `offset`, and `space_i
 |--------|-------|------|-------------|
 | GET | `/users/me` | Logged in | Get the current user's profile |
 | PATCH | `/users/me` | Logged in (own account) | Update the current user's profile |
-| GET | `/users/{id}` | Public | Get a user's public profile |
-| PATCH | `/users/{id}` | Owner / Admin | Update a user profile |
+| GET | `/users/{id}` | Public | Get a user's public profile. Read-only - there is no PATCH on this route, not even for administrators. A profile is edited only by its owner through `PATCH /users/me`. |
 | GET | `/users/by-login/{login}` | Public | Look up a user by login slug |
 | GET | `/users/{id}/posts` | Public | List posts by this user |
 | GET | `/users/suggest` | Public | Typeahead - suggest users by name or login prefix |

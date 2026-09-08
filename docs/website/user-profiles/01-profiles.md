@@ -102,9 +102,13 @@ Keeping the two separate means a community can show real names in bylines while 
 
 ## Deleting Your Account (1.8.0+)
 
-Members can permanently delete their own account from the mobile app or the REST API (`DELETE /users/me`). There is no web front-end button for this yet - it is available through the app and the API only.
+Members can delete their own account from the mobile app or the REST API (`DELETE /users/me`). There is no web front-end button for this yet - it is available through the app and the API only.
 
-Account deletion is permanent and cannot be undone from the community front end - make sure your app or client confirms with the member before sending the request.
+**By default, deleting the account does not delete the member's posts.** The account itself is removed, and their topics and replies stay in place, reassigned to an anonymous tombstone author. Discussions other members took part in therefore stay readable instead of developing holes.
+
+A member who wants their content removed as well has to ask for it explicitly - the request carries a `delete_content: true` flag, which erases their topics and replies along with the account. Whatever you build on top of this API should make the difference obvious at the point of confirmation, because "delete my account" and "delete everything I wrote" are two different requests and members routinely mean the second.
+
+Either way the deletion is permanent and cannot be undone from the community front end. Two further guards apply: the route refuses to delete a user who holds `manage_options` (an administrator has to be removed through WordPress itself), and it is rate limited to 5 attempts per hour per IP.
 
 ## Embedding Profiles on a Page
 
