@@ -2929,6 +2929,12 @@
       "notes": "1.7.1 foundation. Lets Pro/3rd-party code widen the exclusion set (e.g. a future mute feature) without touching the model. Applied once per request (self::$memo), after the 5-minute Cache::remember layer."
     },
     {
+      "name": "jetonomy_breadcrumb_html",
+      "type": "filter",
+      "args": "html, crumbs",
+      "where": "templates/partials/breadcrumb.php"
+    },
+    {
       "name": "jetonomy_can_create_space_frontend",
       "type": "filter",
       "args": "$can (bool), $user_id (int, 0 when logged out)",
@@ -2968,6 +2974,14 @@
       "where": "includes/functions.php (Jetonomy\\compose_label)",
       "consumed_by": [],
       "notes": "1.8.1. Single source for the \"create something here\" verb per space type (Ask a Question / Share an Idea / New Status / New Topic). Consumed by the composer heading (templates/views/new-post.php), the space CTA button (templates/views/space.php), the BuddyPress tab CTA and the composer route's <title> + SEO title (Template_Loader::compose_route_title). Paired with Jetonomy\\compose_post_type(), which maps the same types to question/idea/status/topic - change both together."
+    },
+    {
+      "name": "jetonomy_content_plain_backfill_batch_seconds",
+      "type": "filter",
+      "args": "$seconds (float, default 15.0)",
+      "where": "includes/class-content-backfill.php (Content_Backfill::run_batch)",
+      "consumed_by": null,
+      "notes": "Unreleased. Wall-clock budget for one pass of the content_plain re-derivation sweep. Raise it on a host with a generous max_execution_time to drain a large jt_posts/jt_replies in fewer invocations; the sweep is resumable either way, so the only cost of a small value is more runs of `wp jetonomy content backfill-plain`."
     },
     {
       "name": "jetonomy_cron_batch_size",
@@ -3723,14 +3737,6 @@
       "args": "",
       "where": "includes/api/class-leaderboards-controller.php",
       "consumed_by": []
-    },
-    {
-      "name": "jetonomy_content_plain_backfill_batch_seconds",
-      "type": "filter",
-      "args": "$seconds (float, default 15.0)",
-      "where": "includes/class-content-backfill.php (Content_Backfill::run_batch)",
-      "consumed_by": null,
-      "notes": "Unreleased. Wall-clock budget for one pass of the content_plain re-derivation sweep. Raise it on a host with a generous max_execution_time to drain a large jt_posts/jt_replies in fewer invocations; the sweep is resumable either way, so the only cost of a small value is more runs of `wp jetonomy content backfill-plain`."
     }
   ],
   "buddypress_integration": {
