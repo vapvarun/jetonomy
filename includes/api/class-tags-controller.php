@@ -35,13 +35,28 @@ class Tags_Controller extends Base_Controller {
 				'callback'            => [ $this, 'list_tags' ],
 				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				'args'                => [
-					'limit' => [
+					'limit'  => [
 						'type'    => 'integer',
 						'default' => 30,
 						'minimum' => 1,
 						'maximum' => 100,
 					],
-					'sort'  => [
+
+					/*
+					 * Without this the response reported a total the caller
+					 * could never page to: limit caps at 100 and offset was
+					 * hard-coded 0, so tag 101 was unreachable through the API
+					 * at any parameter combination. A site that imports a large
+					 * forum passes 100 tags easily, and the truncation is
+					 * silent - the app showed one alphabetical page and no
+					 * indication the rest existed (Basecamp 10252924147).
+					 */
+					'offset' => [
+						'type'    => 'integer',
+						'default' => 0,
+						'minimum' => 0,
+					],
+					'sort'   => [
 						'type'    => 'string',
 						'default' => 'popular',
 						'enum'    => [ 'popular', 'alphabetical' ],
@@ -210,8 +225,9 @@ class Tags_Controller extends Base_Controller {
 	 * GET /tags — List post tags ordered by popularity or alphabetically.
 	 */
 	public function list_tags( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$limit = absint( $request->get_param( 'limit' ) ?? 30 );
-		$sort  = $request->get_param( 'sort' ) ?? 'popular';
+		$limit  = absint( $request->get_param( 'limit' ) ?? 30 );
+		$offset = absint( $request->get_param( 'offset' ) ?? 0 );
+		$sort   = $request->get_param( 'sort' ) ?? 'popular';
 
 		global $wpdb;
 		$tags_table = table( 'tags' );
@@ -220,12 +236,13 @@ class Tags_Controller extends Base_Controller {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$tags = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$tags_table} ORDER BY name ASC LIMIT %d",
-					$limit
+					"SELECT * FROM {$tags_table} ORDER BY name ASC LIMIT %d OFFSET %d",
+					$limit,
+					$offset
 				)
 			) ?: [];
 		} else {
-			$tags = Tag::list_popular( $limit );
+			$tags = Tag::list_popular( $limit, $offset );
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -235,7 +252,7 @@ class Tags_Controller extends Base_Controller {
 			$tags,
 			[
 				'total'  => $total,
-				'offset' => 0,
+				'offset' => $offset,
 			]
 		);
 	}
