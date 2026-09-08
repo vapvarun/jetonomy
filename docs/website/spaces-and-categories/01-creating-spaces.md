@@ -62,7 +62,7 @@ the space to the top.
 
 ### Space Configuration
 
-**Type** - Choose Forum, Q&A, or Ideas. This controls how posts and replies behave. See [Space Types](02-space-types.md) for a full explanation of each.
+**Type** - Choose Forum, Q&A, Ideas, or Feed. This controls how posts and replies behave. See [Space Types](02-space-types.md) for a full explanation of each.
 
 **Visibility** - Controls who can see the space and its content. Options: Public, Private, or Hidden. See [Membership & Join Policies](03-membership-policies.md) for details.
 

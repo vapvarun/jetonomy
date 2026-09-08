@@ -74,12 +74,50 @@ Each notification type has an independent toggle for both **web** (in-app bell) 
 | New post in followed space | On | Off |
 | Badge earned | On | Off |
 | Vote on your post | On | Off |
+| Reaction on your post | On | Off |
 | Moderator action on your content | On | On |
 | Space join request | On | On |
+| Your report was reviewed | On | Off |
 
 The values you set here are the starting defaults for new members. Individual members can still override any type from their own notification settings. Use these defaults to keep noisy notification types quiet out of the box without locking members out of re-enabling them.
 
 > **Note:** Vote and badge notifications default to web-only because they can occur frequently. Email for every vote would quickly train members to ignore your community emails entirely.
+
+## Email Templates
+
+**Option:** `jetonomy_email_templates`
+**Location:** Email tab → Email Templates card
+
+Below the notification toggles is a table with one row per notification type, where you can rewrite the subject line and the body intro Jetonomy sends. Leave a row empty and it uses the built-in default, so you only need to fill in the ones you actually want to change.
+
+The twelve types are: welcome, reply to your post, reply to your reply, mention, accepted answer, idea status changed, new post in a subscription, badge earned, vote on your post, moderation notice, join request, and verification reminder.
+
+### Placeholders
+
+Four placeholders are substituted when the email is sent:
+
+| Placeholder | Becomes |
+|---|---|
+| `{site}` | Your community title |
+| `{user}` | The recipient's display name |
+| `{message}` | The generated body of the notification - who did what, and to which topic |
+| `{url}` | The link to the relevant topic, reply or screen |
+
+`{message}` is the important one. It carries the actual content of the notification, so a body that omits it produces an email that says nothing useful. If you are rewriting a body, keep `{message}` somewhere in it and add your wording around it.
+
+The default subject is `[{site}] {message}` and the default body is built around `{message}` for exactly this reason.
+
+### Preview, test and reset
+
+Each row has three buttons:
+
+- **Preview** renders the email with sample data, so you can see the result without sending anything.
+- **Send test** emails the rendered version to your admin address. Use this after changing a subject, since subject lines are where a stray placeholder is most visible.
+- **Reset** discards your version of that row and returns it to the built-in default. It affects that row only.
+
+### A note on tone
+
+These emails arrive in inboxes alongside everything else your members receive. The defaults are deliberately plain - they say what happened and link to it. If you rewrite them, resist adding marketing language: a notification that reads like a newsletter gets filtered like one, and the deliverability cost lands on your genuinely important emails too.
 
 ## Test Email
 

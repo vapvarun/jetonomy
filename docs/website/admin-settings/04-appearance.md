@@ -46,6 +46,18 @@ Jetonomy does not inject its own color into your site's global or block-editor c
 
 > **Tip:** You do not need to worry about button-text legibility. Jetonomy runs a built-in WCAG contrast guard: it measures the accent color it ends up using and automatically flips button text to black or white so it stays AA-readable, even on pale or muted theme brand colors. The theme's brand color itself is never changed - only the text on top of it adapts.
 
+## Logo
+
+**Setting:** `logo_url`
+**Default:** empty
+**Location:** Appearance tab → Logo card
+
+Your community logo, as an image URL. It appears in the mobile app - on the login screen and in the header - and anywhere else a brand mark is needed. A square or wide PNG or SVG works best.
+
+Leave it empty and the Community Title is shown as text instead, which is a reasonable choice if your logo is mostly a wordmark anyway.
+
+> This is not the same as the **Email Logo** on the Settings → Email tab. That one appears at the top of notification emails and is sized for that context (around 200x40px). They are separate settings and can point at different images - an email header often needs a wider, lighter version than an app icon.
+
 ## Color Palette
 
 **Location:** Appearance tab → Color Palette section
