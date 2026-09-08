@@ -1,4 +1,4 @@
-Jetonomy exposes a full REST API under the `jetonomy/v1` namespace: 80 endpoints in the free plugin, plus 73 additional endpoints when Jetonomy Pro is active (153 total). All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
+Jetonomy exposes a full REST API under the `jetonomy/v1` namespace: 86 routes in the free plugin, and 161 with Jetonomy Pro active. All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
 
 **Base URL:** `https://example.com/wp-json/jetonomy/v1/`
 
@@ -68,6 +68,11 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | GET | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | List the membership access rules gating a space. Added 1.9.4. |
 | POST | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | Add an access rule (membership level / role / tag that grants access). Added 1.9.4. |
 | DELETE | `/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Note the path is top-level, not nested under `/spaces/{id}` - the rule id is globally unique. Added 1.9.4. |
+| GET | `/spaces/{id}/join-requests` | Space admin | List pending requests to join this space |
+| POST | `/spaces/{id}/join-requests/{request_id}/approve` | Space admin | Approve a join request and add the member |
+| POST | `/spaces/{id}/join-requests/{request_id}/deny` | Space admin | Deny a join request |
+| GET | `/spaces/{id}/invites` | Space admin | List the space's invite links |
+| DELETE | `/spaces/{id}/invites/{invite_id}` | Space admin | Revoke an invite link. Links already used stay used. |
 
 **GET /spaces - parameters**
 
@@ -191,6 +196,7 @@ Replies are threaded responses to a Post.
 | PATCH | `/replies/{id}` | Author / Moderator | Update a reply |
 | DELETE | `/replies/{id}` | Author / Moderator | Delete a reply |
 | POST | `/replies/{id}/accept` | Post author / Moderator | Accept as answer |
+| DELETE | `/replies/{id}/accept` | Post author / Moderator | Un-accept a reply, returning the topic to unanswered |
 | POST | `/replies/{id}/split` | Moderator / Admin | Split this reply into a new standalone post |
 
 **GET /posts/{post_id}/replies - parameters**
@@ -442,6 +448,11 @@ The response `meta` carries `total`, `has_more`, `count`, `offset`, and `space_i
 | GET | `/users/by-login/{login}` | Public | Look up a user by login slug |
 | GET | `/users/{id}/posts` | Public | List posts by this user |
 | GET | `/users/suggest` | Public | Typeahead - suggest users by name or login prefix |
+| GET | `/users` | Moderator | List community members. Moderator-only - the public directory is `/users/suggest`. |
+| DELETE | `/users/me` | Logged in (own account) | Delete the current account. Anonymises the member's content by default; pass `delete_content: true` to erase it. Refuses accounts holding `manage_options`, and is rate limited to 5 per hour per IP. |
+| GET | `/users/me/blocks` | Logged in | List the members this member has blocked |
+| POST | `/users/me/blocks` | Logged in | Block a member. Their content is hidden from this member's view. |
+| DELETE | `/users/me/blocks/{user_id}` | Logged in | Unblock a member |
 
 **PATCH /users/{id} - updatable fields**
 
