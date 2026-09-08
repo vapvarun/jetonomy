@@ -85,16 +85,22 @@
       "order": 13
     },
     {
+      "slug": "troubleshooting",
+      "name": "Troubleshooting",
+      "description": "Fix a member who cannot post, a community page that 404s, email that is not arriving, or an integration that stopped granting access - plus every Jetonomy error message and what it means.",
+      "order": 14
+    },
+    {
       "slug": "faq",
       "name": "FAQ",
       "description": "Quick answers to the most common questions about Jetonomy and Jetonomy Pro, grouped by topic.",
-      "order": 14
+      "order": 15
     },
     {
       "slug": "developer-guide",
       "name": "Developer Guide",
       "description": "Extend Jetonomy with the REST API, hooks, WP-CLI, blocks, shortcodes, and template overrides.",
-      "order": 15
+      "order": 16
     }
   ]
 }
