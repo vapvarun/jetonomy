@@ -35,22 +35,25 @@ Jetonomy works with any WordPress theme. For the best visual result with zero ex
 
 ## Installation
 
-### Method 1: WordPress Admin (Recommended)
+Jetonomy is distributed from wbcomdesigns.com. Both the free plugin and Pro come
+from the same downloads page, so start by downloading the ZIP: searching the
+WordPress plugin directory will not find it.
 
-1. Go to **Plugins → Add New Plugin** in your WordPress admin.
-2. Search for **Jetonomy**.
+**[Download Jetonomy](https://wbcomdesigns.com/downloads/jetonomy/)**
+
+### Method 1: Upload from WordPress Admin (Recommended)
+
+1. Go to **Plugins → Add New Plugin → Upload Plugin**.
+2. Choose the ZIP you downloaded.
 3. Click **Install Now**, then **Activate**.
 
-### Method 2: Upload a ZIP File
+### Method 2: WP-CLI
 
-1. Download the Jetonomy ZIP from [jetonomy.org](https://jetonomy.org) or [wordpress.org](https://wordpress.org/plugins/jetonomy/).
-2. Go to **Plugins → Add New Plugin → Upload Plugin**.
-3. Choose the ZIP file and click **Install Now**, then **Activate**.
-
-### Method 3: WP-CLI
+Point WP-CLI at the ZIP rather than at a slug. A bare slug is resolved against
+the WordPress plugin directory, where Jetonomy is not published, so it fails.
 
 ```bash
-wp plugin install jetonomy --activate
+wp plugin install /path/to/jetonomy.zip --activate
 ```
 
 ## What Happens on Activation
