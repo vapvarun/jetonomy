@@ -154,21 +154,56 @@ foreach ( $mutations as $m ) {
 	$lint = 0;
 	exec( 'php -l ' . escapeshellarg( $m['file'] ) . ' 2>&1', $lint_out, $lint );
 
+	// Run the suite, and if the guard stayed green, run it ONCE more before
+	// accusing it.
+	//
+	// Why: a guard that asserts over HTTP is judged in a different process from
+	// the one this script mutates the file in. That process can still be serving
+	// the pre-mutation code for a beat - a warm opcache with the default two
+	// second revalidate window, a php -S worker pool, a cached response. The
+	// mutation is then simply not live yet, the guard correctly stays green, and
+	// this script reports a working guard as defective.
+	//
+	// That is not hypothetical. SM1 failed and passed on the same commit in two
+	// CI runs minutes apart, while passing three for three locally. A harness
+	// whose whole claim is "a guard that cannot fail is worse than no guard"
+	// cannot itself return a coin flip: the first false accusation teaches
+	// everyone to re-run it, and from then on a real defect gets re-run away too.
+	//
+	// A structurally blind guard - the thing this exists to catch - stays green
+	// on every attempt, so the retry costs it nothing. The wait is only paid on
+	// the path that was about to fail the build.
 	$out  = [];
 	$code = 0;
+	$joined = '';
+	$failed = false;
+
 	if ( 0 === $lint ) {
-		exec(
-			'cd ' . escapeshellarg( $wp_path ) . ' && wp jetonomy qa-actions 2>&1',
-			$out,
-			$code
-		);
+		for ( $attempt = 1; $attempt <= 2; $attempt++ ) {
+			$out  = [];
+			$code = 0;
+			exec(
+				'cd ' . escapeshellarg( $wp_path ) . ' && wp jetonomy qa-actions 2>&1',
+				$out,
+				$code
+			);
+
+			$joined = implode( "\n", $out );
+			$failed = (bool) preg_match( '/FAIL\s+' . preg_quote( $m['guard'], '/' ) . ':/', $joined );
+
+			if ( $failed ) {
+				break;
+			}
+
+			// Past any plausible revalidate window before the second look.
+			if ( 1 === $attempt ) {
+				sleep( 3 );
+			}
+		}
 	}
 
 	file_put_contents( $m['file'], $source );
 	unset( $restore[ $m['file'] ] );
-
-	$joined  = implode( "\n", $out );
-	$failed  = (bool) preg_match( '/FAIL\s+' . preg_quote( $m['guard'], '/' ) . ':/', $joined );
 	// A guard that SKIPPED did not get the chance to fail - the fixtures it
 	// needs were not present. Reporting that as "cannot fail" is a false
 	// accusation, and reporting it as proven is worse. It is inconclusive, and
