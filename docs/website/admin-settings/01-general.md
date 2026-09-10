@@ -65,6 +65,33 @@ Controls how many posts appear per page in space listings and search results. A 
 
 Controls how many replies load per page inside a single post view. This value also controls how many additional replies load each time a member clicks **Load More** in a thread. Pagination starts at the oldest replies and works forward. Members can jump to the last page to see the most recent replies.
 
+## Activity Log Retention
+
+**Setting:** `activity_log_retention_days`
+**Default:** `90`
+**Range:** 1 to 3650 days
+**Location:** General tab → Pagination section
+
+How long activity log entries are kept before a daily prune removes them.
+
+The activity log records who did what - posts created, content moderated, members banned - and it grows continuously on a busy community. Ninety days is enough for the usual purpose, which is answering "who changed this and when" about something recent.
+
+Raise it if you need a longer audit trail for compliance. Lower it if the log table is large and you do not consult it - a shorter window keeps the table small, and the prune runs daily rather than in one large sweep.
+
+Deleted entries cannot be recovered, so if you are lowering this substantially, export what you need first from **Jetonomy → Activity Log**.
+
+## Terms of Service and Privacy Policy URLs
+
+**Settings:** `terms_url`, `privacy_url`
+**Default:** empty
+**Location:** General tab → Community Setup card
+
+Links to your terms and privacy policy. They are shown to members **in the mobile app** before they sign up.
+
+Leave them empty if you have none - the app simply omits them. If you publish an app, though, app store review generally expects both to be reachable from the sign-up screen, so filling these in is usually part of getting an app approved rather than an optional nicety.
+
+These do not change anything on the web community, which follows whatever your WordPress theme and privacy settings already do.
+
 ## Guest Access (Public / Private)
 
 **Setting:** `guest_read`
@@ -109,6 +136,7 @@ A follow-up reminder is sent automatically if the member has not confirmed withi
 **Setting:** `verification_reminder_hours`
 **Default:** `24`
 **Location:** Stored in `jetonomy_settings['verification_reminder_hours']`
+**Where to change it:** **Settings → Email**, in the "Email Sender" card - not on this General tab, even though the verification toggle it belongs to lives here.
 
 This controls how many hours after registration the reminder email is sent. The reminder runs on an hourly WP-Cron schedule (hook: `jetonomy_verification_reminder`). The email template can be customized on the **Settings → Email** screen under the "Verification reminder" row.
 

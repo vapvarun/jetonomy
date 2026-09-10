@@ -11,6 +11,15 @@ defined( 'ABSPATH' ) || exit;
 
 class Router {
 
+	/**
+	 * `template_redirect` priority the route renders at.
+	 *
+	 * Late on purpose - see the note on the hook registration below. Kept well
+	 * under PHP_INT_MAX so a site with a genuine reason to run after us still
+	 * can.
+	 */
+	private const RENDER_PRIORITY = 9999;
+
 	private string $base_slug = 'community';
 
 	public function __construct() {
@@ -26,8 +35,40 @@ class Router {
 		// anything else hooking parse_request or template_redirect.
 		add_action( 'parse_request', [ $this, 'claim_sitemap_request' ], 0 );
 		add_action( 'parse_query', [ $this, 'correct_query_state' ], 1 );
+
+		// Announce "this URL is a real page" BEFORE any other handler looks.
+		//
+		// correct_query_state() already clears is_404 on parse_query, but
+		// WP_Query::handle_404() runs after that and can set it again - e.g.
+		// `?paged=2` on a route whose underlying main object is a single page.
+		// While rendering happened at priority 10 the stale flag was harmless,
+		// because handle_request() cleared it on its way past. Now that we
+		// render last, every 404 handler in the 0-9998 window sees the flag
+		// first: BuddyX Pro's buddyx_404_redirect() (priority 10) would 301 a
+		// paginated Jetonomy URL straight to the theme's custom 404 page.
+		//
+		// So the not-404 assertion has to lead, and the render has to trail.
+		add_action( 'template_redirect', [ $this, 'assert_route_state' ], 0 );
 		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
-		add_action( 'template_redirect', [ $this, 'handle_request' ] );
+
+		// Rendering runs LAST on template_redirect, not at the default 10.
+		//
+		// This handler renders and exits, so whatever priority it holds is the
+		// point past which no other template_redirect callback runs at all. At
+		// 10 that silently swallowed every gate registered after us: a
+		// maintenance-mode plugin hooking at 11+ never saw the request and
+		// Jetonomy pages stayed public while the rest of the site was closed
+		// (Basecamp 10278698087). The same hole applies to any access gate -
+		// on the reference install WP Fusion's content restriction sits at 13
+		// and 15 - and to the header emitters core registers at 11
+		// (rest_output_link_header, wp_shortlink_header), which never fired on
+		// a Jetonomy URL.
+		//
+		// Claiming the request is our decision to make only after everyone who
+		// might refuse it has had a turn. Nothing that merely wants to inspect
+		// or annotate the request is harmed by us going last; anything that
+		// wants to intercept it now can.
+		add_action( 'template_redirect', [ $this, 'handle_request' ], self::RENDER_PRIORITY );
 		// WP's canonical redirect would append a trailing slash to the extension-
 		// less-looking /…-sitemap.xml URL (301 -> …/) before handle_request emits.
 		// Skip it for the sitemap route so the XML is served directly.
@@ -317,9 +358,50 @@ class Router {
 		}
 	}
 
-	public function handle_request(): void {
+	/**
+	 * Assert that a resolved Jetonomy route is a real 200 page.
+	 *
+	 * Runs at `template_redirect` priority 0, ahead of every other handler, so
+	 * that 404-driven behaviour elsewhere (themes redirecting to a custom 404
+	 * page, SEO plugins adding noindex) reads the corrected state rather than
+	 * the flag WP_Query::handle_404() may have left behind on a paginated
+	 * route. Rendering itself happens at self::RENDER_PRIORITY.
+	 *
+	 * Templates still call status_header( 404 ) themselves for genuinely
+	 * missing content (unknown space / post), which is why this only clears an
+	 * inherited 404 and never asserts one.
+	 */
+	public function assert_route_state(): void {
+		if ( '' === $this->current_route() ) {
+			return;
+		}
+
+		global $wp_query;
+		if ( $wp_query instanceof \WP_Query && $wp_query->is_404() ) {
+			$wp_query->is_404 = false;
+		}
+		status_header( 200 );
+	}
+
+	/**
+	 * The Jetonomy route this request resolves to, or '' for a non-Jetonomy URL.
+	 *
+	 * Shared by assert_route_state() and handle_request() so the two can never
+	 * disagree about whether a request is ours - they run at opposite ends of
+	 * template_redirect, and a split verdict would either leave a stale 404 on
+	 * a page we render or clear a 404 on a page we do not.
+	 */
+	private function current_route(): string {
 		$route = (string) get_query_var( 'jetonomy_route' );
 
+		if ( '' === $route && $this->is_mapped_front_page() ) {
+			return 'home';
+		}
+
+		return $route;
+	}
+
+	public function handle_request(): void {
 		// "Community as homepage": derive the route here rather than injecting a
 		// fake query var during `request`. The old approach put jetonomy_route=home
 		// into an otherwise-empty front-page query, which made the vars non-empty
@@ -328,15 +410,15 @@ class Router {
 		// (their Yoast title on that page) was unreachable. Deriving at
 		// template_redirect leaves WP's resolution intact and still renders the
 		// community through the exact same Template_Loader path as /{base}/.
-		$mapped = false;
-		if ( '' === $route && $this->is_mapped_front_page() ) {
-			$route  = 'home';
-			$mapped = true;
-		}
+		$route = $this->current_route();
 
-		if ( empty( $route ) ) {
+		if ( '' === $route ) {
 			return;
 		}
+
+		// Mapped = the route came from the front-page mapping rather than from a
+		// rewrite rule, i.e. a real WP page backs this URL and owns its SEO.
+		$mapped = '' === (string) get_query_var( 'jetonomy_route' );
 
 		// Set up template data
 		$data = [
@@ -347,18 +429,6 @@ class Router {
 			// A real page backs this URL — it, not Jetonomy, owns the SEO.
 			'mapped'     => $mapped,
 		];
-
-		// A resolved Jetonomy route is a real page. WordPress may have flagged
-		// the main query as 404 — e.g. `?paged=2` on a route whose underlying
-		// main object is a single page — which makes the notifications / listing
-		// "Load More" fetches 404 from page 2 on. Clear the inherited 404 and
-		// assert a 200 before rendering; templates still call status_header( 404 )
-		// themselves for genuinely missing content (unknown space / post).
-		global $wp_query;
-		if ( $wp_query instanceof \WP_Query && $wp_query->is_404() ) {
-			$wp_query->is_404 = false;
-		}
-		status_header( 200 );
 
 		// Space RSS feed renders XML and exits before any template work.
 		if ( 'space-feed' === $route ) {

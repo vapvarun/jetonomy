@@ -2,8 +2,8 @@
 Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
-Tested up to: 6.9
-Stable tag: 1.9.6
+Tested up to: 7.0
+Stable tag: 1.9.7
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -264,16 +264,22 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
-= Unreleased =
+= 1.9.7 - September 2026 =
 
-Fixes link previews, which never loaded, and the plain-text copy of every post and reply, which showed HTML entities and ran paragraphs together.
+Fixes a closed topic refusing a moderator's reply, community pages ignoring maintenance mode, notification email sending from the wrong address, and link previews that never loaded.
 
+* Fix      - Moderators can reply to a closed topic again. The page offered them a reply box and then refused the reply, so the only way to add a moderator note was to reopen the topic first. The topic stays closed after they reply.
+* Fix      - Community pages now respect maintenance mode and membership restrictions. A community page could stay reachable while the rest of the site was closed, and on sites using the community as the homepage that included the homepage itself.
+* Fix      - Notification email now sends from the address configured in Settings > Email even when another active plugin sets a sender for the whole site. Mail was going out as the WordPress admin address instead, which hurts deliverability.
+* Fix      - The tags API can now page past the first 100 tags. It reported a total it could not reach, so a site with a large tag list, common after a forum import, could not read the rest.
 * Fix      - Link previews now load. The preview request resolved the linked site's address in a way that ignores the server's own DNS settings and cannot time out, so on many hosts the request never returned and no preview ever appeared. It now resolves through the system, in milliseconds.
 * Fix      - Quoting a reply in the app no longer inserts "&amp;" where the author wrote "&", and no longer welds the end of one paragraph onto the start of the next.
 * Fix      - Feed excerpts, notification text, search snippets and derived headlines share that same corrected plain-text copy, so all of them stop showing raw entities and run-together paragraphs.
 * Fix      - Searching for a phrase that spans a paragraph break now matches, because the stored search copy keeps the break.
 * Security - The link-preview fetch now connects only to an address the internal-address guard has checked, closing a gap where the connection could use an unchecked IPv6 address for the same host.
+* Dev      - Added the jetonomy_breadcrumb_html filter so the breadcrumb trail can be restyled, replaced or hidden from one place instead of overriding eighteen templates.
 * Dev      - Added wp jetonomy content scan-plain and wp jetonomy content backfill-plain to re-derive the stored plain-text copy for content written before this release. Resumable, non-destructive, and owner-triggered rather than run automatically on update.
+* Compat   - Aligned with Jetonomy Pro 1.9.7. Install both updates together.
 
 = 1.9.6 - September 2026 =
 

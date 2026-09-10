@@ -1,6 +1,6 @@
-Jetonomy ships a full WP-CLI surface covering every core domain of the plugin: 15 command roots in the free plugin and 15 command roots in Jetonomy Pro, totalling 75+ subcommands across both plugins.
+Jetonomy ships a full WP-CLI surface covering every core domain of the plugin: 16 command roots in the free plugin and 15 command roots in Jetonomy Pro, totalling 75+ subcommands across both plugins.
 
-The 15 free roots are the 14 domain commands listed under [Free Commands](#free-commands) below (`category`, `space`, `post`, `reply`, `vote`, `flag`, `member`, `mod`, `notification`, `config`, `tag`, `user`, `privacy`, `scenario`), plus the standalone `qa-actions` command, documented under [Testing and QA Commands](#testing-and-qa-commands).
+The 16 free roots are the 15 domain commands listed under [Free Commands](#free-commands) below (`category`, `space`, `post`, `reply`, `vote`, `flag`, `member`, `mod`, `notification`, `config`, `tag`, `user`, `privacy`, `scenario`, `content`), plus the standalone `qa-actions` command, documented under [Testing and QA Commands](#testing-and-qa-commands).
 
 All free commands live under `wp jetonomy <subject> <subcommand>`.
 All Pro commands live under `wp jetonomy-pro <subject> <subcommand>` (note the separate root - Pro commands require both plugins active).
@@ -419,6 +419,33 @@ wp jetonomy scenario list --format=json
 wp jetonomy scenario run basic-forum-flow
 wp jetonomy scenario run notification-delivery-sweep --cleanup
 wp jetonomy scenario run multi-user-voting-thread --format=json
+```
+
+---
+
+### content
+
+Maintenance for the plain-text copy Jetonomy keeps of every post and reply body. That copy is what full-text search reads, so a stale one means search misses content that is really there.
+
+Rows written before 1.9.5 can carry a stale copy if their body contains an HTML entity or more than one block. Both subcommands are safe to run on a live site.
+
+| Subcommand | Description |
+|------------|-------------|
+| `scan-plain` | Report how many rows carry a stale plain copy. Changes nothing. |
+| `backfill-plain` | Recompute the stale copies. Resumable and idempotent. |
+
+**Flags - both:** `[--seconds=<seconds>]` (wall-clock budget for one pass, default 15) `[--format=<format>]`
+
+`backfill-plain` works in timed passes rather than one long transaction, so it will not hold the database or exhaust memory on a large community. Each pass stores its cursor and reports whether it finished; run it again until `done` reports true. Re-running after completion is a no-op, because rows that already match are skipped rather than rewritten.
+
+```bash
+# See how much is stale before changing anything
+wp jetonomy content scan-plain
+wp jetonomy content scan-plain --format=json
+
+# Fix it, in passes, until done reports true
+wp jetonomy content backfill-plain
+wp jetonomy content backfill-plain --seconds=60
 ```
 
 ---

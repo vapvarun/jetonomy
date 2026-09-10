@@ -244,11 +244,12 @@ class Tag extends Model {
 	 * @param int $limit Maximum number of tags to return.
 	 * @return object[]
 	 */
-	public static function list_popular( int $limit = 20 ): array {
+	public static function list_popular( int $limit = 20, int $offset = 0 ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' ORDER BY post_count DESC LIMIT %d',
-				$limit
+				'SELECT * FROM ' . static::table() . ' ORDER BY post_count DESC LIMIT %d OFFSET %d',
+				$limit,
+				$offset
 			)
 		) ?: [];
 	}

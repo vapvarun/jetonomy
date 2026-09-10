@@ -6,7 +6,7 @@ Activate your license, switch on the extensions you need, and understand which c
 
 - How to activate your Jetonomy Pro license
 - How to enable and disable individual Pro extensions
-- Which license tier unlocks which extensions
+- What your license tier does and does not change
 - Which WordPress capabilities gate each Pro feature
 
 ## Activate Your License
@@ -17,7 +17,7 @@ Jetonomy Pro is a peer plugin to free Jetonomy. Install and activate free Jetono
 2. Paste the license key from your purchase receipt.
 3. Click **Activate**. Jetonomy validates the key against the store and shows your tier and expiry.
 
-Your license drives automatic updates and tier checks. If a license is missing or expired, extensions still boot - but features that require a higher tier than your license carries are blocked at the gate.
+Your license drives automatic updates and the Pro feature gate. The gate is all-or-nothing: any valid license unlocks all seventeen extensions, and there is no per-extension tier check. If a license is missing or expired, Pro stays installed but its features stop at the gate once the grace window ends.
 
 > **Note:** Free and Pro always ship the same `x.y.z` version. Keep both updated together so the contracts between them stay in sync.
 

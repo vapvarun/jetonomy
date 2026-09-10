@@ -24,6 +24,7 @@ These connect an external "who has paid / who is enrolled" system to Jetonomy's 
 | [Learnomy](14-learnomy.md) | Pro | Learnomy course, cohort, Space, or membership plan |
 | [WP Fusion](15-wp-fusion.md) | **Pro** | WP Fusion CRM tag |
 | [SureMembers](16-suremembers.md) | **Pro** | SureMembers access group |
+| [Uncanny Automator](17-uncanny-automator.md) | **Pro** | Automator recipe (event-driven, not a rule) |
 
 > **WP Fusion and SureMembers setup.** These two gate a space from their own tab on the space editor rather than the shared Access Rules picker, and each links tags or access groups back to the source system on join. See the [WP Fusion](15-wp-fusion.md) and [SureMembers](16-suremembers.md) guides for the full walkthrough.
 
