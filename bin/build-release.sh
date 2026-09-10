@@ -154,6 +154,32 @@ if [ "$V_HEADER" != "$V_CONST" ] || [ "$V_HEADER" != "$V_README" ]; then
 	exit 11
 fi
 
+# The two fields that are NOT the plugin header, and that therefore drift
+# silently: audit/manifest.json -> plugin.version and package.json -> version.
+# Nothing at runtime reads either, which is precisely the problem - a wrong
+# value costs nothing until someone trusts it.
+#
+# The manifest's own generated{} block records this lagging at 1.9.1 for two
+# releases before being corrected at 1.9.4, with the note "bumping it is now
+# part of the release checklist". It then lagged again, to 1.9.6 against a
+# 1.9.7 tag. A checklist item that drifts twice is not a checklist item, so it
+# is a gate now: the release cannot be built while either disagrees.
+V_MANIFEST="$(python3 -c "import json;print(json.load(open('audit/manifest.json'))['plugin']['version'])" 2>/dev/null || true)"
+V_PKG="$(python3 -c "import json;print(json.load(open('package.json'))['version'])" 2>/dev/null || true)"
+
+if [ -n "$V_MANIFEST" ] && [ "$V_MANIFEST" != "$V_HEADER" ]; then
+	echo "FAIL: audit/manifest.json plugin.version ($V_MANIFEST) != $V_HEADER" >&2
+	echo "    refresh the manifest, or correct plugin.version, before building" >&2
+	exit 11
+fi
+
+if [ -n "$V_PKG" ] && [ "$V_PKG" != "$V_HEADER" ]; then
+	echo "FAIL: package.json version ($V_PKG) != $V_HEADER" >&2
+	exit 11
+fi
+
+echo "    version fields agree: header/const/readme/manifest/package.json"
+
 VERSION="$V_HEADER"
 ZIP_NAME="${PLUGIN_SLUG}-${VERSION}.zip"
 echo "    version: $VERSION"

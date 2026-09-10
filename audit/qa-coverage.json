@@ -2,11 +2,11 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.9.6"
+        "version": "1.9.7"
     },
     "generated": {
-        "at": "2026-09-08T15:11:56+00:00",
-        "manifest_at": "2026-09-08T14:05:00Z",
+        "at": "2026-09-10T06:17:17+00:00",
+        "manifest_at": "2026-09-10T06:15:51Z",
         "manifest_branch": "1.9.7"
     },
     "categories": {
