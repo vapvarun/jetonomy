@@ -135,16 +135,17 @@ Plugin version: 1.9.6 — 106 actions, 126 filters.
 | `jetonomy_before_create_reply` | data | includes/models/class-reply.php |
 | `jetonomy_before_delete_post` | post_id | includes/models/class-post.php |
 | `jetonomy_before_delete_reply` | reply_id | includes/models/class-reply.php |
-| `jetonomy_breadcrumb_html` | $html (string, rendered markup), $crumbs (array) | templates/partials/breadcrumb.php |
 | `jetonomy_before_join_space` | user_id, space_id | includes/models/class-space-member.php |
 | `jetonomy_before_set_role` | proceed(bool), user_id, space_id, new_role | includes/models/class-space-member.php (set_role) |
 | `jetonomy_before_vote` | user_id, object_type, object_id, vote_value | includes/models/class-vote.php |
 | `jetonomy_blocked_user_ids` | $ids (int[]), $viewer_id (int) | includes/models/class-blocked-user.php (BlockedUser::blocked_ids) |
+| `jetonomy_breadcrumb_html` | html, crumbs | templates/partials/breadcrumb.php |
 | `jetonomy_can_create_space_frontend` | $can (bool), $user_id (int, 0 when logged out) | includes/permissions/class-capabilities.php (Capabilities::can_create_space_frontend) |
 | `jetonomy_check_content` | content, type | includes/moderation/class-content-checker.php |
 | `jetonomy_client_ip` | ip, remote_addr | includes/functions.php Jetonomy\client_ip() — final resolved client IP; override for proxy setups the default trusted-proxy logic doesn't cover. |
 | `jetonomy_companions` |  | includes/integrations/class-companion-registry.php |
 | `jetonomy_compose_label` | string $label, string $space_type | includes/functions.php (Jetonomy\compose_label) |
+| `jetonomy_content_plain_backfill_batch_seconds` | $seconds (float, default 15.0) | includes/class-content-backfill.php (Content_Backfill::run_batch) |
 | `jetonomy_cron_batch_size` |  | includes/class-cron.php:121 |
 | `jetonomy_delete_account_network_wide` | $network_wide (bool, default false), $user_id | includes/api/class-users-controller.php (Users_Controller::delete_wp_account) |
 | `jetonomy_display_name_choices` | string[] $choices, WP_User $user | includes/functions.php:296 |

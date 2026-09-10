@@ -2,9 +2,9 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Jetonomy 1.9.6\n"
+"Project-Id-Version: Jetonomy 1.9.7\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-09-03 12:26:13+00:00\n"
+"POT-Creation-Date: 2026-09-10 05:14:50+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -138,7 +138,7 @@ msgstr ""
 #: includes/admin/ajax/class-categories-handler.php:39
 #: includes/admin/ajax/class-tags-handler.php:33
 #: includes/admin/class-admin.php:1123
-#: includes/api/class-tags-controller.php:120
+#: includes/api/class-tags-controller.php:135
 msgid "Name is required."
 msgstr ""
 
@@ -159,7 +159,7 @@ msgstr ""
 #: includes/admin/ajax/class-categories-handler.php:110
 #: includes/admin/ajax/class-spaces-handler.php:235
 #: includes/admin/ajax/class-tags-handler.php:96
-#: includes/api/class-tags-controller.php:176
+#: includes/api/class-tags-controller.php:191
 msgid "No data to update."
 msgstr ""
 
@@ -551,12 +551,12 @@ msgid "Invite link revoked."
 msgstr ""
 
 #: includes/admin/ajax/class-tags-handler.php:39
-#: includes/api/class-tags-controller.php:126
+#: includes/api/class-tags-controller.php:141
 msgid "A tag with that slug already exists."
 msgstr ""
 
 #: includes/admin/ajax/class-tags-handler.php:49
-#: includes/api/class-tags-controller.php:137
+#: includes/api/class-tags-controller.php:152
 msgid "Failed to create tag."
 msgstr ""
 
@@ -571,28 +571,28 @@ msgstr ""
 
 #: includes/admin/ajax/class-tags-handler.php:72
 #: includes/admin/ajax/class-tags-handler.php:125
-#: includes/api/class-tags-controller.php:150
-#: includes/api/class-tags-controller.php:193 templates/views/tag.php:20
+#: includes/api/class-tags-controller.php:165
+#: includes/api/class-tags-controller.php:208 templates/views/tag.php:20
 msgid "Tag not found."
 msgstr ""
 
 #: includes/admin/ajax/class-tags-handler.php:79
-#: includes/api/class-tags-controller.php:158
+#: includes/api/class-tags-controller.php:173
 msgid "Name cannot be empty."
 msgstr ""
 
 #: includes/admin/ajax/class-tags-handler.php:86
-#: includes/api/class-tags-controller.php:166
+#: includes/api/class-tags-controller.php:181
 msgid "Slug cannot be empty."
 msgstr ""
 
 #: includes/admin/ajax/class-tags-handler.php:90
-#: includes/api/class-tags-controller.php:170
+#: includes/api/class-tags-controller.php:185
 msgid "Another tag already uses that slug."
 msgstr ""
 
 #: includes/admin/ajax/class-tags-handler.php:101
-#: includes/api/class-tags-controller.php:180
+#: includes/api/class-tags-controller.php:195
 msgid "Failed to update tag."
 msgstr ""
 
@@ -605,7 +605,7 @@ msgid "This tag is still attached to posts."
 msgstr ""
 
 #: includes/admin/ajax/class-tags-handler.php:144
-#: includes/api/class-tags-controller.php:197
+#: includes/api/class-tags-controller.php:212
 msgid "Failed to delete tag."
 msgstr ""
 
@@ -8186,15 +8186,15 @@ msgstr ""
 msgid "Your account is currently silenced and cannot post."
 msgstr ""
 
-#: includes/permissions/class-content-gate.php:93
+#: includes/permissions/class-content-gate.php:104
 msgid "This post is closed and cannot receive new replies."
 msgstr ""
 
-#: includes/permissions/class-content-gate.php:106
+#: includes/permissions/class-content-gate.php:117
 msgid "You cannot post in this space."
 msgstr ""
 
-#: includes/permissions/class-content-gate.php:133
+#: includes/permissions/class-content-gate.php:144
 msgid "This space is archived or locked and no longer accepts new content."
 msgstr ""
 
@@ -8256,7 +8256,7 @@ msgstr ""
 msgid "Community discussion forum"
 msgstr ""
 
-#: includes/services/links/class-url-guard.php:126
+#: includes/services/links/class-url-guard.php:137
 msgid "That URL could not be fetched."
 msgstr ""
 
@@ -8381,11 +8381,11 @@ msgstr ""
 msgid "On %s"
 msgstr ""
 
-#: templates/partials/breadcrumb.php:13
+#: templates/partials/breadcrumb.php:15
 msgid "Breadcrumb"
 msgstr ""
 
-#: templates/partials/breadcrumb.php:14 templates/partials/header.php:101
+#: templates/partials/breadcrumb.php:16 templates/partials/header.php:101
 #: templates/partials/header.php:177 templates/partials/icon-picker.php:113
 msgid "Home"
 msgstr ""
