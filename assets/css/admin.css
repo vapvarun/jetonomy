@@ -680,6 +680,30 @@
 
 .jt-status-badge--pending::before { background: var(--jt-admin-warn-dark); }
 
+/* ── Icon + label buttons ──
+   A button with an icon beside its label is an inline-block whose icon was
+   positioned with `vertical-align`, which aligns against the TEXT baseline box,
+   not the button box. With WP's ~38px button line-height around a 20px icon
+   that lands a few pixels high - measured 3px on "Send Test Email", which is
+   what the report described as "misaligned icon and text".
+
+   Flex centres both children against each other, so it is correct whatever the
+   line-height or icon size happens to be. Written as one rule against the
+   pattern rather than per button: the card named one, the codebase has nine,
+   and the next one somebody adds gets it for free. */
+.jetonomy-admin .button:has(> .dashicons),
+.jetonomy-admin .button:has(> svg) {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* The icon's own box must not re-introduce the offset the flex line removed. */
+.jetonomy-admin .button > .dashicons {
+	line-height: 1;
+	vertical-align: middle;
+}
+
 /* Scheduled is a pseudo-status shown beside the real one: the post IS
    published as far as the status column goes, it just has not surfaced yet.
    Informational rather than a warning, so it borrows the accent, not the

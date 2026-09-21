@@ -676,7 +676,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<th scope="row"><?php esc_html_e( 'Test Email', 'jetonomy' ); ?></th>
 						<td>
 							<button type="button" class="button" id="jetonomy-test-email">
-								<span class="dashicons dashicons-email-alt" style="vertical-align:text-bottom;"></span>
+								<span class="dashicons dashicons-email-alt" aria-hidden="true"></span>
 								<?php esc_html_e( 'Send Test Email', 'jetonomy' ); ?>
 							</button>
 							<span class="jetonomy-test-email-status"></span>
