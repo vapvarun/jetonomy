@@ -328,13 +328,34 @@ class UserProfile extends Model {
 	 * @return string SQL fragment beginning with ' WHERE ', or '' for all-time.
 	 */
 	protected static function leaderboard_period_where( string $period ): string {
+		global $wpdb;
+
+		/*
+		 * A profile whose WP user is gone is not a member, and must not occupy
+		 * a rank. It used to: the row was fetched, the view could not render it
+		 * (no user to name or link), and `continue` dropped it AFTER its
+		 * position had been spent — so the board counted ... 17, 18, 20. Every
+		 * member below the hole was silently shifted by one.
+		 *
+		 * Excluded here rather than in the view because this helper is the one
+		 * chokepoint the page query, the total and rank_for_user() all share.
+		 * Filtering in the view would fix the visible gap while leaving the
+		 * count and the rank computed from a different population — the exact
+		 * disagreement this file already warns about above, where per-viewer
+		 * filtering is refused because rank gaps leak.
+		 *
+		 * EXISTS over IN: a semi-join against the users PK, so this stays an
+		 * index lookup per row instead of materialising the user table.
+		 */
+		$is_member = "EXISTS (SELECT 1 FROM {$wpdb->users} u WHERE u.ID = user_id)";
+
 		if ( 'week' === $period ) {
-			return ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)';
+			return " WHERE {$is_member} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)";
 		}
 		if ( 'month' === $period ) {
-			return ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)';
+			return " WHERE {$is_member} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)";
 		}
-		return '';
+		return " WHERE {$is_member}";
 	}
 
 	/**

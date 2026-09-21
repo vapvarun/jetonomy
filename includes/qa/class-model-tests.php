@@ -230,6 +230,7 @@ class Model_Tests {
 		$this->test_space_ownership_transfer();
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
+		$this->test_leaderboard_ranking();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -739,6 +740,79 @@ class Model_Tests {
 			$m->setAccessible( true );
 			$m->invoke( null );
 		}
+	}
+
+	/**
+	 * The leaderboard ranks by reputation, and only real members hold a rank.
+	 *
+	 * Two defects sat in the same view. Rows were numbered by array index
+	 * while the "Your rank" badge used competition ranking, so tied members
+	 * were numbered 10 and 11 while both were told "#10". And a profile whose
+	 * WP user no longer existed was fetched, failed to render, and was dropped
+	 * AFTER spending its position - leaving a visible hole (... 17, 18, 20)
+	 * and shifting everyone below it.
+	 */
+	private function test_leaderboard_ranking(): void {
+		$rows = UserProfile::list_for_leaderboard( 'all', 100, 0 );
+
+		// LB1: no profile without a WP user may hold a rank. This is asserted
+		// on the QUERY, not the view — filtering in the view would leave the
+		// total and rank_for_user() counting a different population.
+		$orphans = array_filter( $rows, static fn( $r ) => ! get_user_by( 'ID', (int) $r->user_id ) );
+		$this->check(
+			'LB1: leaderboard rows all resolve to a real member',
+			0 === count( $orphans ),
+			count( $orphans ) . ' orphan profile(s)'
+		);
+
+		// LB2: the total counts the same population the page lists.
+		$total = UserProfile::count_for_leaderboard( 'all' );
+		$this->check(
+			'LB2: count_for_leaderboard matches the listed population',
+			$total === count( $rows ),
+			"count={$total}, rows=" . count( $rows )
+		);
+
+		// LB3: ties share a rank — the property the view must now honour.
+		// Derived from the same ordered page the view renders.
+		$ok       = true;
+		$detail   = '';
+		$prev_rep = null;
+		$expected = 0;
+		foreach ( array_values( $rows ) as $i => $row ) {
+			$rep = (int) $row->reputation;
+			if ( null === $prev_rep || $rep < $prev_rep ) {
+				$expected = $i + 1;
+			}
+			$prev_rep = $rep;
+
+			$actual = UserProfile::rank_for_user( (int) $row->user_id, 'all' );
+			if ( $actual !== $expected ) {
+				$ok     = false;
+				$detail = "user {$row->user_id} rep {$rep}: rank_for_user={$actual}, position-derived={$expected}";
+				break;
+			}
+		}
+		$this->check( 'LB3: competition rank agrees with reputation order (ties share)', $ok, $detail );
+
+		// LB4: ranks never skip except across a shared rank — the signature of
+		// the old hole. After N members share a rank, the next is rank+N.
+		$ranks    = array_map( static fn( $r ) => UserProfile::rank_for_user( (int) $r->user_id, 'all' ), array_values( $rows ) );
+		$holes    = 0;
+		$run_rank = null;
+		$run_len  = 0;
+		foreach ( $ranks as $r ) {
+			if ( $r === $run_rank ) {
+				++$run_len;
+				continue;
+			}
+			if ( null !== $run_rank && $r !== $run_rank + $run_len ) {
+				++$holes;
+			}
+			$run_rank = $r;
+			$run_len  = 1;
+		}
+		$this->check( 'LB4: no unexplained gap in the rank sequence', 0 === $holes, "{$holes} gap(s)" );
 	}
 
 	private function test_reorder(): void {

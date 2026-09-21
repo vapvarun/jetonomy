@@ -156,22 +156,57 @@ $crumbs = [
 				</div>
 				<?php /* Appendable list — pagination-frontend.js targets .jt-leaderboard-list to inject page 2+ rows. */ ?>
 				<div class="jt-leaderboard-list">
+				<?php
+				/*
+				 * Numbering is COMPETITION rank, not position in the array.
+				 *
+				 * The row number used to be the loop index, while the "Your
+				 * rank #N" badge above used UserProfile::rank_for_user() —
+				 * standard 1224 ranking, where ties share a rank. So two
+				 * members tied on reputation were both correctly told "#10"
+				 * by the badge and then listed as 10 and 11, and the second
+				 * one saw a badge contradicting the row they were standing on.
+				 *
+				 * The badge was right; the list was wrong. Ranks are derived
+				 * here from reputation so both agree by construction.
+				 *
+				 * The first row is seeded from rank_for_user() rather than the
+				 * offset, because a tie can straddle a page boundary: the top
+				 * row of page 2 may share the rank of the last row of page 1,
+				 * and only a real rank query knows that.
+				 */
+				$jt_prev_rep  = null;
+				$jt_comp_rank = 0;
+				?>
 				<?php foreach ( $leaders as $rank => $leader ) : ?>
 					<?php
 					$lu = $leader_user_by_id[ (int) $leader->user_id ] ?? null;
 					if ( ! $lu ) {
+						// Should no longer happen: profiles without a WP user are
+						// excluded by the leaderboard query itself, because a
+						// skipped row here used to consume its number and leave a
+						// visible hole in the sequence (… 17, 18, 20).
 						continue;
 					}
-					// Absolute rank across pages so medals + numbering stay correct
-					// when "Load More" appends page 2+ into this same list.
-					$abs_rank    = $offset + (int) $rank;
-					$trust       = (int) $leader->trust_level;
+					$jt_rep = (int) $leader->reputation;
+					if ( null === $jt_prev_rep ) {
+						$jt_comp_rank = \Jetonomy\Models\UserProfile::rank_for_user( (int) $leader->user_id, $period );
+					} elseif ( $jt_rep < $jt_prev_rep ) {
+						$jt_comp_rank = $offset + (int) $rank + 1;
+					}
+					$jt_prev_rep = $jt_rep;
+
+					$trust = (int) $leader->trust_level;
+
+					// Medals key off the shared rank, so tied leaders both take
+					// gold and nobody is silver — the standard reading of a tie
+					// for first place, and consistent with the numbers beside it.
 					$medal_class = '';
-					if ( 0 === $abs_rank ) {
+					if ( 1 === $jt_comp_rank ) {
 						$medal_class = 'jt-medal jt-medal-gold';
-					} elseif ( 1 === $abs_rank ) {
+					} elseif ( 2 === $jt_comp_rank ) {
 						$medal_class = 'jt-medal jt-medal-silver';
-					} elseif ( 2 === $abs_rank ) {
+					} elseif ( 3 === $jt_comp_rank ) {
 						$medal_class = 'jt-medal jt-medal-bronze';
 					}
 					?>
@@ -187,8 +222,14 @@ $crumbs = [
 								echo '<span class="' . esc_attr( $medal_class ) . '" aria-hidden="true">';
 								jetonomy_echo_icon( 'award', 20 );
 								echo '</span>';
+								// The medal is decorative, so the rank it stands
+								// for still has to reach a screen reader.
+								printf(
+									'<span class="screen-reader-text">%s</span>',
+									esc_html( sprintf( /* translators: %d: leaderboard rank. */ __( 'Rank %d', 'jetonomy' ), $jt_comp_rank ) )
+								);
 							} else {
-								echo (int) ( $abs_rank + 1 );
+								echo (int) $jt_comp_rank;
 							}
 							?>
 						</span>
