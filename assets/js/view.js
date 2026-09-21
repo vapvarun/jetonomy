@@ -2265,15 +2265,28 @@ const { state, actions } = store( 'jetonomy', {
             const postId = btnEl.dataset.postId;
             if ( ! postId ) return;
 
+            // One place that moves every part of the bookmarked state, because
+            // three separate blocks (optimistic apply, server reconcile, revert)
+            // each used to set the data attribute, the class and the title -
+            // and none of them set the accessible name or pressed state. The
+            // icon colour is the visual feedback; a screen-reader user got
+            // nothing, and the name stayed "Bookmark" after bookmarking.
+            const setBookmarked = ( on ) => {
+                on = !! on;
+                const label = on
+                    ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
+                    : ( state.i18n?.bookmark || 'Bookmark' );
+                btnEl.dataset.bookmarked = on ? '1' : '0';
+                btnEl.classList.toggle( 'bookmarked', on );
+                btnEl.title = label;
+                btnEl.setAttribute( 'aria-label', label );
+                btnEl.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+            };
+
             yield window.jetonomyOptimistic.gen( {
                 apply: () => {
                     const wasBookmarked = btnEl.dataset.bookmarked === '1';
-                    const willBe = ! wasBookmarked;
-                    btnEl.dataset.bookmarked = willBe ? '1' : '0';
-                    btnEl.classList.toggle( 'bookmarked', willBe );
-                    btnEl.title = willBe
-                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
-                        : ( state.i18n?.bookmark || 'Bookmark' );
+                    setBookmarked( ! wasBookmarked );
                     return { wasBookmarked };
                 },
                 fetch: () => window.jetonomyRest.restFetch( `/bookmarks`, {
@@ -2283,11 +2296,7 @@ const { state, actions } = store( 'jetonomy', {
                 onSuccess: ( data ) => {
                     if ( ! data ) return;
                     // Reconcile with server canonical value.
-                    btnEl.dataset.bookmarked = data.bookmarked ? '1' : '0';
-                    btnEl.classList.toggle( 'bookmarked', !! data.bookmarked );
-                    btnEl.title = data.bookmarked
-                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
-                        : ( state.i18n?.bookmark || 'Bookmark' );
+                    setBookmarked( data.bookmarked );
                     if ( window.bnToast ) {
                         window.bnToast( data.bookmarked
                             ? ( state.i18n?.bookmarked || 'Bookmarked' )
@@ -2308,11 +2317,7 @@ const { state, actions } = store( 'jetonomy', {
                     }
                 },
                 revert: ( snap ) => {
-                    btnEl.dataset.bookmarked = snap.wasBookmarked ? '1' : '0';
-                    btnEl.classList.toggle( 'bookmarked', snap.wasBookmarked );
-                    btnEl.title = snap.wasBookmarked
-                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
-                        : ( state.i18n?.bookmark || 'Bookmark' );
+                    setBookmarked( snap.wasBookmarked );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.failedSave || 'Could not update bookmark.',

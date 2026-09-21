@@ -317,8 +317,11 @@ class Template_Loader {
 					'reportPrompt'          => __( 'Why are you reporting this post?', 'jetonomy' ),
 					'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
 					'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
-					'postPinned'            => __( 'Post pinned', 'jetonomy' ),
-					'postUnpinned'          => __( 'Post unpinned', 'jetonomy' ),
+					// Scoped, to match the "Pin to space" control. Pro can pin to
+					// the whole community, so an unqualified "Post pinned" leaves
+					// a moderator unsure which of the two just happened.
+					'postPinned'            => __( 'Pinned to this space', 'jetonomy' ),
+					'postUnpinned'          => __( 'Unpinned from this space', 'jetonomy' ),
 					'failedPin'             => __( 'Failed to toggle pin.', 'jetonomy' ),
 					/* translators: %s: the singular label of the item (the configured noun). */
 					'confirmDeletePost'     => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
