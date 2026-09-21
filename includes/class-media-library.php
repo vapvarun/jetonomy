@@ -224,6 +224,139 @@ class Media_Library {
 	}
 
 	/**
+	 * Option holding the first sweep's dry-run report.
+	 *
+	 * Its presence is also the "we have reported once" marker, which is what
+	 * makes the first run report-only. See cleanup_abandoned_uploads().
+	 */
+	private const OPT_CLEANUP_REPORT = 'jetonomy_media_cleanup_report';
+
+	/**
+	 * Action-callback adapter for the scheduled sweep.
+	 *
+	 * The sweep itself returns a report, which tests and any future CLI
+	 * command want; a do_action() callback must return nothing. This keeps
+	 * both honest instead of throwing the report away.
+	 *
+	 * @return void
+	 */
+	public static function run_scheduled_cleanup(): void {
+		self::cleanup_abandoned_uploads();
+	}
+
+	/**
+	 * Delete community uploads that were never attached to anything.
+	 *
+	 * A member who uploads a file in the composer and then abandons the draft
+	 * leaves an attachment with no link row and nothing referencing it. This
+	 * sweep removes those. It lived only in Pro's attachments extension while
+	 * the endpoint that CREATES these rows is in free
+	 * (Media_Controller -> tag_upload), so a free-only site, or a Pro site with
+	 * the extension off, accumulated them forever.
+	 *
+	 * THE SCOPE RULE, and it is not negotiable: only attachments carrying
+	 * META_ORIGIN - ownership recorded by us, at upload time - are eligible.
+	 * Never META_FLAG. That flag is also applied by the backfill, which infers
+	 * "community upload" from the author lacking `upload_files`, and that is
+	 * true of every subscriber-authored attachment on the site INCLUDING
+	 * another forum plugin's. An earlier version of this sweep was scoped that
+	 * way and force-deleted wpForo's files mid-migration, destroying the very
+	 * content the import existed to rescue. See the META_ORIGIN docblock above.
+	 *
+	 * THE FIRST RUN DELETES NOTHING. A site upgrading into this may have
+	 * months of accumulated uploads, and the first thing a new cleanup does
+	 * should not be an unannounced bulk delete. The first sweep records what it
+	 * would have removed; the next one acts. That costs one day and buys the
+	 * owner a chance to look.
+	 *
+	 * @return array{reported:int,deleted:int} What this run did.
+	 */
+	public static function cleanup_abandoned_uploads(): array {
+		global $wpdb;
+
+		$links_table = \Jetonomy\table( 'attachments' );
+		$cutoff      = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
+
+		// Link rows whose WP attachment is gone - belt and braces against a
+		// manual media-library deletion bypassing the cascade. Safe on the
+		// first run too: this removes only dangling rows in our own table, it
+		// deletes no files, so it is not subject to the report-first rule.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "DELETE a FROM {$links_table} a LEFT JOIN {$wpdb->posts} p ON p.ID = a.attachment_id WHERE p.ID IS NULL" );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$stale = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT p.ID FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = %s AND m.meta_value = %s
+				 LEFT JOIN {$links_table} a ON a.attachment_id = p.ID
+				 WHERE p.post_type = 'attachment' AND a.id IS NULL AND p.post_date_gmt < %s",
+				self::META_ORIGIN,
+				'upload',
+				$cutoff
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$stale = array_map( 'intval', (array) $stale );
+
+		$report = get_option( self::OPT_CLEANUP_REPORT );
+		if ( ! is_array( $report ) ) {
+			// First ever sweep on this site: look, record, delete nothing.
+			update_option(
+				self::OPT_CLEANUP_REPORT,
+				[
+					'first_seen_at' => gmdate( 'Y-m-d H:i:s' ),
+					'would_delete'  => count( $stale ),
+				],
+				false
+			);
+
+			/**
+			 * Fires after the first, report-only media sweep.
+			 *
+			 * @since 2.0.0
+			 *
+			 * @param int   $count Attachments that WOULD have been deleted.
+			 * @param int[] $ids   Their attachment ids.
+			 */
+			do_action( 'jetonomy_media_cleanup_reported', count( $stale ), $stale );
+
+			return [
+				'reported' => count( $stale ),
+				'deleted'  => 0,
+			];
+		}
+
+		$deleted = 0;
+		foreach ( $stale as $attachment_id ) {
+			// Belt and braces: re-check ownership per row, so that even if the
+			// query above is ever loosened we still never delete a file we did
+			// not record as ours.
+			if ( ! self::is_ours( $attachment_id ) ) {
+				continue;
+			}
+
+			wp_delete_attachment( $attachment_id, true );
+			++$deleted;
+		}
+
+		/**
+		 * Fires after a media sweep deletes abandoned uploads.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param int $deleted Attachments removed.
+		 */
+		do_action( 'jetonomy_media_cleanup_ran', $deleted );
+
+		return [
+			'reported' => 0,
+			'deleted'  => $deleted,
+		];
+	}
+
+	/**
 	 * Whether the owner has opted to see community uploads on this request.
 	 */
 	private function show_community(): bool {

@@ -3744,6 +3744,30 @@
       "args": "",
       "where": "includes/api/class-leaderboards-controller.php",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_media_cleanup_reported",
+      "type": "action",
+      "args": "count, ids",
+      "where": "includes/class-media-library.php",
+      "consumed_by": [],
+      "purpose": "Fires after the first, report-only abandoned-upload sweep."
+    },
+    {
+      "name": "jetonomy_media_cleanup_ran",
+      "type": "action",
+      "args": "deleted",
+      "where": "includes/class-media-library.php",
+      "consumed_by": [],
+      "purpose": "Fires after an abandoned-upload sweep deletes files."
+    },
+    {
+      "name": "jetonomy_bbpress_import_statuses",
+      "type": "filter",
+      "args": "statuses, type",
+      "where": "includes/import/class-bbpress-importer.php",
+      "consumed_by": [],
+      "purpose": "bbPress post_statuses imported per type (forum|topic|reply)."
     }
   ],
   "buddypress_integration": {
@@ -3879,6 +3903,12 @@
       "schedule": "hourly",
       "purpose": "Send single-shot nudge email to users who never verified after `jetonomy_settings.verification_reminder_hours` (default 24, 0 disables). Rate-limited via `jt_user_profiles.verification_reminder_sent_at` column (1.4.1 migration). Self-heals: also lazy-scheduled on init to upgrade installs without re-activate (1.4.1 A10).",
       "handler": "Verification_Reminder::run"
+    },
+    {
+      "hook": "jetonomy_cleanup_media",
+      "interval": "DAY_IN_SECONDS",
+      "where": "includes/class-cron.php",
+      "purpose": "Delete community uploads never attached to a post or reply (first run reports only)."
     }
   ],
   "wp_cli": [

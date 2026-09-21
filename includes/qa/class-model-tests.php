@@ -234,6 +234,7 @@ class Model_Tests {
 		$this->test_leaderboard_ranking();
 		$this->test_reply_count_moderation();
 		$this->test_bbpress_import_scope();
+		$this->test_media_cleanup_scope();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -934,6 +935,80 @@ class Model_Tests {
 			$importer->get_total_count() === array_sum( $stats ),
 			$importer->get_total_count() . ' vs ' . array_sum( $stats )
 		);
+	}
+
+	/**
+	 * The media sweep deletes only files we recorded as ours, and not on the
+	 * first run.
+	 *
+	 * MD3 is the one that matters. An earlier version of this sweep was scoped
+	 * to META_FLAG, which the backfill also applies to any subscriber-authored
+	 * attachment - including another forum plugin's - and it force-deleted
+	 * wpForo's files mid-migration, destroying the content the import existed
+	 * to rescue. If MD3 ever fails, that incident is back.
+	 */
+	private function test_media_cleanup_scope(): void {
+		$previous = get_option( 'jetonomy_media_cleanup_report' );
+		delete_option( 'jetonomy_media_cleanup_report' );
+
+		$make = static function ( string $title, array $meta, int $days ): int {
+			$when = gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
+			$id   = wp_insert_post(
+				[
+					'post_type'      => 'attachment',
+					'post_title'     => $title,
+					'post_status'    => 'inherit',
+					'post_author'    => 1,
+					'post_mime_type' => 'image/png',
+					'post_date'      => $when,
+					'post_date_gmt'  => $when,
+				]
+			);
+			foreach ( $meta as $key => $value ) {
+				update_post_meta( $id, $key, $value );
+			}
+			return (int) $id;
+		};
+
+		$ours_old   = $make( 'QA media ours old', [ \Jetonomy\Media_Library::META_ORIGIN => 'upload' ], 5 );
+		$ours_fresh = $make( 'QA media ours fresh', [ \Jetonomy\Media_Library::META_ORIGIN => 'upload' ], 0 );
+		// Flagged by the backfill but NOT recorded as ours - i.e. somebody
+		// else's file. The shape the old sweep destroyed.
+		$foreign = $make( 'QA media foreign', [ \Jetonomy\Media_Library::META_FLAG => '1' ], 30 );
+
+		$first = \Jetonomy\Media_Library::cleanup_abandoned_uploads();
+		$this->check(
+			'MD1: the first sweep on a site reports and deletes nothing',
+			0 === $first['deleted'] && $first['reported'] >= 1,
+			wp_json_encode( $first )
+		);
+		$this->check( 'MD1b: and the eligible upload is still there', (bool) get_post( $ours_old ) );
+
+		// MD1c: the scheduled hook actually reaches the sweep. A job can be
+		// scheduled and still do nothing if its callback was never registered -
+		// that exact shape was live in Pro, where the GC ran daily against a
+		// table lookup that silently matched nothing.
+		$this->check(
+			'MD1c: jetonomy_cleanup_media is wired to a callback',
+			has_action( 'jetonomy_cleanup_media' ) !== false
+		);
+
+		$second = \Jetonomy\Media_Library::cleanup_abandoned_uploads();
+		$this->check( 'MD2: the next sweep removes an abandoned upload of ours', ! get_post( $ours_old ), wp_json_encode( $second ) );
+		$this->check( 'MD3: a file that is NOT ours is never deleted', (bool) get_post( $foreign ) );
+		$this->check( 'MD4: an upload inside the 24h grace is kept', (bool) get_post( $ours_fresh ) );
+
+		foreach ( [ $ours_old, $ours_fresh, $foreign ] as $id ) {
+			if ( get_post( $id ) ) {
+				wp_delete_post( $id, true );
+			}
+		}
+
+		if ( false === $previous ) {
+			delete_option( 'jetonomy_media_cleanup_report' );
+		} else {
+			update_option( 'jetonomy_media_cleanup_report', $previous, false );
+		}
 	}
 
 	private function test_reorder(): void {
