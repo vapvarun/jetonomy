@@ -700,7 +700,7 @@ class Space extends Model {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
-		$sql  = 'SELECT * FROM ' . static::table() . " WHERE (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$sql  = 'SELECT * FROM ' . static::table() . " WHERE {$vis_where} ORDER BY sort_order ASC, title ASC";
 		$rows = empty( $vis_values )
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			? static::db()->get_results( $sql )
@@ -739,6 +739,18 @@ class Space extends Model {
 	 * every VIEW should pass one: a category page rendered every space it held,
 	 * which is fine at five and unusable at two thousand.
 	 *
+	 * A CHILD space is listed here too, under the category it was assigned.
+	 * This query used to carry `parent_id = 0`, which meant a space's
+	 * `category_id` was written, indexed and then ignored for any space that
+	 * had a parent. Nothing nested those children either - `list_children()`
+	 * has no callers anywhere in free, Pro or the templates - so an imported
+	 * sub-forum was reachable from nowhere in the directory at all. That is
+	 * the shape two customers reported after migrating.
+	 *
+	 * A child therefore appears exactly ONCE, under its own category. It is
+	 * deliberately not also nested under its parent: the same space listed
+	 * twice on one page reads as a bug.
+	 *
 	 * @param int      $category_id Category id.
 	 * @param int|null $user_id     Viewer; null = current user.
 	 * @param int      $limit       0 = all.
@@ -749,7 +761,7 @@ class Space extends Model {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
-		$sql    = 'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$sql    = 'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND {$vis_where} ORDER BY sort_order ASC, title ASC";
 		$values = array_merge( [ $category_id ], $vis_values );
 
 		if ( $limit > 0 ) {
@@ -773,7 +785,7 @@ class Space extends Model {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for().
-		$sql    = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where}";
+		$sql    = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE category_id = %d AND {$vis_where}";
 		$values = array_merge( [ $category_id ], $vis_values );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above.
@@ -790,7 +802,7 @@ class Space extends Model {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
-		$sql = 'SELECT * FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$sql = 'SELECT * FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
 
 		$values = $vis_values;
 		if ( $limit > 0 ) {
@@ -817,7 +829,7 @@ class Space extends Model {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for().
-		$sql = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where}";
+		$sql = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND {$vis_where}";
 
 		if ( empty( $vis_values ) ) {
 			return (int) static::db()->get_var( $sql );

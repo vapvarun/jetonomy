@@ -229,6 +229,7 @@ class Model_Tests {
 		$this->test_reorder();
 		$this->test_space_ownership_transfer();
 		$this->test_category_visibility();
+		$this->test_child_space_in_category_listing();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -641,6 +642,103 @@ class Model_Tests {
 
 		$wpdb->delete( $spaces_table, [ 'id' => $space_id ] );
 		$wpdb->delete( \Jetonomy\table( 'categories' ), [ 'id' => $cat_id ] );
+	}
+
+	/**
+	 * A child space is listed under the category it was assigned.
+	 *
+	 * The category listing used to carry `parent_id = 0`, so a space with a
+	 * parent had its `category_id` written, indexed and then ignored. Nothing
+	 * nested those children either, so an imported sub-forum was reachable
+	 * from nowhere in the directory - the shape two customers reported after
+	 * migrating.
+	 *
+	 * The count is asserted alongside the list because they are separate
+	 * queries that carried the same clause: fixing one and not the other gives
+	 * pagination that disagrees with its own rows.
+	 */
+	private function test_child_space_in_category_listing(): void {
+		global $wpdb;
+
+		$suffix = wp_generate_password( 6, false, false );
+		$cats   = \Jetonomy\table( 'categories' );
+		$spaces = \Jetonomy\table( 'spaces' );
+
+		$wpdb->insert(
+			$cats,
+			[
+				'name'       => 'QA Child Listing Probe',
+				'slug'       => 'jt-qa-child-' . $suffix,
+				'visibility' => 'public',
+				'parent_id'  => 0,
+				'sort_order' => 0,
+				'created_at' => \Jetonomy\now(),
+			]
+		);
+		$cat_id = (int) $wpdb->insert_id;
+
+		$make_space = static function ( int $parent_id, int $category_id, string $slug ) use ( $wpdb, $spaces ): int {
+			$wpdb->insert(
+				$spaces,
+				[
+					'category_id' => $category_id,
+					'parent_id'   => $parent_id,
+					'author_id'   => 1,
+					'type'        => 'forum',
+					'title'       => 'QA Child Listing ' . $slug,
+					'slug'        => $slug,
+					'visibility'  => 'public',
+					'status'      => 'active',
+					'created_at'  => \Jetonomy\now(),
+				]
+			);
+			return (int) $wpdb->insert_id;
+		};
+
+		$parent_id = $make_space( 0, $cat_id, 'jt-qa-parent-' . $suffix );
+		$child_id  = $make_space( $parent_id, $cat_id, 'jt-qa-kid-' . $suffix );
+
+		$previous_user = get_current_user_id();
+		wp_set_current_user( 0 );
+
+		$ids = array_map( 'intval', array_column( Space::list_by_category( $cat_id, 0 ), 'id' ) );
+		$this->check( 'SS1: a child space appears under its assigned category', in_array( $child_id, $ids, true ) );
+		$this->check( 'SS2: its top-level parent is still listed', in_array( $parent_id, $ids, true ) );
+
+		$count = (int) Space::count_by_category( $cat_id, 0 );
+		$this->check(
+			'SS3: count_by_category agrees with the rows it paginates',
+			$count === count( $ids ),
+			"count={$count}, rows=" . count( $ids )
+		);
+
+		// SS4: listed once. The tree groups by category, so a duplicate would
+		// show up as the same id twice in the same bucket.
+		$tree   = Space::visible_by_category( 0 );
+		$bucket = array_map( 'intval', array_column( $tree[ $cat_id ] ?? [], 'id' ) );
+		$this->check(
+			'SS4: the child is listed exactly once, not also nested',
+			1 === count( array_keys( $bucket, $child_id, true ) ),
+			wp_json_encode( $bucket )
+		);
+
+		wp_set_current_user( $previous_user );
+
+		$wpdb->delete( $spaces, [ 'id' => $child_id ] );
+		$wpdb->delete( $spaces, [ 'id' => $parent_id ] );
+		$wpdb->delete( $cats, [ 'id' => $cat_id ] );
+		self::bust_space_tree();
+	}
+
+	/**
+	 * Drop the cached category tree so a probe's rows never outlive the test.
+	 */
+	private static function bust_space_tree(): void {
+		if ( method_exists( Space::class, 'bump_tree_generation' ) ) {
+			$m = new \ReflectionMethod( Space::class, 'bump_tree_generation' );
+			$m->setAccessible( true );
+			$m->invoke( null );
+		}
 	}
 
 	private function test_reorder(): void {
