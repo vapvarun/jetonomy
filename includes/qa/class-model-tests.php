@@ -15,6 +15,7 @@ namespace Jetonomy\QA;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Category;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
@@ -231,6 +232,7 @@ class Model_Tests {
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
 		$this->test_leaderboard_ranking();
+		$this->test_reply_count_moderation();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -813,6 +815,73 @@ class Model_Tests {
 			$run_len  = 1;
 		}
 		$this->check( 'LB4: no unexplained gap in the rank sequence', 0 === $holes, "{$holes} gap(s)" );
+	}
+
+	/**
+	 * reply_count counts PUBLISHED replies, through every status path.
+	 *
+	 * Reply::create() used to increment unconditionally while the counter -
+	 * and Recount, which defines it - mean published only. update() already
+	 * applies its own +1/-1 when a reply crosses the publish boundary, so a
+	 * reply that did not start published was counted twice: held for approval
+	 * gave counter 1 against 0 published, and approving it gave 2 against 1.
+	 * Every moderated reply permanently inflated its thread by one.
+	 */
+	private function test_reply_count_moderation(): void {
+		global $wpdb;
+
+		$post_id = (int) $wpdb->get_var( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" );
+		if ( ! $post_id ) {
+			$this->check( 'RC0: a published post exists to reply to', false, 'no post available' );
+			return;
+		}
+
+		$posts_table   = \Jetonomy\table( 'posts' );
+		$replies_table = \Jetonomy\table( 'replies' );
+
+		$counter = static fn() => (int) $wpdb->get_var( $wpdb->prepare( "SELECT reply_count FROM {$posts_table} WHERE id = %d", $post_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$actual  = static fn() => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_table} WHERE post_id = %d AND status = 'publish'", $post_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$restore = $counter();
+
+		// RC1: a reply held for approval is not yet a published reply.
+		$held = Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => 1,
+				'content'   => 'QA moderation probe',
+				'status'    => 'pending',
+			]
+		);
+		$this->check(
+			'RC1: a pending reply does not raise reply_count',
+			$counter() === $actual(),
+			'counter ' . $counter() . ' vs published ' . $actual()
+		);
+
+		// RC2: approving it counts it exactly once, not a second time.
+		Reply::update( $held, [ 'status' => 'publish' ] );
+		$this->check(
+			'RC2: approving a held reply counts it exactly once',
+			$counter() === $actual(),
+			'counter ' . $counter() . ' vs published ' . $actual()
+		);
+
+		// RC3: and the ordinary path is unchanged.
+		$normal = Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => 1,
+				'content'   => 'QA direct probe',
+			]
+		);
+		$this->check( 'RC3: a directly published reply still counts', $counter() === $actual() );
+
+		Reply::delete( $normal );
+		Reply::delete( $held );
+		$this->check( 'RC4: deleting replies leaves the counter correct', $counter() === $actual() );
+
+		$wpdb->update( $posts_table, [ 'reply_count' => $restore ], [ 'id' => $post_id ] );
 	}
 
 	private function test_reorder(): void {

@@ -91,10 +91,29 @@ class Reply extends Model {
 		$id = static::insert( $data );
 
 		if ( $id > 0 ) {
-			if ( ! empty( $data['post_id'] ) ) {
+			/*
+			 * Both counters mean "published replies" - Recount defines them that
+			 * way (`COUNT(*) ... WHERE status = 'publish'`), and update() below
+			 * already applies a +1/-1 delta when a reply crosses into or out of
+			 * publish. Incrementing here regardless of status therefore
+			 * double-counted every reply that did not start published.
+			 *
+			 * On a site that holds replies for approval the sequence was:
+			 * created pending -> counter 1, actually 0 published; approved ->
+			 * update() correctly adds its +1 -> counter 2, actually 1. Every
+			 * moderated reply permanently inflated the thread by one, and the
+			 * same applied to the author's profile count.
+			 *
+			 * last_reply_at rides along with this call, which is the behaviour
+			 * we want too: a reply nobody can see yet should not advance the
+			 * thread's "last activity" time.
+			 */
+			$is_published = 'publish' === ( $data['status'] ?? 'publish' );
+
+			if ( $is_published && ! empty( $data['post_id'] ) ) {
 				Post::increment_reply_count( (int) $data['post_id'], 1, (string) $data['created_at'] );
 			}
-			if ( ! empty( $data['author_id'] ) ) {
+			if ( $is_published && ! empty( $data['author_id'] ) ) {
 				UserProfile::increment_reply_count( (int) $data['author_id'] );
 			}
 
