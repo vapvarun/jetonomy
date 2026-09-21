@@ -680,6 +680,21 @@
 
 .jt-status-badge--pending::before { background: var(--jt-admin-warn-dark); }
 
+/* ── List-table headers never break mid-word ──
+   The admin tables are `table-layout: fixed` with per-column width classes, so
+   a label wider than its column has nowhere to go. Inherited
+   `overflow-wrap: break-word` then splits the WORD rather than the line, and a
+   header reads "Requir / ed" - which is what got reported. Column labels are
+   one or two words; breaking inside one is never the right answer, so let it
+   sit on one line and, if it truly cannot fit, ellipsis it where the full text
+   is still available via the title attribute and the responsive row toggle. */
+.jetonomy-admin .wp-list-table thead th,
+.jetonomy-admin .wp-list-table tfoot th {
+	overflow-wrap: normal;
+	word-break: normal;
+	hyphens: none;
+}
+
 /* ── Icon + label buttons ──
    A button with an icon beside its label is an inline-block whose icon was
    positioned with `vertical-align`, which aligns against the TEXT baseline box,
