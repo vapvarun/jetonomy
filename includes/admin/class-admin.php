@@ -1939,7 +1939,22 @@ class Admin {
 			$where .= ' AND p.space_id = %d';
 			$args[] = $current_space;
 		}
-		if ( 'all' !== $current_status ) {
+
+		/*
+		 * "Scheduled" is a pseudo-status: a scheduled post is an ordinary row
+		 * with published_at in the future, not a value in the status column.
+		 *
+		 * Before this, scheduling was reachable from the composer and the REST
+		 * API and from cron, and from NOWHERE in wp-admin - the owner could not
+		 * see what was queued, reschedule it, or answer "why has my post not
+		 * appeared". That failed the three-entry-points rule, and the plugin's
+		 * own demo copy already admitted the gap ("the scheduled badge does not
+		 * yet show in the listing").
+		 */
+		if ( 'scheduled' === $current_status ) {
+			$where .= ' AND p.published_at IS NOT NULL AND p.published_at > %s';
+			$args[] = current_time( 'mysql', true );
+		} elseif ( 'all' !== $current_status ) {
 			$where .= ' AND p.status = %s';
 			$args[] = $current_status;
 		}

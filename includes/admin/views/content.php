@@ -7,7 +7,7 @@
  * @var object[] $posts          Post rows joined with space_title, space_slug, author columns.
  * @var object[] $spaces         For the space filter dropdown.
  * @var int      $current_space  Currently selected space_id filter (0 = all).
- * @var string   $current_status all|publish|pending|spam|trash.
+ * @var string   $current_status all|publish|pending|spam|trash|scheduled.
  * @var int      $per_page
  * @var int      $paged
  * @var int      $total
@@ -21,12 +21,25 @@ defined( 'ABSPATH' ) || exit;
 $settings  = get_option( 'jetonomy_settings', array() );
 $base_slug = $settings['base_slug'] ?? 'community';
 
-$valid_statuses = array( 'all', 'publish', 'pending', 'spam', 'trash' );
+// 'scheduled' is a pseudo-status (published_at in the future), not a value in
+// the status column - see the filter in Admin::render_content(). It belongs in
+// this whitelist all the same, or the controller filters by it while the
+// dropdown silently snaps back to "All" and the owner cannot tell what they
+// are looking at.
+$valid_statuses = array( 'all', 'publish', 'pending', 'spam', 'trash', 'scheduled' );
 $current_status = in_array( $current_status, $valid_statuses, true ) ? $current_status : 'all';
 $current_space  = absint( $current_space );
 
 // Shared with the Replies screen and the status badge below.
 $status_labels = \Jetonomy\content_status_labels( true );
+
+/*
+ * "Scheduled" is added HERE, not in content_status_labels(), because that
+ * helper is shared with the Replies screen and replies have no published_at -
+ * the option would filter to nothing there. It is a pseudo-status: a scheduled
+ * post is an ordinary row whose published_at is still in the future.
+ */
+$status_labels['scheduled'] = __( 'Scheduled', 'jetonomy' );
 
 $search_query = sanitize_text_field( $_GET['s'] ?? '' );
 $page_url     = admin_url( 'admin.php?page=jetonomy-content' );
@@ -271,6 +284,26 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $p->status ); ?>">
 								<?php echo esc_html( \Jetonomy\content_status_label( (string) $p->status ) ); ?>
 							</span>
+							<?php
+							// A queued post reads as an ordinary published one
+							// without this, which is how an owner ends up unable
+							// to answer "why has my post not appeared yet".
+							// Stored UTC, shown in the SITE timezone per the
+							// date/time standard - never the server clock.
+							$jt_is_scheduled = ! empty( $p->published_at )
+								&& strtotime( (string) $p->published_at . ' UTC' ) > time();
+							if ( $jt_is_scheduled ) :
+								$jt_when = get_date_from_gmt(
+									(string) $p->published_at,
+									get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
+								);
+								?>
+								<span class="jt-status-badge jt-status-badge--scheduled"
+									title="<?php echo esc_attr( sprintf( /* translators: %s: date and time the post publishes. */ __( 'Publishes %s', 'jetonomy' ), $jt_when ) ); ?>">
+									<?php esc_html_e( 'Scheduled', 'jetonomy' ); ?>
+								</span>
+								<span class="jt-scheduled-when"><?php echo esc_html( $jt_when ); ?></span>
+							<?php endif; ?>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Replies', 'jetonomy' ); ?>">
 							<?php

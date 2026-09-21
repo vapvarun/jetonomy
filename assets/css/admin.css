@@ -680,6 +680,24 @@
 
 .jt-status-badge--pending::before { background: var(--jt-admin-warn-dark); }
 
+/* Scheduled is a pseudo-status shown beside the real one: the post IS
+   published as far as the status column goes, it just has not surfaced yet.
+   Informational rather than a warning, so it borrows the accent, not the
+   warn colour - an owner should not read a queued post as a problem. */
+.jt-status-badge--scheduled {
+	background: var(--jt-admin-accent-light);
+	color: var(--jt-admin-accent);
+}
+
+.jt-status-badge--scheduled::before { background: var(--jt-admin-accent); }
+
+.jt-scheduled-when {
+	display: block;
+	margin-block-start: 4px;
+	font-size: 0.75rem;
+	color: var(--jt-admin-text-muted);
+}
+
 .jt-status-badge--spam {
 	background: var(--jt-admin-danger-light);
 	color: var(--jt-admin-danger-dark);
