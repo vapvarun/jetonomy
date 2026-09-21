@@ -46,6 +46,23 @@ class Theme_Integration {
 	const STYLE_HANDLE = 'jetonomy';
 
 	/**
+	 * Every frontend style handle that marks "a Jetonomy surface is on this
+	 * page", in the order the inline bridge should attach to them.
+	 *
+	 * The colour bridge and the dark-mode mirror both used to key off
+	 * STYLE_HANDLE alone, which is only enqueued on Jetonomy's own pages. The
+	 * BuddyPress integration renders Jetonomy markup inside BuddyPress
+	 * templates and enqueues its own stylesheet instead, so on a member's
+	 * "Forum" profile tab neither the bridge nor the mirror ran: `.jt-dark`
+	 * was never applied and the tab stayed light inside a dark theme, with
+	 * body text at 1.12:1 against the background.
+	 *
+	 * Add a handle here when a new surface renders Jetonomy markup outside
+	 * Jetonomy's own templates, or it will have the same problem.
+	 */
+	const SURFACE_STYLE_HANDLES = array( 'jetonomy', 'jetonomy-buddypress' );
+
+	/**
 	 * Register hooks.
 	 */
 	public function __construct() {
@@ -54,12 +71,28 @@ class Theme_Integration {
 	}
 
 	/**
+	 * The enqueued Jetonomy style handle to hang inline CSS on, if any.
+	 *
+	 * @return string Handle, or '' when no Jetonomy surface is on this page.
+	 */
+	private function surface_style_handle(): string {
+		foreach ( self::SURFACE_STYLE_HANDLES as $handle ) {
+			if ( wp_style_is( $handle, 'enqueued' ) ) {
+				return $handle;
+			}
+		}
+
+		return '';
+	}
+
+	/**
 	 * Read the active theme's color mods and inject light + dark token blocks.
 	 *
 	 * @return void
 	 */
 	public function output_color_bridge() {
-		if ( ! wp_style_is( self::STYLE_HANDLE, 'enqueued' ) ) {
+		$style_handle = $this->surface_style_handle();
+		if ( '' === $style_handle ) {
 			return;
 		}
 
@@ -132,7 +165,7 @@ class Theme_Integration {
 		}
 
 		if ( '' !== $css ) {
-			wp_add_inline_style( self::STYLE_HANDLE, $css );
+			wp_add_inline_style( $style_handle, $css );
 		}
 	}
 
@@ -151,7 +184,7 @@ class Theme_Integration {
 	 * @return void
 	 */
 	public function output_dark_mode_mirror() {
-		if ( ! wp_style_is( self::STYLE_HANDLE, 'enqueued' ) ) {
+		if ( '' === $this->surface_style_handle() ) {
 			return;
 		}
 
