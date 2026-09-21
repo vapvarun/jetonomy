@@ -38,21 +38,92 @@ class BBPress_Importer extends Importer {
 		return $count > 0;
 	}
 
+	/**
+	 * The bbPress post_statuses we import, per post type.
+	 *
+	 * Every query in this importer used to hard-filter `post_status =
+	 * 'publish'`, which silently dropped three things a real board is full of:
+	 * a **closed** topic (bbPress marks it `closed`, not `publish`), and
+	 * **private** and **hidden** forums. Two customers migrated with content
+	 * missing and no way to know.
+	 *
+	 * The counts below use the same sets, which is the other half of the bug:
+	 * the pre-import estimate applied the identical filter, so it agreed with
+	 * the import exactly and the shortfall was invisible from both ends.
+	 *
+	 * THE single source of truth for "what we take" - the counts, the batch
+	 * queries and the full-run queries all read it, so they cannot drift apart
+	 * again.
+	 *
+	 * @param string $type One of forum, topic, reply.
+	 * @return string[] bbPress post_status values to import.
+	 */
+	private function source_statuses( string $type ): array {
+		$map = [
+			// `private`/`hidden` carry real meaning and now have somewhere to
+			// land: Jetonomy space visibility. See status_to_visibility().
+			'forum' => [ 'publish', 'private', 'hidden' ],
+			// A closed topic is still a topic - it imports and lands closed.
+			'topic' => [ 'publish', 'closed' ],
+			'reply' => [ 'publish' ],
+		];
+
+		/**
+		 * Filter the bbPress post_statuses imported for a given type.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param string[] $statuses bbPress post_status values.
+		 * @param string   $type     forum|topic|reply.
+		 */
+		return (array) apply_filters( 'jetonomy_bbpress_import_statuses', $map[ $type ] ?? [ 'publish' ], $type );
+	}
+
+	/**
+	 * SQL `IN (...)` fragment of the statuses we import for a type.
+	 *
+	 * @param string $type One of forum, topic, reply.
+	 * @return string Quoted, comma-separated list safe for interpolation.
+	 */
+	private function status_sql( string $type ): string {
+		$statuses = array_map( 'sanitize_key', $this->source_statuses( $type ) );
+
+		return "'" . implode( "','", $statuses ) . "'";
+	}
+
+	/**
+	 * Map a bbPress forum post_status onto Jetonomy space visibility.
+	 *
+	 * Imported forums used to be created `public` unconditionally, which would
+	 * turn a staff-only or paid-tier forum into an open one the moment it was
+	 * migrated - a worse outcome than skipping it. Now that categories and
+	 * spaces actually enforce visibility, these values mean what they say.
+	 *
+	 * @param string $status bbPress post_status.
+	 * @return string One of public|private|hidden.
+	 */
+	private function status_to_visibility( string $status ): string {
+		$map = [
+			'private' => 'private',
+			'hidden'  => 'hidden',
+		];
+
+		return $map[ $status ] ?? 'public';
+	}
+
 	public function get_source_stats(): array {
 		global $wpdb;
 		return [
-			'forums'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish'" ),
-			'topics'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status = 'publish'" ),
-			'replies' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status = 'publish'" ),
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- status_sql() emits sanitize_key()'d literals.
+			'forums'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN (" . $this->status_sql( 'forum' ) . ')' ),
+			'topics'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN (" . $this->status_sql( 'topic' ) . ')' ),
+			'replies' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status IN (" . $this->status_sql( 'reply' ) . ')' ),
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		];
 	}
 
 	public function get_total_count(): int {
-		global $wpdb;
-		$forums  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish'" );
-		$topics  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status = 'publish'" );
-		$replies = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status = 'publish'" );
-		return $forums + $topics + $replies;
+		return array_sum( $this->get_source_stats() );
 	}
 
 	/**
@@ -146,6 +217,90 @@ class BBPress_Importer extends Importer {
 	 * @param int    $cat_id Import category id.
 	 * @return int Space id, or 0 on failure.
 	 */
+	/**
+	 * The space a previous import already created for this forum, if any.
+	 *
+	 * Re-running an import used to look idempotent for the wrong reason: the
+	 * second run tried to create each space again, Space::create() failed on
+	 * the duplicate slug, and the forum was recorded as "Failed to create
+	 * space". Nothing was duplicated - but the forum never entered the id_map
+	 * either, so every topic beneath it was then skipped with "Parent forum N
+	 * not imported".
+	 *
+	 * That is why an owner who migrated before the status fix could not simply
+	 * re-run to recover their closed topics: the re-run could never reach them.
+	 * Adopting the existing space instead puts the forum back in the map, so
+	 * the topics under it resolve their parent and the ones that were missed
+	 * the first time are imported now.
+	 *
+	 * Matched on slug, which is what bbPress's post_name produced on the first
+	 * run and what Space::create() collides on.
+	 *
+	 * @param object $forum bbPress forum row.
+	 * @return int Existing space id, or 0 when this forum has not been imported.
+	 */
+	private function find_existing_space( object $forum ): int {
+		$slug = $forum->post_name ?: sanitize_title( $forum->post_title );
+		if ( '' === $slug ) {
+			return 0;
+		}
+
+		$existing = Space::find_by_slug( $slug );
+
+		return $existing ? (int) $existing->id : 0;
+	}
+
+	/**
+	 * The post a previous import already created for this topic, if any.
+	 *
+	 * Same purpose as find_existing_space(): once forums are adopted on a
+	 * re-run, topics beneath them resolve their parent and would otherwise be
+	 * created a second time. Matched on slug, which is what bbPress's
+	 * post_name produced on the first run.
+	 *
+	 * @param object $topic bbPress topic row.
+	 * @return int Existing post id, or 0.
+	 */
+	private function find_existing_post( object $topic ): int {
+		$slug = $topic->post_name ?: sanitize_title( $topic->post_title );
+		if ( '' === $slug ) {
+			return 0;
+		}
+
+		$existing = JtPost::find_by_slug( $slug );
+
+		return $existing ? (int) $existing->id : 0;
+	}
+
+	/**
+	 * Has this bbPress reply already been imported onto this post?
+	 *
+	 * Replies carry no slug, so there is no natural key to collide on and a
+	 * re-run duplicated every one of them. Matched on the triple that IS
+	 * stable across runs: the destination post, the author, and the source's
+	 * own timestamp, which the importer carries into created_at verbatim.
+	 *
+	 * @param int    $post_id    Destination Jetonomy post id.
+	 * @param int    $author_id  Author.
+	 * @param string $created_at Source post_date_gmt carried onto the reply.
+	 * @return bool
+	 */
+	private function reply_already_imported( int $post_id, int $author_id, string $created_at ): bool {
+		global $wpdb;
+
+		$table = \Jetonomy\table( 'replies' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table() is a trusted prefixed name.
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$table} WHERE post_id = %d AND author_id = %d AND created_at = %s LIMIT 1",
+				$post_id,
+				$author_id,
+				$created_at
+			)
+		);
+	}
+
 	private function create_space_from_forum( object $forum, int $cat_id ): int {
 		// bbPress nests forums through the ordinary WP post_parent column. Both
 		// paths used to ignore it, so every sub-forum was created as a top-level
@@ -167,7 +322,10 @@ class BBPress_Importer extends Importer {
 				'title'       => $forum->post_title,
 				'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
 				'description' => wp_strip_all_tags( $forum->post_content ),
-				'visibility'  => 'public',
+				// Carry the source forum's privacy across. Creating every
+				// imported forum `public` would expose a staff-only or paid-tier
+				// board the moment it migrated - worse than the skip it replaces.
+				'visibility'  => $this->status_to_visibility( (string) $forum->post_status ),
 				'join_policy' => 'open',
 			]
 		);
@@ -185,7 +343,7 @@ class BBPress_Importer extends Importer {
 				// theirs whole for the same reason), unlike the topic and reply phases
 				// below, which stay paged in SQL because they run to thousands.
 				$all_forums = $wpdb->get_results(
-					"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish' ORDER BY menu_order ASC, ID ASC"
+					"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN (" . $this->status_sql( 'forum' ) . ') ORDER BY menu_order ASC, ID ASC'
 				);
 				$all_forums = $this->sort_rows_parents_first( (array) $all_forums, 'ID', 'post_parent' );
 				$forums     = array_slice( $all_forums, $offset, $batch_size );
@@ -224,6 +382,17 @@ class BBPress_Importer extends Importer {
 				$cat_id = (int) get_option( 'jetonomy_import_bbpress_cat_id', 0 );
 
 				foreach ( $forums as $forum ) {
+					// Already imported by an earlier run? Adopt it, so topics
+					// beneath it can resolve their parent and anything missed
+					// last time still gets imported. Counted as skipped, not
+					// imported - nothing new was created.
+					$existing = $this->find_existing_space( $forum );
+					if ( $existing ) {
+						$this->map_id( 'forum', $forum->ID, $existing );
+						++$this->skipped;
+						continue;
+					}
+
 					$space_id = $this->create_space_from_forum( $forum, $cat_id );
 					if ( $space_id ) {
 						$this->map_id( 'forum', $forum->ID, $space_id );
@@ -246,7 +415,7 @@ class BBPress_Importer extends Importer {
 
 				$topics = $wpdb->get_results(
 					$wpdb->prepare(
-						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status = 'publish' ORDER BY ID ASC LIMIT %d OFFSET %d",
+						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN (" . $this->status_sql( 'topic' ) . ') ORDER BY ID ASC LIMIT %d OFFSET %d',
 						$batch_size,
 						$offset
 					)
@@ -269,6 +438,15 @@ class BBPress_Importer extends Importer {
 						continue;
 					}
 
+					// Adopt a topic an earlier run already imported: map it so its
+					// replies resolve, and do not create it twice.
+					$already = $this->find_existing_post( $topic );
+					if ( $already ) {
+						$this->map_id( 'topic', $topic->ID, $already );
+						++$this->skipped;
+						continue;
+					}
+
 					$is_sticky = (int) get_post_meta( $topic->ID, '_bbp_topic_sticky', true );
 
 					$post_id = JtPost::create(
@@ -282,6 +460,10 @@ class BBPress_Importer extends Importer {
 							'content_plain' => \jetonomy_content_to_plain( $topic->post_content ),
 							'status'        => 'publish',
 							'is_sticky'     => $is_sticky ? 1 : 0,
+							// bbPress stores "closed" as the post_status; Jetonomy
+							// keeps the topic published and flags it closed, so the
+							// thread stays readable but takes no new replies.
+							'is_closed'     => 'closed' === $topic->post_status ? 1 : 0,
 							'created_at'    => $topic->post_date_gmt ?: now(),
 						]
 					);
@@ -313,7 +495,7 @@ class BBPress_Importer extends Importer {
 
 				$replies = $wpdb->get_results(
 					$wpdb->prepare(
-						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status = 'publish' ORDER BY ID ASC LIMIT %d OFFSET %d",
+						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status IN (" . $this->status_sql( 'reply' ) . ') ORDER BY ID ASC LIMIT %d OFFSET %d',
 						$batch_size,
 						$offset
 					)
@@ -332,6 +514,12 @@ class BBPress_Importer extends Importer {
 					$topic_id = (int) $reply->post_parent;
 					$post_id  = $this->get_mapped_id( 'topic', $topic_id );
 					if ( ! $post_id ) {
+						++$this->skipped;
+						continue;
+					}
+
+					$reply_created_at = $reply->post_date_gmt ?: now();
+					if ( $this->reply_already_imported( (int) $post_id, (int) $reply->post_author, (string) $reply_created_at ) ) {
 						++$this->skipped;
 						continue;
 					}
@@ -374,7 +562,7 @@ class BBPress_Importer extends Importer {
 
 			case 'profiles':
 				$author_ids = $wpdb->get_col(
-					"SELECT DISTINCT post_author FROM {$wpdb->posts} WHERE post_type IN ('topic', 'reply') AND post_status = 'publish' AND post_author > 0"
+					"SELECT DISTINCT post_author FROM {$wpdb->posts} WHERE post_type IN ('topic', 'reply') AND post_status IN (" . $this->status_sql( 'topic' ) . ',' . $this->status_sql( 'reply' ) . ') AND post_author > 0'
 				);
 				foreach ( $author_ids as $uid ) {
 					UserProfile::find_or_create( (int) $uid );
@@ -448,7 +636,7 @@ class BBPress_Importer extends Importer {
 		global $wpdb;
 
 		$forums = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish' ORDER BY menu_order ASC, ID ASC"
+			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN (" . $this->status_sql( 'forum' ) . ') ORDER BY menu_order ASC, ID ASC'
 		);
 
 		// Parents before children, so each sub-forum can resolve its parent's new
@@ -456,6 +644,17 @@ class BBPress_Importer extends Importer {
 		$forums = $this->sort_rows_parents_first( (array) $forums, 'ID', 'post_parent' );
 
 		foreach ( $forums as $forum ) {
+			// See the batched path: adopt a forum an earlier run already
+			// created rather than failing on its duplicate slug, or every topic
+			// beneath it is skipped as "parent not imported" and a re-run can
+			// never recover what the first run missed.
+			$existing = $this->dry_run ? 0 : $this->find_existing_space( $forum );
+			if ( $existing ) {
+				$this->map_id( 'forum', $forum->ID, $existing );
+				++$this->skipped;
+				continue;
+			}
+
 			if ( ! $this->dry_run ) {
 				$space_id = $this->create_space_from_forum( $forum, $cat_id );
 			} else {
@@ -476,7 +675,7 @@ class BBPress_Importer extends Importer {
 		global $wpdb;
 
 		$topics = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status = 'publish' ORDER BY ID ASC"
+			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN (" . $this->status_sql( 'topic' ) . ') ORDER BY ID ASC'
 		);
 
 		foreach ( $topics as $topic ) {
@@ -485,6 +684,15 @@ class BBPress_Importer extends Importer {
 
 			if ( ! $space_id ) {
 				$this->log_error( 'topic', $topic->ID, "Parent forum {$forum_id} not imported" );
+				++$this->skipped;
+				continue;
+			}
+
+			// Adopt a topic an earlier run already imported: map it so its
+			// replies resolve, and do not create it twice.
+			$already = $this->find_existing_post( $topic );
+			if ( $already ) {
+				$this->map_id( 'topic', $topic->ID, $already );
 				++$this->skipped;
 				continue;
 			}
@@ -503,6 +711,10 @@ class BBPress_Importer extends Importer {
 						'content_plain' => \jetonomy_content_to_plain( $topic->post_content ),
 						'status'        => 'publish',
 						'is_sticky'     => $is_sticky ? 1 : 0,
+						// bbPress stores "closed" as the post_status; Jetonomy keeps
+						// the topic published and flags it closed, so the thread stays
+						// readable but takes no new replies.
+						'is_closed'     => 'closed' === $topic->post_status ? 1 : 0,
 						'created_at'    => $topic->post_date_gmt ?: now(),
 					]
 				);
@@ -533,7 +745,7 @@ class BBPress_Importer extends Importer {
 		global $wpdb;
 
 		$replies = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status = 'publish' ORDER BY ID ASC"
+			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status IN (" . $this->status_sql( 'reply' ) . ') ORDER BY ID ASC'
 		);
 
 		foreach ( $replies as $reply ) {
@@ -548,6 +760,12 @@ class BBPress_Importer extends Importer {
 			}
 
 			if ( ! $this->dry_run ) {
+				$reply_created_at = $reply->post_date_gmt ?: now();
+				if ( $this->reply_already_imported( (int) $post_id, (int) $reply->post_author, (string) $reply_created_at ) ) {
+					++$this->skipped;
+					continue;
+				}
+
 				$reply_id = JtReply::create(
 					[
 						'post_id'       => $post_id,
@@ -583,7 +801,7 @@ class BBPress_Importer extends Importer {
 		global $wpdb;
 
 		$author_ids = $wpdb->get_col(
-			"SELECT DISTINCT post_author FROM {$wpdb->posts} WHERE post_type IN ('topic', 'reply') AND post_status = 'publish' AND post_author > 0"
+			"SELECT DISTINCT post_author FROM {$wpdb->posts} WHERE post_type IN ('topic', 'reply') AND post_status IN (" . $this->status_sql( 'topic' ) . ',' . $this->status_sql( 'reply' ) . ') AND post_author > 0'
 		);
 
 		foreach ( $author_ids as $uid ) {

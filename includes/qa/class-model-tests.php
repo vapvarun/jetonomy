@@ -233,6 +233,7 @@ class Model_Tests {
 		$this->test_child_space_in_category_listing();
 		$this->test_leaderboard_ranking();
 		$this->test_reply_count_moderation();
+		$this->test_bbpress_import_scope();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -882,6 +883,57 @@ class Model_Tests {
 		$this->check( 'RC4: deleting replies leaves the counter correct', $counter() === $actual() );
 
 		$wpdb->update( $posts_table, [ 'reply_count' => $restore ], [ 'id' => $post_id ] );
+	}
+
+	/**
+	 * The bbPress importer counts what it will actually take.
+	 *
+	 * Every query hard-filtered `post_status = 'publish'`, which dropped closed
+	 * topics and private/hidden forums - and the pre-import estimate used the
+	 * SAME filter, so the final tally matched the estimate exactly and the
+	 * shortfall was invisible from both ends. That symmetry is the thing worth
+	 * guarding: an estimate that disagrees with the import is a visible bug, an
+	 * estimate that agrees with a lossy import is a silent one.
+	 *
+	 * Skips when no bbPress content is present, so this is meaningful on a
+	 * migration site and harmless everywhere else.
+	 */
+	private function test_bbpress_import_scope(): void {
+		global $wpdb;
+
+		$importer = new \Jetonomy\Import\BBPress_Importer();
+		if ( ! $importer->is_source_available() ) {
+			$this->skip( 'BB1: bbPress import scope', 'no bbPress content on this site' );
+			return;
+		}
+
+		$stats = $importer->get_source_stats();
+
+		// BB1: a closed topic is a topic. bbPress stores "closed" as the
+		// post_status, so a publish-only filter drops it.
+		$closed = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status = 'closed'" );
+		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN ('publish','closed')" );
+		$this->check(
+			'BB1: the topic estimate includes closed topics',
+			(int) $stats['topics'] === $topics,
+			"estimate {$stats['topics']}, publish+closed {$topics} (closed: {$closed})"
+		);
+
+		// BB2: private and hidden forums are forums.
+		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN ('publish','private','hidden')" );
+		$this->check(
+			'BB2: the forum estimate includes private and hidden forums',
+			(int) $stats['forums'] === $forums,
+			"estimate {$stats['forums']}, importable {$forums}"
+		);
+
+		// BB3: the headline total is the sum of the parts the owner is shown -
+		// they drifted apart before because each was computed independently.
+		$this->check(
+			'BB3: total agrees with the per-type estimates',
+			$importer->get_total_count() === array_sum( $stats ),
+			$importer->get_total_count() . ' vs ' . array_sum( $stats )
+		);
 	}
 
 	private function test_reorder(): void {
