@@ -45,11 +45,14 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div class="jetonomy-form-field">
 				<label for="cat-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
-				<select id="cat-visibility">
+				<select id="cat-visibility" aria-describedby="cat-visibility-help">
 					<option value="public"><?php esc_html_e( 'Public', 'jetonomy' ); ?></option>
 					<option value="private"><?php esc_html_e( 'Private', 'jetonomy' ); ?></option>
 					<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
 				</select>
+				<p class="description" id="cat-visibility-help">
+					<?php esc_html_e( 'Public: anyone can see it. Private: signed-in members can see it. Hidden: only you and other category managers can see it - and the spaces inside it are hidden too, whatever their own visibility says.', 'jetonomy' ); ?>
+				</p>
 			</div>
 			<div class="jetonomy-form-field jetonomy-form-field--wide">
 				<label><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>
@@ -291,11 +294,14 @@ defined( 'ABSPATH' ) || exit;
 				</div>
 				<div class="jetonomy-form-field">
 					<label for="edit-cat-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
-					<select id="edit-cat-visibility">
+					<select id="edit-cat-visibility" aria-describedby="edit-cat-visibility-help">
 						<option value="public"><?php esc_html_e( 'Public', 'jetonomy' ); ?></option>
 						<option value="private"><?php esc_html_e( 'Private', 'jetonomy' ); ?></option>
 						<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
 					</select>
+					<p class="description" id="edit-cat-visibility-help">
+						<?php esc_html_e( 'Public: anyone can see it. Private: signed-in members can see it. Hidden: only you and other category managers can see it - and the spaces inside it are hidden too, whatever their own visibility says.', 'jetonomy' ); ?>
+					</p>
 				</div>
 				<div class="jetonomy-form-field jetonomy-form-field--wide">
 					<label><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>

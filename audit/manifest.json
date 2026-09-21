@@ -3590,6 +3590,13 @@
       "consumed_by": []
     },
     {
+      "name": "jetonomy_category_listing_visibility_sql",
+      "type": "filter",
+      "args": "result, user_id, alias",
+      "where": "includes/models/class-category.php:66",
+      "consumed_by": []
+    },
+    {
       "name": "jetonomy_space_listing_visibility_sql",
       "type": "filter",
       "args": "result, user_id, alias",

@@ -492,12 +492,13 @@ class Space extends Model {
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
 			$result = [ '1=1', [] ];
 		} elseif ( $user_id <= 0 ) {
-			$result = [ "{$col}visibility = 'public'", [] ];
+			$result = [ "{$col}visibility = 'public'" . self::parent_category_clause( $user_id, $col ), [] ];
 		} else {
 			$members_table = \Jetonomy\table( 'space_members' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-			$fragment = "({$col}visibility IN ('public','private') OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-			$result   = [ $fragment, [ $user_id ] ];
+			$fragment  = "({$col}visibility IN ('public','private') OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+			$fragment .= self::parent_category_clause( $user_id, $col );
+			$result    = [ $fragment, [ $user_id ] ];
 		}
 
 		/**
@@ -524,6 +525,41 @@ class Space extends Model {
 	 */
 	private static function visibility_predicate_for( ?int $user_id ): array {
 		return self::listing_visibility_sql( $user_id );
+	}
+
+	/**
+	 * Effective-visibility clause: a space is no more visible than its category.
+	 *
+	 * An owner who marks a category `hidden` reasonably reads that as covering
+	 * what is inside it — nothing in the admin UI says otherwise — but a space
+	 * carries its own `visibility` column and nothing ever consulted the
+	 * parent, so a `public` space in a `hidden` category was served to
+	 * anonymous visitors.
+	 *
+	 * Resolved at READ time rather than cascaded onto rows on save: the value
+	 * then stays correct when a category's visibility changes later, and we
+	 * never rewrite a `visibility` the owner did not edit. The cost is this
+	 * clause on listing queries; `category_id` is indexed and the subquery is
+	 * over a table with tens of rows, not thousands.
+	 *
+	 * Uncategorised spaces (`category_id` NULL or 0) are unaffected — there is
+	 * no parent to inherit from.
+	 *
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 * @param string   $col     Spaces-table alias prefix, including trailing dot, or ''.
+	 * @return string SQL fragment beginning with ' AND ', or '' when unrestricted.
+	 */
+	private static function parent_category_clause( ?int $user_id, string $col ): string {
+		[ $cat_where ] = \Jetonomy\Models\Category::listing_visibility_sql( $user_id );
+
+		if ( '1=1' === $cat_where ) {
+			return '';
+		}
+
+		$categories_table = \Jetonomy\table( 'categories' );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $categories_table is a trusted prefixed name; $cat_where is literal SQL from Category::listing_visibility_sql() (no placeholders in the guest/member branches).
+		return " AND ({$col}category_id IS NULL OR {$col}category_id = 0 OR {$col}category_id IN (SELECT id FROM {$categories_table} WHERE {$cat_where}))";
 	}
 
 	/**

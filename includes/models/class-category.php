@@ -36,16 +36,71 @@ class Category extends Model {
 	}
 
 	/**
+	 * Visibility predicate for category listings.
+	 *
+	 * `jt_categories.visibility` was written by the admin UI from the start but
+	 * read by nothing: no listing, no lookup and no REST response filtered on
+	 * it, so a category the owner marked `hidden` was served to anonymous
+	 * visitors on the directory AND by `GET /categories`, which additionally
+	 * disclosed the `visibility` field itself. The route's `permission_callback`
+	 * (`Visibility::rest_check`) could not help — it is a global "is this
+	 * community public" gate, not a per-row filter, and says so.
+	 *
+	 * Deliberately mirrors {@see Space::listing_visibility_sql()}, including its
+	 * semantics: `private` stays discoverable by design, `hidden` is the state
+	 * that conceals. Categories have no membership table, so there is no
+	 * per-member branch — the member case differs from the guest case only in
+	 * seeing `private`.
+	 *
+	 * Owners keep full sight of their own categories: anyone who can manage
+	 * them gets `1=1`, so the admin screens are unaffected by this filter.
+	 *
+	 * @param int|null $user_id Viewer ID (null resolves to the current user, 0 for guests).
+	 * @param string   $alias   Categories-table alias without trailing dot.
+	 * @return array{0:string,1:array} [ SQL fragment, bind values ].
+	 */
+	public static function listing_visibility_sql( ?int $user_id = null, string $alias = '' ): array {
+		$user_id = $user_id ?? get_current_user_id();
+		$col     = '' !== $alias ? $alias . '.' : '';
+
+		if ( $user_id > 0 && ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_manage_categories' ) ) ) {
+			$result = [ '1=1', [] ];
+		} elseif ( $user_id <= 0 ) {
+			$result = [ "{$col}visibility = 'public'", [] ];
+		} else {
+			$result = [ "{$col}visibility IN ('public','private')", [] ];
+		}
+
+		/**
+		 * Filter the category-listing visibility SQL predicate.
+		 *
+		 * @param array{0:string,1:array} $result  [ SQL fragment, bind values ].
+		 * @param int                     $user_id Viewer ID (resolved; 0 for guest).
+		 * @param string                  $alias   Categories-table alias without trailing dot.
+		 */
+		return apply_filters( 'jetonomy_category_listing_visibility_sql', $result, $user_id, $alias );
+	}
+
+	/**
 	 * Find a category by its slug.
 	 *
-	 * @param string $slug
+	 * Visibility-filtered: a `hidden` category is not resolvable by slug for a
+	 * viewer who may not see it, so direct-URL access cannot bypass the
+	 * listings the same predicate governs.
+	 *
+	 * @param string   $slug
+	 * @param int|null $user_id Viewer ID (null resolves to the current user).
 	 * @return object|null
 	 */
-	public static function find_by_slug( string $slug ): ?object {
+	public static function find_by_slug( string $slug, ?int $user_id = null ): ?object {
+		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
 		$row = static::db()->get_row(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE slug = %s',
-				$slug
+				'SELECT * FROM ' . static::table() . " WHERE slug = %s AND {$vis_where}",
+				$slug,
+				...$vis_values
 			)
 		);
 		return $row ?: null;
@@ -56,9 +111,15 @@ class Category extends Model {
 	 *
 	 * @return object[]
 	 */
-	public static function list_top_level(): array {
+	public static function list_top_level( ?int $user_id = null ): array {
+		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
+		$sql = 'SELECT * FROM ' . static::table() . " WHERE (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, name ASC";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		return static::db()->get_results(
-			'SELECT * FROM ' . static::table() . ' WHERE parent_id IS NULL OR parent_id = 0 ORDER BY sort_order ASC, name ASC'
+			empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values )
 		) ?: [];
 	}
 
@@ -68,11 +129,15 @@ class Category extends Model {
 	 * @param int $parent_id
 	 * @return object[]
 	 */
-	public static function list_children( int $parent_id ): array {
+	public static function list_children( int $parent_id, ?int $user_id = null ): array {
+		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE parent_id = %d ORDER BY sort_order ASC, name ASC',
-				$parent_id
+				'SELECT * FROM ' . static::table() . " WHERE parent_id = %d AND {$vis_where} ORDER BY sort_order ASC, name ASC",
+				$parent_id,
+				...$vis_values
 			)
 		) ?: [];
 	}
@@ -94,8 +159,14 @@ class Category extends Model {
 		$per_page = max( 1, min( 100, $per_page ) );
 		$offset   = max( 0, $offset );
 
-		$where  = 'WHERE (parent_id IS NULL OR parent_id = 0)';
-		$values = [];
+		[ $vis_where, $vis_values ] = self::listing_visibility_sql();
+
+		// Anyone who can reach this screen can manage categories, so the
+		// predicate resolves to 1=1 for them and nothing changes here. It is
+		// applied anyway so there is exactly one rule for reading this table
+		// rather than one rule plus a remembered exception.
+		$where  = "WHERE (parent_id IS NULL OR parent_id = 0) AND {$vis_where}";
+		$values = $vis_values;
 		if ( '' !== $search ) {
 			$where   .= ' AND name LIKE %s';
 			$values[] = '%' . static::db()->esc_like( $search ) . '%';

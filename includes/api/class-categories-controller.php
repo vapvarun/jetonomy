@@ -80,9 +80,20 @@ class Categories_Controller extends Base_Controller {
 	public function list_items( WP_REST_Request $request ): WP_REST_Response {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Visibility is filtered HERE as well as in the Category model because
+		// this route deliberately does not go through it: the batched shape
+		// above fetches the whole tree in one query and recurses in PHP. That
+		// optimisation is why a model-level fix alone left this endpoint
+		// serving `hidden` categories — including the `visibility` field — to
+		// anonymous callers. Same predicate, so there is still one rule.
+		[ $vis_where, $vis_values ] = Category::listing_visibility_sql();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table() is a trusted prefixed name; $vis_where is literal SQL from listing_visibility_sql().
+		$sql = 'SELECT * FROM ' . \Jetonomy\table( 'categories' ) . " WHERE {$vis_where} ORDER BY sort_order ASC, name ASC";
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$all_categories = $wpdb->get_results(
-			'SELECT * FROM ' . \Jetonomy\table( 'categories' ) . ' ORDER BY sort_order ASC, name ASC'
+			empty( $vis_values ) ? $sql : $wpdb->prepare( $sql, ...$vis_values )
 		) ?: [];
 
 		$by_parent = [];

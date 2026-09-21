@@ -14,7 +14,9 @@ namespace Jetonomy\QA;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Models\Category;
 use Jetonomy\Models\Restriction;
+use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Models\Tag;
@@ -226,6 +228,7 @@ class Model_Tests {
 
 		$this->test_reorder();
 		$this->test_space_ownership_transfer();
+		$this->test_category_visibility();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -555,6 +558,91 @@ class Model_Tests {
 	 * These assert the arithmetic and the invariant that actually matters -
 	 * a page's writes must stay inside that page's band.
 	 */
+	/**
+	 * Category visibility is ENFORCED, not just stored.
+	 *
+	 * `jt_categories.visibility` was written by the admin UI from day one and
+	 * read by nothing: a `hidden` category was listed on the public directory
+	 * and returned by an unauthenticated `GET /categories`, `visibility` field
+	 * and all. A space inside it leaked the same way, because a space consulted
+	 * only its own column and never its parent's.
+	 *
+	 * Both halves are asserted here rather than in a browser test because the
+	 * defect is in the query, and a template test would pass the moment someone
+	 * hid the row in CSS.
+	 */
+	private function test_category_visibility(): void {
+		global $wpdb;
+
+		$slug = 'jt-qa-vis-' . wp_generate_password( 6, false, false );
+		$wpdb->insert(
+			\Jetonomy\table( 'categories' ),
+			[
+				'name'       => 'QA Visibility Probe',
+				'slug'       => $slug,
+				'visibility' => 'hidden',
+				'parent_id'  => 0,
+				'sort_order' => 0,
+				'created_at' => \Jetonomy\now(),
+			]
+		);
+		$cat_id = (int) $wpdb->insert_id;
+
+		$previous_user = get_current_user_id();
+
+		// CV1-CV3: a guest must not reach a hidden category by any read path.
+		wp_set_current_user( 0 );
+		$guest_slugs = array_column( Category::list_top_level(), 'slug' );
+		$this->check( 'CV1: guest listing omits a hidden category', ! in_array( $slug, $guest_slugs, true ) );
+		$this->check( 'CV2: guest cannot resolve a hidden category by slug', null === Category::find_by_slug( $slug ) );
+
+		[ $guest_where ] = Category::listing_visibility_sql( 0 );
+		$this->check( 'CV3: guest predicate restricts to public', "visibility = 'public'" === $guest_where, $guest_where );
+
+		// CV4: the owner keeps full sight - a filter that blinds the admin
+		// screen would "pass" CV1-CV3 while breaking management.
+		wp_set_current_user( 1 );
+		$admin_slugs = array_column( Category::list_top_level(), 'slug' );
+		$this->check( 'CV4: a category manager still sees a hidden category', in_array( $slug, $admin_slugs, true ) );
+
+		// CV5: effective visibility - a PUBLIC space inside a HIDDEN category
+		// is concealed from a guest, resolved at read time from the parent.
+		$spaces_table = \Jetonomy\table( 'spaces' );
+		$wpdb->insert(
+			$spaces_table,
+			[
+				'category_id' => $cat_id,
+				'parent_id'   => 0,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => 'QA Visibility Probe Space',
+				'slug'        => $slug . '-space',
+				'visibility'  => 'public',
+				'status'      => 'active',
+				'created_at'  => \Jetonomy\now(),
+			]
+		);
+		$space_id = (int) $wpdb->insert_id;
+
+		wp_set_current_user( 0 );
+		$guest_space_ids = array_map( 'intval', array_column( Space::list_by_category( $cat_id, 0 ), 'id' ) );
+		$this->check(
+			'CV5: a public space in a hidden category is concealed from a guest',
+			! in_array( $space_id, $guest_space_ids, true )
+		);
+
+		$owner_space_ids = array_map( 'intval', array_column( Space::list_by_category( $cat_id, 1 ), 'id' ) );
+		$this->check(
+			'CV6: the owner still sees that space',
+			in_array( $space_id, $owner_space_ids, true )
+		);
+
+		wp_set_current_user( $previous_user );
+
+		$wpdb->delete( $spaces_table, [ 'id' => $space_id ] );
+		$wpdb->delete( \Jetonomy\table( 'categories' ), [ 'id' => $cat_id ] );
+	}
+
 	private function test_reorder(): void {
 		// RO1: offset is absolute, derived from page and page size.
 		$this->check( 'RO1: page 1 offset is 0', 0 === jetonomy_reorder_offset( 1, 20 ) );
