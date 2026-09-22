@@ -267,6 +267,32 @@ class Admin {
 		exit;
 	}
 
+	/**
+	 * May the current user save Jetonomy settings?
+	 *
+	 * THE answer, for free and for every Pro settings tab.
+	 *
+	 * The Settings page renders under `jetonomy_manage_settings` (see add_menu),
+	 * and free honours that capability on save via the
+	 * option_page_capability_jetonomy_settings filter below. Every Pro tab,
+	 * however, gated its own save on `manage_options` and returned silently - so
+	 * a manager the owner had deliberately delegated could open every Pro tab,
+	 * change things, and have the save discarded with nothing on screen to say
+	 * why. Nine handlers each answered this question in their own words, and all
+	 * nine answered it differently from free.
+	 *
+	 * Administrators hold `jetonomy_manage_settings` too (Capabilities grants
+	 * every cap to administrator), so this is never narrower than the old check.
+	 * It is NOT the right gate for role administration - editing which role holds
+	 * which capability stays on `manage_options`, or a delegated manager could
+	 * grant their own role anything.
+	 *
+	 * @return bool
+	 */
+	public static function current_user_can_manage_settings(): bool {
+		return current_user_can( 'jetonomy_manage_settings' );
+	}
+
 	// ── Settings API ──
 
 	public function register_settings(): void {
