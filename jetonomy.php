@@ -48,7 +48,25 @@ define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
 // that doesn't carry AS's required functions/constants (EP_NONE, register_post_type
 // with full args, etc.). Real WordPress always has these, so this is smoke-only.
 if ( ! defined( 'JETONOMY_SMOKE_TEST' ) ) {
-	require_once JETONOMY_DIR . 'libs/action-scheduler/action-scheduler.php';
+	$jetonomy_action_scheduler_file = JETONOMY_DIR . 'libs/action-scheduler/action-scheduler.php';
+	if ( file_exists( $jetonomy_action_scheduler_file ) ) {
+		require_once $jetonomy_action_scheduler_file;
+	} else {
+		// An unguarded require here means a bundled-library dir dropped by a bad
+		// copy, an incomplete upload, or a hosting file-count limit takes the
+		// ENTIRE site down (WSOD), not just background jobs. Every job that
+		// depends on AS already checks function_exists( 'as_enqueue_async_action' )
+		// and falls back to WP-Cron (background-jobs standard), so the plugin
+		// itself tolerates AS being absent - only this require_once did not.
+		add_action(
+			'admin_notices',
+			function () {
+				echo '<div class="notice notice-error"><p>';
+				esc_html_e( 'Jetonomy: the bundled Action Scheduler library is missing from libs/action-scheduler/. Background jobs (email digest, badges, AI, reply-by-email, webhooks) will fall back to WP-Cron until the plugin files are restored. Reinstalling Jetonomy from the original zip fixes this.', 'jetonomy' );
+				echo '</p></div>';
+			}
+		);
+	}
 }
 
 require_once JETONOMY_DIR . 'includes/class-autoloader.php';
