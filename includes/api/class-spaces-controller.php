@@ -720,7 +720,23 @@ class Spaces_Controller extends Base_Controller {
 			$data['description'] = sanitize_textarea_field( $request->get_param( 'description' ) );
 		}
 		if ( null !== $request->get_param( 'category_id' ) ) {
-			$data['category_id'] = absint( $request->get_param( 'category_id' ) ) ?: null;
+			$new_category_id = absint( $request->get_param( 'category_id' ) ) ?: null;
+			$old_category_id = (int) ( $space->category_id ?? 0 );
+
+			// A request that clears the category is only honoured when the
+			// editor can actually SEE the category being cleared. Otherwise it
+			// is the space-edit form submitting 0 because the current option
+			// was missing from a visibility-filtered dropdown, and accepting it
+			// unfiles the space - moving a public space out of a hidden
+			// category and onto the community home. The template now always
+			// renders the option; this is the half a crafted request cannot
+			// get around.
+			$clearing = null === $new_category_id && $old_category_id > 0;
+			if ( $clearing && null === \Jetonomy\Models\Category::find_visible( $old_category_id ) ) {
+				$new_category_id = $old_category_id;
+			}
+
+			$data['category_id'] = $new_category_id;
 		}
 		if ( null !== $request->get_param( 'type' ) ) {
 			$data['type'] = sanitize_text_field( $request->get_param( 'type' ) );

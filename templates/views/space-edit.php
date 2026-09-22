@@ -67,6 +67,21 @@ $crumbs = array(
 $current_icon   = (string) ( $space->icon ?? '' );
 $space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
 $categories     = \Jetonomy\Models\Category::list_top_level();
+
+// The space's CURRENT category must always be an option, even when the editor
+// cannot otherwise see it. list_top_level() is visibility-filtered, so a space
+// admin who is not a category manager got a dropdown with no option for the
+// hidden category their space is already in - the select fell back to "No
+// category" and saving silently unfiled the space, which (if its own
+// visibility was public) published it. The editor cannot MOVE a space into a
+// category they cannot see; they just must not lose the one it is in.
+$jt_current_cat_id = (int) ( $space->category_id ?? 0 );
+if ( $jt_current_cat_id > 0 && ! in_array( $jt_current_cat_id, array_map( 'intval', array_column( $categories, 'id' ) ), true ) ) {
+	$jt_current_cat = \Jetonomy\Models\Category::find( $jt_current_cat_id );
+	if ( $jt_current_cat ) {
+		$categories[] = $jt_current_cat;
+	}
+}
 $posts_per_page = isset( $space_settings['posts_per_page'] ) && '' !== $space_settings['posts_per_page'] && (int) $space_settings['posts_per_page'] > 0
 	? absint( $space_settings['posts_per_page'] )
 	: '';

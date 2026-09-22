@@ -499,13 +499,17 @@ class Space extends Model {
 		}
 
 		if ( $user_id <= 0 ) {
-			return [ "{$col}visibility = 'public'" . self::parent_category_clause( $user_id, $col ), [] ];
+			return [ "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), [] ];
 		}
 
 		$members_table = \Jetonomy\table( 'space_members' );
+		$parent        = self::parent_category_clause( $user_id, $col );
+		$readable      = "{$col}visibility = 'public'";
+		if ( '' !== $parent ) {
+			$readable = "({$readable} AND {$parent})";
+		}
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-		$fragment  = "({$col}visibility = 'public' OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-		$fragment .= self::parent_category_clause( $user_id, $col );
+		$fragment = "({$readable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
 		return [ $fragment, [ $user_id ] ];
 	}
 
@@ -541,13 +545,17 @@ class Space extends Model {
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
 			$result = [ '1=1', [] ];
 		} elseif ( $user_id <= 0 ) {
-			$result = [ "{$col}visibility = 'public'" . self::parent_category_clause( $user_id, $col ), [] ];
+			$result = [ "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), [] ];
 		} else {
 			$members_table = \Jetonomy\table( 'space_members' );
+			$parent        = self::parent_category_clause( $user_id, $col );
+			$discoverable  = "{$col}visibility IN ('public','private')";
+			if ( '' !== $parent ) {
+				$discoverable = "({$discoverable} AND {$parent})";
+			}
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-			$fragment  = "({$col}visibility IN ('public','private') OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-			$fragment .= self::parent_category_clause( $user_id, $col );
-			$result    = [ $fragment, [ $user_id ] ];
+			$fragment = "({$discoverable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+			$result   = [ $fragment, [ $user_id ] ];
 		}
 
 		/**
@@ -594,9 +602,20 @@ class Space extends Model {
 	 * Uncategorised spaces (`category_id` NULL or 0) are unaffected — there is
 	 * no parent to inherit from.
 	 *
+	 * MEMBERSHIP OVERRIDES IT. `hidden` means the same thing on a category as
+	 * it has always meant on a space: only members can find this. A hidden
+	 * SPACE stays listed for its own members, so a space inside a hidden
+	 * CATEGORY must too — otherwise the two states the owner reads as one word
+	 * behave differently, and a member of a private space loses it from their
+	 * own directory because the owner tidied the category it sits in. That is
+	 * why callers compose this into the public/private disjunct rather than
+	 * ANDing it across the whole predicate; the membership disjunct is not
+	 * subject to it. {@see self::concealed_by_category()} exempts the same
+	 * viewers on the read side, so a card in a listing always opens.
+	 *
 	 * @param int|null $user_id Viewer ID (0/null for guests).
 	 * @param string   $col     Spaces-table alias prefix, including trailing dot, or ''.
-	 * @return string SQL fragment beginning with ' AND ', or '' when unrestricted.
+	 * @return string Bare SQL condition, or '' when unrestricted.
 	 */
 	private static function parent_category_clause( ?int $user_id, string $col ): string {
 		[ $cat_where ] = \Jetonomy\Models\Category::listing_visibility_sql( $user_id );
@@ -608,7 +627,21 @@ class Space extends Model {
 		$categories_table = \Jetonomy\table( 'categories' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $categories_table is a trusted prefixed name; $cat_where is literal SQL from Category::listing_visibility_sql() (no placeholders in the guest/member branches).
-		return " AND ({$col}category_id IS NULL OR {$col}category_id = 0 OR {$col}category_id IN (SELECT id FROM {$categories_table} WHERE {$cat_where}))";
+		return "({$col}category_id IS NULL OR {$col}category_id = 0 OR {$col}category_id IN (SELECT id FROM {$categories_table} WHERE {$cat_where}))";
+	}
+
+	/**
+	 * `AND <clause>` form of {@see self::parent_category_clause()}, for a
+	 * predicate with no membership disjunct to keep outside it (a guest).
+	 *
+	 * @param int|null $user_id Viewer ID.
+	 * @param string   $col     Alias prefix including trailing dot, or ''.
+	 * @return string
+	 */
+	private static function parent_category_and( ?int $user_id, string $col ): string {
+		$clause = self::parent_category_clause( $user_id, $col );
+
+		return '' === $clause ? '' : ' AND ' . $clause;
 	}
 
 	/**
@@ -677,7 +710,16 @@ class Space extends Model {
 		}
 
 		$user_id = $user_id ?? get_current_user_id();
-		$memo    = (int) $user_id . ':' . $category_id;
+
+		// Membership overrides the parent, exactly as it does in the listing
+		// predicate: a hidden category withholds its spaces from strangers, not
+		// from the members of a space inside it. Checked before the memo
+		// because the answer is per space, not per category.
+		if ( $user_id > 0 && self::admitted( (int) ( $space->id ?? 0 ), (int) $user_id ) ) {
+			return false;
+		}
+
+		$memo = (int) $user_id . ':' . $category_id;
 
 		// Memoised for the request. Permission_Engine::can( 'read', $space )
 		// asks this once per space on a topic list, and the answer for one
@@ -776,6 +818,19 @@ class Space extends Model {
 		}
 
 		if ( ! in_array( (string) ( $space->visibility ?? '' ), array( 'private', 'hidden' ), true ) ) {
+			return true;
+		}
+
+		// The owner reads every space. admitted() deliberately does NOT say
+		// this - it answers "is this viewer admitted", and an administrator who
+		// is not a member is not admitted; that method also backs roster
+		// decisions where claiming otherwise would be wrong. So the bypass
+		// belongs here, on the READ question. Without it GET /spaces/{id}
+		// answered 403 to an administrator for a private space they were not a
+		// member of, while the space page in the browser (which checks
+		// manage_options directly) let the same person straight in - the app
+		// could not open a space the owner was already looking at.
+		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
 			return true;
 		}
 

@@ -701,6 +701,65 @@ class Model_Tests {
 			null === Category::find_visible( $cat_id, 0 )
 		);
 
+		// CV13-CV15: membership overrides the parent, the same way it does for
+		// a hidden SPACE. QA's read of one word has to hold: "hidden" means
+		// only members can find this, so tidying a category must not take a
+		// member's own space away from them - and a card that shows in a
+		// listing must open, which is why the listing and the read side are
+		// asserted together on the same row.
+		$member_id = wp_insert_user(
+			[
+				'user_login' => 'jt_qa_cv_member_' . $post_id,
+				'user_pass'  => wp_generate_password( 16 ),
+				'user_email' => 'jt-qa-cv-' . $post_id . '@test.local',
+				'role'       => 'subscriber',
+			]
+		);
+		$member_id = ( $member_id && ! is_wp_error( $member_id ) ) ? (int) $member_id : 0;
+
+		if ( $member_id ) {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$spaces_table,
+				[
+					'category_id' => $cat_id,
+					'parent_id'   => 0,
+					'author_id'   => 1,
+					'type'        => 'forum',
+					'title'       => 'QA Visibility Probe Private Space',
+					'slug'        => $slug . '-private',
+					'visibility'  => 'private',
+					'status'      => 'active',
+					'created_at'  => \Jetonomy\now(),
+				]
+			);
+			$priv_space_id = (int) $wpdb->insert_id;
+			SpaceMember::add( $priv_space_id, $member_id, 'member' );
+
+			wp_set_current_user( $member_id );
+			$member_space_ids = array_map( 'intval', array_column( Space::list_by_category( $cat_id, $member_id ), 'id' ) );
+			$this->check(
+				'CV13: a member keeps their own space listed inside a hidden category',
+				in_array( $priv_space_id, $member_space_ids, true )
+			);
+			$this->check(
+				'CV14: and can read it - a card that lists must open',
+				Permission_Engine::can( $member_id, 'read', $priv_space_id )
+			);
+			$this->check(
+				'CV15: but gains nothing else in that category',
+				! in_array( $space_id, $member_space_ids, true )
+					&& ! Permission_Engine::can( $member_id, 'read', $space_id )
+			);
+
+			$wpdb->delete( \Jetonomy\table( 'space_members' ), [ 'space_id' => $priv_space_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, [ 'id' => $priv_space_id ] );
+			wp_delete_user( $member_id );
+		} else {
+			$this->skip( 'CV13: member keeps their space', 'test user creation failed' );
+			$this->skip( 'CV14: member can read it', 'precondition not met' );
+			$this->skip( 'CV15: member gains nothing else', 'precondition not met' );
+		}
+
 		// The widen-check that stops all of CV7-CV11 being satisfied by simply
 		// denying everyone.
 		wp_set_current_user( 1 );
