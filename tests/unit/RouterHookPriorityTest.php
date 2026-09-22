@@ -7,7 +7,7 @@ use Jetonomy\Router;
 /**
  * The router renders LAST on template_redirect, and asserts its 200 FIRST.
  *
- * handle_request() renders and exits, so whatever priority it holds is the
+ * handle_non_template_routes() renders and exits, so whatever priority it holds is the
  * point past which no other template_redirect callback runs at all. At the
  * default 10 that silently swallowed every gate registered after it: a
  * maintenance-mode plugin hooking at 11+ never saw the request and Jetonomy
@@ -40,15 +40,15 @@ class RouterHookPriorityTest extends WP_UnitTestCase {
 	}
 
 	public function test_render_runs_after_any_plausible_gate(): void {
-		$priority = has_action( 'template_redirect', array( $this->router, 'handle_request' ) );
+		$priority = has_action( 'template_redirect', array( $this->router, 'handle_non_template_routes' ) );
 
-		$this->assertNotFalse( $priority, 'handle_request must be registered on template_redirect.' );
+		$this->assertNotFalse( $priority, 'handle_non_template_routes must be registered on template_redirect.' );
 		$this->assertGreaterThan(
 			15,
 			$priority,
 			'The render must run after access gates. WP Fusion sits at 13 and 15; a maintenance '
 			. 'plugin commonly sits at 11 or 20. Anything at or below those is swallowed, because '
-			. 'handle_request exits.'
+			. 'handle_non_template_routes exits.'
 		);
 	}
 
@@ -70,12 +70,12 @@ class RouterHookPriorityTest extends WP_UnitTestCase {
 	 */
 	public function test_assertion_leads_and_render_trails(): void {
 		$assert = has_action( 'template_redirect', array( $this->router, 'assert_route_state' ) );
-		$render = has_action( 'template_redirect', array( $this->router, 'handle_request' ) );
+		$render = has_action( 'template_redirect', array( $this->router, 'handle_non_template_routes' ) );
 
 		$this->assertLessThan(
 			$render,
 			$assert,
-			'assert_route_state must run before handle_request, not after it.'
+			'assert_route_state must run before handle_non_template_routes, not after it.'
 		);
 	}
 }
