@@ -86,6 +86,7 @@ class Migrator {
 			// schema-milestone convention as 1.4.2.1 / 1.5.0.1 above.
 			'1.9.4.1' => '1_9_4_1',
 			'1.9.4.2' => '1_9_4_2',
+			'2.0.0'   => '2_0_0',
 		];
 	}
 }

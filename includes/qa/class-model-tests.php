@@ -15,6 +15,7 @@ namespace Jetonomy\QA;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Category;
+use Jetonomy\Models\Import_Map;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
@@ -236,6 +237,7 @@ class Model_Tests {
 		$this->test_bbpress_import_scope();
 		$this->test_media_cleanup_scope();
 		$this->test_category_space_count();
+		$this->test_import_map();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -1137,6 +1139,54 @@ class Model_Tests {
 		$wpdb->delete( $spaces, array( 'id' => $space_id ) );
 		$wpdb->delete( $cats, array( 'id' => $cat_a ) );
 		$wpdb->delete( $cats, array( 'id' => $cat_b ) );
+	}
+
+	/**
+	 * An importer can recognise its OWN rows, and only its own.
+	 *
+	 * This is the mechanism that replaced slug matching, and the reason matters
+	 * more than the mechanics: a bbPress forum called "general" matches an
+	 * owner's own existing "general" space, so a slug-based re-run adopted it
+	 * and poured the source forum's topics into the owner's space - skipping
+	 * the visibility mapping on the way, so private content could land in a
+	 * public space.
+	 *
+	 * IM4 is the one that would catch a regression to slug matching: identity
+	 * must not be shared with a row this importer never created.
+	 */
+	private function test_import_map(): void {
+		global $wpdb;
+
+		$table = \Jetonomy\table( 'import_map' );
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+			$this->skip( 'IM1: import map', 'jt_import_map not present (migration pending)' );
+			return;
+		}
+
+		$source = 'qa-' . wp_generate_password( 6, false, false );
+
+		Import_Map::record( $source, 'space', 4242, 11 );
+		$this->check( 'IM1: a recorded source row resolves to its Jetonomy row', 11 === Import_Map::find( $source, 'space', 4242 ) );
+		$this->check( 'IM2: an unrecorded source row resolves to nothing', 0 === Import_Map::find( $source, 'space', 9999 ) );
+
+		// IM3: a mapping whose target has been deleted must not make the
+		// importer skip that content forever - an owner who deletes an
+		// imported space and re-imports should get it back.
+		Import_Map::record( $source, 'space', 4343, 99999999 );
+		$this->check( 'IM3: a mapping pointing at a deleted row self-heals', 0 === Import_Map::find( $source, 'space', 4343 ) );
+
+		// IM4: identity is per source AND per type. Another importer's row, or
+		// the same id under a different type, is not ours.
+		Import_Map::record( $source, 'post', 4242, 1 );
+		$this->check(
+			'IM4: identity is scoped to source and object type',
+			0 === Import_Map::find( 'qa-other-source', 'space', 4242 )
+			&& 11 === Import_Map::find( $source, 'space', 4242 ),
+			'a different source or type must not resolve to our row'
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $table, array( 'source' => $source ) );
 	}
 
 	private function test_reorder(): void {

@@ -1833,6 +1833,10 @@
     {
       "name": "{prefix}jt_attachments",
       "purpose": "Files attached to a post or reply (1.7.1). Defined in Schema::create_tables(), not only in Migration_1_7_1 - a fresh install never runs a migration, so a migration-only table would be missing on every new site."
+    },
+    {
+      "name": "{prefix}jt_import_map",
+      "purpose": "Source-row to Jetonomy-row identity for every importer (2.0.0). UNIQUE on (source, object_type, source_id) so an importer answers \"did I create this?\" from the source key, never from a slug anything else can also hold."
     }
   ],
   "capabilities": [
@@ -2299,6 +2303,14 @@
       "type": "action",
       "where": "includes/models/class-join-request.php:115",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_media_is_referenced",
+      "type": "filter",
+      "args": "$referenced (bool), $attachment_id (int)",
+      "where": "includes/class-media-library.php (Media_Library::is_referenced)",
+      "consumed_by": null,
+      "notes": "2.0.0. Last word on whether an attachment with no link row is still in use, checked immediately before the orphan sweep deletes it. Fails safe - any truthy return keeps the file."
     },
     {
       "name": "jetonomy_member_card_after",
@@ -4180,6 +4192,7 @@
     "delta_2026_08_22_content_gate": "Follow-up audit after the security batch (Basecamp 10228771444). Reply_Gate RENAMED to Jetonomy\\Permissions\\Content_Gate because it now serves posts as well as replies; a gate named for one caller is a gate the next caller does not look for. NEW Content_Gate::space_accepts_content() carries the archived/locked space rule for callers that have a space but no post. Audited every caller of Reply::create() and every self-service join path, and found the same bug class still live in the WP Abilities API: jetonomy/create-reply checked is_closed but NOT space status, and jetonomy/create-post checked neither, so both could write into an ARCHIVED space that REST refuses with jetonomy_space_restricted. Reproduced (REST 403 vs ability creating reply #2411 in the same space for the same member) and both permission callbacks now route through Content_Gate. Test fixture: SpaceJourneyTest's transfer test now creates its own successor - Space::resolve_successor() falls back to any OTHER manage_options user, so the test silently depended on another test having left an administrator behind. It was the suite's most frequent intermittent failure. Tests: tests/security/ContentGateTest.php (9).",
     "refresh_notes": "Diff-verified against production source. hooks_fired: 0 missing. shortcodes/tables: exact. rest 88 grep vs 86 manifest (2.3%, within gate). ajax +1 real (jetonomy_reorder_spaces); jetonomy_quick_login and jetonomy_upload_image appear only in comments as REST-replaced legacy handlers.",
     "manifest_refresh": "agent-enumeration-only",
+    "delta_2026_09_22_2_0_0_import_identity": "2.0.0 import identity fix. Added table {prefix}jt_import_map (source, object_type, source_id -> object_id, UNIQUE on the triple), created by includes/db/migrations/class-migration_2_0_0.php and read through includes/models/class-import-map.php. Importers used to answer \"did I create this?\" by slug, which adopted an owner's unrelated same-named space on a re-run and poured the source forum's topics into it, and matched replies on post+author+timestamp-to-the-second, silently dropping same-second replies on a FIRST run. Also recorded filter jetonomy_media_is_referenced, live since the orphan-sweep fix but never listed. Tables 22 -> 23.",
     "delta_2026_09_10_1_9_7": "1.9.7 post-release refresh. plugin.version was 1.9.6 against a 1.9.7 tag - the same lag this block recorded at 1.9.4 and called a checklist item. It is a build gate now: bin/build-release.sh triangulates plugin.version and package.json alongside the header, constant and Stable tag, so a release cannot be built while they disagree. No surface delta this cycle: free changed no source file since the last refresh, and Pro's only change (anonymous-posting composer markup) added or removed no hook, route, option or table. Verified against ground-truth greps: REST 86 and shortcodes 8 match exactly; an apparent 2-entry AJAX gap (jetonomy_quick_login, jetonomy_upload_image) was a false positive - both names survive only in comments describing the legacy handlers that REST controllers replaced."
   },
   "static_analysis": {

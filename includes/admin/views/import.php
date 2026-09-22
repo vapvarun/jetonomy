@@ -138,6 +138,23 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						<?php endforeach; ?>
 					</div>
 
+					<?php
+					/*
+					 * What the numbers above do not say. A migration is one-way,
+					 * so the consequences belong in front of the owner BEFORE
+					 * they commit - which statuses are included, that a private
+					 * forum brings its members across, and whether this source
+					 * has been imported already.
+					 */
+					if ( ! empty( $info['notes'] ) ) :
+						?>
+						<ul class="jetonomy-import-notes">
+							<?php foreach ( (array) $info['notes'] as $jt_note ) : ?>
+								<li><?php echo esc_html( $jt_note ); ?></li>
+							<?php endforeach; ?>
+						</ul>
+					<?php endif; ?>
+
 					<!-- Action Buttons -->
 					<div class="jetonomy-import-action">
 						<?php if ( $has_resume ) : ?>

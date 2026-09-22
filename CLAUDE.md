@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 86 REST routes, 44 AJAX handlers, 236 hooks fired (108 actions, 128 filters), 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and independently re-derived from source on 2026-09-08 (`wp jetonomy qa-actions` 348/348); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 86 REST routes, 44 AJAX handlers, 237 hooks fired (108 actions, 129 filters), 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and independently re-derived from source on 2026-09-08 (`wp jetonomy qa-actions` 352/352); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -152,7 +152,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 - **PHP**: 8.1+ required
 - **WP**: 6.7+ required
 - **Namespace**: `Jetonomy\`
-- **Table prefix**: `jt_` (22 custom tables)
+- **Table prefix**: `jt_` (23 custom tables)
 - **REST API**: `jetonomy/v1` (86 endpoints, 22 controllers; 161 endpoints with Pro)
 
 ## Architecture
@@ -170,7 +170,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/class-jetonomy.php` | Singleton, activation, dependency loading |
 | `includes/class-router.php` | URL rewrite rules for /community/* |
 | `includes/class-template-loader.php` | Template resolution with theme overrides |
-| `includes/db/class-schema.php` | All 22 table definitions |
+| `includes/db/class-schema.php` | All 23 table definitions |
 | `includes/db/class-migrator.php` | Version-based schema migrations |
 | `includes/models/` | 22 model classes (Category, Space, Post, Reply, Vote, etc.) |
 | `includes/permissions/class-permission-engine.php` | 3-layer permission resolver |
@@ -213,10 +213,10 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 /community/messages/:id/        → Conversation thread (Pro)
 ```
 
-## Database Tables (22)
-AccessRules, ActivityLog, Attachments, BlockedUsers, Bookmarks, Categories, Flags, InviteLinks, JoinRequests, Notifications, PostTags, Posts, ReadStatus, Replies, Restrictions, Revisions, SpaceMembers, Spaces, Subscriptions, Tags, UserProfiles, Votes
+## Database Tables (23)
+AccessRules, ActivityLog, Attachments, BlockedUsers, Bookmarks, Categories, Flags, ImportMap, InviteLinks, JoinRequests, Notifications, PostTags, Posts, ReadStatus, Replies, Restrictions, Revisions, SpaceMembers, Spaces, Subscriptions, Tags, UserProfiles, Votes
 
-Derived from `CREATE TABLE` in `includes/db/class-schema.php` on 2026-08-20 and matches `audit/manifest.json`. The pre-1.9.4 version of this list named SpaceTags, SpaceTagMap and UserInterests, none of which exist, and omitted Bookmarks, BlockedUsers and Attachments, all of which do.
+Derived from `CREATE TABLE` in `includes/db/class-schema.php` on 2026-08-20 and matches `audit/manifest.json`. `ImportMap` (`jt_import_map`) was added in 2.0.0 so importers identify their own rows by source key instead of by slug. The pre-1.9.4 version of this list named SpaceTags, SpaceTagMap and UserInterests, none of which exist, and omitted Bookmarks, BlockedUsers and Attachments, all of which do.
 
 ## CLI Module (shipped 2026-04-11)
 

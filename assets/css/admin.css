@@ -680,6 +680,23 @@
 
 .jt-status-badge--pending::before { background: var(--jt-admin-warn-dark); }
 
+/* Import consequences, shown under the raw counts. Informational, not a
+   warning: these are things the owner should read, not problems. */
+.jetonomy-import-notes {
+	margin: 12px 0 0;
+	padding: 12px 14px;
+	list-style: disc;
+	padding-inline-start: 30px;
+	background: var(--jt-admin-info-light);
+	border-inline-start: 3px solid var(--jt-admin-info);
+	border-radius: var(--jt-admin-radius);
+	font-size: 0.8125rem;
+	color: var(--jt-admin-info-dark);
+}
+
+.jetonomy-import-notes li { margin: 0 0 6px; }
+.jetonomy-import-notes li:last-child { margin-bottom: 0; }
+
 /* ── List-table headers never break mid-word ──
    The admin tables are `table-layout: fixed` with per-column width classes, so
    a label wider than its column has nowhere to go. Inherited
