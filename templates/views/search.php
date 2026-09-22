@@ -66,7 +66,20 @@ $posts  = [];
 $spaces = [];
 $tags   = [];
 
-if ( '' !== $q && strlen( $q ) >= 2 ) {
+// Has the viewer asked for ANYTHING - a keyword, or a filter on its own?
+//
+// Everything below used to be gated on a keyword alone, so the filters were
+// unreachable until you had already searched, and a filter-only URL
+// (?author_name=aisha, the kind you bookmark or share) rendered the empty
+// state. The REST route has always answered an author-only search - it returns
+// results for author_id with no q - so this was the web UI refusing to do what
+// the API does, which is the three-entry-points rule failing on the surface
+// members actually use.
+$jt_has_filters = ( $date_from || $date_to || $author_id || '' !== $author_name || $tag_slug || 'relevance' !== $sort );
+$jt_has_query   = ( '' !== $q && strlen( $q ) >= 2 );
+$jt_searching   = ( $jt_has_query || $jt_has_filters );
+
+if ( $jt_searching ) {
 	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search();
 	if ( ! $search_adapter ) {
 		$search_adapter = new \Jetonomy\Search\Fulltext_Search();
@@ -205,41 +218,18 @@ $crumbs = [
 				<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>">
 			</form>
 
-			<?php if ( '' !== $q ) : ?>
-				<!-- Filter pills -->
-				<div class="jt-bar jt-mb-20">
-					<div class="jt-pills">
-						<?php
-						$filters = [
-							'all'    => __( 'All', 'jetonomy' ),
-							'posts'  => __( 'Posts', 'jetonomy' ),
-							'spaces' => \Jetonomy\space_label( true ),
-							'tags'   => __( 'Tags', 'jetonomy' ),
-						];
-						foreach ( $filters as $key => $label ) :
-							$f_url = add_query_arg(
-								[
-									'q'      => $q,
-									'filter' => $key,
-								],
-								$base . '/search/'
-							);
-							?>
-							<a href="<?php echo esc_url( $f_url ); ?>"
-								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>"
-								<?php echo $filter === $key ? 'aria-current="true"' : ''; ?>>
-								<?php echo esc_html( $label ); ?>
-							</a>
-						<?php endforeach; ?>
-					</div>
-					<span class="jt-search-result-count">
-						<?php
-						/* translators: %d: number of results */
-						echo esc_html( sprintf( _n( '%d result', '%d results', $total, 'jetonomy' ), $total ) );
-						?>
-					</span>
-				</div>
-
+			<?php
+			/*
+			 * Filters render whether or not a search has run.
+			 *
+			 * They used to live inside the results branch, so the only way to reach
+			 * them was to search for a keyword first - and a filter-only search
+			 * (every post by one author) was therefore impossible from the UI even
+			 * though the REST route has always supported it. Exposing them on the
+			 * landing page is what makes that capability reachable; the accordion
+			 * stays collapsed until used, so the empty page is not busier.
+			 */
+			?>
 				<!-- Advanced filters -->
 				<details class="jt-search-filters jt-mb-20" 
 				<?php
@@ -277,6 +267,41 @@ $crumbs = [
 						</div>
 					</form>
 				</details>
+			<?php if ( $jt_searching ) : ?>
+				<!-- Filter pills -->
+				<div class="jt-bar jt-mb-20">
+					<div class="jt-pills">
+						<?php
+						$filters = [
+							'all'    => __( 'All', 'jetonomy' ),
+							'posts'  => __( 'Posts', 'jetonomy' ),
+							'spaces' => \Jetonomy\space_label( true ),
+							'tags'   => __( 'Tags', 'jetonomy' ),
+						];
+						foreach ( $filters as $key => $label ) :
+							$f_url = add_query_arg(
+								[
+									'q'      => $q,
+									'filter' => $key,
+								],
+								$base . '/search/'
+							);
+							?>
+							<a href="<?php echo esc_url( $f_url ); ?>"
+								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>"
+								<?php echo $filter === $key ? 'aria-current="true"' : ''; ?>>
+								<?php echo esc_html( $label ); ?>
+							</a>
+						<?php endforeach; ?>
+					</div>
+					<span class="jt-search-result-count">
+						<?php
+						/* translators: %d: number of results */
+						echo esc_html( sprintf( _n( '%d result', '%d results', $total, 'jetonomy' ), $total ) );
+						?>
+					</span>
+				</div>
+
 
 				<?php do_action( 'jetonomy_search_filters', $q, $filter, compact( 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' ) ); ?>
 

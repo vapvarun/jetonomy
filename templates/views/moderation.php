@@ -216,6 +216,20 @@ $crumbs = [
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
+<?php
+/*
+ * Same two-column shell as every other community route.
+ *
+ * This view was the only one rendering a bare content column, so the moderation
+ * screen dropped the sidebar entirely - the profile widget and the rest of the
+ * community navigation simply vanished, and a moderator had no way back out
+ * except the browser. The sidebar takes no arguments here, exactly as on the
+ * home route; it is not space-scoped.
+ */
+?>
+<div class="jt-two-col">
+	<main>
+
 <div class="jt-mod-wrap jt-mod-dashboard">
 	<div class="jt-mod-dashboard-head">
 		<div>
@@ -525,4 +539,9 @@ $crumbs = [
 		);
 		?>
 	<?php endif; ?>
+</div>
+
+	</main>
+
+	<?php \Jetonomy\Template_Loader::partial( 'sidebar' ); ?>
 </div>
