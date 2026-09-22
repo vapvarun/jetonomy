@@ -248,11 +248,33 @@ $category     = $space->category_id ? \Jetonomy\Models\Category::find( (int) $sp
 $base         = \Jetonomy\base_url();
 $space_url    = $base . '/s/' . $space->slug . '/';
 
+// Sub-spaces of this space. An import maps sub-forums to child spaces, and
+// until now nothing rendered that: the parent listed no children and the child
+// appeared as an unrelated space beside its parent, so a migrated
+// "Support > Billing" lost the relationship entirely.
+$jt_sub_spaces = \Jetonomy\Models\Space::list_children( (int) $space->id, $_jt_user_id );
+
+// The PARENT belongs in a child's breadcrumb. Home > Category > Child skipped
+// the middle of the hierarchy the owner migrated.
+$jt_parent = ! empty( $space->parent_id )
+	? \Jetonomy\Models\Space::find( (int) $space->parent_id )
+	: null;
+if ( $jt_parent && \Jetonomy\Models\Space::concealed_from_viewer( $jt_parent, $_jt_user_id ) ) {
+	// A parent the viewer may not see must not be named in the trail.
+	$jt_parent = null;
+}
+
 $crumbs = [];
 if ( $category ) {
 	$crumbs[] = [
 		'label' => $category->name,
 		'url'   => '',
+	];
+}
+if ( $jt_parent ) {
+	$crumbs[] = [
+		'label' => $jt_parent->title,
+		'url'   => $base . '/s/' . $jt_parent->slug . '/',
 	];
 }
 $crumbs[] = [
@@ -462,6 +484,40 @@ $crumbs[] = [
 			 * @param bool   $jt_show_members Whether the Members tab is shown (viewer logged in).
 			 */
 			$jt_space_tabs = apply_filters( 'jetonomy_space_tabs', $jt_space_tabs, $space, $jt_show_members );
+			?>
+
+			<?php if ( ! empty( $jt_sub_spaces ) ) : ?>
+				<?php /* translators: %s: the plural space label the site owner configured. */ ?>
+				<nav class="jt-subspaces" aria-label="<?php echo esc_attr( sprintf( __( 'Sub-%s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>">
+					<h2 class="jt-subspaces__title">
+						<?php
+						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+						printf( esc_html__( 'Sub-%s', 'jetonomy' ), esc_html( \Jetonomy\space_label( true, true ) ) );
+						?>
+					</h2>
+					<ul class="jt-subspaces__list">
+						<?php foreach ( $jt_sub_spaces as $jt_sub ) : ?>
+							<li class="jt-subspaces__item">
+								<a class="jt-subspaces__link" href="<?php echo esc_url( $base . '/s/' . $jt_sub->slug . '/' ); ?>">
+									<?php jetonomy_render_space_icon( $jt_sub->icon ?? '', 20, 'jt-space-emoji' ); ?>
+									<span class="jt-subspaces__name"><?php echo esc_html( $jt_sub->title ); ?></span>
+									<span class="jt-subspaces__count">
+										<?php
+										printf(
+											/* translators: %s: number of topics in the sub-space. */
+											esc_html( _n( '%s topic', '%s topics', (int) $jt_sub->post_count, 'jetonomy' ) ),
+											esc_html( number_format_i18n( (int) $jt_sub->post_count ) )
+										);
+										?>
+									</span>
+								</a>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				</nav>
+			<?php endif; ?>
+
+			<?php
 
 			if ( is_array( $jt_space_tabs ) && count( $jt_space_tabs ) > 1 ) :
 				?>

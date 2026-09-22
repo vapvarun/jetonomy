@@ -1032,11 +1032,27 @@ class Space extends Model {
 	 * @param int $parent_id
 	 * @return object[]
 	 */
-	public static function list_children( int $parent_id ): array {
+	public static function list_children( int $parent_id, ?int $user_id = null ): array {
+		if ( $parent_id <= 0 ) {
+			return [];
+		}
+
+		// Visibility-filtered, like every other listing. This method had no
+		// callers at all until the sub-space strip was built on it, so it had
+		// never had to answer the question - and shipping the first caller
+		// against an unfiltered query is how a private sub-forum would have
+		// appeared under a public parent.
+		[ $vis_sql, $vis_params ] = self::listing_visibility_sql( $user_id );
+
+		$params = array_merge( [ $parent_id ], $vis_params );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_sql is literal SQL from listing_visibility_sql().
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE parent_id = %d ORDER BY sort_order ASC, title ASC',
-				$parent_id
+				'SELECT * FROM ' . static::table()
+					. " WHERE parent_id = %d AND status = 'active' AND {$vis_sql}"
+					. ' ORDER BY sort_order ASC, title ASC',
+				$params
 			)
 		) ?: [];
 	}

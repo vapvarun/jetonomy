@@ -247,6 +247,7 @@ class Model_Tests {
 		$this->check_scheduled_contract();
 		$this->check_import_status_mapping();
 		$this->check_robots_single_emitter();
+		$this->check_subspace_listing();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
@@ -268,6 +269,67 @@ class Model_Tests {
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
 	 * space 0 and returned nothing.
 	 */
+	/**
+	 * Sub-spaces are listed, and listed per viewer.
+	 *
+	 * Space::list_children() existed with ZERO callers, so an imported
+	 * sub-forum hierarchy was invisible: the parent listed no children and the
+	 * child sat beside its parent as an unrelated space. Its first caller is the
+	 * sub-space strip, which is also the moment the method first had to answer a
+	 * visibility question - an unfiltered listing would have put a hidden
+	 * sub-forum on a public parent's page.
+	 *
+	 * @return void
+	 */
+	private function check_subspace_listing(): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_t ): int {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$spaces_t,
+				array(
+					'category_id' => 0,
+					'parent_id'   => $parent,
+					'author_id'   => 1,
+					'type'        => 'forum',
+					'title'       => $title,
+					'slug'        => sanitize_title( $title ) . '-' . wp_generate_password( 6, false, false ),
+					'visibility'  => $visibility,
+					'status'      => 'active',
+					'created_at'  => \Jetonomy\now(),
+				)
+			);
+
+			return (int) $wpdb->insert_id;
+		};
+
+		$parent = $make( 'QA subspace parent', 0, 'public' );
+		if ( $parent <= 0 ) {
+			$this->skip( 'SB1: sub-spaces are listed', 'probe insert failed' );
+			$this->skip( 'SB2: a hidden sub-space is withheld', 'precondition not met' );
+			$this->skip( 'SB3: the owner still sees it', 'precondition not met' );
+			return;
+		}
+
+		$open   = $make( 'QA subspace open', $parent, 'public' );
+		$hidden = $make( 'QA subspace hidden', $parent, 'hidden' );
+
+		$guest_ids = array_map( static fn( $r ) => (int) $r->id, Space::list_children( $parent, 0 ) );
+		$owner_ids = array_map( static fn( $r ) => (int) $r->id, Space::list_children( $parent, 1 ) );
+
+		$this->check( 'SB1: a public sub-space is listed under its parent', in_array( $open, $guest_ids, true ) );
+		$this->check( 'SB2: a hidden sub-space is withheld from a guest', ! in_array( $hidden, $guest_ids, true ) );
+		$this->check(
+			'SB3: the owner still sees both',
+			in_array( $open, $owner_ids, true ) && in_array( $hidden, $owner_ids, true )
+		);
+
+		foreach ( array( $hidden, $open, $parent ) as $id ) {
+			$wpdb->delete( $spaces_t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		}
+	}
+
 	/**
 	 * Exactly one robots emitter, expressed through core's filter.
 	 *

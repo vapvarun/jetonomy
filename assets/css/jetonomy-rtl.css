@@ -3394,3 +3394,55 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	outline-offset: 1px;
 	border-radius: 4px;
 }
+
+/* ── Sub-spaces strip ───────────────────────────────────────────────────────
+   An import maps sub-forums to child spaces (parent_id), and nothing rendered
+   that relationship: the parent listed no children and the child sat beside its
+   parent as an unrelated space, so a migrated "Support > Billing" lost its
+   structure. Wraps rather than scrolls, so a parent with a dozen children is
+   usable on a phone without a horizontal gesture. */
+.jt-subspaces { margin-block-end: var(--jt-space-4); }
+.jt-subspaces__title {
+	margin: 0 0 var(--jt-space-2);
+	font-size: var(--jt-text-sm);
+	font-weight: 600;
+	color: var(--jt-text-secondary);
+}
+.jt-subspaces__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--jt-space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.jt-subspaces__item { margin: 0; }
+.jt-subspaces__link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--jt-space-2);
+	min-height: var(--jt-tap);
+	padding: var(--jt-space-2) var(--jt-space-3);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius);
+	background: var(--jt-bg-subtle);
+	color: var(--jt-text);
+	text-decoration: none;
+	transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease);
+}
+.jt-subspaces__link:hover,
+.jt-subspaces__link:focus-visible {
+	background: var(--jt-bg-hover);
+	border-color: var(--jt-border-strong);
+	color: var(--jt-text);
+}
+.jt-subspaces__name { font-weight: 600; }
+.jt-subspaces__count {
+	font-size: var(--jt-text-xs);
+	color: var(--jt-text-tertiary);
+	font-variant-numeric: tabular-nums;
+}
+@media (max-width: 480px) {
+	.jt-subspaces__list { flex-direction: column; }
+	.jt-subspaces__link { width: 100%; }
+}
