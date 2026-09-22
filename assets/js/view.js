@@ -2612,8 +2612,8 @@ const { state, actions } = store( 'jetonomy', {
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
                         window.bnToast( data && data.is_sticky
-                            ? ( state.i18n?.postPinned || 'Post pinned' )
-                            : ( state.i18n?.postUnpinned || 'Post unpinned' )
+                            ? ( state.i18n?.postPinned || 'Pinned to this space' )
+                            : ( state.i18n?.postUnpinned || 'Unpinned from this space' )
                         );
                     }
                     setTimeout( () => window.location.reload(), 600 );
