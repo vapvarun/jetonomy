@@ -1468,6 +1468,12 @@ class Template_Loader {
 							$image     = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
 							$image_alt = $user->display_name;
 						}
+						// Settings > SEO > "Noindex member profiles". This branch
+						// never read the setting: Schema_Markup emitted the tag
+						// for profiles instead, so the two SEO surfaces owned half
+						// the decision each. Now both robots decisions live here,
+						// beside every other route's.
+						$noindex = ! empty( \Jetonomy\seo_settings()['seo_noindex_profiles'] );
 						break;
 					case 'tag':
 						$title = '#' . (string) $data['slug'];
@@ -1656,11 +1662,28 @@ class Template_Loader {
 				$noindex      = (bool) ( $payload['noindex'] ?? false );
 				$article_meta = (array) ( $payload['article_meta'] ?? array() );
 
-				// Always emit robots noindex when the route asks for it —
-				// independent of seo-pro, because seo-pro doesn't currently
-				// emit a follow-aware noindex on these surfaces.
+				// Robots goes through core's wp_robots filter, not a hand-rolled
+				// <meta> echo. Two places printed that tag - here and
+				// Schema_Markup - so a noindexed route emitted it TWICE, which
+				// every site-audit tool flags as a warning the owner then asks
+				// support about. The filter also MERGES with core's own
+				// directives (max-image-preview:large) into one tag instead of
+				// competing with them, and lets an SEO plugin or a site owner
+				// adjust the value the normal way.
+				//
+				// Registered from here rather than at boot because the decision
+				// is per route and lives in this payload. render() runs during
+				// template_include, well before wp_head fires wp_robots(), so the
+				// filter is always in place in time.
 				if ( $noindex ) {
-					echo '<meta name="robots" content="noindex, follow">' . "\n";
+					add_filter(
+						'wp_robots',
+						static function ( array $robots ): array {
+							$robots['noindex'] = true;
+							$robots['follow']  = true;
+							return $robots;
+						}
+					);
 				}
 
 				if ( ! $skip_baseline ) {
@@ -1706,7 +1729,13 @@ class Template_Loader {
 					echo '<link rel="alternate" type="application/json+oembed" href="' . esc_url( $oembed_url ) . '" title="' . esc_attr( $title ) . '">' . "\n";
 				}
 			},
-			1
+			// Priority 0, not 1. The route's noindex decision is expressed by
+			// adding a wp_robots filter, and core runs wp_robots() on wp_head at
+			// priority 1 - registered in default-filters.php at load time, so at
+			// equal priority core wins and our filter arrives after the tag has
+			// already been printed. 0 is the only value that lets the decision
+			// reach the tag core emits.
+			0
 		);
 	}
 

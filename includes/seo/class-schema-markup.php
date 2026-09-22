@@ -44,18 +44,12 @@ class Schema_Markup {
 			return;
 		}
 
-		// Robots noindex for profiles + search is now driven by the
-		// route-aware emitter in Template_Loader::set_seo_meta() (Phase D),
-		// which covers more surfaces. Schema_Markup keeps these legacy
-		// emissions for the case where an admin has the seo-pro extension
-		// disabled and Template_Loader's emit was suppressed by a customer
-		// filter — they're idempotent (browsers de-dupe identical metas).
-		if ( 'profile' === $route && ! empty( $settings['seo_noindex_profiles'] ) ) {
-			echo '<meta name="robots" content="noindex, follow">' . "\n";
-		}
-		if ( 'search' === $route && ! empty( $settings['seo_noindex_search'] ) ) {
-			echo '<meta name="robots" content="noindex, follow">' . "\n";
-		}
+		// No robots tag here. Template_Loader::set_seo_meta() owns that decision
+		// for every route and now expresses it through core's wp_robots filter.
+		// These two echoes were kept as an "idempotent" fallback on the theory
+		// that browsers de-duplicate identical metas - but the tag is read by
+		// crawlers and audit tools, not browsers, and printing it twice is what
+		// Ahrefs, Semrush and Site Health flag. One emitter, one tag.
 
 		$schema = null;
 

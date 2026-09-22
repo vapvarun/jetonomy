@@ -246,6 +246,7 @@ class Model_Tests {
 		$this->check_template_include_contract();
 		$this->check_scheduled_contract();
 		$this->check_import_status_mapping();
+		$this->check_robots_single_emitter();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
@@ -267,6 +268,37 @@ class Model_Tests {
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
 	 * space 0 and returned nothing.
 	 */
+	/**
+	 * Exactly one robots emitter, expressed through core's filter.
+	 *
+	 * Template_Loader and Schema_Markup both printed `<meta name="robots">`, so a
+	 * noindexed route emitted the tag TWICE - which every site-audit tool flags.
+	 * Routing it through wp_robots also merges with core's own directives instead
+	 * of competing with them.
+	 *
+	 * @return void
+	 */
+	private function check_robots_single_emitter(): void {
+		$loader = (string) file_get_contents( JETONOMY_DIR . 'includes/class-template-loader.php' );
+		$schema = (string) file_get_contents( JETONOMY_DIR . 'includes/seo/class-schema-markup.php' );
+
+		$this->check(
+			'RB1: nothing hand-prints a robots meta tag any more',
+			false === strpos( $loader, 'name="robots"' )
+				&& false === strpos( $schema, 'name="robots"' )
+		);
+
+		// RB2: the decision reaches the tag core prints. wp_robots() runs on
+		// wp_head at priority 1 and is registered at load time, so an equal
+		// priority loses the race - the SEO head callback has to be at 0.
+		$this->check(
+			'RB2: both noindex settings are readable by the one emitter',
+			false !== strpos( $loader, "seo_noindex_search" )
+				&& false !== strpos( $loader, "seo_noindex_profiles" )
+				&& false !== strpos( $loader, "'wp_robots'" )
+		);
+	}
+
 	/**
 	 * Importers must carry the SOURCE's moderation state, not publish everything.
 	 *
@@ -1718,8 +1750,41 @@ class Model_Tests {
 
 		$source = 'qa-' . wp_generate_password( 6, false, false );
 
-		Import_Map::record( $source, 'space', 4242, 11 );
-		$this->check( 'IM1: a recorded source row resolves to its Jetonomy row', 11 === Import_Map::find( $source, 'space', 4242 ) );
+		// A REAL row, created here and removed at the end. These assertions used
+		// to point at the literal space id 11 and post id 1, which exist on this
+		// machine and on plenty of others - and nowhere else. Import_Map::find()
+		// correctly self-heals a mapping whose target is gone, so on any site
+		// without space 11 the product behaved perfectly and the suite went RED.
+		// A gate documented as "zero FAIL lines" that fails for no defect teaches
+		// people to ignore red, which is what let the 2.0.0 migration blocker
+		// through in the first place.
+		$spaces_t = table( 'spaces' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$spaces_t,
+			array(
+				'category_id' => 0,
+				'parent_id'   => 0,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => 'QA import-map probe',
+				'slug'        => 'qa-import-map-probe-' . wp_generate_password( 6, false, false ),
+				'visibility'  => 'public',
+				'status'      => 'active',
+				'created_at'  => \Jetonomy\now(),
+			)
+		);
+		$probe_space_id = (int) $wpdb->insert_id;
+
+		if ( $probe_space_id <= 0 ) {
+			$this->skip( 'IM1: a recorded source row resolves', 'probe space insert failed' );
+			$this->skip( 'IM2: an unrecorded source row resolves to nothing', 'precondition not met' );
+			$this->skip( 'IM3: a stale mapping self-heals', 'precondition not met' );
+			$this->skip( 'IM4: identity is scoped to source and type', 'precondition not met' );
+			return;
+		}
+
+		Import_Map::record( $source, 'space', 4242, $probe_space_id );
+		$this->check( 'IM1: a recorded source row resolves to its Jetonomy row', $probe_space_id === Import_Map::find( $source, 'space', 4242 ) );
 		$this->check( 'IM2: an unrecorded source row resolves to nothing', 0 === Import_Map::find( $source, 'space', 9999 ) );
 
 		// IM3: a mapping whose target has been deleted must not make the
@@ -1729,14 +1794,18 @@ class Model_Tests {
 		$this->check( 'IM3: a mapping pointing at a deleted row self-heals', 0 === Import_Map::find( $source, 'space', 4343 ) );
 
 		// IM4: identity is per source AND per type. Another importer's row, or
-		// the same id under a different type, is not ours.
-		Import_Map::record( $source, 'post', 4242, 1 );
+		// the same id under a different type, is not ours. The 'post' mapping
+		// deliberately points at a row that does NOT have to exist - what is
+		// asserted is that the SPACE lookup is unaffected by it.
+		Import_Map::record( $source, 'post', 4242, $probe_space_id );
 		$this->check(
 			'IM4: identity is scoped to source and object type',
 			0 === Import_Map::find( 'qa-other-source', 'space', 4242 )
-			&& 11 === Import_Map::find( $source, 'space', 4242 ),
+			&& $probe_space_id === Import_Map::find( $source, 'space', 4242 ),
 			'a different source or type must not resolve to our row'
 		);
+
+		$wpdb->delete( $spaces_t, array( 'id' => $probe_space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete( $table, array( 'source' => $source ) );
