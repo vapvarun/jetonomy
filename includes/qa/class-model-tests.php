@@ -948,6 +948,8 @@ class Model_Tests {
 	 * to rescue. If MD3 ever fails, that incident is back.
 	 */
 	private function test_media_cleanup_scope(): void {
+		global $wpdb;
+
 		$previous = get_option( 'jetonomy_media_cleanup_report' );
 		delete_option( 'jetonomy_media_cleanup_report' );
 
@@ -976,6 +978,44 @@ class Model_Tests {
 		// else's file. The shape the old sweep destroyed.
 		$foreign = $make( 'QA media foreign', [ \Jetonomy\Media_Library::META_FLAG => '1' ], 30 );
 
+		/*
+		 * MD5-MD7: the sweep must not delete a file that is IN USE.
+		 *
+		 * The first version defined "in use" as "has a jt_attachments link
+		 * row", and the only free caller of Attachment::link() is the importer
+		 * - so every ordinary composer upload looked abandoned. QA reproduced
+		 * it deleting an image inline in a published reply. These three cover
+		 * each way an upload is actually referenced; if any fails, live member
+		 * content is being destroyed.
+		 */
+		$used = array();
+		$mk_used = static function ( string $title ) use ( $make, &$used ) {
+			$id = $make( $title, array( \Jetonomy\Media_Library::META_ORIGIN => 'upload' ), 5 );
+			update_post_meta( $id, '_wp_attached_file', '2026/09/' . sanitize_title( $title ) . '.png' );
+			$used[] = $id;
+			return array( $id, (string) get_post_meta( $id, '_wp_attached_file', true ) );
+		};
+
+		[ $inline_id, $inline_file ] = $mk_used( 'QA media inline in reply' );
+		$reply_id                    = Reply::create(
+			array(
+				'post_id'   => (int) $wpdb->get_var( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" ),
+				'author_id' => 1,
+				'content'   => '<img src="' . esc_url( content_url( '/uploads/' . $inline_file ) ) . '" />',
+			)
+		);
+
+		[ $avatar_id, $avatar_file ] = $mk_used( 'QA media as avatar' );
+		$profiles                    = \Jetonomy\table( 'user_profiles' );
+		$prev_avatar                 = $wpdb->get_var( "SELECT avatar_url FROM {$profiles} WHERE user_id = 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles} SET avatar_url = %s WHERE user_id = 1", content_url( '/uploads/' . $avatar_file ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		[ $cover_id, $cover_file ] = $mk_used( 'QA media as space cover' );
+		$spaces_t                  = \Jetonomy\table( 'spaces' );
+		$cover_space               = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$prev_cover                = $wpdb->get_var( $wpdb->prepare( "SELECT cover_image FROM {$spaces_t} WHERE id = %d", $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_t} SET cover_image = %s WHERE id = %d", content_url( '/uploads/' . $cover_file ), $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
 		$first = \Jetonomy\Media_Library::cleanup_abandoned_uploads();
 		$this->check(
 			'MD1: the first sweep on a site reports and deletes nothing',
@@ -997,6 +1037,22 @@ class Model_Tests {
 		$this->check( 'MD2: the next sweep removes an abandoned upload of ours', ! get_post( $ours_old ), wp_json_encode( $second ) );
 		$this->check( 'MD3: a file that is NOT ours is never deleted', (bool) get_post( $foreign ) );
 		$this->check( 'MD4: an upload inside the 24h grace is kept', (bool) get_post( $ours_fresh ) );
+
+		// The three in-use shapes. Any failure here is live content destroyed.
+		$this->check( 'MD5: an image inline in a published reply is never deleted', (bool) get_post( $inline_id ) );
+		$this->check( 'MD6: a member avatar is never deleted', (bool) get_post( $avatar_id ) );
+		$this->check( 'MD7: a space cover image is never deleted', (bool) get_post( $cover_id ) );
+
+		// Restore the rows the in-use fixtures borrowed.
+		Reply::delete( $reply_id );
+		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles} SET avatar_url = %s WHERE user_id = 1", $prev_avatar ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_t} SET cover_image = %s WHERE id = %d", $prev_cover, $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		foreach ( $used as $id ) {
+			if ( get_post( $id ) ) {
+				wp_delete_post( $id, true );
+			}
+		}
 
 		foreach ( [ $ours_old, $ours_fresh, $foreign ] as $id ) {
 			if ( get_post( $id ) ) {

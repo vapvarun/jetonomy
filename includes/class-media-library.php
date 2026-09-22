@@ -232,6 +232,92 @@ class Media_Library {
 	private const OPT_CLEANUP_REPORT = 'jetonomy_media_cleanup_report';
 
 	/**
+	 * Is this attachment referenced by anything a member can still see?
+	 *
+	 * THE reason this method exists. The first version of the sweep treated
+	 * "has no row in jt_attachments" as "abandoned". That was wrong in the
+	 * worst possible way: the ONLY free caller of Attachment::link() is the
+	 * bbPress/wpForo importer, so an ordinary composer upload never gets a
+	 * link row at all. The sweep therefore deleted images that were inline in
+	 * published replies, member avatars and space covers - the exact
+	 * destroy-live-content failure the META_ORIGIN docblock above was written
+	 * about, reintroduced by a different route.
+	 *
+	 * So absence of a link row proves nothing. Every place an upload can be
+	 * referenced has to be checked, and anything we cannot positively clear is
+	 * treated as in use. Deleting a file we merely failed to find is
+	 * unrecoverable; keeping one we could have deleted costs disk.
+	 *
+	 * @param int $attachment_id Candidate attachment.
+	 * @return bool True when referenced (or when we cannot be sure).
+	 */
+	private static function is_referenced( int $attachment_id ): bool {
+		global $wpdb;
+
+		$url  = (string) wp_get_attachment_url( $attachment_id );
+		$file = (string) get_post_meta( $attachment_id, '_wp_attached_file', true );
+
+		// No resolvable URL means we cannot search for references. Fail safe.
+		if ( '' === $url && '' === $file ) {
+			return true;
+		}
+
+		// Match on the file's own path fragment (e.g. 2026/09/shot.png) rather
+		// than the full URL: an offload plugin (S3/R2) rewrites the host, so a
+		// full-URL match would miss and the file would look unused.
+		$needle = '' !== $file ? $file : wp_basename( $url );
+		$like   = '%' . $wpdb->esc_like( $needle ) . '%';
+
+		// 1. A link row, when the importer wrote one.
+		$links = \Jetonomy\table( 'attachments' );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$links} WHERE attachment_id = %d", $attachment_id ) ) > 0 ) {
+			return true;
+		}
+
+		// 2. Inline in a post or a reply body - how the composer actually uses
+		// an upload, and what the data-loss report was about.
+		foreach ( array( 'posts', 'replies' ) as $table_key ) {
+			$table = \Jetonomy\table( $table_key );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE content LIKE %s", $like ) ) > 0 ) {
+				return true;
+			}
+		}
+
+		// 3. A member's avatar.
+		$profiles = \Jetonomy\table( 'user_profiles' );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$profiles} WHERE avatar_url LIKE %s", $like ) ) > 0 ) {
+			return true;
+		}
+
+		// 4. A space cover or icon.
+		$spaces = \Jetonomy\table( 'spaces' );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE cover_image LIKE %s OR icon LIKE %s", $like, $like ) ) > 0 ) {
+			return true;
+		}
+
+		// 5. Anything the core plugin does not know about. A consumer that
+		// stores an upload somewhere else (Pro, a site's own code) vetoes
+		// the delete here rather than losing the file.
+		/**
+		 * Filter whether a community upload is still referenced.
+		 *
+		 * Return true to keep the file. Default false only means "core found no
+		 * reference"; it is not a claim that nothing uses it.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param bool   $referenced    Whether a reference was found.
+		 * @param int    $attachment_id The attachment.
+		 * @param string $needle        The path fragment searched for.
+		 */
+		return (bool) apply_filters( 'jetonomy_media_is_referenced', false, $attachment_id, $needle );
+	}
+
+	/**
 	 * Action-callback adapter for the scheduled sweep.
 	 *
 	 * The sweep itself returns a report, which tests and any future CLI
@@ -284,13 +370,22 @@ class Media_Library {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query( "DELETE a FROM {$links_table} a LEFT JOIN {$wpdb->posts} p ON p.ID = a.attachment_id WHERE p.ID IS NULL" );
 
+		/*
+		 * CANDIDATES, not victims. This selects uploads of ours past the grace
+		 * window; whether each one is actually unused is decided per row by
+		 * is_referenced() below.
+		 *
+		 * The LEFT JOIN on the link table that used to live here is gone. It
+		 * encoded "no link row = abandoned", and the only free caller of
+		 * Attachment::link() is the importer - so every ordinary composer
+		 * upload looked abandoned and in-use images were deleted.
+		 */
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$stale = $wpdb->get_col(
+		$candidates = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT p.ID FROM {$wpdb->posts} p
 				 INNER JOIN {$wpdb->postmeta} m ON m.post_id = p.ID AND m.meta_key = %s AND m.meta_value = %s
-				 LEFT JOIN {$links_table} a ON a.attachment_id = p.ID
-				 WHERE p.post_type = 'attachment' AND a.id IS NULL AND p.post_date_gmt < %s",
+				 WHERE p.post_type = 'attachment' AND p.post_date_gmt < %s",
 				self::META_ORIGIN,
 				'upload',
 				$cutoff
@@ -298,7 +393,13 @@ class Media_Library {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		$stale = array_map( 'intval', (array) $stale );
+		$stale = array();
+		foreach ( array_map( 'intval', (array) $candidates ) as $candidate_id ) {
+			if ( self::is_referenced( $candidate_id ) ) {
+				continue;
+			}
+			$stale[] = $candidate_id;
+		}
 
 		$report = get_option( self::OPT_CLEANUP_REPORT );
 		if ( ! is_array( $report ) ) {
@@ -330,10 +431,11 @@ class Media_Library {
 
 		$deleted = 0;
 		foreach ( $stale as $attachment_id ) {
-			// Belt and braces: re-check ownership per row, so that even if the
-			// query above is ever loosened we still never delete a file we did
-			// not record as ours.
-			if ( ! self::is_ours( $attachment_id ) ) {
+			// Belt and braces, re-checked immediately before the irreversible
+			// call: ours, and still unreferenced. The reference check is
+			// repeated because the first pass may have run minutes ago on a
+			// large site and a member may have used the file since.
+			if ( ! self::is_ours( $attachment_id ) || self::is_referenced( $attachment_id ) ) {
 				continue;
 			}
 
