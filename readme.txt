@@ -268,6 +268,8 @@ Each site in a Multisite network gets its own independent community. Network act
 
 Data-integrity release: counters, visibility, and settings that said "saved" now actually behave as documented, plus import and media-safety fixes.
 
+* Improve  - Action buttons, vote and bookmark toggles, admin icon alignment, and list-table headers are now consistent across every surface, not just the ones originally reported.
+* Improve  - BuddyPress surfaces use the design-token layer and support dark mode.
 * Fix      - Category and space visibility is now enforced on every read path (search, listings, REST), not just stored as a setting. A space inside a hidden category could still surface through search or a filtered listing.
 * Fix      - The media cleanup sweep no longer deletes images that are still in use.
 * Fix      - Several settings that appeared to save (reputation overrides, the verification email's accent color, and others) now actually apply.
@@ -276,8 +278,10 @@ Data-integrity release: counters, visibility, and settings that said "saved" now
 * Fix      - Sub-forum hierarchy is visible again: a parent space lists its children and a child names its parent.
 * Fix      - Scheduled posts show correctly in wp-admin, and Approve no longer publishes a post early.
 * Fix      - Leaderboard ranks by reputation instead of array position, and ties are ordered consistently.
-* Improve  - Action buttons, vote and bookmark toggles, admin icon alignment, and list-table headers are now consistent across every surface, not just the ones originally reported.
-* Improve  - BuddyPress surfaces use the design-token layer and support dark mode.
+* Fix      - Quoting a reply now attributes the quote to its author; the citation was left blank.
+* Fix      - The Access Rules builder now explains who a membership-adapter rule (WP Fusion, WooCommerce, etc.) catches, matching the built-in rule types.
+* Fix      - The site no longer goes down if the bundled Action Scheduler library is missing from an install; background jobs fall back to WP-Cron instead.
+* Compat   - Aligned with Jetonomy Pro 2.0.0. Install both updates together.
 
 = 1.9.7 - September 2026 =
 
