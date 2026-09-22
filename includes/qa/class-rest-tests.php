@@ -819,6 +819,43 @@ class REST_Tests {
 			$this->skip( 'E32: space feed', 'no public space' );
 		}
 
+		// SF1. Filter-only search (1.9.7). The advanced filters describe topics,
+		// so "this author's topics" with no keyword has to return them - it is
+		// the kind of URL people bookmark and share, and REST has always
+		// answered it. Loopback HTTP because the defect lived in the rendered
+		// template, not in REST: the WHERE always opened with MATCH(...)
+		// AGAINST(%s) bound to the keyword, and AGAINST('') matches no row. A
+		// REST-level check would have passed throughout.
+		//
+		// SF2 is the other half. When a typed name resolves to nobody the
+		// filter must not silently drop, or the page answers "everything this
+		// person wrote" with every topic on the site.
+		$sf_author = $wpdb->get_var( "SELECT author_id FROM {$wpdb->prefix}jt_posts WHERE status = 'publish' AND is_anonymous = 0 GROUP BY author_id ORDER BY COUNT(*) DESC LIMIT 1" );
+		if ( $sf_author ) {
+			$sf_url  = \Jetonomy\base_url() . '/search/?author_id=' . (int) $sf_author;
+			$sf_res  = wp_remote_get( $sf_url, [ 'timeout' => 10 ] );
+			$sf_body = (string) wp_remote_retrieve_body( $sf_res );
+			$sf_hits = preg_match( '/(\d+)\s+results?/i', wp_strip_all_tags( $sf_body ), $sf_m ) ? (int) $sf_m[1] : 0;
+
+			$this->check(
+				'SF1: author filter with no keyword returns results',
+				$sf_hits > 0,
+				"author {$sf_author} → {$sf_hits} results"
+			);
+
+			$sf_bad  = wp_remote_get( \Jetonomy\base_url() . '/search/?author=zzz-no-such-member-zzz', [ 'timeout' => 10 ] );
+			$sf_btxt = wp_strip_all_tags( (string) wp_remote_retrieve_body( $sf_bad ) );
+			$sf_bhit = preg_match( '/(\d+)\s+results?/i', $sf_btxt, $sf_bm ) ? (int) $sf_bm[1] : 0;
+
+			$this->check(
+				'SF2: an author nobody answers to returns nothing, not everything',
+				0 === $sf_bhit,
+				"unresolvable author → {$sf_bhit} results"
+			);
+		} else {
+			$this->skip( 'SF1: filter-only search', 'no published non-anonymous post' );
+		}
+
 		// SM1. Sitemap survives an SEO plugin that claims the URL at request
 		// time. Yoast and Rank Math compete through the rewrite table, so
 		// Router::prioritize_rules() handles them; AIOSEO never registers a

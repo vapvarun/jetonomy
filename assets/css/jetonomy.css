@@ -398,7 +398,6 @@
   .jt-icon-picker .jt-icon-option:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); }
   .jt-icon-picker .jt-icon-option input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
   .jt-icon-picker .jt-icon-option.is-selected { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
-  .jt-icon-picker .jt-icon-option[hidden] { display: none; }
   .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; color: var(--jt-accent); }
   .jt-icon-option-svg svg { width: 22px; height: 22px; }
   /* min-height 40px: this button measured 23px tall in the icon picker on admin
@@ -1212,7 +1211,6 @@
 
   /* ── Similar Topics panel ── */
   .jt-similar { margin-top: 8px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
-  .jt-similar[hidden] { display: none; }
   .jt-similar-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--jt-bg-subtle); border-bottom: 1px solid var(--jt-border); }
   .jt-similar-label { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-similar-toggle { font-size: 0.8125rem; color: var(--jt-text-tertiary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
@@ -1480,7 +1478,6 @@
     border-radius: var(--jt-radius);
   }
 
-  .jt-notif-bulkbar[hidden] { display: none; }
 
   .jt-notif-bulkbar__selectall {
     display: inline-flex;
@@ -1596,7 +1593,6 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
-  .jt-notif-item__menu-list[hidden] { display: none; }
 
   .jt-notif-item__menu-list li { margin: 0; }
 
@@ -1952,8 +1948,6 @@
   .jt-avatar-hint { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-avatar-controls { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .jt-avatar-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-  /* .jt-btn's display beats the UA [hidden] rule — make hidden stick. */
-  .jt-avatar-buttons button[hidden] { display: none; }
 
   /* ── Composer login ── */
   .jt-editor-login { text-align: center; padding: 20px; }
@@ -2011,13 +2005,11 @@
   /* [1.4.3 WS3-B] Positioning owned by jetonomySmartDropdown (position:
      fixed + JS-computed top/left). Keep z-index/border/background only. */
   .jt-publish-mode__menu { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
-  .jt-publish-mode__menu[hidden] { display: none; }
   .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: left; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
   .jt-publish-mode__option:hover { background: var(--jt-bg-hover); }
 
   /* ── Schedule panel ── */
   .jt-schedule-panel { margin-top: 16px; padding: 16px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); border: 1px solid var(--jt-border); }
-  .jt-schedule-panel[hidden] { display: none; }
   /* Restore native appearance so date/time inputs open their browser
      picker on click. The base .jt-input rule sets -webkit-appearance: none
      for consistent text-input styling; for date/time inputs that kills the
@@ -2436,7 +2428,6 @@
 	font-size: 0.9375rem;
 	line-height: 1.4;
 }
-.jt-form-error[hidden] { display: none; }
 
 @media (max-width: 640px) {
 	.jt-form-error { padding: 8px 12px; font-size: 0.875rem; }
@@ -3453,3 +3444,18 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-subspaces__list { flex-direction: column; }
 	.jt-subspaces__link { width: 100%; }
 }
+
+/* ── hidden means hidden ──
+   The HTML `hidden` attribute is how the templates and the JS hide a control
+   (the cover-image Remove button, the schedule panel, a bulk bar). The UA rule
+   behind it is `[hidden] { display: none }` at specificity (0,1,0), which loses
+   to any component rule that sets display - `.jt-app .jt-btn { display:
+   inline-flex }` is (0,2,0). So `hidden` was silently inert on our components,
+   and the owner saw a Remove button on a space with no cover image to remove.
+
+   This was previously patched one component at a time (icon option, similar
+   panel, bulk bar, avatar buttons, publish menu, schedule panel, form error) -
+   eight rules that each re-fixed the same thing for one selector and left the
+   next one broken. One declaration at the end of the cascade covers every
+   element the plugin hides, including ones added later. */
+.jt-app [hidden] { display: none !important; }

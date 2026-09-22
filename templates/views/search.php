@@ -25,7 +25,8 @@ $date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GE
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $date_to = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$author_id = isset( $_GET['author_id'] ) ? absint( $_GET['author_id'] ) : 0;
+$jt_author_unresolved = false;
+$author_id            = isset( $_GET['author_id'] ) ? absint( $_GET['author_id'] ) : 0;
 // Author filter is by NAME for humans (a member can't know a numeric user ID).
 // Resolve a typed name to an author_id: exact login first, then a display-name
 // match. `author_id` (programmatic / REST) still works and takes precedence.
@@ -47,6 +48,12 @@ if ( ! $author_id && '' !== $author_name ) {
 	if ( $jt_author_user ) {
 		$author_id   = (int) $jt_author_user->ID;
 		$author_name = \Jetonomy\user_display_name( $jt_author_user );
+	} else {
+		// A name nobody answers to. Without this the filter silently drops -
+		// $author_id stays 0, so no author clause is added and the search
+		// returns every visible topic, which reads as "here is everything this
+		// person wrote". Say no results instead, which is the truth.
+		$jt_author_unresolved = true;
 	}
 } elseif ( $author_id && '' === $author_name ) {
 	// author_id came from the URL — show the name in the input.
@@ -79,7 +86,7 @@ $jt_has_filters = ( $date_from || $date_to || $author_id || '' !== $author_name 
 $jt_has_query   = ( '' !== $q && strlen( $q ) >= 2 );
 $jt_searching   = ( $jt_has_query || $jt_has_filters );
 
-if ( $jt_searching ) {
+if ( $jt_searching && ! $jt_author_unresolved ) {
 	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search();
 	if ( ! $search_adapter ) {
 		$search_adapter = new \Jetonomy\Search\Fulltext_Search();
@@ -91,8 +98,20 @@ if ( $jt_searching ) {
 			global $wpdb;
 			$posts_tbl  = \Jetonomy\table( 'posts' );
 			$spaces_tbl = \Jetonomy\table( 'spaces' );
-			$where      = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
-			$params     = [ $q ];
+			// The relevance clause only belongs here when there IS a keyword.
+			// AGAINST('') matches no row, so binding it unconditionally made
+			// every filter-only request ("show me this author's topics", the
+			// kind you bookmark) return nothing - while REST answered the same
+			// query fine. The filters were let into this branch before the
+			// query stopped requiring a keyword, which is why the landing page
+			// looked fixed and the results were still empty.
+			$where  = [ "p.status = 'publish'" ];
+			$params = [];
+
+			if ( $jt_has_query ) {
+				array_unshift( $where, 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)' );
+				$params[] = $q;
+			}
 
 			if ( $date_from ) {
 				$where[]  = 'p.created_at >= %s';
@@ -173,11 +192,16 @@ if ( $jt_searching ) {
 		}
 	}
 
-	if ( in_array( $filter, [ 'all', 'spaces' ], true ) ) {
+	// Spaces and tags are keyword searches - the advanced filters (author, date,
+	// tag) describe topics, not either of these. Without this guard a
+	// filter-only request searched them for '', and the tag LIKE '%%' matched
+	// every tag on the site, so "this author's topics" came back decorated with
+	// 15 arbitrary tags.
+	if ( $jt_has_query && in_array( $filter, [ 'all', 'spaces' ], true ) ) {
 		$spaces = $search_adapter->search( $q, 'space', null, 10, 0 );
 	}
 
-	if ( in_array( $filter, [ 'all', 'tags' ], true ) ) {
+	if ( $jt_has_query && in_array( $filter, [ 'all', 'tags' ], true ) ) {
 		global $wpdb;
 		$tags_tbl = \Jetonomy\table( 'tags' );
 		$like     = '%' . $wpdb->esc_like( $q ) . '%';
