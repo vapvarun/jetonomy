@@ -971,9 +971,18 @@
 
 					// The "who matches" half. Keyed off the raw type, so an
 					// adapter option ("membership:learndash") falls through to
-					// no note rather than showing a built-in type's sentence.
-					var typeNotes = i18n.typeNotes || {};
-					var note      = typeNotes[$('#rule-type').val()] || '';
+					// the generic membership note below rather than showing a
+					// built-in type's sentence.
+					var typeNotes  = i18n.typeNotes || {};
+					var ruleTypeId = $('#rule-type').val();
+					var note       = typeNotes[ruleTypeId] || '';
+					if (!note && ruleTypeId && ruleTypeId.indexOf('membership:') === 0 && i18n.membershipNote) {
+						var adapterId2 = ruleTypeId.replace('membership:', '');
+						var adapterRow = adapters.filter(function(a) { return a.id === adapterId2; })[0];
+						if (adapterRow) {
+							note = i18n.membershipNote.replace('%s', adapterRow.label);
+						}
+					}
 
 					$out.html('').append($('<span/>').text(sentence));
 					if (warn) {

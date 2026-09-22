@@ -1274,6 +1274,13 @@ class Admin {
 							'capability'  => __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
 							'trust_level' => __( 'Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ),
 						),
+						// Membership adapters register their own types at runtime
+						// (membership:woocommerce, membership:wpfusion, ...), so
+						// they can't have a fixed entry above. %s is the adapter's
+						// own label, already the single source of truth for its
+						// name elsewhere in this screen.
+						/* translators: %s: the membership adapter's name, e.g. "WooCommerce Memberships". */
+						'membershipNote'   => __( 'Matches members who hold the %s level you pick below.', 'jetonomy' ),
 						// Per-type placeholder for the value box. One generic
 						// example cannot serve a role slug, a capability and a
 						// number at the same time.
