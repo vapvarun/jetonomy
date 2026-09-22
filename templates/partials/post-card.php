@@ -179,6 +179,7 @@ if ( $prefix_name && $space ) {
 			data-wp-on--click="actions.toggleBookmark"
 			data-post-id="<?php echo absint( $post->id ); ?>"
 			data-bookmarked="1"
+			aria-pressed="true"
 			data-bookmark-context="list"
 			title="<?php esc_attr_e( 'Remove bookmark', 'jetonomy' ); ?>"
 			aria-label="<?php esc_attr_e( 'Remove bookmark', 'jetonomy' ); ?>">
