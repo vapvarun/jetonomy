@@ -34,7 +34,7 @@ If you're still running bbPress, wpForo, or Asgaros, Jetonomy ships with one-cli
 
 ### Built to Be Fast at Scale
 
-Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 22 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
+Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 23 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
 
 Every list view is paginated with indexed `LIMIT`/`OFFSET` queries, and page totals come from dedicated `COUNT(*)` methods rather than by loading rows and counting them. Frequently accessed data is cached through the WordPress object cache, so Redis or Memcached are used automatically if you have them. Batch queries everywhere - no N+1 problems.
 
@@ -127,7 +127,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 **Developer Tools**
 - 81 REST routes (109 method-endpoints) at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
-- 233 action hooks and filters for customization (106 actions, 127 filters)
+- 239 action hooks and filters for customization (110 actions, 129 filters)
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
 - RTL stylesheet included
@@ -256,7 +256,7 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 81 REST routes / 109 method-endpoints (141 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 237 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 81 REST routes / 109 method-endpoints (141 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 239 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 

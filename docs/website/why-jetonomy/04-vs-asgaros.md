@@ -26,7 +26,7 @@ How Jetonomy compares to Asgaros Forum - moving up from a lightweight forum to a
 | Moderation | Approve / unapprove topics | Flag system + queue + auto-rules (Pro) |
 | Anti-spam | reCAPTCHA / honeypot | Akismet + reCAPTCHA v3 + Turnstile (invisible) |
 | Membership gating | Not built-in | Adapter system (MemberPress, PMPro free; WooCommerce, LMS Pro) |
-| REST API | Limited | 80 endpoints (153 with Pro) |
+| REST API | Limited | 81 routes (141 with Pro) |
 | Private messaging | Not built-in | Built-in (Pro) |
 | Polls | Not built-in | Built-in (Pro) |
 | Analytics | Basic stats | Dashboard with export (Pro) |

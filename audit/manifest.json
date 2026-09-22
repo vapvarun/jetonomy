@@ -13,6 +13,9 @@
   },
   "rest": {
     "namespace": "jetonomy/v1",
+    "route_count": 81,
+    "method_endpoints": 109,
+    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-09-22. route_count INCLUDES the /jetonomy/v1 index route itself (80 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 86 entries covering 80 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
     "endpoints": [
       {
         "route": "/app/config",

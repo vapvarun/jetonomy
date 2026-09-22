@@ -41,7 +41,7 @@ Jetonomy is a next-gen discussion platform for WordPress. It provides **forums, 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Storage | Custom MySQL tables (22) | Performance at 10,000+ posts/space; CPTs cannot scale |
-| API | WP REST API (`jetonomy/v1`) | 80 endpoints - clean decoupling of data from views |
+| API | WP REST API (`jetonomy/v1`) | 81 routes (109 method-endpoints) - clean decoupling of data from views |
 | Frontend | PHP templates + WP Interactivity API | SSR for SEO; reactive for UX |
 | Permissions | 3-layer engine (ban → WP caps → space roles) | Fine-grained control without custom role plugins |
 | Integrations | Universal adapter interfaces | Swap membership/search/email/AI providers without touching core (there is no realtime adapter - live updates are REST polling) |
@@ -465,7 +465,7 @@ Shared methods:
 - `get_current_user_id()` - returns WP user ID or 0
 - `permission_error()` - standard 403 `WP_Error`
 - `validate_space_access()` - checks `Permission_Engine::can()`
-- Cursor-based pagination helpers
+- Offset-based pagination helpers
 
 ### Full Endpoint Reference
 
@@ -701,7 +701,7 @@ Extends the `jetonomy` store with:
 | `post-card.php` | Space listing rows |
 | `reply-card.php` | Reply rendering (fires `jetonomy_reply_actions`) |
 | `composer.php` | Rich text input (used in new-post + replies) |
-| `pagination.php` | Cursor-based pagination controls |
+| `pagination.php` | Offset-based pagination controls |
 | `avatar.php` | Reusable user avatar with trust badge |
 | `breadcrumb.php` | Category → Space breadcrumbs |
 | `sidebar.php` | Space/category sidebar widget area |

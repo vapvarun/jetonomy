@@ -572,6 +572,6 @@ add_action( 'plugins_loaded', function() {
 
 ## What's Next?
 
-- [REST API Reference](./01-rest-api.md) - All 48+ free endpoints (90+ with Pro) in detail
+- [REST API Reference](./01-rest-api.md) - All 81 free routes (141 with Pro) in detail
 - [Hooks Reference](./02-hooks-reference.md) - Connect your adapter to content lifecycle events
 - [Template Overrides](./03-template-overrides.md) - Customize the community UI
