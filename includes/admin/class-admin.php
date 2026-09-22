@@ -751,9 +751,28 @@ class Admin {
 			$defaults  = \Jetonomy\Trust\Reputation::action_points_defaults();
 			$clean_rep = array();
 			foreach ( $defaults as $action_key => $default_val ) {
-				if ( array_key_exists( $action_key, $raw_rep ) ) {
-					$clean_rep[ $action_key ] = (int) $raw_rep[ $action_key ];
+				if ( ! array_key_exists( $action_key, $raw_rep ) ) {
+					continue;
 				}
+
+				// An empty field means "use the default", not zero. Storing 0 for a
+				// cleared box silently turned off the points for that action.
+				if ( '' === trim( (string) $raw_rep[ $action_key ] ) ) {
+					continue;
+				}
+
+				// Store only what DIFFERS from the default. The form posts every
+				// action, so persisting them all made the first save a full set of
+				// overrides - after which the jetonomy_reputation_points_map filter
+				// could never apply again, because Reputation::points_for() reads a
+				// stored override ahead of the filtered map. An owner who never
+				// touched this tab had their integration's ladder silently frozen
+				// by visiting Permissions once.
+				if ( (int) $raw_rep[ $action_key ] === (int) $default_val ) {
+					continue;
+				}
+
+				$clean_rep[ $action_key ] = (int) $raw_rep[ $action_key ];
 			}
 			$clean['reputation_points'] = $clean_rep;
 		}

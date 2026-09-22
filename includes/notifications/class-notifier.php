@@ -1399,7 +1399,11 @@ class Notifier {
 		 * @param string $accent Hex color.
 		 * @param string $type   Notification type.
 		 */
-		$accent      = (string) apply_filters( 'jetonomy_email_accent_color', (string) ( $settings['accent_color'] ?? '#3B82F6' ), $type );
+		// #0073aa, not #3B82F6. The Appearance tab's default IS #0073aa, and the
+		// token layer treats that value as the "owner has not chosen an accent"
+		// sentinel - so an owner who never picked a colour got a site in one blue
+		// and emails in a different one, with nothing to explain the mismatch.
+		$accent      = (string) apply_filters( 'jetonomy_email_accent_color', (string) ( $settings['accent_color'] ?? '#0073aa' ), $type );
 		$accent_safe = esc_attr( $accent );
 
 		/**
