@@ -686,7 +686,14 @@ class Asgaros_Importer extends Importer {
 					'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
 					'content'       => wp_kses_post( $text ),
 					'content_plain' => \jetonomy_content_to_plain( $text ),
-					'status'        => 'publish',
+					// Map the SOURCE approval, exactly as the topic import above
+					// does with its `approved` column. Hard-coding 'publish'
+					// pushed every unapproved Asgaros reply live on import -
+					// content a moderator had deliberately held back became
+					// public the moment the owner migrated. Asgaros omits the
+					// column on older schemas, so a missing value is treated as
+					// approved rather than burying a whole forum in the queue.
+					'status'        => ( ! isset( $asgaros_post->approved ) || 1 === (int) $asgaros_post->approved ) ? 'publish' : 'pending',
 					'created_at'    => $asgaros_post->date ?? now(),
 				]
 			);

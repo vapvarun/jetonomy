@@ -855,6 +855,30 @@ class WPForo_Importer extends Importer {
 	 * @param object[] $posts wpForo post rows (excluding each topic's first post).
 	 * @return int Rows CONSUMED (including skipped ones).
 	 */
+	/**
+	 * Jetonomy status for one wpForo post (reply) row.
+	 *
+	 * The source stores 0 = approved and any other value = held for moderation, and
+	 * carries a separate `private` flag. A held reply becomes `pending` so it
+	 * lands in the moderation queue the owner already uses, and a private one
+	 * becomes `hidden` rather than being silently published or silently dropped.
+	 *
+	 * Shared with the count queries so the pre-import estimate and the import
+	 * agree - the bbPress card was bounced for exactly that asymmetry, where the
+	 * estimate applied the same filter as the import and hid the shortfall from
+	 * both ends.
+	 *
+	 * @param object $row wpForo post row.
+	 * @return string 'publish' | 'pending' | 'hidden'
+	 */
+	private static function map_reply_status( object $row ): string {
+		if ( ! empty( $row->private ) ) {
+			return 'hidden';
+		}
+
+		return 0 === (int) ( $row->status ?? 0 ) ? 'publish' : 'pending';
+	}
+
 	private function import_reply_rows( array $posts ): int {
 		$consumed = 0;
 		$total    = count( $posts );
@@ -887,7 +911,13 @@ class WPForo_Importer extends Importer {
 					'author_id'     => (int) $wf_post->userid,
 					'content'       => wp_kses_post( $body ),
 					'content_plain' => \jetonomy_content_to_plain( $body ),
-					'status'        => 'publish',
+					// Map the SOURCE status, exactly as the topic import above
+					// does. Hard-coding 'publish' pushed every unapproved or
+					// private wpForo reply live on import: content a moderator
+					// had held back, or a member had marked private, became
+					// public the moment the owner migrated. wpForo uses
+					// status 0 = approved, anything else = held.
+					'status'        => self::map_reply_status( $wf_post ),
 					'created_at'    => $wf_post->created ?? now(),
 				]
 			);

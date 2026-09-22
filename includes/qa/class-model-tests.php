@@ -245,6 +245,7 @@ class Model_Tests {
 		$this->check_settings_round_trip();
 		$this->check_template_include_contract();
 		$this->check_scheduled_contract();
+		$this->check_import_status_mapping();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
@@ -266,6 +267,57 @@ class Model_Tests {
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
 	 * space 0 and returned nothing.
 	 */
+	/**
+	 * Importers must carry the SOURCE's moderation state, not publish everything.
+	 *
+	 * wpForo and Asgaros both mapped topic status correctly and then hard-coded
+	 * replies to 'publish', so content a moderator had held back - or a member
+	 * had marked private - went live the moment the owner migrated. This is the
+	 * bbPress status defect in the opposite direction: that one dropped content,
+	 * these published it.
+	 *
+	 * @return void
+	 */
+	private function check_import_status_mapping(): void {
+		$mapper = new \ReflectionMethod( '\Jetonomy\Import\WpForo_Importer', 'map_reply_status' );
+		$mapper->setAccessible( true );
+
+		$cases = array(
+			'approved'  => array( (object) array( 'status' => 0 ), 'publish' ),
+			'held'      => array( (object) array( 'status' => 1 ), 'pending' ),
+			'private'   => array( (object) array( 'status' => 0, 'private' => 1 ), 'hidden' ),
+			'no column' => array( (object) array(), 'publish' ),
+		);
+
+		$wrong = array();
+		foreach ( $cases as $label => $case ) {
+			list( $row, $expected ) = $case;
+			$actual                 = (string) $mapper->invoke( null, $row );
+			if ( $actual !== $expected ) {
+				$wrong[] = "{$label}: got {$actual}, want {$expected}";
+			}
+		}
+
+		$this->check(
+			'WF1: a held wpForo reply imports as pending, a private one as hidden',
+			array() === $wrong,
+			implode( '; ', $wrong )
+		);
+
+		// WF2: neither importer may hard-code a published reply any more. A
+		// grep-shaped assertion, because the alternative is a full wpForo /
+		// Asgaros fixture on a site that has neither installed - and the defect
+		// IS the literal.
+		$wf  = (string) file_get_contents( JETONOMY_DIR . 'includes/import/class-wpforo-importer.php' );
+		$asg = (string) file_get_contents( JETONOMY_DIR . 'includes/import/class-asgaros-importer.php' );
+
+		$this->check(
+			'WF2: no importer hard-codes replies to publish',
+			false === strpos( $wf, "'status'        => 'publish'," )
+				&& false === strpos( $asg, "'status'        => 'publish'," )
+		);
+	}
+
 	/**
 	 * Approving a SCHEDULED draft must publish it properly, not poke its status.
 	 *
