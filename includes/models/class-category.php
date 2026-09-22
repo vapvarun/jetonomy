@@ -107,6 +107,39 @@ class Category extends Model {
 	}
 
 	/**
+	 * Find a category by id, but only if the viewer may see it.
+	 *
+	 * The id twin of {@see self::find_by_slug()}. Model::find() is the raw
+	 * fetch and stays unfiltered because internal callers (breadcrumbs on a
+	 * space the viewer already reached, admin screens behind a capability
+	 * check) legitimately need the row. Anything answering an untrusted id -
+	 * REST, a shortcode attribute - asks this instead. Without it, GET
+	 * /categories/{id} answered 200 with a `hidden` category's name to a guest
+	 * while the collection beside it correctly withheld the same row.
+	 *
+	 * @param int      $id      Category id.
+	 * @param int|null $user_id Viewer ID (null resolves to the current user).
+	 * @return object|null
+	 */
+	public static function find_visible( int $id, ?int $user_id = null ): ?object {
+		if ( $id <= 0 ) {
+			return null;
+		}
+
+		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . " WHERE id = %d AND {$vis_where}",
+				$id,
+				...$vis_values
+			)
+		);
+		return $row ?: null;
+	}
+
+	/**
 	 * List all top-level categories (parent_id IS NULL or 0).
 	 *
 	 * @return object[]

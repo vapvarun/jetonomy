@@ -145,9 +145,13 @@ class Categories_Controller extends Base_Controller {
 	 */
 	public function get_item( $request ) {
 		$id       = absint( $request->get_param( 'id' ) );
-		$category = Category::find( $id );
+		$category = Category::find_visible( $id );
 
 		if ( ! $category ) {
+			// 404, not 403: a category the viewer may not see must not be
+			// distinguishable from one that does not exist. The mutation
+			// handlers below keep the raw find() - they are already behind
+			// jetonomy_manage_categories, which sees everything.
 			return $this->not_found( 'Category' );
 		}
 

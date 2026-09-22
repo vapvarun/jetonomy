@@ -1756,16 +1756,18 @@ class Template_Loader {
 			case 'post':
 				if ( $slug ) {
 					$post = \Jetonomy\Models\Post::find_by_slug( $slug );
-					if ( ! $post ) {
+					// can_read_post() is the authoritative read decision and
+					// already owns the status gate (hoisted there in 1.8.0), the
+					// per-post privacy gate and the space gate - including a
+					// space concealed by its category. This case used to re-state
+					// only the status half in its own words, so a published topic
+					// the viewer could not read rendered "Post not found" under
+					// HTTP 200: a soft 404 the REST route (404) and the space
+					// route (404) both disagreed with, and one search engines
+					// index. The in-template gates run after the theme has begun
+					// output, which is why the status has to be decided here.
+					if ( ! $post || ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 						status_header( 404 );
-					} elseif ( 'publish' !== $post->status ) {
-						// Allow moderators and the post author to view non-published posts.
-						$user_id   = get_current_user_id();
-						$is_author = $user_id && (int) $post->author_id === $user_id;
-						$can_mod   = current_user_can( 'jetonomy_moderate' );
-						if ( ! $is_author && ! $can_mod ) {
-							status_header( 404 );
-						}
 					}
 				}
 				break;

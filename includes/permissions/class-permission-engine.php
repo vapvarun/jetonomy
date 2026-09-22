@@ -276,6 +276,18 @@ class Permission_Engine {
 			return false;
 		}
 
+		// A space inside a category this viewer cannot see is off-limits for
+		// every action, whatever the space's OWN visibility says. This is the
+		// chokepoint the leak came through: a public space in a `hidden`
+		// category answered can( 'read' ) true, so can_read_post() -> GET
+		// /posts/{id}, oEmbed, JSON-LD, the updates poller and four Pro
+		// extensions all served its topics to strangers while every listing
+		// correctly withheld the space itself. Admins are exempt inside the
+		// helper.
+		if ( Space::concealed_by_category( $space, $user_id ) ) {
+			return false;
+		}
+
 		// Private / hidden spaces require membership OR an access rule that
 		// admits this user.
 		//

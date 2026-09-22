@@ -144,8 +144,11 @@ class Replies_Controller extends Base_Controller {
 		// post readable — so deleting a topic did not take its conversation with
 		// it, and a private topic's thread answered to non-members
 		// (Basecamp 10105628594).
+		// 404, not 403, and for the same reason GET /posts/{id} answers 404: a
+		// 403 on the thread confirms the topic exists to a viewer the post
+		// route refuses to tell. Two answers to one question is the leak.
 		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
-			return $this->permission_error();
+			return $this->not_found( 'Post' );
 		}
 
 		$pagination = $this->get_pagination( $request );

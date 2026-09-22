@@ -555,6 +555,16 @@ class Spaces_Controller extends Base_Controller {
 
 		$user_id = get_current_user_id();
 
+		// Concealment before permission, and 404 not 403: the browser path
+		// (Space::concealed_from_viewer, Basecamp 10105630168) already answers
+		// 404 for a space whose existence is hidden from this viewer, and a 403
+		// here would confirm the space exists to the same stranger the template
+		// refuses to tell. Covers both a `hidden` space and any space inside a
+		// category the viewer cannot see.
+		if ( Space::concealed_from_viewer( $space, (int) $user_id ) ) {
+			return $this->not_found( 'Space' );
+		}
+
 		// Admission, not the roster. Asking SpaceMember alone refused a 403 to
 		// exactly the learners a course's access rule exists to admit - the web
 		// page let them in and the API did not, so the app could not show a room
@@ -940,6 +950,16 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		$user_id = get_current_user_id();
+
+		// Concealment before permission, and 404 not 403: the browser path
+		// (Space::concealed_from_viewer, Basecamp 10105630168) already answers
+		// 404 for a space whose existence is hidden from this viewer, and a 403
+		// here would confirm the space exists to the same stranger the template
+		// refuses to tell. Covers both a `hidden` space and any space inside a
+		// category the viewer cannot see.
+		if ( Space::concealed_from_viewer( $space, (int) $user_id ) ) {
+			return $this->not_found( 'Space' );
+		}
 
 		// Same admission test as the space itself: someone who may read the space
 		// may see who is in it. Gating this on the roster hid the member list

@@ -646,8 +646,75 @@ class Model_Tests {
 			in_array( $space_id, $owner_space_ids, true )
 		);
 
+		// CV7-CV12: the ACCESS half. CV1-CV6 only proved the space and category
+		// stay out of LISTINGS, which is why the leak survived a release: every
+		// read path answered from the space's own `visibility` field and never
+		// looked at the parent, so a stranger holding the URL or the id got the
+		// space, its topics and its JSON-LD. Each check below is one surface
+		// that was serving that content.
+		$posts_table = \Jetonomy\table( 'posts' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$posts_table,
+			[
+				'space_id'   => $space_id,
+				'author_id'  => 1,
+				'title'      => 'QA Visibility Probe Topic',
+				'slug'       => $slug . '-topic',
+				'content'    => 'probe',
+				'status'     => 'publish',
+				'created_at' => \Jetonomy\now(),
+			]
+		);
+		$post_id  = (int) $wpdb->insert_id;
+		$probe_post = (object) [
+			'id'         => $post_id,
+			'space_id'   => $space_id,
+			'author_id'  => 1,
+			'status'     => 'publish',
+			'is_private' => 0,
+		];
+		$probe_space = (object) [
+			'id'          => $space_id,
+			'category_id' => $cat_id,
+			'visibility'  => 'public',
+		];
+
+		wp_set_current_user( 0 );
+		$this->check(
+			'CV7: a guest cannot read a space inside a hidden category',
+			! Permission_Engine::can( 0, 'read', $space_id )
+		);
+		$this->check(
+			'CV8: the direct URL conceals it from a guest (404, not a gate page)',
+			Space::concealed_from_viewer( $probe_space, 0 )
+		);
+		$this->check(
+			'CV9: the REST read gate agrees with the template gate',
+			! Space::readable_by_viewer( $probe_space, 0 )
+		);
+		$this->check(
+			'CV10: its topics are unreadable by a guest on every surface',
+			! Permission_Engine::can_read_post( 0, $probe_post )
+		);
+		$this->check(
+			'CV11: find_visible withholds a hidden category from a guest',
+			null === Category::find_visible( $cat_id, 0 )
+		);
+
+		// The widen-check that stops all of CV7-CV11 being satisfied by simply
+		// denying everyone.
+		wp_set_current_user( 1 );
+		$this->check(
+			'CV12: the owner still reads the space and its topics',
+			Permission_Engine::can( 1, 'read', $space_id )
+				&& Space::readable_by_viewer( $probe_space, 1 )
+				&& Permission_Engine::can_read_post( 1, $probe_post )
+				&& null !== Category::find_visible( $cat_id, 1 )
+		);
+
 		wp_set_current_user( $previous_user );
 
+		$wpdb->delete( $posts_table, [ 'id' => $post_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->delete( $spaces_table, [ 'id' => $space_id ] );
 		$wpdb->delete( \Jetonomy\table( 'categories' ), [ 'id' => $cat_id ] );
 	}

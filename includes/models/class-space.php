@@ -471,6 +471,14 @@ class Space extends Model {
 	 *   - Logged-in: public spaces, plus any space they are a member of
 	 *     (covers PRIVATE and HIDDEN spaces they belong to).
 	 *
+	 * A space also inherits its CATEGORY's concealment ({@see
+	 * self::parent_category_clause()}). A public space inside a `hidden`
+	 * category is not readable by a stranger, because the category promised the
+	 * owner that nothing in it is reachable yet. Without this, `hidden` was
+	 * cosmetic on every read surface: the space's topics still surfaced in
+	 * search, tag pages, the sidebar, profile activity and the Pro digest,
+	 * because only the LISTING predicate consulted the parent.
+	 *
 	 * Fails CLOSED relative to can(): AccessRule grants and per-user bans are
 	 * intentionally not modelled in SQL — the predicate is the membership-based
 	 * common case and may only ever UNDER-include (never leak). Single-item
@@ -491,12 +499,13 @@ class Space extends Model {
 		}
 
 		if ( $user_id <= 0 ) {
-			return [ "{$col}visibility = 'public'", [] ];
+			return [ "{$col}visibility = 'public'" . self::parent_category_clause( $user_id, $col ), [] ];
 		}
 
 		$members_table = \Jetonomy\table( 'space_members' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-		$fragment = "({$col}visibility = 'public' OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+		$fragment  = "({$col}visibility = 'public' OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+		$fragment .= self::parent_category_clause( $user_id, $col );
 		return [ $fragment, [ $user_id ] ];
 	}
 
@@ -621,10 +630,22 @@ class Space extends Model {
 	 * @return bool True when the viewer must see a 404, not a gate page.
 	 */
 	public static function concealed_from_viewer( object $space, ?int $user_id ): bool {
-		if ( 'hidden' !== ( $space->visibility ?? '' ) ) {
+		if ( user_can( (int) $user_id, 'manage_options' ) ) {
 			return false;
 		}
-		if ( user_can( (int) $user_id, 'manage_options' ) ) {
+
+		// A space inside a category the viewer cannot see is concealed whatever
+		// the space's OWN visibility says. A public space in a `hidden`
+		// category answered HTTP 200 with its title to anyone holding the URL,
+		// which made a hidden category cosmetic - the owner staged content in
+		// it and it was publicly reachable the whole time. Membership does not
+		// exempt: hiding the category is a decision about the whole branch, and
+		// the owner can undo it by changing one field.
+		if ( self::concealed_by_category( $space, $user_id ) ) {
+			return true;
+		}
+
+		if ( 'hidden' !== ( $space->visibility ?? '' ) ) {
 			return false;
 		}
 		if ( ! $user_id ) {
@@ -635,6 +656,67 @@ class Space extends Model {
 		// the rule exists to let in.
 		return ! self::admitted( (int) $space->id, (int) $user_id );
 	}
+
+	/**
+	 * Does this space's parent category conceal it from the viewer?
+	 *
+	 * Same predicate the category's own listing uses, asked about one row, so
+	 * the rule lives in exactly one place ({@see
+	 * Category::listing_visibility_sql()}). Uncategorised spaces have no parent
+	 * to inherit from and are never concealed this way.
+	 *
+	 * @param object   $space   Space row (needs ->category_id).
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 * @return bool
+	 */
+	public static function concealed_by_category( object $space, ?int $user_id ): bool {
+		$category_id = (int) ( $space->category_id ?? 0 );
+
+		if ( $category_id <= 0 ) {
+			return false;
+		}
+
+		$user_id = $user_id ?? get_current_user_id();
+		$memo    = (int) $user_id . ':' . $category_id;
+
+		// Memoised for the request. Permission_Engine::can( 'read', $space )
+		// asks this once per space on a topic list, and the answer for one
+		// (viewer, category) pair cannot change inside a request - without the
+		// memo a 50-row list that spans 6 categories runs 50 queries where 6
+		// would do.
+		if ( isset( self::$category_conceal_memo[ $memo ] ) ) {
+			return self::$category_conceal_memo[ $memo ];
+		}
+
+		[ $cat_where, $cat_values ] = Category::listing_visibility_sql( $user_id );
+
+		if ( '1=1' === $cat_where ) {
+			self::$category_conceal_memo[ $memo ] = false;
+			return false;
+		}
+
+		$categories_table = \Jetonomy\table( 'categories' );
+		$sql              = "SELECT id FROM {$categories_table} WHERE id = %d AND {$cat_where}";
+		$values           = array_merge( [ $category_id ], $cat_values );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- $categories_table is a trusted prefixed name; $cat_where is literal SQL from Category::listing_visibility_sql().
+		$visible = (bool) static::db()->get_var( static::db()->prepare( $sql, ...$values ) );
+
+		self::$category_conceal_memo[ $memo ] = ! $visible;
+
+		return ! $visible;
+	}
+
+	/**
+	 * Per-request memo for {@see self::concealed_by_category()}.
+	 *
+	 * Keyed "{user_id}:{category_id}". Request-scoped on purpose: a category's
+	 * visibility change lands on the next request, and nothing here is worth a
+	 * cache key to invalidate.
+	 *
+	 * @var array<string, bool>
+	 */
+	private static array $category_conceal_memo = [];
 
 	/**
 	 * Is this viewer admitted to this space?
@@ -683,6 +765,16 @@ class Space extends Model {
 	 * @return bool
 	 */
 	public static function readable_by_viewer( object $space, int $user_id ): bool {
+		// The parent category is asked FIRST and is not overridable by
+		// admission: a public space inside a `hidden` category used to answer
+		// GET /spaces/{id} with 200 to a stranger holding the id, which made
+		// the category's promise cosmetic on the API while the browser path
+		// (concealed_from_viewer) had already been taught to honour it. Same
+		// question, one answer.
+		if ( self::concealed_by_category( $space, $user_id ) ) {
+			return false;
+		}
+
 		if ( ! in_array( (string) ( $space->visibility ?? '' ), array( 'private', 'hidden' ), true ) ) {
 			return true;
 		}
