@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 1.9.7
+Stable tag: 2.0.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,21 @@ Absolutely. Jetonomy has 81 REST routes / 109 method-endpoints (141 routes acros
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.0.0 - September 2026 =
+
+Data-integrity release: counters, visibility, and settings that said "saved" now actually behave as documented, plus import and media-safety fixes.
+
+* Fix      - Category and space visibility is now enforced on every read path (search, listings, REST), not just stored as a setting. A space inside a hidden category could still surface through search or a filtered listing.
+* Fix      - The media cleanup sweep no longer deletes images that are still in use.
+* Fix      - Several settings that appeared to save (reputation overrides, the verification email's accent color, and others) now actually apply.
+* Fix      - Reply, space, and leaderboard counters are recounted automatically in the background after upgrading, repairing drift accumulated before these write-path fixes, then stay accurate going forward.
+* Fix      - bbPress, wpForo, and Asgaros importers keep the source's moderation state, recover closed topics and private forums, and identify their own rows by source key instead of slug so re-running an import doesn't create duplicates.
+* Fix      - Sub-forum hierarchy is visible again: a parent space lists its children and a child names its parent.
+* Fix      - Scheduled posts show correctly in wp-admin, and Approve no longer publishes a post early.
+* Fix      - Leaderboard ranks by reputation instead of array position, and ties are ordered consistently.
+* Improve  - Action buttons, vote and bookmark toggles, admin icon alignment, and list-table headers are now consistent across every surface, not just the ones originally reported.
+* Improve  - BuddyPress surfaces use the design-token layer and support dark mode.
 
 = 1.9.7 - September 2026 =
 
