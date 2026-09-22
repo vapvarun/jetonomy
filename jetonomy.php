@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     1.9.7
+ * Version:     2.0.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '1.9.7' );
+define( 'JETONOMY_VERSION', '2.0.0' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -816,7 +816,7 @@ function jetonomy_sanitize_editor_content( string $content ): string {
  * (decoding first would turn a stored "&lt;script&gt;" into a real tag for
  * strip_tags to eat, losing the text a member actually typed).
  *
- * @since TBD  Set at release time - no version is planned for this work yet.
+ * @since 2.0.0
  *
  * @param string $content Stored/normalized body HTML.
  * @return string Plain-text copy: entities decoded, blocks separated by newlines.
