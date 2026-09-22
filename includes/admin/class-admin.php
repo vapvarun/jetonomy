@@ -492,9 +492,40 @@ class Admin {
 	 * @param mixed $input
 	 * @return array<string, array{subject: string, body: string}>
 	 */
+	/**
+	 * Did THIS request post the Email tab's template fields?
+	 *
+	 * See sanitize_email_templates() for why a per-call check is not enough.
+	 *
+	 * @var bool
+	 */
+	private static bool $email_templates_submitted = false;
+
 	public function sanitize_email_templates( $input ): array {
 		$stored = get_option( 'jetonomy_email_templates', array() );
 		$stored = is_array( $stored ) ? $stored : array();
+
+		// Core can call this sanitizer TWICE for one save. When the stored value
+		// equals the registered default - which is array(), i.e. every site that
+		// has never saved a template - update_option() routes to add_option(),
+		// and add_option() runs sanitize_option() again on the array this method
+		// just returned. That second pass has no _submitted marker (it is not a
+		// stored key), so the guard below read it as "a different tab posted"
+		// and handed back the stored empty array: the owner's FIRST template was
+		// silently dropped, for ever, on exactly the sites that had none.
+		//
+		// The marker is therefore remembered for the request, not just for the
+		// call. Static, because the two passes are the same request by
+		// definition.
+		if ( is_array( $input ) && ! empty( $input['_submitted'] ) ) {
+			self::$email_templates_submitted = true;
+		}
+
+		if ( self::$email_templates_submitted && is_array( $input ) && empty( $input['_submitted'] ) ) {
+			// Core's re-sanitise of our own output. It is already clean; handing
+			// back $stored here is what lost the first save.
+			return $input;
+		}
 
 		// This option is registered in the `jetonomy_settings` group, and
 		// options.php writes EVERY option in a group on submit - including the

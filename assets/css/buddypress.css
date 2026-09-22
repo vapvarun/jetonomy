@@ -150,13 +150,22 @@
 /* A wrapping grid, not a single clipping row.
    As a one-row flex with overflow:hidden, the four cells needed 369px inside a
    358px box at 390px wide - so the last cell (TRUST, the one stat that explains
-   a member's permissions) was cut off by 10px and lost its border. Longer
-   translations or a 4-digit reputation clip more. auto-fit keeps one row
-   wherever there is room and folds to 2x2 on a phone, with no breakpoint to
-   keep in step with the cell count. */
+   a member's permissions) was cut off and lost its border.
+
+   The column minimum has to be big enough for the CONTENT, not just big enough
+   to fit four columns. At minmax(84px, ...) four columns still fit a 358px
+   container (about 89px each) and the text clipped INSIDE its cell instead -
+   "REPUTATIO", "LEVE" - which is the same bug one level down. 7rem is wider
+   than the longest label ("Reputation") at the size it renders, so on a narrow
+   container the row folds to 2x2 instead. min(100%, 7rem) keeps a single very
+   narrow cell from overflowing its own container.
+
+   Content wrapping is the backstop: a longer translation or a 4-digit
+   reputation wraps within the cell rather than being cut off, so no future
+   string can reintroduce the clip. */
 .jt-bp-stats {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
 	gap: 0;
 	padding: 0;
 	margin-bottom: 24px;
@@ -166,6 +175,7 @@
 }
 .jt-bp-stat {
 	min-width: 0;
+	overflow-wrap: anywhere;
 	text-align: center;
 	padding: 16px 12px;
 	border-inline-end: 1px solid var(--jt-border, #e2e8f0);

@@ -311,13 +311,15 @@ class Model_Tests {
 	 * @return void
 	 */
 	private function check_import_status_mapping(): void {
+		global $wpdb;
+
 		$mapper = new \ReflectionMethod( '\Jetonomy\Import\WpForo_Importer', 'map_reply_status' );
 		$mapper->setAccessible( true );
 
 		$cases = array(
 			'approved'  => array( (object) array( 'status' => 0 ), 'publish' ),
 			'held'      => array( (object) array( 'status' => 1 ), 'pending' ),
-			'private'   => array( (object) array( 'status' => 0, 'private' => 1 ), 'hidden' ),
+			'private'   => array( (object) array( 'status' => 0, 'private' => 1 ), 'pending' ),
 			'no column' => array( (object) array(), 'publish' ),
 		);
 
@@ -331,7 +333,7 @@ class Model_Tests {
 		}
 
 		$this->check(
-			'WF1: a held wpForo reply imports as pending, a private one as hidden',
+			'WF1: held and private wpForo replies both import as pending, never published',
 			array() === $wrong,
 			implode( '; ', $wrong )
 		);
@@ -347,6 +349,42 @@ class Model_Tests {
 			'WF2: no importer hard-codes replies to publish',
 			false === strpos( $wf, "'status'        => 'publish'," )
 				&& false === strpos( $asg, "'status'        => 'publish'," )
+		);
+
+		// WF3: every status the mapper can return must SURVIVE A ROUND TRIP
+		// through the replies table. WF1 asserted what the mapper returns and
+		// WF2 grepped for a literal; neither inserted a row, so a mapper
+		// returning 'hidden' - a status that exists on spaces and not on
+		// replies - passed both while MySQL stored the empty string (invisible
+		// to members AND to the moderation queue) or, in strict mode, threw the
+		// row away. Checking the value against the column is the only test that
+		// could have caught it.
+		$replies_t = table( 'replies' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$column = (array) $wpdb->get_row( "SHOW COLUMNS FROM {$replies_t} LIKE 'status'", ARRAY_A );
+		$allowed = array();
+		if ( ! empty( $column['Type'] ) && preg_match_all( "/'([^']+)'/", (string) $column['Type'], $m ) ) {
+			$allowed = $m[1];
+		}
+
+		$mapper   = new \ReflectionMethod( '\Jetonomy\Import\WpForo_Importer', 'map_reply_status' );
+		$mapper->setAccessible( true );
+		$produced = array();
+		foreach ( array(
+			(object) array( 'status' => 0 ),
+			(object) array( 'status' => 1 ),
+			(object) array( 'status' => 0, 'private' => 1 ),
+			(object) array(),
+		) as $row ) {
+			$produced[] = (string) $mapper->invoke( null, $row );
+		}
+		$produced = array_values( array_unique( $produced ) );
+		$invalid  = array_values( array_diff( $produced, $allowed ) );
+
+		$this->check(
+			'WF3: every mapped reply status exists in the replies status column',
+			array() === $invalid && array() !== $allowed,
+			'invalid: ' . implode( ',', $invalid ) . ' | column allows: ' . implode( ',', $allowed )
 		);
 	}
 
