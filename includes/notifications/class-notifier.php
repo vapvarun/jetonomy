@@ -174,6 +174,34 @@ class Notifier {
 	}
 
 	/**
+	 * The accent colour every Jetonomy email uses.
+	 *
+	 * One definition, because there were two: the shell resolved the owner's
+	 * `accent_color` while the verification email hard-coded #3B82F6 - so the
+	 * one email a new member is guaranteed to see was the one that ignored the
+	 * site's colour.
+	 *
+	 * The default is #0073aa, matching the Appearance tab. The token layer
+	 * treats that value as the "owner has not chosen an accent" sentinel, so an
+	 * owner who never picked a colour gets a site and emails that agree.
+	 *
+	 * @param string $type Notification type, passed to the filter.
+	 * @return string Hex colour.
+	 */
+	private static function accent_color( string $type = '' ): string {
+		$settings = get_option( 'jetonomy_settings', [] );
+
+		/**
+		 * Filter the accent color used in the email header accent-bar and CTA.
+		 * Default reads from settings `accent_color`, falls back to #0073aa.
+		 *
+		 * @param string $accent Hex color.
+		 * @param string $type   Notification type.
+		 */
+		return (string) apply_filters( 'jetonomy_email_accent_color', (string) ( $settings['accent_color'] ?? '#0073aa' ), $type );
+	}
+
+	/**
 	 * Send the email-confirmation message to a user who just signed up
 	 * while `require_email_verification` was on.
 	 *
@@ -238,7 +266,7 @@ class Notifier {
 			?>
 		</p>
 		<p style="margin:24px 0;">
-			<a href="<?php echo esc_url( $verify_url ); ?>" style="display:inline-block;background:#3B82F6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">
+			<a href="<?php echo esc_url( $verify_url ); ?>" style="display:inline-block;background:<?php echo esc_attr( self::accent_color( 'verification' ) ); ?>;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">
 				<?php esc_html_e( 'Confirm email', 'jetonomy' ); ?>
 			</a>
 		</p>
@@ -1392,18 +1420,7 @@ class Notifier {
 
 		$settings = get_option( 'jetonomy_settings', [] );
 
-		/**
-		 * Filter the accent color used in the email header accent-bar and CTA.
-		 * Default reads from settings `accent_color`, falls back to #3B82F6.
-		 *
-		 * @param string $accent Hex color.
-		 * @param string $type   Notification type.
-		 */
-		// #0073aa, not #3B82F6. The Appearance tab's default IS #0073aa, and the
-		// token layer treats that value as the "owner has not chosen an accent"
-		// sentinel - so an owner who never picked a colour got a site in one blue
-		// and emails in a different one, with nothing to explain the mismatch.
-		$accent      = (string) apply_filters( 'jetonomy_email_accent_color', (string) ( $settings['accent_color'] ?? '#0073aa' ), $type );
+		$accent      = self::accent_color( $type );
 		$accent_safe = esc_attr( $accent );
 
 		/**
