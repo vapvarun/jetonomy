@@ -517,10 +517,18 @@ final class Jetonomy {
 	 * it), and the SHOW TABLES sentinel only triggers real work when a table is
 	 * actually absent — so the steady-state cost is a single option read.
 	 *
-	 * The newest table (jt_attachments) is owned by a DATA migration — it is the
-	 * renamed jt_pro_attachments — so a plain create_tables() would make an empty
-	 * table and orphan the old rows. We run the migration itself, which is idempotent
-	 * (renames/merges, then dbDelta-creates), then the create_tables net for the rest.
+	 * The sentinel is EVERY table the schema defines, compared in one SHOW TABLES
+	 * query. It used to be the single hard-coded name jt_attachments, which made
+	 * the repair blind to any table added afterwards — and that is exactly how
+	 * 2.0.0 shipped a jt_import_map that no upgraded site ever got: the version
+	 * constant was not bumped, so the migration block never ran, and this repair
+	 * was only ever looking at jt_attachments. Naming the tables individually is
+	 * how the next new table repeats it.
+	 *
+	 * jt_attachments keeps its special case: it is owned by a DATA migration (the
+	 * renamed jt_pro_attachments), so a plain create_tables() would make an empty
+	 * table and orphan the old rows. That migration is idempotent, so running it
+	 * whenever the table is absent is safe.
 	 */
 	private function maybe_repair_schema(): void {
 		if ( get_option( 'jetonomy_schema_checked' ) === JETONOMY_VERSION ) {
@@ -528,14 +536,26 @@ final class Jetonomy {
 		}
 
 		global $wpdb;
+
+		require_once JETONOMY_DIR . 'includes/db/class-schema.php';
+
+		// One query for the whole set; the steady state is "nothing missing".
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$present = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'jt_attachments' ) );
+		$existing = (array) $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->prefix . 'jt_' ) . '%' ) );
+		$missing  = array();
 
-		if ( ! $present ) {
-			require_once JETONOMY_DIR . 'includes/db/migrations/class-migration_1_7_1.php';
-			( new DB\Migrations\Migration_1_7_1() )->up();
+		foreach ( DB\Schema::get_table_names() as $table ) {
+			if ( ! in_array( $wpdb->prefix . $table, $existing, true ) ) {
+				$missing[] = $table;
+			}
+		}
 
-			require_once JETONOMY_DIR . 'includes/db/class-schema.php';
+		if ( $missing ) {
+			if ( in_array( 'jt_attachments', $missing, true ) ) {
+				require_once JETONOMY_DIR . 'includes/db/migrations/class-migration_1_7_1.php';
+				( new DB\Migrations\Migration_1_7_1() )->up();
+			}
+
 			DB\Schema::create_tables();
 		}
 

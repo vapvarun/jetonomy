@@ -1402,9 +1402,22 @@ class Model_Tests {
 
 		$table = \Jetonomy\table( 'import_map' );
 		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
-			$this->skip( 'IM1: import map', 'jt_import_map not present (migration pending)' );
+			// FAIL, not skip. This skipped once and the suite reported all-green
+			// on a site where the 2.0.0 migration had never run - so a release
+			// blocker (importers silently duplicating everything on a re-run,
+			// because they had no identity table) was invisible to the gate that
+			// exists to catch it. A skip is for a condition the site legitimately
+			// may not meet; a table this plugin version is supposed to have
+			// created is not one of those.
+			$this->check(
+				'IM0: jt_import_map exists (migration ran)',
+				false,
+				'table missing - Migration_2_0_0 has not run; every importer will duplicate on a re-run'
+			);
 			return;
 		}
+
+		$this->check( 'IM0: jt_import_map exists (migration ran)', true );
 
 		$source = 'qa-' . wp_generate_password( 6, false, false );
 
