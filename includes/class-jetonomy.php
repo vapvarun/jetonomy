@@ -319,6 +319,7 @@ final class Jetonomy {
 		// In-flight space purges too, in both schedulers - the background-jobs
 		// standard requires deactivation to leave nothing queued.
 		Space_Purge::clear_scheduled();
+		Recount_Backfill::clear_scheduled();
 		flush_rewrite_rules();
 	}
 
@@ -721,6 +722,7 @@ final class Jetonomy {
 		// operation — only the CLI-driven Space_Backfill sweep does — but the
 		// listener has to be registered for that sweep to reach free's tables.
 		Space_Purge::register();
+		Recount_Backfill::register();
 
 		new SEO\Sitemap();
 		new SEO\Schema_Markup();

@@ -2467,6 +2467,22 @@
       "notes": "1.8.0. Fired once per orphaned (already-deleted) user id during 'wp jetonomy privacy purge-orphans'. Free and Pro both listen via on_user_delete, so the backfill replays the real delete path rather than reimplementing it."
     },
     {
+      "name": "jetonomy_recount_backfill_batch",
+      "type": "action",
+      "args_count": 0,
+      "args_signature": [],
+      "where": "includes/class-recount-backfill.php:56",
+      "notes": "2.0.0. Action Scheduler continuation hook; re-enqueued until every stage of the one-off counter backfill drains."
+    },
+    {
+      "name": "jetonomy_recount_backfill_complete",
+      "type": "action",
+      "args": "none",
+      "where": "includes/class-recount-backfill.php (Recount_Backfill::complete)",
+      "consumed_by": null,
+      "notes": "2.0.0. Fired once the upgrade-time recount of reply/post counters has finished on a site."
+    },
+    {
       "name": "jetonomy_reply_accepted",
       "type": "action",
       "args": "reply_id",

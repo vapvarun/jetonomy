@@ -63,5 +63,15 @@ class Migration_2_0_0 {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- prefixed table names.
 		$wpdb->query( "UPDATE {$cats_t} c SET c.space_count = (SELECT COUNT(*) FROM {$spaces_t} s WHERE s.category_id = c.id AND s.status = 'active')" );
+
+		// Reply counters carry drift from the moderation double-count and the
+		// all-status count_by_post() that 2.0.0 fixes on the write side. Unlike
+		// the category count above, those span every topic and every profile,
+		// so they are repaired in bounded background slices rather than here:
+		// this method runs on plugins_loaded, inside whichever request arrives
+		// first after the update. Only RECORD the debt - Action Scheduler's
+		// store is not ready yet, and Recount_Backfill::register() does the
+		// hand-off on action_scheduler_init.
+		\Jetonomy\Recount_Backfill::mark_pending();
 	}
 }

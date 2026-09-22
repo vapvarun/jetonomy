@@ -33,7 +33,7 @@
   "supplements_path": null,
   "qa_actions": {
     "command": "wp jetonomy qa-actions",
-    "expected_total": 391,
+    "expected_total": 394,
     "verified_on": "2026-09-22",
     "verified_version": "2.0.0",
     "verified_on_site": "forums.local",

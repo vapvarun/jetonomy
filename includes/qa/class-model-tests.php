@@ -239,6 +239,7 @@ class Model_Tests {
 		$this->test_media_cleanup_scope();
 		$this->test_category_space_count();
 		$this->test_import_map();
+		$this->test_recount_backfill();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -2095,4 +2096,105 @@ class Model_Tests {
 			$this->fail++;
 		}
 	}
+
+	/**
+	 * The 2.0.0 counter backfill repairs a bounded slice, and no more than it.
+	 *
+	 * BF1 is the regression guard that matters. The range is half-open -
+	 * [from, until) - and the first slice therefore starts AT the cursor rather
+	 * than after it. An exclusive lower bound looks equivalent and is not: with
+	 * the cursor starting at 0 it skipped key 0 entirely, which on this schema
+	 * left a user_profiles row at user_id 0 carrying its drift forever. BF1
+	 * fails on that earlier bound.
+	 *
+	 * BF2 is the other half of the same contract: a slice must not reach past
+	 * its own span, or the cursor stops meaning anything and a resumed job
+	 * would silently skip whatever the dead batch had not yet committed.
+	 */
+	private function test_recount_backfill(): void {
+		global $wpdb;
+
+		$posts_t   = \Jetonomy\table( 'posts' );
+		$replies_t = \Jetonomy\table( 'replies' );
+		$suffix    = wp_generate_password( 6, false, false );
+
+		$mk_post = static function ( string $title ) use ( $wpdb, $posts_t ) {
+			$wpdb->insert(
+				$posts_t,
+				array(
+					'space_id'     => 1,
+					'author_id'    => 1,
+					'type'         => 'forum',
+					'title'        => $title,
+					'slug'         => sanitize_title( $title ),
+					'content'      => 'qa',
+					'status'       => 'publish',
+					'reply_count'  => 0,
+					'published_at' => \Jetonomy\now(),
+					'created_at'   => \Jetonomy\now(),
+				)
+			);
+			return (int) $wpdb->insert_id;
+		};
+
+		$low  = $mk_post( 'QA Backfill Low ' . $suffix );
+		$high = $mk_post( 'QA Backfill High ' . $suffix );
+
+		// One published reply each, so the truthful count is 1 apiece.
+		foreach ( array( $low, $high ) as $pid ) {
+			$wpdb->insert(
+				$replies_t,
+				array(
+					'post_id'    => $pid,
+					'author_id'  => 1,
+					'content'    => 'qa',
+					'status'     => 'publish',
+					'created_at' => \Jetonomy\now(),
+				)
+			);
+		}
+
+		// Drift both, the way an upgrading site carries it.
+		$wpdb->query( $wpdb->prepare( "UPDATE {$posts_t} SET reply_count = 9 WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$stored = static fn( int $id ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT reply_count FROM {$posts_t} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// A slice that starts exactly at $low must include $low.
+		\Jetonomy\Recount::run( 'posts', $low, $low + 1 );
+
+		$this->check(
+			'BF1: a slice includes the key it starts at',
+			1 === $stored( $low ),
+			"post {$low} reply_count " . $stored( $low ) . ', expected 1'
+		);
+
+		$this->check(
+			'BF2: a slice does not reach past its span',
+			9 === $stored( $high ),
+			"post {$high} reply_count " . $stored( $high ) . ', expected 9 (untouched)'
+		);
+
+		// A site that already has a record must not be rewound by a second
+		// upgrade pass - that is what makes a re-run a no-op.
+		$saved = get_option( 'jetonomy_recount_backfill', null );
+		update_option( 'jetonomy_recount_backfill', array( 'stage' => 'users', 'cursor' => 7, 'done' => false ), false );
+		\Jetonomy\Recount_Backfill::mark_pending();
+		$after = (array) get_option( 'jetonomy_recount_backfill' );
+
+		$this->check(
+			'BF3: marking pending twice does not rewind progress',
+			'users' === ( $after['stage'] ?? '' ) && 7 === (int) ( $after['cursor'] ?? 0 ),
+			'stage ' . ( $after['stage'] ?? '?' ) . ', cursor ' . ( $after['cursor'] ?? '?' )
+		);
+
+		if ( null === $saved ) {
+			delete_option( 'jetonomy_recount_backfill' );
+		} else {
+			update_option( 'jetonomy_recount_backfill', $saved, false );
+		}
+
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$replies_t} WHERE post_id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$posts_t} WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
 }
