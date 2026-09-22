@@ -125,7 +125,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 - FULLTEXT indexes for instant search
 
 **Developer Tools**
-- 86 REST API endpoints at `/wp-json/jetonomy/v1/`
+- 81 REST routes (109 method-endpoints) at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
 - 233 action hooks and filters for customization (106 actions, 127 filters)
 - WP-CLI commands for trust level management and imports
@@ -256,7 +256,7 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 86 REST API endpoints (161 with Pro), 19 WordPress Abilities (WP 6.9+), 233 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 81 REST routes / 109 method-endpoints (141 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 237 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 

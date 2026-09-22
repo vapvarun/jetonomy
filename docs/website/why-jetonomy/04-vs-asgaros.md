@@ -50,7 +50,7 @@ Asgaros has no built-in voting. Jetonomy gives every topic and reply upvote/down
 
 ### Performance at Scale
 
-Both plugins use their own database tables instead of WordPress posts, so both avoid the bloat that slows down CPT-based forums. Jetonomy goes further with cursor-based pagination, smart reply loading on long threads, and denormalized counters, so a space with tens of thousands of topics loads as fast as a small one. See the [Scalability](03-scalability.md) page for the details.
+Both plugins use their own database tables instead of WordPress posts, so both avoid the bloat that slows down CPT-based forums. Jetonomy goes further with indexed pagination, smart reply loading on long threads, and denormalized counters, so a space with tens of thousands of topics loads as fast as a small one. See the [Scalability](03-scalability.md) page for the details.
 
 ## Where Asgaros Forum Still Works
 

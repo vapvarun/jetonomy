@@ -61,7 +61,7 @@ Independent of the above, `Settings → General → Community Access` toggles th
 Two shapes appear across the API, both bounded (no unbounded `SELECT *`):
 
 - **Offset-based** (`limit` + `offset`, most list endpoints): response body is `{ "data": [...], "meta": { "count", "has_more", "cursor_next", "total", "offset" } }`. `X-WP-Total` and `X-WP-TotalPages` headers are set on most collection routes.
-- **Cursor-based** (`after`/`before` on posts/replies/messages): the base `get_collection_params()` schema declares `after`/`before` alongside legacy `offset` — cursor is preferred for large datasets since `OFFSET` on a 100k-row table degrades linearly.
+- **`after` / `before`** (on posts/replies/messages): declared by the base `get_collection_params()` schema alongside `offset`. These are a stable pagination TOKEN, not keyset pagination: `after` carries an offset and `get_pagination()` folds it into `offset`, so it costs the same as `offset` and has no deep-page advantage. Use whichever your client finds convenient. Do not read `cursor_next` as a promise of keyset pagination — it is the next offset.
 
 Default `limit` is usually 20 (search defaults 20, capped 50; leaderboards default 20, capped 100; media default 24). Always check the specific endpoint's `args` schema in `openapi.json` for the real min/max/default.
 

@@ -5,7 +5,7 @@ How Jetonomy is built to handle communities of any size - from 10 members to 100
 ## What You Will Learn
 
 - Why custom database tables matter for performance
-- How cursor-based pagination prevents slowdowns
+- How indexed pagination and denormalized counters keep lists fast
 - Caching strategies that keep page loads fast
 - Real-world performance benchmarks
 
@@ -29,11 +29,22 @@ Jetonomy stores all community data in 22 dedicated tables with the `wp_jt_` pref
 
 Your WordPress `wp_posts` table stays clean. Your forum can grow without slowing down the rest of your site.
 
-### Cursor-Based Pagination
+### Indexed Pagination
 
-Traditional pagination uses `LIMIT/OFFSET`. On page 500 of a 10,000-topic space, the database must scan and skip 9,980 rows before returning 20. This gets slower as your community grows.
+Every list is a bounded query: `LIMIT` plus `OFFSET`, against an index on the
+column being sorted, with totals from dedicated `COUNT(*)` methods rather than by
+counting a loaded result set. Nothing loads a whole space into memory to show one
+page of it, and no list view is unbounded.
 
-Jetonomy uses cursor-based pagination: "give me 20 topics after ID 9980." The database uses the primary key index to jump directly to the right position. Page 500 loads as fast as page 1.
+Being straight about the trade-off: deep offsets still cost more than shallow
+ones, because the database counts past the skipped rows. Page 500 of a
+10,000-topic space is slower than page 1. What the indexes buy is that the work
+is proportional to the offset rather than to the size of the table, and that
+sorting and filtering never fall back to a full scan.
+
+Private messages are the exception, and genuinely keyset-paginated: a
+conversation pages with `WHERE id < :before`, so scrolling back through a long
+thread stays flat.
 
 ### Smart Reply Loading
 

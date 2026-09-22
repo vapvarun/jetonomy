@@ -1,8 +1,11 @@
 # Jetonomy - Capabilities
 
 Buyer-level roll-up: what this plugin can actually do, in the words a site owner
-would use. The [manifest](audit/manifest.json) lists the parts (86 REST routes,
-229 hooks, 22 tables); this file says what the parts add up to.
+would use. The [manifest](audit/manifest.json) lists the parts (81 REST routes /
+109 method-endpoints, 237 hooks, 23 tables); this file says what the parts add
+up to. Route counts are measured from the live REST index, not from
+`register_rest_route()` call sites - one call can register several methods, which
+is how the numbers drifted apart in the first place.
 
 Every row is verified against code, with the file that delivers it. Status
 values: **YES** shipped and complete, **YES-beta** shipped but young,
@@ -76,7 +79,7 @@ this file in the same commit.
 | Be driven entirely over REST | YES | 86 routes under `jetonomy/v1`, `includes/api/`. 1.9.4 closed the last two write gaps: tags and space access rules were previously admin-AJAX only |
 | Back a mobile app | YES | `includes/api/class-app-config-controller.php`; app sign-in via Application Password, `includes/integrations/class-app-connect.php` |
 | Be automated from the terminal | YES | 14 WP-CLI command roots, `includes/cli/` |
-| Be extended without forking | YES | 225 hooks (106 actions, 119 filters), see `docs/website/developer-guide/02a-hooks-index.md` |
+| Be extended without forking | YES | 237 hooks (108 actions, 129 filters), see `docs/website/developer-guide/02a-hooks-index.md` |
 | Be themed to match the site | YES | `--jt-*` token layer in `assets/css/jetonomy-tokens.css`, adopts the host theme's brand colour |
 | Have its templates overridden | YES | `includes/class-template-loader.php`, drop files in `your-theme/jetonomy/` |
 | Work right-to-left | YES | Logical CSS properties plus generated `*-rtl.css` |

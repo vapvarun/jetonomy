@@ -502,7 +502,7 @@ Shared methods:
 **Replies** (`Jetonomy\API\Replies_Controller`)
 | Method | Route | Notes |
 |--------|-------|-------|
-| GET | `/posts/{post_id}/replies` | Threaded (parent_reply_id); cursor paginated |
+| GET | `/posts/{post_id}/replies` | Threaded (parent_reply_id); `LIMIT`/`OFFSET` paginated (`after` carries an offset) |
 | POST | `/posts/{post_id}/replies` | Runs `jetonomy_check_content` filter |
 | GET/PATCH/DELETE | `/replies/{id}` | |
 | POST | `/replies/{id}/accept` | OP only; fires `jetonomy_reply_accepted` |

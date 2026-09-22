@@ -103,7 +103,7 @@ If a moderator edits your reply, the reply gets an "Edited by moderator" label.
 
 ## How Jetonomy Handles Large Threads
 
-For topics with many replies, Jetonomy uses cursor-based pagination to load replies in batches.
+For topics with many replies, Jetonomy loads replies in batches using indexed `LIMIT`/`OFFSET` pagination. Only the page you are viewing is queried, so a thread with hundreds of replies costs the same as a short one to open.
 
 The first time you open a topic, you see the first batch of top-level replies (default: 20). A **Load more replies** button appears at the bottom if more exist. Clicking it loads the next batch without reloading the page.
 

@@ -36,7 +36,7 @@ How Jetonomy compares to bbPress - and why communities are switching to a modern
 
 bbPress stores every topic and reply as a WordPress post. On sites with 10,000+ topics, this bloats the `wp_posts` and `wp_postmeta` tables, slowing down your entire WordPress installation - not just the forum.
 
-Jetonomy uses its own database tables with proper indexes and cursor-based pagination. Your forum can grow to tens of thousands of topics without affecting the rest of your site.
+Jetonomy uses its own database tables with indexes on every column it sorts and filters by, and paginates with bounded `LIMIT`/`OFFSET` queries plus dedicated `COUNT(*)` methods. Your forum can grow to tens of thousands of topics without affecting the rest of your site.
 
 ### Self-Moderating Community
 
