@@ -235,6 +235,7 @@ class Model_Tests {
 		$this->test_reply_count_moderation();
 		$this->test_bbpress_import_scope();
 		$this->test_media_cleanup_scope();
+		$this->test_category_space_count();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
@@ -1065,6 +1066,77 @@ class Model_Tests {
 		} else {
 			update_option( 'jetonomy_media_cleanup_report', $previous, false );
 		}
+	}
+
+	/**
+	 * jt_categories.space_count survives a space being moved or archived.
+	 *
+	 * Only create() incremented it and only purge decremented it, so a space
+	 * moved between categories left the old count too high and the new one too
+	 * low, and archiving never decremented at all - while Recount counts active
+	 * spaces only. `wp jetonomy recount` repaired it and the next move broke it
+	 * again, which is the signature of a missing write-path adjustment.
+	 *
+	 * Asserted as "stored equals actual" after each transition rather than by
+	 * expected numbers, so the test stays true whatever the fixture holds.
+	 */
+	private function test_category_space_count(): void {
+		global $wpdb;
+
+		$cats   = \Jetonomy\table( 'categories' );
+		$spaces = \Jetonomy\table( 'spaces' );
+		$suffix = wp_generate_password( 6, false, false );
+
+		$mk_cat = static function ( string $name ) use ( $wpdb, $cats ) {
+			$wpdb->insert(
+				$cats,
+				array(
+					'name'       => $name,
+					'slug'       => sanitize_title( $name ),
+					'visibility' => 'public',
+					'parent_id'  => 0,
+					'sort_order' => 0,
+					'created_at' => \Jetonomy\now(),
+				)
+			);
+			return (int) $wpdb->insert_id;
+		};
+
+		$cat_a = $mk_cat( 'QA Count A ' . $suffix );
+		$cat_b = $mk_cat( 'QA Count B ' . $suffix );
+
+		$space_id = (int) Space::create(
+			array(
+				'category_id' => $cat_a,
+				'parent_id'   => 0,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => 'QA Count Space ' . $suffix,
+				'slug'        => 'qa-count-space-' . $suffix,
+				'visibility'  => 'public',
+				'status'       => 'active',
+			)
+		);
+
+		$stored = static fn( int $c ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT space_count FROM {$cats} WHERE id = %d", $c ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$actual = static fn( int $c ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE category_id = %d AND status = 'active'", $c ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exact  = static fn(): bool => $stored( $cat_a ) === $actual( $cat_a ) && $stored( $cat_b ) === $actual( $cat_b );
+		$detail = static fn(): string => "A {$stored( $cat_a )}/{$actual( $cat_a )}, B {$stored( $cat_b )}/{$actual( $cat_b )}";
+
+		$this->check( 'SC1: creating a space counts it', $exact(), $detail() );
+
+		Space::update( $space_id, array( 'category_id' => $cat_b ) );
+		$this->check( 'SC2: moving a space moves the count with it', $exact(), $detail() );
+
+		Space::update( $space_id, array( 'status' => 'archived' ) );
+		$this->check( 'SC3: archiving a space decrements its category', $exact(), $detail() );
+
+		Space::update( $space_id, array( 'category_id' => $cat_a, 'status' => 'active' ) );
+		$this->check( 'SC4: a move and a restore in one call stay exact', $exact(), $detail() );
+
+		$wpdb->delete( $spaces, array( 'id' => $space_id ) );
+		$wpdb->delete( $cats, array( 'id' => $cat_a ) );
+		$wpdb->delete( $cats, array( 'id' => $cat_b ) );
 	}
 
 	private function test_reorder(): void {

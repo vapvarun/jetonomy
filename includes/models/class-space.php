@@ -78,13 +78,53 @@ class Space extends Model {
 	public static function update( int $id, array $data ): bool {
 		$slug_changing = ! empty( $data['slug'] );
 		$type_changing = ! empty( $data['type'] );
+		// A space counts toward a category only while it is active and in one,
+		// so BOTH a category move and a status change can alter two counters.
+		$count_changing = array_key_exists( 'category_id', $data ) || array_key_exists( 'status', $data );
 
-		// One read covers both comparisons.
-		$existing = ( $slug_changing || $type_changing ) ? parent::find( $id ) : null;
+		// One read covers every comparison below.
+		$existing = ( $slug_changing || $type_changing || $count_changing ) ? parent::find( $id ) : null;
 		$old_slug = $slug_changing ? ( $existing->slug ?? null ) : null;
 		$old_type = $type_changing ? ( $existing->type ?? null ) : null;
 
 		$result = parent::update( $id, $data );
+
+		/*
+		 * Keep jt_categories.space_count honest.
+		 *
+		 * Only create() incremented it and only purge decremented it, so
+		 * moving a space between categories left both counters wrong - the old
+		 * one too high, the new one too low - and archiving a space never
+		 * decremented at all, while Recount counts active spaces only. Measured
+		 * on a demo install: one category stored 23 against 5 actual spaces.
+		 * `wp jetonomy recount` repaired it and the next move broke it again,
+		 * which is the signature of a missing write-path adjustment rather than
+		 * a bad backfill.
+		 *
+		 * Expressed as "which category was this space counted in, before and
+		 * after" so one comparison covers a move, an archive, a restore, and a
+		 * move-and-archive in the same call.
+		 */
+		if ( $result && $count_changing && $existing ) {
+			$counted_in = static function ( $category_id, $status ): int {
+				return ( 'active' === (string) $status ) ? (int) $category_id : 0;
+			};
+
+			$was = $counted_in( $existing->category_id ?? 0, $existing->status ?? '' );
+			$now = $counted_in(
+				array_key_exists( 'category_id', $data ) ? $data['category_id'] : ( $existing->category_id ?? 0 ),
+				array_key_exists( 'status', $data ) ? $data['status'] : ( $existing->status ?? '' )
+			);
+
+			if ( $was !== $now ) {
+				if ( $was > 0 ) {
+					Category::increment_space_count( $was, -1 );
+				}
+				if ( $now > 0 ) {
+					Category::increment_space_count( $now, 1 );
+				}
+			}
+		}
 
 		// Retype the posts inside when the space changes what it is. Post type
 		// drives real behaviour, not just a label: schema markup only emits
