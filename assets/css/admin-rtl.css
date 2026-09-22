@@ -744,6 +744,14 @@
 	background: var(--jt-admin-accent-light);
 	color: var(--jt-admin-accent);
 }
+/* Overdue: queued, its time has passed, and the publish job has not run.
+   Reads as a warning rather than a neutral queued state, because it is the
+   row an owner is looking for when a member asks why a post never appeared. */
+.jt-status-badge--overdue {
+	background: var(--jt-admin-warn-light);
+	color: var(--jt-admin-warn-dark);
+}
+.jt-status-badge--overdue::before { background: var(--jt-admin-warn); }
 
 .jt-status-badge--scheduled::before { background: var(--jt-admin-accent); }
 

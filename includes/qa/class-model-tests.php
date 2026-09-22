@@ -23,6 +23,7 @@ use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Models\Tag;
 use Jetonomy\Models\Notification;
+use Jetonomy\Models\Post;
 use Jetonomy\Permissions\Permission_Engine;
 use Jetonomy\Permissions\Rate_Limiter;
 use Jetonomy\Trust\Trust_Evaluator;
@@ -243,6 +244,7 @@ class Model_Tests {
 		$this->check_shortcode_ref_contract();
 		$this->check_settings_round_trip();
 		$this->check_template_include_contract();
+		$this->check_scheduled_contract();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
@@ -264,6 +266,104 @@ class Model_Tests {
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
 	 * space 0 and returned nothing.
 	 */
+	/**
+	 * Approving a SCHEDULED draft must publish it properly, not poke its status.
+	 *
+	 * Bulk Approve wrote status=publish directly, so the post went live early
+	 * with published_at still in the future: it kept rendering a "Scheduled"
+	 * badge, pinned itself to the top of the recency sort, and never fired
+	 * jetonomy_after_create_post - no notifications, no activity, no BuddyPress
+	 * broadcast. The REST publish-now route already did this correctly, so two
+	 * paths disagreed about what publishing means.
+	 *
+	 * @return void
+	 */
+	private function check_scheduled_contract(): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} WHERE status = 'active' LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		if ( $space_id <= 0 ) {
+			$this->skip( 'SC-A1: approving a scheduled draft', 'no active space' );
+			return;
+		}
+
+		$future = gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS );
+		$post_id = Post::create(
+			array(
+				'space_id'  => $space_id,
+				'author_id' => 1,
+				'title'     => 'QA scheduled probe',
+				'content'   => 'probe',
+				'type'      => 'discussion',
+				'status'    => 'draft',
+			)
+		);
+		$post_id = is_wp_error( $post_id ) ? 0 : (int) $post_id;
+
+		if ( $post_id <= 0 ) {
+			$this->skip( 'SC-A1: approving a scheduled draft', 'post insert failed' );
+			return;
+		}
+
+		$posts_t = table( 'posts' );
+		$wpdb->update( $posts_t, array( 'published_at' => $future ), array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+		$fired = array();
+		$probe = static function ( $id ) use ( &$fired ) {
+			$fired[] = (int) $id;
+		};
+		add_action( 'jetonomy_after_create_post', $probe, 1 );
+
+		\Jetonomy\Moderation\Moderation_Service::system_set_object_status( 'post', $post_id, 'approve', 1 );
+
+		remove_action( 'jetonomy_after_create_post', $probe, 1 );
+
+		$row = Post::find( $post_id );
+
+		$this->check(
+			'SC-A1: approving a scheduled draft clears its publish time',
+			'publish' === ( $row->status ?? '' ) && empty( $row->published_at ),
+			'status=' . ( $row->status ?? '?' ) . ' published_at=' . ( $row->published_at ?? 'NULL' )
+		);
+		$this->check(
+			'SC-A2: and fires the create hook, so notifications still go out',
+			in_array( $post_id, $fired, true )
+		);
+
+		// SC-A3: the Scheduled listing predicate must be status-scoped. A
+		// published post with a future date is not scheduled, and a queued post
+		// whose time has passed must NOT vanish from the one screen an owner
+		// checks when a member asks why a post never appeared.
+		$overdue_id = Post::create(
+			array(
+				'space_id'  => $space_id,
+				'author_id' => 1,
+				'title'     => 'QA overdue probe',
+				'content'   => 'probe',
+				'type'      => 'discussion',
+				'status'    => 'draft',
+			)
+		);
+		$overdue_id = is_wp_error( $overdue_id ) ? 0 : (int) $overdue_id;
+		$wpdb->update( $posts_t, array( 'published_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ), array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$queued = array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$posts_t} WHERE status = 'draft' AND published_at IS NOT NULL" ) );
+
+		$this->check(
+			'SC-A3: an overdue queued post stays in the Scheduled listing',
+			in_array( (int) $overdue_id, $queued, true )
+		);
+		$this->check(
+			'SC-A4: an approved post is no longer in the Scheduled listing',
+			! in_array( (int) $post_id, $queued, true )
+		);
+
+		$wpdb->delete( $posts_t, array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $posts_t, array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
 	/**
 	 * The router must claim a route through `template_include`, and must not be
 	 * the last word on it.

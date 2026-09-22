@@ -1992,8 +1992,21 @@ class Admin {
 		 * yet show in the listing").
 		 */
 		if ( 'scheduled' === $current_status ) {
-			$where .= ' AND p.published_at IS NOT NULL AND p.published_at > %s';
-			$args[] = current_time( 'mysql', true );
+			// status='draft' is the load-bearing half. Without it this matched
+			// ANY row with a future published_at, so a published post that an
+			// admin had forward-dated listed as Scheduled (carrying both a
+			// "Published" and a "Scheduled" badge), as did a scheduled post that
+			// had since been trashed or marked spam.
+			//
+			// No `published_at > NOW()` either: a post whose time has passed but
+			// which the hourly cron has not published yet would drop out of the
+			// filter entirely - and "why has my post not gone live" is the exact
+			// question this screen exists to answer. Those rows stay, badged
+			// Overdue by the view.
+			//
+			// status is indexed (status_created), so this uses an index where
+			// the published_at-only predicate full-scanned.
+			$where .= " AND p.status = 'draft' AND p.published_at IS NOT NULL";
 		} elseif ( 'all' !== $current_status ) {
 			$where .= ' AND p.status = %s';
 			$args[] = $current_status;
@@ -2021,6 +2034,17 @@ class Admin {
 
 		$full_args = array_merge( $args, array( $per_page, $offset ) );
 		$posts     = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: array();
+
+		// Count for the Scheduled filter label. The card asked for one and the
+		// only number on screen was "1-N of N", which appears AFTER you pick the
+		// filter - no use for deciding whether to look.
+		$scheduled_count = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'draft' AND p.published_at IS NOT NULL"
+		);
+
+		// Site-timezone "now", for the view's Overdue split. Computed once here
+		// rather than per row.
+		$scheduled_now = current_time( 'mysql', true );
 
 		include JETONOMY_DIR . 'includes/admin/views/content.php';
 	}

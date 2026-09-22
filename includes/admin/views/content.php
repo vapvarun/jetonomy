@@ -39,7 +39,10 @@ $status_labels = \Jetonomy\content_status_labels( true );
  * the option would filter to nothing there. It is a pseudo-status: a scheduled
  * post is an ordinary row whose published_at is still in the future.
  */
-$status_labels['scheduled'] = __( 'Scheduled', 'jetonomy' );
+$status_labels['scheduled'] = isset( $scheduled_count ) && $scheduled_count > 0
+	/* translators: %d: number of posts waiting to publish. */
+	? sprintf( __( 'Scheduled (%d)', 'jetonomy' ), (int) $scheduled_count )
+	: __( 'Scheduled', 'jetonomy' );
 
 $search_query = sanitize_text_field( $_GET['s'] ?? '' );
 $page_url     = admin_url( 'admin.php?page=jetonomy-content' );
@@ -290,17 +293,32 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							// to answer "why has my post not appeared yet".
 							// Stored UTC, shown in the SITE timezone per the
 							// date/time standard - never the server clock.
-							$jt_is_scheduled = ! empty( $p->published_at )
-								&& strtotime( (string) $p->published_at . ' UTC' ) > time();
-							if ( $jt_is_scheduled ) :
+							// A queued post is one that is STILL A DRAFT and carries a
+							// publish time. Keying the badge on "published_at is in
+							// the future" alone also badged a published post an
+							// admin had forward-dated.
+							$jt_is_queued  = ! empty( $p->published_at ) && 'draft' === ( $p->status ?? '' );
+							$jt_is_overdue = $jt_is_queued
+								&& strtotime( (string) $p->published_at . ' UTC' ) <= time();
+							if ( $jt_is_queued ) :
 								$jt_when = get_date_from_gmt(
 									(string) $p->published_at,
 									get_option( 'date_format' ) . ' ' . get_option( 'time_format' )
 								);
 								?>
-								<span class="jt-status-badge jt-status-badge--scheduled"
-									title="<?php echo esc_attr( sprintf( /* translators: %s: date and time the post publishes. */ __( 'Publishes %s', 'jetonomy' ), $jt_when ) ); ?>">
-									<?php esc_html_e( 'Scheduled', 'jetonomy' ); ?>
+								<span class="jt-status-badge <?php echo $jt_is_overdue ? 'jt-status-badge--overdue' : 'jt-status-badge--scheduled'; ?>"
+									title="
+									<?php
+									echo esc_attr(
+										$jt_is_overdue
+											/* translators: %s: date and time the post was due to publish. */
+											? sprintf( __( 'Was due %s - the publish job has not run yet', 'jetonomy' ), $jt_when )
+											/* translators: %s: date and time the post publishes. */
+											: sprintf( __( 'Publishes %s', 'jetonomy' ), $jt_when )
+									);
+									?>
+									">
+									<?php echo $jt_is_overdue ? esc_html__( 'Overdue', 'jetonomy' ) : esc_html__( 'Scheduled', 'jetonomy' ); ?>
 								</span>
 								<span class="jt-scheduled-when"><?php echo esc_html( $jt_when ); ?></span>
 							<?php endif; ?>
@@ -323,9 +341,20 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							<span title="<?php echo esc_attr( $p->created_at ?? '' ); ?>">
 								<?php
 								if ( ! empty( $p->created_at ) ) {
+									// human_time_diff() returns an ABSOLUTE gap, so
+									// appending "ago" unconditionally told the owner a
+									// post dated three days in the FUTURE was three
+									// days old. Dates are stored UTC, so parse them as
+									// UTC - reading them as server-local shifted every
+									// row by the server's offset.
+									$jt_ts   = strtotime( (string) $p->created_at . ' UTC' );
+									$jt_diff = human_time_diff( $jt_ts, time() );
 									echo esc_html(
-										human_time_diff( strtotime( $p->created_at ), time() )
-										. ' ' . __( 'ago', 'jetonomy' )
+										$jt_ts > time()
+											/* translators: %s: human-readable time span, e.g. "3 days". */
+											? sprintf( __( 'in %s', 'jetonomy' ), $jt_diff )
+											/* translators: %s: human-readable time span, e.g. "3 days". */
+											: sprintf( __( '%s ago', 'jetonomy' ), $jt_diff )
 									);
 								} else {
 									echo '&mdash;';
