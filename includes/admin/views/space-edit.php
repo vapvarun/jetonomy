@@ -611,7 +611,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<th scope="row"><label for="ss-who-can-post"><?php esc_html_e( 'Who Can Post', 'jetonomy' ); ?></label></th>
 						<td>
 							<select id="ss-who-can-post">
-								<option value="" <?php selected( $space_settings['who_can_post'] ?? '', '' ); ?>><?php esc_html_e( '(Use Global Default)', 'jetonomy' ); ?></option>
+								<option value="" <?php selected( $space_settings['who_can_post'] ?? '', '' ); ?>><?php esc_html_e( 'Anyone who can see it (no restriction)', 'jetonomy' ); ?></option>
 								<option value="members" <?php selected( $space_settings['who_can_post'] ?? '', 'members' ); ?>><?php esc_html_e( 'Members Only', 'jetonomy' ); ?></option>
 								<option value="moderators" <?php selected( $space_settings['who_can_post'] ?? '', 'moderators' ); ?>><?php esc_html_e( 'Moderators & Admins', 'jetonomy' ); ?></option>
 								<option value="admins" <?php selected( $space_settings['who_can_post'] ?? '', 'admins' ); ?>><?php esc_html_e( 'Admins Only', 'jetonomy' ); ?></option>
@@ -622,7 +622,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<th scope="row"><label for="ss-who-can-reply"><?php esc_html_e( 'Who Can Reply', 'jetonomy' ); ?></label></th>
 						<td>
 							<select id="ss-who-can-reply">
-								<option value="" <?php selected( $space_settings['who_can_reply'] ?? '', '' ); ?>><?php esc_html_e( '(Use Global Default)', 'jetonomy' ); ?></option>
+								<option value="" <?php selected( $space_settings['who_can_reply'] ?? '', '' ); ?>><?php esc_html_e( 'Anyone who can see it (no restriction)', 'jetonomy' ); ?></option>
 								<option value="members" <?php selected( $space_settings['who_can_reply'] ?? '', 'members' ); ?>><?php esc_html_e( 'Members Only', 'jetonomy' ); ?></option>
 								<option value="moderators" <?php selected( $space_settings['who_can_reply'] ?? '', 'moderators' ); ?>><?php esc_html_e( 'Moderators & Admins', 'jetonomy' ); ?></option>
 							</select>

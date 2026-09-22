@@ -467,8 +467,22 @@ class Admin {
 	 * @return array<string, array{subject: string, body: string}>
 	 */
 	public function sanitize_email_templates( $input ): array {
-		if ( ! is_array( $input ) ) {
-			return array();
+		$stored = get_option( 'jetonomy_email_templates', array() );
+		$stored = is_array( $stored ) ? $stored : array();
+
+		// This option is registered in the `jetonomy_settings` group, and
+		// options.php writes EVERY option in a group on submit - including the
+		// ones whose fields the current tab never rendered. So a save on
+		// Appearance, General, SEO or any other tab arrived here with $input
+		// null and wiped every override the owner had written. The header
+		// comment on register_setting() promised a separate OPTION protected
+		// this; what matters is the separate GROUP, which it does not have.
+		//
+		// The Email tab posts jetonomy_email_templates[_submitted]=1, so its
+		// absence means this save is not about templates. Present with no rows
+		// still means "the owner cleared them", which is honoured below.
+		if ( ! is_array( $input ) || empty( $input['_submitted'] ) ) {
+			return $stored;
 		}
 
 		$allowed_types = array(

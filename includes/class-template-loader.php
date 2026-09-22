@@ -185,22 +185,31 @@ class Template_Loader {
 		$dynamic_css = '';
 
 		// Detect the theme's container width and set --jt-container-width.
-		// 1. Check Jetonomy setting (user override)
-		// 2. Read from theme.json via wp_get_global_settings()
-		// 3. Read WP's $content_width global (classic themes set this in functions.php)
-		// 4. Fallback to 1200px
-		$container_width = '';
-		if ( ! empty( $settings['container_width'] ) ) {
-			$container_width = $settings['container_width'];
-		}
+		// 1. Read from theme.json via wp_get_global_settings()
+		// 2. Read WP's $content_width global (classic themes set this in functions.php)
+		// 3. Fallback to 1200px
+		//
+		// The `container_width` SETTING is deliberately not read here. It stores
+		// the enum theme / full / custom (see Admin::sanitize_settings), never a
+		// length, so this used to print `--jt-container-width:theme` - invalid at
+		// computed-value time, which makes `max-width: var(--jt-container-width,
+		// 1200px)` resolve to `none` rather than the fallback, because a var()
+		// fallback does not apply to an invalid substituted value. The community
+		// container therefore had NO max-width on any theme that does not wrap it
+		// itself, while the owner saw "Theme" selected and nothing wrong. It also
+		// meant the theme.json / $content_width detection below never ran, since
+		// the enum is always non-empty.
+		//
+		// `theme` means exactly this detection chain. `full` and `custom` are
+		// applied by Integrations\Layout_CSS::build_rules(), whose
+		// `body.jt-page .jt-container` selector outranks the rule emitted here.
+		// One reader per key.
+		$global_settings = wp_get_global_settings( array( 'layout' ) );
+		// wideSize is the wider container (for layouts with sidebars).
+		$container_width = $global_settings['wideSize'] ?? '';
+		// If no wideSize, try contentSize.
 		if ( ! $container_width ) {
-			$global_settings = wp_get_global_settings( array( 'layout' ) );
-			// wideSize is the wider container (for layouts with sidebars).
-			$container_width = $global_settings['wideSize'] ?? '';
-			// If no wideSize, try contentSize.
-			if ( ! $container_width ) {
-				$container_width = $global_settings['contentSize'] ?? '';
-			}
+			$container_width = $global_settings['contentSize'] ?? '';
 		}
 		if ( ! $container_width ) {
 			global $content_width;
@@ -1480,7 +1489,15 @@ class Template_Loader {
 						$desc      = sprintf( __( 'Search discussions, replies, members, and tags on %s.', 'jetonomy' ), $site_name );
 						$url       = $base . '/search/';
 						$image_alt = $site_name;
-						$noindex   = true; // Search results — duplicate / thin.
+						// Honour the owner's choice. This was hard-coded true, so
+						// Settings > SEO > "Noindex search pages" visibly saved and
+						// changed nothing - the tag stayed in the head either way.
+						// Schema_Markup::…:56 already read the setting, so the two
+						// SEO surfaces disagreed about the same key. Default stays
+						// ON (search results are thin/duplicate); seo_settings()
+						// supplies that default, so an owner who never touched the
+						// box is unaffected.
+						$noindex = ! empty( \Jetonomy\seo_settings()['seo_noindex_search'] );
 						break;
 					case 'moderation':
 						$title = __( 'Moderation Queue', 'jetonomy' );

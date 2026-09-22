@@ -1389,6 +1389,19 @@ class Space extends Model {
 			$incoming['prefixes'] = $clean_prefixes;
 		}
 
+		// An explicitly empty restriction means "no per-space restriction", so the
+		// key has to be REMOVED, not stored as ''. Permission_Engine Layer 4 uses
+		// ! empty() so '' would behave correctly today, but a stored '' is a
+		// phantom value that reads as configured, and the same merge carries it
+		// forward forever.
+		$clear_restrictions = array();
+		foreach ( array( 'who_can_post', 'who_can_reply' ) as $restriction_key ) {
+			if ( array_key_exists( $restriction_key, $incoming ) && '' === (string) $incoming[ $restriction_key ] ) {
+				unset( $incoming[ $restriction_key ] );
+				$clear_restrictions[] = $restriction_key;
+			}
+		}
+
 		$clear_per_page = false;
 		if ( array_key_exists( 'posts_per_page', $incoming ) ) {
 			$per_page = $incoming['posts_per_page'];
@@ -1401,6 +1414,10 @@ class Space extends Model {
 		}
 
 		$merged = array_merge( self::get_settings( $space_id ), $incoming );
+
+		foreach ( $clear_restrictions as $restriction_key ) {
+			unset( $merged[ $restriction_key ] );
+		}
 
 		// The key was cleared, so strip what the merge carried over from the
 		// previously stored value — otherwise "clear this" silently no-ops.

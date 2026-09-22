@@ -241,6 +241,7 @@ class Model_Tests {
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
+		$this->check_settings_round_trip();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
@@ -262,6 +263,122 @@ class Model_Tests {
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
 	 * space 0 and returned nothing.
 	 */
+	/**
+	 * Settings round-trip: what the owner saved is what is stored and used.
+	 *
+	 * Every check here is a defect that shipped, and they share one shape - the
+	 * screen said "saved" while the value was silently changed, dropped, or
+	 * never read. None of them is visible to a static gate, and none was
+	 * covered, which is why a whole settings audit found them at once.
+	 *
+	 * @return void
+	 */
+	private function check_settings_round_trip(): void {
+		$admin = new \Jetonomy\Admin\Admin();
+
+		// SV1: a save from a tab that renders no template fields must not wipe
+		// the overrides. jetonomy_email_templates is registered in the same
+		// settings group as everything else, so options.php calls this
+		// sanitizer with nothing on EVERY tab's save - and it used to answer
+		// with an empty array.
+		$templates_before = get_option( 'jetonomy_email_templates', array() );
+		update_option(
+			'jetonomy_email_templates',
+			array( 'mention' => array( 'subject' => 'SV probe', 'body' => 'SV body' ) )
+		);
+		$kept = $admin->sanitize_email_templates( null );
+		$this->check(
+			'SV1: saving another tab keeps the custom email templates',
+			isset( $kept['mention']['subject'] ) && 'SV probe' === $kept['mention']['subject']
+		);
+
+		// SV2: the widen-check - the Email tab itself must still be able to
+		// clear a row, or SV1 could be satisfied by making templates permanent.
+		$cleared = $admin->sanitize_email_templates(
+			array(
+				'_submitted' => '1',
+				'mention'    => array( 'subject' => '', 'body' => '' ),
+			)
+		);
+		$this->check( 'SV2: the Email tab can still clear a template', array() === $cleared );
+		update_option( 'jetonomy_email_templates', $templates_before );
+
+		// SV3: the empty "no restriction" option must REMOVE who_can_post, not
+		// store a value. The admin JS used to coerce '' to 'members', which
+		// turned an open community into members-only whenever the owner touched
+		// any other field on that tab.
+		$spaces_t = table( 'spaces' );
+		$space_id = (int) $this->db_insert_probe_space( $spaces_t );
+		if ( $space_id > 0 ) {
+			Space::update(
+				$space_id,
+				array( 'settings' => wp_json_encode( Space::merge_settings( $space_id, array( 'who_can_post' => 'members' ) ) ) )
+			);
+			$merged = Space::merge_settings( $space_id, array( 'who_can_post' => '', 'posts_per_page' => 9 ) );
+			$this->check(
+				'SV3: the empty post restriction unsets the key instead of storing members',
+				! array_key_exists( 'who_can_post', $merged ) && 9 === (int) ( $merged['posts_per_page'] ?? 0 )
+			);
+
+			global $wpdb;
+			$wpdb->delete( $spaces_t, array( 'id' => $space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		} else {
+			$this->skip( 'SV3: empty post restriction unsets the key', 'probe space insert failed' );
+		}
+
+		// SV4: container_width is an ENUM, and sanitize_settings() is what keeps
+		// a length out of the option. The emitted CSS is built inside
+		// Template_Loader::render(), so the "is it printed as a length" half is
+		// a browser check, not this one - what is asserted here is the contract
+		// every reader relies on: the stored value is only ever theme / full /
+		// custom, with the length living in its own key.
+		$sanitized = $admin->sanitize_settings(
+			array(
+				'accent_color'           => '#0073aa',
+				'container_width'        => '1280px',
+				'container_width_custom' => '1440',
+			)
+		);
+		$this->check(
+			'SV4: container_width stores only the enum, never a length',
+			in_array( $sanitized['container_width'] ?? '', array( 'theme', 'full', 'custom' ), true ),
+			(string) ( $sanitized['container_width'] ?? '(unset)' )
+		);
+		$this->check(
+			'SV4: the custom length lives in its own key, clamped',
+			1440 === (int) ( $sanitized['container_width_custom'] ?? 0 ),
+			(string) ( $sanitized['container_width_custom'] ?? '(unset)' )
+		);
+	}
+
+	/**
+	 * Insert a throwaway active space for a settings probe.
+	 *
+	 * @param string $spaces_t Prefixed spaces table.
+	 * @return int Row id, or 0.
+	 */
+	private function db_insert_probe_space( string $spaces_t ): int {
+		global $wpdb;
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$spaces_t,
+			array(
+				'category_id' => 0,
+				'parent_id'   => 0,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => 'QA Settings Probe',
+				'slug'        => 'qa-settings-probe-' . wp_generate_password( 6, false ),
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+				'status'      => 'active',
+				'created_at'  => \Jetonomy\now(),
+			)
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
 	private function check_shortcode_ref_contract(): void {
 		global $wpdb;
 

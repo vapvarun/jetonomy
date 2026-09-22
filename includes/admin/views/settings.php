@@ -779,7 +779,17 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 				<?php
 				$email_templates = get_option( 'jetonomy_email_templates', array() );
-				$tmpl_types      = array(
+				// Marker so sanitize_email_templates() can tell "the Email tab
+				// posted, and the owner cleared every row" from "a different tab
+				// posted and said nothing about templates". Without it, saving
+				// Appearance (or any other tab) erased every override, because
+				// options.php writes EVERY option registered in this settings
+				// group whether the form carried it or not. Same pattern as
+				// role_caps_submitted on the Permissions tab.
+				?>
+				<input type="hidden" name="jetonomy_email_templates[_submitted]" value="1" />
+				<?php
+				$tmpl_types = array(
 					'user_welcome'          => __( 'Welcome: new member', 'jetonomy' ),
 					'reply_to_post'         => __( 'Reply to your post', 'jetonomy' ),
 					'reply_to_reply'        => __( 'Reply to your reply', 'jetonomy' ),
