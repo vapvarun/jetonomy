@@ -439,7 +439,7 @@ $crumbs[] = [
 				<nav class="jt-subspaces" aria-label="<?php echo esc_attr( sprintf( __( 'Sub-%s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>">
 					<h2 class="jt-subspaces__title">
 						<?php
-						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
+						/* translators: %s: the plural space label the site owner configured. */
 						printf( esc_html__( 'Sub-%s', 'jetonomy' ), esc_html( \Jetonomy\space_label( true, true ) ) );
 						?>
 					</h2>

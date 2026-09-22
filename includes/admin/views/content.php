@@ -353,7 +353,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 										$jt_ts > time()
 											/* translators: %s: human-readable time span, e.g. "3 days". */
 											? sprintf( __( 'in %s', 'jetonomy' ), $jt_diff )
-											/* translators: %s: human-readable time span, e.g. "3 days". */
+											/* translators: %s: human-readable time difference. */
 											: sprintf( __( '%s ago', 'jetonomy' ), $jt_diff )
 									);
 								} else {
