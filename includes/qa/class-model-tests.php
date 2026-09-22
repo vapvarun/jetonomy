@@ -242,6 +242,7 @@ class Model_Tests {
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
 		$this->check_settings_round_trip();
+		$this->check_template_include_contract();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
@@ -263,6 +264,53 @@ class Model_Tests {
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
 	 * space 0 and returned nothing.
 	 */
+	/**
+	 * The router must claim a route through `template_include`, and must not be
+	 * the last word on it.
+	 *
+	 * Rendering-and-exiting on `template_redirect` made every Jetonomy route
+	 * bypass maintenance mode, paywalls and coming-soon screens, because
+	 * WordPress fires template_redirect BEFORE template_include and an exit
+	 * there means the later hook never runs at all. A first attempt moved the
+	 * render to template_redirect priority 9999 and looked fixed only because
+	 * the verification gates also hooked template_redirect - no priority on
+	 * that hook can fix it. These checks pin the hook itself.
+	 *
+	 * @return void
+	 */
+	private function check_template_include_contract(): void {
+		// MM1: nothing of ours renders on template_redirect any more. A
+		// callback that exits there is the defect, whatever its priority.
+		$this->check(
+			'MM1: the router no longer renders on template_redirect',
+			false === has_action( 'template_redirect', array( 'Jetonomy\\Router', 'handle_request' ) )
+				&& ! method_exists( 'Jetonomy\\Router', 'handle_request' ),
+			'handle_request still exists'
+		);
+
+		// MM2: the route IS claimed, via the filter, and resolves to a real
+		// file - a canvas path that does not exist would 500 every route.
+		$canvas = JETONOMY_DIR . 'includes/template-canvas.php';
+		$this->check( 'MM2: the template canvas file exists', file_exists( $canvas ), $canvas );
+
+		// MM3: a gate registered AFTER us still wins. This is the contract
+		// maintenance / membership / coming-soon plugins are written against,
+		// and the one the old render-and-exit broke. Priority 999999 is what
+		// the Maintenance plugin from the original report uses.
+		$gate = static function () {
+			return '/dev/null/jetonomy-qa-gate.php';
+		};
+		add_filter( 'template_include', $gate, 999999 );
+		$result = apply_filters( 'template_include', 'theme-index.php' );
+		remove_filter( 'template_include', $gate, 999999 );
+
+		$this->check(
+			'MM3: a later template_include gate can still refuse the request',
+			'/dev/null/jetonomy-qa-gate.php' === $result,
+			(string) $result
+		);
+	}
+
 	/**
 	 * Settings round-trip: what the owner saved is what is stored and used.
 	 *
