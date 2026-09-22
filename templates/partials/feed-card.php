@@ -72,6 +72,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 			<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 		<button type="button"
 			class="jt-feed-act <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
+			aria-pressed="<?php echo 1 === $viewer_vote ? 'true' : 'false'; ?>"
 			data-wp-on--click="actions.voteUp"
 			data-post-id="<?php echo absint( $post->id ); ?>"
 			aria-label="<?php esc_attr_e( 'Upvote', 'jetonomy' ); ?>">
@@ -85,6 +86,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 					?>
 		<button type="button"
 			class="jt-feed-act <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
+			aria-pressed="<?php echo -1 === $viewer_vote ? 'true' : 'false'; ?>"
 			data-wp-on--click="actions.voteDown"
 			data-post-id="<?php echo absint( $post->id ); ?>"
 			aria-label="<?php esc_attr_e( 'Downvote', 'jetonomy' ); ?>">

@@ -269,13 +269,42 @@
      Narrowing the reset instead would have removed this exact set of buttons
      from the cross-theme insulation the block exists to provide.
      `fill` makes the ON state read as filled rather than only tinted, so the
-     meaning does not rest on colour alone (WCAG 1.4.1). */
+     meaning does not rest on colour alone (WCAG 1.4.1).
+     EVERY surface that renders an ON state has to be listed here, not just the
+     one a bug report named. The first pass covered only the single-topic
+     bookmark and .jt-act.voted, so the topic-list vote (.jt-v-btn), the feed
+     vote (.jt-feed-act), the reported/flagged state (.is-flagged), the My
+     Bookmarks list toggle and Pro's reaction chip all stayed grey - the two
+     vote surfaces being the ones members actually use. Each of those classes
+     sits on a <button>, which is what the reset matches; an <a> is untouched by
+     it and needs nothing here. */
   .jt-app button.jt-bookmark-btn.bookmarked,
-  .jt-app button.jt-act.voted { color: var(--jt-accent) !important; }
+  .jt-app button.jt-bookmark-toggle.bookmarked,
+  .jt-app button.jt-act.voted,
+  .jt-app button.jt-v-btn.voted,
+  .jt-app button.jt-v-btn.jt-voted,
+  .jt-app button.jt-feed-act.voted,
+  .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent) !important; }
   .jt-app button.jt-bookmark-btn.bookmarked svg,
-  .jt-app button.jt-act.voted svg { fill: currentColor; }
-  .jt-app button.jt-act.jt-flagged-indicator { color: var(--jt-danger) !important; }
-  .jt-app button.jt-act.jt-flagged-indicator svg { fill: currentColor; }
+  .jt-app button.jt-bookmark-toggle.bookmarked svg,
+  .jt-app button.jt-act.voted svg,
+  .jt-app button.jt-v-btn.voted svg,
+  .jt-app button.jt-v-btn.jt-voted svg,
+  .jt-app button.jt-feed-act.voted svg,
+  .jt-app button.jt-feed-act.jt-voted svg { fill: currentColor; }
+  /* Reported/flagged. The class the template and view.js actually set is
+     `is-flagged` (single-post.php, view.js). The previous rule here named
+     .jt-act.jt-flagged-indicator, which is only ever on an <a> - so it matched
+     no button at all while reading as though flag was covered. The <a> form
+     keeps its own rule further down; it needs no !important because the
+     `.jt-app a` reset carries none. */
+  .jt-app button.jt-act.is-flagged { color: var(--jt-danger) !important; }
+  .jt-app button.jt-act.is-flagged svg { fill: currentColor; }
+  /* Pro's reaction chip. The rule lives in Pro (reactions extension) without
+     !important, so free's reset wins over it; the re-assert therefore belongs
+     here, beside the reset that breaks it, rather than as an !important war
+     inside Pro. */
+  .jt-app button.jt-reaction-chip.is-mine { color: var(--jt-accent) !important; background-color: var(--jt-accent-light) !important; border-color: var(--jt-accent) !important; }
 
   .jt-app button.jt-btn-ghost.jt-btn-danger { color: var(--jt-danger) !important; }
   .jt-app button.jt-btn-ghost.jt-btn-danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; border-color: var(--jt-danger) !important; }

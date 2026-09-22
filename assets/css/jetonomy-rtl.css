@@ -258,6 +258,54 @@
      neutral ghost rules above so the danger colour wins for a destructive
      secondary action (member Ban, notification Delete) while the shape stays
      consistent with its ghost siblings. */
+  /* Action buttons that are ON (bookmarked / voted / flagged).
+     These belong in THIS block, not beside their own component rules, for the
+     same reason .jt-btn-fill does: the blanket reset above carries !important,
+     so it beat `.jt-bookmark-btn.bookmarked { color: var(--jt-accent) }` no
+     matter its specificity. The state class was applied, the icon inherited
+     via currentColor, and the colour it inherited was forced back to the
+     parent's - so a member got NO visual confirmation from any action button
+     in the plugin. The notice was the only feedback there was.
+     Narrowing the reset instead would have removed this exact set of buttons
+     from the cross-theme insulation the block exists to provide.
+     `fill` makes the ON state read as filled rather than only tinted, so the
+     meaning does not rest on colour alone (WCAG 1.4.1).
+     EVERY surface that renders an ON state has to be listed here, not just the
+     one a bug report named. The first pass covered only the single-topic
+     bookmark and .jt-act.voted, so the topic-list vote (.jt-v-btn), the feed
+     vote (.jt-feed-act), the reported/flagged state (.is-flagged), the My
+     Bookmarks list toggle and Pro's reaction chip all stayed grey - the two
+     vote surfaces being the ones members actually use. Each of those classes
+     sits on a <button>, which is what the reset matches; an <a> is untouched by
+     it and needs nothing here. */
+  .jt-app button.jt-bookmark-btn.bookmarked,
+  .jt-app button.jt-bookmark-toggle.bookmarked,
+  .jt-app button.jt-act.voted,
+  .jt-app button.jt-v-btn.voted,
+  .jt-app button.jt-v-btn.jt-voted,
+  .jt-app button.jt-feed-act.voted,
+  .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent) !important; }
+  .jt-app button.jt-bookmark-btn.bookmarked svg,
+  .jt-app button.jt-bookmark-toggle.bookmarked svg,
+  .jt-app button.jt-act.voted svg,
+  .jt-app button.jt-v-btn.voted svg,
+  .jt-app button.jt-v-btn.jt-voted svg,
+  .jt-app button.jt-feed-act.voted svg,
+  .jt-app button.jt-feed-act.jt-voted svg { fill: currentColor; }
+  /* Reported/flagged. The class the template and view.js actually set is
+     `is-flagged` (single-post.php, view.js). The previous rule here named
+     .jt-act.jt-flagged-indicator, which is only ever on an <a> - so it matched
+     no button at all while reading as though flag was covered. The <a> form
+     keeps its own rule further down; it needs no !important because the
+     `.jt-app a` reset carries none. */
+  .jt-app button.jt-act.is-flagged { color: var(--jt-danger) !important; }
+  .jt-app button.jt-act.is-flagged svg { fill: currentColor; }
+  /* Pro's reaction chip. The rule lives in Pro (reactions extension) without
+     !important, so free's reset wins over it; the re-assert therefore belongs
+     here, beside the reset that breaks it, rather than as an !important war
+     inside Pro. */
+  .jt-app button.jt-reaction-chip.is-mine { color: var(--jt-accent) !important; background-color: var(--jt-accent-light) !important; border-color: var(--jt-accent) !important; }
+
   .jt-app button.jt-btn-ghost.jt-btn-danger { color: var(--jt-danger) !important; }
   .jt-app button.jt-btn-ghost.jt-btn-danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; border-color: var(--jt-danger) !important; }
   /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
@@ -534,6 +582,31 @@
   .jt-post-body code, .jt-reply-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
   /* code inside a code block must not also get the inline-code chip background. */
   .jt-post-body pre code, .jt-reply-body pre code { background: none; padding: 0; border-radius: 0; }
+
+  /* ── Wide-content containment (theme-proof) ──
+     `overflow-x: auto` on the <pre> is necessary but NOT sufficient, and that
+     gap is what reaches customers as "a code block breaks the page layout".
+     A flex or grid item defaults to `min-width: auto`, which means it refuses
+     to shrink below its content: if the host theme puts the post body inside a
+     flex/grid container - most modern themes do - a long unbroken line makes
+     that container grow instead of making our <pre> scroll, and the whole page
+     gains a horizontal scrollbar. Nothing in the plugin's own CSS is wrong when
+     that happens, which is why it reproduces on one theme and not another.
+     `min-width: 0` opts the chain out of that behaviour, so the scroll happens
+     where we put it. Declared here rather than waiting to learn which theme a
+     given report came from. */
+  .jt-post-body, .jt-reply-body,
+  .jt-post-body > *, .jt-reply-body > * { min-width: 0; }
+
+  /* Anything that can be intrinsically wider than its column stays inside it.
+     Tables and images are included because they fail the same way a <pre>
+     does; an embed keeps its own aspect handling and only gains the ceiling. */
+  .jt-post-body pre, .jt-reply-body pre,
+  .jt-post-body table, .jt-reply-body table,
+  .jt-post-body img, .jt-reply-body img,
+  .jt-post-body iframe, .jt-reply-body iframe { max-width: 100%; }
+
+  .jt-post-body table, .jt-reply-body table { display: block; overflow-x: auto; }
   .jt-post-body pre, .jt-reply-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
   .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-border); color: var(--jt-text-secondary); }
   .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }

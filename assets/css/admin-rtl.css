@@ -680,6 +680,80 @@
 
 .jt-status-badge--pending::before { background: var(--jt-admin-warn-dark); }
 
+/* Import consequences, shown under the raw counts. Informational, not a
+   warning: these are things the owner should read, not problems. */
+.jetonomy-import-notes {
+	margin: 12px 0 0;
+	padding: 12px 14px;
+	list-style: disc;
+	padding-inline-start: 30px;
+	background: var(--jt-admin-info-light);
+	border-inline-start: 3px solid var(--jt-admin-info);
+	border-radius: var(--jt-admin-radius);
+	font-size: 0.8125rem;
+	color: var(--jt-admin-info-dark);
+}
+
+.jetonomy-import-notes li { margin: 0 0 6px; }
+.jetonomy-import-notes li:last-child { margin-bottom: 0; }
+
+/* ── List-table headers never break mid-word ──
+   The admin tables are `table-layout: fixed` with per-column width classes, so
+   a label wider than its column has nowhere to go. Inherited
+   `overflow-wrap: break-word` then splits the WORD rather than the line, and a
+   header reads "Requir / ed" - which is what got reported. Column labels are
+   one or two words; breaking inside one is never the right answer, so let it
+   sit on one line and, if it truly cannot fit, ellipsis it where the full text
+   is still available via the title attribute and the responsive row toggle. */
+.jetonomy-admin .wp-list-table thead th,
+.jetonomy-admin .wp-list-table tfoot th {
+	overflow-wrap: normal;
+	word-break: normal;
+	hyphens: none;
+}
+
+/* ── Icon + label buttons ──
+   A button with an icon beside its label is an inline-block whose icon was
+   positioned with `vertical-align`, which aligns against the TEXT baseline box,
+   not the button box. With WP's ~38px button line-height around a 20px icon
+   that lands a few pixels high - measured 3px on "Send Test Email", which is
+   what the report described as "misaligned icon and text".
+
+   Flex centres both children against each other, so it is correct whatever the
+   line-height or icon size happens to be. Written as one rule against the
+   pattern rather than per button: the card named one, the codebase has nine,
+   and the next one somebody adds gets it for free. */
+.jetonomy-admin .button:has(> .dashicons),
+.jetonomy-admin .button:has(> svg) {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* The icon's own box must not re-introduce the offset the flex line removed. */
+.jetonomy-admin .button > .dashicons {
+	line-height: 1;
+	vertical-align: middle;
+}
+
+/* Scheduled is a pseudo-status shown beside the real one: the post IS
+   published as far as the status column goes, it just has not surfaced yet.
+   Informational rather than a warning, so it borrows the accent, not the
+   warn colour - an owner should not read a queued post as a problem. */
+.jt-status-badge--scheduled {
+	background: var(--jt-admin-accent-light);
+	color: var(--jt-admin-accent);
+}
+
+.jt-status-badge--scheduled::before { background: var(--jt-admin-accent); }
+
+.jt-scheduled-when {
+	display: block;
+	margin-block-start: 4px;
+	font-size: 0.75rem;
+	color: var(--jt-admin-text-muted);
+}
+
 .jt-status-badge--spam {
 	background: var(--jt-admin-danger-light);
 	color: var(--jt-admin-danger-dark);

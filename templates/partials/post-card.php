@@ -58,6 +58,7 @@ if ( $prefix_name && $space ) {
 			<?php // Not "is logged in" - "may actually vote here". A Read-grant rule admits without granting the vote. ?>
 			<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 				<button type="button" class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
+					aria-pressed="<?php echo 1 === $viewer_vote ? 'true' : 'false'; ?>"
 					data-wp-on--click="actions.voteUp"
 					data-post-id="<?php echo absint( $post->id ); ?>"
 					title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
@@ -66,6 +67,7 @@ if ( $prefix_name && $space ) {
 				<?php // Hide downvote on own content (self-downvote landed at -1). ?>
 				<?php if ( (int) $post->author_id !== $viewer_id ) : ?>
 					<button type="button" class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
+						aria-pressed="<?php echo -1 === $viewer_vote ? 'true' : 'false'; ?>"
 						data-wp-on--click="actions.voteDown"
 						data-post-id="<?php echo absint( $post->id ); ?>"
 						title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"

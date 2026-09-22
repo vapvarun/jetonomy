@@ -544,6 +544,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
 							<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
+								aria-pressed="<?php echo 1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteUp"
 								data-post-id="<?php echo absint( $post->id ); ?>"
 								title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
@@ -557,6 +558,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								if ( (int) $post->author_id !== get_current_user_id() ) :
 									?>
 							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
+								aria-pressed="<?php echo -1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteDown"
 								data-post-id="<?php echo absint( $post->id ); ?>"
 								title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"

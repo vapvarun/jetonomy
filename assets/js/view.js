@@ -832,6 +832,25 @@ function jtSetCoverPreview( form, url ) {
     }
 }
 
+/**
+ * Set a vote button's ON state.
+ *
+ * The class and the accessible state have to move together. Six call sites
+ * (optimistic apply, server reconcile and revert, for each of up and down) each
+ * toggled the class on its own and none of them touched aria-pressed, so a
+ * screen-reader user was told nothing at all when a vote registered - the state
+ * was carried by colour only, which is also what WCAG 1.4.1 is about. Mirrors
+ * setBookmarked() in the bookmark action.
+ *
+ * @param {Element|null|undefined} el Vote button.
+ * @param {boolean}                on Whether the viewer's vote is on this button.
+ */
+function jetonomySetVoted( el, on ) {
+    if ( ! el ) return;
+    el.classList.toggle( 'voted', !! on );
+    el.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -1628,10 +1647,10 @@ const { state, actions } = store( 'jetonomy', {
                         state.postScores[ postId ] = data.score;
                     }
                     if ( data && data.action === 'removed' ) {
-                        btnEl.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, false );
                     } else {
-                        btnEl.classList.add( 'voted' );
-                        if ( downSibling ) downSibling.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, true );
+                        jetonomySetVoted( downSibling, false );
                     }
                     if ( window.bnToast && ! window._jetonomyVoteToasted ) {
                         window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
@@ -1641,8 +1660,8 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: ( snap ) => {
                     state.postScores[ postId ] = snap.prevScore;
-                    btnEl.classList.toggle( 'voted', snap.wasVoted );
-                    if ( downSibling ) downSibling.classList.toggle( 'voted', snap.downWasVoted );
+                    jetonomySetVoted( btnEl, snap.wasVoted );
+                    jetonomySetVoted( downSibling, snap.downWasVoted );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
@@ -1685,10 +1704,10 @@ const { state, actions } = store( 'jetonomy', {
                         state.postScores[ postId ] = data.score;
                     }
                     if ( data && data.action === 'removed' ) {
-                        btnEl.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, false );
                     } else {
-                        btnEl.classList.add( 'voted' );
-                        if ( upSibling ) upSibling.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, true );
+                        jetonomySetVoted( upSibling, false );
                     }
                     if ( window.bnToast && ! window._jetonomyVoteToasted ) {
                         window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
@@ -1698,8 +1717,8 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: ( snap ) => {
                     state.postScores[ postId ] = snap.prevScore;
-                    btnEl.classList.toggle( 'voted', snap.wasVoted );
-                    if ( upSibling ) upSibling.classList.toggle( 'voted', snap.upWasVoted );
+                    jetonomySetVoted( btnEl, snap.wasVoted );
+                    jetonomySetVoted( upSibling, snap.upWasVoted );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
@@ -1743,17 +1762,17 @@ const { state, actions } = store( 'jetonomy', {
                         if ( scoreEl ) scoreEl.textContent = String( data.score );
                     }
                     if ( data && data.action === 'removed' ) {
-                        btnEl.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, false );
                     } else {
-                        btnEl.classList.add( 'voted' );
-                        if ( downSibling ) downSibling.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, true );
+                        jetonomySetVoted( downSibling, false );
                     }
                 },
                 revert: ( snap ) => {
                     state.replyScores[ replyId ] = snap.prevScore;
                     if ( scoreEl ) scoreEl.textContent = String( snap.prevScore );
-                    btnEl.classList.toggle( 'voted', snap.wasVoted );
-                    if ( downSibling ) downSibling.classList.toggle( 'voted', snap.downWasVoted );
+                    jetonomySetVoted( btnEl, snap.wasVoted );
+                    jetonomySetVoted( downSibling, snap.downWasVoted );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
@@ -1800,10 +1819,10 @@ const { state, actions } = store( 'jetonomy', {
                         if ( scoreEl ) scoreEl.textContent = String( data.score );
                     }
                     if ( data && data.action === 'removed' ) {
-                        btnEl.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, false );
                     } else {
-                        btnEl.classList.add( 'voted' );
-                        if ( upSibling ) upSibling.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, true );
+                        jetonomySetVoted( upSibling, false );
                     }
                 },
                 revert: ( snap ) => {
@@ -1812,8 +1831,8 @@ const { state, actions } = store( 'jetonomy', {
                     // failed downvote until refresh).
                     state.replyScores[ replyId ] = snap.prevScore;
                     if ( scoreEl ) scoreEl.textContent = String( snap.prevScore );
-                    btnEl.classList.toggle( 'voted', snap.wasVoted );
-                    if ( upSibling ) upSibling.classList.toggle( 'voted', snap.upWasVoted );
+                    jetonomySetVoted( btnEl, snap.wasVoted );
+                    jetonomySetVoted( upSibling, snap.upWasVoted );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',

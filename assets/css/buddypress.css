@@ -50,7 +50,7 @@
 }
 .jt-bp-forum-head .bp-primary-action {
 	background: var(--jt-accent, #3b82f6);
-	color: #fff; /* on-accent contrast */
+	color: var(--jt-accent-fg, #fff); /* follows the accent, so a light accent still reads */
 	border: none;
 	border-radius: 6px;
 	padding: 8px 18px;
@@ -62,7 +62,7 @@
 }
 .jt-bp-forum-head .bp-primary-action:hover {
 	background: var(--jt-accent-hover, #2563eb);
-	color: #fff; /* on-accent contrast */
+	color: var(--jt-accent-fg, #fff); /* follows the accent, so a light accent still reads */
 }
 
 .jt-bp-empty {
@@ -82,7 +82,7 @@
 	border-spacing: 0;
 }
 .jt-bp-topics th {
-	text-align: left;
+	text-align: start;
 	font-size: 0.6875rem;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
@@ -147,8 +147,16 @@
 /* ── Member Profile Forum Tab ── */
 .jt-bp-profile { padding: 0; }
 
+/* A wrapping grid, not a single clipping row.
+   As a one-row flex with overflow:hidden, the four cells needed 369px inside a
+   358px box at 390px wide - so the last cell (TRUST, the one stat that explains
+   a member's permissions) was cut off by 10px and lost its border. Longer
+   translations or a 4-digit reputation clip more. auto-fit keeps one row
+   wherever there is room and folds to 2x2 on a phone, with no breakpoint to
+   keep in step with the cell count. */
 .jt-bp-stats {
-	display: flex;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
 	gap: 0;
 	padding: 0;
 	margin-bottom: 24px;
@@ -157,13 +165,13 @@
 	overflow: hidden;
 }
 .jt-bp-stat {
-	flex: 1;
+	min-width: 0;
 	text-align: center;
 	padding: 16px 12px;
-	border-right: 1px solid var(--jt-border, #e2e8f0);
+	border-inline-end: 1px solid var(--jt-border, #e2e8f0);
 	background: var(--jt-bg-subtle, #f8fafc);
 }
-.jt-bp-stat:last-child { border-right: none; }
+.jt-bp-stat:last-child { border-inline-end: none; }
 .jt-bp-stat strong {
 	display: block;
 	font-size: 1.5rem;
@@ -215,7 +223,7 @@
 	color: var(--jt-text-tertiary, #94a3b8);
 	font-size: 0.8125rem;
 	white-space: nowrap;
-	text-align: right;
+	text-align: end;
 }
 .jt-bp-space-tag {
 	display: inline-block;
@@ -224,7 +232,7 @@
 	background: var(--jt-bg-muted, #f1f5f9);
 	padding: 1px 8px;
 	border-radius: 4px;
-	margin-left: 6px;
+	margin-inline-start: 6px;
 	vertical-align: middle;
 }
 
