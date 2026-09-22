@@ -389,10 +389,15 @@ class UserProfile extends Model {
 	 * @param string $order_by ORDER BY clause. Trusted: callers pass a fixed
 	 *                         literal or a value already vetted via the
 	 *                         `jetonomy_users_query_args` filter. Defaults to
-	 *                         'reputation DESC'.
+	 *                         'reputation DESC, user_id ASC'. The user_id half is
+	 *                         load-bearing, not cosmetic: under LIMIT/OFFSET,
+	 *                         MySQL may return tied rows in a different order for
+	 *                         each page, so without it a member tied on
+	 *                         reputation could appear on both pages of the board
+	 *                         or on neither.
 	 * @return object[] Profile rows for the page (empty array when none).
 	 */
-	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC' ): array {
+	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC, user_id ASC' ): array {
 		// Deliberately NOT block-filtered — a ranking, not a content feed.
 		// Per-viewer filtering would re-rank the board and leak "you blocked
 		// someone" via rank gaps.
@@ -407,6 +412,48 @@ class UserProfile extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $rows ? $rows : [];
+	}
+
+	/**
+	 * Competition ranks for one PAGE of leaderboard rows.
+	 *
+	 * The single definition of "what number goes beside this member", so the
+	 * server-rendered board, this REST endpoint and anything added later cannot
+	 * disagree. They already had: the web view derived shared 1224 ranks while
+	 * the REST controller numbered rows positionally with its own `$rank++`, so
+	 * the mobile app contradicted the "Your rank #N" badge the same member saw
+	 * on the web.
+	 *
+	 * Ties share a rank and the next distinct reputation resumes at its ordinal
+	 * position - 10, 10, 12 - which is correct 1224 ranking, not a gap. The
+	 * FIRST row is seeded from rank_for_user() rather than from $offset, because
+	 * a tie can straddle a page boundary: the top row of page 2 may share the
+	 * rank of the last row of page 1, and only a real rank query knows that.
+	 *
+	 * @param object[] $leaders Rows from list_for_leaderboard(), in order.
+	 * @param string   $period  Period the board was built for.
+	 * @param int      $offset  Offset the page was fetched with.
+	 * @return array<int, int> Rank per row, keyed by the row's position in $leaders.
+	 */
+	public static function competition_ranks( array $leaders, string $period, int $offset ): array {
+		$ranks    = array();
+		$prev_rep = null;
+		$rank     = 0;
+
+		foreach ( array_values( $leaders ) as $i => $leader ) {
+			$rep = (int) ( $leader->reputation ?? 0 );
+
+			if ( null === $prev_rep ) {
+				$rank = self::rank_for_user( (int) ( $leader->user_id ?? 0 ), $period );
+			} elseif ( $rep < $prev_rep ) {
+				$rank = $offset + $i + 1;
+			}
+
+			$prev_rep    = $rep;
+			$ranks[ $i ] = $rank;
+		}
+
+		return $ranks;
 	}
 
 	/**

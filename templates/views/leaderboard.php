@@ -175,8 +175,7 @@ $crumbs = [
 				 * row of page 2 may share the rank of the last row of page 1,
 				 * and only a real rank query knows that.
 				 */
-				$jt_prev_rep  = null;
-				$jt_comp_rank = 0;
+				$jt_comp_ranks = \Jetonomy\Models\UserProfile::competition_ranks( $leaders, $period, $offset );
 				?>
 				<?php foreach ( $leaders as $rank => $leader ) : ?>
 					<?php
@@ -188,13 +187,7 @@ $crumbs = [
 						// visible hole in the sequence (… 17, 18, 20).
 						continue;
 					}
-					$jt_rep = (int) $leader->reputation;
-					if ( null === $jt_prev_rep ) {
-						$jt_comp_rank = \Jetonomy\Models\UserProfile::rank_for_user( (int) $leader->user_id, $period );
-					} elseif ( $jt_rep < $jt_prev_rep ) {
-						$jt_comp_rank = $offset + (int) $rank + 1;
-					}
-					$jt_prev_rep = $jt_rep;
+					$jt_comp_rank = $jt_comp_ranks[ (int) $rank ] ?? ( $offset + (int) $rank + 1 );
 
 					$trust = (int) $leader->trust_level;
 

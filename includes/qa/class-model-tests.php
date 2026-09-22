@@ -1063,6 +1063,49 @@ class Model_Tests {
 			$run_len  = 1;
 		}
 		$this->check( 'LB4: no unexplained gap in the rank sequence', 0 === $holes, "{$holes} gap(s)" );
+
+		// LB5: the REST endpoint returns the SAME numbers as the shared
+		// derivation. LB1-LB4 tested the model only, so the web board and the
+		// REST controller could each number rows their own way and nothing
+		// failed - which is exactly what happened: the web showed shared ranks
+		// while REST counted positions, so the app contradicted the badge the
+		// same member saw in a browser.
+		$page     = UserProfile::list_for_leaderboard( 'all', 20, 0 );
+		$expected = UserProfile::competition_ranks( $page, 'all', 0 );
+		$request  = new \WP_REST_Request( 'GET', '/jetonomy/v1/leaderboards' );
+		$request->set_param( 'limit', 20 );
+		$request->set_param( 'offset', 0 );
+		$payload = rest_do_request( $request )->get_data();
+		$actual  = array_values( wp_list_pluck( (array) ( $payload['data'] ?? array() ), 'rank' ) );
+
+		// Compare only the rows REST returned (a profile with no WP user is
+		// skipped there by design), matched up by user id.
+		$by_user = array();
+		foreach ( array_values( $page ) as $i => $row ) {
+			$by_user[ (int) $row->user_id ] = $expected[ $i ] ?? 0;
+		}
+		$mismatch = 0;
+		foreach ( (array) ( $payload['data'] ?? array() ) as $item ) {
+			$uid = (int) ( $item['user_id'] ?? 0 );
+			if ( isset( $by_user[ $uid ] ) && (int) $item['rank'] !== $by_user[ $uid ] ) {
+				++$mismatch;
+			}
+		}
+		$this->check(
+			'LB5: REST ranks match the shared competition derivation',
+			0 === $mismatch && count( $actual ) > 0,
+			"{$mismatch} row(s) disagree"
+		);
+
+		// LB6: the ordering is deterministic. Without a tiebreaker, MySQL may
+		// return tied rows in a different order per page under LIMIT/OFFSET, so
+		// a tied member can appear on two pages or on none.
+		$first  = wp_list_pluck( UserProfile::list_for_leaderboard( 'all', 20, 0 ), 'user_id' );
+		$second = wp_list_pluck( UserProfile::list_for_leaderboard( 'all', 20, 0 ), 'user_id' );
+		$this->check(
+			'LB6: the leaderboard page order is stable across identical queries',
+			$first === $second && count( $first ) > 0
+		);
 	}
 
 	/**
