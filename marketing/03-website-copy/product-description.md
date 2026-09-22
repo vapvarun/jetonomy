@@ -50,12 +50,12 @@ Jetonomy Pro includes an AI layer that reads every new post and reply for spam, 
 - 24 custom MySQL tables with proper indexes for forum query patterns
 - Denormalized counters - reply counts and vote scores are on each record, not computed on load
 - Object cache support - works with Redis and Memcached when available
-- Cursor-based pagination on all list endpoints - consistent results on active communities
+- Denormalized counters on every record - listing pages never run a COUNT query per row
 - Sub-200ms page loads at 50,000 topics with Redis
 
 **Full REST API**
 
-48+ endpoints in the free plugin under the jetonomy/v1 namespace, 90+ endpoints with Pro. Cursor-based pagination, JSON schema validation, and complete documentation. Every feature is accessible programmatically.
+48+ endpoints in the free plugin under the jetonomy/v1 namespace, 90+ endpoints with Pro. Offset pagination with `after`/`before` tokens, JSON schema validation, and complete documentation. Every feature is accessible programmatically.
 
 Jetonomy also registers 20 abilities via the WordPress Abilities API (WP 6.9+), so AI agents and automation tools can discover and interact with your community without custom integration code.
 
@@ -81,7 +81,7 @@ Built-in importers for both. Auto-detects your source, runs a dry run first, sho
 - In-community and email notifications, subscriptions
 - Leaderboard and user profiles
 - Schema.org markup, sitemaps, Open Graph, and clean URLs
-- 80 REST API endpoints with cursor-based pagination
+- 80 REST API endpoints with offset pagination and JSON schema validation
 - Template overrides via your-theme/jetonomy/ directory
 - bbPress and wpForo importers with dry run and progress tracking
 - WordPress Abilities API support (20 abilities)
@@ -129,7 +129,7 @@ The frontend uses CSS custom properties that pull values from your theme's theme
 
 **Full REST API and developer tools**
 
-48+ endpoints in free (90+ with Pro) under the jetonomy/v1 namespace with cursor-based pagination and JSON schema validation. Full template override support via your-theme/jetonomy/. Action and filter hooks throughout. An adapter pattern for search, email, real-time updates, and membership integrations means you can swap components without touching the core.
+48+ endpoints in free (90+ with Pro) under the jetonomy/v1 namespace with offset pagination and JSON schema validation. Full template override support via your-theme/jetonomy/. Action and filter hooks throughout. An adapter pattern for search, email, real-time updates, and membership integrations means you can swap components without touching the core.
 
 For sites running WordPress 6.9+, Jetonomy registers 20 abilities via the WordPress Abilities API, so AI agents and automation tools can discover and interact with your community without custom code.
 

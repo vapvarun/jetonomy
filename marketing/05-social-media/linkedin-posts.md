@@ -20,7 +20,7 @@ bbPress, the most-used forum plugin, stores topics as WordPress posts and replie
 
 We built Jetonomy to fix that at the data layer.
 
-24 custom MySQL tables, designed for the actual query patterns of forum software. Denormalized counters (reply counts, vote scores) updated on write, not computed on read. Cursor-based pagination so list endpoints stay fast regardless of dataset size. A caching layer that uses Redis when available and degrades gracefully when it isn't.
+24 custom MySQL tables, designed for the actual query patterns of forum software. Denormalized counters (reply counts, vote scores) updated on write, not computed on read. Indexed queries over those tables, with page totals from dedicated COUNT(*) methods rather than loading rows to count them. A caching layer that uses Redis when available and degrades gracefully when it isn't.
 
 On top of that:
 - WordPress Interactivity API frontend - no jQuery, server-rendered HTML that hydrates, SEO-friendly
@@ -85,7 +85,7 @@ If you're a WordPress developer or agency building community features for client
 24 custom MySQL tables - not WordPress post types or post meta. Tables are designed for forum query patterns, with proper composite indexes. Counters (reply_count, vote_score, post_count) are denormalized and updated on write. Cold queries against a 50,000-post community stay under 300ms. With Redis object caching, under 50ms.
 
 **REST API**
-42 endpoints at `jetonomy/v1`. Cursor-based pagination on every list endpoint - not offset-based. Cursor pagination is stable when new content is added between page requests, which offset-based pagination is not. Full rate limiting at the API layer. Response shapes are consistent and documented.
+42 endpoints at `jetonomy/v1`. Offset pagination with `after`/`before` tokens on every list endpoint, over indexed purpose-built tables. Full rate limiting at the API layer. Response shapes are consistent and documented.
 
 **Frontend**
 WordPress Interactivity API with `@wordpress/interactivity` directives. No jQuery, no custom framework. The server renders full HTML - pages are indexable by search engines. Client-side interactions (voting, sorting, loading replies) hydrate the existing HTML. It's the architecture WordPress itself recommends for modern plugin UIs.
@@ -152,7 +152,7 @@ More features than bbPress, more actively developed, more modern-looking UI. Sti
 Not really a forum plugin - it's a social network layer with activity streams, friend connections, groups, and optional discussion components. Powerful and flexible, but it's a bigger commitment than a forum plugin. Builds a parallel user layer on top of WordPress. If you want a full social community (profiles, connections, activity feed, groups, messaging), BuddyPress plus BuddyPress extensions is a reasonable path.
 
 **Jetonomy (what we built)**
-Custom MySQL tables designed specifically for forum query patterns. Trust level system that auto-moderates new users. Three space types (Forum, Q&A, Ideas). WordPress Interactivity API frontend. CSS that inherits from theme.json. 80 REST API endpoints with cursor pagination.
+Custom MySQL tables designed specifically for forum query patterns. Trust level system that auto-moderates new users. Three space types (Forum, Q&A, Ideas). WordPress Interactivity API frontend. CSS that inherits from theme.json. 80 REST API endpoints with JSON schema validation.
 
 Where we're weaker: we're brand new. bbPress and wpForo have years of community support, tutorials, and hosting-provider documentation. We have 1.0 and a commitment to maintain it seriously.
 

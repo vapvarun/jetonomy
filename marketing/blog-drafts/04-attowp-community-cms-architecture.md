@@ -83,9 +83,9 @@ Historically, WordPress community plugins stored forum content in `wp_posts` and
 
 bbPress is the canonical example of this failure mode. I ran a 15,000-post community on bbPress for 18 months and the experience got progressively worse - admin list pages timing out, SEO plugins trying to index forum topics as regular blog posts, `wp_postmeta` bloat making the whole site slower. The root cause was that bbPress stored forum content in `wp_posts`, not a performance problem that more hosting could fix.
 
-The modern answer - what I'd pick in 2026 - is a WordPress community plugin that uses **dedicated custom database tables** with denormalized counters and cursor-based pagination. That eliminates the architectural bottleneck that killed bbPress at scale.
+The modern answer - what I'd pick in 2026 - is a WordPress community plugin that uses **dedicated custom database tables** with denormalized counters and indexes built for the queries a forum actually runs. That eliminates the architectural bottleneck that killed bbPress at scale.
 
-Jetonomy (from Wbcom Designs) is the plugin I moved that community to. 24 custom MySQL tables, denormalized counters on every record, cursor-based pagination on every list endpoint, and theme.json integration so it inherits your theme's design tokens automatically. I've tested it with imported data at 50,000+ topics and page loads stay under 200ms with Redis.
+Jetonomy (from Wbcom Designs) is the plugin I moved that community to. 24 custom MySQL tables, denormalized counters on every record, indexed pagination over those tables rather than `wp_posts`, and theme.json integration so it inherits your theme's design tokens automatically. I've tested it with imported data at 50,000+ topics and page loads stay under 200ms with Redis.
 
 That's not a sales pitch for Jetonomy - it's a description of the architectural pattern you should demand from any WordPress community plugin you're evaluating. If the plugin stores content in `wp_posts`, you're buying the bbPress problem. If it uses dedicated tables with proper indexes, you're not.
 
@@ -217,7 +217,7 @@ Rule out any plugin that stores content in `wp_posts` / `wp_postmeta`. That incl
 You want a plugin that:
 - Uses **dedicated custom database tables** (not `wp_posts`).
 - Stores denormalized counters (reply counts, vote scores) directly on the topic record - no `COUNT(*)` queries on page load.
-- Uses cursor-based pagination so deep pages stay fast.
+- Pages with `LIMIT`/`OFFSET` over its own indexed tables, not `wp_posts` joined to `wp_postmeta`.
 - Integrates with `theme.json` so the community inherits your WordPress theme's design tokens automatically.
 - Has a real REST API (not a thin community add-on).
 

@@ -72,7 +72,7 @@ On our community: we've been running Ollama locally against an 8B model for spam
 
 ### Improved: rendering speed on big spaces
 
-Topic listings on large spaces are now **2–3× faster** thanks to smarter batch queries. `COUNT(*)` replaced with cursor-based pagination, eager loading for avatars and vote state, denormalized counters on the topic row itself. On a test space with 10,000 topics, a paginated listing went from ~480ms to ~170ms on my dev box. This is the work that pays off more as the community grows.
+Topic listings on large spaces are now **2–3× faster** thanks to smarter batch queries. per-row `COUNT(*)` queries replaced with dedicated count methods, eager loading for avatars and vote state, denormalized counters on the topic row itself. On a test space with 10,000 topics, a paginated listing went from ~480ms to ~170ms on my dev box. This is the work that pays off more as the community grows.
 
 ### Improved: URL-base safety
 

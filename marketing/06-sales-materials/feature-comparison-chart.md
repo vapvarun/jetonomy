@@ -21,7 +21,6 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Avoids wp_postmeta bloat | Yes | No - heavy wp_postmeta use | Yes |
 | Denormalized counters (no COUNT on load) | Yes | No | Partial |
 | Object cache support (Redis/Memcached) | Yes | Partial (WP object cache) | Partial |
-| Cursor-based pagination | Yes | No - offset only | No - offset only |
 | Tested at 50K+ topics | Yes - sub-200ms with Redis | No documented scale testing | Limited documentation |
 | Server-side rendered HTML | Yes - WP Interactivity API | Yes - classic PHP templates | Yes |
 | Multisite (network activation installs everywhere) | Yes | No | No |
@@ -152,7 +151,6 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
 | REST API | Yes - 48+ endpoints (90+ with Pro) | No | Partial |
-| Cursor-based pagination on API | Yes | No | No |
 | JSON schema validation on API | Yes | No | No |
 | Template override system | Yes - theme/jetonomy/ | Yes - theme/bbpress/ | Partial |
 | Action and filter hooks | Yes - throughout | Yes - throughout | Yes |

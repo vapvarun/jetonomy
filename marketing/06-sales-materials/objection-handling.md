@@ -81,7 +81,7 @@ The key decisions:
 
 - **Object cache.** When Redis or Memcached is available, Jetonomy caches space data, user profiles, and permission results automatically. Sub-200ms page loads at 50,000 topics with Redis enabled.
 
-- **Cursor-based pagination.** Offset pagination slows down as tables grow because the database has to scan past skipped rows. Jetonomy uses cursor-based pagination on all list endpoints. Query time stays consistent regardless of how many records are in the table.
+- **Purpose-built tables with real indexes.** List endpoints page with `LIMIT`/`OFFSET`, the same as every other forum plugin, but the query runs against dedicated forum tables with indexes on the columns actually sorted and filtered on - not `wp_posts` joined to `wp_postmeta`. Page totals come from dedicated `COUNT(*)` methods rather than loading rows to count them.
 
 - **No page reloads for interactive actions.** Voting, sorting, and loading more replies use the WordPress Interactivity API. No full page loads for these actions, which means no PHP execution, no database queries for the page frame.
 

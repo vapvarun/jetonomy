@@ -69,7 +69,7 @@ Every community page gets Schema.org structured data (DiscussionForumPosting, QA
 
 ### 80 REST API endpoints (155 with Pro)
 
-Everything Jetonomy does is available via REST API under the jetonomy/v1 namespace. Cursor-based pagination on every list endpoint. JSON schema validation on every input. Build custom frontends, mobile apps, or integrations without touching PHP.
+Everything Jetonomy does is available via REST API under the jetonomy/v1 namespace. Offset pagination with `after`/`before` tokens on every list endpoint. JSON schema validation on every input. Build custom frontends, mobile apps, or integrations without touching PHP.
 
 ### WordPress Abilities API support
 

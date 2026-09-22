@@ -69,7 +69,7 @@ Specific design decisions that affect performance:
 
 - Reply counts, post counts, and vote scores are stored as denormalized counters directly on each record. No COUNT queries on page load.
 - Object cache support is built in. When Redis or Memcached is available, space data, user profiles, and permission results are cached automatically.
-- Cursor-based pagination on all list endpoints - results stay consistent even when new content is posted between pages.
+- Denormalized counters and dedicated `COUNT(*)` methods - page totals never come from loading rows and counting them.
 - FULLTEXT indexes for search - no linear table scans.
 
 Tested scale path: sub-200ms page loads at 50,000 topics with Redis. The architecture supports 10,000+ active users without any configuration changes. Scaling beyond that point involves infrastructure (more caching, read replicas), not code changes.

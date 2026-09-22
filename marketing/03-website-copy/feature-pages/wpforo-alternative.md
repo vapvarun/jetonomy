@@ -23,7 +23,7 @@ Jetonomy is a WordPress-first community platform that started from the same ques
 
 **You need more than a forum layout.** wpForo gives you four forum layout variants. Jetonomy gives you four fundamentally different space types: Forum (threaded discussion), Q&A (with accepted answers that float to the top), Ideas (a roadmap board where members vote features up and owners move them through status lanes), and Show & Tell (short-form showcase posts). You can run all four on the same community, separated into spaces that each work the way their content should.
 
-**No REST API means no future-proofing.** wpForo has limited REST API support. Jetonomy ships 80 REST endpoints in the free version and 155 with Pro. Every read, every write, full CRUD, with cursor-based pagination and JSON schema validation. If you want to build a mobile companion app, a custom dashboard, a Slack integration, or feed forum data into an analytics platform, the API is there.
+**No REST API means no future-proofing.** wpForo has limited REST API support. Jetonomy ships 80 REST endpoints in the free version and 155 with Pro. Every read, every write, full CRUD, with offset pagination and JSON schema validation. If you want to build a mobile companion app, a custom dashboard, a Slack integration, or feed forum data into an analytics platform, the API is there.
 
 ---
 
@@ -66,7 +66,7 @@ Every feature below ships in the free version, no license required.
 - **Draft posts and scheduling** - Members save drafts and return to them. Trusted members and moderators can schedule posts to go live at a set time.
 - **In-app and email notifications** - Notification bell, per-user preferences, subscription to specific spaces or posts.
 - **MemberPress and PMPro gating** - Gate spaces by membership level out of the box. No third-party add-on required.
-- **REST API, 48+ endpoints** - Full `jetonomy/v1` coverage, cursor-based pagination, JSON schema validation. Every operation available programmatically.
+- **REST API, 48+ endpoints** - Full `jetonomy/v1` coverage, offset pagination, JSON schema validation. Every operation available programmatically.
 - **Built-in wpForo importer** - Dry run first to preview exactly what migrates. Full import with live progress tracking. Resumable on failure.
 
 ---

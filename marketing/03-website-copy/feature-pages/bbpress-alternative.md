@@ -17,7 +17,7 @@ Jetonomy is a modern WordPress forum plugin built for communities that grow past
 
 ## Why people switch from bbPress
 
-**The data storage problem is real.** bbPress stores every topic and reply as a WordPress custom post type. At 10,000 topics, your `wp_posts` table is doing far more work than it should - and it drags down your entire WordPress installation, not just the forum. Jetonomy uses 24 dedicated MySQL tables with proper indexes, denormalized counters, and cursor-based pagination. Your forum can scale to 50,000+ topics with sub-200ms page loads when paired with Redis, and the rest of your site stays fast.
+**The data storage problem is real.** bbPress stores every topic and reply as a WordPress custom post type. At 10,000 topics, your `wp_posts` table is doing far more work than it should - and it drags down your entire WordPress installation, not just the forum. Jetonomy uses 24 dedicated MySQL tables with proper indexes and denormalized counters, so a listing page never runs a COUNT query per row. Your forum can scale to 50,000+ topics with sub-200ms page loads when paired with Redis, and the rest of your site stays fast.
 
 **Moderation by hand is exhausting.** bbPress gives you WordPress roles: subscriber, contributor, moderator. You either trust someone to moderate or you do not. There is no middle ground, and there is no automation. Every piece of spam, every rule-breaking reply, every flagged post lands in your inbox. Jetonomy's trust level system automatically promotes members from Trust Level 0 (new, restricted) through to Trust Level 5 (community elder) based on their behavior. New accounts start rate-limited. Spam triggers automatic reputation penalties. The community manages itself more and more as it matures.
 
@@ -62,7 +62,7 @@ Everything below ships in the free version - no license required, no feature wal
 - **In-app and email notifications** - Notification bell, per-user preferences, space and post subscriptions. Members stay informed without you sending manual emails.
 - **Draft posts and scheduling** - Members can save a draft and come back to it. Moderators and trusted members can schedule posts to publish at a set time.
 - **Drafts importer from bbPress** - Run a dry run to preview what will migrate before committing. Progress tracking shows you where the import is. Resume on failure without starting over.
-- **REST API, 48+ endpoints** - Every read and write operation is available via `jetonomy/v1`. Cursor-based pagination, JSON schema validation, clean auth. Build mobile apps, custom dashboards, or integrations on top.
+- **REST API, 48+ endpoints** - Every read and write operation is available via `jetonomy/v1`. Offset pagination, JSON schema validation, clean auth. Build mobile apps, custom dashboards, or integrations on top.
 
 ---
 

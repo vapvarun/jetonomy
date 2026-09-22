@@ -218,7 +218,7 @@ https://wbcomdesigns.com/downloads/jetonomy/
 Jetonomy for WordPress developers. A thread. 1/4
 
 **2/4**
-REST API: 42 endpoints at jetonomy/v1. Cursor-based pagination on every list endpoint - no offset pagination that breaks when new content is added mid-browse. Full rate limiting built in.
+REST API: 42 endpoints at jetonomy/v1. Offset pagination with after/before tokens on every list endpoint, over indexed purpose-built tables. Full rate limiting built in.
 
 **3/4**
 Frontend: WordPress Interactivity API (no jQuery). Server-rendered HTML that hydrates in the browser. Search-engine-friendly. Voting, sorting, and "load more replies" work without full page reloads.
@@ -230,7 +230,7 @@ https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #WPDev #WordPressPlugin #REST
 
-**Suggested image:** Code snippet screenshot showing a clean REST API response from jetonomy/v1/posts with cursor pagination fields visible (next_cursor, has_more).
+**Suggested image:** Code snippet screenshot showing a clean REST API response from jetonomy/v1/posts with the pagination meta visible (count, has_more, total, offset).
 
 ---
 

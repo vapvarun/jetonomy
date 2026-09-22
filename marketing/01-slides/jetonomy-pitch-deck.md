@@ -73,7 +73,7 @@ Use cases:
 **Left column - what we did:**
 - 24 custom MySQL tables with proper composite indexes
 - Denormalized counters (reply_count, vote_score, post_count stored on write)
-- Cursor-based pagination on every list endpoint
+- Dedicated `COUNT(*)` methods for page totals, never `count()` over loaded rows
 - Object cache for spaces, profiles, permissions
 - FULLTEXT indexes for instant search
 
@@ -220,7 +220,7 @@ If your theme doesn't publish theme.json, Jetonomy falls back to neutral default
 **Four quadrants:**
 
 **REST API**
-48+ endpoints in free, 90+ with Pro. Cursor-based pagination, JSON schema validation, full OpenAPI documentation.
+48+ endpoints in free, 90+ with Pro. Offset pagination, JSON schema validation, full OpenAPI documentation.
 
 **WordPress Abilities API**
 19 abilities in 5 categories. AI agents and automation tools discover and operate your community without custom integration code. Requires WP 6.9+.

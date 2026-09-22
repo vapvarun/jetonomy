@@ -74,7 +74,7 @@ I'll put my cards on the table: this is what I'm installing on every new communi
 - **Four space types in one plugin.** Forum (threaded discussion), Q&A (with accepted answers), Ideas (with roadmap view and status tracking), and Social Feed (Twitter-like short form). You can mix them on the same site. This is the first plugin I've seen that handles all four without you installing three separate plugins and gluing them together.
 - **Six trust levels with auto-promotion.** New members are rate-limited automatically (3 posts/day, no links). As they participate, they earn higher trust levels and unlock more abilities. By the time someone reaches Trust Level 4, the community has already vetted them. I used to enforce this manually; now the plugin does it.
 - **Theme integration via `theme.json`.** Jetonomy reads your active theme's font, color, and spacing tokens and adapts automatically. This is the first forum plugin I've installed in years that didn't need custom CSS to look right.
-- **80 REST API endpoints in free** (155 with Pro), cursor-based pagination, JSON schema validation. If you want to build a mobile app or a headless frontend, everything's there.
+- **80 REST API endpoints in free** (155 with Pro), offset pagination, JSON schema validation. If you want to build a mobile app or a headless frontend, everything's there.
 - **WordPress Abilities API support** - 19 abilities across 5 categories. AI agents can discover and operate the community without custom integration. This is a 2026 feature, and no other forum plugin ships with it today.
 - **Built-in importers for bbPress, wpForo, and Asgaros.** Dry run first, then batched import with resume-on-failure. The bbPress import I ran moved 15,000 posts in about 40 minutes with zero data loss.
 - **AI-powered moderation in Pro 1.3.0** - spam detection, content moderation, reply suggestions, and thread summaries. Four providers supported, including self-hosted Ollama. If you're in a regulated industry where you can't send member content to a third-party AI, this is a genuine option.
@@ -370,7 +370,7 @@ For new projects with any expectation of growth, I recommend Jetonomy. It's the 
 
 ### Is bbPress still good in 2026?
 
-bbPress still works for small, stable forums with no growth plans. But development has slowed, and at scale the architectural limitations (storing content in wp_posts, no denormalized counters, no cursor pagination) start causing real problems. For new projects, I'd pick something else.
+bbPress still works for small, stable forums with no growth plans. But development has slowed, and at scale the architectural limitations (storing content in wp_posts, no denormalized counters, a COUNT query per row on listings) start causing real problems. For new projects, I'd pick something else.
 
 ### What's the best free WordPress forum plugin?
 
@@ -378,7 +378,7 @@ Both Jetonomy and bbPress have genuinely complete free versions. Jetonomy's free
 
 ### Which WordPress forum plugin is fastest?
 
-Jetonomy - because of the architectural decisions (custom tables, denormalized counters, cursor-based pagination, object cache integration). I've measured sub-200ms page loads at 50,000 topics with Redis. bbPress and wpForo will work at that scale too, but they'll need more hosting resources and more tuning to get there.
+Jetonomy - because of the architectural decisions (custom tables, denormalized counters, object cache integration). I've measured sub-200ms page loads at 50,000 topics with Redis. bbPress and wpForo will work at that scale too, but they'll need more hosting resources and more tuning to get there.
 
 ### Can I migrate from bbPress to another forum plugin?
 

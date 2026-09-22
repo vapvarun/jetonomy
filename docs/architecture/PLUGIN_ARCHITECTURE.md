@@ -492,7 +492,7 @@ Shared methods:
 **Posts** (`Jetonomy\API\Posts_Controller`)
 | Method | Route | Notes |
 |--------|-------|-------|
-| GET | `/spaces/{space_id}/posts` | Cursor pagination; sorted by last activity |
+| GET | `/spaces/{space_id}/posts` | `LIMIT`/`OFFSET` paginated (`after` carries an offset); sorted by last activity |
 | POST | `/spaces/{space_id}/posts` | Runs `jetonomy_check_content` filter |
 | GET/PATCH/DELETE | `/posts/{id}` | |
 | POST | `/posts/{id}/close` | space moderator+ |
