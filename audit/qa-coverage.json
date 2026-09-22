@@ -5,7 +5,7 @@
         "version": "1.9.7"
     },
     "generated": {
-        "at": "2026-09-22T03:21:37+00:00",
+        "at": "2026-09-22T10:09:50+00:00",
         "manifest_at": "2026-09-10T06:15:51Z",
         "manifest_branch": "1.9.7"
     },
@@ -699,7 +699,7 @@
             "total": 10,
             "covered": 5,
             "uncovered": 5,
-            "skipped": 227,
+            "skipped": 229,
             "covered_items": [
                 {
                     "name": "jetonomy_post_publish_transition",
@@ -864,7 +864,7 @@
         "items_total": 186,
         "items_covered": 65,
         "items_uncovered": 121,
-        "items_skipped": 227,
+        "items_skipped": 229,
         "coverage_percent": 34.899999999999999
     },
     "drift": {
