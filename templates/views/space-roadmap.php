@@ -185,15 +185,16 @@ $space_url = $base . '/s/' . $space->slug . '/';
 	</div>
 </div>
 
-<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-<nav class="jt-space-tabs" aria-label="<?php echo esc_attr( sprintf( __( '%s sections', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>">
-	<a href="<?php echo esc_url( $space_url ); ?>" class="jt-space-tab">
-		<?php esc_html_e( 'Ideas', 'jetonomy' ); ?>
-	</a>
-	<a href="<?php echo esc_url( $space_url . 'roadmap/' ); ?>" class="jt-space-tab on" aria-current="page">
-		<?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
-	</a>
-</nav>
+<?php
+\Jetonomy\Template_Loader::partial(
+	'space-tabs',
+	[
+		'space'     => $space,
+		'space_url' => $space_url,
+		'active'    => 'roadmap',
+	]
+);
+?>
 
 <div class="jt-kanban">
 	<?php foreach ( $columns as $col_key => $col ) : ?>

@@ -432,58 +432,6 @@ $crumbs[] = [
 			<?php
 			// Space sub-navigation. Ideas spaces keep their Ideas + Roadmap tabs;
 			// every space type also exposes a Members tab for logged-in users so
-			// space moderators can reach the members page (and its pending join-
-			// request approval panel) without knowing the direct URL. (#10013900410)
-			// The tab list is filterable via `jetonomy_space_tabs`.
-			$jt_is_ideas       = 'ideas' === ( $space->type ?? '' );
-			$jt_show_members   = is_user_logged_in();
-			$jt_primary_labels = [
-				'forum' => __( 'Discussions', 'jetonomy' ),
-				'qa'    => __( 'Questions', 'jetonomy' ),
-				'ideas' => __( 'Ideas', 'jetonomy' ),
-				'feed'  => __( 'Posts', 'jetonomy' ),
-			];
-			$jt_primary_label  = $jt_primary_labels[ $space->type ?? 'forum' ] ?? __( 'Discussions', 'jetonomy' );
-
-			// Built-in tabs as an ordered, filterable map. Each entry:
-			// slug => [ 'label' => string, 'url' => string, 'active' => bool ].
-			// The primary tab represents this view (the space topic listing).
-			$jt_space_tabs = array(
-				'primary' => array(
-					'label'  => $jt_primary_label,
-					'url'    => $space_url,
-					'active' => true,
-				),
-			);
-			if ( $jt_is_ideas ) {
-				$jt_space_tabs['roadmap'] = array(
-					'label' => __( 'Roadmap', 'jetonomy' ),
-					'url'   => $space_url . 'roadmap/',
-				);
-			}
-			if ( $jt_show_members ) {
-				$jt_space_tabs['members'] = array(
-					'label' => \Jetonomy\jetonomy_label( 'member', true ),
-					'url'   => $space_url . 'members/',
-				);
-			}
-
-			/**
-			 * Filters the space sub-navigation tabs.
-			 *
-			 * Add, remove, reorder, or relabel the tabs on a space page. Each tab
-			 * is `slug => [ 'label' => string, 'url' => string, 'active' => bool ]`.
-			 * Set 'active' on the tab representing the current view. A custom tab
-			 * typically links to a route registered via `jetonomy_template_map`.
-			 * The nav renders when there is more than one tab.
-			 *
-			 * @since 1.5.0
-			 *
-			 * @param array<string,array{label:string,url:string,active?:bool}> $jt_space_tabs Ordered tab map.
-			 * @param object $space          The space being viewed.
-			 * @param bool   $jt_show_members Whether the Members tab is shown (viewer logged in).
-			 */
-			$jt_space_tabs = apply_filters( 'jetonomy_space_tabs', $jt_space_tabs, $space, $jt_show_members );
 			?>
 
 			<?php if ( ! empty( $jt_sub_spaces ) ) : ?>
@@ -518,24 +466,15 @@ $crumbs[] = [
 			<?php endif; ?>
 
 			<?php
-
-			if ( is_array( $jt_space_tabs ) && count( $jt_space_tabs ) > 1 ) :
-				?>
-				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-				<nav class="jt-space-tabs" aria-label="<?php echo esc_attr( sprintf( __( '%s sections', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>">
-					<?php
-					foreach ( $jt_space_tabs as $jt_space_tab ) :
-						if ( empty( $jt_space_tab['label'] ) || ! isset( $jt_space_tab['url'] ) ) {
-							continue;
-						}
-						$jt_tab_on = ! empty( $jt_space_tab['active'] );
-						?>
-						<a href="<?php echo esc_url( $jt_space_tab['url'] ); ?>" class="jt-space-tab <?php echo $jt_tab_on ? 'on' : ''; ?>"<?php echo $jt_tab_on ? ' aria-current="page"' : ''; ?>>
-							<?php echo esc_html( $jt_space_tab['label'] ); ?>
-						</a>
-					<?php endforeach; ?>
-				</nav>
-			<?php endif; ?>
+			\Jetonomy\Template_Loader::partial(
+				'space-tabs',
+				[
+					'space'     => $space,
+					'space_url' => $space_url,
+					'active'    => 'primary',
+				]
+			);
+			?>
 
 			<div class="jt-bar">
 				<div class="jt-pills">

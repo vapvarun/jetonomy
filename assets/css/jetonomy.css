@@ -228,7 +228,10 @@
   .jt-pill.on, .jt-pill.active { background: var(--jt-bg); color: var(--jt-text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 -2px 0 var(--jt-accent); }
 
   /* ── Buttons ── */
-  .jt-app .jt-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--jt-radius-full); font-weight: 600; font-size: 0.9375rem; text-decoration: none; transition: all var(--jt-dur) var(--jt-ease); border: none; cursor: pointer; font-family: var(--jt-font); }
+  /* line-height is explicit: without it a <label class="jt-btn"> inherits the
+     body's 1.65 while a <button> gets the theme's button reset, so the two
+     render 0.8px apart wherever they sit side by side (cover image picker). */
+  .jt-app .jt-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--jt-radius-full); font-weight: 600; font-size: 0.9375rem; line-height: 1.6; text-decoration: none; transition: all var(--jt-dur) var(--jt-ease); border: 1.5px solid transparent; cursor: pointer; font-family: var(--jt-font); }
   .jt-app .jt-btn-fill, .jt-app a.jt-btn-fill, .jt-app button.jt-btn-fill { background: var(--jt-accent); color: var(--jt-accent-fg); }
   .jt-app .jt-btn-fill:hover, .jt-app a.jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-accent-hover-fg); text-decoration: none; }
   .jt-app .jt-btn-ghost, .jt-app a.jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
@@ -249,7 +252,7 @@
   /* Re-assert the plugin's own intentional button surfaces/text that the reset
      above (and the theme) would otherwise flatten. Each carries !important to
      beat the blanket; the design tokens keep them theme-adaptive. */
-  .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-accent-fg) !important; }
+  .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-accent-fg) !important; border-color: transparent !important; }
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
@@ -746,7 +749,10 @@
   .jt-reply-private-toggle input { margin: 0; }
 
   /* ── My Subscriptions ── */
-  .jt-subs-heading { font-family: var(--jt-font-heading); font-size: 1rem; font-weight: 600; margin: var(--jt-space-6) 0 var(--jt-space-3); }
+  /* .jt-app prefix so the margin survives the .jt-app h2 reset (0,1,1) — a bare
+     class (0,1,0) loses, which collapsed the gap to 0 and made the list's own
+     top border read as missing where the heading sat on it. */
+  .jt-app .jt-subs-heading { font-family: var(--jt-font-heading); font-size: 1rem; font-weight: 600; margin: var(--jt-space-6) 0 var(--jt-space-3); }
   .jt-subs-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
   .jt-subs-row { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); padding: var(--jt-space-3) var(--jt-space-4); }
   .jt-subs-row + .jt-subs-row { border-block-start: 1px solid var(--jt-border); }
