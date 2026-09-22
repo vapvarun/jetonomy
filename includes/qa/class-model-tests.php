@@ -1320,6 +1320,60 @@ class Model_Tests {
 		Reply::delete( $held );
 		$this->check( 'RC4: deleting replies leaves the counter correct', $counter() === $actual() );
 
+		// RC5-RC7: an ORPHANED reply must still render. This is the customer
+		// symptom the card was opened for - a thread advertising "3 replies" and
+		// showing none - and it survived the first fix because that one only
+		// corrected the counter. Any moderator trashing a reply that has
+		// children reproduces it.
+		$parent_id = Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => 1,
+				'content'   => 'QA orphan parent',
+			]
+		);
+		$child_id = Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => 1,
+				'content'   => 'QA orphan child',
+				'parent_id' => $parent_id,
+			]
+		);
+		$parent_id = is_wp_error( $parent_id ) ? 0 : (int) $parent_id;
+		$child_id  = is_wp_error( $child_id ) ? 0 : (int) $child_id;
+
+		if ( $parent_id > 0 && $child_id > 0 ) {
+			$root_ids = static function () use ( $post_id ): array {
+				return array_map(
+					static fn( $r ) => (int) $r->id,
+					Reply::get_threaded( $post_id, 'oldest', 50, 0 )
+				);
+			};
+
+			$this->check(
+				'RC5: a nested reply is NOT a root while its parent is published',
+				! in_array( $child_id, $root_ids(), true )
+			);
+
+			Reply::update( $parent_id, [ 'status' => 'trash' ] );
+			$this->check(
+				'RC6: trashing the parent promotes the child to a root, not oblivion',
+				in_array( $child_id, $root_ids(), true )
+			);
+			$this->check(
+				'RC7: and the top-level count agrees with what renders',
+				Reply::count_top_level( $post_id ) === count( $root_ids() )
+			);
+
+			$wpdb->delete( table( 'replies' ), [ 'id' => $child_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( table( 'replies' ), [ 'id' => $parent_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		} else {
+			$this->skip( 'RC5: nested reply is not a root', 'reply insert failed' );
+			$this->skip( 'RC6: orphan promoted to root', 'precondition not met' );
+			$this->skip( 'RC7: count agrees with render', 'precondition not met' );
+		}
+
 		$wpdb->update( $posts_table, [ 'reply_count' => $restore ], [ 'id' => $post_id ] );
 	}
 

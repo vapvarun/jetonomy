@@ -1359,7 +1359,11 @@ class Abilities {
 			return new WP_Error( 'create_failed', __( 'Failed to create reply.', 'jetonomy' ) );
 		}
 
-		UserProfile::increment_reply_count( $user_id );
+		// NO UserProfile::increment_reply_count() here. Reply::create() already
+		// applies it (class-reply.php:117), so every reply made through the
+		// Abilities API counted twice on its author's profile - inflating their
+		// reply total and, through it, their reputation and leaderboard rank.
+		// The model owns the counter; a caller that adds its own is the bug.
 		// 3rd arg is null — Abilities API execute callbacks have no WP_REST_Request,
 		// mirroring the post-create hook's null request arg a few lines up in
 		// execute_create_post().
