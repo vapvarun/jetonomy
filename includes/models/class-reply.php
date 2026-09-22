@@ -1517,6 +1517,41 @@ class Reply extends Model {
 			Post::increment_reply_count( (int) $reply->post_id, -1 * $moved_count );
 		}
 
+		// Leave a trace in the SOURCE thread.
+		//
+		// Split is a move: the reply disappears from the thread everyone else is
+		// reading, with no explanation. Members following a conversation saw a
+		// reply vanish; the hook below existed but nothing listened, so the
+		// community never learned where it went. Discourse leaves a marker for
+		// exactly this reason.
+		//
+		// A real reply row, authored by the same member, so it renders normally
+		// and cannot be mistaken for someone else speaking. Best-effort: a
+		// failure here must not undo a completed split, which is why the return
+		// value is not checked.
+		$new_post  = Post::find( $new_post_id );
+		$new_space = $new_post ? Space::find( (int) $new_post->space_id ) : null;
+
+		if ( $new_post && $new_space ) {
+			// Built the same way every other topic URL in the plugin is - there is
+			// no shared permalink helper to call.
+			$new_url = \Jetonomy\base_url() . '/s/' . $new_space->slug . '/t/' . $new_post->slug . '/';
+
+			static::create(
+				array(
+					'post_id'   => (int) $reply->post_id,
+					'author_id' => (int) $reply->author_id,
+					'content'   => sprintf(
+						/* translators: 1: singular reply label, 2: link to the new topic. */
+						'<p><em>' . esc_html__( 'A %1$s was split into a new discussion: %2$s', 'jetonomy' ) . '</em></p>',
+						esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+						'<a href="' . esc_url( $new_url ) . '">' . esc_html( (string) $new_post->title ) . '</a>'
+					),
+					'status'    => 'publish',
+				)
+			);
+		}
+
 		do_action( 'jetonomy_reply_split', $reply_id, $new_post_id, (int) $reply->post_id );
 
 		return $new_post_id;

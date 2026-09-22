@@ -248,6 +248,7 @@ class Model_Tests {
 		$this->check_import_status_mapping();
 		$this->check_robots_single_emitter();
 		$this->check_subspace_listing();
+		$this->check_split_leaves_a_trace();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
@@ -269,6 +270,83 @@ class Model_Tests {
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
 	 * space 0 and returned nothing.
 	 */
+	/**
+	 * Splitting a reply leaves a trace in the thread it left.
+	 *
+	 * Split is a MOVE - the reply is trashed from the source thread and becomes
+	 * the opening post of a new one. Members following the conversation saw a
+	 * reply vanish with no explanation, and the jetonomy_reply_split hook existed
+	 * with nothing listening, so the community never learned where it went.
+	 *
+	 * @return void
+	 */
+	private function check_split_leaves_a_trace(): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+
+		if ( $space_id <= 0 ) {
+			$this->skip( 'SP1: a split leaves a trace in the source thread', 'no active space' );
+			$this->skip( 'SP2: the split reply still leaves the source thread', 'precondition not met' );
+			return;
+		}
+
+		$post_id = Post::create(
+			array(
+				'space_id'  => $space_id,
+				'author_id' => 1,
+				'title'     => 'QA split source',
+				'content'   => 'probe',
+				'type'      => 'discussion',
+				'status'    => 'publish',
+			)
+		);
+		$post_id = is_wp_error( $post_id ) ? 0 : (int) $post_id;
+
+		$reply_id = $post_id > 0
+			? Reply::create( array( 'post_id' => $post_id, 'author_id' => 1, 'content' => 'QA reply to split' ) )
+			: 0;
+		$reply_id = is_wp_error( $reply_id ) ? 0 : (int) $reply_id;
+
+		if ( $post_id <= 0 || $reply_id <= 0 ) {
+			$this->skip( 'SP1: a split leaves a trace in the source thread', 'probe insert failed' );
+			$this->skip( 'SP2: the split reply still leaves the source thread', 'precondition not met' );
+			return;
+		}
+
+		$new_post_id = (int) Reply::split_to_topic( $reply_id, 'QA split target' );
+
+		$replies_t = table( 'replies' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, status, content FROM {$replies_t} WHERE post_id = %d", $post_id ) );
+
+		$trace  = false;
+		$moved  = false;
+		foreach ( $rows as $row ) {
+			if ( (int) $row->id === $reply_id ) {
+				$moved = 'trash' === (string) $row->status;
+				continue;
+			}
+			if ( 'publish' === (string) $row->status && false !== strpos( (string) $row->content, 'split into a new discussion' ) ) {
+				$trace = true;
+			}
+		}
+
+		$this->check( 'SP1: a split leaves a trace in the source thread', $trace );
+		$this->check( 'SP2: the split reply still leaves the source thread', $moved );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $replies_t, array( 'post_id' => $post_id ) );
+		$wpdb->delete( table( 'posts' ), array( 'id' => $post_id ) );
+		if ( $new_post_id > 0 ) {
+			$wpdb->delete( $replies_t, array( 'post_id' => $new_post_id ) );
+			$wpdb->delete( table( 'posts' ), array( 'id' => $new_post_id ) );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery
+	}
+
 	/**
 	 * Sub-spaces are listed, and listed per viewer.
 	 *

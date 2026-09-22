@@ -351,8 +351,18 @@ class Template_Loader {
 					'topicMerged'           => sprintf( __( '%s merged successfully.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
 					/* translators: %s: the plural topic label the site owner configured. */
 					'mergeFailed'           => sprintf( __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'splitReplyTitle'       => sprintf( __( 'Enter a title for the new %s:', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+					// Says what the action DOES, not just what it needs. Split is a
+					// MOVE: the reply is removed from this thread and becomes the
+					// opening post of a new one. The prompt asked only for a title,
+					// so moderators used it expecting a copy and members watched a
+					// reply vanish. Merge has warned about its own destructiveness
+					// since 1.4.0; this is the same courtesy.
+					'splitReplyTitle'       => sprintf(
+						/* translators: 1: singular reply label, 2: singular topic label. */
+						__( 'This %1$s will be MOVED out of this %2$s and become the first post of a new one. Title for the new %2$s:', 'jetonomy' ),
+						\Jetonomy\jetonomy_label( 'reply', false, true ),
+						\Jetonomy\jetonomy_label( 'topic', false, true )
+					),
 					/* translators: 1: singular reply label, 2: singular topic label the site owner configured. */
 					'replySplit'            => sprintf( __( '%1$s split into new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					/* translators: %s: the singular reply label the site owner configured. */
