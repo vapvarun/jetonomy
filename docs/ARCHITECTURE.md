@@ -70,7 +70,7 @@ WP REST dispatch
 └──────┬───────────┘
        ▼
 ┌──────────────────┐
-│  Custom MySQL    │  22 tables: wp_jt_* via dbDelta
+│  Custom MySQL    │  23 tables: wp_jt_* via dbDelta
 │  tables          │  Schema: includes/db/class-schema.php
 │                  │  Migrations: includes/db/class-migrator.php
 └──────────────────┘

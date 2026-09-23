@@ -17,7 +17,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Data storage | 24+ custom MySQL tables | WordPress CPTs (wp_posts + wp_postmeta) | Custom tables |
+| Data storage | 23 custom MySQL tables | WordPress CPTs (wp_posts + wp_postmeta) | Custom tables |
 | Avoids wp_postmeta bloat | Yes | No - heavy wp_postmeta use | Yes |
 | Denormalized counters (no COUNT on load) | Yes | No | Partial |
 | Object cache support (Redis/Memcached) | Yes | Partial (WP object cache) | Partial |
@@ -110,7 +110,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 |---|---|---|---|
 | Three-layer permission system | Yes (WP Caps + Space Roles + Trust Levels) | No - WordPress roles only | Partial (WP roles + usergroup roles) |
 | Per-space roles | Yes | No | Yes (usergroups) |
-| 20+ fine-grained capabilities | Yes | Partial | Yes |
+| 23 fine-grained capabilities | Yes | Partial | Yes |
 | MemberPress integration | Yes (free) | Add-on required | Add-on required |
 | Paid Memberships Pro integration | Yes (free) | Add-on required | Add-on required |
 | WooCommerce membership gating | Jetonomy Pro | Add-on required | Add-on required |
@@ -150,12 +150,12 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| REST API | Yes - 48+ endpoints (90+ with Pro) | No | Partial |
+| REST API | Yes - 81 endpoints (141 with Pro) | No | Partial |
 | JSON schema validation on API | Yes | No | No |
 | Template override system | Yes - theme/jetonomy/ | Yes - theme/bbpress/ | Partial |
 | Action and filter hooks | Yes - throughout | Yes - throughout | Yes |
 | Adapter pattern for integrations | Yes (search, email, realtime, membership) | No | No |
-| WordPress Abilities API support | Yes - 20 abilities (free + Pro) | No | No |
+| WordPress Abilities API support | Yes - 19 abilities free (39 with Pro) | No | No |
 | Clean uninstall (removes all data) | Yes | Partial | Yes |
 | Composer autoloader | No | No | No |
 

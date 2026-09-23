@@ -85,7 +85,7 @@ bbPress is the canonical example of this failure mode. I ran a 15,000-post commu
 
 The modern answer - what I'd pick in 2026 - is a WordPress community plugin that uses **dedicated custom database tables** with denormalized counters and indexes built for the queries a forum actually runs. That eliminates the architectural bottleneck that killed bbPress at scale.
 
-Jetonomy (from Wbcom Designs) is the plugin I moved that community to. 24 custom MySQL tables, denormalized counters on every record, indexed pagination over those tables rather than `wp_posts`, and theme.json integration so it inherits your theme's design tokens automatically. I've tested it with imported data at 50,000+ topics and page loads stay under 200ms with Redis.
+Jetonomy (from Wbcom Designs) is the plugin I moved that community to. 23 custom MySQL tables, denormalized counters on every record, indexed pagination over those tables rather than `wp_posts`, and theme.json integration so it inherits your theme's design tokens automatically. I've tested it with imported data at 50,000+ topics and page loads stay under 200ms with Redis.
 
 That's not a sales pitch for Jetonomy - it's a description of the architectural pattern you should demand from any WordPress community plugin you're evaluating. If the plugin stores content in `wp_posts`, you're buying the bbPress problem. If it uses dedicated tables with proper indexes, you're not.
 

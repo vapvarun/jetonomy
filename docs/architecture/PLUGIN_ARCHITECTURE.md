@@ -1,7 +1,7 @@
 # Jetonomy - Plugin Architecture Reference
 
 > **Generated:** 2026-03-24 | **Scope:** hybrid | **Version:** 1.0.0
-> **PHP:** 8.1+ | **WordPress:** 6.7+ | **Tables:** 22 custom | **REST endpoints:** 42 | **AJAX actions:** 34
+> **PHP:** 8.1+ | **WordPress:** 6.7+ | **Tables:** 23 custom | **REST endpoints:** 81 | **AJAX actions:** 44
 
 ---
 
@@ -167,7 +167,7 @@ jetonomy/
 │   ├── class-privacy.php         # GDPR privacy hooks
 │   ├── class-media.php           # Image upload AJAX
 │   ├── class-nav-menus.php       # Community nav menu items
-│   ├── class-abilities.php       # WP Abilities API (18 abilities)
+│   ├── class-abilities.php       # WP Abilities API (19 abilities)
 │   ├── class-activity-tracker.php# Centralized activity log hooks
 │   ├── class-mentions.php        # @mention parsing
 │   ├── class-embeds.php          # oEmbed handling in content
@@ -215,7 +215,7 @@ jetonomy/
 │   ├── search/
 │   │   └── class-fulltext-search.php        # MySQL FULLTEXT search
 │   ├── db/
-│   │   ├── class-schema.php           # 22 CREATE TABLE definitions
+│   │   ├── class-schema.php           # 23 CREATE TABLE definitions
 │   │   ├── class-migrator.php         # Version-based migration runner
 │   │   └── migrations/
 │   │       └── class-migration_1_0_0.php
@@ -252,7 +252,7 @@ jetonomy/
 
 ## 5. Database Layer
 
-### 22 Custom Tables (prefix: `wp_jt_*`)
+### 23 Custom Tables (prefix: `wp_jt_*`)
 
 #### Core Content
 
@@ -303,7 +303,7 @@ jetonomy/
 
 ### Schema Management
 
-- **`DB\Schema::create_tables()`** - runs `dbDelta()` for all 22 tables. Idempotent - safe to call repeatedly.
+- **`DB\Schema::create_tables()`** - runs `dbDelta()` for all 23 tables. Idempotent - safe to call repeatedly.
 - **`DB\Migrator::run($current_version)`** - runs incremental migrations from `includes/db/migrations/`.
 - DB version stored in `jetonomy_db_version` option (tracks against `JETONOMY_DB_VERSION` constant).
 
@@ -779,7 +779,7 @@ Import runs via AJAX batch: `jetonomy_run_import` → `jetonomy_import_batch` (r
 
 ### `Jetonomy\Abilities` (WP 6.9+)
 
-Registers 18 abilities across 5 categories. Makes all forum operations discoverable by AI agents.
+Registers 19 abilities across 5 categories. Makes all forum operations discoverable by AI agents.
 
 | Category | Abilities |
 |----------|-----------|

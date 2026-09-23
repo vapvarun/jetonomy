@@ -219,7 +219,7 @@ That works for a simple single-topic forum. It breaks down when your community h
 Jetonomy uses three layers:
 
 **Layer 1 - WordPress Capabilities**
-20 capabilities mapped to WP roles. The usual starting point, handled properly.
+23 capabilities mapped to WP roles. The usual starting point, handled properly.
 
 **Layer 2 - Space Roles**
 Each space has its own roles: viewer, member, moderator, admin. A user can be a moderator in the Support space and a regular member everywhere else. Space admins manage their own space without WP Admin access.

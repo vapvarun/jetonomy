@@ -42,7 +42,7 @@ Use cases:
 
 **Three columns (big iconographic numbers):**
 
-| 24 | 6 | 90+ |
+| 23 | 6 | 81 |
 |---|---|---|
 | **custom MySQL tables** | **trust levels (0-5)** | **REST endpoints** |
 | Fast queries, proper indexes, zero wp_postmeta bloat | Community moderates itself - new accounts rate-limited automatically | Full REST API - build anything on top |
@@ -71,7 +71,7 @@ Use cases:
 **Headline:** Sub-200ms page loads at 50,000 topics with Redis
 
 **Left column - what we did:**
-- 24 custom MySQL tables with proper composite indexes
+- 23 custom MySQL tables with proper composite indexes
 - Denormalized counters (reply_count, vote_score, post_count stored on write)
 - Dedicated `COUNT(*)` methods for page totals, never `count()` over loaded rows
 - Object cache for spaces, profiles, permissions
@@ -177,7 +177,7 @@ If your theme doesn't publish theme.json, Jetonomy falls back to neutral default
 | Voting, reputation, trust levels | ✓ | ✓ |
 | Moderation queue and flagging | ✓ | ✓ |
 | Full-text search | ✓ | ✓ |
-| 80 REST API endpoints | ✓ | ✓ |
+| 81 REST API endpoints | ✓ | ✓ |
 | Abilities API (19 abilities) | ✓ | ✓ |
 | bbPress and wpForo importers | ✓ | ✓ |
 | Multisite network activation | ✓ | ✓ |
@@ -220,7 +220,7 @@ If your theme doesn't publish theme.json, Jetonomy falls back to neutral default
 **Four quadrants:**
 
 **REST API**
-48+ endpoints in free, 90+ with Pro. Offset pagination, JSON schema validation, full OpenAPI documentation.
+81 endpoints in free, 141 with Pro. Offset pagination, JSON schema validation, full OpenAPI documentation.
 
 **WordPress Abilities API**
 19 abilities in 5 categories. AI agents and automation tools discover and operate your community without custom integration code. Requires WP 6.9+.

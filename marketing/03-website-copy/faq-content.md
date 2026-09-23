@@ -61,7 +61,7 @@ If your theme doesn't publish theme.json values, Jetonomy falls back to sensible
 
 ## Q5 - How does Jetonomy perform at scale?
 
-**Community data lives in 24 custom MySQL tables, not in WordPress posts.**
+**Community data lives in 23 custom MySQL tables, not in WordPress posts.**
 
 The short version of why that matters: wp_postmeta is a key-value table. At scale, joining it to retrieve forum content creates slow queries that get worse as the table grows. Jetonomy sidesteps this entirely with dedicated tables designed for forum query patterns.
 

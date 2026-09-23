@@ -218,7 +218,7 @@ https://wbcomdesigns.com/downloads/jetonomy/
 Jetonomy for WordPress developers. A thread. 1/4
 
 **2/4**
-REST API: 42 endpoints at jetonomy/v1. Offset pagination with after/before tokens on every list endpoint, over indexed purpose-built tables. Full rate limiting built in.
+REST API: 81 endpoints at jetonomy/v1. Offset pagination with after/before tokens on every list endpoint, over indexed purpose-built tables. Full rate limiting built in.
 
 **3/4**
 Frontend: WordPress Interactivity API (no jQuery). Server-rendered HTML that hydrates in the browser. Search-engine-friendly. Voting, sorting, and "load more replies" work without full page reloads.

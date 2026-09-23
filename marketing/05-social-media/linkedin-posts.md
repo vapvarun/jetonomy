@@ -20,7 +20,7 @@ bbPress, the most-used forum plugin, stores topics as WordPress posts and replie
 
 We built Jetonomy to fix that at the data layer.
 
-24 custom MySQL tables, designed for the actual query patterns of forum software. Denormalized counters (reply counts, vote scores) updated on write, not computed on read. Indexed queries over those tables, with page totals from dedicated COUNT(*) methods rather than loading rows to count them. A caching layer that uses Redis when available and degrades gracefully when it isn't.
+23 custom MySQL tables, designed for the actual query patterns of forum software. Denormalized counters (reply counts, vote scores) updated on write, not computed on read. Indexed queries over those tables, with page totals from dedicated COUNT(*) methods rather than loading rows to count them. A caching layer that uses Redis when available and degrades gracefully when it isn't.
 
 On top of that:
 - WordPress Interactivity API frontend - no jQuery, server-rendered HTML that hydrates, SEO-friendly
@@ -82,17 +82,17 @@ https://wbcomdesigns.com/downloads/jetonomy/
 If you're a WordPress developer or agency building community features for clients, here's the technical picture on Jetonomy - the new forum plugin we released this week.
 
 **Database layer**
-24 custom MySQL tables - not WordPress post types or post meta. Tables are designed for forum query patterns, with proper composite indexes. Counters (reply_count, vote_score, post_count) are denormalized and updated on write. Cold queries against a 50,000-post community stay under 300ms. With Redis object caching, under 50ms.
+23 custom MySQL tables - not WordPress post types or post meta. Tables are designed for forum query patterns, with proper composite indexes. Counters (reply_count, vote_score, post_count) are denormalized and updated on write. Cold queries against a 50,000-post community stay under 300ms. With Redis object caching, under 50ms.
 
 **REST API**
-42 endpoints at `jetonomy/v1`. Offset pagination with `after`/`before` tokens on every list endpoint, over indexed purpose-built tables. Full rate limiting at the API layer. Response shapes are consistent and documented.
+81 endpoints at `jetonomy/v1`. Offset pagination with `after`/`before` tokens on every list endpoint, over indexed purpose-built tables. Full rate limiting at the API layer. Response shapes are consistent and documented.
 
 **Frontend**
 WordPress Interactivity API with `@wordpress/interactivity` directives. No jQuery, no custom framework. The server renders full HTML - pages are indexable by search engines. Client-side interactions (voting, sorting, loading replies) hydrate the existing HTML. It's the architecture WordPress itself recommends for modern plugin UIs.
 
 **Permissions**
 Three-layer system resolving in a single function call: `Permission_Engine::can($user_id, $action, $space_id)`.
-Layer 1: WordPress capabilities (20 custom caps mapped to WP roles).
+Layer 1: WordPress capabilities (23 custom caps mapped to WP roles).
 Layer 2: Per-space roles (viewer, member, moderator, admin - each space has its own role assignments).
 Layer 3: Trust level gates (Level 0 can't post links, Level 3 can edit freely, etc.) + membership adapter rules.
 

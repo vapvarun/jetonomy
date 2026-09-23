@@ -14,7 +14,7 @@ How Jetonomy compares to Asgaros Forum - moving up from a lightweight forum to a
 
 | Feature | Asgaros Forum | Jetonomy |
 |---------|---------------|----------|
-| Data storage | Custom tables | Custom tables (22 tables) |
+| Data storage | Custom tables | Custom tables (23 tables) |
 | Forum formats | Forums + sub-forums | 4 space types (forum, Q&A, ideas, feed) |
 | Threaded replies | Flat | 3-level threading |
 | Voting | Not built-in | Built-in upvote/downvote with reputation |

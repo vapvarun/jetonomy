@@ -80,7 +80,7 @@ One of my personal pet peeves: you rename `/forum/` to `/community/` and two yea
 
 ### Improved: scriptability via the WordPress Abilities API
 
-The Abilities API is new in WP 6.9 and it's going to be how AI assistants drive WordPress. We registered **18 abilities across posts, replies, spaces, moderation, and user management.** In practice: an AI agent can now be told "create a Q&A space called Support, gated behind Pro, and post a welcome topic" and do it - no custom integration required. We use this internally to seed our community content.
+The Abilities API is new in WP 6.9 and it's going to be how AI assistants drive WordPress. We registered **19 abilities across posts, replies, spaces, moderation, and user management.** In practice: an AI agent can now be told "create a Q&A space called Support, gated behind Pro, and post a welcome topic" and do it - no custom integration required. We use this internally to seed our community content.
 
 Plus **ten customer-reported bug fixes** we'd accumulated - BuddyPress compatibility crash, notification defaults, vote state indicator, admin "View" link, join request admin UI, post scheduling default timestamps, settings write consistency, REST nonce handling, cookie credentials on fetch. Small individually, important in aggregate.
 

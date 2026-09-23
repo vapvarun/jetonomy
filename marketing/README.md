@@ -7,9 +7,9 @@ Launch date: March 27, 2026
 - **Headline:** The Modern Forum Plugin for WordPress
 - **Tagline:** Forums, Q&A, and idea boards - built for communities that grow.
 - **Value prop:** Jetonomy adds a fast, self-moderating discussion platform to any WordPress site - custom database tables, trust levels, and a design that adapts to your theme.
-- **Proof point:** 22 custom tables, 6 trust levels, 80 REST endpoints (155 with Pro), sub-200ms at 50K topics.
+- **Proof point:** 23 custom tables, 6 trust levels, 81 REST endpoints (141 with Pro), sub-200ms at 50K topics.
 
-> Counts verified against `audit/manifest.json` on 2026-08-20 for 1.9.4. They were last written for 1.4.2 and had drifted (24 tables, 48+/90+ endpoints, 10/14/15 modules). Re-verify before reusing this copy - marketing numbers are a claim to a customer, not a note to ourselves.
+> Counts verified against `audit/manifest.json` on 2026-09-22 for 2.0.0 (23 tables, 81/141 endpoints). They were last written for 1.4.2 and had drifted (24 tables, 48+/90+ endpoints, 10/14/15 modules) - the same drift resurfaced across most of `marketing/` by 2.0.0 and was swept then too (Basecamp 10330599826). Re-verify before reusing this copy - marketing numbers are a claim to a customer, not a note to ourselves.
 
 ## Content Index
 

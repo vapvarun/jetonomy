@@ -35,7 +35,7 @@ Discourse set the benchmark for modern forum UX. Here is how Jetonomy covers the
 
 **Anti-spam that does not annoy members.** Discourse handles spam through rate limits and trust levels. Jetonomy adds reCAPTCHA v3 and Cloudflare Turnstile - both completely invisible - alongside the same trust-based exemptions. Members at Trust Level 2+ skip spam checks entirely.
 
-**A complete REST API.** Discourse has a well-documented API. Jetonomy ships 80 REST endpoints in the free version (90+ with Pro), every one using WordPress authentication, offset pagination, and JSON schema validation.
+**A complete REST API.** Discourse has a well-documented API. Jetonomy ships 81 REST endpoints in the free version (141 with Pro), every one using WordPress authentication, offset pagination, and JSON schema validation.
 
 ---
 
@@ -61,7 +61,7 @@ No SSO setup. No syncing users between platforms. No separate login.
 
 ### You own your data completely
 
-When you use Discourse hosting, your data lives on their infrastructure. When you self-host, you manage the database. With Jetonomy, your community data lives in 24 custom MySQL tables in your own WordPress database on your own hosting. Export it, back it up, or migrate it whenever you want.
+When you use Discourse hosting, your data lives on their infrastructure. When you self-host, you manage the database. With Jetonomy, your community data lives in 23 custom MySQL tables in your own WordPress database on your own hosting. Export it, back it up, or migrate it whenever you want.
 
 ---
 
@@ -78,7 +78,7 @@ When you use Discourse hosting, your data lives on their infrastructure. When yo
 - Draft posts and scheduled publishing
 - In-app and email notifications with per-user preferences
 - MemberPress and PMPro space gating
-- REST API with 48+ endpoints
+- REST API with 81 endpoints
 - Schema.org markup (DiscussionForumPosting, QAPage, BreadcrumbList)
 - Invisible anti-spam (reCAPTCHA v3 + Cloudflare Turnstile)
 - Multisite network activation with per-subsite table provisioning

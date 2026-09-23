@@ -70,11 +70,11 @@ I'll put my cards on the table: this is what I'm installing on every new communi
 
 **What it does well:**
 
-- **Custom database tables (24 of them).** This is the architectural decision that matters most. Forum content lives in `wp_jt_*` tables with proper indexes and denormalized counters. Reply counts are columns on the topic record, not `COUNT(*)` queries on page load. I've tested this at 50K+ topics with Redis and pages load in under 200ms.
+- **Custom database tables (23 of them).** This is the architectural decision that matters most. Forum content lives in `wp_jt_*` tables with proper indexes and denormalized counters. Reply counts are columns on the topic record, not `COUNT(*)` queries on page load. I've tested this at 50K+ topics with Redis and pages load in under 200ms.
 - **Four space types in one plugin.** Forum (threaded discussion), Q&A (with accepted answers), Ideas (with roadmap view and status tracking), and Social Feed (Twitter-like short form). You can mix them on the same site. This is the first plugin I've seen that handles all four without you installing three separate plugins and gluing them together.
 - **Six trust levels with auto-promotion.** New members are rate-limited automatically (3 posts/day, no links). As they participate, they earn higher trust levels and unlock more abilities. By the time someone reaches Trust Level 4, the community has already vetted them. I used to enforce this manually; now the plugin does it.
 - **Theme integration via `theme.json`.** Jetonomy reads your active theme's font, color, and spacing tokens and adapts automatically. This is the first forum plugin I've installed in years that didn't need custom CSS to look right.
-- **80 REST API endpoints in free** (155 with Pro), offset pagination, JSON schema validation. If you want to build a mobile app or a headless frontend, everything's there.
+- **81 REST API endpoints in free** (141 with Pro), offset pagination, JSON schema validation. If you want to build a mobile app or a headless frontend, everything's there.
 - **WordPress Abilities API support** - 19 abilities across 5 categories. AI agents can discover and operate the community without custom integration. This is a 2026 feature, and no other forum plugin ships with it today.
 - **Built-in importers for bbPress, wpForo, and Asgaros.** Dry run first, then batched import with resume-on-failure. The bbPress import I ran moved 15,000 posts in about 40 minutes with zero data loss.
 - **AI-powered moderation in Pro 1.3.0** - spam detection, content moderation, reply suggestions, and thread summaries. Four providers supported, including self-hosted Ollama. If you're in a regulated industry where you can't send member content to a third-party AI, this is a genuine option.
@@ -144,7 +144,7 @@ wpForo was the first serious "we fixed bbPress's architecture" plugin. It has cu
 - Meaningful feature gates in the free version. Polls, reactions, private messages, advanced mod tools, and user custom fields are all paid add-ons. Each add-on is sold separately and the pricing adds up.
 - Pro add-ons are individual purchases, not a single license. My client ended up paying for 4 add-ons to get the feature set they needed.
 - No built-in trust level system. You have user ranks, but they don't gate posting behavior.
-- REST API exists but is limited compared to Jetonomy's 48+ free endpoints.
+- REST API exists but is limited compared to Jetonomy's 81 free endpoints.
 
 **Best for:** Established forums that need a mature, battle-tested plugin with a known roadmap. Sites where feature breadth matters more than theme integration.
 
@@ -314,7 +314,7 @@ DW Question & Answer is the free alternative to CM Answers. It does the same bas
 
 | Plugin | Free/Paid | Custom tables | Q&A | Ideas | Trust levels | REST API | Theme.json | My 2026 pick |
 |--------|:---------:|:-------------:|:---:|:-----:|:------------:|:--------:|:----------:|:------------:|
-| **Jetonomy** | Free + Pro | Yes (24) | Yes (free) | Yes (free) | Yes (6 levels) | 48+ free / 90+ Pro | Yes | **Yes** |
+| **Jetonomy** | Free + Pro | Yes (24) | Yes (free) | Yes (free) | Yes (6 levels) | 81 free / 141 Pro | Yes | **Yes** |
 | bbPress | Free | No | No | No | No | No | No | Small forums only |
 | wpForo | Free + Pro | Yes | Yes (Pro) | No | No | Limited | No | Solid alternative |
 | Asgaros | Free + addons | Yes | No | No | No | Minimal | No | Tiny forums |
@@ -374,7 +374,7 @@ bbPress still works for small, stable forums with no growth plans. But developme
 
 ### What's the best free WordPress forum plugin?
 
-Both Jetonomy and bbPress have genuinely complete free versions. Jetonomy's free plugin includes forum/Q&A/ideas space types, trust levels, moderation queue, 80 REST endpoints, bbPress importer, and WP Abilities API support. bbPress is completely free with no Pro version at all. For new projects, Jetonomy free. For tiny forums where you just need something simple, bbPress or Asgaros.
+Both Jetonomy and bbPress have genuinely complete free versions. Jetonomy's free plugin includes forum/Q&A/ideas space types, trust levels, moderation queue, 81 REST endpoints, bbPress importer, and WP Abilities API support. bbPress is completely free with no Pro version at all. For new projects, Jetonomy free. For tiny forums where you just need something simple, bbPress or Asgaros.
 
 ### Which WordPress forum plugin is fastest?
 

@@ -19,13 +19,13 @@ bbPress is free, has been around since 2010, and has a large add-on ecosystem. F
 
 Where bbPress runs into real limits:
 
-- **Architecture at scale.** bbPress stores topics as WordPress posts and replies as comments or posts, with metadata in wp_postmeta. At a few thousand topics this is fine. At tens of thousands, wp_postmeta queries get slow in ways that are hard to fix without switching platforms. Jetonomy uses 24 dedicated tables with proper indexes. The performance difference at scale is measurable, not theoretical.
+- **Architecture at scale.** bbPress stores topics as WordPress posts and replies as comments or posts, with metadata in wp_postmeta. At a few thousand topics this is fine. At tens of thousands, wp_postmeta queries get slow in ways that are hard to fix without switching platforms. Jetonomy uses 23 dedicated tables with proper indexes. The performance difference at scale is measurable, not theoretical.
 
 - **No Q&A or Ideas spaces.** If you want accepted answers or member voting on a roadmap, you're adding separate plugins on top of bbPress. Jetonomy includes all three space types in the free core.
 
 - **No trust levels or automatic rate-limiting.** bbPress moderation is manual. Jetonomy's trust system rate-limits new accounts automatically. No configuration, no extra plugins.
 
-- **No REST API.** If you ever want to build anything custom - a mobile view, an integration, a headless front end - bbPress has no native API. Jetonomy has 48+ endpoints from day one (90+ with Pro).
+- **No REST API.** If you ever want to build anything custom - a mobile view, an integration, a headless front end - bbPress has no native API. Jetonomy has 81 endpoints from day one (141 with Pro).
 
 - **Development pace.** bbPress has had one minor release since 2021. Jetonomy is actively maintained by Wbcom Designs, the team behind BuddyX, BuddyPress extensions, and WPMediaVerse.
 

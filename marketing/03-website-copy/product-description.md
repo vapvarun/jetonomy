@@ -9,9 +9,9 @@
 
 ### Character limit: 150 characters
 
-Forums, Q&A, idea boards, Show & Tell, and Social Feed for WordPress. Custom tables, 6 trust levels, 155 REST endpoints, and a design that fits any theme.
+Forums, Q&A, idea boards, Show & Tell, and Social Feed for WordPress. Custom tables, 6 trust levels, 81 REST endpoints, and a design that fits any theme.
 
-*(156 characters - trim "and Social Feed" if the directory enforces 150)*
+*(155 characters - trim "and Social Feed" if the directory enforces 150)*
 
 ---
 
@@ -21,7 +21,7 @@ Forums, Q&A, idea boards, Show & Tell, and Social Feed for WordPress. Custom tab
 
 Jetonomy adds a complete community platform to any WordPress site. Create discussion forums, Q&A boards where the best answers surface automatically, idea trackers where members vote on what gets built next, or Show & Tell spaces for short-form content cards.
 
-Unlike older forum plugins, Jetonomy stores community data in 24 dedicated MySQL tables - not in wp_posts. That means your site stays fast, WordPress stays clean, and your community scales without architectural changes.
+Unlike older forum plugins, Jetonomy stores community data in 23 dedicated MySQL tables - not in wp_posts. That means your site stays fast, WordPress stays clean, and your community scales without architectural changes.
 
 **Five types of community spaces**
 
@@ -47,7 +47,7 @@ Jetonomy Pro includes an AI layer that reads every new post and reply for spam, 
 
 **Performance built in**
 
-- 24 custom MySQL tables with proper indexes for forum query patterns
+- 23 custom MySQL tables with proper indexes for forum query patterns
 - Denormalized counters - reply counts and vote scores are on each record, not computed on load
 - Object cache support - works with Redis and Memcached when available
 - Denormalized counters on every record - listing pages never run a COUNT query per row
@@ -55,9 +55,9 @@ Jetonomy Pro includes an AI layer that reads every new post and reply for spam, 
 
 **Full REST API**
 
-48+ endpoints in the free plugin under the jetonomy/v1 namespace, 90+ endpoints with Pro. Offset pagination with `after`/`before` tokens, JSON schema validation, and complete documentation. Every feature is accessible programmatically.
+81 endpoints in the free plugin under the jetonomy/v1 namespace, 141 endpoints with Pro. Offset pagination with `after`/`before` tokens, JSON schema validation, and complete documentation. Every feature is accessible programmatically.
 
-Jetonomy also registers 20 abilities via the WordPress Abilities API (WP 6.9+), so AI agents and automation tools can discover and interact with your community without custom integration code.
+Jetonomy also registers 19 abilities via the WordPress Abilities API (WP 6.9+), so AI agents and automation tools can discover and interact with your community without custom integration code.
 
 **Works with your theme**
 
@@ -81,10 +81,10 @@ Built-in importers for both. Auto-detects your source, runs a dry run first, sho
 - In-community and email notifications, subscriptions
 - Leaderboard and user profiles
 - Schema.org markup, sitemaps, Open Graph, and clean URLs
-- 80 REST API endpoints with offset pagination and JSON schema validation
+- 81 REST API endpoints with offset pagination and JSON schema validation
 - Template overrides via your-theme/jetonomy/ directory
 - bbPress and wpForo importers with dry run and progress tracking
-- WordPress Abilities API support (20 abilities)
+- WordPress Abilities API support (19 abilities)
 - Three-layer permissions (WP capabilities, space roles, trust levels)
 - MemberPress and Paid Memberships Pro integration for space gating
 - Multisite network activation (tables installed on all existing and future subsites)
@@ -113,7 +113,7 @@ Jetonomy takes a different approach.
 
 **Custom tables, not CPTs**
 
-Community content lives in 24 dedicated MySQL tables with indexes designed for actual forum query patterns. There are no joins back to wp_posts on every page load. Reply counts and vote scores are stored directly on each record - no COUNT queries. At 50,000 topics with object caching, pages load in under 200ms.
+Community content lives in 23 dedicated MySQL tables with indexes designed for actual forum query patterns. There are no joins back to wp_posts on every page load. Reply counts and vote scores are stored directly on each record - no COUNT queries. At 50,000 topics with object caching, pages load in under 200ms.
 
 **Five community modes**
 
@@ -129,9 +129,9 @@ The frontend uses CSS custom properties that pull values from your theme's theme
 
 **Full REST API and developer tools**
 
-48+ endpoints in free (90+ with Pro) under the jetonomy/v1 namespace with offset pagination and JSON schema validation. Full template override support via your-theme/jetonomy/. Action and filter hooks throughout. An adapter pattern for search, email, real-time updates, and membership integrations means you can swap components without touching the core.
+81 endpoints in free (141 with Pro) under the jetonomy/v1 namespace with offset pagination and JSON schema validation. Full template override support via your-theme/jetonomy/. Action and filter hooks throughout. An adapter pattern for search, email, real-time updates, and membership integrations means you can swap components without touching the core.
 
-For sites running WordPress 6.9+, Jetonomy registers 20 abilities via the WordPress Abilities API, so AI agents and automation tools can discover and interact with your community without custom code.
+For sites running WordPress 6.9+, Jetonomy registers 19 abilities via the WordPress Abilities API, so AI agents and automation tools can discover and interact with your community without custom code.
 
 **Migration included**
 
