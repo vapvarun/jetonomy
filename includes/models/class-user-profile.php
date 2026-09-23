@@ -328,13 +328,34 @@ class UserProfile extends Model {
 	 * @return string SQL fragment beginning with ' WHERE ', or '' for all-time.
 	 */
 	protected static function leaderboard_period_where( string $period ): string {
+		global $wpdb;
+
+		/*
+		 * A profile whose WP user is gone is not a member, and must not occupy
+		 * a rank. It used to: the row was fetched, the view could not render it
+		 * (no user to name or link), and `continue` dropped it AFTER its
+		 * position had been spent — so the board counted ... 17, 18, 20. Every
+		 * member below the hole was silently shifted by one.
+		 *
+		 * Excluded here rather than in the view because this helper is the one
+		 * chokepoint the page query, the total and rank_for_user() all share.
+		 * Filtering in the view would fix the visible gap while leaving the
+		 * count and the rank computed from a different population — the exact
+		 * disagreement this file already warns about above, where per-viewer
+		 * filtering is refused because rank gaps leak.
+		 *
+		 * EXISTS over IN: a semi-join against the users PK, so this stays an
+		 * index lookup per row instead of materialising the user table.
+		 */
+		$is_member = "EXISTS (SELECT 1 FROM {$wpdb->users} u WHERE u.ID = user_id)";
+
 		if ( 'week' === $period ) {
-			return ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)';
+			return " WHERE {$is_member} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)";
 		}
 		if ( 'month' === $period ) {
-			return ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)';
+			return " WHERE {$is_member} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)";
 		}
-		return '';
+		return " WHERE {$is_member}";
 	}
 
 	/**
@@ -368,10 +389,15 @@ class UserProfile extends Model {
 	 * @param string $order_by ORDER BY clause. Trusted: callers pass a fixed
 	 *                         literal or a value already vetted via the
 	 *                         `jetonomy_users_query_args` filter. Defaults to
-	 *                         'reputation DESC'.
+	 *                         'reputation DESC, user_id ASC'. The user_id half is
+	 *                         load-bearing, not cosmetic: under LIMIT/OFFSET,
+	 *                         MySQL may return tied rows in a different order for
+	 *                         each page, so without it a member tied on
+	 *                         reputation could appear on both pages of the board
+	 *                         or on neither.
 	 * @return object[] Profile rows for the page (empty array when none).
 	 */
-	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC' ): array {
+	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC, user_id ASC' ): array {
 		// Deliberately NOT block-filtered — a ranking, not a content feed.
 		// Per-viewer filtering would re-rank the board and leak "you blocked
 		// someone" via rank gaps.
@@ -386,6 +412,48 @@ class UserProfile extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $rows ? $rows : [];
+	}
+
+	/**
+	 * Competition ranks for one PAGE of leaderboard rows.
+	 *
+	 * The single definition of "what number goes beside this member", so the
+	 * server-rendered board, this REST endpoint and anything added later cannot
+	 * disagree. They already had: the web view derived shared 1224 ranks while
+	 * the REST controller numbered rows positionally with its own `$rank++`, so
+	 * the mobile app contradicted the "Your rank #N" badge the same member saw
+	 * on the web.
+	 *
+	 * Ties share a rank and the next distinct reputation resumes at its ordinal
+	 * position - 10, 10, 12 - which is correct 1224 ranking, not a gap. The
+	 * FIRST row is seeded from rank_for_user() rather than from $offset, because
+	 * a tie can straddle a page boundary: the top row of page 2 may share the
+	 * rank of the last row of page 1, and only a real rank query knows that.
+	 *
+	 * @param object[] $leaders Rows from list_for_leaderboard(), in order.
+	 * @param string   $period  Period the board was built for.
+	 * @param int      $offset  Offset the page was fetched with.
+	 * @return array<int, int> Rank per row, keyed by the row's position in $leaders.
+	 */
+	public static function competition_ranks( array $leaders, string $period, int $offset ): array {
+		$ranks    = array();
+		$prev_rep = null;
+		$rank     = 0;
+
+		foreach ( array_values( $leaders ) as $i => $leader ) {
+			$rep = (int) ( $leader->reputation ?? 0 );
+
+			if ( null === $prev_rep ) {
+				$rank = self::rank_for_user( (int) ( $leader->user_id ?? 0 ), $period );
+			} elseif ( $rep < $prev_rep ) {
+				$rank = $offset + $i + 1;
+			}
+
+			$prev_rep    = $rep;
+			$ranks[ $i ] = $rank;
+		}
+
+		return $ranks;
 	}
 
 	/**

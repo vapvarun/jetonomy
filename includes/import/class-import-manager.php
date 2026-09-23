@@ -42,6 +42,7 @@ class Import_Manager {
 				$available[ $id ] = [
 					'name'  => $importer->get_source_name(),
 					'stats' => $importer->get_source_stats(),
+					'notes' => $importer->get_import_notes(),
 				];
 			}
 		}

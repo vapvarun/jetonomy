@@ -855,6 +855,94 @@ class WPForo_Importer extends Importer {
 	 * @param object[] $posts wpForo post rows (excluding each topic's first post).
 	 * @return int Rows CONSUMED (including skipped ones).
 	 */
+	/**
+	 * Caveats the owner should read BEFORE running this import.
+	 *
+	 * Rendered on the import screen. The private-reply note exists because the
+	 * mapping is a compromise the owner cannot infer: jt_replies has no `hidden`
+	 * status, so a private wpForo reply lands in the moderation queue rather
+	 * than staying private. Better they read that here than discover a queue
+	 * full of content they never held back.
+	 *
+	 * @return string[]
+	 */
+	public function get_import_notes(): array {
+		global $wpdb;
+
+		$notes = array();
+		$p     = $wpdb->prefix;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$held = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts WHERE status <> 0" );
+		if ( $held > 0 ) {
+			$notes[] = sprintf(
+				/* translators: %s: number of unapproved replies. */
+				_n(
+					'%s unapproved reply will be imported as Pending, not published.',
+					'%s unapproved replies will be imported as Pending, not published.',
+					$held,
+					'jetonomy'
+				),
+				number_format_i18n( $held )
+			);
+		}
+
+		// The `private` column does not exist on every wpForo schema.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$has_private = (bool) $wpdb->get_var( "SHOW COLUMNS FROM {$p}wpforo_posts LIKE 'private'" );
+		if ( $has_private ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$private = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts WHERE private = 1" );
+			if ( $private > 0 ) {
+				$notes[] = sprintf(
+					/* translators: %s: number of private replies. */
+					_n(
+						'%s private reply will be imported as Pending for review - replies have no private state in Jetonomy, so it will not be published.',
+						'%s private replies will be imported as Pending for review - replies have no private state in Jetonomy, so they will not be published.',
+						$private,
+						'jetonomy'
+					),
+					number_format_i18n( $private )
+				);
+			}
+		}
+
+		return $notes;
+	}
+
+	/**
+	 * Jetonomy status for one wpForo post (reply) row.
+	 *
+	 * The source stores 0 = approved and any other value = held for moderation,
+	 * and carries a separate `private` flag.
+	 *
+	 * Every value returned here MUST exist in jt_replies.status, which is
+	 * ENUM('publish','pending','spam','trash'). An earlier version of this
+	 * method returned 'hidden' for a private reply - a value that exists on
+	 * SPACES, not replies. MySQL without strict mode stored it as the empty
+	 * string, matching none of the four statuses: invisible to members, absent
+	 * from the moderation queue, unrecoverable from any screen. On a host with
+	 * STRICT_TRANS_TABLES (the MySQL 5.7+/8 default) the insert failed outright
+	 * and the reply was lost. A status column is a contract, and a mapper is
+	 * exactly where that contract has to be honoured.
+	 *
+	 * A private reply therefore imports as `pending`: not public, still in the
+	 * owner's moderation queue where it can be read and acted on. That is the
+	 * closest thing the schema can express, and it keeps the content rather than
+	 * dropping it. The import notes say so, so the owner is not guessing why
+	 * private replies are awaiting review.
+	 *
+	 * @param object $row wpForo post row.
+	 * @return string 'publish' | 'pending'
+	 */
+	private static function map_reply_status( object $row ): string {
+		if ( ! empty( $row->private ) ) {
+			return 'pending';
+		}
+
+		return 0 === (int) ( $row->status ?? 0 ) ? 'publish' : 'pending';
+	}
+
 	private function import_reply_rows( array $posts ): int {
 		$consumed = 0;
 		$total    = count( $posts );
@@ -887,7 +975,13 @@ class WPForo_Importer extends Importer {
 					'author_id'     => (int) $wf_post->userid,
 					'content'       => wp_kses_post( $body ),
 					'content_plain' => \jetonomy_content_to_plain( $body ),
-					'status'        => 'publish',
+					// Map the SOURCE status, exactly as the topic import above
+					// does. Hard-coding 'publish' pushed every unapproved or
+					// private wpForo reply live on import: content a moderator
+					// had held back, or a member had marked private, became
+					// public the moment the owner migrated. wpForo uses
+					// status 0 = approved, anything else = held.
+					'status'        => self::map_reply_status( $wf_post ),
 					'created_at'    => $wf_post->created ?? now(),
 				]
 			);

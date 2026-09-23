@@ -44,18 +44,12 @@ class Schema_Markup {
 			return;
 		}
 
-		// Robots noindex for profiles + search is now driven by the
-		// route-aware emitter in Template_Loader::set_seo_meta() (Phase D),
-		// which covers more surfaces. Schema_Markup keeps these legacy
-		// emissions for the case where an admin has the seo-pro extension
-		// disabled and Template_Loader's emit was suppressed by a customer
-		// filter — they're idempotent (browsers de-dupe identical metas).
-		if ( 'profile' === $route && ! empty( $settings['seo_noindex_profiles'] ) ) {
-			echo '<meta name="robots" content="noindex, follow">' . "\n";
-		}
-		if ( 'search' === $route && ! empty( $settings['seo_noindex_search'] ) ) {
-			echo '<meta name="robots" content="noindex, follow">' . "\n";
-		}
+		// No robots tag here. Template_Loader::set_seo_meta() owns that decision
+		// for every route and now expresses it through core's wp_robots filter.
+		// These two echoes were kept as an "idempotent" fallback on the theory
+		// that browsers de-duplicate identical metas - but the tag is read by
+		// crawlers and audit tools, not browsers, and printing it twice is what
+		// Ahrefs, Semrush and Site Health flag. One emitter, one tag.
 
 		$schema = null;
 
@@ -227,6 +221,16 @@ class Schema_Markup {
 			return null;
 		}
 
+		// A PUBLIC space inside a category the crawler cannot see is just as
+		// gated, and this gate asked only about the space's own field — so a
+		// public space in a `hidden` category emitted its title and every topic
+		// title + URL into the <head> of a page that answered 404. Asked as the
+		// guest the payload is built for, not as the current viewer, because the
+		// result is cached once and served to everyone.
+		if ( \Jetonomy\Models\Space::concealed_by_category( $space, 0 ) ) {
+			return null;
+		}
+
 		$base      = \Jetonomy\base_url();
 		$space_url = $base . '/s/' . $space->slug . '/';
 
@@ -248,10 +252,23 @@ class Schema_Markup {
 		// (is_private = 1) never surface in the public schema either.
 		$posts        = \Jetonomy\Models\Post::list_by_space_visible( (int) $space->id, 0, false, 'latest', 10 );
 		$item_entries = array();
-		foreach ( $posts as $i => $post ) {
+		foreach ( $posts as $post ) {
+			// Only this space's own topics. The list arrives through the
+			// jetonomy_post_list_results_for_space filter, which Pro's
+			// site-announcements extension uses to inject a cross-space pinned
+			// topic into every space — and this loop minted its URL under the
+			// CURRENT space's slug, publishing a canonical-looking address for a
+			// topic that lives somewhere else. A space's CollectionPage must
+			// list that space's collection.
+			if ( (int) ( $post->space_id ?? 0 ) !== (int) $space->id ) {
+				continue;
+			}
 			$item_entries[] = array(
 				'@type'    => 'ListItem',
-				'position' => $i + 1,
+				// Positions are 1..n over the entries KEPT, not the rows read —
+				// $i skipped a number whenever an injected row was dropped, and
+				// an ItemList with a gap in its positions is invalid.
+				'position' => count( $item_entries ) + 1,
 				'url'      => $base . '/s/' . $space->slug . '/t/' . $post->slug . '/',
 				'name'     => $post->title,
 			);

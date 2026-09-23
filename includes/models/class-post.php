@@ -998,15 +998,32 @@ class Post extends Model {
 	 */
 	public static function increment_reply_count( int $id, int $by = 1, ?string $at = null ): void {
 		$now = now();
-		static::db()->query(
-			static::db()->prepare(
-				'UPDATE ' . static::table() . ' SET reply_count = GREATEST(reply_count + %d, 0), last_reply_at = %s, updated_at = %s WHERE id = %d',
-				$by,
-				( null !== $at && '' !== $at ) ? $at : $now,
-				$now,
-				$id
-			)
-		);
+
+		// A REMOVAL must not advertise new activity. This wrote last_reply_at =
+		// now() for every call, so trashing or spamming a reply bumped its
+		// thread to the top of "recent activity" - moderating a spam reply
+		// promoted the thread it was spamming. Only a positive delta is new
+		// activity; a decrement leaves the timestamp where it was.
+		if ( $by > 0 ) {
+			static::db()->query(
+				static::db()->prepare(
+					'UPDATE ' . static::table() . ' SET reply_count = GREATEST(reply_count + %d, 0), last_reply_at = %s, updated_at = %s WHERE id = %d',
+					$by,
+					( null !== $at && '' !== $at ) ? $at : $now,
+					$now,
+					$id
+				)
+			);
+		} else {
+			static::db()->query(
+				static::db()->prepare(
+					'UPDATE ' . static::table() . ' SET reply_count = GREATEST(reply_count + %d, 0), updated_at = %s WHERE id = %d',
+					$by,
+					$now,
+					$id
+				)
+			);
+		}
 
 		// reply_count and last_reply_at both live on the cached row.
 		self::bust_cache( $id );

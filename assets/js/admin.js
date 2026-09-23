@@ -616,8 +616,14 @@
 				var allowVoting = $('#ss-allow-voting').is(':checked');
 				var postsPerPage = $('#ss-posts-per-page').val();
 
-				settings.who_can_post = whoCanPost || 'members';
-				settings.who_can_reply = whoCanReply || 'members';
+				// Send '' for the empty option so merge_settings() UNSETS the key.
+				// These used to coerce '' to 'members', which wrote a restriction
+				// the owner never chose: touching any field on this tab (posts per
+				// page, voting, prefixes) turned "no restriction" into Members Only
+				// and stopped an open community accepting posts from logged-in
+				// non-members, with nothing on screen to say why.
+				settings.who_can_post = whoCanPost || '';
+				settings.who_can_reply = whoCanReply || '';
 				settings.require_approval = requireApproval ? '1' : '0';
 				settings.allow_voting = allowVoting ? '1' : '0';
 				// Save null when empty so Space::get_posts_per_page() can resolve via the
@@ -965,9 +971,18 @@
 
 					// The "who matches" half. Keyed off the raw type, so an
 					// adapter option ("membership:learndash") falls through to
-					// no note rather than showing a built-in type's sentence.
-					var typeNotes = i18n.typeNotes || {};
-					var note      = typeNotes[$('#rule-type').val()] || '';
+					// the generic membership note below rather than showing a
+					// built-in type's sentence.
+					var typeNotes  = i18n.typeNotes || {};
+					var ruleTypeId = $('#rule-type').val();
+					var note       = typeNotes[ruleTypeId] || '';
+					if (!note && ruleTypeId && ruleTypeId.indexOf('membership:') === 0 && i18n.membershipNote) {
+						var adapterId2 = ruleTypeId.replace('membership:', '');
+						var adapterRow = adapters.filter(function(a) { return a.id === adapterId2; })[0];
+						if (adapterRow) {
+							note = i18n.membershipNote.replace('%s', adapterRow.label);
+						}
+					}
 
 					$out.html('').append($('<span/>').text(sentence));
 					if (warn) {

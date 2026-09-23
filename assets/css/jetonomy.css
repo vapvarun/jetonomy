@@ -228,7 +228,10 @@
   .jt-pill.on, .jt-pill.active { background: var(--jt-bg); color: var(--jt-text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 -2px 0 var(--jt-accent); }
 
   /* ── Buttons ── */
-  .jt-app .jt-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--jt-radius-full); font-weight: 600; font-size: 0.9375rem; text-decoration: none; transition: all var(--jt-dur) var(--jt-ease); border: none; cursor: pointer; font-family: var(--jt-font); }
+  /* line-height is explicit: without it a <label class="jt-btn"> inherits the
+     body's 1.65 while a <button> gets the theme's button reset, so the two
+     render 0.8px apart wherever they sit side by side (cover image picker). */
+  .jt-app .jt-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--jt-radius-full); font-weight: 600; font-size: 0.9375rem; line-height: 1.6; text-decoration: none; transition: all var(--jt-dur) var(--jt-ease); border: 1.5px solid transparent; cursor: pointer; font-family: var(--jt-font); }
   .jt-app .jt-btn-fill, .jt-app a.jt-btn-fill, .jt-app button.jt-btn-fill { background: var(--jt-accent); color: var(--jt-accent-fg); }
   .jt-app .jt-btn-fill:hover, .jt-app a.jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-accent-hover-fg); text-decoration: none; }
   .jt-app .jt-btn-ghost, .jt-app a.jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
@@ -249,7 +252,7 @@
   /* Re-assert the plugin's own intentional button surfaces/text that the reset
      above (and the theme) would otherwise flatten. Each carries !important to
      beat the blanket; the design tokens keep them theme-adaptive. */
-  .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-accent-fg) !important; }
+  .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-accent-fg) !important; border-color: transparent !important; }
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
@@ -258,6 +261,54 @@
      neutral ghost rules above so the danger colour wins for a destructive
      secondary action (member Ban, notification Delete) while the shape stays
      consistent with its ghost siblings. */
+  /* Action buttons that are ON (bookmarked / voted / flagged).
+     These belong in THIS block, not beside their own component rules, for the
+     same reason .jt-btn-fill does: the blanket reset above carries !important,
+     so it beat `.jt-bookmark-btn.bookmarked { color: var(--jt-accent) }` no
+     matter its specificity. The state class was applied, the icon inherited
+     via currentColor, and the colour it inherited was forced back to the
+     parent's - so a member got NO visual confirmation from any action button
+     in the plugin. The notice was the only feedback there was.
+     Narrowing the reset instead would have removed this exact set of buttons
+     from the cross-theme insulation the block exists to provide.
+     `fill` makes the ON state read as filled rather than only tinted, so the
+     meaning does not rest on colour alone (WCAG 1.4.1).
+     EVERY surface that renders an ON state has to be listed here, not just the
+     one a bug report named. The first pass covered only the single-topic
+     bookmark and .jt-act.voted, so the topic-list vote (.jt-v-btn), the feed
+     vote (.jt-feed-act), the reported/flagged state (.is-flagged), the My
+     Bookmarks list toggle and Pro's reaction chip all stayed grey - the two
+     vote surfaces being the ones members actually use. Each of those classes
+     sits on a <button>, which is what the reset matches; an <a> is untouched by
+     it and needs nothing here. */
+  .jt-app button.jt-bookmark-btn.bookmarked,
+  .jt-app button.jt-bookmark-toggle.bookmarked,
+  .jt-app button.jt-act.voted,
+  .jt-app button.jt-v-btn.voted,
+  .jt-app button.jt-v-btn.jt-voted,
+  .jt-app button.jt-feed-act.voted,
+  .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent) !important; }
+  .jt-app button.jt-bookmark-btn.bookmarked svg,
+  .jt-app button.jt-bookmark-toggle.bookmarked svg,
+  .jt-app button.jt-act.voted svg,
+  .jt-app button.jt-v-btn.voted svg,
+  .jt-app button.jt-v-btn.jt-voted svg,
+  .jt-app button.jt-feed-act.voted svg,
+  .jt-app button.jt-feed-act.jt-voted svg { fill: currentColor; }
+  /* Reported/flagged. The class the template and view.js actually set is
+     `is-flagged` (single-post.php, view.js). The previous rule here named
+     .jt-act.jt-flagged-indicator, which is only ever on an <a> - so it matched
+     no button at all while reading as though flag was covered. The <a> form
+     keeps its own rule further down; it needs no !important because the
+     `.jt-app a` reset carries none. */
+  .jt-app button.jt-act.is-flagged { color: var(--jt-danger) !important; }
+  .jt-app button.jt-act.is-flagged svg { fill: currentColor; }
+  /* Pro's reaction chip. The rule lives in Pro (reactions extension) without
+     !important, so free's reset wins over it; the re-assert therefore belongs
+     here, beside the reset that breaks it, rather than as an !important war
+     inside Pro. */
+  .jt-app button.jt-reaction-chip.is-mine { color: var(--jt-accent) !important; background-color: var(--jt-accent-light) !important; border-color: var(--jt-accent) !important; }
+
   .jt-app button.jt-btn-ghost.jt-btn-danger { color: var(--jt-danger) !important; }
   .jt-app button.jt-btn-ghost.jt-btn-danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; border-color: var(--jt-danger) !important; }
   /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
@@ -347,7 +398,6 @@
   .jt-icon-picker .jt-icon-option:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); }
   .jt-icon-picker .jt-icon-option input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
   .jt-icon-picker .jt-icon-option.is-selected { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
-  .jt-icon-picker .jt-icon-option[hidden] { display: none; }
   .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; color: var(--jt-accent); }
   .jt-icon-option-svg svg { width: 22px; height: 22px; }
   /* min-height 40px: this button measured 23px tall in the icon picker on admin
@@ -534,6 +584,31 @@
   .jt-post-body code, .jt-reply-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
   /* code inside a code block must not also get the inline-code chip background. */
   .jt-post-body pre code, .jt-reply-body pre code { background: none; padding: 0; border-radius: 0; }
+
+  /* ── Wide-content containment (theme-proof) ──
+     `overflow-x: auto` on the <pre> is necessary but NOT sufficient, and that
+     gap is what reaches customers as "a code block breaks the page layout".
+     A flex or grid item defaults to `min-width: auto`, which means it refuses
+     to shrink below its content: if the host theme puts the post body inside a
+     flex/grid container - most modern themes do - a long unbroken line makes
+     that container grow instead of making our <pre> scroll, and the whole page
+     gains a horizontal scrollbar. Nothing in the plugin's own CSS is wrong when
+     that happens, which is why it reproduces on one theme and not another.
+     `min-width: 0` opts the chain out of that behaviour, so the scroll happens
+     where we put it. Declared here rather than waiting to learn which theme a
+     given report came from. */
+  .jt-post-body, .jt-reply-body,
+  .jt-post-body > *, .jt-reply-body > * { min-width: 0; }
+
+  /* Anything that can be intrinsically wider than its column stays inside it.
+     Tables and images are included because they fail the same way a <pre>
+     does; an embed keeps its own aspect handling and only gains the ceiling. */
+  .jt-post-body pre, .jt-reply-body pre,
+  .jt-post-body table, .jt-reply-body table,
+  .jt-post-body img, .jt-reply-body img,
+  .jt-post-body iframe, .jt-reply-body iframe { max-width: 100%; }
+
+  .jt-post-body table, .jt-reply-body table { display: block; overflow-x: auto; }
   .jt-post-body pre, .jt-reply-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
   .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-border); color: var(--jt-text-secondary); }
   .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }
@@ -673,7 +748,10 @@
   .jt-reply-private-toggle input { margin: 0; }
 
   /* ── My Subscriptions ── */
-  .jt-subs-heading { font-family: var(--jt-font-heading); font-size: 1rem; font-weight: 600; margin: var(--jt-space-6) 0 var(--jt-space-3); }
+  /* .jt-app prefix so the margin survives the .jt-app h2 reset (0,1,1) — a bare
+     class (0,1,0) loses, which collapsed the gap to 0 and made the list's own
+     top border read as missing where the heading sat on it. */
+  .jt-app .jt-subs-heading { font-family: var(--jt-font-heading); font-size: 1rem; font-weight: 600; margin: var(--jt-space-6) 0 var(--jt-space-3); }
   .jt-subs-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
   .jt-subs-row { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); padding: var(--jt-space-3) var(--jt-space-4); }
   .jt-subs-row + .jt-subs-row { border-block-start: 1px solid var(--jt-border); }
@@ -1133,7 +1211,6 @@
 
   /* ── Similar Topics panel ── */
   .jt-similar { margin-top: 8px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
-  .jt-similar[hidden] { display: none; }
   .jt-similar-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--jt-bg-subtle); border-bottom: 1px solid var(--jt-border); }
   .jt-similar-label { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-similar-toggle { font-size: 0.8125rem; color: var(--jt-text-tertiary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
@@ -1401,7 +1478,6 @@
     border-radius: var(--jt-radius);
   }
 
-  .jt-notif-bulkbar[hidden] { display: none; }
 
   .jt-notif-bulkbar__selectall {
     display: inline-flex;
@@ -1517,7 +1593,6 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
-  .jt-notif-item__menu-list[hidden] { display: none; }
 
   .jt-notif-item__menu-list li { margin: 0; }
 
@@ -1873,8 +1948,6 @@
   .jt-avatar-hint { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-avatar-controls { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .jt-avatar-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-  /* .jt-btn's display beats the UA [hidden] rule — make hidden stick. */
-  .jt-avatar-buttons button[hidden] { display: none; }
 
   /* ── Composer login ── */
   .jt-editor-login { text-align: center; padding: 20px; }
@@ -1932,13 +2005,11 @@
   /* [1.4.3 WS3-B] Positioning owned by jetonomySmartDropdown (position:
      fixed + JS-computed top/left). Keep z-index/border/background only. */
   .jt-publish-mode__menu { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
-  .jt-publish-mode__menu[hidden] { display: none; }
   .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: left; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
   .jt-publish-mode__option:hover { background: var(--jt-bg-hover); }
 
   /* ── Schedule panel ── */
   .jt-schedule-panel { margin-top: 16px; padding: 16px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); border: 1px solid var(--jt-border); }
-  .jt-schedule-panel[hidden] { display: none; }
   /* Restore native appearance so date/time inputs open their browser
      picker on click. The base .jt-input rule sets -webkit-appearance: none
      for consistent text-input styling; for date/time inputs that kills the
@@ -2357,7 +2428,6 @@
 	font-size: 0.9375rem;
 	line-height: 1.4;
 }
-.jt-form-error[hidden] { display: none; }
 
 @media (max-width: 640px) {
 	.jt-form-error { padding: 8px 12px; font-size: 0.875rem; }
@@ -3322,3 +3392,70 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	outline-offset: 1px;
 	border-radius: 4px;
 }
+
+/* ── Sub-spaces strip ───────────────────────────────────────────────────────
+   An import maps sub-forums to child spaces (parent_id), and nothing rendered
+   that relationship: the parent listed no children and the child sat beside its
+   parent as an unrelated space, so a migrated "Support > Billing" lost its
+   structure. Wraps rather than scrolls, so a parent with a dozen children is
+   usable on a phone without a horizontal gesture. */
+.jt-subspaces { margin-block-end: var(--jt-space-4); }
+.jt-subspaces__title {
+	margin: 0 0 var(--jt-space-2);
+	font-size: var(--jt-text-sm);
+	font-weight: 600;
+	color: var(--jt-text-secondary);
+}
+.jt-subspaces__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--jt-space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.jt-subspaces__item { margin: 0; }
+.jt-subspaces__link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--jt-space-2);
+	min-height: var(--jt-tap);
+	padding: var(--jt-space-2) var(--jt-space-3);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius);
+	background: var(--jt-bg-subtle);
+	color: var(--jt-text);
+	text-decoration: none;
+	transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease);
+}
+.jt-subspaces__link:hover,
+.jt-subspaces__link:focus-visible {
+	background: var(--jt-bg-hover);
+	border-color: var(--jt-border-strong);
+	color: var(--jt-text);
+}
+.jt-subspaces__name { font-weight: 600; }
+.jt-subspaces__count {
+	font-size: var(--jt-text-xs);
+	color: var(--jt-text-tertiary);
+	font-variant-numeric: tabular-nums;
+}
+@media (max-width: 480px) {
+	.jt-subspaces__list { flex-direction: column; }
+	.jt-subspaces__link { width: 100%; }
+}
+
+/* ── hidden means hidden ──
+   The HTML `hidden` attribute is how the templates and the JS hide a control
+   (the cover-image Remove button, the schedule panel, a bulk bar). The UA rule
+   behind it is `[hidden] { display: none }` at specificity (0,1,0), which loses
+   to any component rule that sets display - `.jt-app .jt-btn { display:
+   inline-flex }` is (0,2,0). So `hidden` was silently inert on our components,
+   and the owner saw a Remove button on a space with no cover image to remove.
+
+   This was previously patched one component at a time (icon option, similar
+   panel, bulk bar, avatar buttons, publish menu, schedule panel, form error) -
+   eight rules that each re-fixed the same thing for one selector and left the
+   next one broken. One declaration at the end of the cascade covers every
+   element the plugin hides, including ones added later. */
+.jt-app [hidden] { display: none !important; }

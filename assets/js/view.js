@@ -832,6 +832,25 @@ function jtSetCoverPreview( form, url ) {
     }
 }
 
+/**
+ * Set a vote button's ON state.
+ *
+ * The class and the accessible state have to move together. Six call sites
+ * (optimistic apply, server reconcile and revert, for each of up and down) each
+ * toggled the class on its own and none of them touched aria-pressed, so a
+ * screen-reader user was told nothing at all when a vote registered - the state
+ * was carried by colour only, which is also what WCAG 1.4.1 is about. Mirrors
+ * setBookmarked() in the bookmark action.
+ *
+ * @param {Element|null|undefined} el Vote button.
+ * @param {boolean}                on Whether the viewer's vote is on this button.
+ */
+function jetonomySetVoted( el, on ) {
+    if ( ! el ) return;
+    el.classList.toggle( 'voted', !! on );
+    el.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -1628,10 +1647,10 @@ const { state, actions } = store( 'jetonomy', {
                         state.postScores[ postId ] = data.score;
                     }
                     if ( data && data.action === 'removed' ) {
-                        btnEl.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, false );
                     } else {
-                        btnEl.classList.add( 'voted' );
-                        if ( downSibling ) downSibling.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, true );
+                        jetonomySetVoted( downSibling, false );
                     }
                     if ( window.bnToast && ! window._jetonomyVoteToasted ) {
                         window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
@@ -1641,8 +1660,8 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: ( snap ) => {
                     state.postScores[ postId ] = snap.prevScore;
-                    btnEl.classList.toggle( 'voted', snap.wasVoted );
-                    if ( downSibling ) downSibling.classList.toggle( 'voted', snap.downWasVoted );
+                    jetonomySetVoted( btnEl, snap.wasVoted );
+                    jetonomySetVoted( downSibling, snap.downWasVoted );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
@@ -1685,10 +1704,10 @@ const { state, actions } = store( 'jetonomy', {
                         state.postScores[ postId ] = data.score;
                     }
                     if ( data && data.action === 'removed' ) {
-                        btnEl.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, false );
                     } else {
-                        btnEl.classList.add( 'voted' );
-                        if ( upSibling ) upSibling.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, true );
+                        jetonomySetVoted( upSibling, false );
                     }
                     if ( window.bnToast && ! window._jetonomyVoteToasted ) {
                         window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
@@ -1698,8 +1717,8 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: ( snap ) => {
                     state.postScores[ postId ] = snap.prevScore;
-                    btnEl.classList.toggle( 'voted', snap.wasVoted );
-                    if ( upSibling ) upSibling.classList.toggle( 'voted', snap.upWasVoted );
+                    jetonomySetVoted( btnEl, snap.wasVoted );
+                    jetonomySetVoted( upSibling, snap.upWasVoted );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
@@ -1743,17 +1762,17 @@ const { state, actions } = store( 'jetonomy', {
                         if ( scoreEl ) scoreEl.textContent = String( data.score );
                     }
                     if ( data && data.action === 'removed' ) {
-                        btnEl.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, false );
                     } else {
-                        btnEl.classList.add( 'voted' );
-                        if ( downSibling ) downSibling.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, true );
+                        jetonomySetVoted( downSibling, false );
                     }
                 },
                 revert: ( snap ) => {
                     state.replyScores[ replyId ] = snap.prevScore;
                     if ( scoreEl ) scoreEl.textContent = String( snap.prevScore );
-                    btnEl.classList.toggle( 'voted', snap.wasVoted );
-                    if ( downSibling ) downSibling.classList.toggle( 'voted', snap.downWasVoted );
+                    jetonomySetVoted( btnEl, snap.wasVoted );
+                    jetonomySetVoted( downSibling, snap.downWasVoted );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
@@ -1800,10 +1819,10 @@ const { state, actions } = store( 'jetonomy', {
                         if ( scoreEl ) scoreEl.textContent = String( data.score );
                     }
                     if ( data && data.action === 'removed' ) {
-                        btnEl.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, false );
                     } else {
-                        btnEl.classList.add( 'voted' );
-                        if ( upSibling ) upSibling.classList.remove( 'voted' );
+                        jetonomySetVoted( btnEl, true );
+                        jetonomySetVoted( upSibling, false );
                     }
                 },
                 revert: ( snap ) => {
@@ -1812,8 +1831,8 @@ const { state, actions } = store( 'jetonomy', {
                     // failed downvote until refresh).
                     state.replyScores[ replyId ] = snap.prevScore;
                     if ( scoreEl ) scoreEl.textContent = String( snap.prevScore );
-                    btnEl.classList.toggle( 'voted', snap.wasVoted );
-                    if ( upSibling ) upSibling.classList.toggle( 'voted', snap.upWasVoted );
+                    jetonomySetVoted( btnEl, snap.wasVoted );
+                    jetonomySetVoted( upSibling, snap.upWasVoted );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.voteFailed || 'Vote failed.',
@@ -2265,15 +2284,28 @@ const { state, actions } = store( 'jetonomy', {
             const postId = btnEl.dataset.postId;
             if ( ! postId ) return;
 
+            // One place that moves every part of the bookmarked state, because
+            // three separate blocks (optimistic apply, server reconcile, revert)
+            // each used to set the data attribute, the class and the title -
+            // and none of them set the accessible name or pressed state. The
+            // icon colour is the visual feedback; a screen-reader user got
+            // nothing, and the name stayed "Bookmark" after bookmarking.
+            const setBookmarked = ( on ) => {
+                on = !! on;
+                const label = on
+                    ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
+                    : ( state.i18n?.bookmark || 'Bookmark' );
+                btnEl.dataset.bookmarked = on ? '1' : '0';
+                btnEl.classList.toggle( 'bookmarked', on );
+                btnEl.title = label;
+                btnEl.setAttribute( 'aria-label', label );
+                btnEl.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+            };
+
             yield window.jetonomyOptimistic.gen( {
                 apply: () => {
                     const wasBookmarked = btnEl.dataset.bookmarked === '1';
-                    const willBe = ! wasBookmarked;
-                    btnEl.dataset.bookmarked = willBe ? '1' : '0';
-                    btnEl.classList.toggle( 'bookmarked', willBe );
-                    btnEl.title = willBe
-                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
-                        : ( state.i18n?.bookmark || 'Bookmark' );
+                    setBookmarked( ! wasBookmarked );
                     return { wasBookmarked };
                 },
                 fetch: () => window.jetonomyRest.restFetch( `/bookmarks`, {
@@ -2283,11 +2315,7 @@ const { state, actions } = store( 'jetonomy', {
                 onSuccess: ( data ) => {
                     if ( ! data ) return;
                     // Reconcile with server canonical value.
-                    btnEl.dataset.bookmarked = data.bookmarked ? '1' : '0';
-                    btnEl.classList.toggle( 'bookmarked', !! data.bookmarked );
-                    btnEl.title = data.bookmarked
-                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
-                        : ( state.i18n?.bookmark || 'Bookmark' );
+                    setBookmarked( data.bookmarked );
                     if ( window.bnToast ) {
                         window.bnToast( data.bookmarked
                             ? ( state.i18n?.bookmarked || 'Bookmarked' )
@@ -2308,11 +2336,7 @@ const { state, actions } = store( 'jetonomy', {
                     }
                 },
                 revert: ( snap ) => {
-                    btnEl.dataset.bookmarked = snap.wasBookmarked ? '1' : '0';
-                    btnEl.classList.toggle( 'bookmarked', snap.wasBookmarked );
-                    btnEl.title = snap.wasBookmarked
-                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
-                        : ( state.i18n?.bookmark || 'Bookmark' );
+                    setBookmarked( snap.wasBookmarked );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.failedSave || 'Could not update bookmark.',
@@ -2607,8 +2631,8 @@ const { state, actions } = store( 'jetonomy', {
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
                         window.bnToast( data && data.is_sticky
-                            ? ( state.i18n?.postPinned || 'Post pinned' )
-                            : ( state.i18n?.postUnpinned || 'Post unpinned' )
+                            ? ( state.i18n?.postPinned || 'Pinned to this space' )
+                            : ( state.i18n?.postUnpinned || 'Unpinned from this space' )
                         );
                     }
                     setTimeout( () => window.location.reload(), 600 );

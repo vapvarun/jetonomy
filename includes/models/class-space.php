@@ -78,13 +78,53 @@ class Space extends Model {
 	public static function update( int $id, array $data ): bool {
 		$slug_changing = ! empty( $data['slug'] );
 		$type_changing = ! empty( $data['type'] );
+		// A space counts toward a category only while it is active and in one,
+		// so BOTH a category move and a status change can alter two counters.
+		$count_changing = array_key_exists( 'category_id', $data ) || array_key_exists( 'status', $data );
 
-		// One read covers both comparisons.
-		$existing = ( $slug_changing || $type_changing ) ? parent::find( $id ) : null;
+		// One read covers every comparison below.
+		$existing = ( $slug_changing || $type_changing || $count_changing ) ? parent::find( $id ) : null;
 		$old_slug = $slug_changing ? ( $existing->slug ?? null ) : null;
 		$old_type = $type_changing ? ( $existing->type ?? null ) : null;
 
 		$result = parent::update( $id, $data );
+
+		/*
+		 * Keep jt_categories.space_count honest.
+		 *
+		 * Only create() incremented it and only purge decremented it, so
+		 * moving a space between categories left both counters wrong - the old
+		 * one too high, the new one too low - and archiving a space never
+		 * decremented at all, while Recount counts active spaces only. Measured
+		 * on a demo install: one category stored 23 against 5 actual spaces.
+		 * `wp jetonomy recount` repaired it and the next move broke it again,
+		 * which is the signature of a missing write-path adjustment rather than
+		 * a bad backfill.
+		 *
+		 * Expressed as "which category was this space counted in, before and
+		 * after" so one comparison covers a move, an archive, a restore, and a
+		 * move-and-archive in the same call.
+		 */
+		if ( $result && $count_changing && $existing ) {
+			$counted_in = static function ( $category_id, $status ): int {
+				return ( 'active' === (string) $status ) ? (int) $category_id : 0;
+			};
+
+			$was = $counted_in( $existing->category_id ?? 0, $existing->status ?? '' );
+			$now = $counted_in(
+				array_key_exists( 'category_id', $data ) ? $data['category_id'] : ( $existing->category_id ?? 0 ),
+				array_key_exists( 'status', $data ) ? $data['status'] : ( $existing->status ?? '' )
+			);
+
+			if ( $was !== $now ) {
+				if ( $was > 0 ) {
+					Category::increment_space_count( $was, -1 );
+				}
+				if ( $now > 0 ) {
+					Category::increment_space_count( $now, 1 );
+				}
+			}
+		}
 
 		// Retype the posts inside when the space changes what it is. Post type
 		// drives real behaviour, not just a label: schema markup only emits
@@ -431,6 +471,14 @@ class Space extends Model {
 	 *   - Logged-in: public spaces, plus any space they are a member of
 	 *     (covers PRIVATE and HIDDEN spaces they belong to).
 	 *
+	 * A space also inherits its CATEGORY's concealment ({@see
+	 * self::parent_category_clause()}). A public space inside a `hidden`
+	 * category is not readable by a stranger, because the category promised the
+	 * owner that nothing in it is reachable yet. Without this, `hidden` was
+	 * cosmetic on every read surface: the space's topics still surfaced in
+	 * search, tag pages, the sidebar, profile activity and the Pro digest,
+	 * because only the LISTING predicate consulted the parent.
+	 *
 	 * Fails CLOSED relative to can(): AccessRule grants and per-user bans are
 	 * intentionally not modelled in SQL — the predicate is the membership-based
 	 * common case and may only ever UNDER-include (never leak). Single-item
@@ -451,12 +499,17 @@ class Space extends Model {
 		}
 
 		if ( $user_id <= 0 ) {
-			return [ "{$col}visibility = 'public'", [] ];
+			return [ "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), [] ];
 		}
 
 		$members_table = \Jetonomy\table( 'space_members' );
+		$parent        = self::parent_category_clause( $user_id, $col );
+		$readable      = "{$col}visibility = 'public'";
+		if ( '' !== $parent ) {
+			$readable = "({$readable} AND {$parent})";
+		}
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-		$fragment = "({$col}visibility = 'public' OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+		$fragment = "({$readable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
 		return [ $fragment, [ $user_id ] ];
 	}
 
@@ -492,11 +545,16 @@ class Space extends Model {
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
 			$result = [ '1=1', [] ];
 		} elseif ( $user_id <= 0 ) {
-			$result = [ "{$col}visibility = 'public'", [] ];
+			$result = [ "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), [] ];
 		} else {
 			$members_table = \Jetonomy\table( 'space_members' );
+			$parent        = self::parent_category_clause( $user_id, $col );
+			$discoverable  = "{$col}visibility IN ('public','private')";
+			if ( '' !== $parent ) {
+				$discoverable = "({$discoverable} AND {$parent})";
+			}
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-			$fragment = "({$col}visibility IN ('public','private') OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+			$fragment = "({$discoverable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
 			$result   = [ $fragment, [ $user_id ] ];
 		}
 
@@ -527,6 +585,66 @@ class Space extends Model {
 	}
 
 	/**
+	 * Effective-visibility clause: a space is no more visible than its category.
+	 *
+	 * An owner who marks a category `hidden` reasonably reads that as covering
+	 * what is inside it — nothing in the admin UI says otherwise — but a space
+	 * carries its own `visibility` column and nothing ever consulted the
+	 * parent, so a `public` space in a `hidden` category was served to
+	 * anonymous visitors.
+	 *
+	 * Resolved at READ time rather than cascaded onto rows on save: the value
+	 * then stays correct when a category's visibility changes later, and we
+	 * never rewrite a `visibility` the owner did not edit. The cost is this
+	 * clause on listing queries; `category_id` is indexed and the subquery is
+	 * over a table with tens of rows, not thousands.
+	 *
+	 * Uncategorised spaces (`category_id` NULL or 0) are unaffected — there is
+	 * no parent to inherit from.
+	 *
+	 * MEMBERSHIP OVERRIDES IT. `hidden` means the same thing on a category as
+	 * it has always meant on a space: only members can find this. A hidden
+	 * SPACE stays listed for its own members, so a space inside a hidden
+	 * CATEGORY must too — otherwise the two states the owner reads as one word
+	 * behave differently, and a member of a private space loses it from their
+	 * own directory because the owner tidied the category it sits in. That is
+	 * why callers compose this into the public/private disjunct rather than
+	 * ANDing it across the whole predicate; the membership disjunct is not
+	 * subject to it. {@see self::concealed_by_category()} exempts the same
+	 * viewers on the read side, so a card in a listing always opens.
+	 *
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 * @param string   $col     Spaces-table alias prefix, including trailing dot, or ''.
+	 * @return string Bare SQL condition, or '' when unrestricted.
+	 */
+	private static function parent_category_clause( ?int $user_id, string $col ): string {
+		[ $cat_where ] = \Jetonomy\Models\Category::listing_visibility_sql( $user_id );
+
+		if ( '1=1' === $cat_where ) {
+			return '';
+		}
+
+		$categories_table = \Jetonomy\table( 'categories' );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $categories_table is a trusted prefixed name; $cat_where is literal SQL from Category::listing_visibility_sql() (no placeholders in the guest/member branches).
+		return "({$col}category_id IS NULL OR {$col}category_id = 0 OR {$col}category_id IN (SELECT id FROM {$categories_table} WHERE {$cat_where}))";
+	}
+
+	/**
+	 * `AND <clause>` form of {@see self::parent_category_clause()}, for a
+	 * predicate with no membership disjunct to keep outside it (a guest).
+	 *
+	 * @param int|null $user_id Viewer ID.
+	 * @param string   $col     Alias prefix including trailing dot, or ''.
+	 * @return string
+	 */
+	private static function parent_category_and( ?int $user_id, string $col ): string {
+		$clause = self::parent_category_clause( $user_id, $col );
+
+		return '' === $clause ? '' : ' AND ' . $clause;
+	}
+
+	/**
 	 * Should this space's EXISTENCE be concealed from the viewer?
 	 *
 	 * A `hidden` space promises "only members can find this space". Listings
@@ -545,10 +663,22 @@ class Space extends Model {
 	 * @return bool True when the viewer must see a 404, not a gate page.
 	 */
 	public static function concealed_from_viewer( object $space, ?int $user_id ): bool {
-		if ( 'hidden' !== ( $space->visibility ?? '' ) ) {
+		if ( user_can( (int) $user_id, 'manage_options' ) ) {
 			return false;
 		}
-		if ( user_can( (int) $user_id, 'manage_options' ) ) {
+
+		// A space inside a category the viewer cannot see is concealed whatever
+		// the space's OWN visibility says. A public space in a `hidden`
+		// category answered HTTP 200 with its title to anyone holding the URL,
+		// which made a hidden category cosmetic - the owner staged content in
+		// it and it was publicly reachable the whole time. Membership does not
+		// exempt: hiding the category is a decision about the whole branch, and
+		// the owner can undo it by changing one field.
+		if ( self::concealed_by_category( $space, $user_id ) ) {
+			return true;
+		}
+
+		if ( 'hidden' !== ( $space->visibility ?? '' ) ) {
 			return false;
 		}
 		if ( ! $user_id ) {
@@ -559,6 +689,76 @@ class Space extends Model {
 		// the rule exists to let in.
 		return ! self::admitted( (int) $space->id, (int) $user_id );
 	}
+
+	/**
+	 * Does this space's parent category conceal it from the viewer?
+	 *
+	 * Same predicate the category's own listing uses, asked about one row, so
+	 * the rule lives in exactly one place ({@see
+	 * Category::listing_visibility_sql()}). Uncategorised spaces have no parent
+	 * to inherit from and are never concealed this way.
+	 *
+	 * @param object   $space   Space row (needs ->category_id).
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 * @return bool
+	 */
+	public static function concealed_by_category( object $space, ?int $user_id ): bool {
+		$category_id = (int) ( $space->category_id ?? 0 );
+
+		if ( $category_id <= 0 ) {
+			return false;
+		}
+
+		$user_id = $user_id ?? get_current_user_id();
+
+		// Membership overrides the parent, exactly as it does in the listing
+		// predicate: a hidden category withholds its spaces from strangers, not
+		// from the members of a space inside it. Checked before the memo
+		// because the answer is per space, not per category.
+		if ( $user_id > 0 && self::admitted( (int) ( $space->id ?? 0 ), (int) $user_id ) ) {
+			return false;
+		}
+
+		$memo = (int) $user_id . ':' . $category_id;
+
+		// Memoised for the request. Permission_Engine::can( 'read', $space )
+		// asks this once per space on a topic list, and the answer for one
+		// (viewer, category) pair cannot change inside a request - without the
+		// memo a 50-row list that spans 6 categories runs 50 queries where 6
+		// would do.
+		if ( isset( self::$category_conceal_memo[ $memo ] ) ) {
+			return self::$category_conceal_memo[ $memo ];
+		}
+
+		[ $cat_where, $cat_values ] = Category::listing_visibility_sql( $user_id );
+
+		if ( '1=1' === $cat_where ) {
+			self::$category_conceal_memo[ $memo ] = false;
+			return false;
+		}
+
+		$categories_table = \Jetonomy\table( 'categories' );
+		$sql              = "SELECT id FROM {$categories_table} WHERE id = %d AND {$cat_where}";
+		$values           = array_merge( [ $category_id ], $cat_values );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- $categories_table is a trusted prefixed name; $cat_where is literal SQL from Category::listing_visibility_sql().
+		$visible = (bool) static::db()->get_var( static::db()->prepare( $sql, ...$values ) );
+
+		self::$category_conceal_memo[ $memo ] = ! $visible;
+
+		return ! $visible;
+	}
+
+	/**
+	 * Per-request memo for {@see self::concealed_by_category()}.
+	 *
+	 * Keyed "{user_id}:{category_id}". Request-scoped on purpose: a category's
+	 * visibility change lands on the next request, and nothing here is worth a
+	 * cache key to invalidate.
+	 *
+	 * @var array<string, bool>
+	 */
+	private static array $category_conceal_memo = [];
 
 	/**
 	 * Is this viewer admitted to this space?
@@ -607,7 +807,30 @@ class Space extends Model {
 	 * @return bool
 	 */
 	public static function readable_by_viewer( object $space, int $user_id ): bool {
+		// The parent category is asked FIRST and is not overridable by
+		// admission: a public space inside a `hidden` category used to answer
+		// GET /spaces/{id} with 200 to a stranger holding the id, which made
+		// the category's promise cosmetic on the API while the browser path
+		// (concealed_from_viewer) had already been taught to honour it. Same
+		// question, one answer.
+		if ( self::concealed_by_category( $space, $user_id ) ) {
+			return false;
+		}
+
 		if ( ! in_array( (string) ( $space->visibility ?? '' ), array( 'private', 'hidden' ), true ) ) {
+			return true;
+		}
+
+		// The owner reads every space. admitted() deliberately does NOT say
+		// this - it answers "is this viewer admitted", and an administrator who
+		// is not a member is not admitted; that method also backs roster
+		// decisions where claiming otherwise would be wrong. So the bypass
+		// belongs here, on the READ question. Without it GET /spaces/{id}
+		// answered 403 to an administrator for a private space they were not a
+		// member of, while the space page in the browser (which checks
+		// manage_options directly) let the same person straight in - the app
+		// could not open a space the owner was already looking at.
+		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
 			return true;
 		}
 
@@ -664,7 +887,7 @@ class Space extends Model {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
-		$sql  = 'SELECT * FROM ' . static::table() . " WHERE (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$sql  = 'SELECT * FROM ' . static::table() . " WHERE {$vis_where} ORDER BY sort_order ASC, title ASC";
 		$rows = empty( $vis_values )
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			? static::db()->get_results( $sql )
@@ -703,6 +926,18 @@ class Space extends Model {
 	 * every VIEW should pass one: a category page rendered every space it held,
 	 * which is fine at five and unusable at two thousand.
 	 *
+	 * A CHILD space is listed here too, under the category it was assigned.
+	 * This query used to carry `parent_id = 0`, which meant a space's
+	 * `category_id` was written, indexed and then ignored for any space that
+	 * had a parent. Nothing nested those children either - `list_children()`
+	 * has no callers anywhere in free, Pro or the templates - so an imported
+	 * sub-forum was reachable from nowhere in the directory at all. That is
+	 * the shape two customers reported after migrating.
+	 *
+	 * A child therefore appears exactly ONCE, under its own category. It is
+	 * deliberately not also nested under its parent: the same space listed
+	 * twice on one page reads as a bug.
+	 *
 	 * @param int      $category_id Category id.
 	 * @param int|null $user_id     Viewer; null = current user.
 	 * @param int      $limit       0 = all.
@@ -713,7 +948,7 @@ class Space extends Model {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
-		$sql    = 'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$sql    = 'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND {$vis_where} ORDER BY sort_order ASC, title ASC";
 		$values = array_merge( [ $category_id ], $vis_values );
 
 		if ( $limit > 0 ) {
@@ -737,7 +972,7 @@ class Space extends Model {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for().
-		$sql    = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where}";
+		$sql    = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE category_id = %d AND {$vis_where}";
 		$values = array_merge( [ $category_id ], $vis_values );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above.
@@ -754,7 +989,7 @@ class Space extends Model {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
-		$sql = 'SELECT * FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$sql = 'SELECT * FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
 
 		$values = $vis_values;
 		if ( $limit > 0 ) {
@@ -781,7 +1016,7 @@ class Space extends Model {
 		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for().
-		$sql = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where}";
+		$sql = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND {$vis_where}";
 
 		if ( empty( $vis_values ) ) {
 			return (int) static::db()->get_var( $sql );
@@ -797,11 +1032,27 @@ class Space extends Model {
 	 * @param int $parent_id
 	 * @return object[]
 	 */
-	public static function list_children( int $parent_id ): array {
+	public static function list_children( int $parent_id, ?int $user_id = null ): array {
+		if ( $parent_id <= 0 ) {
+			return [];
+		}
+
+		// Visibility-filtered, like every other listing. This method had no
+		// callers at all until the sub-space strip was built on it, so it had
+		// never had to answer the question - and shipping the first caller
+		// against an unfiltered query is how a private sub-forum would have
+		// appeared under a public parent.
+		[ $vis_sql, $vis_params ] = self::listing_visibility_sql( $user_id );
+
+		$params = array_merge( [ $parent_id ], $vis_params );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_sql is literal SQL from listing_visibility_sql().
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE parent_id = %d ORDER BY sort_order ASC, title ASC',
-				$parent_id
+				'SELECT * FROM ' . static::table()
+					. " WHERE parent_id = %d AND status = 'active' AND {$vis_sql}"
+					. ' ORDER BY sort_order ASC, title ASC',
+				$params
 			)
 		) ?: [];
 	}
@@ -1154,6 +1405,19 @@ class Space extends Model {
 			$incoming['prefixes'] = $clean_prefixes;
 		}
 
+		// An explicitly empty restriction means "no per-space restriction", so the
+		// key has to be REMOVED, not stored as ''. Permission_Engine Layer 4 uses
+		// ! empty() so '' would behave correctly today, but a stored '' is a
+		// phantom value that reads as configured, and the same merge carries it
+		// forward forever.
+		$clear_restrictions = array();
+		foreach ( array( 'who_can_post', 'who_can_reply' ) as $restriction_key ) {
+			if ( array_key_exists( $restriction_key, $incoming ) && '' === (string) $incoming[ $restriction_key ] ) {
+				unset( $incoming[ $restriction_key ] );
+				$clear_restrictions[] = $restriction_key;
+			}
+		}
+
 		$clear_per_page = false;
 		if ( array_key_exists( 'posts_per_page', $incoming ) ) {
 			$per_page = $incoming['posts_per_page'];
@@ -1166,6 +1430,10 @@ class Space extends Model {
 		}
 
 		$merged = array_merge( self::get_settings( $space_id ), $incoming );
+
+		foreach ( $clear_restrictions as $restriction_key ) {
+			unset( $merged[ $restriction_key ] );
+		}
 
 		// The key was cleared, so strip what the merge carried over from the
 		// previously stored value — otherwise "clear this" silently no-ops.

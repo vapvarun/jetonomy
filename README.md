@@ -14,7 +14,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/PHPUnit-498%20unit%20tests-brightgreen?logo=testing-library&logoColor=white" alt="498 unit tests">
   <img src="https://img.shields.io/badge/PHPStan-Level%205-brightgreen?logo=php&logoColor=white" alt="PHPStan Level 5">
-  <img src="https://img.shields.io/badge/REST%20API-80%20endpoints-blue?logo=json&logoColor=white" alt="80 REST API Endpoints">
+  <img src="https://img.shields.io/badge/REST%20API-81%20routes-blue?logo=json&logoColor=white" alt="81 REST API routes">
   <img src="https://img.shields.io/badge/Security-OWASP%20tested-blue?logo=owasp&logoColor=white" alt="Security Tested">
 </p>
 
@@ -92,7 +92,7 @@ Jetonomy adds a fast, self-moderating discussion platform to any WordPress site.
 - Configurable community H1 heading for SEO
 
 ### Developer
-- 80 REST API endpoints with cursor-based pagination
+- 81 REST routes / 109 method-endpoints, paginated with indexed `LIMIT`/`OFFSET`
 - Template override system (`theme/jetonomy/` directory)
 - Adapter pattern for search, email, membership, and real-time
 - WordPress Interactivity API for real-time UI updates

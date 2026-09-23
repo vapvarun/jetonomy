@@ -42,7 +42,7 @@ class Router {
 		// WP_Query::handle_404() runs after that and can set it again - e.g.
 		// `?paged=2` on a route whose underlying main object is a single page.
 		// While rendering happened at priority 10 the stale flag was harmless,
-		// because handle_request() cleared it on its way past. Now that we
+		// because the render cleared it on its way past. Now that the render
 		// render last, every 404 handler in the 0-9998 window sees the flag
 		// first: BuddyX Pro's buddyx_404_redirect() (priority 10) would 301 a
 		// paginated Jetonomy URL straight to the theme's custom 404 page.
@@ -51,26 +51,38 @@ class Router {
 		add_action( 'template_redirect', [ $this, 'assert_route_state' ], 0 );
 		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
 
-		// Rendering runs LAST on template_redirect, not at the default 10.
+		// Rendering is a `template_include` FILTER, not a render-and-exit on
+		// `template_redirect`.
 		//
-		// This handler renders and exits, so whatever priority it holds is the
-		// point past which no other template_redirect callback runs at all. At
-		// 10 that silently swallowed every gate registered after us: a
-		// maintenance-mode plugin hooking at 11+ never saw the request and
-		// Jetonomy pages stayed public while the rest of the site was closed
-		// (Basecamp 10278698087). The same hole applies to any access gate -
-		// on the reference install WP Fusion's content restriction sits at 13
-		// and 15 - and to the header emitters core registers at 11
-		// (rest_output_link_header, wp_shortlink_header), which never fired on
-		// a Jetonomy URL.
+		// This is what core's own comment above the template_redirect hook tells
+		// you to do: "if you use exit() or die(), no subsequent
+		// template_redirect hooks will be run ... Instead, use the
+		// template_include filter hook."
 		//
-		// Claiming the request is our decision to make only after everyone who
-		// might refuse it has had a turn. Nothing that merely wants to inspect
-		// or annotate the request is harmed by us going last; anything that
-		// wants to intercept it now can.
-		add_action( 'template_redirect', [ $this, 'handle_request' ], self::RENDER_PRIORITY );
+		// The first attempt at Basecamp 10278698087 moved the render to
+		// template_redirect priority 9999 so later callbacks on THAT hook could
+		// still refuse the request. It looked fixed because the verification
+		// gates all hooked template_redirect - and it did not fix the plugin the
+		// card actually named, which enforces on `template_include` at 999999.
+		// WordPress fires template_redirect BEFORE template_include, so exiting
+		// anywhere on the earlier hook means the later one never runs at all. No
+		// priority on template_redirect can fix that; only moving hooks can.
+		//
+		// As a filter we return a template path and then get out of the way, so
+		// every later template_include callback still runs and any of them can
+		// replace our template with a maintenance page, a paywall or a
+		// coming-soon screen. A higher-priority filter wins simply by returning
+		// something else, which is the contract those plugins are written
+		// against.
+		add_filter( 'template_include', [ $this, 'maybe_render_route' ], self::RENDER_PRIORITY );
+
+		// Feeds and the XML sitemap still emit on template_redirect: they are
+		// not templates, they write their own content type and exit, and
+		// template_include is never reached for them anyway. Core's own feeds
+		// bypass template_include for the same reason.
+		add_action( 'template_redirect', [ $this, 'handle_non_template_routes' ], self::RENDER_PRIORITY );
 		// WP's canonical redirect would append a trailing slash to the extension-
-		// less-looking /…-sitemap.xml URL (301 -> …/) before handle_request emits.
+		// less-looking /…-sitemap.xml URL (301 -> …/) before the sitemap emits.
 		// Skip it for the sitemap route so the XML is served directly.
 		add_filter( 'redirect_canonical', [ $this, 'skip_canonical_for_sitemap' ] );
 
@@ -148,7 +160,7 @@ class Router {
 		// lets WP_Query try (and fail) to resolve one.
 		unset( $query_vars['pagename'], $query_vars['name'], $query_vars['page'] );
 
-		// Return an empty result set — handle_request() renders the output.
+		// Return an empty result set — the template_include canvas renders the output.
 		$query_vars['post__in'] = [ 0 ];
 
 		return $query_vars;
@@ -238,7 +250,7 @@ class Router {
 
 		// Custom XML sitemap (index + paginated children) — replaces the WP-core
 		// providers so we can emit <priority>/<changefreq>. Handled by
-		// Sitemap_Emitter, which echoes XML and exits (see handle_request).
+		// Sitemap_Emitter, which echoes XML and exits (see handle_non_template_routes).
 		add_rewrite_rule( "^{$base}-sitemap\\.xml$", 'index.php?jetonomy_route=sitemap', 'top' );
 		add_rewrite_rule( "^{$base}-sitemap-(spaces|posts)-([0-9]+)\\.xml$", 'index.php?jetonomy_route=sitemap&jetonomy_tab=$matches[1]&jetonomy_slug=$matches[2]', 'top' );
 
@@ -386,7 +398,7 @@ class Router {
 	/**
 	 * The Jetonomy route this request resolves to, or '' for a non-Jetonomy URL.
 	 *
-	 * Shared by assert_route_state() and handle_request() so the two can never
+	 * Shared by assert_route_state() and maybe_render_route() so the two can never
 	 * disagree about whether a request is ours - they run at opposite ends of
 	 * template_redirect, and a split verdict would either leave a stale 404 on
 	 * a page we render or clear a 404 on a page we do not.
@@ -401,49 +413,85 @@ class Router {
 		return $route;
 	}
 
-	public function handle_request(): void {
-		// "Community as homepage": derive the route here rather than injecting a
-		// fake query var during `request`. The old approach put jetonomy_route=home
-		// into an otherwise-empty front-page query, which made the vars non-empty
-		// and broke WP's own front-page resolution — is_front_page() went false and
-		// the real page never became the queried object, so the owner's per-page SEO
-		// (their Yoast title on that page) was unreachable. Deriving at
-		// template_redirect leaves WP's resolution intact and still renders the
-		// community through the exact same Template_Loader path as /{base}/.
+	/**
+	 * Route data resolved for this request, handed to the template canvas.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	private static ?array $render_data = null;
+
+	/**
+	 * The route data the canvas file should render.
+	 *
+	 * Static because the canvas is a plain file WordPress includes, with no
+	 * handle on the Router object; this class is constructed once at boot and
+	 * has no instance registry to reach for.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function rendered_route_data(): array {
+		return self::$render_data ?? array();
+	}
+
+	/**
+	 * Emit the routes that are NOT templates: the space RSS feed and the XML
+	 * sitemap. Both write their own content type and exit, so they stay on
+	 * template_redirect where they have always been.
+	 *
+	 * @return void
+	 */
+	public function handle_non_template_routes(): void {
 		$route = $this->current_route();
 
-		if ( '' === $route ) {
+		if ( 'space-feed' !== $route && 'sitemap' !== $route ) {
 			return;
 		}
 
-		// Mapped = the route came from the front-page mapping rather than from a
-		// rewrite rule, i.e. a real WP page backs this URL and owns its SEO.
-		$mapped = '' === (string) get_query_var( 'jetonomy_route' );
+		if ( 'space-feed' === $route ) {
+			Feed::render( (string) get_query_var( 'jetonomy_slug', '' ) );
+		}
 
-		// Set up template data
-		$data = [
+		// Empty tab = the sitemap index; tab+slug = a child page.
+		SEO\Sitemap_Emitter::render( (string) get_query_var( 'jetonomy_tab', '' ), (int) get_query_var( 'jetonomy_slug', 0 ) );
+	}
+
+
+	/**
+	 * `template_include` filter: hand back the community canvas for our routes.
+	 *
+	 * Returning a path instead of rendering-and-exiting is the whole point. Every
+	 * template_include callback registered after this one still runs and can
+	 * return a different template, which is how maintenance-mode, membership and
+	 * coming-soon plugins are designed to intervene.
+	 *
+	 * "Community as homepage" resolves here rather than by injecting a fake query
+	 * var during `request`: that put jetonomy_route=home into an otherwise-empty
+	 * front-page query, which made the vars non-empty and broke WP's own
+	 * front-page resolution, so is_front_page() went false and the owner's
+	 * per-page SEO on that page became unreachable.
+	 *
+	 * @param string $template Template WordPress resolved.
+	 * @return string
+	 */
+	public function maybe_render_route( $template ) {
+		$route = $this->current_route();
+
+		if ( '' === $route ) {
+			return $template;
+		}
+
+		self::$render_data = array(
 			'route'      => $route,
 			'slug'       => get_query_var( 'jetonomy_slug', '' ),
 			'space_slug' => get_query_var( 'jetonomy_space_slug', '' ),
 			'tab'        => get_query_var( 'jetonomy_tab', '' ),
-			// A real page backs this URL — it, not Jetonomy, owns the SEO.
-			'mapped'     => $mapped,
-		];
+			// Mapped = the route came from the front-page mapping rather than
+			// from a rewrite rule, i.e. a real WP page backs this URL and owns
+			// its SEO.
+			'mapped'     => '' === (string) get_query_var( 'jetonomy_route' ),
+		);
 
-		// Space RSS feed renders XML and exits before any template work.
-		if ( 'space-feed' === $route ) {
-			Feed::render( (string) $data['slug'] );
-		}
-
-		// Custom XML sitemap renders XML and exits before any template work.
-		// Empty tab = the sitemap index; tab+slug = a child page.
-		if ( 'sitemap' === $route ) {
-			SEO\Sitemap_Emitter::render( (string) $data['tab'], (int) $data['slug'] );
-		}
-
-		// Load the template (template may call status_header(404) inside)
-		Template_Loader::render( $data );
-		exit;
+		return JETONOMY_DIR . 'includes/template-canvas.php';
 	}
 
 	/**

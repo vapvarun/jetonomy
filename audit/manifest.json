@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "jetonomy",
     "name": "Jetonomy",
-    "version": "1.9.7",
+    "version": "2.0.0",
     "namespace": "Jetonomy",
     "main_file": "jetonomy.php",
     "text_domain": "jetonomy",
@@ -13,6 +13,9 @@
   },
   "rest": {
     "namespace": "jetonomy/v1",
+    "route_count": 81,
+    "method_endpoints": 109,
+    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-09-22. route_count INCLUDES the /jetonomy/v1 index route itself (80 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 86 entries covering 80 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
     "endpoints": [
       {
         "route": "/app/config",
@@ -1833,6 +1836,10 @@
     {
       "name": "{prefix}jt_attachments",
       "purpose": "Files attached to a post or reply (1.7.1). Defined in Schema::create_tables(), not only in Migration_1_7_1 - a fresh install never runs a migration, so a migration-only table would be missing on every new site."
+    },
+    {
+      "name": "{prefix}jt_import_map",
+      "purpose": "Source-row to Jetonomy-row identity for every importer (2.0.0). UNIQUE on (source, object_type, source_id) so an importer answers \"did I create this?\" from the source key, never from a slug anything else can also hold."
     }
   ],
   "capabilities": [
@@ -2301,6 +2308,14 @@
       "consumed_by": []
     },
     {
+      "name": "jetonomy_media_is_referenced",
+      "type": "filter",
+      "args": "$referenced (bool), $attachment_id (int)",
+      "where": "includes/class-media-library.php (Media_Library::is_referenced)",
+      "consumed_by": null,
+      "notes": "2.0.0. Last word on whether an attachment with no link row is still in use, checked immediately before the orphan sweep deletes it. Fails safe - any truthy return keeps the file."
+    },
+    {
       "name": "jetonomy_member_card_after",
       "type": "action",
       "args": "$member, $space",
@@ -2453,6 +2468,22 @@
         "jetonomy-pro: Privacy::on_user_delete"
       ],
       "notes": "1.8.0. Fired once per orphaned (already-deleted) user id during 'wp jetonomy privacy purge-orphans'. Free and Pro both listen via on_user_delete, so the backfill replays the real delete path rather than reimplementing it."
+    },
+    {
+      "name": "jetonomy_recount_backfill_batch",
+      "type": "action",
+      "args_count": 0,
+      "args_signature": [],
+      "where": "includes/class-recount-backfill.php:56",
+      "notes": "2.0.0. Action Scheduler continuation hook; re-enqueued until every stage of the one-off counter backfill drains."
+    },
+    {
+      "name": "jetonomy_recount_backfill_complete",
+      "type": "action",
+      "args": "none",
+      "where": "includes/class-recount-backfill.php (Recount_Backfill::complete)",
+      "consumed_by": null,
+      "notes": "2.0.0. Fired once the upgrade-time recount of reply/post counters has finished on a site."
     },
     {
       "name": "jetonomy_reply_accepted",
@@ -3590,6 +3621,13 @@
       "consumed_by": []
     },
     {
+      "name": "jetonomy_category_listing_visibility_sql",
+      "type": "filter",
+      "args": "result, user_id, alias",
+      "where": "includes/models/class-category.php:66",
+      "consumed_by": []
+    },
+    {
       "name": "jetonomy_space_listing_visibility_sql",
       "type": "filter",
       "args": "result, user_id, alias",
@@ -3737,6 +3775,30 @@
       "args": "",
       "where": "includes/api/class-leaderboards-controller.php",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_media_cleanup_reported",
+      "type": "action",
+      "args": "count, ids",
+      "where": "includes/class-media-library.php",
+      "consumed_by": [],
+      "purpose": "Fires after the first, report-only abandoned-upload sweep."
+    },
+    {
+      "name": "jetonomy_media_cleanup_ran",
+      "type": "action",
+      "args": "deleted",
+      "where": "includes/class-media-library.php",
+      "consumed_by": [],
+      "purpose": "Fires after an abandoned-upload sweep deletes files."
+    },
+    {
+      "name": "jetonomy_bbpress_import_statuses",
+      "type": "filter",
+      "args": "statuses, type",
+      "where": "includes/import/class-bbpress-importer.php",
+      "consumed_by": [],
+      "purpose": "bbPress post_statuses imported per type (forum|topic|reply)."
     }
   ],
   "buddypress_integration": {
@@ -3872,6 +3934,12 @@
       "schedule": "hourly",
       "purpose": "Send single-shot nudge email to users who never verified after `jetonomy_settings.verification_reminder_hours` (default 24, 0 disables). Rate-limited via `jt_user_profiles.verification_reminder_sent_at` column (1.4.1 migration). Self-heals: also lazy-scheduled on init to upgrade installs without re-activate (1.4.1 A10).",
       "handler": "Verification_Reminder::run"
+    },
+    {
+      "hook": "jetonomy_cleanup_media",
+      "interval": "DAY_IN_SECONDS",
+      "where": "includes/class-cron.php",
+      "purpose": "Delete community uploads never attached to a post or reply (first run reports only)."
     }
   ],
   "wp_cli": [
@@ -4107,9 +4175,9 @@
     "delta_2026_07_04": "Post-refresh deltas + security-audit fixes. 3996dc0: Cache::remember_object() coerces empty-string persistent-cache hits to null (Redis/Memcached TypeError fix); free SEO baseline defers to seo-pro on post + space family (dupe og-tag fix). b46c84f: /app/config gains app_enabled (Pro mobile gate, fail closed) + app_name. Security fixes (2026-07-04 expectation audit): closed 5 private/hidden-space content leaks (Space::list_visible visibility-param bypass; space-members.php + space-roadmap.php missing read gate; search.php advanced-filter branch missing Space::content_visibility_sql; Schema_Markup space CollectionPage + breadcrumb JSON-LD). jetonomy_email_headers widened to 5 args ($object_type,$object_id) so pro reply-by-email can mint a post-scoped Reply-To token (was hooking the wrong adapter-level filter and fataling).",
     "refresh_2026_06_28": "1.6.0 mobile-app refresh + plugin.version 1.4.3->1.6.0. Verified the mobile surface is captured: GET /app/config (App_Config_Controller; serves app_name from Community Title, accent_color, logo_url + feature_flags map) and GET /feed (Feed_Controller; sort hot|new|top, cursor after/before + offset + window_days) present; logo_url added to Settings -> Appearance. REST 73/73 exact vs register_rest_route grep. App-side: the login screen now applies the discovered site accent+logo pre-auth (no plugin surface change). Native push device registration lives in jetonomy-pro web-push (/push/register-device), not free.",
     "refresh_2026_06_11": "Coverage-gated refresh after the full-audit fix series (audit/full-audit-2026-06-11.md). wppqa baseline: audit/wppqa-baseline-2026-06-11. All categories within gate vs ground-truth grep: rest 68/69 calls (multi-config registrations), ajax 40/40 (comment-text hits excluded), hooks_fired 142/140+dynamic, tables 20 (3 dead tables dropped in Migration_1_5_0), blocks 8/8, shortcodes 8/8 (stale jetonomy_recent_activity entry removed), cron 6 (Action Scheduler map in class-cron.php - wp_schedule_event grep finds 0 by design), wp_cli 14 (dynamic dispatcher loop), admin_pages 14/14.",
-    "at": "2026-09-10T06:15:51Z",
+    "at": "2026-09-22T22:58:00Z",
     "from": "wp-plugin-onboard skill (--refresh, verified enumeration)",
-    "branch": "1.9.7",
+    "branch": "2.0.0",
     "schema_version": "v2",
     "refresh_note": "Deterministic generator (write-manifest.mjs) rejected on 2026-09-08: it zeroed wp_cli and capabilities, cut ajax 44->15 and cron 7->2, dropped hook provenance, and pulled Pro's jt_pro_* tables into free. Restored and re-verified every category against source instead. Hooks reconcile exactly (226 grepped + 6 dynamic = 232, zero source-only). REST 86 is correct and higher than a naive grep because 9 /auth/* routes are built by string concatenation.",
     "refreshed_via": "manual reconciliation at the 1.9.4 cut, verified against `wp jetonomy qa-actions` 286/286 on buddynext.local",
@@ -4143,7 +4211,15 @@
     "delta_2026_08_22_content_gate": "Follow-up audit after the security batch (Basecamp 10228771444). Reply_Gate RENAMED to Jetonomy\\Permissions\\Content_Gate because it now serves posts as well as replies; a gate named for one caller is a gate the next caller does not look for. NEW Content_Gate::space_accepts_content() carries the archived/locked space rule for callers that have a space but no post. Audited every caller of Reply::create() and every self-service join path, and found the same bug class still live in the WP Abilities API: jetonomy/create-reply checked is_closed but NOT space status, and jetonomy/create-post checked neither, so both could write into an ARCHIVED space that REST refuses with jetonomy_space_restricted. Reproduced (REST 403 vs ability creating reply #2411 in the same space for the same member) and both permission callbacks now route through Content_Gate. Test fixture: SpaceJourneyTest's transfer test now creates its own successor - Space::resolve_successor() falls back to any OTHER manage_options user, so the test silently depended on another test having left an administrator behind. It was the suite's most frequent intermittent failure. Tests: tests/security/ContentGateTest.php (9).",
     "refresh_notes": "Diff-verified against production source. hooks_fired: 0 missing. shortcodes/tables: exact. rest 88 grep vs 86 manifest (2.3%, within gate). ajax +1 real (jetonomy_reorder_spaces); jetonomy_quick_login and jetonomy_upload_image appear only in comments as REST-replaced legacy handlers.",
     "manifest_refresh": "agent-enumeration-only",
-    "delta_2026_09_10_1_9_7": "1.9.7 post-release refresh. plugin.version was 1.9.6 against a 1.9.7 tag - the same lag this block recorded at 1.9.4 and called a checklist item. It is a build gate now: bin/build-release.sh triangulates plugin.version and package.json alongside the header, constant and Stable tag, so a release cannot be built while they disagree. No surface delta this cycle: free changed no source file since the last refresh, and Pro's only change (anonymous-posting composer markup) added or removed no hook, route, option or table. Verified against ground-truth greps: REST 86 and shortcodes 8 match exactly; an apparent 2-entry AJAX gap (jetonomy_quick_login, jetonomy_upload_image) was a false positive - both names survive only in comments describing the legacy handlers that REST controllers replaced."
+    "delta_2026_09_22_2_0_0_import_identity": "2.0.0 import identity fix. Added table {prefix}jt_import_map (source, object_type, source_id -> object_id, UNIQUE on the triple), created by includes/db/migrations/class-migration_2_0_0.php and read through includes/models/class-import-map.php. Importers used to answer \"did I create this?\" by slug, which adopted an owner's unrelated same-named space on a re-run and poured the source forum's topics into it, and matched replies on post+author+timestamp-to-the-second, silently dropping same-second replies on a FIRST run. Also recorded filter jetonomy_media_is_referenced, live since the orphan-sweep fix but never listed. Tables 22 -> 23.",
+    "delta_2026_09_10_1_9_7": "1.9.7 post-release refresh. plugin.version was 1.9.6 against a 1.9.7 tag - the same lag this block recorded at 1.9.4 and called a checklist item. It is a build gate now: bin/build-release.sh triangulates plugin.version and package.json alongside the header, constant and Stable tag, so a release cannot be built while they disagree. No surface delta this cycle: free changed no source file since the last refresh, and Pro's only change (anonymous-posting composer markup) added or removed no hook, route, option or table. Verified against ground-truth greps: REST 86 and shortcodes 8 match exactly; an apparent 2-entry AJAX gap (jetonomy_quick_login, jetonomy_upload_image) was a false positive - both names survive only in comments describing the legacy handlers that REST controllers replaced.",
+    "delta_2026_09_22_2_0_0_version_bump": "plugin.version bumped 1.9.7 -> 2.0.0 for the release tag. No further surface delta this pass: the import-map table/filter delta above already covers this cycle's only structural change. Verified against source - the release-blocking test fixes, the SEO Pro title-doubling fix, the two translator-comment fixes, and the readme/marketing cursor-pagination sweep added or removed no hook, route, option, or table.",
+    "table_count": 23,
+    "ability_count": 19,
+    "ability_count_pro": 20,
+    "ability_count_pair": 39,
+    "capability_count": 23,
+    "counted_by_table_ability": "table_count = len(tables), verified via SHOW TABLES LIKE \"wp_jt_%\" on a live install. ability_count = wp_register_ability() call sites in includes/class-abilities.php, cross-checked against wp_get_abilities() at runtime, split by jetonomy/ vs jetonomy-pro/ namespace (excludes core/* and any third-party abilities, e.g. yoast-seo/*, that happen to be registered on the measuring site). capability_count = len(capabilities) (WordPress jetonomy_* caps - a different thing from Abilities API abilities; do not conflate the two when writing marketing copy). Card 10330599826 found the bug report itself had a stale Pro ability figure (15, not 20) - always re-derive from wp_get_abilities() rather than trusting a previous audit's number."
   },
   "static_analysis": {
     "dead_listeners": [

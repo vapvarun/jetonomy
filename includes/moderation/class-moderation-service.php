@@ -578,7 +578,21 @@ class Moderation_Service {
 			if ( ! $row ) {
 				return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), [ 'status' => 404 ] );
 			}
-			Post::update( $id, [ 'status' => $new_status ] );
+			// Approving a SCHEDULED draft is a publish-now, not a status poke.
+			// Writing status=publish directly left published_at in the future,
+			// so the post went live early, kept rendering a "Scheduled" badge,
+			// pinned itself to the top of the "new" sort, and never fired
+			// jetonomy_after_create_post - no notifications, no activity, no
+			// BuddyPress broadcast. publish_draft() clears published_at and
+			// fires the create hook, which is what the REST publish-now route
+			// already did correctly.
+			if ( 'publish' === $new_status
+				&& 'draft' === ( $row->status ?? '' )
+				&& ! empty( $row->published_at ) ) {
+				Post::publish_draft( $id );
+			} else {
+				Post::update( $id, [ 'status' => $new_status ] );
+			}
 		} else {
 			$row = Reply::find( $id );
 			if ( ! $row ) {

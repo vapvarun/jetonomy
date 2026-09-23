@@ -107,9 +107,9 @@ bbPress doesn't store a reply count directly on the topic record. When you load 
 
 You can cache it, and Redis masks the problem, but the fundamental issue is that the data model wasn't designed for the query patterns that forums actually run.
 
-### 3. No cursor-based pagination on list endpoints
+### 3. Deep pages pay for the `wp_posts` data model
 
-bbPress uses offset pagination (`LIMIT 20 OFFSET 400`). On page 21 of a busy forum, the database has to scan past 420 rows to get to the ones you want. This gets progressively slower as you paginate deeper. Modern forum software uses cursor-based pagination to avoid this entirely.
+bbPress pages with offset (`LIMIT 20 OFFSET 400`), which every forum plugin I looked at does, Jetonomy included. Offset itself isn't the problem. What costs you is what the database has to scan past to honour it: bbPress reaches topics through `wp_posts` filtered by post type and status, then joins `wp_postmeta` for the fields it needs. On page 21 of a busy forum you're scanning a table shared with every page, post and revision on the site.
 
 ### 4. Development has slowed to a crawl
 
@@ -199,9 +199,9 @@ This is what I ended up switching to. Full disclosure: Wbcom Designs is the Word
 
 **What I liked - the architectural stuff that solved my bbPress problems:**
 
-- **24 custom MySQL tables** instead of `wp_posts`. My 15,000-post data imported cleanly with the built-in bbPress importer (dry run first, then resume on failure). After the import, my `wp_postmeta` shed several million rows. Site-wide admin pages got faster.
+- **23 custom MySQL tables** instead of `wp_posts`. My 15,000-post data imported cleanly with the built-in bbPress importer (dry run first, then resume on failure). After the import, my `wp_postmeta` shed several million rows. Site-wide admin pages got faster.
 - **Denormalized counters.** Reply counts, vote scores, and post counts are stored as columns directly on each topic record. No COUNT queries on page load. The listing page went from 47 queries to 12.
-- **Cursor-based pagination everywhere.** Page 21 loads in the same time as page 1.
+- **Pagination over purpose-built tables.** Still offset pagination, same as everyone else, but the `LIMIT`/`OFFSET` runs against indexed forum tables rather than `wp_posts` joined to `wp_postmeta`, and page totals come from dedicated `COUNT(*)` methods.
 - **Theme integration via `theme.json`.** Jetonomy reads my theme's brand color, font, and border radius automatically. I did zero CSS overrides. This was the first forum plugin I've tried that actually looked like it belonged in my theme out of the box.
 
 **What I liked - the features bbPress doesn't have:**
@@ -209,7 +209,7 @@ This is what I ended up switching to. Full disclosure: Wbcom Designs is the Word
 - **Q&A spaces with accepted answers.** I moved my support section to a Q&A space. Members mark the reply that solved their problem. That reply pins to the top with a green "Accepted Answer" badge and the replier earns reputation. Repeat questions dropped because the canonical answer is visible.
 - **Ideas spaces with a roadmap.** I moved feature requests to an Ideas space. Members vote, and admins move ideas through Open → Planned → In Progress → Done. Replaces the spreadsheet I used to keep.
 - **Six trust levels.** New members start rate-limited (3 posts per day, no links). As they contribute, they earn abilities. This replaced the homegrown "ignore new accounts until they've been around a week" rule I'd been enforcing manually.
-- **80 REST API endpoints in the free plugin** (155 with Pro). When I wanted to build a custom dashboard showing community stats, I queried the API instead of writing raw SQL.
+- **81 REST API endpoints in the free plugin** (141 with Pro). When I wanted to build a custom dashboard showing community stats, I queried the API instead of writing raw SQL.
 - **WordPress Abilities API support** (19 abilities). If you're building AI agents on top of WordPress 6.9+, Jetonomy's community operations are discoverable through the standard Abilities registry.
 - **A built-in bbPress importer with dry-run mode.** The migration took about 40 minutes for 15,000 posts. Zero data loss. The importer ran as a batched background job I could resume if anything failed.
 - **AI-powered moderation in Pro (as of v1.3.0)** with support for self-hosted Ollama. This matters if you're in a regulated industry where you can't send member content to a third-party AI API.
@@ -231,21 +231,20 @@ Here's how bbPress stacks up against the three WordPress-native options I'd actu
 | Feature | bbPress | wpForo | Asgaros | Jetonomy |
 |---------|:-------:|:------:|:-------:|:--------:|
 | Free to install | Yes | Yes (with Pro upsells) | Yes | Yes |
-| Custom database tables (not `wp_posts`) | No | Yes | Yes | Yes (24 tables) |
+| Custom database tables (not `wp_posts`) | No | Yes | Yes | Yes (23 tables) |
 | Denormalized counters | No | Partial | Partial | Yes |
-| Cursor-based pagination | No | No | No | Yes |
 | Theme.json integration | No | No | No | Yes |
 | Q&A with accepted answers | No | Yes (Pro) | No | Yes (free) |
 | Ideas / roadmap spaces | No | No | No | Yes (free) |
 | Trust levels with auto-promotion | No | No | No | Yes (free, 6 levels) |
-| Full REST API | No | Partial | No | Yes (48+ free, 90+ with Pro) |
+| Full REST API | No | Partial | No | Yes (81 free, 141 with Pro) |
 | WordPress Abilities API | No | No | No | Yes (19 abilities) |
 | bbPress importer built in | N/A | Yes | No | Yes |
 | AI-powered moderation | No | No | No | Yes (Pro 1.3.0) |
 | Active development cadence | Slow (1 release in 7 years) | Active | Active | Very active |
 | Theme customization required | A lot | Some | Some | Almost none |
 
-I'm not saying any of these three is bad. wpForo is a legitimate option if you don't care about theme integration. Asgaros is great for tiny forums. I moved to Jetonomy because the architectural decisions (custom tables + denormalized counters + cursor pagination + theme.json) solved the specific problems I was hitting, and because the Q&A and Ideas space types meant I could retire two other plugins I'd been gluing together.
+I'm not saying any of these three is bad. wpForo is a legitimate option if you don't care about theme integration. Asgaros is great for tiny forums. I moved to Jetonomy because the architectural decisions (custom tables + denormalized counters + theme.json) solved the specific problems I was hitting, and because the Q&A and Ideas space types meant I could retire two other plugins I'd been gluing together.
 
 ---
 

@@ -23,7 +23,7 @@ Site Announcements is one of the Pro extensions, enabled the same way as the oth
 
 Jetonomy has two separate "pin" tools for two different jobs:
 
-| | Space pin ("Pin") | Community announcement ("Pin to community") |
+| | Space pin ("Pin to space") | Community announcement ("Pin to community") |
 |---|---|---|
 | Scope | Top of **one space** only | Top of **every space** across the community |
 | Who can use it | Space moderators and admins | **Administrators only** |

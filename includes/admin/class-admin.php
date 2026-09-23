@@ -267,6 +267,32 @@ class Admin {
 		exit;
 	}
 
+	/**
+	 * May the current user save Jetonomy settings?
+	 *
+	 * THE answer, for free and for every Pro settings tab.
+	 *
+	 * The Settings page renders under `jetonomy_manage_settings` (see add_menu),
+	 * and free honours that capability on save via the
+	 * option_page_capability_jetonomy_settings filter below. Every Pro tab,
+	 * however, gated its own save on `manage_options` and returned silently - so
+	 * a manager the owner had deliberately delegated could open every Pro tab,
+	 * change things, and have the save discarded with nothing on screen to say
+	 * why. Nine handlers each answered this question in their own words, and all
+	 * nine answered it differently from free.
+	 *
+	 * Administrators hold `jetonomy_manage_settings` too (Capabilities grants
+	 * every cap to administrator), so this is never narrower than the old check.
+	 * It is NOT the right gate for role administration - editing which role holds
+	 * which capability stays on `manage_options`, or a delegated manager could
+	 * grant their own role anything.
+	 *
+	 * @return bool
+	 */
+	public static function current_user_can_manage_settings(): bool {
+		return current_user_can( 'jetonomy_manage_settings' );
+	}
+
 	// ── Settings API ──
 
 	public function register_settings(): void {
@@ -466,9 +492,54 @@ class Admin {
 	 * @param mixed $input
 	 * @return array<string, array{subject: string, body: string}>
 	 */
+	/**
+	 * Did THIS request post the Email tab's template fields?
+	 *
+	 * See sanitize_email_templates() for why a per-call check is not enough.
+	 *
+	 * @var bool
+	 */
+	private static bool $email_templates_submitted = false;
+
 	public function sanitize_email_templates( $input ): array {
-		if ( ! is_array( $input ) ) {
-			return array();
+		$stored = get_option( 'jetonomy_email_templates', array() );
+		$stored = is_array( $stored ) ? $stored : array();
+
+		// Core can call this sanitizer TWICE for one save. When the stored value
+		// equals the registered default - which is array(), i.e. every site that
+		// has never saved a template - update_option() routes to add_option(),
+		// and add_option() runs sanitize_option() again on the array this method
+		// just returned. That second pass has no _submitted marker (it is not a
+		// stored key), so the guard below read it as "a different tab posted"
+		// and handed back the stored empty array: the owner's FIRST template was
+		// silently dropped, for ever, on exactly the sites that had none.
+		//
+		// The marker is therefore remembered for the request, not just for the
+		// call. Static, because the two passes are the same request by
+		// definition.
+		if ( is_array( $input ) && ! empty( $input['_submitted'] ) ) {
+			self::$email_templates_submitted = true;
+		}
+
+		if ( self::$email_templates_submitted && is_array( $input ) && empty( $input['_submitted'] ) ) {
+			// Core's re-sanitise of our own output. It is already clean; handing
+			// back $stored here is what lost the first save.
+			return $input;
+		}
+
+		// This option is registered in the `jetonomy_settings` group, and
+		// options.php writes EVERY option in a group on submit - including the
+		// ones whose fields the current tab never rendered. So a save on
+		// Appearance, General, SEO or any other tab arrived here with $input
+		// null and wiped every override the owner had written. The header
+		// comment on register_setting() promised a separate OPTION protected
+		// this; what matters is the separate GROUP, which it does not have.
+		//
+		// The Email tab posts jetonomy_email_templates[_submitted]=1, so its
+		// absence means this save is not about templates. Present with no rows
+		// still means "the owner cleared them", which is honoured below.
+		if ( ! is_array( $input ) || empty( $input['_submitted'] ) ) {
+			return $stored;
 		}
 
 		$allowed_types = array(
@@ -680,9 +751,28 @@ class Admin {
 			$defaults  = \Jetonomy\Trust\Reputation::action_points_defaults();
 			$clean_rep = array();
 			foreach ( $defaults as $action_key => $default_val ) {
-				if ( array_key_exists( $action_key, $raw_rep ) ) {
-					$clean_rep[ $action_key ] = (int) $raw_rep[ $action_key ];
+				if ( ! array_key_exists( $action_key, $raw_rep ) ) {
+					continue;
 				}
+
+				// An empty field means "use the default", not zero. Storing 0 for a
+				// cleared box silently turned off the points for that action.
+				if ( '' === trim( (string) $raw_rep[ $action_key ] ) ) {
+					continue;
+				}
+
+				// Store only what DIFFERS from the default. The form posts every
+				// action, so persisting them all made the first save a full set of
+				// overrides - after which the jetonomy_reputation_points_map filter
+				// could never apply again, because Reputation::points_for() reads a
+				// stored override ahead of the filtered map. An owner who never
+				// touched this tab had their integration's ladder silently frozen
+				// by visiting Permissions once.
+				if ( (int) $raw_rep[ $action_key ] === (int) $default_val ) {
+					continue;
+				}
+
+				$clean_rep[ $action_key ] = (int) $raw_rep[ $action_key ];
 			}
 			$clean['reputation_points'] = $clean_rep;
 		}
@@ -1184,6 +1274,13 @@ class Admin {
 							'capability'  => __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
 							'trust_level' => __( 'Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ),
 						),
+						// Membership adapters register their own types at runtime
+						// (membership:woocommerce, membership:wpfusion, ...), so
+						// they can't have a fixed entry above. %s is the adapter's
+						// own label, already the single source of truth for its
+						// name elsewhere in this screen.
+						/* translators: %s: the membership adapter's name, e.g. "WooCommerce Memberships". */
+						'membershipNote'   => __( 'Matches members who hold the %s level you pick below.', 'jetonomy' ),
 						// Per-type placeholder for the value box. One generic
 						// example cannot serve a role slug, a capability and a
 						// number at the same time.
@@ -1939,7 +2036,35 @@ class Admin {
 			$where .= ' AND p.space_id = %d';
 			$args[] = $current_space;
 		}
-		if ( 'all' !== $current_status ) {
+
+		/*
+		 * "Scheduled" is a pseudo-status: a scheduled post is an ordinary row
+		 * with published_at in the future, not a value in the status column.
+		 *
+		 * Before this, scheduling was reachable from the composer and the REST
+		 * API and from cron, and from NOWHERE in wp-admin - the owner could not
+		 * see what was queued, reschedule it, or answer "why has my post not
+		 * appeared". That failed the three-entry-points rule, and the plugin's
+		 * own demo copy already admitted the gap ("the scheduled badge does not
+		 * yet show in the listing").
+		 */
+		if ( 'scheduled' === $current_status ) {
+			// status='draft' is the load-bearing half. Without it this matched
+			// ANY row with a future published_at, so a published post that an
+			// admin had forward-dated listed as Scheduled (carrying both a
+			// "Published" and a "Scheduled" badge), as did a scheduled post that
+			// had since been trashed or marked spam.
+			//
+			// No `published_at > NOW()` either: a post whose time has passed but
+			// which the hourly cron has not published yet would drop out of the
+			// filter entirely - and "why has my post not gone live" is the exact
+			// question this screen exists to answer. Those rows stay, badged
+			// Overdue by the view.
+			//
+			// status is indexed (status_created), so this uses an index where
+			// the published_at-only predicate full-scanned.
+			$where .= " AND p.status = 'draft' AND p.published_at IS NOT NULL";
+		} elseif ( 'all' !== $current_status ) {
 			$where .= ' AND p.status = %s';
 			$args[] = $current_status;
 		}
@@ -1966,6 +2091,17 @@ class Admin {
 
 		$full_args = array_merge( $args, array( $per_page, $offset ) );
 		$posts     = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: array();
+
+		// Count for the Scheduled filter label. The card asked for one and the
+		// only number on screen was "1-N of N", which appears AFTER you pick the
+		// filter - no use for deciding whether to look.
+		$scheduled_count = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'draft' AND p.published_at IS NOT NULL"
+		);
+
+		// Site-timezone "now", for the view's Overdue split. Computed once here
+		// rather than per row.
+		$scheduled_now = current_time( 'mysql', true );
 
 		include JETONOMY_DIR . 'includes/admin/views/content.php';
 	}

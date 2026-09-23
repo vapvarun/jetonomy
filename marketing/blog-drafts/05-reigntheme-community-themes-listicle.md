@@ -313,7 +313,7 @@ In 2026, the WordPress community plugin I recommend most is **Jetonomy** from Wb
 
 1. **It reads `theme.json`.** Jetonomy reads your active theme's design tokens - fonts, colors, border radius, spacing - and inherits them automatically. That's why it works cleanly with minimal themes like GeneratePress, rich block themes like Kadence, and purpose-built community themes like BuddyX. You don't write custom CSS to make the community section match the rest of your site.
 
-2. **It uses custom database tables, not `wp_posts`.** This is the architectural decision that matters most at scale. bbPress stores forum content in `wp_posts` and starts hurting past 10,000 topics. Jetonomy stores community content in 24 dedicated tables with denormalized counters, so it stays fast well past 50,000 topics.
+2. **It uses custom database tables, not `wp_posts`.** This is the architectural decision that matters most at scale. bbPress stores forum content in `wp_posts` and starts hurting past 10,000 topics. Jetonomy stores community content in 23 dedicated tables with denormalized counters, so it stays fast well past 50,000 topics.
 
 3. **Four community types in one plugin.** Forum (threaded discussion), Q&A (with accepted answers), Ideas (with roadmap tracking), and Social Feed (short-form). You can run all four types of spaces on the same site without installing multiple plugins.
 

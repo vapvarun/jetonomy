@@ -1,7 +1,7 @@
 # Jetonomy - Plugin Architecture Reference
 
 > **Generated:** 2026-03-24 | **Scope:** hybrid | **Version:** 1.0.0
-> **PHP:** 8.1+ | **WordPress:** 6.7+ | **Tables:** 22 custom | **REST endpoints:** 42 | **AJAX actions:** 34
+> **PHP:** 8.1+ | **WordPress:** 6.7+ | **Tables:** 23 custom | **REST endpoints:** 81 | **AJAX actions:** 44
 
 ---
 
@@ -41,7 +41,7 @@ Jetonomy is a next-gen discussion platform for WordPress. It provides **forums, 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Storage | Custom MySQL tables (22) | Performance at 10,000+ posts/space; CPTs cannot scale |
-| API | WP REST API (`jetonomy/v1`) | 80 endpoints - clean decoupling of data from views |
+| API | WP REST API (`jetonomy/v1`) | 81 routes (109 method-endpoints) - clean decoupling of data from views |
 | Frontend | PHP templates + WP Interactivity API | SSR for SEO; reactive for UX |
 | Permissions | 3-layer engine (ban → WP caps → space roles) | Fine-grained control without custom role plugins |
 | Integrations | Universal adapter interfaces | Swap membership/search/email/AI providers without touching core (there is no realtime adapter - live updates are REST polling) |
@@ -167,7 +167,7 @@ jetonomy/
 │   ├── class-privacy.php         # GDPR privacy hooks
 │   ├── class-media.php           # Image upload AJAX
 │   ├── class-nav-menus.php       # Community nav menu items
-│   ├── class-abilities.php       # WP Abilities API (18 abilities)
+│   ├── class-abilities.php       # WP Abilities API (19 abilities)
 │   ├── class-activity-tracker.php# Centralized activity log hooks
 │   ├── class-mentions.php        # @mention parsing
 │   ├── class-embeds.php          # oEmbed handling in content
@@ -215,7 +215,7 @@ jetonomy/
 │   ├── search/
 │   │   └── class-fulltext-search.php        # MySQL FULLTEXT search
 │   ├── db/
-│   │   ├── class-schema.php           # 22 CREATE TABLE definitions
+│   │   ├── class-schema.php           # 23 CREATE TABLE definitions
 │   │   ├── class-migrator.php         # Version-based migration runner
 │   │   └── migrations/
 │   │       └── class-migration_1_0_0.php
@@ -252,7 +252,7 @@ jetonomy/
 
 ## 5. Database Layer
 
-### 22 Custom Tables (prefix: `wp_jt_*`)
+### 23 Custom Tables (prefix: `wp_jt_*`)
 
 #### Core Content
 
@@ -303,7 +303,7 @@ jetonomy/
 
 ### Schema Management
 
-- **`DB\Schema::create_tables()`** - runs `dbDelta()` for all 22 tables. Idempotent - safe to call repeatedly.
+- **`DB\Schema::create_tables()`** - runs `dbDelta()` for all 23 tables. Idempotent - safe to call repeatedly.
 - **`DB\Migrator::run($current_version)`** - runs incremental migrations from `includes/db/migrations/`.
 - DB version stored in `jetonomy_db_version` option (tracks against `JETONOMY_DB_VERSION` constant).
 
@@ -465,7 +465,7 @@ Shared methods:
 - `get_current_user_id()` - returns WP user ID or 0
 - `permission_error()` - standard 403 `WP_Error`
 - `validate_space_access()` - checks `Permission_Engine::can()`
-- Cursor-based pagination helpers
+- Offset-based pagination helpers
 
 ### Full Endpoint Reference
 
@@ -492,7 +492,7 @@ Shared methods:
 **Posts** (`Jetonomy\API\Posts_Controller`)
 | Method | Route | Notes |
 |--------|-------|-------|
-| GET | `/spaces/{space_id}/posts` | Cursor pagination; sorted by last activity |
+| GET | `/spaces/{space_id}/posts` | `LIMIT`/`OFFSET` paginated (`after` carries an offset); sorted by last activity |
 | POST | `/spaces/{space_id}/posts` | Runs `jetonomy_check_content` filter |
 | GET/PATCH/DELETE | `/posts/{id}` | |
 | POST | `/posts/{id}/close` | space moderator+ |
@@ -502,7 +502,7 @@ Shared methods:
 **Replies** (`Jetonomy\API\Replies_Controller`)
 | Method | Route | Notes |
 |--------|-------|-------|
-| GET | `/posts/{post_id}/replies` | Threaded (parent_reply_id); cursor paginated |
+| GET | `/posts/{post_id}/replies` | Threaded (parent_reply_id); `LIMIT`/`OFFSET` paginated (`after` carries an offset) |
 | POST | `/posts/{post_id}/replies` | Runs `jetonomy_check_content` filter |
 | GET/PATCH/DELETE | `/replies/{id}` | |
 | POST | `/replies/{id}/accept` | OP only; fires `jetonomy_reply_accepted` |
@@ -701,7 +701,7 @@ Extends the `jetonomy` store with:
 | `post-card.php` | Space listing rows |
 | `reply-card.php` | Reply rendering (fires `jetonomy_reply_actions`) |
 | `composer.php` | Rich text input (used in new-post + replies) |
-| `pagination.php` | Cursor-based pagination controls |
+| `pagination.php` | Offset-based pagination controls |
 | `avatar.php` | Reusable user avatar with trust badge |
 | `breadcrumb.php` | Category → Space breadcrumbs |
 | `sidebar.php` | Space/category sidebar widget area |
@@ -779,7 +779,7 @@ Import runs via AJAX batch: `jetonomy_run_import` → `jetonomy_import_batch` (r
 
 ### `Jetonomy\Abilities` (WP 6.9+)
 
-Registers 18 abilities across 5 categories. Makes all forum operations discoverable by AI agents.
+Registers 19 abilities across 5 categories. Makes all forum operations discoverable by AI agents.
 
 | Category | Abilities |
 |----------|-----------|

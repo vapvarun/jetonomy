@@ -15,16 +15,42 @@ class Ollama_AI_Adapter implements AI_Adapter {
 	private string $model;
 
 	public function __construct( string $base_url = '', string $model = '' ) {
-		$settings       = get_option( 'jetonomy_settings', [] );
-		$ai             = $settings['ai']['providers']['ollama'] ?? [];
+		$ai             = self::ollama_settings();
 		$this->base_url = $base_url ?: ( $ai['base_url'] ?? 'http://localhost:11434' );
 		$this->model    = $model ?: ( $ai['model'] ?? 'llama3' );
 	}
 
+	/**
+	 * Stored Ollama provider settings.
+	 *
+	 * Reads Pro's AI settings FIRST, then free's own `jetonomy_settings['ai']`.
+	 *
+	 * This adapter used to read only the free key - which no screen anywhere
+	 * writes. Pro's AI tab stores its providers under
+	 * `jetonomy_pro_ai_settings`, so ticking "Ollama" there had no effect and
+	 * is_active() could never return true: the provider was permanently
+	 * unreachable however the owner configured it. Free is still consulted so a
+	 * site can configure Ollama through a filter or a mu-plugin without Pro.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function ollama_settings(): array {
+		$pro = get_option( 'jetonomy_pro_ai_settings', array() );
+		$pro = is_array( $pro ) ? ( $pro['providers']['ollama'] ?? array() ) : array();
+
+		if ( ! empty( $pro ) ) {
+			return (array) $pro;
+		}
+
+		$free = get_option( 'jetonomy_settings', array() );
+
+		return is_array( $free ) ? (array) ( $free['ai']['providers']['ollama'] ?? array() ) : array();
+	}
+
 	public function is_active(): bool {
-		$settings = get_option( 'jetonomy_settings', [] );
-		return ! empty( $settings['ai']['providers']['ollama']['enabled'] )
-			&& '' !== $this->base_url;
+		$ai = self::ollama_settings();
+
+		return ! empty( $ai['enabled'] ) && '' !== $this->base_url;
 	}
 
 	public function get_id(): string {

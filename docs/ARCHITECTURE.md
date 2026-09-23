@@ -70,13 +70,13 @@ WP REST dispatch
 └──────┬───────────┘
        ▼
 ┌──────────────────┐
-│  Custom MySQL    │  22 tables: wp_jt_* via dbDelta
+│  Custom MySQL    │  23 tables: wp_jt_* via dbDelta
 │  tables          │  Schema: includes/db/class-schema.php
 │                  │  Migrations: includes/db/class-migrator.php
 └──────────────────┘
 ```
 
-22 controllers, 80 endpoints. All registered under `jetonomy/v1`.
+22 controllers, 81 routes (109 method-endpoints). All registered under `jetonomy/v1`.
 
 ### Outbound oEmbed (v1.3.0)
 

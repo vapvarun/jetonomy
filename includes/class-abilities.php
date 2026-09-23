@@ -1359,7 +1359,11 @@ class Abilities {
 			return new WP_Error( 'create_failed', __( 'Failed to create reply.', 'jetonomy' ) );
 		}
 
-		UserProfile::increment_reply_count( $user_id );
+		// NO UserProfile::increment_reply_count() here. Reply::create() already
+		// applies it (class-reply.php:117), so every reply made through the
+		// Abilities API counted twice on its author's profile - inflating their
+		// reply total and, through it, their reputation and leaderboard rank.
+		// The model owns the counter; a caller that adds its own is the bug.
 		// 3rd arg is null — Abilities API execute callbacks have no WP_REST_Request,
 		// mirroring the post-create hook's null request arg a few lines up in
 		// execute_create_post().
@@ -1471,6 +1475,18 @@ class Abilities {
 			/* translators: %s: the singular label of the item (the configured noun). */
 			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
+
+		// This had NO read gate: it answered with any space's title,
+		// description and visibility to any caller holding an id, private and
+		// hidden spaces included. list-spaces beside it filtered per row; the
+		// single-item twin did not - the same listing-fixed / access-missed
+		// split this whole round is about. Same error as the missing row, so an
+		// id probe cannot tell "no such space" from "not for you".
+		if ( ! $this->check_permission_or_public( 'read', (int) $space->id ) ) {
+			/* translators: %s: the singular label of the item (the configured noun). */
+			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
+		}
+
 		return [
 			'id'           => (int) $space->id,
 			'title'        => $space->title ?? '',
@@ -1748,17 +1764,14 @@ class Abilities {
 	}
 
 	private function check_permission_or_public( string $action, int $space_id ): bool {
-		$user_id = get_current_user_id();
-		// Guests can read public spaces.
-		if ( 'read' === $action ) {
-			$space = Space::find( $space_id );
-			if ( $space && 'public' === ( $space->visibility ?? 'public' ) ) {
-				return true;
-			}
-		}
-		if ( ! $user_id ) {
-			return false;
-		}
-		return Permission_Engine::can( $user_id, $action, $space_id );
+		// One authority, no local restatement. This used to short-circuit true
+		// whenever the space's own `visibility` was `public`, which is the read
+		// rule written out a second time - and it was the OLD rule: a public
+		// space inside a `hidden` category passed the short-circuit and never
+		// reached the engine, so an agent calling list-spaces got a space the
+		// community listing withholds. Permission_Engine::can() already admits
+		// a guest (user 0) to a public space, so the guest branch was not
+		// buying anything either.
+		return Permission_Engine::can( get_current_user_id(), $action, $space_id );
 	}
 }

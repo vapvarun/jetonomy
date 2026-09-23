@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 1.9.7
+Stable tag: 2.0.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,9 +34,9 @@ If you're still running bbPress, wpForo, or Asgaros, Jetonomy ships with one-cli
 
 ### Built to Be Fast at Scale
 
-Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 22 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
+Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 23 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
 
-Every list view uses cursor-based pagination (no expensive `COUNT(*)` queries). Frequently accessed data is automatically cached with Redis or Memcached if you have them. Batch queries everywhere - no N+1 problems.
+Every list view is paginated with indexed `LIMIT`/`OFFSET` queries, and page totals come from dedicated `COUNT(*)` methods rather than by loading rows and counting them. Frequently accessed data is cached through the WordPress object cache, so Redis or Memcached are used automatically if you have them. Batch queries everywhere - no N+1 problems.
 
 ---
 
@@ -120,14 +120,14 @@ The trust level system is your best spam defense. New accounts can post, but the
 **Performance**
 - Object caching (auto-detects Redis/Memcached)
 - Eager loading with batch queries - no N+1 database calls
-- Cursor-based pagination on all REST API endpoints
+- Paginated REST API endpoints, with totals so clients can show page counts
 - Denormalized counters (reply_count, post_count, vote_score updated on write)
 - FULLTEXT indexes for instant search
 
 **Developer Tools**
-- 80 REST API endpoints at `/wp-json/jetonomy/v1/`
+- 81 REST routes (109 method-endpoints) at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
-- 214 action hooks and filters for customization (102 actions, 112 filters)
+- 239 action hooks and filters for customization (110 actions, 129 filters)
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
 - RTL stylesheet included
@@ -210,7 +210,7 @@ Jetonomy inherits your theme's fonts, colors, and spacing automatically using CS
 
 = Will it handle my large community? =
 
-Jetonomy was designed with scale in mind. It uses custom MySQL tables (not `wp_posts`), proper indexes, denormalized counters, and FULLTEXT search indexes. Redis and Memcached are auto-detected and used when available. Cursor-based pagination means no slow `OFFSET` queries on large datasets.
+Jetonomy was designed with scale in mind. It uses custom MySQL tables (not `wp_posts`), proper indexes, denormalized counters, and FULLTEXT search indexes. Redis and Memcached are auto-detected and used when available. List queries are paginated and read their totals from dedicated `COUNT(*)` queries.
 
 = Can I gate spaces behind paid memberships? =
 
@@ -256,13 +256,32 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 80 REST API endpoints (153 with Pro), 19 WordPress Abilities (WP 6.9+), 214 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 81 REST routes / 109 method-endpoints (141 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 239 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.0.0 - September 2026 =
+
+Data-integrity release: counters, visibility, and settings that said "saved" now actually behave as documented, plus import and media-safety fixes.
+
+* Improve  - Action buttons, vote and bookmark toggles, admin icon alignment, and list-table headers are now consistent across every surface, not just the ones originally reported.
+* Improve  - BuddyPress surfaces use the design-token layer and support dark mode.
+* Fix      - Category and space visibility is now enforced on every read path (search, listings, REST), not just stored as a setting. A space inside a hidden category could still surface through search or a filtered listing.
+* Fix      - The media cleanup sweep no longer deletes images that are still in use.
+* Fix      - Several settings that appeared to save (reputation overrides, the verification email's accent color, and others) now actually apply.
+* Fix      - Reply, space, and leaderboard counters are recounted automatically in the background after upgrading, repairing drift accumulated before these write-path fixes, then stay accurate going forward.
+* Fix      - bbPress, wpForo, and Asgaros importers keep the source's moderation state, recover closed topics and private forums, and identify their own rows by source key instead of slug so re-running an import doesn't create duplicates.
+* Fix      - Sub-forum hierarchy is visible again: a parent space lists its children and a child names its parent.
+* Fix      - Scheduled posts show correctly in wp-admin, and Approve no longer publishes a post early.
+* Fix      - Leaderboard ranks by reputation instead of array position, and ties are ordered consistently.
+* Fix      - Quoting a reply now attributes the quote to its author; the citation was left blank.
+* Fix      - The Access Rules builder now explains who a membership-adapter rule (WP Fusion, WooCommerce, etc.) catches, matching the built-in rule types.
+* Fix      - The site no longer goes down if the bundled Action Scheduler library is missing from an install; background jobs fall back to WP-Cron instead.
+* Compat   - Aligned with Jetonomy Pro 2.0.0. Install both updates together.
 
 = 1.9.7 - September 2026 =
 

@@ -1160,7 +1160,7 @@ class Demo_Content {
 			'<p>Yes. The recommended approach is to use Access Rules on the space: set the rule type to Membership, pick the level, and set the space visibility to Private. Members at that level and above see it automatically; everyone else does not.</p>',
 			'<p>Run <code>wp jetonomy flush-rules</code> (or visit Settings &gt; Permalinks and save) after changing the base slug. The 404s are stale rewrite rules — regenerating them fixes it immediately.</p>',
 			'<p>The importer preserves original dates and maps forums to spaces. Always run with <code>--dry-run</code> first to preview counts, take a database backup, then run the real import. It batches large datasets so timeouts are not a concern.</p>',
-			'<p>You can pin a topic from its action menu — look for "Pin to top." A space can hold more than one pinned topic; pinned items sort above the rest while keeping their own order.</p>',
+			'<p>You can pin a topic from its action menu — look for "Pin to space." A space can hold more than one pinned topic; pinned items sort above the rest while keeping their own order.</p>',
 			'<p>Trust levels are earned automatically through participation, so there is nothing to configure per user. If you want to grant an ability sooner, assign a space role instead — that takes effect immediately and is independent of trust level.</p>',
 		);
 	}

@@ -23,6 +23,7 @@ namespace Jetonomy\SEO;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Models\Space;
 use function Jetonomy\table;
 use function Jetonomy\base_url;
 use function Jetonomy\seo_settings;
@@ -200,17 +201,28 @@ class Sitemap_Emitter {
 		global $wpdb;
 		$sp = table( 'spaces' );
 
+		// The sitemap is crawler-facing, so the viewer is always a guest - and
+		// the guest LISTING predicate is exactly what belongs in a sitemap.
+		// These queries used to spell `visibility = 'public'` themselves, which
+		// was the rule written out by hand and, once categories gained
+		// visibility, the wrong rule: every topic in a public space inside a
+		// `hidden` category was submitted to search engines. One predicate, and
+		// a site that filters jetonomy_space_listing_visibility_sql now moves
+		// its sitemap with its listings.
+		[ $vis ]   = Space::listing_visibility_sql( 0 );
+		[ $vis_s ] = Space::listing_visibility_sql( 0, 's' );
+
 		if ( 'spaces' === $type ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$ids = $wpdb->get_col( "SELECT id FROM {$sp} WHERE visibility = 'public' AND status = 'active' ORDER BY id ASC" );
+			$ids = $wpdb->get_col( "SELECT id FROM {$sp} WHERE {$vis} AND status = 'active' ORDER BY id ASC" );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$lastmod = (string) $wpdb->get_var( "SELECT MAX(GREATEST(COALESCE(last_activity_at,'1970-01-01'), COALESCE(updated_at,'1970-01-01'))) FROM {$sp} WHERE visibility = 'public' AND status = 'active'" );
+			$lastmod = (string) $wpdb->get_var( "SELECT MAX(GREATEST(COALESCE(last_activity_at,'1970-01-01'), COALESCE(updated_at,'1970-01-01'))) FROM {$sp} WHERE {$vis} AND status = 'active'" );
 		} else {
 			$pt = table( 'posts' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$ids = $wpdb->get_col( "SELECT p.id FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active' ORDER BY p.id ASC" );
+			$ids = $wpdb->get_col( "SELECT p.id FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND {$vis_s} AND s.status = 'active' ORDER BY p.id ASC" );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$lastmod = (string) $wpdb->get_var( "SELECT MAX(GREATEST(COALESCE(p.last_reply_at,'1970-01-01'), COALESCE(p.updated_at,'1970-01-01'), COALESCE(p.created_at,'1970-01-01'))) FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active'" );
+			$lastmod = (string) $wpdb->get_var( "SELECT MAX(GREATEST(COALESCE(p.last_reply_at,'1970-01-01'), COALESCE(p.updated_at,'1970-01-01'), COALESCE(p.created_at,'1970-01-01'))) FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND {$vis_s} AND s.status = 'active'" );
 		}
 
 		$ids     = array_map( 'intval', (array) $ids );
@@ -236,10 +248,20 @@ class Sitemap_Emitter {
 	private static function fetch_spaces( int $start_after ): array {
 		global $wpdb;
 		$sp = table( 'spaces' );
+		// The sitemap is crawler-facing, so the viewer is always a guest - and
+		// the guest LISTING predicate is exactly what belongs in a sitemap.
+		// These queries used to spell `visibility = 'public'` themselves, which
+		// was the rule written out by hand and, once categories gained
+		// visibility, the wrong rule: every topic in a public space inside a
+		// `hidden` category was submitted to search engines. One predicate, and
+		// a site that filters jetonomy_space_listing_visibility_sql now moves
+		// its sitemap with its listings.
+		[ $vis ] = Space::listing_visibility_sql( 0 );
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (array) $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, slug, last_activity_at, updated_at FROM {$sp} WHERE visibility = 'public' AND status = 'active' AND id > %d ORDER BY id ASC LIMIT %d",
+				"SELECT id, slug, last_activity_at, updated_at FROM {$sp} WHERE {$vis} AND status = 'active' AND id > %d ORDER BY id ASC LIMIT %d",
 				$start_after,
 				self::PAGE_SIZE
 			)
@@ -251,12 +273,17 @@ class Sitemap_Emitter {
 		global $wpdb;
 		$pt = table( 'posts' );
 		$sp = table( 'spaces' );
+
+		// See fetch_meta(): guest listing predicate, not a hand-written
+		// visibility literal.
+		[ $vis_s ] = Space::listing_visibility_sql( 0, 's' );
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (array) $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT p.id, p.slug AS post_slug, s.slug AS space_slug, s.id AS space_id, p.last_reply_at, p.updated_at, p.created_at
 				 FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id
-				 WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active' AND p.id > %d
+				 WHERE p.status = 'publish' AND p.is_private = 0 AND {$vis_s} AND s.status = 'active' AND p.id > %d
 				 ORDER BY p.id ASC LIMIT %d",
 				$start_after,
 				self::PAGE_SIZE

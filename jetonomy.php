@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     1.9.7
+ * Version:     2.0.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '1.9.7' );
+define( 'JETONOMY_VERSION', '2.0.0' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -35,7 +35,7 @@ define( 'JETONOMY_VERSION', '1.9.7' );
 // upgrade block and Migration_1_9_3 never ran there. Keep this in step with
 // the newest key in Migrator::get_migrations() or the newest migration is
 // silently dead on exactly the sites that need it.
-define( 'JETONOMY_DB_VERSION', '1.9.4.2' );
+define( 'JETONOMY_DB_VERSION', '2.0.0' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -48,7 +48,25 @@ define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
 // that doesn't carry AS's required functions/constants (EP_NONE, register_post_type
 // with full args, etc.). Real WordPress always has these, so this is smoke-only.
 if ( ! defined( 'JETONOMY_SMOKE_TEST' ) ) {
-	require_once JETONOMY_DIR . 'libs/action-scheduler/action-scheduler.php';
+	$jetonomy_action_scheduler_file = JETONOMY_DIR . 'libs/action-scheduler/action-scheduler.php';
+	if ( file_exists( $jetonomy_action_scheduler_file ) ) {
+		require_once $jetonomy_action_scheduler_file;
+	} else {
+		// An unguarded require here means a bundled-library dir dropped by a bad
+		// copy, an incomplete upload, or a hosting file-count limit takes the
+		// ENTIRE site down (WSOD), not just background jobs. Every job that
+		// depends on AS already checks function_exists( 'as_enqueue_async_action' )
+		// and falls back to WP-Cron (background-jobs standard), so the plugin
+		// itself tolerates AS being absent - only this require_once did not.
+		add_action(
+			'admin_notices',
+			function () {
+				echo '<div class="notice notice-error"><p>';
+				esc_html_e( 'Jetonomy: the bundled Action Scheduler library is missing from libs/action-scheduler/. Background jobs (email digest, badges, AI, reply-by-email, webhooks) will fall back to WP-Cron until the plugin files are restored. Reinstalling Jetonomy from the original zip fixes this.', 'jetonomy' );
+				echo '</p></div>';
+			}
+		);
+	}
 }
 
 require_once JETONOMY_DIR . 'includes/class-autoloader.php';
@@ -816,7 +834,7 @@ function jetonomy_sanitize_editor_content( string $content ): string {
  * (decoding first would turn a stored "&lt;script&gt;" into a real tag for
  * strip_tags to eat, losing the text a member actually typed).
  *
- * @since TBD  Set at release time - no version is planned for this work yet.
+ * @since 2.0.0
  *
  * @param string $content Stored/normalized body HTML.
  * @return string Plain-text copy: entities decoded, blocks separated by newlines.

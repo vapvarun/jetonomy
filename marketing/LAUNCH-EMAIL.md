@@ -94,7 +94,7 @@ No other WordPress forum plugin supports this today.
 
 Three other things in Jetonomy that competitors don't offer:
 
-1. **Cursor-based pagination.** Most forum plugins use offset pagination - the kind that breaks when new posts get added mid-browse. Jetonomy uses cursor-based pagination on every list endpoint, so navigation stays consistent even on active communities.
+1. **Denormalized counters.** Reply counts, vote scores and post counts live as columns on the record itself, so a listing page never runs a `COUNT` query per row. Page totals come from dedicated `COUNT(*)` methods instead of loading rows to count them, and everything hot is cached through the WordPress object cache - Redis or Memcached get used automatically if you have them.
 
 2. **Three-layer permissions.** WordPress roles, per-space roles, and trust levels all work together. A user can be a moderator in one space and a regular member in another. Access rules can be tied to MemberPress or PMPro memberships. All of it resolves in a single permission check.
 

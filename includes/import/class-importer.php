@@ -183,6 +183,23 @@ abstract class Importer {
 		$this->id_map[ $type ][ $old_id ] = $new_id;
 	}
 
+	/**
+	 * Plain-language notes about what an import will actually do.
+	 *
+	 * The screen used to show raw counts and nothing else, so an owner could
+	 * not tell from it that closed topics and private forums are included now,
+	 * or that a private forum's members get imported, or that this source has
+	 * been imported before. All of that matters BEFORE committing to a one-way
+	 * migration.
+	 *
+	 * Importers override this; the default is silence.
+	 *
+	 * @return string[] Short sentences, already translated.
+	 */
+	public function get_import_notes(): array {
+		return array();
+	}
+
 	protected function get_mapped_id( string $type, $old_id ): ?int {
 		return $this->id_map[ $type ][ $old_id ] ?? null;
 	}

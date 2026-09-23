@@ -14,7 +14,7 @@ How Jetonomy compares to Asgaros Forum - moving up from a lightweight forum to a
 
 | Feature | Asgaros Forum | Jetonomy |
 |---------|---------------|----------|
-| Data storage | Custom tables | Custom tables (22 tables) |
+| Data storage | Custom tables | Custom tables (23 tables) |
 | Forum formats | Forums + sub-forums | 4 space types (forum, Q&A, ideas, feed) |
 | Threaded replies | Flat | 3-level threading |
 | Voting | Not built-in | Built-in upvote/downvote with reputation |
@@ -26,7 +26,7 @@ How Jetonomy compares to Asgaros Forum - moving up from a lightweight forum to a
 | Moderation | Approve / unapprove topics | Flag system + queue + auto-rules (Pro) |
 | Anti-spam | reCAPTCHA / honeypot | Akismet + reCAPTCHA v3 + Turnstile (invisible) |
 | Membership gating | Not built-in | Adapter system (MemberPress, PMPro free; WooCommerce, LMS Pro) |
-| REST API | Limited | 80 endpoints (153 with Pro) |
+| REST API | Limited | 81 routes (141 with Pro) |
 | Private messaging | Not built-in | Built-in (Pro) |
 | Polls | Not built-in | Built-in (Pro) |
 | Analytics | Basic stats | Dashboard with export (Pro) |
@@ -50,7 +50,7 @@ Asgaros has no built-in voting. Jetonomy gives every topic and reply upvote/down
 
 ### Performance at Scale
 
-Both plugins use their own database tables instead of WordPress posts, so both avoid the bloat that slows down CPT-based forums. Jetonomy goes further with cursor-based pagination, smart reply loading on long threads, and denormalized counters, so a space with tens of thousands of topics loads as fast as a small one. See the [Scalability](03-scalability.md) page for the details.
+Both plugins use their own database tables instead of WordPress posts, so both avoid the bloat that slows down CPT-based forums. Jetonomy goes further with indexed pagination, smart reply loading on long threads, and denormalized counters, so a space with tens of thousands of topics loads as fast as a small one. See the [Scalability](03-scalability.md) page for the details.
 
 ## Where Asgaros Forum Still Works
 

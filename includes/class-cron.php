@@ -39,6 +39,11 @@ class Cron {
 		// until expires_at and never fire jetonomy_membership_deactivated, so a
 		// lapsed plan's 'tier' roster row is never removed by the event listener.
 		'jetonomy_reconcile_rosters'     => HOUR_IN_SECONDS,
+		// Abandoned composer uploads. Lived only in Pro's attachments
+		// extension, while the upload endpoint that creates these rows is in
+		// free (Media_Controller -> Media_Library::tag_upload), so a free-only
+		// site accumulated them forever with nothing to clean up.
+		'jetonomy_cleanup_media'         => DAY_IN_SECONDS,
 	];
 
 	public function __construct() {
@@ -51,6 +56,7 @@ class Cron {
 		add_action( 'jetonomy_publish_scheduled', [ $this, 'publish_scheduled_posts' ] );
 		add_action( 'jetonomy_verification_reminder', [ Verification_Reminder::class, 'run' ] );
 		add_action( 'jetonomy_reconcile_rosters', [ Membership_Roster_Sync::class, 'reconcile' ] );
+		add_action( 'jetonomy_cleanup_media', [ \Jetonomy\Media_Library::class, 'run_scheduled_cleanup' ] );
 
 		// Self-heal: ensure every recurring action is registered. We hook the
 		// 'action_scheduler_init' action AS fires once its data store is ready

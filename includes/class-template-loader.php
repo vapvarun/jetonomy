@@ -185,22 +185,31 @@ class Template_Loader {
 		$dynamic_css = '';
 
 		// Detect the theme's container width and set --jt-container-width.
-		// 1. Check Jetonomy setting (user override)
-		// 2. Read from theme.json via wp_get_global_settings()
-		// 3. Read WP's $content_width global (classic themes set this in functions.php)
-		// 4. Fallback to 1200px
-		$container_width = '';
-		if ( ! empty( $settings['container_width'] ) ) {
-			$container_width = $settings['container_width'];
-		}
+		// 1. Read from theme.json via wp_get_global_settings()
+		// 2. Read WP's $content_width global (classic themes set this in functions.php)
+		// 3. Fallback to 1200px
+		//
+		// The `container_width` SETTING is deliberately not read here. It stores
+		// the enum theme / full / custom (see Admin::sanitize_settings), never a
+		// length, so this used to print `--jt-container-width:theme` - invalid at
+		// computed-value time, which makes `max-width: var(--jt-container-width,
+		// 1200px)` resolve to `none` rather than the fallback, because a var()
+		// fallback does not apply to an invalid substituted value. The community
+		// container therefore had NO max-width on any theme that does not wrap it
+		// itself, while the owner saw "Theme" selected and nothing wrong. It also
+		// meant the theme.json / $content_width detection below never ran, since
+		// the enum is always non-empty.
+		//
+		// `theme` means exactly this detection chain. `full` and `custom` are
+		// applied by Integrations\Layout_CSS::build_rules(), whose
+		// `body.jt-page .jt-container` selector outranks the rule emitted here.
+		// One reader per key.
+		$global_settings = wp_get_global_settings( array( 'layout' ) );
+		// wideSize is the wider container (for layouts with sidebars).
+		$container_width = $global_settings['wideSize'] ?? '';
+		// If no wideSize, try contentSize.
 		if ( ! $container_width ) {
-			$global_settings = wp_get_global_settings( array( 'layout' ) );
-			// wideSize is the wider container (for layouts with sidebars).
-			$container_width = $global_settings['wideSize'] ?? '';
-			// If no wideSize, try contentSize.
-			if ( ! $container_width ) {
-				$container_width = $global_settings['contentSize'] ?? '';
-			}
+			$container_width = $global_settings['contentSize'] ?? '';
 		}
 		if ( ! $container_width ) {
 			global $content_width;
@@ -317,8 +326,11 @@ class Template_Loader {
 					'reportPrompt'          => __( 'Why are you reporting this post?', 'jetonomy' ),
 					'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
 					'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
-					'postPinned'            => __( 'Post pinned', 'jetonomy' ),
-					'postUnpinned'          => __( 'Post unpinned', 'jetonomy' ),
+					// Scoped, to match the "Pin to space" control. Pro can pin to
+					// the whole community, so an unqualified "Post pinned" leaves
+					// a moderator unsure which of the two just happened.
+					'postPinned'            => __( 'Pinned to this space', 'jetonomy' ),
+					'postUnpinned'          => __( 'Unpinned from this space', 'jetonomy' ),
 					'failedPin'             => __( 'Failed to toggle pin.', 'jetonomy' ),
 					/* translators: %s: the singular label of the item (the configured noun). */
 					'confirmDeletePost'     => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
@@ -339,8 +351,18 @@ class Template_Loader {
 					'topicMerged'           => sprintf( __( '%s merged successfully.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
 					/* translators: %s: the plural topic label the site owner configured. */
 					'mergeFailed'           => sprintf( __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'splitReplyTitle'       => sprintf( __( 'Enter a title for the new %s:', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+					// Says what the action DOES, not just what it needs. Split is a
+					// MOVE: the reply is removed from this thread and becomes the
+					// opening post of a new one. The prompt asked only for a title,
+					// so moderators used it expecting a copy and members watched a
+					// reply vanish. Merge has warned about its own destructiveness
+					// since 1.4.0; this is the same courtesy.
+					'splitReplyTitle'       => sprintf(
+						/* translators: 1: singular reply label, 2: singular topic label. */
+						__( 'This %1$s will be MOVED out of this %2$s and become the first post of a new one. Title for the new %2$s:', 'jetonomy' ),
+						\Jetonomy\jetonomy_label( 'reply', false, true ),
+						\Jetonomy\jetonomy_label( 'topic', false, true )
+					),
 					/* translators: 1: singular reply label, 2: singular topic label the site owner configured. */
 					'replySplit'            => sprintf( __( '%1$s split into new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					/* translators: %s: the singular reply label the site owner configured. */
@@ -1456,6 +1478,12 @@ class Template_Loader {
 							$image     = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
 							$image_alt = $user->display_name;
 						}
+						// Settings > SEO > "Noindex member profiles". This branch
+						// never read the setting: Schema_Markup emitted the tag
+						// for profiles instead, so the two SEO surfaces owned half
+						// the decision each. Now both robots decisions live here,
+						// beside every other route's.
+						$noindex = ! empty( \Jetonomy\seo_settings()['seo_noindex_profiles'] );
 						break;
 					case 'tag':
 						$title = '#' . (string) $data['slug'];
@@ -1477,7 +1505,15 @@ class Template_Loader {
 						$desc      = sprintf( __( 'Search discussions, replies, members, and tags on %s.', 'jetonomy' ), $site_name );
 						$url       = $base . '/search/';
 						$image_alt = $site_name;
-						$noindex   = true; // Search results — duplicate / thin.
+						// Honour the owner's choice. This was hard-coded true, so
+						// Settings > SEO > "Noindex search pages" visibly saved and
+						// changed nothing - the tag stayed in the head either way.
+						// Schema_Markup::…:56 already read the setting, so the two
+						// SEO surfaces disagreed about the same key. Default stays
+						// ON (search results are thin/duplicate); seo_settings()
+						// supplies that default, so an owner who never touched the
+						// box is unaffected.
+						$noindex = ! empty( \Jetonomy\seo_settings()['seo_noindex_search'] );
 						break;
 					case 'moderation':
 						$title = __( 'Moderation Queue', 'jetonomy' );
@@ -1636,11 +1672,28 @@ class Template_Loader {
 				$noindex      = (bool) ( $payload['noindex'] ?? false );
 				$article_meta = (array) ( $payload['article_meta'] ?? array() );
 
-				// Always emit robots noindex when the route asks for it —
-				// independent of seo-pro, because seo-pro doesn't currently
-				// emit a follow-aware noindex on these surfaces.
+				// Robots goes through core's wp_robots filter, not a hand-rolled
+				// <meta> echo. Two places printed that tag - here and
+				// Schema_Markup - so a noindexed route emitted it TWICE, which
+				// every site-audit tool flags as a warning the owner then asks
+				// support about. The filter also MERGES with core's own
+				// directives (max-image-preview:large) into one tag instead of
+				// competing with them, and lets an SEO plugin or a site owner
+				// adjust the value the normal way.
+				//
+				// Registered from here rather than at boot because the decision
+				// is per route and lives in this payload. render() runs during
+				// template_include, well before wp_head fires wp_robots(), so the
+				// filter is always in place in time.
 				if ( $noindex ) {
-					echo '<meta name="robots" content="noindex, follow">' . "\n";
+					add_filter(
+						'wp_robots',
+						static function ( array $robots ): array {
+							$robots['noindex'] = true;
+							$robots['follow']  = true;
+							return $robots;
+						}
+					);
 				}
 
 				if ( ! $skip_baseline ) {
@@ -1686,7 +1739,13 @@ class Template_Loader {
 					echo '<link rel="alternate" type="application/json+oembed" href="' . esc_url( $oembed_url ) . '" title="' . esc_attr( $title ) . '">' . "\n";
 				}
 			},
-			1
+			// Priority 0, not 1. The route's noindex decision is expressed by
+			// adding a wp_robots filter, and core runs wp_robots() on wp_head at
+			// priority 1 - registered in default-filters.php at load time, so at
+			// equal priority core wins and our filter arrives after the tag has
+			// already been printed. 0 is the only value that lets the decision
+			// reach the tag core emits.
+			0
 		);
 	}
 
@@ -1753,16 +1812,18 @@ class Template_Loader {
 			case 'post':
 				if ( $slug ) {
 					$post = \Jetonomy\Models\Post::find_by_slug( $slug );
-					if ( ! $post ) {
+					// can_read_post() is the authoritative read decision and
+					// already owns the status gate (hoisted there in 1.8.0), the
+					// per-post privacy gate and the space gate - including a
+					// space concealed by its category. This case used to re-state
+					// only the status half in its own words, so a published topic
+					// the viewer could not read rendered "Post not found" under
+					// HTTP 200: a soft 404 the REST route (404) and the space
+					// route (404) both disagreed with, and one search engines
+					// index. The in-template gates run after the theme has begun
+					// output, which is why the status has to be decided here.
+					if ( ! $post || ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 						status_header( 404 );
-					} elseif ( 'publish' !== $post->status ) {
-						// Allow moderators and the post author to view non-published posts.
-						$user_id   = get_current_user_id();
-						$is_author = $user_id && (int) $post->author_id === $user_id;
-						$can_mod   = current_user_can( 'jetonomy_moderate' );
-						if ( ! $is_author && ! $can_mod ) {
-							status_header( 404 );
-						}
 					}
 				}
 				break;

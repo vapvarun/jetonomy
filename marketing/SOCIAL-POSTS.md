@@ -104,7 +104,7 @@ https://wbcomdesigns.com/downloads/jetonomy/
 Jetonomy for developers:
 
 - 80 REST API endpoints (jetonomy/v1)
-- Cursor-based pagination on every list
+- Denormalized counters - no COUNT query per row on a listing
 - 3-layer permission engine (WP Caps + Space Roles + Trust Levels)
 - Template overrides via theme/jetonomy/
 - Action/filter hooks throughout
@@ -150,7 +150,7 @@ Most forum plugins for WordPress were designed when WordPress was mostly blogs. 
 
 It works fine for small communities. It starts to crack at scale.
 
-We spent the past year building Jetonomy - a forum plugin that treats community data as what it actually is. Custom MySQL tables with proper indexes, denormalized counters, cursor-based pagination, and a caching layer that works with Redis when it's available and gracefully degrades when it isn't.
+We spent the past year building Jetonomy - a forum plugin that treats community data as what it actually is. Custom MySQL tables with proper indexes, denormalized counters, and a caching layer that works with Redis when it's available and gracefully degrades when it isn't.
 
 The result scales to 10,000+ users without architectural changes.
 
@@ -158,7 +158,7 @@ What's in v1.0:
 
 - Forum, Q&A, and Ideas space types
 - Three-layer permission system (WordPress roles, per-space roles, trust levels)
-- 80 REST API endpoints with cursor pagination
+- 80 REST API endpoints with JSON schema validation
 - WordPress Interactivity API frontend - SEO-friendly, no jQuery
 - Schema.org markup for every page type
 - bbPress and wpForo importer
@@ -219,7 +219,7 @@ That works for a simple single-topic forum. It breaks down when your community h
 Jetonomy uses three layers:
 
 **Layer 1 - WordPress Capabilities**
-20 capabilities mapped to WP roles. The usual starting point, handled properly.
+23 capabilities mapped to WP roles. The usual starting point, handled properly.
 
 **Layer 2 - Space Roles**
 Each space has its own roles: viewer, member, moderator, admin. A user can be a moderator in the Support space and a regular member everywhere else. Space admins manage their own space without WP Admin access.

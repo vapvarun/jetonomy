@@ -17,11 +17,11 @@ Most WordPress forum plugins were designed for blogs, not communities. They stor
 
 Jetonomy is a WordPress forum plugin built from the ground up for how WordPress works today.
 
-- **24 custom MySQL tables** - not CPTs. Fast queries, proper indexes, no wp_postmeta bloat.
+- **23 custom MySQL tables** - not CPTs. Fast queries, proper indexes, no wp_postmeta bloat.
 - **6 trust levels** - new members are rate-limited automatically. Active contributors earn moderation abilities.
 - **Four space types** - Forum, Q&A, Ideas, and Show & Tell. Each with its own rules and access controls.
 - **Theme-adaptive design** - inherits fonts and colors from theme.json automatically.
-- **80 REST endpoints (155 with Pro)** - every feature is accessible via API.
+- **81 REST endpoints (141 with Pro)** - every feature is accessible via API.
 - **Multisite-ready** - network activation provisions tables on every existing and future subsite.
 
 ---
@@ -35,7 +35,7 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 | Moderation queue | Pending content, flags, and bans in a single view. Approve, spam, or trash in one click. |
 | Full-text search | Built-in search with swappable adapter. Upgrade to Meilisearch later without code changes. |
 | bbPress and wpForo importers | Dry run first, then migrate forums, topics, replies, and users. Resumes on failure. |
-| REST API (48+ free, 90+ with Pro) | Cursor-based pagination, JSON schema validation. Build custom frontends and integrations. |
+| REST API (81 free, 141 with Pro) | Offset pagination, JSON schema validation. Build custom frontends and integrations. |
 
 **Proof points:** Sub-200ms at 50K topics with Redis. Schema.org markup on every page. Server-side rendered - search engines see full content. WordPress Abilities API support - AI agents can discover and operate the community. **New in 1.3.0:** Pro AI integration with self-hosted Ollama for private, on-server spam detection and content moderation. **New in 1.4.2:** Show & Tell space type, Ideas roadmap lanes, Q&A Answered badge in listing view, multisite network activation.
 
@@ -50,7 +50,7 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 | Moderation queue and flagging | Yes | Yes |
 | Full-text search | Yes | Yes |
 | SEO markup and clean URLs | Yes | Yes |
-| 80 REST API endpoints | Yes | Yes |
+| 81 REST API endpoints | Yes | Yes |
 | bbPress and wpForo importers | Yes | Yes |
 | MemberPress and PMPro integration | Yes | Yes |
 | AI integration (spam detection, moderation, thread summaries - Ollama-ready) | - | Yes |

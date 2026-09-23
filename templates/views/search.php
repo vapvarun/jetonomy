@@ -25,7 +25,8 @@ $date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GE
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $date_to = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$author_id = isset( $_GET['author_id'] ) ? absint( $_GET['author_id'] ) : 0;
+$jt_author_unresolved = false;
+$author_id            = isset( $_GET['author_id'] ) ? absint( $_GET['author_id'] ) : 0;
 // Author filter is by NAME for humans (a member can't know a numeric user ID).
 // Resolve a typed name to an author_id: exact login first, then a display-name
 // match. `author_id` (programmatic / REST) still works and takes precedence.
@@ -47,6 +48,12 @@ if ( ! $author_id && '' !== $author_name ) {
 	if ( $jt_author_user ) {
 		$author_id   = (int) $jt_author_user->ID;
 		$author_name = \Jetonomy\user_display_name( $jt_author_user );
+	} else {
+		// A name nobody answers to. Without this the filter silently drops -
+		// $author_id stays 0, so no author clause is added and the search
+		// returns every visible topic, which reads as "here is everything this
+		// person wrote". Say no results instead, which is the truth.
+		$jt_author_unresolved = true;
 	}
 } elseif ( $author_id && '' === $author_name ) {
 	// author_id came from the URL — show the name in the input.
@@ -66,7 +73,20 @@ $posts  = [];
 $spaces = [];
 $tags   = [];
 
-if ( '' !== $q && strlen( $q ) >= 2 ) {
+// Has the viewer asked for ANYTHING - a keyword, or a filter on its own?
+//
+// Everything below used to be gated on a keyword alone, so the filters were
+// unreachable until you had already searched, and a filter-only URL
+// (?author_name=aisha, the kind you bookmark or share) rendered the empty
+// state. The REST route has always answered an author-only search - it returns
+// results for author_id with no q - so this was the web UI refusing to do what
+// the API does, which is the three-entry-points rule failing on the surface
+// members actually use.
+$jt_has_filters = ( $date_from || $date_to || $author_id || '' !== $author_name || $tag_slug || 'relevance' !== $sort );
+$jt_has_query   = ( '' !== $q && strlen( $q ) >= 2 );
+$jt_searching   = ( $jt_has_query || $jt_has_filters );
+
+if ( $jt_searching && ! $jt_author_unresolved ) {
 	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search();
 	if ( ! $search_adapter ) {
 		$search_adapter = new \Jetonomy\Search\Fulltext_Search();
@@ -78,8 +98,20 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 			global $wpdb;
 			$posts_tbl  = \Jetonomy\table( 'posts' );
 			$spaces_tbl = \Jetonomy\table( 'spaces' );
-			$where      = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
-			$params     = [ $q ];
+			// The relevance clause only belongs here when there IS a keyword.
+			// AGAINST('') matches no row, so binding it unconditionally made
+			// every filter-only request ("show me this author's topics", the
+			// kind you bookmark) return nothing - while REST answered the same
+			// query fine. The filters were let into this branch before the
+			// query stopped requiring a keyword, which is why the landing page
+			// looked fixed and the results were still empty.
+			$where  = [ "p.status = 'publish'" ];
+			$params = [];
+
+			if ( $jt_has_query ) {
+				array_unshift( $where, 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)' );
+				$params[] = $q;
+			}
 
 			if ( $date_from ) {
 				$where[]  = 'p.created_at >= %s';
@@ -160,11 +192,16 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 		}
 	}
 
-	if ( in_array( $filter, [ 'all', 'spaces' ], true ) ) {
+	// Spaces and tags are keyword searches - the advanced filters (author, date,
+	// tag) describe topics, not either of these. Without this guard a
+	// filter-only request searched them for '', and the tag LIKE '%%' matched
+	// every tag on the site, so "this author's topics" came back decorated with
+	// 15 arbitrary tags.
+	if ( $jt_has_query && in_array( $filter, [ 'all', 'spaces' ], true ) ) {
 		$spaces = $search_adapter->search( $q, 'space', null, 10, 0 );
 	}
 
-	if ( in_array( $filter, [ 'all', 'tags' ], true ) ) {
+	if ( $jt_has_query && in_array( $filter, [ 'all', 'tags' ], true ) ) {
 		global $wpdb;
 		$tags_tbl = \Jetonomy\table( 'tags' );
 		$like     = '%' . $wpdb->esc_like( $q ) . '%';
@@ -205,41 +242,18 @@ $crumbs = [
 				<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>">
 			</form>
 
-			<?php if ( '' !== $q ) : ?>
-				<!-- Filter pills -->
-				<div class="jt-bar jt-mb-20">
-					<div class="jt-pills">
-						<?php
-						$filters = [
-							'all'    => __( 'All', 'jetonomy' ),
-							'posts'  => __( 'Posts', 'jetonomy' ),
-							'spaces' => \Jetonomy\space_label( true ),
-							'tags'   => __( 'Tags', 'jetonomy' ),
-						];
-						foreach ( $filters as $key => $label ) :
-							$f_url = add_query_arg(
-								[
-									'q'      => $q,
-									'filter' => $key,
-								],
-								$base . '/search/'
-							);
-							?>
-							<a href="<?php echo esc_url( $f_url ); ?>"
-								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>"
-								<?php echo $filter === $key ? 'aria-current="true"' : ''; ?>>
-								<?php echo esc_html( $label ); ?>
-							</a>
-						<?php endforeach; ?>
-					</div>
-					<span class="jt-search-result-count">
-						<?php
-						/* translators: %d: number of results */
-						echo esc_html( sprintf( _n( '%d result', '%d results', $total, 'jetonomy' ), $total ) );
-						?>
-					</span>
-				</div>
-
+			<?php
+			/*
+			 * Filters render whether or not a search has run.
+			 *
+			 * They used to live inside the results branch, so the only way to reach
+			 * them was to search for a keyword first - and a filter-only search
+			 * (every post by one author) was therefore impossible from the UI even
+			 * though the REST route has always supported it. Exposing them on the
+			 * landing page is what makes that capability reachable; the accordion
+			 * stays collapsed until used, so the empty page is not busier.
+			 */
+			?>
 				<!-- Advanced filters -->
 				<details class="jt-search-filters jt-mb-20" 
 				<?php
@@ -277,6 +291,41 @@ $crumbs = [
 						</div>
 					</form>
 				</details>
+			<?php if ( $jt_searching ) : ?>
+				<!-- Filter pills -->
+				<div class="jt-bar jt-mb-20">
+					<div class="jt-pills">
+						<?php
+						$filters = [
+							'all'    => __( 'All', 'jetonomy' ),
+							'posts'  => __( 'Posts', 'jetonomy' ),
+							'spaces' => \Jetonomy\space_label( true ),
+							'tags'   => __( 'Tags', 'jetonomy' ),
+						];
+						foreach ( $filters as $key => $label ) :
+							$f_url = add_query_arg(
+								[
+									'q'      => $q,
+									'filter' => $key,
+								],
+								$base . '/search/'
+							);
+							?>
+							<a href="<?php echo esc_url( $f_url ); ?>"
+								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>"
+								<?php echo $filter === $key ? 'aria-current="true"' : ''; ?>>
+								<?php echo esc_html( $label ); ?>
+							</a>
+						<?php endforeach; ?>
+					</div>
+					<span class="jt-search-result-count">
+						<?php
+						/* translators: %d: number of results */
+						echo esc_html( sprintf( _n( '%d result', '%d results', $total, 'jetonomy' ), $total ) );
+						?>
+					</span>
+				</div>
+
 
 				<?php do_action( 'jetonomy_search_filters', $q, $filter, compact( 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' ) ); ?>
 

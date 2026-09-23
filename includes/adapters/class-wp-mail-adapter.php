@@ -90,12 +90,36 @@ class WP_Mail_Adapter implements Email_Adapter {
 	private function get_from_name(): string {
 		$settings = get_option( 'jetonomy_settings', [] );
 		$name     = $settings['email_from_name'] ?? '';
-		return '' !== $name ? $name : get_bloginfo( 'name' );
+		$name     = '' !== $name ? $name : get_bloginfo( 'name' );
+
+		/**
+		 * Filter the sender NAME for one Jetonomy email.
+		 *
+		 * Exists so a caller that legitimately sends as a different identity can
+		 * say so. The adapter asserts its own From at PHP_INT_MAX on wp_mail_from,
+		 * which is deliberate - it stops a site-wide mail plugin rewriting our
+		 * sender - but it also meant a feature with its own configured sender
+		 * could not use it. Pro's Email Digest has "From name" and "From email"
+		 * fields that were saved and then never applied, because every digest
+		 * went out through this adapter and inherited the Email tab's sender.
+		 *
+		 * @param string $name Resolved sender name.
+		 */
+		return (string) apply_filters( 'jetonomy_email_from_name', $name );
 	}
 
 	private function get_from_email(): string {
 		$settings = get_option( 'jetonomy_settings', [] );
 		$email    = $settings['email_from_email'] ?? '';
-		return '' !== $email ? $email : get_option( 'admin_email' );
+		$email    = '' !== $email ? $email : get_option( 'admin_email' );
+
+		/**
+		 * Filter the sender ADDRESS for one Jetonomy email.
+		 *
+		 * See jetonomy_email_from_name for why this seam exists.
+		 *
+		 * @param string $email Resolved sender address.
+		 */
+		return (string) apply_filters( 'jetonomy_email_from_email', $email );
 	}
 }

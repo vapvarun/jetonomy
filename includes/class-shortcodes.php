@@ -374,8 +374,11 @@ class Shortcodes {
 		$category_ref = trim( (string) $atts['category_id'] );
 		$category_id  = 0;
 		if ( '' !== $category_ref && '0' !== $category_ref ) {
+			// Both branches resolve through the viewer's visibility, so a
+			// shortcode cannot surface a category (or the spaces inside it)
+			// that the community listing withholds from the same viewer.
 			$category = ctype_digit( $category_ref )
-				? Models\Category::find( absint( $category_ref ) )
+				? Models\Category::find_visible( absint( $category_ref ) )
 				: Models\Category::find_by_slug( $category_ref );
 			if ( ! $category ) {
 				return self::missing_ref_notice( 'jetonomy_spaces', 'category', $category_ref );

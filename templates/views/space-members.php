@@ -155,6 +155,17 @@ $role_labels = [
 				</div>
 			</div>
 
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'space-tabs',
+				[
+					'space'     => $space,
+					'space_url' => $base . '/s/' . $space->slug . '/',
+					'active'    => 'members',
+				]
+			);
+			?>
+
 			<?php if ( $viewer_is_priv && ! empty( $jt_pending_requests ) ) : ?>
 				<section id="jt-pending-requests" class="jt-card jt-pending-requests" aria-label="<?php esc_attr_e( 'Pending join requests', 'jetonomy' ); ?>">
 					<h2 class="jt-pending-requests-title">

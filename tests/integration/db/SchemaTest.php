@@ -55,7 +55,8 @@ class SchemaTest extends WP_UnitTestCase {
 		// drops them on upgrade), taking the schema from 23 to 20 tables.
 		// 1.7.1 added jt_blocked_users (member blocking) and jt_attachments (the
 		// attachment link store, moved to free from jt_pro_attachments) -> 22.
-		$this->assertCount( 22, $expected );
+		// 2.0.0 added jt_import_map (importer source-row map) -> 23.
+		$this->assertCount( 23, $expected );
 		foreach ( [ 'jt_space_tags', 'jt_space_tag_map', 'jt_user_interests' ] as $removed ) {
 			$this->assertNotContains( $removed, $expected, "Removed table '{$removed}' must not be re-added to the schema." );
 		}

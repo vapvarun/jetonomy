@@ -63,13 +63,41 @@ class Recount {
 	/**
 	 * Rebuild denormalized counters.
 	 *
-	 * @param string $type One of: all, posts, spaces, votes, users.
+	 * Optionally scoped to a half-open id range, which is what lets the 2.0.0
+	 * backfill ({@see Recount_Backfill}) walk a large site in bounded slices
+	 * without a second copy of these statements. The range applies to the
+	 * driving table's primary key for the requested $type - post id, space id,
+	 * or profile user_id - so it is meaningless for 'all' and ignored there.
+	 *
+	 * The range is half-open - [$from_id, $until_id) - so consecutive slices
+	 * tile the key space with no gap and no overlap, and the first slice
+	 * includes key 0. An exclusive lower bound skipped it, which on this schema
+	 * meant a user_profiles row at user_id 0 kept its drift forever.
+	 *
+	 * @param string   $type     One of: all, posts, spaces, votes, users.
+	 * @param int|null $from_id  Inclusive lower bound on the driving key.
+	 * @param int|null $until_id Exclusive upper bound on the driving key.
 	 * @return array<string, int> Map of step => rows_affected.
 	 */
-	public static function run( string $type = 'all' ): array {
+	public static function run( string $type = 'all', ?int $from_id = null, ?int $until_id = null ): array {
 		global $wpdb;
 
 		$type = in_array( $type, array( 'all', 'posts', 'spaces', 'votes', 'users' ), true ) ? $type : 'all';
+
+		// A range needs one driving table to apply to; 'all' spans four.
+		$scoped = 'all' !== $type && null !== $from_id && null !== $until_id;
+
+		/**
+		 * WHERE clause bounding one batch, or '' for the whole table.
+		 *
+		 * @param string $key Fully-qualified key column, e.g. 'p.id'.
+		 * @return string
+		 */
+		$range = static function ( string $key ) use ( $scoped, $from_id, $until_id ): string {
+			return $scoped
+				? sprintf( ' WHERE %s >= %d AND %s < %d', $key, (int) $from_id, $key, (int) $until_id )
+				: '';
+		};
 
 		$posts_t    = table( 'posts' );
 		$replies_t  = table( 'replies' );
@@ -82,19 +110,24 @@ class Recount {
 
 		if ( in_array( $type, array( 'all', 'posts' ), true ) ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$stats['post_reply_counts'] = (int) $wpdb->query( "UPDATE {$posts_t} p SET p.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish')" );
+			$stats['post_reply_counts'] = (int) $wpdb->query( "UPDATE {$posts_t} p SET p.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish')" . $range( 'p.id' ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$stats['post_last_reply_at'] = (int) $wpdb->query( "UPDATE {$posts_t} p SET p.last_reply_at = (SELECT MAX(r.created_at) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish')" );
+			$stats['post_last_reply_at'] = (int) $wpdb->query( "UPDATE {$posts_t} p SET p.last_reply_at = (SELECT MAX(r.created_at) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish')" . $range( 'p.id' ) );
 		}
 
 		if ( in_array( $type, array( 'all', 'spaces' ), true ) ) {
 			$members_t = table( 'space_members' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$stats['space_post_counts'] = (int) $wpdb->query( "UPDATE {$spaces_t} s SET s.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.space_id = s.id AND p.status = 'publish')" );
+			$stats['space_post_counts'] = (int) $wpdb->query( "UPDATE {$spaces_t} s SET s.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.space_id = s.id AND p.status = 'publish')" . $range( 's.id' ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$stats['space_member_counts'] = (int) $wpdb->query( "UPDATE {$spaces_t} s SET s.member_count = (SELECT COUNT(*) FROM {$members_t} m WHERE m.space_id = s.id)" );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$stats['category_space_counts'] = (int) $wpdb->query( "UPDATE {$cats_t} c SET c.space_count = (SELECT COUNT(*) FROM {$spaces_t} s WHERE s.category_id = c.id AND s.status = 'active')" );
+			$stats['space_member_counts'] = (int) $wpdb->query( "UPDATE {$spaces_t} s SET s.member_count = (SELECT COUNT(*) FROM {$members_t} m WHERE m.space_id = s.id)" . $range( 's.id' ) );
+			// Driven by category id, not space id, so a space-range batch cannot
+			// bound it meaningfully - and categories are few enough that the
+			// unscoped pass in Migration_2_0_0 covers an upgrading site once.
+			if ( ! $scoped ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$stats['category_space_counts'] = (int) $wpdb->query( "UPDATE {$cats_t} c SET c.space_count = (SELECT COUNT(*) FROM {$spaces_t} s WHERE s.category_id = c.id AND s.status = 'active')" );
+			}
 		}
 
 		if ( in_array( $type, array( 'all', 'votes' ), true ) ) {
@@ -106,16 +139,23 @@ class Recount {
 
 		if ( in_array( $type, array( 'all', 'users' ), true ) ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$stats['user_post_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.author_id = u.user_id AND p.status = 'publish')" );
+			$stats['user_post_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.author_id = u.user_id AND p.status = 'publish')" . $range( 'u.user_id' ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$stats['user_reply_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.author_id = u.user_id AND r.status = 'publish')" );
+			$stats['user_reply_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.author_id = u.user_id AND r.status = 'publish')" . $range( 'u.user_id' ) );
 		}
 
 		// Every recompute above is a set-based UPDATE that cannot name the rows it
 		// touched (Caching Standard §4d), and the values written (space/profile
 		// counts, vote scores) back the space:{id} / profile:{id} caches. This is a
 		// one-shot admin/CLI path, so flush the group rather than track every id.
-		Cache::flush();
+		//
+		// A scoped batch skips it: the backfill runs hundreds of these, and
+		// flushing the whole group per slice would keep a large site's cache
+		// cold for the length of the job. Recount_Backfill flushes once when
+		// the last batch lands.
+		if ( ! $scoped ) {
+			Cache::flush();
+		}
 
 		return $stats;
 	}

@@ -118,7 +118,7 @@ class ReplyTest extends WP_UnitTestCase {
 		$this->assertEquals( 3, $count );
 	}
 
-	public function test_count_by_post_includes_all_statuses(): void {
+	public function test_count_by_post_counts_only_published_status(): void {
 		$this->make_reply( [ 'status' => 'publish' ] );
 		Reply::create( [
 			'post_id' => $this->post_id,
@@ -126,9 +126,10 @@ class ReplyTest extends WP_UnitTestCase {
 			'status'  => 'spam',
 		] );
 
-		// count_by_post counts all rows regardless of status.
+		// count_by_post counts published rows only (2.0.0) - matches the REST
+		// replies collection total and Recount::run(); see the method docblock.
 		$count = Reply::count_by_post( $this->post_id );
-		$this->assertEquals( 2, $count );
+		$this->assertEquals( 1, $count );
 	}
 
 	public function test_create_increments_post_reply_count(): void {

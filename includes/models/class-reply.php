@@ -91,10 +91,29 @@ class Reply extends Model {
 		$id = static::insert( $data );
 
 		if ( $id > 0 ) {
-			if ( ! empty( $data['post_id'] ) ) {
+			/*
+			 * Both counters mean "published replies" - Recount defines them that
+			 * way (`COUNT(*) ... WHERE status = 'publish'`), and update() below
+			 * already applies a +1/-1 delta when a reply crosses into or out of
+			 * publish. Incrementing here regardless of status therefore
+			 * double-counted every reply that did not start published.
+			 *
+			 * On a site that holds replies for approval the sequence was:
+			 * created pending -> counter 1, actually 0 published; approved ->
+			 * update() correctly adds its +1 -> counter 2, actually 1. Every
+			 * moderated reply permanently inflated the thread by one, and the
+			 * same applied to the author's profile count.
+			 *
+			 * last_reply_at rides along with this call, which is the behaviour
+			 * we want too: a reply nobody can see yet should not advance the
+			 * thread's "last activity" time.
+			 */
+			$is_published = 'publish' === ( $data['status'] ?? 'publish' );
+
+			if ( $is_published && ! empty( $data['post_id'] ) ) {
 				Post::increment_reply_count( (int) $data['post_id'], 1, (string) $data['created_at'] );
 			}
-			if ( ! empty( $data['author_id'] ) ) {
+			if ( $is_published && ! empty( $data['author_id'] ) ) {
 				UserProfile::increment_reply_count( (int) $data['author_id'] );
 			}
 
@@ -464,7 +483,14 @@ class Reply extends Model {
 	public static function count_by_post( int $post_id ): int {
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE post_id = %d',
+				// status = 'publish', not every row. This is the total the REST
+				// replies collection reports and the value Post::merge_into()
+				// copies onto the merge target, and counting trashed, spammed
+				// and pending rows made both wrong: the endpoint advertised a
+				// total it would never return, so `has_more` stayed true and a
+				// client paged forever against an empty tail. Matches
+				// Recount::run(), which defines reply_count the same way.
+				'SELECT COUNT(*) FROM ' . static::table() . " WHERE post_id = %d AND status = 'publish'",
 				$post_id
 			)
 		);
@@ -791,9 +817,16 @@ class Reply extends Model {
 		// as votes land mid-pagination — the old whole-thread snapshot
 		// couldn't; accepted and documented in the plan.
 		// - Children always render oldest-first regardless of top sort
-		// (the old flat query's order), and orphans (rows whose parent
-		// is pending/trashed/deleted) stay dropped — the level walk
-		// never reaches them, exactly like the old 0-rooted tree walk.
+		// (the old flat query's order).
+		// - ORPHANS RENDER AS ROOTS. A published reply whose parent row is
+		// missing, pending, spammed or trashed used to be unreachable: the
+		// level walk starts at parent_id 0 and never descends to it. It was
+		// still counted, so a topic advertised "3 replies" and rendered
+		// none - the customer report behind Basecamp 10295178703, and
+		// reproducible by any moderator who trashes a reply that has
+		// children. Resolved at READ time via the LEFT JOIN below rather
+		// than by reparenting rows on delete: restore the parent and the
+		// thread nests again, with nothing rewritten.
 		$order_by = 'created_at ASC, id ASC';
 		if ( 'newest' === $sort ) {
 			$order_by = 'created_at DESC, id DESC';
@@ -801,9 +834,18 @@ class Reply extends Model {
 			$order_by = 'vote_score DESC, created_at ASC, id ASC';
 		}
 
-		$top_sql = 'SELECT * FROM ' . static::table()
-			. " WHERE post_id = %d AND status = 'publish' AND ( parent_id IS NULL OR parent_id = 0 )"
-			. " ORDER BY {$order_by}";
+		// Same ordering, qualified for the aliased top-level query below.
+		$order_by_qualified = str_replace( ', ', ', r.', $order_by );
+
+		// `p.id IS NULL` is the orphan arm: the parent is gone or not published,
+		// so this row IS a root for rendering purposes. The join runs on
+		// post_parent (post_id,parent_id), so it is an index lookup per row.
+		$t       = static::table();
+		$top_sql = "SELECT r.* FROM {$t} r"
+			. " LEFT JOIN {$t} p ON p.id = r.parent_id AND p.post_id = r.post_id AND p.status = 'publish'"
+			. " WHERE r.post_id = %d AND r.status = 'publish'"
+			. ' AND ( r.parent_id IS NULL OR r.parent_id = 0 OR p.id IS NULL )'
+			. " ORDER BY r.{$order_by_qualified}";
 		$params  = array( $post_id );
 		if ( $limit > 0 ) {
 			$top_sql .= ' LIMIT %d OFFSET %d';
@@ -860,9 +902,15 @@ class Reply extends Model {
 		// Build tree: group by parent_id. Top-level rows land in $by_parent[0]
 		// in SQL order, so build_tree() emits the final ordering directly —
 		// no post-sort, no post-slice.
+		// A row selected as a ROOT by the top query is grouped under 0 even when
+		// it still carries a parent_id. That is the orphan case: its parent is
+		// missing or not published, so there is no bucket for it to be emitted
+		// from, and grouping it by its dangling parent_id is what made it
+		// invisible while still being counted.
+		$top_ids   = array_flip( array_map( static fn( $r ) => (int) $r->id, $top ) );
 		$by_parent = array();
 		foreach ( $all as $reply ) {
-			$pid                 = (int) ( $reply->parent_id ?? 0 );
+			$pid                 = isset( $top_ids[ (int) $reply->id ] ) ? 0 : (int) ( $reply->parent_id ?? 0 );
 			$by_parent[ $pid ][] = $reply;
 		}
 
@@ -1102,9 +1150,22 @@ class Reply extends Model {
 	 * @return int
 	 */
 	public static function count_top_level( int $post_id ): int {
+		$t = static::table();
+
+		// Counts ROOTS AS RENDERED, which now includes orphans - a published
+		// reply whose parent is missing or not published. This is the mismatch
+		// the card is named after: the counter said "(parent_id IS NULL OR 0)"
+		// while build_threaded() walks down from those roots, so any orphan was
+		// counted by neither and rendered by neither, and the thread advertised
+		// replies it would not show. Same LEFT JOIN as build_threaded(), so the
+		// number and the walk agree by construction rather than by two
+		// independently-maintained predicates.
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . " WHERE post_id = %d AND (parent_id IS NULL OR parent_id = 0) AND status = 'publish'",
+				"SELECT COUNT(*) FROM {$t} r"
+				. " LEFT JOIN {$t} p ON p.id = r.parent_id AND p.post_id = r.post_id AND p.status = 'publish'"
+				. " WHERE r.post_id = %d AND r.status = 'publish'"
+				. ' AND ( r.parent_id IS NULL OR r.parent_id = 0 OR p.id IS NULL )',
 				$post_id
 			)
 		);
@@ -1454,6 +1515,41 @@ class Reply extends Model {
 		// split reply's own -1 was handled by the trash transition above.
 		if ( $moved_count > 0 ) {
 			Post::increment_reply_count( (int) $reply->post_id, -1 * $moved_count );
+		}
+
+		// Leave a trace in the SOURCE thread.
+		//
+		// Split is a move: the reply disappears from the thread everyone else is
+		// reading, with no explanation. Members following a conversation saw a
+		// reply vanish; the hook below existed but nothing listened, so the
+		// community never learned where it went. Discourse leaves a marker for
+		// exactly this reason.
+		//
+		// A real reply row, authored by the same member, so it renders normally
+		// and cannot be mistaken for someone else speaking. Best-effort: a
+		// failure here must not undo a completed split, which is why the return
+		// value is not checked.
+		$new_post  = Post::find( $new_post_id );
+		$new_space = $new_post ? Space::find( (int) $new_post->space_id ) : null;
+
+		if ( $new_post && $new_space ) {
+			// Built the same way every other topic URL in the plugin is - there is
+			// no shared permalink helper to call.
+			$new_url = \Jetonomy\base_url() . '/s/' . $new_space->slug . '/t/' . $new_post->slug . '/';
+
+			static::create(
+				array(
+					'post_id'   => (int) $reply->post_id,
+					'author_id' => (int) $reply->author_id,
+					'content'   => sprintf(
+						/* translators: 1: singular reply label, 2: link to the new topic. */
+						'<p><em>' . esc_html__( 'A %1$s was split into a new discussion: %2$s', 'jetonomy' ) . '</em></p>',
+						esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+						'<a href="' . esc_url( $new_url ) . '">' . esc_html( (string) $new_post->title ) . '</a>'
+					),
+					'status'    => 'publish',
+				)
+			);
 		}
 
 		do_action( 'jetonomy_reply_split', $reply_id, $new_post_id, (int) $reply->post_id );

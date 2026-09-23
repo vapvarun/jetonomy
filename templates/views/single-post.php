@@ -544,6 +544,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
 							<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
+								aria-pressed="<?php echo 1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteUp"
 								data-post-id="<?php echo absint( $post->id ); ?>"
 								title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
@@ -557,6 +558,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								if ( (int) $post->author_id !== get_current_user_id() ) :
 									?>
 							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
+								aria-pressed="<?php echo -1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteDown"
 								data-post-id="<?php echo absint( $post->id ); ?>"
 								title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
@@ -608,6 +610,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						data-wp-on--click="actions.toggleBookmark"
 						data-post-id="<?php echo absint( $post->id ); ?>"
 						data-bookmarked="<?php echo esc_attr( $is_bookmarked ? '1' : '0' ); ?>"
+						aria-pressed="<?php echo esc_attr( $is_bookmarked ? 'true' : 'false' ); ?>"
 						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"
 						aria-label="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
 					<?php if ( (int) $post->author_id !== get_current_user_id() ) : ?>
@@ -672,9 +675,24 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_moderate_here ) : ?>
+								<?php
+								/*
+								 * "Pin to space", not bare "Pin". Pro's
+								 * site-announcements extension adds a "Pin to
+								 * community" button to this same post, which pins
+								 * to the top of EVERY space. Against that, an
+								 * unqualified "Pin" does not say where it pins, and
+								 * a moderator has to already know two pin scopes
+								 * exist to read it correctly. Naming both by their
+								 * scope makes them a matched pair, not a guess.
+								 */
+								$jt_pin_label = $post->is_sticky
+									? __( 'Unpin from space', 'jetonomy' )
+									: __( 'Pin to space', 'jetonomy' );
+								?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
-									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
+									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo esc_html( $jt_pin_label ); ?></button>
 									<button class="jt-more-item"
 										data-wp-on--click="actions.toggleClose"
 										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Reopen %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) : esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></button>

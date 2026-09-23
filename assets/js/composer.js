@@ -141,9 +141,16 @@ document.addEventListener( 'DOMContentLoaded', () => {
             }
         } );
 
-        // Clear placeholder on focus
+        // Clear placeholder on focus.
+        //
+        // "No text" is not "empty". An image-only body has no textContent, so
+        // this deleted the image the moment the member clicked in to start
+        // typing - which is exactly the normal order for "here is a screenshot,
+        // here is my question". The upload was also left orphaned in the media
+        // library. An emoji never reproduced it because an emoji IS text, which
+        // is the clue to the cause.
         body.addEventListener( 'focus', () => {
-            if ( body.textContent.trim() === '' ) {
+            if ( body.textContent.trim() === '' && ! body.querySelector( 'img, video, iframe, audio, hr, table, blockquote, pre' ) ) {
                 body.innerHTML = '';
             }
         } );
@@ -369,7 +376,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
         // Get author name
         var replyCard = replyBody.closest('.jt-reply, .jt-post');
-        var authorEl = replyCard ? replyCard.querySelector('.jt-user-name') : null;
+        // .jt-user-name is the top-level post's author element (single-post.php);
+        // reply-card.php names the same role .jt-reply-author. Quoting a reply
+        // matched nothing and inserted an empty <cite> until both were checked.
+        var authorEl = replyCard ? replyCard.querySelector('.jt-user-name, .jt-reply-author') : null;
         var authorName = authorEl ? authorEl.textContent.trim() : '';
 
         // Position the button near the selection

@@ -88,11 +88,12 @@ class Schema {
 			'jt_bookmarks',
 			'jt_blocked_users',
 			'jt_attachments',
+			'jt_import_map',
 		];
 	}
 
 	/**
-	 * Build CREATE TABLE SQL strings for all 22 tables.
+	 * Build CREATE TABLE SQL strings for all 23 tables.
 	 *
 	 * @param string $p               Table prefix (e.g. "wp_").
 	 * @param string $charset_collate Charset/collation string from $wpdb.
@@ -481,6 +482,37 @@ class Schema {
   UNIQUE KEY object_attachment (object_type,object_id,attachment_id),
   KEY object (object_type,object_id,sort),
   KEY attachment (attachment_id)
+) ENGINE=InnoDB $charset_collate;";
+
+		/*
+		 * 23. jt_import_map — which source row produced which Jetonomy row.
+		 *
+		 * An importer needs to answer "did I create this?" on a re-run. It used
+		 * to answer by slug, which is not the same question: a bbPress forum
+		 * called "general" matched the owner's own existing "general" space, so
+		 * a re-run silently adopted it and poured the source's topics into it.
+		 * On a private source forum that also skipped the visibility mapping,
+		 * which is how private content could land in a public space.
+		 *
+		 * A durable row keyed on (source, object_type, source_id) answers the
+		 * real question, and it makes reply de-duplication exact too - matching
+		 * on post + author + timestamp lost a reply whenever one member posted
+		 * twice in the same second.
+		 *
+		 * In its own table, not an option: an option holding 50k mappings is an
+		 * autoloaded blob, and this has to survive between runs. Shared by all
+		 * three importers via the `source` column.
+		 */
+		$sqls[] = "CREATE TABLE {$p}jt_import_map (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  source varchar(32) NOT NULL,
+  object_type varchar(20) NOT NULL,
+  source_id varchar(64) NOT NULL,
+  object_id bigint(20) unsigned NOT NULL,
+  created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY  (id),
+  UNIQUE KEY source_row (source,object_type,source_id),
+  KEY object (object_type,object_id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		return $sqls;

@@ -46,7 +46,7 @@ $status_labels = \Jetonomy\content_status_labels( true );
 	<!-- Breadcrumb -->
 	<p class="jt-breadcrumb">
 		<a href="<?php echo esc_url( $back_url ); ?>">
-			<span class="dashicons dashicons-arrow-left-alt2" style="vertical-align:middle;font-size:16px;height:16px;width:16px;"></span>
+			<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
 			<?php esc_html_e( 'All Posts', 'jetonomy' ); ?>
 		</a>
 	</p>

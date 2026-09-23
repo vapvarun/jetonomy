@@ -73,7 +73,11 @@ class Leaderboards_Controller extends Base_Controller {
 		$args = apply_filters(
 			'jetonomy_users_query_args',
 			array(
-				'order_by' => 'reputation DESC',
+				// Same default as UserProfile::list_for_leaderboard(). The
+				// user_id tiebreaker is load-bearing under LIMIT/OFFSET: without
+				// it MySQL may order tied rows differently per page, so a member
+				// tied on reputation can show up on two pages or on none.
+				'order_by' => 'reputation DESC, user_id ASC',
 				'limit'    => $limit,
 				'offset'   => $offset,
 			)
@@ -148,16 +152,27 @@ class Leaderboards_Controller extends Base_Controller {
 			\Jetonomy\Models\UserProfile::prime( $user_ids );
 		}
 
-		$items = [];
-		$rank  = $offset + 1;
+		// COMPETITION ranks, from the one place that defines them, so this
+		// endpoint cannot contradict the web board or the "Your rank #N" badge.
+		// It used to number rows positionally with its own counter, so two
+		// members tied on reputation were returned as 2 and 3 while the web
+		// showed 2 and 2 - the app disagreeing with the browser about the same
+		// member.
+		$ranks = \Jetonomy\Models\UserProfile::competition_ranks( $leaders, $period, $offset );
 
-		foreach ( $leaders as $leader ) {
+		$items = [];
+
+		foreach ( array_values( $leaders ) as $lb_index => $leader ) {
 			$user_id = (int) $leader->user_id;
 			$user    = $by_id[ $user_id ] ?? null;
 			if ( ! $user ) {
-				++$rank;
+				// No ++$rank here: a skipped row must not consume a number. The
+				// positional counter had to, which is how the web board grew a
+				// visible hole in its sequence before it moved to real ranks.
 				continue;
 			}
+
+			$rank = $ranks[ $lb_index ] ?? ( $offset + $lb_index + 1 );
 
 			// Presence (profiles were primed above, so this is a cache hit, not an
 			// N+1). Note: the board is cached 300s, so the dot can lag presence by
@@ -179,8 +194,6 @@ class Leaderboards_Controller extends Base_Controller {
 				'last_seen_at'     => $lb_profile ? $lb_profile->last_seen_at : null,
 				'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $lb_profile ? $lb_profile->last_seen_at : null ),
 			];
-
-			++$rank;
 		}
 
 		// Cache the UNFILTERED rows (plan WP4.6) — the enrichment filter

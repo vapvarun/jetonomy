@@ -1,4 +1,4 @@
-Move your existing bbPress community into Jetonomy - forums, topics, replies, user data, and vote history - using the built-in importer.
+Move your existing bbPress community into Jetonomy - forums, topics, replies and user data - using the built-in importer.
 
 ![Import tool interface with source selection and progress tracking](../images/admin-import.png)
 
@@ -21,6 +21,8 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 | Replies | Jetonomy Replies | Imported as flat replies on the post (bbPress reply threading is flattened) |
 | User accounts | Linked to existing WP users | Matched by user ID |
 | Sticky topics | Pinned posts | Preserved |
+| Closed topics | Closed posts | Preserved - the thread stays readable and takes no new replies |
+| Private and hidden forums | Private and hidden spaces | Visibility is carried across, so a staff-only forum does not become public |
 | Inline images and attached files (1.8.0+) | WordPress media library + Jetonomy attachments | Downloaded from bbPress and re-registered as attachments; images stay inline, other files show as a download link |
 
 **Not imported:**
@@ -34,6 +36,13 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 - Forum avatars (WordPress avatars carry over via Gravatar/WP user accounts)
 
 > **Attachments (1.8.0+):** If a file cannot be recovered - for example it is already missing from disk - the import still completes and tells you how many files it could not bring over ("N files could not be recovered and were left linked in the original post text"). That is a warning to check a handful of posts by hand, not a failed import. See the [Migration overview](00-overview.md#attachments-and-inline-images) for details.
+
+> **Re-running an import is safe.** The importer skips anything it has already
+> brought over, matching forums and topics on their slug and replies on their
+> author and original timestamp, so a second run adds only what is missing. If
+> you migrated on a version before 2.0.0, closed topics and private/hidden
+> forums were skipped - re-running the import now brings them in without
+> duplicating what is already there.
 
 > **What to do about the gaps:** Jetonomy replies are flat by design - every reply attaches to the topic, not to another reply - so the conversation stays intact even though bbPress's nested threading is not carried over. Topic tags are not imported; if tags matter to you, re-tag your highest-value topics by hand after the import (it is usually a small number that drive most of the traffic).
 

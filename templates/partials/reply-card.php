@@ -199,6 +199,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyUp"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
+				aria-pressed="<?php echo 1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
 				title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
@@ -211,6 +212,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyDown"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
+				aria-pressed="<?php echo -1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
 				title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 				<?php endif; ?>

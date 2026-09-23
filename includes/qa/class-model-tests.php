@@ -14,11 +14,16 @@ namespace Jetonomy\QA;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Models\Category;
+use Jetonomy\Models\Import_Map;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
+use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Models\Tag;
 use Jetonomy\Models\Notification;
+use Jetonomy\Models\Post;
 use Jetonomy\Permissions\Permission_Engine;
 use Jetonomy\Permissions\Rate_Limiter;
 use Jetonomy\Trust\Trust_Evaluator;
@@ -226,9 +231,25 @@ class Model_Tests {
 
 		$this->test_reorder();
 		$this->test_space_ownership_transfer();
+		$this->test_category_visibility();
+		$this->test_child_space_in_category_listing();
+		$this->test_leaderboard_ranking();
+		$this->test_reply_count_moderation();
+		$this->test_bbpress_import_scope();
+		$this->test_media_cleanup_scope();
+		$this->test_category_space_count();
+		$this->test_import_map();
+		$this->test_recount_backfill();
 
 		$this->check_delete_contract( $admin_id );
 		$this->check_shortcode_ref_contract();
+		$this->check_settings_round_trip();
+		$this->check_template_include_contract();
+		$this->check_scheduled_contract();
+		$this->check_import_status_mapping();
+		$this->check_robots_single_emitter();
+		$this->check_subspace_listing();
+		$this->check_split_leaves_a_trace();
 
 		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
 	}
@@ -250,6 +271,525 @@ class Model_Tests {
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
 	 * space 0 and returned nothing.
 	 */
+	/**
+	 * Splitting a reply leaves a trace in the thread it left.
+	 *
+	 * Split is a MOVE - the reply is trashed from the source thread and becomes
+	 * the opening post of a new one. Members following the conversation saw a
+	 * reply vanish with no explanation, and the jetonomy_reply_split hook existed
+	 * with nothing listening, so the community never learned where it went.
+	 *
+	 * @return void
+	 */
+	private function check_split_leaves_a_trace(): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+
+		if ( $space_id <= 0 ) {
+			$this->skip( 'SP1: a split leaves a trace in the source thread', 'no active space' );
+			$this->skip( 'SP2: the split reply still leaves the source thread', 'precondition not met' );
+			return;
+		}
+
+		$post_id = Post::create(
+			array(
+				'space_id'  => $space_id,
+				'author_id' => 1,
+				'title'     => 'QA split source',
+				'content'   => 'probe',
+				'type'      => 'discussion',
+				'status'    => 'publish',
+			)
+		);
+		$post_id = is_wp_error( $post_id ) ? 0 : (int) $post_id;
+
+		$reply_id = $post_id > 0
+			? Reply::create( array( 'post_id' => $post_id, 'author_id' => 1, 'content' => 'QA reply to split' ) )
+			: 0;
+		$reply_id = is_wp_error( $reply_id ) ? 0 : (int) $reply_id;
+
+		if ( $post_id <= 0 || $reply_id <= 0 ) {
+			$this->skip( 'SP1: a split leaves a trace in the source thread', 'probe insert failed' );
+			$this->skip( 'SP2: the split reply still leaves the source thread', 'precondition not met' );
+			return;
+		}
+
+		$new_post_id = (int) Reply::split_to_topic( $reply_id, 'QA split target' );
+
+		$replies_t = table( 'replies' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, status, content FROM {$replies_t} WHERE post_id = %d", $post_id ) );
+
+		$trace  = false;
+		$moved  = false;
+		foreach ( $rows as $row ) {
+			if ( (int) $row->id === $reply_id ) {
+				$moved = 'trash' === (string) $row->status;
+				continue;
+			}
+			if ( 'publish' === (string) $row->status && false !== strpos( (string) $row->content, 'split into a new discussion' ) ) {
+				$trace = true;
+			}
+		}
+
+		$this->check( 'SP1: a split leaves a trace in the source thread', $trace );
+		$this->check( 'SP2: the split reply still leaves the source thread', $moved );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $replies_t, array( 'post_id' => $post_id ) );
+		$wpdb->delete( table( 'posts' ), array( 'id' => $post_id ) );
+		if ( $new_post_id > 0 ) {
+			$wpdb->delete( $replies_t, array( 'post_id' => $new_post_id ) );
+			$wpdb->delete( table( 'posts' ), array( 'id' => $new_post_id ) );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * Sub-spaces are listed, and listed per viewer.
+	 *
+	 * Space::list_children() existed with ZERO callers, so an imported
+	 * sub-forum hierarchy was invisible: the parent listed no children and the
+	 * child sat beside its parent as an unrelated space. Its first caller is the
+	 * sub-space strip, which is also the moment the method first had to answer a
+	 * visibility question - an unfiltered listing would have put a hidden
+	 * sub-forum on a public parent's page.
+	 *
+	 * @return void
+	 */
+	private function check_subspace_listing(): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_t ): int {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$spaces_t,
+				array(
+					'category_id' => 0,
+					'parent_id'   => $parent,
+					'author_id'   => 1,
+					'type'        => 'forum',
+					'title'       => $title,
+					'slug'        => sanitize_title( $title ) . '-' . wp_generate_password( 6, false, false ),
+					'visibility'  => $visibility,
+					'status'      => 'active',
+					'created_at'  => \Jetonomy\now(),
+				)
+			);
+
+			return (int) $wpdb->insert_id;
+		};
+
+		$parent = $make( 'QA subspace parent', 0, 'public' );
+		if ( $parent <= 0 ) {
+			$this->skip( 'SB1: sub-spaces are listed', 'probe insert failed' );
+			$this->skip( 'SB2: a hidden sub-space is withheld', 'precondition not met' );
+			$this->skip( 'SB3: the owner still sees it', 'precondition not met' );
+			return;
+		}
+
+		$open   = $make( 'QA subspace open', $parent, 'public' );
+		$hidden = $make( 'QA subspace hidden', $parent, 'hidden' );
+
+		$guest_ids = array_map( static fn( $r ) => (int) $r->id, Space::list_children( $parent, 0 ) );
+		$owner_ids = array_map( static fn( $r ) => (int) $r->id, Space::list_children( $parent, 1 ) );
+
+		$this->check( 'SB1: a public sub-space is listed under its parent', in_array( $open, $guest_ids, true ) );
+		$this->check( 'SB2: a hidden sub-space is withheld from a guest', ! in_array( $hidden, $guest_ids, true ) );
+		$this->check(
+			'SB3: the owner still sees both',
+			in_array( $open, $owner_ids, true ) && in_array( $hidden, $owner_ids, true )
+		);
+
+		foreach ( array( $hidden, $open, $parent ) as $id ) {
+			$wpdb->delete( $spaces_t, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		}
+	}
+
+	/**
+	 * Exactly one robots emitter, expressed through core's filter.
+	 *
+	 * Template_Loader and Schema_Markup both printed `<meta name="robots">`, so a
+	 * noindexed route emitted the tag TWICE - which every site-audit tool flags.
+	 * Routing it through wp_robots also merges with core's own directives instead
+	 * of competing with them.
+	 *
+	 * @return void
+	 */
+	private function check_robots_single_emitter(): void {
+		$loader = (string) file_get_contents( JETONOMY_DIR . 'includes/class-template-loader.php' );
+		$schema = (string) file_get_contents( JETONOMY_DIR . 'includes/seo/class-schema-markup.php' );
+
+		$this->check(
+			'RB1: nothing hand-prints a robots meta tag any more',
+			false === strpos( $loader, 'name="robots"' )
+				&& false === strpos( $schema, 'name="robots"' )
+		);
+
+		// RB2: the decision reaches the tag core prints. wp_robots() runs on
+		// wp_head at priority 1 and is registered at load time, so an equal
+		// priority loses the race - the SEO head callback has to be at 0.
+		$this->check(
+			'RB2: both noindex settings are readable by the one emitter',
+			false !== strpos( $loader, "seo_noindex_search" )
+				&& false !== strpos( $loader, "seo_noindex_profiles" )
+				&& false !== strpos( $loader, "'wp_robots'" )
+		);
+	}
+
+	/**
+	 * Importers must carry the SOURCE's moderation state, not publish everything.
+	 *
+	 * wpForo and Asgaros both mapped topic status correctly and then hard-coded
+	 * replies to 'publish', so content a moderator had held back - or a member
+	 * had marked private - went live the moment the owner migrated. This is the
+	 * bbPress status defect in the opposite direction: that one dropped content,
+	 * these published it.
+	 *
+	 * @return void
+	 */
+	private function check_import_status_mapping(): void {
+		global $wpdb;
+
+		$mapper = new \ReflectionMethod( '\Jetonomy\Import\WpForo_Importer', 'map_reply_status' );
+		$mapper->setAccessible( true );
+
+		$cases = array(
+			'approved'  => array( (object) array( 'status' => 0 ), 'publish' ),
+			'held'      => array( (object) array( 'status' => 1 ), 'pending' ),
+			'private'   => array( (object) array( 'status' => 0, 'private' => 1 ), 'pending' ),
+			'no column' => array( (object) array(), 'publish' ),
+		);
+
+		$wrong = array();
+		foreach ( $cases as $label => $case ) {
+			list( $row, $expected ) = $case;
+			$actual                 = (string) $mapper->invoke( null, $row );
+			if ( $actual !== $expected ) {
+				$wrong[] = "{$label}: got {$actual}, want {$expected}";
+			}
+		}
+
+		$this->check(
+			'WF1: held and private wpForo replies both import as pending, never published',
+			array() === $wrong,
+			implode( '; ', $wrong )
+		);
+
+		// WF2: neither importer may hard-code a published reply any more. A
+		// grep-shaped assertion, because the alternative is a full wpForo /
+		// Asgaros fixture on a site that has neither installed - and the defect
+		// IS the literal.
+		$wf  = (string) file_get_contents( JETONOMY_DIR . 'includes/import/class-wpforo-importer.php' );
+		$asg = (string) file_get_contents( JETONOMY_DIR . 'includes/import/class-asgaros-importer.php' );
+
+		$this->check(
+			'WF2: no importer hard-codes replies to publish',
+			false === strpos( $wf, "'status'        => 'publish'," )
+				&& false === strpos( $asg, "'status'        => 'publish'," )
+		);
+
+		// WF3: every status the mapper can return must SURVIVE A ROUND TRIP
+		// through the replies table. WF1 asserted what the mapper returns and
+		// WF2 grepped for a literal; neither inserted a row, so a mapper
+		// returning 'hidden' - a status that exists on spaces and not on
+		// replies - passed both while MySQL stored the empty string (invisible
+		// to members AND to the moderation queue) or, in strict mode, threw the
+		// row away. Checking the value against the column is the only test that
+		// could have caught it.
+		$replies_t = table( 'replies' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$column = (array) $wpdb->get_row( "SHOW COLUMNS FROM {$replies_t} LIKE 'status'", ARRAY_A );
+		$allowed = array();
+		if ( ! empty( $column['Type'] ) && preg_match_all( "/'([^']+)'/", (string) $column['Type'], $m ) ) {
+			$allowed = $m[1];
+		}
+
+		$mapper   = new \ReflectionMethod( '\Jetonomy\Import\WpForo_Importer', 'map_reply_status' );
+		$mapper->setAccessible( true );
+		$produced = array();
+		foreach ( array(
+			(object) array( 'status' => 0 ),
+			(object) array( 'status' => 1 ),
+			(object) array( 'status' => 0, 'private' => 1 ),
+			(object) array(),
+		) as $row ) {
+			$produced[] = (string) $mapper->invoke( null, $row );
+		}
+		$produced = array_values( array_unique( $produced ) );
+		$invalid  = array_values( array_diff( $produced, $allowed ) );
+
+		$this->check(
+			'WF3: every mapped reply status exists in the replies status column',
+			array() === $invalid && array() !== $allowed,
+			'invalid: ' . implode( ',', $invalid ) . ' | column allows: ' . implode( ',', $allowed )
+		);
+	}
+
+	/**
+	 * Approving a SCHEDULED draft must publish it properly, not poke its status.
+	 *
+	 * Bulk Approve wrote status=publish directly, so the post went live early
+	 * with published_at still in the future: it kept rendering a "Scheduled"
+	 * badge, pinned itself to the top of the recency sort, and never fired
+	 * jetonomy_after_create_post - no notifications, no activity, no BuddyPress
+	 * broadcast. The REST publish-now route already did this correctly, so two
+	 * paths disagreed about what publishing means.
+	 *
+	 * @return void
+	 */
+	private function check_scheduled_contract(): void {
+		global $wpdb;
+
+		$spaces_t = table( 'spaces' );
+		$space_id = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} WHERE status = 'active' LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		if ( $space_id <= 0 ) {
+			$this->skip( 'SC-A1: approving a scheduled draft', 'no active space' );
+			return;
+		}
+
+		$future = gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS );
+		$post_id = Post::create(
+			array(
+				'space_id'  => $space_id,
+				'author_id' => 1,
+				'title'     => 'QA scheduled probe',
+				'content'   => 'probe',
+				'type'      => 'discussion',
+				'status'    => 'draft',
+			)
+		);
+		$post_id = is_wp_error( $post_id ) ? 0 : (int) $post_id;
+
+		if ( $post_id <= 0 ) {
+			$this->skip( 'SC-A1: approving a scheduled draft', 'post insert failed' );
+			return;
+		}
+
+		$posts_t = table( 'posts' );
+		$wpdb->update( $posts_t, array( 'published_at' => $future ), array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+		$fired = array();
+		$probe = static function ( $id ) use ( &$fired ) {
+			$fired[] = (int) $id;
+		};
+		add_action( 'jetonomy_after_create_post', $probe, 1 );
+
+		\Jetonomy\Moderation\Moderation_Service::system_set_object_status( 'post', $post_id, 'approve', 1 );
+
+		remove_action( 'jetonomy_after_create_post', $probe, 1 );
+
+		$row = Post::find( $post_id );
+
+		$this->check(
+			'SC-A1: approving a scheduled draft clears its publish time',
+			'publish' === ( $row->status ?? '' ) && empty( $row->published_at ),
+			'status=' . ( $row->status ?? '?' ) . ' published_at=' . ( $row->published_at ?? 'NULL' )
+		);
+		$this->check(
+			'SC-A2: and fires the create hook, so notifications still go out',
+			in_array( $post_id, $fired, true )
+		);
+
+		// SC-A3: the Scheduled listing predicate must be status-scoped. A
+		// published post with a future date is not scheduled, and a queued post
+		// whose time has passed must NOT vanish from the one screen an owner
+		// checks when a member asks why a post never appeared.
+		$overdue_id = Post::create(
+			array(
+				'space_id'  => $space_id,
+				'author_id' => 1,
+				'title'     => 'QA overdue probe',
+				'content'   => 'probe',
+				'type'      => 'discussion',
+				'status'    => 'draft',
+			)
+		);
+		$overdue_id = is_wp_error( $overdue_id ) ? 0 : (int) $overdue_id;
+		$wpdb->update( $posts_t, array( 'published_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ), array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$queued = array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$posts_t} WHERE status = 'draft' AND published_at IS NOT NULL" ) );
+
+		$this->check(
+			'SC-A3: an overdue queued post stays in the Scheduled listing',
+			in_array( (int) $overdue_id, $queued, true )
+		);
+		$this->check(
+			'SC-A4: an approved post is no longer in the Scheduled listing',
+			! in_array( (int) $post_id, $queued, true )
+		);
+
+		$wpdb->delete( $posts_t, array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $posts_t, array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * The router must claim a route through `template_include`, and must not be
+	 * the last word on it.
+	 *
+	 * Rendering-and-exiting on `template_redirect` made every Jetonomy route
+	 * bypass maintenance mode, paywalls and coming-soon screens, because
+	 * WordPress fires template_redirect BEFORE template_include and an exit
+	 * there means the later hook never runs at all. A first attempt moved the
+	 * render to template_redirect priority 9999 and looked fixed only because
+	 * the verification gates also hooked template_redirect - no priority on
+	 * that hook can fix it. These checks pin the hook itself.
+	 *
+	 * @return void
+	 */
+	private function check_template_include_contract(): void {
+		// MM1: nothing of ours renders on template_redirect any more. A
+		// callback that exits there is the defect, whatever its priority.
+		$this->check(
+			'MM1: the router no longer renders on template_redirect',
+			false === has_action( 'template_redirect', array( 'Jetonomy\\Router', 'handle_request' ) )
+				&& ! method_exists( 'Jetonomy\\Router', 'handle_request' ),
+			'handle_request still exists'
+		);
+
+		// MM2: the route IS claimed, via the filter, and resolves to a real
+		// file - a canvas path that does not exist would 500 every route.
+		$canvas = JETONOMY_DIR . 'includes/template-canvas.php';
+		$this->check( 'MM2: the template canvas file exists', file_exists( $canvas ), $canvas );
+
+		// MM3: a gate registered AFTER us still wins. This is the contract
+		// maintenance / membership / coming-soon plugins are written against,
+		// and the one the old render-and-exit broke. Priority 999999 is what
+		// the Maintenance plugin from the original report uses.
+		$gate = static function () {
+			return '/dev/null/jetonomy-qa-gate.php';
+		};
+		add_filter( 'template_include', $gate, 999999 );
+		$result = apply_filters( 'template_include', 'theme-index.php' );
+		remove_filter( 'template_include', $gate, 999999 );
+
+		$this->check(
+			'MM3: a later template_include gate can still refuse the request',
+			'/dev/null/jetonomy-qa-gate.php' === $result,
+			(string) $result
+		);
+	}
+
+	/**
+	 * Settings round-trip: what the owner saved is what is stored and used.
+	 *
+	 * Every check here is a defect that shipped, and they share one shape - the
+	 * screen said "saved" while the value was silently changed, dropped, or
+	 * never read. None of them is visible to a static gate, and none was
+	 * covered, which is why a whole settings audit found them at once.
+	 *
+	 * @return void
+	 */
+	private function check_settings_round_trip(): void {
+		$admin = new \Jetonomy\Admin\Admin();
+
+		// SV1: a save from a tab that renders no template fields must not wipe
+		// the overrides. jetonomy_email_templates is registered in the same
+		// settings group as everything else, so options.php calls this
+		// sanitizer with nothing on EVERY tab's save - and it used to answer
+		// with an empty array.
+		$templates_before = get_option( 'jetonomy_email_templates', array() );
+		update_option(
+			'jetonomy_email_templates',
+			array( 'mention' => array( 'subject' => 'SV probe', 'body' => 'SV body' ) )
+		);
+		$kept = $admin->sanitize_email_templates( null );
+		$this->check(
+			'SV1: saving another tab keeps the custom email templates',
+			isset( $kept['mention']['subject'] ) && 'SV probe' === $kept['mention']['subject']
+		);
+
+		// SV2: the widen-check - the Email tab itself must still be able to
+		// clear a row, or SV1 could be satisfied by making templates permanent.
+		$cleared = $admin->sanitize_email_templates(
+			array(
+				'_submitted' => '1',
+				'mention'    => array( 'subject' => '', 'body' => '' ),
+			)
+		);
+		$this->check( 'SV2: the Email tab can still clear a template', array() === $cleared );
+		update_option( 'jetonomy_email_templates', $templates_before );
+
+		// SV3: the empty "no restriction" option must REMOVE who_can_post, not
+		// store a value. The admin JS used to coerce '' to 'members', which
+		// turned an open community into members-only whenever the owner touched
+		// any other field on that tab.
+		$spaces_t = table( 'spaces' );
+		$space_id = (int) $this->db_insert_probe_space( $spaces_t );
+		if ( $space_id > 0 ) {
+			Space::update(
+				$space_id,
+				array( 'settings' => wp_json_encode( Space::merge_settings( $space_id, array( 'who_can_post' => 'members' ) ) ) )
+			);
+			$merged = Space::merge_settings( $space_id, array( 'who_can_post' => '', 'posts_per_page' => 9 ) );
+			$this->check(
+				'SV3: the empty post restriction unsets the key instead of storing members',
+				! array_key_exists( 'who_can_post', $merged ) && 9 === (int) ( $merged['posts_per_page'] ?? 0 )
+			);
+
+			global $wpdb;
+			$wpdb->delete( $spaces_t, array( 'id' => $space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		} else {
+			$this->skip( 'SV3: empty post restriction unsets the key', 'probe space insert failed' );
+		}
+
+		// SV4: container_width is an ENUM, and sanitize_settings() is what keeps
+		// a length out of the option. The emitted CSS is built inside
+		// Template_Loader::render(), so the "is it printed as a length" half is
+		// a browser check, not this one - what is asserted here is the contract
+		// every reader relies on: the stored value is only ever theme / full /
+		// custom, with the length living in its own key.
+		$sanitized = $admin->sanitize_settings(
+			array(
+				'accent_color'           => '#0073aa',
+				'container_width'        => '1280px',
+				'container_width_custom' => '1440',
+			)
+		);
+		$this->check(
+			'SV4: container_width stores only the enum, never a length',
+			in_array( $sanitized['container_width'] ?? '', array( 'theme', 'full', 'custom' ), true ),
+			(string) ( $sanitized['container_width'] ?? '(unset)' )
+		);
+		$this->check(
+			'SV4: the custom length lives in its own key, clamped',
+			1440 === (int) ( $sanitized['container_width_custom'] ?? 0 ),
+			(string) ( $sanitized['container_width_custom'] ?? '(unset)' )
+		);
+	}
+
+	/**
+	 * Insert a throwaway active space for a settings probe.
+	 *
+	 * @param string $spaces_t Prefixed spaces table.
+	 * @return int Row id, or 0.
+	 */
+	private function db_insert_probe_space( string $spaces_t ): int {
+		global $wpdb;
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$spaces_t,
+			array(
+				'category_id' => 0,
+				'parent_id'   => 0,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => 'QA Settings Probe',
+				'slug'        => 'qa-settings-probe-' . wp_generate_password( 6, false ),
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+				'status'      => 'active',
+				'created_at'  => \Jetonomy\now(),
+			)
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
 	private function check_shortcode_ref_contract(): void {
 		global $wpdb;
 
@@ -555,6 +1095,901 @@ class Model_Tests {
 	 * These assert the arithmetic and the invariant that actually matters -
 	 * a page's writes must stay inside that page's band.
 	 */
+	/**
+	 * Category visibility is ENFORCED, not just stored.
+	 *
+	 * `jt_categories.visibility` was written by the admin UI from day one and
+	 * read by nothing: a `hidden` category was listed on the public directory
+	 * and returned by an unauthenticated `GET /categories`, `visibility` field
+	 * and all. A space inside it leaked the same way, because a space consulted
+	 * only its own column and never its parent's.
+	 *
+	 * Both halves are asserted here rather than in a browser test because the
+	 * defect is in the query, and a template test would pass the moment someone
+	 * hid the row in CSS.
+	 */
+	private function test_category_visibility(): void {
+		global $wpdb;
+
+		$slug = 'jt-qa-vis-' . wp_generate_password( 6, false, false );
+		$wpdb->insert(
+			\Jetonomy\table( 'categories' ),
+			[
+				'name'       => 'QA Visibility Probe',
+				'slug'       => $slug,
+				'visibility' => 'hidden',
+				'parent_id'  => 0,
+				'sort_order' => 0,
+				'created_at' => \Jetonomy\now(),
+			]
+		);
+		$cat_id = (int) $wpdb->insert_id;
+
+		$previous_user = get_current_user_id();
+
+		// CV1-CV3: a guest must not reach a hidden category by any read path.
+		wp_set_current_user( 0 );
+		$guest_slugs = array_column( Category::list_top_level(), 'slug' );
+		$this->check( 'CV1: guest listing omits a hidden category', ! in_array( $slug, $guest_slugs, true ) );
+		$this->check( 'CV2: guest cannot resolve a hidden category by slug', null === Category::find_by_slug( $slug ) );
+
+		[ $guest_where ] = Category::listing_visibility_sql( 0 );
+		$this->check( 'CV3: guest predicate restricts to public', "visibility = 'public'" === $guest_where, $guest_where );
+
+		// CV4: the owner keeps full sight - a filter that blinds the admin
+		// screen would "pass" CV1-CV3 while breaking management.
+		wp_set_current_user( 1 );
+		$admin_slugs = array_column( Category::list_top_level(), 'slug' );
+		$this->check( 'CV4: a category manager still sees a hidden category', in_array( $slug, $admin_slugs, true ) );
+
+		// CV5: effective visibility - a PUBLIC space inside a HIDDEN category
+		// is concealed from a guest, resolved at read time from the parent.
+		$spaces_table = \Jetonomy\table( 'spaces' );
+		$wpdb->insert(
+			$spaces_table,
+			[
+				'category_id' => $cat_id,
+				'parent_id'   => 0,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => 'QA Visibility Probe Space',
+				'slug'        => $slug . '-space',
+				'visibility'  => 'public',
+				'status'      => 'active',
+				'created_at'  => \Jetonomy\now(),
+			]
+		);
+		$space_id = (int) $wpdb->insert_id;
+
+		wp_set_current_user( 0 );
+		$guest_space_ids = array_map( 'intval', array_column( Space::list_by_category( $cat_id, 0 ), 'id' ) );
+		$this->check(
+			'CV5: a public space in a hidden category is concealed from a guest',
+			! in_array( $space_id, $guest_space_ids, true )
+		);
+
+		$owner_space_ids = array_map( 'intval', array_column( Space::list_by_category( $cat_id, 1 ), 'id' ) );
+		$this->check(
+			'CV6: the owner still sees that space',
+			in_array( $space_id, $owner_space_ids, true )
+		);
+
+		// CV7-CV12: the ACCESS half. CV1-CV6 only proved the space and category
+		// stay out of LISTINGS, which is why the leak survived a release: every
+		// read path answered from the space's own `visibility` field and never
+		// looked at the parent, so a stranger holding the URL or the id got the
+		// space, its topics and its JSON-LD. Each check below is one surface
+		// that was serving that content.
+		$posts_table = \Jetonomy\table( 'posts' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$posts_table,
+			[
+				'space_id'   => $space_id,
+				'author_id'  => 1,
+				'title'      => 'QA Visibility Probe Topic',
+				'slug'       => $slug . '-topic',
+				'content'    => 'probe',
+				'status'     => 'publish',
+				'created_at' => \Jetonomy\now(),
+			]
+		);
+		$post_id  = (int) $wpdb->insert_id;
+		$probe_post = (object) [
+			'id'         => $post_id,
+			'space_id'   => $space_id,
+			'author_id'  => 1,
+			'status'     => 'publish',
+			'is_private' => 0,
+		];
+		$probe_space = (object) [
+			'id'          => $space_id,
+			'category_id' => $cat_id,
+			'visibility'  => 'public',
+		];
+
+		wp_set_current_user( 0 );
+		$this->check(
+			'CV7: a guest cannot read a space inside a hidden category',
+			! Permission_Engine::can( 0, 'read', $space_id )
+		);
+		$this->check(
+			'CV8: the direct URL conceals it from a guest (404, not a gate page)',
+			Space::concealed_from_viewer( $probe_space, 0 )
+		);
+		$this->check(
+			'CV9: the REST read gate agrees with the template gate',
+			! Space::readable_by_viewer( $probe_space, 0 )
+		);
+		$this->check(
+			'CV10: its topics are unreadable by a guest on every surface',
+			! Permission_Engine::can_read_post( 0, $probe_post )
+		);
+		$this->check(
+			'CV11: find_visible withholds a hidden category from a guest',
+			null === Category::find_visible( $cat_id, 0 )
+		);
+
+		// CV13-CV15: membership overrides the parent, the same way it does for
+		// a hidden SPACE. QA's read of one word has to hold: "hidden" means
+		// only members can find this, so tidying a category must not take a
+		// member's own space away from them - and a card that shows in a
+		// listing must open, which is why the listing and the read side are
+		// asserted together on the same row.
+		$member_id = wp_insert_user(
+			[
+				'user_login' => 'jt_qa_cv_member_' . $post_id,
+				'user_pass'  => wp_generate_password( 16 ),
+				'user_email' => 'jt-qa-cv-' . $post_id . '@test.local',
+				'role'       => 'subscriber',
+			]
+		);
+		$member_id = ( $member_id && ! is_wp_error( $member_id ) ) ? (int) $member_id : 0;
+
+		if ( $member_id ) {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$spaces_table,
+				[
+					'category_id' => $cat_id,
+					'parent_id'   => 0,
+					'author_id'   => 1,
+					'type'        => 'forum',
+					'title'       => 'QA Visibility Probe Private Space',
+					'slug'        => $slug . '-private',
+					'visibility'  => 'private',
+					'status'      => 'active',
+					'created_at'  => \Jetonomy\now(),
+				]
+			);
+			$priv_space_id = (int) $wpdb->insert_id;
+			SpaceMember::add( $priv_space_id, $member_id, 'member' );
+
+			wp_set_current_user( $member_id );
+			$member_space_ids = array_map( 'intval', array_column( Space::list_by_category( $cat_id, $member_id ), 'id' ) );
+			$this->check(
+				'CV13: a member keeps their own space listed inside a hidden category',
+				in_array( $priv_space_id, $member_space_ids, true )
+			);
+			$this->check(
+				'CV14: and can read it - a card that lists must open',
+				Permission_Engine::can( $member_id, 'read', $priv_space_id )
+			);
+			$this->check(
+				'CV15: but gains nothing else in that category',
+				! in_array( $space_id, $member_space_ids, true )
+					&& ! Permission_Engine::can( $member_id, 'read', $space_id )
+			);
+
+			$wpdb->delete( \Jetonomy\table( 'space_members' ), [ 'space_id' => $priv_space_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, [ 'id' => $priv_space_id ] );
+			wp_delete_user( $member_id );
+		} else {
+			$this->skip( 'CV13: member keeps their space', 'test user creation failed' );
+			$this->skip( 'CV14: member can read it', 'precondition not met' );
+			$this->skip( 'CV15: member gains nothing else', 'precondition not met' );
+		}
+
+		// The widen-check that stops all of CV7-CV11 being satisfied by simply
+		// denying everyone.
+		wp_set_current_user( 1 );
+		$this->check(
+			'CV12: the owner still reads the space and its topics',
+			Permission_Engine::can( 1, 'read', $space_id )
+				&& Space::readable_by_viewer( $probe_space, 1 )
+				&& Permission_Engine::can_read_post( 1, $probe_post )
+				&& null !== Category::find_visible( $cat_id, 1 )
+		);
+
+		wp_set_current_user( $previous_user );
+
+		$wpdb->delete( $posts_table, [ 'id' => $post_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $spaces_table, [ 'id' => $space_id ] );
+		$wpdb->delete( \Jetonomy\table( 'categories' ), [ 'id' => $cat_id ] );
+	}
+
+	/**
+	 * A child space is listed under the category it was assigned.
+	 *
+	 * The category listing used to carry `parent_id = 0`, so a space with a
+	 * parent had its `category_id` written, indexed and then ignored. Nothing
+	 * nested those children either, so an imported sub-forum was reachable
+	 * from nowhere in the directory - the shape two customers reported after
+	 * migrating.
+	 *
+	 * The count is asserted alongside the list because they are separate
+	 * queries that carried the same clause: fixing one and not the other gives
+	 * pagination that disagrees with its own rows.
+	 */
+	private function test_child_space_in_category_listing(): void {
+		global $wpdb;
+
+		$suffix = wp_generate_password( 6, false, false );
+		$cats   = \Jetonomy\table( 'categories' );
+		$spaces = \Jetonomy\table( 'spaces' );
+
+		$wpdb->insert(
+			$cats,
+			[
+				'name'       => 'QA Child Listing Probe',
+				'slug'       => 'jt-qa-child-' . $suffix,
+				'visibility' => 'public',
+				'parent_id'  => 0,
+				'sort_order' => 0,
+				'created_at' => \Jetonomy\now(),
+			]
+		);
+		$cat_id = (int) $wpdb->insert_id;
+
+		$make_space = static function ( int $parent_id, int $category_id, string $slug ) use ( $wpdb, $spaces ): int {
+			$wpdb->insert(
+				$spaces,
+				[
+					'category_id' => $category_id,
+					'parent_id'   => $parent_id,
+					'author_id'   => 1,
+					'type'        => 'forum',
+					'title'       => 'QA Child Listing ' . $slug,
+					'slug'        => $slug,
+					'visibility'  => 'public',
+					'status'      => 'active',
+					'created_at'  => \Jetonomy\now(),
+				]
+			);
+			return (int) $wpdb->insert_id;
+		};
+
+		$parent_id = $make_space( 0, $cat_id, 'jt-qa-parent-' . $suffix );
+		$child_id  = $make_space( $parent_id, $cat_id, 'jt-qa-kid-' . $suffix );
+
+		$previous_user = get_current_user_id();
+		wp_set_current_user( 0 );
+
+		$ids = array_map( 'intval', array_column( Space::list_by_category( $cat_id, 0 ), 'id' ) );
+		$this->check( 'SS1: a child space appears under its assigned category', in_array( $child_id, $ids, true ) );
+		$this->check( 'SS2: its top-level parent is still listed', in_array( $parent_id, $ids, true ) );
+
+		$count = (int) Space::count_by_category( $cat_id, 0 );
+		$this->check(
+			'SS3: count_by_category agrees with the rows it paginates',
+			$count === count( $ids ),
+			"count={$count}, rows=" . count( $ids )
+		);
+
+		// SS4: listed once. The tree groups by category, so a duplicate would
+		// show up as the same id twice in the same bucket.
+		$tree   = Space::visible_by_category( 0 );
+		$bucket = array_map( 'intval', array_column( $tree[ $cat_id ] ?? [], 'id' ) );
+		$this->check(
+			'SS4: the child is listed exactly once, not also nested',
+			1 === count( array_keys( $bucket, $child_id, true ) ),
+			wp_json_encode( $bucket )
+		);
+
+		wp_set_current_user( $previous_user );
+
+		$wpdb->delete( $spaces, [ 'id' => $child_id ] );
+		$wpdb->delete( $spaces, [ 'id' => $parent_id ] );
+		$wpdb->delete( $cats, [ 'id' => $cat_id ] );
+		self::bust_space_tree();
+	}
+
+	/**
+	 * Drop the cached category tree so a probe's rows never outlive the test.
+	 */
+	private static function bust_space_tree(): void {
+		if ( method_exists( Space::class, 'bump_tree_generation' ) ) {
+			$m = new \ReflectionMethod( Space::class, 'bump_tree_generation' );
+			$m->setAccessible( true );
+			$m->invoke( null );
+		}
+	}
+
+	/**
+	 * The leaderboard ranks by reputation, and only real members hold a rank.
+	 *
+	 * Two defects sat in the same view. Rows were numbered by array index
+	 * while the "Your rank" badge used competition ranking, so tied members
+	 * were numbered 10 and 11 while both were told "#10". And a profile whose
+	 * WP user no longer existed was fetched, failed to render, and was dropped
+	 * AFTER spending its position - leaving a visible hole (... 17, 18, 20)
+	 * and shifting everyone below it.
+	 */
+	private function test_leaderboard_ranking(): void {
+		$rows = UserProfile::list_for_leaderboard( 'all', 100, 0 );
+
+		// LB1: no profile without a WP user may hold a rank. This is asserted
+		// on the QUERY, not the view — filtering in the view would leave the
+		// total and rank_for_user() counting a different population.
+		$orphans = array_filter( $rows, static fn( $r ) => ! get_user_by( 'ID', (int) $r->user_id ) );
+		$this->check(
+			'LB1: leaderboard rows all resolve to a real member',
+			0 === count( $orphans ),
+			count( $orphans ) . ' orphan profile(s)'
+		);
+
+		// LB2: the total counts the same population the page lists.
+		$total = UserProfile::count_for_leaderboard( 'all' );
+		$this->check(
+			'LB2: count_for_leaderboard matches the listed population',
+			$total === count( $rows ),
+			"count={$total}, rows=" . count( $rows )
+		);
+
+		// LB3: ties share a rank — the property the view must now honour.
+		// Derived from the same ordered page the view renders.
+		$ok       = true;
+		$detail   = '';
+		$prev_rep = null;
+		$expected = 0;
+		foreach ( array_values( $rows ) as $i => $row ) {
+			$rep = (int) $row->reputation;
+			if ( null === $prev_rep || $rep < $prev_rep ) {
+				$expected = $i + 1;
+			}
+			$prev_rep = $rep;
+
+			$actual = UserProfile::rank_for_user( (int) $row->user_id, 'all' );
+			if ( $actual !== $expected ) {
+				$ok     = false;
+				$detail = "user {$row->user_id} rep {$rep}: rank_for_user={$actual}, position-derived={$expected}";
+				break;
+			}
+		}
+		$this->check( 'LB3: competition rank agrees with reputation order (ties share)', $ok, $detail );
+
+		// LB4: ranks never skip except across a shared rank — the signature of
+		// the old hole. After N members share a rank, the next is rank+N.
+		$ranks    = array_map( static fn( $r ) => UserProfile::rank_for_user( (int) $r->user_id, 'all' ), array_values( $rows ) );
+		$holes    = 0;
+		$run_rank = null;
+		$run_len  = 0;
+		foreach ( $ranks as $r ) {
+			if ( $r === $run_rank ) {
+				++$run_len;
+				continue;
+			}
+			if ( null !== $run_rank && $r !== $run_rank + $run_len ) {
+				++$holes;
+			}
+			$run_rank = $r;
+			$run_len  = 1;
+		}
+		$this->check( 'LB4: no unexplained gap in the rank sequence', 0 === $holes, "{$holes} gap(s)" );
+
+		// LB5: the REST endpoint returns the SAME numbers as the shared
+		// derivation. LB1-LB4 tested the model only, so the web board and the
+		// REST controller could each number rows their own way and nothing
+		// failed - which is exactly what happened: the web showed shared ranks
+		// while REST counted positions, so the app contradicted the badge the
+		// same member saw in a browser.
+		$page     = UserProfile::list_for_leaderboard( 'all', 20, 0 );
+		$expected = UserProfile::competition_ranks( $page, 'all', 0 );
+		$request  = new \WP_REST_Request( 'GET', '/jetonomy/v1/leaderboards' );
+		$request->set_param( 'limit', 20 );
+		$request->set_param( 'offset', 0 );
+		$payload = rest_do_request( $request )->get_data();
+		$actual  = array_values( wp_list_pluck( (array) ( $payload['data'] ?? array() ), 'rank' ) );
+
+		// Compare only the rows REST returned (a profile with no WP user is
+		// skipped there by design), matched up by user id.
+		$by_user = array();
+		foreach ( array_values( $page ) as $i => $row ) {
+			$by_user[ (int) $row->user_id ] = $expected[ $i ] ?? 0;
+		}
+		$mismatch = 0;
+		foreach ( (array) ( $payload['data'] ?? array() ) as $item ) {
+			$uid = (int) ( $item['user_id'] ?? 0 );
+			if ( isset( $by_user[ $uid ] ) && (int) $item['rank'] !== $by_user[ $uid ] ) {
+				++$mismatch;
+			}
+		}
+		$this->check(
+			'LB5: REST ranks match the shared competition derivation',
+			0 === $mismatch && count( $actual ) > 0,
+			"{$mismatch} row(s) disagree"
+		);
+
+		// LB6: the ordering is deterministic. Without a tiebreaker, MySQL may
+		// return tied rows in a different order per page under LIMIT/OFFSET, so
+		// a tied member can appear on two pages or on none.
+		$first  = wp_list_pluck( UserProfile::list_for_leaderboard( 'all', 20, 0 ), 'user_id' );
+		$second = wp_list_pluck( UserProfile::list_for_leaderboard( 'all', 20, 0 ), 'user_id' );
+		$this->check(
+			'LB6: the leaderboard page order is stable across identical queries',
+			$first === $second && count( $first ) > 0
+		);
+	}
+
+	/**
+	 * reply_count counts PUBLISHED replies, through every status path.
+	 *
+	 * Reply::create() used to increment unconditionally while the counter -
+	 * and Recount, which defines it - mean published only. update() already
+	 * applies its own +1/-1 when a reply crosses the publish boundary, so a
+	 * reply that did not start published was counted twice: held for approval
+	 * gave counter 1 against 0 published, and approving it gave 2 against 1.
+	 * Every moderated reply permanently inflated its thread by one.
+	 */
+	private function test_reply_count_moderation(): void {
+		global $wpdb;
+
+		$post_id = (int) $wpdb->get_var( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" );
+		if ( ! $post_id ) {
+			$this->check( 'RC0: a published post exists to reply to', false, 'no post available' );
+			return;
+		}
+
+		$posts_table   = \Jetonomy\table( 'posts' );
+		$replies_table = \Jetonomy\table( 'replies' );
+
+		$counter = static fn() => (int) $wpdb->get_var( $wpdb->prepare( "SELECT reply_count FROM {$posts_table} WHERE id = %d", $post_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$actual  = static fn() => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_table} WHERE post_id = %d AND status = 'publish'", $post_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$restore = $counter();
+
+		// RC1: a reply held for approval is not yet a published reply.
+		$held = Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => 1,
+				'content'   => 'QA moderation probe',
+				'status'    => 'pending',
+			]
+		);
+		$this->check(
+			'RC1: a pending reply does not raise reply_count',
+			$counter() === $actual(),
+			'counter ' . $counter() . ' vs published ' . $actual()
+		);
+
+		// RC2: approving it counts it exactly once, not a second time.
+		Reply::update( $held, [ 'status' => 'publish' ] );
+		$this->check(
+			'RC2: approving a held reply counts it exactly once',
+			$counter() === $actual(),
+			'counter ' . $counter() . ' vs published ' . $actual()
+		);
+
+		// RC3: and the ordinary path is unchanged.
+		$normal = Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => 1,
+				'content'   => 'QA direct probe',
+			]
+		);
+		$this->check( 'RC3: a directly published reply still counts', $counter() === $actual() );
+
+		Reply::delete( $normal );
+		Reply::delete( $held );
+		$this->check( 'RC4: deleting replies leaves the counter correct', $counter() === $actual() );
+
+		// RC5-RC7: an ORPHANED reply must still render. This is the customer
+		// symptom the card was opened for - a thread advertising "3 replies" and
+		// showing none - and it survived the first fix because that one only
+		// corrected the counter. Any moderator trashing a reply that has
+		// children reproduces it.
+		$parent_id = Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => 1,
+				'content'   => 'QA orphan parent',
+			]
+		);
+		$child_id = Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => 1,
+				'content'   => 'QA orphan child',
+				'parent_id' => $parent_id,
+			]
+		);
+		$parent_id = is_wp_error( $parent_id ) ? 0 : (int) $parent_id;
+		$child_id  = is_wp_error( $child_id ) ? 0 : (int) $child_id;
+
+		if ( $parent_id > 0 && $child_id > 0 ) {
+			$root_ids = static function () use ( $post_id ): array {
+				return array_map(
+					static fn( $r ) => (int) $r->id,
+					Reply::get_threaded( $post_id, 'oldest', 50, 0 )
+				);
+			};
+
+			$this->check(
+				'RC5: a nested reply is NOT a root while its parent is published',
+				! in_array( $child_id, $root_ids(), true )
+			);
+
+			Reply::update( $parent_id, [ 'status' => 'trash' ] );
+			$this->check(
+				'RC6: trashing the parent promotes the child to a root, not oblivion',
+				in_array( $child_id, $root_ids(), true )
+			);
+			$this->check(
+				'RC7: and the top-level count agrees with what renders',
+				Reply::count_top_level( $post_id ) === count( $root_ids() )
+			);
+
+			$wpdb->delete( table( 'replies' ), [ 'id' => $child_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( table( 'replies' ), [ 'id' => $parent_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		} else {
+			$this->skip( 'RC5: nested reply is not a root', 'reply insert failed' );
+			$this->skip( 'RC6: orphan promoted to root', 'precondition not met' );
+			$this->skip( 'RC7: count agrees with render', 'precondition not met' );
+		}
+
+		$wpdb->update( $posts_table, [ 'reply_count' => $restore ], [ 'id' => $post_id ] );
+	}
+
+	/**
+	 * The bbPress importer counts what it will actually take.
+	 *
+	 * Every query hard-filtered `post_status = 'publish'`, which dropped closed
+	 * topics and private/hidden forums - and the pre-import estimate used the
+	 * SAME filter, so the final tally matched the estimate exactly and the
+	 * shortfall was invisible from both ends. That symmetry is the thing worth
+	 * guarding: an estimate that disagrees with the import is a visible bug, an
+	 * estimate that agrees with a lossy import is a silent one.
+	 *
+	 * Skips when no bbPress content is present, so this is meaningful on a
+	 * migration site and harmless everywhere else.
+	 */
+	private function test_bbpress_import_scope(): void {
+		global $wpdb;
+
+		$importer = new \Jetonomy\Import\BBPress_Importer();
+		if ( ! $importer->is_source_available() ) {
+			$this->skip( 'BB1: bbPress import scope', 'no bbPress content on this site' );
+			return;
+		}
+
+		$stats = $importer->get_source_stats();
+
+		// BB1: a closed topic is a topic. bbPress stores "closed" as the
+		// post_status, so a publish-only filter drops it.
+		$closed = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status = 'closed'" );
+		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN ('publish','closed')" );
+		$this->check(
+			'BB1: the topic estimate includes closed topics',
+			(int) $stats['topics'] === $topics,
+			"estimate {$stats['topics']}, publish+closed {$topics} (closed: {$closed})"
+		);
+
+		// BB2: private and hidden forums are forums.
+		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN ('publish','private','hidden')" );
+		$this->check(
+			'BB2: the forum estimate includes private and hidden forums',
+			(int) $stats['forums'] === $forums,
+			"estimate {$stats['forums']}, importable {$forums}"
+		);
+
+		// BB3: the headline total is the sum of the parts the owner is shown -
+		// they drifted apart before because each was computed independently.
+		$this->check(
+			'BB3: total agrees with the per-type estimates',
+			$importer->get_total_count() === array_sum( $stats ),
+			$importer->get_total_count() . ' vs ' . array_sum( $stats )
+		);
+	}
+
+	/**
+	 * The media sweep deletes only files we recorded as ours, and not on the
+	 * first run.
+	 *
+	 * MD3 is the one that matters. An earlier version of this sweep was scoped
+	 * to META_FLAG, which the backfill also applies to any subscriber-authored
+	 * attachment - including another forum plugin's - and it force-deleted
+	 * wpForo's files mid-migration, destroying the content the import existed
+	 * to rescue. If MD3 ever fails, that incident is back.
+	 */
+	private function test_media_cleanup_scope(): void {
+		global $wpdb;
+
+		$previous = get_option( 'jetonomy_media_cleanup_report' );
+		delete_option( 'jetonomy_media_cleanup_report' );
+
+		$make = static function ( string $title, array $meta, int $days ): int {
+			$when = gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
+			$id   = wp_insert_post(
+				[
+					'post_type'      => 'attachment',
+					'post_title'     => $title,
+					'post_status'    => 'inherit',
+					'post_author'    => 1,
+					'post_mime_type' => 'image/png',
+					'post_date'      => $when,
+					'post_date_gmt'  => $when,
+				]
+			);
+			foreach ( $meta as $key => $value ) {
+				update_post_meta( $id, $key, $value );
+			}
+			return (int) $id;
+		};
+
+		$ours_old   = $make( 'QA media ours old', [ \Jetonomy\Media_Library::META_ORIGIN => 'upload' ], 5 );
+		$ours_fresh = $make( 'QA media ours fresh', [ \Jetonomy\Media_Library::META_ORIGIN => 'upload' ], 0 );
+		// Flagged by the backfill but NOT recorded as ours - i.e. somebody
+		// else's file. The shape the old sweep destroyed.
+		$foreign = $make( 'QA media foreign', [ \Jetonomy\Media_Library::META_FLAG => '1' ], 30 );
+
+		/*
+		 * MD5-MD7: the sweep must not delete a file that is IN USE.
+		 *
+		 * The first version defined "in use" as "has a jt_attachments link
+		 * row", and the only free caller of Attachment::link() is the importer
+		 * - so every ordinary composer upload looked abandoned. QA reproduced
+		 * it deleting an image inline in a published reply. These three cover
+		 * each way an upload is actually referenced; if any fails, live member
+		 * content is being destroyed.
+		 */
+		$used = array();
+		$mk_used = static function ( string $title ) use ( $make, &$used ) {
+			$id = $make( $title, array( \Jetonomy\Media_Library::META_ORIGIN => 'upload' ), 5 );
+			update_post_meta( $id, '_wp_attached_file', '2026/09/' . sanitize_title( $title ) . '.png' );
+			$used[] = $id;
+			return array( $id, (string) get_post_meta( $id, '_wp_attached_file', true ) );
+		};
+
+		[ $inline_id, $inline_file ] = $mk_used( 'QA media inline in reply' );
+		$reply_id                    = Reply::create(
+			array(
+				'post_id'   => (int) $wpdb->get_var( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" ),
+				'author_id' => 1,
+				'content'   => '<img src="' . esc_url( content_url( '/uploads/' . $inline_file ) ) . '" />',
+			)
+		);
+
+		[ $avatar_id, $avatar_file ] = $mk_used( 'QA media as avatar' );
+		$profiles                    = \Jetonomy\table( 'user_profiles' );
+		$prev_avatar                 = $wpdb->get_var( "SELECT avatar_url FROM {$profiles} WHERE user_id = 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles} SET avatar_url = %s WHERE user_id = 1", content_url( '/uploads/' . $avatar_file ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		[ $cover_id, $cover_file ] = $mk_used( 'QA media as space cover' );
+		$spaces_t                  = \Jetonomy\table( 'spaces' );
+		$cover_space               = (int) $wpdb->get_var( "SELECT id FROM {$spaces_t} ORDER BY id ASC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$prev_cover                = $wpdb->get_var( $wpdb->prepare( "SELECT cover_image FROM {$spaces_t} WHERE id = %d", $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_t} SET cover_image = %s WHERE id = %d", content_url( '/uploads/' . $cover_file ), $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$first = \Jetonomy\Media_Library::cleanup_abandoned_uploads();
+		$this->check(
+			'MD1: the first sweep on a site reports and deletes nothing',
+			0 === $first['deleted'] && $first['reported'] >= 1,
+			wp_json_encode( $first )
+		);
+		$this->check( 'MD1b: and the eligible upload is still there', (bool) get_post( $ours_old ) );
+
+		// MD1c: the scheduled hook actually reaches the sweep. A job can be
+		// scheduled and still do nothing if its callback was never registered -
+		// that exact shape was live in Pro, where the GC ran daily against a
+		// table lookup that silently matched nothing.
+		$this->check(
+			'MD1c: jetonomy_cleanup_media is wired to a callback',
+			has_action( 'jetonomy_cleanup_media' ) !== false
+		);
+
+		$second = \Jetonomy\Media_Library::cleanup_abandoned_uploads();
+		$this->check( 'MD2: the next sweep removes an abandoned upload of ours', ! get_post( $ours_old ), wp_json_encode( $second ) );
+		$this->check( 'MD3: a file that is NOT ours is never deleted', (bool) get_post( $foreign ) );
+		$this->check( 'MD4: an upload inside the 24h grace is kept', (bool) get_post( $ours_fresh ) );
+
+		// The three in-use shapes. Any failure here is live content destroyed.
+		$this->check( 'MD5: an image inline in a published reply is never deleted', (bool) get_post( $inline_id ) );
+		$this->check( 'MD6: a member avatar is never deleted', (bool) get_post( $avatar_id ) );
+		$this->check( 'MD7: a space cover image is never deleted', (bool) get_post( $cover_id ) );
+
+		// Restore the rows the in-use fixtures borrowed.
+		Reply::delete( $reply_id );
+		$wpdb->query( $wpdb->prepare( "UPDATE {$profiles} SET avatar_url = %s WHERE user_id = 1", $prev_avatar ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "UPDATE {$spaces_t} SET cover_image = %s WHERE id = %d", $prev_cover, $cover_space ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		foreach ( $used as $id ) {
+			if ( get_post( $id ) ) {
+				wp_delete_post( $id, true );
+			}
+		}
+
+		foreach ( [ $ours_old, $ours_fresh, $foreign ] as $id ) {
+			if ( get_post( $id ) ) {
+				wp_delete_post( $id, true );
+			}
+		}
+
+		if ( false === $previous ) {
+			delete_option( 'jetonomy_media_cleanup_report' );
+		} else {
+			update_option( 'jetonomy_media_cleanup_report', $previous, false );
+		}
+	}
+
+	/**
+	 * jt_categories.space_count survives a space being moved or archived.
+	 *
+	 * Only create() incremented it and only purge decremented it, so a space
+	 * moved between categories left the old count too high and the new one too
+	 * low, and archiving never decremented at all - while Recount counts active
+	 * spaces only. `wp jetonomy recount` repaired it and the next move broke it
+	 * again, which is the signature of a missing write-path adjustment.
+	 *
+	 * Asserted as "stored equals actual" after each transition rather than by
+	 * expected numbers, so the test stays true whatever the fixture holds.
+	 */
+	private function test_category_space_count(): void {
+		global $wpdb;
+
+		$cats   = \Jetonomy\table( 'categories' );
+		$spaces = \Jetonomy\table( 'spaces' );
+		$suffix = wp_generate_password( 6, false, false );
+
+		$mk_cat = static function ( string $name ) use ( $wpdb, $cats ) {
+			$wpdb->insert(
+				$cats,
+				array(
+					'name'       => $name,
+					'slug'       => sanitize_title( $name ),
+					'visibility' => 'public',
+					'parent_id'  => 0,
+					'sort_order' => 0,
+					'created_at' => \Jetonomy\now(),
+				)
+			);
+			return (int) $wpdb->insert_id;
+		};
+
+		$cat_a = $mk_cat( 'QA Count A ' . $suffix );
+		$cat_b = $mk_cat( 'QA Count B ' . $suffix );
+
+		$space_id = (int) Space::create(
+			array(
+				'category_id' => $cat_a,
+				'parent_id'   => 0,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => 'QA Count Space ' . $suffix,
+				'slug'        => 'qa-count-space-' . $suffix,
+				'visibility'  => 'public',
+				'status'       => 'active',
+			)
+		);
+
+		$stored = static fn( int $c ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT space_count FROM {$cats} WHERE id = %d", $c ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$actual = static fn( int $c ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE category_id = %d AND status = 'active'", $c ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exact  = static fn(): bool => $stored( $cat_a ) === $actual( $cat_a ) && $stored( $cat_b ) === $actual( $cat_b );
+		$detail = static fn(): string => "A {$stored( $cat_a )}/{$actual( $cat_a )}, B {$stored( $cat_b )}/{$actual( $cat_b )}";
+
+		$this->check( 'SC1: creating a space counts it', $exact(), $detail() );
+
+		Space::update( $space_id, array( 'category_id' => $cat_b ) );
+		$this->check( 'SC2: moving a space moves the count with it', $exact(), $detail() );
+
+		Space::update( $space_id, array( 'status' => 'archived' ) );
+		$this->check( 'SC3: archiving a space decrements its category', $exact(), $detail() );
+
+		Space::update( $space_id, array( 'category_id' => $cat_a, 'status' => 'active' ) );
+		$this->check( 'SC4: a move and a restore in one call stay exact', $exact(), $detail() );
+
+		$wpdb->delete( $spaces, array( 'id' => $space_id ) );
+		$wpdb->delete( $cats, array( 'id' => $cat_a ) );
+		$wpdb->delete( $cats, array( 'id' => $cat_b ) );
+	}
+
+	/**
+	 * An importer can recognise its OWN rows, and only its own.
+	 *
+	 * This is the mechanism that replaced slug matching, and the reason matters
+	 * more than the mechanics: a bbPress forum called "general" matches an
+	 * owner's own existing "general" space, so a slug-based re-run adopted it
+	 * and poured the source forum's topics into the owner's space - skipping
+	 * the visibility mapping on the way, so private content could land in a
+	 * public space.
+	 *
+	 * IM4 is the one that would catch a regression to slug matching: identity
+	 * must not be shared with a row this importer never created.
+	 */
+	private function test_import_map(): void {
+		global $wpdb;
+
+		$table = \Jetonomy\table( 'import_map' );
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+			// FAIL, not skip. This skipped once and the suite reported all-green
+			// on a site where the 2.0.0 migration had never run - so a release
+			// blocker (importers silently duplicating everything on a re-run,
+			// because they had no identity table) was invisible to the gate that
+			// exists to catch it. A skip is for a condition the site legitimately
+			// may not meet; a table this plugin version is supposed to have
+			// created is not one of those.
+			$this->check(
+				'IM0: jt_import_map exists (migration ran)',
+				false,
+				'table missing - Migration_2_0_0 has not run; every importer will duplicate on a re-run'
+			);
+			return;
+		}
+
+		$this->check( 'IM0: jt_import_map exists (migration ran)', true );
+
+		$source = 'qa-' . wp_generate_password( 6, false, false );
+
+		// A REAL row, created here and removed at the end. These assertions used
+		// to point at the literal space id 11 and post id 1, which exist on this
+		// machine and on plenty of others - and nowhere else. Import_Map::find()
+		// correctly self-heals a mapping whose target is gone, so on any site
+		// without space 11 the product behaved perfectly and the suite went RED.
+		// A gate documented as "zero FAIL lines" that fails for no defect teaches
+		// people to ignore red, which is what let the 2.0.0 migration blocker
+		// through in the first place.
+		$spaces_t = table( 'spaces' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$spaces_t,
+			array(
+				'category_id' => 0,
+				'parent_id'   => 0,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => 'QA import-map probe',
+				'slug'        => 'qa-import-map-probe-' . wp_generate_password( 6, false, false ),
+				'visibility'  => 'public',
+				'status'      => 'active',
+				'created_at'  => \Jetonomy\now(),
+			)
+		);
+		$probe_space_id = (int) $wpdb->insert_id;
+
+		if ( $probe_space_id <= 0 ) {
+			$this->skip( 'IM1: a recorded source row resolves', 'probe space insert failed' );
+			$this->skip( 'IM2: an unrecorded source row resolves to nothing', 'precondition not met' );
+			$this->skip( 'IM3: a stale mapping self-heals', 'precondition not met' );
+			$this->skip( 'IM4: identity is scoped to source and type', 'precondition not met' );
+			return;
+		}
+
+		Import_Map::record( $source, 'space', 4242, $probe_space_id );
+		$this->check( 'IM1: a recorded source row resolves to its Jetonomy row', $probe_space_id === Import_Map::find( $source, 'space', 4242 ) );
+		$this->check( 'IM2: an unrecorded source row resolves to nothing', 0 === Import_Map::find( $source, 'space', 9999 ) );
+
+		// IM3: a mapping whose target has been deleted must not make the
+		// importer skip that content forever - an owner who deletes an
+		// imported space and re-imports should get it back.
+		Import_Map::record( $source, 'space', 4343, 99999999 );
+		$this->check( 'IM3: a mapping pointing at a deleted row self-heals', 0 === Import_Map::find( $source, 'space', 4343 ) );
+
+		// IM4: identity is per source AND per type. Another importer's row, or
+		// the same id under a different type, is not ours. The 'post' mapping
+		// deliberately points at a row that does NOT have to exist - what is
+		// asserted is that the SPACE lookup is unaffected by it.
+		Import_Map::record( $source, 'post', 4242, $probe_space_id );
+		$this->check(
+			'IM4: identity is scoped to source and object type',
+			0 === Import_Map::find( 'qa-other-source', 'space', 4242 )
+			&& $probe_space_id === Import_Map::find( $source, 'space', 4242 ),
+			'a different source or type must not resolve to our row'
+		);
+
+		$wpdb->delete( $spaces_t, array( 'id' => $probe_space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $table, array( 'source' => $source ) );
+	}
+
 	private function test_reorder(): void {
 		// RO1: offset is absolute, derived from page and page size.
 		$this->check( 'RO1: page 1 offset is 0', 0 === jetonomy_reorder_offset( 1, 20 ) );
@@ -661,4 +2096,105 @@ class Model_Tests {
 			$this->fail++;
 		}
 	}
+
+	/**
+	 * The 2.0.0 counter backfill repairs a bounded slice, and no more than it.
+	 *
+	 * BF1 is the regression guard that matters. The range is half-open -
+	 * [from, until) - and the first slice therefore starts AT the cursor rather
+	 * than after it. An exclusive lower bound looks equivalent and is not: with
+	 * the cursor starting at 0 it skipped key 0 entirely, which on this schema
+	 * left a user_profiles row at user_id 0 carrying its drift forever. BF1
+	 * fails on that earlier bound.
+	 *
+	 * BF2 is the other half of the same contract: a slice must not reach past
+	 * its own span, or the cursor stops meaning anything and a resumed job
+	 * would silently skip whatever the dead batch had not yet committed.
+	 */
+	private function test_recount_backfill(): void {
+		global $wpdb;
+
+		$posts_t   = \Jetonomy\table( 'posts' );
+		$replies_t = \Jetonomy\table( 'replies' );
+		$suffix    = wp_generate_password( 6, false, false );
+
+		$mk_post = static function ( string $title ) use ( $wpdb, $posts_t ) {
+			$wpdb->insert(
+				$posts_t,
+				array(
+					'space_id'     => 1,
+					'author_id'    => 1,
+					'type'         => 'forum',
+					'title'        => $title,
+					'slug'         => sanitize_title( $title ),
+					'content'      => 'qa',
+					'status'       => 'publish',
+					'reply_count'  => 0,
+					'published_at' => \Jetonomy\now(),
+					'created_at'   => \Jetonomy\now(),
+				)
+			);
+			return (int) $wpdb->insert_id;
+		};
+
+		$low  = $mk_post( 'QA Backfill Low ' . $suffix );
+		$high = $mk_post( 'QA Backfill High ' . $suffix );
+
+		// One published reply each, so the truthful count is 1 apiece.
+		foreach ( array( $low, $high ) as $pid ) {
+			$wpdb->insert(
+				$replies_t,
+				array(
+					'post_id'    => $pid,
+					'author_id'  => 1,
+					'content'    => 'qa',
+					'status'     => 'publish',
+					'created_at' => \Jetonomy\now(),
+				)
+			);
+		}
+
+		// Drift both, the way an upgrading site carries it.
+		$wpdb->query( $wpdb->prepare( "UPDATE {$posts_t} SET reply_count = 9 WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$stored = static fn( int $id ): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT reply_count FROM {$posts_t} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// A slice that starts exactly at $low must include $low.
+		\Jetonomy\Recount::run( 'posts', $low, $low + 1 );
+
+		$this->check(
+			'BF1: a slice includes the key it starts at',
+			1 === $stored( $low ),
+			"post {$low} reply_count " . $stored( $low ) . ', expected 1'
+		);
+
+		$this->check(
+			'BF2: a slice does not reach past its span',
+			9 === $stored( $high ),
+			"post {$high} reply_count " . $stored( $high ) . ', expected 9 (untouched)'
+		);
+
+		// A site that already has a record must not be rewound by a second
+		// upgrade pass - that is what makes a re-run a no-op.
+		$saved = get_option( 'jetonomy_recount_backfill', null );
+		update_option( 'jetonomy_recount_backfill', array( 'stage' => 'users', 'cursor' => 7, 'done' => false ), false );
+		\Jetonomy\Recount_Backfill::mark_pending();
+		$after = (array) get_option( 'jetonomy_recount_backfill' );
+
+		$this->check(
+			'BF3: marking pending twice does not rewind progress',
+			'users' === ( $after['stage'] ?? '' ) && 7 === (int) ( $after['cursor'] ?? 0 ),
+			'stage ' . ( $after['stage'] ?? '?' ) . ', cursor ' . ( $after['cursor'] ?? '?' )
+		);
+
+		if ( null === $saved ) {
+			delete_option( 'jetonomy_recount_backfill' );
+		} else {
+			update_option( 'jetonomy_recount_backfill', $saved, false );
+		}
+
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$replies_t} WHERE post_id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$posts_t} WHERE id IN (%d, %d)", $low, $high ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
 }

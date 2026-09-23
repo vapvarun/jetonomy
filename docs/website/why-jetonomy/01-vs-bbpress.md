@@ -14,7 +14,7 @@ How Jetonomy compares to bbPress - and why communities are switching to a modern
 
 | Feature | bbPress | Jetonomy |
 |---------|---------|----------|
-| Data storage | WordPress custom post types | Custom database tables (22 tables) |
+| Data storage | WordPress custom post types | Custom database tables (23 tables) |
 | Threaded replies | 1 level | 3 levels |
 | Voting | Not built-in (requires add-on) | Built-in upvote/downvote |
 | Q&A with accepted answers | Not available | Built-in (per-space type) |
@@ -24,7 +24,7 @@ How Jetonomy compares to bbPress - and why communities are switching to a modern
 | Real-time interactions | Page reload required | Real-time updates with no page reload |
 | Moderation queue | Basic | Flag system + queue + auto-rules (Pro) |
 | Anti-spam | Akismet only | Akismet + reCAPTCHA + Turnstile |
-| REST API | Limited | 80 endpoints (153 with Pro) |
+| REST API | Limited | 81 routes (141 with Pro) |
 | Private messaging | Not built-in | Built-in (Pro) |
 | Polls | Not built-in | Built-in (Pro) |
 | Analytics | Not available | Dashboard with export (Pro) |
@@ -36,7 +36,7 @@ How Jetonomy compares to bbPress - and why communities are switching to a modern
 
 bbPress stores every topic and reply as a WordPress post. On sites with 10,000+ topics, this bloats the `wp_posts` and `wp_postmeta` tables, slowing down your entire WordPress installation - not just the forum.
 
-Jetonomy uses its own database tables with proper indexes and cursor-based pagination. Your forum can grow to tens of thousands of topics without affecting the rest of your site.
+Jetonomy uses its own database tables with indexes on every column it sorts and filters by, and paginates with bounded `LIMIT`/`OFFSET` queries plus dedicated `COUNT(*)` methods. Your forum can grow to tens of thousands of topics without affecting the rest of your site.
 
 ### Self-Moderating Community
 
