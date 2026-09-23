@@ -369,6 +369,22 @@ class Permission_Engine {
 		}
 
 		// Layer 3: Trust level gates.
+		//
+		// This is a CEILING on a capability the role already granted, not a
+		// second path INTO one it did not. Layer 1 above already rejected a
+		// user whose role lacks the underlying jetonomy_<action> capability
+		// (default roles: Subscriber through Contributor lack all four
+		// moderation actions below) before this code ever runs, so raising a
+		// member's trust level cannot hand them edit/move/close/pin on a
+		// default install. What this table DOES do: a role that already
+		// carries the capability (Editor+, or any role a site owner mapped
+		// it onto) is additionally held to a trust-level floor below
+		// moderator/admin - an Editor at trust level 0 is denied
+		// edit_others_posts here even though their WP role allows it.
+		// Trust-threshold UI and docs describe only what the default roles
+		// unlock (Trust_Levels::LEVELS), which correctly omits these four -
+		// keep it that way; don't add them there on the strength of this
+		// array alone.
 		$profile     = UserProfile::find_by_user( $user_id );
 		$trust_level = $profile ? (int) $profile->trust_level : 0;
 
