@@ -64,7 +64,7 @@ Move your existing Asgaros Forum community into Jetonomy - forums, topics, repli
 2. Select **Asgaros Forum** as the source.
 3. Click **Start Import**.
 
-The Asgaros importer runs the entire import in a single pass - the progress bar advances in one step from start to complete. Because it is single-pass, it cannot be resumed partway through; if it is interrupted, click **Start Over** to run it again.
+The importer works in batches (forums, topics, replies, then profiles) and the progress bar advances as it goes. If it is interrupted, return to **Jetonomy → Import** and click **Resume Import** to continue from where it stopped, or **Start Over** to begin again. Either way, anything already imported is skipped, not duplicated.
 
 ## Estimated Import Times
 
@@ -100,7 +100,9 @@ After the import completes:
 
 ## Re-running an Import
 
-Once Asgaros has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge showing the date and record count of the last import, and the Start button becomes **Re-Import**. Jetonomy warns you first because **re-importing creates duplicate content** - it does not skip what you already brought over. Only re-import if the first attempt had a real problem.
+Once Asgaros has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge showing the date and record count of the last import, and the Start button becomes **Re-Import**.
+
+A re-run skips everything already imported and brings over only what is new, including new topics and replies in forums you imported earlier. The result tells you how many items were already imported and skipped. Content imported by an earlier Jetonomy version is recognised on the first re-run too. See [Running an Import Again](00-overview.md#running-an-import-again) for the migration pattern and its limits.
 
 ## What's Next?
 

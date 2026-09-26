@@ -36,6 +36,13 @@ Flush permalinks first, as above. If that does not fix it:
 - Check the community base slug at **Settings -> General** does not collide with an existing WordPress page or another plugin's route.
 - If only *some* routes fail - the direct messages inbox, for example - the rewrite table was likely rebuilt while a Pro extension had not yet registered its own rules. Flushing permalinks re-registers everything.
 - If a topic 404s after you renamed its space, the old URL no longer exists. Space slugs are part of the topic URL.
+- If you changed the community base slug, old links redirect to the new base automatically. An old link that opens a different page instead means a real page or another plugin already uses the old slug, and Jetonomy leaves that page alone.
+
+## Page caching
+
+Community pages work with page caching plugins and host caches (LiteSpeed Cache, WP Rocket, WP Super Cache and similar). Visitors who are not logged in get cacheable pages, so a busy public forum is served from the cache. Pages for logged-in members are still sent as uncached, so each member sees their own notifications, drafts and private spaces.
+
+If new topics or replies take a while to appear for logged-out visitors, that is your page cache's lifetime at work. Shorten the cache lifetime for the community path, or purge the cache, in your caching plugin's settings.
 
 ## Email is not arriving
 

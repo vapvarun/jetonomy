@@ -298,6 +298,8 @@ For release history, run `git log --oneline` or read `readme.txt`. For architect
 - Activity logging via `Activity_Tracker` hooks - no direct `ActivityLog::log()` in controllers
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
+- Community base slug/URL only via `\Jetonomy\base_slug()` / `\Jetonomy\base_url()` - never read `jetonomy_settings['base_slug']` inline or hardcode `/community/` (20 inline copies drifted; the admin Spaces list showed the wrong URL)
+- Importers: ask `Importer::find_imported()` before creating and call `Importer::remember()` after - `jt_import_map` is the only "already imported" record, and every importer shares that one check (re-runs must add only what is missing)
 
 ## CSS Token Rules (enforced - mirrors BuddyNext pattern)
 

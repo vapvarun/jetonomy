@@ -47,8 +47,7 @@ add_action( 'jetonomy_header_nav_items', function() {
 
     // Build the URL from the Jetonomy base slug so it adapts if the site
     // owner has customized the community path.
-    $settings  = get_option( 'jetonomy_settings', [] );
-    $base      = $settings['base_slug'] ?? 'community';
+    $base      = \Jetonomy\base_slug();
     $help_url  = home_url( "/{$base}/help/" );
 
     $classes = 'jt-nav-link' . ( $is_active ? ' active' : '' );
@@ -79,8 +78,7 @@ add_action( 'jetonomy_header_nav_items', function() {
         return;
     }
 
-    $settings = get_option( 'jetonomy_settings', [] );
-    $base     = $settings['base_slug'] ?? 'community';
+    $base     = \Jetonomy\base_slug();
 
     echo '<a href="' . esc_url( home_url( "/{$base}/mod/queue/" ) ) . '" class="jt-nav-link" title="' . esc_attr__( 'Queue', 'my-plugin' ) . '">';
     echo '<span class="jt-nav-label">' . esc_html__( 'Queue', 'my-plugin' ) . '</span>';

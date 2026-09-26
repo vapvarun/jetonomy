@@ -100,7 +100,10 @@ Yes. Admins get a Jetonomy -> Conversations page in wp-admin where Purge permane
 ## Troubleshooting
 
 **Can I migrate from another forum plugin?**
-Yes. Built-in importers bring topics, replies, and members across from bbPress, wpForo (including multi-board installs), and Asgaros Forum; a members-only wpForo board imports as a private space with approval to join, so gated content stays gated. See the [Migration Overview](../migration/00-overview.md).
+Yes. Built-in importers bring topics, replies, and members across from bbPress, wpForo (including multi-board installs), and Asgaros Forum; a members-only wpForo board imports as a private space with approval to join, so gated content stays gated. Running an import again is safe: it skips what is already imported and brings over only new content, so you can import, keep the old forum live, and import again just before you switch. See the [Migration Overview](../migration/00-overview.md).
+
+**Does Jetonomy work with page caching (LiteSpeed Cache, WP Rocket)?**
+Yes. Community pages for logged-out visitors are cacheable, and pages for logged-in members are sent uncached so each member sees their own view. See [Troubleshooting](../troubleshooting/00-overview.md#page-caching).
 
 **I kept seeing "Cookie nonce is invalid" on a tab left open a long time. Is that fixed?**
 Yes. When a long-lived tab's REST nonce expires, the bundled client fetches a fresh nonce against the still-valid login cookie and retries the request once, so members no longer lose a reply. See the [REST API reference](../developer-guide/01-rest-api.md).

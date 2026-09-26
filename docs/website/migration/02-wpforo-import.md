@@ -16,9 +16,9 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, and
 
 | wpForo Data | Imported As | Notes |
 |---|---|---|
-| Forums | Jetonomy Spaces | Forum name, slug, description preserved |
+| Forums | Jetonomy Spaces | Forum name, slug, description preserved. Sub-forums become sub-spaces under their parent |
 | Topics | Jetonomy Posts | Title and first post content preserved |
-| Replies (posts) | Jetonomy Replies | Reply parent relationships preserved |
+| Replies (posts) | Jetonomy Replies | Threaded replies keep their parent. A reply to the opening post, or to a reply that was not imported, becomes a top-level reply |
 | User accounts | Linked to existing WP users | Matched by WP user ID |
 | Liked posts | Vote score | wpForo likes mapped to upvotes |
 | Pinned topics | Pinned posts | Preserved |
@@ -26,7 +26,6 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, and
 | Inline images and attached files (1.8.0+) | WordPress media library + Jetonomy attachments | Downloaded from wpForo and re-registered as attachments; images stay inline, other files show as a download link |
 
 **Not imported:**
-- wpForo sub-forum hierarchy (all forums, including sub-forums, are flattened into spaces under the board's category)
 - wpForo topic tags
 - wpForo user reputation / points
 - wpForo user roles and moderator assignments (assign Space Moderator roles manually after import)
@@ -43,7 +42,7 @@ wpForo and Jetonomy structure their data differently in a few key areas:
 
 **Multi-board support** - wpForo lets you run multiple boards, each with its own set of forums and topics. The importer automatically detects all of your active boards and imports each one into its own Jetonomy category. Single-board installs work without any extra configuration.
 
-**Forums and categories** - Within each board, wpForo nests forums inside forums. Jetonomy separates categories (top-level groups) from spaces (discussion areas), so the importer creates one Jetonomy category per board and one space per wpForo forum. Sub-forum nesting is not preserved - every forum (parent or child) becomes a flat space under the board's category.
+**Forums and categories** - Within each board, wpForo nests forums inside forums. Jetonomy separates categories (top-level groups) from spaces (discussion areas), so the importer creates one Jetonomy category per board and one space per wpForo forum. Parent forums are created before their children, so sub-forums come across as sub-spaces under their parent.
 
 > **For developers:** wpForo stores each board's data in its own set of tables (`wp_wpforo1_*`, `wp_wpforo2_*`, and so on) and tracks boards in `wpforo_boards`. The importer reads `wpforo_boards` to discover boards and auto-detects the table prefix, so a custom prefix needs no configuration.
 
@@ -67,7 +66,7 @@ wpForo and Jetonomy structure their data differently in a few key areas:
 2. Select **wpForo** as the source.
 3. Click **Start Import**.
 
-The wpForo importer runs the entire import in a single pass - the progress bar advances in one step from start to complete. (The bbPress importer, by contrast, runs in true incremental batches.) Because it is single-pass, larger wpForo databases are best imported via WP-CLI to avoid browser timeouts.
+The importer works through each board in batches (forums, topics, replies, likes, then profiles) and the progress bar advances as it goes. Very large wpForo databases are still best imported via WP-CLI to avoid browser timeouts.
 
 ## Preview Before You Import
 
@@ -86,7 +85,7 @@ The wpForo importer runs the entire import in a single pass - the progress bar a
 
 ## Resuming a Paused Import
 
-The wpForo import runs as a single pass, so there is no mid-import resume point. If it is interrupted (timeout, server restart, or closed browser), it cannot be resumed partway through - return to **Jetonomy → Import** and click **Start Over** to run it again. For this reason, run large wpForo imports via WP-CLI, which is not subject to browser timeouts.
+If the import stops (browser closed, timeout, server restart), return to **Jetonomy → Import**. The card shows an **Import Interrupted** badge. Click **Resume Import** to continue from where it stopped, or **Start Over** to begin again. Either way, anything already imported is skipped, not duplicated.
 
 ## Running via WP-CLI
 
@@ -129,7 +128,9 @@ After the import completes:
 
 ## Re-running an Import
 
-Once wpForo has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge showing the date and record count of the last import, and the Start button becomes **Re-Import**. Jetonomy warns you first because **re-importing creates duplicate content** - it does not skip what you already brought over. Only re-import if the first attempt had a real problem.
+Once wpForo has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge showing the date and record count of the last import, and the Start button becomes **Re-Import**.
+
+A re-run skips everything already imported and brings over only what is new, including new topics and replies in forums you imported earlier. Likes already carried across stay in place. The result tells you how many items were already imported and skipped. Content imported by an earlier Jetonomy version is recognised on the first re-run too. See [Running an Import Again](00-overview.md#running-an-import-again) for the migration pattern and its limits.
 
 ## What's Next?
 

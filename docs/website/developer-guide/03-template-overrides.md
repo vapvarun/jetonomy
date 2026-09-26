@@ -222,8 +222,7 @@ The Jetonomy Router must know about new routes before they can receive traffic. 
 ```php
 // Register a custom rewrite rule for /community/events/.
 add_action( 'init', function() {
-    $settings  = get_option( 'jetonomy_settings', [] );
-    $base_slug = $settings['base_slug'] ?? 'community';
+    $base_slug = \Jetonomy\base_slug();
 
     add_rewrite_rule(
         '^' . preg_quote( $base_slug, '^' ) . '/events/?$',

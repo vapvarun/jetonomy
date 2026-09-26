@@ -264,6 +264,21 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 2.0.1 - Unreleased =
+
+Import and URL fixes: re-running a bbPress, wpForo, or Asgaros import is now safe, and changing the community base URL no longer takes over other pages.
+
+* Improve  - Re-running an import skips everything already imported and adds only new content, and the Import screen reports how many items were already imported.
+* Improve  - A site that imported from bbPress on an earlier version can re-run the import to bring in the private, hidden, and BuddyPress group forums the old importer skipped, without duplicating anything.
+* Improve  - Logged-out community pages can now be stored by page caches such as LiteSpeed Cache and WP Rocket.
+* Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
+* Fix      - bbPress imports keep sticky topics and threaded replies.
+* Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.
+* Fix      - After changing the community base URL, a real page at the old URL is no longer redirected to the community.
+* Fix      - Changing the community base URL from the default now redirects old links instead of leaving them broken.
+* Fix      - The Spaces list in wp-admin shows the current community base URL instead of always showing /community/.
+* Fix      - The reply editor toolbar wraps on narrow screens instead of cutting off its last buttons.
+
 = 2.0.0 - September 2026 =
 
 Data-integrity release: counters, visibility, and settings that said "saved" now actually behave as documented, plus import and media-safety fixes.

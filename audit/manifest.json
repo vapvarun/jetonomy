@@ -4126,7 +4126,9 @@
     "AJAX handlers live in includes/admin/ajax/",
     "Settings are merged, never replaced",
     "Use --jt-* CSS tokens for theming",
-    "Every release zip must come from bin/build-release.sh"
+    "Every release zip must come from bin/build-release.sh",
+    "Community base slug/URL come only from \\Jetonomy\\base_slug() / \\Jetonomy\\base_url() (includes/functions.php) - never read jetonomy_settings['base_slug'] directly or hardcode /community/",
+    "Importers never decide 'already imported' themselves: Importer::find_imported() (batched, jt_import_map + legacy fingerprint) before creating, Importer::remember() after; map_source() opts an importer in"
   ],
   "build_commands": {
     "release": "bin/build-release.sh",
@@ -4162,7 +4164,8 @@
       "v2 schema sections added on 2026-04-30 refresh. All `static_analysis.*` arrays default to []; populated entries are confirmed findings.",
       "dead_listeners: free's 6 candidates (jetonomy_cleanup_expired, jetonomy_cleanup_notifications, jetonomy_prune_activity, jetonomy_publish_scheduled, jetonomy_trust_evaluation, jetonomy_verification_reminder) are wp_schedule_event() cron hooks, not dead - fired by WP-Cron, not direct do_action.",
       "grid_track_overflow_risks: 4 bare 1fr tracks in fixed-column grids. Risk rated low (current cell content fits). Fix on next CSS sweep - convert to minmax(0, 1fr) for content-overflow safety."
-    ]
+    ],
+    "changes_2_0_1": "2.0.1 (branch 2.0.1): base_slug() helper replaced ~20 inline reads; Router hooks pre_handle_404 (preempt_route_404) so resolved routes skip core's 404/no-store path; old-base 301 only on is_404(); Importer base gained map_source/find_imported/remember/import_category/get_tally and results()['already']; Import_Map gained find_many/record_many/match_legacy/legacy_category; bbPress importer reads _bbp_sticky_topics/_bbp_super_sticky_topics, _bbp_reply_to (parent_id) and links BuddyPress groups via _bbp_group_ids. No new hooks fired, no schema change."
   },
   "generated": {
     "delta_2026_08_20_1_9_4": "1.9.4 branch cut. plugin.version corrected to 1.9.4 - it had lagged at 1.9.1 for two releases because the release process bumps the header/constant/readme Stable tag (which build-release.sh triangulates) and never this field. Bumping it is now part of the release checklist. No surface changed at the cut: the 1.9.3 reconciliation (delta_2026_08_18_1_9_3) remains accurate - 80 REST routes, 43 AJAX, 225 hooks, 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 CLI commands, 6 cron hooks, 15 admin pages. Verified on 2026-08-20 against wp jetonomy qa-actions = 286/286 on buddynext.local. CLI GAP CLOSED: `jetonomy privacy` (subcommands scan, purge-orphans; Privacy_Command, registered at class-cli-dispatcher.php:47) was live but absent from wp_cli[] - the dispatcher has 14 subject roots, this file listed 13 plus the bare `jetonomy` catch-all. Verified live via `wp jetonomy privacy --help` on buddynext.local 2026-08-20.",

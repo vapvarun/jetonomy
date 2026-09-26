@@ -62,6 +62,8 @@ Jetonomy uses WordPress object cache (`wp_cache`) throughout:
 
 If you run an object cache plugin (Redis, Memcached), Jetonomy benefits automatically.
 
+Page caches work too. Community pages sent to logged-out visitors are cacheable, so LiteSpeed Cache, WP Rocket or your host's cache can serve a busy public forum without touching PHP. Logged-in members still get uncached pages.
+
 As of 1.8.0, cached data is invalidated the instant something changes - space visibility, member counts, and profile counts all clear their cache entry immediately on write, so members never see a stale count or a space that looks visible or hidden a few minutes late.
 
 ### Denormalized Counters

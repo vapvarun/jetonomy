@@ -18,18 +18,21 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies and
 |---|---|---|
 | Forums | Jetonomy Spaces | Forum description → space description |
 | Topics | Jetonomy Posts | Topic title + content preserved |
-| Replies | Jetonomy Replies | Imported as flat replies on the post (bbPress reply threading is flattened) |
+| Replies | Jetonomy Replies | Threaded replies keep their parent reply. A reply whose parent was not imported becomes a top-level reply instead of being dropped |
 | User accounts | Linked to existing WP users | Matched by user ID |
-| Sticky topics | Pinned posts | Preserved |
+| Sticky and super sticky topics | Sticky posts | Both land sticky in their own space. Jetonomy has no site-wide sticky, so a super sticky is not pinned across the whole community |
 | Closed topics | Closed posts | Preserved - the thread stays readable and takes no new replies |
-| Private and hidden forums | Private and hidden spaces | Visibility is carried across, so a staff-only forum does not become public |
+| Private and hidden forums | Private and hidden spaces | A private forum becomes a private space (new members need approval) and a hidden forum a hidden space (invite only). Everyone who posted in them is added as a member so they keep access |
+| BuddyPress group forums | Spaces linked to their group | The space is linked to its group, so the group's Forum tab shows it and joins and leaves stay in sync. The group's confirmed, non-banned members are added: group admins as space admins, group moderators as space moderators. A group already linked to a space is left alone. Needs BuddyPress with Groups active during the import |
 | Inline images and attached files (1.8.0+) | WordPress media library + Jetonomy attachments | Downloaded from bbPress and re-registered as attachments; images stay inline, other files show as a download link |
 
 **Not imported:**
 - bbPress topic tags
 - bbPress user activity counts / reputation
 - bbPress votes (no standard bbPress vote data is read)
-- Forum moderator assignments (assign Space Moderator roles manually after import)
+- Pending, spam and trashed topics and replies
+- Published replies under a topic that was not imported (for example, a reply to a pending topic)
+- Forum moderator assignments (assign Space Moderator roles manually after import). BuddyPress group forums are the exception, see above
 - bbPress subscriptions (replaced by Jetonomy follow/subscribe)
 - bbPress private messages (import to Jetonomy Pro private messaging separately)
 - Custom bbPress meta fields (use the `jetonomy_importers` filter to extend)
@@ -37,14 +40,9 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies and
 
 > **Attachments (1.8.0+):** If a file cannot be recovered - for example it is already missing from disk - the import still completes and tells you how many files it could not bring over ("N files could not be recovered and were left linked in the original post text"). That is a warning to check a handful of posts by hand, not a failed import. See the [Migration overview](00-overview.md#attachments-and-inline-images) for details.
 
-> **Re-running an import is safe.** The importer skips anything it has already
-> brought over, matching forums and topics on their slug and replies on their
-> author and original timestamp, so a second run adds only what is missing. If
-> you migrated on a version before 2.0.0, closed topics and private/hidden
-> forums were skipped - re-running the import now brings them in without
-> duplicating what is already there.
+> **Re-running an import is safe.** The importer skips everything it has already brought over and adds only what is new, so you can import, keep bbPress live, and import again before you switch. If you migrated on 1.9.x, a re-run brings in the private, hidden and BuddyPress group forums the older importer skipped, without duplicating what is already there. See [Running an Import Again](00-overview.md#running-an-import-again).
 
-> **What to do about the gaps:** Jetonomy replies are flat by design - every reply attaches to the topic, not to another reply - so the conversation stays intact even though bbPress's nested threading is not carried over. Topic tags are not imported; if tags matter to you, re-tag your highest-value topics by hand after the import (it is usually a small number that drive most of the traffic).
+> **What to do about the gaps:** Topic tags are not imported; if tags matter to you, re-tag your highest-value topics by hand after the import (it is usually a small number that drive most of the traffic).
 
 ## Pre-Import Checklist
 
@@ -128,7 +126,11 @@ After the import completes, verify the following:
 
 ## Re-running an Import
 
-Once bbPress has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge that shows the date of the last import and how many records it brought over. The Start button becomes **Re-Import**, and Jetonomy warns you before you proceed because **re-importing creates duplicate content** - it does not detect and skip what you already imported. Only re-import if the first import had a real problem; otherwise leave it alone.
+Once bbPress has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge that shows the date of the last import and how many records it brought over. The Start button becomes **Re-Import**.
+
+A re-run skips everything already imported and brings over only what is new: new forums, new topics, and new replies, including replies to topics you imported earlier. The result tells you how many items were already imported and skipped.
+
+If you imported on 1.9.x, the first re-run also recognises what that import brought over and fills in what it missed (private, hidden and BuddyPress group forums, and closed topics). It does not change the rows already there: topics and replies from the 1.9.x import keep their flat replies and lost stickies. Only newly imported content keeps its threading and sticky status. See [Running an Import Again](00-overview.md#running-an-import-again) for the full details and limits.
 
 ## What's Next?
 

@@ -300,8 +300,7 @@ add_action( 'jetonomy_member_card_after', function( object $member, object $spac
     if ( ! $current_user_id || (int) $member->user_id === $current_user_id ) {
         return;
     }
-    $settings = get_option( 'jetonomy_settings', [] );
-    $base     = $settings['base_slug'] ?? 'community';
+    $base     = \Jetonomy\base_slug();
     printf(
         '<a href="%s" class="jt-btn jt-btn--ghost jt-btn--sm my-dm-btn">%s</a>',
         esc_url( home_url( "/{$base}/messages/?to={$member->user_id}" ) ),
