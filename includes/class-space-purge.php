@@ -458,6 +458,10 @@ final class Space_Purge {
 			// actually lost content instead of every profile on the site.
 			$authors = self::author_ids( $post_slice, $reply_slice );
 
+			// Same for tags: the post_tags rows go in bulk below, so read which
+			// tags they touch first and rebuild just those counts afterwards.
+			$tag_ids = Models\Tag::ids_for_posts( $post_slice );
+
 			foreach ( self::relations() as $r ) {
 				if ( 'reply' === $r['ref'] && $reply_slice ) {
 					$n = self::delete_where_in( $r, $reply_slice );
@@ -494,6 +498,8 @@ final class Space_Purge {
 			if ( $n > 0 ) {
 				$removed[ table( 'posts' ) . '.id:post' ] = $n;
 			}
+
+			Models\Tag::recount( $tag_ids );
 
 			return [
 				'done'    => false,

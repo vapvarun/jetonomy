@@ -239,6 +239,52 @@ class Tag extends Model {
 	}
 
 	/**
+	 * Distinct tag ids attached to any of these posts.
+	 *
+	 * Read before a bulk delete of post_tags rows, so the tags can be
+	 * recounted afterwards (see recount()).
+	 *
+	 * @param int[] $post_ids Post ids.
+	 * @return int[]
+	 */
+	public static function ids_for_posts( array $post_ids ): array {
+		$post_ids = array_values( array_unique( array_filter( array_map( 'intval', $post_ids ) ) ) );
+		if ( ! $post_ids ) {
+			return [];
+		}
+
+		$db = static::db();
+		$in = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name + placeholder list.
+		$ids = $db->get_col( $db->prepare( 'SELECT DISTINCT tag_id FROM ' . table( 'post_tags' ) . " WHERE post_id IN ({$in})", ...$post_ids ) );
+
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
+	 * Rebuild post_count from the post_tags rows for these tags, in one write.
+	 *
+	 * For paths that remove post_tags rows in bulk (space purge) instead of
+	 * through detach_from_post(), which keeps the count on every single write.
+	 *
+	 * @param int[] $tag_ids Tag ids.
+	 * @return void
+	 */
+	public static function recount( array $tag_ids ): void {
+		$tag_ids = array_values( array_unique( array_filter( array_map( 'intval', $tag_ids ) ) ) );
+		if ( ! $tag_ids ) {
+			return;
+		}
+
+		$db        = static::db();
+		$tags      = static::table();
+		$post_tags = table( 'post_tags' );
+		$in        = implode( ',', array_fill( 0, count( $tag_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table names + placeholder list.
+		$db->query( $db->prepare( "UPDATE {$tags} t SET t.post_count = ( SELECT COUNT(*) FROM {$post_tags} pt WHERE pt.tag_id = t.id ) WHERE t.id IN ({$in})", ...$tag_ids ) );
+	}
+
+	/**
 	 * List the most popular tags by post_count.
 	 *
 	 * @param int $limit Maximum number of tags to return.
