@@ -296,7 +296,6 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 | `jetonomy_composer_toolbar`<br>_action_ | Fires inside the composer toolbar, after the built-in formatting buttons. | - | `templates/partials/composer.php` |
 | `jetonomy_cron_batch_size`<br>_filter_ | - | - | `includes/class-cron.php` |
 | `jetonomy_erase_batch_size`<br>_filter_ ·_Pro_ | Filter the batch size used by the GDPR personal-data eraser (default 1000). | - | `includes/class-privacy.php` |
-| `jetonomy_view_dedupe_cookie`<br>_filter_ | Whether topic views are de-duplicated with the single `jt_viewed` cookie (24 hours, HttpOnly, holds up to 50 topic IDs, no personal data). Return `false` to never set it - for cookie-consent gating, or to keep logged-out topic responses free of `Set-Cookie` so a page cache can store them. Views then count on every uncached request. Since 2.0.1. | `enabled, post_id` | `includes/class-template-loader.php` |
 | `jetonomy_footer_text`<br>_filter_ | Filter the footer text used by Jetonomy-rendered surfaces. | `text` | `includes/functions.php` |
 | `jetonomy_home_welcome_heading`<br>_filter_ | - | - | `templates/views/home.php` |
 | `jetonomy_home_welcome_subheading`<br>_filter_ | - | - | `templates/views/home.php` |

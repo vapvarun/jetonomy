@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 81 REST routes (109 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 80 without it - do not cite the length of the manifest's endpoints array, which holds 86 entries for 80 unique paths), 45 AJAX handlers, 240 hooks fired (110 actions, 130 filters), 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and independently re-derived from source on 2026-09-08 (`wp jetonomy qa-actions` 396/396); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 82 REST routes (110 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 81 without it - do not cite the length of the manifest's endpoints array, which holds 87 entries for 81 unique paths), 45 AJAX handlers, 239 hooks fired (110 actions, 129 filters), 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and independently re-derived from source on 2026-09-08 (`wp jetonomy qa-actions` 396/396); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -153,7 +153,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 - **WP**: 6.7+ required
 - **Namespace**: `Jetonomy\`
 - **Table prefix**: `jt_` (23 custom tables)
-- **REST API**: `jetonomy/v1` (86 endpoints, 22 controllers; 161 endpoints with Pro)
+- **REST API**: `jetonomy/v1` (87 endpoints, 22 controllers; 161 endpoints with Pro)
 
 ## Architecture
 - **Database**: Custom MySQL tables via `dbDelta()` - NOT WordPress CPTs
@@ -175,7 +175,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/models/` | 22 model classes (Category, Space, Post, Reply, Vote, etc.) |
 | `includes/permissions/class-permission-engine.php` | 3-layer permission resolver |
 | `includes/trust/` | Trust levels (0-5), reputation calculator, auto-evaluator |
-| `includes/api/` | 23 REST API controller classes (86 routes) |
+| `includes/api/` | 23 REST API controller classes (87 routes) |
 | `includes/adapters/` | 4 interfaces (membership, email, search, AI) + Adapter_Registry and the WP Roles, wp_mail, MemberPress, PMPro and Ollama adapters. Pro registers the rest (WooCommerce, RCP, LearnDash, Tutor). |
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |

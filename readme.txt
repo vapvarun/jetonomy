@@ -286,8 +286,9 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Fix      - Permanently deleting a topic now removes its replies, votes, bookmarks, tags, subscriptions, and notifications instead of leaving them behind.
 * Fix      - My Subscriptions shows how you are actually notified, so it no longer says Web + Email when email is off.
 * Fix      - Leaderboards and the Top Members widget rank only members who have earned reputation.
-* Fix      - Topic view counting uses one cookie instead of one per topic, can be turned off with a filter, and is described in the privacy policy guide.
+* Fix      - Topic views are counted by the browser after the page loads, so topic pages set no cookie, page caches can store them, and cached visits still count.
 * Fix      - Imported forum names with emoji get clean URLs, and the import progress bar no longer passes 100%.
+* Dev      - New POST /posts/{id}/view REST route counts a topic view, and GET /posts/{id} no longer counts one, so apps call the new route when they show a topic.
 
 = 2.0.0 - September 2026 =
 

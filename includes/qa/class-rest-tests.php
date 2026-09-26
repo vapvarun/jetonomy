@@ -367,6 +367,20 @@ class REST_Tests {
 		$this->check( 'B14: response id matches fixture', (int) ( $data['id'] ?? 0 ) === $this->post_id, 'id mismatch' );
 		$this->check( 'B14: response has title + space_id', isset( $data['title'], $data['space_id'] ), 'missing title/space_id' );
 
+		// 14b. The view beacon is the only view counter: it answers with a
+		// `counted` flag, an immediate repeat is deduped, and a plain GET read
+		// no longer moves view_count.
+		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/view" );
+		$data = $r->get_data();
+		$this->check( 'B14b: POST /posts/{id}/view → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'B14b: response has boolean counted', is_bool( $data['counted'] ?? null ), 'missing counted' );
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/view" );
+		$this->check( 'B14b: repeat view inside the window is not counted', false === ( $r->get_data()['counted'] ?? null ), 'repeat was counted' );
+		$before = (int) ( \Jetonomy\Models\Post::find( $this->post_id )->view_count ?? 0 );
+		$this->rest( 'GET', "/posts/{$this->post_id}" );
+		$after = (int) ( \Jetonomy\Models\Post::find( $this->post_id )->view_count ?? 0 );
+		$this->check( 'B14b: GET /posts/{id} does not count a view', $before === $after, "view_count {$before} -> {$after}" );
+
 		$r    = $this->rest( 'GET', "/replies/{$this->reply_id}" );
 		$data = $r->get_data();
 		$this->check( 'B15: GET /replies/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );

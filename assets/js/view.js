@@ -4607,3 +4607,41 @@ const { state, actions } = store( 'jetonomy', {
     document.addEventListener( 'jetonomy:navigated', focusComposer );
     window.addEventListener( 'hashchange', focusComposer );
 } )();
+
+/**
+ * Topic view beacon. The one place a topic view is counted.
+ *
+ * The topic page response does no counting and sets no cookie, so a page cache
+ * can store it - and a cached hit never runs PHP, so the count has to come from
+ * the browser. Once per browser session per topic (sessionStorage, no cookie),
+ * POST /posts/{id}/view; the server adds its own per-IP window against replays.
+ * Guests send no nonce (a cached page's nonce is stale by design); a logged-in
+ * member's page is never cached, so its nonce is fresh and identifies them,
+ * which private-space topics need. Re-runs on `jetonomy:navigated` so a topic
+ * reached by client-side navigation counts too.
+ */
+( function () {
+    function countView() {
+        const el = document.querySelector( '[data-jt-view-post]' );
+        const id = el ? parseInt( el.getAttribute( 'data-jt-view-post' ), 10 ) : 0;
+        if ( ! id || ! window.jetonomyRest ) return;
+        const key = 'jetonomy_view_' + id;
+        try {
+            if ( window.sessionStorage.getItem( key ) ) return;
+            window.sessionStorage.setItem( key, '1' );
+        } catch ( e ) {
+            // Storage blocked: count anyway; the server window still dedupes.
+        }
+        window.jetonomyRest.restFetch( '/posts/' + id + '/view', {
+            method: 'POST',
+            nonce: document.body.classList.contains( 'logged-in' ),
+        } );
+    }
+
+    if ( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', countView );
+    } else {
+        countView();
+    }
+    document.addEventListener( 'jetonomy:navigated', countView );
+} )();

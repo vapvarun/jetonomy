@@ -50,9 +50,9 @@ class Privacy {
 		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
 			return;
 		}
-		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'Jetonomy sets one functional cookie. Remove this section if you disabled it with the jetonomy_view_dedupe_cookie filter.', 'jetonomy' ) . '</p>'
+		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'Jetonomy sets no cookies on community pages. It counts topic views with the storage described below.', 'jetonomy' ) . '</p>'
 			. '<p><strong class="privacy-policy-tutorial">' . esc_html__( 'Suggested text:', 'jetonomy' ) . '</strong> '
-			. esc_html__( 'When you open a discussion topic in our community, we set a cookie named jt_viewed that lists the IDs of the topics you opened in the last 24 hours, so reloading a topic does not count as a new view. It contains no personal information, is not used for tracking or advertising, and expires after 24 hours.', 'jetonomy' )
+			. esc_html__( 'When you open a discussion topic in our community, your browser notes the topic ID in session storage, which is cleared when you close the tab, so reloading a topic does not count as a new view. To stop a view from being counted twice, our server also keeps a one-way hash of your IP address and the topic ID for 30 minutes. Neither is used for tracking or advertising.', 'jetonomy' )
 			. '</p><p>'
 			. esc_html__( 'If you have an account, the topics, replies, votes, reactions, follows and profile details you add to the community are stored with your account. You can request an export or erasure of this data.', 'jetonomy' )
 			. '</p>';

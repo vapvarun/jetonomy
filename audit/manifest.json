@@ -13,9 +13,9 @@
   },
   "rest": {
     "namespace": "jetonomy/v1",
-    "route_count": 81,
-    "method_endpoints": 109,
-    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-09-22. route_count INCLUDES the /jetonomy/v1 index route itself (80 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 86 entries covering 80 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
+    "route_count": 82,
+    "method_endpoints": 110,
+    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-09-22. route_count INCLUDES the /jetonomy/v1 index route itself (81 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 87 entries covering 81 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
     "endpoints": [
       {
         "route": "/app/config",
@@ -244,7 +244,7 @@
         "auth": "public_with_handler",
         "capability": "ownership_or_edit_others",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1). 1.8.0: can_read_post now also gates STATUS - a non-publish post (trash/pending/spam) is readable only by its author or a moderator, everyone else gets 403; delete is a soft delete so this is what makes DELETE /posts/{id} actually stop serving the content. 1.8.0: blocked_author is ADVISORY ONLY - title/content/content_plain now come back empty server-side (Post::apply_block_tombstone) when it is true, so a client that ignores the flag still cannot render the blocked author's words. 1.9.3: response adds can_downvote - the server rejects a self-downvote with 400 and the web templates already hide the control on own content; computed from the pre-anonymised author so anonymous posts stay correct. 1.9.3: response also adds viewer_flagged - a second report is refused 409, and the API previously published nothing to read that state from. 2.0.1: DELETE accepts force=true - permanent delete through Post::delete() (cascades replies + every dependent row), space moderators/admins only (delete_others_posts); authors can only trash. Restore is POST /spaces/{id}/moderation/approve/post/{id}."
+        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1). 1.8.0: can_read_post now also gates STATUS - a non-publish post (trash/pending/spam) is readable only by its author or a moderator, everyone else gets 403; delete is a soft delete so this is what makes DELETE /posts/{id} actually stop serving the content. 1.8.0: blocked_author is ADVISORY ONLY - title/content/content_plain now come back empty server-side (Post::apply_block_tombstone) when it is true, so a client that ignores the flag still cannot render the blocked author's words. 1.9.3: response adds can_downvote - the server rejects a self-downvote with 400 and the web templates already hide the control on own content; computed from the pre-anonymised author so anonymous posts stay correct. 1.9.3: response also adds viewer_flagged - a second report is refused 409, and the API previously published nothing to read that state from. 2.0.1: DELETE accepts force=true - permanent delete through Post::delete() (cascades replies + every dependent row), space moderators/admins only (delete_others_posts); authors can only trash. Restore is POST /spaces/{id}/moderation/approve/post/{id}. 2.0.1 (Basecamp 10344051299): GET no longer increments view_count - it is an API read (apps, MCP, refreshes) that double-counted; POST /posts/{id}/view is the single counter."
       },
       {
         "route": "/posts/(?P<id>\\d+)/close",
@@ -271,6 +271,19 @@
         "capability": "edit_others_posts",
         "ownership_check": "handler_enforces",
         "audit_notes": "Pin to top of space"
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)/view",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Posts_Controller::record_view",
+        "permission": "REST_Auth::auth_public_write (closure)",
+        "purpose": "Count one view of a topic (the single view counter)",
+        "auth": "public_rate_limited",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "2.0.1 (Basecamp 10344051299): fired by view.js once per browser session per topic (sessionStorage, no cookie) so topic page responses carry no Set-Cookie and page-cached hits still count. Handler 404s missing / non-publish / unreadable (can_read_post) topics identically to GET /posts/{id}. Server-side dedupe: one count per client_ip()+topic per Posts_Controller::VIEW_WINDOW (30 min) via atomic wp_cache_add with a persistent object cache, transient otherwise. No nonce required: guests send none (cached page nonce is stale); logged-in pages send theirs so private-space views resolve the member. Returns {counted: bool}."
       },
       {
         "route": "/posts/(?P<id>\\d+)/move",
@@ -3322,18 +3335,6 @@
       "audit_notes": "1.8.1 (commit baeef5d): global veto covering ALL THREE notification producers (Notifier create_and_maybe_email, direct Notification::add, mention notify). Lets bulk importers add_filter __return_false so a backdated import fans out zero notifications/emails. Default true; no core consumer by design - it is a site/importer extension point."
     },
     {
-      "name": "jetonomy_view_dedupe_cookie",
-      "type": "filter",
-      "args_count": 2,
-      "args_signature": [
-        "bool $enabled",
-        "int $post_id"
-      ],
-      "where": "includes/class-template-loader.php (Template_Loader::count_view)",
-      "consumed_by": [],
-      "audit_notes": "2.0.1 (Basecamp 10344014243): return false to never set the single jt_viewed view-dedupe cookie (cookie consent, or Set-Cookie-free logged-out topic responses for page caches). Views then count on every uncached request. Default true."
-    },
-    {
       "name": "jetonomy_oembed_response",
       "type": "filter",
       "args": "response, post",
@@ -4241,7 +4242,8 @@
     "ability_count_pro": 20,
     "ability_count_pair": 39,
     "capability_count": 23,
-    "counted_by_table_ability": "table_count = len(tables), verified via SHOW TABLES LIKE \"wp_jt_%\" on a live install. ability_count = wp_register_ability() call sites in includes/class-abilities.php, cross-checked against wp_get_abilities() at runtime, split by jetonomy/ vs jetonomy-pro/ namespace (excludes core/* and any third-party abilities, e.g. yoast-seo/*, that happen to be registered on the measuring site). capability_count = len(capabilities) (WordPress jetonomy_* caps - a different thing from Abilities API abilities; do not conflate the two when writing marketing copy). Card 10330599826 found the bug report itself had a stale Pro ability figure (15, not 20) - always re-derive from wp_get_abilities() rather than trusting a previous audit's number."
+    "counted_by_table_ability": "table_count = len(tables), verified via SHOW TABLES LIKE \"wp_jt_%\" on a live install. ability_count = wp_register_ability() call sites in includes/class-abilities.php, cross-checked against wp_get_abilities() at runtime, split by jetonomy/ vs jetonomy-pro/ namespace (excludes core/* and any third-party abilities, e.g. yoast-seo/*, that happen to be registered on the measuring site). capability_count = len(capabilities) (WordPress jetonomy_* caps - a different thing from Abilities API abilities; do not conflate the two when writing marketing copy). Card 10330599826 found the bug report itself had a stale Pro ability figure (15, not 20) - always re-derive from wp_get_abilities() rather than trusting a previous audit's number.",
+    "delta_2026_09_27_view_beacon": "2.0.1 (Basecamp 10344051299): topic views counted by a client beacon POST /posts/{id}/view instead of on the page request. Removed the jt_viewed cookie, Template_Loader::count_view/parse_viewed_cookie and the unreleased jetonomy_view_dedupe_cookie filter (never shipped in a tag). GET /posts/{id} stops counting. Routes 81->82 (method endpoints 109->110); hooks 240->239 (filters 130->129)."
   },
   "static_analysis": {
     "dead_listeners": [

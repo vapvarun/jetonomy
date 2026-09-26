@@ -133,6 +133,21 @@ class Posts_Controller extends Base_Controller {
 			)
 		);
 
+		// Topic view beacon. Public on purpose: views are counted from the topic
+		// page by a client-side beacon (view.js) so the page response itself
+		// stays cookie-free and page-cacheable. A cached page's nonce is stale
+		// by design, so a guest's beacon carries none. Abuse is bounded by
+		// record_view()'s per-IP, per-topic window, not by auth.
+		register_rest_route(
+			$ns,
+			'/posts/(?P<id>\d+)/view',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'record_view' ),
+				'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'post_view' ) ),
+			)
+		);
+
 		register_rest_route(
 			$ns,
 			'/posts/(?P<id>\d+)/move',
@@ -341,9 +356,55 @@ class Posts_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		Post::increment_view_count( $id );
-
+		// No view is counted here. This is an API read (apps, MCP, embeds,
+		// refreshes after an edit), and counting it double-counted every topic
+		// a client fetched and rendered. POST /posts/{id}/view is the one counter.
 		return new WP_REST_Response( $this->prepare_post( $post ), 200 );
+	}
+
+	/** Seconds one IP's view of one topic is counted once for. */
+	const VIEW_WINDOW = 30 * MINUTE_IN_SECONDS;
+
+	/**
+	 * POST /posts/{id}/view - count one view of a topic.
+	 *
+	 * The single view counter. The topic page fires it once per browser session
+	 * per topic (sessionStorage, no cookie), so page responses carry no
+	 * Set-Cookie and a page-cached hit still counts. The server adds a cheap
+	 * per-IP, per-topic window so replaying the request cannot inflate a count.
+	 *
+	 * No nonce is required. A guest's beacon sends none, because a cached
+	 * page's nonce is stale by design; a logged-in member's page is never
+	 * page-cached, so view.js sends its fresh nonce and the member is resolved,
+	 * which is what lets views of private-space topics count. A topic that is
+	 * missing, unpublished, or unreadable by the requester answers the same 404
+	 * as GET /posts/{id}, so the route cannot be used to probe for private
+	 * topics. The window keys on IP alone, so guests and members count alike.
+	 */
+	public function record_view( $request ) {
+		$id   = absint( $request->get_param( 'id' ) );
+		$post = Post::find( $id );
+
+		if ( ! $post || 'publish' !== $post->status || ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+			return $this->not_found( 'Post' );
+		}
+
+		$key = 'jt_view_' . md5( ( \Jetonomy\client_ip() ?: 'unknown' ) . '|' . $id );
+		if ( wp_using_ext_object_cache() ) {
+			// Atomic: of a concurrent burst exactly one add() wins.
+			$first = wp_cache_add( $key, 1, 'jetonomy_views', self::VIEW_WINDOW );
+		} else {
+			// ponytail: get-then-set can let a few truly concurrent requests
+			// through without a persistent object cache; sequential replays
+			// are blocked. Good enough for an approximate counter.
+			$first = false === get_transient( $key ) && set_transient( $key, 1, self::VIEW_WINDOW );
+		}
+
+		if ( $first ) {
+			Post::increment_view_count( $id );
+		}
+
+		return new WP_REST_Response( array( 'counted' => (bool) $first ), 200 );
 	}
 
 	/**
