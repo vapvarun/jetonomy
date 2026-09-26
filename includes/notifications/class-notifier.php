@@ -1084,8 +1084,7 @@ class Notifier {
 		$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 
 		// Check web preference before creating notification.
-		$web_enabled = $user_prefs[ $type ]['web'] ?? $global_defaults[ $type ]['web'] ?? true;
-		if ( $web_enabled ) {
+		if ( self::should_web( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$notification_id = Notification::create(
 				[
 					'user_id'         => $user_id,
@@ -1222,9 +1221,7 @@ class Notifier {
 		}
 
 		if ( null === $user_prefs ) {
-			$profile    = UserProfile::find_by_user( $user_id );
-			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
-			$user_prefs = is_array( $settings ) ? ( $settings['notifications'] ?? [] ) : [];
+			$user_prefs = self::user_prefs( $user_id );
 		}
 		if ( isset( $user_prefs[ $type ]['email'] ) ) {
 			return ! empty( $user_prefs[ $type ]['email'] );
@@ -1234,6 +1231,77 @@ class Notifier {
 			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 		}
 		return ! empty( $global_defaults[ $type ]['email'] );
+	}
+
+	/**
+	 * Should this user receive a WEB (in-app) notification row for this type?
+	 *
+	 * The web half of the delivery decision, kept beside should_email() so
+	 * create_and_maybe_email() and delivery_channel() share one rule:
+	 * per-user per-type pref, then the admin default, then on.
+	 *
+	 * @since 2.0.1
+	 * @param int        $user_id         Recipient.
+	 * @param string     $type            Notification type.
+	 * @param array|null $user_prefs      Pre-loaded per-user notifications map.
+	 * @param array|null $global_defaults Pre-loaded admin notification_defaults map.
+	 * @return bool
+	 */
+	public static function should_web( int $user_id, string $type, ?array $user_prefs = null, ?array $global_defaults = null ): bool {
+		if ( null === $user_prefs ) {
+			$user_prefs = self::user_prefs( $user_id );
+		}
+		if ( null === $global_defaults ) {
+			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+		}
+		return (bool) ( $user_prefs[ $type ]['web'] ?? $global_defaults[ $type ]['web'] ?? true );
+	}
+
+	/**
+	 * The channel(s) a notification of $type will actually reach this user on.
+	 *
+	 * Derived from should_web() + should_email() - the same gates delivery
+	 * uses - so a surface that shows "how will I be notified" (the My
+	 * Subscriptions badge, GET /subscriptions `via`) cannot drift from what
+	 * the notifier does. The stored jt_subscriptions.notify_via column is
+	 * NOT consulted: delivery never read it, so displaying it lied.
+	 *
+	 * @since 2.0.1
+	 * @param int        $user_id         Recipient.
+	 * @param string     $type            Notification type.
+	 * @param array|null $user_prefs      Pre-loaded per-user notifications map.
+	 * @param array|null $global_defaults Pre-loaded admin notification_defaults map.
+	 * @return string 'both' | 'web' | 'email' | 'none'.
+	 */
+	public static function delivery_channel( int $user_id, string $type, ?array $user_prefs = null, ?array $global_defaults = null ): string {
+		if ( null === $user_prefs ) {
+			$user_prefs = self::user_prefs( $user_id );
+		}
+		if ( null === $global_defaults ) {
+			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+		}
+		$web   = self::should_web( $user_id, $type, $user_prefs, $global_defaults );
+		$email = self::should_email( $user_id, $type, $user_prefs, $global_defaults );
+
+		if ( $web && $email ) {
+			return 'both';
+		}
+		if ( $web ) {
+			return 'web';
+		}
+		return $email ? 'email' : 'none';
+	}
+
+	/**
+	 * A user's per-type notification preference map (profile settings JSON).
+	 *
+	 * @param int $user_id User ID.
+	 * @return array
+	 */
+	private static function user_prefs( int $user_id ): array {
+		$profile  = UserProfile::find_by_user( $user_id );
+		$settings = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
+		return is_array( $settings ) && is_array( $settings['notifications'] ?? null ) ? $settings['notifications'] : [];
 	}
 
 	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {

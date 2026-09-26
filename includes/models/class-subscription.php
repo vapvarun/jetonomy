@@ -24,7 +24,9 @@ class Subscription extends Model {
 	 * @param int    $user_id
 	 * @param string $object_type
 	 * @param int    $object_id
-	 * @param string $via         Notification channel: 'email', 'in_app', or 'both'.
+	 * @param string $via         Stored in notify_via for back-compat only ('web'|'email'|'both').
+	 *                            Delivery never reads it - the member's notification
+	 *                            preferences decide (see attach_delivery()).
 	 * @return int Inserted row ID (0 if the row already existed due to INSERT IGNORE).
 	 */
 	public static function subscribe( int $user_id, string $object_type, int $object_id, string $via = 'both' ): int {
@@ -168,6 +170,50 @@ class Subscription extends Model {
 			if ( isset( $target['space_slug'] ) ) {
 				$item['space_slug'] = $target['space_slug'];
 			}
+		}
+		unset( $item );
+
+		return $items;
+	}
+
+	/**
+	 * Notification type a follow of each object type delivers
+	 * (see Notifier::fanout_post_subscribers / fanout_reply_subscribers).
+	 */
+	const NOTIFICATION_TYPES = [
+		'space' => 'new_post_in_sub',
+		'post'  => 'reply_to_post',
+	];
+
+	/**
+	 * Set each item's `via` to the channel(s) the member will ACTUALLY be
+	 * notified on for it: 'both' | 'web' | 'email' | 'none'.
+	 *
+	 * Single source for the My Subscriptions badge and GET /subscriptions.
+	 * It used to echo jt_subscriptions.notify_via, a value written once at
+	 * follow time (always 'both') that the notifier never reads - so a member
+	 * who had turned email off, or whose site defaults email off for new
+	 * posts in followed spaces, was told "Web + Email" while no mail was sent.
+	 *
+	 * Batched: every item belongs to one user and there are only two
+	 * notification types, so the preference read happens once per type
+	 * (profile + option are cached), never per row.
+	 *
+	 * @param array<int,array<string,mixed>> $items   Items with object_type.
+	 * @param int                            $user_id Subscriber.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function attach_delivery( array $items, int $user_id ): array {
+		$by_type = [];
+		foreach ( $items as &$item ) {
+			$type = self::NOTIFICATION_TYPES[ $item['object_type'] ?? '' ] ?? '';
+			if ( '' === $type ) {
+				continue;
+			}
+			if ( ! isset( $by_type[ $type ] ) ) {
+				$by_type[ $type ] = \Jetonomy\Notifications\Notifier::delivery_channel( $user_id, $type );
+			}
+			$item['via'] = $by_type[ $type ];
 		}
 		unset( $item );
 

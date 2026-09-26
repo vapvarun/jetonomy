@@ -87,13 +87,9 @@ You can re-subscribe at any time using the same menu.
 
 ## Managing All Your Subscriptions
 
-Go to your profile's **Settings** page at `/community/u/your-username/edit/` and open the **Notifications** section.
+Open **My Subscriptions** at `/community/subscriptions/`. It lists every space and topic you follow, 50 per page, each with a one-click **Unfollow** button.
 
-Here you can:
-
-- See a list of all spaces you follow with a one-click unfollow option
-- See topics you are subscribed to (the list shows the 20 most recent)
-- Set your notification preference for email delivery (immediate, daily digest, or never)
+The label beside each item shows how you will actually be notified about it: **Web**, **Email**, **Web + Email**, or **Notifications off**. It follows your notification preferences, so if you turn email off for a type (or opt out of all email), the label changes to match. To change it, go to your profile's **Settings** page at `/community/u/your-username/edit/` and open the **Notifications** section.
 
 > **Note:** Daily and weekly email digests are a Jetonomy Pro feature. In the free plugin, email notifications are sent immediately for each event or not at all - based on your notification settings.
 

@@ -337,6 +337,12 @@ Subscriptions track which Spaces or Posts a user follows for new-content notific
 
 These are batch-loaded - two queries per page (one for posts, one for spaces), never a lookup per row.
 
+**`via` is the effective delivery channel (changed in 2.0.1)**
+
+`via` reports how the caller will actually be notified about the followed item: `both`, `web`, `email`, or `none`. It is computed from the same rules the notifier uses (the member's master email opt-out, their per-type preferences, then the site's notification defaults) for the notification type the follow produces - `new_post_in_sub` for a space, `reply_to_post` for a topic. Before 2.0.1 it echoed the value stored when the follow was created (always `both`), which never affected delivery. `none` is new: the member has turned both channels off for that type.
+
+`POST /subscriptions` still accepts `via` (`web`/`email`/`both`) for backward compatibility, and still stores it, but it does not change delivery. To change how a member is notified, update their notification preferences. The response's `via` is the effective channel, like `GET`.
+
 ---
 
 ## Moderation
