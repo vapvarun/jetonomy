@@ -20,9 +20,8 @@ if ( ! apply_filters( 'jetonomy_show_sidebar', true ) ) {
 $base = \Jetonomy\base_url();
 
 global $wpdb;
-$posts_tbl    = \Jetonomy\table( 'posts' );
-$spaces_tbl   = \Jetonomy\table( 'spaces' );
-$profiles_tbl = \Jetonomy\table( 'user_profiles' );
+$posts_tbl  = \Jetonomy\table( 'posts' );
+$spaces_tbl = \Jetonomy\table( 'spaces' );
 
 // Trending: top voted published posts, optionally scoped to the current space.
 // Before 1.3.6 this widget ignored is_private entirely and leaked private
@@ -116,15 +115,14 @@ $trending = \Jetonomy\Cache::remember(
 // runs on 100% of page views, and the bare ORDER BY reputation filesorts.
 // TTL-only by design: a 10-minute-stale Top Members widget is invisible,
 // and busting on every reputation write would defeat the point.
+//
+// Reads the leaderboard model, not its own query, so the widget ranks exactly
+// the population the Leaderboard page does (members with reputation > 0).
+// The key changed from 'sidebar:leaders' when that rule landed, so an upgraded
+// site does not serve the old unfiltered list for the rest of the TTL.
 $leaders = \Jetonomy\Cache::remember(
-	'sidebar:leaders',
-	static function () use ( $wpdb, $profiles_tbl ) {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT 5"
-		) ?: [];
-	},
+	'sidebar:top-members',
+	static fn() => \Jetonomy\Models\UserProfile::list_for_leaderboard( 'all', 5, 0 ),
 	600
 );
 

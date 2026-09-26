@@ -325,7 +325,7 @@ class UserProfile extends Model {
 	 * identical population. Returns an empty string for the all-time board.
 	 *
 	 * @param string $period One of 'week', 'month', or 'all' (default).
-	 * @return string SQL fragment beginning with ' WHERE ', or '' for all-time.
+	 * @return string SQL fragment beginning with ' WHERE '.
 	 */
 	protected static function leaderboard_period_where( string $period ): string {
 		global $wpdb;
@@ -349,13 +349,26 @@ class UserProfile extends Model {
 		 */
 		$is_member = "EXISTS (SELECT 1 FROM {$wpdb->users} u WHERE u.ID = user_id)";
 
+		/*
+		 * A rank is earned. Reputation 0 is the "has not participated yet"
+		 * default every new profile starts at, and a negative score is a
+		 * penalty - neither may hold a position, or a fresh sign-up fills a
+		 * visible slot ahead of nobody and "Your rank #30" greets someone who
+		 * has never posted. Defined here, beside the member rule, for the same
+		 * reason: the page, the total and rank_for_user() must agree on one
+		 * population. Every other ranked surface (Top Members widget,
+		 * [jetonomy_leaderboard], the block and classic widget that render it,
+		 * GET /leaderboards) reads list_for_leaderboard(), so none can drift.
+		 */
+		$eligible = "{$is_member} AND reputation > 0";
+
 		if ( 'week' === $period ) {
-			return " WHERE {$is_member} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)";
+			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)";
 		}
 		if ( 'month' === $period ) {
-			return " WHERE {$is_member} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)";
+			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)";
 		}
-		return " WHERE {$is_member}";
+		return " WHERE {$eligible}";
 	}
 
 	/**

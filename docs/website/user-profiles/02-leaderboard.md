@@ -14,7 +14,7 @@ The community leaderboard is available at `/community/leaderboard/`. Any member 
 
 ![Leaderboard page](../images/leaderboard.png)
 
-Members are ranked by total reputation score, highest first. The leaderboard updates in real time as reputation changes - there is no daily cache delay between earning reputation and appearing in the rankings.
+Members are ranked by total reputation score, highest first. Only members with a reputation above zero are ranked: a new member starts at 0 and appears on the board, the Top Members widget and the "Your rank" badge once they earn their first point. Members whose score has dropped to zero or below are left off too. The total shown next to "Your rank" counts the same ranked members. The leaderboard updates in real time as reputation changes - there is no daily cache delay between earning reputation and appearing in the rankings.
 
 ### How Reputation Is Earned
 
@@ -69,7 +69,7 @@ Configuration options:
 | Title | Top Members | Widget heading text |
 | Count | 5 | Number of members to show (max 20) |
 
-The widget runs a single direct `LIMIT` query to fetch the top members by reputation.
+The widget reads the same ranked list as the leaderboard page, so it shows the same members in the same order (members with a reputation above zero).
 
 ## Why the Leaderboard Improves Community Quality
 

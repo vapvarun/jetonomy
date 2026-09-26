@@ -439,21 +439,10 @@ class Shortcodes {
 		$limit = absint( $atts['count'] ) ?: 10;
 		$base  = base_url();
 
-		global $wpdb;
-		$profiles_tbl = table( 'user_profiles' );
-
-		// Deliberately NOT block-filtered — a leaderboard is a ranking, not a
-		// content feed. Per-viewer filtering would re-rank the board and leak
-		// "you blocked someone" via rank gaps.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$leaders = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT %d",
-				$limit
-			)
-		) ?: array();
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// The Leaderboard page's own model query (same eligible population:
+		// real members with reputation > 0, same tie order). Also backs the
+		// leaderboard block and the classic widget, which render this shortcode.
+		$leaders = Models\UserProfile::list_for_leaderboard( 'all', $limit, 0 );
 
 		if ( empty( $leaders ) ) {
 			return '<div class="jt-shortcode-empty">' . esc_html__( 'No members yet.', 'jetonomy' ) . '</div>';
