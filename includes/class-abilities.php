@@ -1264,8 +1264,7 @@ class Abilities {
 		Subscription::subscribe( $user_id, 'post', $post_id );
 		do_action( 'jetonomy_after_create_post', $post_id, $space_id, null );
 
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$base_slug = $settings['base_slug'] ?? 'community';
+		$base_slug = \Jetonomy\base_slug();
 		$space     = Space::find( $space_id );
 		$post      = Post::find( $post_id );
 

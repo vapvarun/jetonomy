@@ -18,8 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$settings  = get_option( 'jetonomy_settings', array() );
-$base_slug = $settings['base_slug'] ?? 'community';
+$base_slug = \Jetonomy\base_slug();
 
 // 'scheduled' is a pseudo-status (published_at in the future), not a value in
 // the status column - see the filter in Admin::render_content(). It belongs in

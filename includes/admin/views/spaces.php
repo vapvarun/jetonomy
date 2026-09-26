@@ -273,7 +273,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 								echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
 							}
 							echo '<strong><a href="' . esc_url( $edit_url ) . '">' . esc_html( $space->title ) . '</a></strong>';
-							echo '<br><code>/community/s/' . esc_html( $space->slug ) . '/</code>';
+							echo '<br><code>/' . esc_html( \Jetonomy\base_slug() . '/s/' . $space->slug ) . '/</code>';
 							?>
 							<div class="row-actions">
 								<span class="edit"><a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>

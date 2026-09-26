@@ -38,8 +38,7 @@ class OEmbed_Controller extends Base_Controller {
 	 * registration is global so we also hook `init` directly.
 	 */
 	public static function register_provider(): void {
-		$settings  = get_option( 'jetonomy_settings', array() );
-		$base_slug = trim( (string) ( $settings['base_slug'] ?? 'community' ), '/' );
+		$base_slug = trim( \Jetonomy\base_slug(), '/' );
 		$pattern   = home_url( '/' . $base_slug . '/s/*' );
 
 		wp_oembed_add_provider( $pattern, rest_url( 'jetonomy/v1/oembed' ), false );
@@ -295,8 +294,7 @@ class OEmbed_Controller extends Base_Controller {
 			return null;
 		}
 
-		$settings  = get_option( 'jetonomy_settings', array() );
-		$base_slug = trim( (string) ( $settings['base_slug'] ?? 'community' ), '/' );
+		$base_slug = trim( \Jetonomy\base_slug(), '/' );
 		$regex     = '#^/' . preg_quote( $base_slug, '#' ) . '/s/([^/]+)/t/([^/]+)/?$#';
 
 		if ( ! preg_match( $regex, $path, $m ) ) {

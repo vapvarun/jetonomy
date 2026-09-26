@@ -47,8 +47,7 @@ class Spaces_Handler {
 	 * Spaces_Controller::generate_invite() exactly.
 	 */
 	private function invite_url( string $token ): string {
-		$settings  = get_option( 'jetonomy_settings', array() );
-		$base_slug = $settings['base_slug'] ?? 'community';
+		$base_slug = \Jetonomy\base_slug();
 		return home_url( '/' . $base_slug . '/invite/' . $token . '/' );
 	}
 

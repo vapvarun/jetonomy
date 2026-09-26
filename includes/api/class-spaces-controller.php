@@ -1363,8 +1363,7 @@ class Spaces_Controller extends Base_Controller {
 	 * REST controller being loaded. Within this controller there is one copy.
 	 */
 	private function invite_url( string $token ): string {
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$base_slug = $settings['base_slug'] ?? 'community';
+		$base_slug = \Jetonomy\base_slug();
 		return home_url( '/' . $base_slug . '/invite/' . $token . '/' );
 	}
 

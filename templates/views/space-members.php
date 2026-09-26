@@ -272,7 +272,7 @@ $role_labels = [
 						<?php foreach ( $jt_invites as $jt_invite ) : ?>
 							<?php
 							$jt_invite_url = home_url(
-								'/' . ( get_option( 'jetonomy_settings', [] )['base_slug'] ?? 'community' ) . '/invite/' . $jt_invite->token . '/'
+								'/' . \Jetonomy\base_slug() . '/invite/' . $jt_invite->token . '/'
 							);
 							$jt_invite_max = (int) $jt_invite->max_uses;
 							$jt_invite_use = (int) $jt_invite->use_count;

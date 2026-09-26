@@ -27,8 +27,7 @@ if ( empty( $token ) ) {
 
 $result = \Jetonomy\Models\InviteLink::accept( $token, get_current_user_id() );
 
-$settings  = get_option( 'jetonomy_settings', [] );
-$base_slug = $settings['base_slug'] ?? 'community';
+$base_slug = \Jetonomy\base_slug();
 
 if ( is_wp_error( $result ) ) {
 	// Logged-out visitors with a VALID token get the invite panel with a

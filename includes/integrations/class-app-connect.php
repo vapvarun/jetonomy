@@ -131,8 +131,7 @@ class App_Connect {
 	 * @return string
 	 */
 	public static function connect_url(): string {
-		$settings = (array) get_option( 'jetonomy_settings', array() );
-		$base     = (string) ( $settings['base_slug'] ?? 'community' );
+		$base = \Jetonomy\base_slug();
 
 		return home_url( '/' . $base . '/connect-app/' );
 	}

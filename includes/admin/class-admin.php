@@ -635,15 +635,19 @@ class Admin {
 		// Only process if base_slug is present (General tab was submitted).
 		if ( isset( $input['base_slug'] ) ) {
 			$new_slug = sanitize_title( $input['base_slug'] ?? 'community' );
-			if ( $new_slug !== ( $existing['base_slug'] ?? '' ) ) {
+			// An unsaved key means the site has been running on the default, so
+			// that is the base its old links point at.
+			$old_base = sanitize_title( $existing['base_slug'] ?? 'community' );
+			if ( $new_slug !== $old_base ) {
 				// Delete the versioned flush key so Router re-registers rules on next load.
 				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
 
 				// Store the old slug so Router can 301-redirect old URLs.
-				$old_base = $existing['base_slug'] ?? '';
-				if ( ! empty( $old_base ) ) {
-					update_option( 'jetonomy_old_base_slug', $old_base, false );
-				}
+				update_option( 'jetonomy_old_base_slug', $old_base, false );
+			}
+			// Moving back onto the old slug retires the redirect.
+			if ( get_option( 'jetonomy_old_base_slug', '' ) === $new_slug ) {
+				delete_option( 'jetonomy_old_base_slug' );
 			}
 			$clean['base_slug']       = $new_slug;
 			$clean['community_title'] = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
@@ -1388,8 +1392,7 @@ class Admin {
 			"SELECT * FROM {$activity_t} ORDER BY created_at DESC LIMIT 10"
 		) ?: array();
 
-		$settings  = get_option( 'jetonomy_settings', array() );
-		$base_slug = $settings['base_slug'] ?? 'community';
+		$base_slug = \Jetonomy\base_slug();
 
 		// Live 7-day pulse for the analytics teaser (real numbers, not a
 		// blurred screenshot — the widget demonstrates what Pro's analytics

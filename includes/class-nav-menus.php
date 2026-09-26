@@ -110,7 +110,7 @@ class Nav_Menus {
 	 * Render the Community menu items meta box.
 	 */
 	public function render_meta_box(): void {
-		$base = home_url( '/' . $this->get_base_slug() . '/' );
+		$base = home_url( '/' . \Jetonomy\base_slug() . '/' );
 
 		$items = [
 			[
@@ -221,13 +221,5 @@ class Nav_Menus {
 		return $wpdb->get_results(
 			"SELECT title, slug FROM {$table} WHERE visibility = 'public' AND status = 'active' ORDER BY title ASC LIMIT 50"
 		);
-	}
-
-	/**
-	 * Get the community base slug.
-	 */
-	private function get_base_slug(): string {
-		$settings = get_option( 'jetonomy_settings', [] );
-		return $settings['base_slug'] ?? 'community';
 	}
 }

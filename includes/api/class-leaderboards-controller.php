@@ -122,8 +122,7 @@ class Leaderboards_Controller extends Base_Controller {
 		$total   = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
 		$leaders = \Jetonomy\Models\UserProfile::list_for_leaderboard( $period, $limit, $offset, $order_by_sql );
 
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$base_slug = $settings['base_slug'] ?? 'community';
+		$base_slug = \Jetonomy\base_slug();
 
 		// Batch-fetch all leader users in one query to eliminate the
 		// per-row get_userdata() N+1. get_users() also primes the user

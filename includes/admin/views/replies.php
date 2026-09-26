@@ -20,8 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$settings  = get_option( 'jetonomy_settings', array() );
-$base_slug = $settings['base_slug'] ?? 'community';
+$base_slug = \Jetonomy\base_slug();
 
 $back_url = admin_url( 'admin.php?page=jetonomy-content' );
 $page_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . absint( $post->id ) );

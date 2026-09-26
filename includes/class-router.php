@@ -20,8 +20,6 @@ class Router {
 	 */
 	private const RENDER_PRIORITY = 9999;
 
-	private string $base_slug = 'community';
-
 	public function __construct() {
 		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
@@ -35,6 +33,12 @@ class Router {
 		// anything else hooking parse_request or template_redirect.
 		add_action( 'parse_request', [ $this, 'claim_sitemap_request' ], 0 );
 		add_action( 'parse_query', [ $this, 'correct_query_state' ], 1 );
+		// Keep core off its 404 path for a resolved route. Our routes are
+		// virtual, so the main query finds no posts and WP::handle_404() would
+		// queue nocache_headers() - which assert_route_state() cannot take
+		// back - and every page cache would skip the forum for logged-out
+		// visitors. Logged-in requests still get no-cache from WP::send_headers().
+		add_filter( 'pre_handle_404', [ $this, 'preempt_route_404' ], 10, 1 );
 
 		// Announce "this URL is a real page" BEFORE any other handler looks.
 		//
@@ -238,7 +242,7 @@ class Router {
 	}
 
 	public function add_rewrite_rules(): void {
-		$base = $this->get_base_slug();
+		$base = base_slug();
 
 		// Community home
 		add_rewrite_rule( "^{$base}/?$", 'index.php?jetonomy_route=home', 'top' );
@@ -350,10 +354,14 @@ class Router {
 	 * the old URL is stored in the `jetonomy_old_base_slug` option.
 	 * This handler performs a permanent redirect so search engines and
 	 * bookmarks update.
+	 *
+	 * Only a request nothing else answered is redirected: once the old slug is
+	 * free, a real page or another plugin may own that path, and a cached 301
+	 * would make it unreachable.
 	 */
 	public function redirect_old_base_slug(): void {
-		$old_slug = get_option( 'jetonomy_old_base_slug', '' );
-		if ( empty( $old_slug ) ) {
+		$old_slug = (string) get_option( 'jetonomy_old_base_slug', '' );
+		if ( '' === $old_slug || $old_slug === base_slug() || ! is_404() ) {
 			return;
 		}
 
@@ -363,11 +371,24 @@ class Router {
 
 		// Match /old-slug or /old-slug/anything.
 		if ( strpos( $path, '/' . $old_slug . '/' ) === 0 || $path === '/' . $old_slug ) {
-			$new_slug = $this->get_base_slug();
+			$new_slug = base_slug();
 			$new_uri  = str_replace( '/' . $old_slug, '/' . $new_slug, $request_uri );
 			wp_safe_redirect( home_url( $new_uri ), 301 );
 			exit;
 		}
+	}
+
+	/**
+	 * Skip core's 404 handling for a resolved Jetonomy route.
+	 *
+	 * Filters `pre_handle_404`. A missing space or post is still a 404: the
+	 * template sends status_header( 404 ) itself.
+	 *
+	 * @param bool|mixed $preempt Whether another callback already short-circuited.
+	 * @return bool|mixed
+	 */
+	public function preempt_route_404( $preempt ) {
+		return '' === $this->current_route() ? $preempt : true;
 	}
 
 	/**
@@ -525,7 +546,7 @@ class Router {
 			return;
 		}
 
-		$base = preg_quote( $this->get_base_slug(), '#' );
+		$base = preg_quote( base_slug(), '#' );
 
 		if ( preg_match( '#^' . $base . '-sitemap\\.xml$#', $slug ) ) {
 			SEO\Sitemap_Emitter::render( '', 0 );
@@ -534,10 +555,5 @@ class Router {
 		if ( preg_match( '#^' . $base . '-sitemap-(spaces|posts)-([0-9]+)\\.xml$#', $slug, $m ) ) {
 			SEO\Sitemap_Emitter::render( $m[1], (int) $m[2] );
 		}
-	}
-
-	private function get_base_slug(): string {
-		$settings = get_option( 'jetonomy_settings', [] );
-		return $settings['base_slug'] ?? $this->base_slug;
 	}
 }

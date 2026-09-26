@@ -7,8 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$settings  = get_option( 'jetonomy_settings', [] );
-$base_slug = $settings['base_slug'] ?? 'community';
+$base_slug = \Jetonomy\base_slug();
 $site_url  = trailingslashit( home_url() );
 $nonce     = wp_create_nonce( 'jetonomy_setup' );
 $ajax_url  = admin_url( 'admin-ajax.php' );

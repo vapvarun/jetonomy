@@ -319,8 +319,7 @@ class Sitemap_Emitter {
 	 * get_base_slug() exactly so the emitted child URLs line up with the rewrite.
 	 */
 	public static function base_prefix(): string {
-		$settings = get_option( 'jetonomy_settings', array() );
-		return (string) ( $settings['base_slug'] ?? 'community' );
+		return \Jetonomy\base_slug();
 	}
 
 	/** Stored UTC datetime → W3C/ISO8601 (sitemaps expect W3C). */

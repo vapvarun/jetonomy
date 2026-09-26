@@ -58,8 +58,7 @@ class Template_Loader {
 				if ( count( $mod_space_ids ) === 1 ) {
 					$mod_first = \Jetonomy\Models\Space::find( (int) $mod_space_ids[0] );
 					if ( $mod_first ) {
-						$mod_settings  = get_option( 'jetonomy_settings', array() );
-						$mod_base_slug = $mod_settings['base_slug'] ?? 'community';
+						$mod_base_slug = \Jetonomy\base_slug();
 						wp_safe_redirect( home_url( '/' . $mod_base_slug . '/s/' . $mod_first->slug . '/mod/' ) );
 						exit;
 					}
@@ -85,8 +84,7 @@ class Template_Loader {
 				$jt_is_member = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() )
 					|| \Jetonomy\Models\AccessRule::grants_access( get_current_user_id(), (int) $jt_space->id );
 				if ( ! $jt_is_member && in_array( $jt_join_policy, array( 'invite', 'approval' ), true ) ) {
-					$jt_settings  = get_option( 'jetonomy_settings', array() );
-					$jt_base_slug = $jt_settings['base_slug'] ?? 'community';
+					$jt_base_slug = \Jetonomy\base_slug();
 					wp_safe_redirect( home_url( '/' . $jt_base_slug . '/s/' . $jt_space->slug . '/' ) );
 					exit;
 				}
@@ -291,7 +289,7 @@ class Template_Loader {
 				'apiBase'        => rest_url( 'jetonomy/v1' ),
 				'_nonce'         => wp_create_nonce( 'wp_rest' ),
 				'nonce'          => wp_create_nonce( 'wp_rest' ),
-				'communityBase'  => home_url( '/' . ( $settings['base_slug'] ?? 'community' ) ),
+				'communityBase'  => home_url( '/' . \Jetonomy\base_slug() ),
 				'currentPostId'  => 0,
 				'postScores'     => new \stdClass(),
 				'replyScores'    => new \stdClass(),

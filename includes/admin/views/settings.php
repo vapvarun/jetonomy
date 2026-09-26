@@ -144,8 +144,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tr>
 						<th scope="row"><label for="base_slug"><?php esc_html_e( 'Community Base URL', 'jetonomy' ); ?></label></th>
 						<td>
-							<input type="text" id="base_slug" name="jetonomy_settings[base_slug]" value="<?php echo esc_attr( $settings['base_slug'] ?? 'community' ); ?>" class="regular-text">
-							<p class="description"><?php echo esc_html( home_url( '/' ) ); ?><strong><?php echo esc_html( $settings['base_slug'] ?? 'community' ); ?></strong>/</p>
+							<input type="text" id="base_slug" name="jetonomy_settings[base_slug]" value="<?php echo esc_attr( \Jetonomy\base_slug() ); ?>" class="regular-text">
+							<p class="description"><?php echo esc_html( home_url( '/' ) ); ?><strong><?php echo esc_html( \Jetonomy\base_slug() ); ?></strong>/</p>
 						</td>
 					</tr>
 					<tr>

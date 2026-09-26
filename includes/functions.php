@@ -23,9 +23,21 @@ function table( string $name ): string {
  * @return string Base URL without trailing slash.
  */
 function base_url(): string {
-	$settings  = get_option( 'jetonomy_settings', [] );
-	$base_slug = $settings['base_slug'] ?? 'community';
-	return home_url( '/' . $base_slug );
+	return home_url( '/' . base_slug() );
+}
+
+/**
+ * Get the community base slug (e.g. 'discussion'), default 'community'.
+ *
+ * The one resolver for the setting: every URL, rewrite rule and admin label
+ * reads it here so a renamed base can never show up in one place and not
+ * another.
+ *
+ * @return string Base slug without slashes.
+ */
+function base_slug(): string {
+	$settings = get_option( 'jetonomy_settings', [] );
+	return (string) ( $settings['base_slug'] ?? 'community' );
 }
 
 /**
@@ -674,8 +686,7 @@ function community_profile_url( int $user_id ): string {
 		return '';
 	}
 
-	$settings  = get_option( 'jetonomy_settings', [] );
-	$base_slug = $settings['base_slug'] ?? 'community';
+	$base_slug = base_slug();
 	// rawurlencode because a login may legally contain a space or non-ASCII.
 	return home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
 }
