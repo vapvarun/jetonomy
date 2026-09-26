@@ -1762,12 +1762,7 @@ class Template_Loader {
 			return;
 		}
 
-		$cookie = 'jt_viewed_' . (int) $post->id;
-        // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
-		if ( empty( $_COOKIE[ $cookie ] ) ) {
-			\Jetonomy\Models\Post::increment_view_count( (int) $post->id );
-			setcookie( $cookie, '1', time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
-		}
+		self::count_view( (int) $post->id );
 
 		// 1.4.0 C.5 — wire ReadStatus::mark_read so opening a thread clears
 		// its "new replies" pill on the space view. Records the latest reply
@@ -1780,6 +1775,84 @@ class Template_Loader {
 			}
 			\Jetonomy\Models\ReadStatus::mark_read( $user_id, (int) $post->id, $latest_reply_id );
 		}
+	}
+
+	/** Name of the view-dedupe cookie (one cookie for every topic). */
+	const VIEWED_COOKIE = 'jt_viewed';
+
+	/** Most topic ids the view-dedupe cookie remembers (oldest dropped first). */
+	const VIEWED_COOKIE_MAX = 50;
+
+	/**
+	 * Count one view of a topic, at most once per visitor per 24 hours.
+	 *
+	 * Dedupe rides ONE first-party cookie, `jt_viewed`, whose value is
+	 * "<expires>:<id>,<id>,..." - the window's expiry (unix time) then up to
+	 * VIEWED_COOKIE_MAX topic ids, newest last. It replaced one
+	 * `jt_viewed_<id>` cookie per topic, which piled up dozens of cookies a
+	 * consent tool could not classify. The window is fixed at the first view
+	 * rather than rolling, so a daily visitor's revisits still count once a day.
+	 *
+	 * The cookie is functional (it prevents a refresh from inflating a count)
+	 * and holds no personal data; the privacy-policy text describes it. Sites
+	 * that must not set it return false from `jetonomy_view_dedupe_cookie`:
+	 * every view then counts and no cookie is ever sent.
+	 *
+	 * @param int $post_id Topic ID.
+	 */
+	private static function count_view( int $post_id ): void {
+		/**
+		 * Whether topic views are de-duplicated with the `jt_viewed` cookie.
+		 *
+		 * Return false to never set the cookie (e.g. before cookie consent, or
+		 * to keep logged-out topic responses free of Set-Cookie for a page
+		 * cache). Views are then counted on every uncached request.
+		 *
+		 * @since 2.0.1
+		 * @param bool $enabled Default true.
+		 * @param int  $post_id Topic being viewed.
+		 */
+		if ( ! apply_filters( 'jetonomy_view_dedupe_cookie', true, $post_id ) ) {
+			\Jetonomy\Models\Post::increment_view_count( $post_id );
+			return;
+		}
+
+		$now = time();
+		// phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
+		list( $expires, $ids ) = self::parse_viewed_cookie( (string) wp_unslash( $_COOKIE[ self::VIEWED_COOKIE ] ?? '' ), $now );
+
+		if ( in_array( $post_id, $ids, true ) ) {
+			return;
+		}
+
+		\Jetonomy\Models\Post::increment_view_count( $post_id );
+
+		$expires = $expires ?: $now + DAY_IN_SECONDS;
+		$ids[]   = $post_id;
+		$ids     = array_slice( $ids, -self::VIEWED_COOKIE_MAX );
+		if ( ! headers_sent() ) {
+			setcookie( self::VIEWED_COOKIE, $expires . ':' . implode( ',', $ids ), $expires, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+		}
+	}
+
+	/**
+	 * Parse the `jt_viewed` cookie. Anything malformed or expired reads as an
+	 * empty window; ids are positive ints, de-duplicated and capped.
+	 *
+	 * @param string $raw Raw cookie value.
+	 * @param int    $now Current unix time.
+	 * @return array{0:int,1:int[]} [ expiry (0 = no live window), ids ].
+	 */
+	public static function parse_viewed_cookie( string $raw, int $now ): array {
+		if ( ! preg_match( '/^(\d{1,11}):([\d,]{0,600})$/', $raw, $m ) ) {
+			return array( 0, array() );
+		}
+		$expires = (int) $m[1];
+		if ( $expires <= $now || $expires > $now + DAY_IN_SECONDS ) {
+			return array( 0, array() );
+		}
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', explode( ',', $m[2] ) ) ) ) );
+		return array( $expires, array_slice( $ids, -self::VIEWED_COOKIE_MAX ) );
 	}
 
 	/**

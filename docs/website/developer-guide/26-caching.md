@@ -138,3 +138,15 @@ One `WHERE user_id IN (...)` query replaces N single-row lookups. Users with
 no profile row are cached as absent, so they don't re-query either. Jetonomy's
 own leaderboard, sidebar, and REST user lists already do this; the public
 seam exists so pages Jetonomy has never heard of can too.
+
+## Page caches and the view-count cookie
+
+Logged-out forum pages are cacheable. One thing on them sets a cookie: the first time a visitor opens a topic, Jetonomy counts the view and sets `jt_viewed` (HttpOnly, 24 hours, up to 50 topic IDs, no personal data) so a reload does not count again. Later views of topics already in the cookie send no `Set-Cookie`.
+
+Many page caches do not store a response that carries `Set-Cookie`, so a visitor's first view of each topic is served uncached. If you want every logged-out topic response to be cacheable, or you need to hold the cookie until consent, disable it:
+
+```php
+add_filter( 'jetonomy_view_dedupe_cookie', '__return_false' );
+```
+
+With the cookie off, every request that reaches PHP counts a view. Requests served from the page cache never reach PHP, so they are not counted either way. Treat the view count as approximate on a cached site.

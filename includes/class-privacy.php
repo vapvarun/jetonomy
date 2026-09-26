@@ -38,6 +38,25 @@ class Privacy {
 		// this action per id, routing them into the very same body a live
 		// deletion runs — so the cleanup can never drift from the fix.
 		add_action( 'jetonomy_purge_orphan_user', [ $this, 'on_user_delete' ] );
+
+		add_action( 'admin_init', [ $this, 'add_privacy_policy_content' ] );
+	}
+
+	/**
+	 * Suggested text for Settings > Privacy > Policy Guide, so a site owner
+	 * declaring cookies has the plugin's own answer instead of guessing.
+	 */
+	public function add_privacy_policy_content(): void {
+		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+			return;
+		}
+		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'Jetonomy sets one functional cookie. Remove this section if you disabled it with the jetonomy_view_dedupe_cookie filter.', 'jetonomy' ) . '</p>'
+			. '<p><strong class="privacy-policy-tutorial">' . esc_html__( 'Suggested text:', 'jetonomy' ) . '</strong> '
+			. esc_html__( 'When you open a discussion topic in our community, we set a cookie named jt_viewed that lists the IDs of the topics you opened in the last 24 hours, so reloading a topic does not count as a new view. It contains no personal information, is not used for tracking or advertising, and expires after 24 hours.', 'jetonomy' )
+			. '</p><p>'
+			. esc_html__( 'If you have an account, the topics, replies, votes, reactions, follows and profile details you add to the community are stored with your account. You can request an export or erasure of this data.', 'jetonomy' )
+			. '</p>';
+		wp_add_privacy_policy_content( 'Jetonomy', wp_kses_post( $content ) );
 	}
 
 	/**

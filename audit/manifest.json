@@ -3315,6 +3315,18 @@
       "audit_notes": "1.8.1 (commit baeef5d): global veto covering ALL THREE notification producers (Notifier create_and_maybe_email, direct Notification::add, mention notify). Lets bulk importers add_filter __return_false so a backdated import fans out zero notifications/emails. Default true; no core consumer by design - it is a site/importer extension point."
     },
     {
+      "name": "jetonomy_view_dedupe_cookie",
+      "type": "filter",
+      "args_count": 2,
+      "args_signature": [
+        "bool $enabled",
+        "int $post_id"
+      ],
+      "where": "includes/class-template-loader.php (Template_Loader::count_view)",
+      "consumed_by": [],
+      "audit_notes": "2.0.1 (Basecamp 10344014243): return false to never set the single jt_viewed view-dedupe cookie (cookie consent, or Set-Cookie-free logged-out topic responses for page caches). Views then count on every uncached request. Default true."
+    },
+    {
       "name": "jetonomy_oembed_response",
       "type": "filter",
       "args": "response, post",
