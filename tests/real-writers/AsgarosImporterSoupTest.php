@@ -146,4 +146,56 @@ class AsgarosImporterSoupTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '<div>', (string) $post->content, 'no div soup may survive the import' );
 		$this->assertStringNotContainsString( '<div>', (string) $reply->content, 'no div soup may survive the import' );
 	}
+	/**
+	 * A re-run adds only what is new, and recognises an import made before
+	 * jt_import_map existed (Basecamp 10343829815, 10343781860).
+	 *
+	 * Before 2.0.1 the second run hit the unique space slug, logged a raw
+	 * "Duplicate entry", and then skipped every topic in the forum - including
+	 * new ones - because the forum could not be mapped.
+	 */
+	public function test_rerun_adds_only_new_rows_and_recognises_pre_map_imports(): void {
+		global $wpdb;
+		$p      = $wpdb->prefix;
+		$author = self::factory()->user->create();
+
+		$wpdb->insert( "{$p}forum_forums", array( 'name' => 'Rerun Forum' ) );
+		$forum_id = (int) $wpdb->insert_id;
+		$add_topic = function ( string $title, array $dates ) use ( $wpdb, $p, $forum_id, $author ): void {
+			$wpdb->insert( "{$p}forum_topics", array( 'name' => $title, 'parent_id' => $forum_id, 'author_id' => $author ) );
+			$topic_id = (int) $wpdb->insert_id;
+			foreach ( $dates as $date ) {
+				$wpdb->insert( "{$p}forum_posts", array( 'parent_id' => $topic_id, 'author_id' => $author, 'text' => 'x', 'date' => $date ) );
+			}
+		};
+		// Two replies by one member in the same second must map to two rows.
+		$add_topic( 'Rerun one', array( '2026-01-01 10:00:00', '2026-01-01 11:00:00', '2026-01-01 11:00:00' ) );
+
+		$count = function () use ( $wpdb ): array {
+			return array(
+				(int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_spaces" ), // phpcs:ignore WordPress.DB
+				(int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_posts" ), // phpcs:ignore WordPress.DB
+				(int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_replies" ), // phpcs:ignore WordPress.DB
+				(int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_categories" ), // phpcs:ignore WordPress.DB
+			);
+		};
+
+		$before = $count();
+		( new \Jetonomy\Import\Asgaros_Importer() )->run( array() );
+		$first = $count();
+		$this->assertSame( array( 1, 1, 2, 1 ), array_map( fn( $a, $b ) => $a - $b, $first, $before ), 'first run imports everything' );
+
+		$add_topic( 'Rerun two', array( '2026-02-01 10:00:00', '2026-02-01 11:00:00' ) );
+		$result = ( new \Jetonomy\Import\Asgaros_Importer() )->run( array() );
+		$this->assertSame( array( 0, 1, 1, 0 ), array_map( fn( $a, $b ) => $a - $b, $count(), $first ), 're-run adds only the new topic and its reply' );
+		$this->assertSame( 4, $result['already'], 'forum, topic and both replies are reported as already imported' );
+		$this->assertSame( array(), $result['errors'] );
+
+		// A pre-2.0.1 import left no map rows. Recognition must still hold.
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_import_map" ); // phpcs:ignore WordPress.DB
+		$second = $count();
+		$result = ( new \Jetonomy\Import\Asgaros_Importer() )->run( array() );
+		$this->assertSame( $second, $count(), 'a legacy import is recognised, nothing is duplicated' );
+		$this->assertSame( 6, $result['already'], 'forum, both topics and all three replies' );
+	}
 }

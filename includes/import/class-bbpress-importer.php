@@ -9,7 +9,6 @@ namespace Jetonomy\Import;
 
 defined( 'ABSPATH' ) || exit;
 
-use Jetonomy\Models\Category;
 use Jetonomy\Models\Import_Map;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
@@ -341,9 +340,10 @@ class BBPress_Importer extends Importer {
 	}
 
 	/**
-	 * Also drop the import category id on a fresh run so a restarted import does
-	 * not leave an orphan option behind. parent handles the shared id_map +
-	 * processed counter.
+	 * Also drop the category-id option releases before 2.0.1 kept between
+	 * batches (the category is now resolved through jt_import_map), so an
+	 * import aborted on an older version leaves nothing behind. parent handles
+	 * the shared id_map + processed counter.
 	 */
 	public function reset_run_state(): void {
 		parent::reset_run_state();
@@ -378,7 +378,7 @@ class BBPress_Importer extends Importer {
 	 * @return void
 	 */
 	private function after_space_created( object $forum, int $space_id ): void {
-		Import_Map::record( self::SOURCE, 'space', (int) $forum->ID, $space_id );
+		$this->remember( 'space', (int) $forum->ID, $space_id );
 
 		$access = $this->map_access( $forum );
 		if ( 'public' !== $access['visibility'] ) {
@@ -389,48 +389,74 @@ class BBPress_Importer extends Importer {
 	/** Importer slug used as the `source` in jt_import_map. */
 	private const SOURCE = 'bbpress';
 
-	/**
-	 * The space THIS IMPORTER created for this forum, if any.
-	 *
-	 * Identity comes from the source id, not the slug. Matching on slug asked a
-	 * different and dangerous question: a bbPress forum called "general"
-	 * matches the owner's own existing "general" space, so a re-run adopted it
-	 * and poured the source forum's topics into the owner's space. On a private
-	 * source forum that also skipped create_space_from_forum(), where the
-	 * visibility mapping lives, so private content could land in a public
-	 * space. Jetonomy post slugs are not even unique (KEY, not UNIQUE), so the
-	 * post equivalent was non-deterministic as well.
-	 *
-	 * @param object $forum bbPress forum row.
-	 * @return int Existing space id, or 0.
-	 */
-	private function find_existing_space( object $forum ): int {
-		return Import_Map::find( self::SOURCE, 'space', (int) $forum->ID );
+	protected function map_source(): string {
+		return self::SOURCE;
 	}
 
 	/**
-	 * The post THIS IMPORTER created for this topic, if any.
+	 * Which of these forums an earlier run already turned into spaces.
 	 *
-	 * @param object $topic bbPress topic row.
-	 * @return int Existing post id, or 0.
+	 * Identity comes from the source id in jt_import_map, never from the slug
+	 * alone: a bbPress forum called "general" must not adopt the owner's own
+	 * "general" space. The slug is passed only as the legacy fingerprint for
+	 * imports made before the map existed (see Import_Map::match_legacy()),
+	 * which also requires the space to sit in an importer-created category.
+	 *
+	 * @param object[] $forums bbPress forum rows.
+	 * @return array<int,int> forum ID => space id.
 	 */
-	private function find_existing_post( object $topic ): int {
-		return Import_Map::find( self::SOURCE, 'post', (int) $topic->ID );
+	private function find_imported_forums( array $forums ): array {
+		$rows = [];
+		foreach ( $forums as $forum ) {
+			$rows[ (int) $forum->ID ] = [ 'slug' => $forum->post_name ?: sanitize_title( $forum->post_title ) ];
+		}
+
+		return $this->find_imported( 'space', $rows );
 	}
 
 	/**
-	 * Has THIS IMPORTER already brought this reply over?
+	 * Which of these topics/replies an earlier run already imported.
 	 *
-	 * Exact, because it asks about the source row. The previous version matched
-	 * on post + author + timestamp-to-the-second, which dropped the second of
-	 * two replies posted by one member within the same second - on a first run,
-	 * not just a re-run.
+	 * Rows whose parent was not imported are left out: they are skipped by the
+	 * caller anyway. The fingerprint (parent, author, date) is what 1.9.x wrote
+	 * on the Jetonomy row - see Import_Map::match_legacy().
 	 *
-	 * @param object $reply bbPress reply row.
-	 * @return bool
+	 * @param string   $type        'post' (topics) or 'reply'.
+	 * @param object[] $rows        bbPress topic or reply rows.
+	 * @param string   $parent_type id_map type of the parent: 'forum' or 'topic'.
+	 * @return array<int,int> source ID => Jetonomy id.
 	 */
-	private function reply_already_imported( object $reply ): bool {
-		return Import_Map::find( self::SOURCE, 'reply', (int) $reply->ID ) > 0;
+	private function find_imported_children( string $type, array $rows, string $parent_type ): array {
+		$fingerprints = [];
+		foreach ( $rows as $row ) {
+			$parent = $this->get_mapped_id( $parent_type, (int) $row->post_parent );
+			if ( $parent ) {
+				$fingerprints[ (int) $row->ID ] = [
+					'parent'  => $parent,
+					'author'  => (int) $row->post_author,
+					'created' => (string) $row->post_date_gmt,
+				];
+			}
+		}
+
+		return $this->find_imported( $type, $fingerprints );
+	}
+
+	/**
+	 * The category imported bbPress spaces are filed under.
+	 *
+	 * @return int
+	 */
+	private function bbpress_category(): int {
+		return $this->import_category(
+			'default',
+			'imported-bbpress',
+			[
+				'name'        => __( 'Imported from bbPress', 'jetonomy' ),
+				'description' => __( 'Forums imported from bbPress', 'jetonomy' ),
+				'visibility'  => 'public',
+			]
+		);
 	}
 
 	private function create_space_from_forum( object $forum, int $cat_id ): int {
@@ -509,32 +535,22 @@ class BBPress_Importer extends Importer {
 				// of 1 topics.
 				$this->id_map = get_option( 'jetonomy_import_id_map', [] );
 
-				// First batch: create import category.
-				if ( 0 === $offset ) {
-					$cat_id = Category::create(
-						[
-							'name'       => __( 'Imported from bbPress', 'jetonomy' ),
-							'slug'       => 'imported-bbpress-' . time(),
-							'visibility' => 'public',
-						]
-					);
-					update_option( 'jetonomy_import_bbpress_cat_id', $cat_id );
-				}
-
-				$cat_id = (int) get_option( 'jetonomy_import_bbpress_cat_id', 0 );
+				$existing = $this->find_imported_forums( $forums );
+				$cat_id   = 0;
 
 				foreach ( $forums as $forum ) {
 					// Already imported by an earlier run? Adopt it, so topics
 					// beneath it can resolve their parent and anything missed
-					// last time still gets imported. Counted as skipped, not
-					// imported - nothing new was created.
-					$existing = $this->find_existing_space( $forum );
-					if ( $existing ) {
-						$this->map_id( 'forum', $forum->ID, $existing );
-						++$this->skipped;
+					// last time still gets imported.
+					if ( isset( $existing[ (int) $forum->ID ] ) ) {
+						$this->map_id( 'forum', $forum->ID, $existing[ (int) $forum->ID ] );
+						++$this->already;
 						continue;
 					}
 
+					// Resolved only once a forum really needs creating, so a
+					// re-run with nothing new leaves no empty category behind.
+					$cat_id   = $cat_id ?: $this->bbpress_category();
 					$space_id = $this->create_space_from_forum( $forum, $cat_id );
 					if ( $space_id ) {
 						$this->map_id( 'forum', $forum->ID, $space_id );
@@ -573,6 +589,8 @@ class BBPress_Importer extends Importer {
 					];
 				}
 
+				$existing = $this->find_imported_children( 'post', $topics, 'forum' );
+
 				foreach ( $topics as $topic ) {
 					$forum_id = (int) $topic->post_parent;
 					$space_id = $this->get_mapped_id( 'forum', $forum_id );
@@ -583,10 +601,9 @@ class BBPress_Importer extends Importer {
 
 					// Adopt a topic an earlier run already imported: map it so its
 					// replies resolve, and do not create it twice.
-					$already = $this->find_existing_post( $topic );
-					if ( $already ) {
-						$this->map_id( 'topic', $topic->ID, $already );
-						++$this->skipped;
+					if ( isset( $existing[ (int) $topic->ID ] ) ) {
+						$this->map_id( 'topic', $topic->ID, $existing[ (int) $topic->ID ] );
+						++$this->already;
 						continue;
 					}
 
@@ -618,7 +635,7 @@ class BBPress_Importer extends Importer {
 
 					if ( $post_id ) {
 						$this->map_id( 'topic', $topic->ID, $post_id );
-						Import_Map::record( self::SOURCE, 'post', (int) $topic->ID, (int) $post_id );
+						$this->remember( 'post', (int) $topic->ID, (int) $post_id );
 						$this->migrate_bbpress_attachments( 'post', (int) $topic->ID, (int) $post_id );
 						++$this->imported;
 					}
@@ -654,6 +671,8 @@ class BBPress_Importer extends Importer {
 					];
 				}
 
+				$existing = $this->find_imported_children( 'reply', $replies, 'topic' );
+
 				foreach ( $replies as $reply ) {
 					$topic_id = (int) $reply->post_parent;
 					$post_id  = $this->get_mapped_id( 'topic', $topic_id );
@@ -662,9 +681,8 @@ class BBPress_Importer extends Importer {
 						continue;
 					}
 
-					$reply_created_at = $reply->post_date_gmt ?: now();
-					if ( $this->reply_already_imported( $reply ) ) {
-						++$this->skipped;
+					if ( isset( $existing[ (int) $reply->ID ] ) ) {
+						++$this->already;
 						continue;
 					}
 
@@ -689,7 +707,7 @@ class BBPress_Importer extends Importer {
 						// did). Nothing downstream could resolve an imported reply --
 						// including its attachments.
 						$this->map_id( 'reply', $reply->ID, $reply_id );
-						Import_Map::record( self::SOURCE, 'reply', (int) $reply->ID, (int) $reply_id );
+						$this->remember( 'reply', (int) $reply->ID, (int) $reply_id );
 						$this->migrate_bbpress_attachments( 'reply', (int) $reply->ID, (int) $reply_id );
 						++$this->imported;
 					}
@@ -722,7 +740,6 @@ class BBPress_Importer extends Importer {
 			case 'recount':
 				$this->recount();
 				delete_option( 'jetonomy_import_id_map' );
-				delete_option( 'jetonomy_import_bbpress_cat_id' );
 				flush_rewrite_rules();
 				return [
 					'phase'     => 'complete',
@@ -742,21 +759,8 @@ class BBPress_Importer extends Importer {
 	}
 
 	public function run( array $options = [] ): array {
-		// 1. Create a default category for imported forums
-		if ( ! $this->dry_run ) {
-			$cat_id = Category::create(
-				[
-					'name'        => __( 'Imported from bbPress', 'jetonomy' ),
-					'slug'        => 'imported-bbpress',
-					'description' => __( 'Forums imported from bbPress', 'jetonomy' ),
-				]
-			);
-		} else {
-			$cat_id = self::DRY_RUN_ID; // Simulate
-		}
-
-		// 2. Import forums as spaces
-		$this->import_forums( $cat_id );
+		// 1. Import forums as spaces (the category is resolved when first needed).
+		$this->import_forums();
 
 		// 3. Import topics as posts
 		$this->import_topics();
@@ -777,7 +781,7 @@ class BBPress_Importer extends Importer {
 		return $this->results();
 	}
 
-	private function import_forums( int $cat_id ): void {
+	private function import_forums(): void {
 		global $wpdb;
 
 		$forums = $wpdb->get_results(
@@ -788,19 +792,21 @@ class BBPress_Importer extends Importer {
 		// space id below. Same reason as the batched path.
 		$forums = $this->sort_rows_parents_first( (array) $forums, 'ID', 'post_parent' );
 
+		$existing = $this->find_imported_forums( $forums );
+		$cat_id   = 0;
+
 		foreach ( $forums as $forum ) {
 			// See the batched path: adopt a forum an earlier run already
-			// created rather than failing on its duplicate slug, or every topic
-			// beneath it is skipped as "parent not imported" and a re-run can
-			// never recover what the first run missed.
-			$existing = $this->dry_run ? 0 : $this->find_existing_space( $forum );
-			if ( $existing ) {
-				$this->map_id( 'forum', $forum->ID, $existing );
-				++$this->skipped;
+			// created, or every topic beneath it is skipped as "parent not
+			// imported" and a re-run can never recover what the first run missed.
+			if ( isset( $existing[ (int) $forum->ID ] ) ) {
+				$this->map_id( 'forum', $forum->ID, $existing[ (int) $forum->ID ] );
+				++$this->already;
 				continue;
 			}
 
 			if ( ! $this->dry_run ) {
+				$cat_id   = $cat_id ?: $this->bbpress_category();
 				$space_id = $this->create_space_from_forum( $forum, $cat_id );
 			} else {
 				$space_id = self::DRY_RUN_ID; // Simulate
@@ -826,6 +832,8 @@ class BBPress_Importer extends Importer {
 			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN (" . $this->status_sql( 'topic' ) . ') ORDER BY ID ASC'
 		);
 
+		$existing = $this->find_imported_children( 'post', (array) $topics, 'forum' );
+
 		foreach ( $topics as $topic ) {
 			$forum_id = (int) $topic->post_parent;
 			$space_id = $this->get_mapped_id( 'forum', $forum_id );
@@ -838,10 +846,9 @@ class BBPress_Importer extends Importer {
 
 			// Adopt a topic an earlier run already imported: map it so its
 			// replies resolve, and do not create it twice.
-			$already = $this->find_existing_post( $topic );
-			if ( $already ) {
-				$this->map_id( 'topic', $topic->ID, $already );
-				++$this->skipped;
+			if ( isset( $existing[ (int) $topic->ID ] ) ) {
+				$this->map_id( 'topic', $topic->ID, $existing[ (int) $topic->ID ] );
+				++$this->already;
 				continue;
 			}
 
@@ -878,7 +885,7 @@ class BBPress_Importer extends Importer {
 
 			if ( $post_id || $this->dry_run ) {
 				$this->map_id( 'topic', $topic->ID, $post_id );
-				Import_Map::record( self::SOURCE, 'post', (int) $topic->ID, (int) $post_id );
+				$this->remember( 'post', (int) $topic->ID, (int) $post_id );
 				if ( ! $this->dry_run ) {
 					$this->migrate_bbpress_attachments( 'post', (int) $topic->ID, (int) $post_id );
 				}
@@ -897,24 +904,24 @@ class BBPress_Importer extends Importer {
 			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status IN (" . $this->status_sql( 'reply' ) . ') ORDER BY ID ASC'
 		);
 
+		$existing = $this->find_imported_children( 'reply', (array) $replies, 'topic' );
+
 		foreach ( $replies as $reply ) {
 			// bbPress reply's post_parent is the topic ID
 			$topic_id = (int) $reply->post_parent;
 			$post_id  = $this->get_mapped_id( 'topic', $topic_id );
 
 			if ( ! $post_id ) {
-				// Try grandparent (nested reply)
 				++$this->skipped;
 				continue;
 			}
 
-			if ( ! $this->dry_run ) {
-				$reply_created_at = $reply->post_date_gmt ?: now();
-				if ( $this->reply_already_imported( $reply ) ) {
-					++$this->skipped;
-					continue;
-				}
+			if ( isset( $existing[ (int) $reply->ID ] ) ) {
+				++$this->already;
+				continue;
+			}
 
+			if ( ! $this->dry_run ) {
 				$reply_id = JtReply::create(
 					[
 						'post_id'       => $post_id,
@@ -936,7 +943,7 @@ class BBPress_Importer extends Importer {
 
 			if ( $reply_id || $this->dry_run ) {
 				$this->map_id( 'reply', $reply->ID, $reply_id );
-				Import_Map::record( self::SOURCE, 'reply', (int) $reply->ID, (int) $reply_id );
+				$this->remember( 'reply', (int) $reply->ID, (int) $reply_id );
 				if ( ! $this->dry_run ) {
 					$this->migrate_bbpress_attachments( 'reply', (int) $reply->ID, (int) $reply_id );
 				}

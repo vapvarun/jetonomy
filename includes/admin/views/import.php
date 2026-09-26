@@ -98,11 +98,20 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 									esc_html( number_format_i18n( $import_history[ $id ]['imported'] ) )
 								);
 								?>
+								<?php if ( ! empty( $import_history[ $id ]['already'] ) ) : ?>
+									&mdash;
+									<?php
+									printf(
+										/* translators: %s: number of items a previous import already brought over. */
+										esc_html__( '%s already imported, skipped', 'jetonomy' ),
+										esc_html( number_format_i18n( (int) $import_history[ $id ]['already'] ) )
+									);
+									?>
+								<?php endif; ?>
 							</p>
 
 							<p class="description">
-								<strong><?php esc_html_e( 'Warning:', 'jetonomy' ); ?></strong>
-								<?php esc_html_e( 'Re-importing may create duplicate content. Only re-import if the previous import had issues.', 'jetonomy' ); ?>
+								<?php esc_html_e( 'Running it again imports only what is new since then. Anything already imported is recognised and skipped, never duplicated.', 'jetonomy' ); ?>
 							</p>
 						</div>
 					<?php endif; ?>
@@ -171,7 +180,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						<?php elseif ( $was_imported ) : ?>
 							<button type="button" class="button jetonomy-import-btn jetonomy-import-btn--reimport"
 								data-source="<?php echo esc_attr( $id ); ?>"
-								data-jt-confirm="<?php esc_attr_e( 'Re-importing may create duplicates. Are you sure?', 'jetonomy' ); ?>"
+								data-jt-confirm="<?php esc_attr_e( 'Re-import? Only content added since the last import is brought over; anything already imported is skipped.', 'jetonomy' ); ?>"
 								data-jt-confirm-tone="warning"
 								data-jt-confirm-handler="dispatch-click">
 								<?php esc_html_e( 'Re-Import', 'jetonomy' ); ?>
@@ -262,6 +271,18 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						);
 						?>
 					</p>
+
+					<?php if ( ! empty( $jt_record['already'] ) ) : ?>
+						<p class="description">
+							<?php
+							printf(
+								/* translators: %s: number of items a previous import already brought over. */
+								esc_html( _n( '%s item was already imported and was skipped.', '%s items were already imported and were skipped.', (int) $jt_record['already'], 'jetonomy' ) ),
+								esc_html( number_format_i18n( (int) $jt_record['already'] ) )
+							);
+							?>
+						</p>
+					<?php endif; ?>
 
 					<?php if ( $jt_skipped > 0 ) : ?>
 						<div class="notice notice-warning inline jetonomy-import-skipped">

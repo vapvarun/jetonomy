@@ -105,6 +105,30 @@ class Import_Handler {
 		}
 		$skipped_files = (int) ( $import_errors['count'] ?? 0 );
 
+		// Rows actually created vs rows an earlier run already brought over.
+		// Without the second number a re-run reads as "nothing happened" (or as
+		// a second full import), when it is the proof nothing was duplicated.
+		$tally       = get_option(
+			'jetonomy_import_tally',
+			[
+				'imported' => 0,
+				'already'  => 0,
+			]
+		);
+		$batch_tally = $importer->get_tally();
+		$tally       = [
+			'imported' => (int) ( $tally['imported'] ?? 0 ) + $batch_tally['imported'],
+			'already'  => (int) ( $tally['already'] ?? 0 ) + $batch_tally['already'],
+		];
+		update_option( 'jetonomy_import_tally', $tally, false );
+		$already_message = $tally['already'] > 0
+			? sprintf(
+				/* translators: %s: number of items a previous import already brought over. */
+				_n( '%s item was already imported and was skipped.', '%s items were already imported and were skipped.', $tally['already'], 'jetonomy' ),
+				number_format_i18n( $tally['already'] )
+			)
+			: '';
+
 		// Calculate overall progress.
 		$total           = $importer->get_total_count();
 		$total_processed = absint( get_option( 'jetonomy_import_total_processed', 0 ) ) + $result['processed'];
@@ -139,7 +163,8 @@ class Import_Handler {
 			$history            = get_option( 'jetonomy_import_history', [] );
 			$history[ $source ] = [
 				'completed_at' => current_time( 'mysql' ),
-				'imported'     => $total_processed,
+				'imported'     => $tally['imported'],
+				'already'      => $tally['already'],
 				'skipped'      => $skipped_files,
 				// Carry the sample into the durable record, not just the count.
 				// It used to be accumulated across every batch and then thrown away
@@ -161,6 +186,7 @@ class Import_Handler {
 			delete_option( 'jetonomy_import_total_processed' );
 			delete_option( 'jetonomy_import_id_map' );
 			delete_option( 'jetonomy_import_errors' );
+			delete_option( 'jetonomy_import_tally' );
 			\Jetonomy\Import\Importer::clear_progress();
 		}
 
@@ -174,6 +200,8 @@ class Import_Handler {
 				'percent'   => $percent,
 				'message'   => $phase_labels[ $result['phase'] ] ?? '',
 				'skipped'   => $skipped_files,
+				'imported'  => $tally['imported'],
+				'already'   => $already_message,
 			]
 		);
 	}

@@ -1644,7 +1644,7 @@
 				}
 			}
 
-			function buildCompleteNotice(processed, skipped) {
+			function buildCompleteNotice(processed, skipped, already) {
 				skipped = parseInt(skipped, 10) || 0;
 				var notice = document.createElement('div');
 				// A partial success is a warning, not a clean success — the site owner
@@ -1656,6 +1656,11 @@
 				strong.textContent = (Jetonomy.i18n.importDone || 'Import complete!') + ' ';
 				p.appendChild(strong);
 				p.appendChild(document.createTextNode(processed + ' records imported successfully. '));
+				// A re-run recognises what an earlier import brought over and skips
+				// it; say so, or "0 records imported" reads as a failure.
+				if (already) {
+					p.appendChild(document.createTextNode(already + ' '));
+				}
 				if (skipped > 0) {
 					var warn = document.createElement('strong');
 					var tmpl = Jetonomy.i18n.importSkippedFiles || '%d file(s) could not be recovered and were left linked in the original post text.';
@@ -1719,7 +1724,7 @@
 
 							results.style.display = 'block';
 							while (results.firstChild) { results.removeChild(results.firstChild); }
-							results.appendChild(buildCompleteNotice(d.processed, d.skipped));
+							results.appendChild(buildCompleteNotice(d.imported, d.skipped, d.already));
 
 							// Only auto-reload a CLEAN import. The reload exists to reveal the
 							// "Previously Imported" state, which is fine when there is nothing

@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Attachment;
 use Jetonomy\Models\Category;
+use Jetonomy\Models\Import_Map;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
@@ -24,6 +25,17 @@ abstract class Importer {
 	protected array $errors = [];
 	protected int $imported = 0;
 	protected int $skipped  = 0;
+
+	/**
+	 * Source rows an earlier run already brought over, recognised and skipped.
+	 *
+	 * Kept apart from $skipped, which means "could not import": an owner
+	 * re-running an import needs to read "40 already imported" as the
+	 * guarantee it is, not as 40 failures.
+	 *
+	 * @var int
+	 */
+	protected int $already = 0;
 	/**
 	 * Placeholder id recorded in the id map during a dry run.
 	 *
@@ -173,7 +185,112 @@ abstract class Importer {
 		delete_option( 'jetonomy_import_id_map' );
 		delete_option( 'jetonomy_import_total_processed' );
 		delete_option( 'jetonomy_import_errors' );
+		delete_option( 'jetonomy_import_tally' );
 		$this->id_map = [];
+	}
+
+	/**
+	 * Slug this importer records its rows under in jt_import_map.
+	 *
+	 * Every bundled importer overrides it. The default '' opts out, so a
+	 * third-party importer registered through `jetonomy_importers` before the
+	 * map existed keeps working exactly as it did.
+	 *
+	 * @return string
+	 */
+	protected function map_source(): string {
+		return '';
+	}
+
+	/**
+	 * Which of this batch's source rows did an earlier run already import?
+	 *
+	 * THE one "already imported?" check every importer uses, so a re-run adds
+	 * only what is missing and never duplicates. One lookup per batch, not per
+	 * row: jt_import_map first, then - for rows it does not know - the legacy
+	 * fingerprint match for content imported before the map existed (see
+	 * Import_Map::match_legacy()). Legacy matches are written back to the map,
+	 * so each one is inferred once and exact from then on.
+	 *
+	 * @param string $type 'space', 'post' or 'reply'.
+	 * @param array  $rows source_id => legacy fingerprint (see match_legacy()).
+	 * @return array source_id => existing Jetonomy id. Rows not imported yet are absent.
+	 */
+	protected function find_imported( string $type, array $rows ): array {
+		$source = $this->map_source();
+		if ( '' === $source || ! $rows ) {
+			return [];
+		}
+
+		$found  = Import_Map::find_many( $source, $type, array_keys( $rows ) );
+		$legacy = Import_Map::match_legacy( $source, $type, array_diff_key( $rows, $found ) );
+
+		if ( $legacy && ! $this->dry_run ) {
+			Import_Map::record_many( $source, $type, $legacy );
+		}
+
+		return $found + $legacy;
+	}
+
+	/**
+	 * Record that a source row produced a Jetonomy row.
+	 *
+	 * @param string     $type      'space', 'post', 'reply'.
+	 * @param int|string $source_id Source primary key.
+	 * @param int        $object_id Jetonomy id just created.
+	 * @return void
+	 */
+	protected function remember( string $type, $source_id, int $object_id ): void {
+		if ( '' !== $this->map_source() && ! $this->dry_run ) {
+			Import_Map::record( $this->map_source(), $type, $source_id, $object_id );
+		}
+	}
+
+	/**
+	 * The category this source's spaces are filed under, created only when needed.
+	 *
+	 * A re-run used to create a fresh "Imported from ..." category every time,
+	 * so each re-import left another empty one behind. Resolution order: the
+	 * category this importer recorded, then the one a pre-map import used, then
+	 * a new one. Callers ask for it only when a forum actually has to be
+	 * created, so a re-run that finds nothing new creates nothing.
+	 *
+	 * @param string $key         Map key for the category ('default', or a board key).
+	 * @param string $slug_prefix Slug prefix, e.g. 'imported-bbpress'. A timestamp is appended.
+	 * @param array  $args        Category::create() args (name, description, ...).
+	 * @return int Category id.
+	 */
+	protected function import_category( string $key, string $slug_prefix, array $args ): int {
+		if ( $this->dry_run ) {
+			return self::DRY_RUN_ID;
+		}
+
+		$source = $this->map_source();
+		$cat_id = '' === $source ? 0 : Import_Map::find( $source, 'category', $key );
+		if ( $cat_id ) {
+			return $cat_id;
+		}
+
+		$cat_id = Import_Map::legacy_category( $slug_prefix );
+		if ( ! $cat_id ) {
+			$cat_id = (int) Category::create( array_merge( $args, [ 'slug' => $slug_prefix . '-' . time() ] ) );
+		}
+
+		$this->remember( 'category', $key, $cat_id );
+
+		return $cat_id;
+	}
+
+	/**
+	 * Created vs already-there counts for this request, for the batch driver.
+	 *
+	 * @return array{imported:int, already:int}
+	 */
+	public function get_tally(): array {
+		return [
+			'imported' => $this->imported,
+			'already'  => $this->already,
+		];
 	}
 
 	/**
@@ -291,6 +408,7 @@ abstract class Importer {
 			'source'   => $this->get_source_name(),
 			'imported' => $this->imported,
 			'skipped'  => $this->skipped,
+			'already'  => $this->already,
 			'errors'   => $this->errors,
 			'dry_run'  => $this->dry_run,
 		];
