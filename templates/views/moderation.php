@@ -81,7 +81,7 @@ $jt_can_manage_bans = user_can( $user_id, 'jetonomy_moderate' );
 // flags list is already scoped per-viewer by Moderation_Service; the banned
 // list is not, hence the extra gate above.
 $jt_view = sanitize_key( wp_unslash( $_GET['view'] ?? 'flags' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-if ( ! in_array( $jt_view, [ 'flags', 'approvals', 'banned' ], true ) ) {
+if ( ! in_array( $jt_view, [ 'flags', 'approvals', 'trash', 'banned' ], true ) ) {
 	$jt_view = 'flags';
 }
 if ( 'banned' === $jt_view && ! $jt_can_manage_bans ) {
@@ -113,12 +113,21 @@ $jt_kind = sanitize_key( wp_unslash( $_GET['kind'] ?? 'post' ) ); // phpcs:ignor
 if ( ! in_array( $jt_kind, [ 'post', 'reply' ], true ) ) {
 	$jt_kind = 'post';
 }
-$jt_held_count = 'reply' === $jt_kind ? $jt_held_replies : $jt_held_posts;
+// The Trash panel reuses the approvals list, card and pagination - same
+// shape as the space queue. Its counts run only while it is open.
+$jt_is_trash     = 'trash' === $jt_view;
+$jt_list_posts   = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'post' ) : $jt_held_posts;
+$jt_list_replies = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'reply' ) : $jt_held_replies;
+
+$jt_held_count = 'reply' === $jt_kind ? $jt_list_replies : $jt_list_posts;
 $jt_held_pages = max( 1, (int) ceil( $jt_held_count / $per_page ) );
 $jt_held_paged = min( $jt_raw_paged, $jt_held_pages );
-$jt_held       = 'approvals' === $jt_view && $jt_held_count > 0
-	? Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page )
-	: [];
+$jt_held       = [];
+if ( in_array( $jt_view, [ 'approvals', 'trash' ], true ) && $jt_held_count > 0 ) {
+	$jt_held = $jt_is_trash
+		? Moderation_Service::list_trashed( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page )
+		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page );
+}
 
 // Batch-resolve everything the cards need: parent posts (replies only), spaces,
 // and the WP user cache. Done here rather than inside approval-card.php so a
@@ -241,7 +250,11 @@ $crumbs = [
 				// The subtitle follows the open panel. Reporting the flag total
 				// while the moderator is reading the approvals list would say
 				// "0 pending flags" over a screen full of held submissions.
-				if ( 'approvals' === $jt_view ) {
+				if ( $jt_is_trash ) {
+					$jt_trash_total = $jt_list_posts + $jt_list_replies;
+					/* translators: %d: number of trashed posts and replies. */
+					echo esc_html( sprintf( _n( '%d item in trash', '%d items in trash', $jt_trash_total, 'jetonomy' ), $jt_trash_total ) );
+				} elseif ( 'approvals' === $jt_view ) {
 					/* translators: %d: number of submissions held for approval. */
 					echo esc_html( sprintf( _n( '%d submission awaiting approval', '%d submissions awaiting approval', $jt_held_total, 'jetonomy' ), $jt_held_total ) );
 				} elseif ( $is_admin ) {
@@ -254,7 +267,7 @@ $crumbs = [
 				?>
 			</p>
 		</div>
-		<?php if ( 'approvals' !== $jt_view && $total > 0 ) : ?>
+		<?php if ( 'flags' === $jt_view && $total > 0 ) : ?>
 			<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( (string) $total ); ?>">
 				<?php
 				/* translators: %d: number of pending flags. */
@@ -285,6 +298,9 @@ $crumbs = [
 			<?php if ( $jt_held_total > 0 ) : ?>
 				<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $jt_held_total ) ); ?></span>
 			<?php endif; ?>
+		</a>
+		<a href="<?php echo esc_url( add_query_arg( 'view', 'trash', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo $jt_is_trash ? 'active' : ''; ?>" <?php echo $jt_is_trash ? 'aria-current="page"' : ''; ?>>
+			<?php esc_html_e( 'Trash', 'jetonomy' ); ?>
 		</a>
 		<?php if ( $jt_can_manage_bans ) : ?>
 			<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>" <?php echo 'banned' === $jt_view ? 'aria-current="page"' : ''; ?>>
@@ -361,18 +377,18 @@ $crumbs = [
 			?>
 		<?php endif; ?>
 
-	<?php elseif ( 'approvals' === $jt_view ) : ?>
+	<?php elseif ( 'approvals' === $jt_view || $jt_is_trash ) : ?>
 		<?php // Sub-tabs: posts and replies are counted and paginated separately. ?>
-		<nav class="jt-subtabs" aria-label="<?php esc_attr_e( 'Held content type', 'jetonomy' ); ?>">
+		<nav class="jt-subtabs" aria-label="<?php esc_attr_e( 'Content type', 'jetonomy' ); ?>">
 			<?php
 			$jt_kind_tabs = [
-				'post'  => [ __( 'Posts', 'jetonomy' ), $jt_held_posts ],
-				'reply' => [ \Jetonomy\jetonomy_label( 'reply', true ), $jt_held_replies ],
+				'post'  => [ __( 'Posts', 'jetonomy' ), $jt_list_posts ],
+				'reply' => [ \Jetonomy\jetonomy_label( 'reply', true ), $jt_list_replies ],
 			];
 			foreach ( $jt_kind_tabs as $jt_kind_key => $jt_kind_meta ) :
 				$jt_kind_url = add_query_arg(
 					[
-						'view' => 'approvals',
+						'view' => $jt_view,
 						'kind' => $jt_kind_key,
 					],
 					$base . '/mod/'
@@ -389,13 +405,19 @@ $crumbs = [
 
 		<?php if ( empty( $jt_held ) ) : ?>
 			<?php
-			$jt_held_empty = 'reply' === $jt_kind
-				? sprintf( /* translators: %s: plural reply label. */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
-				: __( 'No posts are waiting for approval.', 'jetonomy' );
+			if ( $jt_is_trash ) {
+				$jt_held_empty = 'reply' === $jt_kind
+					? sprintf( /* translators: %s: plural reply label. */ __( 'No %s in the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+					: __( 'No posts in the trash.', 'jetonomy' );
+			} else {
+				$jt_held_empty = 'reply' === $jt_kind
+					? sprintf( /* translators: %s: plural reply label. */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+					: __( 'No posts are waiting for approval.', 'jetonomy' );
+			}
 			\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_held_empty ] );
 			?>
 		<?php else : ?>
-			<div class="jt-card jt-card-flush" data-jt-mod-queue="approvals">
+			<div class="jt-card jt-card-flush" data-jt-mod-queue="approvals"<?php echo $jt_is_trash ? ' data-empty-text="' . esc_attr__( 'The trash is empty.', 'jetonomy' ) . '"' : ''; ?>>
 				<?php
 				foreach ( $jt_held as $jt_item ) :
 					$jt_parent        = 'reply' === $jt_kind
@@ -420,6 +442,7 @@ $crumbs = [
 							'space'       => $jt_item_space,
 							'parent_post' => $jt_parent,
 							'base'        => $base,
+							'mode'        => $jt_view,
 						]
 					);
 				endforeach;
@@ -434,12 +457,12 @@ $crumbs = [
 					'pages' => $jt_held_pages,
 					'base'  => add_query_arg(
 						[
-							'view' => 'approvals',
+							'view' => $jt_view,
 							'kind' => $jt_kind,
 						],
 						$base . '/mod/'
 					),
-					'label' => __( 'Awaiting approval pagination', 'jetonomy' ),
+					'label' => $jt_is_trash ? __( 'Trash pagination', 'jetonomy' ) : __( 'Awaiting approval pagination', 'jetonomy' ),
 				]
 			);
 			?>

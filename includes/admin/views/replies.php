@@ -39,6 +39,10 @@ $front_url   = $space_slug && $post_slug
 
 // Shared with the Replies screen and the status badge below.
 $status_labels = \Jetonomy\content_status_labels( true );
+if ( ! empty( $trash_count ) ) {
+	/* translators: %d: number of replies in the trash. */
+	$status_labels['trash'] = sprintf( __( 'Trash (%d)', 'jetonomy' ), (int) $trash_count );
+}
 ?>
 <div class="wrap jetonomy-admin">
 
@@ -128,9 +132,14 @@ $status_labels = \Jetonomy\content_status_labels( true );
 			<!-- Bulk actions -->
 			<select id="jt-bulk-action" aria-label="<?php esc_attr_e( 'Bulk action', 'jetonomy' ); ?>">
 				<option value=""><?php esc_html_e( 'Bulk Actions', 'jetonomy' ); ?></option>
-				<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
-				<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
-				<option value="spam"><?php esc_html_e( 'Mark as Spam', 'jetonomy' ); ?></option>
+				<?php if ( 'trash' === $current_status ) : ?>
+					<option value="approve"><?php esc_html_e( 'Restore', 'jetonomy' ); ?></option>
+					<option value="delete"><?php esc_html_e( 'Delete Permanently', 'jetonomy' ); ?></option>
+				<?php else : ?>
+					<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
+					<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
+					<option value="spam"><?php esc_html_e( 'Mark as Spam', 'jetonomy' ); ?></option>
+				<?php endif; ?>
 			</select>
 			<button type="button" class="button" id="jt-bulk-apply"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
 			<span class="spinner" id="jt-bulk-spinner" style="float:none;margin:0;"></span>
@@ -232,13 +241,11 @@ $status_labels = \Jetonomy\content_status_labels( true );
 									<a href="#" class="jt-edit-trigger" data-reply-id="<?php echo absint( $r->id ); ?>">
 										<?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 									</a>
-									<?php if ( 'trash' !== $r->status ) : ?>
-										&nbsp;|&nbsp;
-									<?php endif; ?>
+									&nbsp;|&nbsp;
 								</span>
 								<?php if ( 'trash' !== $r->status ) : ?>
 									<?php if ( in_array( $r->status ?? '', array( 'spam', 'pending' ), true ) ) : ?>
-										<span class="approve">
+										<span class="jt-approve"><?php // Not "approve": core CSS hides .approve in every list table, so Approve / Not Spam never showed. ?>
 											<a href="#"
 												class="jt-action-link"
 												data-id="<?php echo absint( $r->id ); ?>"
@@ -284,6 +291,16 @@ $status_labels = \Jetonomy\content_status_labels( true );
 											data-action="approve"
 										>
 											<?php esc_html_e( 'Restore', 'jetonomy' ); ?>
+										</a>
+										&nbsp;|&nbsp;
+									</span>
+									<span class="delete">
+										<a href="#"
+											class="jt-action-link submitdelete"
+											data-id="<?php echo absint( $r->id ); ?>"
+											data-action="delete"
+										>
+											<?php esc_html_e( 'Delete Permanently', 'jetonomy' ); ?>
 										</a>
 									</span>
 								<?php endif; ?>
@@ -366,13 +383,15 @@ wp_localize_script(
 	array(
 		'nonce' => $nonce_value,
 		'i18n'  => array(
-			'confirmTrash' => esc_html__( 'Move this to trash?', 'jetonomy' ),
-			'confirmSpam'  => esc_html__( 'Mark this as spam?', 'jetonomy' ),
-			'confirmBulk'  => esc_html__( 'Apply this action to all selected replies?', 'jetonomy' ),
-			'saved'        => esc_html__( 'Saved!', 'jetonomy' ),
-			'saveError'    => esc_html__( 'Save failed. Please try again.', 'jetonomy' ),
-			'noneSelected' => esc_html__( 'Please select at least one reply.', 'jetonomy' ),
-			'noAction'     => esc_html__( 'Please choose a bulk action.', 'jetonomy' ),
+			'confirmTrash'      => esc_html__( 'Move this to trash?', 'jetonomy' ),
+			'confirmSpam'       => esc_html__( 'Mark this as spam?', 'jetonomy' ),
+			'confirmDelete'     => esc_html__( 'Delete this reply permanently? This cannot be undone.', 'jetonomy' ),
+			'confirmBulkDelete' => esc_html__( 'Delete the selected replies permanently? This cannot be undone.', 'jetonomy' ),
+			'confirmBulk'       => esc_html__( 'Apply this action to all selected replies?', 'jetonomy' ),
+			'saved'             => esc_html__( 'Saved!', 'jetonomy' ),
+			'saveError'         => esc_html__( 'Save failed. Please try again.', 'jetonomy' ),
+			'noneSelected'      => esc_html__( 'Please select at least one reply.', 'jetonomy' ),
+			'noAction'          => esc_html__( 'Please choose a bulk action.', 'jetonomy' ),
 		),
 	)
 );

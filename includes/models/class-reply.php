@@ -287,6 +287,13 @@ class Reply extends Model {
 		}
 
 		if ( true === $result ) {
+			// Votes, flags, notifications, activity, revisions, attachment
+			// links and Pro's rows for this reply - the same relation map a
+			// space purge and Post::delete() use. Child replies are left in
+			// place on purpose: build_threaded() renders a reply whose parent
+			// is gone as a root, so nobody else's words disappear with it.
+			\Jetonomy\Space_Purge::delete_dependents( 'reply', array( $id ) );
+
 			/**
 			 * Fires after a reply row is deleted, whatever deleted it.
 			 *

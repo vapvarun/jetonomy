@@ -101,6 +101,13 @@ class Posts_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					'args'                => array(
+						'force' => array(
+							'type'        => 'boolean',
+							'default'     => false,
+							'description' => __( 'Delete permanently instead of moving to trash. Space moderators and admins only.', 'jetonomy' ),
+						),
+					),
 				),
 			)
 		);
@@ -825,6 +832,13 @@ class Posts_Controller extends Base_Controller {
 
 	/**
 	 * DELETE /posts/{id} — Soft-delete (trash) a post.
+	 *
+	 * `?force=true` deletes it permanently instead, through Post::delete()
+	 * (replies and everything hanging off the topic go with it). Same
+	 * convention as core's wp/v2 routes. Moderator-only: an author can trash
+	 * their own topic but not destroy it, so a moderator can always review or
+	 * restore what was removed. Restoring is POST
+	 * /spaces/{space_id}/moderation/approve/post/{id}.
 	 */
 	public function delete_item( $request ) {
 		$user_id = $this->require_auth();
@@ -847,6 +861,27 @@ class Posts_Controller extends Base_Controller {
 
 		if ( ! $can_delete ) {
 			return $this->permission_error();
+		}
+
+		if ( rest_sanitize_boolean( $request->get_param( 'force' ) ) ) {
+			if ( ! $this->check_permission( 'delete_others_posts', $space_id ) ) {
+				return $this->permission_error();
+			}
+			$result = Post::delete( $id );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			if ( true !== $result ) {
+				return new WP_Error( 'jetonomy_delete_failed', __( 'The post could not be deleted.', 'jetonomy' ), array( 'status' => 500 ) );
+			}
+			return new WP_REST_Response(
+				array(
+					'deleted'   => true,
+					'permanent' => true,
+					'id'        => $id,
+				),
+				200
+			);
 		}
 
 		// Post::update() detects the publish→trash transition and decrements

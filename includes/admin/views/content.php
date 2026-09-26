@@ -8,6 +8,7 @@
  * @var object[] $spaces         For the space filter dropdown.
  * @var int      $current_space  Currently selected space_id filter (0 = all).
  * @var string   $current_status all|publish|pending|spam|trash|scheduled.
+ * @var int      $trash_count    Topics in the trash (All excludes them).
  * @var int      $per_page
  * @var int      $paged
  * @var int      $total
@@ -42,6 +43,11 @@ $status_labels['scheduled'] = isset( $scheduled_count ) && $scheduled_count > 0
 	/* translators: %d: number of posts waiting to publish. */
 	? sprintf( __( 'Scheduled (%d)', 'jetonomy' ), (int) $scheduled_count )
 	: __( 'Scheduled', 'jetonomy' );
+
+if ( ! empty( $trash_count ) ) {
+	/* translators: %d: number of topics in the trash. */
+	$status_labels['trash'] = sprintf( __( 'Trash (%d)', 'jetonomy' ), (int) $trash_count );
+}
 
 $search_query = sanitize_text_field( $_GET['s'] ?? '' );
 $page_url     = admin_url( 'admin.php?page=jetonomy-content' );
@@ -84,9 +90,15 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			<!-- Bulk actions -->
 			<select id="jt-bulk-action" aria-label="<?php esc_attr_e( 'Bulk action', 'jetonomy' ); ?>">
 				<option value=""><?php esc_html_e( 'Bulk Actions', 'jetonomy' ); ?></option>
-				<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
-				<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
-				<option value="spam"><?php esc_html_e( 'Mark as Spam', 'jetonomy' ); ?></option>
+				<?php if ( 'trash' === $current_status ) : ?>
+					<?php // Core's trash view: the only ways out are back, or gone for good. ?>
+					<option value="approve"><?php esc_html_e( 'Restore', 'jetonomy' ); ?></option>
+					<option value="delete"><?php esc_html_e( 'Delete Permanently', 'jetonomy' ); ?></option>
+				<?php else : ?>
+					<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
+					<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
+					<option value="spam"><?php esc_html_e( 'Mark as Spam', 'jetonomy' ); ?></option>
+				<?php endif; ?>
 			</select>
 			<button type="button" class="button" id="jt-bulk-apply"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
 			<span class="spinner" id="jt-bulk-spinner" style="float:none;margin:0;"></span>
@@ -222,9 +234,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 									<a href="#" class="jt-edit-trigger" data-post-id="<?php echo absint( $p->id ); ?>">
 										<?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 									</a>
-									<?php if ( 'trash' !== $p->status ) : ?>
-										&nbsp;|&nbsp;
-									<?php endif; ?>
+									&nbsp;|&nbsp;
 								</span>
 								<?php if ( 'trash' !== $p->status ) : ?>
 									<span class="trash">
@@ -249,7 +259,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 										</a>
 									</span>
 								<?php else : ?>
-									<span class="approve">
+									<span class="restore"><?php // Not "approve": core CSS hides .approve in every list table (a comments-screen rule), which made this link invisible. ?>
 										<a href="#"
 											class="jt-action-link"
 											data-id="<?php echo absint( $p->id ); ?>"
@@ -257,6 +267,17 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 											data-action="approve"
 										>
 											<?php esc_html_e( 'Restore', 'jetonomy' ); ?>
+										</a>
+										&nbsp;|&nbsp;
+									</span>
+									<span class="delete">
+										<a href="#"
+											class="jt-action-link submitdelete"
+											data-id="<?php echo absint( $p->id ); ?>"
+											data-type="post"
+											data-action="delete"
+										>
+											<?php esc_html_e( 'Delete Permanently', 'jetonomy' ); ?>
 										</a>
 									</span>
 								<?php endif; ?>
@@ -422,13 +443,15 @@ wp_localize_script(
 	array(
 		'nonce' => $nonce_value,
 		'i18n'  => array(
-			'confirmTrash' => esc_html__( 'Move this to trash?', 'jetonomy' ),
-			'confirmSpam'  => esc_html__( 'Mark this as spam?', 'jetonomy' ),
-			'confirmBulk'  => esc_html__( 'Apply this action to all selected posts?', 'jetonomy' ),
-			'saved'        => esc_html__( 'Saved!', 'jetonomy' ),
-			'saveError'    => esc_html__( 'Save failed. Please try again.', 'jetonomy' ),
-			'noneSelected' => esc_html__( 'Please select at least one post.', 'jetonomy' ),
-			'noAction'     => esc_html__( 'Please choose a bulk action.', 'jetonomy' ),
+			'confirmTrash'      => esc_html__( 'Move this to trash?', 'jetonomy' ),
+			'confirmSpam'       => esc_html__( 'Mark this as spam?', 'jetonomy' ),
+			'confirmDelete'     => esc_html__( 'Delete permanently? The topic and all of its replies are removed and cannot be restored.', 'jetonomy' ),
+			'confirmBulkDelete' => esc_html__( 'Delete the selected topics permanently, with all of their replies? This cannot be undone.', 'jetonomy' ),
+			'confirmBulk'       => esc_html__( 'Apply this action to all selected posts?', 'jetonomy' ),
+			'saved'             => esc_html__( 'Saved!', 'jetonomy' ),
+			'saveError'         => esc_html__( 'Save failed. Please try again.', 'jetonomy' ),
+			'noneSelected'      => esc_html__( 'Please select at least one post.', 'jetonomy' ),
+			'noAction'          => esc_html__( 'Please choose a bulk action.', 'jetonomy' ),
 		),
 	)
 );

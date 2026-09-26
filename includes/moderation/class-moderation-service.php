@@ -186,6 +186,44 @@ class Moderation_Service {
 	}
 
 	/**
+	 * List trashed content this user may moderate - the queue's Trash tab.
+	 *
+	 * Deleting a topic or reply is a soft delete, and without this the only
+	 * way back (or forward, to a permanent delete) was a wp-admin row action
+	 * a space moderator cannot reach. Same scope rules as the approvals list.
+	 *
+	 * @param int      $user_id
+	 * @param string   $kind     'post' or 'reply'.
+	 * @param int|null $space_id Limit to one space, or null for the caller's scope.
+	 * @param int      $limit
+	 * @param int      $offset
+	 * @return object[]
+	 */
+	public static function list_trashed( int $user_id, string $kind, ?int $space_id = null, int $limit = 20, int $offset = 0 ): array {
+		$scope = self::approval_scope( $user_id, $space_id );
+
+		return 'reply' === $kind
+			? Reply::list_by_status( array( 'trash' ), $limit, $offset, $scope )
+			: Post::list_by_status( array( 'trash' ), $limit, $offset, $scope );
+	}
+
+	/**
+	 * Count trashed content visible to this user - paired with list_trashed().
+	 *
+	 * @param int      $user_id
+	 * @param string   $kind     'post' or 'reply'.
+	 * @param int|null $space_id Limit to one space, or null for the caller's scope.
+	 * @return int
+	 */
+	public static function count_trashed( int $user_id, string $kind, ?int $space_id = null ): int {
+		$scope = self::approval_scope( $user_id, $space_id );
+
+		return 'reply' === $kind
+			? Reply::count_by_status( array( 'trash' ), $scope )
+			: Post::count_by_status( array( 'trash' ), $scope );
+	}
+
+	/**
 	 * Resolve everything a page of flag rows needs to render, in a fixed
 	 * number of queries.
 	 *

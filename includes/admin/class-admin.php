@@ -2070,6 +2070,12 @@ class Admin {
 		} elseif ( 'all' !== $current_status ) {
 			$where .= ' AND p.status = %s';
 			$args[] = $current_status;
+		} else {
+			// WordPress convention: "All" is everything EXCEPT the trash, which
+			// has its own filter. Listing trashed topics under All is how a
+			// deleted topic stayed on screen with a Trash badge and looked
+			// undeletable (Basecamp 10335997408).
+			$where .= " AND p.status <> 'trash'";
 		}
 		if ( $search_query ) {
 			$where .= ' AND p.title LIKE %s';
@@ -2101,6 +2107,10 @@ class Admin {
 		$scheduled_count = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'draft' AND p.published_at IS NOT NULL"
 		);
+
+		// Same idea for Trash: now that All leaves it out, the filter label is
+		// the only place an owner learns there is anything in there.
+		$trash_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'trash'" );
 
 		// Site-timezone "now", for the view's Overdue split. Computed once here
 		// rather than per row.
@@ -2139,6 +2149,9 @@ class Admin {
 		if ( 'all' !== $current_status ) {
 			$where .= ' AND r.status = %s';
 			$args[] = $current_status;
+		} else {
+			// All excludes the trash, as on the topics screen.
+			$where .= " AND r.status <> 'trash'";
 		}
 		if ( $search_query ) {
 			$where .= ' AND r.content_plain LIKE %s';
@@ -2156,6 +2169,8 @@ class Admin {
 
 		$sql     = "SELECT r.* FROM {$replies_t} r WHERE {$where} ORDER BY r.created_at ASC LIMIT %d OFFSET %d";
 		$replies = $wpdb->get_results( $wpdb->prepare( $sql, ...array_merge( $args, array( $per_page, $offset ) ) ) ) ?: array();
+
+		$trash_count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = %d AND r.status = 'trash'", $post_id ) );
 
 		$nonce_value = wp_create_nonce( 'jetonomy_admin' );
 

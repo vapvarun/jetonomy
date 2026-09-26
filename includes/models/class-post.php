@@ -339,7 +339,17 @@ class Post extends Model {
 		// delete path (CLI content journey, QA fixtures, abilities) must mirror
 		// it so space + author post_count stay consistent across every delete
 		// mechanism. Mirrors Reply::delete().
-		$post   = self::find( $id );
+		$post = self::find( $id );
+
+		// Replies first, while the topic row still exists for any listener
+		// that looks it up. A hard delete used to remove the topic and leave
+		// every reply behind pointing at a post_id that no longer resolved -
+		// still counted on their authors, still in search and activity
+		// (Basecamp 10344032754).
+		if ( $post ) {
+			self::delete_replies( $id );
+		}
+
 		$result = parent::delete( $id );
 		self::reset_slug_memo();
 
@@ -361,6 +371,19 @@ class Post extends Model {
 		}
 
 		if ( true === $result ) {
+			// Through the model so each tag's post_count drops; a raw delete of
+			// post_tags would leave the tag cloud counting a topic that is gone.
+			foreach ( Tag::list_for_post( $id ) as $tag ) {
+				Tag::detach_from_post( $id, (int) $tag->id );
+			}
+
+			// Everything else pointing at the topic - votes, flags, bookmarks,
+			// read state, subscriptions, notifications, activity, revisions,
+			// attachment links and Pro's tables - from the same relation map a
+			// space purge uses, so the two can never disagree about what a
+			// topic owns.
+			\Jetonomy\Space_Purge::delete_dependents( 'post', array( $id ) );
+
 			/**
 			 * Fires after a post row is deleted, whatever deleted it.
 			 *
@@ -383,6 +406,81 @@ class Post extends Model {
 		}
 
 		return $result;
+	}
+
+	/** Replies removed per pass when a topic is hard-deleted. */
+	private const REPLY_DELETE_BATCH = 500;
+
+	/**
+	 * Hard-delete every reply of a topic that is itself being hard-deleted.
+	 *
+	 * Batched, NOT a loop over Reply::delete(). A 5,000-reply topic through
+	 * Reply::delete() is ~40,000 queries: a find, the row delete, an update
+	 * of the dying topic's reply_count, an author counter update and a thread
+	 * cache bump per reply, plus the dependents sweep per reply. Here each
+	 * pass of 500 costs one SELECT, one DELETE per dependent table, one row
+	 * DELETE and one counter UPDATE per distinct author.
+	 *
+	 * What Reply::delete() guarantees is kept, because other code relies on
+	 * it: author reply_count drops for every published reply, and the two
+	 * per-reply actions still fire for each row - `jetonomy_reply_publish_transition`
+	 * (Pro analytics) and `jetonomy_after_delete_reply` (Pro attachment links,
+	 * BuddyNext's mirrored feed comments). They fire after the row is gone,
+	 * exactly as Reply::delete() fires them.
+	 *
+	 * Deliberately skipped: the `jetonomy_before_delete_reply` veto. The
+	 * topic's own `jetonomy_before_delete_post` already decided; a reply
+	 * cannot outlive the topic it belongs to. And the topic's reply_count is
+	 * not maintained - the row it lives on is deleted next.
+	 *
+	 * @param int $post_id Topic being deleted.
+	 */
+	private static function delete_replies( int $post_id ): void {
+		$db      = static::db();
+		$replies = \Jetonomy\table( 'replies' );
+
+		do {
+			$rows = $db->get_results(
+				$db->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT id, author_id, status, created_at FROM {$replies} WHERE post_id = %d ORDER BY id ASC LIMIT %d",
+					$post_id,
+					self::REPLY_DELETE_BATCH
+				)
+			) ?: array();
+			if ( ! $rows ) {
+				break;
+			}
+
+			$ids   = array_map( static fn( $r ) => (int) $r->id, $rows );
+			$batch = count( $ids );
+			\Jetonomy\Space_Purge::delete_dependents( 'reply', $ids );
+
+			$in = implode( ',', $ids );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- ids are intval'd above.
+			$db->query( "DELETE FROM {$replies} WHERE id IN ({$in})" );
+
+			$published = array();
+			foreach ( $rows as $r ) {
+				if ( 'publish' === $r->status && (int) $r->author_id > 0 ) {
+					$published[ (int) $r->author_id ] = ( $published[ (int) $r->author_id ] ?? 0 ) + 1;
+				}
+			}
+			foreach ( $published as $author_id => $n ) {
+				UserProfile::increment_reply_count( $author_id, -$n );
+			}
+
+			foreach ( $rows as $r ) {
+				if ( 'publish' === $r->status ) {
+					/** This action is documented in includes/models/class-reply.php (Reply::create) */
+					do_action( 'jetonomy_reply_publish_transition', (int) $r->id, -1, (string) $r->created_at );
+				}
+				/** This action is documented in includes/models/class-reply.php (Reply::delete) */
+				do_action( 'jetonomy_after_delete_reply', (int) $r->id );
+			}
+		} while ( self::REPLY_DELETE_BATCH === $batch );
+
+		Reply::bust_thread( $post_id );
 	}
 
 	/**

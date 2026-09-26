@@ -146,6 +146,12 @@
 				var data = { status: statusParam };
 				data[idParam] = actionPostId;
 
+				// Permanent delete is not a status change - its own endpoint.
+				if ('delete' === action) {
+					ajaxAction = 'jetonomy_delete_content_permanently';
+					data = { type: type, ids: [actionPostId] };
+				}
+
 				ajax(ajaxAction, data).then(function (res) {
 					if (res.success) {
 						var actionRow = actionLink.closest('tr');
@@ -159,7 +165,8 @@
 				performAction();
 				return;
 			}
-			var confirmMsg = 'trash' === action ? (cfg.i18n.confirmTrash || 'Move this to trash?') : (cfg.i18n.confirmSpam || 'Mark this as spam?');
+			var confirmMsg = 'delete' === action ? (cfg.i18n.confirmDelete || 'Delete permanently?')
+				: 'trash' === action ? (cfg.i18n.confirmTrash || 'Move this to trash?') : (cfg.i18n.confirmSpam || 'Mark this as spam?');
 			_confirm(confirmMsg, { danger: true }).then(function (ok) {
 				if (ok) { performAction(); }
 			});
@@ -200,11 +207,10 @@
 			var runBulk = function () {
 				bulkBtn.disabled = true;
 				bulkSpinner.classList.add('is-active');
-				ajax('jetonomy_bulk_content_action', {
-					bulk_action: bulkAction,
-					type: 'post',
-					ids: ids
-				}).then(function () {
+				var request = 'delete' === action
+					? ajax('jetonomy_delete_content_permanently', { type: 'post', ids: ids })
+					: ajax('jetonomy_bulk_content_action', { bulk_action: bulkAction, type: 'post', ids: ids });
+				request.then(function () {
 					bulkBtn.disabled = false;
 					bulkSpinner.classList.remove('is-active');
 					window.location.reload();
@@ -214,8 +220,9 @@
 				});
 			};
 
-			if ('trash' === action || 'spam' === action) {
-				_confirm(cfg.i18n.confirmBulk || 'Apply this action to all selected posts?', { danger: true }).then(function (ok) {
+			if ('trash' === action || 'spam' === action || 'delete' === action) {
+				var bulkMsg = 'delete' === action ? (cfg.i18n.confirmBulkDelete || cfg.i18n.confirmBulk) : cfg.i18n.confirmBulk;
+				_confirm(bulkMsg || 'Apply this action to all selected posts?', { danger: true }).then(function (ok) {
 					if (ok) { runBulk(); }
 				});
 			} else {

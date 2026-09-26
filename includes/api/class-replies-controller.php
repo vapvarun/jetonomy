@@ -84,6 +84,13 @@ class Replies_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					'args'                => array(
+						'force' => array(
+							'type'        => 'boolean',
+							'default'     => false,
+							'description' => __( 'Delete permanently instead of moving to trash. Space moderators and admins only.', 'jetonomy' ),
+						),
+					),
 				),
 			)
 		);
@@ -612,6 +619,30 @@ class Replies_Controller extends Base_Controller {
 
 		if ( ! $can_delete ) {
 			return $this->permission_error();
+		}
+
+		// ?force=true - permanent delete, moderators only. Mirrors
+		// DELETE /posts/{id}?force=true; restore is POST
+		// /spaces/{space_id}/moderation/approve/reply/{id}.
+		if ( rest_sanitize_boolean( $request->get_param( 'force' ) ) ) {
+			if ( ! $this->check_permission( 'delete_others_posts', $space_id ) ) {
+				return $this->permission_error();
+			}
+			$result = Reply::delete( $id );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			if ( true !== $result ) {
+				return new WP_Error( 'jetonomy_delete_failed', __( 'The reply could not be deleted.', 'jetonomy' ), array( 'status' => 500 ) );
+			}
+			return new WP_REST_Response(
+				array(
+					'deleted'   => true,
+					'permanent' => true,
+					'id'        => $id,
+				),
+				200
+			);
 		}
 
 		// Reply::update() detects the publish→trash transition and decrements

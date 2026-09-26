@@ -326,11 +326,40 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						esc_html_e( 'This post is pending review and not yet publicly visible.', 'jetonomy' );
 					} elseif ( 'spam' === $post->status ) {
 						esc_html_e( 'This post has been marked as spam.', 'jetonomy' );
+					} elseif ( 'trash' === $post->status ) {
+						esc_html_e( 'This post is in the trash and hidden from the community.', 'jetonomy' );
 					} else {
 						/* translators: %s: post status */
 						echo esc_html( sprintf( __( 'This post has status: %s', 'jetonomy' ), $post->status ) );
 					}
 					?>
+					<?php
+					// A trashed topic reaches this template only for its author
+					// and for moderators (can_read_post). Moderators get the way
+					// back - or out - right here, the one frontend surface a
+					// trashed topic has. The author does not: trashing is theirs,
+					// restoring and destroying are a moderator's call.
+					if ( 'trash' === $post->status && $jt_can_moderate_here ) :
+						?>
+						<div class="jt-notice-actions">
+							<button type="button" class="jt-btn jt-btn-fill jt-btn-sm"
+								data-wp-interactive="jetonomy"
+								data-wp-on--click="actions.trashedPostAction"
+								data-rest-method="POST"
+								data-rest-path="<?php echo esc_attr( '/spaces/' . (int) $post->space_id . '/moderation/approve/post/' . (int) $post->id ); ?>">
+								<?php esc_html_e( 'Restore', 'jetonomy' ); ?>
+							</button>
+							<button type="button" class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm"
+								data-wp-interactive="jetonomy"
+								data-wp-on--click="actions.trashedPostAction"
+								data-rest-method="DELETE"
+								data-rest-path="<?php echo esc_attr( '/posts/' . (int) $post->id . '?force=true' ); ?>"
+								data-confirm="<?php esc_attr_e( 'Delete this post and all its replies permanently? This cannot be undone.', 'jetonomy' ); ?>"
+								data-redirect="<?php echo esc_url( $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/mod/?view=trash' : \Jetonomy\base_url() . '/' ); ?>">
+								<?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?>
+							</button>
+						</div>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 			<!-- Post -->

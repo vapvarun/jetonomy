@@ -1224,6 +1224,8 @@
   /* ── Inline notices (pending, spam, etc.) ── */
   .jt-notice { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; margin-bottom: 16px; }
   .jt-notice-warning { background: var(--jt-warn-light); color: var(--jt-warn-dark); border-left: 4px solid var(--jt-warn); }
+  /* Moderator Restore / Delete permanently on a trashed topic. Wraps under 390px. */
+  .jt-notice-actions { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); margin-block-start: var(--jt-space-3); }
 
   /* ── View count ── */
   .jt-view-count { display: inline-flex; align-items: center; gap: 4px; font-size: var(--jt-text-sm); color: var(--jt-text-tertiary); }

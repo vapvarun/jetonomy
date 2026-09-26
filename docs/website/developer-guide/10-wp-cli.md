@@ -84,7 +84,7 @@ Create and manage posts within spaces.
 | `create` | Create a new post |
 | `list` | List posts |
 | `update <id>` | Update a post |
-| `delete <id>` | Delete a post |
+| `delete <id>` | Permanently delete a post, its replies and everything attached to them |
 
 **Flags - create:** `--space=<id>` `--author=<id>` `--title=<title>` `--content=<content>` `[--status=<status>]` `[--slug=<slug>]` `[--format=<format>]`
 
@@ -110,7 +110,7 @@ Create and manage replies on posts.
 | `create` | Create a reply |
 | `list` | List replies for a post |
 | `update <id>` | Update a reply |
-| `delete <id>` | Delete a reply |
+| `delete <id>` | Permanently delete a reply and its votes, flags and notifications. Replies nested under it stay |
 | `accept` | Mark a reply as the accepted answer |
 
 **Flags - create:** `--post=<id>` `--author=<id>` `--content=<content>` `[--parent=<id>]` `[--status=<status>]` `[--format=<format>]`

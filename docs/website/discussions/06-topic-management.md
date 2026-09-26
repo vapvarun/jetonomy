@@ -106,11 +106,16 @@ Deleting a topic moves it to trash. It disappears from the space listing and is 
 2. Click the **...** menu and select **Delete Topic**.
 3. Confirm the deletion in the prompt.
 
-Deleted topics can be recovered by a site admin from **Jetonomy → Content** in the WordPress admin - filter by status "Trash" to find them. A trashed topic can be restored or permanently deleted.
+Only a moderator can bring a trashed topic back or remove it for good. Authors can trash their own topics but cannot restore or permanently delete them.
 
-Permanent deletion removes the topic, all replies, all votes, all bookmarks, and all associated notifications from the database. It cannot be undone.
+- **Space moderators and admins** open the **Trash** tab of the moderation queue (`/community/s/{slug}/mod/?view=trash`, or `/community/mod/?view=trash` for every space they moderate). Each trashed topic or reply has **Restore** and **Delete permanently**. Opening a trashed topic directly shows the same two buttons in its notice.
+- **Site admins** use **Jetonomy → Content** in the WordPress admin. The **All** filter leaves trashed topics out; pick **Trash** to see them, then use the **Restore** or **Delete Permanently** row actions, or the matching bulk actions. Trashed replies are on each topic's replies screen under the same **Trash** filter.
 
-> **Note:** When you delete a topic, the topic author's reputation is reduced (a default of 20 points) to reflect the removed content. The penalty amount is admin-configurable under [Settings → Permissions → Reputation Points](../admin-settings/02-permissions.md#reputation-points).
+Restoring publishes the topic again and puts it back in the space's post count.
+
+Permanent deletion removes the topic, all of its replies, and everything attached to them - votes, flags, bookmarks, tags, subscriptions, read markers, notifications and attachment links. Author reply counts and tag counts are corrected. It cannot be undone.
+
+> **Note:** Deleting a topic does not change the author's reputation. Only marking content as **Spam** applies the reputation penalty (a default of 20 points), configurable under [Settings → Permissions → Reputation Points](../admin-settings/02-permissions.md#reputation-points).
 
 ## What's Next?
 

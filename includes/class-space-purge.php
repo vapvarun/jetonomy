@@ -578,6 +578,42 @@ final class Space_Purge {
 	}
 
 	/**
+	 * Delete every row that hangs off a set of topics or replies.
+	 *
+	 * The one-object half of this class's map: Post::delete() and
+	 * Reply::delete() call it so a hard delete of a single topic or reply
+	 * cleans up exactly what a space purge would have cleaned up for it -
+	 * votes, flags, notifications, activity, attachments, revisions, tags,
+	 * bookmarks, read state, subscriptions, and whatever Pro adds through
+	 * `jetonomy_space_relations` - from the same declaration, with no second
+	 * list to drift.
+	 *
+	 * The object rows themselves are NOT touched, and for `post` neither are
+	 * its replies: the caller owns those, because they carry counters and
+	 * hooks this class knows nothing about.
+	 *
+	 * @param string $ref 'post' or 'reply'.
+	 * @param int[]  $ids Object ids.
+	 * @return int Rows removed.
+	 */
+	public static function delete_dependents( string $ref, array $ids ): int {
+		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+		if ( ! $ids || ! in_array( $ref, [ 'post', 'reply' ], true ) ) {
+			return 0;
+		}
+
+		$replies = table( 'replies' );
+		$n       = 0;
+		foreach ( self::relations() as $r ) {
+			if ( $ref !== $r['ref'] || $r['self'] || ( $replies === $r['table'] && 'post_id' === $r['column'] ) ) {
+				continue;
+			}
+			$n += self::delete_where_in( $r, $ids );
+		}
+		return $n;
+	}
+
+	/**
 	 * Distinct authors of the rows about to be deleted.
 	 *
 	 * @param int[] $post_ids  Topic ids in this slice.
@@ -688,7 +724,19 @@ final class Space_Purge {
 	/** Does a table exist? Pro tables are absent when the extension never ran. */
 	private static function table_exists( string $table ): bool {
 		global $wpdb;
+
+		// Only a positive answer is remembered: a table never disappears
+		// mid-request, but a Pro extension may create one. Without this every
+		// single-topic delete paid one SHOW TABLES per relation.
+		static $exists = [];
+		if ( isset( $exists[ $table ] ) ) {
+			return true;
+		}
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+			$exists[ $table ] = true;
+			return true;
+		}
+		return false;
 	}
 }

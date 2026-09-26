@@ -29,7 +29,13 @@
 		var params = new URLSearchParams();
 		params.set('action', action);
 		params.set('nonce', cfg.nonce);
-		Object.keys(data).forEach(function (k) { params.set(k, data[k]); });
+		Object.keys(data).forEach(function (k) {
+			if (Array.isArray(data[k])) {
+				data[k].forEach(function (v) { params.append(k + '[]', v); });
+			} else {
+				params.set(k, data[k]);
+			}
+		});
 		return fetch(cfg.ajaxUrl, {
 			method: 'POST',
 			credentials: 'same-origin',
@@ -154,12 +160,19 @@
 		var ajaxAction = 'approve' === action ? 'jetonomy_approve_content'
 			: 'spam' === action ? 'jetonomy_spam_content'
 				: 'jetonomy_trash_content';
+		var data = { type: 'reply', id: replyId };
 
-		ajax(ajaxAction, { type: 'reply', id: replyId })
+		// Permanent delete is not a status change - its own endpoint.
+		if ('delete' === action) {
+			ajaxAction = 'jetonomy_delete_content_permanently';
+			data = { type: 'reply', ids: [replyId] };
+		}
+
+		ajax(ajaxAction, data)
 			.then(function (res) {
 				if (!res.success) { return; }
 				var row = document.getElementById('jt-reply-row-' + replyId);
-				if ('trash' === action || 'spam' === action) {
+				if ('trash' === action || 'spam' === action || 'delete' === action) {
 					row.style.opacity = '0.4';
 					row.style.pointerEvents = 'none';
 					setTimeout(function () { row.remove(); }, 700);
@@ -175,9 +188,10 @@
 		e.preventDefault();
 		var action = link.dataset.action;
 		var replyId = link.dataset.id;
-		var confirmMsg = 'trash' === action ? (cfg.i18n.confirmTrash || 'Move this to trash?') : (cfg.i18n.confirmSpam || 'Mark this as spam?');
+		var confirmMsg = 'delete' === action ? (cfg.i18n.confirmDelete || 'Delete permanently?')
+			: 'trash' === action ? (cfg.i18n.confirmTrash || 'Move this to trash?') : (cfg.i18n.confirmSpam || 'Mark this as spam?');
 
-		if ('trash' === action || 'spam' === action) {
+		if ('trash' === action || 'spam' === action || 'delete' === action) {
 			_confirm(confirmMsg, { danger: true }).then(function (ok) {
 				if (ok) { performReplyAction(action, replyId); }
 			});
@@ -208,9 +222,12 @@
 			var runBulk = function () {
 				bulkBtn.disabled = true;
 				bulkSpinner.classList.add('is-active');
-				var promises = ids.map(function (id) {
-					return ajax(ajaxAction, { type: 'reply', id: id });
-				});
+				// One request for the whole selection when deleting permanently.
+				var promises = 'delete' === action
+					? [ajax('jetonomy_delete_content_permanently', { type: 'reply', ids: ids })]
+					: ids.map(function (id) {
+						return ajax(ajaxAction, { type: 'reply', id: id });
+					});
 				return Promise.allSettled(promises).then(function () {
 					bulkBtn.disabled = false;
 					bulkSpinner.classList.remove('is-active');
@@ -218,8 +235,9 @@
 				});
 			};
 
-			if ('trash' === action || 'spam' === action) {
-				_confirm(cfg.i18n.confirmBulk || 'Apply this action to all selected replies?', { danger: true }).then(function (ok) {
+			if ('trash' === action || 'spam' === action || 'delete' === action) {
+				var bulkMsg = 'delete' === action ? (cfg.i18n.confirmBulkDelete || cfg.i18n.confirmBulk) : cfg.i18n.confirmBulk;
+				_confirm(bulkMsg || 'Apply this action to all selected replies?', { danger: true }).then(function (ok) {
 					if (ok) { runBulk(); }
 				});
 			} else {

@@ -2864,6 +2864,40 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Restore / delete permanently a trashed topic (moderators) ──
+        // The route, method, confirm text and redirect all come from the
+        // button, so Restore (POST space-scoped approve) and Delete
+        // permanently (DELETE /posts/{id}?force=true) share one action.
+        *trashedPostAction() {
+            const btn = getElement().ref;
+            const path = btn.getAttribute( 'data-rest-path' );
+            if ( ! path ) return;
+
+            const confirmMsg = btn.getAttribute( 'data-confirm' );
+            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg ) ) ) return;
+
+            btn.disabled = true;
+            try {
+                const res = yield window.jetonomyRest.restFetch( path, {
+                    method: btn.getAttribute( 'data-rest-method' ) || 'POST',
+                } );
+                if ( res.ok ) {
+                    const redirect = btn.getAttribute( 'data-redirect' );
+                    if ( redirect ) {
+                        window.location.assign( redirect );
+                    } else {
+                        window.location.reload();
+                    }
+                    return;
+                }
+                btn.disabled = false;
+                if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.failedDelete || 'Failed to delete.' );
+            } catch {
+                btn.disabled = false;
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+            }
+        },
+
         // ── Delete reply ──
         *deleteReply( event ) {
             const trigger = triggerOf( event );
@@ -3333,10 +3367,16 @@ const { state, actions } = store( 'jetonomy', {
             let path = endpoint + action + '/' + kind + '/' + objectId;
             if ( base && 0 === path.indexOf( base ) ) path = path.slice( base.length );
 
+            // A button can name its own route instead - the Trash tab's
+            // "Delete permanently" is DELETE /posts|replies/{id}?force=true,
+            // not a moderation status change.
+            const method = btn.getAttribute( 'data-rest-method' ) || 'POST';
+            if ( btn.getAttribute( 'data-rest-path' ) ) path = btn.getAttribute( 'data-rest-path' );
+
             const buttons = card.querySelectorAll( '.jt-mod-approve' );
             buttons.forEach( ( b ) => { b.disabled = true; } );
 
-            const res = yield window.jetonomyRest.restFetch( path, { method: 'POST' } );
+            const res = yield window.jetonomyRest.restFetch( path, { method } );
             if ( ! res.ok ) {
                 // Re-enable rather than strand the row: the usual cause is another
                 // moderator having already handled it, and the message says so.
@@ -3373,7 +3413,7 @@ const { state, actions } = store( 'jetonomy', {
                 wrapper.className = 'jt-empty';
                 const msg = document.createElement( 'div' );
                 msg.className = 'jt-empty-text';
-                msg.textContent = i18n.approvalsClean || 'Nothing left awaiting approval.';
+                msg.textContent = container.getAttribute( 'data-empty-text' ) || i18n.approvalsClean || 'Nothing left awaiting approval.';
                 wrapper.appendChild( msg );
                 container.parentNode.replaceChild( wrapper, container );
             }

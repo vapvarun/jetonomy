@@ -117,7 +117,7 @@ Posts are individual discussion threads (topics) inside a Space.
 | POST | `/spaces/{space_id}/posts` | Logged in | Create a post |
 | GET | `/posts/{id}` | Public | Get a single post |
 | PATCH | `/posts/{id}` | Author / Moderator | Update a post |
-| DELETE | `/posts/{id}` | Author / Moderator | Delete a post |
+| DELETE | `/posts/{id}` | Author / Moderator | Move a post to trash. `?force=true` deletes it permanently with all its replies (space moderators and admins only). Restore with `POST /spaces/{space_id}/moderation/approve/post/{id}` |
 | POST | `/posts/{id}/close` | Moderator / Admin | Toggle closed status |
 | POST | `/posts/{id}/pin` | Moderator / Admin | Toggle pinned status |
 | POST | `/posts/{id}/move` | Moderator / Admin | Move to another space |
@@ -194,7 +194,7 @@ Replies are threaded responses to a Post.
 | POST | `/posts/{post_id}/replies` | Logged in | Create a reply |
 | GET | `/replies/{id}` | Public | Get a single reply |
 | PATCH | `/replies/{id}` | Author / Moderator | Update a reply |
-| DELETE | `/replies/{id}` | Author / Moderator | Delete a reply |
+| DELETE | `/replies/{id}` | Author / Moderator | Move a reply to trash. `?force=true` deletes it permanently (space moderators and admins only). Restore with `POST /spaces/{space_id}/moderation/approve/reply/{id}` |
 | POST | `/replies/{id}/accept` | Post author / Moderator | Accept as answer |
 | DELETE | `/replies/{id}/accept` | Post author / Moderator | Un-accept a reply, returning the topic to unanswered |
 | POST | `/replies/{id}/split` | Moderator / Admin | Split this reply into a new standalone post |
@@ -364,7 +364,7 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
 | GET | `/spaces/{id}/moderation/flags` | Space Admin | List flags filed within a specific space |
 | POST | `/spaces/{id}/moderation/flags/{flag_id}/resolve` | Space Admin | Resolve a flag within a specific space |
-| POST | `/spaces/{id}/moderation/{action}/{type}/{obj_id}` | Space Admin | Moderate content in a specific space (`action`: `approve`, `spam`, or `trash`; `type`: `post` or `reply`) |
+| POST | `/spaces/{id}/moderation/{action}/{type}/{obj_id}` | Space Admin | Moderate content in a specific space (`action`: `approve`, `spam`, or `trash`; `type`: `post` or `reply`). `approve` on trashed content restores it |
 
 Resolving a flag as `valid` applies the full resolution contract on every surface (1.5.0 fix): the flagged content is trashed, any other pending flags on the same object are cleared with it, the reporter earns +5 reputation, and the `jetonomy_flag_resolved` action fires (so Pro webhooks see the event). Earlier versions skipped these side effects when the flag was resolved through this global REST route specifically.
 
