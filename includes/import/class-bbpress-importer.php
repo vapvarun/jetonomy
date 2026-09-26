@@ -384,6 +384,51 @@ class BBPress_Importer extends Importer {
 		if ( 'public' !== $access['visibility'] ) {
 			$this->import_forum_members( $space_id, (int) $forum->ID );
 		}
+
+		$this->link_buddypress_group( $space_id, (int) $forum->ID );
+	}
+
+	/**
+	 * Carry a BuddyPress group forum's group across: link it and its members.
+	 *
+	 * BP-bbPress ties a group to its forum through the forum's `_bbp_group_ids`
+	 * meta. Without this the imported space was an orphan: the group's Forum
+	 * tab did not show it, later joins/leaves did not sync (Jetonomy's
+	 * BuddyPress integration keys both on the group -> space link), and a
+	 * private or hidden group's members who had never posted lost access -
+	 * import_forum_members() only knows authors.
+	 *
+	 * Also runs for a forum an earlier run imported, since no release before
+	 * 2.0.1 linked groups. A group already linked to any space (by the owner,
+	 * or by a previous run) is left alone, so a re-run costs one meta read per
+	 * group forum. Roles follow the integration's promote map (admin -> admin,
+	 * mod -> moderator); SpaceMember::add() never lowers an existing role.
+	 *
+	 * @param int $space_id Imported space.
+	 * @param int $forum_id Source bbPress forum ID.
+	 * @return void
+	 */
+	private function link_buddypress_group( int $space_id, int $forum_id ): void {
+		global $wpdb;
+
+		if ( ! function_exists( 'bp_is_active' ) || ! bp_is_active( 'groups' ) ) {
+			return;
+		}
+
+		foreach ( array_map( 'intval', (array) get_post_meta( $forum_id, '_bbp_group_ids', true ) ) as $group_id ) {
+			if ( $group_id <= 0 || groups_get_groupmeta( $group_id, \Jetonomy\Integrations\BuddyPress::META_KEY, true ) ) {
+				continue;
+			}
+			\Jetonomy\Integrations\BuddyPress::link_group_to_space( $group_id, $space_id );
+
+			$table = buddypress()->groups->table_name_members;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- BP's own table name.
+			$members = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, is_admin, is_mod FROM {$table} WHERE group_id = %d AND is_confirmed = 1 AND is_banned = 0", $group_id ) );
+			foreach ( (array) $members as $m ) {
+				$role = $m->is_admin ? 'admin' : ( $m->is_mod ? 'moderator' : 'member' );
+				SpaceMember::add( $space_id, (int) $m->user_id, $role );
+			}
+		}
 	}
 
 	/** Importer slug used as the `source` in jt_import_map. */
@@ -440,6 +485,72 @@ class BBPress_Importer extends Importer {
 		}
 
 		return $this->find_imported( $type, $fingerprints );
+	}
+
+	/**
+	 * bbPress topic ids that are stuck, keyed for isset().
+	 *
+	 * There is no per-topic sticky flag in bbPress: bbp_stick_topic() stores the ids
+	 * in the forum's `_bbp_sticky_topics` meta and super stickies in the
+	 * `_bbp_super_sticky_topics` option. Earlier releases read a
+	 * `_bbp_topic_sticky` post meta bbPress never writes, so every sticky
+	 * imported unstuck. Read raw, so it works with bbPress deactivated.
+	 * Jetonomy has no site-wide sticky, so a super sticky lands sticky in its
+	 * own space.
+	 *
+	 * @param object[] $topics bbPress topic rows.
+	 * @return array<int,true>
+	 */
+	private function sticky_topic_ids( array $topics ): array {
+		$ids = (array) get_option( '_bbp_super_sticky_topics', [] );
+		foreach ( array_unique( array_map( 'intval', array_column( $topics, 'post_parent' ) ) ) as $forum_id ) {
+			$ids = array_merge( $ids, (array) get_post_meta( $forum_id, '_bbp_sticky_topics', true ) );
+		}
+
+		return array_fill_keys( array_map( 'intval', array_filter( $ids ) ), true );
+	}
+
+	/**
+	 * Jetonomy parent reply for each threaded bbPress reply in this batch.
+	 *
+	 * The reply being answered is stored in `_bbp_reply_to` post meta.
+	 * Earlier releases ignored it, so every threaded discussion imported flat.
+	 * One meta query per batch; the parent resolves through this run's id map
+	 * (same or earlier batch) or, for a parent an earlier run imported,
+	 * jt_import_map. A parent that was never imported (pending, spam) leaves
+	 * the reply top-level rather than dropping it.
+	 *
+	 * Call it per reply AFTER earlier replies in the batch were created, since
+	 * bbPress replies answer older (lower-id) replies in the same topic.
+	 *
+	 * @param object[] $replies bbPress reply rows.
+	 * @return callable(int): ?int Source reply id => Jetonomy parent reply id, null for top level (the column default).
+	 */
+	private function reply_parent_resolver( array $replies ): callable {
+		global $wpdb;
+
+		$reply_to = [];
+		$ids      = array_map( 'intval', array_column( $replies, 'ID' ) );
+		if ( $ids ) {
+			$in = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholder list.
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_bbp_reply_to' AND post_id IN ({$in})", ...$ids ) );
+			foreach ( (array) $rows as $row ) {
+				if ( (int) $row->meta_value > 0 ) {
+					$reply_to[ (int) $row->post_id ] = (int) $row->meta_value;
+				}
+			}
+		}
+
+		$earlier = array_diff( array_unique( $reply_to ), array_keys( $this->id_map['reply'] ?? [] ) );
+		$earlier = $earlier ? Import_Map::find_many( self::SOURCE, 'reply', $earlier ) : [];
+
+		return function ( int $source_id ) use ( $reply_to, $earlier ): ?int {
+			$parent = $reply_to[ $source_id ] ?? 0;
+			$mapped = $parent ? ( $this->get_mapped_id( 'reply', $parent ) ?? ( $earlier[ (string) $parent ] ?? 0 ) ) : 0;
+
+			return $mapped > 0 ? (int) $mapped : null;
+		};
 	}
 
 	/**
@@ -544,6 +655,8 @@ class BBPress_Importer extends Importer {
 					// last time still gets imported.
 					if ( isset( $existing[ (int) $forum->ID ] ) ) {
 						$this->map_id( 'forum', $forum->ID, $existing[ (int) $forum->ID ] );
+						// A group forum an older release imported was never linked to its group.
+						$this->link_buddypress_group( $existing[ (int) $forum->ID ], (int) $forum->ID );
 						++$this->already;
 						continue;
 					}
@@ -590,6 +703,7 @@ class BBPress_Importer extends Importer {
 				}
 
 				$existing = $this->find_imported_children( 'post', $topics, 'forum' );
+				$sticky   = $this->sticky_topic_ids( $topics );
 
 				foreach ( $topics as $topic ) {
 					$forum_id = (int) $topic->post_parent;
@@ -607,7 +721,7 @@ class BBPress_Importer extends Importer {
 						continue;
 					}
 
-					$is_sticky = (int) get_post_meta( $topic->ID, '_bbp_topic_sticky', true );
+					$is_sticky = isset( $sticky[ (int) $topic->ID ] );
 
 					$post_id = JtPost::create(
 						[
@@ -671,7 +785,8 @@ class BBPress_Importer extends Importer {
 					];
 				}
 
-				$existing = $this->find_imported_children( 'reply', $replies, 'topic' );
+				$existing  = $this->find_imported_children( 'reply', $replies, 'topic' );
+				$parent_of = $this->reply_parent_resolver( $replies );
 
 				foreach ( $replies as $reply ) {
 					$topic_id = (int) $reply->post_parent;
@@ -689,6 +804,7 @@ class BBPress_Importer extends Importer {
 					$reply_id = JtReply::create(
 						[
 							'post_id'       => $post_id,
+							'parent_id'     => $parent_of( (int) $reply->ID ),
 							'author_id'     => (int) $reply->post_author,
 							'content'       => wp_kses_post( $reply->post_content ),
 							'content_plain' => \jetonomy_content_to_plain( $reply->post_content ),
@@ -801,6 +917,9 @@ class BBPress_Importer extends Importer {
 			// imported" and a re-run can never recover what the first run missed.
 			if ( isset( $existing[ (int) $forum->ID ] ) ) {
 				$this->map_id( 'forum', $forum->ID, $existing[ (int) $forum->ID ] );
+				if ( ! $this->dry_run ) {
+					$this->link_buddypress_group( $existing[ (int) $forum->ID ], (int) $forum->ID );
+				}
 				++$this->already;
 				continue;
 			}
@@ -833,6 +952,7 @@ class BBPress_Importer extends Importer {
 		);
 
 		$existing = $this->find_imported_children( 'post', (array) $topics, 'forum' );
+		$sticky   = $this->sticky_topic_ids( (array) $topics );
 
 		foreach ( $topics as $topic ) {
 			$forum_id = (int) $topic->post_parent;
@@ -852,7 +972,7 @@ class BBPress_Importer extends Importer {
 				continue;
 			}
 
-			$is_sticky = (int) get_post_meta( $topic->ID, '_bbp_topic_sticky', true );
+			$is_sticky = isset( $sticky[ (int) $topic->ID ] );
 
 			if ( ! $this->dry_run ) {
 				$post_id = JtPost::create(
@@ -904,7 +1024,8 @@ class BBPress_Importer extends Importer {
 			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status IN (" . $this->status_sql( 'reply' ) . ') ORDER BY ID ASC'
 		);
 
-		$existing = $this->find_imported_children( 'reply', (array) $replies, 'topic' );
+		$existing  = $this->find_imported_children( 'reply', (array) $replies, 'topic' );
+		$parent_of = $this->reply_parent_resolver( (array) $replies );
 
 		foreach ( $replies as $reply ) {
 			// bbPress reply's post_parent is the topic ID
@@ -925,6 +1046,7 @@ class BBPress_Importer extends Importer {
 				$reply_id = JtReply::create(
 					[
 						'post_id'       => $post_id,
+						'parent_id'     => $parent_of( (int) $reply->ID ),
 						'author_id'     => (int) $reply->post_author,
 						'content'       => wp_kses_post( $reply->post_content ),
 						'content_plain' => \jetonomy_content_to_plain( $reply->post_content ),
