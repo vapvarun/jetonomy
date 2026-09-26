@@ -237,6 +237,23 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 									&nbsp;|&nbsp;
 								</span>
 								<?php if ( 'trash' !== $p->status ) : ?>
+									<?php if ( in_array( $p->status ?? '', array( 'spam', 'pending' ), true ) ) : ?>
+										<span class="jt-approve"><?php // Not "approve": core CSS hides .approve in every list table. Same action as the Replies screen. ?>
+											<a href="#"
+												class="jt-action-link"
+												data-id="<?php echo absint( $p->id ); ?>"
+												data-type="post"
+												data-action="approve"
+											>
+												<?php
+												echo 'spam' === $p->status
+													? esc_html__( 'Not Spam', 'jetonomy' )
+													: esc_html__( 'Approve', 'jetonomy' );
+												?>
+											</a>
+											&nbsp;|&nbsp;
+										</span>
+									<?php endif; ?>
 									<span class="trash">
 										<a href="#"
 											class="jt-action-link"
