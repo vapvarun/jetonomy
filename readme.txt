@@ -271,6 +271,11 @@ Import and URL fixes: re-running a bbPress, wpForo, or Asgaros import is now saf
 * Improve  - Re-running an import skips everything already imported and adds only new content, and the Import screen reports how many items were already imported.
 * Improve  - A site that imported from bbPress on an earlier version can re-run the import to bring in the private, hidden, and BuddyPress group forums the old importer skipped, without duplicating anything.
 * Improve  - Logged-out community pages can now be stored by page caches such as LiteSpeed Cache and WP Rocket.
+* Improve  - Moderators can restore or permanently delete trashed topics and replies from the moderation queue, the topic page, and wp-admin, and the Content screen no longer lists trashed topics under All.
+* Improve  - The Import screen explains replies that were not imported because their topic was pending, spam, or trashed, instead of saying nothing was skipped.
+* Improve  - Forum data from a deactivated or uninstalled bbPress, wpForo, or Asgaros is shown as ready to import instead of as an active plugin.
+* Improve  - bbPress category forums import as Jetonomy categories instead of empty spaces, and large BuddyPress groups are added in batches so big imports do not time out.
+* Improve  - Imports of very large forums no longer slow down as they grow.
 * Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
 * Fix      - bbPress imports keep sticky topics and threaded replies, and re-running the import restores threading on replies an earlier version imported flat.
 * Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.
@@ -278,6 +283,11 @@ Import and URL fixes: re-running a bbPress, wpForo, or Asgaros import is now saf
 * Fix      - Changing the community base URL from the default now redirects old links instead of leaving them broken.
 * Fix      - The Spaces list in wp-admin shows the current community base URL instead of always showing /community/.
 * Fix      - The reply editor toolbar wraps on narrow screens instead of cutting off its last buttons.
+* Fix      - Permanently deleting a topic now removes its replies, votes, bookmarks, tags, subscriptions, and notifications instead of leaving them behind.
+* Fix      - My Subscriptions shows how you are actually notified, so it no longer says Web + Email when email is off.
+* Fix      - Leaderboards and the Top Members widget rank only members who have earned reputation.
+* Fix      - Topic view counting uses one cookie instead of one per topic, can be turned off with a filter, and is described in the privacy policy guide.
+* Fix      - Imported forum names with emoji get clean URLs, and the import progress bar no longer passes 100%.
 
 = 2.0.0 - September 2026 =
 
