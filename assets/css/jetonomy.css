@@ -600,15 +600,9 @@
   .jt-post-body, .jt-reply-body,
   .jt-post-body > *, .jt-reply-body > * { min-width: 0; }
 
-  /* Anything that can be intrinsically wider than its column stays inside it.
-     Tables and images are included because they fail the same way a <pre>
-     does; an embed keeps its own aspect handling and only gains the ceiling. */
-  .jt-post-body pre, .jt-reply-body pre,
-  .jt-post-body table, .jt-reply-body table,
-  .jt-post-body img, .jt-reply-body img,
-  .jt-post-body iframe, .jt-reply-body iframe { max-width: 100%; }
-
-  .jt-post-body table, .jt-reply-body table { display: block; overflow-x: auto; }
+  /* A <pre> stays inside its column and scrolls there. Images, tables and
+     embeds get the same ceiling in the post-body rules further down. */
+  .jt-post-body pre, .jt-reply-body pre { max-width: 100%; }
   .jt-post-body pre, .jt-reply-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
   .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-border); color: var(--jt-text-secondary); }
   .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }
@@ -717,7 +711,7 @@
   /* ── Composer ── */
   .jt-editor { border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius-lg); overflow: hidden; background: var(--jt-bg); transition: border-color 0.2s; }
   .jt-editor:focus-within { border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
-  .jt-editor-bar { display: flex; gap: 2px; padding: 6px 10px; border-bottom: 1px solid var(--jt-border); background: var(--jt-bg-subtle); position: relative; }
+  .jt-editor-bar { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px 10px; border-bottom: 1px solid var(--jt-border); background: var(--jt-bg-subtle); position: relative; }
   .jt-editor-bar button { min-width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; padding: 0; }
   .jt-editor-bar button:hover, .jt-editor-bar button:focus { background: var(--jt-bg); color: var(--jt-text); border: none; }
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
