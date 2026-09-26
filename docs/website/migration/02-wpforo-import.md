@@ -54,7 +54,7 @@ wpForo and Jetonomy structure their data differently in a few key areas:
 
 1. **Back up your database.** The importer reads but never modifies wpForo tables, but a backup protects against any edge cases.
 2. **Activate Jetonomy** and complete the setup wizard.
-3. **Keep wpForo active** during the import - the importer reads from wpForo's live tables.
+3. **wpForo can be active or deactivated** - the importer reads wpForo's tables straight from the database. Import before deleting it.
 4. **Check your wpForo table prefix.** If wpForo uses a custom prefix, confirm it in `wpforo_boards` - the importer auto-detects it.
 5. **Disable wpForo page caching** if active, to avoid stale data during the import process.
 

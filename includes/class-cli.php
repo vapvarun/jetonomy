@@ -126,13 +126,21 @@ class CLI {
 
 		\WP_CLI::success(
 			sprintf(
-				'%sImport complete. Imported: %d, Skipped: %d, Errors: %d',
+				'%sImport complete. Imported: %d, Already imported: %d, Skipped: %d, Errors: %d',
 				$prefix,
 				$result['imported'],
+				$result['already'] ?? 0,
 				$result['skipped'],
 				count( $result['errors'] )
 			)
 		);
+
+		// The same sentences the Import screen shows: what an earlier run
+		// already brought over, what was re-threaded, and what was left out
+		// because its topic or forum was not imported.
+		foreach ( \Jetonomy\Import\Importer::describe_tally( $result ) as $line ) {
+			\WP_CLI::log( $line );
+		}
 
 		if ( ! empty( $result['errors'] ) ) {
 			\WP_CLI::warning( 'Errors:' );

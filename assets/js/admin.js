@@ -1630,6 +1630,9 @@
 			statusPct.textContent    = '0%';
 
 			function updateStepIndicator(phase) {
+				// Granting members to private and group spaces belongs to the
+				// Forums step; it has no step of its own.
+				if (phase === 'members') { phase = 'forums'; }
 				var found = false;
 				// Iterate in reverse so steps before the active one get marked done
 				for (var i = steps.length - 1; i >= 0; i--) {
@@ -1644,7 +1647,7 @@
 				}
 			}
 
-			function buildCompleteNotice(processed, skipped, already) {
+			function buildCompleteNotice(processed, skipped, summary) {
 				skipped = parseInt(skipped, 10) || 0;
 				var notice = document.createElement('div');
 				// A partial success is a warning, not a clean success — the site owner
@@ -1656,10 +1659,12 @@
 				strong.textContent = (Jetonomy.i18n.importDone || 'Import complete!') + ' ';
 				p.appendChild(strong);
 				p.appendChild(document.createTextNode(processed + ' records imported successfully. '));
-				// A re-run recognises what an earlier import brought over and skips
-				// it; say so, or "0 records imported" reads as a failure.
-				if (already) {
-					p.appendChild(document.createTextNode(already + ' '));
+				// What was not created and why: already imported by an earlier run
+				// (or "0 records imported" reads as a failure), and rows left out
+				// because their topic or forum was not imported (or the source
+				// count does not add up). Server-worded: Importer::describe_tally().
+				if (summary) {
+					p.appendChild(document.createTextNode(summary + ' '));
 				}
 				if (skipped > 0) {
 					var warn = document.createElement('strong');
@@ -1724,7 +1729,7 @@
 
 							results.style.display = 'block';
 							while (results.firstChild) { results.removeChild(results.firstChild); }
-							results.appendChild(buildCompleteNotice(d.imported, d.skipped, d.already));
+							results.appendChild(buildCompleteNotice(d.imported, d.skipped, d.summary));
 
 							// Only auto-reload a CLEAN import. The reload exists to reveal the
 							// "Previously Imported" state, which is fine when there is nothing

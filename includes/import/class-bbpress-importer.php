@@ -14,7 +14,6 @@ use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\Post as JtPost;
 use Jetonomy\Models\Reply as JtReply;
-use Jetonomy\Models\UserProfile;
 use function Jetonomy\now;
 
 class BBPress_Importer extends Importer {
@@ -37,6 +36,13 @@ class BBPress_Importer extends Importer {
 			"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type IN ('forum', 'topic', 'reply')"
 		);
 		return $count > 0;
+	}
+
+	/**
+	 * bbPress itself loaded? The import works either way - see Importer::is_source_active().
+	 */
+	public function is_source_active(): bool {
+		return class_exists( 'bbPress', false );
 	}
 
 	/**
@@ -104,7 +110,7 @@ class BBPress_Importer extends Importer {
 	 *    to).
 	 *
 	 * So a private forum maps to a private space AND its participants are
-	 * imported as members (see import_forum_members), or everyone who could
+	 * imported as members (see grant_members()), or everyone who could
 	 * read it yesterday cannot read it today. `approval` is the join policy for
 	 * newcomers, since the source forum was not open to all.
 	 *
@@ -159,52 +165,101 @@ class BBPress_Importer extends Importer {
 		);
 	}
 
+	/** Option holding this run's queued member grants between batches. */
+	private const GRANTS_OPTION = 'jetonomy_import_bbpress_grants';
+
 	/**
-	 * Give an imported private/hidden forum's participants their access back.
+	 * People who must keep access to a space this request created or linked.
 	 *
-	 * A Jetonomy private or hidden space is readable only by its members, so
-	 * without this every member of a private bbPress forum loses the content on
-	 * migration day and has to be approved again one by one.
+	 * Each entry is `[ 'space' => id, 'forum' => bbPress forum id ]` (the
+	 * forum's participants) or `[ 'space' => id, 'group' => BP group id ]`
+	 * (the group's members). See grant_members().
 	 *
-	 * "Participant" is anyone who authored a topic or a reply in that forum -
-	 * the people who demonstrably had access at the source.
-	 *
-	 * @param int $space_id Imported space.
-	 * @param int $forum_id Source bbPress forum ID.
-	 * @return int Members added.
+	 * @var array<int,array<string,int>>
 	 */
-	private function import_forum_members( int $space_id, int $forum_id ): int {
+	private array $grants = [];
+
+	/**
+	 * Grant one page of queued memberships.
+	 *
+	 * Two kinds of people keep access to what they could read yesterday:
+	 *
+	 *  - A private or hidden forum's participants - anyone who authored a
+	 *    topic or reply in it. A Jetonomy private/hidden space is readable only
+	 *    by its members (bbPress `private` meant any logged-in user), so without
+	 *    this they lose the content on migration day.
+	 *  - A BuddyPress group forum's confirmed, non-banned group members, with
+	 *    the integration's role map (admin -> admin, mod -> moderator). Members
+	 *    who never posted are not participants, so the group is the only list.
+	 *
+	 * Both used to be added inline, one SpaceMember::add() per person, inside
+	 * the forums batch: fine at 13 members, a timeout at 10,000. They are now
+	 * one ordered query over every queued grant, paged by the batch driver
+	 * like any other phase. add() stays the writer so join hooks fire and an
+	 * existing role is never lowered; deleted users are dropped in SQL.
+	 *
+	 * @param array $grants Queued grants.
+	 * @param int   $offset Row offset across all grants.
+	 * @param int   $limit  Page size.
+	 * @return array{fetched:int, processed:int} processed < fetched means the time budget stopped the page early.
+	 */
+	private function grant_members( array $grants, int $offset, int $limit ): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$author_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT t.post_author
-				   FROM {$wpdb->posts} t
-				  WHERE t.post_type = 'topic' AND t.post_parent = %d AND t.post_author > 0
-				  UNION
-				 SELECT DISTINCT r.post_author
-				   FROM {$wpdb->posts} r
-				  INNER JOIN {$wpdb->posts} rt ON rt.ID = r.post_parent AND rt.post_type = 'topic'
-				  WHERE r.post_type = 'reply' AND rt.post_parent = %d AND r.post_author > 0",
-				$forum_id,
-				$forum_id
-			)
-		);
-
-		$added = 0;
-		foreach ( array_map( 'intval', (array) $author_ids ) as $user_id ) {
-			if ( ! get_user_by( 'ID', $user_id ) ) {
-				continue;
+		$parts = [];
+		foreach ( array_values( $grants ) as $job => $grant ) {
+			if ( ! empty( $grant['group'] ) ) {
+				if ( ! function_exists( 'bp_is_active' ) || ! bp_is_active( 'groups' ) ) {
+					continue;
+				}
+				$bp_table = buddypress()->groups->table_name_members;
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- BP's own table name.
+				$parts[] = $wpdb->prepare( "SELECT %d AS job, %d AS space_id, user_id, CASE WHEN is_admin = 1 THEN 'admin' WHEN is_mod = 1 THEN 'moderator' ELSE 'member' END AS role FROM {$bp_table} WHERE group_id = %d AND is_confirmed = 1 AND is_banned = 0", $job, (int) $grant['space'], (int) $grant['group'] );
+			} elseif ( ! empty( $grant['forum'] ) ) {
+				$parts[] = $wpdb->prepare(
+					"SELECT %d AS job, %d AS space_id, a.user_id, 'member' AS role FROM (
+					   SELECT t.post_author AS user_id FROM {$wpdb->posts} t
+					    WHERE t.post_type = 'topic' AND t.post_parent = %d AND t.post_author > 0
+					   UNION
+					   SELECT r.post_author FROM {$wpdb->posts} r
+					    INNER JOIN {$wpdb->posts} rt ON rt.ID = r.post_parent AND rt.post_type = 'topic'
+					    WHERE r.post_type = 'reply' AND rt.post_parent = %d AND r.post_author > 0
+					 ) a",
+					$job,
+					(int) $grant['space'],
+					(int) $grant['forum'],
+					(int) $grant['forum']
+				);
 			}
-			if ( SpaceMember::is_member( $space_id, $user_id ) ) {
-				continue;
-			}
-			SpaceMember::add( $space_id, $user_id, 'member' );
-			++$added;
 		}
 
-		return $added;
+		if ( ! $parts ) {
+			return [
+				'fetched'   => 0,
+				'processed' => 0,
+			];
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- every part is prepared above; limit/offset are absint.
+		$rows = (array) $wpdb->get_results(
+			'SELECT g.space_id, g.user_id, g.role FROM ( ' . implode( ' UNION ALL ', $parts ) . " ) g
+			 INNER JOIN {$wpdb->users} u ON u.ID = g.user_id
+			 ORDER BY g.job ASC, g.user_id ASC LIMIT " . absint( $limit ) . ' OFFSET ' . absint( $offset )
+		);
+
+		$processed = 0;
+		foreach ( $rows as $row ) {
+			SpaceMember::add( (int) $row->space_id, (int) $row->user_id, (string) $row->role );
+			++$processed;
+			if ( $processed < count( $rows ) && $this->budget_spent() ) {
+				break;
+			}
+		}
+
+		return [
+			'fetched'   => count( $rows ),
+			'processed' => $processed,
+		];
 	}
 
 	public function get_source_stats(): array {
@@ -258,6 +313,23 @@ class BBPress_Importer extends Importer {
 			);
 		}
 
+		// Not the ones an earlier release already imported as spaces: a re-run
+		// adopts those as they are.
+		$containers = $this->container_forums( $this->forum_rows() );
+		$containers = count( array_diff_key( $containers, Import_Map::find_many( self::SOURCE, 'space', array_keys( $containers ) ) ) );
+		if ( $containers > 0 ) {
+			$notes[] = sprintf(
+				/* translators: %s: number of bbPress forums that only contain other forums. */
+				_n(
+					'%s forum that only groups other forums (a bbPress category or the group forums root) becomes a category, not an empty space.',
+					'%s forums that only group other forums (bbPress categories or the group forums root) become categories, not empty spaces.',
+					$containers,
+					'jetonomy'
+				),
+				number_format_i18n( $containers )
+			);
+		}
+
 		$already = Import_Map::count_for_source( self::SOURCE );
 		if ( $already > 0 ) {
 			$notes[] = sprintf(
@@ -270,8 +342,128 @@ class BBPress_Importer extends Importer {
 		return $notes;
 	}
 
+	/**
+	 * Source rows plus the profiles phase's authors, so progress ends at 100%
+	 * instead of running past it once profiles are counted.
+	 */
 	public function get_total_count(): int {
-		return array_sum( $this->get_source_stats() );
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- authors_where() emits sanitize_key()'d literals.
+		$authors = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts} WHERE " . $this->authors_where() );
+
+		return array_sum( $this->get_source_stats() ) + $authors;
+	}
+
+	/**
+	 * WHERE clause for the authors the profiles phase creates profiles for.
+	 *
+	 * @return string
+	 */
+	private function authors_where(): string {
+		return "post_type IN ('topic', 'reply') AND post_status IN (" . $this->status_sql( 'topic' ) . ',' . $this->status_sql( 'reply' ) . ') AND post_author > 0';
+	}
+
+	/**
+	 * Distinct author ids, paged when $limit > 0.
+	 *
+	 * @param int $limit  Page size; 0 for all.
+	 * @param int $offset Row offset.
+	 * @return int[]
+	 */
+	private function author_ids( int $limit = 0, int $offset = 0 ): array {
+		global $wpdb;
+
+		$sql = "SELECT DISTINCT post_author FROM {$wpdb->posts} WHERE " . $this->authors_where() . ' ORDER BY post_author ASC';
+		if ( $limit > 0 ) {
+			$sql .= ' LIMIT ' . absint( $limit ) . ' OFFSET ' . absint( $offset );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- literals + absint only.
+		return array_map( 'intval', (array) $wpdb->get_col( $sql ) );
+	}
+
+	/**
+	 * All importable forums, parents before children.
+	 *
+	 * Forums are a small set (tens), unlike topics and replies, and a child can
+	 * only resolve its parent once the parent exists, so the whole set is
+	 * ordered once and the batch path slices it.
+	 *
+	 * @return object[]
+	 */
+	private function forum_rows(): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- status_sql() emits sanitize_key()'d literals.
+		$forums = $wpdb->get_results( "SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN (" . $this->status_sql( 'forum' ) . ') ORDER BY menu_order ASC, ID ASC' );
+
+		return $this->sort_rows_parents_first( (array) $forums, 'ID', 'post_parent' );
+	}
+
+	/**
+	 * Importable topic or reply rows in id order, paged when $limit > 0.
+	 *
+	 * @param string $type   'topic' or 'reply'.
+	 * @param int    $limit  Page size; 0 for all.
+	 * @param int    $offset Row offset.
+	 * @return object[]
+	 */
+	private function content_rows( string $type, int $limit = 0, int $offset = 0 ): array {
+		global $wpdb;
+
+		$sql = "SELECT * FROM {$wpdb->posts} WHERE post_type = '" . sanitize_key( $type ) . "' AND post_status IN (" . $this->status_sql( $type ) . ') ORDER BY ID ASC';
+		if ( $limit > 0 ) {
+			$sql .= ' LIMIT ' . absint( $limit ) . ' OFFSET ' . absint( $offset );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- sanitize_key()'d literals + absint only.
+		return (array) $wpdb->get_results( $sql );
+	}
+
+	/**
+	 * Forums that only group other forums, keyed for isset().
+	 *
+	 * A bbPress category (`_bbp_forum_type` = category) and the BuddyPress
+	 * "Group Forums" root hold forums, not topics. Imported as spaces they
+	 * became empty spaces a member could post into; a Jetonomy category is
+	 * the same idea - a heading that groups spaces - so they become one.
+	 *
+	 * Only when the forum really holds no importable topic (a forum switched to
+	 * a category keeps its old topics) and sits at the top level or inside
+	 * another container: a category nests under a category, never inside a
+	 * space. Anything else stays a space, as before.
+	 *
+	 * @param object[] $forums Forum rows, parents first (forum_rows()).
+	 * @return array<int,true>
+	 */
+	private function container_forums( array $forums ): array {
+		global $wpdb;
+
+		$ids = array_map( 'intval', array_column( $forums, 'ID' ) );
+		if ( ! $ids ) {
+			return [];
+		}
+		$in = implode( ',', $ids );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- int list and sanitize_key()'d literals.
+		$categories = array_flip( array_map( 'intval', (array) $wpdb->get_col( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_bbp_forum_type' AND meta_value = 'category' AND post_id IN ({$in})" ) ) );
+		$has_topics = array_flip( array_map( 'intval', (array) $wpdb->get_col( "SELECT DISTINCT post_parent FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN (" . $this->status_sql( 'topic' ) . ") AND post_parent IN ({$in})" ) ) );
+		// phpcs:enable
+		$group_root = (int) get_option( '_bbp_group_forums_root_id', 0 );
+
+		$containers = [];
+		foreach ( $forums as $forum ) {
+			$id     = (int) $forum->ID;
+			$parent = (int) $forum->post_parent;
+			if ( ( isset( $categories[ $id ] ) || $id === $group_root )
+				&& ! isset( $has_topics[ $id ] )
+				&& ( 0 === $parent || isset( $containers[ $parent ] ) ) ) {
+				$containers[ $id ] = true;
+			}
+		}
+
+		return $containers;
 	}
 
 	/**
@@ -342,35 +534,20 @@ class BBPress_Importer extends Importer {
 	/**
 	 * Also drop the category-id option releases before 2.0.1 kept between
 	 * batches (the category is now resolved through jt_import_map), so an
-	 * import aborted on an older version leaves nothing behind. parent handles
-	 * the shared id_map + processed counter.
+	 * import aborted on an older version leaves nothing behind, and an aborted
+	 * run's member-grant queue. parent handles the shared run state.
 	 */
 	public function reset_run_state(): void {
 		parent::reset_run_state();
 		delete_option( 'jetonomy_import_bbpress_cat_id' );
+		delete_option( self::GRANTS_OPTION );
 	}
 
-	/**
-	 * Create the space for one bbPress forum row, resolving its parent.
-	 *
-	 * Shared by BOTH import paths (run_batch() and run()) on purpose. The parent
-	 * mapping below was missing from each of them independently; giving them one
-	 * body means the next change to forum->space mapping cannot land on one path
-	 * and miss the other.
-	 *
-	 * Callers must have created the parent forum already — see
-	 * sort_rows_parents_first(). A parent that still doesn't resolve (orphan row)
-	 * falls back to top level rather than failing the import.
-	 *
-	 * @param object $forum  bbPress forum post row.
-	 * @param int    $cat_id Import category id.
-	 * @return int Space id, or 0 on failure.
-	 */
 	/**
 	 * Everything that must happen once a forum's space exists.
 	 *
 	 * Recording the mapping is what makes a later re-run able to recognise its
-	 * own work instead of guessing by slug. Importing the participants is what
+	 * own work instead of guessing by slug. Queuing the participants is what
 	 * stops a private forum's members losing access on migration day.
 	 *
 	 * @param object $forum    Source forum row.
@@ -380,37 +557,37 @@ class BBPress_Importer extends Importer {
 	private function after_space_created( object $forum, int $space_id ): void {
 		$this->remember( 'space', (int) $forum->ID, $space_id );
 
-		$access = $this->map_access( $forum );
-		if ( 'public' !== $access['visibility'] ) {
-			$this->import_forum_members( $space_id, (int) $forum->ID );
+		if ( 'public' !== $this->map_access( $forum )['visibility'] ) {
+			$this->grants[] = [
+				'space' => $space_id,
+				'forum' => (int) $forum->ID,
+			];
 		}
 
 		$this->link_buddypress_group( $space_id, (int) $forum->ID );
 	}
 
 	/**
-	 * Carry a BuddyPress group forum's group across: link it and its members.
+	 * Carry a BuddyPress group forum's group across: link it, queue its members.
 	 *
 	 * BP-bbPress ties a group to its forum through the forum's `_bbp_group_ids`
 	 * meta. Without this the imported space was an orphan: the group's Forum
 	 * tab did not show it, later joins/leaves did not sync (Jetonomy's
 	 * BuddyPress integration keys both on the group -> space link), and a
-	 * private or hidden group's members who had never posted lost access -
-	 * import_forum_members() only knows authors.
+	 * private or hidden group's members who had never posted lost access.
 	 *
 	 * Also runs for a forum an earlier run imported, since no release before
 	 * 2.0.1 linked groups. A group already linked to any space (by the owner,
-	 * or by a previous run) is left alone, so a re-run costs one meta read per
-	 * group forum. Roles follow the integration's promote map (admin -> admin,
-	 * mod -> moderator); SpaceMember::add() never lowers an existing role.
+	 * or by a previous run) is left alone - including one the owner unlinked
+	 * from the space on purpose and whose forum is then imported again: a
+	 * re-import is an explicit request, so it links the group again. The
+	 * members are granted by the paged members phase, see grant_members().
 	 *
 	 * @param int $space_id Imported space.
 	 * @param int $forum_id Source bbPress forum ID.
 	 * @return void
 	 */
 	private function link_buddypress_group( int $space_id, int $forum_id ): void {
-		global $wpdb;
-
 		if ( ! function_exists( 'bp_is_active' ) || ! bp_is_active( 'groups' ) ) {
 			return;
 		}
@@ -420,14 +597,10 @@ class BBPress_Importer extends Importer {
 				continue;
 			}
 			\Jetonomy\Integrations\BuddyPress::link_group_to_space( $group_id, $space_id );
-
-			$table = buddypress()->groups->table_name_members;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- BP's own table name.
-			$members = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, is_admin, is_mod FROM {$table} WHERE group_id = %d AND is_confirmed = 1 AND is_banned = 0", $group_id ) );
-			foreach ( (array) $members as $m ) {
-				$role = $m->is_admin ? 'admin' : ( $m->is_mod ? 'moderator' : 'member' );
-				SpaceMember::add( $space_id, (int) $m->user_id, $role );
-			}
+			$this->grants[] = [
+				'space' => $space_id,
+				'group' => $group_id,
+			];
 		}
 	}
 
@@ -515,10 +688,10 @@ class BBPress_Importer extends Importer {
 	 *
 	 * The reply being answered is stored in `_bbp_reply_to` post meta.
 	 * Earlier releases ignored it, so every threaded discussion imported flat.
-	 * One meta query per batch; the parent resolves through this run's id map
-	 * (same or earlier batch) or, for a parent an earlier run imported,
-	 * jt_import_map. A parent that was never imported (pending, spam) leaves
-	 * the reply top-level rather than dropping it.
+	 * One meta query per batch; a parent an earlier batch or run imported is
+	 * loaded from jt_import_map (load_mapped()), one created earlier in this
+	 * batch is already in memory. A parent that was never imported (pending,
+	 * spam) leaves the reply top-level rather than dropping it.
 	 *
 	 * Call it per reply AFTER earlier replies in the batch were created, since
 	 * bbPress replies answer older (lower-id) replies in the same topic.
@@ -542,14 +715,13 @@ class BBPress_Importer extends Importer {
 			}
 		}
 
-		$earlier = array_diff( array_unique( $reply_to ), array_keys( $this->id_map['reply'] ?? [] ) );
-		$earlier = $earlier ? Import_Map::find_many( self::SOURCE, 'reply', $earlier ) : [];
+		$parents = array_unique( $reply_to );
+		$this->load_mapped( 'reply', 'reply', array_combine( $parents, $parents ) );
 
-		return function ( int $source_id ) use ( $reply_to, $earlier ): ?int {
-			$parent = $reply_to[ $source_id ] ?? 0;
-			$mapped = $parent ? ( $this->get_mapped_id( 'reply', $parent ) ?? ( $earlier[ (string) $parent ] ?? 0 ) ) : 0;
+		return function ( int $source_id ) use ( $reply_to ): ?int {
+			$mapped = isset( $reply_to[ $source_id ] ) ? (int) $this->get_mapped_id( 'reply', $reply_to[ $source_id ] ) : 0;
 
-			return $mapped > 0 ? (int) $mapped : null;
+			return $mapped > 0 ? $mapped : null;
 		};
 	}
 
@@ -570,19 +742,49 @@ class BBPress_Importer extends Importer {
 		);
 	}
 
+	/**
+	 * The category a container forum becomes (see container_forums()).
+	 *
+	 * Recorded in jt_import_map under `forum-{ID}`, so a re-run reuses it. The
+	 * slug keeps the `imported-bbpress` prefix every imported category carries.
+	 *
+	 * @param object $forum bbPress forum row.
+	 * @return int Category id.
+	 */
+	private function container_category( object $forum ): int {
+		$slug = self::clean_slug( $forum->post_name ?: $forum->post_title ) ?: 'category';
+
+		return $this->import_category(
+			'forum-' . (int) $forum->ID,
+			'imported-bbpress-' . $slug . '-' . (int) $forum->ID,
+			[
+				'name'        => $forum->post_title,
+				'description' => wp_strip_all_tags( $forum->post_content ),
+				'parent_id'   => max( 0, (int) $this->get_mapped_id( 'forum_category', (int) $forum->post_parent ) ),
+				'visibility'  => $this->map_access( $forum )['visibility'],
+				'sort_order'  => (int) $forum->menu_order,
+			]
+		);
+	}
+
+	/**
+	 * Create the space for one bbPress forum row, resolving its parent.
+	 *
+	 * Callers must have mapped the parent forum already - see
+	 * sort_rows_parents_first(). A parent that still doesn't resolve (orphan
+	 * row, or a container that became a category) leaves it top level.
+	 *
+	 * @param object $forum  bbPress forum post row.
+	 * @param int    $cat_id Category to file it under.
+	 * @return int Space id, or 0 on failure.
+	 */
 	private function create_space_from_forum( object $forum, int $cat_id ): int {
 		$access = $this->map_access( $forum );
 
 		// bbPress nests forums through the ordinary WP post_parent column. Both
 		// paths used to ignore it, so every sub-forum was created as a top-level
 		// space and the customer's whole board structure was flattened on import.
-		$parent_space_id = 0;
-		if ( (int) $forum->post_parent > 0 ) {
-			$mapped = $this->get_mapped_id( 'forum', (int) $forum->post_parent );
-			if ( $mapped ) {
-				$parent_space_id = $mapped;
-			}
-		}
+		$parent_space_id = (int) $this->get_mapped_id( 'forum', (int) $forum->post_parent );
 
 		return (int) Space::create(
 			[
@@ -600,7 +802,7 @@ class BBPress_Importer extends Importer {
 				 * own spaces imports alongside it as "<slug>-1" instead of
 				 * merging into it or erroring out.
 				 */
-				'slug'        => Space::unique_slug( $forum->post_name ?: sanitize_title( $forum->post_title ) ),
+				'slug'        => Space::unique_slug( self::clean_slug( $forum->post_name ?: $forum->post_title ) ?: 'forum-' . (int) $forum->ID ),
 				'description' => wp_strip_all_tags( $forum->post_content ),
 				// Carry the source forum's privacy across, with a join policy
 				// the model accepts. See map_access().
@@ -610,363 +812,107 @@ class BBPress_Importer extends Importer {
 		);
 	}
 
-	public function run_batch( string $phase, int $offset, int $batch_size ): array {
-		global $wpdb;
-
-		switch ( $phase ) {
-			case 'forums':
-				// Forums must be created parents-first so a sub-forum can resolve its
-				// parent's new space id, and that ordering has to hold ACROSS batches —
-				// which SQL paging cannot express. So the whole set is ordered once and
-				// then sliced. Forums are a small set (tens; wpForo and Asgaros load
-				// theirs whole for the same reason), unlike the topic and reply phases
-				// below, which stay paged in SQL because they run to thousands.
-				$all_forums = $wpdb->get_results(
-					"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN (" . $this->status_sql( 'forum' ) . ') ORDER BY menu_order ASC, ID ASC'
-				);
-				$all_forums = $this->sort_rows_parents_first( (array) $all_forums, 'ID', 'post_parent' );
-				$forums     = array_slice( $all_forums, $offset, $batch_size );
-
-				if ( empty( $forums ) ) {
-					return [
-						'phase'     => 'topics',
-						'offset'    => 0,
-						'done'      => false,
-						'processed' => 0,
-					];
-				}
-
-				// Carry forward what earlier batches mapped. Every batch runs in its own
-				// request with a fresh instance, so id_map starts empty; without this the
-				// update_option() below replaced the entire map with only THIS batch's
-				// forums. Two consequences, both silent: a child forum could never see a
-				// parent created in an earlier batch, and every topic under an earlier
-				// batch's forum was skipped as "parent not imported". Verified: 5 forums
-				// at batch_size 2 persisted only the last batch's mapping and imported 0
-				// of 1 topics.
-				$this->id_map = get_option( 'jetonomy_import_id_map', [] );
-
-				$existing = $this->find_imported_forums( $forums );
-				$cat_id   = 0;
-
-				foreach ( $forums as $forum ) {
-					// Already imported by an earlier run? Adopt it, so topics
-					// beneath it can resolve their parent and anything missed
-					// last time still gets imported.
-					if ( isset( $existing[ (int) $forum->ID ] ) ) {
-						$this->map_id( 'forum', $forum->ID, $existing[ (int) $forum->ID ] );
-						// A group forum an older release imported was never linked to its group.
-						$this->link_buddypress_group( $existing[ (int) $forum->ID ], (int) $forum->ID );
-						++$this->already;
-						continue;
-					}
-
-					// Resolved only once a forum really needs creating, so a
-					// re-run with nothing new leaves no empty category behind.
-					$cat_id   = $cat_id ?: $this->bbpress_category();
-					$space_id = $this->create_space_from_forum( $forum, $cat_id );
-					if ( $space_id ) {
-						$this->map_id( 'forum', $forum->ID, $space_id );
-						$this->after_space_created( $forum, $space_id );
-						++$this->imported;
-					}
-				}
-
-				update_option( 'jetonomy_import_id_map', $this->id_map, false );
-
-				$has_more = count( $all_forums ) > $offset + $batch_size;
-				return [
-					'phase'     => $has_more ? 'forums' : 'topics',
-					'offset'    => $has_more ? $offset + $batch_size : 0,
-					'done'      => false,
-					'processed' => count( $forums ),
-				];
-
-			case 'topics':
-				$this->id_map = get_option( 'jetonomy_import_id_map', [] );
-
-				$topics = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN (" . $this->status_sql( 'topic' ) . ') ORDER BY ID ASC LIMIT %d OFFSET %d',
-						$batch_size,
-						$offset
-					)
-				);
-
-				if ( empty( $topics ) ) {
-					return [
-						'phase'     => 'replies',
-						'offset'    => 0,
-						'done'      => false,
-						'processed' => 0,
-					];
-				}
-
-				$existing = $this->find_imported_children( 'post', $topics, 'forum' );
-				$sticky   = $this->sticky_topic_ids( $topics );
-
-				foreach ( $topics as $topic ) {
-					$forum_id = (int) $topic->post_parent;
-					$space_id = $this->get_mapped_id( 'forum', $forum_id );
-					if ( ! $space_id ) {
-						++$this->skipped;
-						continue;
-					}
-
-					// Adopt a topic an earlier run already imported: map it so its
-					// replies resolve, and do not create it twice.
-					if ( isset( $existing[ (int) $topic->ID ] ) ) {
-						$this->map_id( 'topic', $topic->ID, $existing[ (int) $topic->ID ] );
-						++$this->already;
-						continue;
-					}
-
-					$is_sticky = isset( $sticky[ (int) $topic->ID ] );
-
-					$post_id = JtPost::create(
-						[
-							'space_id'      => $space_id,
-							'author_id'     => (int) $topic->post_author,
-							'type'          => \Jetonomy\compose_post_type( 'forum' ),
-							'title'         => $topic->post_title,
-							'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
-							'content'       => wp_kses_post( $topic->post_content ),
-							'content_plain' => \jetonomy_content_to_plain( $topic->post_content ),
-							'status'        => 'publish',
-							'is_sticky'     => $is_sticky ? 1 : 0,
-							// bbPress stores "closed" as the post_status; Jetonomy
-							// keeps the topic published and flags it closed, so the
-							// thread stays readable but takes no new replies.
-							'is_closed'     => 'closed' === $topic->post_status ? 1 : 0,
-							'created_at'    => $topic->post_date_gmt ?: now(),
-						]
-					);
-
-					if ( is_wp_error( $post_id ) ) {
-						++$this->skipped;
-						continue;
-					}
-
-					if ( $post_id ) {
-						$this->map_id( 'topic', $topic->ID, $post_id );
-						$this->remember( 'post', (int) $topic->ID, (int) $post_id );
-						$this->migrate_bbpress_attachments( 'post', (int) $topic->ID, (int) $post_id );
-						++$this->imported;
-					}
-				}
-
-				update_option( 'jetonomy_import_id_map', $this->id_map, false );
-
-				$has_more = count( $topics ) >= $batch_size;
-				return [
-					'phase'     => $has_more ? 'topics' : 'replies',
-					'offset'    => $has_more ? $offset + $batch_size : 0,
-					'done'      => false,
-					'processed' => count( $topics ),
-				];
-
-			case 'replies':
-				$this->id_map = get_option( 'jetonomy_import_id_map', [] );
-
-				$replies = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status IN (" . $this->status_sql( 'reply' ) . ') ORDER BY ID ASC LIMIT %d OFFSET %d',
-						$batch_size,
-						$offset
-					)
-				);
-
-				if ( empty( $replies ) ) {
-					return [
-						'phase'     => 'profiles',
-						'offset'    => 0,
-						'done'      => false,
-						'processed' => 0,
-					];
-				}
-
-				$existing  = $this->find_imported_children( 'reply', $replies, 'topic' );
-				$parent_of = $this->reply_parent_resolver( $replies );
-				$rethread  = [];
-
-				foreach ( $replies as $reply ) {
-					$topic_id = (int) $reply->post_parent;
-					$post_id  = $this->get_mapped_id( 'topic', $topic_id );
-					if ( ! $post_id ) {
-						++$this->skipped;
-						continue;
-					}
-
-					if ( isset( $existing[ (int) $reply->ID ] ) ) {
-						++$this->already;
-						$parent = $parent_of( (int) $reply->ID );
-						if ( $parent ) {
-							$rethread[ $existing[ (int) $reply->ID ] ] = $parent;
-						}
-						continue;
-					}
-
-					$reply_id = JtReply::create(
-						[
-							'post_id'       => $post_id,
-							'parent_id'     => $parent_of( (int) $reply->ID ),
-							'author_id'     => (int) $reply->post_author,
-							'content'       => wp_kses_post( $reply->post_content ),
-							'content_plain' => \jetonomy_content_to_plain( $reply->post_content ),
-							'status'        => 'publish',
-							'created_at'    => $reply->post_date_gmt ?: now(),
-						]
-					);
-
-					if ( is_wp_error( $reply_id ) ) {
-						++$this->skipped;
-						continue;
-					}
-
-					if ( $reply_id ) {
-						// The batched path never mapped replies (the legacy run() path
-						// did). Nothing downstream could resolve an imported reply --
-						// including its attachments.
-						$this->map_id( 'reply', $reply->ID, $reply_id );
-						$this->remember( 'reply', (int) $reply->ID, (int) $reply_id );
-						$this->migrate_bbpress_attachments( 'reply', (int) $reply->ID, (int) $reply_id );
-						++$this->imported;
-					}
-				}
-
-				$this->rethread_existing( $rethread );
-				update_option( 'jetonomy_import_id_map', $this->id_map, false );
-
-				$has_more = count( $replies ) >= $batch_size;
-				return [
-					'phase'     => $has_more ? 'replies' : 'profiles',
-					'offset'    => $has_more ? $offset + $batch_size : 0,
-					'done'      => false,
-					'processed' => count( $replies ),
-				];
-
-			case 'profiles':
-				$author_ids = $wpdb->get_col(
-					"SELECT DISTINCT post_author FROM {$wpdb->posts} WHERE post_type IN ('topic', 'reply') AND post_status IN (" . $this->status_sql( 'topic' ) . ',' . $this->status_sql( 'reply' ) . ') AND post_author > 0'
-				);
-				foreach ( $author_ids as $uid ) {
-					UserProfile::find_or_create( (int) $uid );
-				}
-				return [
-					'phase'     => 'recount',
-					'offset'    => 0,
-					'done'      => false,
-					'processed' => count( $author_ids ),
-				];
-
-			case 'recount':
-				$this->recount();
-				delete_option( 'jetonomy_import_id_map' );
-				flush_rewrite_rules();
-				return [
-					'phase'     => 'complete',
-					'offset'    => 0,
-					'done'      => true,
-					'processed' => 0,
-				];
-
-			default:
-				return [
-					'phase'     => 'complete',
-					'offset'    => 0,
-					'done'      => true,
-					'processed' => 0,
-				];
+	/**
+	 * Import forum rows: adopt what an earlier run made, turn containers into
+	 * categories, create a space for everything else.
+	 *
+	 * Shared by BOTH import paths (run_batch() and run()) on purpose: the parent
+	 * mapping, the adoption check and the group link were each once missing
+	 * from one path only.
+	 *
+	 * @param object[]        $forums     Forum rows to import, parents first.
+	 * @param array<int,true> $containers container_forums() over ALL forums.
+	 * @return void
+	 */
+	private function import_forum_rows( array $forums, array $containers ): void {
+		// Parents an earlier batch created, and categories an earlier batch or
+		// run made for a parent or for a container in this slice.
+		$parents  = array_filter( array_unique( array_map( 'intval', array_column( $forums, 'post_parent' ) ) ) );
+		$cat_keys = [];
+		foreach ( array_merge( $parents, array_intersect( array_map( 'intval', array_column( $forums, 'ID' ) ), array_keys( $containers ) ) ) as $forum_id ) {
+			$cat_keys[ $forum_id ] = 'forum-' . $forum_id;
 		}
-	}
-
-	public function run( array $options = [] ): array {
-		// 1. Import forums as spaces (the category is resolved when first needed).
-		$this->import_forums();
-
-		// 3. Import topics as posts
-		$this->import_topics();
-
-		// 4. Import replies
-		$this->import_replies();
-
-		// 5. Create user profiles for all authors (skip in dry-run)
-		if ( ! $this->dry_run ) {
-			$this->create_profiles();
-		}
-
-		// 6. Recount all denormalized fields (skip in dry-run)
-		if ( ! $this->dry_run ) {
-			$this->recount();
-		}
-
-		return $this->results();
-	}
-
-	private function import_forums(): void {
-		global $wpdb;
-
-		$forums = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN (" . $this->status_sql( 'forum' ) . ') ORDER BY menu_order ASC, ID ASC'
-		);
-
-		// Parents before children, so each sub-forum can resolve its parent's new
-		// space id below. Same reason as the batched path.
-		$forums = $this->sort_rows_parents_first( (array) $forums, 'ID', 'post_parent' );
+		$this->load_mapped( 'forum', 'space', array_combine( $parents, $parents ) );
+		$this->load_mapped( 'forum_category', 'category', $cat_keys );
 
 		$existing = $this->find_imported_forums( $forums );
 		$cat_id   = 0;
 
 		foreach ( $forums as $forum ) {
-			// See the batched path: adopt a forum an earlier run already
-			// created, or every topic beneath it is skipped as "parent not
-			// imported" and a re-run can never recover what the first run missed.
-			if ( isset( $existing[ (int) $forum->ID ] ) ) {
-				$this->map_id( 'forum', $forum->ID, $existing[ (int) $forum->ID ] );
+			$id = (int) $forum->ID;
+
+			// Already imported by an earlier run? Adopt it, so topics beneath
+			// it resolve their parent and anything missed last time imports.
+			if ( isset( $existing[ $id ] ) ) {
+				$this->map_id( 'forum', $id, $existing[ $id ] );
 				if ( ! $this->dry_run ) {
-					$this->link_buddypress_group( $existing[ (int) $forum->ID ], (int) $forum->ID );
+					// A group forum an older release imported was never linked to its group.
+					$this->link_buddypress_group( $existing[ $id ], $id );
 				}
 				++$this->already;
 				continue;
 			}
 
-			if ( ! $this->dry_run ) {
-				$cat_id   = $cat_id ?: $this->bbpress_category();
-				$space_id = $this->create_space_from_forum( $forum, $cat_id );
-			} else {
-				$space_id = self::DRY_RUN_ID; // Simulate
+			if ( isset( $containers[ $id ] ) ) {
+				if ( $this->get_mapped_id( 'forum_category', $id ) ) {
+					++$this->already;
+					continue;
+				}
+				$this->map_id( 'forum_category', $id, $this->container_category( $forum ) );
+				++$this->imported;
+				continue;
 			}
 
-			if ( $space_id || $this->dry_run ) {
-				$this->map_id( 'forum', $forum->ID, $space_id );
-				if ( ! $this->dry_run ) {
-					$this->after_space_created( $forum, $space_id );
+			$space_id = self::DRY_RUN_ID;
+			if ( ! $this->dry_run ) {
+				// A forum inside a container goes into that container's
+				// category, a sub-forum into its parent space's category, and
+				// everything else into the import category - resolved only once
+				// a forum really needs creating, so a re-run with nothing new
+				// leaves no empty category behind.
+				$in_category  = (int) $this->get_mapped_id( 'forum_category', (int) $forum->post_parent );
+				$parent_space = (int) $this->get_mapped_id( 'forum', (int) $forum->post_parent );
+				if ( ! $in_category && $parent_space > 0 ) {
+					$in_category = (int) ( Space::find( $parent_space )->category_id ?? 0 );
 				}
-				++$this->imported;
-			} else {
-				$this->log_error( 'forum', $forum->ID, 'Failed to create space' );
-				++$this->skipped;
+				if ( ! $in_category ) {
+					$cat_id      = $cat_id ?: $this->bbpress_category();
+					$in_category = $cat_id;
+				}
+				$space_id = $this->create_space_from_forum( $forum, $in_category );
 			}
+
+			if ( ! $space_id ) {
+				$this->log_error( 'forum', $id, 'Failed to create space' );
+				++$this->skipped;
+				continue;
+			}
+
+			$this->map_id( 'forum', $id, $space_id );
+			if ( ! $this->dry_run ) {
+				$this->after_space_created( $forum, $space_id );
+			}
+			++$this->imported;
 		}
 	}
 
-	private function import_topics(): void {
-		global $wpdb;
+	/**
+	 * Import topic rows. Shared by both paths (see import_forum_rows()).
+	 *
+	 * @param object[] $topics bbPress topic rows.
+	 * @return void
+	 */
+	private function import_topic_rows( array $topics ): void {
+		$forums = array_unique( array_map( 'intval', array_column( $topics, 'post_parent' ) ) );
+		$this->load_mapped( 'forum', 'space', array_combine( $forums, $forums ) );
 
-		$topics = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN (" . $this->status_sql( 'topic' ) . ') ORDER BY ID ASC'
-		);
-
-		$existing = $this->find_imported_children( 'post', (array) $topics, 'forum' );
-		$sticky   = $this->sticky_topic_ids( (array) $topics );
+		$existing = $this->find_imported_children( 'post', $topics, 'forum' );
+		$sticky   = $this->sticky_topic_ids( $topics );
 
 		foreach ( $topics as $topic ) {
-			$forum_id = (int) $topic->post_parent;
-			$space_id = $this->get_mapped_id( 'forum', $forum_id );
-
+			$space_id = $this->get_mapped_id( 'forum', (int) $topic->post_parent );
 			if ( ! $space_id ) {
-				$this->log_error( 'topic', $topic->ID, "Parent forum {$forum_id} not imported" );
-				++$this->skipped;
+				$this->skip_orphan( 'topic' );
 				continue;
 			}
 
@@ -978,69 +924,59 @@ class BBPress_Importer extends Importer {
 				continue;
 			}
 
-			$is_sticky = isset( $sticky[ (int) $topic->ID ] );
+			$post_id = $this->dry_run ? self::DRY_RUN_ID : JtPost::create(
+				[
+					'space_id'      => $space_id,
+					'author_id'     => (int) $topic->post_author,
+					'type'          => \Jetonomy\compose_post_type( 'forum' ),
+					'title'         => $topic->post_title,
+					'slug'          => self::clean_slug( $topic->post_name ?: $topic->post_title ) ?: 'topic-' . (int) $topic->ID,
+					'content'       => wp_kses_post( $topic->post_content ),
+					'content_plain' => \jetonomy_content_to_plain( $topic->post_content ),
+					'status'        => 'publish',
+					'is_sticky'     => isset( $sticky[ (int) $topic->ID ] ) ? 1 : 0,
+					// bbPress stores "closed" as the post_status; Jetonomy keeps
+					// the topic published and flags it closed, so the thread stays
+					// readable but takes no new replies.
+					'is_closed'     => 'closed' === $topic->post_status ? 1 : 0,
+					'created_at'    => $topic->post_date_gmt ?: now(),
+				]
+			);
 
-			if ( ! $this->dry_run ) {
-				$post_id = JtPost::create(
-					[
-						'space_id'      => $space_id,
-						'author_id'     => (int) $topic->post_author,
-						'type'          => \Jetonomy\compose_post_type( 'forum' ),
-						'title'         => $topic->post_title,
-						'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
-						'content'       => wp_kses_post( $topic->post_content ),
-						'content_plain' => \jetonomy_content_to_plain( $topic->post_content ),
-						'status'        => 'publish',
-						'is_sticky'     => $is_sticky ? 1 : 0,
-						// bbPress stores "closed" as the post_status; Jetonomy keeps
-						// the topic published and flags it closed, so the thread stays
-						// readable but takes no new replies.
-						'is_closed'     => 'closed' === $topic->post_status ? 1 : 0,
-						'created_at'    => $topic->post_date_gmt ?: now(),
-					]
-				);
-
-				if ( is_wp_error( $post_id ) ) {
-					$this->log_error( 'topic', $topic->ID, $post_id->get_error_message() );
-					++$this->skipped;
-					continue;
-				}
-			} else {
-				$post_id = self::DRY_RUN_ID; // Simulate
-			}
-
-			if ( $post_id || $this->dry_run ) {
-				$this->map_id( 'topic', $topic->ID, $post_id );
-				$this->remember( 'post', (int) $topic->ID, (int) $post_id );
-				if ( ! $this->dry_run ) {
-					$this->migrate_bbpress_attachments( 'post', (int) $topic->ID, (int) $post_id );
-				}
-				++$this->imported;
-			} else {
-				$this->log_error( 'topic', $topic->ID, 'Failed to create post' );
+			if ( is_wp_error( $post_id ) || ! $post_id ) {
+				$this->log_error( 'topic', $topic->ID, is_wp_error( $post_id ) ? $post_id->get_error_message() : 'Failed to create post' );
 				++$this->skipped;
+				continue;
 			}
+
+			$this->map_id( 'topic', $topic->ID, (int) $post_id );
+			$this->remember( 'post', (int) $topic->ID, (int) $post_id );
+			if ( ! $this->dry_run ) {
+				$this->migrate_bbpress_attachments( 'post', (int) $topic->ID, (int) $post_id );
+			}
+			++$this->imported;
 		}
 	}
 
-	private function import_replies(): void {
-		global $wpdb;
+	/**
+	 * Import reply rows. Shared by both paths (see import_forum_rows()).
+	 *
+	 * @param object[] $replies bbPress reply rows, in id order.
+	 * @return void
+	 */
+	private function import_reply_rows( array $replies ): void {
+		$topics = array_unique( array_map( 'intval', array_column( $replies, 'post_parent' ) ) );
+		$this->load_mapped( 'topic', 'post', array_combine( $topics, $topics ) );
 
-		$replies = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status IN (" . $this->status_sql( 'reply' ) . ') ORDER BY ID ASC'
-		);
-
-		$existing  = $this->find_imported_children( 'reply', (array) $replies, 'topic' );
-		$parent_of = $this->reply_parent_resolver( (array) $replies );
+		$existing  = $this->find_imported_children( 'reply', $replies, 'topic' );
+		$parent_of = $this->reply_parent_resolver( $replies );
 		$rethread  = [];
 
 		foreach ( $replies as $reply ) {
-			// bbPress reply's post_parent is the topic ID
-			$topic_id = (int) $reply->post_parent;
-			$post_id  = $this->get_mapped_id( 'topic', $topic_id );
-
+			// bbPress reply's post_parent is the topic ID.
+			$post_id = $this->get_mapped_id( 'topic', (int) $reply->post_parent );
 			if ( ! $post_id ) {
-				++$this->skipped;
+				$this->skip_orphan( 'reply' );
 				continue;
 			}
 
@@ -1053,40 +989,174 @@ class BBPress_Importer extends Importer {
 				continue;
 			}
 
-			if ( ! $this->dry_run ) {
-				$reply_id = JtReply::create(
-					[
-						'post_id'       => $post_id,
-						'parent_id'     => $parent_of( (int) $reply->ID ),
-						'author_id'     => (int) $reply->post_author,
-						'content'       => wp_kses_post( $reply->post_content ),
-						'content_plain' => \jetonomy_content_to_plain( $reply->post_content ),
-						'status'        => 'publish',
-						'created_at'    => $reply->post_date_gmt ?: now(),
-					]
-				);
+			$reply_id = $this->dry_run ? self::DRY_RUN_ID : JtReply::create(
+				[
+					'post_id'       => $post_id,
+					'parent_id'     => $parent_of( (int) $reply->ID ),
+					'author_id'     => (int) $reply->post_author,
+					'content'       => wp_kses_post( $reply->post_content ),
+					'content_plain' => \jetonomy_content_to_plain( $reply->post_content ),
+					'status'        => 'publish',
+					'created_at'    => $reply->post_date_gmt ?: now(),
+				]
+			);
 
-				if ( is_wp_error( $reply_id ) ) {
-					++$this->skipped;
-					continue;
-				}
-			} else {
-				$reply_id = self::DRY_RUN_ID; // Simulate
-			}
-
-			if ( $reply_id || $this->dry_run ) {
-				$this->map_id( 'reply', $reply->ID, $reply_id );
-				$this->remember( 'reply', (int) $reply->ID, (int) $reply_id );
-				if ( ! $this->dry_run ) {
-					$this->migrate_bbpress_attachments( 'reply', (int) $reply->ID, (int) $reply_id );
-				}
-				++$this->imported;
-			} else {
+			if ( is_wp_error( $reply_id ) || ! $reply_id ) {
+				$this->log_error( 'reply', $reply->ID, is_wp_error( $reply_id ) ? $reply_id->get_error_message() : 'Failed to create reply' );
 				++$this->skipped;
+				continue;
 			}
+
+			// Mapped so a later reply in this batch threads under it.
+			$this->map_id( 'reply', $reply->ID, (int) $reply_id );
+			$this->remember( 'reply', (int) $reply->ID, (int) $reply_id );
+			if ( ! $this->dry_run ) {
+				$this->migrate_bbpress_attachments( 'reply', (int) $reply->ID, (int) $reply_id );
+			}
+			++$this->imported;
 		}
 
 		$this->rethread_existing( $rethread );
+	}
+
+	/**
+	 * Keep this request's queued grants for the members phase.
+	 *
+	 * @return void
+	 */
+	private function queue_grants(): void {
+		if ( $this->grants ) {
+			update_option( self::GRANTS_OPTION, array_merge( (array) get_option( self::GRANTS_OPTION, [] ), $this->grants ), false );
+			$this->grants = [];
+		}
+	}
+
+	/**
+	 * Batch result helper.
+	 *
+	 * @param string $phase     Next phase.
+	 * @param int    $offset    Next offset.
+	 * @param int    $processed Rows this call counts toward progress.
+	 * @param bool   $done      Import finished.
+	 * @return array{phase:string, offset:int, done:bool, processed:int}
+	 */
+	private function step( string $phase, int $offset, int $processed, bool $done = false ): array {
+		return [
+			'phase'     => $phase,
+			'offset'    => $offset,
+			'done'      => $done,
+			'processed' => $processed,
+		];
+	}
+
+	/**
+	 * Import one batch of one phase.
+	 *
+	 * Phase order: forums -> members (only when grants were queued) -> topics
+	 * -> replies -> profiles -> recount. Nothing is carried between batches
+	 * except jt_import_map and the grant queue: each batch loads the parents
+	 * it needs (load_mapped()).
+	 *
+	 * @param string $phase      Current phase.
+	 * @param int    $offset     Row offset within the phase.
+	 * @param int    $batch_size Rows to process this call.
+	 * @return array{phase:string, offset:int, done:bool, processed:int}
+	 */
+	public function run_batch( string $phase, int $offset, int $batch_size ): array {
+		$batch_size = max( 1, $batch_size );
+		$this->start_budget();
+
+		switch ( $phase ) {
+			case 'forums':
+				$all_forums = $this->forum_rows();
+				$forums     = array_slice( $all_forums, $offset, $batch_size );
+
+				$this->import_forum_rows( $forums, $this->container_forums( $all_forums ) );
+				$this->queue_grants();
+
+				if ( count( $all_forums ) > $offset + $batch_size ) {
+					return $this->step( 'forums', $offset + $batch_size, count( $forums ) );
+				}
+
+				return $this->step( get_option( self::GRANTS_OPTION ) ? 'members' : 'topics', 0, count( $forums ) );
+
+			case 'members':
+				// Not counted toward progress: how many people a forum's
+				// participants or a group add up to is only known once the
+				// forums phase has linked them, after the total was fixed.
+				$r    = $this->grant_members( (array) get_option( self::GRANTS_OPTION, [] ), $offset, $batch_size );
+				$more = $r['processed'] < $r['fetched'] || $r['fetched'] >= $batch_size;
+				if ( ! $more ) {
+					delete_option( self::GRANTS_OPTION );
+				}
+
+				return $more ? $this->step( 'members', $offset + $r['processed'], 0 ) : $this->step( 'topics', 0, 0 );
+
+			case 'topics':
+				$topics = $this->content_rows( 'topic', $batch_size, $offset );
+				$this->import_topic_rows( $topics );
+
+				return count( $topics ) >= $batch_size
+					? $this->step( 'topics', $offset + $batch_size, count( $topics ) )
+					: $this->step( 'replies', 0, count( $topics ) );
+
+			case 'replies':
+				$replies = $this->content_rows( 'reply', $batch_size, $offset );
+				$this->import_reply_rows( $replies );
+
+				return count( $replies ) >= $batch_size
+					? $this->step( 'replies', $offset + $batch_size, count( $replies ) )
+					: $this->step( 'profiles', 0, count( $replies ) );
+
+			case 'profiles':
+				// Paged like every other phase: a forum with 50k authors must not
+				// create 50k profiles in one request.
+				$authors = $this->author_ids( $batch_size, $offset );
+				foreach ( $authors as $uid ) {
+					$this->ensure_profile( $uid );
+				}
+
+				return count( $authors ) >= $batch_size
+					? $this->step( 'profiles', $offset + $batch_size, count( $authors ) )
+					: $this->step( 'recount', 0, count( $authors ) );
+
+			case 'recount':
+				$this->recount();
+				flush_rewrite_rules();
+
+				return $this->step( 'complete', 0, 0, true );
+
+			default:
+				return $this->step( 'complete', 0, 0, true );
+		}
+	}
+
+	public function run( array $options = [] ): array {
+		$forums = $this->forum_rows();
+		$this->import_forum_rows( $forums, $this->container_forums( $forums ) );
+
+		// One process, no request timeout: grant every queued membership now,
+		// a page at a time so memory stays flat.
+		$offset = 0;
+		while ( $this->grants ) {
+			$r       = $this->grant_members( $this->grants, $offset, 500 );
+			$offset += $r['processed'];
+			if ( $r['fetched'] < 500 ) {
+				$this->grants = [];
+			}
+		}
+
+		$this->import_topic_rows( $this->content_rows( 'topic' ) );
+		$this->import_reply_rows( $this->content_rows( 'reply' ) );
+
+		if ( ! $this->dry_run ) {
+			foreach ( $this->author_ids() as $uid ) {
+				$this->ensure_profile( $uid );
+			}
+			$this->recount();
+		}
+
+		return $this->results();
 	}
 
 	/**
@@ -1104,18 +1174,6 @@ class BBPress_Importer extends Importer {
 	private function rethread_existing( array $parents ): void {
 		if ( $parents && ! $this->dry_run ) {
 			$this->rethreaded += JtReply::fill_missing_parents( $parents );
-		}
-	}
-
-	private function create_profiles(): void {
-		global $wpdb;
-
-		$author_ids = $wpdb->get_col(
-			"SELECT DISTINCT post_author FROM {$wpdb->posts} WHERE post_type IN ('topic', 'reply') AND post_status IN (" . $this->status_sql( 'topic' ) . ',' . $this->status_sql( 'reply' ) . ') AND post_author > 0'
-		);
-
-		foreach ( $author_ids as $uid ) {
-			$this->ensure_profile( (int) $uid );
 		}
 	}
 

@@ -4,7 +4,7 @@
  *
  * Variables seeded by Admin::render_import() before include.
  *
- * @var array<string,bool> $available
+ * @var array<string,array{name:string,stats:array<string,int>,notes:string[],active:bool}> $available Import_Manager::get_available().
  *
  * @package Jetonomy
  */
@@ -56,6 +56,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 				$was_imported = isset( $import_history[ $id ] );
 				$has_resume   = ! empty( $resume_state ) && ( $resume_state['source'] ?? '' ) === $id;
 				$is_running   = ( $current_progress['status'] ?? '' ) === 'running';
+				$is_active    = ! empty( $info['active'] );
 				?>
 				<div class="jetonomy-import-source" id="import-source-<?php echo esc_attr( $id ); ?>"
 					data-source="<?php echo esc_attr( $id ); ?>"
@@ -70,10 +71,33 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 							<span class="jetonomy-badge jetonomy-badge--success">&#10003; <?php esc_html_e( 'Previously Imported', 'jetonomy' ); ?></span>
 						<?php elseif ( $has_resume ) : ?>
 							<span class="jetonomy-badge jetonomy-badge--warning">&#9888; <?php esc_html_e( 'Import Interrupted', 'jetonomy' ); ?></span>
-						<?php else : ?>
+						<?php elseif ( $is_active ) : ?>
 							<span class="jetonomy-badge jetonomy-badge--info"><?php esc_html_e( 'Available', 'jetonomy' ); ?></span>
+						<?php else : ?>
+							<span class="jetonomy-badge jetonomy-badge--warning"><?php esc_html_e( 'Data found, plugin not active', 'jetonomy' ); ?></span>
 						<?php endif; ?>
 					</div>
+
+					<?php
+					/*
+					 * The old forum was deactivated or deleted, but its content is
+					 * still in the database. Importers read those tables directly,
+					 * so this is still a real import - often the owner's last copy
+					 * of that content. Say what is going on instead of calling it
+					 * "Available" as if the plugin were running, or hiding it.
+					 */
+					if ( ! $is_active ) :
+						?>
+						<p class="description jetonomy-import-inactive">
+							<?php
+							printf(
+								/* translators: %s: forum plugin name, e.g. bbPress. */
+								esc_html__( '%s is not active, but its forums are still in your database. You can import them without reactivating it.', 'jetonomy' ),
+								esc_html( $info['name'] )
+							);
+							?>
+						</p>
+					<?php endif; ?>
 
 					<?php if ( $was_imported ) : ?>
 						<div class="jetonomy-import-history">
@@ -272,17 +296,9 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						?>
 					</p>
 
-					<?php if ( ! empty( $jt_record['already'] ) ) : ?>
-						<p class="description">
-							<?php
-							printf(
-								/* translators: %s: number of items a previous import already brought over. */
-								esc_html( _n( '%s item was already imported and was skipped.', '%s items were already imported and were skipped.', (int) $jt_record['already'], 'jetonomy' ) ),
-								esc_html( number_format_i18n( (int) $jt_record['already'] ) )
-							);
-							?>
-						</p>
-					<?php endif; ?>
+					<?php foreach ( \Jetonomy\Import\Importer::describe_tally( (array) $jt_record ) as $jt_line ) : ?>
+						<p class="description"><?php echo esc_html( $jt_line ); ?></p>
+					<?php endforeach; ?>
 
 					<?php if ( $jt_skipped > 0 ) : ?>
 						<div class="notice notice-warning inline jetonomy-import-skipped">
@@ -326,7 +342,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 								</p>
 							<?php endif; ?>
 						</div>
-					<?php else : ?>
+					<?php elseif ( empty( $jt_record['already'] ) && ! array_filter( (array) ( $jt_record['orphans'] ?? [] ) ) ) : ?>
 						<p class="description"><?php esc_html_e( 'Everything imported cleanly. Nothing was skipped.', 'jetonomy' ); ?></p>
 					<?php endif; ?>
 				</div>

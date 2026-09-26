@@ -32,6 +32,13 @@ class Asgaros_Importer extends Importer {
 		);
 	}
 
+	/**
+	 * Asgaros Forum itself loaded? The import works either way - see Importer::is_source_active().
+	 */
+	public function is_source_active(): bool {
+		return class_exists( 'AsgarosForum', false );
+	}
+
 	public function get_source_stats(): array {
 		global $wpdb;
 		$p = $wpdb->prefix;
@@ -42,13 +49,27 @@ class Asgaros_Importer extends Importer {
 		];
 	}
 
+	/**
+	 * Exactly the rows the batches report as processed, so progress ends at
+	 * 100%: forums, topics, the posts that become replies (each topic's first
+	 * post is its body, not a reply), and the profiles phase's authors.
+	 */
 	public function get_total_count(): int {
 		global $wpdb;
-		$p      = $wpdb->prefix;
-		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_forums" );
-		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_topics" );
-		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_posts" );
-		return $forums + $topics + $posts;
+		$p = $wpdb->prefix;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$first   = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT parent_id) FROM {$p}forum_posts" );
+		$authors = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM (
+			     SELECT author_id FROM {$p}forum_topics WHERE author_id > 0
+			     UNION
+			     SELECT author_id FROM {$p}forum_posts WHERE author_id > 0
+			 ) authors"
+		);
+		// phpcs:enable
+
+		return array_sum( $this->get_source_stats() ) - $first + $authors;
 	}
 
 	/**
@@ -57,8 +78,8 @@ class Asgaros_Importer extends Importer {
 	 * This used to call run() — the entire import — inside a single AJAX request,
 	 * so any forum with real content hit max_execution_time and died with no
 	 * partial-progress recovery. Phases now page through the source tables the way
-	 * the bbPress importer does, and the caller (Import_Handler) persists the id_map
-	 * and a resume point between batches.
+	 * the bbPress importer does; each batch loads the parents it needs from
+	 * jt_import_map (load_mapped()) and the caller keeps a resume point.
 	 *
 	 * Phase order: forums -> topics -> replies -> profiles -> complete.
 	 *
@@ -88,7 +109,6 @@ class Asgaros_Importer extends Importer {
 		switch ( $phase ) {
 			case 'forums':
 				$this->import_forums();
-				$this->persist_id_map();
 
 				return [
 					'phase'     => 'topics',
@@ -99,7 +119,6 @@ class Asgaros_Importer extends Importer {
 
 			case 'topics':
 				$r = $this->import_topics_batch( $offset, $batch_size );
-				$this->persist_id_map();
 
 				// Ran out of time mid-page: resume at the exact row we stopped on.
 				if ( $r['processed'] < $r['fetched'] ) {
@@ -121,7 +140,6 @@ class Asgaros_Importer extends Importer {
 
 			case 'replies':
 				$r = $this->import_replies_batch( $offset, $batch_size );
-				$this->persist_id_map();
 
 				if ( $r['processed'] < $r['fetched'] ) {
 					return [
@@ -171,14 +189,6 @@ class Asgaros_Importer extends Importer {
 					'processed' => 0,
 				];
 		}
-	}
-
-	/**
-	 * Persist the id_map so the next batch (a separate request) can resolve
-	 * parents. Import_Handler restores it into $this->id_map before each call.
-	 */
-	private function persist_id_map(): void {
-		update_option( 'jetonomy_import_id_map', $this->id_map, false );
 	}
 
 	public function run( array $options = [] ): array {
@@ -270,7 +280,7 @@ class Asgaros_Importer extends Importer {
 					'title'       => $forum->name,
 					// Identity lives in jt_import_map, so a name that matches one
 					// of the owner's own spaces imports beside it as "<slug>-1".
-					'slug'        => Space::unique_slug( self::forum_slug( $forum ) ),
+					'slug'        => Space::unique_slug( self::clean_slug( self::forum_slug( $forum ) ) ?: 'forum-' . $forum->id ),
 					'description' => wp_strip_all_tags( $forum->description ?? '' ),
 					'visibility'  => $access['visibility'],
 					'join_policy' => $access['join_policy'],
@@ -538,6 +548,10 @@ class Asgaros_Importer extends Importer {
 			$first_posts_map[ (int) $fp->parent_id ] = $fp;
 		}
 
+		// This page's forums, from memory or from jt_import_map (see load_mapped()).
+		$forum_ids = array_unique( array_map( 'intval', array_column( $topics, 'parent_id' ) ) );
+		$this->load_mapped( 'forum', 'space', array_combine( $forum_ids, $forum_ids ) );
+
 		// One "already imported?" lookup for the whole page (see find_imported()).
 		$fingerprints = [];
 		foreach ( $topics as $topic ) {
@@ -559,8 +573,7 @@ class Asgaros_Importer extends Importer {
 
 			$space_id = $this->get_mapped_id( 'forum', (int) $topic->parent_id );
 			if ( ! $space_id ) {
-				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->parent_id} not imported" );
-				++$this->skipped;
+				$this->skip_orphan( 'topic' );
 				continue;
 			}
 
@@ -588,7 +601,7 @@ class Asgaros_Importer extends Importer {
 					'author_id'     => (int) ( $topic->author_id ?? 1 ),
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
 					'title'         => $topic->name,
-					'slug'          => sanitize_title( $topic->name ) ?: 'topic-' . $topic->id,
+					'slug'          => self::clean_slug( $topic->name ) ?: 'topic-' . $topic->id,
 					'content'       => wp_kses_post( $content ),
 					'content_plain' => \jetonomy_content_to_plain( $content ),
 					'status'        => $status,
@@ -665,6 +678,10 @@ class Asgaros_Importer extends Importer {
 		$consumed = 0;
 		$total    = count( $posts );
 
+		// This page's topics, from memory or from jt_import_map (see load_mapped()).
+		$topic_ids = array_unique( array_map( 'intval', array_column( $posts, 'parent_id' ) ) );
+		$this->load_mapped( 'topic', 'post', array_combine( $topic_ids, $topic_ids ) );
+
 		$fingerprints = [];
 		foreach ( $posts as $asgaros_post ) {
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
@@ -684,7 +701,7 @@ class Asgaros_Importer extends Importer {
 
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
 			if ( ! $post_id ) {
-				++$this->skipped;
+				$this->skip_orphan( 'reply' );
 				continue;
 			}
 

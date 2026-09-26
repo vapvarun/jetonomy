@@ -47,7 +47,7 @@ Move your existing Asgaros Forum community into Jetonomy - forums, topics, repli
 
 1. **Back up your database.** The importer reads but never modifies Asgaros tables, but a backup protects against any edge cases.
 2. **Activate Jetonomy** and complete the setup wizard.
-3. **Keep Asgaros Forum active** during the import - the importer reads from its live tables.
+3. **Asgaros Forum can be active or deactivated** - the importer reads its tables straight from the database. Import before deleting it.
 4. **Disable page caching** if active, to avoid stale data during the import.
 
 > **Tip:** For large Asgaros communities, run the import via WP-CLI to avoid browser timeouts.

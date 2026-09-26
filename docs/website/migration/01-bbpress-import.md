@@ -16,14 +16,15 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies and
 
 | bbPress Data | Imported As | Notes |
 |---|---|---|
-| Forums | Jetonomy Spaces | Forum description → space description |
+| Forums | Jetonomy Spaces | Forum description → space description. Emoji and symbols are left out of the space's web address |
+| bbPress categories and the BuddyPress "Group Forums" root | Jetonomy Categories | A forum that only groups other forums becomes a category holding them, not an empty space. One that still holds topics stays a space |
 | Topics | Jetonomy Posts | Topic title + content preserved |
 | Replies | Jetonomy Replies | Threaded replies keep their parent reply. A reply whose parent was not imported becomes a top-level reply instead of being dropped |
 | User accounts | Linked to existing WP users | Matched by user ID |
 | Sticky and super sticky topics | Sticky posts | Both land sticky in their own space. Jetonomy has no site-wide sticky, so a super sticky is not pinned across the whole community |
 | Closed topics | Closed posts | Preserved - the thread stays readable and takes no new replies |
 | Private and hidden forums | Private and hidden spaces | A private forum becomes a private space (new members need approval) and a hidden forum a hidden space (invite only). Everyone who posted in them is added as a member so they keep access |
-| BuddyPress group forums | Spaces linked to their group | The space is linked to its group, so the group's Forum tab shows it and joins and leaves stay in sync. The group's confirmed, non-banned members are added: group admins as space admins, group moderators as space moderators. A group already linked to a space is left alone. Needs BuddyPress with Groups active during the import |
+| BuddyPress group forums | Spaces linked to their group | The space is linked to its group, so the group's Forum tab shows it and joins and leaves stay in sync. The group's confirmed, non-banned members are added: group admins as space admins, group moderators as space moderators. Members are added in steps, so a group with thousands of members does not time out. A group already linked to a space is left alone; a group you unlinked from its space on purpose is linked again if you re-import its forum. Needs BuddyPress with Groups active during the import |
 | Inline images and attached files (1.8.0+) | WordPress media library + Jetonomy attachments | Downloaded from bbPress and re-registered as attachments; images stay inline, other files show as a download link |
 
 **Not imported:**
@@ -50,7 +51,7 @@ Complete these steps before starting the import:
 
 1. **Back up your database.** The importer does not modify bbPress tables, but a backup is essential.
 2. **Activate Jetonomy** and complete the setup wizard. Your community base URL should be set.
-3. **Keep bbPress active** during the import. The importer reads directly from bbPress tables.
+3. **bbPress can be active or deactivated.** The importer reads bbPress's data straight from the database, so it also works after you have deactivated bbPress. Import before deleting it.
 4. **Set your server timeout high.** Large imports (100,000+ records) take time. Increase `max_execution_time` in `php.ini` or use WP-CLI (recommended for large sites).
 5. **Disable other heavy plugins** during import if your server is resource-constrained.
 

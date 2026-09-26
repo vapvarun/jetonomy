@@ -6,16 +6,6 @@ parameters:
 			path: includes/adapters/class-pmpro-adapter.php
 
 		-
-			message: "#^Cannot access offset 'name' on bool\\.$#"
-			count: 2
-			path: includes/admin/views/import.php
-
-		-
-			message: "#^Cannot access offset 'stats' on bool\\.$#"
-			count: 1
-			path: includes/admin/views/import.php
-
-		-
 			message: "#^Access to an undefined property object\\:\\:\\$id\\.$#"
 			count: 1
 			path: includes/admin/views/space-edit.php

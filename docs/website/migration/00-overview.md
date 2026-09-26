@@ -18,7 +18,7 @@ These three are the only built-in sources. Developers can add support for other 
 
 **Always take a full database backup before importing, no matter which source you use.** The importers read from your old forum's tables and never modify them, but importing creates new records in Jetonomy and cannot be automatically undone. A backup is your safety net if you want to start fresh.
 
-Keep your old forum plugin (bbPress, wpForo, or Asgaros) **active** during the import - each importer reads directly from that plugin's live tables. You can deactivate it once you have confirmed the import looks right.
+Your old forum plugin (bbPress, wpForo, or Asgaros) can be active or deactivated during the import - each importer reads that plugin's tables straight from the database. Keeping it active until you have checked the result lets you compare the two side by side. Import before you delete the old plugin, since some plugins remove their tables when they are deleted.
 
 ## Browser or WP-CLI?
 
@@ -55,10 +55,12 @@ When you open **Jetonomy → Import**, each forum plugin that Jetonomy detects a
 - **Stat preview** - each detected source shows a live count of what it found (for example Forums, Topics, Replies). This is read straight from your old forum so you can confirm Jetonomy sees your data before you start.
 - **Status badge** - one badge per card tells you the card's state:
   - **Available** - detected and ready to import; this is the normal first-time state.
+  - **Data found, plugin not active** - the old forum plugin is deactivated or deleted, but its forums are still in your database. You can import them without reactivating it.
   - **Previously Imported** - you have already run this import once. The card shows the date of the last import and how many records it brought over.
   - **Import Interrupted** - a browser import stopped before finishing. The card offers **Resume Import** to continue, or **Start Over** to begin again.
 - **Re-Import** - once a source shows **Previously Imported**, its button changes to **Re-Import**. The card explains that running it again imports only what is new since then, and asks you to confirm before it starts. See [Running an Import Again](#running-an-import-again).
 - **Already imported, skipped** - after a re-run, the result and the card show how many items were already in Jetonomy and were skipped, for example *"1,240 items were already imported and were skipped."* That number is the proof nothing was duplicated, not a list of failures.
+- **Not imported because the parent was not** - the result, the card and Past imports also say how many topics or replies were left out because the forum or topic they belong to was not imported, for example *"52 replies were not imported because their topic was not imported (for example, the topic is pending, spam or in the trash)."* This is why the imported count can be lower than the source count.
 - **Progress tracker** - while an import runs, a five-step tracker shows where it is: **Forums → Topics → Replies → Profiles → Finalize**, with a percentage progress bar underneath.
 
 ## Running an Import Again

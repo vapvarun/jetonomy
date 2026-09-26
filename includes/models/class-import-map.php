@@ -408,6 +408,12 @@ class Import_Map {
 	 * The oldest such category that actually holds a space wins, which skips
 	 * the empty categories earlier re-runs left behind.
 	 *
+	 * A category an import already recorded in the map is never a legacy
+	 * candidate - the same rule match_legacy() applies to spaces. Without it,
+	 * a prefix like 'imported-bbpress' also matches a category this importer
+	 * made for one bbPress category forum ('imported-bbpress-community-...'),
+	 * and every top-level forum would be filed under it.
+	 *
 	 * @param string $slug_prefix Category slug prefix, e.g. 'imported-bbpress'.
 	 * @return int Category id, or 0.
 	 */
@@ -416,12 +422,14 @@ class Import_Map {
 
 		$cats   = \Jetonomy\table( 'categories' );
 		$spaces = \Jetonomy\table( 'spaces' );
+		$map    = self::table();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table names.
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT c.id FROM {$cats} c
-				 WHERE c.slug LIKE %s AND EXISTS ( SELECT 1 FROM {$spaces} s WHERE s.category_id = c.id )
+				 LEFT JOIN {$map} m ON m.object_type = 'category' AND m.object_id = c.id
+				 WHERE m.id IS NULL AND c.slug LIKE %s AND EXISTS ( SELECT 1 FROM {$spaces} s WHERE s.category_id = c.id )
 				 ORDER BY c.id ASC LIMIT 1",
 				$wpdb->esc_like( $slug_prefix ) . '%'
 			)
