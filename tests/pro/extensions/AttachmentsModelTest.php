@@ -84,9 +84,28 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 		$this->assertSame( 0, Model::count_for( 'reply', 3232 ) );
 	}
 
+	/**
+	 * Run the abandoned-upload sweep past its first-run, report-only pass.
+	 *
+	 * The sweep moved from Pro's attachments GC (a no-op since Pro 834b303) to
+	 * free's Media_Library::cleanup_abandoned_uploads(), which every site runs.
+	 * Its very first run only reports, so seed the report to exercise deletion.
+	 */
+	private function sweep(): void {
+		update_option(
+			'jetonomy_media_cleanup_report',
+			[
+				'first_seen_at' => gmdate( 'Y-m-d H:i:s' ),
+				'would_delete'  => 0,
+			],
+			false
+		);
+		Media_Library::cleanup_abandoned_uploads();
+	}
+
 	public function test_gc_removes_orphan_link_rows(): void {
 		Model::link( 'post', 5151, 999999999, 0 ); // attachment id that does not exist.
-		( new Extension() )->gc();
+		$this->sweep();
 		$this->assertSame( 0, Model::count_for( 'post', 5151 ) );
 	}
 
@@ -116,7 +135,7 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 		update_post_meta( $foreign, Media_Library::META_FLAG, 1 );
 		$this->assertFalse( Media_Library::is_ours( $foreign ) );
 
-		( new Extension() )->gc();
+		$this->sweep();
 
 		$this->assertNotNull( get_post( $foreign ), 'GC destroyed a file another plugin owns.' );
 	}
@@ -137,7 +156,7 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 		Media_Library::tag_upload( $ours ); // records provenance at upload time
 		$this->assertTrue( Media_Library::is_ours( $ours ) );
 
-		( new Extension() )->gc();
+		$this->sweep();
 
 		$this->assertNull( get_post( $ours ), 'GC no longer reclaims abandoned uploads.' );
 	}
