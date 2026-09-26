@@ -85,4 +85,51 @@ class BbpressStructureTest extends WP_UnitTestCase {
 		$this->assertSame( $this->jt_id( 'reply', $r1 ), $parent( $r5 ) );
 		$this->assertSame( 5, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}replies" ), 'no duplicates on re-run' );
 	}
+
+	/**
+	 * A re-run restores threading on replies an earlier release imported flat,
+	 * without overwriting a reply the owner has re-threaded since.
+	 */
+	public function test_rerun_rethreads_flat_legacy_replies_only_where_parent_is_missing(): void {
+		global $wpdb;
+		$p     = $wpdb->prefix . 'jt_';
+		$user  = self::factory()->user->create();
+		$forum = self::factory()->post->create( [ 'post_type' => 'forum', 'post_status' => 'publish', 'post_title' => 'F' ] );
+		$topic = self::factory()->post->create( [ 'post_type' => 'topic', 'post_status' => 'publish', 'post_parent' => $forum, 'post_author' => $user, 'post_title' => 'T' ] );
+		$reply = function ( int $reply_to = 0 ) use ( $topic, $user ): int {
+			$id = self::factory()->post->create( [ 'post_type' => 'reply', 'post_status' => 'publish', 'post_parent' => $topic, 'post_author' => $user, 'post_content' => 'r' . wp_rand() ] );
+			update_post_meta( $id, '_bbp_reply_to', $reply_to );
+			return $id;
+		};
+		$r1 = $reply();
+		$r2 = $reply( $r1 );
+		$r3 = $reply( $r2 );
+
+		$this->import();
+
+		// What a 1.9.x import left behind: every reply top-level, except one the
+		// owner has since moved under $r1 by hand.
+		$wpdb->query( "UPDATE {$p}replies SET parent_id = NULL" );
+		$wpdb->update( "{$p}replies", [ 'parent_id' => $this->jt_id( 'reply', $r1 ) ], [ 'id' => $this->jt_id( 'reply', $r3 ) ] );
+
+		$this->import();
+
+		$parent = fn( int $src ) => (int) $wpdb->get_var( $wpdb->prepare( "SELECT parent_id FROM {$p}replies WHERE id = %d", $this->jt_id( 'reply', $src ) ) );
+		$this->assertSame( $this->jt_id( 'reply', $r1 ), $parent( $r2 ), 'flat legacy reply re-threaded' );
+		$this->assertSame( $this->jt_id( 'reply', $r1 ), $parent( $r3 ), "owner's own threading kept" );
+		$this->assertSame( 0, $parent( $r1 ) );
+		$this->assertSame( 3, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}replies" ), 'no duplicates' );
+	}
+
+	public function test_fill_missing_parents_refuses_a_parent_on_another_post(): void {
+		global $wpdb;
+		$p    = $wpdb->prefix . 'jt_';
+		$user = self::factory()->user->create();
+		$make = fn( int $post_id ) => \Jetonomy\Models\Reply::insert( [ 'post_id' => $post_id, 'author_id' => $user, 'content' => 'x', 'status' => 'publish' ] );
+		$a    = $make( 101 );
+		$b    = $make( 202 );
+
+		$this->assertSame( 0, \Jetonomy\Models\Reply::fill_missing_parents( [ $b => $a ] ) );
+		$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT parent_id FROM {$p}replies WHERE id = %d", $b ) ) );
+	}
 }

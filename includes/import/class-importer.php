@@ -36,6 +36,13 @@ abstract class Importer {
 	 * @var int
 	 */
 	protected int $already = 0;
+
+	/**
+	 * Replies an earlier release imported flat that this run re-threaded.
+	 *
+	 * @var int
+	 */
+	protected int $rethreaded = 0;
 	/**
 	 * Placeholder id recorded in the id map during a dry run.
 	 *
@@ -284,12 +291,13 @@ abstract class Importer {
 	/**
 	 * Created vs already-there counts for this request, for the batch driver.
 	 *
-	 * @return array{imported:int, already:int}
+	 * @return array{imported:int, already:int, rethreaded:int}
 	 */
 	public function get_tally(): array {
 		return [
-			'imported' => $this->imported,
-			'already'  => $this->already,
+			'imported'   => $this->imported,
+			'already'    => $this->already,
+			'rethreaded' => $this->rethreaded,
 		];
 	}
 
@@ -405,12 +413,13 @@ abstract class Importer {
 	 */
 	protected function results(): array {
 		return [
-			'source'   => $this->get_source_name(),
-			'imported' => $this->imported,
-			'skipped'  => $this->skipped,
-			'already'  => $this->already,
-			'errors'   => $this->errors,
-			'dry_run'  => $this->dry_run,
+			'source'     => $this->get_source_name(),
+			'imported'   => $this->imported,
+			'skipped'    => $this->skipped,
+			'already'    => $this->already,
+			'rethreaded' => $this->rethreaded,
+			'errors'     => $this->errors,
+			'dry_run'    => $this->dry_run,
 		];
 	}
 

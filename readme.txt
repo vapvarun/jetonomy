@@ -272,7 +272,7 @@ Import and URL fixes: re-running a bbPress, wpForo, or Asgaros import is now saf
 * Improve  - A site that imported from bbPress on an earlier version can re-run the import to bring in the private, hidden, and BuddyPress group forums the old importer skipped, without duplicating anything.
 * Improve  - Logged-out community pages can now be stored by page caches such as LiteSpeed Cache and WP Rocket.
 * Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
-* Fix      - bbPress imports keep sticky topics and threaded replies.
+* Fix      - bbPress imports keep sticky topics and threaded replies, and re-running the import restores threading on replies an earlier version imported flat.
 * Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.
 * Fix      - After changing the community base URL, a real page at the old URL is no longer redirected to the community.
 * Fix      - Changing the community base URL from the default now redirects old links instead of leaving them broken.

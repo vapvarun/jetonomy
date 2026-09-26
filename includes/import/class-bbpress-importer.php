@@ -787,6 +787,7 @@ class BBPress_Importer extends Importer {
 
 				$existing  = $this->find_imported_children( 'reply', $replies, 'topic' );
 				$parent_of = $this->reply_parent_resolver( $replies );
+				$rethread  = [];
 
 				foreach ( $replies as $reply ) {
 					$topic_id = (int) $reply->post_parent;
@@ -798,6 +799,10 @@ class BBPress_Importer extends Importer {
 
 					if ( isset( $existing[ (int) $reply->ID ] ) ) {
 						++$this->already;
+						$parent = $parent_of( (int) $reply->ID );
+						if ( $parent ) {
+							$rethread[ $existing[ (int) $reply->ID ] ] = $parent;
+						}
 						continue;
 					}
 
@@ -829,6 +834,7 @@ class BBPress_Importer extends Importer {
 					}
 				}
 
+				$this->rethread_existing( $rethread );
 				update_option( 'jetonomy_import_id_map', $this->id_map, false );
 
 				$has_more = count( $replies ) >= $batch_size;
@@ -1026,6 +1032,7 @@ class BBPress_Importer extends Importer {
 
 		$existing  = $this->find_imported_children( 'reply', (array) $replies, 'topic' );
 		$parent_of = $this->reply_parent_resolver( (array) $replies );
+		$rethread  = [];
 
 		foreach ( $replies as $reply ) {
 			// bbPress reply's post_parent is the topic ID
@@ -1039,6 +1046,10 @@ class BBPress_Importer extends Importer {
 
 			if ( isset( $existing[ (int) $reply->ID ] ) ) {
 				++$this->already;
+				$parent = $parent_of( (int) $reply->ID );
+				if ( $parent ) {
+					$rethread[ $existing[ (int) $reply->ID ] ] = $parent;
+				}
 				continue;
 			}
 
@@ -1073,6 +1084,26 @@ class BBPress_Importer extends Importer {
 			} else {
 				++$this->skipped;
 			}
+		}
+
+		$this->rethread_existing( $rethread );
+	}
+
+	/**
+	 * Restore threading on replies an earlier release imported flat.
+	 *
+	 * Releases before 2.0.1 ignored `_bbp_reply_to`, so every reply they
+	 * created is top-level. A re-run recognises those rows and would otherwise
+	 * skip them as they are. Only a reply with no parent yet is touched, so
+	 * anything re-threaded since the import stays as it is. Stickies are left
+	 * alone on purpose: an owner may have pinned or unpinned topics since.
+	 *
+	 * @param array<int,int> $parents Jetonomy reply id => Jetonomy parent reply id.
+	 * @return void
+	 */
+	private function rethread_existing( array $parents ): void {
+		if ( $parents && ! $this->dry_run ) {
+			$this->rethreaded += JtReply::fill_missing_parents( $parents );
 		}
 	}
 

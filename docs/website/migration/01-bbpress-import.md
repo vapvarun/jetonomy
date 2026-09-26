@@ -130,7 +130,7 @@ Once bbPress has been imported, its card on **Jetonomy → Import** changes to a
 
 A re-run skips everything already imported and brings over only what is new: new forums, new topics, and new replies, including replies to topics you imported earlier. The result tells you how many items were already imported and skipped.
 
-If you imported on 1.9.x, the first re-run also recognises what that import brought over and fills in what it missed (private, hidden and BuddyPress group forums, and closed topics). It does not change the rows already there: topics and replies from the 1.9.x import keep their flat replies and lost stickies. Only newly imported content keeps its threading and sticky status. See [Running an Import Again](00-overview.md#running-an-import-again) for the full details and limits.
+If you imported on 1.9.x, the first re-run also recognises what that import brought over and fills in what it missed (private, hidden and BuddyPress group forums, and closed topics). It also restores reply threading on the replies that import brought over flat, and the Import screen says how many replies it re-threaded. It only fills in a missing parent, so a reply you have moved since keeps its place. Stickies from the old import are not changed, because you may have pinned or unpinned topics since; re-pin any you want by hand. See [Running an Import Again](00-overview.md#running-an-import-again) for the full details and limits.
 
 ## What's Next?
 

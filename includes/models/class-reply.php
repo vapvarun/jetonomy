@@ -775,6 +775,64 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Give parentless replies the parent they should have had, in one write.
+	 *
+	 * For importers repairing threading on rows an older release created flat.
+	 * Only a NULL parent is filled, and only with a reply on the same post, so
+	 * a reply that has been re-threaded or moved since is never overwritten.
+	 *
+	 * @param array<int,int> $parents Reply id => parent reply id.
+	 * @return int Replies changed.
+	 */
+	public static function fill_missing_parents( array $parents ): int {
+		$parents = array_filter(
+			array_map( 'intval', $parents ),
+			static fn( int $parent, $id ): bool => $parent > 0 && $parent !== (int) $id,
+			ARRAY_FILTER_USE_BOTH
+		);
+		if ( ! $parents ) {
+			return 0;
+		}
+
+		$db    = static::db();
+		$table = static::table();
+		$ids   = array_unique( array_merge( array_keys( $parents ), array_values( $parents ) ) );
+		$in    = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name + placeholder list.
+		$rows = $db->get_results( $db->prepare( "SELECT id, post_id, parent_id FROM {$table} WHERE id IN ({$in})", ...$ids ), OBJECT_K );
+
+		$case    = '';
+		$args    = [];
+		$targets = [];
+		$posts   = [];
+		foreach ( $parents as $id => $parent ) {
+			$child = $rows[ $id ] ?? null;
+			if ( ! $child || null !== $child->parent_id || ! isset( $rows[ $parent ] ) || $rows[ $parent ]->post_id !== $child->post_id ) {
+				continue;
+			}
+			$case     .= ' WHEN %d THEN %d';
+			$args[]    = (int) $id;
+			$args[]    = $parent;
+			$targets[] = (int) $id;
+
+			$posts[ (int) $child->post_id ] = true;
+		}
+		if ( ! $targets ) {
+			return 0;
+		}
+
+		$in = implode( ',', array_fill( 0, count( $targets ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name, CASE arms and placeholder list.
+		$changed = (int) $db->query( $db->prepare( "UPDATE {$table} SET parent_id = CASE id{$case} END WHERE id IN ({$in}) AND parent_id IS NULL", ...$args, ...$targets ) );
+
+		foreach ( array_keys( $posts ) as $post_id ) {
+			self::bust_thread( $post_id );
+		}
+
+		return $changed;
+	}
+
+	/**
 	 * Invalidate every cached threaded read for a post.
 	 *
 	 * Called on every reply write. Bumping past the current value rather than

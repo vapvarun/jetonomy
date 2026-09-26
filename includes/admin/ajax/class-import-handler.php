@@ -111,14 +111,16 @@ class Import_Handler {
 		$tally       = get_option(
 			'jetonomy_import_tally',
 			[
-				'imported' => 0,
-				'already'  => 0,
+				'imported'   => 0,
+				'already'    => 0,
+				'rethreaded' => 0,
 			]
 		);
 		$batch_tally = $importer->get_tally();
 		$tally       = [
-			'imported' => (int) ( $tally['imported'] ?? 0 ) + $batch_tally['imported'],
-			'already'  => (int) ( $tally['already'] ?? 0 ) + $batch_tally['already'],
+			'imported'   => (int) ( $tally['imported'] ?? 0 ) + $batch_tally['imported'],
+			'already'    => (int) ( $tally['already'] ?? 0 ) + $batch_tally['already'],
+			'rethreaded' => (int) ( $tally['rethreaded'] ?? 0 ) + $batch_tally['rethreaded'],
 		];
 		update_option( 'jetonomy_import_tally', $tally, false );
 		$already_message = $tally['already'] > 0
@@ -128,6 +130,15 @@ class Import_Handler {
 				number_format_i18n( $tally['already'] )
 			)
 			: '';
+		if ( $tally['rethreaded'] > 0 ) {
+			$already_message = trim(
+				$already_message . ' ' . sprintf(
+					/* translators: %s: number of replies whose threading was restored. */
+					_n( '%s reply from an earlier import had its threading restored.', '%s replies from an earlier import had their threading restored.', $tally['rethreaded'], 'jetonomy' ),
+					number_format_i18n( $tally['rethreaded'] )
+				)
+			);
+		}
 
 		// Calculate overall progress.
 		$total           = $importer->get_total_count();

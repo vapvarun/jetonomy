@@ -76,7 +76,7 @@ That makes the usual migration pattern work:
 Two limits to know:
 
 - A topic or reply whose source had no date cannot be recognised as imported by an earlier version, so a re-run imports it again.
-- A re-run does not change rows that are already in Jetonomy. Anything an earlier version imported stays as it was (for example, replies that came across flat or stickies that were not kept). Only newly imported content gets the current importer's handling.
+- A re-run does not rewrite rows that are already in Jetonomy, with one exception: bbPress replies an earlier version imported flat get their threading back, and only where the reply has no parent yet. Everything else an earlier version imported stays as it was (for example, stickies that were not kept), so nothing you have changed since is overwritten.
 
 ## After Any Import
 
