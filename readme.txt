@@ -266,7 +266,7 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 2.0.1 - Unreleased =
 
-Import and URL fixes: re-running a bbPress, wpForo, or Asgaros import is now safe, and changing the community base URL no longer takes over other pages.
+Safer forum imports, a complete trash workflow for moderators, and fixes for URLs, page caching, notifications, and leaderboards.
 
 * Improve  - Re-running an import skips everything already imported and adds only new content, and the Import screen reports how many items were already imported.
 * Improve  - A site that imported from bbPress on an earlier version can re-run the import to bring in the private, hidden, and BuddyPress group forums the old importer skipped, without duplicating anything.
