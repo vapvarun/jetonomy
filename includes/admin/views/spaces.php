@@ -55,7 +55,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<td>
 						<?php
 						$jt_settings       = get_option( 'jetonomy_settings', array() );
-						$default_new_space = in_array( $jt_settings['default_space_type'] ?? 'forum', array( 'forum', 'qa', 'ideas', 'feed' ), true )
+						$default_new_space = in_array( $jt_settings['default_space_type'] ?? 'forum', \Jetonomy\Models\Space::valid_types(), true )
 							? $jt_settings['default_space_type']
 							: 'forum';
 						?>

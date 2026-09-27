@@ -87,6 +87,9 @@ final class Space_Journey {
 		}
 
 		$id = Space::create( $data );
+		if ( is_wp_error( $id ) ) {
+			return Journey_Result::from_wp_error( $id );
+		}
 		if ( ! $id ) {
 			return Journey_Result::fail( 'Space::create() returned 0 — insert failed.' );
 		}
@@ -154,6 +157,9 @@ final class Space_Journey {
 		}
 
 		$ok = Space::update( $id, $patch );
+		if ( is_wp_error( $ok ) ) {
+			return Journey_Result::from_wp_error( $ok );
+		}
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
 		}

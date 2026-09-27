@@ -71,7 +71,8 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Title is required.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
+		// An unknown type is refused by Space::create() below, not swapped.
+		if ( '' === $type ) {
 			$type = 'forum';
 		}
 		if ( ! in_array( $visibility, Space::visibility_values(), true ) ) {
@@ -105,6 +106,9 @@ class Spaces_Handler {
 			)
 		);
 
+		if ( is_wp_error( $id ) ) {
+			wp_send_json_error( $id->get_error_message() );
+		}
 		if ( ! $id ) {
 			wp_send_json_error( __( 'Failed to create space.', 'jetonomy' ) );
 		}
@@ -148,10 +152,8 @@ class Spaces_Handler {
 			$data['category_id'] = absint( $_POST['category_id'] );
 		}
 		if ( isset( $_POST['type'] ) ) {
-			$type = sanitize_text_field( wp_unslash( $_POST['type'] ) );
-			if ( in_array( $type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
-				$data['type'] = $type;
-			}
+			// Validated by Space::update(), which refuses an unknown type.
+			$data['type'] = sanitize_text_field( wp_unslash( $_POST['type'] ) );
 		}
 		if ( isset( $_POST['visibility'] ) ) {
 			$visibility = sanitize_text_field( wp_unslash( $_POST['visibility'] ) );
@@ -236,6 +238,9 @@ class Spaces_Handler {
 		$data['updated_at'] = now();
 
 		$result = Space::update( $id, $data );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
 		if ( ! $result ) {
 			wp_send_json_error( __( 'Failed to update space.', 'jetonomy' ) );
 		}

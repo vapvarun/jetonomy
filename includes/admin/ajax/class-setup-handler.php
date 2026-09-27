@@ -76,6 +76,10 @@ class Setup_Handler {
 			]
 		);
 
+		if ( is_wp_error( $space_id ) ) {
+			wp_send_json_error( $space_id->get_error_message() );
+		}
+
 		$add_result = SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
 		if ( is_wp_error( $add_result ) ) {
 			wp_send_json_error( $add_result->get_error_message() );
@@ -161,6 +165,6 @@ class Setup_Handler {
 	 */
 	private function sanitize_space_type( $value ): string {
 		$value = sanitize_key( (string) $value );
-		return in_array( $value, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $value : 'forum';
+		return in_array( $value, Space::valid_types(), true ) ? $value : 'forum';
 	}
 }

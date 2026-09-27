@@ -17,7 +17,7 @@ $user_id   = get_current_user_id();
 $qualifies = \Jetonomy\Permissions\Capabilities::can_create_space_frontend();
 
 $default_type = sanitize_key( (string) ( $settings['default_space_type'] ?? 'forum' ) );
-if ( ! in_array( $default_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
+if ( ! in_array( $default_type, \Jetonomy\Models\Space::valid_types(), true ) ) {
 	$default_type = 'forum';
 }
 

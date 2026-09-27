@@ -54,9 +54,9 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/spaces` | Public | List spaces (paginated) |
-| POST | `/spaces` | `manage_options` | Create a space |
+| POST | `/spaces` | `manage_options` | Create a space. `type` is one of `forum`, `qa`, `ideas`, `feed` (omit it to use Settings > Default Space Type); any other value returns `400`. |
 | GET | `/spaces/{id}` | Public | Get a single space |
-| PATCH | `/spaces/{id}` | Moderator / Admin | Update space settings. Accepts `sort_order` to place the space within its category. |
+| PATCH | `/spaces/{id}` | Moderator / Admin | Update space settings. Accepts `sort_order` to place the space within its category. An unknown `type` returns `400` and nothing is saved. |
 | DELETE | `/spaces/{id}` | Space admin | Remove a space. `?mode=transfer` (default) hands it to a successor and archives it, keeping all content, and returns `deleted:false`. `?mode=purge` destroys it and everything in it, returns `202`, and runs in the background. Purge additionally requires `manage_options` unless the site owner has allowed space admins to purge. |
 | GET | `/spaces/{id}/members` | Public / Members only if private | List space members |
 | POST | `/spaces/{id}/members` | Logged in | Join a space |
@@ -196,7 +196,7 @@ Replies are threaded responses to a Post.
 | GET | `/replies/{id}` | Public | Get a single reply |
 | PATCH | `/replies/{id}` | Author / Moderator | Update a reply |
 | DELETE | `/replies/{id}` | Author / Moderator | Move a reply to trash. `?force=true` deletes it permanently (space moderators and admins only). Restore with `POST /spaces/{space_id}/moderation/approve/reply/{id}` |
-| POST | `/replies/{id}/accept` | Post author / Moderator | Accept as answer |
+| POST | `/replies/{id}/accept` | Post author / Moderator | Accept as answer. Safe to retry: repeated or simultaneous calls award the answerer's reputation once. |
 | DELETE | `/replies/{id}/accept` | Post author / Moderator | Un-accept a reply, returning the topic to unanswered |
 | POST | `/replies/{id}/split` | Moderator / Admin | Split this reply into a new standalone post |
 

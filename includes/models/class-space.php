@@ -73,9 +73,14 @@ class Space extends Model {
 	 *
 	 * @param int   $id   Space ID.
 	 * @param array $data Column data.
-	 * @return bool
+	 * @return bool|\WP_Error WP_Error (400) when `type` is not a valid space type.
 	 */
-	public static function update( int $id, array $data ): bool {
+	public static function update( int $id, array $data ): bool|\WP_Error {
+		$invalid = self::check_type( $data );
+		if ( $invalid ) {
+			return $invalid;
+		}
+
 		$slug_changing = ! empty( $data['slug'] );
 		$type_changing = ! empty( $data['type'] );
 		// A space counts toward a category only while it is active and in one,
@@ -398,9 +403,15 @@ class Space extends Model {
 	 *                                  space admin. Defaults to the
 	 *                                  current logged-in user. Pass 0
 	 *                                  to skip seeding entirely.
-	 * @return int Inserted row ID.
+	 * @return int|\WP_Error Inserted row ID (0 when the insert failed), or
+	 *                       WP_Error (400) when `type` is not a valid space type.
 	 */
-	public static function create( array $data, ?int $creator_user_id = null ): int {
+	public static function create( array $data, ?int $creator_user_id = null ): int|\WP_Error {
+		$invalid = self::check_type( $data );
+		if ( $invalid ) {
+			return $invalid;
+		}
+
 		$now  = now();
 		$data = array_merge(
 			[
@@ -1545,6 +1556,32 @@ class Space extends Model {
 	 */
 	public static function valid_types(): array {
 		return array( 'forum', 'qa', 'ideas', 'feed' );
+	}
+
+	/**
+	 * Refuse a write whose `type` is not a valid space type.
+	 *
+	 * The one gate for every writer (REST, admin AJAX, CLI, Abilities,
+	 * importers, integrations): without it MySQL coerces an unknown value to
+	 * '' and the space loses every type-driven view.
+	 *
+	 * @param array $data Column data about to be written.
+	 * @return \WP_Error|null Null when `type` is absent or valid.
+	 */
+	private static function check_type( array $data ): ?\WP_Error {
+		if ( ! array_key_exists( 'type', $data ) || in_array( $data['type'], self::valid_types(), true ) ) {
+			return null;
+		}
+		return new \WP_Error(
+			'jetonomy_invalid_space_type',
+			sprintf(
+				/* translators: 1: rejected space type, 2: comma-separated list of valid space types. */
+				__( 'Invalid space type "%1$s". Use one of: %2$s.', 'jetonomy' ),
+				is_scalar( $data['type'] ) ? (string) $data['type'] : gettype( $data['type'] ),
+				implode( ', ', self::valid_types() )
+			),
+			array( 'status' => 400 )
+		);
 	}
 
 	/**

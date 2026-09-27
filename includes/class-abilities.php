@@ -721,7 +721,7 @@ class Abilities {
 						'type'        => [
 							'type'        => 'string',
 							'description' => 'Space type.',
-							'enum'        => [ 'forum', 'qa', 'ideas', 'feed' ],
+							'enum'        => Space::valid_types(),
 							'default'     => 'forum',
 						],
 						'visibility'  => [
@@ -1574,6 +1574,9 @@ class Abilities {
 		}
 
 		$space_id = Space::create( $data );
+		if ( is_wp_error( $space_id ) ) {
+			return $space_id;
+		}
 		if ( ! $space_id ) {
 			return new WP_Error( 'create_failed', __( 'Failed to create space.', 'jetonomy' ) );
 		}

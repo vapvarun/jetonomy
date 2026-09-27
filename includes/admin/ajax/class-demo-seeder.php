@@ -124,7 +124,7 @@ class Demo_Seeder {
 					),
 					$admin_id
 				);
-				if ( $space_id <= 0 ) {
+				if ( is_wp_error( $space_id ) || $space_id <= 0 ) {
 					continue;
 				}
 				$demo['spaces'][]        = $space_id;

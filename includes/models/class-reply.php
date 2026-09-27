@@ -422,44 +422,72 @@ class Reply extends Model {
 	/**
 	 * Mark a reply as the accepted answer.
 	 *
-	 * Clears any previously-accepted reply on the same post before marking
-	 * the new one, so a Q&A post always has at most one accepted reply.
+	 * The flip is one conditional UPDATE (`... AND is_accepted = 0`), so it
+	 * is an atomic check-and-set: when two requests race, MySQL lets exactly
+	 * one of them change the row. Callers use the return value to decide
+	 * whether side effects (hooks, reputation) belong to them.
+	 *
+	 * Any other accepted reply on the same post is cleared afterwards, so a
+	 * Q&A post keeps at most one accepted reply.
 	 *
 	 * @param int $id Reply ID.
+	 * @return bool True when this call flipped the flag 0 -> 1.
 	 */
-	public static function mark_accepted( int $id ): void {
+	public static function mark_accepted( int $id ): bool {
 		$reply = static::find( $id );
 		if ( ! $reply ) {
-			return;
+			return false;
 		}
 
+		$won = self::set_accepted_flag( $id, 1 );
+
 		$post_id = (int) $reply->post_id;
-		if ( $post_id > 0 ) {
-			// Clear any other accepted reply on this post first. Worst case
-			// between the two updates is zero accepted replies, which is a
-			// safe state. Two accepted replies is the broken state we prevent.
-			static::db()->update(
-				static::table(),
-				array( 'is_accepted' => 0 ),
-				array(
-					'post_id'     => $post_id,
-					'is_accepted' => 1,
-				),
-				array( '%d' ),
-				array( '%d', '%d' )
+		if ( $won && $post_id > 0 ) {
+			static::db()->query(
+				static::db()->prepare(
+					'UPDATE ' . static::table() . ' SET is_accepted = 0 WHERE post_id = %d AND is_accepted = 1 AND id <> %d',
+					$post_id,
+					$id
+				)
 			);
 		}
 
-		static::update( $id, array( 'is_accepted' => 1 ) );
+		return $won;
 	}
 
 	/**
 	 * Clear the accepted flag on a reply (reverse of mark_accepted()).
 	 *
+	 * Same atomic check-and-set as mark_accepted().
+	 *
 	 * @param int $id Reply ID.
+	 * @return bool True when this call flipped the flag 1 -> 0.
 	 */
-	public static function unmark_accepted( int $id ): void {
-		static::update( $id, array( 'is_accepted' => 0 ) );
+	public static function unmark_accepted( int $id ): bool {
+		return self::set_accepted_flag( $id, 0 );
+	}
+
+	/**
+	 * Flip is_accepted only if it currently holds the opposite value.
+	 *
+	 * @param int $id    Reply ID.
+	 * @param int $value 1 to accept, 0 to clear.
+	 * @return bool True when exactly this call changed the row.
+	 */
+	private static function set_accepted_flag( int $id, int $value ): bool {
+		$changed = static::db()->query(
+			static::db()->prepare(
+				'UPDATE ' . static::table() . ' SET is_accepted = %d WHERE id = %d AND is_accepted = %d',
+				$value,
+				$id,
+				1 - $value
+			)
+		);
+		if ( 1 !== (int) $changed ) {
+			return false;
+		}
+		self::bust_thread( (int) ( static::find( $id )->post_id ?? 0 ) );
+		return true;
 	}
 
 	/**
@@ -471,8 +499,10 @@ class Reply extends Model {
 	 * run Post::accept_reply() alone, leaving the reply's own flag at 0.
 	 *
 	 * Authorization is the caller's job (REST: post author or close_posts;
-	 * CLI: whoever runs it). Idempotent: re-accepting the current answer is a
-	 * no-op, so a retried request cannot double-award reputation.
+	 * CLI: whoever runs it). Idempotent, also under concurrency: only the
+	 * request whose conditional UPDATE flips is_accepted 0 -> 1 fires the
+	 * hook and awards, so a double tap or a retried request arriving while
+	 * the first is still running cannot award +15 twice.
 	 *
 	 * @param int $id       Reply ID.
 	 * @param int $actor_id Who accepted (0 = system/CLI). No self-award.
@@ -499,11 +529,15 @@ class Reply extends Model {
 			);
 		}
 
-		if ( ! empty( $reply->is_accepted ) && (int) ( $post->accepted_reply_id ?? 0 ) === $id ) {
+		if ( ! self::mark_accepted( $id ) ) {
+			// Already accepted (earlier or by a concurrent request). Heal a
+			// post row that lost its pointer, but award nothing.
+			if ( (int) ( $post->accepted_reply_id ?? 0 ) !== $id ) {
+				Post::accept_reply( (int) $post->id, $id );
+			}
 			return true;
 		}
 
-		self::mark_accepted( $id );
 		Post::accept_reply( (int) $post->id, $id );
 
 		do_action( 'jetonomy_reply_accepted', $id, (int) $post->id );
@@ -536,7 +570,9 @@ class Reply extends Model {
 		}
 
 		$author_id = (int) $reply->author_id;
-		if ( empty( $reply->is_accepted ) ) {
+		// Atomic: of N concurrent un-accepts only one flips the row, so the
+		// revoke cannot run twice.
+		if ( ! self::unmark_accepted( $id ) ) {
 			return new \WP_Error(
 				'jetonomy_not_accepted',
 				__( 'This reply is not the accepted answer.', 'jetonomy' ),
@@ -544,7 +580,6 @@ class Reply extends Model {
 			);
 		}
 
-		self::unmark_accepted( $id );
 		Post::clear_accepted_reply( (int) $post->id );
 
 		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );

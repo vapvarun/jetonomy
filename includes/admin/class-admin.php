@@ -669,7 +669,7 @@ class Admin {
 			$clean['activity_log_retention_days'] = min( 3650, max( 1, absint( $input['activity_log_retention_days'] ?? 90 ) ) );
 			$clean['replies_per_page']            = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
 			$raw_space_type                       = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
-			$clean['default_space_type']          = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
+			$clean['default_space_type']          = in_array( $raw_space_type, Space::valid_types(), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
 			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
 			// Community as homepage — unchecked checkboxes don't submit, so
@@ -1540,7 +1540,7 @@ class Admin {
 		if ( $filter_category ) {
 			$where[] = $wpdb->prepare( 'category_id = %d', $filter_category );
 		}
-		if ( $filter_type && in_array( $filter_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
+		if ( $filter_type && in_array( $filter_type, Space::valid_types(), true ) ) {
 			$where[] = $wpdb->prepare( 'type = %s', $filter_type );
 		}
 		if ( $filter_status && in_array( $filter_status, array( 'active', 'archived', 'locked' ), true ) ) {
