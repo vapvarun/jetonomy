@@ -22,8 +22,7 @@
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-cssmin": "^5.0.0",
     "grunt-contrib-uglify": "^5.2.2",
-    "grunt-rtlcss": "^2.0.2",
-    "grunt-wp-i18n": "^1.0.4"
+    "grunt-rtlcss": "^2.0.2"
   },
   "dependencies": {
     "@babel/runtime": "^7.29.2",

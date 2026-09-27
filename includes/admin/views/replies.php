@@ -40,7 +40,7 @@ $front_url   = $space_slug && $post_slug
 // Shared with the Replies screen and the status badge below.
 $status_labels = \Jetonomy\content_status_labels( true );
 if ( ! empty( $trash_count ) ) {
-	/* translators: %d: number of replies in the trash. */
+	/* translators: %d: number of items in the trash. */
 	$status_labels['trash'] = sprintf( __( 'Trash (%d)', 'jetonomy' ), (int) $trash_count );
 }
 ?>

@@ -19,29 +19,6 @@ module.exports = function( grunt ) {
 			},
 		},
 
-		// Generate .pot file
-		makepot: {
-			target: {
-				options: {
-					domainPath: 'languages/',
-					potFilename: 'jetonomy.pot',
-					type: 'wp-plugin',
-					updateTimestamp: false,
-					// Never scan build/staging/vendor/test trees. A leftover
-					// dist/ (the zip-staging copy) otherwise doubles every
-					// source reference with phantom dist/jetonomy/... lines.
-					// libs/ are vendored third-party bundles (Action Scheduler, EDD SDK)
-					// with their own text domains - their 256 references polluted the
-					// POT (QA 10150516732).
-					exclude: [ 'dist/.*', 'vendor/.*', 'node_modules/.*', 'tests/.*', 'libs/.*' ],
-					potHeaders: {
-						poedit: true,
-						'x-poedit-keywordslist': true,
-					},
-				},
-			},
-		},
-
 		// CSS minification
 		cssmin: {
 			dist: {
@@ -145,12 +122,51 @@ module.exports = function( grunt ) {
 
 	// Load plugins
 	grunt.loadNpmTasks( 'grunt-rtlcss' );
-	grunt.loadNpmTasks( 'grunt-wp-i18n' );
 	grunt.loadNpmTasks( 'grunt-contrib-cssmin' );
 	grunt.loadNpmTasks( 'grunt-contrib-uglify' );
 	grunt.loadNpmTasks( 'grunt-contrib-clean' );
 	grunt.loadNpmTasks( 'grunt-contrib-copy' );
 	grunt.loadNpmTasks( 'grunt-contrib-compress' );
+
+	// `grunt makepot`: languages/jetonomy.pot via WP-CLI `wp i18n make-pot`, which
+	// extracts __()/_x()/_n() from JS (wp.i18n) as well as PHP. It replaced
+	// grunt-wp-i18n, which scanned PHP only, so no JS string could ever reach a
+	// translator or a languages/*.json file. WP-CLI is required: failing loudly
+	// beats silently shipping a PHP-only POT. Never scan build/staging/vendor/test
+	// trees: dist/ (zip staging) doubled every reference with phantom
+	// dist/jetonomy/... lines, and libs/ are vendored bundles with their own text
+	// domains (QA 10150516732).
+	grunt.registerTask( 'makepot', 'Generate the .pot (PHP + JS) with wp i18n make-pot.', function() {
+		var fs = require( 'fs' );
+		var pot = 'languages/jetonomy.pot';
+		var before = fs.existsSync( pot ) ? fs.readFileSync( pot, 'utf8' ) : '';
+		var result = require( 'child_process' ).spawnSync( 'wp', [
+			'i18n', 'make-pot', '.', pot,
+			'--slug=jetonomy',
+			'--domain=jetonomy',
+			'--exclude=dist,vendor,node_modules,tests,libs,build,*.min.js',
+			'--headers=' + JSON.stringify( {
+				'Plural-Forms': 'nplurals=2; plural=(n != 1);',
+				'X-Poedit-Country': 'United States',
+				'X-Poedit-SourceCharset': 'UTF-8',
+				'X-Poedit-KeywordsList': '__;_e;_x:1,2c;_ex:1,2c;_n:1,2;_nx:1,2,4c;_n_noop:1,2;_nx_noop:1,2,3c;esc_attr__;esc_html__;esc_attr_e;esc_html_e;esc_attr_x:1,2c;esc_html_x:1,2c;',
+				'X-Poedit-Basepath': '../',
+				'X-Poedit-SearchPath-0': '.',
+				'X-Poedit-Bookmarks': '',
+				'X-Textdomain-Support': 'yes',
+			} ),
+		], { stdio: 'inherit' } );
+		if ( result.error || 0 !== result.status ) {
+			grunt.fail.fatal( 'wp i18n make-pot failed' + ( result.error ? ' (' + result.error.message + ')' : '' ) + '. WP-CLI (https://wp-cli.org) must be on PATH to build the .pot: it is the only extractor here that reads JS strings.' );
+		}
+		// Idempotent builds: a rerun whose only change is POT-Creation-Date keeps the old file.
+		var strip = function( s ) {
+			return s.replace( /^"POT-Creation-Date: .*\n/m, '' );
+		};
+		if ( before && strip( before ) === strip( fs.readFileSync( pot, 'utf8' ) ) ) {
+			fs.writeFileSync( pot, before );
+		}
+	} );
 
 	// Registers `grunt i18n`: sync new strings (msgmerge) -> AI-translate ->
 	// compile .mo + .json, per .wbcom-i18n.json. Run before a release to refresh
@@ -200,7 +216,7 @@ module.exports = function( grunt ) {
 	} );
 
 	// Build task: pot first, then RTL + minify.
-	// makepot scans source PHP, so it runs before the minifiers touch assets.
+	// makepot scans source PHP + JS, so it runs before the minifiers touch assets.
 	grunt.registerTask( 'build', [ 'makepot', 'rtlcss', 'cssmin', 'uglify' ] );
 
 	// Dist task: CI check + build + package zip

@@ -45,7 +45,7 @@ $status_labels['scheduled'] = isset( $scheduled_count ) && $scheduled_count > 0
 	: __( 'Scheduled', 'jetonomy' );
 
 if ( ! empty( $trash_count ) ) {
-	/* translators: %d: number of topics in the trash. */
+	/* translators: %d: number of items in the trash. */
 	$status_labels['trash'] = sprintf( __( 'Trash (%d)', 'jetonomy' ), (int) $trash_count );
 }
 
