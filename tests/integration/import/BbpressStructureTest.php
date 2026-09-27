@@ -175,9 +175,27 @@ class BbpressStructureTest extends WP_UnitTestCase {
 		$cafe = self::factory()->post->create( [ 'post_type' => 'forum', 'post_status' => 'publish', 'post_title' => 'Cafe', 'post_name' => 'off-topic-cafe-%e2%98%95', 'post_parent' => $cat ] );
 		$sub  = self::factory()->post->create( [ 'post_type' => 'forum', 'post_status' => 'publish', 'post_title' => 'Sub', 'post_parent' => $cafe ] );
 		$top  = self::factory()->post->create( [ 'post_type' => 'forum', 'post_status' => 'publish', 'post_title' => 'Top level', 'menu_order' => 5 ] );
+		$hi   = self::factory()->post->create( [ 'post_type' => 'forum', 'post_status' => 'publish', 'post_title' => 'हिंदी चर्चा' ] );
 		self::factory()->post->create( [ 'post_type' => 'topic', 'post_status' => 'publish', 'post_parent' => $sub, 'post_author' => $user, 'post_title' => 'Hot ☕' ] );
 
 		$this->import();
+
+		// Combining marks (Indic vowel signs, viramas, NFD accents) are part of
+		// the word, not separators.
+		$this->assertSame( 'हिंदी-चर्चा', urldecode( (string) $wpdb->get_var( $wpdb->prepare( "SELECT slug FROM {$wpdb->prefix}jt_spaces WHERE id = %d", $this->jt_id( 'space', $hi ) ) ) ) );
+		$clean = new \ReflectionMethod( \Jetonomy\Import\Importer::class, 'clean_slug' );
+		$clean->setAccessible( true );
+		foreach (
+			[
+				'हिंदी-चर्चा'              => 'हिंदी-चर्चा',
+				'বাংলা-আলোচনা'             => 'বাংলা-আলোচনা',
+				'தமிழ்-மன்றம்'             => 'தமிழ்-மன்றம்',
+				"nai\u{0308}ve-u\u{0308}ber" => 'naive-uber',
+				'off-topic-cafe-☕'         => 'off-topic-cafe',
+			] as $in => $want
+		) {
+			$this->assertSame( sanitize_title( $want ), $clean->invoke( null, $in ), $in );
+		}
 
 		$this->assertSame( 0, $this->jt_id( 'space', $cat ), 'no space for the category forum' );
 		$category = \Jetonomy\Models\Import_Map::find( 'bbpress', 'category', 'forum-' . $cat );

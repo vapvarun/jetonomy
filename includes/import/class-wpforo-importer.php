@@ -82,7 +82,7 @@ class WPForo_Importer extends Importer {
 	/**
 	 * The rows the batches report as processed, so progress ends at 100%:
 	 * forums, topics, the posts that become replies (each topic's first post
-	 * is its body, not a reply), and the profiles phase's rows. Counts the
+	 * is its body, not a reply), the likes and the profiles phase's rows. Counts the
 	 * default board, like get_source_stats().
 	 */
 	public function get_total_count(): int {
@@ -94,9 +94,11 @@ class WPForo_Importer extends Importer {
 		$profiles = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'wpforo_profiles' ) )
 			? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_profiles" )
 			: 0;
+		$src      = $this->likes_source( $p . 'wpforo_' );
+		$likes    = $src ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$src['table']} WHERE 1=1 {$src['where']}" ) : 0;
 		// phpcs:enable
 
-		return array_sum( $this->get_source_stats() ) - $first + $profiles;
+		return array_sum( $this->get_source_stats() ) - $first + $profiles + $likes;
 	}
 
 	/** Option holding the resolved board list for the run in progress. */
@@ -190,9 +192,15 @@ class WPForo_Importer extends Importer {
 					: $this->next( 'likes', 0, $r['processed'] );
 
 			case 'likes':
-				// Likes are a thin join table; one pass per board is bounded and cheap.
-				$this->import_likes( $prefix );
-				return $this->next( 'profiles', 0, 0 );
+				// Keyset-paged: $offset is the last like id consumed, so a retry
+				// after a timeout resumes where it stopped instead of at zero.
+				$r = $this->import_likes_batch( $prefix, $offset, $batch_size );
+
+				if ( $r['processed'] < $r['fetched'] || $r['fetched'] >= $batch_size ) {
+					return $this->next( 'likes', $r['cursor'], $r['processed'] );
+				}
+
+				return $this->next( 'profiles', 0, $r['processed'] );
 
 			case 'profiles':
 				$processed = $this->create_profiles_batch( $prefix, $offset, $batch_size );
@@ -1106,40 +1114,137 @@ class WPForo_Importer extends Importer {
 		return $consumed;
 	}
 
+	/**
+	 * Where this board keeps its likes, or null when it has none.
+	 *
+	 * Since 2.0, wpForo moved likes (and Q&A votes) into `{prefix}reactions` and
+	 * dropped `{prefix}likes`; only pre-2.0 boards still have the old table.
+	 * A like is a reaction with value 1 (up-votes and the like reactions);
+	 * down-votes are not likes and are left out.
+	 *
+	 * @param string $p Board table prefix.
+	 * @return array{table:string, pk:string, where:string}|null
+	 */
+	private function likes_source( string $p ): ?array {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'reactions' ) ) ) {
+			return [
+				'table' => $p . 'reactions',
+				'pk'    => 'reactionid',
+				'where' => 'AND reaction = 1',
+			];
+		}
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'likes' ) ) ) {
+			return [
+				'table' => $p . 'likes',
+				'pk'    => 'likeid',
+				'where' => '',
+			];
+		}
+		// phpcs:enable
+
+		return null;
+	}
+
+	/**
+	 * Every like on a board, a page at a time (the single-shot CLI path).
+	 *
+	 * @param string $p Board table prefix.
+	 * @return void
+	 */
 	private function import_likes( string $p = '' ): void {
 		global $wpdb;
 		if ( ! $p ) {
 			$p = $wpdb->prefix . 'wpforo_';
 		}
 
-		$likes_table = $p . 'likes';
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $likes_table ) ) ) {
-			return;
+		$cursor = 0;
+		do {
+			$r      = $this->import_likes_batch( $p, $cursor, 500 );
+			$cursor = $r['cursor'];
+		} while ( $r['fetched'] > 0 );
+	}
+
+	/**
+	 * Turn one page of wpForo likes into reply votes.
+	 *
+	 * Keyset-paged on the like's primary key: $after is the last id consumed,
+	 * and the returned cursor is the id to resume after. Per page: one query
+	 * for the likes, one jt_import_map lookup for their replies, one jt_votes
+	 * lookup for the pairs that already exist - never a query per like.
+	 *
+	 * @param string $p     Board table prefix.
+	 * @param int    $after Resume after this like id.
+	 * @param int    $limit Page size.
+	 * @return array{fetched:int, processed:int, cursor:int}
+	 */
+	private function import_likes_batch( string $p, int $after, int $limit ): array {
+		global $wpdb;
+
+		$src = $this->likes_source( $p );
+		if ( ! $src ) {
+			return [
+				'fetched'   => 0,
+				'processed' => 0,
+				'cursor'    => $after,
+			];
 		}
 
-		$likes = (array) $wpdb->get_results( "SELECT * FROM {$likes_table}" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted board table/column names.
+		$likes = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT {$src['pk']} AS id, userid, postid FROM {$src['table']} WHERE {$src['pk']} > %d {$src['where']} ORDER BY {$src['pk']} ASC LIMIT %d",
+				$after,
+				$limit
+			)
+		);
 
-		// The liked replies, from jt_import_map, a page at a time.
-		foreach ( array_chunk( array_unique( array_map( 'intval', array_column( $likes, 'postid' ) ) ), 500 ) as $chunk ) {
-			$this->load_mapped( 'wpforo_reply', 'reply', array_combine( $chunk, array_map( fn( $id ) => $this->sid( $id ), $chunk ) ) );
+		$post_ids = array_unique( array_map( 'intval', array_column( $likes, 'postid' ) ) );
+		if ( $post_ids ) {
+			$this->load_mapped( 'wpforo_reply', 'reply', array_combine( $post_ids, array_map( fn( $id ) => $this->sid( $id ), $post_ids ) ) );
 		}
 
+		$reply_ids = array_filter( array_map( fn( $id ) => (int) $this->get_mapped_id( 'wpforo_reply', $id ), $post_ids ) );
+		$voted     = Vote::voter_pairs( 'reply', array_column( $likes, 'userid' ), $reply_ids );
+
+		$total    = count( $likes );
+		$consumed = 0;
+		$cursor   = $after;
 		foreach ( $likes as $like ) {
-			$reply_id = $this->get_mapped_id( 'wpforo_reply', $like->postid );
-			if ( ! $reply_id ) {
-				continue;
+			++$consumed;
+			$cursor   = (int) $like->id;
+			$user_id  = (int) $like->userid;
+			$reply_id = (int) $this->get_mapped_id( 'wpforo_reply', $like->postid );
+
+			// Guests (email-only reactions) have no account to vote as; a
+			// like on a reply that was not imported has nothing to attach to.
+			if ( $user_id && $reply_id ) {
+				// A re-run maps replies an earlier run imported, and
+				// Vote::cast() TOGGLES a repeated vote - casting again would
+				// retract the like. Also covers one member's two reactions
+				// on the same post within this page.
+				if ( isset( $voted[ "{$user_id}|{$reply_id}" ] ) ) {
+					++$this->already;
+				} else {
+					Vote::cast( $user_id, 'reply', $reply_id, 1 );
+					$voted[ "{$user_id}|{$reply_id}" ] = true;
+					++$this->imported;
+				}
 			}
 
-			// A re-run maps replies an earlier run imported, and Vote::cast()
-			// TOGGLES a repeated vote - so casting again would retract the like.
-			// ponytail: one lookup per like; batch it if likes ever run to 100k+.
-			if ( null !== Vote::get_user_vote( (int) $like->userid, 'reply', (int) $reply_id ) ) {
-				continue;
+			if ( $consumed < $total && $this->budget_spent() ) {
+				break;
 			}
-
-			Vote::cast( (int) $like->userid, 'reply', $reply_id, 1 );
-			++$this->imported;
 		}
+
+		return [
+			'fetched'   => $total,
+			'processed' => $consumed,
+			'cursor'    => $cursor,
+		];
 	}
 
 	private function create_profiles( string $p = '' ): void {

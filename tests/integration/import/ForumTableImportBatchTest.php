@@ -126,6 +126,56 @@ class ForumTableImportBatchTest extends WP_UnitTestCase {
 		$this->assertFalse( get_option( 'jetonomy_import_id_map' ) );
 	}
 
+	/**
+	 * wpForo 2.0+ keeps likes in {prefix}reactions (the likes table is gone).
+	 * The likes phase pages on the reaction id, one row per batch here, counts
+	 * in the progress total, and a re-run neither adds a vote nor toggles an
+	 * existing one off (Vote::cast() toggles a repeat).
+	 */
+	public function test_wpforo_reactions_page_and_rerun_adds_and_retracts_nothing(): void {
+		global $wpdb;
+		$p = $wpdb->prefix;
+		$this->tables(
+			[
+				'wpforo_boards'    => 'boardid bigint(20) unsigned NOT NULL DEFAULT 0, title varchar(255) NOT NULL DEFAULT \'\', status tinyint(1) NOT NULL DEFAULT 1, PRIMARY KEY (boardid)',
+				'wpforo_forums'    => 'forumid bigint(20) unsigned NOT NULL AUTO_INCREMENT, title varchar(255) NOT NULL DEFAULT \'\', slug varchar(255) NOT NULL DEFAULT \'\', description text, parentid bigint(20) unsigned NOT NULL DEFAULT 0, `order` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (forumid)',
+				'wpforo_topics'    => 'topicid bigint(20) unsigned NOT NULL AUTO_INCREMENT, forumid bigint(20) unsigned NOT NULL DEFAULT 0, userid bigint(20) unsigned NOT NULL DEFAULT 0, title varchar(255) NOT NULL DEFAULT \'\', slug varchar(255) NOT NULL DEFAULT \'\', status tinyint(1) NOT NULL DEFAULT 0, closed tinyint(1) NOT NULL DEFAULT 0, type tinyint(1) NOT NULL DEFAULT 0, created datetime NOT NULL DEFAULT \'0000-00-00 00:00:00\', PRIMARY KEY (topicid)',
+				'wpforo_posts'     => 'postid bigint(20) unsigned NOT NULL AUTO_INCREMENT, topicid bigint(20) unsigned NOT NULL DEFAULT 0, userid bigint(20) unsigned NOT NULL DEFAULT 0, parentid bigint(20) unsigned NOT NULL DEFAULT 0, body longtext, created datetime NOT NULL DEFAULT \'0000-00-00 00:00:00\', PRIMARY KEY (postid)',
+				'wpforo_reactions' => 'reactionid bigint(20) unsigned NOT NULL AUTO_INCREMENT, userid bigint(20) unsigned NOT NULL, postid bigint(20) unsigned NOT NULL, post_userid bigint(20) unsigned NOT NULL DEFAULT 0, reaction tinyint NOT NULL DEFAULT 1, type varchar(50) NOT NULL DEFAULT \'up\', name varchar(50) DEFAULT NULL, email varchar(100) DEFAULT NULL, PRIMARY KEY (reactionid)',
+			]
+		);
+		[ $u1, $u2, $u3 ] = self::factory()->user->create_many( 3 );
+
+		$wpdb->insert( "{$p}wpforo_forums", [ 'title' => 'F', 'slug' => 'f' ] );
+		$wpdb->insert( "{$p}wpforo_topics", [ 'forumid' => (int) $wpdb->insert_id, 'userid' => $u1, 'title' => 'T', 'created' => '2026-01-01 00:00:00' ] );
+		$topic = (int) $wpdb->insert_id;
+		$posts = [];
+		foreach ( range( 0, 3 ) as $i ) {
+			$wpdb->insert( "{$p}wpforo_posts", [ 'topicid' => $topic, 'userid' => $u1, 'body' => "b{$i}", 'created' => '2026-01-02 00:00:0' . $i ] );
+			$posts[] = (int) $wpdb->insert_id;
+		}
+		$react = function ( int $user, int $post, int $value = 1, string $type = 'up' ) use ( $wpdb, $p ): void {
+			$wpdb->insert( "{$p}wpforo_reactions", [ 'userid' => $user, 'postid' => $post, 'reaction' => $value, 'type' => $type ] );
+		};
+		$react( $u2, $posts[1] );
+		$react( $u3, $posts[1] );
+		$react( $u2, $posts[2] );
+		$react( $u2, $posts[2], 1, 'love' ); // Second reaction by the same member: one vote.
+		$react( $u3, $posts[3], -1, 'down' ); // A down-vote is not a like.
+		$react( 0, $posts[3] );                // Guest reaction: no account to vote as.
+
+		$votes = fn(): int => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}jt_votes WHERE object_type = 'reply'" );
+
+		$run = $this->drive( WPForo_Importer::class );
+		$this->assertSame( 3, $votes() );
+		$this->assertSame( $run['total'], $run['processed'], 'likes counted in progress; ends at the total' );
+
+		$again = $this->drive( WPForo_Importer::class );
+		$this->assertSame( 0, $again['imported'], 're-run adds nothing' );
+		$this->assertSame( 3, $votes(), 're-run toggles nothing off' );
+		$this->assertSame( $again['total'], $again['processed'] );
+	}
+
 	public function test_asgaros_batches_resolve_parents_from_the_map(): void {
 		global $wpdb;
 		$p = $wpdb->prefix;

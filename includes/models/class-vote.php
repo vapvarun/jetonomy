@@ -307,6 +307,44 @@ class Vote extends Model {
 	}
 
 	/**
+	 * Which of these voters already voted on which of these objects.
+	 *
+	 * One query for a whole batch. Filtering on both lists keeps the result to
+	 * at most the batch's own pairs, even when one reply carries 10k votes.
+	 * The importer's re-run guard: cast() TOGGLES a repeated vote, so
+	 * re-casting a like an earlier run brought over would retract it.
+	 *
+	 * @param string $object_type 'post' | 'reply'.
+	 * @param int[]  $user_ids    Voters.
+	 * @param int[]  $object_ids  Object IDs.
+	 * @return array<string,true> "user_id|object_id" => true.
+	 */
+	public static function voter_pairs( string $object_type, array $user_ids, array $object_ids ): array {
+		$user_ids   = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
+		$object_ids = array_values( array_unique( array_filter( array_map( 'intval', $object_ids ) ) ) );
+		if ( ! $user_ids || ! $object_ids ) {
+			return array();
+		}
+
+		$in_u = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+		$in_o = implode( ',', array_fill( 0, count( $object_ids ), '%d' ) );
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT user_id, object_id FROM ' . static::table() . " WHERE object_type = %s AND object_id IN ({$in_o}) AND user_id IN ({$in_u})",
+				$object_type,
+				...array_merge( $object_ids, $user_ids )
+			)
+		);
+		$pairs = array();
+		foreach ( $rows ?: array() as $row ) {
+			$pairs[ (int) $row->user_id . '|' . (int) $row->object_id ] = true;
+		}
+
+		return $pairs;
+	}
+
+	/**
 	 * List posts voted on by a user (upvotes only), with post + space info.
 	 *
 	 * @param int $user_id Voter user ID.

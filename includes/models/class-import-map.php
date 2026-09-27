@@ -362,26 +362,31 @@ class Import_Map {
 		$target = self::target_table( $object_type );
 
 		$parents = array_values( array_unique( array_map( 'intval', array_column( $rows, 'parent' ) ) ) );
+		$authors = array_values( array_unique( array_map( 'intval', array_column( $rows, 'author' ) ) ) );
 		$dates   = array_values( array_unique( array_filter( array_map( 'strval', array_column( $rows, 'created' ) ) ) ) );
 		if ( ! $dates ) {
 			return array();
 		}
 
 		$in_p = implode( ',', array_fill( 0, count( $parents ), '%d' ) );
+		$in_a = implode( ',', array_fill( 0, count( $authors ), '%d' ) );
 		$in_d = implode( ',', array_fill( 0, count( $dates ), '%s' ) );
 
-		// Bounded by the batch: only this batch's parents AND this batch's exact
-		// timestamps, served by the (space_id|post_id, created_at)-leading keys,
-		// so a topic with 10k replies does not pull all 10k rows.
+		// Bounded by the batch: only this batch's parents, authors AND exact
+		// timestamps. The index that serves it: replies use post_created
+		// (post_id, created_at); posts have no (space_id, created_at) key, so
+		// they use author_created (author_id, created_at) - without the author
+		// filter MySQL fell back to space_sticky_reply and read every topic in
+		// the batch's spaces. Author is part of the fingerprint anyway.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- trusted table/column names; placeholder lists.
 		$candidates = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT t.id, t.{$col} AS parent, t.author_id AS author, t.created_at AS created FROM {$target} t
 				 LEFT JOIN {$map} m ON m.object_type = %s AND m.object_id = t.id
-				 WHERE m.id IS NULL AND t.{$col} IN ({$in_p}) AND t.created_at IN ({$in_d})
+				 WHERE m.id IS NULL AND t.{$col} IN ({$in_p}) AND t.author_id IN ({$in_a}) AND t.created_at IN ({$in_d})
 				 ORDER BY t.id ASC",
 				$object_type,
-				...array_merge( $parents, $dates )
+				...array_merge( $parents, $authors, $dates )
 			)
 		);
 

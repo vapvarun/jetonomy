@@ -323,9 +323,13 @@ abstract class Importer {
 	 * A slug that reads cleanly in the address bar.
 	 *
 	 * Source slugs are WordPress-style, so an emoji or symbol in a forum title
-	 * arrives percent-encoded ("off-topic-cafe-%e2%98%95"). Letters and digits
-	 * of any script are kept (WordPress encodes those too, and browsers show
-	 * them decoded); everything else is dropped.
+	 * arrives percent-encoded ("off-topic-cafe-%e2%98%95"). Letters, combining
+	 * marks and digits of any script are kept (WordPress encodes those too, and
+	 * browsers show them decoded); everything else is dropped. The marks (\p{M})
+	 * matter: Indic vowel signs and viramas (हिंदी, বাংলা, தமிழ்) and decomposed
+	 * Latin accents are marks, not letters, and dropping them broke every word
+	 * into fragments. sanitize_title() -> remove_accents() then folds accented
+	 * Latin, NFD included, to plain ASCII.
 	 *
 	 * Used for NEW rows only. Legacy recognition still matches the slug an
 	 * earlier release wrote verbatim.
@@ -334,7 +338,7 @@ abstract class Importer {
 	 * @return string Clean slug; '' when nothing sluggable is left.
 	 */
 	protected static function clean_slug( string $slug ): string {
-		return sanitize_title( (string) preg_replace( '/[^\p{L}\p{N}\-]+/u', '-', urldecode( $slug ) ) );
+		return sanitize_title( (string) preg_replace( '/[^\p{L}\p{M}\p{N}\-]+/u', '-', urldecode( $slug ) ) );
 	}
 
 	/**
