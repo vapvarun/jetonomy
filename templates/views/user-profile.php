@@ -30,7 +30,6 @@ $rep             = $profile ? (int) $profile->reputation : 0;
 $p_count         = $profile ? (int) $profile->post_count : 0;
 $r_count         = $profile ? (int) $profile->reply_count : 0;
 $profile_user_id = (int) $user->ID;
-$base            = \Jetonomy\base_url();
 $initials        = strtoupper( substr( \Jetonomy\user_display_name( $user ), 0, 2 ) );
 
 // Frontend member moderation (parity with the app + wp-admin, since a community
@@ -208,7 +207,7 @@ $crumbs = [
 								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
 							</a>
 						<?php elseif ( is_user_logged_in() && \Jetonomy\messaging_active() ) : ?>
-							<a href="<?php echo esc_url( $base . '/messages/?to=' . rawurlencode( $user->user_login ) ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
+							<a href="<?php echo esc_url( \Jetonomy\route_url( 'messages' ) . '?to=' . rawurlencode( $user->user_login ) ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php jetonomy_echo_icon( 'send', 14 ); ?>
 								<?php esc_html_e( 'Message', 'jetonomy' ); ?>
 							</a>
@@ -460,7 +459,7 @@ $crumbs = [
 					<div class="jt-topics">
 						<?php foreach ( $user_votes as $uv ) : ?>
 							<?php
-							$uv_url   = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
+							$uv_url   = \Jetonomy\route_url( 'post', ( $uv->space_slug ?? '' ), ( $uv->post_slug ?? '' ) );
 							$uv_ago   = human_time_diff( strtotime( $uv->voted_at ), time() );
 							$uv_space = $jt_space_by_slug( $uv->space_slug ?? '' );
 							?>
@@ -521,7 +520,7 @@ $crumbs = [
 						// thing itself. Fall back to a non-clickable row if the draft
 						// has no slug yet (edge case) rather than emit a broken link.
 						$dr_url       = ( '' !== $dr_space && '' !== $dr_slug )
-							? $base . '/s/' . $dr_space . '/t/' . $dr_slug . '/'
+							? \Jetonomy\route_url( 'post', $dr_space, $dr_slug )
 							: '';
 						$is_scheduled = ! empty( $dr_post->published_at );
 						$dr_row_class = 'jt-row jt-row--draft' . ( '' !== $dr_url ? ' jt-row-clickable' : '' );
@@ -552,7 +551,7 @@ $crumbs = [
 									<?php endif; ?>
 								</div>
 								<div class="jt-row-sub">
-									<a href="<?php echo esc_url( $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/' ); ?>"
+									<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', ( $dr_post->space_slug ?? '' ) ) ); ?>"
 										>
 										<?php echo esc_html( $dr_post->space_title ?? '' ); ?>
 									</a>
@@ -612,7 +611,7 @@ $crumbs = [
 						<?php foreach ( $bookmarks as $bk_post ) : ?>
 							<?php
 							$bk_space = $bk_spaces[ (int) $bk_post->space_id ] ?? null;
-							$bk_url   = $base . '/s/' . ( $bk_space->slug ?? '' ) . '/t/' . $bk_post->slug . '/';
+							$bk_url   = \Jetonomy\route_url( 'post', ( $bk_space->slug ?? '' ), $bk_post->slug );
 							$bk_ago   = human_time_diff( strtotime( $bk_post->bookmarked_at ), time() );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $bk_url ); ?>">
@@ -660,7 +659,7 @@ $crumbs = [
 						<?php foreach ( $recent_posts as $r_post ) : ?>
 							<?php
 							$time_ago = human_time_diff( strtotime( $r_post->created_at ), time() );
-							$post_url = $base . '/s/' . $r_post->space_slug . '/t/' . $r_post->slug . '/';
+							$post_url = \Jetonomy\route_url( 'post', $r_post->space_slug, $r_post->slug );
 							$r_space  = $jt_space_by_slug( $r_post->space_slug ?? '' );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $post_url ); ?>">
@@ -672,7 +671,7 @@ $crumbs = [
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $r_post ) ); ?></div>
 									<div class="jt-row-sub">
-										<a href="<?php echo esc_url( $base . '/s/' . $r_post->space_slug . '/' ); ?>"
+										<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $r_post->space_slug ) ); ?>"
 											>
 											<?php echo esc_html( $r_post->space_title ); ?>
 										</a>

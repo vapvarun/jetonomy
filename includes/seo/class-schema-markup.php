@@ -132,7 +132,7 @@ class Schema_Markup {
 		// against visible content, so a site that renames members via
 		// jetonomy_user_display_name must not have its schema disagree.
 		$author_name = $author ? \Jetonomy\user_display_name( $author ) : 'Anonymous';
-		$base        = \Jetonomy\base_url() . '/s/' . $space_slug . '/t/' . $slug . '/';
+		$base        = \Jetonomy\route_url( 'post', $space_slug, $slug );
 
 		if ( 'question' === $post->type && $post->accepted_reply_id ) {
 			$accepted      = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
@@ -231,8 +231,7 @@ class Schema_Markup {
 			return null;
 		}
 
-		$base      = \Jetonomy\base_url();
-		$space_url = $base . '/s/' . $space->slug . '/';
+		$space_url = \Jetonomy\route_url( 'space', $space->slug );
 
 		// Cached 900s per space (plan WP4.9). The viewer is hard-coded to the
 		// guest path below (crawler-facing payload), so the whole schema is
@@ -269,7 +268,7 @@ class Schema_Markup {
 				// $i skipped a number whenever an injected row was dropped, and
 				// an ItemList with a gap in its positions is invalid.
 				'position' => count( $item_entries ) + 1,
-				'url'      => $base . '/s/' . $space->slug . '/t/' . $post->slug . '/',
+				'url'      => \Jetonomy\route_url( 'post', $space->slug, $post->slug ),
 				'name'     => $post->title,
 			);
 		}
@@ -313,7 +312,7 @@ class Schema_Markup {
 				'@type'       => 'SearchAction',
 				'target'      => array(
 					'@type'       => 'EntryPoint',
-					'urlTemplate' => $base . '/search/?q={search_term_string}',
+					'urlTemplate' => \Jetonomy\route_url( 'search' ) . '?q={search_term_string}',
 				),
 				'query-input' => 'required name=search_term_string',
 			),
@@ -389,8 +388,7 @@ class Schema_Markup {
 			return null;
 		}
 
-		$base    = \Jetonomy\base_url();
-		$tag_url = $base . '/tag/' . rawurlencode( $tag->slug ) . '/';
+		$tag_url = \Jetonomy\route_url( 'tag', rawurlencode( $tag->slug ) );
 
 		// Top 10 recent posts under this tag — gives the schema a real
 		// itemListElement instead of an empty container. Capped at 10 so a
@@ -405,7 +403,7 @@ class Schema_Markup {
 			$item_entries[] = array(
 				'@type'    => 'ListItem',
 				'position' => $i + 1,
-				'url'      => $base . '/s/' . $space->slug . '/t/' . $post->post_slug . '/',
+				'url'      => \Jetonomy\route_url( 'post', $space->slug, $post->post_slug ),
 				'name'     => $post->title,
 			);
 		}
@@ -456,7 +454,7 @@ class Schema_Markup {
 			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 				$items[] = [
 					'name' => $space->title,
-					'url'  => $base . 's/' . $slug . '/',
+					'url'  => \Jetonomy\route_url( 'space', $slug ),
 				];
 			}
 		}
@@ -472,7 +470,7 @@ class Schema_Markup {
 			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 				$items[] = [
 					'name' => $space->title,
-					'url'  => $base . 's/' . $space_slug . '/',
+					'url'  => \Jetonomy\route_url( 'space', $space_slug ),
 				];
 			}
 			// can_render_post_text(): the crumb's `name` IS the post title, so a
@@ -482,7 +480,7 @@ class Schema_Markup {
 			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 				$items[] = [
 					'name' => $post->title,
-					'url'  => $base . 's/' . $space_slug . '/t/' . $slug . '/',
+					'url'  => \Jetonomy\route_url( 'post', $space_slug, $slug ),
 				];
 			}
 		}
@@ -506,26 +504,26 @@ class Schema_Markup {
 			if ( $tag ) {
 				$items[] = array(
 					'name' => '#' . $tag->name,
-					'url'  => $base . 'tag/' . rawurlencode( $tag->slug ) . '/',
+					'url'  => \Jetonomy\route_url( 'tag', rawurlencode( $tag->slug ) ),
 				);
 			}
 		}
 		if ( 'leaderboard' === $route ) {
 			$items[] = array(
 				'name' => __( 'Leaderboard', 'jetonomy' ),
-				'url'  => $base . 'leaderboard/',
+				'url'  => \Jetonomy\route_url( 'leaderboard' ),
 			);
 		}
 		if ( 'search' === $route ) {
 			$items[] = array(
 				'name' => __( 'Search', 'jetonomy' ),
-				'url'  => $base . 'search/',
+				'url'  => \Jetonomy\route_url( 'search' ),
 			);
 		}
 		if ( 'moderation' === $route ) {
 			$items[] = array(
 				'name' => __( 'Moderation', 'jetonomy' ),
-				'url'  => $base . 'mod/',
+				'url'  => \Jetonomy\route_url( 'moderation' ),
 			);
 		}
 

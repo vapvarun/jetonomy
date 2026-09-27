@@ -944,8 +944,6 @@ function jetonomy_render_markdown_images( string $content ): string {
 }
 
 function jetonomy_format_content( string $content ): string {
-	$base = \Jetonomy\base_url();
-
 	// Repair div-soup that older releases stored verbatim (see
 	// jetonomy_normalize_editor_html) - a no-op for clean content.
 	$content = jetonomy_normalize_editor_html( $content );
@@ -998,10 +996,10 @@ function jetonomy_format_content( string $content ): string {
 		// (`foo.com#section`) don't get linkified as tags.
 		$part = preg_replace_callback(
 			'/(?<![\w\/.:-])#([a-zA-Z0-9_-]+)/u',
-			function ( $matches ) use ( $base ) {
+			function ( $matches ) {
 				$tag  = $matches[1];
 				$slug = sanitize_title( $tag );
-				$url  = $base . '/tag/' . $slug . '/';
+				$url  = \Jetonomy\route_url( 'tag', $slug );
 				return '<a href="' . esc_url( $url ) . '" class="jt-tag-link">#' . esc_html( $tag ) . '</a>';
 			},
 			$part

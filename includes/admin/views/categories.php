@@ -194,13 +194,13 @@ defined( 'ABSPATH' ) || exit;
 							?>
 							<div class="row-actions">
 								<span class="edit"><a href="#" class="jetonomy-edit-category" data-id="<?php echo absint( $cat->id ); ?>" data-name="<?php echo esc_attr( $cat->name ); ?>" data-slug="<?php echo esc_attr( $cat->slug ); ?>" data-description="<?php echo esc_attr( $cat->description ?? '' ); ?>" data-parent="<?php echo absint( $cat->parent_id ); ?>" data-icon="<?php echo esc_attr( $cat->icon ?? '' ); ?>" data-color="<?php echo esc_attr( $cat->color ?? '' ); ?>" data-visibility="<?php echo esc_attr( $cat->visibility ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
-								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/category/' . $cat->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
+								<span class="view"><a href="<?php echo esc_url( \Jetonomy\route_url( 'category', $cat->slug ) ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
 								<span class="delete"><a href="#" class="jetonomy-delete-category" data-id="<?php echo absint( $cat->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 							</div>
 							<?php
 							break;
 						case 'slug':
-							echo '<code>' . esc_html( wp_parse_url( \Jetonomy\base_url(), PHP_URL_PATH ) . '/category/' . $cat->slug . '/' ) . '</code>';
+							echo '<code>' . esc_html( wp_parse_url( \Jetonomy\route_url( 'category', $cat->slug ), PHP_URL_PATH ) ) . '</code>';
 							break;
 						case 'spaces':
 							echo absint( $cat->space_count );

@@ -17,8 +17,6 @@ if ( ! apply_filters( 'jetonomy_show_sidebar', true ) ) {
 	return;
 }
 
-$base = \Jetonomy\base_url();
-
 global $wpdb;
 $posts_tbl  = \Jetonomy\table( 'posts' );
 $spaces_tbl = \Jetonomy\table( 'spaces' );
@@ -218,11 +216,11 @@ $bn_active = did_action( 'buddynext_loaded' );
 			?>
 			<?php if ( is_user_logged_in() ) : ?>
 				<div class="jt-sidebar-links">
-					<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/members/' ); ?>" class="jt-sidebar-link-text">
+					<a href="<?php echo esc_url( \Jetonomy\route_url( 'space-members', $space->slug ) ); ?>" class="jt-sidebar-link-text">
 						<?php printf( /* translators: %s: plural member label. */ esc_html__( 'View all %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 					</a>
 					<?php if ( \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( get_current_user_id(), (int) $space->id ) ) : ?>
-						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/mod/' ); ?>" class="jt-sidebar-link-text jt-sidebar-link-mod">
+						<a href="<?php echo esc_url( \Jetonomy\route_url( 'space-moderation', $space->slug ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-mod">
 							<?php jetonomy_echo_icon( 'shield', 14 ); ?>
 							<?php esc_html_e( 'Moderation queue', 'jetonomy' ); ?>
 						</a>
@@ -318,7 +316,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 				<div class="jt-trend">
 					<div>
 						<div class="jt-trend-title">
-							<a href="<?php echo esc_url( $base . '/s/' . $t_post->space_slug . '/t/' . $t_post->slug . '/' ); ?>">
+							<a href="<?php echo esc_url( \Jetonomy\route_url( 'post', $t_post->space_slug, $t_post->slug ) ); ?>">
 								<?php echo esc_html( jetonomy_post_title_or_excerpt( $t_post ) ); ?>
 							</a>
 						</div>
@@ -411,7 +409,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 				</div>
 			<?php endforeach; ?>
 			<div class="jt-sidebar-link">
-				<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>"><?php esc_html_e( 'View full leaderboard', 'jetonomy' ); ?></a>
+				<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>"><?php esc_html_e( 'View full leaderboard', 'jetonomy' ); ?></a>
 			</div>
 		</div>
 	</div>
@@ -449,7 +447,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
 			<div class="jt-tags">
 				<?php foreach ( $popular_tags as $tag ) : ?>
-					<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
+					<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">
 						<?php echo esc_html( $tag->name ); ?>
 						<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
 					</a>

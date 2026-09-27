@@ -637,7 +637,7 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 		echo '<div class="jt-space-grid">';
 		foreach ( $spaces as $space ) {
 			?>
-			<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
+			<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
 				class="jt-card jt-space-card jt-no-underline jt-block">
 				<div class="jt-space-card-inner">
 					<?php

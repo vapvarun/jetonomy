@@ -277,7 +277,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 							?>
 							<div class="row-actions">
 								<span class="edit"><a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
-								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
+								<span class="view"><a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
 								<?php
 								// Two separate actions rather than one Delete with a
 								// mode picker: the safe one and the irreversible one

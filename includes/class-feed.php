@@ -58,8 +58,8 @@ class Feed {
 		 */
 		$posts = (array) apply_filters( 'jetonomy_space_feed_posts', $posts, $space );
 
-		$space_url = trailingslashit( base_url() ) . 's/' . rawurlencode( (string) $space->slug ) . '/';
-		$self_url  = $space_url . 'feed/';
+		$space_url = route_url( 'space', rawurlencode( (string) $space->slug ) );
+		$self_url  = route_url( 'space-feed', rawurlencode( (string) $space->slug ) );
 		$newest    = ! empty( $posts ) ? (string) $posts[0]->created_at : (string) ( $space->created_at ?? now() );
 
 		status_header( 200 );
@@ -79,7 +79,7 @@ class Feed {
 	<generator>Jetonomy <?php echo esc_html( JETONOMY_VERSION ); ?></generator>
 		<?php foreach ( $posts as $post ) : ?>
 			<?php
-			$post_url = $space_url . 't/' . rawurlencode( (string) $post->slug ) . '/';
+			$post_url = route_url( 'post', rawurlencode( (string) $space->slug ), rawurlencode( (string) $post->slug ) );
 			$display  = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 			$excerpt  = wp_trim_words( (string) ( $post->content_plain ?? \jetonomy_content_to_plain( (string) $post->content ) ), 55 );
 			?>
@@ -113,7 +113,7 @@ class Feed {
 		printf(
 			'<link rel="alternate" type="application/rss+xml" title="%s" href="%s" />' . "\n",
 			esc_attr( wp_specialchars_decode( (string) $space->title, ENT_QUOTES ) . ' – RSS' ),
-			esc_url( trailingslashit( base_url() ) . 's/' . rawurlencode( (string) $space->slug ) . '/feed/' )
+			esc_url( route_url( 'space-feed', rawurlencode( (string) $space->slug ) ) )
 		);
 	}
 }

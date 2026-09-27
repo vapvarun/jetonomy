@@ -59,7 +59,6 @@ if ( ! empty( $leader_ids ) ) {
 	\Jetonomy\Models\UserProfile::prime( $leader_ids );
 }
 
-$base   = \Jetonomy\base_url();
 $crumbs = [
 	[
 		'label' => __( 'Leaderboard', 'jetonomy' ),
@@ -88,8 +87,8 @@ $crumbs = [
 				);
 				foreach ( $jt_lb_periods as $jt_lb_key => $jt_lb_label ) :
 					$jt_lb_url = 'all' === $jt_lb_key
-						? $base . '/leaderboard/'
-						: add_query_arg( 'period', $jt_lb_key, $base . '/leaderboard/' );
+						? \Jetonomy\route_url( 'leaderboard' )
+						: add_query_arg( 'period', $jt_lb_key, \Jetonomy\route_url( 'leaderboard' ) );
 					?>
 					<a href="<?php echo esc_url( $jt_lb_url ); ?>"
 						class="jt-pill <?php echo $period === $jt_lb_key ? esc_attr( 'on' ) : ''; ?>"

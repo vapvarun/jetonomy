@@ -22,8 +22,7 @@ $has_unread = isset( $has_unread ) ? (bool) $has_unread : false;
 $show_bookmark_toggle = isset( $show_bookmark_toggle ) ? (bool) $show_bookmark_toggle : false;
 $initials             = '' !== $display['name'] ? strtoupper( mb_substr( $display['name'], 0, 2 ) ) : '??';
 $trust                = $profile ? (int) $profile->trust_level : 0;
-$base                 = \Jetonomy\base_url();
-$post_url             = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+$post_url             = \Jetonomy\route_url( 'post', ( $space->slug ?? '' ), $post->slug );
 $time_ago             = human_time_diff( strtotime( $post->created_at ), time() );
 $tags                 = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 $viewer_id            = get_current_user_id();
@@ -155,7 +154,7 @@ if ( $prefix_name && $space ) {
 				// instead of inert <span> elements. CSS selectors stay
 				// `.jt-tag` so existing styles still apply (the `<a>` carries
 				// the same class).
-				$jt_tag_url = \Jetonomy\base_url() . '/tag/' . rawurlencode( (string) $post_tag->slug ) . '/';
+				$jt_tag_url = \Jetonomy\route_url( 'tag', rawurlencode( (string) $post_tag->slug ) );
 				?>
 				<a class="jt-tag" href="<?php echo esc_url( $jt_tag_url ); ?>"><?php echo esc_html( $post_tag->name ); ?></a>
 			<?php endforeach; ?>

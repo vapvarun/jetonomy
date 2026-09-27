@@ -1694,7 +1694,7 @@ class Reply extends Model {
 		if ( $new_post && $new_space ) {
 			// Built the same way every other topic URL in the plugin is - there is
 			// no shared permalink helper to call.
-			$new_url = \Jetonomy\base_url() . '/s/' . $new_space->slug . '/t/' . $new_post->slug . '/';
+			$new_url = \Jetonomy\route_url( 'post', $new_space->slug, $new_post->slug );
 
 			static::create(
 				array(

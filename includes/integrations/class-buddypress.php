@@ -305,8 +305,7 @@ class BuddyPress {
 			return;
 		}
 
-		$base      = \Jetonomy\base_url();
-		$topic_url = $space ? $base . '/s/' . $space->slug . '/t/' . $post->slug . '/' : '';
+		$topic_url = $space ? \Jetonomy\route_url( 'post', $space->slug, $post->slug ) : '';
 
 		// Jetonomy stores `content_plain` with block-level breaks already
 		// stripped, so paragraphs run together. Re-derive a paragraph-aware
@@ -536,7 +535,7 @@ class BuddyPress {
 			return '';
 		}
 
-		return \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+		return \Jetonomy\route_url( 'post', $space->slug, $post->slug );
 	}
 
 	/*
@@ -844,9 +843,8 @@ class BuddyPress {
 			&& ( user_can( $bp_user_id, 'manage_options' )
 				|| \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $bp_user_id, $space_id ) );
 		$posts            = Post::list_by_space_visible( $space_id, (int) $bp_user_id, (bool) $bp_is_privileged, 'latest', 20 );
-		$base             = \Jetonomy\base_url();
-		$space_url        = $base . '/s/' . $space->slug . '/';
-		$new_post_url     = $space_url . 'new/';
+		$space_url        = \Jetonomy\route_url( 'space', $space->slug );
+		$new_post_url     = \Jetonomy\route_url( 'new-post', $space->slug );
 		$post_count       = count( $posts );
 
 		echo '<div class="jt-bp-forum">';
@@ -866,7 +864,7 @@ class BuddyPress {
 		} else {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
-				$post_url   = $base . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+				$post_url   = \Jetonomy\route_url( 'post', $space->slug, $post->slug );
 				$jt_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 				$time_ago   = human_time_diff( strtotime( $post->last_reply_at ?? $post->created_at ), time() );
 				$replies    = (int) $post->reply_count;
@@ -987,7 +985,6 @@ class BuddyPress {
 		$user_id = bp_displayed_user_id();
 		$this->render_profile_stats( $user_id );
 
-		$base  = \Jetonomy\base_url();
 		$posts = Post::list_by_author( $user_id, 10 );
 
 		// Own-profile leak guard: a "Posts" tab on the AUTHOR's own profile
@@ -1000,7 +997,7 @@ class BuddyPress {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
 				$space    = Space::find( (int) $post->space_id );
-				$post_url = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
+				$post_url = \Jetonomy\route_url( 'post', ( $space ? $space->slug : '' ), $post->slug );
 				$time_ago = human_time_diff( strtotime( $post->created_at ), time() );
 				echo '<li>';
 				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
@@ -1026,8 +1023,7 @@ class BuddyPress {
 		$this->render_profile_stats( $user_id );
 
 		global $wpdb;
-		$base = \Jetonomy\base_url();
-		$p    = $wpdb->prefix;
+		$p = $wpdb->prefix;
 
 		// Space-visibility + per-post is_private gate on the PARENT post so a
 		// member's replies in private/hidden spaces (or under private posts)
@@ -1075,7 +1071,7 @@ class BuddyPress {
 		if ( ! empty( $replies ) ) {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $replies as $reply ) {
-				$post_url = $base . '/s/' . $reply->space_slug . '/t/' . $reply->post_slug . '/';
+				$post_url = \Jetonomy\route_url( 'post', $reply->space_slug, $reply->post_slug );
 				$time_ago = human_time_diff( strtotime( $reply->created_at ), time() );
 				$snippet  = wp_trim_words( $reply->content_plain, 15, '...' );
 				echo '<li>';
@@ -1100,13 +1096,12 @@ class BuddyPress {
 		$this->render_profile_stats( $user_id );
 
 		$bookmarks = \Jetonomy\Models\Bookmark::list_by_user( $user_id, 10 );
-		$base      = \Jetonomy\base_url();
 
 		if ( ! empty( $bookmarks ) ) {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $bookmarks as $post ) {
 				$space    = Space::find( (int) $post->space_id );
-				$post_url = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
+				$post_url = \Jetonomy\route_url( 'post', ( $space ? $space->slug : '' ), $post->slug );
 				$time_ago = human_time_diff( strtotime( $post->bookmarked_at ?? $post->created_at ), time() );
 				echo '<li>';
 				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';

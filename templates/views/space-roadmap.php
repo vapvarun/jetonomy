@@ -154,7 +154,6 @@ foreach ( array_keys( $columns ) as $jt_col_status ) {
 }
 
 $category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base     = \Jetonomy\base_url();
 
 $crumbs = array();
 if ( $category ) {
@@ -165,13 +164,13 @@ if ( $category ) {
 }
 $crumbs[]  = array(
 	'label' => $space->title,
-	'url'   => $base . '/s/' . $space->slug . '/',
+	'url'   => \Jetonomy\route_url( 'space', $space->slug ),
 );
 $crumbs[]  = array(
 	'label' => __( 'Roadmap', 'jetonomy' ),
 	'url'   => '',
 );
-$space_url = $base . '/s/' . $space->slug . '/';
+$space_url = \Jetonomy\route_url( 'space', $space->slug );
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
 
@@ -209,7 +208,7 @@ $space_url = $base . '/s/' . $space->slug . '/';
 				<p class="jt-kanban-empty"><?php esc_html_e( 'No ideas here yet.', 'jetonomy' ); ?></p>
 			<?php else : ?>
 				<?php foreach ( $col['posts'] as $idea ) : ?>
-					<?php $idea_url = $base . '/s/' . $space->slug . '/t/' . $idea->slug . '/'; ?>
+					<?php $idea_url = \Jetonomy\route_url( 'post', $space->slug, $idea->slug ); ?>
 					<div class="jt-idea jt-row-clickable" data-jt-href="<?php echo esc_url( $idea_url ); ?>">
 						<div class="jt-idea-title"><?php echo esc_html( $idea->title ); ?></div>
 						<?php if ( ! empty( $idea->content ) ) : ?>
@@ -227,7 +226,7 @@ $space_url = $base . '/s/' . $space->slug . '/';
 				<?php endforeach; ?>
 				<?php if ( ( $col['total'] ?? 0 ) > count( $col['posts'] ) ) : ?>
 					<p class="jt-kanban-more">
-						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
+						<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 							<?php
 							printf(
 								/* translators: %d: number of additional ideas not shown in this column. */

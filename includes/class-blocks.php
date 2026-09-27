@@ -454,7 +454,7 @@ class Blocks {
 		if ( $space_id > 0 && class_exists( Space::class ) ) {
 			$space = Space::find( $space_id );
 			if ( $space && ! empty( $space->slug ) ) {
-				$link = $base . '/s/' . rawurlencode( (string) $space->slug ) . '/';
+				$link = route_url( 'space', rawurlencode( (string) $space->slug ) );
 				if ( '' === $custom_title ) {
 					/* translators: %s: space title */
 					$heading_text = sprintf( __( '%s · Topics', 'jetonomy' ), (string) ( $space->title ?? '' ) );
@@ -516,7 +516,7 @@ class Blocks {
 		if ( '' === $slug || '' === $title ) {
 			return '';
 		}
-		$url        = \Jetonomy\base_url() . '/s/' . rawurlencode( $slug ) . '/';
+		$url        = route_url( 'space', rawurlencode( $slug ) );
 		$is_active  = $slug === $active_slug;
 		$aria_attr  = $is_active ? ' aria-current="page"' : '';
 		$active_cls = $is_active ? ' is-active' : '';
@@ -642,7 +642,6 @@ class Blocks {
 
 		$user_id = get_current_user_id();
 		$user    = wp_get_current_user();
-		$base    = \Jetonomy\base_url();
 		$avatar  = get_avatar( $user_id, 48, '', $user->display_name, array( 'class' => 'jt-userpanel-avatar' ) );
 
 		// Trust level (cheap read from user_profiles).
@@ -660,11 +659,11 @@ class Blocks {
 
 		$profile_url   = \Jetonomy\get_profile_url( $user_id );
 		$edit_url      = \Jetonomy\get_profile_action_url( 'edit', (int) $user->ID );
-		$notifs_url    = $base . '/notifications/';
-		$messages_url  = $base . '/messages/';
-		$my_spaces_url = $base . '/my-spaces/';
-		$subs_url      = $base . '/subscriptions/';
-		$new_space_url = $base . '/new-space/';
+		$notifs_url    = route_url( 'notifications' );
+		$messages_url  = route_url( 'messages' );
+		$my_spaces_url = route_url( 'my-spaces' );
+		$subs_url      = route_url( 'subscriptions' );
+		$new_space_url = route_url( 'new-space' );
 
 		// 1.4.0 G6 — show "Create space" link only to viewers who could
 		// actually complete the flow. Same gate as the /new-space/ form and

@@ -18,57 +18,57 @@ class Settings_Handler {
 	 * notification type. Keeps the preview concrete without pulling real
 	 * community data.
 	 *
-	 * @return array<string, array{message: string, url_path: string}>
+	 * @return array<string, array{message: string, url: string}>
 	 */
 	private static function sample_fixtures(): array {
 		return array(
 			'user_welcome'          => array(
-				'message'  => __( 'Welcome to the community. Your account is ready. Jump in and introduce yourself.', 'jetonomy' ),
-				'url_path' => '/',
+				'message' => __( 'Welcome to the community. Your account is ready. Jump in and introduce yourself.', 'jetonomy' ),
+				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'reply_to_post'         => array(
-				'message'  => __( 'Alice replied to your post "Getting started with Jetonomy".', 'jetonomy' ),
-				'url_path' => '/s/general/t/getting-started-with-jetonomy/',
+				'message' => __( 'Alice replied to your post "Getting started with Jetonomy".', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'post', 'general', 'getting-started-with-jetonomy' ),
 			),
 			'reply_to_reply'        => array(
-				'message'  => __( 'Bob replied to your comment on "Hosting recommendations".', 'jetonomy' ),
-				'url_path' => '/s/general/t/hosting-recommendations/',
+				'message' => __( 'Bob replied to your comment on "Hosting recommendations".', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'post', 'general', 'hosting-recommendations' ),
 			),
 			'mention'               => array(
-				'message'  => __( '@alice mentioned you in "Release notes discussion".', 'jetonomy' ),
-				'url_path' => '/s/announcements/t/release-notes-discussion/',
+				'message' => __( '@alice mentioned you in "Release notes discussion".', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'post', 'announcements', 'release-notes-discussion' ),
 			),
 			'accepted_answer'       => array(
-				'message'  => __( 'Your answer was accepted as the best reply on "How do I enable dark mode?".', 'jetonomy' ),
-				'url_path' => '/s/help/t/how-do-i-enable-dark-mode/',
+				'message' => __( 'Your answer was accepted as the best reply on "How do I enable dark mode?".', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'post', 'help', 'how-do-i-enable-dark-mode' ),
 			),
 			'idea_status_changed'   => array(
-				'message'  => __( 'Your idea "Dark mode toggle" is now Planned.', 'jetonomy' ),
-				'url_path' => '/s/feature-requests/roadmap/',
+				'message' => __( 'Your idea "Dark mode toggle" is now Planned.', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'space-roadmap', 'feature-requests' ),
 			),
 			'new_post_in_sub'       => array(
-				'message'  => __( 'A new discussion was posted in a space you follow.', 'jetonomy' ),
-				'url_path' => '/',
+				'message' => __( 'A new discussion was posted in a space you follow.', 'jetonomy' ),
+				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'badge_earned'          => array(
-				'message'  => __( 'You earned the "First Post" badge. Nice work.', 'jetonomy' ),
-				'url_path' => '/u/me/',
+				'message' => __( 'You earned the "First Post" badge. Nice work.', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'profile', 'me' ),
 			),
 			'vote_on_post'          => array(
-				'message'  => __( 'Your post received a new vote.', 'jetonomy' ),
-				'url_path' => '/',
+				'message' => __( 'Your post received a new vote.', 'jetonomy' ),
+				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'moderation'            => array(
-				'message'  => __( 'A moderator reviewed your recent content.', 'jetonomy' ),
-				'url_path' => '/mod/',
+				'message' => __( 'A moderator reviewed your recent content.', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
 			'join_request'          => array(
-				'message'  => __( 'A member has asked to join one of your spaces.', 'jetonomy' ),
-				'url_path' => '/mod/',
+				'message' => __( 'A member has asked to join one of your spaces.', 'jetonomy' ),
+				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
 			'verification_reminder' => array(
-				'message'  => __( "We noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.", 'jetonomy' ),
-				'url_path' => '/',
+				'message' => __( "We noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.", 'jetonomy' ),
+				'url'     => \Jetonomy\base_url() . '/',
 			),
 		);
 	}
@@ -137,7 +137,7 @@ class Settings_Handler {
 			$fixture['message'],
 			'preview',
 			0,
-			\Jetonomy\base_url() . $fixture['url_path']
+			$fixture['url']
 		);
 
 		wp_send_json_success(
@@ -175,7 +175,7 @@ class Settings_Handler {
 			'{user}'    => $user->display_name,
 			'{message}' => $fixture['message'],
 			'{type}'    => $type,
-			'{url}'     => \Jetonomy\base_url() . $fixture['url_path'],
+			'{url}'     => $fixture['url'],
 		);
 
 		$subject = '' !== $subject_override ? strtr( $subject_override, $placeholders ) : strtr( '[{site}] {message}', $placeholders );
@@ -186,7 +186,7 @@ class Settings_Handler {
 			$body,
 			$user,
 			'',
-			\Jetonomy\base_url() . $fixture['url_path']
+			$fixture['url']
 		);
 
 		wp_send_json_success(

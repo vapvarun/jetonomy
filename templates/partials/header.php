@@ -36,11 +36,11 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 				<?php jetonomy_echo_icon( 'home', 18 ); ?>
 				<span class="jt-nav-label"><?php esc_html_e( 'Community', 'jetonomy' ); ?></span>
 			</a>
-			<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="<?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Search', 'jetonomy' ); ?>">
+			<a href="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="<?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Search', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'search', 18 ); ?>
 				<span class="jt-nav-label"><?php esc_html_e( 'Search', 'jetonomy' ); ?></span>
 			</a>
-			<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="<?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Leaderboard', 'jetonomy' ); ?>">
+			<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>" class="<?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Leaderboard', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'award', 18 ); ?>
 				<span class="jt-nav-label"><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span>
 			</a>
@@ -51,7 +51,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 				</a>
 			<?php endif; ?>
 			<?php if ( $user_id && \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $user_id ) ) : ?>
-				<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="<?php echo in_array( $current_route, array( 'moderation', 'space-moderation' ), true ) ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Moderation', 'jetonomy' ); ?>">
+				<a href="<?php echo esc_url( \Jetonomy\route_url( 'moderation' ) ); ?>" class="<?php echo in_array( $current_route, array( 'moderation', 'space-moderation' ), true ) ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Moderation', 'jetonomy' ); ?>">
 					<?php jetonomy_echo_icon( 'shield', 18 ); ?>
 					<span class="jt-nav-label"><?php esc_html_e( 'Moderation', 'jetonomy' ); ?></span>
 				</a>
@@ -76,7 +76,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 						<div class="jt-notif-panel-body">
 							<div class="jt-notif-panel-loading"><?php esc_html_e( 'Loading...', 'jetonomy' ); ?></div>
 						</div>
-						<a href="<?php echo esc_url( $base . '/notifications/' ); ?>" class="jt-notif-panel-footer">
+						<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" class="jt-notif-panel-footer">
 							<?php esc_html_e( 'View all notifications', 'jetonomy' ); ?>
 						</a>
 					</div>
@@ -100,16 +100,16 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 		<?php jetonomy_echo_icon( 'home', 20 ); ?>
 		<span><?php esc_html_e( 'Home', 'jetonomy' ); ?></span>
 	</a>
-	<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-mobile-tab <?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>">
+	<a href="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-mobile-tab <?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 		<?php jetonomy_echo_icon( 'search', 20 ); ?>
 		<span><?php esc_html_e( 'Search', 'jetonomy' ); ?></span>
 	</a>
-	<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
+	<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 		<?php jetonomy_echo_icon( 'award', 20 ); ?>
 		<span><?php esc_html_e( 'Ranks', 'jetonomy' ); ?></span>
 	</a>
 	<?php if ( $user_id ) : ?>
-		<a href="<?php echo esc_url( $base . '/notifications/' ); ?>" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
+		<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 			<?php jetonomy_echo_icon( 'bell', 20 ); ?>
 			<span><?php esc_html_e( 'Alerts', 'jetonomy' ); ?></span>
 			<?php if ( $unread > 0 ) : ?>

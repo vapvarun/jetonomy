@@ -58,8 +58,7 @@ class Template_Loader {
 				if ( count( $mod_space_ids ) === 1 ) {
 					$mod_first = \Jetonomy\Models\Space::find( (int) $mod_space_ids[0] );
 					if ( $mod_first ) {
-						$mod_base_slug = \Jetonomy\base_slug();
-						wp_safe_redirect( home_url( '/' . $mod_base_slug . '/s/' . $mod_first->slug . '/mod/' ) );
+						wp_safe_redirect( route_url( 'space-moderation', $mod_first->slug ) );
 						exit;
 					}
 				}
@@ -84,8 +83,7 @@ class Template_Loader {
 				$jt_is_member = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() )
 					|| \Jetonomy\Models\AccessRule::grants_access( get_current_user_id(), (int) $jt_space->id );
 				if ( ! $jt_is_member && in_array( $jt_join_policy, array( 'invite', 'approval' ), true ) ) {
-					$jt_base_slug = \Jetonomy\base_slug();
-					wp_safe_redirect( home_url( '/' . $jt_base_slug . '/s/' . $jt_space->slug . '/' ) );
+					wp_safe_redirect( route_url( 'space', $jt_space->slug ) );
 					exit;
 				}
 			}
@@ -1351,7 +1349,7 @@ class Template_Loader {
 						$title = self::seo_display_name( 'category', (string) $data['slug'], ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) ) );
 						/* translators: 1: plural space label, 2: category name, 3: site title. */
 						$desc      = sprintf( __( '%1$s in the %2$s category on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name );
-						$url       = $base . '/category/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$url       = route_url( 'category', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $title;
 						break;
 					case 'space':
@@ -1382,23 +1380,23 @@ class Template_Loader {
 									$title = $space->title . ' — ' . \Jetonomy\jetonomy_label( 'member', true );
 									/* translators: 1: plural member label, 2: space title, 3: singular space label, 4: site title. */
 									$desc = sprintf( __( '%1$s of the %2$s %3$s on %4$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
-									$url  = $base . '/s/' . $space->slug . '/members/';
+									$url  = route_url( 'space-members', $space->slug );
 									break;
 								case 'space-roadmap':
 									$title = $space->title . ' — ' . __( 'Roadmap', 'jetonomy' );
 									/* translators: 1: space title, 2: singular space label, 3: site title. */
 									$desc = sprintf( __( 'Roadmap for the %1$s %2$s on %3$s.', 'jetonomy' ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
-									$url  = $base . '/s/' . $space->slug . '/roadmap/';
+									$url  = route_url( 'space-roadmap', $space->slug );
 									break;
 								case 'space-moderation':
 									$title = $space->title . ' — ' . __( 'Moderation', 'jetonomy' );
 									/* translators: %s: site title. */
 									$desc    = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $space->title );
-									$url     = $base . '/s/' . $space->slug . '/mod/';
+									$url     = route_url( 'space-moderation', $space->slug );
 									$noindex = true; // Mod tools never indexed.
 									break;
 								default:
-									$url = $base . '/s/' . $space->slug . '/';
+									$url = route_url( 'space', $space->slug );
 							}
 
 							if ( $is_private ) {
@@ -1431,7 +1429,7 @@ class Template_Loader {
 								? wp_strip_all_tags( (string) $post->content_plain )
 								: wp_strip_all_tags( (string) $post->content );
 							$desc         = trim( preg_replace( '/\s+/', ' ', $desc ) );
-							$url          = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+							$url          = route_url( 'post', ( $space->slug ?? '' ), $post->slug );
 							$og_type      = 'article';
 							$twitter_card = 'summary_large_image';
 							$image_alt    = $post->title;
@@ -1491,21 +1489,21 @@ class Template_Loader {
 						$title = '#' . (string) $data['slug'];
 						/* translators: 1: tag name, 2: site title. */
 						$desc      = sprintf( __( 'Discussions tagged %1$s on %2$s.', 'jetonomy' ), $title, $site_name );
-						$url       = $base . '/tag/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$url       = route_url( 'tag', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $title;
 						break;
 					case 'leaderboard':
 						$title = __( 'Top members', 'jetonomy' );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Top contributors and most-helpful members on %s.', 'jetonomy' ), $site_name );
-						$url       = $base . '/leaderboard/';
+						$url       = route_url( 'leaderboard' );
 						$image_alt = $site_name;
 						break;
 					case 'search':
 						$title = __( 'Search the community', 'jetonomy' );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Search discussions, replies, members, and tags on %s.', 'jetonomy' ), $site_name );
-						$url       = $base . '/search/';
+						$url       = route_url( 'search' );
 						$image_alt = $site_name;
 						// Honour the owner's choice. This was hard-coded true, so
 						// Settings > SEO > "Noindex search pages" visibly saved and
@@ -1521,7 +1519,7 @@ class Template_Loader {
 						$title = __( 'Moderation Queue', 'jetonomy' );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $site_name );
-						$url       = $base . '/mod/';
+						$url       = route_url( 'moderation' );
 						$image_alt = $site_name;
 						$noindex   = true; // Admin tooling.
 						break;
@@ -1533,21 +1531,21 @@ class Template_Loader {
 						$title = self::compose_route_title( $slug, ucfirst( str_replace( '-', ' ', $slug ) ) );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Compose a new discussion on %s.', 'jetonomy' ), $site_name );
-						$url       = $base . ( '' !== $slug ? '/s/' . rawurlencode( $slug ) . '/new/' : '/new/' );
+						$url       = '' !== $slug ? route_url( 'new-post', rawurlencode( $slug ) ) : $base . '/new/';
 						$image_alt = $site_name;
 						$noindex   = true; // Composer page.
 						break;
 					case 'notifications':
 						$title     = __( 'Notifications', 'jetonomy' );
 						$desc      = __( 'Your community notifications.', 'jetonomy' );
-						$url       = $base . '/notifications/';
+						$url       = route_url( 'notifications' );
 						$image_alt = $site_name;
 						$noindex   = true; // Personal logged-in view.
 						break;
 					case 'edit-profile':
 						$title     = __( 'Edit profile', 'jetonomy' );
 						$desc      = __( 'Edit your community profile.', 'jetonomy' );
-						$url       = $base . '/u/me/edit/';
+						$url       = route_url( 'edit-profile', 'me' );
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in form.
 						break;
@@ -1555,7 +1553,7 @@ class Template_Loader {
 						$title = __( 'You are invited', 'jetonomy' );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Accept your community invite to %s.', 'jetonomy' ), $site_name );
-						$url       = $base . '/invite/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$url       = route_url( 'invite', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $site_name;
 						$noindex   = true; // One-shot landing.
 						break;
@@ -1564,7 +1562,7 @@ class Template_Loader {
 						$title = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						/* translators: 1: plural space label, 2: plural space label, 3: site title. */
 						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
-						$url       = $base . '/my-spaces/';
+						$url       = route_url( 'my-spaces' );
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
 						break;
@@ -1572,7 +1570,7 @@ class Template_Loader {
 						$title = __( 'My Subscriptions', 'jetonomy' );
 						/* translators: 1: plural topic label, 2: plural space label (e.g. Spaces), 3: site name */
 						$desc      = sprintf( __( '%1$s and %2$s you follow on %3$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\space_label( true, true ), $site_name );
-						$url       = $base . '/subscriptions/';
+						$url       = route_url( 'subscriptions' );
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
 						break;
@@ -1581,7 +1579,7 @@ class Template_Loader {
 						$title = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: 1: singular space label, 2: site title. */
 						$desc      = sprintf( __( 'Start a new community %1$s on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $site_name );
-						$url       = $base . '/new-space/';
+						$url       = route_url( 'new-space' );
 						$image_alt = $site_name;
 						$noindex   = true; // Composer page.
 						break;
@@ -1590,21 +1588,21 @@ class Template_Loader {
 						$title = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: %s: singular space label. */
 						$desc      = sprintf( __( 'Edit your community %s settings.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
-						$url       = $base . '/s/' . rawurlencode( (string) $data['slug'] ) . '/edit/';
+						$url       = route_url( 'edit-space', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in editor view.
 						break;
 					case 'drafts':
 						$title     = __( 'My drafts', 'jetonomy' );
 						$desc      = __( 'Your saved drafts on the community.', 'jetonomy' );
-						$url       = $base . '/drafts/';
+						$url       = route_url( 'drafts' );
 						$image_alt = $site_name;
 						$noindex   = true; // Personal logged-in view.
 						break;
 					case 'bookmarks':
 						$title     = __( 'My bookmarks', 'jetonomy' );
 						$desc      = __( 'Posts you have bookmarked on the community.', 'jetonomy' );
-						$url       = $base . '/bookmarks/';
+						$url       = route_url( 'bookmarks' );
 						$image_alt = $site_name;
 						$noindex   = true; // Personal logged-in view.
 						break;

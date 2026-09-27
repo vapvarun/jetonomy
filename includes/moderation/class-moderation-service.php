@@ -242,7 +242,8 @@ class Moderation_Service {
 	 * is loaded, which is why replies are fetched before posts.
 	 *
 	 * @param object[] $flags Flag rows.
-	 * @param string   $base  Community base URL, for permalinks.
+	 * @param string   $base  Non-empty to include permalinks (built by
+	 *                        \Jetonomy\route_url(); callers pass base_url()).
 	 * @return array<string,object{object:object,space:?object,permalink:string}>
 	 *         Keyed "{object_type}:{object_id}". Flags whose object or space
 	 *         has been deleted are simply absent - callers skip them.
@@ -322,7 +323,7 @@ class Moderation_Service {
 				'object'    => $object,
 				'space'     => $space,
 				'permalink' => '' !== $base
-					? $base . '/s/' . $space->slug . '/t/' . $parent->slug . '/'
+					? \Jetonomy\route_url( 'post', $space->slug, $parent->slug )
 					: '',
 			);
 		}

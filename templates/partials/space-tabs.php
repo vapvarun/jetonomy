@@ -47,7 +47,7 @@ $jt_space_tabs = array(
 if ( 'ideas' === ( $space->type ?? '' ) ) {
 	$jt_space_tabs['roadmap'] = array(
 		'label'  => __( 'Roadmap', 'jetonomy' ),
-		'url'    => $jt_space_url . 'roadmap/',
+		'url'    => \Jetonomy\route_url( 'space-roadmap', $space->slug ),
 		'active' => 'roadmap' === $jt_active,
 	);
 }
@@ -59,7 +59,7 @@ $jt_show_members = is_user_logged_in();
 if ( $jt_show_members ) {
 	$jt_space_tabs['members'] = array(
 		'label'  => jetonomy_label( 'member', true ),
-		'url'    => $jt_space_url . 'members/',
+		'url'    => \Jetonomy\route_url( 'space-members', $space->slug ),
 		'active' => 'members' === $jt_active,
 	);
 }

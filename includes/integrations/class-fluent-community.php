@@ -317,8 +317,7 @@ class Fluent_Community {
 			return;
 		}
 
-		$base      = $this->jetonomy_base_slug();
-		$topic_url = home_url( '/' . $base . '/s/' . $jt_space->slug . '/t/' . $post->slug . '/' );
+		$topic_url = \Jetonomy\route_url( 'post', $jt_space->slug, $post->slug );
 
 		// Generous excerpt — we want the FC feed post to read as a
 		// standalone preview, not a bait-and-switch that forces a click.
@@ -726,8 +725,7 @@ class Fluent_Community {
 			return $links;
 		}
 
-		$base    = $this->jetonomy_base_slug();
-		$url     = home_url( '/' . $base . '/s/' . $jt_space->slug . '/' );
+		$url     = \Jetonomy\route_url( 'space', $jt_space->slug );
 		$links[] = array(
 			'title'    => $this->get_tab_label(),
 			'url'      => esc_url_raw( $url ),
@@ -883,7 +881,6 @@ class Fluent_Community {
 		}
 
 		$label       = $this->get_tab_label();
-		$base        = $this->jetonomy_base_slug();
 		$user        = get_userdata( $user_id );
 		$profile_url = $user ? \Jetonomy\get_profile_url( (int) $user->ID ) : '';
 
@@ -898,7 +895,7 @@ class Fluent_Community {
 					<?php foreach ( $started as $p ) : ?>
 						<?php
 						$space = isset( $p->space_id ) ? Space::find( (int) $p->space_id ) : null;
-						$purl  = $space ? home_url( '/' . $base . '/s/' . $space->slug . '/t/' . $p->slug . '/' ) : '';
+						$purl  = $space ? \Jetonomy\route_url( 'post', $space->slug, $p->slug ) : '';
 						?>
 						<li>
 							<?php if ( $purl ) : ?>
@@ -941,7 +938,7 @@ class Fluent_Community {
 					<?php foreach ( $followed as $p ) : ?>
 						<?php
 						$space = isset( $p->space_id ) ? Space::find( (int) $p->space_id ) : null;
-						$purl  = $space ? home_url( '/' . $base . '/s/' . $space->slug . '/t/' . $p->slug . '/' ) : '';
+						$purl  = $space ? \Jetonomy\route_url( 'post', $space->slug, $p->slug ) : '';
 						?>
 						<li>
 							<?php if ( $purl ) : ?>
@@ -960,7 +957,7 @@ class Fluent_Community {
 					<?php foreach ( $bookmarks as $p ) : ?>
 						<?php
 						$space = isset( $p->space_id ) ? Space::find( (int) $p->space_id ) : null;
-						$purl  = $space ? home_url( '/' . $base . '/s/' . $space->slug . '/t/' . $p->slug . '/' ) : '';
+						$purl  = $space ? \Jetonomy\route_url( 'post', $space->slug, $p->slug ) : '';
 						?>
 						<li>
 							<?php if ( $purl ) : ?>
@@ -1045,17 +1042,6 @@ class Fluent_Community {
 	 *  Helpers  (pair map, URL/slug, space lookups)
 	 * ══════════════════════════════════════════════
 	 */
-
-	/**
-	 * Resolve the Jetonomy base URL slug (defaults to "community").
-	 *
-	 * @return string
-	 */
-	private function jetonomy_base_slug(): string {
-		$settings = get_option( 'jetonomy_settings', array() );
-		$slug     = is_array( $settings ) && ! empty( $settings['base_slug'] ) ? (string) $settings['base_slug'] : 'community';
-		return trim( $slug, '/' );
-	}
 
 	/**
 	 * Current configured tab label (defaults to "Discussions").

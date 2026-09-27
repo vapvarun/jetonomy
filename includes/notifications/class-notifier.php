@@ -1482,7 +1482,7 @@ class Notifier {
 	public static function render_email_template( string $type, string $message, \WP_User $user, string $unsub_url = '', string $content_url = '', array $extra = array() ): string {
 		$site_name     = esc_html( get_bloginfo( 'name' ) );
 		$community_url = '' !== $content_url ? esc_url( $content_url ) : esc_url( \Jetonomy\base_url() . '/' );
-		$notif_url     = esc_url( \Jetonomy\base_url() . '/notifications/' );
+		$notif_url     = esc_url( \Jetonomy\route_url( 'notifications' ) );
 		$unsub_link    = $unsub_url ? esc_url( $unsub_url ) : '';
 		$home_url      = esc_url( home_url( '/' ) );
 
@@ -1603,7 +1603,7 @@ class Notifier {
 		$space = Space::find( $space_id );
 		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 		$name = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
-		$url  = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
+		$url  = $space ? \Jetonomy\route_url( 'space', $space->slug ) : '';
 		$this->create_and_maybe_email(
 			$user_id,
 			$reviewed_by,
@@ -1723,7 +1723,7 @@ class Notifier {
 		if ( ! $space ) {
 			return \Jetonomy\base_url() . '/';
 		}
-		return \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+		return \Jetonomy\route_url( 'post', $space->slug, $post->slug );
 	}
 
 	/**

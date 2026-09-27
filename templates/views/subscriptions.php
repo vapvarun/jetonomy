@@ -61,7 +61,7 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 			<li class="jt-subs-row">
 				<div class="jt-subs-main">
 					<?php if ( $item['exists'] && '' !== $item['title'] ) : ?>
-						<a class="jt-subs-title" href="<?php echo esc_url( 'space' === $type ? $base . '/s/' . $item['slug'] . '/' : $base . '/s/' . ( $item['space_slug'] ?? '' ) . '/t/' . $item['slug'] . '/' ); ?>">
+						<a class="jt-subs-title" href="<?php echo esc_url( 'space' === $type ? \Jetonomy\route_url( 'space', $item['slug'] ) : \Jetonomy\route_url( 'post', ( $item['space_slug'] ?? '' ), $item['slug'] ) ); ?>">
 							<?php echo esc_html( $item['title'] ); ?>
 						</a>
 					<?php else : ?>

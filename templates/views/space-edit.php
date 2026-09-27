@@ -56,7 +56,7 @@ $base   = \Jetonomy\base_url();
 $crumbs = array(
 	array(
 		'label' => $space->title,
-		'url'   => $base . '/s/' . $space->slug . '/',
+		'url'   => \Jetonomy\route_url( 'space', $space->slug ),
 	),
 	array(
 		'label' => __( 'Edit', 'jetonomy' ),
@@ -269,7 +269,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 				<button type="submit" class="jt-btn jt-btn-fill">
 					<?php esc_html_e( 'Save changes', 'jetonomy' ); ?>
 				</button>
-				<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
+				<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 					<?php esc_html_e( 'Cancel', 'jetonomy' ); ?>
 				</a>
 				<span class="jt-form-saved" data-jt-saved hidden>
@@ -337,7 +337,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 							data-wp-on--click="actions.deleteSpace"
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-mode="transfer"
-							data-redirect="<?php echo esc_attr( $base . '/s/' . $space->slug . '/' ); ?>"
+							data-redirect="<?php echo esc_attr( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
 							data-confirm="<?php echo esc_attr( $jt_confirm_archive ); ?>">
 							<?php esc_html_e( 'Archive and hand over', 'jetonomy' ); ?>
 						</button>

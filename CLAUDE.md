@@ -299,6 +299,7 @@ For release history, run `git log --oneline` or read `readme.txt`. For architect
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
 - Community base slug/URL only via `\Jetonomy\base_slug()` / `\Jetonomy\base_url()` - never read `jetonomy_settings['base_slug']` inline or hardcode `/community/` (20 inline copies drifted; the admin Spaces list showed the wrong URL)
+- Community route URLs only via `\Jetonomy\route_url( 'post', $space_slug, $post_slug )` (keys = `jetonomy_route` values; the one map of fixed English segments lives in `includes/functions.php`) - never concatenate `/s/`, `/t/`, `/u/`, `/tag/`, `/mod/`... onto `base_url()`. Segments are fixed, not translated or filterable; `Router::add_rewrite_rules()` holds the matching regexes, so change both together. Arguments go in verbatim - `rawurlencode()` at the call site where needed
 - Importers: ask `Importer::find_imported()` before creating and call `Importer::remember()` after - `jt_import_map` is the only "already imported" record, and every importer shares that one check (re-runs must add only what is missing)
 
 ## CSS Token Rules (enforced - mirrors BuddyNext pattern)

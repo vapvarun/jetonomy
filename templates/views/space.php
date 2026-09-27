@@ -245,8 +245,7 @@ $posts       = \Jetonomy\Models\Post::$_jt_list_fn(
 $_jt_total    = \Jetonomy\Models\Post::count_by_space_visible( (int) $space->id, (int) $_jt_user_id, (bool) $_jt_is_priv, $sort );
 $_jt_has_more = ( $paged * $limit ) < $_jt_total;
 $category     = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base         = \Jetonomy\base_url();
-$space_url    = $base . '/s/' . $space->slug . '/';
+$space_url    = \Jetonomy\route_url( 'space', $space->slug );
 
 // Sub-spaces of this space. An import maps sub-forums to child spaces, and
 // until now nothing rendered that: the parent listed no children and the child
@@ -274,7 +273,7 @@ if ( $category ) {
 if ( $jt_parent ) {
 	$crumbs[] = [
 		'label' => $jt_parent->title,
-		'url'   => $base . '/s/' . $jt_parent->slug . '/',
+		'url'   => \Jetonomy\route_url( 'space', $jt_parent->slug ),
 	];
 }
 $crumbs[] = [
@@ -328,7 +327,7 @@ $crumbs[] = [
 						?>
 						<p class="jt-space-edit-cta">
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
-								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
+								href="<?php echo esc_url( \Jetonomy\route_url( 'edit-space', $space->slug ) ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
 								<?php /* translators: %s: the label of the item being edited (the configured noun). */ ?>
 								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
@@ -446,7 +445,7 @@ $crumbs[] = [
 					<ul class="jt-subspaces__list">
 						<?php foreach ( $jt_sub_spaces as $jt_sub ) : ?>
 							<li class="jt-subspaces__item">
-								<a class="jt-subspaces__link" href="<?php echo esc_url( $base . '/s/' . $jt_sub->slug . '/' ); ?>">
+								<a class="jt-subspaces__link" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $jt_sub->slug ) ); ?>">
 									<?php jetonomy_render_space_icon( $jt_sub->icon ?? '', 20, 'jt-space-emoji' ); ?>
 									<span class="jt-subspaces__name"><?php echo esc_html( $jt_sub->title ); ?></span>
 									<span class="jt-subspaces__count">
@@ -512,7 +511,7 @@ $crumbs[] = [
 					 */
 					?>
 				<?php elseif ( \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id ) ) : ?>
-					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
+					<a href="<?php echo esc_url( \Jetonomy\route_url( 'new-post', $space->slug ) ); ?>" class="jt-btn jt-btn-fill">
 						<?php
 						// Shared label, so the button and the composer heading it
 						// leads to never disagree (they used to: "+ New Post"
@@ -577,7 +576,7 @@ $crumbs[] = [
 						'icon'      => 'empty-posts',
 						'message'   => $_jt_no_posts_msg,
 						'cta_label' => $_jt_can_post ? $_jt_post_cta : '',
-						'cta_url'   => $_jt_can_post ? ( $space_url . 'new/' ) : '',
+						'cta_url'   => $_jt_can_post ? ( \Jetonomy\route_url( 'new-post', $space->slug ) ) : '',
 					]
 				);
 				?>

@@ -41,6 +41,59 @@ function base_slug(): string {
 }
 
 /**
+ * URL of a community route, e.g. route_url( 'post', $space_slug, $post_slug ).
+ *
+ * THE map of the segments after the base slug. They are fixed English and not
+ * translatable or filterable by design - labels are display-only (Basecamp
+ * 10344391975). Keys are the router's jetonomy_route values; Router::add_rewrite_rules()
+ * holds the matching regexes, so a segment changed here must change there.
+ *
+ * Arguments are substituted verbatim - encode them at the call site where the
+ * caller already did (rawurlencode for logins / tag slugs), so URLs stay
+ * byte-identical to the hand-built ones this replaced.
+ *
+ * @param string                $route   Route key (see the map below).
+ * @param string|int|float|null ...$args Values for the %s placeholders, in order.
+ * @return string Absolute URL with a trailing slash, or '' for an unknown route.
+ */
+function route_url( string $route, ...$args ): string {
+	static $routes = array(
+		'connect-app'      => 'connect-app',
+		'category'         => 'category/%s',
+		'space'            => 's/%s',
+		'space-members'    => 's/%s/members',
+		'space-roadmap'    => 's/%s/roadmap',
+		'space-moderation' => 's/%s/mod',
+		'new-post'         => 's/%s/new',
+		'edit-space'       => 's/%s/edit',
+		'space-feed'       => 's/%s/feed',
+		'post'             => 's/%s/t/%s',
+		'profile'          => 'u/%s',
+		'edit-profile'     => 'u/%s/edit',
+		'notifications'    => 'notifications',
+		'search'           => 'search',
+		'leaderboard'      => 'leaderboard',
+		'moderation'       => 'mod',
+		'my-spaces'        => 'my-spaces',
+		'subscriptions'    => 'subscriptions',
+		'drafts'           => 'drafts',
+		'bookmarks'        => 'bookmarks',
+		'new-space'        => 'new-space',
+		'tag'              => 'tag/%s',
+		'invite'           => 'invite/%s',
+		'messages'         => 'messages',
+		'conversation'     => 'messages/%s',
+	);
+
+	if ( ! isset( $routes[ $route ] ) ) {
+		_doing_it_wrong( __FUNCTION__, esc_html( "Unknown Jetonomy route '{$route}'." ), '2.0.1' );
+		return '';
+	}
+
+	return base_url() . '/' . vsprintf( $routes[ $route ], $args ) . '/';
+}
+
+/**
  * Load Jetonomy's JS translations for classic script handles that use wp.i18n.
  *
  * The one place that knows the text domain and languages path for
@@ -703,9 +756,8 @@ function community_profile_url( int $user_id ): string {
 		return '';
 	}
 
-	$base_slug = base_slug();
 	// rawurlencode because a login may legally contain a space or non-ASCII.
-	return home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
+	return route_url( 'profile', rawurlencode( $user->user_login ) );
 }
 
 /**
@@ -764,15 +816,16 @@ function get_profile_action_url( string $action, int $user_id ): string {
 	if ( '' === $base ) {
 		return '';
 	}
+	$edit = route_url( 'edit-profile', rawurlencode( get_userdata( $user_id )->user_login ) );
 
-	$suffixes = array(
-		'profile'               => '',
-		'edit'                  => 'edit/',
-		'notification-settings' => 'edit/#notification-preferences',
-		'badges'                => '#jt-badges',
-		'digest'                => '#digest-preferences',
+	$urls = array(
+		'profile'               => $base,
+		'edit'                  => $edit,
+		'notification-settings' => $edit . '#notification-preferences',
+		'badges'                => $base . '#jt-badges',
+		'digest'                => $base . '#digest-preferences',
 	);
-	$url      = $base . ( $suffixes[ $action ] ?? '' );
+	$url  = $urls[ $action ] ?? $base;
 
 	/**
 	 * Filter a Jetonomy-owned profile-action deep-link.
@@ -847,15 +900,8 @@ function replies_per_page(): int {
 /**
  * A space's front URL.
  *
- * `base_url()` already keeps the configurable base slug in one place, but the
- * `/s/` segment after it is a literal repeated in ~90 places. That is fine for
- * a template inside this plugin, which moves whenever the router does, and not
- * fine for an integration in another plugin, which would keep pointing at a
- * path this one no longer serves.
- *
- * Same shape as reply_permalink() below. Existing call sites are deliberately
- * left alone - sweeping ninety of them is a change of its own - but nothing new
- * should compose this by hand.
+ * Kept as a public entry point for integrations in other plugins; it is a
+ * thin wrapper over route_url( 'space', ... ) with an empty-slug guard.
  *
  * @param string $space_slug Space slug.
  * @return string Front URL, or '' when the slug is unusable.
@@ -863,7 +909,7 @@ function replies_per_page(): int {
 function space_permalink( string $space_slug ): string {
 	$space_slug = trim( $space_slug, '/' );
 
-	return '' === $space_slug ? '' : base_url() . '/s/' . $space_slug . '/';
+	return '' === $space_slug ? '' : route_url( 'space', $space_slug );
 }
 
 function reply_permalink( string $space_slug, string $post_slug, int $reply_id, ?int $page = null ): string {
@@ -871,7 +917,7 @@ function reply_permalink( string $space_slug, string $post_slug, int $reply_id, 
 		return '';
 	}
 
-	$url  = base_url() . '/s/' . $space_slug . '/t/' . $post_slug . '/';
+	$url  = route_url( 'post', $space_slug, $post_slug );
 	$page = null !== $page ? max( 1, $page ) : Models\Reply::page_of( $reply_id, replies_per_page() );
 
 	if ( $page > 1 ) {
@@ -904,7 +950,7 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 		if ( ! $space ) {
 			return '';
 		}
-		return base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+		return route_url( 'post', $space->slug, $post->slug );
 	}
 
 	if ( 'reply' === $object_type ) {
@@ -929,7 +975,7 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 
 	if ( 'space' === $object_type ) {
 		$space = Models\Space::find( $object_id );
-		return $space ? base_url() . '/s/' . $space->slug . '/' : '';
+		return $space ? route_url( 'space', $space->slug ) : '';
 	}
 
 	/**
@@ -984,7 +1030,7 @@ function join_request_url_for( int $recipient_id, $space ): string {
 	// #jt-pending-requests anchors the pending list on the members page, so a
 	// space with many members doesn't land the reader above the fold and away
 	// from the thing the notification was about.
-	return base_url() . '/s/' . $space->slug . '/members/#jt-pending-requests';
+	return route_url( 'space-members', $space->slug ) . '#jt-pending-requests';
 }
 
 /**
@@ -1062,7 +1108,7 @@ function get_space_edit_url( $space ): string {
 	$use_frontend = (bool) apply_filters( 'jetonomy_use_frontend_space_edit', true, $space );
 
 	if ( $use_frontend && '' !== $slug ) {
-		return base_url() . '/s/' . rawurlencode( $slug ) . '/edit/';
+		return route_url( 'edit-space', rawurlencode( $slug ) );
 	}
 
 	if ( $id > 0 ) {

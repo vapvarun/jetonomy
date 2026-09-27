@@ -242,6 +242,7 @@ class Router {
 	}
 
 	public function add_rewrite_rules(): void {
+		// Segments below must match the route map in \Jetonomy\route_url() (includes/functions.php).
 		$base = base_slug();
 
 		// Community home

@@ -85,8 +85,7 @@ $posts = $wpdb->get_results(
 	)
 ) ?: [];
 
-$base    = \Jetonomy\base_url();
-$tag_url = $base . '/tag/' . $tag->slug . '/';
+$tag_url = \Jetonomy\route_url( 'tag', $tag->slug );
 
 $crumbs = [
 	[
@@ -124,7 +123,7 @@ $crumbs = [
 					$jt_tag_compose_url = add_query_arg(
 						'tag',
 						rawurlencode( $tag->slug ),
-						$base . '/s/' . rawurlencode( $jt_tag_post_space ) . '/new/'
+						\Jetonomy\route_url( 'new-post', rawurlencode( $jt_tag_post_space ) )
 					);
 					?>
 					<a href="<?php echo esc_url( $jt_tag_compose_url ); ?>" class="jt-btn jt-btn-fill jt-btn-sm jt-ml-auto">

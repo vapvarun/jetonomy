@@ -4148,6 +4148,7 @@
     "Use --jt-* CSS tokens for theming",
     "Every release zip must come from bin/build-release.sh",
     "Community base slug/URL come only from \\Jetonomy\\base_slug() / \\Jetonomy\\base_url() (includes/functions.php) - never read jetonomy_settings['base_slug'] directly or hardcode /community/",
+    "Community route URLs come only from \\Jetonomy\\route_url( $route, ...$args ) (includes/functions.php; one map of jetonomy_route key -> fixed English segment, e.g. 'post' => s/%s/t/%s) - never concatenate '/s/', '/t/', '/u/', '/tag/', '/mod/' etc. onto base_url(). Segments are fixed and not filterable (labels are display-only, Basecamp 10344391975); Router::add_rewrite_rules() and Pro's private-messaging rules hold the matching regexes. Older public wrappers (space_permalink, reply_permalink, community_profile_url, get_space_edit_url) call it internally",
     "Importers never decide 'already imported' themselves: Importer::find_imported() (batched, jt_import_map + legacy fingerprint) before creating, Importer::remember() after; map_source() opts an importer in"
   ],
   "build_commands": {

@@ -27,8 +27,6 @@ if ( empty( $token ) ) {
 
 $result = \Jetonomy\Models\InviteLink::accept( $token, get_current_user_id() );
 
-$base_slug = \Jetonomy\base_slug();
-
 if ( is_wp_error( $result ) ) {
 	// Logged-out visitors with a VALID token get the invite panel with a
 	// login CTA; every other error renders as an empty state.
@@ -63,6 +61,6 @@ if ( is_wp_error( $result ) ) {
 }
 
 // joined / already_member — straight into the space.
-$space_url = home_url( '/' . $base_slug . '/s/' . $result['space']->slug . '/' );
+$space_url = \Jetonomy\route_url( 'space', $result['space']->slug );
 echo '<meta http-equiv="refresh" content="0; url=' . esc_url( $space_url ) . '">';
 exit;

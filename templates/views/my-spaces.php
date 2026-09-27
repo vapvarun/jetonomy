@@ -101,7 +101,7 @@ $crumbs = array(
 						$label = ( 'admin' === $role ) ? __( 'Admin', 'jetonomy' ) : __( 'Mod', 'jetonomy' );
 						?>
 						<li class="jt-space-card jt-space-card--privileged">
-							<a class="jt-space-card-link" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/' ); ?>">
+							<a class="jt-space-card-link" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $sp->slug ) ); ?>">
 								<div class="jt-space-card-head">
 									<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon', $sp->type ?? '' ); ?>
 									<div class="jt-space-card-titlewrap">
@@ -137,11 +137,11 @@ $crumbs = array(
 										<span><?php esc_html_e( 'Edit', 'jetonomy' ); ?></span>
 									</a>
 								<?php endif; ?>
-								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/mod/' ); ?>">
+								<a class="jt-space-card-action" href="<?php echo esc_url( \Jetonomy\route_url( 'space-moderation', $sp->slug ) ); ?>">
 									<?php jetonomy_echo_icon( 'shield', 14 ); ?>
 									<span><?php esc_html_e( 'Mod queue', 'jetonomy' ); ?></span>
 								</a>
-								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/members/' ); ?>">
+								<a class="jt-space-card-action" href="<?php echo esc_url( \Jetonomy\route_url( 'space-members', $sp->slug ) ); ?>">
 									<?php jetonomy_echo_icon( 'users', 14 ); ?>
 									<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></span>
 								</a>
@@ -157,7 +157,7 @@ $crumbs = array(
 				<ul class="jt-space-list">
 					<?php foreach ( $member_spaces as $sp ) : ?>
 						<li class="jt-space-card">
-							<a class="jt-space-card-link" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/' ); ?>">
+							<a class="jt-space-card-link" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $sp->slug ) ); ?>">
 								<div class="jt-space-card-head">
 									<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon', $sp->type ?? '' ); ?>
 									<div class="jt-space-card-titlewrap">

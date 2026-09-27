@@ -60,7 +60,7 @@ $jt_slug = $jt_is_reply
 	: (string) ( $item->slug ?? '' );
 
 $jt_permalink = $jt_slug
-	? $base . '/s/' . $space->slug . '/t/' . $jt_slug . '/'
+	? \Jetonomy\route_url( 'post', $space->slug, $jt_slug )
 	: '';
 
 // The JS appends "{action}/{kind}/{id}" to this.
@@ -77,7 +77,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 		<span class="jt-mod-flag-reason jt-mod-flag-reason--held">
 			<?php $jt_is_trash ? esc_html_e( 'In trash', 'jetonomy' ) : esc_html_e( 'Awaiting approval', 'jetonomy' ); ?>
 		</span>
-		<a class="jt-mod-flag-space" href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
+		<a class="jt-mod-flag-space" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 			<?php echo esc_html( (string) $space->title ); ?>
 		</a>
 		<span class="jt-mod-flag-reporter">

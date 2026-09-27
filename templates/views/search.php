@@ -68,7 +68,6 @@ if ( ! in_array( $sort, [ 'relevance', 'newest', 'votes' ], true ) ) {
 	$sort = 'relevance';
 }
 
-$base   = \Jetonomy\base_url();
 $posts  = [];
 $spaces = [];
 $tags   = [];
@@ -230,7 +229,7 @@ $crumbs = [
 <div class="jt-two-col">
 		<main>
 			<!-- Search form -->
-			<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-search-page-form" autocomplete="off">
+			<form method="get" action="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-search-page-form" autocomplete="off">
 				<div class="jt-search-page-input">
 					<span class="jt-search-page-icon" aria-hidden="true"><?php jetonomy_echo_icon( 'search', 20 ); ?></span>
 					<input type="text" name="q"
@@ -261,7 +260,7 @@ $crumbs = [
 					?>
 					open<?php endif; ?>>
 					<summary class="jt-search-filters-toggle"><?php esc_html_e( 'Filters', 'jetonomy' ); ?> <?php jetonomy_echo_icon( 'chevron-down', 12 ); ?></summary>
-					<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-search-filters-form">
+					<form method="get" action="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-search-filters-form">
 						<input type="hidden" name="q" value="<?php echo esc_attr( $q ); ?>">
 						<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>">
 						<div class="jt-filter-row">
@@ -287,7 +286,7 @@ $crumbs = [
 						</div>
 						<div class="jt-filter-actions">
 							<button type="submit" class="jt-btn jt-btn-fill jt-btn-sm"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
-							<a href="<?php echo esc_url( add_query_arg( 'q', $q, $base . '/search/' ) ); ?>" class="jt-btn jt-btn-ghost jt-btn-sm"><?php esc_html_e( 'Clear', 'jetonomy' ); ?></a>
+							<a href="<?php echo esc_url( add_query_arg( 'q', $q, \Jetonomy\route_url( 'search' ) ) ); ?>" class="jt-btn jt-btn-ghost jt-btn-sm"><?php esc_html_e( 'Clear', 'jetonomy' ); ?></a>
 						</div>
 					</form>
 				</details>
@@ -308,7 +307,7 @@ $crumbs = [
 									'q'      => $q,
 									'filter' => $key,
 								],
-								$base . '/search/'
+								\Jetonomy\route_url( 'search' )
 							);
 							?>
 							<a href="<?php echo esc_url( $f_url ); ?>"
@@ -355,7 +354,7 @@ $crumbs = [
 							<?php
 							foreach ( $posts as $post ) :
 								$time_ago       = human_time_diff( strtotime( $post->created_at ), time() );
-								$post_url       = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
+								$post_url       = \Jetonomy\route_url( 'post', $post->space_slug, $post->slug );
 								$excerpt        = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
 								$author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 								?>
@@ -401,7 +400,7 @@ $crumbs = [
 						</h3>
 						<div class="jt-space-grid jt-mb-lg">
 							<?php foreach ( $spaces as $space ) : ?>
-								<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
+								<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
 									class="jt-card jt-space-card jt-no-underline jt-block">
 									<div class="jt-space-card-inner">
 										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-cat-emoji', $space->type ?? '' ); ?>
@@ -426,7 +425,7 @@ $crumbs = [
 						</h3>
 						<div class="jt-tags">
 							<?php foreach ( $tags as $tag ) : ?>
-								<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
+								<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">
 									<?php echo esc_html( $tag->name ); ?>
 									<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
 								</a>

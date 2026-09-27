@@ -211,7 +211,6 @@ class Shortcodes {
 			// silently queried space 0 and returned nothing.
 			$space_id = absint( $space->id );
 		}
-		$base = base_url();
 
 		global $wpdb;
 		$posts_tbl  = table( 'posts' );
@@ -265,7 +264,7 @@ class Shortcodes {
 
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
 		foreach ( $posts as $post ) {
-			$url    = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
+			$url    = route_url( 'post', $post->space_slug, $post->slug );
 			$time   = human_time_diff( strtotime( $post->created_at ), time() );
 			$author = get_userdata( (int) $post->author_id );
 			$out   .= '<div class="jt-shortcode-post">';
@@ -319,7 +318,6 @@ class Shortcodes {
 			$space_id = absint( $space->id );
 		}
 		$window = absint( $atts['window'] ) ?: 7;
-		$base   = base_url();
 
 		$posts = Models\Post::list_trending( $limit, $space_id ?: null, $window );
 
@@ -331,7 +329,7 @@ class Shortcodes {
 		$out  = '<div class="jt-shortcode jt-shortcode-trending-posts">';
 		foreach ( $posts as $post ) {
 			++$rank;
-			$url    = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
+			$url    = route_url( 'post', $post->space_slug, $post->slug );
 			$author = get_userdata( (int) $post->author_id );
 			$out   .= '<div class="jt-shortcode-post jt-shortcode-trending-post">';
 			$out   .= '<span class="jt-shortcode-trending-rank" aria-hidden="true">' . (int) $rank . '</span>';
@@ -385,7 +383,6 @@ class Shortcodes {
 			}
 			$category_id = absint( $category->id );
 		}
-		$base = base_url();
 
 		global $wpdb;
 		$spaces_tbl = table( 'spaces' );
@@ -414,7 +411,7 @@ class Shortcodes {
 
 		$out = '<div class="jt-shortcode jt-shortcode-spaces">';
 		foreach ( $spaces as $space ) {
-			$url  = $base . '/s/' . $space->slug . '/';
+			$url  = route_url( 'space', $space->slug );
 			$out .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-space">';
 			$out .= '<strong>' . esc_html( $space->title ) . '</strong>';
 			if ( ! empty( $space->description ) ) {
@@ -437,7 +434,6 @@ class Shortcodes {
 		self::enqueue_styles();
 
 		$limit = absint( $atts['count'] ) ?: 10;
-		$base  = base_url();
 
 		// The Leaderboard page's own model query (same eligible population:
 		// real members with reputation > 0, same tie order). Also backs the

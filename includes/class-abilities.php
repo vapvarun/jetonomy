@@ -1264,15 +1264,14 @@ class Abilities {
 		Subscription::subscribe( $user_id, 'post', $post_id );
 		do_action( 'jetonomy_after_create_post', $post_id, $space_id, null );
 
-		$base_slug = \Jetonomy\base_slug();
-		$space     = Space::find( $space_id );
-		$post      = Post::find( $post_id );
+		$space = Space::find( $space_id );
+		$post  = Post::find( $post_id );
 
 		return [
 			'id'         => $post_id,
 			'title'      => $title,
 			'is_private' => (bool) $is_private,
-			'url'        => home_url( "/{$base_slug}/s/" . ( $space->slug ?? '' ) . '/t/' . ( $post->slug ?? $slug ) . '/' ),
+			'url'        => \Jetonomy\route_url( 'post', $space->slug ?? '', $post->slug ?? $slug ),
 		];
 	}
 

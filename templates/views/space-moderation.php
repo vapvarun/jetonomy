@@ -136,7 +136,7 @@ if ( $category ) {
 }
 $crumbs[] = [
 	'label' => $space->title,
-	'url'   => $base . '/s/' . $space->slug . '/',
+	'url'   => \Jetonomy\route_url( 'space', $space->slug ),
 ];
 $crumbs[] = [
 	'label' => __( 'Moderation', 'jetonomy' ),
@@ -195,7 +195,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<?php endif; ?>
 			</div>
 
-			<?php $jt_queue_url = $base . '/s/' . $space->slug . '/mod/'; ?>
+			<?php $jt_queue_url = \Jetonomy\route_url( 'space-moderation', $space->slug ); ?>
 			<nav class="jt-profile-tabs" aria-label="<?php esc_attr_e( 'Moderation sections', 'jetonomy' ); ?>">
 				<a href="<?php echo esc_url( $jt_queue_url ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>" <?php echo 'flags' === $jt_view ? 'aria-current="page"' : ''; ?>>
 					<?php esc_html_e( 'Flags', 'jetonomy' ); ?>

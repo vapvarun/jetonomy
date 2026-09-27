@@ -131,9 +131,7 @@ class App_Connect {
 	 * @return string
 	 */
 	public static function connect_url(): string {
-		$base = \Jetonomy\base_slug();
-
-		return home_url( '/' . $base . '/connect-app/' );
+		return \Jetonomy\route_url( 'connect-app' );
 	}
 
 	/**

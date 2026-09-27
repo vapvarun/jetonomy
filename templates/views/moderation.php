@@ -287,23 +287,23 @@ $crumbs = [
 	<?php // Tabs: Flags | Awaiting approval | Banned members. Reuses the profile tab styling. ?>
 	<?php // Flags and Awaiting approval are always both reachable, so the strip always renders; Banned stays capability-gated. ?>
 	<nav class="jt-profile-tabs" aria-label="<?php esc_attr_e( 'Moderation sections', 'jetonomy' ); ?>">
-		<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>" <?php echo 'flags' === $jt_view ? 'aria-current="page"' : ''; ?>>
+		<a href="<?php echo esc_url( \Jetonomy\route_url( 'moderation' ) ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>" <?php echo 'flags' === $jt_view ? 'aria-current="page"' : ''; ?>>
 			<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
 			<?php if ( $total > 0 ) : ?>
 				<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $total ) ); ?></span>
 			<?php endif; ?>
 		</a>
-		<a href="<?php echo esc_url( add_query_arg( 'view', 'approvals', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'approvals' === $jt_view ? 'active' : ''; ?>" <?php echo 'approvals' === $jt_view ? 'aria-current="page"' : ''; ?>>
+		<a href="<?php echo esc_url( add_query_arg( 'view', 'approvals', \Jetonomy\route_url( 'moderation' ) ) ); ?>" class="jt-profile-tab <?php echo 'approvals' === $jt_view ? 'active' : ''; ?>" <?php echo 'approvals' === $jt_view ? 'aria-current="page"' : ''; ?>>
 			<?php esc_html_e( 'Awaiting approval', 'jetonomy' ); ?>
 			<?php if ( $jt_held_total > 0 ) : ?>
 				<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $jt_held_total ) ); ?></span>
 			<?php endif; ?>
 		</a>
-		<a href="<?php echo esc_url( add_query_arg( 'view', 'trash', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo $jt_is_trash ? 'active' : ''; ?>" <?php echo $jt_is_trash ? 'aria-current="page"' : ''; ?>>
+		<a href="<?php echo esc_url( add_query_arg( 'view', 'trash', \Jetonomy\route_url( 'moderation' ) ) ); ?>" class="jt-profile-tab <?php echo $jt_is_trash ? 'active' : ''; ?>" <?php echo $jt_is_trash ? 'aria-current="page"' : ''; ?>>
 			<?php esc_html_e( 'Trash', 'jetonomy' ); ?>
 		</a>
 		<?php if ( $jt_can_manage_bans ) : ?>
-			<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>" <?php echo 'banned' === $jt_view ? 'aria-current="page"' : ''; ?>>
+			<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', \Jetonomy\route_url( 'moderation' ) ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>" <?php echo 'banned' === $jt_view ? 'aria-current="page"' : ''; ?>>
 				<?php printf( /* translators: %s: plural member label. */ esc_html__( 'Banned %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 			</a>
 		<?php endif; ?>
@@ -370,7 +370,7 @@ $crumbs = [
 				[
 					'paged' => $jt_ban_paged,
 					'pages' => $jt_ban_pages,
-					'base'  => add_query_arg( 'view', 'banned', $base . '/mod/' ),
+					'base'  => add_query_arg( 'view', 'banned', \Jetonomy\route_url( 'moderation' ) ),
 					'label' => sprintf( /* translators: %s: plural member label. */ __( 'Banned %s pagination', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 				]
 			);
@@ -391,7 +391,7 @@ $crumbs = [
 						'view' => $jt_view,
 						'kind' => $jt_kind_key,
 					],
-					$base . '/mod/'
+					\Jetonomy\route_url( 'moderation' )
 				);
 				?>
 				<a href="<?php echo esc_url( $jt_kind_url ); ?>"
@@ -460,7 +460,7 @@ $crumbs = [
 							'view' => $jt_view,
 							'kind' => $jt_kind,
 						],
-						$base . '/mod/'
+						\Jetonomy\route_url( 'moderation' )
 					),
 					'label' => $jt_is_trash ? __( 'Trash pagination', 'jetonomy' ) : __( 'Awaiting approval pagination', 'jetonomy' ),
 				]
@@ -502,7 +502,7 @@ $crumbs = [
 				}
 				$reason_key   = (string) ( $flag->reason ?? 'other' );
 				$reason_label = $jt_reason_labels[ $reason_key ] ?? $jt_reason_labels['other'];
-				$queue_url    = $base . '/s/' . $space->slug . '/mod/';
+				$queue_url    = \Jetonomy\route_url( 'space-moderation', $space->slug );
 				?>
 				<li class="jt-mod-flag-row">
 					<div class="jt-mod-flag-row-head">
@@ -512,7 +512,7 @@ $crumbs = [
 						<span class="jt-mod-flag-type">
 							<?php echo $is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html__( 'Post', 'jetonomy' ); ?>
 						</span>
-						<a class="jt-mod-flag-space" href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
+						<a class="jt-mod-flag-space" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 							<?php echo esc_html( $space->title ); ?>
 						</a>
 						<span class="jt-mod-flag-age">
@@ -556,7 +556,7 @@ $crumbs = [
 			[
 				'paged' => $paged,
 				'pages' => $total_pages,
-				'base'  => $base . '/mod/',
+				'base'  => \Jetonomy\route_url( 'moderation' ),
 				'label' => __( 'Moderation queue pagination', 'jetonomy' ),
 			]
 		);
