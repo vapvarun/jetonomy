@@ -67,9 +67,3 @@ Both `scan` commands are read-only. Both `purge-orphans` commands accept `--dry-
 Deleting a space in wp-admin or the front end defaults to **Transfer**: the space is archived and handed to another admin, and every topic and reply inside it is kept. This is deliberate - a space holds other members' contributions, not just its owner's, so the default never destroys anyone's writing.
 
 An administrator can permanently destroy a space and everything in it instead. This is a separate, explicit action (not the default "delete" button's behaviour), and site administrators can always do it. To let a space's own admin do the same, turn on **Let space admins permanently delete a space and everything in it** under **Jetonomy → Settings → General** ("Deleting spaces"). It is off by default. A permanent purge runs in the background and cannot be undone.
-
-## What's Next?
-
-Manage your community's global tag namespace from wp-admin.
-
-[Tags →](19-tags.md)

@@ -54,7 +54,7 @@ See [Theme Compatibility - Troubleshooting](../integrations/07-theme-compatibili
 
 ## Search shows no results
 
-1. **Words under four characters are ignored.** Every word in a search has to match Jetonomy's FULLTEXT index, and MySQL/MariaDB FULLTEXT indexes do not index words shorter than 4 characters - a search for "QA" or "v2" matches nothing even though posts contain that exact text. Search a longer, more distinctive word instead. See [Search & Filters](../search-and-discovery/01-search-filters.md).
+1. **Mixing short and long words?** MySQL/MariaDB FULLTEXT indexes do not store words shorter than 4 characters. When a search contains at least one word of 4+ characters, the short words are dropped and only the longer words are matched - `QA workflow` searches for `workflow`. A search made only of short words (`QA`, `v2`, `cri`) still works: it falls back to a plain substring match, just without relevance ranking. See [Search & Filters](../search-and-discovery/01-search-filters.md).
 2. **Content in Private or Hidden spaces never appears in search for non-members.** It is excluded from the query itself, not filtered out afterward - a member sees those results once they actually join the space.
 3. **There is no search index to rebuild.** Search runs live against your database on every request. If the words are long enough and the content is visible to the searcher, it is found - there is nothing to reindex or fall out of sync.
 
@@ -89,7 +89,7 @@ If Jetonomy's From address is being replaced by a different one, another plugin 
 2. **Did they turn on "Pause all email notifications"?** This snoozes every email type at once while in-app notifications keep working. It is a pause, not an unsubscribe - the member's per-type choices underneath it are preserved and come back when they turn it off again.
 3. **Did they click Unfollow, not "mute"?** Jetonomy has no mute action. Following a space subscribes a member to its new-topic notifications; clicking **Following** to toggle it back to **Follow** (or Unfollow from **My Subscriptions**) is what stops them - and a member is never notified about a space or topic they never followed in the first place. See [Bookmarks & Following](../discussions/04-bookmarks-following.md#following-spaces).
 4. **Expecting browser push?** Web Push is a Jetonomy Pro extension and requires HTTPS - it does nothing on an HTTP site even with the extension enabled, and it does not exist on the free plugin at all.
-5. **@mentions cannot be turned off.** If a mention notification is genuinely missing, that is a different bug, not a preference to check.
+5. **Missing @mention notifications?** Mentions are a normal notification type. Check the **Mention** row in the site-wide defaults at **Settings -> Email**, and in the member's own notification preferences on their profile - either one can turn it off.
 
 ## An integration stopped granting access
 
@@ -115,7 +115,7 @@ Common to all of them: access rules are evaluated when the member loads the spac
 
 ## Admin menu items are missing, or show "Not allowed"
 
-1. **Does the account's WordPress role hold `jetonomy_manage_settings`?** Every Jetonomy admin screen - Dashboard, Spaces, Categories, Users, Moderation, Settings, Import, Community Media - is gated by this one capability, granted to Administrators by default and to nobody else unless you grant it. Check or grant it on the [Role Capability Mapping](../admin-settings/18-role-capabilities.md) grid.
+1. **Does the account's WordPress role hold the right capability?** The **Moderation** screen needs `jetonomy_moderate`. Every other Jetonomy admin screen - Dashboard, Spaces, Categories, Users, Settings, Import, Community Media - needs `jetonomy_manage_settings`, which only Administrators have by default. A moderator who can see Moderation but nothing else is working as designed. Check or grant either capability on the [Role Capability Mapping](../admin-settings/18-role-capabilities.md) grid.
 2. **Looking for a Pro-only screen (Extensions, License, a Pro settings tab)?** Those menu items are added by Jetonomy Pro itself and only appear when Pro is installed **and** active - they are never present on a free-only install.
 3. **Pro menu item is there but the feature underneath says it is unavailable?** Check **Settings -> License** - an expired or missing license closes every Pro extension even though the Extensions grid still shows each toggle. See [License](../admin-settings/14-license.md).
 4. **License is valid but one specific feature is still missing?** Check it is switched on at **Jetonomy -> Extensions** - extensions are enabled individually, separately from licensing. See [Extensions](../admin-settings/13-extensions.md).

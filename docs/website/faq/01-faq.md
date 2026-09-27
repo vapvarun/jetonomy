@@ -114,8 +114,8 @@ Usually visibility, not a bug - check whether the space (or its category) is Pri
 **Why is a Jetonomy menu missing for one of my staff, or showing "Not allowed"?**
 Almost always a missing capability, an inactive Pro license, or a disabled extension. See [Admin menu items are missing, or show "Not allowed"](../troubleshooting/00-overview.md#admin-menu-items-are-missing-or-show-not-allowed).
 
-**Why does searching for a short word return nothing?**
-Words under 4 characters are not indexed by MySQL's FULLTEXT search, so they are ignored. See [Search shows no results](../troubleshooting/00-overview.md#search-shows-no-results).
+**Why does a search with a short word ignore that word?**
+MySQL's FULLTEXT index does not store words under 4 characters. Next to a longer word, a short word is dropped. On its own (for example `QA` or `v2`), it still matches as a plain substring, just without relevance ranking. See [Search shows no results](../troubleshooting/00-overview.md#search-shows-no-results).
 
 **Why can't a member sign in to the mobile app?**
 Usually Application Passwords, HTTPS, or a security plugin. See [Mobile app sign-in fails](../troubleshooting/00-overview.md#mobile-app-sign-in-fails).
