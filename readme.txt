@@ -276,6 +276,9 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Improve  - Forum data from a deactivated or uninstalled bbPress, wpForo, or Asgaros is shown as ready to import instead of as an active plugin.
 * Improve  - bbPress category forums import as Jetonomy categories instead of empty spaces, and large BuddyPress groups are added in batches so big imports do not time out.
 * Improve  - Imports of very large forums no longer slow down as they grow.
+* Improve  - Changing a space so it no longer takes join requests now settles pending requests: members join if the space opened, and are told no if it became invite-only.
+* Improve  - Notifications no longer lead to banned members or to posts and replies that were removed.
+* Improve  - The remaining English-only text in admin screens, keyboard shortcuts, and the composer can now be translated.
 * Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
 * Fix      - bbPress imports keep sticky topics and threaded replies, and re-running the import restores threading on replies an earlier version imported flat.
 * Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.
@@ -288,7 +291,12 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Fix      - Leaderboards and the Top Members widget rank only members who have earned reputation.
 * Fix      - Topic views are counted by the browser after the page loads, so topic pages set no cookie, page caches can store them, and cached visits still count.
 * Fix      - Imported forum names with emoji get clean URLs, and the import progress bar no longer passes 100%.
+* Fix      - The Full Width and Hide sidebar layout options no longer stretch the theme header or hide footer widgets on Reign, BuddyX, and BuddyX Pro.
+* Fix      - Denying or approving the same member's join request a second time now works.
+* Fix      - Accepting an answer again no longer awards the reputation twice.
+* Fix      - The keyboard shortcut help Close button is readable in dark mode, and the profile hover card uses your renamed topic label.
 * Dev      - New POST /posts/{id}/view REST route counts a topic view, and GET /posts/{id} no longer counts one, so apps call the new route when they show a topic.
+* Dev      - wp jetonomy reply unaccept is new, reply accept marks the reply itself, space create accepts the feed type, and space delete --mode=purge --yes skips the prompt as documented.
 
 = 2.0.0 - September 2026 =
 
