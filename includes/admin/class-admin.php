@@ -1102,10 +1102,11 @@ class Admin {
 		wp_enqueue_script(
 			'jetonomy-admin',
 			JETONOMY_URL . 'assets/js/admin.js',
-			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals' ),
+			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals', 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-admin' );
 
 		// Shared confirm-on-click delegate for [data-jt-confirm] markup.
 		// Replaces legacy inline event-attribute confirms that fight CSP,
@@ -1216,8 +1217,6 @@ class Admin {
 					'revisionHideDiff'        => esc_html__( 'Hide diff', 'jetonomy' ),
 					'tagNameRequired'         => esc_html__( 'Name is required.', 'jetonomy' ),
 					'tagDeleteConfirm'        => esc_html__( 'Delete this tag?', 'jetonomy' ),
-					'tagDeleteAttachedPrefix' => esc_html__( 'This tag is attached to', 'jetonomy' ),
-					'tagDeleteAttachedSuffix' => esc_html__( 'posts. Delete it and detach from all posts?', 'jetonomy' ),
 					'tagBulkSelectAtLeastOne' => esc_html__( 'Select at least one tag.', 'jetonomy' ),
 					'tagBulkDeleteConfirm'    => esc_html__( 'Delete the selected tags?', 'jetonomy' ),
 					'emailPreviewFailed'      => esc_html__( 'Preview failed.', 'jetonomy' ),
@@ -1345,10 +1344,11 @@ class Admin {
 			wp_enqueue_script(
 				'jetonomy-admin-tags',
 				JETONOMY_URL . 'assets/js/admin-tags.js',
-				array( 'jetonomy-admin' ),
+				array( 'jetonomy-admin', 'wp-i18n' ),
 				JETONOMY_VERSION,
 				true
 			);
+			\Jetonomy\script_translations( 'jetonomy-admin-tags' );
 		} elseif ( str_ends_with( $hook, '_page_jetonomy-settings' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-settings',

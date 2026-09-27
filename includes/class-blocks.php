@@ -124,7 +124,7 @@ class Blocks {
 			JETONOMY_VERSION,
 			true
 		);
-		wp_set_script_translations( 'jetonomy-compose-topic-block', 'jetonomy', JETONOMY_DIR . 'languages' );
+		\Jetonomy\script_translations( 'jetonomy-compose-topic-block' );
 
 		// One editor script registers all the server-rendered blocks
 		// (forum-feed, trending, space-list, leaderboard, navigation,
@@ -139,7 +139,7 @@ class Blocks {
 			JETONOMY_VERSION,
 			true
 		);
-		wp_set_script_translations( 'jetonomy-blocks-editor', 'jetonomy', JETONOMY_DIR . 'languages' );
+		\Jetonomy\script_translations( 'jetonomy-blocks-editor' );
 
 		// Editor-only stylesheet — frames the preview cards + harmonises the
 		// Compose Topic mock so the family reads as one Jetonomy set in the

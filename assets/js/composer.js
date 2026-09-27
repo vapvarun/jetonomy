@@ -548,7 +548,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 emojiBtn.setAttribute('aria-controls', 'jt-emoji-picker');
                 emojiBtn.setAttribute('aria-expanded', 'true');
                 // Localized name comes from the trigger's own title.
-                sharedPicker.setAttribute('aria-label', emojiBtn.getAttribute('title') || emojiBtn.getAttribute('aria-label') || 'Insert emoji');
+                sharedPicker.setAttribute('aria-label', emojiBtn.getAttribute('title') || emojiBtn.getAttribute('aria-label') || wp.i18n.__( 'Insert emoji', 'jetonomy' ));
                 if ( sharedPicker.parentElement !== document.body ) {
                     document.body.appendChild( sharedPicker );
                 }
@@ -649,7 +649,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
             } else {
                 btn.disabled = false;
                 btn.textContent = jtI18n( 'requestToJoin', 'Request to Join' );
-                (window.bnToast ? window.bnToast(data.message || 'Could not submit request.', 'error') : null);
+                (window.bnToast ? window.bnToast(data.message || jtI18n( 'requestFailed', 'Could not submit request.' ), 'error') : null);
             }
         });
     });
@@ -681,7 +681,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 window.location.reload();
             } else {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = jtI18n( 'requestToJoin', 'Request to Join' ); }
-                showGateMessage(form, data.message || 'Could not submit request.', true);
+                showGateMessage(form, data.message || jtI18n( 'requestFailed', 'Could not submit request.' ), true);
             }
         });
     });

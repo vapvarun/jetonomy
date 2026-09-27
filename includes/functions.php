@@ -41,6 +41,23 @@ function base_slug(): string {
 }
 
 /**
+ * Load Jetonomy's JS translations for classic script handles that use wp.i18n.
+ *
+ * The one place that knows the text domain and languages path for
+ * wp_set_script_translations(), so no enqueue site can drift from it. Call it
+ * after the handle is registered or enqueued. Script modules (view.js,
+ * compose-topic) cannot take script translations; they read PHP-localized
+ * state.i18n instead.
+ *
+ * @param string ...$handles Registered script handles.
+ */
+function script_translations( string ...$handles ): void {
+	foreach ( $handles as $handle ) {
+		wp_set_script_translations( $handle, 'jetonomy', JETONOMY_DIR . 'languages' );
+	}
+}
+
+/**
  * Get the URL of the page currently being requested.
  *
  * Jetonomy routes are virtual (rendered by the Router without a real WP post),

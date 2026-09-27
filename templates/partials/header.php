@@ -147,10 +147,11 @@ wp_enqueue_style(
 wp_enqueue_script(
 	'jetonomy-header',
 	JETONOMY_URL . 'assets/js/header.js',
-	array( 'jetonomy-rest' ),
+	array( 'jetonomy-rest', 'wp-i18n' ),
 	JETONOMY_VERSION,
 	true
 );
+\Jetonomy\script_translations( 'jetonomy-header' );
 wp_localize_script(
 	'jetonomy-header',
 	'jetonomyHeader',

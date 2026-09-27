@@ -1,6 +1,8 @@
 (function($) {
 	'use strict';
 
+	const { __, _n, sprintf } = wp.i18n;
+
 	var Jetonomy = {
 		nonce: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.nonce : '',
 		ajaxUrl: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.ajaxUrl : '',
@@ -826,7 +828,7 @@
 					var matches = activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; });
 
 					if (!matches.length) {
-						$results.append('<div class="jetonomy-ac-empty">No matches</div>');
+						$results.append($('<div class="jetonomy-ac-empty"/>').text(__('No matches', 'jetonomy')));
 						$results.show();
 						return;
 					}
@@ -882,7 +884,11 @@
 					});
 
 					if (matches.length > shown.length) {
-						$results.append('<div class="jetonomy-ac-empty">' + (matches.length - shown.length) + ' more — refine search</div>');
+						var hidden = matches.length - shown.length;
+						$results.append($('<div class="jetonomy-ac-empty"/>').text(
+							/* translators: %d: number of matching levels not shown in the list. */
+							sprintf(_n('%d more — refine search', '%d more — refine search', hidden, 'jetonomy'), hidden)
+						));
 					}
 					$results.show();
 				}
@@ -1518,7 +1524,8 @@
 				var username = $(this).data('username');
 
 				$('#ban-user-id').val(userId);
-				$('#ban-user-label').text('Banning: ' + username);
+				/* translators: %s: username of the member being banned. */
+				$('#ban-user-label').text(sprintf(__('Banning: %s', 'jetonomy'), username));
 				$('#ban-type').val('global_ban');
 				$('#ban-reason').val('');
 				$('#ban-duration').val('permanent');
@@ -1533,7 +1540,8 @@
 				var username = $row.find('.column-username strong').text();
 
 				$('#ban-user-id').val(userId);
-				$('#ban-user-label').text('Silencing: ' + username);
+				/* translators: %s: username of the member being silenced. */
+				$('#ban-user-label').text(sprintf(__('Silencing: %s', 'jetonomy'), username));
 				$('#ban-type').val('silence');
 				$('#ban-reason').val('');
 				$('#ban-duration').val('7d');
@@ -1649,6 +1657,7 @@
 
 			function buildCompleteNotice(processed, skipped, summary) {
 				skipped = parseInt(skipped, 10) || 0;
+				processed = parseInt(processed, 10) || 0;
 				var notice = document.createElement('div');
 				// A partial success is a warning, not a clean success — the site owner
 				// needs to know some files did not come across rather than seeing a
@@ -1658,7 +1667,10 @@
 				var strong = document.createElement('strong');
 				strong.textContent = (Jetonomy.i18n.importDone || 'Import complete!') + ' ';
 				p.appendChild(strong);
-				p.appendChild(document.createTextNode(processed + ' records imported successfully. '));
+				p.appendChild(document.createTextNode(
+					/* translators: %d: number of records imported. */
+					sprintf(_n('%d record imported successfully.', '%d records imported successfully.', processed, 'jetonomy'), processed) + ' '
+				));
 				// What was not created and why: already imported by an earlier run
 				// (or "0 records imported" reads as a failure), and rows left out
 				// because their topic or forum was not imported (or the source
@@ -1675,8 +1687,15 @@
 				var link = document.createElement('a');
 				link.href = '';
 				link.textContent = Jetonomy.i18n.reloadPage || 'Reload page';
+				// Split around the placeholder so the link can sit anywhere the
+				// translation puts it.
+				var reloadParts = (
+					/* translators: %s: the "Reload page" link. */
+					__('%s to see updated status.', 'jetonomy')
+				).split('%s');
+				p.appendChild(document.createTextNode(reloadParts[0]));
 				p.appendChild(link);
-				p.appendChild(document.createTextNode(' to see updated status.'));
+				p.appendChild(document.createTextNode(reloadParts.slice(1).join('%s')));
 				notice.appendChild(p);
 				return notice;
 			}

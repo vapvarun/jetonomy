@@ -469,7 +469,8 @@ class Template_Loader {
 		// downstream consumer evaluates. Depend on jetonomy-data so they share
 		// its enqueue context; the script-module below loads after them in
 		// document order. Callsite migration lands in WS3-B.
-		wp_enqueue_script( 'jetonomy-optimistic', JETONOMY_URL . 'assets/js/lib/optimistic.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
+		wp_enqueue_script( 'jetonomy-optimistic', JETONOMY_URL . 'assets/js/lib/optimistic.min.js', array( 'jetonomy-data', 'wp-i18n' ), JETONOMY_VERSION, true );
+		\Jetonomy\script_translations( 'jetonomy-optimistic' );
 		wp_enqueue_script( 'jetonomy-smart-dropdown', JETONOMY_URL . 'assets/js/lib/smart-dropdown.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
 
 		// Shared Pro custom-field collector (window.jetonomyCollectCustomFields).
@@ -711,10 +712,11 @@ class Template_Loader {
 		wp_enqueue_script(
 			'jetonomy-composer',
 			JETONOMY_URL . 'assets/js/composer.js',
-			array( 'jetonomy-modals', 'jetonomy-rest' ),
+			array( 'jetonomy-modals', 'jetonomy-rest', 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-composer' );
 
 		// Localize REST data for composer.js (image upload + instant search).
 		// 1.4.0 A.1 commit 3: legacy `ajaxUrl` + `nonce` keys removed; the

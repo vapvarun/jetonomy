@@ -2,8 +2,9 @@
  * Jetonomy — Tags admin page.
  *
  * Create / edit / delete tags via AJAX, including the edit modal and
- * bulk-delete flow. All user-visible strings come from
- * window.jetonomyAdmin.i18n. Loaded via the conditional enqueue in
+ * bulk-delete flow. User-visible strings come from
+ * window.jetonomyAdmin.i18n, except the pluralized attached-posts confirm,
+ * which uses wp.i18n. Loaded via the conditional enqueue in
  * Admin::enqueue_assets when the hook matches the Tags page.
  */
 (function () {
@@ -101,7 +102,11 @@
 			var count = parseInt(this.dataset.count || '0', 10);
 			var msg = i18n.tagDeleteConfirm || 'Delete this tag?';
 			if (count > 0) {
-				msg = (i18n.tagDeleteAttachedPrefix || 'This tag is attached to') + ' ' + count + ' ' + (i18n.tagDeleteAttachedSuffix || 'posts. Delete it and detach from all posts?');
+				msg = wp.i18n.sprintf(
+					/* translators: %d: number of posts the tag is attached to. */
+					wp.i18n._n( 'This tag is attached to %d post. Delete it and detach from all posts?', 'This tag is attached to %d posts. Delete it and detach from all posts?', count, 'jetonomy' ),
+					count
+				);
 			}
 			_confirm(msg, { danger: true }).then(function (ok) {
 				if (!ok) { return; }

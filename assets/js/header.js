@@ -311,8 +311,8 @@
 				['/ or Ctrl+K', ( D.i18n && D.i18n.kbSearch ) || 'Search'],
 				['j / k',       ( D.i18n && D.i18n.kbNavigate ) || 'Navigate up/down'],
 				['Enter',       ( D.i18n && D.i18n.kbOpenSelected ) || 'Open selected'],
-				['l',           ( D.i18n && D.i18n.kbUpvote ) || 'Upvote selected'],
-				['r',           ( D.i18n && D.i18n.kbReply ) || 'Reply to selected'],
+				['l',           wp.i18n.__( 'Upvote selected', 'jetonomy' )],
+				['r',           wp.i18n.__( 'Reply to selected', 'jetonomy' )],
 				['n',           ( D.i18n && D.i18n.kbHome ) || 'Home'],
 				['?',           ( D.i18n && D.i18n.kbThisHelp ) || 'This help']
 			];
