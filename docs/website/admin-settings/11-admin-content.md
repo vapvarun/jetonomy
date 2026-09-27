@@ -22,7 +22,7 @@ The filter bar at the top of the screen has four controls that can be combined f
 | Control | What it filters |
 |---|---|
 | Space filter | Show only posts from a specific space |
-| Status filter | All, Published, Pending, Spam, or Trash |
+| Status filter | All, Published, Pending, Spam, or Trash (N). **All** leaves out trashed posts, the same way WordPress Posts does, and the Trash filter shows how many are in there |
 | Search box | Searches post titles |
 | Clear button | Appears when any filter is active; resets all to defaults |
 
@@ -53,13 +53,23 @@ Click **Edit** to expand an inline edit panel directly in the table row. You can
 
 Click **Save** to apply the change. Click **Cancel** to collapse the panel without saving.
 
+### Approve / Not Spam
+
+Appears on pending and spam posts. **Approve** publishes a pending post, and **Not Spam** publishes a post that was marked as spam.
+
 ### Trash
 
-Moves the post to Trash status. Trashed posts are hidden from the front end but remain in the database. Use the Status filter to view trashed posts and restore them with the **Restore** action that appears in their row.
+Moves the post to Trash status. Trashed posts are hidden from the front end but remain in the database. Open the **Trash** filter to see them.
 
 ### Spam
 
 Marks the post as spam. Spam posts are hidden from the front end. The author's reputation is not automatically adjusted by this action.
+
+### Restore and Delete Permanently
+
+A trashed post shows **Restore**, which publishes it again, and **Delete Permanently**. Deleting permanently removes the post together with its replies, votes, bookmarks, tags, subscriptions, reports and notifications, and updates the author and tag counts. It cannot be undone.
+
+Moderators can do the same without wp-admin: the moderation queue on the front end has a **Trash** tab, and a trashed topic's page offers Restore and Delete permanently to moderators.
 
 ### View
 
@@ -70,7 +80,7 @@ Opens the post on the front end in a new tab. Only appears when the post has a v
 To apply an action to multiple posts at once:
 
 1. Check the boxes next to the posts you want to affect. Check the header checkbox to select all visible rows.
-2. Choose **Approve**, **Move to Trash**, or **Mark as Spam** from the bulk action dropdown.
+2. Choose **Approve**, **Move to Trash**, or **Mark as Spam** from the bulk action dropdown. In the Trash view the choices are **Restore** and **Delete Permanently**.
 3. Click **Apply**.
 
 A confirmation prompt appears before the action runs. The spinner in the toolbar indicates the request is in flight.
@@ -88,7 +98,7 @@ Clicking the reply count number for any post opens a filtered view showing only 
 | Published | Visible to all users with read access |
 | Pending | Created by a member at trust level 0 and awaiting first-post review |
 | Spam | Flagged or manually marked as spam |
-| Trash | Soft-deleted; not visible on the front end |
+| Trash | Soft-deleted; not visible on the front end. Restore it or delete it permanently from the Trash filter |
 
 > **Note:** Pending posts are held for review when the anti-spam settings require first-post moderation. Once you approve a member's first post, subsequent posts from that member publish immediately.
 
