@@ -153,6 +153,13 @@ class Subscriptions_Controller extends Base_Controller {
 			$via = 'both';
 		}
 
+		if ( 'post' === $object_type ) {
+			$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $object_id );
+			if ( is_wp_error( $live ) ) {
+				return $live;
+			}
+		}
+
 		$id = Subscription::subscribe( $user_id, $object_type, $object_id, $via );
 
 		// When INSERT IGNORE fires on a duplicate, insert_id is 0.

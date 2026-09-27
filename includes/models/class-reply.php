@@ -518,6 +518,13 @@ class Reply extends Model {
 			return new \WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
+		// A trashed or unpublished reply, or one inside such a topic, cannot
+		// become the accepted answer (409). Shared by REST and WP-CLI.
+		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'reply', $id );
+		if ( is_wp_error( $live ) ) {
+			return $live;
+		}
+
 		// Accepted answers are a Q&A workflow. Other space types read
 		// is_resolved differently (Ideas roadmap) or not at all.
 		$space = Space::find( (int) $post->space_id );

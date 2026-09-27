@@ -75,11 +75,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * DELETE ?force=true.
 	 */
 	protected function already_trashed_error(): WP_Error {
-		return new WP_Error(
-			'jetonomy_already_trashed',
-			__( 'This item is already in the trash. A moderator can restore it or delete it permanently.', 'jetonomy' ),
-			[ 'status' => 409 ]
-		);
+		return \Jetonomy\Permissions\Content_Gate::trashed_error();
 	}
 
 	/**

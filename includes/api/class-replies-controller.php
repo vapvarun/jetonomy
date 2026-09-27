@@ -224,7 +224,7 @@ class Replies_Controller extends Base_Controller {
 		 * rather than facts about the post, and a CAPTCHA is meaningless for a
 		 * mail webhook.
 		 */
-		$gate = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post );
+		$gate = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post, absint( $request->get_param( 'parent_id' ) ) );
 		if ( is_wp_error( $gate ) ) {
 			return $gate;
 		}

@@ -39,6 +39,8 @@ namespace Jetonomy\Permissions;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
 
@@ -51,17 +53,37 @@ class Content_Gate {
 	 * routing that controller through here does not change a single response
 	 * it was already producing.
 	 *
-	 * @param int    $user_id Author.
-	 * @param object $post    Post row being replied to.
+	 * @param int    $user_id   Author.
+	 * @param object $post      Post row being replied to.
+	 * @param int    $parent_id Reply being answered in a thread, 0 for top level.
 	 * @return true|\WP_Error True when the reply may proceed.
 	 */
-	public static function check( int $user_id, object $post ) {
+	public static function check( int $user_id, object $post, int $parent_id = 0 ) {
 		if ( $user_id <= 0 ) {
 			return new \WP_Error(
 				'jetonomy_not_logged_in',
 				__( 'You must be logged in to reply.', 'jetonomy' ),
 				array( 'status' => 401 )
 			);
+		}
+
+		/*
+		 * Only a published topic takes replies. A trashed one kept accepting
+		 * them on every surface - REST 201, the ability, emailed replies - so
+		 * its author could keep a thread nobody else can see alive
+		 * (Basecamp 10335997408). Drafts and scheduled topics (drafts with a
+		 * published_at) are refused too: there is no thread yet.
+		 */
+		$live = self::status_error( $post );
+		if ( $live ) {
+			return $live;
+		}
+
+		if ( $parent_id > 0 ) {
+			$live = self::target_is_live( 'reply', $parent_id );
+			if ( is_wp_error( $live ) ) {
+				return $live;
+			}
 		}
 
 		if ( Restriction::is_banned( $user_id ) ) {
@@ -147,5 +169,71 @@ class Content_Gate {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether a post or reply is published, so it may take member writes:
+	 * votes, reactions, bookmarks, follows, accepted answers, pins.
+	 *
+	 * A reply is live only when its topic is too - voting on a reply inside a
+	 * trashed topic is a write to the trashed topic. A missing target returns
+	 * true: the caller already owns its 404.
+	 *
+	 * Removals (unvote, unbookmark, unfollow) deliberately do not call this,
+	 * so a member can still undo what they did before the item was trashed.
+	 *
+	 * @param string $type 'post' or 'reply'.
+	 * @param int    $id   Object ID.
+	 * @return true|\WP_Error 409 when the target is trashed or unpublished.
+	 */
+	public static function target_is_live( string $type, int $id ) {
+		if ( 'reply' === $type ) {
+			$reply = Reply::find( $id );
+			if ( ! $reply ) {
+				return true;
+			}
+			$error = self::status_error( $reply );
+			if ( $error ) {
+				return $error;
+			}
+			$id = (int) $reply->post_id;
+		}
+
+		$post = Post::find( $id );
+
+		return ( $post ? self::status_error( $post ) : null ) ?? true;
+	}
+
+	/**
+	 * The one "this item is in the trash" error, shared with
+	 * Base_Controller::already_trashed_error() so the REST edit/trash paths
+	 * and the write gates answer with the same code.
+	 */
+	public static function trashed_error(): \WP_Error {
+		return new \WP_Error(
+			'jetonomy_already_trashed',
+			__( 'This item is already in the trash. A moderator can restore it or delete it permanently.', 'jetonomy' ),
+			array( 'status' => 409 )
+		);
+	}
+
+	/**
+	 * 409 for a row that is not published, null when it is.
+	 *
+	 * @param object $row Post or reply row.
+	 */
+	private static function status_error( object $row ): ?\WP_Error {
+		$status = (string) ( $row->status ?? 'publish' );
+		if ( 'publish' === $status ) {
+			return null;
+		}
+		if ( 'trash' === $status ) {
+			return self::trashed_error();
+		}
+		return new \WP_Error(
+			'jetonomy_not_published',
+			__( 'This content is not published, so it cannot be replied to, voted on or reacted to.', 'jetonomy' ),
+			array( 'status' => 409 )
+		);
 	}
 }

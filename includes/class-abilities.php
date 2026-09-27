@@ -365,7 +365,7 @@ class Abilities {
 					 * 403 and the ability created reply #2411 in the same
 					 * space, for the same member.
 					 */
-					return \Jetonomy\Permissions\Content_Gate::check( get_current_user_id(), $post );
+					return \Jetonomy\Permissions\Content_Gate::check( get_current_user_id(), $post, (int) ( $input['parent_id'] ?? 0 ) );
 				},
 				'meta'                => [
 					'annotations'  => [
@@ -1405,6 +1405,11 @@ class Abilities {
 		$object_type = sanitize_text_field( $input['object_type'] );
 		$object_id   = (int) $input['object_id'];
 		$value       = (int) $input['value'];
+
+		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $object_type, $object_id );
+		if ( is_wp_error( $live ) ) {
+			return $live;
+		}
 
 		$result = Vote::cast( $user_id, $object_type, $object_id, $value );
 		if ( is_wp_error( $result ) ) {

@@ -5,6 +5,7 @@ use WP_UnitTestCase;
 use Jetonomy\DB\Schema;
 use Jetonomy\Models\Category;
 use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
 use Jetonomy\Permissions\Content_Gate;
@@ -176,5 +177,55 @@ class ContentGateTest extends WP_UnitTestCase {
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'jetonomy_not_logged_in', $result->get_error_code() );
+	}
+
+	/*
+	 * Trashed and unpublished targets (Basecamp 10335997408): a trashed topic
+	 * took replies (201) and votes (200) from its author on every surface.
+	 */
+
+	public function test_a_trashed_post_accepts_no_replies(): void {
+		Post::update( $this->post_id, [ 'status' => 'trash' ] );
+
+		$result = Content_Gate::check( $this->member_id, $this->post() );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'jetonomy_already_trashed', $result->get_error_code() );
+		$this->assertSame( 409, $result->get_error_data()['status'] );
+	}
+
+	public function test_a_draft_post_accepts_no_replies(): void {
+		Post::update( $this->post_id, [ 'status' => 'draft' ] );
+
+		$result = Content_Gate::check( $this->member_id, $this->post() );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'jetonomy_not_published', $result->get_error_code() );
+	}
+
+	public function test_a_trashed_parent_reply_accepts_no_threaded_replies(): void {
+		$reply_id = (int) Reply::create( [ 'post_id' => $this->post_id, 'author_id' => 1, 'content' => '<p>r</p>' ] );
+		Reply::update( $reply_id, [ 'status' => 'trash' ] );
+
+		$result = Content_Gate::check( $this->member_id, $this->post(), $reply_id );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'jetonomy_already_trashed', $result->get_error_code() );
+	}
+
+	public function test_live_targets_accept_writes_and_trashed_ones_do_not(): void {
+		$reply_id = (int) Reply::create( [ 'post_id' => $this->post_id, 'author_id' => 1, 'content' => '<p>r</p>' ] );
+
+		$this->assertTrue( Content_Gate::target_is_live( 'post', $this->post_id ), 'control: a published post is live' );
+		$this->assertTrue( Content_Gate::target_is_live( 'reply', $reply_id ), 'control: a published reply is live' );
+
+		Post::update( $this->post_id, [ 'status' => 'trash' ] );
+
+		$this->assertSame( 'jetonomy_already_trashed', Content_Gate::target_is_live( 'post', $this->post_id )->get_error_code() );
+		$this->assertSame(
+			'jetonomy_already_trashed',
+			Content_Gate::target_is_live( 'reply', $reply_id )->get_error_code(),
+			'a live reply inside a trashed topic is not a live target'
+		);
 	}
 }

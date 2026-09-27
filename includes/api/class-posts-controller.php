@@ -1143,6 +1143,14 @@ class Posts_Controller extends Base_Controller {
 		// Toggle: unpin if already pinned, pin if not.
 		$new_value = $post->is_sticky ? 0 : 1;
 
+		// Pinning a trashed or unpublished topic is refused; unpinning stays open.
+		if ( 1 === $new_value ) {
+			$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $id );
+			if ( is_wp_error( $live ) ) {
+				return $live;
+			}
+		}
+
 		// Cap the number of pinned topics per space so the top of a space
 		// stays scarce. Default 3, filterable per space. Only checked when
 		// pinning (not when unpinning), and a post already counted toward the

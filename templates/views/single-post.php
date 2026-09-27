@@ -35,6 +35,13 @@ $jt_can_moderate_here = $jt_viewer_id
 	? \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'moderate', (int) $post->space_id )
 	: false;
 
+// Only a published topic takes member writes: Content_Gate refuses replies,
+// votes, reactions, bookmarks, follows and pins on anything else with a 409
+// (Basecamp 10335997408). Every write control below keys off this one flag
+// so the page never offers what the server refuses. The status notice (with
+// Restore / Delete permanently for moderators on trash) still renders.
+$jt_is_live = 'publish' === $post->status;
+
 // The non-published (pending / trash / spam) gate that used to live here is
 // now inside Permission_Engine::can_read_post() below — the same author-or-
 // moderator rule, same 404 + "Post not found" outcome, but enforced for the
@@ -390,7 +397,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// button to the meta row (it lands at the trailing edge
 					// via margin-inline-start: auto). Titled posts get the
 					// usual title-row with Follow on the right.
-					$jt_show_follow = is_user_logged_in();
+					$jt_show_follow = is_user_logged_in() && $jt_is_live;
 					if ( $jt_show_follow ) {
 						$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
 					}
@@ -582,7 +589,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 						<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
 							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
-							<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
+							<?php if ( $jt_is_live && jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 								aria-pressed="<?php echo 1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteUp"
@@ -643,7 +650,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"
 					aria-label="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<?php
-				if ( is_user_logged_in() ) :
+				if ( is_user_logged_in() && $jt_is_live ) :
 					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
 					?>
 					<button class="jt-act jt-bookmark-btn <?php echo $is_bookmarked ? esc_attr( 'bookmarked' ) : ''; ?>"
@@ -722,7 +729,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( $jt_can_moderate_here ) : ?>
+							<?php if ( $jt_can_moderate_here && $jt_is_live ) : ?>
 								<?php
 								/*
 								 * "Pin to space", not bare "Pin". Pro's
@@ -768,7 +775,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						</div>
 					</div>
 				<?php endif; ?>
-				<?php do_action( 'jetonomy_post_actions', $post ); ?>
+				<?php
+				// Pro hangs React, Pin to community and Add Poll here - all writes.
+				if ( $jt_is_live ) {
+					do_action( 'jetonomy_post_actions', $post );
+				}
+				?>
 				</div>
 			</article>
 
@@ -950,7 +962,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			// then 403s. Gate the composer on the same permission the server enforces so
 			// a read-only member never sees a Post Reply box they cannot submit - the
 			// Vote / New-Topic seam, applied to the reply surface.
-			$jt_can_reply_here = $jt_viewer_id
+			$jt_can_reply_here = $jt_is_live
+				&& $jt_viewer_id
 				&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
 			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
