@@ -279,6 +279,8 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Improve  - Changing a space so it no longer takes join requests now settles pending requests: members join if the space opened, and are told no if it became invite-only.
 * Improve  - Notifications no longer lead to banned members or to posts and replies that were removed.
 * Improve  - The remaining English-only text in admin screens, keyboard shortcuts, and the composer can now be translated.
+* Improve  - Scheduled topics publish at their scheduled time instead of up to an hour late, and scheduling confirms the time instead of saying the draft was saved.
+* Improve  - The reply and topic editors gain a Code block button, and no longer claim Markdown support the editor does not have.
 * Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
 * Fix      - bbPress imports keep sticky topics and threaded replies, and re-running the import restores threading on replies an earlier version imported flat.
 * Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.
@@ -295,6 +297,10 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Fix      - Denying or approving the same member's join request a second time now works.
 * Fix      - Accepting an answer again no longer awards the reputation twice.
 * Fix      - The keyboard shortcut help Close button is readable in dark mode, and the profile hover card uses your renamed topic label.
+* Fix      - Deleting a member no longer archives their spaces when the site admin is already a space admin there.
+* Fix      - Wide tables in topics and replies scroll sideways on phones instead of breaking every word, and the Post Topic button fits on small screens.
+* Fix      - A trashed topic no longer offers its author Delete or Edit, deleting it again returns an error instead of a false success, and delete confirmations focus Cancel.
+* Fix      - Scheduling rejects past dates, a missing time, and a duplicate submit.
 * Dev      - New POST /posts/{id}/view REST route counts a topic view, and GET /posts/{id} no longer counts one, so apps call the new route when they show a topic.
 * Dev      - wp jetonomy reply unaccept is new, reply accept marks the reply itself, space create accepts the feed type, and space delete --mode=purge --yes skips the prompt as documented.
 
