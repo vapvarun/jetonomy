@@ -179,8 +179,8 @@ wp_localize_script(
 			'kbThisHelp'       => esc_html__( 'This help', 'jetonomy' ),
 			/* translators: 1: trust level number, 2: reputation points. */
 			'trustLevelFormat' => __( 'Level %1$d · %2$d rep', 'jetonomy' ),
-			/* translators: %s: plural reply label. The %%1$d (post count) and %%2$d (reply count) are filled in by JS. */
-			'hcStatsFormat'    => sprintf( __( '%%1$d posts · %%2$d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			/* translators: 1: plural topic label, 2: plural reply label. The %%1$d (topic count) and %%2$d (reply count) are filled in by JS. */
+			'hcStatsFormat'    => sprintf( __( '%%1$d %1$s · %%2$d %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 		),
 	)
 );
