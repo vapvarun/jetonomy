@@ -370,7 +370,10 @@
   @media ( max-width: 640px ) {
     .jt-form { padding: 16px; }
     .jt-form-actions { flex-direction: column; align-items: stretch; }
-    .jt-form-actions .jt-btn { width: 100%; text-align: center; }
+    /* Direct children only: a composite control inside the row (the
+       .jt-publish-mode split button) sizes its own halves. A descendant
+       selector stretched its chevron to 100% and crushed the submit label. */
+    .jt-form-actions > .jt-btn { width: 100%; text-align: center; }
   }
 
   /* 1.4.0 G5/G6: cover-image uploader + Lucide icon picker on the
@@ -3254,12 +3257,19 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 
 .jt-post-body table,
-.jt-reply-body table {
+.jt-reply-body table,
+.jt-feed-card-body table {
 	/* Tables with many columns get their own horizontal scroll
-	   inside the post body; the rest of the page stays put. */
+	   inside the post body (and the feed card, which renders the
+	   full topic); the rest of the page stays put. */
 	display: block;
 	max-width: 100%;
 	overflow-x: auto;
+	/* Undo the body's overflow-wrap: anywhere for cells. It shrinks each
+	   cell's min-content to one character, so the table squeezed into the
+	   column breaking every word instead of scrolling. */
+	overflow-wrap: normal;
+	word-break: normal;
 }
 
 .jt-post-body iframe,
