@@ -248,7 +248,16 @@
 
 	/* ── Keyboard Shortcuts ── */
 	var shortcutOpen = false;
+	var shortcutOpener = null;
 	document.addEventListener('keydown', function (e) {
+		// The help dialog is modal: Escape (or ?) closes it, Tab stays on its
+		// only control, and no page shortcut fires behind it (QA 10344422080).
+		if (shortcutOpen) {
+			var helpClose = document.querySelector('.jt-shortcut-modal button');
+			if (e.key === 'Escape' || e.key === '?') { e.preventDefault(); window.jtCloseShortcutHelp(); }
+			else if (e.key === 'Tab' && helpClose) { e.preventDefault(); helpClose.focus(); }
+			return;
+		}
 		var tag = (e.target.tagName || '').toLowerCase();
 		if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) { return; }
 
@@ -297,13 +306,17 @@
 		}
 		if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
-			if (shortcutOpen) { window.jtCloseShortcutHelp(); return; }
 			shortcutOpen = true;
+			shortcutOpener = document.activeElement;
 			var modal = document.createElement('div');
 			modal.className = 'jt-shortcut-help';
 			var box = document.createElement('div');
 			box.className = 'jt-shortcut-modal';
+			box.setAttribute('role', 'dialog');
+			box.setAttribute('aria-modal', 'true');
+			box.setAttribute('aria-labelledby', 'jt-shortcut-help-title');
 			var h3 = document.createElement('h3');
+			h3.id = 'jt-shortcut-help-title';
 			h3.textContent = D.i18n.shortcuts;
 			box.appendChild(h3);
 			var tbl = document.createElement('table');
@@ -334,12 +347,15 @@
 			modal.appendChild(box);
 			document.body.appendChild(modal);
 			modal.addEventListener('click', function (ev) { if (ev.target === modal) { window.jtCloseShortcutHelp(); } });
+			closeBtn.focus();
 		}
 	});
 	window.jtCloseShortcutHelp = function () {
 		shortcutOpen = false;
 		var m = document.querySelector('.jt-shortcut-help');
 		if (m) { m.remove(); }
+		if (shortcutOpener && shortcutOpener.isConnected && shortcutOpener.focus) { shortcutOpener.focus(); }
+		shortcutOpener = null;
 	};
 
 	/* ── User Hover Cards ── */
