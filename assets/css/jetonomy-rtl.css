@@ -2558,12 +2558,17 @@
 /* ── G8: Keyboard Shortcuts ── */
 .jt-kb-focus { outline: 2px solid var(--jt-accent) !important; outline-offset: -2px; }
 .jt-shortcut-help { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
-.jt-shortcut-modal { background: var(--jt-bg); border-radius: var(--jt-radius-lg); padding: 24px; max-width: 360px; width: 90%; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
-.jt-shortcut-modal h3 { margin: 0 0 16px; }
+/* Appended to <body>, OUTSIDE .jt-app, so nothing from the app reset reaches it:
+   the text and the Close button inherited the THEME's colours (Reign paints
+   buttons black, unreadable on the dark modal). Declare colour + font from the
+   :root tokens so it follows light/dark on every theme. */
+.jt-shortcut-modal { background: var(--jt-bg); color: var(--jt-text); font-family: var(--jt-font); border-radius: var(--jt-radius-lg); padding: 24px; max-width: 360px; width: 90%; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
+.jt-shortcut-modal h3 { margin: 0 0 16px; color: var(--jt-text); font-family: var(--jt-font-heading); }
 .jt-shortcut-modal table { width: 100%; }
 .jt-shortcut-modal td { padding: 6px 0; }
 .jt-shortcut-modal kbd { background: var(--jt-bg-muted); padding: 2px 8px; border-radius: 4px; font-family: var(--jt-font-mono); border: 1px solid var(--jt-border); }
-.jt-shortcut-modal button { margin-top: 16px; width: 100%; padding: 8px; border-radius: var(--jt-radius); border: 1px solid var(--jt-border); background: none; cursor: pointer; }
+.jt-shortcut-modal button { margin-top: 16px; width: 100%; padding: 8px; border-radius: var(--jt-radius); border: 1px solid var(--jt-border-strong); background: var(--jt-bg); color: var(--jt-text); font: inherit; font-weight: 600; cursor: pointer; }
+.jt-shortcut-modal button:hover, .jt-shortcut-modal button:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); }
 
 /* ── G9: Emoji Picker ── */
 .jt-emoji-picker { position: fixed; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; width: 220px; }

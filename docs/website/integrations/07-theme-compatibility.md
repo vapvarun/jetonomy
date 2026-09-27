@@ -139,6 +139,106 @@ This approach is update-safe and does not require template overrides.
 | Semantic | `--jt-success`, `--jt-warn`, `--jt-danger` and their `-light` variants |
 | Radius | `--jt-radius`, `--jt-radius-sm`, `--jt-radius-lg`, `--jt-radius-full` |
 
+## Troubleshooting
+
+Community pages (`/community/`, spaces, topics, profiles) are not WordPress pages. Jetonomy renders them itself: your theme's normal header, then the community, then your theme's normal footer. It does not load the theme's page template or sidebar, so a community page has exactly one site header by design.
+
+Each entry below was reproduced on the supported themes (Reign, BuddyX, BuddyX Pro).
+
+### The site header stretches edge-to-edge, or the footer widgets disappear, on community pages only
+
+**Symptom:** on `/community/` the logo and menu jump to the far edges of the screen while every other page keeps them centred, or the footer widget row is gone on community pages.
+
+**Likely causes**
+
+- **Container Width** is set to **Full Width** or **Custom**, or **Theme Sidebar** is set to **Hide on community pages**, on Jetonomy 2.0.0 or earlier. Those versions applied the override to every theme container on the page, including the header and footer ones.
+
+**Check in order**
+
+1. Open **Jetonomy → Settings → Appearance → Layout**.
+2. Note whether Container Width or Theme Sidebar is set to anything other than **Theme Default**.
+3. Check your Jetonomy version under **Plugins**.
+
+**Fix**
+
+- Update to Jetonomy 2.0.1 or later. The Layout overrides now apply only to the wrappers around the community, so the header, the footer, and the footer widgets keep the theme's layout.
+- If you cannot update yet, set both options back to **Theme Default**.
+
+**Verify:** open a topic. The logo and menu line up with the rest of your site, the community content uses the width you picked, and the footer widgets show.
+
+### Content is squeezed next to a sidebar on a page that shows a Jetonomy block or shortcode
+
+**Symptom:** a normal WordPress page that holds a Jetonomy block (Forum Feed, Navigation, Space List, and so on) or shortcode shows the content in a narrow column with the theme's sidebar beside it.
+
+**Likely causes**
+
+- That page is a regular WordPress page, so the theme's page layout applies to it, including its default right sidebar. The Jetonomy Layout settings do not reach it, because they only apply on community routes.
+
+**Check in order**
+
+1. Edit the page and look at the theme's layout control for that page.
+
+**Fix**
+
+- **BuddyX and BuddyX Pro:** in the page editor, open **Page → Template** and choose **Page No Sidebar**.
+- **Reign:** in the page editor, open the **Reign Custom Settings** box and set **Content Layout** to **Full Width** (or **Full Width (No Subheader)** to also drop the page title bar).
+
+**Verify:** reload the page. The block uses the full content width and the sidebar is gone.
+
+### I changed my "Community" page (template, layout, or content) and nothing changed
+
+**Symptom:** you edited a WordPress page called Community, or the page set as your homepage, and `/community/` (or the homepage) still looks exactly the same.
+
+**Likely causes**
+
+- Jetonomy owns every URL under your community slug. A WordPress page with the same slug as the community (for example a page named `community` while the slug is `community`) is never shown, so its template and content have no effect.
+- With **Show the community home on the site front page** on, the community replaces the homepage entirely, so the homepage's page template and content are not used either.
+
+**Check in order**
+
+1. Open **Jetonomy → Settings → General** and note the community slug and whether the community is shown on the front page.
+2. Compare the slug with the page you edited.
+
+**Fix**
+
+- Change the community's width and sidebar from **Jetonomy → Settings → Appearance → Layout**, not from a page template.
+- If you want your own content on that page, give the page a different slug, and link to the community from it or place Jetonomy blocks on it.
+
+**Verify:** the Layout change shows on `/community/` after a reload.
+
+### It looks like there are two headers or two menus
+
+**Symptom:** a second bar of links (Community, Search, Leaderboard, My Profile) appears under your site header, or the header is very tall and lists every page on the site.
+
+**Likely causes**
+
+- The bar under the header is Jetonomy's community navigation. It is part of the community, not a second copy of your site header.
+- A header that lists every page on the site means the theme has no menu assigned to its main menu location, so it falls back to listing all pages. This happens most often right after switching themes, because menu assignments are stored per theme.
+
+**Check in order**
+
+1. Compare the extra bar with the site header. If it holds Community, Search, and Leaderboard links, it is the community navigation.
+2. Open **Appearance → Menus → Manage Locations** and check that the theme's main menu location has a menu.
+
+**Fix**
+
+- Assign a menu to the theme's main menu location.
+- To remove the community navigation bar (for example because you added the same links to your theme menu), return `false` from the `jetonomy_show_community_nav` filter:
+
+```php
+add_filter( 'jetonomy_show_community_nav', '__return_false' );
+```
+
+**Verify:** the header shows only your menu, and the community page shows one navigation bar or none, as you chose.
+
+### Still stuck - collect this for support
+
+- WordPress and PHP versions (**Tools → Site Health → Info**).
+- Jetonomy and Jetonomy Pro versions, and your active theme and its version.
+- Your **Jetonomy → Settings → Appearance → Layout** values.
+- A screenshot of the broken community page at full width and on a phone.
+- The last lines of `wp-content/debug.log` after loading the page, if debugging is on.
+
 ## What's Next?
 
 Configure your community's global settings - URL slug, pagination, and access defaults.
