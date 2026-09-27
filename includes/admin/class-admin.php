@@ -1187,6 +1187,7 @@ class Admin {
 				'membershipAdapters' => $membership_adapters,
 				'i18n'               => array(
 					'confirmDelete'           => esc_html__( 'Are you sure? This cannot be undone.', 'jetonomy' ),
+					'confirmUnban'            => esc_html__( 'Lift this restriction? The member can post again right away.', 'jetonomy' ),
 					'confirmArchiveSpace'     => esc_html__( 'Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.', 'jetonomy' ),
 					'confirmPurgeSpace'       => esc_html__( 'Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.', 'jetonomy' ),
 					/* translators: %s: the space name the operator must retype. */

@@ -188,6 +188,9 @@ final class Space_Command extends Base_Command {
 	 *   - purge
 	 * ---
 	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt for --mode=purge.
+	 *
 	 * [--format=<format>]
 	 * : Output format.
 	 * ---
