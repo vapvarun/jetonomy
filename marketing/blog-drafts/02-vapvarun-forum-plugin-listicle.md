@@ -70,7 +70,7 @@ I'll put my cards on the table: this is what I'm installing on every new communi
 
 **What it does well:**
 
-- **Custom database tables (23 of them).** This is the architectural decision that matters most. Forum content lives in `wp_jt_*` tables with proper indexes and denormalized counters. Reply counts are columns on the topic record, not `COUNT(*)` queries on page load. I've tested this at 50K+ topics with Redis and pages load in under 200ms.
+- **Custom database tables (23 of them).** This is the architectural decision that matters most. Forum content lives in `wp_jt_*` tables with proper indexes and denormalized counters. Reply counts are columns on the topic record, not a separate meta lookup or an occasional repair-tool rebuild. Built for large communities: indexed queries, paginated lists, and object-cache aware throughout.
 - **Four space types in one plugin.** Forum (threaded discussion), Q&A (with accepted answers), Ideas (with roadmap view and status tracking), and Social Feed (Twitter-like short form). You can mix them on the same site. This is the first plugin I've seen that handles all four without you installing three separate plugins and gluing them together.
 - **Six trust levels with auto-promotion.** New members are rate-limited automatically (3 posts/day, no links). As they participate, they earn higher trust levels and unlock more abilities. By the time someone reaches Trust Level 4, the community has already vetted them. I used to enforce this manually; now the plugin does it.
 - **Theme integration via `theme.json`.** Jetonomy reads your active theme's font, color, and spacing tokens and adapts automatically. This is the first forum plugin I've installed in years that didn't need custom CSS to look right.
@@ -314,9 +314,9 @@ DW Question & Answer is the free alternative to CM Answers. It does the same bas
 
 | Plugin | Free/Paid | Custom tables | Q&A | Ideas | Trust levels | REST API | Theme.json | My 2026 pick |
 |--------|:---------:|:-------------:|:---:|:-----:|:------------:|:--------:|:----------:|:------------:|
-| **Jetonomy** | Free + Pro | Yes (24) | Yes (free) | Yes (free) | Yes (6 levels) | 81 free / 141 Pro | Yes | **Yes** |
+| **Jetonomy** | Free + Pro | Yes (23) | Yes (free) | Yes (free) | Yes (6 levels) | 81 free / 141 Pro | Yes | **Yes** |
 | bbPress | Free | No | No | No | No | No | No | Small forums only |
-| wpForo | Free + Pro | Yes | Yes (Pro) | No | No | Limited | No | Solid alternative |
+| wpForo | Free + Pro | Yes | Yes (free) | No | No | Limited | No | Solid alternative |
 | Asgaros | Free + addons | Yes | No | No | No | Minimal | No | Tiny forums |
 | BuddyBoss | Paid | Mixed | No | No | No | Partial | Partial | Social sites |
 | Discourse | Free/Paid | N/A (not WP) | Yes | No | Yes | Yes | No | Not a WP plugin |
@@ -370,7 +370,7 @@ For new projects with any expectation of growth, I recommend Jetonomy. It's the 
 
 ### Is bbPress still good in 2026?
 
-bbPress still works for small, stable forums with no growth plans. But development has slowed, and at scale the architectural limitations (storing content in wp_posts, no denormalized counters, a COUNT query per row on listings) start causing real problems. For new projects, I'd pick something else.
+bbPress still works for small, stable forums with no growth plans. But development has slowed, and at scale the architectural limitations (storing content in wp_posts, counters as postmeta instead of dedicated columns, offset pagination over a shared table) start causing real problems. For new projects, I'd pick something else.
 
 ### What's the best free WordPress forum plugin?
 
@@ -378,7 +378,7 @@ Both Jetonomy and bbPress have genuinely complete free versions. Jetonomy's free
 
 ### Which WordPress forum plugin is fastest?
 
-Jetonomy - because of the architectural decisions (custom tables, denormalized counters, object cache integration). I've measured sub-200ms page loads at 50,000 topics with Redis. bbPress and wpForo will work at that scale too, but they'll need more hosting resources and more tuning to get there.
+Jetonomy - because of the architectural decisions (custom tables, denormalized counters as dedicated columns, object cache integration). It's built for large communities: indexed queries, paginated lists, and object-cache aware throughout. bbPress and wpForo will work at scale too, but they'll need more hosting resources and more tuning to get there.
 
 ### Can I migrate from bbPress to another forum plugin?
 
@@ -394,7 +394,7 @@ A forum plugin gives you threaded discussion: topics, replies, subscriptions. A 
 
 ### Is there a WordPress Q&A plugin like Stack Overflow?
 
-Yes, several. Jetonomy's Q&A space type is my current recommendation - it does accepted answers, voting, reputation, and integrates with forum/Ideas spaces if you need them later. CM Answers and DW Question & Answer are Q&A-only alternatives. wpForo has a Q&A layout in its premium version.
+Yes, several. Jetonomy's Q&A space type is my current recommendation - it does accepted answers, voting, reputation, and integrates with forum/Ideas spaces if you need them later. CM Answers and DW Question & Answer are Q&A-only alternatives. wpForo has a Q&A layout built into its free version.
 
 ---
 

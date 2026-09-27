@@ -9,7 +9,7 @@
 **Value Proposition:** Jetonomy adds a fast, self-moderating discussion platform to any WordPress site. Custom database tables for performance, trust levels that automate moderation, and a design that adapts to your theme.
 
 **Elevator Pitch (30 seconds):**
-Most WordPress forum plugins store everything in wp_posts and require constant manual moderation. Jetonomy uses custom database tables that scale to 50,000+ topics, a trust level system that lets the community moderate itself, and CSS custom properties that match any theme automatically. Free version covers forums, Q&A, ideas, search, notifications, and moderation. Pro adds reactions, messaging, polls, badges, and analytics.
+Most WordPress forum plugins store everything in wp_posts and require constant manual moderation. Jetonomy uses custom database tables built for large communities - indexed queries, paginated lists, object-cache aware - a trust level system that lets the community moderate itself, and CSS custom properties that match any theme automatically. Free version covers forums, Q&A, ideas, search, notifications, and moderation. Pro adds reactions, messaging, polls, badges, and analytics.
 
 ## Key Differentiators (use in all content)
 
@@ -18,7 +18,7 @@ Most WordPress forum plugins store everything in wp_posts and require constant m
 | Custom database tables | "Dedicated tables keep your forum fast without bloating WordPress" | "Revolutionary database architecture" |
 | Trust levels | "Members earn moderation abilities as they contribute" | "AI-powered moderation" |
 | Theme integration | "Adapts to your theme colors and fonts automatically" | "Seamless integration" |
-| Performance | "Handles 50,000 topics with sub-200ms page loads" | "Blazing fast" |
+| Performance | "Built for large communities - indexed queries, paginated lists, object-cache aware" | "Blazing fast" |
 | Modern UI | "Real-time voting, inline editing, no page reloads" | "Next-generation interface" |
 
 ## Proof Points (use when available)
@@ -27,7 +27,7 @@ Most WordPress forum plugins store everything in wp_posts and require constant m
 - 6 trust levels with automatic promotion
 - 81 REST API endpoints (141 with Pro)
 - 4 space types (forum, Q&A, ideas, feed)
-- Sub-200ms page loads with Redis at 50K topics
+- Built for large communities - indexed queries, paginated lists, object-cache aware
 - Built-in importers for bbPress and wpForo
 - 5 membership plugin integrations
 

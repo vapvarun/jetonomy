@@ -51,7 +51,7 @@ Jetonomy Pro includes an AI layer that reads every new post and reply for spam, 
 - Denormalized counters - reply counts and vote scores are on each record, not computed on load
 - Object cache support - works with Redis and Memcached when available
 - Denormalized counters on every record - listing pages never run a COUNT query per row
-- Sub-200ms page loads at 50,000 topics with Redis
+- Built for large communities - indexed queries, paginated lists, and object-cache aware throughout
 
 **Full REST API**
 
@@ -113,7 +113,7 @@ Jetonomy takes a different approach.
 
 **Custom tables, not CPTs**
 
-Community content lives in 23 dedicated MySQL tables with indexes designed for actual forum query patterns. There are no joins back to wp_posts on every page load. Reply counts and vote scores are stored directly on each record - no COUNT queries. At 50,000 topics with object caching, pages load in under 200ms.
+Community content lives in 23 dedicated MySQL tables with indexes designed for actual forum query patterns. There are no joins back to wp_posts on every page load. Reply counts and vote scores are stored directly on each record - no COUNT queries. Built for large communities: indexed queries, paginated lists, and object-cache aware throughout.
 
 **Five community modes**
 

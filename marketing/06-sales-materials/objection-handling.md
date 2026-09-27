@@ -19,7 +19,7 @@ bbPress is free, has been around since 2010, and has a large add-on ecosystem. F
 
 Where bbPress runs into real limits:
 
-- **Architecture at scale.** bbPress stores topics as WordPress posts and replies as comments or posts, with metadata in wp_postmeta. At a few thousand topics this is fine. At tens of thousands, wp_postmeta queries get slow in ways that are hard to fix without switching platforms. Jetonomy uses 23 dedicated tables with proper indexes. The performance difference at scale is measurable, not theoretical.
+- **Architecture at scale.** bbPress stores both topics and replies as WordPress custom post types, with reply/topic/voice counts as metadata in wp_postmeta. At a few thousand topics this is fine. At tens of thousands, the extra rows in wp_posts and wp_postmeta slow down every WordPress query on the site, not just the forum. Jetonomy uses 23 dedicated tables with proper indexes, so forum content never touches wp_posts or wp_postmeta.
 
 - **No Q&A or Ideas spaces.** If you want accepted answers or member voting on a roadmap, you're adding separate plugins on top of bbPress. Jetonomy includes all three space types in the free core.
 
@@ -27,7 +27,7 @@ Where bbPress runs into real limits:
 
 - **No REST API.** If you ever want to build anything custom - a mobile view, an integration, a headless front end - bbPress has no native API. Jetonomy has 81 endpoints from day one (141 with Pro).
 
-- **Development pace.** bbPress has had one minor release since 2021. Jetonomy is actively maintained by Wbcom Designs, the team behind BuddyX, BuddyPress extensions, and WPMediaVerse.
+- **Development pace.** bbPress still ships regular patch releases - 2.6.18 shipped in September 2026 - but no major version since 2.6 in 2020, so the feature set has stayed largely the same for years. Jetonomy is actively maintained by Wbcom Designs, the team behind BuddyX, BuddyPress extensions, and WPMediaVerse.
 
 **Close**
 
@@ -79,7 +79,7 @@ The key decisions:
 
 - **Denormalized counters.** Reply counts, vote scores, and post counts are stored directly on each record. There are no COUNT(*) queries running on every page load to compute these numbers.
 
-- **Object cache.** When Redis or Memcached is available, Jetonomy caches space data, user profiles, and permission results automatically. Sub-200ms page loads at 50,000 topics with Redis enabled.
+- **Object cache.** When Redis or Memcached is available, Jetonomy caches space data, user profiles, and permission results automatically. Built for large communities - indexed queries, paginated lists, and object-cache aware throughout.
 
 - **Purpose-built tables with real indexes.** List endpoints page with `LIMIT`/`OFFSET`, the same as every other forum plugin, but the query runs against dedicated forum tables with indexes on the columns actually sorted and filtered on - not `wp_posts` joined to `wp_postmeta`. Page totals come from dedicated `COUNT(*)` methods rather than loading rows to count them.
 

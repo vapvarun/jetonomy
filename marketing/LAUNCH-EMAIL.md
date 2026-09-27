@@ -90,15 +90,11 @@ No other WordPress forum plugin supports this today.
 
 ---
 
-**Did you know?**
+**Two things you won't find in other WordPress forums**
 
-Three other things in Jetonomy that competitors don't offer:
+1. **Three-layer permissions.** WordPress roles, per-space roles, and trust levels all work together. A user can be a moderator in one space and a regular member in another. Access rules can be tied to MemberPress or PMPro memberships. All of it resolves in a single permission check.
 
-1. **Denormalized counters.** Reply counts, vote scores and post counts live as columns on the record itself, so a listing page never runs a `COUNT` query per row. Page totals come from dedicated `COUNT(*)` methods instead of loading rows to count them, and everything hot is cached through the WordPress object cache - Redis or Memcached get used automatically if you have them.
-
-2. **Three-layer permissions.** WordPress roles, per-space roles, and trust levels all work together. A user can be a moderator in one space and a regular member in another. Access rules can be tied to MemberPress or PMPro memberships. All of it resolves in a single permission check.
-
-3. **Trust levels that actually gate behavior.** New members (Level 0) can't post links and are rate-limited to 3 posts per day - an automatic spam buffer that requires no configuration. As members contribute, they earn higher levels and unlock more capabilities automatically.
+2. **Trust levels that actually gate behavior.** New members (Level 0) can't post links and are rate-limited to 3 posts per day - an automatic spam buffer that requires no configuration. As members contribute, they earn higher levels and unlock more capabilities automatically.
 
 [Explore Jetonomy Pro - 17 modules] [https://wbcomdesigns.com/downloads/jetonomy-pro/]
 

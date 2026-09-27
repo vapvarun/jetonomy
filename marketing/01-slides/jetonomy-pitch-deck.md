@@ -68,7 +68,7 @@ Use cases:
 
 ## Slide 5 - Performance at Scale
 
-**Headline:** Sub-200ms page loads at 50,000 topics with Redis
+**Headline:** Built for large communities - indexed queries, paginated lists, object-cache aware
 
 **Left column - what we did:**
 - 23 custom MySQL tables with proper composite indexes
@@ -83,7 +83,7 @@ Use cases:
 - List pages stay fast regardless of table size
 - Forum traffic never impacts the rest of your WordPress site
 
-**Visual:** Query profiler showing p50/p99 at 50K-topic scale
+**Visual:** Architecture diagram - custom tables, indexes, and the object-cache layer
 
 ---
 
