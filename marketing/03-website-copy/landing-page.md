@@ -125,7 +125,7 @@ Top answers surface automatically in Q&A spaces. Flagged content goes to a moder
 | Schema.org and SEO markup | Yes | Yes |
 | 81 REST API endpoints (141 with Pro) | Yes | Yes |
 | Template overrides | Yes | Yes |
-| WordPress Abilities API (19 free, 34 across free + Pro) | Yes | Yes |
+| WordPress Abilities API (19 free, 39 across free + Pro) | Yes | Yes |
 | Multisite network activation (tables on every subsite) | Yes | Yes |
 | Translatable interface with keyboard accessibility | Yes | Yes |
 | Emoji reactions | - | Yes |

@@ -155,7 +155,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Template override system | Yes - theme/jetonomy/ | Yes - theme/bbpress/ | Partial |
 | Action and filter hooks | Yes - throughout | Yes - throughout | Yes |
 | Adapter pattern for integrations | Yes (search, email, realtime, membership) | No | No |
-| WordPress Abilities API support | Yes - 19 abilities free (34 across free + Pro) | No | No |
+| WordPress Abilities API support | Yes - 19 abilities free (39 across free + Pro) | No | No |
 | Clean uninstall (removes all data) | Yes | Partial | Yes |
 | Composer autoloader | No | No | No |
 
