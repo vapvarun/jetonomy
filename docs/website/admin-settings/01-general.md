@@ -176,6 +176,8 @@ Rename the built-in words your community uses. Each of the five nouns has a sing
 
 The labels you type are shown exactly as entered, everywhere the community renders that noun - on the front end, in the admin menu, and in the mobile app. Leave a field blank to keep the default.
 
+**Labels change words, not web addresses.** The fixed parts of community URLs stay the same whatever you call things: `/s/` for a space, `/t/` for a topic, `/u/` for a profile, `/category/`, `/my-spaces/`, `/new-space/`, `/leaderboard/` and so on. Links members have bookmarked or shared keep working when you rename a noun, and every visible link text, heading and menu item uses your label. To change the first part of every address (for example `/community/` to `/lounges/`), use the **Community Base URL** setting above.
+
 Note: a custom label bypasses translation, so on a non-English site an English custom label shows in English. Developers can override any label programmatically with the `jetonomy_label` filter (see the Developer Guide → Hooks Reference → Terminology).
 
 ## Deleting Spaces
