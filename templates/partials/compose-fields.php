@@ -150,13 +150,14 @@ endif;
 			rows="6"
 			data-wp-on--input="actions.composeTopicBodyInput"
 			data-wp-bind--disabled="context.submitting"
-			placeholder="<?php esc_attr_e( 'Share the details… (Markdown supported)', 'jetonomy' ); ?>"></textarea>
+			placeholder="<?php esc_attr_e( 'Share the details…', 'jetonomy' ); ?>"></textarea>
 	<?php else : ?>
 		<div class="jt-editor" id="jt-post-editor">
 			<div class="jt-editor-bar">
 				<button type="button" data-cmd="bold" title="<?php esc_attr_e( 'Bold', 'jetonomy' ); ?>"><strong>B</strong></button>
 				<button type="button" data-cmd="italic" title="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>"><em>I</em></button>
 				<button type="button" data-cmd="code" title="<?php esc_attr_e( 'Code', 'jetonomy' ); ?>">&lt;/&gt;</button>
+				<button type="button" data-cmd="codeblock" title="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>">{ }</button>
 				<button type="button" data-cmd="link" title="<?php esc_attr_e( 'Link', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<button type="button" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 16 ); ?></button>
 				<button type="button" data-cmd="image" title="<?php esc_attr_e( 'Upload image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>

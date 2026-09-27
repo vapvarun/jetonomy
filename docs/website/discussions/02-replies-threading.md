@@ -19,7 +19,7 @@ Replies are where conversations happen. Jetonomy's reply system supports threade
 
 ## The Reply Composer
 
-The reply composer appears at the bottom of every topic page. Click into the text area to expand the full Markdown toolbar - the same formatting options available in the post composer (bold, italic, inline code, links, block quotes, image upload, code blocks).
+The reply composer appears at the bottom of every topic page. Click into the text area to show the formatting toolbar - the same options as the topic composer (bold, italic, inline code, code block, links, block quotes, image upload).
 
 Click **Reply** to submit. A new top-level reply is added in place without a page reload. A threaded sub-reply (a reply to another reply) reloads the page so it slots into the right position under its parent.
 

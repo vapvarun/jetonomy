@@ -138,6 +138,11 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 case 'quote':
                     document.execCommand( 'formatBlock', false, 'blockquote' );
                     break;
+                case 'codeblock':
+                    // A real <pre> block: the server keeps its whitespace
+                    // (jetonomy_sanitize_editor_content), unlike typed ``` fences.
+                    document.execCommand( 'formatBlock', false, 'pre' );
+                    break;
             }
         } );
 

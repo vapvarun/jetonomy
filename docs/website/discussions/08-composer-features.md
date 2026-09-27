@@ -14,7 +14,7 @@ The composer is the box you type in when you create a new post or reply. It work
 - Where role pills appear and what they tell members
 - How link previews turn a pasted URL into a rich card
 - How members add images, and which capability gates uploads
-- How the composer's formatting toolbar and markdown shortcuts work
+- How the composer's formatting toolbar works
 
 ## @mention Autocomplete
 
@@ -161,11 +161,11 @@ Developers who need the exact capability list can find it under [Developer Notes
 
 ## The Formatting Toolbar
 
-The composer is a single rich-text editor with a small formatting toolbar - there is no separate "plain text" vs "WYSIWYG" mode to choose between. The toolbar buttons are: **bold**, **italic**, **inline code** (`</>`), **link**, **blockquote**, and **image upload**.
+The composer is a single rich-text editor with a small formatting toolbar - there is no separate "plain text" vs "WYSIWYG" mode to choose between. The toolbar buttons are: **bold**, **italic**, **inline code** (`</>`), **code block** (`{ }`), **link**, **blockquote**, and **image upload**.
 
-Members who prefer to type can also use common markdown shortcuts (`**bold**`, `*italic*`, `` `code` ``, `> quote`) directly in the editor. The toolbar and the markdown shortcuts produce the same formatted result.
+The editor does not convert typed Markdown: `**bold**`, backtick fences and `> quote` are kept as the characters you typed. Use the toolbar buttons to format; the composer hint says so ("Use the toolbar to format").
 
-Paste handling, image uploads, and @mention autocomplete all work the same way regardless of whether you click a toolbar button or type the markup yourself.
+Paste handling, image uploads, and @mention autocomplete work the same way in every composer.
 
 For more on the content editor and its fields, see [Creating Topics](01-creating-topics.md#content).
 
