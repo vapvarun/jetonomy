@@ -219,42 +219,101 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The recurring GC is armed by boot(), not activate().
+	 * The retired GC schedule is cancelled, never armed.
 	 *
-	 * This test asserted activate() for releases after the code deliberately
-	 * moved the scheduling into boot() (enabled-only, idempotent — see the
-	 * comment at class-extension.php's activate()). It had been failing since
-	 * 1.9.3 as a result: a red test asserting a contract the plugin had
-	 * intentionally abandoned. Re-pointed at boot() in 1.9.4 so it now proves
-	 * the behaviour that actually ships.
+	 * Free owns the sweep now (`jetonomy_cleanup_media`), so Pro's boot() must
+	 * not schedule `jetonomy_pro_attachments_gc` and must remove a schedule an
+	 * earlier version left behind - on `action_scheduler_init`, because AS's
+	 * store is not ready when boot() runs. Pro's Queue picks Action Scheduler
+	 * or WP-Cron at runtime, so both branches are exercised here regardless of
+	 * whether the environment loaded AS.
+	 *
+	 * @dataProvider scheduler_branches
+	 *
+	 * @param bool $use_as True = Action Scheduler branch, false = WP-Cron branch.
 	 */
-	public function test_gc_schedule_and_clear(): void {
-		$ext = new Extension();
-
-		// boot() is the real arming path, but it also registers ~15 filters and
-		// actions (uploader, REST routes, renderer, composer hooks). Those would
-		// outlive this test and change what LATER tests in the same process see —
-		// which is exactly what happened on the first attempt at this fix:
-		// AttachmentsRestTest started counting a doubly-applied download-URL
-		// filter. Snapshot the hook registry and put it back afterwards so this
-		// test proves the scheduling contract without leaking global state.
-		$hooks_before = $GLOBALS['wp_filter'];
-
-		try {
-			$ext->boot();
-		} finally {
-			$GLOBALS['wp_filter'] = $hooks_before;
+	public function test_retired_gc_schedule_is_cancelled( bool $use_as ): void {
+		if ( $use_as && ! function_exists( 'as_schedule_recurring_action' ) ) {
+			$this->markTestSkipped( 'Action Scheduler is not loaded.' );
 		}
 
-		$scheduled = function_exists( 'as_has_scheduled_action' )
-			? as_has_scheduled_action( Extension::GC_HOOK, array(), 'jetonomy' )
-			: (bool) wp_next_scheduled( Extension::GC_HOOK );
-		$this->assertTrue( (bool) $scheduled );
+		$has_as = new \ReflectionProperty( \Jetonomy_Pro\Queue::class, 'has_as' );
+		$has_as->setAccessible( true );
+		$was_as = $has_as->getValue();
+		$has_as->setValue( null, $use_as );
 
-		$ext->deactivate();
-		$still_scheduled = function_exists( 'as_has_scheduled_action' )
-			? as_has_scheduled_action( Extension::GC_HOOK, array(), 'jetonomy' )
+		try {
+			// A stale schedule left by a pre-retirement version.
+			if ( $use_as ) {
+				as_schedule_recurring_action( time() + HOUR_IN_SECONDS, DAY_IN_SECONDS, Extension::GC_HOOK, array(), 'jetonomy' );
+			} else {
+				wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', Extension::GC_HOOK );
+			}
+			$this->assertTrue( $this->gc_is_scheduled( $use_as ), 'fixture precondition: stale GC schedule seeded' );
+
+			$init_before = $this->callbacks_on( 'action_scheduler_init' );
+			( new Extension() )->boot();
+
+			// Fire only what boot() hooked onto action_scheduler_init, not the
+			// whole action: AS and free hang their own start-up work there.
+			foreach ( array_diff_key( $this->callbacks_on( 'action_scheduler_init' ), $init_before ) as $callback ) {
+				call_user_func( $callback['function'] );
+			}
+
+			$this->assertFalse( $this->gc_is_scheduled( $use_as ), 'boot() left the retired GC scheduled.' );
+		} finally {
+			// boot()'s other hooks (uploader, REST routes, renderer) are undone
+			// by WP_UnitTestCase's own hook backup/restore around every test.
+			$has_as->setValue( null, $was_as );
+		}
+	}
+
+	/**
+	 * @return array<string, array{0: bool}>
+	 */
+	public function scheduler_branches(): array {
+		return array(
+			'action scheduler' => array( true ),
+			'wp-cron'          => array( false ),
+		);
+	}
+
+	/**
+	 * gc() is a no-op: an orphan link row survives it (free's sweep owns that).
+	 */
+	public function test_retired_gc_is_a_noop(): void {
+		Model::link( 'post', 6161, 999999999, 0 ); // attachment id that does not exist.
+		( new Extension() )->gc();
+		$this->assertSame( 1, Model::count_for( 'post', 6161 ) );
+	}
+
+	/**
+	 * Whether the retired GC hook is scheduled on the given backend.
+	 *
+	 * @param bool $use_as Action Scheduler (true) or WP-Cron (false).
+	 */
+	private function gc_is_scheduled( bool $use_as ): bool {
+		return $use_as
+			? (bool) as_has_scheduled_action( Extension::GC_HOOK, array(), 'jetonomy' )
 			: (bool) wp_next_scheduled( Extension::GC_HOOK );
-		$this->assertFalse( (bool) $still_scheduled );
+	}
+
+	/**
+	 * Flat map of callbacks on a hook, keyed "priority|idx" so a diff finds new ones.
+	 *
+	 * @param string $hook Hook name.
+	 * @return array<string, array>
+	 */
+	private function callbacks_on( string $hook ): array {
+		$out = array();
+		if ( empty( $GLOBALS['wp_filter'][ $hook ] ) ) {
+			return $out;
+		}
+		foreach ( $GLOBALS['wp_filter'][ $hook ]->callbacks as $priority => $callbacks ) {
+			foreach ( $callbacks as $idx => $callback ) {
+				$out[ $priority . '|' . $idx ] = $callback;
+			}
+		}
+		return $out;
 	}
 }
