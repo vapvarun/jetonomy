@@ -301,6 +301,10 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Fix      - Wide tables in topics and replies scroll sideways on phones instead of breaking every word, and the Post Topic button fits on small screens.
 * Fix      - A trashed topic no longer offers its author Delete or Edit, deleting it again returns an error instead of a false success, and delete confirmations focus Cancel.
 * Fix      - Scheduling rejects past dates, a missing time, and a duplicate submit.
+* Fix      - Accepting an answer twice at the same moment, such as a double tap, awards the reputation once.
+* Fix      - Creating or editing a space with an unknown type is refused on every screen and in the REST API instead of storing an empty type.
+* Fix      - Imported forums and topics titled in Hindi, Bengali, Tamil, and other scripts with vowel signs keep readable addresses.
+* Fix      - wpForo imports bring over likes from current wpForo versions, in batches that survive large boards and never duplicate on a re-run.
 * Dev      - New POST /posts/{id}/view REST route counts a topic view, and GET /posts/{id} no longer counts one, so apps call the new route when they show a topic.
 * Dev      - wp jetonomy reply unaccept is new, reply accept marks the reply itself, space create accepts the feed type, and space delete --mode=purge --yes skips the prompt as documented.
 
