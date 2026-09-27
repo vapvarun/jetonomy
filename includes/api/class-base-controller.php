@@ -65,6 +65,24 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * A write against a trashed topic or reply that only makes sense on live
+	 * content (trashing it again, editing it).
+	 *
+	 * 409 Conflict, not 400: the request is well formed, it conflicts with the
+	 * item's current state. Returning 200 {"deleted":true} for a no-op told the
+	 * author it worked while nothing changed. The way forward is restore
+	 * (POST /spaces/{id}/moderation/approve/{type}/{id}) or a moderator's
+	 * DELETE ?force=true.
+	 */
+	protected function already_trashed_error(): WP_Error {
+		return new WP_Error(
+			'jetonomy_already_trashed',
+			__( 'This item is already in the trash. A moderator can restore it or delete it permanently.', 'jetonomy' ),
+			[ 'status' => 409 ]
+		);
+	}
+
+	/**
 	 * Is this user trusted enough that we should skip Akismet / content spam checks?
 	 *
 	 * Site admins (manage_options) and space admins/moderators are whitelisted:

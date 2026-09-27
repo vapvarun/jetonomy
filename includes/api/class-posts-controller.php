@@ -574,6 +574,27 @@ class Posts_Controller extends Base_Controller {
 				if ( $is_publishing && ! current_user_can( 'manage_options' ) ) {
 					return $this->permission_error();
 				}
+				if ( ! $is_publishing ) {
+					$schedule_error = $this->validate_schedule( (string) $raw_published_at, $backdate );
+					if ( $schedule_error ) {
+						return $schedule_error;
+					}
+					// A second click on the composer (or a retried request)
+					// must not queue a second copy that goes live beside the
+					// first. Same author, space, title and instant is never
+					// two intended topics.
+					$existing = Post::find_scheduled_duplicate( $user_id, $space_id, $title, $backdate );
+					if ( $existing ) {
+						return new WP_Error(
+							'jetonomy_duplicate_scheduled',
+							__( 'You already scheduled this for the same time. Find it in your profile under Drafts.', 'jetonomy' ),
+							array(
+								'status'  => 409,
+								'post_id' => (int) $existing->id,
+							)
+						);
+					}
+				}
 				$post_data['published_at'] = $backdate;
 				if ( $is_publishing ) {
 					// For backdated publishes, sync the sort/display columns so listings order correctly.
@@ -722,6 +743,11 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Trashed content is restored or purged, not edited in place.
+		if ( 'trash' === ( $post->status ?? '' ) ) {
+			return $this->already_trashed_error();
+		}
+
 		// Publish-now: an author (or moderator) can publish their own draft
 		// immediately instead of waiting for the scheduled cron run. This is the
 		// only status transition exposed through update, and it runs the exact
@@ -774,6 +800,13 @@ class Posts_Controller extends Base_Controller {
 			$backdate = $this->sanitize_backdate( $raw_published_at );
 			if ( is_wp_error( $backdate ) ) {
 				return $backdate;
+			}
+			// On a draft, published_at is the schedule, not a backdate.
+			if ( null !== $backdate && 'draft' === ( $post->status ?? '' ) ) {
+				$schedule_error = $this->validate_schedule( (string) $raw_published_at, $backdate );
+				if ( $schedule_error ) {
+					return $schedule_error;
+				}
 			}
 			if ( null !== $backdate ) {
 				$update_data['published_at']  = $backdate;
@@ -892,6 +925,37 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Validate a schedule time for a draft.
+	 *
+	 * The raw value must carry a time of day: a date alone used to be read as
+	 * midnight, so "today, no time picked" went live at the next run. The
+	 * normalized UTC value must be in the future, compared against the UTC
+	 * clock it is stored in (sanitize_backdate() already read a naive value
+	 * in the site timezone).
+	 *
+	 * @param string $raw Raw published_at from the request.
+	 * @param string $utc Normalized UTC 'Y-m-d H:i:s' from sanitize_backdate().
+	 * @return WP_Error|null Error to return, or null when the schedule is valid.
+	 */
+	private function validate_schedule( string $raw, string $utc ): ?WP_Error {
+		if ( ! preg_match( '/\d{1,2}:\d{2}/', $raw ) ) {
+			return new WP_Error(
+				'jetonomy_schedule_time_required',
+				__( 'Choose a time as well as a date to schedule this.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+		if ( strtotime( $utc . ' UTC' ) <= time() ) {
+			return new WP_Error(
+				'jetonomy_schedule_in_past',
+				__( 'The scheduled time has already passed. Choose a time in the future, or publish now.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+		return null;
+	}
+
+	/**
 	 * DELETE /posts/{id} — Soft-delete (trash) a post.
 	 *
 	 * `?force=true` deletes it permanently instead, through Post::delete()
@@ -943,6 +1007,10 @@ class Posts_Controller extends Base_Controller {
 				),
 				200
 			);
+		}
+
+		if ( 'trash' === ( $post->status ?? '' ) ) {
+			return $this->already_trashed_error();
 		}
 
 		// Post::update() detects the publish→trash transition and decrements

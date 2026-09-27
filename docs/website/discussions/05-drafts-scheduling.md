@@ -63,20 +63,22 @@ You can schedule a post to publish automatically at a specific future date and t
 1. Write your title and content.
 2. Click the **arrow** next to the **Post** button to expand the split-button menu.
 3. Select **Schedule**.
-4. A date and time picker appears. Choose when you want the post to go live.
-5. Click **Schedule Post**.
+4. A date and time picker appears. Choose the date, hour and minute you want the post to go live. Times are in the site's timezone (**Settings > General**), not your device's.
+5. Click **Schedule**.
 
-The post is saved with a Scheduled status. It does not appear publicly until the scheduled time.
+You are taken to the scheduled post, which shows when it will publish. It does not appear publicly until then.
+
+A schedule needs both a date and a time, and the time must be in the future. Scheduling the same title for the same time twice is refused, so a double click never queues a second copy.
 
 Scheduled posts appear in your **Drafts** tab with a "Scheduled" label and the publish date/time displayed. You can click into a scheduled post to edit the content or change the publish time at any point before it goes live.
 
-To cancel a scheduled post and convert it back to a draft, open it and click **Unschedule**.
+To publish a scheduled post early, click **Publish now** on its row in the **Drafts** tab.
 
 ## How Scheduled Publishing Works
 
-Jetonomy publishes scheduled posts through Action Scheduler - the same background queue that powers WooCommerce - which runs its own queue runner rather than relying purely on page views. The check runs every hour. (WP-Cron remains a legacy fallback for older installs.)
+Jetonomy publishes scheduled posts through Action Scheduler - the same background queue that powers WooCommerce. It queues one job for the earliest scheduled post, due at that post's publish time, and queues the next one after it runs. Nothing runs while nothing is scheduled. (WP-Cron is the fallback when Action Scheduler is unavailable.)
 
-This means a post scheduled for 9:00 AM may publish at any point during the following hour rather than exactly on the minute.
+A post scheduled for 9:00 AM goes live at the queue's first run after 9:00 AM, normally within a minute or two. On a site with no visitors and no server cron, the queue runs on the next page view.
 
 If a post's scheduled time is missed (for example, because the queue did not run during a low-traffic period), Jetonomy will publish it on the next run. It never silently drops a scheduled post.
 

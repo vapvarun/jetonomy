@@ -475,6 +475,11 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Trashed content is restored or purged, not edited in place.
+		if ( 'trash' === ( $reply->status ?? '' ) ) {
+			return $this->already_trashed_error();
+		}
+
 		// Privacy toggle (1.9.0): same author-or-editor gate as content edits.
 		// Only applied when the client actually sent the param, so ordinary
 		// content edits don't silently reset the flag.
@@ -642,6 +647,10 @@ class Replies_Controller extends Base_Controller {
 				),
 				200
 			);
+		}
+
+		if ( 'trash' === ( $reply->status ?? '' ) ) {
+			return $this->already_trashed_error();
 		}
 
 		// Reply::update() detects the publish→trash transition and decrements

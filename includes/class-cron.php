@@ -18,6 +18,21 @@ class Cron {
 
 	private const AS_GROUP = 'jetonomy';
 
+	/**
+	 * Scheduled-topic publisher. Not recurring: one single action armed at the
+	 * earliest pending published_at and re-armed after every run (background
+	 * jobs standard, pattern 3). The old hourly poll published a topic up to 59
+	 * minutes late and ran on sites with nothing scheduled.
+	 */
+	public const PUBLISH_HOOK = 'jetonomy_publish_scheduled';
+
+	/**
+	 * Set while the publisher runs so each publish does not re-arm on its own.
+	 *
+	 * @var bool
+	 */
+	private static bool $publishing = false;
+
 	/** Keyset cursor (last processed user_id) for the batched trust sweep. */
 	private const TRUST_CURSOR_OPTION = 'jetonomy_trust_eval_cursor';
 
@@ -33,7 +48,6 @@ class Cron {
 		'jetonomy_cleanup_expired'       => HOUR_IN_SECONDS,
 		'jetonomy_prune_activity'        => DAY_IN_SECONDS,
 		'jetonomy_cleanup_notifications' => WEEK_IN_SECONDS,
-		'jetonomy_publish_scheduled'     => HOUR_IN_SECONDS,
 		'jetonomy_verification_reminder' => HOUR_IN_SECONDS,
 		// Roster expiry backstop: some membership adapters (BN Pro) hold access
 		// until expires_at and never fire jetonomy_membership_deactivated, so a
@@ -92,12 +106,14 @@ class Cron {
 			as_unschedule_all_actions( 'jetonomy_trust_evaluation_batch', [], self::AS_GROUP );
 			// …and any queued avatar Gravatar-existence checks (async, per-user).
 			as_unschedule_all_actions( 'jetonomy_gravatar_check', [], self::AS_GROUP );
+			as_unschedule_all_actions( self::PUBLISH_HOOK, [], self::AS_GROUP );
 		}
 		foreach ( array_keys( self::RECURRING ) as $hook ) {
 			wp_clear_scheduled_hook( $hook );
 		}
 		wp_clear_scheduled_hook( 'jetonomy_trust_evaluation_batch' );
 		wp_clear_scheduled_hook( 'jetonomy_gravatar_check' );
+		wp_clear_scheduled_hook( self::PUBLISH_HOOK );
 		delete_option( self::TRUST_CURSOR_OPTION );
 	}
 
@@ -127,6 +143,54 @@ class Cron {
 			// Verification reminder starts +1h so it doesn't compete with everything else at time().
 			$start = ( 'jetonomy_verification_reminder' === $hook ) ? $now + HOUR_IN_SECONDS : $now;
 			as_schedule_recurring_action( $start, $interval, $hook, [], self::AS_GROUP );
+		}
+
+		// One-time move off the hourly recurring publisher (2.0.1): drop it
+		// and arm the single action for whatever is already scheduled.
+		if ( ! get_option( 'jetonomy_publish_single_armed' ) ) {
+			update_option( 'jetonomy_publish_single_armed', 1, false );
+			self::arm_scheduled_publish();
+		}
+	}
+
+	/**
+	 * Arm the publisher for the earliest scheduled topic, or disarm it when
+	 * nothing is scheduled. Idempotent: replaces whatever was queued, so it
+	 * never stacks. Called by Post on every write that sets or clears a
+	 * schedule, and after each run.
+	 */
+	public static function arm_scheduled_publish(): void {
+		if ( self::$publishing ) {
+			return; // publish_scheduled_posts() re-arms once when it finishes.
+		}
+		// Action Scheduler's store is not ready before action_scheduler_init;
+		// an early call would silently no-op, so defer it.
+		if ( function_exists( 'as_schedule_single_action' ) && ! did_action( 'action_scheduler_init' ) ) {
+			if ( ! has_action( 'action_scheduler_init', [ self::class, 'arm_scheduled_publish' ] ) ) {
+				add_action( 'action_scheduler_init', [ self::class, 'arm_scheduled_publish' ], 20 );
+			}
+			return;
+		}
+
+		$next = \Jetonomy\Models\Post::next_scheduled_at();
+		$when = null === $next ? 0 : max( (int) strtotime( $next . ' UTC' ), time() );
+
+		if ( function_exists( 'as_schedule_single_action' ) ) {
+			// Already armed for that instant (e.g. a later schedule was added):
+			// leave it, rather than cancel and re-queue an identical action.
+			if ( $when && as_next_scheduled_action( self::PUBLISH_HOOK, [], self::AS_GROUP ) === $when ) {
+				return;
+			}
+			as_unschedule_all_actions( self::PUBLISH_HOOK, [], self::AS_GROUP );
+			if ( $when ) {
+				as_schedule_single_action( $when, self::PUBLISH_HOOK, [], self::AS_GROUP );
+			}
+			return;
+		}
+
+		wp_clear_scheduled_hook( self::PUBLISH_HOOK );
+		if ( $when ) {
+			wp_schedule_single_event( $when, self::PUBLISH_HOOK );
 		}
 	}
 
@@ -370,8 +434,20 @@ class Cron {
 	public function publish_scheduled_posts(): void {
 		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'publish_scheduled_posts' );
 		$due_posts = \Jetonomy\Models\Post::get_due_scheduled( $batch );
-		foreach ( $due_posts as $post ) {
-			\Jetonomy\Models\Post::publish_scheduled( (int) $post->id );
+
+		self::$publishing = true;
+		try {
+			foreach ( $due_posts as $post ) {
+				\Jetonomy\Models\Post::publish_scheduled( (int) $post->id );
+			}
+		} finally {
+			self::$publishing = false;
+			// Next schedule, or the rest of a backlog larger than one batch
+			// (a past-due MIN arms at time(), so it runs again right away).
+			// In finally so a failed run is retried instead of stranding every
+			// later schedule. ponytail: a post that fails every time retries on
+			// each queue run; a per-post failure counter if that ever shows up.
+			self::arm_scheduled_publish();
 		}
 	}
 }

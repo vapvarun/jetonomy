@@ -328,6 +328,17 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						esc_html_e( 'This post has been marked as spam.', 'jetonomy' );
 					} elseif ( 'trash' === $post->status ) {
 						esc_html_e( 'This post is in the trash and hidden from the community.', 'jetonomy' );
+					} elseif ( 'draft' === $post->status && ! empty( $post->published_at ) ) {
+						// published_at is UTC; show it in the site timezone.
+						echo esc_html(
+							sprintf(
+								/* translators: %s: scheduled publish date and time. */
+								__( 'Scheduled to publish on %s. It is hidden from the community until then.', 'jetonomy' ),
+								get_date_from_gmt( $post->published_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) )
+							)
+						);
+					} elseif ( 'draft' === $post->status ) {
+						esc_html_e( 'This is a draft and is hidden from the community until it is published.', 'jetonomy' );
 					} else {
 						/* translators: %s: post status */
 						echo esc_html( sprintf( __( 'This post has status: %s', 'jetonomy' ), $post->status ) );
@@ -687,14 +698,22 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						?>
 					<?php endif; ?>
 				<?php endif; ?>
-				<?php if ( $jt_can_moderate_here || (int) $post->author_id === get_current_user_id() ) : ?>
+				<?php
+				// A trashed topic is restored or deleted from the notice above,
+				// by a moderator. Edit / Make Private / Delete on it did nothing
+				// useful (DELETE on a trashed post is a 409), so its author has
+				// no menu at all and moderators keep only the moderation tools.
+				$jt_is_trashed = 'trash' === $post->status;
+				$jt_is_author  = (int) $post->author_id === get_current_user_id();
+				?>
+				<?php if ( $jt_can_moderate_here || ( $jt_is_author && ! $jt_is_trashed ) ) : ?>
 					<div class="jt-more-menu">
 						<button class="jt-act jt-more-trigger" type="button"
 							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
 						<div class="jt-more-dropdown" hidden>
-							<?php if ( (int) $post->author_id === get_current_user_id() || $jt_can_moderate_here ) : ?>
+							<?php if ( ! $jt_is_trashed && ( $jt_is_author || $jt_can_moderate_here ) ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
@@ -736,7 +755,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( (int) $post->author_id === get_current_user_id() || $jt_can_moderate_here ) : ?>
+							<?php if ( ! $jt_is_trashed && ( $jt_is_author || $jt_can_moderate_here ) ) : ?>
 								<button class="jt-more-item jt-more-item--danger"
 									data-wp-on--click="actions.deletePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"

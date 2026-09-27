@@ -230,13 +230,14 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 
 							<!-- Row action links -->
 							<div class="row-actions">
+								<?php // Trashed rows are restored or deleted, not edited - core's Trash view offers no Edit either. ?>
+								<?php if ( 'trash' !== $p->status ) : ?>
 								<span class="edit">
 									<a href="#" class="jt-edit-trigger" data-post-id="<?php echo absint( $p->id ); ?>">
 										<?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 									</a>
 									&nbsp;|&nbsp;
 								</span>
-								<?php if ( 'trash' !== $p->status ) : ?>
 									<?php if ( in_array( $p->status ?? '', array( 'spam', 'pending' ), true ) ) : ?>
 										<span class="jt-approve"><?php // Not "approve": core CSS hides .approve in every list table. Same action as the Replies screen. ?>
 											<a href="#"

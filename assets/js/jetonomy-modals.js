@@ -15,6 +15,7 @@
  *
  *   window.jetonomyConfirm( message [, opts] )
  *     opts.title?, opts.confirmLabel?, opts.cancelLabel?, opts.danger?
+ *     (danger = red confirm button, initial focus on Cancel)
  *     resolves true on confirm, false on cancel/ESC/backdrop
  *
  *   window.jetonomyAlert( message [, opts] )
@@ -248,12 +249,17 @@
 
 			document.body.appendChild( dom.overlay );
 
-			// Focus management: prompt → input first; otherwise → primary button.
+			// Focus management: prompt → input first; a danger confirm → Cancel,
+			// so a reflexive Enter backs out instead of destroying something
+			// (the button is native, Enter activates the focused one);
+			// otherwise → primary button.
 			if ( dom.input ) {
 				dom.input.focus();
 				if ( opts.defaultValue ) {
 					dom.input.select();
 				}
+			} else if ( opts.danger && dom.cancelBtn ) {
+				dom.cancelBtn.focus();
 			} else {
 				dom.okBtn.focus();
 			}

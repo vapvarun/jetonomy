@@ -237,13 +237,14 @@ if ( ! empty( $trash_count ) ) {
 
 							<!-- Row actions -->
 							<div class="row-actions">
+								<?php // Trashed rows are restored or deleted, not edited - core's Trash view offers no Edit either. ?>
+								<?php if ( 'trash' !== $r->status ) : ?>
 								<span class="edit">
 									<a href="#" class="jt-edit-trigger" data-reply-id="<?php echo absint( $r->id ); ?>">
 										<?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 									</a>
 									&nbsp;|&nbsp;
 								</span>
-								<?php if ( 'trash' !== $r->status ) : ?>
 									<?php if ( in_array( $r->status ?? '', array( 'spam', 'pending' ), true ) ) : ?>
 										<span class="jt-approve"><?php // Not "approve": core CSS hides .approve in every list table, so Approve / Not Spam never showed. ?>
 											<a href="#"

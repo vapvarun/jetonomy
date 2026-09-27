@@ -173,6 +173,10 @@ class Post extends Model {
 			);
 		}
 
+		if ( $id && 'draft' === ( $data['status'] ?? '' ) && ! empty( $data['published_at'] ) ) {
+			\Jetonomy\Cron::arm_scheduled_publish();
+		}
+
 		return $id;
 	}
 
@@ -291,6 +295,12 @@ class Post extends Model {
 			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $post->created_at ?? '' ) );
 		}
 
+		// published_at on a draft is its schedule: every write that sets or
+		// clears it moves the next publish time.
+		if ( array_key_exists( 'published_at', $data ) ) {
+			\Jetonomy\Cron::arm_scheduled_publish();
+		}
+
 		return $result;
 	}
 
@@ -403,6 +413,12 @@ class Post extends Model {
 			 * @param int $id Deleted post ID.
 			 */
 			do_action( 'jetonomy_after_delete_post', $id );
+
+			// A deleted scheduled draft may have been the one the publisher
+			// was armed for.
+			if ( $post && 'draft' === ( $post->status ?? '' ) && ! empty( $post->published_at ) ) {
+				\Jetonomy\Cron::arm_scheduled_publish();
+			}
 		}
 
 		return $result;
@@ -1753,6 +1769,48 @@ class Post extends Model {
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
+	 * Earliest schedule among scheduled drafts, or null when none is pending.
+	 *
+	 * Served by the status_created index (status = 'draft' is a small slice).
+	 *
+	 * @return string|null UTC 'Y-m-d H:i:s'.
+	 */
+	public static function next_scheduled_at(): ?string {
+		$table = static::table();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$next = static::db()->get_var( "SELECT MIN(published_at) FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL" );
+		return $next ? (string) $next : null;
+	}
+
+	/**
+	 * A scheduled draft identical to one about to be created: same author,
+	 * space, title and publish instant. Used to refuse a double-submitted
+	 * schedule. Served by the author_created index.
+	 *
+	 * @param int    $author_id    Author user ID.
+	 * @param int    $space_id     Space ID.
+	 * @param string $title        Sanitized title.
+	 * @param string $published_at UTC 'Y-m-d H:i:s'.
+	 * @return object|null
+	 */
+	public static function find_scheduled_duplicate( int $author_id, int $space_id, string $title, string $published_at ): ?object {
+		$table = static::table();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id FROM {$table} WHERE author_id = %d AND space_id = %d AND status = 'draft' AND title = %s AND published_at = %s LIMIT 1",
+				$author_id,
+				$space_id,
+				$title,
+				$published_at
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $row ? $row : null;
 	}
 
 	/**

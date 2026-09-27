@@ -12,7 +12,14 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
  */
 const jtModalI18n = () => ( ( typeof window !== 'undefined' && window.jetonomyData && window.jetonomyData.i18n ) || {} );
 
-function jetonomyConfirm( message ) {
+// opts.danger: red confirm button and initial focus on Cancel, so Enter backs
+// out of a destructive action. Delegates to the shared toolkit
+// (jetonomy-modals.js, which also handles Esc and focus trapping) wherever it
+// is loaded; the inline dialog below is only for surfaces without it.
+function jetonomyConfirm( message, opts = {} ) {
+	if ( 'function' === typeof window.jetonomyConfirm ) {
+		return window.jetonomyConfirm( message, opts );
+	}
 	return new Promise( ( resolve ) => {
 		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
@@ -30,7 +37,7 @@ function jetonomyConfirm( message ) {
 		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( false ); } );
 		const okBtn = document.createElement( 'button' );
-		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.className = 'jt-btn ' + ( opts.danger ? 'jt-btn-danger' : 'jt-btn-fill' );
 		okBtn.textContent = t.modalConfirm || 'Confirm';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( true ); } );
 		actions.appendChild( cancelBtn );
@@ -39,7 +46,7 @@ function jetonomyConfirm( message ) {
 		overlay.appendChild( box );
 		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( false ); } } );
 		document.body.appendChild( overlay );
-		okBtn.focus();
+		( opts.danger ? cancelBtn : okBtn ).focus();
 	} );
 }
 
@@ -2763,7 +2770,7 @@ const { state, actions } = store( 'jetonomy', {
             const targetId = yield jetonomyPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId, sourceTitle );
             if ( ! targetId ) return;
 
-            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', { danger: true } ) ) ) return;
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }/merge`, {
@@ -2844,7 +2851,7 @@ const { state, actions } = store( 'jetonomy', {
             const spaceSlug = el.ref.dataset.spaceSlug;
             if ( ! postId ) return;
 
-            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?', { danger: true } ) ) ) return;
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }`, {
@@ -2874,7 +2881,7 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! path ) return;
 
             const confirmMsg = btn.getAttribute( 'data-confirm' );
-            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg ) ) ) return;
+            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg, { danger: true } ) ) ) return;
 
             btn.disabled = true;
             try {
@@ -2905,7 +2912,7 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
-            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?', { danger: true } ) ) ) return;
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/replies/${ replyId }`, {
@@ -3359,7 +3366,7 @@ const { state, actions } = store( 'jetonomy', {
             // Approve does not — it is the outcome the author already asked for.
             const confirmMsg = btn.getAttribute( 'data-confirm' );
             if ( confirmMsg && 'function' === typeof window.jetonomyConfirm ) {
-                const ok = yield window.jetonomyConfirm( confirmMsg );
+                const ok = yield window.jetonomyConfirm( confirmMsg, { danger: true } );
                 if ( ! ok ) return;
             }
 
@@ -3727,16 +3734,21 @@ const { state, actions } = store( 'jetonomy', {
                 // the core post scheduler. We intentionally do NOT stamp the
                 // browser's timezone here — the scheduled time means "this time
                 // in the site's timezone", regardless of where the author is.
+                //
+                // Date AND time are both required. A missing time used to fall
+                // back to midnight, so "today, no time picked" was already in
+                // the past and went live at the next run. The server rejects
+                // a past or time-less schedule too; this only saves the trip.
                 if ( dateVal && timeVal ) {
                     publishedAt = dateVal + 'T' + timeVal + ':00';
-                } else if ( dateVal ) {
-                    publishedAt = dateVal + 'T00:00:00';
                 }
             }
             if ( o.collectSchedule && 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
-                state.isSubmitting = false;
-                state.submitLabel  = state.i18n?.schedule || 'Schedule';
-                if ( window.bnToast ) window.bnToast( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
+                const msg = state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.';
+                writeError( msg );
+                if ( window.bnToast ) window.bnToast( msg );
+                setIdle();
+                state.submitLabel = state.i18n?.schedule || 'Schedule';
                 return;
             }
 
@@ -3810,6 +3822,14 @@ const { state, actions } = store( 'jetonomy', {
                 writeError( errMsg );
                 if ( window.bnToast ) window.bnToast( errMsg );
                 setIdle();
+                // Keep the label the member chose (Schedule / Save Draft):
+                // setIdle() resets it to "Post Topic", which read as if the
+                // form had switched to publishing now.
+                if ( 'draft' === postStatus && 'state' === o.errorSink ) {
+                    state.submitLabel = ctx.showScheduler
+                        ? ( state.i18n?.schedule || 'Schedule' )
+                        : ( state.i18n?.saveDraft || 'Save Draft' );
+                }
                 return;
             }
 
@@ -3832,6 +3852,15 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
+            // Draft or scheduled: leave the form for the saved item, the same
+            // as a published topic. Staying put with the fields still filled
+            // (and the button reset to "Post Topic") made the natural next
+            // click queue a second copy. The item's page says whether it is a
+            // draft or when it is scheduled to publish.
+            if ( 'draft' === status && slug && spaceSlug && state.communityBase ) {
+                window.location.href = `${ state.communityBase }/s/${ spaceSlug }/t/${ slug }/`;
+                return;
+            }
             if ( 'draft' === status ) {
                 state.submitLabel  = state.i18n?.saveDraft || 'Save Draft';
                 setIdle();
