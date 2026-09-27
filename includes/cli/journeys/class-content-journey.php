@@ -264,25 +264,64 @@ final class Content_Journey {
 	/**
 	 * Mark a reply as the accepted answer for a post.
 	 *
-	 * @param int $post_id  Parent post ID.
+	 * Runs the same Reply::accept_as_answer() transaction as
+	 * POST /replies/{id}/accept: reply is_accepted + post accepted_reply_id /
+	 * is_resolved, jetonomy_reply_accepted, reputation. Q&A spaces only.
+	 *
+	 * @param int $post_id  Parent post ID (must own the reply).
 	 * @param int $reply_id Reply to accept.
 	 */
 	public function accept_reply( int $post_id, int $reply_id ): Journey_Result {
+		return $this->answer_transition( $post_id, $reply_id, true );
+	}
+
+	/**
+	 * Clear a reply's accepted-answer state (reverse of accept_reply()).
+	 *
+	 * Mirrors DELETE /replies/{id}/accept via Reply::unaccept_as_answer().
+	 *
+	 * @param int $post_id  Parent post ID (must own the reply).
+	 * @param int $reply_id Currently accepted reply.
+	 */
+	public function unaccept_reply( int $post_id, int $reply_id ): Journey_Result {
+		return $this->answer_transition( $post_id, $reply_id, false );
+	}
+
+	/**
+	 * Shared body of accept_reply() / unaccept_reply().
+	 *
+	 * @param int  $post_id  Parent post ID.
+	 * @param int  $reply_id Reply ID.
+	 * @param bool $accept   True to accept, false to un-accept.
+	 */
+	private function answer_transition( int $post_id, int $reply_id, bool $accept ): Journey_Result {
 		$start = microtime( true );
 
 		if ( $post_id <= 0 || $reply_id <= 0 ) {
 			return Journey_Result::fail( 'post_id and reply_id must both be positive.' );
 		}
 
-		$ok = Post::accept_reply( $post_id, $reply_id );
-		if ( ! $ok ) {
-			return Journey_Result::fail( sprintf( 'Post::accept_reply(%d, %d) returned false.', $post_id, $reply_id ) );
+		$reply = Reply::find( $reply_id );
+		if ( $reply && (int) $reply->post_id !== $post_id ) {
+			return Journey_Result::fail( sprintf( 'Reply %d belongs to post %d, not %d.', $reply_id, (int) $reply->post_id, $post_id ) );
 		}
+
+		$actor  = get_current_user_id();
+		$result = $accept ? Reply::accept_as_answer( $reply_id, $actor ) : Reply::unaccept_as_answer( $reply_id, $actor );
+		if ( is_wp_error( $result ) ) {
+			return Journey_Result::from_wp_error( $result );
+		}
+
+		$reply = Reply::find( $reply_id );
+		$post  = Post::find( $post_id );
 
 		return Journey_Result::ok(
 			[
-				'post_id'  => $post_id,
-				'reply_id' => $reply_id,
+				'post_id'           => $post_id,
+				'reply_id'          => $reply_id,
+				'is_accepted'       => (int) ( $reply->is_accepted ?? 0 ),
+				'accepted_reply_id' => (int) ( $post->accepted_reply_id ?? 0 ),
+				'is_resolved'       => (int) ( $post->is_resolved ?? 0 ),
 			],
 			[],
 			$this->duration_ms( $start )

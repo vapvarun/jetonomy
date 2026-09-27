@@ -68,7 +68,7 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | GET | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | List the membership access rules gating a space. Added 1.9.4. |
 | POST | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | Add an access rule (membership level / role / tag that grants access). Added 1.9.4. |
 | DELETE | `/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Note the path is top-level, not nested under `/spaces/{id}` - the rule id is globally unique. Added 1.9.4. |
-| GET | `/spaces/{id}/join-requests` | Space admin | List pending requests to join this space |
+| GET | `/spaces/{id}/join-requests` | Space admin | List pending requests to join this space. When a `PATCH /spaces/{id}` (or the admin screen, or `wp jetonomy space update`) changes `join_policy` / `visibility` so the space no longer takes requests, the pending ones are settled at once: approved and added as members if the space is now open, denied if it is now invite-only. Each requester gets the usual approved / not-approved notification. |
 | POST | `/spaces/{id}/join-requests/{request_id}/approve` | Space admin | Approve a join request and add the member |
 | POST | `/spaces/{id}/join-requests/{request_id}/deny` | Space admin | Deny a join request |
 | GET | `/spaces/{id}/invites` | Space admin | List the space's invite links |
@@ -210,7 +210,7 @@ Replies are threaded responses to a Post.
 
 **POST /replies/{id}/accept**
 
-Marks this reply as the accepted answer. Only the original post author or a moderator can call this. Fires the `jetonomy_reply_accepted` action hook and awards +15 reputation to the reply author.
+Marks this reply as the accepted answer. Only the original post author or a moderator can call this, and only in a Q&A space (`400 jetonomy_not_qa_space` otherwise). Fires the `jetonomy_reply_accepted` action hook and awards +15 reputation to the reply author. Re-accepting the reply that is already accepted returns 200 without firing the hook or awarding again. `wp jetonomy reply accept` runs the same transaction.
 
 ```javascript
 await fetch( `/wp-json/jetonomy/v1/replies/${replyId}/accept`, {

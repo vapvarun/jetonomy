@@ -255,8 +255,7 @@ class SpaceMember extends Model {
 			);
 		}
 
-		$visibility  = (string) ( $space->visibility ?? 'public' );
-		$join_policy = (string) ( $space->join_policy ?? 'open' );
+		$mode = Space::join_mode( (string) ( $space->visibility ?? 'public' ), (string) ( $space->join_policy ?? 'open' ) );
 
 		/*
 		 * A hidden space is not discoverable, so there is no such thing as
@@ -265,7 +264,7 @@ class SpaceMember extends Model {
 		 * the same error, so the response cannot be used to tell a hidden space
 		 * apart from an invite-only one by probing ids.
 		 */
-		if ( 'invite' === $join_policy || 'hidden' === $visibility ) {
+		if ( 'invite' === $mode ) {
 			return new \WP_Error(
 				'jetonomy_invite_only',
 				__( 'This space is invite-only.', 'jetonomy' ),
@@ -273,7 +272,7 @@ class SpaceMember extends Model {
 			);
 		}
 
-		if ( 'approval' === $join_policy || 'private' === $visibility ) {
+		if ( 'request' === $mode ) {
 			if ( JoinRequest::find_pending( $space_id, $user_id ) ) {
 				return [
 					'status'          => 'pending',

@@ -463,6 +463,100 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Accept a reply as its post's answer - the one "accept" transaction.
+	 *
+	 * Writes both sides (reply is_accepted + post accepted_reply_id /
+	 * is_resolved), fires jetonomy_reply_accepted (Notifier, Pro badges) and
+	 * awards the reply author. REST and WP-CLI both call this; the CLI used to
+	 * run Post::accept_reply() alone, leaving the reply's own flag at 0.
+	 *
+	 * Authorization is the caller's job (REST: post author or close_posts;
+	 * CLI: whoever runs it). Idempotent: re-accepting the current answer is a
+	 * no-op, so a retried request cannot double-award reputation.
+	 *
+	 * @param int $id       Reply ID.
+	 * @param int $actor_id Who accepted (0 = system/CLI). No self-award.
+	 * @return true|\WP_Error
+	 */
+	public static function accept_as_answer( int $id, int $actor_id ) {
+		$reply = static::find( $id );
+		if ( ! $reply ) {
+			return new \WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		$post = Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return new \WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+
+		// Accepted answers are a Q&A workflow. Other space types read
+		// is_resolved differently (Ideas roadmap) or not at all.
+		$space = Space::find( (int) $post->space_id );
+		if ( ! $space || 'qa' !== ( $space->type ?? '' ) ) {
+			return new \WP_Error(
+				'jetonomy_not_qa_space',
+				__( 'Accepted answers only apply to Q&A spaces.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! empty( $reply->is_accepted ) && (int) ( $post->accepted_reply_id ?? 0 ) === $id ) {
+			return true;
+		}
+
+		self::mark_accepted( $id );
+		Post::accept_reply( (int) $post->id, $id );
+
+		do_action( 'jetonomy_reply_accepted', $id, (int) $post->id );
+
+		$author_id = (int) $reply->author_id;
+		if ( $author_id && $author_id !== $actor_id ) {
+			UserProfile::find_or_create( $author_id );
+			\Jetonomy\Trust\Reputation::award( $author_id, 'reply_accepted' );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Reverse of accept_as_answer(): clear both sides, fire
+	 * jetonomy_reply_unaccepted, revoke the acceptance reputation.
+	 *
+	 * @param int $id       Reply ID.
+	 * @param int $actor_id Who un-accepted (0 = system/CLI). No self-revoke.
+	 * @return true|\WP_Error
+	 */
+	public static function unaccept_as_answer( int $id, int $actor_id ) {
+		$reply = static::find( $id );
+		if ( ! $reply ) {
+			return new \WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		$post = Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return new \WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+
+		$author_id = (int) $reply->author_id;
+		if ( empty( $reply->is_accepted ) ) {
+			return new \WP_Error(
+				'jetonomy_not_accepted',
+				__( 'This reply is not the accepted answer.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		self::unmark_accepted( $id );
+		Post::clear_accepted_reply( (int) $post->id );
+
+		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
+
+		if ( $author_id && $author_id !== $actor_id ) {
+			\Jetonomy\Trust\Reputation::revoke( $author_id, 'reply_accepted' );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Return the highest reply id for a post (1.4.0 C.5 fallback for posts
 	 * whose Post row didn't keep last_reply_id in sync).
 	 *

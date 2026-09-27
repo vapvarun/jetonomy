@@ -4002,9 +4002,9 @@
       "handler": "CLI\\Commands\\Reply_Command",
       "subcommands": [
         "create",
-        "list",
-        "update",
-        "delete"
+        "delete",
+        "accept",
+        "unaccept"
       ]
     },
     {

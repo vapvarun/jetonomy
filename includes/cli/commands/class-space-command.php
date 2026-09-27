@@ -45,7 +45,7 @@ final class Space_Command extends Base_Command {
 	 *   - forum
 	 *   - qa
 	 *   - ideas
-	 *   - chat
+	 *   - feed
 	 * ---
 	 *
 	 * [--visibility=<vis>]
@@ -117,7 +117,7 @@ final class Space_Command extends Base_Command {
 	 *   - forum
 	 *   - qa
 	 *   - ideas
-	 *   - chat
+	 *   - feed
 	 * ---
 	 *
 	 * [--visibility=<vis>]

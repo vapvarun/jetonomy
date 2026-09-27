@@ -18,7 +18,6 @@ use Jetonomy\Models\Reply;
 use Jetonomy\Models\Revision;
 use Jetonomy\Models\Notification;
 use Jetonomy\Models\UserProfile;
-use Jetonomy\Trust\Reputation;
 
 class Replies_Controller extends Base_Controller {
 
@@ -685,22 +684,8 @@ class Replies_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		$space_id        = (int) $post->space_id;
-		$post_author_id  = (int) $post->author_id;
-		$reply_author_id = (int) $reply->author_id;
-
-		// Accept-answer is a Q&A workflow. Other space types use the
-		// roadmap status (Ideas) or have no equivalent (Forum, Feed), so
-		// accepting on them would write `is_resolved=1` data that those
-		// types' read paths interpret differently. Refuse cleanly.
-		$space = \Jetonomy\Models\Space::find( $space_id );
-		if ( ! $space || 'qa' !== ( $space->type ?? '' ) ) {
-			return new \WP_Error(
-				'jetonomy_not_qa_space',
-				__( 'Accepted answers only apply to Q&A spaces.', 'jetonomy' ),
-				array( 'status' => 400 )
-			);
-		}
+		$space_id       = (int) $post->space_id;
+		$post_author_id = (int) $post->author_id;
 
 		// Only post author or a moderator/admin may accept a reply.
 		$can_accept = ( $post_author_id === $user_id )
@@ -710,19 +695,12 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Mark the reply as accepted and resolve the post.
-		Reply::mark_accepted( $id );
-		Post::accept_reply( (int) $post->id, $id );
-
-		// Fire action for Notifier and other listeners.
-		do_action( 'jetonomy_reply_accepted', $id, (int) $post->id );
-
-		// Award reputation to the reply author (skip self-award).
-		if ( $reply_author_id && $reply_author_id !== $user_id ) {
-			UserProfile::find_or_create( $reply_author_id );
-			Reputation::award( $reply_author_id, 'reply_accepted' );
-
-			// Notification handled by Notifier via jetonomy_reply_accepted hook above.
+		// One transaction shared with WP-CLI: both flags, the
+		// jetonomy_reply_accepted action (Notifier), the Q&A-only guard
+		// (400 jetonomy_not_qa_space) and the reputation award.
+		$accepted = Reply::accept_as_answer( $id, $user_id );
+		if ( is_wp_error( $accepted ) ) {
+			return $accepted;
 		}
 
 		$updated_reply = Reply::find( $id );
@@ -755,9 +733,8 @@ class Replies_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		$space_id        = (int) $post->space_id;
-		$post_author_id  = (int) $post->author_id;
-		$reply_author_id = (int) $reply->author_id;
+		$space_id       = (int) $post->space_id;
+		$post_author_id = (int) $post->author_id;
 
 		// Only post author or a moderator/admin may un-accept (mirrors accept).
 		$can_unaccept = ( $post_author_id === $user_id )
@@ -766,22 +743,11 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		if ( empty( $reply->is_accepted ) ) {
-			return new \WP_Error(
-				'jetonomy_not_accepted',
-				__( 'This reply is not the accepted answer.', 'jetonomy' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		Reply::unmark_accepted( $id );
-		Post::clear_accepted_reply( (int) $post->id );
-
-		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
-
-		// Revoke the reputation granted on acceptance (skip self, mirroring accept).
-		if ( $reply_author_id && $reply_author_id !== $user_id ) {
-			Reputation::revoke( $reply_author_id, 'reply_accepted' );
+		// Shared with WP-CLI: 400 jetonomy_not_accepted, both flags, the
+		// jetonomy_reply_unaccepted action and the reputation revoke.
+		$unaccepted = Reply::unaccept_as_answer( $id, $user_id );
+		if ( is_wp_error( $unaccepted ) ) {
+			return $unaccepted;
 		}
 
 		$updated_reply = Reply::find( $id );

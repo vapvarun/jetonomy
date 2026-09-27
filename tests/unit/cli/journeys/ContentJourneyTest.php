@@ -176,20 +176,61 @@ class ContentJourneyTest extends WP_UnitTestCase {
 		$this->assertTrue( $result->is_success() );
 	}
 
-	public function test_accept_reply_sets_accepted_state(): void {
+	public function test_accept_reply_sets_both_sides_like_rest(): void {
+		Space::update( $this->space_id, [ 'type' => 'qa' ] );
 		$post_id  = $this->make_post();
-		$reply_id = Reply::create(
+		$answerer = self::factory()->user->create();
+		$reply_id = (int) Reply::create(
 			[
 				'post_id'   => $post_id,
-				'author_id' => $this->author_id,
+				'author_id' => $answerer,
 				'content'   => 'Accepted answer.',
 			]
 		);
+		$fired = did_action( 'jetonomy_reply_accepted' );
 
-		$result = $this->journey->accept_reply( $post_id, (int) $reply_id );
-		$this->assertTrue( $result->is_success() );
-		$this->assertSame( $post_id, $result->data['post_id'] );
-		$this->assertSame( (int) $reply_id, $result->data['reply_id'] );
+		$result = $this->journey->accept_reply( $post_id, $reply_id );
+		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
+		$this->assertSame( 1, (int) Reply::find( $reply_id )->is_accepted, 'reply is_accepted must be set (the bug)' );
+		$post = Post::find( $post_id );
+		$this->assertSame( $reply_id, (int) $post->accepted_reply_id );
+		$this->assertSame( 1, (int) $post->is_resolved );
+		$this->assertSame( $fired + 1, did_action( 'jetonomy_reply_accepted' ), 'listeners (Notifier, badges) must hear a CLI accept' );
+
+		$again = $this->journey->accept_reply( $post_id, $reply_id );
+		$this->assertTrue( $again->is_success() );
+		$this->assertSame( $fired + 1, did_action( 'jetonomy_reply_accepted' ), 're-accepting is a no-op (no double award)' );
+
+		$undo = $this->journey->unaccept_reply( $post_id, $reply_id );
+		$this->assertTrue( $undo->is_success(), implode( ',', $undo->errors ) );
+		$this->assertSame( 0, (int) Reply::find( $reply_id )->is_accepted );
+		$post = Post::find( $post_id );
+		$this->assertSame( 0, (int) $post->accepted_reply_id );
+		$this->assertSame( 0, (int) $post->is_resolved );
+
+		$twice = $this->journey->unaccept_reply( $post_id, $reply_id );
+		$this->assertFalse( $twice->is_success() );
+		$this->assertStringContainsString( 'jetonomy_not_accepted', $twice->first_error() );
+	}
+
+	public function test_accept_reply_refuses_non_qa_space_and_foreign_post(): void {
+		$post_id  = $this->make_post();
+		$reply_id = (int) Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => $this->author_id,
+				'content'   => 'Forum reply.',
+			]
+		);
+
+		$forum = $this->journey->accept_reply( $post_id, $reply_id );
+		$this->assertFalse( $forum->is_success() );
+		$this->assertStringContainsString( 'jetonomy_not_qa_space', $forum->first_error() );
+		$this->assertSame( 0, (int) Reply::find( $reply_id )->is_accepted );
+
+		$mismatch = $this->journey->accept_reply( $this->make_post(), $reply_id );
+		$this->assertFalse( $mismatch->is_success() );
+		$this->assertStringContainsString( 'belongs to post', $mismatch->first_error() );
 	}
 
 	public function test_vote_cast_created_then_undone(): void {

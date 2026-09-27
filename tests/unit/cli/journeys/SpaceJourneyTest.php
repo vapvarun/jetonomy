@@ -90,6 +90,34 @@ class SpaceJourneyTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'join_policy', $result->first_error() );
 	}
 
+	public function test_type_validation_matches_the_schema_enum(): void {
+		$chat = $this->journey->create(
+			[
+				'title'       => 'Chat',
+				'slug'        => 'chat-' . $this->suffix,
+				'category_id' => $this->category_id,
+				'type'        => 'chat',
+			]
+		);
+		$this->assertFalse( $chat->is_success(), "'chat' is not in the type ENUM; MySQL would store ''" );
+		$this->assertStringContainsString( 'type', $chat->first_error() );
+
+		$feed = $this->journey->create(
+			[
+				'title'       => 'Feed',
+				'slug'        => 'feed-' . $this->suffix,
+				'category_id' => $this->category_id,
+				'type'        => 'feed',
+			]
+		);
+		$this->assertTrue( $feed->is_success(), implode( ',', $feed->errors ) );
+		$this->assertSame( 'feed', Space::find( (int) $feed->data['id'] )->type );
+
+		$update = $this->journey->update( (int) $feed->data['id'], [ 'type' => 'chat' ] );
+		$this->assertFalse( $update->is_success() );
+		$this->assertSame( 'feed', Space::find( (int) $feed->data['id'] )->type );
+	}
+
 	public function test_create_rejects_invalid_visibility(): void {
 		$result = $this->journey->create(
 			[

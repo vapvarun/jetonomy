@@ -81,9 +81,12 @@ class Space extends Model {
 		// A space counts toward a category only while it is active and in one,
 		// so BOTH a category move and a status change can alter two counters.
 		$count_changing = array_key_exists( 'category_id', $data ) || array_key_exists( 'status', $data );
+		// Visibility and join_policy together decide whether this space takes
+		// join requests at all (see join_mode()).
+		$access_changing = array_key_exists( 'join_policy', $data ) || array_key_exists( 'visibility', $data );
 
 		// One read covers every comparison below.
-		$existing = ( $slug_changing || $type_changing || $count_changing ) ? parent::find( $id ) : null;
+		$existing = ( $slug_changing || $type_changing || $count_changing || $access_changing ) ? parent::find( $id ) : null;
 		$old_slug = $slug_changing ? ( $existing->slug ?? null ) : null;
 		$old_type = $type_changing ? ( $existing->type ?? null ) : null;
 
@@ -133,6 +136,24 @@ class Space extends Model {
 		// result (Basecamp 10210058401). Ideas spaces had the same gap.
 		if ( $type_changing && $old_type && $old_type !== $data['type'] ) {
 			self::retype_posts( $id, (string) $data['type'] );
+		}
+
+		/*
+		 * Settle the request queue when the space stops taking requests.
+		 * Pending rows used to linger after approval -> open/invite, looking
+		 * unprocessed in the owner's queue forever (Basecamp 10148432976).
+		 * Every writer - REST PATCH, admin AJAX, WP-CLI - funnels through
+		 * here, so this is the one place that sees all of them.
+		 */
+		if ( $result && $access_changing && $existing ) {
+			$was = self::join_mode( (string) ( $existing->visibility ?? 'public' ), (string) ( $existing->join_policy ?? 'open' ) );
+			$now = self::join_mode(
+				(string) ( $data['visibility'] ?? ( $existing->visibility ?? 'public' ) ),
+				(string) ( $data['join_policy'] ?? ( $existing->join_policy ?? 'open' ) )
+			);
+			if ( 'request' === $was && 'request' !== $now ) {
+				JoinRequest::resolve_pending_for_space( $id, 'open' === $now, get_current_user_id() );
+			}
 		}
 
 		self::bust_cache( $id );
@@ -1491,6 +1512,42 @@ class Space extends Model {
 				'description' => __( 'Only members can find this space. It is invite-only.', 'jetonomy' ),
 			],
 		];
+	}
+
+	/**
+	 * Space types a space can be. Mirrors the `type` ENUM in class-schema.php;
+	 * MySQL silently stores '' for anything else, so every writer validates
+	 * against this list rather than a local copy.
+	 *
+	 * @return string[]
+	 */
+	public static function valid_types(): array {
+		return array( 'forum', 'qa', 'ideas', 'feed' );
+	}
+
+	/**
+	 * How a non-member gets into a space, from its visibility + join_policy.
+	 *
+	 * - 'invite'  : hidden, or invite-only - only an invite link admits.
+	 * - 'request' : approval policy, or a private space - joining files a
+	 *               JoinRequest for an admin to review.
+	 * - 'open'    : anyone may join directly.
+	 *
+	 * The single statement of the rule SpaceMember::join() enforces, so the
+	 * join gate and the request-queue cleanup in update() cannot disagree.
+	 *
+	 * @param string $visibility  'public' | 'private' | 'hidden'.
+	 * @param string $join_policy 'open' | 'approval' | 'invite'.
+	 * @return string 'invite' | 'request' | 'open'
+	 */
+	public static function join_mode( string $visibility, string $join_policy ): string {
+		if ( 'invite' === $join_policy || 'hidden' === $visibility ) {
+			return 'invite';
+		}
+		if ( 'approval' === $join_policy || 'private' === $visibility ) {
+			return 'request';
+		}
+		return 'open';
 	}
 
 	/**

@@ -108,19 +108,19 @@ Create and manage replies on posts.
 | Subcommand | Description |
 |------------|-------------|
 | `create` | Create a reply |
-| `list` | List replies for a post |
-| `update <id>` | Update a reply |
 | `delete <id>` | Permanently delete a reply and its votes, flags and notifications. Replies nested under it stay |
-| `accept` | Mark a reply as the accepted answer |
+| `accept` | Mark a reply as the accepted answer. Same result as `POST /replies/{id}/accept`: the reply is flagged accepted, the question is resolved, the answerer is notified and earns reputation. Q&A spaces only |
+| `unaccept` | Clear the accepted answer. Same result as `DELETE /replies/{id}/accept`: the question returns to unresolved and the acceptance reputation is revoked |
 
 **Flags - create:** `--post=<id>` `--author=<id>` `--content=<content>` `[--parent=<id>]` `[--status=<status>]` `[--format=<format>]`
 
-**Flags - accept:** `--post=<id>` `--reply=<id>` `[--format=<format>]`
+**Flags - accept / unaccept:** `--post=<id>` `--reply=<id>` `[--format=<format>]`. The reply must belong to that post. Add the global `--user=<id>` to record who accepted; the answerer earns nothing when accepting their own reply.
 
 ```bash
 wp jetonomy reply create --post=42 --author=3 --content="Great idea"
 wp jetonomy reply create --post=42 --author=3 --content="Nested reply" --parent=17
-wp jetonomy reply accept --post=42 --reply=17
+wp jetonomy reply accept --post=42 --reply=17 --user=1
+wp jetonomy reply unaccept --post=42 --reply=17 --user=1
 ```
 
 ---
