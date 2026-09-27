@@ -304,9 +304,27 @@ class Space extends Model {
 	 * @return int Successor user ID, or 0 when nobody qualifies.
 	 */
 	public static function resolve_successor( int $space_id, int $excluding = 0 ): int {
+		return static::surviving_admin( $space_id, $excluding ) ?: static::fallback_owner( $excluding );
+	}
+
+	/**
+	 * The surviving space admin who inherits, if any (precedence step 1).
+	 *
+	 * Split out so a caller can tell "a space admin is still running this space"
+	 * from "nobody is, fall back to the site admin". Privacy used to infer that
+	 * by comparing the successor with the site admin, which misread a site
+	 * admin who is ALSO a space admin as a stranded space and archived it
+	 * (Basecamp 10344393613). Any role counts here, site administrator included:
+	 * the question is only whether a space admin row survives.
+	 *
+	 * @param int $space_id  Space to look in.
+	 * @param int $excluding User to exclude (the departing owner).
+	 * @return int Space admin user ID, or 0 when none survives.
+	 */
+	public static function surviving_admin( int $space_id, int $excluding = 0 ): int {
 		$members = \Jetonomy\table( 'space_members' );
 
-		$heir = (int) static::db()->get_var(
+		return (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
 				"SELECT user_id FROM {$members} WHERE space_id = %d AND user_id <> %d AND role = 'admin' ORDER BY joined_at ASC, user_id ASC LIMIT 1",
@@ -314,11 +332,15 @@ class Space extends Model {
 				$excluding
 			)
 		);
+	}
 
-		if ( $heir ) {
-			return $heir;
-		}
-
+	/**
+	 * Lowest-id site administrator, the owner of last resort (precedence step 2).
+	 *
+	 * @param int $excluding User to exclude (the departing owner).
+	 * @return int User ID, or 0 when no other site administrator exists.
+	 */
+	public static function fallback_owner( int $excluding = 0 ): int {
 		$admins = get_users(
 			[
 				'capability' => 'manage_options',

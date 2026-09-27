@@ -1044,6 +1044,12 @@ class Model_Tests {
 			]
 		);
 
+		// C: the surviving co-admin IS the site administrator. Still a survivor,
+		// so the space must stay running (Basecamp 10344393613).
+		$site_admin = \Jetonomy\Models\Space::fallback_owner( (int) $owner );
+		$by_admin   = $make_space( 'qa-transfer-siteadmin-' . $suffix, (int) $owner );
+		\Jetonomy\Models\SpaceMember::add( $by_admin, $site_admin, 'admin' );
+
 		$fired = [];
 		$spy   = static function ( $space_id, $from, $to ) use ( &$fired ): void {
 			$fired[ (int) $space_id ] = [ (int) $from, (int) $to ];
@@ -1075,8 +1081,12 @@ class Model_Tests {
 
 		$this->check( 'ST6: transfer hook fired for both spaces', isset( $fired[ $sole ], $fired[ $shared ] ) );
 
+		$c = $row( $by_admin );
+		$this->check( 'ST7: site admin as surviving space admin keeps the space active', $site_admin && $c && 'archived' !== $c->status, $c->status ?? 'missing' );
+		$this->check( 'ST8: site admin as surviving space admin inherits attribution', $c && (int) $c->author_id === $site_admin, 'author_id=' . ( $c->author_id ?? '?' ) );
+
 		// Cleanup.
-		foreach ( [ $sole, $shared ] as $sid ) {
+		foreach ( [ $sole, $shared, $by_admin ] as $sid ) {
 			$wpdb->delete( $members_t, [ 'space_id' => $sid ] );
 			$wpdb->delete( $spaces_t, [ 'id' => $sid ] );
 		}

@@ -28,7 +28,7 @@ You have two paths, depending on how the request arrives.
 
 **A member deletes their own account from the app or API.** This is `DELETE /users/me` (documented for members in [User Profiles](../user-profiles/01-profiles.md), under "Deleting Your Account"). It runs the exact same anonymize-and-delete behaviour described above by default. A member can additionally opt in to `delete_content: true`, which hard-deletes their posts and replies instead of anonymizing them - make sure any interface you build in front of this API makes that distinction obvious, since "delete my account" and "delete everything I wrote" are different requests members can mean either of.
 
-**If the departing member was the sole admin of a space**, Jetonomy hands that space to another site administrator and archives it, rather than leaving it stranded with no one able to manage it. If another admin remains on the space, nothing changes for it. Either way, no other member's post or reply is affected.
+**If the departing member was the sole admin of a space**, Jetonomy hands that space to another site administrator and archives it, rather than leaving it stranded with no one able to manage it. If another admin remains on the space, that admin takes over and the space stays active. This includes you: to keep a member's spaces running after you delete their account, make yourself (or anyone else) an admin of those spaces first. Either way, no other member's post or reply is affected.
 
 ## What to Put in Your Privacy Policy
 

@@ -97,7 +97,8 @@ class Privacy {
 			return;
 		}
 
-		$site_admin = $this->resolve_site_admin( $user_id );
+		// Resolved once: it is the same for every space this user owned.
+		$site_admin = \Jetonomy\Models\Space::fallback_owner( $user_id );
 
 		foreach ( $space_ids as $space_id ) {
 			$space_id = (int) $space_id;
@@ -109,9 +110,11 @@ class Privacy {
 			// unrelated member closed their account (Basecamp 10119343043, QA
 			// case B). Hand over attribution, leave the space running.
 			// Same successor rule the explicit delete flow uses, so the two
-			// cannot disagree about who inherits a space.
-			$heir = \Jetonomy\Models\Space::resolve_successor( $space_id, $user_id );
-			$heir = ( $heir && $heir !== $site_admin ) ? $heir : 0;
+			// cannot disagree about who inherits a space. Only step 1 of it
+			// here: whether a space admin survives decides archive vs keep,
+			// and a site administrator who is also a space admin is exactly
+			// such a survivor (Basecamp 10344393613).
+			$heir = \Jetonomy\Models\Space::surviving_admin( $space_id, $user_id );
 
 			if ( $heir ) {
 				// NOT archived: another admin is still running this space, so
@@ -137,27 +140,6 @@ class Privacy {
 			// the admin row; attribution without the row leaves it unmanageable.
 			\Jetonomy\Models\Space::hand_over( $space_id, $successor, $user_id, true );
 		}
-	}
-
-	/**
-	 * Lowest-id site administrator, excluding the departing user.
-	 *
-	 * @param int $exclude_user_id User being removed.
-	 * @return int Admin user id, or 0 when the site has no other administrator.
-	 */
-	private function resolve_site_admin( int $exclude_user_id ): int {
-		$admins = get_users(
-			[
-				'role'    => 'administrator',
-				'exclude' => [ $exclude_user_id ],
-				'orderby' => 'ID',
-				'order'   => 'ASC',
-				'number'  => 1,
-				'fields'  => 'ID',
-			]
-		);
-
-		return $admins ? (int) $admins[0] : 0;
 	}
 
 	/**
