@@ -152,6 +152,8 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			</thead>
 			<tbody id="jt-posts-tbody">
 				<?php
+				// One query for every author on the page, not one get_userdata() per row.
+				cache_users( array_map( 'intval', wp_list_pluck( $posts, 'author_id' ) ) );
 				foreach ( $posts as $p ) :
 					$author      = get_userdata( $p->author_id );
 					$author_name = $author ? $author->display_name : __( 'Unknown', 'jetonomy' );

@@ -189,6 +189,8 @@ if ( ! empty( $trash_count ) ) {
 			</thead>
 			<tbody id="jt-replies-tbody">
 				<?php
+				// One query for every author on the page, not one get_userdata() per row.
+				cache_users( array_map( 'intval', wp_list_pluck( $replies, 'author_id' ) ) );
 				foreach ( $replies as $r ) :
 					$author      = get_userdata( (int) $r->author_id );
 					$author_name = $author ? $author->display_name : __( 'Unknown', 'jetonomy' );
