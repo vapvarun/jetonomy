@@ -292,7 +292,7 @@ class Post extends Model {
 			}
 
 			/** This action is documented in includes/models/class-post.php (Post::create) */
-			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $post->created_at ?? '' ) );
+			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $data['created_at'] ?? $post->created_at ?? '' ) );
 		}
 
 		// published_at on a draft is its schedule: every write that sets or
@@ -1668,12 +1668,20 @@ class Post extends Model {
 		// "scheduled" badge and can never be re-selected by get_due_scheduled()
 		// (which keys on `published_at IS NOT NULL`). $wpdb->update() emits a
 		// real SQL NULL for a null value.
+		//
+		// The post's date becomes the moment it went live (the WordPress
+		// convention for a scheduled post). Keeping the drafting time buried a
+		// topic drafted last week under a week of newer ones in Latest, which
+		// sorts by last_reply_at and displays created_at.
+		$now = now();
 		static::update(
 			$id,
 			array(
-				'status'       => 'publish',
-				'published_at' => null,
-				'updated_at'   => now(),
+				'status'        => 'publish',
+				'published_at'  => null,
+				'created_at'    => $now,
+				'last_reply_at' => $now,
+				'updated_at'    => $now,
 			)
 		);
 
