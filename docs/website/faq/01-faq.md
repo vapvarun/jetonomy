@@ -107,3 +107,21 @@ Yes. Community pages for logged-out visitors are cacheable, and pages for logged
 
 **I kept seeing "Cookie nonce is invalid" on a tab left open a long time. Is that fixed?**
 Yes. When a long-lived tab's REST nonce expires, the bundled client fetches a fresh nonce against the still-valid login cookie and retries the request once, so members no longer lose a reply. See the [REST API reference](../developer-guide/01-rest-api.md).
+
+**A member says a space they should see just isn't there. Why?**
+Usually visibility, not a bug - check whether the space (or its category) is Private or Hidden, and whether the member has actually joined. See [A member cannot see a space](../troubleshooting/00-overview.md#a-member-cannot-see-a-space).
+
+**Why is a Jetonomy menu missing for one of my staff, or showing "Not allowed"?**
+Almost always a missing capability, an inactive Pro license, or a disabled extension. See [Admin menu items are missing, or show "Not allowed"](../troubleshooting/00-overview.md#admin-menu-items-are-missing-or-show-not-allowed).
+
+**Why does searching for a short word return nothing?**
+Words under 4 characters are not indexed by MySQL's FULLTEXT search, so they are ignored. See [Search shows no results](../troubleshooting/00-overview.md#search-shows-no-results).
+
+**Why can't a member sign in to the mobile app?**
+Usually Application Passwords, HTTPS, or a security plugin. See [Mobile app sign-in fails](../troubleshooting/00-overview.md#mobile-app-sign-in-fails).
+
+**A member says they aren't being notified. What should I check?**
+Per-type toggles, the "Pause all email" switch, and whether they actually followed the space - Jetonomy has no "mute". See [Members are not getting notifications](../troubleshooting/00-overview.md#members-are-not-getting-notifications).
+
+**A Pro feature I was using disappeared after updating. Why?**
+Check whether the extension is still enabled, your license is still valid, and clear any page cache. See [A feature is missing after updating](../troubleshooting/00-overview.md#a-feature-is-missing-after-updating).

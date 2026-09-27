@@ -313,6 +313,32 @@ add_filter( 'jetonomy_admin_footer_text', function( string $text ): string {
 
 ---
 
+## Wbcom Companion Catalog
+
+The **Jetonomy → Settings → Integrations** tab shows a card grid of companion Wbcom plugins (see [Wbcom Stack Install](../admin-settings/16-wbcom-stack-install.md) for the customer-facing walkthrough). The catalog itself is filterable, so a third-party plugin - or a Pro extension - can add its own card without touching core:
+
+```php
+add_filter( 'jetonomy_companions', function( array $companions ): array {
+    $companions['my-plugin'] = [
+        'label'     => 'My Plugin',
+        'why'       => 'Short description of what it adds.',
+        'detect'    => static fn() => defined( 'MY_PLUGIN_VERSION' ),
+        'free'      => [
+            'item_id'  => 0,      // EDD item ID; 0 disables one-click install.
+            'key'      => '',
+            'basename' => 'my-plugin/my-plugin.php',
+        ],
+        'store_url' => 'https://example.com/my-plugin/',
+        'unlocks'   => 'What lights up in Jetonomy when this is active.',
+    ];
+    return $companions;
+} );
+```
+
+Set `item_id` to `0` to suppress the one-click install button and show only the "Learn more" store link. The `detect` callable is what Jetonomy uses to determine whether the companion is active - it should return `true` when the companion's capability is live.
+
+---
+
 ## Known Gap: Admin List-Table Columns
 
 There is no filter to add a column to any Jetonomy admin list table (Spaces, Posts, Replies, Users, Activity Log). The column definitions in each list table are hard-coded. If you need to surface per-row data:

@@ -136,6 +136,17 @@ Multiple rules can be stacked. Jetonomy grants the highest matching permission l
 
 > **Note:** MemberPress and Paid Memberships Pro adapters are available in Jetonomy free. WooCommerce Memberships, Restrict Content Pro, LearnDash, and [Learnomy](../integrations/14-learnomy.md) adapters require Jetonomy Pro. The Learnomy adapter gates a space by either a Learnomy course or a Learnomy membership plan.
 
+### Walkthrough: Gate a Space End to End
+
+This is the same four-step shape for every membership and LMS integration - only the provider you pick inside the rule changes. Use it to prove a gate works before you rely on it.
+
+1. **Create the rule.** Open the space, click the **Access Rules** tab, set **Rule Type** to the membership level, WordPress role, capability, or trust level you want to check, choose a **Value**, and pick an **Access Grant** (Participate is right for most paid spaces). Click **Add Rule**. If the space was Public, Jetonomy switches it to Private automatically so the rule can actually gate something.
+2. **Attach it by testing with two members.** Use one account that holds the membership, role, or trust level the rule names, and one that does not. Load the space as each. The member who matches gets in at the level you chose; the one who does not sees the space as locked (or, if it is Hidden, sees nothing at all).
+3. **Confirm the roster, separately from access.** Access is resolved live on every page load, but the space's **Members** list and member count only update after you click **Sync Members** on the rule (or when the member does something that adds them, like accepting an invite). A matched member can read and post before they appear on the Members tab - that is expected, not a bug.
+4. **Test what happens on cancel or unenroll.** Remove or downgrade the matching member's membership, role, or enrolment in the source system, then load the space as them again. Access is re-evaluated on that next page load and disappears immediately - there is nothing to sync and nothing to run. Their existing posts and replies are never touched; losing access hides the space from them, it does not remove what they already wrote.
+
+The exact hook a given integration listens for (a MemberPress transaction status, a WooCommerce order status, and so on) differs by provider - see that integration's own guide, starting with [MemberPress](../integrations/01-memberpress.md#access-follows-the-subscription), for the specific trigger behind step 4.
+
 ## Invite Links
 
 Invite links let you bring specific people into a space without opening up general membership.
