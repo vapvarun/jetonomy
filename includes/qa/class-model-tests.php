@@ -1369,6 +1369,10 @@ class Model_Tests {
 
 		$parent_id = $make_space( 0, $cat_id, 'jt-qa-parent-' . $suffix );
 		$child_id  = $make_space( $parent_id, $cat_id, 'jt-qa-kid-' . $suffix );
+		// The fixture inserts raw rows, bypassing Space::create(), so it must
+		// retire the cached category tree itself the way every real write does.
+		// Without this SS4 read a warm guest tree from before the insert.
+		Space::bump_tree_generation();
 
 		$previous_user = get_current_user_id();
 		wp_set_current_user( 0 );
@@ -1493,6 +1497,10 @@ class Model_Tests {
 		// same member saw in a browser.
 		$page     = UserProfile::list_for_leaderboard( 'all', 20, 0 );
 		$expected = UserProfile::competition_ranks( $page, 'all', 0 );
+		// The REST leaderboard is TTL-cached (lb:v2, 300s) and not busted on
+		// reputation changes by design; clear it so this compares the rank
+		// derivation, not freshness after an earlier run moved reputations.
+		\Jetonomy\Cache::delete( 'lb:v2:all:20:0' );
 		$request  = new \WP_REST_Request( 'GET', '/jetonomy/v1/leaderboards' );
 		$request->set_param( 'limit', 20 );
 		$request->set_param( 'offset', 0 );
