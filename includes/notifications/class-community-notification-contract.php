@@ -66,9 +66,10 @@ class Community_Notification_Contract {
 	 * @param int    $object_id       Object id, or 0 (badge_earned uses the new trust level).
 	 * @param string $message         Already-translated, plain-text sentence.
 	 * @param string $url             Deep link, or '' when the caller didn't resolve one.
+	 * @param bool   $actor_anonymous The actor's content is anonymous: the host gets no actor at all.
 	 * @return array<string,mixed>
 	 */
-	public static function payload( int $notification_id, int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url ): array {
+	public static function payload( int $notification_id, int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url, bool $actor_anonymous = false ): array {
 		$message = trim( wp_strip_all_tags( $message ) );
 		if ( $user_id <= 0 || '' === $message || ( $actor_id > 0 && $actor_id === $user_id ) ) {
 			return array();
@@ -101,7 +102,10 @@ class Community_Notification_Contract {
 		// keeps the first row's object and link when it merges, so the group key
 		// and the object must describe the same thing. Own list and email are
 		// untouched; a reply whose topic can't be resolved stays per reply.
-		if ( 'reply_to_post' === $slug && 'reply' === $object_type && $object_id > 0 ) {
+		//
+		// An anonymous reply is not grouped: a merged row names its newest actor,
+		// and the host would count anonymous repliers as one person.
+		if ( 'reply_to_post' === $slug && 'reply' === $object_type && $object_id > 0 && ! $actor_anonymous ) {
 			$reply = Reply::find( $object_id );
 			$post  = $reply ? Post::find( (int) $reply->post_id ) : null;
 			if ( $post ) {
@@ -121,7 +125,10 @@ class Community_Notification_Contract {
 		$payload = array(
 			'recipient_id'    => $user_id,
 			'type'            => $slug,
-			'actor_id'        => $actor_id,
+			// The host names the member from this id, so an anonymous actor is 0
+			// (the message already says "Anonymous"). The self-notify guard above
+			// used the real id.
+			'actor_id'        => $actor_anonymous ? 0 : $actor_id,
 			'object_type'     => sanitize_key( $object_type ),
 			'object_id'       => max( 0, $object_id ),
 			'message'         => $message,

@@ -222,6 +222,33 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'message_grouped', $rtr );
 	}
 
+	public function test_an_anonymous_actor_reaches_the_host_as_nobody_and_is_not_grouped(): void {
+		list( , $r1 ) = $this->topic_with_two_replies();
+		$captured     = null;
+		add_action(
+			'jetonomy_notification_created',
+			static function ( ...$args ) use ( &$captured ): void {
+				$captured = end( $args );
+			},
+			10,
+			8
+		);
+
+		// Through the real door, so a caller that forgets the flag fails here.
+		Notifier::emit_notification_created( 5, $this->recipient, $this->actor, 'reply_to_post', 'reply', $r1, 'Anonymous replied to your post "Grouped topic"', 'https://example.test/r1', true );
+
+		$this->assertSame( 0, $captured['actor_id'], 'the host names a member from actor_id, so an anonymous one is 0' );
+		$this->assertSame( 'Anonymous replied to your post "Grouped topic"', $captured['message'] );
+		$this->assertSame( 'reply', $captured['object_type'], 'stays per reply: a merged row would name its newest actor' );
+		$this->assertSame( $r1, $captured['object_id'] );
+		$this->assertSame( 'reply_to_post_' . $r1, $captured['group_key'] );
+		$this->assertArrayNotHasKey( 'message_grouped', $captured );
+	}
+
+	public function test_an_anonymous_actor_who_is_the_recipient_still_gets_no_row(): void {
+		$this->assertSame( array(), Community_Notification_Contract::payload( 6, $this->recipient, $this->recipient, 'reply_to_post', 'reply', 1, 'Anonymous replied', 'https://example.test/', true ), 'the self-notify guard reads the real actor' );
+	}
+
 	public function test_removal_fires_on_permanent_delete_only(): void {
 		$removed = array();
 		add_action(

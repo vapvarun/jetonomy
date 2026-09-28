@@ -1124,7 +1124,7 @@ class Notifier {
 				]
 			);
 
-			self::emit_notification_created( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url );
+			self::emit_notification_created( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url, $actor_anonymous );
 		}
 
 		// Check email preference via the shared gate (profile + defaults already
@@ -1192,8 +1192,9 @@ class Notifier {
 	 * @param int    $object_id       Object ID.
 	 * @param string $message         Rendered human sentence.
 	 * @param string $url             Deep link.
+	 * @param bool   $actor_anonymous The actor's content is anonymous (the contract payload then carries no actor).
 	 */
-	public static function emit_notification_created( int $notification_id, int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '' ): void {
+	public static function emit_notification_created( int $notification_id, int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', bool $actor_anonymous = false ): void {
 		if ( self::recipient_blocked_actor( $user_id, $actor_id ) ) {
 			return;
 		}
@@ -1224,7 +1225,7 @@ class Notifier {
 			$object_id,
 			$message,
 			$url,
-			Community_Notification_Contract::payload( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url )
+			Community_Notification_Contract::payload( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url, $actor_anonymous )
 		);
 	}
 

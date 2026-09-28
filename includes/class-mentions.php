@@ -311,7 +311,7 @@ class Mentions {
 			// Routed through the shared emitter so the push gate applies here too
 			// (1.8.0). This path fired the hook raw, so @mentioning someone who
 			// had blocked you put your words on their phone.
-			\Jetonomy\Notifications\Notifier::emit_notification_created( $notification_id, $uid, $actor_id, 'mention', $object_type, $object_id, $message, $content_url );
+			\Jetonomy\Notifications\Notifier::emit_notification_created( $notification_id, $uid, $actor_id, 'mention', $object_type, $object_id, $message, $content_url, $actor_anonymous );
 
 			// Check email preference via the shared gate (master kill-switch +
 			// per-user per-type + admin default). $user_prefs already loaded.
