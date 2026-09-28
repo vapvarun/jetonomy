@@ -96,6 +96,8 @@ class Community_Notification_Contract {
 
 		$slug    = sanitize_key( $type );
 		$grouped = '';
+		$single  = '';
+		$item_id = 0;
 
 		// Replies to one topic collapse into one bell row: the row is about the
 		// TOPIC (its status decides visibility, its link always exists). The host
@@ -106,19 +108,29 @@ class Community_Notification_Contract {
 		// An anonymous reply is not grouped: a merged row names its newest actor,
 		// and the host would count anonymous repliers as one person.
 		if ( 'reply_to_post' === $slug && 'reply' === $object_type && $object_id > 0 && ! $actor_anonymous ) {
-			$reply = Reply::find( $object_id );
-			$post  = $reply ? Post::find( (int) $reply->post_id ) : null;
+			$reply_id = $object_id;
+			$reply    = Reply::find( $reply_id );
+			$post     = $reply ? Post::find( (int) $reply->post_id ) : null;
 			if ( $post ) {
 				$topic_link  = \Jetonomy\notification_deep_link( 'post', (int) $post->id );
 				$title       = mb_substr( (string) $post->title, 0, 50 );
 				$object_type = 'post';
 				$object_id   = (int) $post->id;
 				$link        = '' !== $topic_link ? $topic_link : $link;
-				$grouped     = (int) $post->author_id === $user_id
+				$item_id     = $reply_id;
+				$owner       = (int) $post->author_id === $user_id;
+				$grouped     = $owner
 					/* translators: 1: post title. {actor} and {others} are placeholders filled by the host; keep them. */
 					? sprintf( __( '{actor} and {others} replied to your post "%s"', 'jetonomy' ), $title )
 					/* translators: 1: post title. {actor} and {others} are placeholders filled by the host; keep them. */
 					: sprintf( __( '{actor} and {others} replied in "%s"', 'jetonomy' ), $title );
+				// The host words a row left with ONE visible person from this, so it
+				// never names a member Jetonomy hides (a trashed or banned replier).
+				$single = $owner
+					/* translators: 1: post title. {actor} is a placeholder filled by the host; keep it. */
+					? sprintf( __( '{actor} replied to your post "%s"', 'jetonomy' ), $title )
+					/* translators: 1: post title. {actor} is a placeholder filled by the host; keep it. */
+					: sprintf( __( '{actor} replied in "%s"', 'jetonomy' ), $title );
 			}
 		}
 
@@ -141,6 +153,11 @@ class Community_Notification_Contract {
 		);
 		if ( '' !== $grouped ) {
 			$payload['message_grouped'] = $grouped;
+			$payload['message_single']  = $single;
+			// The host keeps who did what: the topic is the row's object, the reply
+			// is the item this event came from (its visibility is asked per item).
+			$payload['item_type'] = 'reply';
+			$payload['item_id']   = $item_id;
 		}
 
 		return $payload;
@@ -230,9 +247,9 @@ class Community_Notification_Contract {
 	 * the PHP twin of the SQL every Jetonomy list already applies, so the host's
 	 * bell and Jetonomy's own notifications page can never disagree.
 	 *
-	 * @param array<int|string,bool>                                                                 $visible   Every key starts true.
-	 * @param int                                                                                    $viewer_id Recipient viewing their bell.
-	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int}> $targets   Rows on this page.
+	 * @param array<int|string,bool>                                                                            $visible   Every key starts true.
+	 * @param int                                                                                               $viewer_id Recipient viewing their bell.
+	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int,item?:bool}> $targets   Rows on this page; `item` = one event of a grouped host row.
 	 * @return array<int|string,bool>
 	 */
 	public static function filter_visible( array $visible, int $viewer_id, array $targets ): array {

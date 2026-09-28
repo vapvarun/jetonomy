@@ -446,8 +446,8 @@ class Notification extends Model {
 	 * the rule is written twice; NotificationVisibilityParityTest runs both over
 	 * one fixture set and fails if they ever disagree.
 	 *
-	 * @param int                                                                                    $viewer_id Recipient viewing their list.
-	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int}> $targets   Rows on this page, any keys.
+	 * @param int                                                                                               $viewer_id Recipient viewing their list.
+	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int,item?:bool}> $targets   Rows on this page, any keys. `item` marks ONE event inside a grouped host row rather than a whole notification.
 	 * @return array<int|string,bool> Same keys, true = visible.
 	 */
 	public static function targets_visible( int $viewer_id, array $targets ): array {
@@ -500,11 +500,18 @@ class Notification extends Model {
 			$dead_posts = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status <> 'publish' AND id IN ({$in})", $ids ) ) );
 		}
 		$dead_replies = array();
+		$live_replies = array();
 		if ( ! empty( $reply_keys ) ) {
 			$ids = array_values( array_unique( $reply_keys ) );
 			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
-			$dead_replies = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT r.id FROM ' . \Jetonomy\table( 'replies' ) . ' r INNER JOIN ' . \Jetonomy\table( 'posts' ) . " p ON p.id = r.post_id WHERE ( r.status <> 'publish' OR p.status <> 'publish' ) AND r.id IN ({$in})", $ids ) ) );
+			$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT r.id, ( r.status <> \'publish\' OR p.status <> \'publish\' ) AS dead FROM ' . \Jetonomy\table( 'replies' ) . ' r INNER JOIN ' . \Jetonomy\table( 'posts' ) . " p ON p.id = r.post_id WHERE r.id IN ({$in})", $ids ) );
+			foreach ( $rows as $row ) {
+				$live_replies[] = (int) $row->id;
+				if ( (int) $row->dead ) {
+					$dead_replies[] = (int) $row->id;
+				}
+			}
 		}
 
 		foreach ( $post_keys as $key => $id ) {
@@ -513,7 +520,11 @@ class Notification extends Model {
 			}
 		}
 		foreach ( $reply_keys as $key => $id ) {
-			if ( in_array( $id, $dead_replies, true ) ) {
+			// A missing target stays visible for a whole notification (the removal
+			// signal deletes the row), but an ITEM of a grouped host row has no row
+			// of its own to delete: a purged reply must drop out of the count.
+			$gone = ! empty( $targets[ $key ]['item'] ) && ! in_array( $id, $live_replies, true );
+			if ( $gone || in_array( $id, $dead_replies, true ) ) {
 				$visible[ $key ] = false;
 			}
 		}

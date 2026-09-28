@@ -12,6 +12,7 @@ namespace Jetonomy\Tests\Unit\Notifications;
 use WP_UnitTestCase;
 use Jetonomy\DB\Schema;
 use Jetonomy\Models\Category;
+use Jetonomy\Models\Notification;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
@@ -207,6 +208,10 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 		$this->assertSame( \Jetonomy\notification_deep_link( 'post', $post_id ), $a['url'], 'the link is the topic, which always exists' );
 		$this->assertSame( '{actor} and {others} replied to your post "Grouped topic"', $a['message_grouped'] );
 		$this->assertSame( 'X replied to your post "Grouped topic"', $a['message'], 'the single-row wording is untouched' );
+		$this->assertSame( 'reply', $a['item_type'], 'the host keeps who did what: the reply is the item' );
+		$this->assertSame( $r1, $a['item_id'] );
+		$this->assertSame( $r2, $b['item_id'] );
+		$this->assertSame( '{actor} replied to your post "Grouped topic"', $a['message_single'], 'the wording for a row left with one visible person' );
 	}
 
 	public function test_a_subscriber_gets_the_replied_in_wording_and_reply_to_reply_stays_per_reply(): void {
@@ -215,11 +220,13 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 
 		$sub = Community_Notification_Contract::payload( 3, $subscriber, $this->actor, 'reply_to_post', 'reply', $r1, 'X replied in "Grouped topic"', 'https://example.test/r1' );
 		$this->assertSame( '{actor} and {others} replied in "Grouped topic"', $sub['message_grouped'] );
+		$this->assertSame( '{actor} replied in "Grouped topic"', $sub['message_single'] );
 
 		$rtr = Community_Notification_Contract::payload( 4, $this->recipient, $this->actor, 'reply_to_reply', 'reply', $r1, 'X replied to you', 'https://example.test/r1' );
 		$this->assertSame( 'reply_to_reply_' . $r1, $rtr['group_key'], 'the recipient owns that one reply' );
 		$this->assertSame( 'reply', $rtr['object_type'] );
 		$this->assertArrayNotHasKey( 'message_grouped', $rtr );
+		$this->assertArrayNotHasKey( 'item_id', $rtr, 'only a grouped row has items' );
 	}
 
 	public function test_an_anonymous_actor_reaches_the_host_as_nobody_and_is_not_grouped(): void {
@@ -243,10 +250,29 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 		$this->assertSame( $r1, $captured['object_id'] );
 		$this->assertSame( 'reply_to_post_' . $r1, $captured['group_key'] );
 		$this->assertArrayNotHasKey( 'message_grouped', $captured );
+		$this->assertArrayNotHasKey( 'item_id', $captured, 'an anonymous reply never joins a host tally' );
+		$this->assertArrayNotHasKey( 'message_single', $captured );
 	}
 
 	public function test_an_anonymous_actor_who_is_the_recipient_still_gets_no_row(): void {
 		$this->assertSame( array(), Community_Notification_Contract::payload( 6, $this->recipient, $this->recipient, 'reply_to_post', 'reply', 1, 'Anonymous replied', 'https://example.test/', true ), 'the self-notify guard reads the real actor' );
+	}
+
+	public function test_an_item_of_a_grouped_row_follows_its_reply_but_a_whole_notification_keeps_the_old_rule(): void {
+		list( $post_id, $r1, $r2 ) = $this->topic_with_two_replies();
+
+		$ask = static fn( array $target ): bool => Notification::targets_visible( 1, array( 'k' => $target ) )['k'];
+		$item = array( 'type' => 'reply_to_post', 'object_type' => 'reply', 'actor_id' => 0, 'item' => true );
+
+		$this->assertTrue( $ask( $item + array( 'object_id' => $r1 ) ), 'a published reply counts' );
+
+		Reply::update( $r1, array( 'status' => 'trash' ) );
+		$this->assertFalse( $ask( $item + array( 'object_id' => $r1 ) ), 'a trashed reply drops out of the row' );
+		$this->assertTrue( $ask( $item + array( 'object_id' => $r2 ) ), 'its sibling still counts' );
+
+		Reply::delete( $r2 );
+		$this->assertFalse( $ask( $item + array( 'object_id' => $r2 ) ), 'a purged reply drops out (an item has no row to delete)' );
+		$this->assertTrue( $ask( array_diff_key( $item, array( 'item' => 1 ) ) + array( 'object_id' => $r2 ) ), 'a whole notification about a missing target stays visible: the removal signal deletes its row' );
 	}
 
 	public function test_removal_fires_on_permanent_delete_only(): void {
