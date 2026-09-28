@@ -174,7 +174,10 @@ Owners rename the built-in nouns under Settings > General > Terminology (Space, 
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
-| `jetonomy_notification_created`<br>_action_ | - | `notification_id, user_id, type, object_type, object_id, message, link` | `includes/class-mentions.php` |
+| `jetonomy_notification_created`<br>_action_ | Fires after a web notification row is created. Since 2.0.1 an 8th argument carries the community notification contract payload (see below) — existing listeners with fewer `accepted_args` (e.g. Pro's web-push, 7) never receive it. | `notification_id, user_id, type, object_type, object_id, message, link, payload` | `includes/notifications/class-notifier.php`, `includes/class-mentions.php` |
+| `jetonomy_community_notification_types`<br>_filter_ | Declares Jetonomy's notification types (`slug => label, description, default_on`) so a host plugin (BuddyNext) can list one settings switch per type. Declaring stands down the host's older undifferentiated mirror of every Jetonomy notification. | `types` | `includes/notifications/class-community-notification-contract.php` |
+| `jetonomy_community_notification_visible`<br>_filter_ | Answers, per bell page, which rows about Jetonomy content the viewer may still see: hides trashed/pending/draft content, a globally banned author, or a private space the viewer cannot read. Batched — at most one query per table regardless of page size. | `visible, viewer_id, targets` | `includes/notifications/class-community-notification-contract.php` |
+| `jetonomy_community_notification_removed`<br>_action_ | Fires on a PERMANENT delete only (`Post::delete()` / `Reply::delete()`, via `jetonomy_after_delete_post` / `jetonomy_after_delete_reply`) so a host removes every bell row about the object. Trash is visibility, not removal. | `object_type, object_id` | `includes/notifications/class-community-notification-contract.php` |
 | `jetonomy_pro_message_notified`<br>_action_ ·_Pro_ | Fires after message notifications are dispatched. | `$conversation_id, $sender_id, $preview` | `includes/extensions/private-messaging/class-extension.php` |
 
 ## Email
