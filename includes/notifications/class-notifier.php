@@ -349,6 +349,10 @@ class Notifier {
 		// reactions only on the 0->1 transition, so no per-reaction spam).
 		add_action( 'jetonomy_pro_first_reaction', [ $this, 'on_first_reaction' ], 10, 3 );
 
+		// Custom badge earned (fired by Pro) - same door as a trust-level promotion,
+		// so it gets the preference gate, the email and the community payload.
+		add_action( 'jetonomy_pro_badge_earned', [ $this, 'on_badge_earned' ], 10, 3 );
+
 		// Join request — notify space admins
 		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
 		add_action( 'jetonomy_join_request_approved', [ $this, 'on_join_request_approved' ], 10, 3 );
@@ -981,6 +985,28 @@ class Notifier {
 				__( 'Congratulations! You have been promoted to %1$s (Level %2$d)', 'jetonomy' ),
 				$name,
 				$new_level
+			)
+		);
+	}
+
+	/**
+	 * Notify a member who earned a custom badge (Pro fires the action).
+	 *
+	 * @param int    $user_id  Member who earned it.
+	 * @param int    $badge_id Badge id.
+	 * @param object $badge    Badge row.
+	 */
+	public function on_badge_earned( int $user_id, int $badge_id, object $badge ): void {
+		$this->create_and_maybe_email(
+			$user_id,
+			0, // system notification
+			'badge_earned',
+			'badge',
+			$badge_id,
+			sprintf(
+				/* translators: %s: badge name. */
+				__( 'Congratulations! You earned the %s badge', 'jetonomy' ),
+				(string) ( $badge->name ?? '' )
 			)
 		);
 	}

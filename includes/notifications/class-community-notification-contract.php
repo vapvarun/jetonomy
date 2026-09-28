@@ -18,8 +18,7 @@ namespace Jetonomy\Notifications;
 
 defined( 'ABSPATH' ) || exit;
 
-use Jetonomy\Models\Restriction;
-use Jetonomy\Permissions\Permission_Engine;
+use Jetonomy\Models\Notification;
 
 /**
  * Builds, declares and answers for the community notification contract.
@@ -191,124 +190,19 @@ class Community_Notification_Contract {
 
 	/**
 	 * Answer which of the host's bell rows for Jetonomy content the viewer may
-	 * still see. The DECISION never re-derives Jetonomy's own rules — it calls
-	 * the plugin's existing authoritative checks: `Permission_Engine::can_read_post()`
-	 * / `can_read_reply()` (status, private content, space visibility including
-	 * hidden-category concealment and access rules, exactly as the front end and
-	 * REST enforce it) and `Restriction::is_banned()` (the same global-ban check
-	 * `can()` itself uses for the viewer, applied here to the CONTENT's author).
-	 * Both are request-memoized (`Permission_Engine::can()`, `Restriction::is_banned()`),
-	 * so this only fetches the raw rows itself — one query per table, regardless
-	 * of page size — and asks the canonical functions per row.
+	 * still see. The rule is not written here: it is Notification::targets_visible(),
+	 * the PHP twin of the SQL every Jetonomy list already applies, so the host's
+	 * bell and Jetonomy's own notifications page can never disagree.
 	 *
-	 * @param array<int|string,bool>                                                                 $visible Every key starts true.
+	 * @param array<int|string,bool>                                                                 $visible   Every key starts true.
 	 * @param int                                                                                    $viewer_id Recipient viewing their bell.
-	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int}> $targets Rows on this page; a caller of the shared filter is not
-	 *        guaranteed to fill every key.
+	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int}> $targets   Rows on this page.
 	 * @return array<int|string,bool>
 	 */
 	public static function filter_visible( array $visible, int $viewer_id, array $targets ): array {
-		$post_keys  = array(); // key => post_id
-		$reply_keys = array(); // key => reply_id
-		$space_keys = array(); // key => space_id
-
-		foreach ( $targets as $key => $target ) {
-			$object_id = (int) ( $target['object_id'] ?? 0 );
-			if ( $object_id <= 0 ) {
-				continue;
-			}
-			switch ( (string) ( $target['object_type'] ?? '' ) ) {
-				case 'post':
-					$post_keys[ $key ] = $object_id;
-					break;
-				case 'reply':
-					$reply_keys[ $key ] = $object_id;
-					break;
-				case 'space':
-					$space_keys[ $key ] = $object_id;
-					break;
-				default:
-					// 'badge', '' and anything unrecognised: no content object to
-					// hide behind, always visible.
-					break;
-			}
+		foreach ( Notification::targets_visible( $viewer_id, $targets ) as $key => $ok ) {
+			$visible[ $key ] = ( $visible[ $key ] ?? true ) && $ok;
 		}
-
-		if ( empty( $post_keys ) && empty( $reply_keys ) && empty( $space_keys ) ) {
-			return $visible;
-		}
-
-		global $wpdb;
-
-		// One query for every reply this page references — data only; the
-		// visibility DECISION for each row happens below via Permission_Engine.
-		$reply_rows = array();
-		if ( ! empty( $reply_keys ) ) {
-			$ids          = array_values( array_unique( $reply_keys ) );
-			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a trusted prefixed constant, ids are %d-placeholders.
-			$reply_rows = $wpdb->get_results(
-				$wpdb->prepare(
-					'SELECT * FROM ' . \Jetonomy\table( 'replies' ) . " WHERE id IN ({$placeholders})",
-					$ids
-				),
-				OBJECT_K
-			);
-		}
-
-		// One query for every post this page references, directly or via a reply
-		// (can_read_post()/can_read_reply() both need the parent post row).
-		$post_ids = array_values( $post_keys );
-		foreach ( $reply_rows as $reply_row ) {
-			$post_ids[] = (int) $reply_row->post_id;
-		}
-		$post_ids = array_values( array_unique( array_filter( $post_ids ) ) );
-
-		$post_rows = array();
-		if ( ! empty( $post_ids ) ) {
-			$placeholders = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$post_rows = $wpdb->get_results(
-				$wpdb->prepare(
-					'SELECT * FROM ' . \Jetonomy\table( 'posts' ) . " WHERE id IN ({$placeholders})",
-					$post_ids
-				),
-				OBJECT_K
-			);
-		}
-
-		foreach ( $post_keys as $key => $post_id ) {
-			$post = $post_rows[ $post_id ] ?? null;
-			if ( ! $post
-				|| ! Permission_Engine::can_read_post( $viewer_id, $post )
-				|| Restriction::is_banned( (int) $post->author_id )
-			) {
-				$visible[ $key ] = false;
-			}
-		}
-
-		foreach ( $reply_keys as $key => $reply_id ) {
-			$reply = $reply_rows[ $reply_id ] ?? null;
-			$post  = $reply ? ( $post_rows[ (int) $reply->post_id ] ?? null ) : null;
-			if ( ! $reply || ! $post
-				|| 'publish' !== $reply->status
-				|| ! Permission_Engine::can_read_post( $viewer_id, $post )
-				|| ! Permission_Engine::can_read_reply( $viewer_id, $reply, $post )
-				|| Restriction::is_banned( (int) $reply->author_id )
-			) {
-				$visible[ $key ] = false;
-			}
-		}
-
-		// Space targets (join_request / join_request_result) — the same 'read'
-		// action can_read_post() checks at the space level, memoized per
-		// (viewer, space) so repeats across this page cost nothing extra.
-		foreach ( $space_keys as $key => $space_id ) {
-			if ( ! Permission_Engine::can( $viewer_id, 'read', $space_id ) ) {
-				$visible[ $key ] = false;
-			}
-		}
-
 		return $visible;
 	}
 }

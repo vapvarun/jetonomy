@@ -2392,7 +2392,7 @@
       "args": "visible, viewer_id, targets",
       "where": "includes/notifications/class-community-notification-contract.php",
       "consumed_by": "buddynext",
-      "audit_notes": "2.0.1: community notification contract. Batched (one query per table per page) answer for trashed/pending/draft content, a globally banned author, or a private space the viewer cannot read."
+      "audit_notes": "2.0.1: community notification contract. Batched (one query per table per page) answer from Notification::targets_visible(), the PHP twin of visibility_sql(): hides a globally banned or blocked actor and a post/reply target that is not publish (moderation and flag_resolved exempt). Same rule as Jetonomy's own notifications list; a parity test keeps them equal."
     },
     {
       "name": "jetonomy_community_notification_removed",

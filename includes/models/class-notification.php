@@ -407,7 +407,9 @@ class Notification extends Model {
 	 * a ban or a trash, the same as the other no-per-user-loop writes noted in
 	 * unread_count().
 	 *
-	 * Requires the notifications table to be aliased `n`.
+	 * Requires the notifications table to be aliased `n`. targets_visible() is
+	 * its PHP twin for a host that keeps its own copy of the rows - change both
+	 * together (NotificationVisibilityParityTest enforces it).
 	 *
 	 * @param int $user_id Recipient (viewer).
 	 * @return array{0:string,1:array<int,mixed>} { fragment with leading " AND", placeholder values }
@@ -435,6 +437,88 @@ class Notification extends Model {
 		}
 
 		return [ $sql, $params ];
+	}
+
+	/**
+	 * The PHP twin of visibility_sql(): which of these notification targets a
+	 * viewer may see, by the same rule, for a host plugin that holds its own
+	 * copy of the rows (the BuddyNext bell). SQL cannot be called from PHP, so
+	 * the rule is written twice; NotificationVisibilityParityTest runs both over
+	 * one fixture set and fails if they ever disagree.
+	 *
+	 * @param int                                                                                    $viewer_id Recipient viewing their list.
+	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int}> $targets   Rows on this page, any keys.
+	 * @return array<int|string,bool> Same keys, true = visible.
+	 */
+	public static function targets_visible( int $viewer_id, array $targets ): array {
+		$visible = array_fill_keys( array_keys( $targets ), true );
+		if ( empty( $targets ) ) {
+			return $visible;
+		}
+
+		global $wpdb;
+
+		// Actors under an active site-wide ban: one query for the page.
+		$actor_ids = array_values( array_unique( array_filter( array_map( static fn( $t ) => (int) ( $t['actor_id'] ?? 0 ), $targets ) ) ) );
+		$banned    = array();
+		if ( ! empty( $actor_ids ) ) {
+			$in = implode( ',', array_fill( 0, count( $actor_ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
+			$banned = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT user_id FROM ' . \Jetonomy\table( 'restrictions' ) . " WHERE type = 'global_ban' AND ( expires_at IS NULL OR expires_at > %s ) AND user_id IN ({$in})", array_merge( array( now() ), $actor_ids ) ) ) );
+		}
+		$blocked = BlockedUser::blocked_ids( $viewer_id );
+
+		$post_keys  = array();
+		$reply_keys = array();
+		foreach ( $targets as $key => $t ) {
+			$actor = (int) ( $t['actor_id'] ?? 0 );
+			if ( $actor > 0 && ( in_array( $actor, $banned, true ) || in_array( $actor, $blocked, true ) ) ) {
+				$visible[ $key ] = false;
+				continue;
+			}
+			$id = (int) ( $t['object_id'] ?? 0 );
+			if ( $id <= 0 || in_array( (string) ( $t['type'] ?? '' ), self::TARGET_STATUS_EXEMPT_TYPES, true ) ) {
+				continue;
+			}
+			switch ( (string) ( $t['object_type'] ?? '' ) ) {
+				case 'post':
+					$post_keys[ $key ] = $id;
+					break;
+				case 'reply':
+					$reply_keys[ $key ] = $id;
+					break;
+			}
+		}
+
+		// Dead targets: one query per table for the page. A target that resolves
+		// to nothing stays visible, exactly as visibility_sql() leaves it.
+		$dead_posts = array();
+		if ( ! empty( $post_keys ) ) {
+			$ids = array_values( array_unique( $post_keys ) );
+			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
+			$dead_posts = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status <> 'publish' AND id IN ({$in})", $ids ) ) );
+		}
+		$dead_replies = array();
+		if ( ! empty( $reply_keys ) ) {
+			$ids = array_values( array_unique( $reply_keys ) );
+			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
+			$dead_replies = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT r.id FROM ' . \Jetonomy\table( 'replies' ) . ' r INNER JOIN ' . \Jetonomy\table( 'posts' ) . " p ON p.id = r.post_id WHERE ( r.status <> 'publish' OR p.status <> 'publish' ) AND r.id IN ({$in})", $ids ) ) );
+		}
+
+		foreach ( $post_keys as $key => $id ) {
+			if ( in_array( $id, $dead_posts, true ) ) {
+				$visible[ $key ] = false;
+			}
+		}
+		foreach ( $reply_keys as $key => $id ) {
+			if ( in_array( $id, $dead_replies, true ) ) {
+				$visible[ $key ] = false;
+			}
+		}
+
+		return $visible;
 	}
 
 	/**

@@ -130,15 +130,13 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 		}
 	}
 
-	public function test_visibility_hides_trashed_banned_and_private_space(): void {
+	public function test_visibility_hides_trashed_and_banned_actor(): void {
 		$cat_id   = Category::create( array( 'name' => 'CNV', 'slug' => 'cnv-' . uniqid() ) );
 		$pub_id   = Space::create( array( 'title' => 'Public', 'slug' => 'cnv-pub-' . uniqid(), 'category_id' => $cat_id, 'visibility' => 'public' ) );
-		$priv_id  = Space::create( array( 'title' => 'Private', 'slug' => 'cnv-priv-' . uniqid(), 'category_id' => $cat_id, 'visibility' => 'private' ) );
 
 		$visible_post  = Post::create( array( 'space_id' => $pub_id, 'author_id' => $this->actor, 'title' => 'A', 'slug' => 'cnv-a-' . uniqid(), 'content' => '<p>A</p>' ) );
 		$trashed_post  = Post::create( array( 'space_id' => $pub_id, 'author_id' => $this->actor, 'title' => 'B', 'slug' => 'cnv-b-' . uniqid(), 'content' => '<p>B</p>' ) );
 		Post::update( $trashed_post, array( 'status' => 'trash' ) );
-		$private_post  = Post::create( array( 'space_id' => $priv_id, 'author_id' => $this->actor, 'title' => 'C', 'slug' => 'cnv-c-' . uniqid(), 'content' => '<p>C</p>' ) );
 		$banned_author = self::factory()->user->create();
 		$banned_post   = Post::create( array( 'space_id' => $pub_id, 'author_id' => $banned_author, 'title' => 'D', 'slug' => 'cnv-d-' . uniqid(), 'content' => '<p>D</p>' ) );
 		Restriction::ban( $banned_author, 'global_ban', 1 );
@@ -146,8 +144,8 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 		$targets = array(
 			'ok'      => array( 'type' => 'reply_to_post', 'object_type' => 'post', 'object_id' => $visible_post, 'actor_id' => $this->actor ),
 			'trashed' => array( 'type' => 'reply_to_post', 'object_type' => 'post', 'object_id' => $trashed_post, 'actor_id' => $this->actor ),
-			'private' => array( 'type' => 'reply_to_post', 'object_type' => 'post', 'object_id' => $private_post, 'actor_id' => $this->actor ),
 			'banned'  => array( 'type' => 'reply_to_post', 'object_type' => 'post', 'object_id' => $banned_post, 'actor_id' => $banned_author ),
+			'vote_banned' => array( 'type' => 'vote_on_post', 'object_type' => 'post', 'object_id' => $visible_post, 'actor_id' => $banned_author ),
 			'badge'   => array( 'type' => 'badge_earned', 'object_type' => 'badge', 'object_id' => 3, 'actor_id' => 0 ),
 		);
 
@@ -160,9 +158,29 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 
 		$this->assertTrue( $visible['ok'] );
 		$this->assertFalse( $visible['trashed'] );
-		$this->assertFalse( $visible['private'], 'a private space the viewer never joined stays hidden' );
 		$this->assertFalse( $visible['banned'] );
+		$this->assertFalse( $visible['vote_banned'], 'the ban is on the notification actor, not only the content author' );
 		$this->assertTrue( $visible['badge'], 'a non-content type has nothing to hide behind' );
+	}
+
+	public function test_pro_badge_reaches_the_contract_through_the_notifier(): void {
+		$captured = null;
+		add_action(
+			'jetonomy_notification_created',
+			static function ( ...$args ) use ( &$captured ): void {
+				$captured = end( $args );
+			},
+			10,
+			8
+		);
+
+		( new Notifier() )->on_badge_earned( $this->recipient, 7, (object) array( 'name' => 'Helper' ) );
+
+		$this->assertIsArray( $captured, 'a Pro badge fires the notification hook with the contract payload' );
+		$this->assertSame( 'badge_earned', $captured['type'] );
+		$this->assertSame( $this->recipient, $captured['recipient_id'] );
+		$this->assertStringContainsString( 'Helper', $captured['message'] );
+		$this->assertNotSame( '', $captured['url'], 'no deep link falls back to the member\'s profile' );
 	}
 
 	public function test_removal_fires_on_permanent_delete_only(): void {
