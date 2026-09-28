@@ -97,11 +97,18 @@ array(
 	'group_key'       => 'reply_to_post_1153', // per object + subtype, never per actor
 	'context'         => array( 'type' => 'space', 'id' => 12, 'label' => 'Design Critique' ),
 	'notification_id' => 991,                  // the plugin's own row id
+	'renotify'        => true,                 // false = a running notice (see below)
 )
 ```
 
 `{actor}` = latest actor's name; `{others}` = BuddyNext's translated "1 other" / "3 others".
 Never fire for the actor themself or during an import. Build the payload in ONE helper.
+
+**Running notices** (a personal record that keeps growing through the week, a progress count):
+set `renotify => false` with a `group_key` per period. The first fire creates the row; every
+repeat with the same key refreshes that row's text quietly (keeps read state and date, no push).
+Without it, repeats merge: the row jumps to the top and alerts again, which is right for
+"Aisha and 3 others replied" and wrong for a number that only grows.
 
 ### 4.2 Declare types: the one switch
 
