@@ -1182,8 +1182,24 @@ class Notifier {
 		 * $message (rendered human sentence) and $url (deep link) are appended
 		 * so consumers can mirror the notification 1:1 without re-deriving
 		 * them. Backward-compatible: existing 5-arg listeners are unaffected.
+		 *
+		 * The 8th argument is the community notification contract payload (see
+		 * Community_Notification_Contract::payload()) — existing listeners
+		 * registered with fewer accepted_args never receive it, so this is
+		 * additive. It is an empty array when the notification shouldn't reach
+		 * a host's inbox (e.g. the actor notifying themself).
 		 */
-		do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
+		do_action(
+			'jetonomy_notification_created',
+			$notification_id,
+			$user_id,
+			$type,
+			$object_type,
+			$object_id,
+			$message,
+			$url,
+			Community_Notification_Contract::payload( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url )
+		);
 	}
 
 	/**

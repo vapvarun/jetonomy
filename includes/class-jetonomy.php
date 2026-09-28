@@ -715,6 +715,7 @@ final class Jetonomy {
 		Membership_Roster_Sync::init();
 
 		new Notifications\Notifier();
+		Notifications\Community_Notification_Contract::init();
 		new Cron();
 		new Privacy();
 
