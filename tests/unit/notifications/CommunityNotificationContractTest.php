@@ -183,6 +183,45 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 		$this->assertNotSame( '', $captured['url'], 'no deep link falls back to the member\'s profile' );
 	}
 
+	/** @return array{0:int,1:int,2:int} topic id, first reply id, second reply id (different authors). */
+	private function topic_with_two_replies(): array {
+		$cat_id   = Category::create( array( 'name' => 'CNG', 'slug' => 'cng-' . uniqid() ) );
+		$space_id = Space::create( array( 'title' => 'G', 'slug' => 'cng-s-' . uniqid(), 'category_id' => $cat_id, 'visibility' => 'public' ) );
+		$post_id  = Post::create( array( 'space_id' => $space_id, 'author_id' => $this->recipient, 'title' => 'Grouped topic', 'slug' => 'cng-p-' . uniqid(), 'content' => '<p>T</p>' ) );
+		$other    = self::factory()->user->create();
+		$r1       = Reply::create( array( 'post_id' => $post_id, 'author_id' => $this->actor, 'content' => '<p>1</p>' ) );
+		$r2       = Reply::create( array( 'post_id' => $post_id, 'author_id' => $other, 'content' => '<p>2</p>' ) );
+		return array( $post_id, $r1, $r2 );
+	}
+
+	public function test_replies_to_one_topic_share_one_group_anchored_on_the_topic(): void {
+		list( $post_id, $r1, $r2 ) = $this->topic_with_two_replies();
+
+		$a = Community_Notification_Contract::payload( 1, $this->recipient, $this->actor, 'reply_to_post', 'reply', $r1, 'X replied to your post "Grouped topic"', 'https://example.test/r1' );
+		$b = Community_Notification_Contract::payload( 2, $this->recipient, 999, 'reply_to_post', 'reply', $r2, 'Y replied to your post "Grouped topic"', 'https://example.test/r2' );
+
+		$this->assertSame( 'reply_to_post_' . $post_id, $a['group_key'] );
+		$this->assertSame( $a['group_key'], $b['group_key'], 'two repliers, one group' );
+		$this->assertSame( 'post', $a['object_type'], 'the row is about the topic, so its status decides visibility' );
+		$this->assertSame( $post_id, $a['object_id'] );
+		$this->assertSame( \Jetonomy\notification_deep_link( 'post', $post_id ), $a['url'], 'the link is the topic, which always exists' );
+		$this->assertSame( '{actor} and {others} replied to your post "Grouped topic"', $a['message_grouped'] );
+		$this->assertSame( 'X replied to your post "Grouped topic"', $a['message'], 'the single-row wording is untouched' );
+	}
+
+	public function test_a_subscriber_gets_the_replied_in_wording_and_reply_to_reply_stays_per_reply(): void {
+		list( $post_id, $r1 ) = $this->topic_with_two_replies();
+		$subscriber           = self::factory()->user->create();
+
+		$sub = Community_Notification_Contract::payload( 3, $subscriber, $this->actor, 'reply_to_post', 'reply', $r1, 'X replied in "Grouped topic"', 'https://example.test/r1' );
+		$this->assertSame( '{actor} and {others} replied in "Grouped topic"', $sub['message_grouped'] );
+
+		$rtr = Community_Notification_Contract::payload( 4, $this->recipient, $this->actor, 'reply_to_reply', 'reply', $r1, 'X replied to you', 'https://example.test/r1' );
+		$this->assertSame( 'reply_to_reply_' . $r1, $rtr['group_key'], 'the recipient owns that one reply' );
+		$this->assertSame( 'reply', $rtr['object_type'] );
+		$this->assertArrayNotHasKey( 'message_grouped', $rtr );
+	}
+
 	public function test_removal_fires_on_permanent_delete_only(): void {
 		$removed = array();
 		add_action(

@@ -19,6 +19,8 @@ namespace Jetonomy\Notifications;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Notification;
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 
 /**
  * Builds, declares and answers for the community notification contract.
@@ -91,9 +93,32 @@ class Community_Notification_Contract {
 			return array();
 		}
 
-		$slug = sanitize_key( $type );
+		$slug    = sanitize_key( $type );
+		$grouped = '';
 
-		return array(
+		// Replies to one topic collapse into one bell row: the row is about the
+		// TOPIC (its status decides visibility, its link always exists). The host
+		// keeps the first row's object and link when it merges, so the group key
+		// and the object must describe the same thing. Own list and email are
+		// untouched; a reply whose topic can't be resolved stays per reply.
+		if ( 'reply_to_post' === $slug && 'reply' === $object_type && $object_id > 0 ) {
+			$reply = Reply::find( $object_id );
+			$post  = $reply ? Post::find( (int) $reply->post_id ) : null;
+			if ( $post ) {
+				$topic_link  = \Jetonomy\notification_deep_link( 'post', (int) $post->id );
+				$title       = mb_substr( (string) $post->title, 0, 50 );
+				$object_type = 'post';
+				$object_id   = (int) $post->id;
+				$link        = '' !== $topic_link ? $topic_link : $link;
+				$grouped     = (int) $post->author_id === $user_id
+					/* translators: 1: post title. {actor} and {others} are placeholders filled by the host; keep them. */
+					? sprintf( __( '{actor} and {others} replied to your post "%s"', 'jetonomy' ), $title )
+					/* translators: 1: post title. {actor} and {others} are placeholders filled by the host; keep them. */
+					: sprintf( __( '{actor} and {others} replied in "%s"', 'jetonomy' ), $title );
+			}
+		}
+
+		$payload = array(
 			'recipient_id'    => $user_id,
 			'type'            => $slug,
 			'actor_id'        => $actor_id,
@@ -101,13 +126,17 @@ class Community_Notification_Contract {
 			'object_id'       => max( 0, $object_id ),
 			'message'         => $message,
 			'url'             => $link,
-			// Per object, never per actor — matches the spec's own example
+			// Per object, never per actor - matches the spec's own example
 			// (`reply_to_post_1153`). Merges e.g. several join requests for the
-			// same space into one row; a reply keeps its own row because
-			// $object_id is the reply id, which is unique per reply.
+			// same space into one row, and several replies to one topic.
 			'group_key'       => $object_id > 0 ? $slug . '_' . $object_id : '',
 			'notification_id' => $notification_id,
 		);
+		if ( '' !== $grouped ) {
+			$payload['message_grouped'] = $grouped;
+		}
+
+		return $payload;
 	}
 
 	/**
