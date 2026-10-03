@@ -118,11 +118,31 @@ class Cron {
 	}
 
 	/**
+	 * Is this a request where recurring schedules should be checked and armed?
+	 *
+	 * Each check is a database lookup (as_has_scheduled_action, plus the one-time
+	 * migration flags), and running them on every page, REST call and heartbeat
+	 * made them part of every request's query floor. Check only in the cron runner
+	 * (which re-arms a lost job within one tick), wp-admin page loads and WP-CLI.
+	 * See docs/standards/background-jobs.md.
+	 *
+	 * @return bool
+	 */
+	public static function is_scheduling_request(): bool {
+		return wp_doing_cron()
+			|| ( is_admin() && ! wp_doing_ajax() )
+			|| ( defined( 'WP_CLI' ) && WP_CLI );
+	}
+
+	/**
 	 * Idempotent scheduler — ensures every recurring action exists in AS exactly
 	 * once. On first run after upgrade from <1.4.4, also wipes the legacy WP-Cron
 	 * registrations so the same handler doesn't fire from two schedulers.
 	 */
 	public static function ensure_scheduled(): void {
+		if ( ! self::is_scheduling_request() ) {
+			return;
+		}
 		if ( ! function_exists( 'as_schedule_recurring_action' ) ) {
 			return; // AS not booted yet (e.g. activation request before plugins_loaded). Retry next request.
 		}
