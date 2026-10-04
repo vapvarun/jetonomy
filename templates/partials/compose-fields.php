@@ -178,8 +178,20 @@ endif;
  *
  * @param object|null $space The space object.
  */
+//
+// Output is collected into one .jt-compose-extras wrapper (printed only when
+// an extension rendered something) so tool buttons from different extensions
+// can share one row: a callback that marks its root .jt-compose-tool has its
+// .jt-btn laid out in a single row of secondary buttons and any panel it
+// owns (poll builder, upload strip) opened full width below that row.
+ob_start();
 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- caller-controlled hook (defaults to jetonomy_compose_extras) so embeds can pass a different surface-specific hook.
 do_action( $_fields_hook, $space );
+$_extras_html = trim( (string) ob_get_clean() );
+if ( '' !== $_extras_html ) {
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- extension markup, escaped by each hooked callback (same output do_action printed directly before).
+	echo '<div class="jt-compose-extras">' . $_extras_html . '</div>';
+}
 ?>
 
 <?php if ( $_show_private && is_user_logged_in() ) : ?>

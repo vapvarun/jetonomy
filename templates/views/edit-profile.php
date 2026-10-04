@@ -65,7 +65,7 @@ if ( ! $cancel_url ) {
 		<div class="jt-form-group">
 			<label class="jt-label" for="jt-nickname"><?php esc_html_e( 'Nickname', 'jetonomy' ); ?></label>
 			<input type="text" id="jt-nickname" name="nickname" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'nickname', true ) ); ?>" required>
-			<p class="jt-field-hint"><?php esc_html_e( 'Required. Only shown if you pick it below.', 'jetonomy' ); ?></p>
+			<p class="jt-form-help"><?php esc_html_e( 'Required. Only shown if you pick it below.', 'jetonomy' ); ?></p>
 		</div>
 
 		<div class="jt-form-group">

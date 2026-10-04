@@ -99,7 +99,7 @@ $crumbs = [
 <div class="jt-two-col">
 		<main>
 			<div class="jt-flex jt-items-center jt-gap-12 jt-mb-20">
-				<span class="jt-tag jt-tag-hero"><?php echo esc_html( $tag->name ); ?></span>
+				<h1 class="jt-page-title"><?php echo esc_html( $tag->name ); ?></h1>
 				<span class="jt-tag-count-label">
 					<?php
 					echo esc_html( \Jetonomy\count_label( (int) $tag->post_count, 'topic' ) );

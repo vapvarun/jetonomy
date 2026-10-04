@@ -644,7 +644,7 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 					// Always route through the icon helper so a stored "message-circle"
 					// renders as the Lucide SVG (not as the literal text). The helper
 					// also defends against legacy emoji values and dashicon prefixes.
-					jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' );
+					jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-icon', $space->type ?? '' );
 					?>
 					<div class="jt-space-card-body">
 						<div class="jt-space-card-title">

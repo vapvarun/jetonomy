@@ -205,16 +205,13 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 /* ─── Login block ──────────────────────────────────────────────────── */
 
-/* The login card is the call-to-action for every logged-out visitor, so it sits
-   slightly proud of the neutral widgets around it (nav, ABOUT, MANAGED BY),
-   which stay on var(--jt-bg). --jt-bg-subtle is the plugin's existing "raised
-   surface" step — mixed a few percent toward --jt-text — which makes it
-   mode-correct by construction: --jt-text is dark in light mode so the card goes
-   darker, and light in dark mode so it goes lighter. Either way it separates
-   from the page. Hardcoding "darker" would sink the card into a dark page, and a
-   fourth hand-rolled percentage is the duplication this file just removed. */
+/* The login card is the call-to-action for every logged-out visitor; the
+   accent bar across its top (::before) is what sets it apart. Its surface is
+   --jt-bg like every other card: on --jt-bg-subtle it was a grey card on a
+   near-identical grey page (Reign #fafbfd), so it read as sunken, not raised,
+   beside the white nav/feed cards. */
 .jt-login-block {
-	background: var(--jt-bg-subtle);
+	background: var(--jt-bg);
 	border: 1px solid var(--jt-border);
 	border-radius: var(--jt-radius-lg);
 	box-shadow: var(--jt-shadow-sm);
@@ -769,9 +766,34 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font-variant-numeric: tabular-nums;
 }
 
-/* Leaderboard */
+/* Standalone list shortcodes (page, page builder, the Leaderboard block)
+   draw the same card as the Forum Feed / Trending blocks. Bare, they were
+   rows floating on the page next to carded siblings: the leaderboard spread
+   a name and its score 800px apart with nothing framing the row. Inside a
+   feed block or a theme widget the container already draws the box. */
+:is(.jt-shortcode-recent-posts, .jt-shortcode-trending-posts, .jt-shortcode-leaderboard, .jt-shortcode-members) {
+	background: var(--jt-bg);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius-lg);
+	box-shadow: var(--jt-shadow-sm);
+	padding: var(--jt-space-5);
+	margin: 0 0 var(--jt-space-6);
+}
+.jt-feed-block > .jt-shortcode,
+[class*="widget_jetonomy_"] .jt-shortcode {
+	background: none;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 0;
+	margin: 0;
+}
+
+/* Leaderboard - rank badge like Trending's. A flex <li> drops its list
+   marker, so `list-style: decimal inside` never drew a number. */
 .jt-shortcode-leaderboard ol {
-	list-style: decimal inside;
+	list-style: none;
+	counter-reset: jt-rank;
 	margin: 0;
 	padding: 0;
 	display: flex;
@@ -779,13 +801,27 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	gap: var(--jt-space-1);
 }
 .jt-shortcode-leaderboard li {
+	counter-increment: jt-rank;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	gap: var(--jt-space-3);
-	padding: 8px 10px;
-	border-radius: var(--jt-radius-sm);
+	padding: var(--jt-space-2) 0;
 }
+.jt-shortcode-leaderboard li::before {
+	content: counter(jt-rank);
+	flex: 0 0 28px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 28px;
+	border-radius: var(--jt-radius-full);
+	background: var(--jt-accent-light);
+	color: var(--jt-accent-strong);
+	font-size: 0.8125rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+.jt-shortcode-leaderboard li > a { flex: 1 1 auto; min-width: 0; }
 .jt-shortcode-leaderboard li + li {
 	border-top: 1px solid var(--jt-border);
 }
@@ -936,6 +972,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-login-tab { font-size: 0.875rem; padding: 9px 10px; }
 	.jt-login-label > input { font-size: 16px; } /* avoid iOS zoom */
 	.jt-shortcode-post { padding: 10px 6px; }
+	:is(.jt-shortcode-recent-posts, .jt-shortcode-trending-posts, .jt-shortcode-leaderboard, .jt-shortcode-members) { padding: var(--jt-space-4); }
 	.jt-shortcode-spaces { grid-template-columns: 1fr; gap: var(--jt-space-3); }
 	.jt-feed-header { margin-bottom: 12px; padding-bottom: 10px; }
 	.jt-feed-title { font-size: 0.9375rem; }
@@ -983,7 +1020,6 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	align-items: flex-start;
 	gap: var(--jt-space-4);
 	padding: 1.25rem 1.5rem;
-	background: var(--jt-bg-subtle, var(--jt-bg-subtle, #f9fafb));
 }
 
 .jt-compose-topic-login-icon {

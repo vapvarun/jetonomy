@@ -403,7 +403,7 @@ $crumbs = [
 								<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
 									class="jt-card jt-space-card jt-no-underline jt-block">
 									<div class="jt-space-card-inner">
-										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-cat-emoji', $space->type ?? '' ); ?>
+										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-icon', $space->type ?? '' ); ?>
 										<div>
 											<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
 											<?php if ( ! empty( $space->description ) ) : ?>
