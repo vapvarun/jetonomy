@@ -12,8 +12,6 @@ defined( 'ABSPATH' ) || exit;
 final class Jetonomy {
 	private static ?self $instance = null;
 
-	public ?Moderation\AI_Spam_Detector $ai_spam_detector = null;
-
 	public static function instance(): self {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -643,23 +641,11 @@ final class Jetonomy {
 			$mepr->register_hooks();
 		}
 
-		// Ollama AI adapter (conditional — self-hosted, free).
-		//
-		// AI_Adapter has zero in-tree consumers in the free plugin. That's
-		// intentional: the registry slot is a Pro-only extension hook. Pro's
-		// AI extension consumes Adapter_Registry::get_ai() / get_all_ai() and
-		// brings its own provider adapters (OpenAI, Anthropic, custom) plus
-		// the moderator / suggester / summarizer features that consume them.
-		// Free ships Ollama for the self-hosted no-Pro use case via the
-		// AI_Spam_Detector instance below.
-		$ai_settings = $settings['ai']['providers']['ollama'] ?? [];
-		if ( ! empty( $ai_settings['enabled'] ) ) {
-			Adapters\Adapter_Registry::register_ai( 'ollama', new Adapters\Ollama_AI_Adapter() );
-		}
-
-		// AI spam detection (free version — Ollama only).
-		// Instance stored so Pro can reliably remove the filter via jetonomy()->ai_spam_detector.
-		$this->ai_spam_detector = new Moderation\AI_Spam_Detector();
+		// AI is a Pro feature. The AI_Adapter registry slot and the Ollama
+		// adapter class stay in free because Pro's AI extension registers and
+		// consumes them; free registers no AI provider and runs no AI check.
+		// (2.0.1 removed a free Ollama spam detector that no screen could
+		// enable - Basecamp 10368526756.)
 
 		// PMPro adapter (conditional)
 		if ( defined( 'PMPRO_VERSION' ) ) {

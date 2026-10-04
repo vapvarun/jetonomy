@@ -22,7 +22,7 @@ class Categories_Handler {
 
 	public function ajax_create_category(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+		if ( ! current_user_can( 'jetonomy_manage_categories' ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
@@ -75,7 +75,7 @@ class Categories_Handler {
 
 	public function ajax_update_category(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+		if ( ! current_user_can( 'jetonomy_manage_categories' ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
@@ -133,7 +133,7 @@ class Categories_Handler {
 
 	public function ajax_delete_category(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+		if ( ! current_user_can( 'jetonomy_manage_categories' ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
@@ -156,7 +156,7 @@ class Categories_Handler {
 
 	public function ajax_reorder_categories(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+		if ( ! current_user_can( 'jetonomy_manage_categories' ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 

@@ -467,8 +467,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											'upload_media' => __( 'Upload images', 'jetonomy' ),
 											'edit_own_posts' => __( 'Edit own posts', 'jetonomy' ),
 											'delete_own_posts' => __( 'Delete own posts', 'jetonomy' ),
-											/* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */
-											'create_spaces' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 											/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 											'join_spaces'  => sprintf( __( 'Join private %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
@@ -715,6 +713,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 				];
+				if ( \Jetonomy\Notifications\Notifier::messages_enabled() ) {
+					$notif_types['message'] = __( 'Private message', 'jetonomy' );
+				}
 				?>
 				<table class="jt-notif-defaults-table jt-settings-matrix">
 					<thead>
@@ -728,12 +729,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<?php
 						foreach ( $notif_types as $type => $label ) :
 							// Fallbacks must match how Notifier consumes an unset type:
-							// web defaults ON ( ?? true ), but email defaults OFF
-							// ( should_email() uses !empty() ). Rendering email as
-							// checked-by-default showed types as ON that the notifier
-							// treats as OFF (the phantom-default this card targets).
+							// web defaults ON ( ?? true ); email uses the notifier's own
+							// default_email() (OFF except types added later, such as
+							// `message`), so the box never shows a phantom default.
 							$web_on   = isset( $notif_defaults[ $type ]['web'] ) ? (bool) $notif_defaults[ $type ]['web'] : true;
-							$email_on = isset( $notif_defaults[ $type ]['email'] ) ? (bool) $notif_defaults[ $type ]['email'] : false;
+							$email_on = \Jetonomy\Notifications\Notifier::default_email( $type, (array) $notif_defaults );
 							?>
 							<tr>
 								<th scope="row"><?php echo esc_html( $label ); ?></th>
@@ -1082,7 +1082,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'White Label', 'jetonomy' ); ?></h4>
-					<p><?php esc_html_e( 'Remove Jetonomy branding and replace it with your own logo and color scheme.', 'jetonomy' ); ?></p>
+					<p><?php esc_html_e( 'Replace Jetonomy branding with your own community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ); ?></p>
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
@@ -1458,7 +1458,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'White Label', 'jetonomy' ),
 						'icon' => 'dashicons-admin-appearance',
-						'desc' => __( 'Replace all Jetonomy branding: custom logo, name, footer, accent color, and CSS.', 'jetonomy' ),
+						'desc' => __( 'Replace Jetonomy branding: community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ),
 						'tier' => 'Agency',
 					],
 				];

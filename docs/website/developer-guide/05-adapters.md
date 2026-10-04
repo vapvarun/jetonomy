@@ -24,7 +24,7 @@ All adapters are managed through the static `Adapter_Registry` class (`includes/
 | `WP_Roles_Adapter` | Membership | Always (WP role-based membership fallback) |
 | `MemberPress_Adapter` | Membership | MemberPress plugin is active |
 | `PMPro_Adapter` | Membership | Paid Memberships Pro is active |
-| `Ollama_AI_Adapter` | AI | A local Ollama endpoint is configured |
+| `Ollama_AI_Adapter` | AI | Jetonomy Pro's AI extension has an Ollama provider configured (the class ships in free; Pro registers it) |
 
 ## Pro Adapters (Jetonomy Pro)
 
@@ -90,6 +90,8 @@ add_action( 'plugins_loaded', function() {
 ---
 
 ## Search Adapter Interface
+
+> **Where a search adapter applies today:** a registered search adapter powers the Abilities (MCP) search only. The REST search endpoint, the companion app and the community search page still use Jetonomy's built-in MySQL FULLTEXT search, because they filter by tag, date, author and viewer visibility, which the interface below does not take yet. Routing them through the adapter is planned once the interface carries those filters.
 
 ```php
 namespace Jetonomy\Adapters;
@@ -424,7 +426,7 @@ interface AI_Adapter {
 }
 ```
 
-The built-in `Ollama_AI_Adapter` (free) talks to a local Ollama endpoint and activates only when one is configured. Jetonomy Pro's AI extension registers `OpenAI_AI_Adapter`, `Anthropic_AI_Adapter`, and `Custom_AI_Adapter` (any OpenAI-compatible endpoint). `Adapter_Registry::get_ai()` returns the first registered adapter whose `is_active()` returns `true`; pass an explicit ID to target a specific provider.
+The `Ollama_AI_Adapter` class ships in the free plugin, but free registers no AI provider. Jetonomy Pro's AI extension registers it when an Ollama provider is configured, along with `OpenAI_AI_Adapter`, `Anthropic_AI_Adapter`, and `Custom_AI_Adapter` (any OpenAI-compatible endpoint). `Adapter_Registry::get_ai()` returns the first registered adapter whose `is_active()` returns `true`; pass an explicit ID to target a specific provider.
 
 ### Example: Custom AI Adapter
 

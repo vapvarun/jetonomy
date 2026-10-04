@@ -127,7 +127,7 @@ class Admin {
 			'jetonomy',
 			$jt_categories_label,
 			$jt_categories_label,
-			'jetonomy_manage_settings',
+			'jetonomy_manage_categories',
 			'jetonomy-categories',
 			array( $this, 'render_categories' )
 		);

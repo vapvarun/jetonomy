@@ -1070,15 +1070,22 @@ class REST_Tests {
 			return;
 		}
 
-		// We need an existing flag to target. Create one as admin, then attempt
-		// resolve as test_user (subscriber, no jetonomy_moderate capability).
-		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', '/flags', [
-				'object_type' => 'post',
-				'object_id'   => $this->post_id,
-				'reason'      => 'other',
-				'description' => 'Group G permission test flag',
-			] );
+		// We need an existing flag to target. Members cannot report their own
+		// content (E25d) and E25 already has the test user's report on the
+		// fixture post, so the test user reports the admin's fixture reply -
+		// then tries to resolve it without jetonomy_moderate.
+		if ( $this->reply_id ) {
+			$r = $this->rest(
+				'POST',
+				'/flags',
+				[
+					'object_type' => 'reply',
+					'object_id'   => $this->reply_id,
+					'reason'      => 'other',
+					'description' => 'Group G permission test flag',
+				],
+				$this->test_user_id
+			);
 			$data    = $r->get_data();
 			$flag_id = ! empty( $data['id'] ) ? (int) $data['id'] : 0;
 
@@ -1092,7 +1099,7 @@ class REST_Tests {
 				$this->skip( 'G34: permission test flag', 'flag creation failed' );
 			}
 		} else {
-			$this->skip( 'G34: non-mod resolve flag', 'no post_id' );
+			$this->skip( 'G34: non-mod resolve flag', 'no reply_id' );
 		}
 	}
 
@@ -1155,7 +1162,7 @@ class REST_Tests {
 		$r    = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => $this->test_user_id ] );
 		$data = $r->get_data();
 		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
-		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()}" );
+		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()} " . wp_json_encode( $data ) . " uid=" . get_current_user_id() . " tu={$this->test_user_id}" );
 		$this->check( 'J1: response confirms blocked user', ! empty( $data['user_id'] ) && (int) $data['user_id'] === $this->test_user_id, 'missing/incorrect user_id' );
 
 		// J2: The block shows up in the viewer's list.

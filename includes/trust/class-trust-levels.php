@@ -58,7 +58,10 @@ class Trust_Levels {
 				'reputation'  => 50,
 			],
 			'rate_limits'  => [],
-			'abilities'    => [ 'create_spaces', 'join_spaces' ],
+			// Not create_spaces: creating a space needs the jetonomy_create_spaces
+			// capability plus trust level 4 (Permission_Engine), so listing it here
+			// told owners Regular members could do it (Basecamp 10368526692).
+			'abilities'    => [ 'join_spaces' ],
 			'restrictions' => [],
 		],
 		3 => [

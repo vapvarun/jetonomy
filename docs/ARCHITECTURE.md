@@ -165,7 +165,7 @@ Universal interfaces for swappable providers:
 | `Membership_Adapter` | WP Roles | Map external memberships to space access |
 | `Search_Adapter` | MySQL FULLTEXT | Pluggable search backend |
 | `Email_Adapter` | wp_mail | Email delivery |
-| `AI_Adapter` | Ollama | Content moderation, spam detection |
+| `AI_Adapter` | none (Pro registers Ollama, OpenAI, Anthropic, custom) | Pro AI: moderation, spam detection, suggestions, summaries |
 
 Registered via `Adapter_Registry`. Pro adds WooCommerce, RCP, LearnDash, and Tutor LMS membership adapters.
 
