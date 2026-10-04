@@ -281,6 +281,11 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Improve  - The remaining English-only text in admin screens, keyboard shortcuts, and the composer can now be translated.
 * Improve  - Scheduled topics publish at their scheduled time instead of up to an hour late, and scheduling confirms the time instead of saying the draft was saved.
 * Improve  - The reply and topic editors gain a Code block button, and no longer claim Markdown support the editor does not have.
+* Improve  - Sub-categories appear on the community home and category pages as links that show how many spaces each holds, and every space picker lists them indented under their parent.
+* Improve  - Space and sub-category pages show a linked breadcrumb back through the category and its parent category.
+* Improve  - The community home shows each category's description under its name, separates categories with a divider, and uses the category colour as an accent.
+* Improve  - Every place that names topics follows a renamed Topic label, including empty states, profile tabs, drafts, search filters, the leaderboard, and moderation screens.
+* Improve  - A held topic or reply that a moderator approves now notifies subscribers and mentioned members, reaches activity feeds such as BuddyNext, and credits the author's reputation, the same as content posted directly.
 * Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
 * Fix      - bbPress imports keep sticky topics and threaded replies, and re-running the import restores threading on replies an earlier version imported flat.
 * Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.
@@ -305,8 +310,19 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Fix      - Creating or editing a space with an unknown type is refused on every screen and in the REST API instead of storing an empty type.
 * Fix      - Imported forums and topics titled in Hindi, Bengali, Tamil, and other scripts with vowel signs keep readable addresses.
 * Fix      - wpForo imports bring over likes from current wpForo versions, in batches that survive large boards and never duplicate on a re-run.
+* Fix      - Spaces filed in a sub-category no longer disappear from the community home and the navigation block.
+* Fix      - Deleting a category is refused while it still has sub-categories or active spaces, in the REST API as well as wp-admin, instead of leaving them unreachable.
+* Fix      - Categories nest two levels deep on every screen, in the REST API, and in imports, and deeper, orphaned, or looping categories from earlier versions are moved under their top-level category on update.
+* Fix      - The composer button keeps the space type's wording after you choose Publish now, and a failed draft save no longer relabels it as posting.
+* Fix      - Settings no longer claims Regular members can create spaces, and the White Label upgrade note describes what Pro White Label actually changes.
+* Fix      - Category management in wp-admin checks the Manage categories capability, the same as the REST API.
+* Fix      - Topics and replies waiting for approval no longer send mention notifications, push, or email, or award reputation, before a moderator approves them.
+* Fix      - Purging a space now clears its notifications from a connected community bell, such as BuddyNext, for the space and every topic and reply in it.
 * Dev      - New POST /posts/{id}/view REST route counts a topic view, and GET /posts/{id} no longer counts one, so apps call the new route when they show a topic.
 * Dev      - wp jetonomy reply unaccept is new, reply accept marks the reply itself, space create accepts the feed type, and space delete --mode=purge --yes skips the prompt as documented.
+* Dev      - GET /categories includes spaces on sub-category nodes, and its tree is two levels deep.
+* Dev      - The free plugin no longer registers an Ollama AI provider or runs a hidden AI spam check. AI features are part of Jetonomy Pro.
+* Dev      - New jetonomy_deliver_notification action lets an extension send a notification through member preferences, blocks, push, and email, and the message notification type is part of the community notification contract.
 
 = 2.0.0 - September 2026 =
 

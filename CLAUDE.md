@@ -179,7 +179,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/adapters/` | 4 interfaces (membership, email, search, AI) + Adapter_Registry and the WP Roles, wp_mail, MemberPress, PMPro and Ollama adapters. Pro registers the rest (WooCommerce, RCP, LearnDash, Tutor). |
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |
-| `templates/` | 23 views + 14 partials (theme-overridable) |
+| `templates/` | 23 views + 17 partials (theme-overridable) |
 | `assets/css/jetonomy-tokens.css` | The `--jt-*` token layer (`:root` + dark). Dependency of BOTH `jetonomy` and `jetonomy-blocks` |
 | `assets/css/jetonomy.css` | Theme-adaptive CSS for the community app (consumes the tokens; declares none) |
 | `assets/js/view.js` | Interactivity API store (voting, sorting, polling) |

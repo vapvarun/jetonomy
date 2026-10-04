@@ -5,7 +5,7 @@
         "version": "2.0.0"
     },
     "generated": {
-        "at": "2026-09-28T00:51:13+00:00",
+        "at": "2026-10-04T09:45:14+00:00",
         "manifest_at": "2026-09-22T22:58:00Z",
         "manifest_branch": "2.0.0"
     },
@@ -706,7 +706,7 @@
             "total": 10,
             "covered": 5,
             "uncovered": 5,
-            "skipped": 232,
+            "skipped": 233,
             "covered_items": [
                 {
                     "name": "jetonomy_post_publish_transition",
@@ -760,10 +760,13 @@
         },
         "cron": {
             "total": 8,
-            "covered": 2,
-            "uncovered": 6,
+            "covered": 3,
+            "uncovered": 5,
             "skipped": 0,
             "covered_items": [
+                {
+                    "hook": "jetonomy_trust_evaluation"
+                },
                 {
                     "hook": "jetonomy_reconcile_rosters"
                 },
@@ -772,10 +775,6 @@
                 }
             ],
             "uncovered_items": [
-                {
-                    "hook": "jetonomy_trust_evaluation",
-                    "stub_command": "bin/qa-stub-gen.php cron jetonomy_trust_evaluation"
-                },
                 {
                     "hook": "jetonomy_cleanup_expired",
                     "stub_command": "bin/qa-stub-gen.php cron jetonomy_cleanup_expired"
@@ -869,14 +868,14 @@
     "summary": {
         "categories_checked": 5,
         "items_total": 188,
-        "items_covered": 67,
-        "items_uncovered": 121,
-        "items_skipped": 232,
-        "coverage_percent": 35.6
+        "items_covered": 68,
+        "items_uncovered": 120,
+        "items_skipped": 233,
+        "coverage_percent": 36.200000000000003
     },
     "drift": {
-        "previous_uncovered": 121,
-        "current_uncovered": 121,
+        "previous_uncovered": 120,
+        "current_uncovered": 120,
         "delta": 0
     }
 }

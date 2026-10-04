@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-04T09:40:12+00:00\n"
+"POT-Creation-Date: 2026-10-04T09:48:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1730,7 +1730,7 @@ msgstr[1] ""
 #: includes/class-template-loader.php:1589
 #: templates/partials/sidebar.php:237
 #: templates/views/space-edit.php:99
-#: templates/views/space.php:333
+#: templates/views/space.php:342
 #, php-format
 msgid "Edit %s"
 msgstr ""
@@ -4462,7 +4462,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:120
 #: includes/admin/views/spaces.php:85
 #: includes/functions.php:1341
-#: templates/views/space.php:354
+#: templates/views/space.php:363
 msgid "Invite Only"
 msgstr ""
 
@@ -6503,14 +6503,14 @@ msgstr ""
 #: includes/class-template-loader.php:314
 #: templates/views/single-post.php:427
 #: templates/views/single-post.php:527
-#: templates/views/space.php:396
+#: templates/views/space.php:405
 msgid "Follow"
 msgstr ""
 
 #: includes/class-template-loader.php:315
 #: templates/views/single-post.php:427
 #: templates/views/single-post.php:527
-#: templates/views/space.php:396
+#: templates/views/space.php:405
 msgid "Following"
 msgstr ""
 
@@ -6972,7 +6972,7 @@ msgstr ""
 #: includes/class-template-loader.php:581
 #: templates/views/new-post.php:60
 #: templates/views/space.php:192
-#: templates/views/space.php:384
+#: templates/views/space.php:393
 #, php-format
 msgid "Join %s"
 msgstr ""
@@ -6988,7 +6988,7 @@ msgid "Requesting..."
 msgstr ""
 
 #: includes/class-template-loader.php:585
-#: templates/views/space.php:363
+#: templates/views/space.php:372
 msgid "Awaiting Approval"
 msgstr ""
 
@@ -7554,7 +7554,7 @@ msgstr ""
 
 #. translators: %s: the compose action for this space type, e.g. "Ask a Question".
 #: includes/integrations/class-buddypress.php:857
-#: templates/views/space.php:516
+#: templates/views/space.php:525
 #, php-format
 msgid "+ %s"
 msgstr ""
@@ -9014,8 +9014,8 @@ msgstr ""
 
 #. translators: %s: a plural label the site owner configured (e.g. spaces, categories).
 #: templates/partials/category-chips.php:26
-#: templates/views/space.php:438
-#: templates/views/space.php:442
+#: templates/views/space.php:447
+#: templates/views/space.php:451
 #, php-format
 msgid "Sub-%s"
 msgstr ""
@@ -10977,7 +10977,7 @@ msgid "Optional: why do you want to join?"
 msgstr ""
 
 #: templates/views/space.php:170
-#: templates/views/space.php:372
+#: templates/views/space.php:381
 msgid "Join"
 msgstr ""
 
@@ -10988,79 +10988,79 @@ msgid "This %1$s is private. Join to access its %2$s and discussions."
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
-#: templates/views/space.php:412
+#: templates/views/space.php:421
 #, php-format
 msgid "Leave %s"
 msgstr ""
 
 #. translators: 1: singular space label; 2: plural topic label; 3: plural reply label.
-#: templates/views/space.php:423
+#: templates/views/space.php:432
 #, php-format
 msgid "This %1$s is archived. New %2$s and %3$s are no longer accepted."
 msgstr ""
 
 #. translators: 1: singular space label; 2: plural topic label; 3: plural reply label.
-#: templates/views/space.php:426
+#: templates/views/space.php:435
 #, php-format
 msgid "This %1$s is locked. New %2$s and %3$s are not allowed."
 msgstr ""
 
-#: templates/views/space.php:478
+#: templates/views/space.php:487
 #: templates/views/tag.php:141
 #: assets/js/blocks-editor.js:100
 msgid "Latest"
 msgstr ""
 
-#: templates/views/space.php:479
+#: templates/views/space.php:488
 #: templates/views/tag.php:142
 msgid "Popular"
 msgstr ""
 
-#: templates/views/space.php:480
+#: templates/views/space.php:489
 msgid "Unanswered"
 msgstr ""
 
-#: templates/views/space.php:527
+#: templates/views/space.php:536
 msgid "Log in to post"
 msgstr ""
 
-#: templates/views/space.php:540
+#: templates/views/space.php:549
 msgid "Every question has an accepted answer."
 msgstr ""
 
 #. translators: 1: plural topic label; 2: plural reply label.
-#: templates/views/space.php:541
+#: templates/views/space.php:550
 #, php-format
 msgid "No %1$s without %2$s yet."
 msgstr ""
 
-#: templates/views/space.php:545
+#: templates/views/space.php:554
 msgid "No questions yet. Ask the first one and get answers from the community."
 msgstr ""
 
-#: templates/views/space.php:548
+#: templates/views/space.php:557
 msgid "Nothing posted yet. Share the first update."
 msgstr ""
 
-#: templates/views/space.php:551
+#: templates/views/space.php:560
 msgid "No ideas yet. Suggest the first one and let the community vote."
 msgstr ""
 
 #. translators: %s: plural topic label.
-#: templates/views/space.php:555
+#: templates/views/space.php:564
 #, php-format
 msgid "No %s yet. Be the first to start a discussion!"
 msgstr ""
 
-#: templates/views/space.php:559
+#: templates/views/space.php:568
 msgid "Ask a question"
 msgstr ""
 
-#: templates/views/space.php:560
+#: templates/views/space.php:569
 msgid "Share an update"
 msgstr ""
 
-#: templates/views/space.php:561
+#: templates/views/space.php:570
 msgid "Suggest an idea"
 msgstr ""
 
