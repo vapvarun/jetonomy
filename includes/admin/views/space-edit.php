@@ -87,7 +87,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<select id="space-category">
 							<option value="0"><?php esc_html_e( '(None)', 'jetonomy' ); ?></option>
 							<?php foreach ( $categories as $space_cat ) : ?>
-								<option value="<?php echo absint( $space_cat->id ); ?>" <?php selected( $space->category_id, $space_cat->id ); ?>><?php echo esc_html( $space_cat->name ); ?></option>
+								<option value="<?php echo absint( $space_cat->id ); ?>" <?php selected( $space->category_id, $space_cat->id ); ?>><?php echo esc_html( \Jetonomy\Models\Category::picker_label( $space_cat ) ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</td>

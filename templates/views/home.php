@@ -118,10 +118,14 @@ if ( ! is_user_logged_in() ) :
 				// One grouped query (+ the WP4.4 tree cache) for every
 				// category section instead of one query per category (WP3.9).
 				$jt_spaces_by_cat = \Jetonomy\Models\Space::visible_by_category();
+				$jt_children      = \Jetonomy\Models\Category::children_by_parent();
 				?>
 				<?php foreach ( $categories as $category ) : ?>
-					<?php $spaces = $jt_spaces_by_cat[ (int) $category->id ] ?? []; ?>
-					<section class="jt-mb-md">
+					<?php
+					$spaces    = $jt_spaces_by_cat[ (int) $category->id ] ?? [];
+					$jt_accent = sanitize_hex_color( (string) ( $category->color ?? '' ) );
+					?>
+					<section class="jt-cat-section<?php echo $jt_accent ? ' jt-cat-section--accent' : ''; ?>"<?php echo $jt_accent ? ' style="--jt-cat-accent:' . esc_attr( $jt_accent ) . '"' : ''; ?>>
 						<div class="jt-cat-row">
 							<?php if ( ! empty( $category->icon ) ) : ?>
 								<?php jetonomy_render_space_icon( (string) $category->icon, 20, 'jt-cat-emoji' ); ?>
@@ -134,7 +138,7 @@ if ( ! is_user_logged_in() ) :
 							if ( 0 !== strcasecmp( trim( (string) $category->name ), trim( (string) $community_title ) ) ) :
 								?>
 								<h2 class="jt-cat-name">
-									<?php echo esc_html( $category->name ); ?>
+									<a href="<?php echo esc_url( \Jetonomy\route_url( 'category', $category->slug ) ); ?>"><?php echo esc_html( $category->name ); ?></a>
 								</h2>
 							<?php endif; ?>
 							<?php if ( ! empty( $category->description ) ) : ?>
@@ -142,12 +146,23 @@ if ( ! is_user_logged_in() ) :
 								<span class="jt-cat-desc"><?php echo esc_html( $category->description ); ?></span>
 							<?php endif; ?>
 						</div>
-						<?php jetonomy_render_space_grid( $spaces, $base ); ?>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'category-chips',
+							[
+								'children'      => $jt_children[ (int) $category->id ] ?? [],
+								'spaces_by_cat' => $jt_spaces_by_cat,
+							]
+						);
+						?>
+						<?php if ( ! empty( $spaces ) ) : ?>
+							<?php jetonomy_render_space_grid( $spaces, $base ); ?>
+						<?php endif; ?>
 					</section>
 				<?php endforeach; ?>
 
 				<?php if ( ! empty( $uncategorized_spaces ) ) : ?>
-					<section class="jt-mb-md">
+					<section class="jt-cat-section">
 						<div class="jt-cat-row">
 							<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 							<h2 class="jt-cat-name"><?php echo esc_html( sprintf( __( 'Other %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>

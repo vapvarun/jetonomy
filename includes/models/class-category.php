@@ -294,6 +294,73 @@ class Category extends Model {
 	}
 
 	/**
+	 * Visible sub-categories grouped by parent id, in one query.
+	 *
+	 * Categories nest two levels deep, so this plus list_top_level() is the
+	 * whole tree. Replaces one list_children() query per parent on the
+	 * directory, the category page, the navigation block and the admin list.
+	 *
+	 * @param int|null $user_id    Viewer ID (null resolves to the current user).
+	 * @param int[]    $parent_ids Limit to these parents (empty = every parent).
+	 * @return array<int, object[]> Parent id => children ordered like list_children().
+	 */
+	public static function children_by_parent( ?int $user_id = null, array $parent_ids = [] ): array {
+		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+
+		$parent_ids = array_values( array_filter( array_map( 'intval', $parent_ids ) ) );
+		$in         = '';
+		if ( ! empty( $parent_ids ) ) {
+			$in         = ' AND parent_id IN (' . implode( ',', array_fill( 0, count( $parent_ids ), '%d' ) ) . ')';
+			$vis_values = array_merge( $parent_ids, $vis_values );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is %d placeholders, $vis_where literal SQL from listing_visibility_sql().
+		$sql = 'SELECT * FROM ' . static::table() . " WHERE parent_id > 0{$in} AND {$vis_where} ORDER BY sort_order ASC, name ASC";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows = static::db()->get_results( empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values ) ) ?: [];
+
+		$grouped = [];
+		foreach ( $rows as $row ) {
+			$grouped[ (int) $row->parent_id ][] = $row;
+		}
+		return $grouped;
+	}
+
+	/**
+	 * Every visible category in display order (each parent followed by its
+	 * sub-categories), with a `depth` of 0 or 1 for indenting a picker.
+	 *
+	 * @param int|null $user_id Viewer ID (null resolves to the current user).
+	 * @return object[]
+	 */
+	public static function list_tree( ?int $user_id = null ): array {
+		$children = self::children_by_parent( $user_id );
+		$tree     = [];
+		foreach ( self::list_top_level( $user_id ) as $top ) {
+			$top->depth = 0;
+			$tree[]     = $top;
+			foreach ( $children[ (int) $top->id ] ?? [] as $child ) {
+				$child->depth = 1;
+				$tree[]       = $child;
+			}
+		}
+		return $tree;
+	}
+
+	/**
+	 * A category's name indented by its list_tree() depth, for a <select>.
+	 *
+	 * Three non-breaking spaces per level, as wp_dropdown_categories() does.
+	 *
+	 * @param object $category Row from list_tree().
+	 * @return string Unescaped.
+	 */
+	public static function picker_label( object $category ): string {
+		return str_repeat( "\u{00A0}", 3 * (int) ( $category->depth ?? 0 ) ) . $category->name;
+	}
+
+	/**
 	 * Paginated list of top-level categories for the admin page.
 	 *
 	 * @param string $search   Optional LIKE filter against name.
@@ -338,9 +405,10 @@ class Category extends Model {
 		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: [];
 
 		// Hydrate children inline (children share parent's page; usually a small
-		// number per parent, no need to paginate those).
+		// number per parent, no need to paginate those) - one query for the page.
+		$children = self::children_by_parent( null, array_column( $rows, 'id' ) );
 		foreach ( $rows as $row ) {
-			$row->children = self::list_children( (int) $row->id );
+			$row->children = $children[ (int) $row->id ] ?? [];
 		}
 
 		return [

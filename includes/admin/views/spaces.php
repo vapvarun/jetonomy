@@ -45,7 +45,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 						<select id="space-category">
 							<option value="0"><?php esc_html_e( '(None)', 'jetonomy' ); ?></option>
 							<?php foreach ( $categories as $cat ) : ?>
-								<option value="<?php echo absint( $cat->id ); ?>"><?php echo esc_html( $cat->name ); ?></option>
+								<option value="<?php echo absint( $cat->id ); ?>"><?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</td>
@@ -155,7 +155,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				<select name="category_id">
 					<option value=""><?php esc_html_e( 'All Categories', 'jetonomy' ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
-						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $filter_category, (int) $cat->id ); ?>><?php echo esc_html( $cat->name ); ?></option>
+						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $filter_category, (int) $cat->id ); ?>><?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<select name="type">

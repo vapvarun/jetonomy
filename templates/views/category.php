@@ -39,12 +39,23 @@ $spaces      = \Jetonomy\Models\Space::list_by_category( (int) $category->id, nu
 $jt_has_more = ( $jt_page * $jt_per_page ) < $jt_total;
 $base        = \Jetonomy\base_url();
 
-$crumbs = [
-	[
-		'label' => $category->name,
-		'url'   => '',
-	],
+// Categories nest two levels deep, so the only ancestor is the parent. It is
+// fetched visibility-filtered: a hidden parent is left out of the trail
+// rather than named to a viewer who cannot open it.
+$crumbs    = [];
+$jt_parent = (int) $category->parent_id > 0 ? \Jetonomy\Models\Category::find_visible( (int) $category->parent_id ) : null;
+if ( $jt_parent ) {
+	$crumbs[] = [
+		'label' => $jt_parent->name,
+		'url'   => \Jetonomy\route_url( 'category', $jt_parent->slug ),
+	];
+}
+$crumbs[] = [
+	'label' => $category->name,
+	'url'   => '',
 ];
+
+$jt_children = \Jetonomy\Models\Category::children_by_parent( null, [ (int) $category->id ] )[ (int) $category->id ] ?? [];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
@@ -62,7 +73,17 @@ $crumbs = [
 				</div>
 			</div>
 
-			<?php if ( empty( $spaces ) ) : ?>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'category-chips',
+				[
+					'children'      => $jt_children,
+					'spaces_by_cat' => $jt_children ? \Jetonomy\Models\Space::visible_by_category() : [],
+				]
+			);
+			?>
+
+			<?php if ( empty( $spaces ) && empty( $jt_children ) ) : ?>
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
@@ -74,7 +95,7 @@ $crumbs = [
 					]
 				);
 				?>
-			<?php else : ?>
+			<?php elseif ( ! empty( $spaces ) ) : ?>
 				<?php
 				// Shared with the home grid. This view used to carry its own copy,
 				// which had drifted: hardcoded "posts"/"members" instead of _n(), and

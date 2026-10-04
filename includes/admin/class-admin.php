@@ -1456,7 +1456,9 @@ class Admin {
 	public function render_categories(): void {
 		// Flat list of every category (for the parent-select dropdowns) —
 		// dropdown needs all values regardless of pagination.
-		$all_categories = $this->get_all_categories_nested();
+		// Parents only: categories nest two levels deep, so a sub-category
+		// can never be offered as a parent.
+		$all_categories = Category::list_top_level();
 
 		// Paginated top-level categories for the main table.
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
@@ -1515,7 +1517,7 @@ class Admin {
 				/* translators: %s: the singular label of the item (the configured noun). */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
-			$categories = $this->get_all_categories_flat();
+			$categories = Category::list_tree();
 			// Explicit cap (plan WP1.5): the unbounded default rendered every
 			// member row on one screen. 1000 keeps this management surface
 			// functional; when the space is larger the view shows a notice so
@@ -1575,7 +1577,7 @@ class Admin {
 				$offset
 			)
 		) ?: array();
-		$categories = $this->get_all_categories_flat();
+		$categories = Category::list_tree();
 
 		include JETONOMY_DIR . 'includes/admin/views/spaces.php';
 	}
@@ -1975,22 +1977,6 @@ class Admin {
 
 	// ── Helpers ──
 
-	private function get_all_categories_nested(): array {
-		$top    = Category::list_top_level();
-		$result = array();
-		foreach ( $top as $cat ) {
-			$cat->children = Category::list_children( (int) $cat->id );
-			$result[]      = $cat;
-		}
-		return $result;
-	}
-
-	private function get_all_categories_flat(): array {
-		global $wpdb;
-		return $wpdb->get_results(
-			'SELECT * FROM ' . table( 'categories' ) . ' ORDER BY sort_order ASC, name ASC'
-		) ?: array();
-	}
 
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Spaces

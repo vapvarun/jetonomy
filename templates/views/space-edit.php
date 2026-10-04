@@ -66,7 +66,7 @@ $crumbs = array(
 
 $current_icon   = (string) ( $space->icon ?? '' );
 $space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
-$categories     = \Jetonomy\Models\Category::list_top_level();
+$categories     = \Jetonomy\Models\Category::list_tree();
 
 // The space's CURRENT category must always be an option, even when the editor
 // cannot otherwise see it. list_top_level() is visibility-filtered, so a space
@@ -201,7 +201,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					<option value="0"><?php printf( /* translators: %s: singular category label. */ esc_html__( 'No %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
 						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( (int) ( $space->category_id ?? 0 ), (int) $cat->id ); ?>>
-							<?php echo esc_html( $cat->name ); ?>
+							<?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>

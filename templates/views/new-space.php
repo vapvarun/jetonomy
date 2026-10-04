@@ -21,9 +21,10 @@ if ( ! in_array( $default_type, \Jetonomy\Models\Space::valid_types(), true ) ) 
 	$default_type = 'forum';
 }
 
-// Top-level categories for the Category select — mirrors the edit form (G5) so
-// the create form (G6) exposes the same space options the backend accepts.
-$categories = \Jetonomy\Models\Category::list_top_level();
+// Categories and their sub-categories for the Category select — mirrors the
+// edit form (G5) so the create form (G6) exposes the same options the backend
+// accepts. Top-level only hid every sub-category (Basecamp 10355160759).
+$categories = \Jetonomy\Models\Category::list_tree();
 
 $base   = \Jetonomy\base_url();
 $crumbs = array(
@@ -105,7 +106,7 @@ $crumbs = array(
 						<option value="0"><?php printf( /* translators: %s: singular category label. */ esc_html__( 'No %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></option>
 						<?php foreach ( $categories as $cat ) : ?>
 							<option value="<?php echo absint( $cat->id ); ?>">
-								<?php echo esc_html( $cat->name ); ?>
+								<?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>

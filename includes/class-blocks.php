@@ -562,6 +562,7 @@ class Blocks {
 		// per render below, AFTER the cache — the cache holds space DATA,
 		// never per-page HTML (safety review, WP4.4).
 		$spaces_by_cat = Space::visible_by_category( $user_id );
+		$children      = Category::children_by_parent( $user_id );
 
 		$sections = array();
 
@@ -572,13 +573,23 @@ class Blocks {
 			}
 			// Same per-category runaway cap the old list_visible carried.
 			$spaces = array_slice( $spaces_by_cat[ $category_id ] ?? array(), 0, 200 );
-			if ( $hide_empty && empty( $spaces ) ) {
+			$subs   = $children[ $category_id ] ?? array();
+			if ( $hide_empty && empty( $spaces ) && empty( $subs ) ) {
 				continue;
 			}
 
 			$items_html = '';
 			foreach ( $spaces as $space ) {
 				$items_html .= self::render_space_item( $space, $active_slug, $show_count );
+			}
+			// Sub-categories link to their own page, as on the community home;
+			// their spaces were missing from this block entirely (Basecamp 10355160441).
+			foreach ( $subs as $sub ) {
+				$items_html .= sprintf(
+					'<li class="jt-nav-space jt-nav-subcategory"><a href="%1$s">%2$s</a></li>',
+					esc_url( \Jetonomy\route_url( 'category', $sub->slug ) ),
+					esc_html( (string) $sub->name )
+				);
 			}
 
 			$category_name = (string) ( $category->name ?? '' );

@@ -71,73 +71,31 @@ class Categories_Controller extends Base_Controller {
 	/**
 	 * GET /categories — List all top-level categories with nested children.
 	 *
-	 * Batched (plan WP3.9): the old shape ran one Space::list_by_category
-	 * per top-level category plus one Category::list_children per NODE of
-	 * the tree, unbounded depth — the community landing page's endpoint at
-	 * 30-50 queries. Now: one categories fetch grouped by parent_id (the
-	 * recursion walks PHP arrays) + the shared, tree-cached space grouping.
+	 * Categories nest two levels deep, so the tree is list_top_level() plus
+	 * children_by_parent(): two visibility-filtered queries, both through the
+	 * Category model, plus the shared tree-cached space grouping. Every node
+	 * carries `spaces` and `children` (empty on a sub-category), the shape the
+	 * companion app types declare (Basecamp 10355161085).
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response {
-		global $wpdb;
-
-		// Visibility is filtered HERE as well as in the Category model because
-		// this route deliberately does not go through it: the batched shape
-		// above fetches the whole tree in one query and recurses in PHP. That
-		// optimisation is why a model-level fix alone left this endpoint
-		// serving `hidden` categories — including the `visibility` field — to
-		// anonymous callers. Same predicate, so there is still one rule.
-		[ $vis_where, $vis_values ] = Category::listing_visibility_sql();
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table() is a trusted prefixed name; $vis_where is literal SQL from listing_visibility_sql().
-		$sql = 'SELECT * FROM ' . \Jetonomy\table( 'categories' ) . " WHERE {$vis_where} ORDER BY sort_order ASC, name ASC";
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-		$all_categories = $wpdb->get_results(
-			empty( $vis_values ) ? $sql : $wpdb->prepare( $sql, ...$vis_values )
-		) ?: [];
-
-		$by_parent = [];
-		foreach ( $all_categories as $cat ) {
-			$by_parent[ (int) ( $cat->parent_id ?? 0 ) ][] = $cat;
-		}
-
+		$children      = Category::children_by_parent();
 		$spaces_by_cat = Space::visible_by_category();
 
-		$items = [];
-		foreach ( $by_parent[0] ?? [] as $category ) {
+		$node = function ( object $category ) use ( $spaces_by_cat ): array {
 			$item             = $this->prepare_category( $category );
 			$item['spaces']   = $spaces_by_cat[ (int) $category->id ] ?? [];
-			$item['children'] = $this->build_children( $by_parent, (int) $category->id );
+			$item['children'] = [];
+			return $item;
+		};
+
+		$items = [];
+		foreach ( Category::list_top_level() as $category ) {
+			$item             = $node( $category );
+			$item['children'] = array_map( $node, $children[ (int) $category->id ] ?? [] );
 			$items[]          = $item;
 		}
 
 		return $this->paginated_response( $items, [ 'total' => count( $items ) ] );
-	}
-
-	/**
-	 * Recursively format child categories from the pre-grouped map — no
-	 * queries inside the recursion (plan WP3.9). The seen-guard makes a
-	 * corrupt cyclic parent_id terminate instead of recursing forever.
-	 *
-	 * @param array<int, object[]> $by_parent Categories grouped by parent_id.
-	 * @param int                  $parent_id Current parent.
-	 * @param array<int, true>     $seen      Visited category ids.
-	 */
-	private function build_children( array $by_parent, int $parent_id, array $seen = [] ): array {
-		$result = [];
-
-		foreach ( $by_parent[ $parent_id ] ?? [] as $child ) {
-			$cid = (int) $child->id;
-			if ( isset( $seen[ $cid ] ) ) {
-				continue;
-			}
-			$seen[ $cid ]     = true;
-			$item             = $this->prepare_category( $child );
-			$item['children'] = $this->build_children( $by_parent, $cid, $seen );
-			$result[]         = $item;
-		}
-
-		return $result;
 	}
 
 	/**
