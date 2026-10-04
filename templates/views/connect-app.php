@@ -89,6 +89,7 @@ if ( $jt_scheme_ok ) {
 						'connected'   => false,
 						'deepLink'    => '',
 						'error'       => '',
+						'errorText'   => __( 'Something went wrong. Please try again.', 'jetonomy' ),
 					)
 				);
 				// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped

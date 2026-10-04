@@ -56,7 +56,7 @@ function jetonomyPrompt( message, options ) {
 	// requireMatch turns this into a type-to-confirm gate: the submit button
 	// stays disabled until the typed text matches exactly. Used for actions
 	// with no undo, so the weight of the confirmation matches the weight of
-	// the action - the same contract admin.js already uses for space purge.
+	// the action - the same contract admin-common.js already uses for space purge.
 	const requireMatch = opts.requireMatch ? String( opts.requireMatch ) : '';
 
 	return new Promise( ( resolve ) => {
@@ -1161,7 +1161,7 @@ const { state, actions } = store( 'jetonomy', {
 
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const ok = yield window.jetonomyConfirm(
-                ( i18n.liftConfirmFormat || 'Lift the restriction on %s?' ).replace( '%s', name || '' ),
+                ( i18n.liftConfirmFormat || 'Lift the restriction on %s? They regain full access right away.' ).replace( '%s', name || '' ),
                 { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift' }
             );
             if ( ! ok ) return;
@@ -2010,7 +2010,7 @@ const { state, actions } = store( 'jetonomy', {
                     } ),
                 revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Could not update follow state.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -2072,7 +2072,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Could not update follow state.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -2095,7 +2095,7 @@ const { state, actions } = store( 'jetonomy', {
                     {
                         title: state.i18n?.leaveSpace || 'Leave space',
                         confirmLabel: state.i18n?.leave || 'Leave',
-                        cancelLabel: state.i18n?.cancelLabel || 'Cancel',
+                        cancelLabel: state.i18n?.cancel || 'Cancel',
                     }
                 )
                 : true;
@@ -2116,7 +2116,7 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             if ( window.bnToast ) {
-                window.bnToast( ( res.data && res.data.message ) || state.i18n?.leaveFailed || 'Could not leave. Please try again.' );
+                window.bnToast( ( res.data && res.data.message ) || state.i18n?.leaveSpaceFailed || 'Could not leave. Please try again.' );
             }
         },
 
@@ -2350,7 +2350,7 @@ const { state, actions } = store( 'jetonomy', {
                     setBookmarked( snap.wasBookmarked );
                 },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Could not update bookmark.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -2961,7 +2961,7 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.reload();
                 } else {
                     const err = res.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to unblock.' );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                     trigger.disabled = false;
                 }
             } catch {
@@ -2992,7 +2992,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: () => { /* No optimistic UI — helper toasts on error. */ },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Failed to accept.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -3016,7 +3016,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: () => { /* No optimistic UI — helper toasts on error. */ },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Failed to update.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -3074,7 +3074,7 @@ const { state, actions } = store( 'jetonomy', {
                     allBtns.forEach( ( b ) => { b.disabled = false; } );
                 },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Could not update status.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -3300,7 +3300,7 @@ const { state, actions } = store( 'jetonomy', {
 
             // Purge asks the admin to TYPE the space name; archive is a plain
             // confirm. Matching the weight of the gate to the weight of the
-            // action is the point — the same split admin.js makes.
+            // action is the point — the same split admin-common.js makes.
             let confirmed;
             if ( 'purge' === mode && title && 'function' === typeof window.jetonomyPrompt ) {
                 const typed = yield window.jetonomyPrompt( message, {
@@ -3334,7 +3334,7 @@ const { state, actions } = store( 'jetonomy', {
                     // The route's own messages are written for humans — "No one
                     // else can take over this space", "restricted to site
                     // administrators" — so surface them rather than a generic.
-                    errorEl.textContent = ( res.data && res.data.message ) || i18n.error || 'Could not delete. Please try again.';
+                    errorEl.textContent = ( res.data && res.data.message ) || i18n.deleteFailed || 'Could not delete. Please try again.';
                     errorEl.hidden = false;
                 } 
                 return;
@@ -3397,7 +3397,7 @@ const { state, actions } = store( 'jetonomy', {
                 const p = document.createElement( 'p' );
                 p.className = 'jt-mod-flag-error';
                 p.setAttribute( 'role', 'alert' );
-                p.textContent = ( res.data && res.data.message ) || i18n.approvalFailed || 'Could not update this submission.';
+                p.textContent = ( res.data && res.data.message ) || i18n.approvalFailed || 'Could not update this submission. It may have been handled by another moderator.';
                 card.appendChild( p );
                 return;
             }
@@ -3514,7 +3514,7 @@ const { state, actions } = store( 'jetonomy', {
                     }
                 } else {
                     const err = response.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to post reply.' );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                 }
             } catch {
                 if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
@@ -3684,7 +3684,7 @@ const { state, actions } = store( 'jetonomy', {
                 || document.querySelector( '.jt-compose-topic-embed .jt-compose-topic-form' );
 
             if ( ! form ) {
-                writeError( state.i18n?.failedSave || 'Failed to create post.' );
+                writeError( state.i18n?.failedSave || 'Failed to save.' );
                 setIdle();
                 return;
             }
@@ -3823,7 +3823,7 @@ const { state, actions } = store( 'jetonomy', {
             // normalises the response into { ok, status, data }. Using it here
             // means a stale nonce no longer eats the post silently.
             if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
-                writeError( state.i18n?.failedSave || 'Failed to create post.' );
+                writeError( state.i18n?.failedSave || 'Failed to save.' );
                 setIdle();
                 return;
             }
@@ -3836,7 +3836,7 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! result.ok ) {
                 const errMsg = ( result.data && result.data.message )
                     ? result.data.message
-                    : ( state.i18n?.failedSave || 'Failed to create post.' );
+                    : ( state.i18n?.failedSave || 'Failed to save.' );
                 writeError( errMsg );
                 if ( window.bnToast ) window.bnToast( errMsg );
                 setIdle();
@@ -4120,7 +4120,7 @@ const { state, actions } = store( 'jetonomy', {
                         const cfErr = cfResponse.data || {};
                         if ( window.bnToast ) {
                             window.bnToast(
-                                cfErr.message || ( state.i18n?.failedSaveProfile || 'Some custom fields could not be saved.' ),
+                                cfErr.message || ( state.i18n?.failedSaveProfile || 'Failed to save profile.' ),
                                 'error'
                             );
                         }

@@ -317,6 +317,13 @@ class Template_Loader {
 					'followingSpace'        => sprintf( __( 'Following %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					/* translators: %s: the unfollowed space or topic title. */
 					'unfollowedSpace'       => sprintf( __( 'Unfollowed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					// Leave-space confirm (actions.leaveSpace).
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'leaveSpace'            => sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'confirmLeaveSpace'     => sprintf( __( 'Leave this %s? You can rejoin at any time.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					'leave'                 => __( 'Leave', 'jetonomy' ),
+					'leaveSpaceFailed'      => __( 'Could not leave. Please try again.', 'jetonomy' ),
 					'copyLink'              => __( 'Copy link', 'jetonomy' ),
 					'bookmark'              => __( 'Bookmark', 'jetonomy' ),
 					'removeBookmark'        => __( 'Remove bookmark', 'jetonomy' ),
@@ -555,6 +562,9 @@ class Template_Loader {
 					'saveFailed'             => esc_html__( 'Could not save changes.', 'jetonomy' ),
 					'prefixLabel'            => esc_html__( 'Label', 'jetonomy' ),
 					'removePrefix'           => esc_html__( 'Remove prefix', 'jetonomy' ),
+					// Space danger zone (actions.deleteSpace).
+					'purgeConfirmLabel'      => esc_html__( 'Delete permanently', 'jetonomy' ),
+					'deleteFailed'           => esc_html__( 'Could not delete. Please try again.', 'jetonomy' ),
 					// Join-Space failure toast (composer.js); carries the owner's space noun.
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
