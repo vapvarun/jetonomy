@@ -1573,7 +1573,9 @@ const { state, actions } = store( 'jetonomy', {
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { status: 'publish' } } );
             if ( res.ok ) {
-                if ( window.bnToast ) window.bnToast( state.i18n?.draftPublished || 'Published.' );
+                // A space that requires approval holds it instead of publishing.
+                const held = [ 'pending', 'spam' ].includes( res.data && res.data.status );
+                if ( window.bnToast ) window.bnToast( held ? state.i18n?.pendingNotice : ( state.i18n?.draftPublished || 'Published.' ) );
                 row.remove();
                 // Last draft gone — reload so the server renders the empty state.
                 if ( ! document.querySelector( '.jt-row--draft' ) ) window.location.reload();
