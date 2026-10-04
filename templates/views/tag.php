@@ -102,8 +102,7 @@ $crumbs = [
 				<span class="jt-tag jt-tag-hero"><?php echo esc_html( $tag->name ); ?></span>
 				<span class="jt-tag-count-label">
 					<?php
-					/* translators: %d: post count. */
-					echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $tag->post_count, 'jetonomy' ), (int) $tag->post_count ) );
+					echo esc_html( number_format_i18n( (int) $tag->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $tag->post_count, true ) );
 					?>
 				</span>
 				<?php
@@ -161,7 +160,7 @@ $crumbs = [
 					[
 						'icon'      => 'message-circle',
 						'icon_size' => 48,
-						'message'   => __( 'No posts with this tag yet.', 'jetonomy' ),
+						'message'   => sprintf( /* translators: %s: plural topic label. */ __( 'No %s with this tag yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 					]
 				);
 				?>

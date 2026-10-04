@@ -54,7 +54,7 @@ $crumbs = array(
 				<?php esc_html_e( 'My bookmarks', 'jetonomy' ); ?>
 			</h1>
 			<p class="jt-page-subtitle">
-				<?php esc_html_e( 'Posts you have bookmarked. Quick access to anything you wanted to come back to.', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( /* translators: %s: plural topic label. */ __( '%s you have bookmarked. Quick access to anything you wanted to come back to.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?>
 			</p>
 		</header>
 

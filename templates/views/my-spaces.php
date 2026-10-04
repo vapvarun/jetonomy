@@ -120,8 +120,7 @@ $crumbs = array(
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
 									<?php
-									/* translators: %d: post count. */
-									echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
+									echo esc_html( number_format_i18n( (int) $sp->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $sp->post_count, true ) );
 									?>
 									·
 									<?php
@@ -171,8 +170,7 @@ $crumbs = array(
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
 									<?php
-									/* translators: %d: post count. */
-									echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
+									echo esc_html( number_format_i18n( (int) $sp->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $sp->post_count, true ) );
 									?>
 									·
 									<?php

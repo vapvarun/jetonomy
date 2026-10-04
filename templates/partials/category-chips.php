@@ -22,7 +22,7 @@ if ( empty( $jt_children ) ) {
 }
 $jt_spaces_by_cat = $spaces_by_cat ?? [];
 ?>
-<?php /* translators: %s: plural category label the site owner configured (e.g. categories, channels). */ ?>
+<?php /* translators: %s: a plural label the site owner configured (e.g. spaces, categories). */ ?>
 <ul class="jt-cat-chips" aria-label="<?php echo esc_attr( sprintf( __( 'Sub-%s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?>">
 	<?php foreach ( $jt_children as $jt_child ) : ?>
 		<?php $jt_count = count( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? [] ); ?>

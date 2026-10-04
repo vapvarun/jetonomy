@@ -150,7 +150,7 @@ $crumbs = [
 					<span class="jt-leader-name"><?php echo esc_html( \Jetonomy\jetonomy_label( 'member' ) ); ?></span>
 					<div class="jt-leader-stats">
 						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'rep', 'jetonomy' ); ?></div>
-						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>
+						<div class="jt-leader-stat-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ); ?></div>
 					</div>
 				</div>
 				<?php /* Appendable list — pagination-frontend.js targets .jt-leaderboard-list to inject page 2+ rows. */ ?>
@@ -255,7 +255,7 @@ $crumbs = [
 							</div>
 							<div>
 								<div class="jt-leader-stat-val"><?php echo (int) $leader->post_count; ?></div>
-								<div class="jt-leader-stat-lbl"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>
+								<div class="jt-leader-stat-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ); ?></div>
 							</div>
 						</div>
 					</div>

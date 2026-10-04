@@ -259,7 +259,7 @@ class Shortcodes {
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( empty( $posts ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No posts yet.', 'jetonomy' ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
@@ -417,7 +417,7 @@ class Shortcodes {
 			if ( ! empty( $space->description ) ) {
 				$out .= '<span class="jt-shortcode-space-desc">' . esc_html( wp_trim_words( $space->description, 12 ) ) . '</span>';
 			}
-			$out .= '<span class="jt-shortcode-space-stats">' . (int) $space->post_count . ' ' . esc_html( _n( 'post', 'posts', (int) $space->post_count, 'jetonomy' ) ) . '</span>';
+			$out .= '<span class="jt-shortcode-space-stats">' . (int) $space->post_count . ' ' . esc_html( jetonomy_label( 'topic', 1 !== (int) $space->post_count, true ) ) . '</span>';
 			$out .= '</a>';
 		}
 		$out .= '</div>';
@@ -499,7 +499,7 @@ class Shortcodes {
 		}
 		$out .= '<div class="jt-shortcode-profile-stats">';
 		$out .= '<span>' . (int) ( $profile->reputation ?? 0 ) . ' rep</span>';
-		$out .= '<span>' . (int) ( $profile->post_count ?? 0 ) . ' ' . esc_html( _n( 'post', 'posts', (int) ( $profile->post_count ?? 0 ), 'jetonomy' ) ) . '</span>';
+		$out .= '<span>' . (int) ( $profile->post_count ?? 0 ) . ' ' . esc_html( jetonomy_label( 'topic', 1 !== (int) ( $profile->post_count ?? 0 ), true ) ) . '</span>';
 		$out .= '</div></div>';
 
 		return $out;
@@ -688,7 +688,8 @@ class Shortcodes {
 					'i18n'          => array(
 						'chooseSpace'    => __( 'Choose a space first.', 'jetonomy' ),
 						'titleRequired'  => __( 'Title is required.', 'jetonomy' ),
-						'couldNotCreate' => __( 'Could not create the topic.', 'jetonomy' ),
+						/* translators: %s: singular topic label. */
+						'couldNotCreate' => sprintf( __( 'Could not create the %s.', 'jetonomy' ), jetonomy_label( 'topic', false, true ) ),
 						'networkError'   => __( 'Network error. Please try again.', 'jetonomy' ),
 					),
 				)

@@ -180,8 +180,8 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			'empty-state',
 			[
 				'icon'    => 'lock',
-				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-				'message' => sprintf( __( 'This %s is private. Join to access posts and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				/* translators: 1: the singular space label the site owner configured (e.g. space, group); 2: plural topic label. */
+				'message' => sprintf( __( 'This %1$s is private. Join to access its %2$s and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				'tone'    => 'forbidden',
 			]
 		);
@@ -420,10 +420,10 @@ $crumbs[] = [
 			<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">
 				<?php if ( 'archived' === $space_status ) : ?>
 					<?php /* translators: 1: singular space label (e.g. space, group); 2: plural reply label. */ ?>
-					<?php echo esc_html( sprintf( __( 'This %1$s is archived. New posts and %2$s are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					<?php echo esc_html( sprintf( /* translators: 1: singular space label; 2: plural topic label; 3: plural reply label. */ __( 'This %1$s is archived. New %2$s and %3$s are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				<?php else : ?>
 					<?php /* translators: 1: singular space label (e.g. space, group); 2: plural reply label. */ ?>
-					<?php echo esc_html( sprintf( __( 'This %1$s is locked. New posts and %2$s are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					<?php echo esc_html( sprintf( /* translators: 1: singular space label; 2: plural topic label; 3: plural reply label. */ __( 'This %1$s is locked. New %2$s and %3$s are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>
@@ -434,11 +434,11 @@ $crumbs[] = [
 			?>
 
 			<?php if ( ! empty( $jt_sub_spaces ) ) : ?>
-				<?php /* translators: %s: the plural space label the site owner configured. */ ?>
+				<?php /* translators: %s: a plural label the site owner configured (e.g. spaces, categories). */ ?>
 				<nav class="jt-subspaces" aria-label="<?php echo esc_attr( sprintf( __( 'Sub-%s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>">
 					<h2 class="jt-subspaces__title">
 						<?php
-						/* translators: %s: the plural space label the site owner configured. */
+						/* translators: %s: a plural label the site owner configured (e.g. spaces, categories). */
 						printf( esc_html__( 'Sub-%s', 'jetonomy' ), esc_html( \Jetonomy\space_label( true, true ) ) );
 						?>
 					</h2>
@@ -450,11 +450,7 @@ $crumbs[] = [
 									<span class="jt-subspaces__name"><?php echo esc_html( $jt_sub->title ); ?></span>
 									<span class="jt-subspaces__count">
 										<?php
-										printf(
-											/* translators: %s: number of topics in the sub-space. */
-											esc_html( _n( '%s topic', '%s topics', (int) $jt_sub->post_count, 'jetonomy' ) ),
-											esc_html( number_format_i18n( (int) $jt_sub->post_count ) )
-										);
+										echo esc_html( number_format_i18n( (int) $jt_sub->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $jt_sub->post_count, true ) );
 										?>
 									</span>
 								</a>
@@ -542,7 +538,7 @@ $crumbs[] = [
 				if ( 'unanswered' === $sort ) {
 					$_jt_no_posts_msg = ( 'qa' === $_jt_space_type )
 						? __( 'Every question has an accepted answer.', 'jetonomy' )
-						: sprintf( /* translators: %s: plural reply label. */ __( 'No posts without %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) );
+						: sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'No %1$s without %2$s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) );
 				} else {
 					switch ( $_jt_space_type ) {
 						case 'qa':
@@ -555,7 +551,8 @@ $crumbs[] = [
 							$_jt_no_posts_msg = __( 'No ideas yet. Suggest the first one and let the community vote.', 'jetonomy' );
 							break;
 						default:
-							$_jt_no_posts_msg = __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+							/* translators: %s: plural topic label. */
+							$_jt_no_posts_msg = sprintf( __( 'No %s yet. Be the first to start a discussion!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 					}
 				}
 				$_jt_cta_by_type = [
@@ -563,7 +560,7 @@ $crumbs[] = [
 					'feed'  => __( 'Share an update', 'jetonomy' ),
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
 				];
-				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? __( 'New Post', 'jetonomy' );
+				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? \Jetonomy\compose_label( $_jt_space_type );
 				// Mirror the space-header New Topic gate (Permission_Engine::can,
 				// which folds in membership, admin, trust AND the access rule's
 				// grant LEVEL) instead of the binary $_jt_rule_admits - a Read-only

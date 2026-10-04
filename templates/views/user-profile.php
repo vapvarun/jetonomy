@@ -326,7 +326,7 @@ $crumbs = [
 			// the base profile URL and is the active tab when $current_tab is empty.
 			$jt_profile_tabs = array(
 				'posts'   => array(
-					'label' => __( 'Posts', 'jetonomy' ),
+					'label' => \Jetonomy\jetonomy_label( 'topic', true ),
 					'url'   => $jt_profile_url . '/',
 				),
 				'replies' => array(
@@ -449,7 +449,7 @@ $crumbs = [
 						'empty-state',
 						[
 							'message' => $is_own
-								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not voted yet — upvote posts and %s you find helpful and they will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+								? sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'You have not voted yet — upvote %1$s and %2$s you find helpful and they will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 								: __( 'No votes yet.', 'jetonomy' ),
 							'variant' => 'compact',
 						]
@@ -499,7 +499,7 @@ $crumbs = [
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						[
-							'message' => __( 'No drafts yet. Save a post as draft and it will appear here.', 'jetonomy' ),
+							'message' => sprintf( /* translators: %s: singular topic label. */ __( 'No drafts yet. Save a %s as draft and it will appear here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 							'variant' => 'compact',
 						]
 					);
@@ -582,7 +582,7 @@ $crumbs = [
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						[
-							'message' => __( 'No bookmarks yet. Bookmark posts to find them here later.', 'jetonomy' ),
+							'message' => sprintf( /* translators: %s: plural topic label. */ __( 'No bookmarks yet. Bookmark %s to find them here later.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 							'variant' => 'compact',
 						]
 					);
@@ -649,7 +649,7 @@ $crumbs = [
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						[
-							'message' => __( 'No posts yet.', 'jetonomy' ),
+							'message' => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 							'variant' => 'compact',
 						]
 					);

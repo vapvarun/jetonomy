@@ -382,7 +382,7 @@ $crumbs = [
 		<nav class="jt-subtabs" aria-label="<?php esc_attr_e( 'Content type', 'jetonomy' ); ?>">
 			<?php
 			$jt_kind_tabs = [
-				'post'  => [ __( 'Posts', 'jetonomy' ), $jt_list_posts ],
+				'post'  => [ \Jetonomy\jetonomy_label( 'topic', true ), $jt_list_posts ],
 				'reply' => [ \Jetonomy\jetonomy_label( 'reply', true ), $jt_list_replies ],
 			];
 			foreach ( $jt_kind_tabs as $jt_kind_key => $jt_kind_meta ) :
@@ -407,12 +407,12 @@ $crumbs = [
 			<?php
 			if ( $jt_is_trash ) {
 				$jt_held_empty = 'reply' === $jt_kind
-					? sprintf( /* translators: %s: plural reply label. */ __( 'No %s in the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
-					: __( 'No posts in the trash.', 'jetonomy' );
+					? sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s in the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+					: sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s in the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 			} else {
 				$jt_held_empty = 'reply' === $jt_kind
-					? sprintf( /* translators: %s: plural reply label. */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
-					: __( 'No posts are waiting for approval.', 'jetonomy' );
+					? sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+					: sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 			}
 			\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_held_empty ] );
 			?>
@@ -510,7 +510,7 @@ $crumbs = [
 							<?php echo esc_html( $reason_label ); ?>
 						</span>
 						<span class="jt-mod-flag-type">
-							<?php echo $is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html__( 'Post', 'jetonomy' ); ?>
+							<?php echo $is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html( \Jetonomy\jetonomy_label( 'topic' ) ); ?>
 						</span>
 						<a class="jt-mod-flag-space" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 							<?php echo esc_html( $space->title ); ?>
