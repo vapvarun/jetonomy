@@ -19,6 +19,7 @@ use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\Space;
+use Jetonomy\Models\SpaceMember;
 
 class NotificationVisibilityParityTest extends WP_UnitTestCase {
 
@@ -33,6 +34,9 @@ class NotificationVisibilityParityTest extends WP_UnitTestCase {
 		$this->actor    = self::factory()->user->create();
 		$cat_id         = Category::create( array( 'name' => 'NVP', 'slug' => 'nvp-' . uniqid() ) );
 		$this->space_id = Space::create( array( 'title' => 'NVP', 'slug' => 'nvp-s-' . uniqid(), 'category_id' => $cat_id, 'visibility' => 'private', 'join_policy' => 'approval' ) );
+		// The viewer posts in this private space, so they are a member of it -
+		// notifications are only shown while the viewer can read the space.
+		SpaceMember::add( $this->space_id, $this->viewer, 'member' );
 	}
 
 	private function post( string $status = 'publish', ?int $author = null ): int {
@@ -69,7 +73,14 @@ class NotificationVisibilityParityTest extends WP_UnitTestCase {
 			'banned_actor_vote' => array( 'type' => 'vote_on_post', 'object_type' => 'post', 'object_id' => $live, 'actor_id' => self::factory()->user->create() ),
 			'blocked_actor'     => array( 'type' => 'reaction', 'object_type' => 'post', 'object_id' => $live, 'actor_id' => self::factory()->user->create() ),
 			'missing_target'    => array( 'type' => 'reply_to_post', 'object_type' => 'post', 'object_id' => 99999999, 'actor_id' => $this->actor ),
+			'post_unreadable'   => array( 'type' => 'new_post_in_sub', 'object_type' => 'post', 'object_id' => $this->post_in_closed_space(), 'actor_id' => $this->actor ),
 		);
+	}
+
+	/** A live topic in a private space the viewer is not a member of (Basecamp 10345420194). */
+	private function post_in_closed_space(): int {
+		$space = Space::create( array( 'title' => 'NVP closed', 'slug' => 'nvp-c-' . uniqid(), 'visibility' => 'private', 'join_policy' => 'approval' ) );
+		return Post::create( array( 'space_id' => $space, 'author_id' => $this->actor, 'title' => 'C', 'slug' => 'nvp-c-p-' . uniqid(), 'content' => '<p>C</p>' ) );
 	}
 
 	public function test_bell_filter_and_notifications_list_agree_and_pin_the_fixed_cases(): void {
@@ -114,5 +125,6 @@ class NotificationVisibilityParityTest extends WP_UnitTestCase {
 		$this->assertFalse( $bell['reply_dead_parent'] );
 		$this->assertTrue( $bell['reply_live'] );
 		$this->assertTrue( $bell['post_live'] );
+		$this->assertFalse( $bell['post_unreadable'], 'a topic in a private space the viewer cannot read is hidden' );
 	}
 }
