@@ -104,29 +104,25 @@ foreach ( $jt_status_count_rows as $jt_count_row ) {
 
 // Canonical column order (mirrors Post::valid_idea_statuses()). Owners
 // move ideas left to right; "declined" sits at the end as the off-ramp.
-// One colour per stage. Planned and In Progress both used --jt-warn, so the
-// two leftmost columns were indistinguishable and the colour carried no
-// information at all — the whole point of a status board. Accent reads as
-// "committed, queued", warn as "in flight".
+// One colour per stage, set in jetonomy.css from the column's data-jt-status
+// (accent = committed/queued, warn = in flight, success = shipped). It used to
+// be an inline style here, which painted the raw status hue as title text
+// (2.4-2.9:1) and boxed the header on themes that style div borders.
 $columns = array(
 	'planned'     => array(
 		'label' => __( 'Planned', 'jetonomy' ),
-		'color' => 'var(--jt-accent)',
 		'posts' => array(),
 	),
 	'in_progress' => array(
 		'label' => __( 'In Progress', 'jetonomy' ),
-		'color' => 'var(--jt-warn)',
 		'posts' => array(),
 	),
 	'shipped'     => array(
 		'label' => __( 'Shipped', 'jetonomy' ),
-		'color' => 'var(--jt-success)',
 		'posts' => array(),
 	),
 	'declined'    => array(
 		'label' => __( 'Declined', 'jetonomy' ),
-		'color' => 'var(--jt-text-tertiary)',
 		'posts' => array(),
 	),
 );
@@ -198,8 +194,8 @@ $space_url = \Jetonomy\route_url( 'space', $space->slug );
 <div class="jt-kanban">
 	<?php foreach ( $columns as $col_key => $col ) : ?>
 		<div class="jt-col" data-jt-status="<?php echo esc_attr( $col_key ); ?>">
-			<div class="jt-col-head" style="border-color:<?php echo esc_attr( $col['color'] ); ?>;">
-				<span class="jt-col-title" style="color:<?php echo esc_attr( $col['color'] ); ?>;">
+			<div class="jt-col-head">
+				<span class="jt-col-title">
 					<?php echo esc_html( $col['label'] ); ?>
 				</span>
 				<span class="jt-col-n"><?php echo esc_html( $col['total'] ?? count( $col['posts'] ) ); ?></span>

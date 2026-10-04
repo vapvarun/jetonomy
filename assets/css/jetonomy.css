@@ -48,9 +48,9 @@
   .jt-app *, .jt-app *::before, .jt-app *::after { box-sizing: border-box; }
 
   /* Heading reset — override BuddyX/WordPress heading styles within the app */
-  .jt-app h1 { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; line-height: 1.3; margin: 0; }
-  .jt-app h2 { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; line-height: 1.3; margin: 0; }
-  .jt-app h3 { font-family: var(--jt-font-heading); font-size: 1.125rem; font-weight: 700; line-height: 1.35; margin: 0; }
+  .jt-app h1 { font-family: var(--jt-font-heading); font-size: var(--jt-text-3xl); font-weight: 700; line-height: 1.3; margin: 0; }
+  .jt-app h2 { font-family: var(--jt-font-heading); font-size: var(--jt-text-xl); font-weight: 700; line-height: 1.3; margin: 0; }
+  .jt-app h3 { font-family: var(--jt-font-heading); font-size: var(--jt-text-lg); font-weight: 700; line-height: 1.35; margin: 0; }
   .jt-app h4 { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); margin: 0; }
   .jt-app h5 { font-size: 0.8125rem; font-weight: 600; margin: 0; }
   .jt-app h6 { font-size: 0.75rem; font-weight: 600; margin: 0; }
@@ -74,7 +74,7 @@
   .jt-community-nav-actions { display: flex; align-items: center; gap: 8px; }
   .jt-community-nav-notif { background: none; color: var(--jt-text-secondary); display: flex; align-items: center; gap: 4px; padding: 8px; border: none; border-radius: var(--jt-radius-full); transition: all var(--jt-dur); position: relative; }
   .jt-community-nav-notif:hover { color: var(--jt-text); background: var(--jt-bg-muted); border: none; }
-  .jt-community-nav-badge { background: var(--jt-danger); color: var(--jt-white); font-size: 0.75rem; font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+  .jt-community-nav-badge { background: var(--jt-danger-solid); color: var(--jt-danger-fg); font-size: 0.75rem; font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; justify-content: center; }
 
   /* Legacy header classes kept for backward compatibility */
   .jt-header { display: none; } /* Hidden — theme header handles this */
@@ -124,6 +124,10 @@
   /* max-width is set dynamically via --jt-container-width (injected by PHP from theme settings).
      Detection order: Jetonomy setting → theme.json wideSize → $content_width → 1200px fallback. */
   .jt-container { max-width: var(--jt-container-width, 1200px); margin: 0 auto; padding: 12px 24px 24px; }
+  /* A view that wraps itself in .jt-container (Pro Messages does) sits inside
+     the page's own container; re-padding it inset the panel 24px from the
+     breadcrumb and tab edge. Only the outer container pads. */
+  .jt-container .jt-container { max-width: none; padding-inline: 0; }
   .jt-two-col { display: grid !important; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
   .jt-two-col > main { min-width: 0; }
   .jt-two-col > .jt-sidebar,
@@ -138,7 +142,11 @@
   body.jt-page #content > .page-header { display: none; }
 
   /* ── Breadcrumb ── */
-  .jt-crumb { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); margin-bottom: 20px; }
+  /* line-height is pinned so the crumb -> first block gap is the same 20px on
+     every theme (it inherited the theme's body line-height: 17-20px). */
+  /* Inline text flow, not flex: as flex items a long category name wrapped
+     inside its own column, so the trail broke into ragged side-by-side blocks. */
+  .jt-crumb { display: block; font-size: 0.8125rem; line-height: var(--jt-leading-normal); color: var(--jt-text-secondary); margin-bottom: var(--jt-space-5); }
   .jt-crumb a { color: var(--jt-text-tertiary); }
   .jt-crumb a:hover { color: var(--jt-text-secondary); }
 
@@ -188,7 +196,7 @@
     line-height: 1.2;
     color: var(--jt-text);
   }
-  .jt-space-cover--image .jt-space-cover__title { color: #fff; }
+  .jt-space-cover--image .jt-space-cover__title { color: var(--jt-white); }
   /* Space avatar tile — surface fill, ring, soft shadow; reads on tonal + photo. */
   .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: var(--jt-radius-lg); background: var(--jt-surface); border: 3px solid var(--jt-surface); box-shadow: var(--jt-shadow-sm); color: var(--jt-accent); flex-shrink: 0; }
   .jt-space-emoji svg { width: 32px; height: 32px; }
@@ -221,7 +229,7 @@
   .jt-num-lbl { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
 
   /* ── Toolbar ── */
-  .jt-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .jt-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--jt-space-4); }
   .jt-pills { display: flex; gap: 2px; background: var(--jt-bg-muted); border-radius: var(--jt-radius-full); padding: 3px; }
   .jt-pill { padding: 5px 14px; font-size: 0.875rem; font-weight: 500; color: var(--jt-text-secondary); border-radius: var(--jt-radius-full); transition: all var(--jt-dur) var(--jt-ease); border: none; background: none; cursor: pointer; font-family: var(--jt-font); }
   .jt-pill:hover { color: var(--jt-text); }
@@ -307,10 +315,10 @@
      !important, so free's reset wins over it; the re-assert therefore belongs
      here, beside the reset that breaks it, rather than as an !important war
      inside Pro. */
-  .jt-app button.jt-reaction-chip.is-mine { color: var(--jt-accent) !important; background-color: var(--jt-accent-light) !important; border-color: var(--jt-accent) !important; }
+  .jt-app button.jt-reaction-chip.is-mine { color: var(--jt-accent-strong) !important; background-color: var(--jt-accent-light) !important; border-color: var(--jt-accent) !important; }
 
   .jt-app button.jt-btn-ghost.jt-btn-danger { color: var(--jt-danger) !important; }
-  .jt-app button.jt-btn-ghost.jt-btn-danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; border-color: var(--jt-danger) !important; }
+  .jt-app button.jt-btn-ghost.jt-btn-danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger-strong) !important; border-color: var(--jt-danger) !important; }
   /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
      raised surface + accent underline. */
   .jt-app button.jt-pill.on, .jt-app button.jt-pill.active,
@@ -320,15 +328,17 @@
   /* Dropdown menu items: hover surface + danger text. */
   .jt-app button.jt-more-item:hover { background-color: var(--jt-bg-hover) !important; }
   .jt-app button.jt-more-item--danger { color: var(--jt-danger) !important; }
-  .jt-app button.jt-more-item--danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; }
+  .jt-app button.jt-more-item--danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger-strong) !important; }
 
   /* ── Topic list ── */
   .jt-topics { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
-  .jt-row { display: grid !important; grid-template-columns: 48px 1fr 80px 80px; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); transition: background 0.1s; cursor: pointer; }
+  /* Stat columns are fixed (rows stay aligned) and wide enough for one line:
+     "0 replies" and "12 months ago" wrapped at 80px. */
+  .jt-row { display: grid !important; grid-template-columns: 48px minmax(0, 1fr) 96px 104px; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); transition: background 0.1s; cursor: pointer; }
   .jt-row:last-child { border-bottom: none; }
   .jt-row:hover { background: var(--jt-bg-hover); }
   .jt-row.pinned { background: var(--jt-accent-muted); }
-  a.jt-row { text-decoration: none; color: inherit; display: grid; grid-template-columns: 48px 1fr 80px 80px; gap: 12px; align-items: center; }
+  a.jt-row { text-decoration: none; color: inherit; display: grid; grid-template-columns: 48px minmax(0, 1fr) 96px 104px; gap: 12px; align-items: center; }
   a.jt-row:hover { color: inherit; }
   .jt-row-main { min-width: 0; }
   .jt-row-title { font-weight: 600; font-size: 1rem; line-height: 1.4; color: var(--jt-text); }
@@ -365,7 +375,7 @@
   .jt-form-help { color: var(--jt-text-tertiary); font-size: 0.8125rem; margin: 6px 0 0; }
   .jt-required { color: var(--jt-danger); }
   .jt-form-actions { display: flex; align-items: center; gap: 12px; margin-block-start: 8px; flex-wrap: wrap; }
-  .jt-form-error { margin-block-start: 12px; padding: 10px 12px; border-radius: var(--jt-radius); background: var(--jt-danger-light); color: var(--jt-danger); font-size: 0.875rem; }
+  .jt-form-error { margin-block-start: 12px; padding: 10px 12px; border-radius: var(--jt-radius); background: var(--jt-danger-light); color: var(--jt-danger-strong); font-size: 0.875rem; }
   .jt-form-saved { color: var(--jt-success); font-weight: 600; font-size: 0.875rem; }
   @media ( max-width: 640px ) {
     .jt-form { padding: 16px; }
@@ -434,7 +444,7 @@
   /* My Spaces landing (G7). Two stacked sections, card per space. */
   .jt-my-spaces-section { margin-block-end: 36px; }
   .jt-my-spaces-section:last-child { margin-block-end: 0; }
-  .jt-space-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; color: var(--jt-accent); background: var(--jt-accent-muted); border-radius: var(--jt-radius); }
+  .jt-space-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; color: var(--jt-accent-strong); background: var(--jt-accent-muted); border-radius: var(--jt-radius); }
   .jt-space-card-icon svg { width: 22px; height: 22px; }
   .jt-space-card-icon.dashicons { font-size: 22px; }
   .jt-space-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
@@ -452,8 +462,8 @@
      by a top border. Each action is a real ghost button so customers
      read them as interactive, not as muted text. */
   .jt-space-card-actions { display: flex; gap: 6px; padding: 10px 14px; border-block-start: 1px solid var(--jt-border); background: var(--jt-bg-subtle); flex-wrap: wrap; }
-  .jt-space-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg); border: 1px solid var(--jt-border); color: var(--jt-text); font-size: 0.8125rem; font-weight: 500; text-decoration: none; transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease; }
-  .jt-space-card-action:hover { border-color: var(--jt-accent); color: var(--jt-accent); background: var(--jt-accent-muted); }
+  .jt-space-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-full); background: var(--jt-bg); border: 1px solid var(--jt-border); color: var(--jt-text); font-size: 0.8125rem; font-weight: 500; text-decoration: none; transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease; }
+  .jt-space-card-action:hover { border-color: var(--jt-accent); color: var(--jt-accent-strong); background: var(--jt-accent-muted); }
   .jt-space-card-action svg { flex-shrink: 0; }
   .jt-empty-cta { margin-block-start: 16px; text-align: center; }
   @media ( max-width: 640px ) {
@@ -470,10 +480,15 @@
     .jt-pagination-link { padding: 8px 10px; font-size: 0.875rem; }
   }
   .jt-row:hover .jt-row-title { color: var(--jt-text-secondary); }
-  .jt-row-sub { font-size: 0.8125rem; color: var(--jt-text-tertiary); margin-top: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .jt-row-stat { text-align: center; }
+  .jt-row-sub { font-size: var(--jt-text-sm); line-height: var(--jt-leading-snug); color: var(--jt-text-tertiary); margin-top: var(--jt-space-1); display: flex; align-items: center; gap: var(--jt-space-2); flex-wrap: wrap; }
+  /* Everything on the meta line (author, tags, role/state pills, prefixes)
+     shares the line's one size; tag chips are compact and centred on the
+     author text instead of a 15px pill beside 13px text. */
+  .jt-row-sub :is(.jt-tag, .jt-prefix, .jt-role-pill, .jt-qa-pill, .jt-idea-pill, [class*="jt-badge"], time) { font-size: inherit; line-height: inherit; }
+  .jt-row-sub .jt-tag { padding: 0 var(--jt-space-2); }
+  .jt-row-stat { text-align: center; white-space: nowrap; }
   .jt-row-stat-n { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; }
-  .jt-row-stat-l { font-size: 0.9375rem; color: var(--jt-text-secondary); }
+  .jt-row-stat-l { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); }
   /* Drafts-tab rows have a 2-column shape (title | actions), not the 4-column
      topic-listing grid. Without this the title lands in the 48px icon column and
      wraps one word per line, with a huge gap before the meta column (Basecamp
@@ -486,7 +501,7 @@
 
   /* ── Vote buttons ── */
   .jt-votes { display: flex; flex-direction: column; align-items: center; gap: 1px; position: relative; z-index: 1; }
-  .jt-v-btn { width: 26px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--jt-text-secondary); font-size: 0.8125rem; border-radius: 3px; transition: all 0.1s; border: none; background: none; cursor: pointer; }
+  .jt-v-btn { width: 26px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--jt-text-secondary); font-size: 0.8125rem; border-radius: var(--jt-radius-sm); transition: all 0.1s; border: none; background: none; cursor: pointer; }
   .jt-v-btn:hover { color: var(--jt-text-secondary); background: var(--jt-accent-muted); }
   .jt-v-btn.jt-voted, .jt-v-btn.voted { color: var(--jt-accent); }
   /* Keep the chevron from collapsing to 0 width as a flex child (Chromium SVG-in-flex quirk). */
@@ -499,7 +514,7 @@
   /* Moderator "open reports" indicator: danger-tinted so flagged content reads
      as needing attention; the count badge sits on the flag icon. */
   .jt-act.jt-flagged-indicator { color: var(--jt-danger); text-decoration: none; }
-  .jt-act.jt-flagged-indicator:hover { color: var(--jt-danger); background: var(--jt-danger-light); }
+  .jt-act.jt-flagged-indicator:hover { color: var(--jt-danger-strong); background: var(--jt-danger-light); }
   .jt-flagged-count { font-weight: 700; font-family: var(--jt-font-mono); font-size: 0.8125rem; }
   .jt-v-num { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; }
 
@@ -512,9 +527,11 @@
 
 
   /* ── Tags ── */
-  .jt-tag { font-size: 0.9375rem; font-weight: 500; padding: 1px 7px; border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); display: inline-block; }
-  .jt-tag-qa { background: var(--jt-success-light); color: var(--jt-success); }
-  .jt-tag-ideas { background: var(--jt-warn-light); color: var(--jt-warn); }
+  /* Tags are metadata: regular weight like the text around them. Only the
+     space-type pills below (and state pills elsewhere) carry weight. */
+  .jt-tag { font-size: 0.9375rem; font-weight: 400; padding: 1px 7px; border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); display: inline-block; }
+  .jt-tag-qa { background: var(--jt-success-light); color: var(--jt-success-strong); font-weight: 600; }
+  .jt-tag-ideas { background: var(--jt-warn-light); color: var(--jt-warn-strong); font-weight: 600; }
 
   /* ── Inline mentions & hashtag links ── */
   .jt-mention { color: var(--jt-accent); font-weight: 600; }
@@ -529,7 +546,7 @@
   .jt-post-tags { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-block: var(--jt-space-5); padding-block: 0; padding-inline: var(--jt-space-6); }
 
   /* ── Trust level badge ── */
-  .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 0.6875rem; font-weight: 700; color: var(--jt-white); font-family: var(--jt-font-mono); }
+  .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 0.6875rem; font-weight: 700; color: var(--jt-ink); font-family: var(--jt-font-mono); }
   .jt-tl[data-jt-tl="0"] { background: var(--jt-tl0); }
   .jt-tl[data-jt-tl="1"] { background: var(--jt-tl1); }
   .jt-tl[data-jt-tl="2"] { background: var(--jt-tl2); }
@@ -544,10 +561,13 @@
      first-child (cover image) is enforced below via a scoped rule that
      only targets direct children inside the rounded top-left/right
      corners, so we don't pay the clipping tax on the whole card. */
-  .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 20px; }
+  .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: var(--jt-space-6); }
   .jt-post > *:first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
   .jt-post > *:last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
-  .jt-post-head { display: flex; flex-direction: column; gap: var(--jt-space-4); padding: var(--jt-space-5); border-bottom: 1px solid var(--jt-border); position: relative; }
+  /* Post and reply cards share one inner left edge per card: head, body, tags
+     and the first action icon (foot padding + .jt-act's own 12px) all start at
+     24px in a post and 16px in a reply. They were 20/24/28 and 16/18/32. */
+  .jt-post-head { display: flex; flex-direction: column; gap: var(--jt-space-4); padding: var(--jt-space-5) var(--jt-space-6); border-bottom: 1px solid var(--jt-border); position: relative; }
   .jt-post-title-row { display: flex; align-items: center; gap: var(--jt-space-4); }
   .jt-post-title-row > h1 { flex: 1 1 auto; min-width: 0; }
   .jt-post-title-row > .jt-btn-sm { flex: 0 0 auto; }
@@ -584,7 +604,7 @@
   .jt-post-body ol, .jt-post-body ul,
   .jt-reply-body ol, .jt-reply-body ul { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-6); }
   .jt-post-body li, .jt-reply-body li { margin-block: var(--jt-space-1); }
-  .jt-post-body code, .jt-reply-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
+  .jt-post-body code, .jt-reply-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: var(--jt-radius-sm); font-family: var(--jt-font-mono); }
   /* code inside a code block must not also get the inline-code chip background. */
   .jt-post-body pre code, .jt-reply-body pre code { background: none; padding: 0; border-radius: 0; }
 
@@ -608,7 +628,7 @@
   .jt-post-body pre, .jt-reply-body pre { max-width: 100%; }
   .jt-post-body pre, .jt-reply-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
   .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-border); color: var(--jt-text-secondary); }
-  .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }
+  .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-3); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
   .jt-act { display: inline-flex; align-items: center; gap: var(--jt-space-2); padding-block: var(--jt-space-2); padding-inline: var(--jt-space-3); border-radius: var(--jt-radius-full); font-size: 0.8125rem; color: var(--jt-text-tertiary); font-weight: 500; transition: all 0.1s; border: none; background: none; cursor: pointer; font-family: var(--jt-font); min-block-size: 36px; }
@@ -645,7 +665,7 @@
   /* ── Replies ── */
   .jt-replies-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--jt-space-4); }
   .jt-replies-head h2, .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: var(--jt-space-2); margin: 0; }
-  .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.75rem; font-weight: 600; line-height: 1.4; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-accent-light); color: var(--jt-accent); min-width: 1.75em; text-align: center; }
+  .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.75rem; font-weight: 600; line-height: 1.4; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-accent-light); color: var(--jt-accent-strong); min-width: 1.75em; text-align: center; }
 
   /* Reply card: must NOT clip overflow, otherwise the three-dot menu dropdown
      (absolute-positioned on the actions row) gets hidden the moment it extends
@@ -676,10 +696,24 @@
      review, a vote roll-up) — it carries the notification's type icon. */
   .jt-avatar-anon, .jt-avatar-system { color: var(--jt-text-tertiary); }
   .jt-avatar-anon svg, .jt-avatar-system svg { flex-shrink: 0; }
-  .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
-  .jt-reply-body p { margin: 0 0 10px; }
-  .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-5); }
-  .jt-accepted-tag { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--jt-success); white-space: nowrap; }
+  .jt-reply-body { padding: var(--jt-space-3) var(--jt-space-4); font-size: 1rem; line-height: 1.75; }
+  .jt-reply-body p { margin: 0 0 var(--jt-space-3); }
+  /* Post and reply bodies end on their padding, not padding + the last
+     paragraph's margin (it added 10-12px below every body). */
+  .jt-post-body > :last-child, .jt-reply-body > :last-child { margin-bottom: 0; }
+  /* One prose rhythm for every block in a post / reply body, scoped under
+     .jt-app so it outranks the host theme's own `.entry-content pre` /
+     `table` margins (Reign put 8.5px above and below code blocks, 23px under
+     tables, BuddyX 7.5-8px / 22.5px) and the app-wide `h2 { margin: 0 }`
+     that left body headings touching the paragraph under them. Blocks are
+     spaced 12px; a heading gets 20px above, 8px below. */
+  .jt-app :is(.jt-post-body, .jt-reply-body) > :is(p, ul, ol, blockquote, pre, table, figure, hr, img, .wp-block-image) { margin-block: 0 var(--jt-space-3); }
+  .jt-app :is(.jt-post-body, .jt-reply-body) > :is(h1, h2, h3, h4, h5, h6) { margin-block: var(--jt-space-5) var(--jt-space-2); }
+  .jt-app :is(.jt-post-body, .jt-reply-body) > :first-child { margin-block-start: 0; }
+  .jt-app :is(.jt-post-body, .jt-reply-body) > :last-child,
+  .jt-app :is(.jt-post-body, .jt-reply-body) :is(blockquote, li, td, th) > :last-child { margin-block-end: 0; }
+  .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-1); }
+  .jt-accepted-tag { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--jt-success-strong); white-space: nowrap; }
   .jt-accepted-tag svg { flex-shrink: 0; }
 
   /* Blocked-author tombstone (reply-card.php). Node is kept so nested,
@@ -697,7 +731,7 @@
 
   /* Threaded reply nesting — up to 3 levels */
   .jt-nested { margin-left: 24px; position: relative; }
-  .jt-nested::before { content: ''; position: absolute; left: -12px; top: 0; bottom: 0; width: 2px; background: var(--jt-border); border-radius: 1px; }
+  .jt-nested::before { content: ''; position: absolute; left: -12px; top: 0; bottom: 0; width: 2px; background: var(--jt-border); border-radius: var(--jt-radius-full); }
   .jt-nested-1 { margin-left: 24px; }
   .jt-nested-2 { margin-left: 24px; }
   .jt-nested-3 { margin-left: 24px; }
@@ -737,11 +771,11 @@
   .jt-space-card:hover { border-color: var(--jt-border-strong); }
 
   /* ── Progress bar ── */
-  .jt-progress { height: 4px; background: var(--jt-bg-muted); border-radius: 2px; overflow: hidden; }
-  .jt-progress-fill { height: 100%; background: var(--jt-accent); border-radius: 2px; transition: width 0.8s var(--jt-ease); }
+  .jt-progress { height: 4px; background: var(--jt-bg-muted); border-radius: var(--jt-radius-full); overflow: hidden; }
+  .jt-progress-fill { height: 100%; background: var(--jt-accent); border-radius: var(--jt-radius-full); transition: width 0.8s var(--jt-ease); }
 
   /* ── Private replies (1.8.1) ── */
-  .jt-private-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--jt-warn); background: var(--jt-warn-light); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); }
+  .jt-private-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--jt-warn-strong); background: var(--jt-warn-light); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); }
   .jt-reply-private-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); cursor: pointer; user-select: none; }
   .jt-reply-private-toggle input { margin: 0; }
 
@@ -772,7 +806,7 @@
 
   .jt-stats-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
   .jt-stat { text-align: center; }
-  .jt-stat-n { font-family: var(--jt-font-mono); font-size: 1.15rem; font-weight: 700; }
+  .jt-stat-n { font-family: var(--jt-font-mono); font-size: 1.125rem; font-weight: 700; }
   .jt-stat-l { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
 
   /* ── Badges ── */
@@ -786,8 +820,15 @@
   /* ── Kanban (ideas) ── */
   .jt-kanban { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
   .jt-col { background: var(--jt-bg-subtle); border-radius: var(--jt-radius-lg); padding: 12px; min-height: 350px; }
-  .jt-col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid; }
-  .jt-col-title { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  /* Status colour per column: --jt-col draws the underline, --jt-col-fg is the
+     title text (the -strong shade - the raw warn/success hue is 2.4-2.9:1 as
+     text). Keyed on data-jt-status so no inline colour is needed. */
+  .jt-col { --jt-col: var(--jt-text-tertiary); --jt-col-fg: var(--jt-text-secondary); }
+  .jt-col[data-jt-status="planned"] { --jt-col: var(--jt-accent); --jt-col-fg: var(--jt-accent-strong); }
+  .jt-col[data-jt-status="in_progress"] { --jt-col: var(--jt-warn); --jt-col-fg: var(--jt-warn-strong); }
+  .jt-col[data-jt-status="shipped"] { --jt-col: var(--jt-success); --jt-col-fg: var(--jt-success-strong); }
+  .jt-col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--jt-space-3); padding-bottom: var(--jt-space-2); border: 0; border-bottom: 2px solid var(--jt-col); }
+  .jt-col-title { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-col-fg); }
   .jt-col-n { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--jt-bg); }
   .jt-idea { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all var(--jt-dur); }
   .jt-idea:hover { border-color: var(--jt-border-strong); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
@@ -875,7 +916,7 @@
     .jt-mobile-toggle { display: flex; }
     .jt-nav { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--jt-bg); z-index: 200; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
     .jt-nav.open { display: flex; }
-    .jt-nav.open a { font-size: 1.1rem; padding: 12px 24px; }
+    .jt-nav.open a { font-size: 1.125rem; padding: 12px 24px; }
     .jt-search { display: none; }
     .jt-nav.open .jt-mobile-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--jt-text-secondary); background: none; border: none; cursor: pointer; }
   }
@@ -918,8 +959,7 @@
     .jt-row .jt-votes { width: 36px; }
     .jt-row-title { font-size: var(--jt-text-base); line-height: var(--jt-leading-snug); }
     .jt-row-sub { font-size: var(--jt-text-xs); gap: var(--jt-space-2); margin-top: var(--jt-space-1); }
-    .jt-row-sub .jt-tag { font-size: var(--jt-text-2xs); padding: 2px var(--jt-space-2); }
-    .jt-row-sub .jt-tl { width: 16px; height: 16px; font-size: 0.625rem; }
+    .jt-row-sub .jt-tl { width: 16px; height: 16px; font-size: 0.6875rem; }
     .jt-row-stat { text-align: right; }
     .jt-row-stat-n { font-size: var(--jt-text-sm); }
     .jt-row-stat-l { font-size: var(--jt-text-2xs); }
@@ -940,6 +980,7 @@
     .jt-badges { grid-template-columns: repeat(2, 1fr); }
     .jt-stats-bar { grid-template-columns: repeat(2, 1fr); }
     .jt-nested, .jt-nested-1, .jt-nested-2, .jt-nested-3 { margin-left: var(--jt-space-3); }
+    .jt-app .jt-thread-toggle-btn { margin-inline-start: calc(var(--jt-space-3) - var(--jt-space-2)); }
 
     /* Action bar — primary CTA goes full width */
     .jt-bar { flex-wrap: wrap; gap: var(--jt-space-2); }
@@ -971,9 +1012,9 @@
 
     /* Show the mobile header row. It renders as a dimmed, uppercase
        column legend aligned with the stat values below. */
-    .jt-leader-head { display: flex; align-items: center; background: var(--jt-bg-subtle); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); font-weight: 600; padding: var(--jt-space-2) var(--jt-space-3); }
+    .jt-leader-head { display: flex; align-items: center; background: var(--jt-bg-subtle); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); font-weight: 600; padding: var(--jt-space-2) var(--jt-space-3); }
     .jt-leader-head .jt-leader-head-spacer { width: 36px; flex-shrink: 0; }
-    .jt-leader-head .jt-leader-name { font-size: 0.625rem; font-weight: 600; color: var(--jt-text-tertiary); }
+    .jt-leader-head .jt-leader-name { font-size: 0.6875rem; font-weight: 600; color: var(--jt-text-tertiary); }
     .jt-leader-head .jt-leader-stats { color: var(--jt-text-tertiary); }
     .jt-leader-head .jt-leader-stats > div { min-width: 38px; text-align: right; }
 
@@ -1000,7 +1041,7 @@
 
     /* Post head — smaller title, follow button flows inline below meta */
     .jt-post-head { padding: var(--jt-space-4); }
-    .jt-post-head h1 { font-size: var(--jt-text-xl); padding-right: 0; }
+    .jt-post-head h1 { font-size: var(--jt-text-2xl); padding-inline-end: 0; }
     .jt-post-head > .jt-btn-sm { position: static; display: inline-flex; align-items: center; margin-top: var(--jt-space-4); min-height: var(--jt-tap); padding: var(--jt-space-2) var(--jt-space-5); }
 
     /* Post / reply foot — icon-only single row on mobile. Padding
@@ -1027,6 +1068,43 @@
     /* Reply composer footer stacks vertically */
     .jt-editor-foot { flex-direction: column; gap: var(--jt-space-2); align-items: stretch; }
     .jt-editor-foot .jt-btn { width: 100%; justify-content: center; }
+
+    /* One nav layer on phones. The fixed bottom tab bar carries Community,
+       Search, Ranks, Alerts and Profile, so the same icons in the top row were
+       a second (unlabelled) copy - four nav layers before any content. Hide
+       the duplicates (header.php marks them .jt-nav-dup) only when the tab bar
+       is actually rendered (BuddyNext suppresses it), and drop the row when
+       no unique link is left. Moderation and the Pro Messages link have no
+       tab, so they keep the row. */
+    .jt-community-nav:has(~ .jt-mobile-tabs) .jt-nav-dup { display: none; }
+    .jt-community-nav:has(~ .jt-mobile-tabs):not(:has(.jt-community-nav-links > a:not(.jt-nav-dup))) { display: none; }
+
+    /* Heading order holds on phones: h1 20 > h2 17 > h3 15 (tokens file). */
+    .jt-app h1, .jt-app .jt-page-title { font-size: var(--jt-text-2xl); }
+    .jt-app h2, .jt-app .jt-cat-name, .jt-app .jt-home-welcome-title { font-size: var(--jt-text-lg); }
+    .jt-app h3 { font-size: var(--jt-text-base); }
+
+    /* Compact space hero - the first screen showed header + hero + stats and
+       no topics. Identity goes back to one row (icon beside title), the cover
+       shrinks to a band, the description clamps to two lines and the stats
+       sit inline with their labels. */
+    .jt-space-cover { min-height: 0; }
+    .jt-space-cover--image { min-height: 96px; }
+    .jt-space-cover__identity { flex-direction: row; align-items: center; text-align: start; gap: var(--jt-space-3); padding: var(--jt-space-3) var(--jt-space-4); }
+    .jt-space-cover .jt-space-emoji { width: 40px; height: 40px; }
+    .jt-space-cover .jt-space-emoji svg { width: 20px; height: 20px; }
+    .jt-space-cover__title { font-size: var(--jt-text-2xl); }
+    .jt-space-head { flex-direction: row; flex-wrap: wrap; align-items: center; text-align: start; gap: var(--jt-space-2); padding-block: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
+    .jt-space-head__meta, .jt-space-nums { flex: 1 1 100%; }
+    .jt-space-head__meta { justify-content: flex-start; }
+    .jt-space-desc { margin-top: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .jt-space-nums { gap: var(--jt-space-4); margin-inline-start: 0; }
+    .jt-num { display: inline-flex; align-items: baseline; gap: var(--jt-space-1); }
+    .jt-num-val { font-size: var(--jt-text-base); }
+
+    /* 12px of padding gives the crumb links' 40px hit areas room inside the
+       crumb's overflow:hidden; text -> next block stays 20px (12 + 8). */
+    .jt-crumb { padding-block: var(--jt-space-3); margin-bottom: var(--jt-space-2); }
   }
 
   .jt-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
@@ -1068,19 +1146,25 @@
      narrow column at 390px (Basecamp 10345571083). */
   .jt-cat-section { margin-bottom: var(--jt-space-6); }
   .jt-cat-section + .jt-cat-section { border-top: 1px solid var(--jt-border); padding-top: var(--jt-space-6); }
-  .jt-cat-row { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--jt-space-2); row-gap: var(--jt-space-1); margin-bottom: var(--jt-space-3); }
+  .jt-cat-row { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--jt-space-2); row-gap: var(--jt-space-1); margin-bottom: var(--jt-space-4); }
   .jt-cat-section--accent .jt-cat-row { border-inline-start: 4px solid var(--jt-cat-accent); padding-inline-start: var(--jt-space-3); }
   .jt-cat-emoji { font-size: 1.25em; }
-  .jt-cat-name { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; margin: 0; min-width: 0; overflow-wrap: anywhere; }
+  .jt-cat-name { font-family: var(--jt-font-heading); font-size: var(--jt-text-xl); font-weight: 700; margin: 0; min-width: 0; overflow-wrap: anywhere; }
   .jt-app .jt-cat-name a { color: inherit; text-decoration: none; }
   .jt-app .jt-cat-name a:hover, .jt-app .jt-cat-name a:focus-visible { color: var(--jt-accent); text-decoration: underline; }
   .jt-cat-desc { flex-basis: 100%; font-size: 0.9375rem; color: var(--jt-text-tertiary); }
-  .jt-cat-chips { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); list-style: none; margin: 0 0 var(--jt-space-4); padding: 0; }
+  .jt-cat-chips { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); list-style: none; margin: 0; padding: 0; }
+  /* Chips then a grid inside one section: the same 12px step as heading->content. */
+  .jt-cat-chips + * { margin-top: var(--jt-space-3); }
   .jt-app .jt-cat-chip { display: inline-flex; align-items: center; gap: var(--jt-space-2); min-height: 40px; padding: 0 var(--jt-space-4); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-full); background: var(--jt-bg); color: var(--jt-text); font-size: 0.9375rem; font-weight: 500; text-decoration: none; transition: border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease); }
   .jt-app .jt-cat-chip:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); color: var(--jt-text); }
   .jt-app .jt-cat-chip:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-cat-chip-count { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); background: var(--jt-bg-muted); border-radius: var(--jt-radius-full); padding: 0 var(--jt-space-2); }
-  .jt-cat-empty { color: var(--jt-text-tertiary); padding: 8px 0; }
+  /* No padding, and the host theme's paragraph margin zeroed: an empty
+     category used to start its text 20px under the heading (8px padding + the
+     theme's ~12px p margin) and sit 69px from the next section, against 12px
+     and 49px for every section with cards or chips. Same rhythm for all. */
+  .jt-app .jt-cat-empty { color: var(--jt-text-tertiary); margin: 0; padding: 0; }
 
   /* ── Space card (home/category) ── */
   .jt-space-card-inner { display: flex; align-items: center; gap: 12px; }
@@ -1088,47 +1172,47 @@
   .jt-space-card-body { min-width: 0; flex: 1; }
   .jt-space-card-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .jt-space-card-excerpt { font-size: 0.8125rem; color: var(--jt-text-tertiary); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .jt-space-card-stats { display: flex; gap: 12px; margin-top: 6px; }
-  .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+  .jt-space-card-stats { display: flex; gap: var(--jt-space-3); margin-top: 6px; min-width: 0; }
+  .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); white-space: nowrap; flex: 0 0 auto; }
   .jt-space-card-stat strong { color: var(--jt-text-secondary); font-weight: 600; }
   /* Recency signal on space cards (1.5.0) — pushed to the end, lighter, so a
      newcomer can tell at a glance which spaces are alive. */
-  .jt-space-card-activity { margin-inline-start: auto; font-style: italic; }
+  .jt-space-card-activity { margin-inline-start: auto; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
-  .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
+  .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
   .jt-space-card-badge svg { flex-shrink: 0; width: 12px; height: 12px; }
-  .jt-space-card-badge-hidden { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn, var(--jt-text-secondary)); }
+  .jt-space-card-badge-hidden { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn-strong, var(--jt-text-secondary)); }
   /*
    * Type chips. Tinted with the accent token so the chip reads as
    * "category" rather than "warning", and stays automatically theme-
    * adaptive — `--jt-accent-light` flips for dark mode via the same
    * cascade that powers the rest of the UI.
    */
-  .jt-space-card-badge-type { background: var(--jt-accent-light, var(--jt-bg-muted)); color: var(--jt-accent, var(--jt-text-secondary)); }
+  .jt-space-card-badge-type { background: var(--jt-accent-light, var(--jt-bg-muted)); color: var(--jt-accent-strong, var(--jt-text-secondary)); }
   /*
    * Policy chips. Approval-required reads as a soft warning (action
    * still owed by the visitor); invite-only reads as informational
    * (no action owed, just a contract statement).
    */
-  .jt-space-card-badge-policy-approval { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn, var(--jt-text-secondary)); }
+  .jt-space-card-badge-policy-approval { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn-strong, var(--jt-text-secondary)); }
   .jt-space-card-badge-policy-invite { background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
 
   /* ── Space status banner ── */
   .jt-status-banner { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; font-weight: 500; margin-bottom: 12px; }
   .jt-status-banner--archived { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); }
-  .jt-status-banner--locked { background: var(--jt-warn-light); color: var(--jt-warn-dark); border: 1px solid var(--jt-warn-border); }
+  .jt-status-banner--locked { background: var(--jt-warn-light); color: var(--jt-warn-strong); border: 1px solid var(--jt-warn-border); }
 
   /* ── Status badges ── */
-  .jt-badge-resolved { background: var(--jt-success-light); color: var(--jt-success); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
+  .jt-badge-resolved { background: var(--jt-success-light); color: var(--jt-success-strong); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-closed { background: var(--jt-bg-muted); color: var(--jt-text-tertiary); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
-  .jt-badge-danger { display: inline-flex; align-items: center; background: var(--jt-danger); color: var(--jt-white); font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); white-space: nowrap; }
-  .jt-badge-private { background: var(--jt-warn-light); color: var(--jt-warn); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
+  .jt-badge-danger { display: inline-flex; align-items: center; background: var(--jt-danger-solid); color: var(--jt-danger-fg); font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); white-space: nowrap; }
+  .jt-badge-private { background: var(--jt-warn-light); color: var(--jt-warn-strong); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
   /* Pinned (sticky) topic marker — same shape as the private badge but in the
      accent colour, since pinning is informational, not a warning. Labelled
      (not an aria-hidden bare icon) so it reads as "Pinned" for everyone. */
-  .jt-badge-pinned { background: var(--jt-accent-muted); color: var(--jt-accent); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
+  .jt-badge-pinned { background: var(--jt-accent-muted); color: var(--jt-accent-strong); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
   .jt-badge-pinned svg { flex-shrink: 0; }
-  .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-sm); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+  .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 
   /* Feed-space card layout — full body inline like a social feed.
@@ -1163,7 +1247,7 @@
      language as the idea-status pill so listings stay scannable across
      space types. Answered = success green; Needs answer = quiet neutral. */
   .jt-qa-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
-  .jt-qa-pill-answered { background: color-mix(in srgb, var(--jt-success) 16%, transparent); color: var(--jt-success); }
+  .jt-qa-pill-answered { background: color-mix(in srgb, var(--jt-success) 16%, transparent); color: var(--jt-success-strong); }
   .jt-qa-pill-needs-answer { background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
 
   /* Pinned accepted-answer callout above the reply list on Q&A posts.
@@ -1171,16 +1255,17 @@
      immediately recognise this is the answer, while the reply itself
      still appears in chronological position below. */
   .jt-accepted-callout { background: color-mix(in srgb, var(--jt-success) 8%, transparent); border: 1px solid color-mix(in srgb, var(--jt-success) 30%, transparent); border-radius: var(--jt-radius); padding: 12px 14px; margin-block: 8px 16px; }
-  .jt-accepted-callout-head { display: inline-flex; align-items: center; gap: 6px; color: var(--jt-success); font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.02em; text-transform: uppercase; margin-block-end: 8px; }
+  .jt-accepted-callout-head { display: inline-flex; align-items: center; gap: 6px; color: var(--jt-success-strong); font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.02em; text-transform: uppercase; margin-block-end: 8px; }
   .jt-accepted-callout-body .jt-reply { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-sm); padding: 12px; }
 
   /* Idea roadmap status pill - four canonical statuses, color-coded so the
      listing and post header speak the same visual language as the kanban. */
-  .jt-idea-pill { --jt-ip: var(--jt-text-secondary); display: inline-flex; align-items: center; background: color-mix(in srgb, var(--jt-ip) 14%, transparent); color: var(--jt-ip); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
-  .jt-idea-pill-planned { --jt-ip: var(--jt-accent); }
-  .jt-idea-pill-in_progress { --jt-ip: var(--jt-warn); }
-  .jt-idea-pill-shipped { --jt-ip: var(--jt-success); }
-  .jt-idea-pill-declined { --jt-ip: var(--jt-text-tertiary); }
+  /* --jt-ip is the status hue (tint, border); --jt-ip-fg the readable text shade of it. */
+  .jt-idea-pill { --jt-ip: var(--jt-text-secondary); --jt-ip-fg: var(--jt-text); display: inline-flex; align-items: center; background: color-mix(in srgb, var(--jt-ip) 14%, transparent); color: var(--jt-ip-fg); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
+  .jt-idea-pill-planned { --jt-ip: var(--jt-accent); --jt-ip-fg: var(--jt-accent-strong); }
+  .jt-idea-pill-in_progress { --jt-ip: var(--jt-warn); --jt-ip-fg: var(--jt-warn-strong); }
+  .jt-idea-pill-shipped { --jt-ip: var(--jt-success); --jt-ip-fg: var(--jt-success-strong); }
+  .jt-idea-pill-declined { --jt-ip: var(--jt-text-tertiary); --jt-ip-fg: var(--jt-text-secondary); }
 
   /* Roadmap status picker (moderator only on Ideas spaces). Each option
      is a pill button that mirrors the read-only pill above; the active
@@ -1195,9 +1280,9 @@
      Hover previews the semantic color as a tint so the affordance is
      still legible. */
   .jt-idea-status-btn { font-family: inherit; cursor: pointer; background: var(--jt-bg); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
-  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 12%, transparent); color: var(--jt-ip); border-color: color-mix(in srgb, var(--jt-ip) 30%, transparent); outline: none; }
+  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 12%, transparent); color: var(--jt-ip-fg); border-color: color-mix(in srgb, var(--jt-ip) 30%, transparent); outline: none; }
   .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
-  .jt-idea-status-btn.is-active { background: var(--jt-ip); color: #fff; border-color: var(--jt-ip); }
+  .jt-idea-status-btn.is-active { background: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)); color: var(--jt-ip-fg); border-color: var(--jt-ip); box-shadow: inset 0 0 0 1px var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
   @media (max-width: 640px) {
     .jt-idea-status-setter { gap: var(--jt-space-2); padding: var(--jt-space-3); align-items: flex-start; flex-direction: column; }
@@ -1274,7 +1359,7 @@
 
   /* ── Leaderboard ── */
   /* Leaderboard uses jt-two-col now — no max-width needed */
-  .jt-page-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
+  .jt-page-title { font-family: var(--jt-font-heading); font-size: var(--jt-text-3xl); font-weight: 700; margin: 0; }
   /* Community-home title: now visible (was screen-reader-only, which contradicted
      the "main heading" setting). Spacing so it reads as the page heading.
      .jt-app prefix: a bare class (0,1,0) loses its margin to the
@@ -1295,7 +1380,7 @@
     background: var(--jt-bg-subtle, var(--jt-bg));
   }
   .jt-home-welcome-body { flex: 1 1 320px; min-width: 0; }
-  .jt-app .jt-home-welcome-title { margin: 0 0 0.35rem; font-size: 1.25rem; }
+  .jt-app .jt-home-welcome-title { margin: 0 0 0.35rem; font-size: var(--jt-text-xl); }
   .jt-home-welcome-sub { margin: 0 0 0.75rem; color: var(--jt-text-secondary); max-width: 60ch; }
   .jt-home-welcome-pulse { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; color: var(--jt-text-tertiary); }
   .jt-home-welcome-pulse .jt-pulse-stat strong { color: var(--jt-text); font-weight: 700; }
@@ -1320,6 +1405,10 @@
   .jt-sidebar-stat strong { font-family: var(--jt-font-mono); font-size: 1.125rem; font-weight: 700; }
   .jt-sidebar-stat span { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
   .jt-sidebar-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  /* One step between every sidebar card, whatever renders it: the user-panel
+     block carried 24px of its own while the cards used .jt-mb-md (16px). */
+  .jt-app .jt-sidebar > * { margin-block: 0 var(--jt-space-4); }
+  .jt-app .jt-sidebar > :last-child { margin-block-end: 0; }
   .jt-sidebar-link-text { font-size: 0.9375rem; color: var(--jt-accent); font-weight: 500; }
   .jt-tag-count { color: var(--jt-text-tertiary); font-size: 0.9375rem; margin-left: 3px; }
 
@@ -1371,18 +1460,18 @@
     flex: 0 0 auto;
     padding: 2px 8px;
     border-radius: var(--jt-radius-full);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
   .jt-managed-by-role--admin {
     background: var(--jt-accent-muted);
-    color: var(--jt-accent);
+    color: var(--jt-accent-strong);
   }
   .jt-managed-by-role--moderator {
     background: var(--jt-warn-light);
-    color: var(--jt-warn);
+    color: var(--jt-warn-strong);
   }
   .jt-managed-by-empty {
     margin: 0;
@@ -1396,7 +1485,7 @@
     display: inline-block;
     padding: 1px 6px;
     border-radius: var(--jt-radius-full);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1405,11 +1494,11 @@
   }
   .jt-role-pill--admin {
     background: var(--jt-accent-muted);
-    color: var(--jt-accent);
+    color: var(--jt-accent-strong);
   }
   .jt-role-pill--moderator {
     background: var(--jt-warn-light);
-    color: var(--jt-warn);
+    color: var(--jt-warn-strong);
   }
 
   /* ── Notification page ── */
@@ -1467,7 +1556,7 @@
     min-width: 18px;
     height: 18px;
     padding: 0 6px;
-    border-radius: 9px;
+    border-radius: var(--jt-radius-full);
     background: var(--jt-bg-muted);
     color: var(--jt-text-secondary);
     font-size: 0.75rem;
@@ -1638,7 +1727,7 @@
   /* Moderation queue flag cards — token-driven per DESIGN-SYSTEM.md */
   .jt-mod-flag { padding: var(--jt-space-4); border-bottom: 1px solid var(--jt-border); }
   .jt-mod-flag-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jt-space-2); margin-bottom: var(--jt-space-2); }
-  .jt-mod-flag-type { font-size: var(--jt-text-2xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-danger-light); color: var(--jt-danger); white-space: nowrap; }
+  .jt-mod-flag-type { font-size: var(--jt-text-2xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-danger-light); color: var(--jt-danger-strong); white-space: nowrap; }
   .jt-mod-flag-reason { font-size: var(--jt-text-sm); font-weight: 500; color: var(--jt-text-secondary); }
   .jt-mod-flag-reporter { margin-left: auto; font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); white-space: nowrap; }
   .jt-mod-flag-note { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); margin-bottom: var(--jt-space-2); padding: var(--jt-space-2); background: var(--jt-bg-subtle); border-radius: var(--jt-radius-sm); }
@@ -1650,7 +1739,7 @@
     font-size: var(--jt-text-sm, 0.85rem);
     font-weight: 500;
     line-height: 1.25;
-    border-radius: var(--jt-radius-sm, 6px);
+    border-radius: var(--jt-radius-full);
     min-height: 0;
     gap: 4px;
   }
@@ -1659,11 +1748,11 @@
   @media (max-width: 640px) {
     .jt-app .jt-mod-flag-actions .jt-btn {
       padding: 0.45rem 0.75rem;
-      font-size: 0.88rem;
+      font-size: 0.875rem;
     }
   }
-  .jt-app .jt-btn-danger, .jt-app a.jt-btn-danger { background: var(--jt-danger); color: var(--jt-white); }
-  .jt-app .jt-btn-danger:hover { color: var(--jt-white); }
+  .jt-app .jt-btn-danger, .jt-app a.jt-btn-danger { background: var(--jt-danger-solid); color: var(--jt-danger-fg); }
+  .jt-app .jt-btn-danger:hover { color: var(--jt-danger-fg); }
 
   /* Resolve error surfaced by assets/js/moderation.js when REST fails. */
   .jt-mod-flag-error { color: var(--jt-danger); font-size: var(--jt-text-sm); margin-top: var(--jt-space-2); }
@@ -1679,10 +1768,10 @@
   .jt-mod-flag-row:hover { border-color: var(--jt-border-strong); }
   .jt-mod-flag-row-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); }
   .jt-mod-flag-row .jt-mod-flag-reason { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
-  .jt-mod-flag-reason--spam { background: var(--jt-danger-light); color: var(--jt-danger); }
+  .jt-mod-flag-reason--spam { background: var(--jt-danger-light); color: var(--jt-danger-strong); }
   .jt-mod-flag-reason--offensive,
-  .jt-mod-flag-reason--harassment { background: var(--jt-warn-light); color: var(--jt-warn); }
-  .jt-mod-flag-reason--off_topic { background: var(--jt-accent-light); color: var(--jt-accent); }
+  .jt-mod-flag-reason--harassment { background: var(--jt-warn-light); color: var(--jt-warn-strong); }
+  .jt-mod-flag-reason--off_topic { background: var(--jt-accent-light); color: var(--jt-accent-strong); }
   .jt-mod-flag-row .jt-mod-flag-type { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--jt-text-tertiary); background: transparent; padding: 0; }
   .jt-mod-flag-space { font-size: 0.875rem; font-weight: 500; color: var(--jt-text); text-decoration: none; }
   .jt-mod-flag-space:hover { color: var(--jt-accent); text-decoration: underline; }
@@ -1703,14 +1792,14 @@
      the panel. Everything is token-driven, so dark mode follows for free, and
      the strip inherits .jt-profile-tabs' existing ≤640px scroll behaviour. */
   .jt-tab-count { display: inline-block; margin-inline-start: var(--jt-space-1); padding: 1px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); font-size: 0.6875rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.5; }
-  .jt-profile-tab.active .jt-tab-count { background: var(--jt-accent-light); color: var(--jt-accent); }
+  .jt-profile-tab.active .jt-tab-count { background: var(--jt-accent-light); color: var(--jt-accent-strong); }
   .jt-subtabs { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); margin-block-end: var(--jt-space-4); }
   .jt-subtab { display: inline-flex; align-items: center; padding: var(--jt-space-1) var(--jt-space-3); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-full); background: var(--jt-bg); color: var(--jt-text-secondary); font-size: var(--jt-text-sm); font-weight: 500; text-decoration: none; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease); }
   .jt-subtab:hover { color: var(--jt-text); border-color: var(--jt-border-strong); }
-  .jt-subtab.active { background: var(--jt-accent-light); border-color: var(--jt-accent); color: var(--jt-accent); }
+  .jt-subtab.active { background: var(--jt-accent-light); border-color: var(--jt-accent); color: var(--jt-accent-strong); }
   .jt-subtab:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-subtab.active .jt-tab-count { background: transparent; color: inherit; padding-inline: 0; }
-  .jt-mod-flag-reason--held { background: var(--jt-warn-light); color: var(--jt-warn); }
+  .jt-mod-flag-reason--held { background: var(--jt-warn-light); color: var(--jt-warn-strong); }
 
   /* Space card owner line (1.9.4). The single space page has named its admins
      in the "Managed by" sidebar card since 1.4.0; the directory - where the
@@ -1767,7 +1856,7 @@
     appearance: auto;
     padding: var(--jt-space-1) var(--jt-space-2);
     border: 1px solid var(--jt-border);
-    border-radius: var(--jt-radius-sm);
+    border-radius: var(--jt-radius);
     background: var(--jt-bg);
     color: var(--jt-text);
     font-size: var(--jt-text-sm);
@@ -1790,10 +1879,12 @@
   /* ── Search ── */
   /* ── Search page form (separate from header search) ── */
   .jt-search-page-form { margin-bottom: 24px; }
-  .jt-search-page-input { display: flex !important; align-items: center; gap: 10px; width: 100%; padding: 14px 20px; border: 2px solid var(--jt-border); border-radius: var(--jt-radius-lg); background: var(--jt-bg); transition: border-color 0.2s, box-shadow 0.2s; }
+  /* The field is the wrapper; the input inside it is the tap target, so it
+     carries the 40px height (it was 24px inside 14px of dead padding). */
+  .jt-search-page-input { display: flex !important; align-items: center; gap: var(--jt-space-3); width: 100%; padding: var(--jt-space-1) var(--jt-space-5); border: 2px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); transition: border-color 0.2s, box-shadow 0.2s; }
   .jt-search-page-input:focus-within { border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-search-page-icon { flex-shrink: 0; color: var(--jt-text-tertiary); }
-  .jt-search-page-input input { flex: 1; border: none !important; background: none !important; outline: none !important; padding: 0 !important; margin: 0 !important; font-family: inherit; font-size: inherit; color: var(--jt-text); box-shadow: none !important; }
+  .jt-search-page-input input { flex: 1; min-block-size: calc(var(--jt-tap) + var(--jt-space-2)); border: none !important; background: none !important; outline: none !important; padding: 0 !important; margin: 0 !important; font-family: inherit; font-size: inherit; color: var(--jt-text); box-shadow: none !important; }
   .jt-search-page-input input::placeholder { color: var(--jt-text-tertiary); }
   /* Same uppercase-label treatment as .jt-card h4 — same 12px gap contract.
      .jt-app prefix so the margin survives the .jt-app h3 reset. */
@@ -1828,10 +1919,10 @@
   .jt-reply-edit { color: var(--jt-text-tertiary); margin-left: auto; }
 
   /* ── Time stat on post rows ── */
-  .jt-row-time { font-size: 0.9375rem; color: var(--jt-text-secondary); }
+  .jt-row-time { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); white-space: nowrap; }
 
   /* ── Category page header ── */
-  .jt-cat-page-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .jt-cat-page-row { display: flex; align-items: center; gap: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
   .jt-cat-page-emoji { font-size: 1.75em; }
   .jt-cat-page-desc { color: var(--jt-text-secondary); margin-top: 4px; }
 
@@ -1862,7 +1953,7 @@
   .jt-invite-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--jt-space-3); margin-top: var(--jt-space-3); }
   .jt-invite-field { display: flex; flex-direction: column; gap: var(--jt-space-1); }
   .jt-invite-label { font-size: var(--jt-text-xs); font-weight: 600; color: var(--jt-text-secondary); }
-  .jt-invite-input { min-height: var(--jt-tap); padding: var(--jt-space-2) var(--jt-space-3); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-sm); background: var(--jt-bg); color: var(--jt-text); font-family: var(--jt-font); font-size: var(--jt-text-sm); }
+  .jt-invite-input { min-height: var(--jt-tap); padding: var(--jt-space-2) var(--jt-space-3); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); font-family: var(--jt-font); font-size: var(--jt-text-sm); }
   .jt-invite-input:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 1px; }
   .jt-invite-error { margin: var(--jt-space-3) 0 0; color: var(--jt-danger); font-size: var(--jt-text-xs); }
   .jt-invite-list { list-style: none; margin: var(--jt-space-4) 0 0; padding: 0; }
@@ -1892,7 +1983,7 @@
      re-asserted separately because .jt-app button.jt-btn-ghost:hover is one
      specificity step higher and would otherwise pull the red back to neutral. */
   .jt-app button.jt-invite-revoke { color: var(--jt-danger) !important; }
-  .jt-app button.jt-invite-revoke:hover, .jt-app button.jt-invite-revoke:focus-visible { color: var(--jt-danger) !important; background-color: var(--jt-danger-light) !important; }
+  .jt-app button.jt-invite-revoke:hover, .jt-app button.jt-invite-revoke:focus-visible { color: var(--jt-danger-strong) !important; background-color: var(--jt-danger-light) !important; }
   .jt-invite-empty { margin: var(--jt-space-4) 0 0; color: var(--jt-text-tertiary); font-size: var(--jt-text-sm); }
 
   @media (max-width: 640px) {
@@ -1966,7 +2057,9 @@
   .jt-editor-login { text-align: center; padding: 20px; }
 
   /* ── Narrow container ── */
-  .jt-narrow { max-width: 860px; margin-inline: auto; }
+  /* Readable measure, but left-aligned on the container edge the breadcrumb and
+     tabs use - centring it put the composer title 116px right of the crumb. */
+  .jt-narrow { max-width: 860px; margin-inline: 0; }
   .jt-narrower { max-width: 600px; }
 
   /* ── Card flush (no padding, overflow hidden) ── */
@@ -1992,17 +2085,20 @@
      010 specificity, and beats us on source order. The .jt-app prefix takes
      the same scope free already uses for every other tokenised rule. */
   .jt-app .jt-custom-fields-title { font-size: 15px; font-weight: 600; color: var(--jt-text); margin: 0 0 12px; padding: 0; line-height: 1.3; }
-  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; caret-color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: left; }
+  /* border-radius is !important for the same reason as border/colour: host
+     themes style input[type=text] at higher specificity (Reign 6px, BuddyX 4px),
+     so the input radius changed per theme. One radius: --jt-radius. */
+  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius) !important; font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; caret-color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: left; }
   /* Single focus ring (border recolor + box-shadow halo). Text inputs always
      match :focus-visible when focused, so a separate outline here doubled the
      ring — :focus and :focus-visible share one indicator. */
   .jt-input:focus, .jt-input:focus-visible { outline: none !important; border-color: var(--jt-accent) !important; box-shadow: 0 0 0 3px var(--jt-accent-muted) !important; }
   .jt-input::placeholder { color: var(--jt-text-secondary) !important; }
-  .jt-select { padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
+  .jt-select { padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius) !important; font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
   .jt-select:focus, .jt-select:focus-visible { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
   .jt-new-post-form { margin-top: 16px; }
-  .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
+  .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; margin: 0; }
   .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: var(--jt-space-2) 0 var(--jt-space-6); }
 
   /* ── Publish mode split-button ──
@@ -2064,8 +2160,8 @@
   }
 
   /* ── Draft / scheduled badges on profile ── */
-  .jt-badge--draft { background: var(--jt-warn-light); color: var(--jt-warn); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-left: 8px; vertical-align: middle; }
-  .jt-badge--scheduled { background: var(--jt-accent-light); color: var(--jt-accent); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-left: 8px; vertical-align: middle; }
+  .jt-badge--draft { background: var(--jt-warn-light); color: var(--jt-warn-strong); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-left: 8px; vertical-align: middle; }
+  .jt-badge--scheduled { background: var(--jt-accent-light); color: var(--jt-accent-strong); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-left: 8px; vertical-align: middle; }
   .jt-row--draft { opacity: 0.9; }
 
   @media (max-width: 640px) {
@@ -2076,7 +2172,6 @@
   }
 
   /* ── Pagination ── */
-  .jt-pagination { text-align: center; margin: 20px 0; }
   .jt-pagination-btn { min-width: 200px; justify-content: center; }
 
   /* ── Prism.js override for theme consistency ── */
@@ -2093,20 +2188,21 @@
   .jt-row-excerpt { color: var(--jt-text-tertiary); margin-top: 4px; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
   /* ── Replies section ── */
-  .jt-replies-section { scroll-margin-top: 80px; margin-block-start: var(--jt-space-8); }
+  .jt-replies-section { scroll-margin-top: 80px; margin-block-start: var(--jt-space-6); }
   .jt-replies-controls { display: flex; align-items: center; gap: 12px; }
   .jt-replies-status { font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--jt-border); }
 
   /* Load More button — centered, prominent */
   .jt-load-more { text-align: center; padding: 24px 0; }
-  .jt-load-more-btn { width: 100%; max-width: 400px; justify-content: center; padding: 12px 24px; font-size: 0.9375rem; font-weight: 600; border: 2px solid var(--jt-border); border-radius: var(--jt-radius-lg); transition: all 0.2s; }
+  .jt-load-more-btn { width: 100%; max-width: 400px; justify-content: center; padding: 12px 24px; font-size: 0.9375rem; font-weight: 600; border: 2px solid var(--jt-border); border-radius: var(--jt-radius-full); transition: all 0.2s; }
   .jt-load-more-btn:hover { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
   .jt-load-more-btn:disabled { opacity: 0.6; cursor: wait; }
 
   /* ── Thread collapse/expand ── */
   .jt-thread-toggle-btn {
     display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 10px; margin: 4px 0 4px 24px;
+    /* Text starts on the nested card's edge (indent minus own padding). */
+    padding: var(--jt-space-1) var(--jt-space-2); margin-block: var(--jt-space-1); margin-inline: calc(var(--jt-space-6) - var(--jt-space-2)) 0;
     border: none; background: none; color: var(--jt-text-tertiary);
     font-size: 0.9375rem; font-weight: 500; cursor: pointer;
     border-radius: var(--jt-radius-full);
@@ -2435,7 +2531,7 @@
 	margin: 0 0 12px;
 	padding: 10px 14px;
 	background: var(--jt-danger-light);
-	color: var(--jt-danger);
+	color: var(--jt-danger-strong);
 	border: 1px solid var(--jt-danger);
 	border-radius: var(--jt-radius);
 	font-size: 0.9375rem;
@@ -2584,7 +2680,7 @@
 .jt-shortcut-modal h3 { margin: 0 0 16px; color: var(--jt-text); font-family: var(--jt-font-heading); }
 .jt-shortcut-modal table { width: 100%; }
 .jt-shortcut-modal td { padding: 6px 0; }
-.jt-shortcut-modal kbd { background: var(--jt-bg-muted); padding: 2px 8px; border-radius: 4px; font-family: var(--jt-font-mono); border: 1px solid var(--jt-border); }
+.jt-shortcut-modal kbd { background: var(--jt-bg-muted); padding: 2px 8px; border-radius: var(--jt-radius-sm); font-family: var(--jt-font-mono); border: 1px solid var(--jt-border); }
 .jt-shortcut-modal button { margin-top: 16px; width: 100%; padding: 8px; border-radius: var(--jt-radius); border: 1px solid var(--jt-border-strong); background: var(--jt-bg); color: var(--jt-text); font: inherit; font-weight: 600; cursor: pointer; }
 .jt-shortcut-modal button:hover, .jt-shortcut-modal button:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); }
 
@@ -2603,7 +2699,7 @@
    modifier never applied ANYWHERE on the site — measured: asks for 4px 12px,
    rendered 8px 18px. Every "small" button has silently been full-size. Found
    while building the invite panel, whose revoke/copy controls are jt-btn-sm. */
-.jt-app .jt-btn-sm { font-size: 0.8125rem; padding: 0.25rem 0.75rem; border-radius: var(--jt-radius); }
+.jt-app .jt-btn-sm { font-size: 0.8125rem; padding: 0.25rem 0.75rem; border-radius: var(--jt-radius-full); white-space: nowrap; }
 .jt-following { background: var(--jt-accent); color: var(--jt-accent-fg); border-color: var(--jt-accent); }
 .jt-following:hover { background: var(--jt-danger); border-color: var(--jt-danger); }
 
@@ -2686,7 +2782,7 @@
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
 .jt-more-item--danger { color: var(--jt-danger); }
-.jt-more-item--danger:hover { background: var(--jt-danger-light); color: var(--jt-danger); }
+.jt-more-item--danger:hover { background: var(--jt-danger-light); color: var(--jt-danger-strong); }
 
 /* ── Mobile Bottom Tab Bar ── */
 .jt-mobile-tabs {
@@ -2706,7 +2802,7 @@
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 6px 8px; min-width: 56px;
   color: var(--jt-text-tertiary); text-decoration: none;
-  font-size: 0.625rem; font-weight: 500;
+  font-size: 0.6875rem; font-weight: 500;
   transition: color var(--jt-dur);
   position: relative;
 }
@@ -2714,10 +2810,10 @@
 .jt-mobile-tab:hover, .jt-mobile-tab.active { color: var(--jt-accent); }
 .jt-mobile-tab-badge {
   position: absolute; top: 2px; right: 4px;
-  background: var(--jt-danger); color: var(--jt-white);
-  font-size: 0.625rem; font-weight: 700;
+  background: var(--jt-danger-solid); color: var(--jt-danger-fg);
+  font-size: 0.6875rem; font-weight: 700;
   min-width: 14px; height: 14px; padding: 0 3px;
-  border-radius: 7px;
+  border-radius: var(--jt-radius-full);
   display: inline-flex; align-items: center; justify-content: center;
 }
 
@@ -2778,8 +2874,8 @@
 .jt-modal-actions .jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-accent-hover-fg); }
 .jt-modal-actions .jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
 .jt-modal-actions .jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
-.jt-modal-actions .jt-btn-danger { background: var(--jt-danger); color: #fff; }
-.jt-modal-actions .jt-btn-danger:hover { background: var(--jt-danger); filter: brightness( 0.93 ); color: #fff; }
+.jt-modal-actions .jt-btn-danger { background: var(--jt-danger-solid); color: var(--jt-danger-fg); }
+.jt-modal-actions .jt-btn-danger:hover { background: var(--jt-danger-solid); filter: brightness( 0.93 ); color: var(--jt-danger-fg); }
 @media ( max-width: 640px ) {
 	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
 	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }
@@ -2815,7 +2911,7 @@
 .jt-modal-picker-item.is-selected { background: var(--jt-accent-light, var(--jt-bg-muted)); }
 .jt-modal-picker-item-title { font-size: 0.9375rem; font-weight: 500; color: var(--jt-text); line-height: 1.4; }
 .jt-modal-picker-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--jt-text-tertiary); }
-.jt-modal-picker-space-chip { display: inline-flex; padding: 2px 6px; border-radius: var(--jt-radius-sm, 4px); background: var(--jt-bg-muted); color: var(--jt-text-secondary); font-weight: 600; letter-spacing: 0.02em; }
+.jt-modal-picker-space-chip { display: inline-flex; padding: 2px 6px; border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); font-weight: 600; letter-spacing: 0.02em; }
 .jt-modal-picker-item-stat { color: var(--jt-text-tertiary); }
 @media ( max-width: 640px ) {
 	.jt-modal-picker { padding: 16px 16px 12px; }
@@ -2861,7 +2957,7 @@
 }
 .jt-link-preview-favicon {
   width: 14px; height: 14px; object-fit: contain; flex-shrink: 0;
-  border-radius: 2px;
+  border-radius: var(--jt-radius-sm);
 }
 .jt-link-preview-domain { color: var(--jt-text-tertiary); font-weight: 500; }
 .jt-link-preview-title {
@@ -2981,7 +3077,7 @@
 .jt-search-overlay-input::placeholder { color: var(--jt-text-tertiary); }
 .jt-search-overlay-kbd {
   font-family: var(--jt-font-mono); font-size: 0.6875rem;
-  padding: 2px 6px; border-radius: 4px;
+  padding: 2px 6px; border-radius: var(--jt-radius-sm);
   background: var(--jt-bg-muted); border: 1px solid var(--jt-border);
   color: var(--jt-text-tertiary);
 }
@@ -3139,7 +3235,7 @@
 	color: var(--jt-text);
 }
 .jt-nav-title {
-	font-size: 0.95rem;
+	font-size: 0.9375rem;
 	font-weight: 600;
 	margin: 0 0 0.75rem;
 	color: var(--jt-text);
@@ -3170,7 +3266,7 @@ details.jt-nav-category > summary.jt-nav-category-title::-webkit-details-marker 
 }
 details.jt-nav-category > summary.jt-nav-category-title::after {
 	content: "▸";
-	font-size: 0.7rem;
+	font-size: 0.75rem;
 	transition: transform var(--jt-dur, 0.15s) var(--jt-ease, ease);
 	color: var(--jt-text-tertiary, var(--jt-text-secondary));
 }
@@ -3194,7 +3290,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	border-radius: var(--jt-radius-sm, 6px);
 	text-decoration: none;
 	color: var(--jt-text);
-	font-size: 0.9rem;
+	font-size: 0.9375rem;
 	line-height: 1.35;
 	transition: background var(--jt-dur, 0.15s) var(--jt-ease, ease), color var(--jt-dur, 0.15s) var(--jt-ease, ease);
 }
@@ -3206,11 +3302,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-nav-space.is-active > a,
 .jt-nav-space > a[aria-current="page"] {
 	background: var(--jt-accent-muted, var(--jt-bg-subtle));
-	color: var(--jt-accent);
+	color: var(--jt-accent-strong);
 	font-weight: 600;
 }
 .jt-nav-count {
-	font-size: 0.72rem;
+	font-size: 0.75rem;
 	color: var(--jt-text-tertiary, var(--jt-text-secondary));
 	background: var(--jt-bg-subtle);
 	padding: 0.1rem 0.45rem;
@@ -3229,7 +3325,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	}
 	.jt-nav-space > a {
 		padding: 0.55rem 0.55rem;
-		font-size: 0.95rem;
+		font-size: 0.9375rem;
 	}
 }
 
@@ -3364,7 +3460,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	padding: 0.25rem 0.375rem;
 	border-radius: var(--jt-radius-sm);
 	background: var(--jt-accent-light);
-	color: var(--jt-accent);
+	color: var(--jt-accent-strong);
 }
 
 .jt-attachment__meta {
@@ -3415,7 +3511,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-emoji-picker .jt-emoji-option:focus-visible {
 	outline: 2px solid var(--jt-accent, #0073aa);
 	outline-offset: 1px;
-	border-radius: 4px;
+	border-radius: var(--jt-radius-sm);
 }
 
 /* ── Sub-spaces strip ───────────────────────────────────────────────────────
@@ -3484,3 +3580,33 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
    next one broken. One declaration at the end of the cascade covers every
    element the plugin hides, including ones added later. */
 .jt-app [hidden] { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOUCH TARGET FLOOR (<= 1024px: tablets and phones)
+   Deliberately the LAST rule in the file: several of these controls are
+   declared after the consolidated responsive blocks above (mod actions,
+   notification menu, toggles), so a floor placed there lost on source order.
+   Two mechanisms, one list each:
+   1. Controls whose box may grow get min-block/inline-size = --jt-tap.
+   2. Controls that keep their visual size (vote chevron, tags, inline text
+      links, avatars, switches) get an invisible --jt-tap hit area from a
+      centred ::after - the tap lands on the control, nothing reflows.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .jt-app :is(.jt-pill, .jt-act, .jt-reaction-trigger, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button, .jt-member-role-select, .jt-mod-flag-actions .jt-btn, .jt-btn, .jt-managed-by-link) {
+    min-block-size: var(--jt-tap);
+  }
+  .jt-app :is(.jt-act, .jt-reaction-trigger, .jt-community-nav-notif, .jt-notif-item__menu-trigger, .jt-editor-bar button) {
+    min-inline-size: var(--jt-tap);
+    justify-content: center;
+  }
+  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-login-prompt a, .jt-notif-item__select) {
+    position: relative;
+  }
+  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-login-prompt a, .jt-notif-item__select)::after {
+    content: "";
+    position: absolute;
+    inset-block: min(0px, calc((100% - var(--jt-tap)) / 2));
+    inset-inline: min(0px, calc((100% - var(--jt-tap)) / 2));
+  }
+}

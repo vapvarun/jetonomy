@@ -5,16 +5,16 @@
 	gap: 2px;
 	background: var(--jt-bg-muted, #f1f1f0);
 	border: 1px solid var(--jt-border, #e0e0e0);
-	border-radius: 6px;
+	border-radius: var(--jt-radius-full);
 	padding: 2px;
 	margin-right: auto;
 }
 .jt-font-scale__btn {
 	border: none;
 	background: transparent;
-	border-radius: 4px;
+	border-radius: var(--jt-radius-full);
 	padding: 3px 8px;
-	font-size: 11px;
+	font-size: var(--jt-text-2xs, 0.6875rem);
 	font-weight: 600;
 	color: var(--jt-text-secondary, #6b7280);
 	cursor: pointer;
@@ -25,5 +25,5 @@
 .jt-font-scale__btn:hover { color: var(--jt-text, #1a1a1a); }
 .jt-font-scale__btn.active {
 	background: var(--jt-accent, #3b82f6);
-	color: #fff;
+	color: var(--jt-accent-fg, #fff);
 }

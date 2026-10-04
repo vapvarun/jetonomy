@@ -79,12 +79,24 @@
     --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 15%, white);
 
     --jt-text: var(--bx-color-fg, var(--text-1, var(--wp--preset--color--contrast, #1a1a1a)));
+    /* Muted text is the theme's own text colour pulled toward the page
+       background, so it stays a shade of the host palette in any theme. Two
+       rules, both measured (2.0.1):
+       - Mix toward --jt-bg, never `transparent`. A translucent colour
+         composites with whatever surface it lands on, so the same token read
+         4.0:1 on the page and 2.96:1 on an unread / selected / subtle row.
+         An opaque mix has one value everywhere.
+       - 92% / 88%, not 70% / 65%. Host themes already ship mid-grey body text
+         (BuddyX #505050 = 8.06:1, Reign #404855 = 9.7:1), so a 30% fade put
+         breadcrumbs, timestamps, card stats and outline-button labels at
+         3.2-4.0:1. At 92/88 the worst measured theme (BuddyX) holds
+         6.5 / 5.8 on the page and >= 5.0 on the accent-tinted unread row.
+         The step between levels is small on mid-grey themes; size and weight
+         carry the rest of the hierarchy. */
     --jt-text-secondary: #4B5563;
-    --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
-    /* Bumped from 60% → 65% so any text using --jt-text-tertiary against
-       the default light bg passes WCAG AA 4.5:1 (was 3.48:1 at 60%). */
+    --jt-text-secondary: color-mix(in srgb, var(--jt-text) 92%, var(--jt-bg));
     --jt-text-tertiary: #6B7280;
-    --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 65%, transparent);
+    --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 88%, var(--jt-bg));
 
     --jt-bg: var(--bx-color-bg-elevated, var(--bg, var(--wp--preset--color--base, #ffffff)));
     --jt-bg-subtle: #F9FAFB;
@@ -108,7 +120,32 @@
     --jt-danger: var(--red, #dc2626);
     --jt-danger-light: var(--red-bg, #fee2e2);
 
-    /* Trust level colors */
+    /* Status colour used AS TEXT on its own tint (pill, badge, column title,
+       callout heading). The base colours above are fills - #16a34a on its
+       tint is 2.6:1, #ca8a04 2.4:1. The -strong shade is the same hue mixed
+       40% toward black (dark mode: toward white, below), which measures
+       >= 5.6:1 on the tint and on the page in both modes. Never put the base
+       status colour on its tint as text; use the -strong token. */
+    --jt-success-strong: #15803d;
+    --jt-success-strong: color-mix(in srgb, var(--jt-success) 60%, black);
+    --jt-warn-strong: #795302;
+    --jt-warn-strong: color-mix(in srgb, var(--jt-warn) 60%, black);
+    --jt-danger-strong: #991b1b;
+    --jt-danger-strong: color-mix(in srgb, var(--jt-danger) 60%, black);
+    --jt-accent-strong: #1e40af;
+    --jt-accent-strong: color-mix(in srgb, var(--jt-accent) 60%, black);
+
+    /* Solid danger fill that carries text (count badges, Delete buttons).
+       Dark mode lightens --jt-danger to #ef4444 so it reads as TEXT on a dark
+       surface, and white on that is 3.76:1. The fill is derived here, on
+       :root, from the light value, so it does not follow that flip: white on
+       it is >= 5:1 in both modes. --jt-danger-fg is the text on it. */
+    --jt-danger-solid: #b91c1c;
+    --jt-danger-solid: color-mix(in srgb, var(--jt-danger) 85%, black);
+    --jt-danger-fg: var(--jt-white);
+
+    /* Trust level colors - pastel fills; text on them uses --jt-ink
+       (white on #f472b6 was 2.65:1, dark ink is >= 7.5:1 on all six). */
     --jt-tl0: #9ca3af;
     --jt-tl1: #60a5fa;
     --jt-tl2: #34d399;
@@ -121,7 +158,18 @@
     --jt-badge-silver: #9ca3af;
     --jt-badge-gold: #f59e0b;
 
-    /* Radius — BuddyNext first, then WP custom, then hardcoded */
+    /* Radius — BuddyNext first, then WP custom, then hardcoded.
+       ONE system, four steps plus circles. Pick by ROLE, never a literal:
+         --jt-radius-full  every button (all sizes, .jt-btn-sm included),
+                           pill, tab pill, tag, chip, badge, count bubble
+         --jt-radius-lg    cards, panels, modals, the composer, covers
+         --jt-radius       form controls (input, select, textarea, search
+                           field), menus, popovers, inner boxes, code
+         --jt-radius-sm    small inner marks: thumbnails, checkboxes,
+                           focus-ring corners, inline code
+         50%               avatars, status dots, round icon buttons
+       Inputs read --jt-radius explicitly so the theme's own input radius
+       never decides it. */
     --jt-radius: var(--r-md, var(--wp--custom--border-radius, 8px));
     --jt-radius-sm: var(--r-sm, calc(var(--jt-radius) * 0.5));
     --jt-radius-lg: var(--r-lg, calc(var(--jt-radius) * 1.5));
@@ -168,16 +216,22 @@
 
     /* Typography scale — rem-based so OS/theme zoom is respected.
        Components pick a token, never a literal rem value.
-       Mobile breakpoint adjusts the visible size via the `fluid` vars. */
+       Heading ROLES are fixed to steps so the order holds at every width
+       (2.0.1: a topic H1 rendered 19px under a 21px "Replies" H2 on phones):
+                     desktop   phone (<= 640)
+         h1 (page)   3xl 24    2xl 20
+         h2 (section) xl 18    lg  17
+         h3           lg 17    base 15
+       Hierarchy below h3 comes from weight and colour, not more sizes. */
     --jt-text-2xs: 0.6875rem;   /* 11px — pill, caption */
     --jt-text-xs:  0.75rem;     /* 12px — meta, tag */
     --jt-text-sm:  0.8125rem;   /* 13px — secondary */
     --jt-text-base: 0.9375rem;  /* 15px — body, card title mobile */
     --jt-text-md:  1rem;        /* 16px — body desktop */
-    --jt-text-lg:  1.0625rem;   /* 17px — card title desktop */
-    --jt-text-xl:  1.125rem;    /* 18px — section title mobile */
-    --jt-text-2xl: 1.25rem;     /* 20px — section title desktop, page title mobile */
-    --jt-text-3xl: 1.75rem;     /* 28px — page title desktop */
+    --jt-text-lg:  1.0625rem;   /* 17px — h3, h2 phone */
+    --jt-text-xl:  1.125rem;    /* 18px — h2 section title */
+    --jt-text-2xl: 1.25rem;     /* 20px — h1 phone */
+    --jt-text-3xl: 1.5rem;      /* 24px — h1 page title */
 
     /* Line heights */
     --jt-leading-tight: 1.2;
@@ -193,12 +247,11 @@
 
     /* Constants — absolute values that do NOT adapt to the active theme */
     --jt-white: #ffffff;                 /* text/icons on colored backgrounds */
+    --jt-ink: #111827;                   /* text on light pastel fills (trust-level chips) */
     --jt-code-bg: #1e1e1e;              /* code block bg — always dark (syntax highlighter) */
     --jt-code-fg: #d4d4d4;              /* code block text — always light */
 
     /* Warning variants */
-    --jt-warn-dark: #7c5c00;
-    --jt-warn-dark: color-mix(in srgb, var(--jt-warn) 80%, black);
     --jt-warn-border: #ffe082;
     --jt-warn-border: color-mix(in srgb, var(--jt-warn) 50%, white);
   }
@@ -249,10 +302,11 @@
   .jt-dark,
   [data-theme="dark"] {
     --jt-text: #e5e5e5;
-    --jt-text-secondary: rgba(229, 229, 229, 0.75);
-    /* Bumped from 0.4 → 0.6 so text using --jt-text-tertiary passes WCAG AA
-       on the dark surface (was 3.07:1 at 0.4, now ≈ 4.65:1). */
-    --jt-text-tertiary: rgba(229, 229, 229, 0.6);
+    /* Opaque, like light mode: #b8b8b8 / #9e9e9e are what the old 0.75 / 0.6
+       alpha resolved to on #171717, now fixed so they do not lighten or
+       darken with the row behind them. 9.3 / 6.8:1 on --jt-bg. */
+    --jt-text-secondary: #b8b8b8;
+    --jt-text-tertiary: #9e9e9e;
     --jt-bg: #171717;
     --jt-bg-subtle: #1e1e1e;
     --jt-bg-muted: #262626;
@@ -278,11 +332,10 @@
        not patches that scream. */
     --jt-accent-light: color-mix(in srgb, var(--jt-accent) 12%, #171717);
     --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 18%, #171717);
-    /* Warn-dark flips to a warm light tint in dark mode. It is used as
-       text on the dark --jt-warn-light surface (locked-space banner,
-       .jt-notice-warning). The light-mode default (color-mix warn 80%,
-       black) stays olive and fails WCAG contrast against the dark warn
-       background; this re-derives against white so the copy stays
-       legible. */
-    --jt-warn-dark: color-mix(in srgb, var(--jt-warn) 35%, white);
+    /* -strong shades flip toward white so status text stays readable on
+       the dark tints (>= 7:1). */
+    --jt-success-strong: color-mix(in srgb, var(--jt-success) 60%, white);
+    --jt-warn-strong: color-mix(in srgb, var(--jt-warn) 60%, white);
+    --jt-danger-strong: color-mix(in srgb, var(--jt-danger) 60%, white);
+    --jt-accent-strong: color-mix(in srgb, var(--jt-accent) 60%, white);
   }
