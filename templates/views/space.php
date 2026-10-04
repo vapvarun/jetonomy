@@ -591,40 +591,10 @@ $crumbs[] = [
 				?>
 			<?php else : ?>
 				<?php
-				// 1.4.0 G3: warm the per-request role-label cache so each
-				// post-card partial below is O(1) instead of issuing one
-				// SpaceMember query per author. Single bulk query for the
-				// whole list. Author IDs are unique-deduped inside the
-				// model helper.
-				\Jetonomy\Models\SpaceMember::warm_role_cache(
-					(int) $space->id,
-					array_map( static fn( $p ) => (int) $p->author_id, $posts )
-				);
-
-				// WP3.7: batch the remaining per-card lookups for the page —
-				// author profiles (fills the profile:{id} keys the cards
-				// read), tag pills (Tag::list_for_post memo) and the viewer's
-				// votes (Vote::get_user_vote memo). Each card then costs zero
-				// per-row queries for these; unprimed surfaces (drafts / tag /
-				// bookmarks views, theme-overridden partials) keep the
-				// per-row fallback inside the models.
-				$jt_page_post_ids = array_map( static fn( $p ) => (int) $p->id, $posts );
-				\Jetonomy\Models\UserProfile::prime(
-					array_map( static fn( $p ) => (int) $p->author_id, $posts )
-				);
-				\Jetonomy\Models\Tag::for_posts( $jt_page_post_ids );
-
-				// 1.4.0 C.5: bulk-load the viewer's last-read reply id per
-				// post so each card can render a "new replies" pill in O(1).
-				$jt_read_map = array();
+				// One batch load for every card on the page (roles, profiles,
+				// tags, the viewer's votes and last-read ids).
+				$jt_read_map = \Jetonomy\prime_post_cards( $posts );
 				$jt_viewer   = get_current_user_id();
-				if ( $jt_viewer > 0 ) {
-					$jt_read_map = \Jetonomy\Models\ReadStatus::last_read_for_posts(
-						$jt_viewer,
-						$jt_page_post_ids
-					);
-					\Jetonomy\Models\Vote::user_votes_map( $jt_viewer, 'post', $jt_page_post_ids );
-				}
 				?>
 				<?php
 				// Feed spaces render the post body inline as a social-feed

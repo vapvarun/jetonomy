@@ -166,6 +166,7 @@ $crumbs = [
 				?>
 			<?php else : ?>
 				<div class="jt-topics">
+					<?php \Jetonomy\prime_post_cards( $posts ); ?>
 					<?php foreach ( $posts as $post ) : ?>
 						<?php \Jetonomy\Template_Loader::partial( 'post-card', [ 'post' => $post ] ); ?>
 					<?php endforeach; ?>

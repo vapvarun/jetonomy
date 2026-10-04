@@ -9,6 +9,7 @@ namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Cache;
 use function Jetonomy\now;
 
 class Category extends Model {
@@ -219,11 +220,24 @@ class Category extends Model {
 	 * viewer who may not see it, so direct-URL access cannot bypass the
 	 * listings the same predicate governs.
 	 *
+	 * Memoised per request: the category route resolves the same slug from
+	 * the template, the document title and the SEO paths. The key carries the
+	 * tree generation every category write bumps, so a write in the same
+	 * request is seen by the next lookup.
+	 *
 	 * @param string   $slug
 	 * @param int|null $user_id Viewer ID (null resolves to the current user).
 	 * @return object|null
 	 */
 	public static function find_by_slug( string $slug, ?int $user_id = null ): ?object {
+		static $memo = array();
+
+		$user_id = $user_id ?? get_current_user_id();
+		$key     = $slug . '|' . $user_id . '|' . (int) Cache::get( 'cat_tree_gen' );
+		if ( array_key_exists( $key, $memo ) ) {
+			return $memo[ $key ] ? clone $memo[ $key ] : null;
+		}
+
 		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
@@ -234,6 +248,8 @@ class Category extends Model {
 				...$vis_values
 			)
 		);
+
+		$memo[ $key ] = $row ? clone $row : null;
 		return $row ?: null;
 	}
 

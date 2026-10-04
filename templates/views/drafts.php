@@ -72,6 +72,7 @@ $crumbs = array(
 			?>
 		<?php else : ?>
 			<div class="jt-topics">
+				<?php \Jetonomy\prime_post_cards( $drafts ); ?>
 				<?php foreach ( $drafts as $draft_post ) : ?>
 					<?php
 					// Reuse post-card for visual consistency with the rest of

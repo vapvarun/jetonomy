@@ -271,6 +271,40 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 }
 
 /**
+ * Batch-load everything a list of topic cards reads, so each card costs no
+ * per-row queries: author role labels (per space, since a tag or drafts list
+ * mixes spaces), author profiles, tag pills, and the viewer's votes. Every
+ * page that renders post-card / feed-card rows calls this once first; the
+ * models keep a per-row fallback for theme-overridden partials.
+ *
+ * @param object[] $posts Topic rows about to render.
+ * @return array<int,int> post_id => the viewer's last-read reply id, for the
+ *                        "new replies" pill. Empty for guests.
+ */
+function prime_post_cards( array $posts ): array {
+	if ( ! $posts ) {
+		return array();
+	}
+	$ids     = array_map( static fn( $p ) => (int) $p->id, $posts );
+	$authors = array();
+	foreach ( $posts as $p ) {
+		$authors[ (int) $p->space_id ][] = (int) $p->author_id;
+	}
+	foreach ( $authors as $space_id => $user_ids ) {
+		Models\SpaceMember::warm_role_cache( $space_id, $user_ids );
+	}
+	Models\UserProfile::prime( array_map( static fn( $p ) => (int) $p->author_id, $posts ) );
+	Models\Tag::for_posts( $ids );
+
+	$viewer = get_current_user_id();
+	if ( $viewer <= 0 ) {
+		return array();
+	}
+	Models\Vote::user_votes_map( $viewer, 'post', $ids );
+	return Models\ReadStatus::last_read_for_posts( $viewer, $ids );
+}
+
+/**
  * A translatable "N nouns" phrase as a sprintf format with %s for the number,
  * e.g. "%s topics", so callers can style the number (wrap it in <strong>).
  *
