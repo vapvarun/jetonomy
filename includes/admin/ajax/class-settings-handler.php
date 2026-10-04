@@ -129,7 +129,6 @@ class Settings_Handler {
 		// so we don't duplicate the template-rendering logic.
 		$notifier = new Notifier();
 		$ref      = new \ReflectionMethod( Notifier::class, 'send_email_notification' );
-		$ref->setAccessible( true );
 		$ref->invoke(
 			$notifier,
 			(int) $admin_user->ID,

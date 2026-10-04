@@ -456,7 +456,6 @@ class Model_Tests {
 		global $wpdb;
 
 		$mapper = new \ReflectionMethod( '\Jetonomy\Import\WpForo_Importer', 'map_reply_status' );
-		$mapper->setAccessible( true );
 
 		$cases = array(
 			'approved'  => array( (object) array( 'status' => 0 ), 'publish' ),
@@ -510,7 +509,6 @@ class Model_Tests {
 		}
 
 		$mapper   = new \ReflectionMethod( '\Jetonomy\Import\WpForo_Importer', 'map_reply_status' );
-		$mapper->setAccessible( true );
 		$produced = array();
 		foreach ( array(
 			(object) array( 'status' => 0 ),
@@ -1440,7 +1438,6 @@ class Model_Tests {
 	private static function bust_space_tree(): void {
 		if ( method_exists( Space::class, 'bump_tree_generation' ) ) {
 			$m = new \ReflectionMethod( Space::class, 'bump_tree_generation' );
-			$m->setAccessible( true );
 			$m->invoke( null );
 		}
 	}
