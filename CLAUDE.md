@@ -368,6 +368,8 @@ Derived color tokens use `color-mix()` for modern browsers with a hex fallback f
 
 ### Dark mode rule
 
+Dark surfaces adopt the host theme's dark palette (`--jt-page-bg`, then `--jt-bg` as its elevated step) - see `docs/standards/host-theme-color-adoption.md`. Any derived token (built with `var()`/`color-mix()`) must be re-declared in the `.jt-dark, [data-theme="dark"]` block too, or it keeps its light value.
+
 Never write per-component dark selectors. Dark mode overrides only live in `.jt-dark, [data-theme="dark"]` in `jetonomy-tokens.css`, by reassigning the `--jt-*` root tokens. Individual components automatically get dark mode by using the tokens:
 
 ```css
