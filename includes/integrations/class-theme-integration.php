@@ -60,7 +60,14 @@ class Theme_Integration {
 	 * Add a handle here when a new surface renders Jetonomy markup outside
 	 * Jetonomy's own templates, or it will have the same problem.
 	 */
-	const SURFACE_STYLE_HANDLES = array( 'jetonomy', 'jetonomy-buddypress' );
+	const SURFACE_STYLE_HANDLES = array( 'jetonomy', 'jetonomy-buddypress', 'jetonomy-blocks' );
+
+	/**
+	 * Whether the colour bridge has already been attached on this request.
+	 *
+	 * @var bool
+	 */
+	private $bridged = false;
 
 	/**
 	 * Register hooks.
@@ -68,6 +75,13 @@ class Theme_Integration {
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'output_color_bridge' ), 20 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'output_dark_mode_mirror' ), 20 );
+		// Blocks, widgets and shortcodes enqueue `jetonomy-blocks` while the
+		// content renders - after wp_enqueue_scripts on a classic theme - so a
+		// block on an ordinary page missed both passes above: no .jt-dark, and
+		// light tokens on a dark theme. Run again before the late styles and
+		// footer scripts print (wp_footer 20).
+		add_action( 'wp_footer', array( $this, 'output_color_bridge' ), 5 );
+		add_action( 'wp_footer', array( $this, 'output_dark_mode_mirror' ), 5 );
 	}
 
 	/**
@@ -92,9 +106,10 @@ class Theme_Integration {
 	 */
 	public function output_color_bridge() {
 		$style_handle = $this->surface_style_handle();
-		if ( '' === $style_handle ) {
+		if ( $this->bridged || '' === $style_handle ) {
 			return;
 		}
+		$this->bridged = true;
 
 		$light = $this->resolve_token_map( false );
 		$dark  = $this->resolve_token_map( true );

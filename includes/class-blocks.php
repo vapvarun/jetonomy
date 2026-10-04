@@ -822,7 +822,7 @@ class Blocks {
 					<button type="button" class="jt-login-tab is-active" data-jt-tab="login" role="tab" aria-selected="true">
 						<?php esc_html_e( 'Log in', 'jetonomy' ); ?>
 					</button>
-					<button type="button" class="jt-login-tab" data-jt-tab="register" role="tab" aria-selected="false">
+					<button type="button" class="jt-login-tab" data-jt-tab="register" role="tab" aria-selected="false" tabindex="-1">
 						<?php esc_html_e( 'Register', 'jetonomy' ); ?>
 					</button>
 				</div>

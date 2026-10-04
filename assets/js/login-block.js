@@ -33,6 +33,8 @@
 			var active = tab.dataset.jtTab === name;
 			tab.classList.toggle( 'is-active', active );
 			tab.setAttribute( 'aria-selected', active ? 'true' : 'false' );
+			// Roving tabindex: Tab reaches only the selected tab; arrows move.
+			tab.setAttribute( 'tabindex', active ? '0' : '-1' );
 		} );
 		block.querySelectorAll( '.jt-login-form' ).forEach( function ( form ) {
 			form.classList.toggle( 'is-active', form.dataset.jtPanel === name );
@@ -362,6 +364,24 @@
 				activateTab( block, tab.dataset.jtTab );
 			} );
 		} );
+
+		// WAI-ARIA tabs keyboard model: Left/Right (and Home/End) move between
+		// the Log in / Register tabs and select the one focused.
+		var tablist = block.querySelector( '.jt-login-tabs' );
+		if ( tablist ) {
+			tablist.addEventListener( 'keydown', function ( e ) {
+				var tabs = Array.prototype.slice.call( tablist.querySelectorAll( '.jt-login-tab' ) );
+				var i = tabs.indexOf( document.activeElement );
+				if ( i < 0 ) { return; }
+				var rtl = 'rtl' === getComputedStyle( tablist ).direction;
+				var next = { ArrowRight: rtl ? i - 1 : i + 1, ArrowLeft: rtl ? i + 1 : i - 1, Home: 0, End: tabs.length - 1 }[ e.key ];
+				if ( undefined === next ) { return; }
+				e.preventDefault();
+				var tab = tabs[ ( next + tabs.length ) % tabs.length ];
+				activateTab( block, tab.dataset.jtTab );
+				tab.focus();
+			} );
+		}
 
 		var loginForm = block.querySelector( '.jt-login-form[data-jt-panel="login"]' );
 		if ( loginForm ) {
