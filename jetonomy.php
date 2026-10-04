@@ -76,6 +76,7 @@ Jetonomy\Autoloader::register();
 // functions that the autoloader can't pick up. Must load BEFORE class-jetonomy so
 // Migrator runs (fired on plugins_loaded -> init) can call these helpers.
 require_once JETONOMY_DIR . 'includes/functions.php';
+\Jetonomy\version_assets_by_mtime( JETONOMY_URL, JETONOMY_DIR, JETONOMY_VERSION );
 
 // Public global helpers for templates (jetonomy_post_title_or_excerpt etc.).
 // Kept separate from functions.php because functions.php is namespaced

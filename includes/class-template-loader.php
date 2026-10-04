@@ -458,14 +458,10 @@ class Template_Loader {
 			)
 		);
 
-		// Enqueue Interactivity API module. Asset version uses filemtime()
-		// (with the plugin version as a fallback) so any in-place hotfix
-		// shipped under the same plugin version still busts browser + CDN
-		// caches — a site stuck on a cached view.js?ver=x.y.z would
-		// otherwise never pick up an x.y.z hotfix.
-		$view_file    = JETONOMY_DIR . 'assets/js/view.js';
-		$view_mtime   = file_exists( $view_file ) ? (string) filemtime( $view_file ) : '';
-		$view_version = '' !== $view_mtime ? JETONOMY_VERSION . '+' . $view_mtime : JETONOMY_VERSION;
+		// Enqueue Interactivity API module. Every Jetonomy asset URL is
+		// versioned by file mtime in one place - see
+		// \Jetonomy\version_assets_by_mtime() - so enqueues pass the plain
+		// plugin version.
 
 		// WS3-A primitives (1.4.3): shared optimistic-action helper and smart
 		// dropdown positioner. Registered as classic scripts so window globals
@@ -496,7 +492,7 @@ class Template_Loader {
 					'import' => 'dynamic',
 				),
 			),
-			$view_version
+			JETONOMY_VERSION
 		);
 
 		// Pagination hydrator: re-wires data-wp-on--click directives on reply
@@ -504,14 +500,11 @@ class Template_Loader {
 		// module so it can pull the live IA store ref via the @wordpress/
 		// interactivity import. See pagination-hydrator.js header for the
 		// fallback strategy.
-		$ph_file    = JETONOMY_DIR . 'assets/js/pagination-hydrator.js';
-		$ph_mtime   = file_exists( $ph_file ) ? (string) filemtime( $ph_file ) : '';
-		$ph_version = '' !== $ph_mtime ? JETONOMY_VERSION . '+' . $ph_mtime : JETONOMY_VERSION;
 		wp_enqueue_script_module(
 			'jetonomy-pagination-hydrator',
 			JETONOMY_URL . 'assets/js/pagination-hydrator.js',
 			array( '@wordpress/interactivity', 'jetonomy-view' ),
-			$ph_version
+			JETONOMY_VERSION
 		);
 
 		// Shared global for non-Interactivity JS on community pages (link preview
@@ -1011,14 +1004,11 @@ class Template_Loader {
 		}
 		wp_enqueue_script( 'jetonomy-data' );
 
-		$jr_file    = JETONOMY_DIR . 'assets/js/jetonomy-rest.js';
-		$jr_mtime   = file_exists( $jr_file ) ? (string) filemtime( $jr_file ) : '';
-		$jr_version = '' !== $jr_mtime ? JETONOMY_VERSION . '+' . $jr_mtime : JETONOMY_VERSION;
 		wp_enqueue_script(
 			'jetonomy-rest',
 			JETONOMY_URL . 'assets/js/jetonomy-rest.js',
 			array( 'jetonomy-data' ),
-			$jr_version,
+			JETONOMY_VERSION,
 			true
 		);
 	}

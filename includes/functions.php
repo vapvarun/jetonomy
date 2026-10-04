@@ -94,6 +94,56 @@ function route_url( string $route, ...$args ): string {
 }
 
 /**
+ * Cache-busting version for one asset file: "<version>+<mtime>".
+ *
+ * A fix shipped under an unchanged plugin version (a hotfix, a QA build, a
+ * site that pulled the branch) keeps the same ?ver=x.y.z, so browsers and CDNs
+ * keep serving the old file - the owner sees stale CSS after the fix landed.
+ * Appending the file's mtime changes the URL whenever the file changes. Falls
+ * back to the plain version when the file cannot be read.
+ *
+ * @param string $file    Absolute path to the asset.
+ * @param string $version Plugin version to prefix.
+ * @return string
+ */
+function asset_version( string $file, string $version ): string {
+	$mtime = is_readable( $file ) ? filemtime( $file ) : false;
+	return false !== $mtime ? $version . '+' . $mtime : $version;
+}
+
+/**
+ * Version every style, script and script module a plugin enqueues by mtime.
+ *
+ * Hooks the three loader-src filters once, so no enqueue site has to remember
+ * to do it (the old pattern was an inline filemtime() copy at three JS
+ * enqueues while every CSS enqueue used the bare version). Only URLs under
+ * $base_url whose ?ver= is exactly $version are rewritten; an enqueue that
+ * passes its own explicit version is left alone. Pro calls this with its own
+ * URL, directory and version.
+ *
+ * @param string $base_url Plugin URL (trailing slash).
+ * @param string $base_dir Plugin directory (trailing slash).
+ * @param string $version  Plugin version passed to the enqueues.
+ */
+function version_assets_by_mtime( string $base_url, string $base_dir, string $version ): void {
+	$rewrite = static function ( $src ) use ( $base_url, $base_dir, $version ) {
+		if ( ! is_string( $src ) || 0 !== strpos( $src, $base_url ) ) {
+			return $src;
+		}
+		$query = (string) wp_parse_url( $src, PHP_URL_QUERY );
+		parse_str( $query, $args );
+		if ( ( $args['ver'] ?? '' ) !== $version ) {
+			return $src;
+		}
+		$path = strtok( substr( $src, strlen( $base_url ) ), '?' );
+		return add_query_arg( 'ver', asset_version( $base_dir . $path, $version ), $src );
+	};
+	add_filter( 'style_loader_src', $rewrite );
+	add_filter( 'script_loader_src', $rewrite );
+	add_filter( 'script_module_loader_src', $rewrite );
+}
+
+/**
  * Load Jetonomy's JS translations for classic script handles that use wp.i18n.
  *
  * The one place that knows the text domain and languages path for
