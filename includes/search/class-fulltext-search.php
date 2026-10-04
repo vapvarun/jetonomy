@@ -269,7 +269,12 @@ class Fulltext_Search implements Search_Adapter {
 	 * search was broken (Basecamp 10161324553).
 	 *
 	 * Below the floor we scan with LIKE instead. That cannot use the FULLTEXT
-	 * index, but a query this short is rare and correctness beats the plan.
+	 * index, so it matches TITLE columns only: body columns (content_plain)
+	 * are the large ones, and the composer typeahead sends 2-3 character
+	 * queries on every keystroke, which made a LIKE over every topic and reply
+	 * body a full scan per keystroke on a large community. An acronym or
+	 * product code ("QA", "v2") is still found in titles; a column list with
+	 * no title (reply bodies) matches nothing below the floor.
 	 *
 	 * @param string[] $columns Fully-qualified column names to match against.
 	 * @param string   $q       Raw user query.
@@ -285,6 +290,10 @@ class Fulltext_Search implements Search_Adapter {
 		}
 
 		global $wpdb;
+		$columns = array_values( array_filter( $columns, static fn( $c ) => false === strpos( $c, 'content' ) ) );
+		if ( ! $columns ) {
+			return [ '0 = 1', [], true ];
+		}
 		$like  = '%' . $wpdb->esc_like( $q ) . '%';
 		$parts = array_map( static fn( $c ) => $c . ' LIKE %s', $columns );
 

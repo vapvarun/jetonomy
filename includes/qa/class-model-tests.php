@@ -1939,6 +1939,12 @@ class Model_Tests {
 		add_filter( 'ngettext', $polish, 10, 5 );
 		$this->check( 'PL1: a 3-form language gets each form (1/2/5/22)', '1 temat|2 tematy|5 tematów|22 tematy' === implode( '|', array_map( static fn( $n ) => \Jetonomy\count_label( $n, 'topic' ), [ 1, 2, 5, 22 ] ) ) );
 		remove_filter( 'ngettext', $polish, 10 );
+		[ $sq_sql, $sq_params, $sq_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], 'qa' );
+		$this->check( 'SQ1: a short query scans titles only, never topic bodies', $sq_like && false === strpos( $sq_sql, 'content_plain' ) && 1 === count( $sq_params ) );
+		[ $sq_sql ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'r.content_plain' ], 'qa' );
+		$this->check( 'SQ2: a short query does not scan reply bodies', '0 = 1' === $sq_sql );
+		[ $sq_sql ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], 'caching' );
+		$this->check( 'SQ3: a normal query still searches bodies through FULLTEXT', 0 === strpos( $sq_sql, 'MATCH(p.title, p.content_plain)' ) );
 		$this->check( 'PL3: a stacked stat label agrees with its number', 'reply|replies|replies' === \Jetonomy\count_noun( 1, 'reply' ) . '|' . \Jetonomy\count_noun( 0, 'reply' ) . '|' . \Jetonomy\count_noun( 2, 'reply' ) );
 
 		$saved = get_option( 'jetonomy_settings', [] );
