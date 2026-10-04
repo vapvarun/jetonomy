@@ -341,9 +341,10 @@ Tokens inherit from WP preset tokens so they auto-adapt to the active theme:
 | Background | `--jt-bg`, `--jt-bg-subtle`, `--jt-bg-muted`, `--jt-bg-hover` |
 | Border | `--jt-border`, `--jt-border-strong` |
 | Semantic | `--jt-success`, `--jt-success-light`, `--jt-warn`, `--jt-warn-light`, `--jt-danger`, `--jt-danger-light` |
+| Text on tints / fills | `--jt-success-strong`, `--jt-warn-strong`, `--jt-danger-strong`, `--jt-accent-strong` (status text on its own `-light` tint, AA in both modes); `--jt-accent-fg` (text on `--jt-accent`); `--jt-danger-solid` + `--jt-danger-fg` (filled danger badges/buttons); `--jt-ink` (text on pastel trust-level fills). Never write `color: #fff` on a coloured fill. |
 | Trust levels | `--jt-tl0` … `--jt-tl5` |
 | Badge tiers | `--jt-badge-bronze`, `--jt-badge-silver`, `--jt-badge-gold` |
-| Radius | `--jt-radius`, `--jt-radius-sm`, `--jt-radius-lg`, `--jt-radius-full` |
+| Radius (one system, by role) | `--jt-radius-full` every button of every size, chips, pills, badges; `--jt-radius-lg` cards, panels, modals, composer; `--jt-radius` form controls (inputs read it explicitly so the theme cannot change them); `--jt-radius-sm` small inner marks (thumbnails, checkboxes). No literal px radii. |
 | Motion | `--jt-ease`, `--jt-dur` |
 
 ### The color-mix fallback pattern
@@ -351,11 +352,17 @@ Tokens inherit from WP preset tokens so they auto-adapt to the active theme:
 Derived color tokens use `color-mix()` for modern browsers with a hex fallback for older ones. Always write the hex fallback first, then override with `color-mix()` on the next line:
 
 ```css
-/* Correct - hex fallback first, color-mix second */
+/* Correct - hex fallback first, color-mix second, mixed toward the page background */
 --jt-text-secondary: #4B5563;
---jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
+--jt-text-secondary: color-mix(in srgb, var(--jt-text) 92%, var(--jt-bg));
 
 /* Wrong - skipping the fallback */
+--jt-text-secondary: color-mix(in srgb, var(--jt-text) 92%, var(--jt-bg));
+
+/* Wrong - mixing text toward `transparent`. The theme's text colour is often
+   already mid-grey, so fading it further dropped muted text to 3.2-3.9:1
+   (2.0.1 presentation review). Mix toward --jt-bg and check 4.5:1 on the
+   subtle/unread surfaces too. */
 --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
 ```
 
