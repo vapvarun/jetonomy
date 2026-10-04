@@ -263,11 +263,20 @@ if ( $jt_parent && \Jetonomy\Models\Space::concealed_from_viewer( $jt_parent, $_
 	$jt_parent = null;
 }
 
+// Home > Parent category > Category > ... Each category crumb links to its
+// page; nothing on a space page led back to its category (Basecamp 10355161213).
 $crumbs = [];
 if ( $category ) {
+	$jt_parent_cat = (int) $category->parent_id > 0 ? \Jetonomy\Models\Category::find_visible( (int) $category->parent_id ) : null;
+	if ( $jt_parent_cat ) {
+		$crumbs[] = [
+			'label' => $jt_parent_cat->name,
+			'url'   => \Jetonomy\route_url( 'category', $jt_parent_cat->slug ),
+		];
+	}
 	$crumbs[] = [
 		'label' => $category->name,
-		'url'   => '',
+		'url'   => \Jetonomy\route_url( 'category', $category->slug ),
 	];
 }
 if ( $jt_parent ) {
