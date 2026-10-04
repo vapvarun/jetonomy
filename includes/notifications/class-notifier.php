@@ -322,8 +322,8 @@ class Notifier {
 		// Background fan-out handlers — fired from Action Scheduler (or the
 		// WP-Cron fallback) when a subscriber set is too large to notify inline
 		// in the create request. Same callbacks the inline path uses.
-		add_action( 'jetonomy_fanout_post_subscribers', [ $this, 'fanout_post_subscribers' ], 10, 2 );
-		add_action( 'jetonomy_fanout_reply_subscribers', [ $this, 'fanout_reply_subscribers' ], 10, 2 );
+		add_action( 'jetonomy_fanout_post_subscribers', [ $this, 'fanout_post_subscribers' ], 10, 3 );
+		add_action( 'jetonomy_fanout_reply_subscribers', [ $this, 'fanout_reply_subscribers' ], 10, 3 );
 
 		// Reply submitted by email (Reply-by-Email Pro extension fires this).
 		// Nothing in free listened before, so emailed replies were silently lost.
@@ -483,29 +483,61 @@ class Notifier {
 	private const FANOUT_INLINE_MAX = 25;
 
 	/**
-	 * Enqueue a fan-out hook to run off the request path, so a write into a
-	 * large space/thread returns immediately and the subscriber loop runs on the
-	 * next tick instead of blocking the author.
+	 * Subscribers notified per background run. Each one can send an email, so
+	 * a run stays well inside a PHP time limit; the next batch is queued from
+	 * the last user id until the list is exhausted.
+	 */
+	private const FANOUT_BATCH = 100;
+
+	/**
+	 * Queue a fan-out batch off the request path: Action Scheduler first (the
+	 * background-jobs standard), WP-Cron when AS is absent or refuses.
 	 *
-	 * Uses a WP-Cron single event: it persists to the cron option (verifiable
-	 * and reliable in every context, CLI included) and fires on the next page
-	 * load, which on an active community is within seconds. This is the
-	 * reactive-single-shot mechanism from the background-jobs standard. Action
-	 * Scheduler was intentionally not used here because its enqueue is not
-	 * observably persisted outside a normal web request, which risks silently
-	 * dropping the fan-out — and a lost notification is worse than a slightly
-	 * delayed one.
+	 * The return value is load-bearing: false means nothing was queued, and
+	 * the caller then runs the batch inline rather than dropping it.
 	 *
 	 * @param string $hook Action hook name.
 	 * @param array  $args Positional args passed to the callback.
-	 * @return bool True if the work was scheduled (caller then skips inline run).
+	 * @return bool True when the batch is queued.
 	 */
 	private function enqueue_fanout( string $hook, array $args ): bool {
-		// Don't stack a duplicate if an identical fan-out is already queued.
+		if ( function_exists( 'as_enqueue_async_action' ) && did_action( 'action_scheduler_init' ) ) {
+			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, $args, 'jetonomy' ) ) {
+				return true;
+			}
+			if ( as_enqueue_async_action( $hook, $args, 'jetonomy' ) ) {
+				return true;
+			}
+		}
 		if ( wp_next_scheduled( $hook, $args ) ) {
 			return true;
 		}
 		return false !== wp_schedule_single_event( time(), $hook, $args );
+	}
+
+	/**
+	 * Walk one object's subscribers in FANOUT_BATCH steps, calling $notify for
+	 * each user id. After a full batch the rest is queued as the next run; if
+	 * nothing can be queued it carries on inline, so no subscriber is skipped.
+	 *
+	 * @param string   $object_type 'space' or 'post'.
+	 * @param int      $object_id   Object id.
+	 * @param int      $after       Last user id already notified.
+	 * @param string   $hook        Hook that runs the next batch.
+	 * @param array    $hook_args   Leading args for that hook (the cursor is appended).
+	 * @param callable $notify      fn( int $user_id ): void.
+	 */
+	private function fanout_batches( string $object_type, int $object_id, int $after, string $hook, array $hook_args, callable $notify ): void {
+		do {
+			$batch = Subscription::get_subscribers( $object_type, $object_id, $after, self::FANOUT_BATCH );
+			foreach ( $batch as $user_id ) {
+				$notify( $user_id );
+			}
+			if ( count( $batch ) < self::FANOUT_BATCH ) {
+				return;
+			}
+			$after = (int) end( $batch );
+		} while ( ! $this->enqueue_fanout( $hook, array_merge( $hook_args, array( $after ) ) ) );
 	}
 
 	/**
@@ -536,7 +568,7 @@ class Notifier {
 	 * Runs inline for small spaces and from Action Scheduler for large ones; the
 	 * body is identical either way, so the notifications produced are the same.
 	 */
-	public function fanout_post_subscribers( int $post_id, int $space_id ): void {
+	public function fanout_post_subscribers( int $post_id, int $space_id, int $after = 0 ): void {
 		$post = Post::find( $post_id );
 		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
 			return;
@@ -544,17 +576,16 @@ class Notifier {
 
 		$space = Space::find( $space_id );
 		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-		$space_name  = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
-		$actor_id    = (int) $post->author_id;
-		$post_url    = $this->get_post_url( $post );
-		$subscribers = Subscription::get_subscribers( 'space', $space_id );
+		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		$actor_id   = (int) $post->author_id;
+		$post_url   = $this->get_post_url( $post );
 		// Actor is the post author; an anonymous post must not leak the real
 		// author via the notification row's actor_id (avatar/name/profile).
 		$is_anon = (bool) ( $post->is_anonymous ?? false );
 
-		foreach ( $subscribers as $sub_user_id ) {
+		$notify = function ( int $sub_user_id ) use ( $actor_id, $post_id, $space_name, $post, $post_url, $is_anon ): void {
 			if ( $sub_user_id === $actor_id ) {
-				continue;
+				return;
 			}
 			$this->create_and_maybe_email(
 				$sub_user_id,
@@ -573,7 +604,9 @@ class Notifier {
 				array(),
 				$is_anon
 			);
-		}
+		};
+
+		$this->fanout_batches( 'space', $space_id, $after, 'jetonomy_fanout_post_subscribers', array( $post_id, $space_id ), $notify );
 	}
 
 	/**
@@ -669,7 +702,7 @@ class Notifier {
 	 * and the post author, who are notified directly). Inline for small threads,
 	 * from Action Scheduler for large ones; identical body either way.
 	 */
-	public function fanout_reply_subscribers( int $reply_id, int $post_id ): void {
+	public function fanout_reply_subscribers( int $reply_id, int $post_id, int $after = 0 ): void {
 		$reply = Reply::find( $reply_id );
 		$post  = Post::find( $post_id );
 		if ( ! $reply || ! $post || 'publish' !== ( $reply->status ?? '' ) ) {
@@ -681,10 +714,9 @@ class Notifier {
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
 		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
 
-		$subscribers = Subscription::get_subscribers( 'post', $post_id );
-		foreach ( $subscribers as $sub_user_id ) {
+		$notify = function ( int $sub_user_id ) use ( $actor_id, $reply_id, $reply, $post, $reply_url, $ctx_extra, $is_anon ): void {
 			if ( $sub_user_id === $actor_id || $sub_user_id === (int) $post->author_id ) {
-				continue;
+				return;
 			}
 			$this->create_and_maybe_email(
 				$sub_user_id,
@@ -702,7 +734,9 @@ class Notifier {
 				$ctx_extra,
 				$is_anon
 			);
-		}
+		};
+
+		$this->fanout_batches( 'post', $post_id, $after, 'jetonomy_fanout_reply_subscribers', array( $reply_id, $post_id ), $notify );
 	}
 
 	/**

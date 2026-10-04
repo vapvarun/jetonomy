@@ -241,6 +241,7 @@ class Model_Tests {
 		$this->test_category_hierarchy_rules();
 		$this->test_category_sibling_reorder();
 		$this->test_notification_space_read_gate();
+		$this->test_subscriber_fanout_batches();
 		$this->test_count_label_plurals();
 		$this->test_import_map();
 		$this->test_recount_backfill();
@@ -1864,6 +1865,59 @@ class Model_Tests {
 			delete_option( 'jetonomy_media_cleanup_report' );
 		} else {
 			update_option( 'jetonomy_media_cleanup_report', $previous, false );
+		}
+	}
+
+	/**
+	 * FO: subscriber fan-out walks large lists in bounded batches on Action
+	 * Scheduler, so a space with thousands of followers cannot time out one
+	 * run and silently drop everyone after that point.
+	 */
+	private function test_subscriber_fanout_batches(): void {
+		global $wpdb;
+		$hook   = 'jetonomy_fanout_post_subscribers';
+		$admins = get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] );
+		$author = (int) ( $admins[0] ?? 1 );
+		$fake   = range( 990000001, 990000250 );
+		$space  = Space::create( [ 'title' => 'QA FO', 'slug' => 'jt-qa-fo-' . wp_generate_password( 6, false, false ), 'author_id' => $author ] );
+		$post   = 0;
+
+		try {
+			foreach ( $fake as $uid ) {
+				\Jetonomy\Models\Subscription::subscribe( $uid, 'space', $space );
+			}
+
+			$seen  = [];
+			$after = 0;
+			do {
+				$batch = \Jetonomy\Models\Subscription::get_subscribers( 'space', $space, $after, 100 );
+				$seen  = array_merge( $seen, $batch );
+				$after = $batch ? (int) end( $batch ) : $after;
+			} while ( 100 === count( $batch ) );
+			$this->check( 'FO1: cursor batches cover every subscriber once, in order', $fake === $seen );
+
+			$post = Post::create( [ 'space_id' => $space, 'author_id' => $author, 'title' => 'QA FO', 'slug' => 'jt-qa-fo-p-' . wp_generate_password( 6, false, false ), 'content' => '<p>FO</p>' ] );
+			do_action( 'jetonomy_after_create_post', $post, $space, null ); // As the REST create path fires it.
+			$this->check( 'FO2: a post to a large space queues the fan-out on Action Scheduler', function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, [ $post, $space ], 'jetonomy' ) );
+
+			$count = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_notifications WHERE object_type = 'post' AND object_id = %d AND type = 'new_post_in_sub'", $post ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			do_action( $hook, $post, $space );
+			$this->check( 'FO3: one run notifies one batch and queues the rest from its cursor', 100 === $count() && as_has_scheduled_action( $hook, [ $post, $space, 990000100 ], 'jetonomy' ) );
+
+			do_action( $hook, $post, $space, 990000100 );
+			do_action( $hook, $post, $space, 990000200 );
+			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 250 === $count() );
+		} finally {
+			if ( function_exists( 'as_unschedule_all_actions' ) ) {
+				as_unschedule_all_actions( $hook, [], 'jetonomy' );
+				foreach ( [ [ $post, $space ], [ $post, $space, 990000100 ], [ $post, $space, 990000200 ] ] as $args ) {
+					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
+				}
+			}
+			wp_clear_scheduled_hook( $hook, [ $post, $space ] );
+			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_notifications WHERE user_id BETWEEN 990000001 AND 990000250" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_subscriptions WHERE user_id BETWEEN 990000001 AND 990000250" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			\Jetonomy\Space_Purge::purge( $space );
 		}
 	}
 

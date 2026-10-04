@@ -355,25 +355,27 @@ class Subscription extends Model {
 	}
 
 	/**
-	 * Return an array of user_ids subscribed to a given object.
+	 * User ids subscribed to an object, in user_id order.
 	 *
-	 * @param string $object_type
-	 * @param int    $object_id
+	 * With $limit > 0 it returns one batch after $after_user_id, so a fan-out
+	 * to thousands of subscribers can walk them in bounded steps (index
+	 * object_user covers the WHERE and the ORDER BY).
+	 *
+	 * @param string $object_type   'space' or 'post'.
+	 * @param int    $object_id     Object id.
+	 * @param int    $after_user_id Return only ids above this one.
+	 * @param int    $limit         Batch size; 0 returns every subscriber.
 	 * @return int[]
 	 */
-	public static function get_subscribers( string $object_type, int $object_id ): array {
-		$rows = static::db()->get_results(
-			static::db()->prepare(
-				'SELECT user_id FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d',
-				$object_type,
-				$object_id
-			)
-		);
-
-		if ( empty( $rows ) ) {
-			return [];
+	public static function get_subscribers( string $object_type, int $object_id, int $after_user_id = 0, int $limit = 0 ): array {
+		$sql  = 'SELECT user_id FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d AND user_id > %d ORDER BY user_id ASC';
+		$args = array( $object_type, $object_id, $after_user_id );
+		if ( $limit > 0 ) {
+			$sql   .= ' LIMIT %d';
+			$args[] = $limit;
 		}
 
-		return array_map( static fn( $row ) => (int) $row->user_id, $rows );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from literals and the trusted table name.
+		return array_map( 'intval', static::db()->get_col( static::db()->prepare( $sql, ...$args ) ) ?: array() );
 	}
 }
