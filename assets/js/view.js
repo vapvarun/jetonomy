@@ -3564,7 +3564,7 @@ const { state, actions } = store( 'jetonomy', {
             ctx.postStatus    = 'publish';
             ctx.showScheduler = false;
             actions._closePublishMenus();
-            state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+            state.submitLabel = actions._submitLabelFor( ctx );
         },
 
         selectSaveDraft() {
@@ -3572,7 +3572,7 @@ const { state, actions } = store( 'jetonomy', {
             ctx.postStatus    = 'draft';
             ctx.showScheduler = false;
             actions._closePublishMenus();
-            state.submitLabel = state.i18n?.saveDraft || 'Save Draft';
+            state.submitLabel = actions._submitLabelFor( ctx );
         },
 
         selectSchedule() {
@@ -3580,7 +3580,22 @@ const { state, actions } = store( 'jetonomy', {
             ctx.postStatus    = 'draft';
             ctx.showScheduler = true;
             actions._closePublishMenus();
-            state.submitLabel = state.i18n?.schedule || 'Schedule';
+            state.submitLabel = actions._submitLabelFor( ctx );
+        },
+
+        // The composer's submit label for its current publish mode. Every
+        // place that sets the label routes through here, so Publish now reads
+        // in the space type's own words (state.publishLabel, set by the
+        // composer page: "Post Question", "Submit Idea", ...) and an idle or
+        // failed submit never swaps Save Draft / Schedule for a publish label.
+        _submitLabelFor( ctx ) {
+            if ( ctx?.showScheduler ) {
+                return state.i18n?.schedule || 'Schedule';
+            }
+            if ( 'draft' === ctx?.postStatus ) {
+                return state.i18n?.saveDraft || 'Save Draft';
+            }
+            return state.publishLabel || 'Post Topic';
         },
 
         // ── Shared post-compose generator (1.4.3) ──
@@ -3649,7 +3664,7 @@ const { state, actions } = store( 'jetonomy', {
                 state.isSubmitting = false;
                 ctx.submitting     = false;
                 if ( 'state' === o.errorSink ) {
-                    state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+                    state.submitLabel = actions._submitLabelFor( ctx );
                 }
             };
 
@@ -3748,7 +3763,6 @@ const { state, actions } = store( 'jetonomy', {
                 writeError( msg );
                 if ( window.bnToast ) window.bnToast( msg );
                 setIdle();
-                state.submitLabel = state.i18n?.schedule || 'Schedule';
                 return;
             }
 
@@ -3822,14 +3836,6 @@ const { state, actions } = store( 'jetonomy', {
                 writeError( errMsg );
                 if ( window.bnToast ) window.bnToast( errMsg );
                 setIdle();
-                // Keep the label the member chose (Schedule / Save Draft):
-                // setIdle() resets it to "Post Topic", which read as if the
-                // form had switched to publishing now.
-                if ( 'draft' === postStatus && 'state' === o.errorSink ) {
-                    state.submitLabel = ctx.showScheduler
-                        ? ( state.i18n?.schedule || 'Schedule' )
-                        : ( state.i18n?.saveDraft || 'Save Draft' );
-                }
                 return;
             }
 
@@ -3862,7 +3868,6 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
             if ( 'draft' === status ) {
-                state.submitLabel  = state.i18n?.saveDraft || 'Save Draft';
                 setIdle();
                 if ( window.bnToast ) window.bnToast( state.i18n?.draftSaved || 'Draft saved. You can find it in your profile under Drafts.' );
                 return;

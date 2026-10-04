@@ -296,6 +296,9 @@ class Template_Loader {
 				'isSubmitting'   => false,
 				/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
 				'submitLabel'    => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+				// The Publish-now label; new-post.php overrides it per space type.
+				/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
+				'publishLabel'   => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 				'submitError'    => '',
 				'msgComposeOpen' => false,
 				'i18n'           => array(
@@ -367,8 +370,6 @@ class Template_Loader {
 					/* translators: %s: the singular reply label the site owner configured (lowercase). */
 					'cancelReply'           => sprintf( __( 'Cancel %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'posting'               => __( 'Posting...', 'jetonomy' ),
-					/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
-					'postTopic'             => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 					/* translators: %d: number of new items; %s: the reply label (substituted server-side). */
 					'newReply'              => sprintf( __( '%%d new %s. Click to refresh.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					/* translators: %d: number of new items; %s: the reply label (substituted server-side). */
