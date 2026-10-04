@@ -404,7 +404,7 @@ class Blocks {
 		}
 		$atts .= ' sort="' . esc_attr( $attributes['sort'] ?? 'latest' ) . '"';
 
-		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, __( 'Recent topics', 'jetonomy' ) ) : '';
+		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, sprintf( /* translators: %s: plural topic label the site owner configured. */ __( 'Recent %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) : '';
 
 		return '<div class="wp-block-jetonomy-forum-feed jt-feed-block jt-app">'
 			. $header
@@ -434,7 +434,7 @@ class Blocks {
 			$atts .= ' window="' . $window . '"';
 		}
 
-		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, __( 'Trending topics', 'jetonomy' ) ) : '';
+		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, sprintf( /* translators: %s: plural topic label the site owner configured. */ __( 'Trending %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) : '';
 
 		return '<div class="wp-block-jetonomy-trending jt-feed-block jt-trending-block jt-app">'
 			. $header
@@ -456,8 +456,7 @@ class Blocks {
 			if ( $space && ! empty( $space->slug ) ) {
 				$link = route_url( 'space', rawurlencode( (string) $space->slug ) );
 				if ( '' === $custom_title ) {
-					/* translators: %s: space title */
-					$heading_text = sprintf( __( '%s · Topics', 'jetonomy' ), (string) ( $space->title ?? '' ) );
+					$heading_text = sprintf( /* translators: 1: space title, 2: plural topic label. */ __( '%1$s · %2$s', 'jetonomy' ), (string) ( $space->title ?? '' ), \Jetonomy\jetonomy_label( 'topic', true ) );
 				}
 			}
 		}

@@ -639,7 +639,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					/* translators: %d: number of views */
 					$jt_view_count_label = sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count );
 					?>
-					<span class="jt-view-count" data-jt-view-post="<?php echo absint( $post->id ); ?>" title="<?php echo esc_attr( $jt_view_count_label ); ?>" aria-label="<?php echo esc_attr( $jt_view_count_label ); ?>">
+					<?php // Only a published topic counts a view; the endpoint refuses anything else, so a pending/draft/trashed page would just log a 404. ?>
+					<span class="jt-view-count"<?php echo 'publish' === ( $post->status ?? '' ) ? ' data-jt-view-post="' . absint( $post->id ) . '"' : ''; ?> title="<?php echo esc_attr( $jt_view_count_label ); ?>" aria-label="<?php echo esc_attr( $jt_view_count_label ); ?>">
 						<?php jetonomy_echo_icon( 'eye', 14 ); ?>
 						<span class="n"><?php echo esc_html( (int) $post->view_count ); ?></span>
 					</span>
