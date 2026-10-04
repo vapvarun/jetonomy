@@ -165,26 +165,19 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
 		}
 
-		// TOP-LEVEL ONLY, enforced server-side rather than trusting the batch.
-		// Pagination counts top-level categories and renders children inline on
-		// the parent's page, so a submitted batch containing children is longer
-		// than per_page and its tail overwrites the next page's positions. The
-		// client now excludes them, but the client is not the control: a stale
-		// cached admin-common.js would silently corrupt ordering again.
-		//
-		// Dropping them is also correct on its own terms - a child's sort_order
-		// is only ever compared against its siblings (list_children() orders
-		// WHERE parent_id = %d), so a position taken from the parent sequence
-		// means nothing for it.
-		$order = array_values(
-			array_filter(
-				$order,
-				static function ( int $cat_id ): bool {
-					$cat = Category::find( $cat_id );
-					return $cat && empty( $cat->parent_id );
-				}
-			)
-		);
+		// A batch reorders ONE sibling group, and the server decides which ids
+		// belong to it rather than trusting the batch: the top-level
+		// categories (parent_id 0), or the sub-categories of one parent.
+		// Positions are only ever compared within a sibling group
+		// (list_top_level() / list_children() order by sort_order), so mixing
+		// groups would write meaningless numbers. A stale cached admin script
+		// that still sends children in a top-level batch therefore cannot
+		// corrupt the order - they are simply dropped (Basecamp 10210539659).
+		$parent_id = absint( $_POST['parent_id'] ?? 0 );
+		$siblings  = $parent_id
+			? Category::list_children( $parent_id, get_current_user_id() )
+			: Category::list_top_level( get_current_user_id() );
+		$order     = array_values( array_intersect( $order, array_map( 'intval', array_column( $siblings, 'id' ) ) ) );
 
 		if ( ! $order ) {
 			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
@@ -193,7 +186,9 @@ class Categories_Handler {
 		// Absolute positions, never the batch index. The browser only submits
 		// the rows it rendered, so on page 2 the index restarts at 0 and would
 		// renumber those rows over the top of page 1 (Basecamp 10210539659).
-		$offset = jetonomy_reorder_offset(
+		// Sub-categories always render in full under their parent, so their
+		// batch is the whole group and starts at 0.
+		$offset = $parent_id ? 0 : jetonomy_reorder_offset(
 			absint( $_POST['paged'] ?? 1 ),
 			absint( $_POST['per_page'] ?? 20 )
 		);

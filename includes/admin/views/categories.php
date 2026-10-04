@@ -146,8 +146,9 @@ defined( 'ABSPATH' ) || exit;
 				'rows'      => $jt_cat_rows,
 				'row_attrs' => static function ( $cat ): array {
 					return array(
-						'data-id' => (int) $cat->id,
-						'class'   => 'jetonomy-category-row' . ( $cat->jt_is_child ? ' jetonomy-category-child' : '' ),
+						'data-id'     => (int) $cat->id,
+						'data-parent' => (int) $cat->parent_id,
+						'class'       => 'jetonomy-category-row' . ( $cat->jt_is_child ? ' jetonomy-category-child' : '' ),
 					);
 				},
 				'empty'     => ! empty( $search )
@@ -168,25 +169,17 @@ defined( 'ABSPATH' ) || exit;
 				'cell'      => static function ( $cat, string $key ): void {
 					switch ( $key ) {
 						case 'name':
-							// Drag handle lives inside the identity cell now: a
+							// Drag handle lives inside the identity cell: a
 							// dedicated 30px column had no label to collapse
 							// under and broke the one-primary-cell contract.
-							//
-							// PARENTS ONLY. Pagination counts top-level rows and
-							// hydrates children inline on the parent's page, so a
-							// page can render more rows than per_page. Including
-							// children in the drag batch made it overflow into the
-							// next page's band and collide (Basecamp 10210539659).
-							// A child's sort_order is only ever compared against its
-							// siblings - list_children() orders WHERE parent_id = %d
-							// - so a position drawn from the parent sequence is
-							// meaningless for it in the first place.
-							if ( ! $cat->jt_is_child ) {
-								echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
-							}
+							// Every row gets one. A parent reorders among the
+							// top-level categories, a sub-category among its
+							// siblings; admin-common.js keeps each parent's
+							// sub-categories under it after a drop.
 							if ( $cat->jt_is_child ) {
 								echo '<span class="jetonomy-child-indent"></span>';
 							}
+							echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
 							echo '<strong>' . esc_html( $cat->name ) . '</strong>';
 							if ( ! $cat->jt_is_child && ! empty( $cat->description ) ) {
 								echo '<span class="description">' . esc_html( wp_trim_words( $cat->description, 12 ) ) . '</span>';

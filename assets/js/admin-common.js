@@ -403,27 +403,37 @@
 				});
 			});
 
-			// Drag-sort Categories
+			// Drag-sort Categories. A parent reorders among the top-level
+			// categories, a sub-category among its siblings. After any drop the
+			// rows are regrouped so every sub-category sits under its own parent
+			// again: a dragged parent carries its sub-categories, and a
+			// sub-category dropped elsewhere keeps only its order among siblings.
 			if ($('#jetonomy-categories-list').length) {
-				$('#jetonomy-categories-list').sortable({
+				var $catList = $('#jetonomy-categories-list');
+				$catList.sortable({
 					handle: '.jetonomy-drag-handle',
 					placeholder: 'ui-sortable-placeholder',
-					update: function() {
+					update: function(event, ui) {
+						var parentId = parseInt(ui.item.data('parent'), 10) || 0;
+						var $children = $catList.children('tr.jetonomy-category-child');
+
+						$catList.children('tr[data-id]').not('.jetonomy-category-child').each(function() {
+							var $parent = $(this);
+							$parent.after($children.filter('[data-parent="' + $parent.data('id') + '"]'));
+						});
+
 						var order = [];
-						// Parent rows only. Children render inline on their parent's
-						// page, so counting them would make the batch larger than
-						// per_page and its tail would overwrite the next page's
-						// positions - the same corruption this handler was fixed for,
-						// reachable from page 1 (Basecamp 10210539659).
-						$('#jetonomy-categories-list tr[data-id]').not('.jetonomy-category-child').each(function() {
+						$catList.children('tr[data-id][data-parent="' + parentId + '"]').each(function() {
 							order.push($(this).data('id'));
 						});
-						// Only the rendered page is submitted, so the handler needs the
-						// page context to turn these into absolute positions. Without it
-						// page 2 renumbers from 0 and collides with page 1.
+						// Top-level rows are one page of a paginated list, so the
+						// handler needs the page context to turn them into absolute
+						// positions (Basecamp 10210539659). A sibling group always
+						// renders whole under its parent.
 						var ctx = self.listPageContext();
 						self.ajax('jetonomy_reorder_categories', {
 							order: order,
+							parent_id: parentId,
 							paged: ctx.paged,
 							per_page: ctx.perPage
 						}).done(function(res) {

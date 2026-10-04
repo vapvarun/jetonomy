@@ -239,6 +239,7 @@ class Model_Tests {
 		$this->test_media_cleanup_scope();
 		$this->test_category_space_count();
 		$this->test_category_hierarchy_rules();
+		$this->test_category_sibling_reorder();
 		$this->test_notification_space_read_gate();
 		$this->test_count_label_plurals();
 		$this->test_import_map();
@@ -2012,6 +2013,71 @@ class Model_Tests {
 			}
 			// Raw delete: fixtures must go even when a check above failed and
 			// left the tree in a state Category::delete() would refuse.
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE slug LIKE %s", '%' . $wpdb->esc_like( '-' . $suffix ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			Space::bump_tree_generation();
+		}
+	}
+
+	/**
+	 * CR: the admin reorder saves one sibling group, and the server decides
+	 * which ids belong to it - sub-categories can be reordered, and a stale or
+	 * forged batch cannot move rows outside its group (Basecamp 10355161693).
+	 */
+	private function test_category_sibling_reorder(): void {
+		global $wpdb;
+		$suffix = wp_generate_password( 6, false, false );
+		$table  = table( 'categories' );
+		$make   = static fn( string $name, int $parent = 0 ): int => Category::create(
+			[
+				'name'      => 'QA CR ' . $name,
+				'slug'      => 'jt-qa-cr-' . strtolower( $name ) . '-' . $suffix,
+				'parent_id' => $parent,
+			]
+		);
+		$prev_user = get_current_user_id();
+		$admins    = get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] );
+		$p         = $make( 'P' );
+		$a         = $make( 'A', $p );
+		$b         = $make( 'B', $p );
+		$c         = $make( 'C', $p );
+		$q         = $make( 'Q' );
+		$d         = $make( 'D', $q );
+		$pos       = static fn( int $id ): int => (int) Category::find( $id )->sort_order;
+		$die       = static fn() => static function () {
+			throw new \RuntimeException( 'ajax done' );
+		};
+		$run       = static function ( array $post ) use ( $die ): void {
+			$_POST    = $post + [ 'nonce' => wp_create_nonce( 'jetonomy_admin' ) ];
+			$_REQUEST = $_POST;
+			add_filter( 'wp_doing_ajax', '__return_true' );
+			add_filter( 'wp_die_ajax_handler', $die );
+			ob_start();
+			try {
+				( new \Jetonomy\Admin\Ajax\Categories_Handler() )->ajax_reorder_categories();
+			} catch ( \RuntimeException $e ) {
+				unset( $e );
+			}
+			ob_end_clean();
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $die );
+			$_POST    = [];
+			$_REQUEST = [];
+		};
+
+		try {
+			wp_set_current_user( (int) ( $admins[0] ?? 0 ) );
+
+			$run( [ 'order' => [ $c, $a, $b ], 'parent_id' => $p ] );
+			$this->check( 'CR1: sub-categories reorder among their siblings', [ 0, 1, 2 ] === [ $pos( $c ), $pos( $a ), $pos( $b ) ] );
+
+			$run( [ 'order' => [ $d, $q, $b, $a ], 'parent_id' => $p ] );
+			$this->check( 'CR2: a batch cannot move ids that are not children of its parent', 0 === $pos( $d ) && 0 === $pos( $q ) && [ 0, 1 ] === [ $pos( $b ), $pos( $a ) ] );
+
+			$before = [ $pos( $a ), $pos( $b ), $pos( $c ) ];
+			$run( [ 'order' => [ $c, $q, $p ], 'parent_id' => 0, 'paged' => 1, 'per_page' => 20 ] );
+			$this->check( 'CR3: a top-level batch leaves sub-categories untouched', $before === [ $pos( $a ), $pos( $b ), $pos( $c ) ] && [ 0, 1 ] === [ $pos( $q ), $pos( $p ) ] );
+		} finally {
+			wp_set_current_user( $prev_user );
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE slug LIKE %s", '%' . $wpdb->esc_like( '-' . $suffix ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			Space::bump_tree_generation();
 		}
