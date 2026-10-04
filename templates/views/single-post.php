@@ -10,17 +10,26 @@ defined( 'ABSPATH' ) || exit;
 $post_slug = $data['slug'] ?? '';
 $post      = \Jetonomy\Models\Post::find_by_slug( $post_slug );
 
-if ( ! $post ) {
+// One not-found state for a missing topic and one the viewer may not read (a
+// 404 either way, so a private topic's existence is not disclosed). It was a
+// dead end; it now says what happened and leads back to the community.
+$jt_not_found = static function (): void {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
-			'icon'      => 'empty-search',
-			'icon_size' => 48,
-			'message'   => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-			'tone'      => 'warn',
+			'icon'        => 'empty-search',
+			'icon_size'   => 48,
+			'message'     => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			'description' => sprintf( /* translators: %s: the singular topic label, lowercase. */ __( 'This %s may have been removed, or the link is wrong.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			'cta_label'   => __( 'Back to the community', 'jetonomy' ),
+			'cta_url'     => \Jetonomy\base_url(),
 		]
 	);
+};
+
+if ( ! $post ) {
+	$jt_not_found();
 	return;
 }
 
@@ -78,16 +87,7 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 // (Basecamp 9803998504). Permission_Engine::can_read_post() is the single
 // source of truth — author + manage_options + space mod/admin only.
 if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
-	status_header( 404 );
-	\Jetonomy\Template_Loader::partial(
-		'empty-state',
-		[
-			'icon'      => 'empty-search',
-			'icon_size' => 48,
-			'message'   => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-			'tone'      => 'warn',
-		]
-	);
+	$jt_not_found();
 	return;
 }
 
@@ -108,7 +108,7 @@ if ( ! empty( $post->is_blocked_author ) ) {
 	?>
 	<div class="jt-post-blocked-tombstone" data-wp-interactive="jetonomy">
 		<?php jetonomy_echo_icon( 'shield', 32 ); ?>
-		<p><?php esc_html_e( 'Content hidden — you blocked this user.', 'jetonomy' ); ?></p>
+		<p><?php esc_html_e( 'Content hidden because you blocked this user.', 'jetonomy' ); ?></p>
 		<button class="jt-btn jt-btn-ghost" type="button"
 			data-wp-on--click="actions.unblockUser"
 			data-user-id="<?php echo (int) $post->author_id; ?>">

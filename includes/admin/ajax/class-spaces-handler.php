@@ -517,7 +517,7 @@ class Spaces_Handler {
 		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
 
 		$message = $made_private
-			? __( 'Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space.', 'jetonomy' )
+			? __( 'Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.', 'jetonomy' )
 			: __( 'Access rule added.', 'jetonomy' );
 
 		wp_send_json_success(

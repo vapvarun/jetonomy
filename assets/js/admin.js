@@ -423,7 +423,7 @@
 					}
 					if ($vis.val() === 'hidden' && $(this).val() !== 'invite') {
 						$vis.val('private');
-						ensureNote(self.i18n.hiddenRequiresInvite || 'Switched visibility to Private — Hidden requires invite-only.');
+						ensureNote(self.i18n.hiddenRequiresInvite || 'Switched visibility to Private. Hidden requires invite-only.');
 					}
 				});
 			};
@@ -887,7 +887,7 @@
 						var hidden = matches.length - shown.length;
 						$results.append($('<div class="jetonomy-ac-empty"/>').text(
 							/* translators: %d: number of matching levels not shown in the list. */
-							sprintf(_n('%d more — refine search', '%d more — refine search', hidden, 'jetonomy'), hidden)
+							sprintf(_n('%d more. Refine your search to see it.', '%d more. Refine your search to see them.', hidden, 'jetonomy'), hidden)
 						));
 					}
 					$results.show();

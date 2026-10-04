@@ -17,7 +17,7 @@ if ( ! empty( $reply->is_blocked_author ) ) {
 	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-blocked" data-wp-interactive="jetonomy">
 		<div class="jt-reply-body jt-reply-tombstone">
 			<?php jetonomy_echo_icon( 'shield', 16 ); ?>
-			<span><?php esc_html_e( 'Content hidden — you blocked this user.', 'jetonomy' ); ?></span>
+			<span><?php esc_html_e( 'Content hidden because you blocked this user.', 'jetonomy' ); ?></span>
 			<?php if ( is_user_logged_in() ) : ?>
 				<button class="jt-act jt-unblock-btn" type="button"
 					data-wp-on--click="actions.unblockUser"
@@ -43,7 +43,7 @@ if ( ! empty( $reply->is_private_hidden ) ) {
 	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-private-hidden" data-wp-interactive="jetonomy">
 		<div class="jt-reply-body jt-reply-tombstone">
 			<?php jetonomy_echo_icon( 'lock', 16 ); ?>
-			<span><?php printf( /* translators: 1: singular reply label; 2: singular topic label. */ esc_html__( 'Private %1$s — visible to the %2$s author and moderators.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></span>
+			<span><?php printf( /* translators: 1: singular reply label; 2: singular topic label. */ esc_html__( 'Private %1$s, visible to the %2$s author and moderators.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></span>
 		</div>
 	</div>
 	<?php

@@ -388,7 +388,7 @@ $crumbs = [
 						'empty-state',
 						[
 							'message' => $is_own
-								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not replied to anything yet — jump into a discussion and your %s will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not replied to anything yet. Jump into a discussion and your %s will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 								: sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 							'variant' => 'compact',
 						]
@@ -449,7 +449,7 @@ $crumbs = [
 						'empty-state',
 						[
 							'message' => $is_own
-								? sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'You have not voted yet — upvote %1$s and %2$s you find helpful and they will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+								? sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'You have not voted yet. Upvote %1$s and %2$s you find helpful and they will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 								: __( 'No votes yet.', 'jetonomy' ),
 							'variant' => 'compact',
 						]

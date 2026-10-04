@@ -372,7 +372,7 @@ class Spaces_Controller extends Base_Controller {
 				'data'         => AccessRule::find( (int) $id ),
 				'made_private' => $made_private,
 				'message'      => $made_private
-					? __( 'Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space.', 'jetonomy' )
+					? __( 'Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.', 'jetonomy' )
 					: __( 'Access rule added.', 'jetonomy' ),
 			],
 			201

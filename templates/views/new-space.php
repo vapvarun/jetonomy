@@ -71,7 +71,7 @@ $crumbs = array(
 				<div class="jt-form-row">
 					<label for="jt-ns-description"><?php esc_html_e( 'Description', 'jetonomy' ); ?></label>
 					<textarea id="jt-ns-description" name="description" rows="3" maxlength="280" class="jt-input"></textarea>
-					<p class="jt-form-help"><?php esc_html_e( '1–2 sentences. Sets expectations for what belongs here.', 'jetonomy' ); ?></p>
+					<p class="jt-form-help"><?php esc_html_e( '1-2 sentences. Sets expectations for what belongs here.', 'jetonomy' ); ?></p>
 				</div>
 
 				<div class="jt-form-row">
