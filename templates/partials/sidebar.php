@@ -161,13 +161,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 		<?php
 		/**
 		 * Insert a custom widget or ad before the About card. Fires in space scope.
-		 * Use jetonomy_show_sidebar_about to hide the About card.
+		 * Use jetonomy_show_sidebar_about to show or hide the About card. Off
+		 * by default on the space page itself, whose header already shows the
+		 * description and counts.
 		 *
 		 * @param object $space Current space object.
 		 */
 		do_action( 'jetonomy_sidebar_before_about', $space );
 		?>
-		<?php if ( apply_filters( 'jetonomy_show_sidebar_about', true, $space ) ) : ?>
+		<?php if ( apply_filters( 'jetonomy_show_sidebar_about', 'space' !== get_query_var( 'jetonomy_route' ), $space ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>

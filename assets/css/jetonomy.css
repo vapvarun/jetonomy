@@ -744,6 +744,10 @@
   .jt-nested-1 { margin-left: 24px; }
   .jt-nested-2 { margin-left: 24px; }
   .jt-nested-3 { margin-left: 24px; }
+  /* A nested reply sits on the thread rail, not in a card of its own; only
+     the accepted answer and a linked (#reply) reply keep their highlight. */
+  .jt-nested > .jt-reply:not(.accepted):not(:target) { border-color: transparent; box-shadow: none; }
+  .jt-nested > .jt-reply:not(.accepted):not(:target) > .jt-reply-head { background: transparent; }
 
   /* Gap loader — in-between divider */
   .jt-load-gap { text-align: center; padding: 16px 0; position: relative; }
@@ -1853,7 +1857,6 @@
      secondary text so it orients without competing with the space grid. */
   .jt-home-member-hint { margin: 0 0 var(--jt-space-5); max-width: 62ch; color: var(--jt-text-secondary); font-size: var(--jt-text-base); line-height: var(--jt-leading-normal); }
 
-  .jt-space-card-owner { margin-block-start: var(--jt-space-1); font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* Space danger zone on /s/{slug}/edit/ (1.9.4).
      Sits BELOW the form, outside it, so a stray Enter in a text field can
@@ -2358,10 +2361,6 @@
   /* ── Smooth focus transitions ── */
   .jt-editor-body:focus { box-shadow: inset 0 0 0 1px var(--jt-accent-muted); }
 
-  /* ── Reply depth visual indicator (colored thread lines) ── */
-  .jt-nested-1::before { background: var(--jt-accent); opacity: 0.3; }
-  .jt-nested-2::before { background: var(--jt-success); opacity: 0.3; }
-  .jt-nested-3::before { background: var(--jt-warn); opacity: 0.3; }
 
   /* ═══════════════════════════════════════════
      PREMIUM UX — Uniform Across All Pages

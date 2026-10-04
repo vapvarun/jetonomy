@@ -381,11 +381,7 @@ $crumbs = [
 									</div>
 									<div class="jt-row-stat">
 										<div class="jt-row-stat-n"><?php echo (int) $post->reply_count; ?></div>
-										<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
-									</div>
-									<div class="jt-row-stat">
-										<div class="jt-row-stat-n"><?php echo (int) $post->vote_score; ?></div>
-										<div class="jt-row-stat-l"><?php esc_html_e( 'votes', 'jetonomy' ); ?></div>
+										<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $post->reply_count, 'reply' ) ); ?></div>
 									</div>
 								</a>
 							<?php endforeach; ?>
