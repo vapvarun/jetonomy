@@ -123,7 +123,9 @@ return key => bool. Batched per bell page. Reuse the plugin's existing permissio
 ### 4.4 Removal
 
 `{prefix}_community_notification_removed( $object_type, $object_id )` on PERMANENT delete only.
-Trash and unpublish are visibility.
+Trash and unpublish are visibility. A bulk delete that skips the per-object delete path (a
+container purge) emits the same signal for every object id it removes, plus one for the
+container itself (Jetonomy: `('post'|'reply', id)` per row and `('space', space_id)` once).
 
 ## 5. Checklist for any integration PR
 

@@ -547,7 +547,7 @@ class Users_Controller extends Base_Controller {
 				// Must cover every type shown in the Edit-Profile + admin
 				// Notification Defaults UIs, or that toggle is silently dropped on
 				// save (idea_status_changed / moderation / join_request were missing).
-				$valid_types = [ 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'idea_status_changed', 'moderation', 'join_request' ];
+				$valid_types = [ 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'idea_status_changed', 'moderation', 'join_request', 'message' ];
 				$prefs       = [];
 				foreach ( $notif_input as $type => $channels ) {
 					if ( ! in_array( $type, $valid_types, true ) ) {

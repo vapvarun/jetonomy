@@ -967,6 +967,33 @@ class Model_Tests {
 		if ( $host_id > 0 ) {
 			\Jetonomy\Models\Post::delete( $host_id );
 		}
+
+		// DC4: a space purge deletes in bulk, so Post::delete() never runs - it
+		// must still tell the host community to drop bell rows for every topic
+		// and reply it removed, plus the space itself.
+		wp_set_current_user( $admin_id );
+		$req = new \WP_REST_Request( 'POST', '/jetonomy/v1/spaces' );
+		$req->set_body_params( [ 'title' => 'QA purge-contract ' . wp_generate_password( 6, false ) ] );
+		$purge_space = (int) ( rest_do_request( $req )->get_data()['id'] ?? 0 );
+		if ( $purge_space <= 0 ) {
+			$this->skip( 'DC4: space purge emits removal signals', 'could not create fixture space' );
+			return;
+		}
+		$topic    = (int) \Jetonomy\Models\Post::create( [ 'space_id' => $purge_space, 'author_id' => $admin_id, 'title' => 'QA purge topic', 'content' => 'x', 'status' => 'publish' ] );
+		$answer   = (int) \Jetonomy\Models\Reply::create( [ 'post_id' => $topic, 'author_id' => $admin_id, 'content' => 'y', 'status' => 'publish' ] );
+		$signals  = [];
+		$listener = static function ( $type, $id ) use ( &$signals ) {
+			$signals[] = $type . ':' . $id;
+		};
+		add_action( 'jetonomy_community_notification_removed', $listener, 10, 2 );
+		\Jetonomy\Space_Purge::purge( $purge_space );
+		remove_action( 'jetonomy_community_notification_removed', $listener, 10 );
+		sort( $signals );
+		$this->check(
+			'DC4: space purge emits a removal signal per topic, reply and the space',
+			[ 'post:' . $topic, 'reply:' . $answer, 'space:' . $purge_space ] === $signals,
+			implode( ',', $signals )
+		);
 	}
 
 	/**

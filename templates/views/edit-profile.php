@@ -163,6 +163,9 @@ if ( ! $cancel_url ) {
 			'new_post_in_sub'     => __( 'New post in followed space', 'jetonomy' ),
 			'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 		];
+		if ( \Jetonomy\Notifications\Notifier::messages_enabled() ) {
+			$notif_types['message'] = __( 'Private message', 'jetonomy' );
+		}
 		?>
 		<div class="jt-form-group" id="notification-preferences">
 			<label class="jt-label"><?php esc_html_e( 'Notification Preferences', 'jetonomy' ); ?></label>
@@ -174,8 +177,8 @@ if ( ! $cancel_url ) {
 				</div>
 				<?php
 				foreach ( $notif_types as $key => $label ) :
-					$web_on   = isset( $notif_prefs[ $key ]['web'] ) ? ! empty( $notif_prefs[ $key ]['web'] ) : ! empty( $global_defs[ $key ]['web'] );
-					$email_on = isset( $notif_prefs[ $key ]['email'] ) ? ! empty( $notif_prefs[ $key ]['email'] ) : ! empty( $global_defs[ $key ]['email'] );
+					$web_on   = isset( $notif_prefs[ $key ]['web'] ) ? ! empty( $notif_prefs[ $key ]['web'] ) : (bool) ( $global_defs[ $key ]['web'] ?? true );
+					$email_on = isset( $notif_prefs[ $key ]['email'] ) ? ! empty( $notif_prefs[ $key ]['email'] ) : \Jetonomy\Notifications\Notifier::default_email( $key, (array) $global_defs );
 					?>
 					<div class="jt-notif-row">
 						<span><?php echo esc_html( $label ); ?></span>

@@ -37,7 +37,9 @@ class Community_Notification_Contract {
 
 		// A purged topic or reply takes its bell rows with it. Trash is a status
 		// change (visibility handles that); these two hooks fire only on the
-		// real DELETE (Post::delete() / Reply::delete()).
+		// real DELETE (Post::delete() / Reply::delete()). A space purge deletes
+		// in bulk and emits the same ('post'|'reply', id) signals itself, plus
+		// ('space', space_id) once, from Space_Purge::purge_step().
 		add_action(
 			'jetonomy_after_delete_post',
 			static function ( int $post_id ): void {
@@ -229,6 +231,12 @@ class Community_Notification_Contract {
 				'description' => __( 'Someone mentioned you.', 'jetonomy' ),
 			),
 		);
+		if ( Notifier::messages_enabled() ) {
+			$defs['message'] = array(
+				'label'       => __( 'Private messages', 'jetonomy' ),
+				'description' => __( 'Someone sent you a private message.', 'jetonomy' ),
+			);
+		}
 
 		foreach ( $defs as $slug => $def ) {
 			$types[ $slug ] = array(

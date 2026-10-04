@@ -2380,6 +2380,14 @@
       "audit_notes": "1.8.0: BOTH fire sites now go through Notifier::emit_notification_created(), which does NOT fire this action when the recipient has blocked the actor (Notifier::recipient_blocked_actor). Consumers mirror a notification OUT of the app, so the gate belongs above the hook, not in each listener - Pro's web-push subscribed to the raw hook and fired 12 lines ABOVE the block check that correctly suppressed the matching EMAIL, so the same event produced a suppressed email and a delivered push. The signature is unchanged (7 args) and carries no actor_id, so a listener could not have made this decision itself. The notification ROW is still written; only the outbound mirror is withheld, and unblocking restores history without re-sending. 2.0.1: an 8th argument was added - the community notification contract payload array (Community_Notification_Contract::payload()), built for every existing notification type. Existing listeners (Pro web-push, 7 accepted_args) never receive it, so this is additive."
     },
     {
+      "name": "jetonomy_deliver_notification",
+      "type": "action",
+      "args": "user_id, actor_id, type, object_type, object_id, message, url, send_email",
+      "where": "listened by includes/notifications/class-notifier.php Notifier::deliver(); fired by jetonomy-pro private-messaging notify_participants()",
+      "consumed_by": "jetonomy-pro",
+      "audit_notes": "2.0.1: public door over Notifier::create_and_maybe_email() for notifications raised outside free. Pro DMs (type message) gain preferences, block gate, push/host contract and email; Pro falls back to a bare Notification::create() when has_action() is false (older free). send_email=false skips email only (one DM email per unread conversation). Email default for message is ON at read time via Notifier::default_email(); no migration."
+    },
+    {
       "name": "jetonomy_community_notification_types",
       "type": "filter",
       "args": "types",

@@ -810,9 +810,15 @@ class Admin {
 				// Was missing, so unchecking its admin default silently reverted
 				// to the seeded true/true — the toggle looked dead.
 				'idea_status_changed',
+				// Pro private messages. Only rendered (and so only submitted)
+				// while that extension is live; otherwise keep what is stored.
+				'message',
 			);
 			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : array();
 			foreach ( $notif_types as $nt ) {
+				if ( 'message' === $nt && ! \Jetonomy\Notifications\Notifier::messages_enabled() ) {
+					continue;
+				}
 				$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : array();
 				$clean['notification_defaults'][ $nt ] = array(
 					'web'   => ! empty( $nt_data['web'] ),

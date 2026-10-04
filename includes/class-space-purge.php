@@ -501,6 +501,16 @@ final class Space_Purge {
 
 			Models\Tag::recount( $tag_ids );
 
+			// The rows went in bulk, so Post::delete() / Reply::delete() never
+			// ran and their delete hooks never told the host community to drop
+			// its bell rows. Same signal, for the ids this slice removed.
+			foreach ( $reply_slice as $reply_id ) {
+				do_action( 'jetonomy_community_notification_removed', 'reply', (int) $reply_id );
+			}
+			foreach ( $post_slice as $post_id ) {
+				do_action( 'jetonomy_community_notification_removed', 'post', (int) $post_id );
+			}
+
 			return [
 				'done'    => false,
 				'removed' => $removed,
@@ -542,6 +552,9 @@ final class Space_Purge {
 		}
 
 		Models\Space::bust_cache( $space_id, $slug );
+
+		// Space-level notifications (join requests and the like) go with it.
+		do_action( 'jetonomy_community_notification_removed', 'space', $space_id );
 
 		return [
 			'done'    => true,

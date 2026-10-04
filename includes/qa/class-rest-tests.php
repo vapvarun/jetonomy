@@ -1101,6 +1101,9 @@ class REST_Tests {
 		} else {
 			$this->skip( 'G34: non-mod resolve flag', 'no reply_id' );
 		}
+
+		// G34 acts as the test user; later groups (J blocks as the admin) must not inherit it.
+		wp_set_current_user( $this->admin_id );
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
@@ -1162,7 +1165,7 @@ class REST_Tests {
 		$r    = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => $this->test_user_id ] );
 		$data = $r->get_data();
 		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
-		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()} " . wp_json_encode( $data ) . " uid=" . get_current_user_id() . " tu={$this->test_user_id}" );
+		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()}" );
 		$this->check( 'J1: response confirms blocked user', ! empty( $data['user_id'] ) && (int) $data['user_id'] === $this->test_user_id, 'missing/incorrect user_id' );
 
 		// J2: The block shows up in the viewer's list.

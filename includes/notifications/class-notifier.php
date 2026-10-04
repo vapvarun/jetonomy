@@ -23,6 +23,9 @@ class Notifier {
 	/** Days an email unsubscribe link stays valid. */
 	private const UNSUB_TTL_DAYS = 60;
 
+	/** Types whose email is on when no stored default exists (see default_email()). */
+	private const EMAIL_ON_WHEN_UNSET = array( 'message' );
+
 	public function __construct() {
 		$this->register_hooks();
 	}
@@ -352,6 +355,10 @@ class Notifier {
 		// Custom badge earned (fired by Pro) - same door as a trust-level promotion,
 		// so it gets the preference gate, the email and the community payload.
 		add_action( 'jetonomy_pro_badge_earned', [ $this, 'on_badge_earned' ], 10, 3 );
+
+		// The public door for a notification raised outside free (Pro private
+		// messages): preferences, block gate, push + host contract, email.
+		add_action( 'jetonomy_deliver_notification', [ $this, 'deliver' ], 10, 8 );
 
 		// Join request — notify space admins
 		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
@@ -1101,8 +1108,11 @@ class Notifier {
 	 *                                 on the row so display layers (REST prepare_notification,
 	 *                                 the notifications template) mask the real actor without
 	 *                                 re-resolving the source object.
+	 * @param bool   $send_email       False when the caller throttles email itself
+	 *                                 (Pro DMs: one email per unread conversation);
+	 *                                 the row, push and host payload still go out.
 	 */
-	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', array $extra = array(), bool $actor_anonymous = false ): void {
+	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', array $extra = array(), bool $actor_anonymous = false, bool $send_email = true ): void {
 		// Load user preferences and global defaults.
 		$profile         = UserProfile::find_by_user( $user_id );
 		$settings        = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
@@ -1136,9 +1146,63 @@ class Notifier {
 		// keeps this a no-op for system notifications) — the read-surface
 		// filters already hide it from the recipient, and unblocking restores
 		// the history without needing to re-send anything.
-		if ( ! self::recipient_blocked_actor( $user_id, $actor_id ) && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
+		if ( $send_email && ! self::recipient_blocked_actor( $user_id, $actor_id ) && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
+	}
+
+	/**
+	 * Deliver a notification raised outside free's own listeners - the
+	 * `jetonomy_deliver_notification` action. Pro private messages use it so a
+	 * DM gets the same per-type preferences, block gate, push, host contract
+	 * and email as every forum notification, instead of a bare row.
+	 *
+	 * @since 2.0.1
+	 * @param int    $user_id     Recipient.
+	 * @param int    $actor_id    Acting member (0 = system).
+	 * @param string $type        Notification type (e.g. 'message').
+	 * @param string $object_type Object type (e.g. 'message').
+	 * @param int    $object_id   Object id (e.g. conversation id).
+	 * @param string $message     Already-translated sentence.
+	 * @param string $url         Deep link; resolved via notification_deep_link() when empty.
+	 * @param bool   $send_email  False to skip email for this one (caller-side throttle).
+	 */
+	public function deliver( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', bool $send_email = true ): void {
+		if ( $user_id <= 0 || '' === $type ) {
+			return;
+		}
+		if ( '' === $url ) {
+			$url = \Jetonomy\notification_deep_link( $object_type, $object_id );
+		}
+		$this->create_and_maybe_email( $user_id, $actor_id, $type, $object_type, $object_id, $message, $url, array(), false, $send_email );
+	}
+
+	/**
+	 * Is the Pro private-messaging extension live? Decides whether the
+	 * `message` notification type is offered in preference screens.
+	 *
+	 * @since 2.0.1
+	 * @return bool
+	 */
+	public static function messages_enabled(): bool {
+		return defined( 'JETONOMY_PRO_VERSION' )
+			&& in_array( 'private-messaging', (array) get_option( 'jetonomy_pro_extensions', array() ), true );
+	}
+
+	/**
+	 * Email default for a type the owner has not stored a default for.
+	 *
+	 * Types added after a site seeded notification_defaults have no stored
+	 * key; these are ON by default and the rest stay OFF. Read-time, so no
+	 * migration and no reseeding of owner-customised defaults.
+	 *
+	 * @since 2.0.1
+	 * @param string $type            Notification type.
+	 * @param array  $global_defaults Stored notification_defaults.
+	 * @return bool
+	 */
+	public static function default_email( string $type, array $global_defaults ): bool {
+		return (bool) ( $global_defaults[ $type ]['email'] ?? in_array( $type, self::EMAIL_ON_WHEN_UNSET, true ) );
 	}
 
 	/**
@@ -1273,7 +1337,7 @@ class Notifier {
 		if ( null === $global_defaults ) {
 			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 		}
-		return ! empty( $global_defaults[ $type ]['email'] );
+		return self::default_email( $type, (array) $global_defaults );
 	}
 
 	/**
@@ -1564,6 +1628,7 @@ class Notifier {
 			'flag_resolved'       => __( 'Report Reviewed', 'jetonomy' ),
 			'join_request'        => __( 'Join Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
+			'message'             => __( 'Private Message', 'jetonomy' ),
 		];
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
@@ -1581,6 +1646,7 @@ class Notifier {
 			'flag_resolved'       => __( 'Open the Community', 'jetonomy' ),
 			'join_request'        => __( 'Review Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
+			'message'             => __( 'Read Message', 'jetonomy' ),
 		];
 		$cta_text   = $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' );
 
