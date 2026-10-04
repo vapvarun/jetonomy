@@ -1,13 +1,12 @@
 /**
  * Jetonomy — Revisions admin page.
  *
- * Toggles the diff row open/closed for each revision pair. i18n strings
- * for the button label come from window.jetonomyAdmin.i18n.
+ * Toggles the diff row open/closed for each revision pair. The button
+ * labels are translated with wp.i18n.
  */
 (function () {
-	var i18n = (window.jetonomyAdmin && window.jetonomyAdmin.i18n) || {};
-	var labelView = i18n.revisionViewDiff || 'View diff';
-	var labelHide = i18n.revisionHideDiff || 'Hide diff';
+	var labelView = wp.i18n.__( 'View diff', 'jetonomy' );
+	var labelHide = wp.i18n.__( 'Hide diff', 'jetonomy' );
 
 	var toggles = document.querySelectorAll('.jt-rev-diff-toggle');
 	for (var i = 0; i < toggles.length; i++) {

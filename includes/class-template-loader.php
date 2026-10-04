@@ -518,24 +518,11 @@ class Template_Loader {
 			wp_register_script(
 				'jetonomy-modals',
 				JETONOMY_URL . 'assets/js/jetonomy-modals.js',
-				array(),
+				array( 'wp-i18n' ),
 				JETONOMY_VERSION,
 				true
 			);
-			// Default button labels for jetonomyConfirm / jetonomyAlert /
-			// jetonomyPrompt when no override is passed. Localized so the
-			// toolkit works in every language Jetonomy itself supports —
-			// previously these were hard-coded English in the JS bundle.
-			wp_localize_script(
-				'jetonomy-modals',
-				'jetonomyModalsI18n',
-				array(
-					'cancel'  => __( 'Cancel', 'jetonomy' ),
-					'confirm' => __( 'Confirm', 'jetonomy' ),
-					'submit'  => __( 'Submit', 'jetonomy' ),
-					'ok'      => __( 'OK', 'jetonomy' ),
-				)
-			);
+			\Jetonomy\script_translations( 'jetonomy-modals' );
 		}
 		wp_enqueue_script( 'jetonomy-modals' );
 
@@ -558,10 +545,6 @@ class Template_Loader {
 					'approvalFailed'         => esc_html__( 'Could not update this submission. It may have been handled by another moderator.', 'jetonomy' ),
 					'approvalsClean'         => esc_html__( 'Nothing left awaiting approval.', 'jetonomy' ),
 					'roleUpdateFailed'       => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
-					'loading'                => esc_html__( 'Loading...', 'jetonomy' ),
-					'loadMore'               => esc_html__( 'Load More', 'jetonomy' ),
-					'iconShowFewer'          => esc_html__( 'Show fewer icons', 'jetonomy' ),
-					'iconShowMore'           => esc_html__( 'Show more icons', 'jetonomy' ),
 					'uploading'              => esc_html__( 'Uploading...', 'jetonomy' ),
 					'uploaded'               => esc_html__( 'Uploaded.', 'jetonomy' ),
 					'uploadFailed'           => esc_html__( 'Upload failed.', 'jetonomy' ),
@@ -572,21 +555,9 @@ class Template_Loader {
 					'saveFailed'             => esc_html__( 'Could not save changes.', 'jetonomy' ),
 					'prefixLabel'            => esc_html__( 'Label', 'jetonomy' ),
 					'removePrefix'           => esc_html__( 'Remove prefix', 'jetonomy' ),
-					// Composer + Join-Space gate strings (consumed by composer.js).
-					'quoteSelected'          => esc_html__( 'Quote', 'jetonomy' ),
-					'joining'                => esc_html__( 'Joining...', 'jetonomy' ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'joinSpace'              => esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ),
+					// Join-Space failure toast (composer.js); carries the owner's space noun.
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
-					'requesting'             => esc_html__( 'Requesting...', 'jetonomy' ),
-					'awaitingApproval'       => esc_html__( 'Awaiting Approval', 'jetonomy' ),
-					'requestToJoin'          => esc_html__( 'Request to Join', 'jetonomy' ),
-					'submitting'             => esc_html__( 'Submitting...', 'jetonomy' ),
-					'requestSent'            => esc_html__( 'Request Sent', 'jetonomy' ),
-					'requestSubmitted'       => esc_html__( 'Request submitted. Awaiting approval.', 'jetonomy' ),
-					'requestFailed'          => esc_html__( 'Could not submit request.', 'jetonomy' ),
-					'noMentionMatches'       => esc_html__( 'No matches', 'jetonomy' ),
 					'memberBanned'           => esc_html__( 'Banned', 'jetonomy' ),
 					// Modal helpers in view.js (jetonomyConfirm / jetonomyPrompt /
 					// jetonomySpacePicker / jetonomyPostPicker). These live OUTSIDE the
@@ -599,8 +570,6 @@ class Template_Loader {
 					'modalMerge'             => esc_html__( 'Merge', 'jetonomy' ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'loadingSpaces'          => esc_html( sprintf( __( 'Loading %s…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'selectSpacePlaceholder' => esc_html( sprintf( __( 'Select a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'noOtherSpaces'          => esc_html( sprintf( __( 'No other %s available', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: plural space label. */
@@ -625,14 +594,6 @@ class Template_Loader {
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
 						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
 					),
-					// WS4-C: composer mobile-nav close + link prompt.
-					'closeMenu'              => esc_html__( 'Close menu', 'jetonomy' ),
-					'linkPromptUrl'          => esc_html__( 'Enter URL:', 'jetonomy' ),
-					'linkPromptPlaceholder'  => esc_html__( 'https://example.com', 'jetonomy' ),
-					// WS4-C: moderation flag actions in view.js.
-					'contentRemoved'         => esc_html__( 'Content removed', 'jetonomy' ),
-					'flagDismissed'          => esc_html__( 'Flag dismissed', 'jetonomy' ),
-					'failed'                 => esc_html__( 'Failed', 'jetonomy' ),
 					'failedSaveProfile'      => esc_html__( 'Failed to save profile.', 'jetonomy' ),
 					// WS4-C: space-members ban dialog (translator placeholders).
 					/* translators: 1: member display name (substituted client-side); 2: singular space label; 3: plural topic label; 4: plural reply label. */
@@ -640,7 +601,6 @@ class Template_Loader {
 					/* translators: %s: the singular member label the site owner configured. */
 					'banMemberTitle'         => esc_html( sprintf( __( 'Ban %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
-					'banFailed'              => esc_html__( 'Ban failed. Please try again.', 'jetonomy' ),
 					// Frontend member moderation from a profile (site ban / silence / lift).
 					/* translators: %s: member display name. */
 					'banSiteConfirmFormat'   => esc_html__( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ),
@@ -682,10 +642,11 @@ class Template_Loader {
 		wp_enqueue_script(
 			'jetonomy-pagination',
 			JETONOMY_URL . 'assets/js/pagination-frontend.js',
-			array( 'jetonomy-data' ),
+			array( 'jetonomy-data', 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-pagination' );
 
 		// Icon picker wiring. Self-discovers every [data-jt-icon-picker] on
 		// the page so any template (frontend new-space, space-edit, or a
@@ -693,10 +654,11 @@ class Template_Loader {
 		wp_enqueue_script(
 			'jetonomy-icon-picker',
 			JETONOMY_URL . 'assets/js/jetonomy-icon-picker.js',
-			array( 'jetonomy-data' ),
+			array( 'jetonomy-data', 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-icon-picker' );
 
 		// Per-route page scripts: NONE remain. Every former per-route surface
 		// (new-space, edit-space, space-members, notifications, moderation) is now

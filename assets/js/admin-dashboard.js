@@ -3,14 +3,18 @@
  *
  * Removes the demo-data card via AJAX. Loaded only on the Jetonomy
  * Dashboard admin page, and only when the demo-data card is present.
- * i18n strings come from window.jetonomyAdmin.i18n.
+ * UI strings are translated with wp.i18n.
  */
 (function () {
 	var btn = document.getElementById('jetonomy-cleanup-demo');
 	if (!btn) {
 		return;
 	}
-	var i18n = (window.jetonomyAdmin && window.jetonomyAdmin.i18n) || {};
+	var i18n = {
+		demoCleanupConfirm:  wp.i18n.__( 'Delete all sample categories, spaces, posts, and replies from the setup wizard? Your own content is not affected.', 'jetonomy' ),
+		demoCleanupRemoving: wp.i18n.__( 'Removing…', 'jetonomy' ),
+		error:               wp.i18n.__( 'Something went wrong.', 'jetonomy' ),
+	};
 
 	// Modal toolkit (jetonomy-modals.js) is a hard dependency on every
 	// Jetonomy admin page. Degrade silently if it is absent rather than
@@ -24,11 +28,11 @@
 	};
 
 	btn.addEventListener('click', function () {
-		var msg = i18n.demoCleanupConfirm || 'Delete all sample categories, spaces, posts, and replies from the setup wizard? Your own content is not affected.';
+		var msg = i18n.demoCleanupConfirm;
 		_confirm(msg, { danger: true }).then(function (ok) {
 			if (!ok) { return; }
 			btn.disabled = true;
-			btn.textContent = i18n.demoCleanupRemoving || 'Removing...';
+			btn.textContent = i18n.demoCleanupRemoving;
 			fetch(window.ajaxurl, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -46,7 +50,7 @@
 							card.remove();
 						}
 					} else {
-						_alert(res.data || (i18n.error || 'Failed'));
+						_alert(res.data || i18n.error);
 						btn.disabled = false;
 					}
 				});

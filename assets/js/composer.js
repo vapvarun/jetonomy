@@ -1,21 +1,8 @@
 /**
  * Jetonomy Reply Composer
- * Simple contenteditable enhancement with toolbar actions
+ * Simple contenteditable enhancement with toolbar actions.
+ * UI strings are translated with wp.i18n.
  */
-
-/**
- * Translate a single string via the localized jetonomyData.i18n payload from
- * includes/class-template-loader.php. The English fallback is the safety net
- * if the localize block did not deliver — composer.js still runs.
- *
- * @param {string} key
- * @param {string} fallback English fallback shipped with the source.
- * @returns {string}
- */
-function jtI18n( key, fallback ) {
-    var d = window.jetonomyData && window.jetonomyData.i18n;
-    return ( d && d[ key ] ) || fallback;
-}
 
 // Mobile hamburger navigation
 document.addEventListener( 'DOMContentLoaded', function() {
@@ -28,7 +15,7 @@ document.addEventListener( 'DOMContentLoaded', function() {
                 var close = document.createElement( 'button' );
                 close.className = 'jt-mobile-close';
                 close.innerHTML = '&times;';
-                close.setAttribute( 'aria-label', ( window.jetonomyData && window.jetonomyData.i18n && window.jetonomyData.i18n.closeMenu ) || 'Close menu' );
+                close.setAttribute( 'aria-label', wp.i18n.__( 'Close menu', 'jetonomy' ) );
                 close.addEventListener( 'click', function() { nav.classList.remove( 'open' ); } );
                 nav.prepend( close );
             }
@@ -286,8 +273,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     }
 
                     window.jetonomyPrompt(
-                        jtI18n( 'linkPromptUrl', 'Enter URL:' ),
-                        { placeholder: jtI18n( 'linkPromptPlaceholder', 'https://example.com' ) }
+                        wp.i18n.__( 'Enter URL:', 'jetonomy' ),
+                        { placeholder: wp.i18n.__( 'https://example.com', 'jetonomy' ) }
                     ).then( ( raw ) => {
                         if ( ! raw ) return;
                         const trimmed = raw.trim();
@@ -412,7 +399,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         // Show uploading placeholder
         var placeholder = document.createElement( 'div' );
         placeholder.className = 'jt-upload-placeholder';
-        placeholder.textContent = jtI18n( 'uploading', 'Uploading\u2026' );
+        placeholder.textContent = wp.i18n.__( 'Uploading…', 'jetonomy' );
         editor.appendChild( placeholder );
 
         // 1.4.0 A.1: POST /jetonomy/v1/media replaces wp_ajax_jetonomy_upload_image.
@@ -442,7 +429,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var doUpload = function () {
             if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
                 placeholder.remove();
-                if ( window.bnToast ) { window.bnToast( jtI18n( 'uploadFailed', 'Upload failed' ), 'error' ); }
+                if ( window.bnToast ) { window.bnToast( wp.i18n.__( 'Upload failed.', 'jetonomy' ), 'error' ); }
                 return;
             }
             window.jetonomyRest.restFetch( '/media', {
@@ -462,7 +449,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     editor.appendChild( img );
                     editor.appendChild( document.createElement( 'br' ) );
                 } else {
-                    var msg = ( res.data && res.data.message ) ? res.data.message : jtI18n( 'uploadFailed', 'Upload failed' );
+                    var msg = ( res.data && res.data.message ) ? res.data.message : wp.i18n.__( 'Upload failed.', 'jetonomy' );
                     if ( window.bnToast ) { window.bnToast( msg, 'error' ); }
                 }
             } );
@@ -533,7 +520,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
     var quoteBtn = document.createElement('button');
     quoteBtn.className = 'jt-quote-btn';
-    quoteBtn.textContent = jtI18n( 'quoteSelected', 'Quote' );
+    quoteBtn.textContent = wp.i18n.__( 'Quote', 'jetonomy' );
     quoteBtn.style.display = 'none';
     document.body.appendChild(quoteBtn);
 
@@ -777,8 +764,11 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var nonce   = btn.dataset.nonce;
         if (!spaceId) return;
 
+        // Restore the server-rendered label on failure: it carries the owner's
+        // configured space noun, which this script cannot know.
+        var label = btn.textContent;
         btn.disabled = true;
-        btn.textContent = jtI18n( 'joining', 'Joining\u2026' );
+        btn.textContent = wp.i18n.__( 'Joining…', 'jetonomy' );
 
         window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -789,8 +779,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 window.location.reload();
             } else {
                 btn.disabled = false;
-                btn.textContent = jtI18n( 'joinSpace', 'Join Space' );
-                (window.bnToast ? window.bnToast((res.data && res.data.message) || jtI18n( 'joinSpaceFailed', 'Could not join space.' ), 'error') : null);
+                btn.textContent = label;
+                (window.bnToast ? window.bnToast((res.data && res.data.message) || ( window.jetonomyData && window.jetonomyData.i18n && window.jetonomyData.i18n.joinSpaceFailed ) || wp.i18n.__( 'Something went wrong. Please try again.', 'jetonomy' ), 'error') : null);
             }
         });
     });
@@ -806,7 +796,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if (!spaceId) return;
 
         btn.disabled = true;
-        btn.textContent = jtI18n( 'requesting', 'Requesting\u2026' );
+        btn.textContent = wp.i18n.__( 'Requesting…', 'jetonomy' );
 
         window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -816,16 +806,16 @@ document.addEventListener( 'DOMContentLoaded', () => {
             var data = res.data || {};
             if (data.status === 'pending') {
                 btn.disabled = true;
-                btn.textContent = jtI18n( 'awaitingApproval', 'Awaiting Approval' );
+                btn.textContent = wp.i18n.__( 'Awaiting Approval', 'jetonomy' );
                 btn.classList.remove('jt-btn-fill');
                 btn.classList.add('jt-btn-outline');
-                (window.bnToast ? window.bnToast(data.message || jtI18n( 'requestSubmitted', 'Request submitted. Awaiting approval.' ), 'success') : null);
+                (window.bnToast ? window.bnToast(data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), 'success') : null);
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
                 btn.disabled = false;
-                btn.textContent = jtI18n( 'requestToJoin', 'Request to Join' );
-                (window.bnToast ? window.bnToast(data.message || jtI18n( 'requestFailed', 'Could not submit request.' ), 'error') : null);
+                btn.textContent = wp.i18n.__( 'Request to Join', 'jetonomy' );
+                (window.bnToast ? window.bnToast(data.message || wp.i18n.__( 'Could not submit request.', 'jetonomy' ), 'error') : null);
             }
         });
     });
@@ -842,7 +832,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if (!spaceId) return;
 
         var submitBtn = form.querySelector('[type="submit"]');
-        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'submitting', 'Submitting\u2026' ); }
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = wp.i18n.__( 'Submitting…', 'jetonomy' ); }
 
         window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -851,13 +841,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             var data = res.data || {};
             if (data.status === 'pending') {
-                showGateMessage(form, data.message || jtI18n( 'requestSubmitted', 'Request submitted. Awaiting approval.' ), false);
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'requestSent', 'Request Sent' ); }
+                showGateMessage(form, data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), false);
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = wp.i18n.__( 'Request Sent', 'jetonomy' ); }
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = jtI18n( 'requestToJoin', 'Request to Join' ); }
-                showGateMessage(form, data.message || jtI18n( 'requestFailed', 'Could not submit request.' ), true);
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = wp.i18n.__( 'Request to Join', 'jetonomy' ); }
+                showGateMessage(form, data.message || wp.i18n.__( 'Could not submit request.', 'jetonomy' ), true);
             }
         });
     });
@@ -939,7 +929,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if ( ! matches.length ) {
             var empty = document.createElement( 'div' );
             empty.className = 'jt-mention-empty';
-            empty.textContent = jtI18n( 'noMentionMatches', 'No matches' );
+            empty.textContent = wp.i18n.__( 'No matches', 'jetonomy' );
             dropdown.appendChild( empty );
             return;
         }

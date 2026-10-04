@@ -155,7 +155,7 @@ jetonomy/
 │   │   └── admin.css             # Admin UI styles
 │   └── js/
 │       ├── view.js               # Interactivity API store (voting, sorting, polls)
-│       ├── admin.js              # Admin AJAX UI
+│       ├── admin-common.js       # Admin AJAX UI
 │       └── composer.js           # Rich text composer
 ├── includes/
 │   ├── class-jetonomy.php        # Main singleton

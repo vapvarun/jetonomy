@@ -4,12 +4,21 @@
  * Email-preview / send-test / reset-to-default flows for the Email
  * Templates section, plus the CAPTCHA-provider field toggle on the
  * Spam tab. Loaded only on the Settings admin page; reads nonce / ajax
- * URL / i18n strings from window.jetonomyAdmin.
+ * URL from window.jetonomyAdmin and translates its strings with wp.i18n.
  */
 (function () {
 	'use strict';
 
-	var i18n = (window.jetonomyAdmin && window.jetonomyAdmin.i18n) || {};
+	var i18n = {
+		emailPreviewFailed: wp.i18n.__( 'Preview failed.', 'jetonomy' ),
+		emailPreviewTitle:  wp.i18n.__( 'Email Preview', 'jetonomy' ),
+		emailSending:       wp.i18n.__( 'Sending…', 'jetonomy' ),
+		emailSent:          wp.i18n.__( 'Sent.', 'jetonomy' ),
+		emailSendFailed:    wp.i18n.__( 'Failed to send.', 'jetonomy' ),
+		/* translators: %s: email template label */
+		emailResetConfirm:  wp.i18n.__( 'Reset %s to default? Your custom copy will be lost.', 'jetonomy' ),
+		emailResetFailed:   wp.i18n.__( 'Reset failed.', 'jetonomy' ),
+	};
 	var nonce = (window.jetonomyAdmin && window.jetonomyAdmin.nonce) || '';
 	var ajax = (window.jetonomyAdmin && window.jetonomyAdmin.ajaxUrl) || window.ajaxurl;
 
@@ -101,7 +110,7 @@
 	});
 
 	// Restore focus on EVERY close, not just the ones this file handles.
-	// admin.js ships a generic dialog enhancer that also binds Escape (capture
+	// admin-common.js ships a generic dialog enhancer that also binds Escape (capture
 	// phase, so it wins) and hides the dialog itself. Whichever handler gets
 	// there first, the outcome has to be the same: focus returns to the button
 	// that opened the preview. Watching the element decouples that promise from
@@ -139,10 +148,10 @@
 			var f = rowFields(type);
 			postForm('jetonomy_email_preview', { type: type, subject: f.subject, body: f.body }).then(function (json) {
 				if (!json.success) {
-					alertFn((json.data && json.data.message) || json.data || (i18n.emailPreviewFailed || 'Preview failed.'));
+					alertFn((json.data && json.data.message) || json.data || i18n.emailPreviewFailed);
 					return;
 				}
-				subjEl.textContent = json.data.subject || (i18n.emailPreviewTitle || 'Email Preview');
+				subjEl.textContent = json.data.subject || i18n.emailPreviewTitle;
 				iframe.srcdoc = json.data.html;
 				openModal( btn );
 			});
@@ -154,13 +163,13 @@
 			var type = btn.dataset.type;
 			var label = btn.dataset.label || btn.textContent;
 			btn.disabled = true;
-			btn.textContent = i18n.emailSending || 'Sending...';
+			btn.textContent = i18n.emailSending;
 
 			postForm('jetonomy_test_email', { type: type }).then(function (json) {
 				btn.disabled = false;
 				btn.textContent = label;
 				var msg = (json.data && json.data.message) || json.data || '';
-				alertFn(msg || (json.success ? (i18n.emailSent || 'Sent.') : (i18n.emailSendFailed || 'Failed to send.')));
+				alertFn(msg || (json.success ? i18n.emailSent : i18n.emailSendFailed));
 			});
 		});
 	});
@@ -169,7 +178,7 @@
 		btn.addEventListener('click', function () {
 			var type = btn.dataset.type;
 			var label = btn.dataset.label || type;
-			var msg = (i18n.emailResetConfirm || 'Reset %s to default? Your custom copy will be lost.').replace('%s', label);
+			var msg = i18n.emailResetConfirm.replace('%s', label);
 
 			confirmFn(msg, { danger: true }).then(function (ok) {
 				if (!ok) { return; }
@@ -178,7 +187,7 @@
 				postForm('jetonomy_email_reset', { type: type }).then(function (json) {
 					btn.disabled = false;
 					if (!json.success) {
-						alertFn((json.data && json.data.message) || json.data || (i18n.emailResetFailed || 'Reset failed.'));
+						alertFn((json.data && json.data.message) || json.data || i18n.emailResetFailed);
 						return;
 					}
 					var row = document.querySelector('[data-jt-email-type="' + type + '"]');

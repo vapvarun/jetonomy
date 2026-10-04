@@ -63,32 +63,11 @@ class Blocks {
 		wp_register_script(
 			'jetonomy-login-block',
 			JETONOMY_URL . 'assets/js/login-block.js',
-			array(),
+			array( 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
-		wp_localize_script(
-			'jetonomy-login-block',
-			'jetonomyLoginBlock',
-			array(
-				'i18n' => array(
-					'resendConfirmation'    => esc_html__( 'Resend confirmation email', 'jetonomy' ),
-					'sending'               => esc_html__( 'Sending...', 'jetonomy' ),
-					// Every outcome message this block can show. They were English
-					// literals in login-block.js with only these two keys defined,
-					// so a visitor on a translated site got their sign-in, sign-up
-					// and password-reset feedback in English - on the one surface a
-					// first-time visitor is guaranteed to see.
-					'genericError'          => esc_html__( 'Something went wrong. Please try again.', 'jetonomy' ),
-					'networkError'          => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
-					'signedIn'              => esc_html__( 'Signed in.', 'jetonomy' ),
-					'accountCreated'        => esc_html__( 'Account created.', 'jetonomy' ),
-					'accountCreatedConfirm' => esc_html__( 'Account created. Check your email to confirm.', 'jetonomy' ),
-					'resetLinkSent'         => esc_html__( 'Reset link sent.', 'jetonomy' ),
-					'resendSent'            => esc_html__( 'If an account is waiting on confirmation, a new link is on its way.', 'jetonomy' ),
-				),
-			)
-		);
+		\Jetonomy\script_translations( 'jetonomy-login-block' );
 
 		// Compose-topic block/shortcode piggybacks on the main view bundle —
 		// that's where the Interactivity API `jetonomy` store lives. Registering

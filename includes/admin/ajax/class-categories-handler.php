@@ -170,7 +170,7 @@ class Categories_Handler {
 		// the parent's page, so a submitted batch containing children is longer
 		// than per_page and its tail overwrites the next page's positions. The
 		// client now excludes them, but the client is not the control: a stale
-		// cached admin.js would silently corrupt ordering again.
+		// cached admin-common.js would silently corrupt ordering again.
 		//
 		// Dropping them is also correct on its own terms - a child's sort_order
 		// is only ever compared against its siblings (list_children() orders

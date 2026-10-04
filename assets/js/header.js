@@ -14,6 +14,8 @@
  */
 (function () {
 	var D = window.jetonomyHeader;
+	var __ = wp.i18n.__;
+	var _x = wp.i18n._x;
 	if (!D) { return; }
 
 	if (!window.bnToast) {
@@ -39,14 +41,14 @@
 			window.jetonomyRest.restFetch('/notifications?limit=5').then(function (res) {
 				var body = panel.querySelector('.jt-notif-panel-body');
 				if (!res.ok) {
-					body.textContent = D.i18n.loadFail;
+					body.textContent = __( 'Failed to load', 'jetonomy' );
 					body.className = 'jt-notif-panel-body jt-notif-panel-empty';
 					return;
 				}
 				var resp = res.data || {};
 				var data = resp.data || resp;
 				if (!data || !data.length) {
-					body.textContent = D.i18n.noNotifs;
+					body.textContent = __( 'No notifications yet.', 'jetonomy' );
 					body.className = 'jt-notif-panel-body jt-notif-panel-empty';
 					return;
 				}
@@ -151,12 +153,12 @@
 		var input = document.createElement('input');
 		input.type = 'text';
 		input.className = 'jt-search-overlay-input';
-		input.placeholder = D.i18n.searchPH;
+		input.placeholder = __( 'Search discussions…', 'jetonomy' );
 		input.autocomplete = 'off';
 		field.appendChild(input);
 		var kbd = document.createElement('kbd');
 		kbd.className = 'jt-search-overlay-kbd';
-		kbd.textContent = ( D.i18n && D.i18n.escKey ) || 'ESC';
+		kbd.textContent = _x( 'ESC', 'keyboard key label shown next to the search overlay', 'jetonomy' );
 		field.appendChild(kbd);
 		inner.appendChild(field);
 		var results = document.createElement('div');
@@ -199,7 +201,7 @@
 					var data = ( res.data && res.data.data ) || [];
 					results.textContent = '';
 					if (!data.length) {
-						results.textContent = D.i18n.noResults;
+						results.textContent = __( 'No results found.', 'jetonomy' );
 						results.className = 'jt-search-overlay-results jt-search-overlay-empty';
 						return;
 					}
@@ -317,17 +319,21 @@
 			box.setAttribute('aria-labelledby', 'jt-shortcut-help-title');
 			var h3 = document.createElement('h3');
 			h3.id = 'jt-shortcut-help-title';
-			h3.textContent = D.i18n.shortcuts;
+			h3.textContent = __( 'Keyboard Shortcuts', 'jetonomy' );
 			box.appendChild(h3);
 			var tbl = document.createElement('table');
 			var shortcuts = [
-				['/ or Ctrl+K', ( D.i18n && D.i18n.kbSearch ) || 'Search'],
-				['j / k',       ( D.i18n && D.i18n.kbNavigate ) || 'Navigate up/down'],
-				['Enter',       ( D.i18n && D.i18n.kbOpenSelected ) || 'Open selected'],
-				['l',           wp.i18n.__( 'Upvote selected', 'jetonomy' )],
-				['r',           wp.i18n.__( 'Reply to selected', 'jetonomy' )],
-				['n',           ( D.i18n && D.i18n.kbHome ) || 'Home'],
-				['?',           ( D.i18n && D.i18n.kbThisHelp ) || 'This help']
+				[
+					/* translators: keyboard shortcut for search; keep "/" and "Ctrl+K" as they are. */
+					__( '/ or Ctrl+K', 'jetonomy' ),
+					__( 'Search', 'jetonomy' )
+				],
+				['j / k', __( 'Navigate up/down', 'jetonomy' )],
+				[_x( 'Enter', 'keyboard key', 'jetonomy' ), __( 'Open selected', 'jetonomy' )],
+				['l', __( 'Upvote selected', 'jetonomy' )],
+				['r', __( 'Reply to selected', 'jetonomy' )],
+				['n', __( 'Home', 'jetonomy' )],
+				['?', __( 'This help', 'jetonomy' )]
 			];
 			shortcuts.forEach(function (s) {
 				var tr = document.createElement('tr');
@@ -341,7 +347,7 @@
 			});
 			box.appendChild(tbl);
 			var closeBtn = document.createElement('button');
-			closeBtn.textContent = D.i18n.close;
+			closeBtn.textContent = __( 'Close', 'jetonomy' );
 			closeBtn.addEventListener('click', function () { window.jtCloseShortcutHelp(); });
 			box.appendChild(closeBtn);
 			modal.appendChild(box);
@@ -410,10 +416,12 @@
 		info.appendChild(nameEl);
 		var trustEl = document.createElement('span');
 		trustEl.className = 'jt-hc-trust';
-		var trustFmt = ( D.i18n && D.i18n.trustLevelFormat ) || 'Level %1$d · %2$d rep';
-		trustEl.textContent = trustFmt
-			.replace( '%1$d', data.trust_level || 0 )
-			.replace( '%2$d', data.reputation || 0 );
+		trustEl.textContent = wp.i18n.sprintf(
+			/* translators: 1: trust level number, 2: reputation points. */
+			__( 'Level %1$d · %2$d rep', 'jetonomy' ),
+			data.trust_level || 0,
+			data.reputation || 0
+		);
 		info.appendChild(trustEl);
 		header.appendChild(info);
 		card.appendChild(header);
@@ -425,7 +433,8 @@
 		}
 		var stats = document.createElement('div');
 		stats.className = 'jt-hc-stats';
-		var statsFmt = ( D.i18n && D.i18n.hcStatsFormat ) || '%1$d posts · %2$d replies';
+		// Server-built: the topic and reply nouns are the owner's configured labels.
+		var statsFmt = D.i18n.hcStatsFormat;
 		stats.textContent = statsFmt
 			.replace( '%1$d', data.post_count || 0 )
 			.replace( '%2$d', data.reply_count || 0 );

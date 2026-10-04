@@ -453,26 +453,16 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 wp_enqueue_script(
 	'jetonomy-admin-content',
 	JETONOMY_URL . 'assets/js/admin-content.js',
-	array( 'jetonomy-admin' ),
+	array( 'jetonomy-admin', 'wp-i18n' ),
 	JETONOMY_VERSION,
 	true
 );
+\Jetonomy\script_translations( 'jetonomy-admin-content' );
 wp_localize_script(
 	'jetonomy-admin-content',
 	'jetonomyContent',
 	array(
 		'nonce' => $nonce_value,
-		'i18n'  => array(
-			'confirmTrash'      => esc_html__( 'Move this to trash?', 'jetonomy' ),
-			'confirmSpam'       => esc_html__( 'Mark this as spam?', 'jetonomy' ),
-			'confirmDelete'     => esc_html__( 'Delete permanently? The topic and all of its replies are removed and cannot be restored.', 'jetonomy' ),
-			'confirmBulkDelete' => esc_html__( 'Delete the selected topics permanently, with all of their replies? This cannot be undone.', 'jetonomy' ),
-			'confirmBulk'       => esc_html__( 'Apply this action to all selected posts?', 'jetonomy' ),
-			'saved'             => esc_html__( 'Saved!', 'jetonomy' ),
-			'saveError'         => esc_html__( 'Save failed. Please try again.', 'jetonomy' ),
-			'noneSelected'      => esc_html__( 'Please select at least one post.', 'jetonomy' ),
-			'noAction'          => esc_html__( 'Please choose a bulk action.', 'jetonomy' ),
-		),
 	)
 );
 ?>

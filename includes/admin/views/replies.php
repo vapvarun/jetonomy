@@ -376,26 +376,16 @@ if ( ! empty( $trash_count ) ) {
 wp_enqueue_script(
 	'jetonomy-admin-replies',
 	JETONOMY_URL . 'assets/js/admin-replies.js',
-	array( 'jetonomy-admin' ),
+	array( 'jetonomy-admin', 'wp-i18n' ),
 	JETONOMY_VERSION,
 	true
 );
+\Jetonomy\script_translations( 'jetonomy-admin-replies' );
 wp_localize_script(
 	'jetonomy-admin-replies',
 	'jetonomyReplies',
 	array(
 		'nonce' => $nonce_value,
-		'i18n'  => array(
-			'confirmTrash'      => esc_html__( 'Move this to trash?', 'jetonomy' ),
-			'confirmSpam'       => esc_html__( 'Mark this as spam?', 'jetonomy' ),
-			'confirmDelete'     => esc_html__( 'Delete this reply permanently? This cannot be undone.', 'jetonomy' ),
-			'confirmBulkDelete' => esc_html__( 'Delete the selected replies permanently? This cannot be undone.', 'jetonomy' ),
-			'confirmBulk'       => esc_html__( 'Apply this action to all selected replies?', 'jetonomy' ),
-			'saved'             => esc_html__( 'Saved!', 'jetonomy' ),
-			'saveError'         => esc_html__( 'Save failed. Please try again.', 'jetonomy' ),
-			'noneSelected'      => esc_html__( 'Please select at least one reply.', 'jetonomy' ),
-			'noAction'          => esc_html__( 'Please choose a bulk action.', 'jetonomy' ),
-		),
 	)
 );
 ?>

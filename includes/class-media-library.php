@@ -574,19 +574,11 @@ class Media_Library {
 		wp_enqueue_script(
 			'jetonomy-media-grid',
 			JETONOMY_URL . 'assets/js/admin-media-grid.js',
-			array(),
+			array( 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
-		wp_localize_script(
-			'jetonomy-media-grid',
-			'jetonomyMediaGrid',
-			array(
-				'label' => __( 'Community uploads', 'jetonomy' ),
-				'show'  => __( 'Show community uploads', 'jetonomy' ),
-				'hide'  => __( 'Hide community uploads', 'jetonomy' ),
-			)
-		);
+		\Jetonomy\script_translations( 'jetonomy-media-grid' );
 	}
 
 	/**

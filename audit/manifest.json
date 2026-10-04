@@ -3919,7 +3919,7 @@
       },
       {
         "handle": "jetonomy-admin",
-        "path": "assets/js/admin.js",
+        "path": "assets/js/admin-common.js",
         "deps": [
           "jquery"
         ]

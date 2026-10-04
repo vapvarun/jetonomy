@@ -53,7 +53,7 @@ The floors are shipped as shared CSS on `.jetonomy-admin` — a new screen inher
 
 ## 8. Expander (collapse) contract details
 
-- The toggle is a real `<button class="toggle-row" aria-expanded="false">` with a screen-reader label; `admin.js` stamps the attribute onto core-rendered toggles (WP_List_Table screens) and syncs it on toggle for everything.
+- The toggle is a real `<button class="toggle-row" aria-expanded="false">` with a screen-reader label; `admin-common.js` stamps the attribute onto core-rendered toggles (WP_List_Table screens) and syncs it on toggle for everything.
 - Expanded rows render label/value in SEPARATE lanes (label is a static flex item — never core's absolute label lane over our flex values).
 
 ## 9. Definition of done for any admin change

@@ -170,24 +170,10 @@ wp_localize_script(
 		'restNotif'    => rest_url( 'jetonomy/v1/notifications' ),
 		'restMarkRead' => rest_url( 'jetonomy/v1/notifications/mark-all-read' ),
 		'restSearch'   => rest_url( 'jetonomy/v1/search' ),
+		// Label-dependent copy only; header.js translates the rest with wp.i18n.
 		'i18n'         => array(
-			'noNotifs'         => esc_html__( 'No notifications yet.', 'jetonomy' ),
-			'noResults'        => esc_html__( 'No results found.', 'jetonomy' ),
-			'searchPH'         => esc_html__( 'Search discussions...', 'jetonomy' ),
-			'shortcuts'        => esc_html__( 'Keyboard Shortcuts', 'jetonomy' ),
-			'close'            => esc_html__( 'Close', 'jetonomy' ),
-			'loadFail'         => esc_html__( 'Failed to load', 'jetonomy' ),
-			'escKey'           => esc_html_x( 'ESC', 'keyboard key label shown next to the search overlay', 'jetonomy' ),
-			// WS4-C: keyboard-shortcut labels + hover-card trust line.
-			'kbSearch'         => esc_html__( 'Search', 'jetonomy' ),
-			'kbNavigate'       => esc_html__( 'Navigate up/down', 'jetonomy' ),
-			'kbOpenSelected'   => esc_html__( 'Open selected', 'jetonomy' ),
-			'kbHome'           => esc_html__( 'Home', 'jetonomy' ),
-			'kbThisHelp'       => esc_html__( 'This help', 'jetonomy' ),
-			/* translators: 1: trust level number, 2: reputation points. */
-			'trustLevelFormat' => __( 'Level %1$d · %2$d rep', 'jetonomy' ),
 			/* translators: 1: plural topic label, 2: plural reply label. The %%1$d (topic count) and %%2$d (reply count) are filled in by JS. */
-			'hcStatsFormat'    => sprintf( __( '%%1$d %1$s · %%2$d %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			'hcStatsFormat' => sprintf( __( '%%1$d %1$s · %%2$d %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 		),
 	)
 );
