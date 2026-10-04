@@ -244,8 +244,11 @@ $posts       = \Jetonomy\Models\Post::$_jt_list_fn(
 // real total (same visibility population as the listing) against what's shown.
 $_jt_total    = \Jetonomy\Models\Post::count_by_space_visible( (int) $space->id, (int) $_jt_user_id, (bool) $_jt_is_priv, $sort );
 $_jt_has_more = ( $paged * $limit ) < $_jt_total;
-$category     = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
 $space_url    = \Jetonomy\route_url( 'space', $space->slug );
+
+// find_visible(): a member admitted to a space inside a hidden category must
+// not see that category named or linked in the breadcrumb (it would 404).
+$category = $space->category_id ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 
 // Sub-spaces of this space. An import maps sub-forums to child spaces, and
 // until now nothing rendered that: the parent listed no children and the child

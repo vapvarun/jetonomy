@@ -1744,7 +1744,15 @@
   "tables": [
     {
       "name": "{prefix}jt_categories",
-      "purpose": "Categories/sections"
+      "purpose": "Categories/sections. Two levels (top-level + sub-categories), enforced by Category::parent_error(); a hidden parent hides its branch (Category::listing_visibility_sql).",
+      "migrations": [
+        {
+          "version": "2.0.1",
+          "change": "Re-parent third-level, orphaned and cyclic categories to their top-level ancestor",
+          "purpose": "2.0.1 enforces two levels; pre-2.0.1 rows outside the rule would drop out of every listing.",
+          "file": "includes/db/migrations/class-migration_2_0_1.php"
+        }
+      ]
     },
     {
       "name": "{prefix}jt_spaces",

@@ -1172,7 +1172,7 @@ class Model_Tests {
 		$this->check( 'CV2: guest cannot resolve a hidden category by slug', null === Category::find_by_slug( $slug ) );
 
 		[ $guest_where ] = Category::listing_visibility_sql( 0 );
-		$this->check( 'CV3: guest predicate restricts to public', "visibility = 'public'" === $guest_where, $guest_where );
+		$this->check( 'CV3: guest predicate restricts to public', str_starts_with( $guest_where, "visibility IN ('public')" ), $guest_where );
 
 		// CV4: the owner keeps full sight - a filter that blinds the admin
 		// screen would "pass" CV1-CV3 while breaking management.
@@ -1868,6 +1868,92 @@ class Model_Tests {
 	}
 
 	/**
+	 * CH: categories nest two levels deep, a hidden parent hides its branch,
+	 * and a category cannot be deleted from under its sub-categories or live
+	 * spaces (Basecamp 10355160875, 10355160993).
+	 */
+	private function test_category_hierarchy_rules(): void {
+		global $wpdb;
+		$suffix = wp_generate_password( 6, false, false );
+		$table  = table( 'categories' );
+		$make   = static fn( string $name, int $parent = 0, string $vis = 'public' ): int => Category::create(
+			[
+				'name'       => 'QA CH ' . $name,
+				'slug'       => 'jt-qa-ch-' . strtolower( $name ) . '-' . $suffix,
+				'parent_id'  => $parent,
+				'visibility' => $vis,
+			]
+		);
+		$top    = $make( 'Top' );
+		$child  = $make( 'Child', $top );
+		$deep   = $make( 'Deep', $child );
+		$space  = 0;
+
+		try {
+			$this->check( 'CH1: a machine write under a sub-category lands on its top-level ancestor', $top === (int) ( Category::find( $deep )->parent_id ?? 0 ) );
+			$this->check( 'CH2: a category cannot parent itself', is_wp_error( Category::update( $top, [ 'parent_id' => $top ] ) ) );
+			$this->check( 'CH3: a parent cannot move under its own child (cycle)', is_wp_error( Category::update( $top, [ 'parent_id' => $child ] ) ) );
+			$this->check( 'CH4: a missing parent is refused', null !== Category::parent_error( 0, PHP_INT_MAX ) );
+			$this->check( 'CH5: a third level is refused', null !== Category::parent_error( 0, $child ) );
+
+			$other = $make( 'Other' );
+			$this->check( 'CH5b: a category with sub-categories cannot become one', null !== Category::parent_error( $top, $other ) );
+			Category::delete( $other );
+
+			$blocked = Category::delete( $top );
+			$this->check( 'CH6: a category with sub-categories cannot be deleted', is_wp_error( $blocked ) && 409 === ( $blocked->get_error_data()['status'] ?? 0 ) );
+
+			$space = Space::create(
+				[
+					'title'       => 'QA CH Space',
+					'slug'        => 'jt-qa-ch-space-' . $suffix,
+					'category_id' => $deep,
+					'author_id'   => 1,
+					'type'        => 'forum',
+				]
+			);
+			$this->check( 'CH7: a category holding an active space cannot be deleted', is_wp_error( Category::delete( $deep ) ) );
+			Space::update( $space, [ 'status' => 'locked' ] );
+			$this->check( 'CH7b: a locked (live, read-only) space blocks the delete too', is_wp_error( Category::delete( $deep ) ) );
+
+			Space::update( $space, [ 'status' => 'archived' ] );
+			$this->check( 'CH8: an archived space does not block the delete', true === Category::delete( $deep ) );
+			$this->check( 'CH9: and is parked as uncategorised, not left under a dead category', 0 === (int) ( Space::find( $space )->category_id ?? -1 ) );
+
+			// CH10: a hidden parent hides its branch from a guest by URL too.
+			Category::update( $top, [ 'visibility' => 'hidden' ] );
+			$child_slug = Category::find( $child )->slug;
+			$previous   = get_current_user_id();
+			wp_set_current_user( 0 );
+			$this->check( 'CH10: a public sub-category under a hidden parent is not resolvable by a guest', null === Category::find_by_slug( $child_slug ) );
+			wp_set_current_user( $previous );
+
+			// CH11: the migration keeps an orphan's child grouped under it. The
+			// child gets the LOWER id so it is processed before its parent - the
+			// order that used to flatten it to top level.
+			$wpdb->insert( $table, [ 'name' => 'QA CH Orphan kid', 'slug' => 'jt-qa-ch-orphankid-' . $suffix, 'parent_id' => 0, 'created_at' => \Jetonomy\now() ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$orphan_kid = (int) $wpdb->insert_id;
+			$wpdb->insert( $table, [ 'name' => 'QA CH Orphan', 'slug' => 'jt-qa-ch-orphan-' . $suffix, 'parent_id' => PHP_INT_MAX, 'created_at' => \Jetonomy\now() ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$orphan = (int) $wpdb->insert_id;
+			$wpdb->update( $table, [ 'parent_id' => $orphan ], [ 'id' => $orphan_kid ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			require_once JETONOMY_DIR . 'includes/db/migrations/class-migration_2_0_1.php';
+			( new \Jetonomy\DB\Migrations\Migration_2_0_1() )->up();
+			$this->check(
+				'CH11: migration makes an orphan top-level and keeps its child under it',
+				0 === (int) Category::find( $orphan )->parent_id && $orphan === (int) Category::find( $orphan_kid )->parent_id
+			);
+		} finally {
+			if ( $space ) {
+				Space::delete( $space );
+			}
+			// Raw delete: fixtures must go even when a check above failed and
+			// left the tree in a state Category::delete() would refuse.
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE slug LIKE %s", '%' . $wpdb->esc_like( '-' . $suffix ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			Space::bump_tree_generation();
+		}
+	}
+
+	/**
 	 * jt_categories.space_count survives a space being moved or archived.
 	 *
 	 * Only create() incremented it and only purge decremented it, so a space
@@ -1879,67 +1965,6 @@ class Model_Tests {
 	 * Asserted as "stored equals actual" after each transition rather than by
 	 * expected numbers, so the test stays true whatever the fixture holds.
 	 */
-	/**
-	 * CH: categories nest two levels deep and cannot be deleted from under
-	 * their sub-categories or spaces (Basecamp 10355160875, 10355160993).
-	 * REST deleted a parent outright and accepted any parent_id, so a category
-	 * could orphan its children, parent itself, or form a cycle.
-	 */
-	private function test_category_hierarchy_rules(): void {
-		$suffix = wp_generate_password( 6, false, false );
-		$top    = Category::create(
-			[
-				'name' => 'QA CH Top',
-				'slug' => 'jt-qa-ch-top-' . $suffix,
-			]
-		);
-		$child  = Category::create(
-			[
-				'name'      => 'QA CH Child',
-				'slug'      => 'jt-qa-ch-child-' . $suffix,
-				'parent_id' => $top,
-			]
-		);
-		$deep   = Category::create(
-			[
-				'name'      => 'QA CH Deep',
-				'slug'      => 'jt-qa-ch-deep-' . $suffix,
-				'parent_id' => $child,
-			]
-		);
-
-		$deep_row = Category::find( $deep );
-		$this->check( 'CH1: a machine write under a sub-category lands on its top-level ancestor', $top === (int) ( $deep_row->parent_id ?? 0 ) );
-		$this->check( 'CH2: a category cannot parent itself', is_wp_error( Category::update( $top, [ 'parent_id' => $top ] ) ) );
-		$this->check( 'CH3: a parent cannot move under its own child (cycle)', is_wp_error( Category::update( $top, [ 'parent_id' => $child ] ) ) );
-		$this->check( 'CH4: a missing parent is refused', null !== Category::parent_error( 0, PHP_INT_MAX ) );
-		$this->check( 'CH5: a third level is refused', null !== Category::parent_error( 0, $child ) );
-
-		$blocked = Category::delete( $top );
-		$this->check( 'CH6: a category with sub-categories cannot be deleted', is_wp_error( $blocked ) && 409 === ( $blocked->get_error_data()['status'] ?? 0 ) );
-
-		$space_id = Space::create(
-			[
-				'title'       => 'QA CH Space',
-				'slug'        => 'jt-qa-ch-space-' . $suffix,
-				'category_id' => $child,
-				'author_id'   => 1,
-				'type'        => 'forum',
-			]
-		);
-		$this->check( 'CH7: a category holding an active space cannot be deleted', is_wp_error( Category::delete( $child ) ) );
-
-		Space::update( $space_id, [ 'status' => 'archived' ] );
-		Category::delete( $deep );
-		$deleted = Category::delete( $child );
-		$parked  = Space::find( $space_id );
-		$this->check( 'CH8: an archived space does not block the delete', true === $deleted );
-		$this->check( 'CH9: and is parked as uncategorised, not left under a dead category', 0 === (int) ( $parked->category_id ?? -1 ) );
-
-		Space::delete( $space_id );
-		Category::delete( $top );
-	}
-
 	private function test_category_space_count(): void {
 		global $wpdb;
 

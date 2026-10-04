@@ -33,8 +33,7 @@ $jt_spaces_by_cat = $spaces_by_cat ?? [];
 				<?php endif; ?>
 				<span class="jt-cat-chip-name"><?php echo esc_html( $jt_child->name ); ?></span>
 				<?php if ( $jt_count > 0 ) : ?>
-					<?php /* translators: 1: number of spaces in the sub-category, 2: singular or plural space label. */ ?>
-					<span class="jt-cat-chip-count" aria-label="<?php echo esc_attr( sprintf( __( '%1$s %2$s', 'jetonomy' ), number_format_i18n( $jt_count ), \Jetonomy\space_label( 1 !== $jt_count, true ) ) ); ?>"><?php echo esc_html( number_format_i18n( $jt_count ) ); ?></span>
+					<span class="jt-cat-chip-count"><?php echo esc_html( number_format_i18n( $jt_count ) ); ?><span class="jt-sr-only"> <?php echo esc_html( \Jetonomy\space_label( 1 !== $jt_count, true ) ); ?></span></span>
 				<?php endif; ?>
 			</a>
 		</li>

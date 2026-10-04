@@ -39,7 +39,9 @@ class Category extends Model {
 			$data['parent_id'] = self::top_level_ancestor( (int) $data['parent_id'] );
 		}
 
-		return static::insert( $data );
+		$id = static::insert( $data );
+		Space::bump_tree_generation();
+		return $id;
 	}
 
 	/**
@@ -57,7 +59,11 @@ class Category extends Model {
 			}
 		}
 
-		return parent::update( $id, $data );
+		$updated = parent::update( $id, $data );
+		// The cached space tree is grouped by category and filtered by its
+		// visibility, so a rename, move or visibility change must retire it.
+		Space::bump_tree_generation();
+		return $updated;
 	}
 
 	/**
@@ -66,20 +72,16 @@ class Category extends Model {
 	 * The one guard every caller routes through. REST used to delete a parent
 	 * outright, leaving its sub-categories pointing at a missing row (gone
 	 * from every listing and unrepairable in wp-admin) and its spaces filed
-	 * under nothing (Basecamp 10355160875). Active spaces and sub-categories
-	 * block the delete; archived spaces are moved to uncategorised so a later
-	 * restore does not bring them back inside a category that no longer exists.
+	 * under nothing (Basecamp 10355160875). Live spaces (anything not archived,
+	 * locked included) and sub-categories block the delete; archived spaces are
+	 * moved to uncategorised so a restore does not land in a deleted category.
 	 *
 	 * @param int $id Category id.
 	 * @return bool|\WP_Error 409 WP_Error while spaces or sub-categories remain.
 	 */
 	public static function delete( int $id ): bool|\WP_Error {
-		if ( Space::count(
-			[
-				'category_id' => $id,
-				'status'      => 'active',
-			]
-		) > 0 ) {
+		$spaces = \Jetonomy\table( 'spaces' );
+		if ( (int) static::db()->get_var( static::db()->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE category_id = %d AND status <> 'archived'", $id ) ) > 0 ) {
 			return new \WP_Error( 'jetonomy_category_has_spaces', __( 'Cannot delete a category that contains spaces. Move or delete the spaces first.', 'jetonomy' ), [ 'status' => 409 ] );
 		}
 
@@ -88,13 +90,15 @@ class Category extends Model {
 		}
 
 		$parked = static::db()->get_col(
-			static::db()->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'spaces' ) . ' WHERE category_id = %d', $id )
+			static::db()->prepare( "SELECT id FROM {$spaces} WHERE category_id = %d AND status = 'archived'", $id )
 		);
 		foreach ( $parked as $space_id ) {
 			Space::update( (int) $space_id, [ 'category_id' => 0 ] );
 		}
 
-		return parent::delete( $id );
+		$deleted = parent::delete( $id );
+		Space::bump_tree_generation();
+		return $deleted;
 	}
 
 	/**
@@ -130,7 +134,9 @@ class Category extends Model {
 	}
 
 	/**
-	 * The top-level category `$id` sits under (itself when already top-level, 0 if missing).
+	 * The top-level category `$id` sits under: itself when already top-level,
+	 * the highest existing ancestor when a parent row is missing, 0 when `$id`
+	 * itself is missing or the chain loops.
 	 *
 	 * Visited-set walk so pre-2.0.1 rows with a cycle cannot loop.
 	 *
@@ -139,12 +145,14 @@ class Category extends Model {
 	 */
 	public static function top_level_ancestor( int $id ): int {
 		$seen = [];
+		$last = 0;
 		while ( $id > 0 && ! isset( $seen[ $id ] ) ) {
 			$seen[ $id ] = true;
 			$row         = static::find( $id );
 			if ( ! $row ) {
-				return 0;
+				return $last;
 			}
+			$last = $id;
 			if ( (int) $row->parent_id <= 0 ) {
 				return $id;
 			}
@@ -183,10 +191,15 @@ class Category extends Model {
 
 		if ( $user_id > 0 && ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_manage_categories' ) ) ) {
 			$result = [ '1=1', [] ];
-		} elseif ( $user_id <= 0 ) {
-			$result = [ "{$col}visibility = 'public'", [] ];
 		} else {
-			$result = [ "{$col}visibility IN ('public','private')", [] ];
+			$allowed = $user_id <= 0 ? "'public'" : "'public','private'";
+			// A hidden parent hides its whole branch: a sub-category is visible
+			// only when its parent is too. Categories nest two levels deep, so
+			// one parent check covers the tree.
+			$result = [
+				"{$col}visibility IN ({$allowed}) AND ( {$col}parent_id IS NULL OR {$col}parent_id = 0 OR {$col}parent_id IN ( SELECT jt_vp.id FROM " . \Jetonomy\table( 'categories' ) . " jt_vp WHERE jt_vp.visibility IN ({$allowed}) ) )",
+				[],
+			];
 		}
 
 		/**
@@ -331,10 +344,15 @@ class Category extends Model {
 	 * Every visible category in display order (each parent followed by its
 	 * sub-categories), with a `depth` of 0 or 1 for indenting a picker.
 	 *
+	 * `$keep_id` is always included (appended if the viewer cannot see it), so a
+	 * picker for an existing space never drops the category it is already in
+	 * and a save cannot silently unfile it.
+	 *
 	 * @param int|null $user_id Viewer ID (null resolves to the current user).
+	 * @param int      $keep_id Category that must stay selectable (0 = none).
 	 * @return object[]
 	 */
-	public static function list_tree( ?int $user_id = null ): array {
+	public static function list_tree( ?int $user_id = null, int $keep_id = 0 ): array {
 		$children = self::children_by_parent( $user_id );
 		$tree     = [];
 		foreach ( self::list_top_level( $user_id ) as $top ) {
@@ -343,6 +361,13 @@ class Category extends Model {
 			foreach ( $children[ (int) $top->id ] ?? [] as $child ) {
 				$child->depth = 1;
 				$tree[]       = $child;
+			}
+		}
+		if ( $keep_id > 0 && ! in_array( $keep_id, array_map( 'intval', array_column( $tree, 'id' ) ), true ) ) {
+			$kept = static::find( $keep_id );
+			if ( $kept ) {
+				$kept->depth = 0;
+				$tree[]      = $kept;
 			}
 		}
 		return $tree;

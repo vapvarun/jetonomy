@@ -190,7 +190,7 @@ class Categories_Controller extends Base_Controller {
 			$data['description'] = sanitize_textarea_field( $request->get_param( 'description' ) );
 		}
 		if ( null !== $request->get_param( 'parent_id' ) ) {
-			$data['parent_id'] = absint( $request->get_param( 'parent_id' ) ) ?: null;
+			$data['parent_id'] = absint( $request->get_param( 'parent_id' ) );
 		}
 		if ( null !== $request->get_param( 'icon' ) ) {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );

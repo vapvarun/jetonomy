@@ -155,7 +155,7 @@ if ( ! is_user_logged_in() ) :
 							]
 						);
 						?>
-						<?php if ( ! empty( $spaces ) ) : ?>
+						<?php if ( ! empty( $spaces ) || empty( $jt_children[ (int) $category->id ] ) ) : ?>
 							<?php jetonomy_render_space_grid( $spaces, $base ); ?>
 						<?php endif; ?>
 					</section>

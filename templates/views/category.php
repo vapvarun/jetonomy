@@ -55,7 +55,7 @@ $crumbs[] = [
 	'url'   => '',
 ];
 
-$jt_children = \Jetonomy\Models\Category::children_by_parent( null, [ (int) $category->id ] )[ (int) $category->id ] ?? [];
+$jt_children = \Jetonomy\Models\Category::list_children( (int) $category->id );
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 

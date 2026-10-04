@@ -1523,7 +1523,7 @@ class Admin {
 				/* translators: %s: the singular label of the item (the configured noun). */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
-			$categories = Category::list_tree();
+			$categories = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
 			// Explicit cap (plan WP1.5): the unbounded default rendered every
 			// member row on one screen. 1000 keeps this management surface
 			// functional; when the space is larger the view shows a notice so

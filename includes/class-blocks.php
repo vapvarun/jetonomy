@@ -574,6 +574,9 @@ class Blocks {
 			// Same per-category runaway cap the old list_visible carried.
 			$spaces = array_slice( $spaces_by_cat[ $category_id ] ?? array(), 0, 200 );
 			$subs   = $children[ $category_id ] ?? array();
+			if ( $hide_empty ) {
+				$subs = array_filter( $subs, fn( $sub ) => ! empty( $spaces_by_cat[ (int) $sub->id ] ) );
+			}
 			if ( $hide_empty && empty( $spaces ) && empty( $subs ) ) {
 				continue;
 			}
