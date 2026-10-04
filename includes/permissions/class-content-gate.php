@@ -123,7 +123,8 @@ class Content_Gate {
 		if ( ! empty( $post->is_closed ) && ! Permission_Engine::can( $user_id, 'moderate', $space_id ) ) {
 			return new \WP_Error(
 				'jetonomy_post_closed',
-				__( 'This post is closed and cannot receive new replies.', 'jetonomy' ),
+				/* translators: 1: singular topic label; 2: plural reply label. */
+				sprintf( __( 'This %1$s is closed and cannot receive new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 				array( 'status' => 403 )
 			);
 		}

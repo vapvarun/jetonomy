@@ -178,7 +178,8 @@ class REST_Auth {
 					if ( ! $is_author ) {
 						return new WP_Error(
 							'rest_forbidden',
-							__( 'You can only edit your own posts.', 'jetonomy' ),
+							/* translators: %s: plural topic label. */
+							sprintf( __( 'You can only edit your own %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 							array( 'status' => 403 )
 						);
 					}

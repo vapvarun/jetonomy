@@ -217,7 +217,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 			<?php if ( is_user_logged_in() ) : ?>
 				<div class="jt-sidebar-links">
 					<a href="<?php echo esc_url( \Jetonomy\route_url( 'space-members', $space->slug ) ); ?>" class="jt-sidebar-link-text">
-						<?php printf( /* translators: %s: plural member label. */ esc_html__( 'View all %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
+						<?php printf( /* translators: %s: the plural label of the item (the configured noun). */ esc_html__( 'View all %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 					</a>
 					<?php if ( \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( get_current_user_id(), (int) $space->id ) ) : ?>
 						<a href="<?php echo esc_url( \Jetonomy\route_url( 'space-moderation', $space->slug ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-mod">

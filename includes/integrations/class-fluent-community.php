@@ -890,7 +890,7 @@ class Fluent_Community {
 			<h3><?php echo esc_html( $label ); ?></h3>
 
 			<?php if ( ! empty( $started ) ) : ?>
-				<h4><?php esc_html_e( 'Topics started', 'jetonomy' ); ?></h4>
+				<h4><?php echo esc_html( sprintf( /* translators: %s: plural topic label. */ __( '%s started', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></h4>
 				<ul>
 					<?php foreach ( $started as $p ) : ?>
 						<?php
@@ -915,7 +915,7 @@ class Fluent_Community {
 						<?php
 						$slug_space = isset( $r->space_slug ) ? (string) $r->space_slug : '';
 						$slug_post  = isset( $r->post_slug ) ? (string) $r->post_slug : '';
-						$title_post = isset( $r->post_title ) && '' !== $r->post_title ? (string) $r->post_title : __( 'Untitled topic', 'jetonomy' );
+						$title_post = isset( $r->post_title ) && '' !== $r->post_title ? (string) $r->post_title : sprintf( /* translators: %s: singular topic label. */ __( 'Untitled %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) );
 						$reply_id   = isset( $r->id ) ? (int) $r->id : 0;
 						$purl       = ( '' !== $slug_space && '' !== $slug_post && $reply_id )
 							? \Jetonomy\reply_permalink( $slug_space, $slug_post, $reply_id )
@@ -933,7 +933,7 @@ class Fluent_Community {
 			<?php endif; ?>
 
 			<?php if ( ! empty( $followed ) ) : ?>
-				<h4><?php esc_html_e( 'Topics followed', 'jetonomy' ); ?></h4>
+				<h4><?php echo esc_html( sprintf( /* translators: %s: plural topic label. */ __( '%s followed', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></h4>
 				<ul>
 					<?php foreach ( $followed as $p ) : ?>
 						<?php

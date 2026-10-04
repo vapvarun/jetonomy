@@ -207,9 +207,11 @@ class BuddyPress {
 		bp_activity_set_action(
 			'groups',
 			self::ACTIVITY_TYPE,
-			__( 'New forum topic', 'jetonomy' ),
+			/* translators: %s: singular topic label. */
+			sprintf( __( 'New forum %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			array( $this, 'format_activity_action' ),
-			__( 'Forum Topics', 'jetonomy' ),
+			/* translators: %s: plural topic label. */
+			sprintf( __( 'Forum %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
 			array( 'activity', 'group', 'member', 'member_groups' )
 		);
 	}
@@ -242,11 +244,11 @@ class BuddyPress {
 			: '';
 
 		if ( '' === $group_link ) {
-			/* translators: %s: user link. */
-			return sprintf( esc_html__( '%s started a new forum topic', 'jetonomy' ), $user_link );
+			/* translators: 1: user link, 2: singular topic label. */
+			return sprintf( esc_html__( '%1$s started a new forum %2$s', 'jetonomy' ), $user_link, esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 		}
-		/* translators: 1: user link, 2: group link. */
-		return sprintf( esc_html__( '%1$s started a new forum topic in %2$s', 'jetonomy' ), $user_link, $group_link );
+		/* translators: 1: user link, 2: singular topic label, 3: group link. */
+		return sprintf( esc_html__( '%1$s started a new forum %2$s in %3$s', 'jetonomy' ), $user_link, esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), $group_link );
 	}
 
 	/**
@@ -860,7 +862,7 @@ class BuddyPress {
 		echo '</div>';
 
 		if ( empty( $posts ) ) {
-			echo '<p class="jt-bp-empty">' . esc_html__( 'No topics yet. Start a discussion!', 'jetonomy' ) . '</p>';
+			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: plural topic label. */ __( 'No %s yet. Start a discussion!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . '</p>';
 		} else {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
@@ -886,7 +888,7 @@ class BuddyPress {
 			}
 			echo '</ul>';
 
-			echo '<p class="jt-bp-view-all"><a href="' . esc_url( $space_url ) . '">' . esc_html__( 'View all topics', 'jetonomy' ) . ' &rarr;</a></p>';
+			echo '<p class="jt-bp-view-all"><a href="' . esc_url( $space_url ) . '">' . esc_html( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'View all %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . ' &rarr;</a></p>';
 		}
 
 		echo '</div>';
@@ -925,7 +927,7 @@ class BuddyPress {
 		// Sub-tab: Posts (default).
 		bp_core_new_subnav_item(
 			array(
-				'name'            => __( 'Posts', 'jetonomy' ),
+				'name'            => \Jetonomy\jetonomy_label( 'topic', true ),
 				'slug'            => 'posts',
 				'parent_slug'     => 'forum',
 				'parent_url'      => $bp_url . 'forum/',
@@ -1010,7 +1012,7 @@ class BuddyPress {
 			}
 			echo '</ul>';
 		} else {
-			echo '<p class="jt-bp-empty">' . esc_html__( 'No forum posts yet.', 'jetonomy' ) . '</p>';
+			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: plural topic label. */ __( 'No forum %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . '</p>';
 		}
 
 		$this->render_profile_link( $user_id );
@@ -1114,7 +1116,7 @@ class BuddyPress {
 			}
 			echo '</ul>';
 		} else {
-			echo '<p class="jt-bp-empty">' . esc_html__( 'No bookmarked posts yet.', 'jetonomy' ) . '</p>';
+			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: plural topic label. */ __( 'No bookmarked %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . '</p>';
 		}
 
 		$this->render_profile_link( $user_id );
@@ -1130,8 +1132,8 @@ class BuddyPress {
 		$trust_level = $profile ? (int) $profile->trust_level : 0;
 
 		echo '<div class="jt-bp-stats">';
-		echo '<div class="jt-bp-stat"><strong>' . esc_html( (string) $post_count ) . '</strong> ' . esc_html__( 'Topics', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . esc_html( (string) $reply_count ) . '</strong> ' . esc_html__( 'Replies', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . esc_html( (string) $post_count ) . '</strong> ' . esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . esc_html( (string) $reply_count ) . '</strong> ' . esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ) . '</div>';
 		echo '<div class="jt-bp-stat"><strong>' . esc_html( (string) $reputation ) . '</strong> ' . esc_html__( 'Reputation', 'jetonomy' ) . '</div>';
 		echo '<div class="jt-bp-stat"><strong>' . esc_html__( 'Level', 'jetonomy' ) . ' ' . esc_html( (string) $trust_level ) . '</strong> ' . esc_html__( 'Trust', 'jetonomy' ) . '</div>';
 		echo '</div>';

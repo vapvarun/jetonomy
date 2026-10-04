@@ -142,8 +142,8 @@ class Rate_Limiter {
 
 		switch ( $action ) {
 			case 'create_posts':
-				/* translators: %s: number of topics allowed per day. */
-				$allowance = sprintf( _n( 'New members can post %s topic a day.', 'New members can post %s topics a day.', $status['limit'], 'jetonomy' ), $count );
+				/* translators: 1: number of topics allowed per day; 2: the topic label, singular or plural to match the number. */
+				$allowance = sprintf( _n( 'New members can post %1$s %2$s a day.', 'New members can post %1$s %2$s a day.', $status['limit'], 'jetonomy' ), $count, \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $status['limit'], true ) );
 				/* translators: %s: human-readable wait, e.g. "17 hours". */
 				$again = __( 'You can post again in about %s.', 'jetonomy' );
 				break;

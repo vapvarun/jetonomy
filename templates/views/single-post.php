@@ -17,7 +17,7 @@ if ( ! $post ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Post not found.', 'jetonomy' ),
+			'message'   => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'tone'      => 'warn',
 		]
 	);
@@ -84,7 +84,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Post not found.', 'jetonomy' ),
+			'message'   => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'tone'      => 'warn',
 		]
 	);
@@ -330,11 +330,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<div class="jt-notice jt-notice-warning">
 					<?php
 					if ( 'pending' === $post->status ) {
-						esc_html_e( 'This post is pending review and not yet publicly visible.', 'jetonomy' );
+						echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'This %s is pending review and not yet publicly visible.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 					} elseif ( 'spam' === $post->status ) {
-						esc_html_e( 'This post has been marked as spam.', 'jetonomy' );
+						echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'This %s has been marked as spam.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 					} elseif ( 'trash' === $post->status ) {
-						esc_html_e( 'This post is in the trash and hidden from the community.', 'jetonomy' );
+						echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'This %s is in the trash and hidden from the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 					} elseif ( 'draft' === $post->status && ! empty( $post->published_at ) ) {
 						// published_at is UTC; show it in the site timezone.
 						echo esc_html(
@@ -347,8 +347,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					} elseif ( 'draft' === $post->status ) {
 						esc_html_e( 'This is a draft and is hidden from the community until it is published.', 'jetonomy' );
 					} else {
-						/* translators: %s: post status */
-						echo esc_html( sprintf( __( 'This post has status: %s', 'jetonomy' ), $post->status ) );
+						/* translators: 1: singular topic label; 2: the raw status slug. */
+						echo esc_html( sprintf( __( 'This %1$s has status: %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), $post->status ) );
 					}
 					?>
 					<?php
@@ -372,7 +372,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								data-wp-on--click="actions.trashedPostAction"
 								data-rest-method="DELETE"
 								data-rest-path="<?php echo esc_attr( '/posts/' . (int) $post->id . '?force=true' ); ?>"
-								data-confirm="<?php esc_attr_e( 'Delete this post and all its replies permanently? This cannot be undone.', 'jetonomy' ); ?>"
+								data-confirm="<?php echo esc_attr( sprintf( /* translators: 1: singular topic label; 2: plural reply label. */ __( 'Delete this %1$s and all its %2$s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
 								data-redirect="<?php echo esc_url( $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/mod/?view=trash' : \Jetonomy\base_url() . '/' ); ?>">
 								<?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?>
 							</button>
@@ -587,7 +587,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// inside the cluster.
 					?>
 					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
-						<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
+						<div class="jt-vote-cluster" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
 							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
 							<?php if ( $jt_is_live && jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
@@ -968,7 +968,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
-					<?php printf( /* translators: %s: plural reply label. */ esc_html__( 'This post is closed and no longer accepts %s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					<?php printf( /* translators: 1: singular topic label; 2: plural reply label. */ esc_html__( 'This %1$s is closed and no longer accepts %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				</div>
 			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>

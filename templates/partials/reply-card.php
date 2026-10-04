@@ -198,7 +198,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		// one side. JS bindings are untouched and verified live.
 		?>
 		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
-		<div class="jt-vote-cluster" role="group" aria-label="<?php printf( /* translators: %s: singular reply label. */ esc_attr__( 'Vote on this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
+		<div class="jt-vote-cluster" role="group" aria-label="<?php printf( /* translators: %s: the singular label of the item (the configured noun). */ esc_attr__( 'Vote on this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
 			<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
 			<?php if ( $jt_thread_live && jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"

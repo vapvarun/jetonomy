@@ -515,7 +515,7 @@ class Reply extends Model {
 		}
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
-			return new \WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
 		}
 
 		// A trashed or unpublished reply, or one inside such a topic, cannot
@@ -573,7 +573,7 @@ class Reply extends Model {
 		}
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
-			return new \WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
 		}
 
 		$author_id = (int) $reply->author_id;

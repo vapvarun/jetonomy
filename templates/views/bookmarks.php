@@ -64,7 +64,8 @@ $crumbs = array(
 				'empty-state',
 				[
 					'icon'      => 'bookmark',
-					'message'   => __( "You haven't bookmarked anything yet. Bookmark posts to find them here later.", 'jetonomy' ),
+					/* translators: %s: plural topic label. */
+					'message'   => sprintf( __( "You haven't bookmarked anything yet. Bookmark %s to find them here later.", 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 					'cta_label' => __( 'Browse the community', 'jetonomy' ),
 					'cta_url'   => $base . '/',
 				]

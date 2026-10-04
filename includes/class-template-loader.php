@@ -322,7 +322,8 @@ class Template_Loader {
 					'removeBookmark'        => __( 'Remove bookmark', 'jetonomy' ),
 					'bookmarked'            => __( 'Bookmarked', 'jetonomy' ),
 					'bookmarkRemoved'       => __( 'Bookmark removed', 'jetonomy' ),
-					'reportPrompt'          => __( 'Why are you reporting this post?', 'jetonomy' ),
+					/* translators: %s: the singular label of the item (the configured noun). */
+					'reportPrompt'          => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
 					'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
 					// Scoped, to match the "Pin to space" control. Pro can pin to
@@ -401,7 +402,8 @@ class Template_Loader {
 					'failed'                => __( 'Failed', 'jetonomy' ),
 					'failedSaveProfile'     => __( 'Failed to save profile.', 'jetonomy' ),
 					'schedule'              => __( 'Schedule', 'jetonomy' ),
-					'editPost'              => __( 'Edit post', 'jetonomy' ),
+					/* translators: %s: the label of the item being edited (the configured noun). */
+					'editPost'              => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					/* translators: %s: the label of the item being edited (the configured noun). */
 					'editReply'             => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'unaccepted'            => __( 'Marked as unanswered', 'jetonomy' ),
@@ -419,9 +421,10 @@ class Template_Loader {
 					'madePrivate'           => sprintf( __( '%s is now private', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 					/* translators: %s: the singular topic label the site owner configured. */
 					'madePublic'            => sprintf( __( '%s is now public', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					'pendingNotice'         => __( 'Your post is awaiting moderation and will appear once approved.', 'jetonomy' ),
+					/* translators: %s: singular topic label. */
+					'pendingNotice'         => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					'reportPlaceholder'     => __( 'Describe the issue...', 'jetonomy' ),
-					/* translators: %s: the singular reply label the site owner configured. */
+					/* translators: %s: the singular label of the item (the configured noun). */
 					'reportReplyPrompt'     => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'reportUserPrompt'      => __( 'Why are you reporting this user?', 'jetonomy' ),
 					'reportUserPlaceholder' => __( 'Describe the issue...', 'jetonomy' ),
@@ -1602,7 +1605,7 @@ class Template_Loader {
 						break;
 					case 'bookmarks':
 						$title     = __( 'My bookmarks', 'jetonomy' );
-						$desc      = __( 'Posts you have bookmarked on the community.', 'jetonomy' );
+						$desc      = sprintf( /* translators: %s: plural topic label. */ __( '%s you have bookmarked on the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) );
 						$url       = route_url( 'bookmarks' );
 						$image_alt = $site_name;
 						$noindex   = true; // Personal logged-in view.

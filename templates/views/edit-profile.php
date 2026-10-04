@@ -154,13 +154,16 @@ if ( ! $cancel_url ) {
 		$notif_prefs   = $user_settings['notifications'] ?? [];
 		$global_defs   = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 		$notif_types   = [
-			'reply_to_post'       => __( 'Reply to my post', 'jetonomy' ),
+			/* translators: %s: singular topic label. */
+			'reply_to_post'       => sprintf( __( 'Reply to my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'reply_to_reply'      => __( 'Reply to my reply', 'jetonomy' ),
 			'mention'             => __( '@Mention', 'jetonomy' ),
-			'vote_on_post'        => __( 'Vote on my post', 'jetonomy' ),
+			/* translators: %s: singular topic label. */
+			'vote_on_post'        => sprintf( __( 'Vote on my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'accepted_answer'     => __( 'Accepted answer', 'jetonomy' ),
 			'idea_status_changed' => __( 'My idea roadmap status changed', 'jetonomy' ),
-			'new_post_in_sub'     => __( 'New post in followed space', 'jetonomy' ),
+			/* translators: 1: singular topic label; 2: singular space label. */
+			'new_post_in_sub'     => sprintf( __( 'New %1$s in followed %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
 			'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 		];
 		if ( \Jetonomy\Notifications\Notifier::messages_enabled() ) {

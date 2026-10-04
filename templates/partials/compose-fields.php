@@ -164,7 +164,7 @@ endif;
 				<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it (QA card 10149499573). ?>
 				<button type="button" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>
 			</div>
-			<div class="jt-editor-body" contenteditable="true" data-placeholder="<?php esc_attr_e( 'Write your post...', 'jetonomy' ); ?>"></div>
+			<div class="jt-editor-body" contenteditable="true" data-placeholder="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Write your %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>"></div>
 		</div>
 	<?php endif; ?>
 </div>
@@ -228,7 +228,7 @@ do_action( $_fields_hook, $space );
 			</div>
 			<input type="hidden" name="published_at" value="">
 			<p class="jt-label-hint">
-				<?php esc_html_e( 'Your post will be published automatically at this date and time.', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Your %s will be published automatically at this date and time.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 			</p>
 		</div>
 	</div>

@@ -72,7 +72,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 	data-act-endpoint="<?php echo esc_attr( $jt_endpoint ); ?>">
 	<div class="jt-mod-flag-head">
 		<span class="jt-mod-flag-type">
-			<?php echo $jt_is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html__( 'Post', 'jetonomy' ); ?>
+			<?php echo $jt_is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html( \Jetonomy\jetonomy_label( 'topic' ) ); ?>
 		</span>
 		<span class="jt-mod-flag-reason jt-mod-flag-reason--held">
 			<?php $jt_is_trash ? esc_html_e( 'In trash', 'jetonomy' ) : esc_html_e( 'Awaiting approval', 'jetonomy' ); ?>
@@ -127,7 +127,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 				data-action-name="delete"
 				data-rest-method="DELETE"
 				data-rest-path="<?php echo esc_attr( ( $jt_is_reply ? '/replies/' : '/posts/' ) . absint( $item->id ) . '?force=true' ); ?>"
-				data-confirm="<?php echo esc_attr( $jt_is_reply ? __( 'Delete this reply permanently? This cannot be undone.', 'jetonomy' ) : __( 'Delete this post and all its replies permanently? This cannot be undone.', 'jetonomy' ) ); ?>">
+				data-confirm="<?php echo esc_attr( $jt_is_reply ? sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Delete this %s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) : sprintf( /* translators: 1: singular topic label; 2: plural reply label. */ __( 'Delete this %1$s and all its %2$s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
 				<?php jetonomy_echo_icon( 'trash', 14 ); ?>
 				<?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?>
 			</button>
