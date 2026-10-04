@@ -1577,8 +1577,10 @@ const { state, actions } = store( 'jetonomy', {
                 const held = [ 'pending', 'spam' ].includes( res.data && res.data.status );
                 if ( window.bnToast ) window.bnToast( held ? state.i18n?.pendingNotice : ( state.i18n?.draftPublished || 'Published.' ) );
                 row.remove();
-                // Last draft gone — reload so the server renders the empty state.
-                if ( ! document.querySelector( '.jt-row--draft' ) ) window.location.reload();
+                // Last draft gone — reload so the server renders the empty state,
+                // after the held notice has been on screen long enough to read.
+                // ponytail: fixed delay; carry the notice across the reload if it ever needs to persist.
+                if ( ! document.querySelector( '.jt-row--draft' ) ) window.setTimeout( () => window.location.reload(), held ? 3000 : 0 );
             } else {
                 btn.disabled = false;
                 if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.genericError || 'Could not publish.' );
@@ -3495,7 +3497,7 @@ const { state, actions } = store( 'jetonomy', {
                     // don't append.
                     if ( 'pending' === payload.status || 'spam' === payload.status ) {
                         body.innerHTML = '';
-                        if ( window.bnToast ) window.bnToast( state.i18n?.pendingNotice || 'Your reply is awaiting moderation and will appear once approved.' );
+                        if ( window.bnToast ) window.bnToast( state.i18n?.pendingReplyNotice || 'Your reply is awaiting moderation and will appear once approved.' );
                     } else {
                         // Top-level replies append in place; nested replies and any
                         // append miss fall back to a full reload.

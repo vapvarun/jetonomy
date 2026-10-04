@@ -421,8 +421,10 @@ class Template_Loader {
 					'madePrivate'           => sprintf( __( '%s is now private', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 					/* translators: %s: the singular topic label the site owner configured. */
 					'madePublic'            => sprintf( __( '%s is now public', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					/* translators: %s: singular topic label. */
+					/* translators: %s: singular topic or reply label. */
 					'pendingNotice'         => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+					/* translators: %s: singular topic or reply label. */
+					'pendingReplyNotice'    => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'reportPlaceholder'     => __( 'Describe the issue...', 'jetonomy' ),
 					/* translators: %s: the singular label of the item (the configured noun). */
 					'reportReplyPrompt'     => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
