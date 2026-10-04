@@ -118,11 +118,11 @@ class Notifier {
 				'body'    => __( "Hi {user},\n\nWelcome to {site}. Your account is ready. Jump in and introduce yourself, ask a question, or browse the latest discussions.\n\n{message}", 'jetonomy' ),
 			),
 			'reply_to_post'         => array(
-				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $topic ),
+				'subject' => sprintf( /* translators: %s: singular topic or reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $topic ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the discussion to read the full reply and join the conversation.", 'jetonomy' ),
 			),
 			'reply_to_reply'        => array(
-				'subject' => sprintf( /* translators: %s: singular reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $reply ),
+				'subject' => sprintf( /* translators: %s: singular topic or reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $reply ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nClick through to read the full thread.", 'jetonomy' ),
 			),
 			'mention'               => array(
@@ -1616,7 +1616,7 @@ class Notifier {
 			'reaction'            => __( 'Reaction', 'jetonomy' ),
 			'accepted_answer'     => __( 'Answer Accepted', 'jetonomy' ),
 			'idea_status_changed' => __( 'Roadmap Update', 'jetonomy' ),
-			/* translators: %s: the singular topic label. */
+			/* translators: %s: the singular label of the item (the configured noun). */
 			'new_post_in_sub'     => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'badge_earned'        => __( 'Achievement', 'jetonomy' ),
 			'moderation'          => __( 'Moderation', 'jetonomy' ),
@@ -1627,11 +1627,11 @@ class Notifier {
 		];
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
-		/* translators: %s: the singular topic or reply label. */
+		/* translators: %s: the topic or reply label, singular or plural. */
 		$view_topic = sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 		$cta_labels = [
 			'reply_to_post'       => $view_topic,
-			/* translators: %s: the singular topic or reply label. */
+			/* translators: %s: the topic or reply label, singular or plural. */
 			'reply_to_reply'      => sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 			'mention'             => $view_topic,
 			'vote_on_post'        => $view_topic,
