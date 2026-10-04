@@ -32,7 +32,125 @@ class Category extends Model {
 			$data
 		);
 
+		// Interactive callers reject a bad parent with parent_error() first;
+		// this keeps machine writers (importers, seeders) inside the two-level
+		// rule instead of failing a long import over one deep forum.
+		if ( ! empty( $data['parent_id'] ) ) {
+			$data['parent_id'] = self::top_level_ancestor( (int) $data['parent_id'] );
+		}
+
 		return static::insert( $data );
+	}
+
+	/**
+	 * Update a category, refusing a parent that breaks the two-level rule.
+	 *
+	 * @param int   $id   Category id.
+	 * @param array $data Column => value pairs.
+	 * @return bool|\WP_Error
+	 */
+	public static function update( int $id, array $data ): bool|\WP_Error {
+		if ( array_key_exists( 'parent_id', $data ) ) {
+			$error = self::parent_error( $id, (int) $data['parent_id'] );
+			if ( $error ) {
+				return $error;
+			}
+		}
+
+		return parent::update( $id, $data );
+	}
+
+	/**
+	 * Delete a category only when nothing is filed under it.
+	 *
+	 * The one guard every caller routes through. REST used to delete a parent
+	 * outright, leaving its sub-categories pointing at a missing row (gone
+	 * from every listing and unrepairable in wp-admin) and its spaces filed
+	 * under nothing (Basecamp 10355160875). Active spaces and sub-categories
+	 * block the delete; archived spaces are moved to uncategorised so a later
+	 * restore does not bring them back inside a category that no longer exists.
+	 *
+	 * @param int $id Category id.
+	 * @return bool|\WP_Error 409 WP_Error while spaces or sub-categories remain.
+	 */
+	public static function delete( int $id ): bool|\WP_Error {
+		if ( Space::count(
+			[
+				'category_id' => $id,
+				'status'      => 'active',
+			]
+		) > 0 ) {
+			return new \WP_Error( 'jetonomy_category_has_spaces', __( 'Cannot delete a category that contains spaces. Move or delete the spaces first.', 'jetonomy' ), [ 'status' => 409 ] );
+		}
+
+		if ( static::count( [ 'parent_id' => $id ] ) > 0 ) {
+			return new \WP_Error( 'jetonomy_category_has_children', __( 'Cannot delete a category that has sub-categories. Delete them first.', 'jetonomy' ), [ 'status' => 409 ] );
+		}
+
+		$parked = static::db()->get_col(
+			static::db()->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'spaces' ) . ' WHERE category_id = %d', $id )
+		);
+		foreach ( $parked as $space_id ) {
+			Space::update( (int) $space_id, [ 'category_id' => 0 ] );
+		}
+
+		return parent::delete( $id );
+	}
+
+	/**
+	 * Why `$parent_id` cannot be the parent of category `$id`, or null if it can.
+	 *
+	 * Categories nest two levels deep: a top-level category and its
+	 * sub-categories. A parent must exist, must itself be top-level, and a
+	 * category that already has sub-categories cannot become one. Those rules
+	 * also rule out self-parenting and cycles.
+	 *
+	 * @param int $id        Category being written (0 when creating).
+	 * @param int $parent_id Proposed parent (0 = top level).
+	 * @return \WP_Error|null
+	 */
+	public static function parent_error( int $id, int $parent_id ): ?\WP_Error {
+		if ( $parent_id <= 0 ) {
+			return null;
+		}
+
+		$message = null;
+		$parent  = static::find( $parent_id );
+		if ( $parent_id === $id ) {
+			$message = __( 'A category cannot be its own parent.', 'jetonomy' );
+		} elseif ( ! $parent ) {
+			$message = __( 'The parent category does not exist.', 'jetonomy' );
+		} elseif ( (int) $parent->parent_id > 0 ) {
+			$message = __( 'Categories nest two levels deep. Choose a top-level category as the parent.', 'jetonomy' );
+		} elseif ( $id > 0 && static::count( [ 'parent_id' => $id ] ) > 0 ) {
+			$message = __( 'This category has sub-categories, so it cannot become a sub-category itself.', 'jetonomy' );
+		}
+
+		return $message ? new \WP_Error( 'jetonomy_invalid_parent', $message, [ 'status' => 400 ] ) : null;
+	}
+
+	/**
+	 * The top-level category `$id` sits under (itself when already top-level, 0 if missing).
+	 *
+	 * Visited-set walk so pre-2.0.1 rows with a cycle cannot loop.
+	 *
+	 * @param int $id Category id.
+	 * @return int
+	 */
+	public static function top_level_ancestor( int $id ): int {
+		$seen = [];
+		while ( $id > 0 && ! isset( $seen[ $id ] ) ) {
+			$seen[ $id ] = true;
+			$row         = static::find( $id );
+			if ( ! $row ) {
+				return 0;
+			}
+			if ( (int) $row->parent_id <= 0 ) {
+				return $id;
+			}
+			$id = (int) $row->parent_id;
+		}
+		return 0;
 	}
 
 	/**

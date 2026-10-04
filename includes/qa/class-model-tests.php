@@ -238,6 +238,7 @@ class Model_Tests {
 		$this->test_bbpress_import_scope();
 		$this->test_media_cleanup_scope();
 		$this->test_category_space_count();
+		$this->test_category_hierarchy_rules();
 		$this->test_import_map();
 		$this->test_recount_backfill();
 
@@ -1851,6 +1852,67 @@ class Model_Tests {
 	 * Asserted as "stored equals actual" after each transition rather than by
 	 * expected numbers, so the test stays true whatever the fixture holds.
 	 */
+	/**
+	 * CH: categories nest two levels deep and cannot be deleted from under
+	 * their sub-categories or spaces (Basecamp 10355160875, 10355160993).
+	 * REST deleted a parent outright and accepted any parent_id, so a category
+	 * could orphan its children, parent itself, or form a cycle.
+	 */
+	private function test_category_hierarchy_rules(): void {
+		$suffix = wp_generate_password( 6, false, false );
+		$top    = Category::create(
+			[
+				'name' => 'QA CH Top',
+				'slug' => 'jt-qa-ch-top-' . $suffix,
+			]
+		);
+		$child  = Category::create(
+			[
+				'name'      => 'QA CH Child',
+				'slug'      => 'jt-qa-ch-child-' . $suffix,
+				'parent_id' => $top,
+			]
+		);
+		$deep   = Category::create(
+			[
+				'name'      => 'QA CH Deep',
+				'slug'      => 'jt-qa-ch-deep-' . $suffix,
+				'parent_id' => $child,
+			]
+		);
+
+		$deep_row = Category::find( $deep );
+		$this->check( 'CH1: a machine write under a sub-category lands on its top-level ancestor', $top === (int) ( $deep_row->parent_id ?? 0 ) );
+		$this->check( 'CH2: a category cannot parent itself', is_wp_error( Category::update( $top, [ 'parent_id' => $top ] ) ) );
+		$this->check( 'CH3: a parent cannot move under its own child (cycle)', is_wp_error( Category::update( $top, [ 'parent_id' => $child ] ) ) );
+		$this->check( 'CH4: a missing parent is refused', null !== Category::parent_error( 0, PHP_INT_MAX ) );
+		$this->check( 'CH5: a third level is refused', null !== Category::parent_error( 0, $child ) );
+
+		$blocked = Category::delete( $top );
+		$this->check( 'CH6: a category with sub-categories cannot be deleted', is_wp_error( $blocked ) && 409 === ( $blocked->get_error_data()['status'] ?? 0 ) );
+
+		$space_id = Space::create(
+			[
+				'title'       => 'QA CH Space',
+				'slug'        => 'jt-qa-ch-space-' . $suffix,
+				'category_id' => $child,
+				'author_id'   => 1,
+				'type'        => 'forum',
+			]
+		);
+		$this->check( 'CH7: a category holding an active space cannot be deleted', is_wp_error( Category::delete( $child ) ) );
+
+		Space::update( $space_id, [ 'status' => 'archived' ] );
+		Category::delete( $deep );
+		$deleted = Category::delete( $child );
+		$parked  = Space::find( $space_id );
+		$this->check( 'CH8: an archived space does not block the delete', true === $deleted );
+		$this->check( 'CH9: and is parked as uncategorised, not left under a dead category', 0 === (int) ( $parked->category_id ?? -1 ) );
+
+		Space::delete( $space_id );
+		Category::delete( $top );
+	}
+
 	private function test_category_space_count(): void {
 		global $wpdb;
 

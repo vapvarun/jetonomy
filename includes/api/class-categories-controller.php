@@ -189,6 +189,11 @@ class Categories_Controller extends Base_Controller {
 			'sort_order'  => absint( $request->get_param( 'sort_order' ) ),
 		];
 
+		$parent_error = Category::parent_error( 0, (int) $data['parent_id'] );
+		if ( $parent_error ) {
+			return $parent_error;
+		}
+
 		$id = Category::create( array_filter( $data, fn( $v ) => null !== $v && '' !== $v ) );
 
 		if ( ! $id ) {
@@ -246,7 +251,10 @@ class Categories_Controller extends Base_Controller {
 			return $this->validation_error( __( 'No fields provided for update.', 'jetonomy' ) );
 		}
 
-		Category::update( $id, $data );
+		$result = Category::update( $id, $data );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		$updated = Category::find( $id );
 
@@ -265,6 +273,9 @@ class Categories_Controller extends Base_Controller {
 		}
 
 		$deleted = Category::delete( $id );
+		if ( is_wp_error( $deleted ) ) {
+			return $deleted;
+		}
 
 		if ( ! $deleted ) {
 			return new WP_Error(

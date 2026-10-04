@@ -10,7 +10,6 @@ namespace Jetonomy\Admin\Ajax;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Category;
-use Jetonomy\Models\Space;
 
 class Categories_Handler {
 
@@ -41,6 +40,11 @@ class Categories_Handler {
 
 		if ( ! in_array( $visibility, [ 'public', 'private', 'hidden' ], true ) ) {
 			$visibility = 'public';
+		}
+
+		$parent_error = Category::parent_error( 0, $parent_id );
+		if ( $parent_error ) {
+			wp_send_json_error( $parent_error->get_error_message() );
 		}
 
 		$id = Category::create(
@@ -111,6 +115,9 @@ class Categories_Handler {
 		}
 
 		$result = Category::update( $id, $data );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
 		if ( ! $result ) {
 			wp_send_json_error( __( 'Failed to update category.', 'jetonomy' ) );
 		}
@@ -135,19 +142,11 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Invalid category ID.', 'jetonomy' ) );
 		}
 
-		// Check for spaces in this category
-		$spaces = Space::list_by_category( $id );
-		if ( ! empty( $spaces ) ) {
-			wp_send_json_error( __( 'Cannot delete a category that contains spaces. Move or delete the spaces first.', 'jetonomy' ) );
-		}
-
-		// Check for child categories
-		$children = Category::list_children( $id );
-		if ( ! empty( $children ) ) {
-			wp_send_json_error( __( 'Cannot delete a category that has sub-categories. Delete them first.', 'jetonomy' ) );
-		}
-
+		// Category::delete() refuses while spaces or sub-categories remain.
 		$result = Category::delete( $id );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
 		if ( ! $result ) {
 			wp_send_json_error( __( 'Failed to delete category.', 'jetonomy' ) );
 		}
