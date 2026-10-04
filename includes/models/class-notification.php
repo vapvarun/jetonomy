@@ -419,14 +419,22 @@ class Notification extends Model {
 		$posts        = \Jetonomy\table( 'posts' );
 		$replies      = \Jetonomy\table( 'replies' );
 		$exempt       = "'" . implode( "','", self::TARGET_STATUS_EXEMPT_TYPES ) . "'";
+		$spaces       = \Jetonomy\table( 'spaces' );
+
+		// The target's space must still be readable by the viewer: a member
+		// removed from a private space kept seeing its topic titles here and in
+		// the host bell, and the link landed on a 403 (Basecamp 10345420194).
+		// Same set-based read rule search and feeds use; fails closed.
+		[ $read_p, $read_p_params ] = Space::content_visibility_sql( $user_id, 'nvs' );
+		[ $read_r, $read_r_params ] = Space::content_visibility_sql( $user_id, 'nvrs' );
 
 		$sql = " AND NOT EXISTS ( SELECT 1 FROM {$restrictions} nvr WHERE nvr.user_id = n.actor_id AND nvr.type = 'global_ban' AND ( nvr.expires_at IS NULL OR nvr.expires_at > %s ) )"
 			. " AND ( n.type IN ({$exempt})"
-			. " OR ( n.object_type = 'post' AND NOT EXISTS ( SELECT 1 FROM {$posts} nvp WHERE nvp.id = n.object_id AND nvp.status <> 'publish' ) )"
-			. " OR ( n.object_type = 'reply' AND NOT EXISTS ( SELECT 1 FROM {$replies} nvy INNER JOIN {$posts} nvyp ON nvyp.id = nvy.post_id WHERE nvy.id = n.object_id AND ( nvy.status <> 'publish' OR nvyp.status <> 'publish' ) ) )"
+			. " OR ( n.object_type = 'post' AND NOT EXISTS ( SELECT 1 FROM {$posts} nvp WHERE nvp.id = n.object_id AND ( nvp.status <> 'publish' OR NOT EXISTS ( SELECT 1 FROM {$spaces} nvs WHERE nvs.id = nvp.space_id AND {$read_p} ) ) ) )"
+			. " OR ( n.object_type = 'reply' AND NOT EXISTS ( SELECT 1 FROM {$replies} nvy INNER JOIN {$posts} nvyp ON nvyp.id = nvy.post_id WHERE nvy.id = n.object_id AND ( nvy.status <> 'publish' OR nvyp.status <> 'publish' OR NOT EXISTS ( SELECT 1 FROM {$spaces} nvrs WHERE nvrs.id = nvyp.space_id AND {$read_r} ) ) ) )"
 			. " OR n.object_type NOT IN ('post','reply') )";
 
-		$params = [ now() ];
+		$params = array_merge( [ now() ], $read_p_params, $read_r_params );
 
 		// Carry the block fragment's own params: past INLINE_CAP it switches to
 		// a `blocker_id = %d` subquery, which the old per-method copies dropped.
@@ -497,7 +505,9 @@ class Notification extends Model {
 			$ids = array_values( array_unique( $post_keys ) );
 			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
-			$dead_posts = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status <> 'publish' AND id IN ({$in})", $ids ) ) );
+			[ $read, $read_params ] = Space::content_visibility_sql( $viewer_id, 's' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed tables, %d placeholders, $read from content_visibility_sql().
+			$dead_posts = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT p.id FROM ' . \Jetonomy\table( 'posts' ) . " p WHERE p.id IN ({$in}) AND ( p.status <> 'publish' OR NOT EXISTS ( SELECT 1 FROM " . \Jetonomy\table( 'spaces' ) . " s WHERE s.id = p.space_id AND {$read} ) )", ...array_merge( $ids, $read_params ) ) ) );
 		}
 		$dead_replies = array();
 		$live_replies = array();
@@ -505,7 +515,9 @@ class Notification extends Model {
 			$ids = array_values( array_unique( $reply_keys ) );
 			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
-			$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT r.id, ( r.status <> \'publish\' OR p.status <> \'publish\' ) AS dead FROM ' . \Jetonomy\table( 'replies' ) . ' r INNER JOIN ' . \Jetonomy\table( 'posts' ) . " p ON p.id = r.post_id WHERE r.id IN ({$in})", $ids ) );
+			[ $read, $read_params ] = Space::content_visibility_sql( $viewer_id, 's' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed tables, %d placeholders, $read from content_visibility_sql().
+			$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT r.id, ( r.status <> \'publish\' OR p.status <> \'publish\' OR NOT EXISTS ( SELECT 1 FROM ' . \Jetonomy\table( 'spaces' ) . " s WHERE s.id = p.space_id AND {$read} ) ) AS dead FROM " . \Jetonomy\table( 'replies' ) . ' r INNER JOIN ' . \Jetonomy\table( 'posts' ) . " p ON p.id = r.post_id WHERE r.id IN ({$in})", ...array_merge( $read_params, $ids ) ) );
 			foreach ( $rows as $row ) {
 				$live_replies[] = (int) $row->id;
 				if ( (int) $row->dead ) {

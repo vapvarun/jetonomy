@@ -239,6 +239,7 @@ class Model_Tests {
 		$this->test_media_cleanup_scope();
 		$this->test_category_space_count();
 		$this->test_category_hierarchy_rules();
+		$this->test_notification_space_read_gate();
 		$this->test_import_map();
 		$this->test_recount_backfill();
 
@@ -1861,6 +1862,45 @@ class Model_Tests {
 			delete_option( 'jetonomy_media_cleanup_report' );
 		} else {
 			update_option( 'jetonomy_media_cleanup_report', $previous, false );
+		}
+	}
+
+	/**
+	 * NV: a notification about a topic in a private space disappears for a
+	 * member who can no longer read that space, on the Jetonomy list and the
+	 * host bell twin alike (Basecamp 10345420194).
+	 */
+	private function test_notification_space_read_gate(): void {
+		global $wpdb;
+		$suffix  = wp_generate_password( 6, false, false );
+		$stay    = (int) wp_insert_user( [ 'user_login' => 'jt_qa_nv_stay_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'nv-stay-' . $suffix . '@example.test', 'role' => 'subscriber' ] );
+		$leave   = (int) wp_insert_user( [ 'user_login' => 'jt_qa_nv_leave_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'nv-leave-' . $suffix . '@example.test', 'role' => 'subscriber' ] );
+		$space   = Space::create( [ 'title' => 'QA NV Private', 'slug' => 'jt-qa-nv-' . $suffix, 'author_id' => 1, 'type' => 'forum', 'visibility' => 'private' ] );
+		$post    = 0;
+
+		try {
+			SpaceMember::add( (int) $space, $stay, 'member' );
+			SpaceMember::add( (int) $space, $leave, 'member' );
+			$post = (int) Post::create( [ 'space_id' => (int) $space, 'author_id' => 1, 'title' => 'QA NV topic', 'slug' => 'jt-qa-nv-topic-' . $suffix, 'content' => '<p>x</p>', 'status' => 'publish' ] );
+			foreach ( [ $stay, $leave ] as $uid ) {
+				Notification::create( [ 'user_id' => $uid, 'actor_id' => 1, 'type' => 'new_post_in_sub', 'object_type' => 'post', 'object_id' => $post, 'message' => 'QA NV' ] );
+			}
+			$sees = static fn( int $uid ): bool => in_array( $post, array_map( static fn( $n ) => (int) $n->object_id, Notification::list_for_user( $uid, 50 ) ), true );
+			$bell = static fn( int $uid ): bool => (bool) Notification::targets_visible( $uid, [ 'k' => [ 'type' => 'new_post_in_sub', 'object_type' => 'post', 'object_id' => $post, 'actor_id' => 1 ] ] )['k'];
+
+			$this->check( 'NV1: a member sees the private-space notification (list and bell)', $sees( $leave ) && $bell( $leave ) );
+			SpaceMember::remove( (int) $space, $leave );
+			$this->check( 'NV2: after removal it is gone from the Jetonomy list', ! $sees( $leave ) );
+			$this->check( 'NV3: and the bell twin agrees', ! $bell( $leave ) );
+			$this->check( 'NV4: a member who stayed still sees it', $sees( $stay ) && $bell( $stay ) );
+		} finally {
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}jt_notifications WHERE message = %s AND user_id IN (%d,%d)", 'QA NV', $stay, $leave ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			if ( $space ) {
+				\Jetonomy\Space_Purge::purge( (int) $space );
+			}
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+			wp_delete_user( $stay );
+			wp_delete_user( $leave );
 		}
 	}
 
