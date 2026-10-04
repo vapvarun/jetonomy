@@ -76,10 +76,21 @@ done < <(grep -rEn \
 	| grep -v '\.min\.js' \
 	|| true)
 
+# Classic scripts (no ES `import`) translate with wp.i18n, so an English
+# fallback after a localized lookup (`i18n.key || 'Saved!'`) or a
+# key-plus-fallback helper means a string is not in the JS translation files.
+# Script modules (view.js and friends) cannot use wp.i18n and keep fallbacks.
+while IFS= read -r file; do
+	while IFS= read -r line; do
+		echo "$file:$line"
+		FAILED=1
+	done < <(grep -nE "\|\|\s*['\"][A-Z][a-z]+[ a-z.!?,…]|\b(jtI18n|lbI18n)\(" "$file" | grep -v '^\s*[0-9]*:\s*\(//\|\*\)' || true)
+done < <(grep -rL '^import ' assets/js --include='*.js' | grep -v '\.min\.js' || true)
+
 if [[ "$FAILED" -ne 0 ]]; then
 	echo ""
 	echo "FAILED: literal user-facing string(s) found in assets/js/."
-	echo "Localize via window.jetonomyData.i18n / state.i18n / jetonomyHeader.i18n."
+	echo "Classic scripts: wp.i18n.__() + script_translations(). Modules: state.i18n / jetonomyData.i18n."
 	echo "See docs/architecture/I18N.md."
 	exit 1
 fi
