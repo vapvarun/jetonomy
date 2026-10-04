@@ -53,8 +53,8 @@ if ( ! is_user_logged_in() ) :
 			<h2 class="jt-home-welcome-title"><?php echo esc_html( $jt_welcome_heading ); ?></h2>
 			<p class="jt-home-welcome-sub"><?php echo esc_html( $jt_welcome_sub ); ?></p>
 			<div class="jt-home-welcome-pulse">
-				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['members'] ) ); ?></strong> <?php echo esc_html( \Jetonomy\jetonomy_label( 'member', 1 !== (int) $jt_pulse['members'], true ) ); ?></span>
-				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts'] ) ); ?></strong> <?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $jt_pulse['posts'], true ) ); ?></span>
+				<span class="jt-pulse-stat"><?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $jt_pulse['members'], 'member' ) ), '<strong>' . esc_html( number_format_i18n( (int) $jt_pulse['members'] ) ) . '</strong>' ), array( 'strong' => array() ) ); ?></span>
+				<span class="jt-pulse-stat"><?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $jt_pulse['posts'], 'topic' ) ), '<strong>' . esc_html( number_format_i18n( (int) $jt_pulse['posts'] ) ) . '</strong>' ), array( 'strong' => array() ) ); ?></span>
 				<?php if ( $jt_pulse['posts_week'] > 0 ) : ?>
 					<span class="jt-pulse-stat jt-pulse-stat--live"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts_week'] ) ); ?></strong> <?php esc_html_e( 'this week', 'jetonomy' ); ?></span>
 				<?php endif; ?>

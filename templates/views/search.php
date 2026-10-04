@@ -410,7 +410,7 @@ $crumbs = [
 												<div class="jt-space-card-excerpt jt-mt-sm"><?php echo esc_html( wp_trim_words( $space->description, 12 ) ); ?></div>
 											<?php endif; ?>
 											<div class="jt-space-card-stat jt-mt-sm">
-												<?php echo esc_html( number_format_i18n( (int) $space->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $space->post_count, true ) ); ?>
+												<?php echo esc_html( \Jetonomy\count_label( (int) $space->post_count, 'topic' ) ); ?>
 											</div>
 										</div>
 									</div>

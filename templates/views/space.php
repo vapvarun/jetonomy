@@ -462,7 +462,7 @@ $crumbs[] = [
 									<span class="jt-subspaces__name"><?php echo esc_html( $jt_sub->title ); ?></span>
 									<span class="jt-subspaces__count">
 										<?php
-										echo esc_html( number_format_i18n( (int) $jt_sub->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $jt_sub->post_count, true ) );
+										echo esc_html( \Jetonomy\count_label( (int) $jt_sub->post_count, 'topic' ) );
 										?>
 									</span>
 								</a>

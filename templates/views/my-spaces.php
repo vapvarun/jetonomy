@@ -120,12 +120,11 @@ $crumbs = array(
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
 									<?php
-									echo esc_html( number_format_i18n( (int) $sp->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $sp->post_count, true ) );
+									echo esc_html( \Jetonomy\count_label( (int) $sp->post_count, 'topic' ) );
 									?>
 									·
 									<?php
-									/* translators: 1: the count; 2: the label of the item (the configured noun). */
-									echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $sp->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $sp->member_count, true ) ) );
+									echo esc_html( \Jetonomy\count_label( (int) $sp->member_count, 'member' ) );
 									?>
 								</p>
 							</a>
@@ -170,12 +169,11 @@ $crumbs = array(
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
 									<?php
-									echo esc_html( number_format_i18n( (int) $sp->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $sp->post_count, true ) );
+									echo esc_html( \Jetonomy\count_label( (int) $sp->post_count, 'topic' ) );
 									?>
 									·
 									<?php
-									/* translators: 1: the count; 2: the label of the item (the configured noun). */
-									echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $sp->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $sp->member_count, true ) ) );
+									echo esc_html( \Jetonomy\count_label( (int) $sp->member_count, 'member' ) );
 									?>
 								</p>
 							</a>

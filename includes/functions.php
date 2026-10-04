@@ -258,6 +258,64 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 }
 
 /**
+ * A translatable "N nouns" phrase as a sprintf format with %s for the number,
+ * e.g. "%s topics", so callers can style the number (wrap it in <strong>).
+ *
+ * Built-in nouns go through _n(), so languages with three or more plural
+ * forms (Polish, Russian, Arabic) get every form from their translation. A
+ * label the owner renamed (or one a filter changes) only has the singular and
+ * plural the owner typed, so it falls back to "number + label" in the
+ * owner's words - the best that is possible with two forms (Basecamp
+ * 10369320225).
+ *
+ * @param int    $count Number being counted.
+ * @param string $noun  One of: space, topic, reply, member, category.
+ * @return string Format containing one %s.
+ */
+function count_label_format( int $count, string $noun ): string {
+	$noun     = strtolower( $noun );
+	$noun     = isset( label_defaults()[ $noun ] ) ? $noun : 'space';
+	$settings = get_option( 'jetonomy_settings', array() );
+	$renamed  = '' !== trim( (string) ( $settings[ $noun . '_label_singular' ] ?? '' ) . (string) ( $settings[ $noun . '_label_plural' ] ?? '' ) )
+		|| has_filter( 'jetonomy_label' )
+		|| ( 'space' === $noun && has_filter( 'jetonomy_space_label' ) );
+
+	if ( $renamed ) {
+		return '%s ' . str_replace( '%', '%%', jetonomy_label( $noun, 1 !== $count, true ) );
+	}
+
+	switch ( $noun ) {
+		case 'topic':
+			/* translators: %s: number of topics. */
+			return _n( '%s topic', '%s topics', $count, 'jetonomy' );
+		case 'reply':
+			/* translators: %s: number of replies. */
+			return _n( '%s reply', '%s replies', $count, 'jetonomy' );
+		case 'member':
+			/* translators: %s: number of members. */
+			return _n( '%s member', '%s members', $count, 'jetonomy' );
+		case 'category':
+			/* translators: %s: number of categories. */
+			return _n( '%s category', '%s categories', $count, 'jetonomy' );
+		default:
+			/* translators: %s: number of spaces. */
+			return _n( '%s space', '%s spaces', $count, 'jetonomy' );
+	}
+}
+
+/**
+ * "N nouns" with the number formatted for the locale, plural-correct in every
+ * language. See count_label_format().
+ *
+ * @param int    $count Number being counted.
+ * @param string $noun  One of: space, topic, reply, member, category.
+ * @return string Unescaped.
+ */
+function count_label( int $count, string $noun ): string {
+	return sprintf( count_label_format( $count, $noun ), number_format_i18n( $count ) );
+}
+
+/**
  * The site owner's label for a "Space". Back-compat wrapper over jetonomy_label()
  * kept so all existing space_label() call sites (150+) keep working untouched.
  *

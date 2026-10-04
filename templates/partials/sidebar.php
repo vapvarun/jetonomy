@@ -332,12 +332,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 									$v
 								)
 								. ' · '
-								. sprintf(
-									/* translators: 1: the count; 2: the label of the item (the configured noun). */
-									__( '%1$d %2$s', 'jetonomy' ),
-									$r,
-									\Jetonomy\jetonomy_label( 'reply', 1 !== (int) $r, true )
-								)
+								. \Jetonomy\count_label( (int) $r, 'reply' )
 							);
 							?>
 						</div>

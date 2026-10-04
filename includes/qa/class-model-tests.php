@@ -240,6 +240,7 @@ class Model_Tests {
 		$this->test_category_space_count();
 		$this->test_category_hierarchy_rules();
 		$this->test_notification_space_read_gate();
+		$this->test_count_label_plurals();
 		$this->test_import_map();
 		$this->test_recount_backfill();
 
@@ -1863,6 +1864,31 @@ class Model_Tests {
 		} else {
 			update_option( 'jetonomy_media_cleanup_report', $previous, false );
 		}
+	}
+
+	/**
+	 * PL: count phrases go through _n() so languages with 3+ plural forms
+	 * translate every count; a renamed noun falls back to the owner's words
+	 * (Basecamp 10369320225).
+	 */
+	private function test_count_label_plurals(): void {
+		$polish = static function ( $t, $s, $p, $n, $d ) {
+			if ( 'jetonomy' !== $d || '%s topic' !== $s ) {
+				return $t;
+			}
+			if ( 1 === $n ) {
+				return '%s temat';
+			}
+			return ( $n % 10 >= 2 && $n % 10 <= 4 && ( $n % 100 < 10 || $n % 100 >= 20 ) ) ? '%s tematy' : '%s tematów';
+		};
+		add_filter( 'ngettext', $polish, 10, 5 );
+		$this->check( 'PL1: a 3-form language gets each form (1/2/5/22)', '1 temat|2 tematy|5 tematów|22 tematy' === implode( '|', array_map( static fn( $n ) => \Jetonomy\count_label( $n, 'topic' ), [ 1, 2, 5, 22 ] ) ) );
+		remove_filter( 'ngettext', $polish, 10 );
+
+		$saved = get_option( 'jetonomy_settings', [] );
+		update_option( 'jetonomy_settings', array_merge( (array) $saved, [ 'topic_label_singular' => 'Thread', 'topic_label_plural' => 'Threads' ] ) );
+		$this->check( 'PL2: a renamed noun uses the owner\'s singular and plural', '1 thread|5 threads' === \Jetonomy\count_label( 1, 'topic' ) . '|' . \Jetonomy\count_label( 5, 'topic' ) );
+		update_option( 'jetonomy_settings', $saved );
 	}
 
 	/**

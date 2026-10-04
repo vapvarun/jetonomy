@@ -102,7 +102,7 @@ $crumbs = [
 				<span class="jt-tag jt-tag-hero"><?php echo esc_html( $tag->name ); ?></span>
 				<span class="jt-tag-count-label">
 					<?php
-					echo esc_html( number_format_i18n( (int) $tag->post_count ) . ' ' . \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $tag->post_count, true ) );
+					echo esc_html( \Jetonomy\count_label( (int) $tag->post_count, 'topic' ) );
 					?>
 				</span>
 				<?php

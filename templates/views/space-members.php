@@ -147,8 +147,7 @@ $role_labels = [
 					</h1>
 					<p class="jt-page-subtitle">
 						<?php
-						/* translators: 1: the count; 2: the label of the item (the configured noun). */
-						echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $space->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $space->member_count, true ) ) );
+						echo esc_html( \Jetonomy\count_label( (int) $space->member_count, 'member' ) );
 						?>
 					</p>
 				</div>

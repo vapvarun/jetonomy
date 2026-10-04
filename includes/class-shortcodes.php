@@ -417,7 +417,7 @@ class Shortcodes {
 			if ( ! empty( $space->description ) ) {
 				$out .= '<span class="jt-shortcode-space-desc">' . esc_html( wp_trim_words( $space->description, 12 ) ) . '</span>';
 			}
-			$out .= '<span class="jt-shortcode-space-stats">' . (int) $space->post_count . ' ' . esc_html( jetonomy_label( 'topic', 1 !== (int) $space->post_count, true ) ) . '</span>';
+			$out .= '<span class="jt-shortcode-space-stats">' . esc_html( \Jetonomy\count_label( (int) $space->post_count, 'topic' ) ) . '</span>';
 			$out .= '</a>';
 		}
 		$out .= '</div>';
@@ -498,8 +498,9 @@ class Shortcodes {
 			$out .= '<p>' . esc_html( wp_trim_words( $profile->bio, 20 ) ) . '</p>';
 		}
 		$out .= '<div class="jt-shortcode-profile-stats">';
-		$out .= '<span>' . (int) ( $profile->reputation ?? 0 ) . ' rep</span>';
-		$out .= '<span>' . (int) ( $profile->post_count ?? 0 ) . ' ' . esc_html( jetonomy_label( 'topic', 1 !== (int) ( $profile->post_count ?? 0 ), true ) ) . '</span>';
+		/* translators: %s: reputation points. */
+		$out .= '<span>' . esc_html( sprintf( _n( '%s point', '%s points', (int) ( $profile->reputation ?? 0 ), 'jetonomy' ), number_format_i18n( (int) ( $profile->reputation ?? 0 ) ) ) ) . '</span>';
+		$out .= '<span>' . esc_html( \Jetonomy\count_label( (int) ( $profile->post_count ?? 0 ), 'topic' ) ) . '</span>';
 		$out .= '</div></div>';
 
 		return $out;
