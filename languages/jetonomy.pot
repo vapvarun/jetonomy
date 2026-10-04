@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-04T16:02:42+00:00\n"
+"POT-Creation-Date: 2026-10-04T16:17:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -834,7 +834,7 @@ msgstr ""
 #: includes/admin/views/tags.php:46
 #: templates/partials/compose-fields.php:118
 #: templates/views/search.php:302
-#: templates/views/search.php:424
+#: templates/views/search.php:420
 #: templates/views/single-post.php:545
 msgid "Tags"
 msgstr ""
@@ -1146,7 +1146,7 @@ msgstr ""
 
 #: includes/admin/views/categories.php:51
 #: includes/admin/views/categories.php:300
-#: includes/helpers.php:659
+#: includes/helpers.php:645
 #: includes/models/class-space.php:1544
 msgid "Hidden"
 msgstr ""
@@ -1285,7 +1285,7 @@ msgstr[1] ""
 #: includes/class-template-loader.php:415
 #: includes/class-template-loader.php:1247
 #: includes/class-template-loader.php:1556
-#: templates/partials/sidebar.php:237
+#: templates/partials/sidebar.php:239
 #: templates/views/space-edit.php:88
 #: templates/views/space.php:345
 #, php-format
@@ -1573,7 +1573,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:135
 #: includes/admin/views/moderation.php:246
 #: includes/admin/views/replies.php:272
-#: includes/functions.php:1392
+#: includes/functions.php:1404
 #: templates/views/moderation.php:303
 #: templates/views/space-moderation.php:213
 msgid "Trash"
@@ -1583,7 +1583,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:134
 #: includes/admin/views/moderation.php:245
 #: includes/admin/views/replies.php:285
-#: includes/functions.php:1391
+#: includes/functions.php:1403
 #: templates/partials/moderation/flag-card.php:31
 #: templates/views/moderation.php:212
 msgid "Spam"
@@ -2526,7 +2526,7 @@ msgstr ""
 #: includes/admin/views/spaces.php:212
 #: includes/integrations/class-buddypress.php:805
 #: includes/integrations/class-buddypress.php:918
-#: templates/partials/sidebar.php:195
+#: templates/partials/sidebar.php:197
 msgid "Forum"
 msgstr ""
 
@@ -2536,7 +2536,7 @@ msgstr ""
 #: includes/admin/views/spaces.php:164
 #: includes/admin/views/spaces.php:213
 #: templates/partials/icon-picker.php:68
-#: templates/partials/sidebar.php:196
+#: templates/partials/sidebar.php:198
 msgid "Q&A"
 msgstr ""
 
@@ -2547,7 +2547,7 @@ msgstr ""
 #: includes/admin/views/spaces.php:165
 #: includes/admin/views/spaces.php:214
 #: templates/partials/icon-picker.php:73
-#: templates/partials/sidebar.php:197
+#: templates/partials/sidebar.php:199
 #: templates/partials/space-tabs.php:33
 msgid "Ideas"
 msgstr ""
@@ -4014,20 +4014,20 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:118
 #: includes/admin/views/spaces.php:83
-#: includes/functions.php:1445
+#: includes/functions.php:1457
 #: templates/partials/feed-card.php:114
 msgid "Open"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:119
 #: includes/admin/views/spaces.php:84
-#: includes/functions.php:1447
+#: includes/functions.php:1459
 msgid "Requires Approval"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:120
 #: includes/admin/views/spaces.php:85
-#: includes/functions.php:1449
+#: includes/functions.php:1461
 #: templates/views/space.php:366
 msgid "Invite Only"
 msgstr ""
@@ -4035,21 +4035,21 @@ msgstr ""
 #: includes/admin/views/space-edit.php:128
 #: includes/admin/views/spaces.php:93
 #: includes/admin/views/spaces.php:170
-#: includes/functions.php:1422
+#: includes/functions.php:1434
 msgid "Active"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:129
 #: includes/admin/views/spaces.php:94
 #: includes/admin/views/spaces.php:171
-#: includes/functions.php:1424
+#: includes/functions.php:1436
 msgid "Archived"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:130
 #: includes/admin/views/spaces.php:95
 #: includes/admin/views/spaces.php:172
-#: includes/functions.php:1426
+#: includes/functions.php:1438
 msgid "Locked"
 msgstr ""
 
@@ -5044,7 +5044,7 @@ msgstr[1] ""
 
 #. translators: %d: number of votes.
 #: includes/api/class-oembed-controller.php:247
-#: templates/partials/sidebar.php:331
+#: templates/partials/sidebar.php:333
 #, php-format
 msgid "%d vote"
 msgid_plural "%d votes"
@@ -5551,7 +5551,7 @@ msgid "Categories"
 msgstr ""
 
 #: includes/class-admin-bar.php:162
-#: templates/partials/sidebar.php:225
+#: templates/partials/sidebar.php:227
 msgid "Moderation queue"
 msgstr ""
 
@@ -6947,20 +6947,20 @@ msgid_plural "%s spaces"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/functions.php:349
+#: includes/functions.php:361
 msgid "Ask a Question"
 msgstr ""
 
-#: includes/functions.php:352
+#: includes/functions.php:364
 msgid "Share an Idea"
 msgstr ""
 
-#: includes/functions.php:355
+#: includes/functions.php:367
 msgid "New Status"
 msgstr ""
 
 #. translators: %s: the singular label of the item (the configured noun).
-#: includes/functions.php:359
+#: includes/functions.php:371
 #: includes/notifications/class-notifier.php:1611
 #: includes/notifications/class-notifier.php:1613
 #: includes/notifications/class-notifier.php:1620
@@ -6969,21 +6969,21 @@ msgid "New %s"
 msgstr ""
 
 #. translators: 1: visibility level, e.g. "Private". 2: what it means.
-#: includes/functions.php:1348
+#: includes/functions.php:1360
 #, php-format
 msgctxt "space visibility option"
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: includes/functions.php:1389
+#: includes/functions.php:1401
 msgid "Published"
 msgstr ""
 
-#: includes/functions.php:1390
+#: includes/functions.php:1402
 msgid "Pending"
 msgstr ""
 
-#: includes/functions.php:1395
+#: includes/functions.php:1407
 #: templates/views/notifications.php:102
 #: templates/views/search.php:299
 msgid "All"
@@ -7006,15 +7006,9 @@ msgid "No %s in this category yet."
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
-#: includes/helpers.php:657
+#: includes/helpers.php:643
 #, php-format
 msgid "Hidden %s. Only admins and members can see this listing."
-msgstr ""
-
-#. translators: %s: display name of the space's owning admin.
-#: includes/helpers.php:698
-#, php-format
-msgid "Managed by %s"
 msgstr ""
 
 #: includes/import/class-asgaros-importer.php:272
@@ -7172,7 +7166,7 @@ msgstr ""
 
 #. translators: %s: the plural label of the item (the configured noun).
 #: includes/integrations/class-buddypress.php:891
-#: templates/partials/sidebar.php:220
+#: templates/partials/sidebar.php:222
 #, php-format
 msgid "View all %s"
 msgstr ""
@@ -9289,34 +9283,34 @@ msgstr ""
 msgid "Unaccept"
 msgstr ""
 
-#: templates/partials/sidebar.php:174
 #: templates/partials/sidebar.php:176
+#: templates/partials/sidebar.php:178
 msgid "About"
 msgstr ""
 
-#: templates/partials/sidebar.php:198
+#: templates/partials/sidebar.php:200
 msgid "Social"
 msgstr ""
 
-#: templates/partials/sidebar.php:309
 #: templates/partials/sidebar.php:311
+#: templates/partials/sidebar.php:313
 #: assets/js/blocks-editor.js:123
 msgid "Trending"
 msgstr ""
 
 #. translators: %s: plural member label.
-#: templates/partials/sidebar.php:370
 #: templates/partials/sidebar.php:372
+#: templates/partials/sidebar.php:374
 #, php-format
 msgid "Top %s"
 msgstr ""
 
-#: templates/partials/sidebar.php:407
+#: templates/partials/sidebar.php:409
 msgid "View full leaderboard"
 msgstr ""
 
-#: templates/partials/sidebar.php:437
 #: templates/partials/sidebar.php:439
+#: templates/partials/sidebar.php:441
 msgid "Popular Tags"
 msgstr ""
 
@@ -10154,12 +10148,8 @@ msgstr ""
 msgid "Browse all %s"
 msgstr ""
 
-#: templates/views/search.php:388
-msgid "votes"
-msgstr ""
-
 #. translators: %s: the plural space label the site owner configured (e.g. spaces, groups).
-#: templates/views/search.php:445
+#: templates/views/search.php:441
 #, php-format
 msgid "Enter a search term above to find discussions, %s, and tags."
 msgstr ""
