@@ -177,26 +177,40 @@ class Community_Notification_Contract {
 	 * @return array<string,array<string,mixed>>
 	 */
 	public static function filter_types( array $types ): array {
-		$defs = array(
+		$topic   = \Jetonomy\jetonomy_label( 'topic', false, true );
+		$topics  = \Jetonomy\jetonomy_label( 'topic', true, true );
+		$reply   = \Jetonomy\jetonomy_label( 'reply', false, true );
+		$replies = \Jetonomy\jetonomy_label( 'reply', true, true );
+		$spaces  = \Jetonomy\space_label( true, true );
+		$defs    = array(
 			'new_post_in_sub'     => array(
-				'label'       => __( 'New topics in spaces you follow', 'jetonomy' ),
-				'description' => __( 'A new topic was posted in a space you subscribed to.', 'jetonomy' ),
+				/* translators: 1: plural topic label, 2: plural space label. */
+				'label'       => ucfirst( sprintf( __( 'New %1$s in %2$s you follow', 'jetonomy' ), $topics, $spaces ) ),
+				/* translators: 1: singular topic label, 2: singular space label. */
+				'description' => sprintf( __( 'A new %1$s was posted in a %2$s you subscribed to.', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ),
 			),
 			'reply_to_post'       => array(
-				'label'       => __( 'Replies to your topics', 'jetonomy' ),
-				'description' => __( 'Someone replied to a topic you started.', 'jetonomy' ),
+				/* translators: 1: plural reply label, 2: plural topic label. */
+				'label'       => ucfirst( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), $replies, $topics ) ),
+				/* translators: 1: singular reply label, 2: singular topic label. */
+				'description' => sprintf( __( 'Someone added a %1$s to a %2$s you started.', 'jetonomy' ), $reply, $topic ),
 			),
 			'reply_to_reply'      => array(
-				'label'       => __( 'Replies to your comments', 'jetonomy' ),
-				'description' => __( 'Someone replied to your comment.', 'jetonomy' ),
+				/* translators: 1: plural reply label, 2: plural reply label. */
+				'label'       => ucfirst( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), $replies, $replies ) ),
+				/* translators: %s: singular reply label. */
+				'description' => sprintf( __( 'Someone responded to your %s.', 'jetonomy' ), $reply ),
 			),
 			'vote_on_post'        => array(
-				'label'       => __( 'Votes on your topics', 'jetonomy' ),
-				'description' => __( 'Someone voted on your topic.', 'jetonomy' ),
+				/* translators: %s: plural topic label. */
+				'label'       => sprintf( __( 'Votes on your %s', 'jetonomy' ), $topics ),
+				/* translators: %s: singular topic label. */
+				'description' => sprintf( __( 'Someone voted on your %s.', 'jetonomy' ), $topic ),
 			),
 			'reaction'            => array(
 				'label'       => __( 'Reactions', 'jetonomy' ),
-				'description' => __( 'Someone reacted to your post.', 'jetonomy' ),
+				/* translators: 1: singular topic label, 2: singular reply label. */
+				'description' => sprintf( __( 'Someone reacted to your %1$s or %2$s.', 'jetonomy' ), $topic, $reply ),
 			),
 			'flag_resolved'       => array(
 				'label'       => __( 'Report updates', 'jetonomy' ),
