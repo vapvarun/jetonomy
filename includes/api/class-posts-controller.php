@@ -703,15 +703,9 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
+		// @mentions are notified by the create-hook listener (Mentions::notify_for),
+		// only once the post is published - including later, on approval.
 		$post = Post::find( $post_id );
-
-		// Parse @mentions and notify — only for published posts.
-		if ( 'draft' !== ( $post_data['status'] ?? 'publish' ) ) {
-			$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
-			if ( ! empty( $mentioned ) ) {
-				\Jetonomy\Mentions::notify( $mentioned, $user_id, 'post', $post_id, $title, (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
-			}
-		}
 
 		return new WP_REST_Response( $this->prepare_post( $post ), 201 );
 	}

@@ -2133,8 +2133,9 @@
         "int $space_id",
         "WP_REST_Request|null $request"
       ],
-      "where": "includes/api/class-posts-controller.php (REST create); includes/models/class-post.php Post::publish_scheduled() (cron-published scheduled post, $request null); includes/class-abilities.php (programmatic create, $request null)",
-      "consumed_by": "jetonomy-pro"
+      "where": "includes/api/class-posts-controller.php (REST create); includes/models/class-post.php Post::publish_scheduled() (cron-published scheduled post, $request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending -> publish approval, $request null)",
+      "consumed_by": "jetonomy-pro",
+      "audit_notes": "2.0.1: also fires at approval of held content. Fires at creation for pending/spam too, so every announcing listener (Notifier, Mentions::notify_for, Activity_Tracker, BuddyPress/FluentCommunity, Pro webhooks) gates on status = publish."
     },
     {
       "name": "jetonomy_after_create_reply",
@@ -2145,9 +2146,9 @@
         "int $post_id",
         "WP_REST_Request|null $request"
       ],
-      "where": "includes/api/class-replies-controller.php (REST create); includes/notifications/class-notifier.php on_reply_from_email() ($request null); includes/class-abilities.php (programmatic create, $request null)",
+      "where": "includes/api/class-replies-controller.php (REST create); includes/notifications/class-notifier.php on_reply_from_email() ($request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending -> publish approval, $request null)",
       "consumed_by": "jetonomy-pro",
-      "audit_notes": "1.7.1: widened 2 -> 3 args to mirror jetonomy_after_create_post. The REST create path (class-replies-controller.php) now passes $request so jetonomy-pro's attachments extension can read attachment_ids from a JSON body on POST /posts/{id}/replies (previously silently dropped for mobile/JSON clients, which never populate $_POST)."
+      "audit_notes": "2.0.1: also fires at approval of a held reply; announcing listeners gate on status = publish. 1.7.1: widened 2 -> 3 args to mirror jetonomy_after_create_post. The REST create path (class-replies-controller.php) now passes $request so jetonomy-pro's attachments extension can read attachment_ids from a JSON body on POST /posts/{id}/replies (previously silently dropped for mobile/JSON clients, which never populate $_POST)."
     },
     {
       "name": "jetonomy_after_create_space",

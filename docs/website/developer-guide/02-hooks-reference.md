@@ -13,7 +13,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
-| `jetonomy_after_create_post`<br>_action_ | - | - | `includes/class-abilities.php` |
+| `jetonomy_after_create_post`<br>_action_ | Fires when a post is created (including one held for approval or flagged as spam) and again, with a null request, when a moderator approves a held post. Read the post's status: announce, notify or sync only when it is `publish`. Since 2.0.1 the approval fire is new. | `post_id, space_id, request` | `includes/class-abilities.php` |
 | `jetonomy_after_delete_post`<br>_action_ | Fires after a post is deleted. | - | `includes/api/class-posts-controller.php` |
 | `jetonomy_after_post_article`<br>_action_ | Named `_article` (not `_content`) to avoid collision with the existing `jetonomy_after_post_content` FILTER that injects HTML inside the… | `post_id` | `templates/views/single-post.php` |
 | `jetonomy_after_post_content`<br>_filter_ | - | `post_id, content` | `templates/views/single-post.php` |
@@ -38,7 +38,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
-| `jetonomy_after_create_reply`<br>_action_ | - | - | `includes/class-abilities.php` |
+| `jetonomy_after_create_reply`<br>_action_ | Fires when a reply is created (including one held for approval or flagged as spam) and again, with a null request, when a moderator approves a held reply. Read the reply's status: announce, notify or sync only when it is `publish`. Since 2.0.1 the approval fire is new. | `reply_id, post_id, request` | `includes/class-abilities.php` |
 | `jetonomy_after_delete_reply`<br>_action_ | Fires after a reply is deleted. | - | `includes/api/class-replies-controller.php` |
 | `jetonomy_after_replies`<br>_action_ | Fires after the replies list renders. | `post_id` | `templates/views/single-post.php` |
 | `jetonomy_after_reply_content`<br>_filter_ | Filter appended after a reply's body content. File Attachments renders its attachment card strip here - the reply-side mirror of `jetonomy_after_post_content`. Since 1.7.0. | `content, reply` | `templates/partials/reply-card.php` |

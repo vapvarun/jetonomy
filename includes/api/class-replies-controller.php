@@ -396,13 +396,9 @@ class Replies_Controller extends Base_Controller {
 		// $request->get_param() on the reply path work the same as on posts —
 		// e.g. attachment_ids from a JSON REST body (the mobile app), which the
 		// old 2-arg fire silently dropped (see attachments extension).
+		// @mentions are notified by the create-hook listener (Mentions::notify_for)
+		// once the reply is published, so a held reply mentions nobody until approved.
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, $request );
-
-		// Parse @mentions and notify.
-		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
-		if ( ! empty( $mentioned ) ) {
-			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ), (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
-		}
 
 		$reply = Reply::find( $reply_id );
 

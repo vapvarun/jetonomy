@@ -244,6 +244,40 @@ class Mentions {
 	}
 
 	/**
+	 * Notify everyone @mentioned in a post or reply, once it is published.
+	 *
+	 * The one entry point for content mentions. Called from the create-hook
+	 * listeners in Notifier, which run when content goes live - on direct
+	 * publish, on approval of held content, and on a scheduled/draft publish -
+	 * so a mention in content that is pending, spam or draft never notifies.
+	 *
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int    $object_id   Post or reply ID.
+	 */
+	public static function notify_for( string $object_type, int $object_id ): void {
+		$object = 'reply' === $object_type ? Models\Reply::find( $object_id ) : Models\Post::find( $object_id );
+		if ( ! $object || 'publish' !== ( $object->status ?? '' ) ) {
+			return;
+		}
+
+		$user_ids = self::extract_user_ids( (string) ( $object->content ?? '' ) );
+		if ( empty( $user_ids ) ) {
+			return;
+		}
+
+		$post = 'reply' === $object_type ? Models\Post::find( (int) $object->post_id ) : $object;
+		self::notify(
+			$user_ids,
+			(int) $object->author_id,
+			$object_type,
+			$object_id,
+			'reply' === $object_type ? ( $post->title ?? __( 'your reply', 'jetonomy' ) ) : (string) $object->title,
+			(int) ( $post->space_id ?? 0 ),
+			(bool) ( $post->is_private ?? false )
+		);
+	}
+
+	/**
 	 * Notify mentioned users.
 	 */
 	public static function notify( array $user_ids, int $actor_id, string $object_type, int $object_id, string $context_title, ?int $space_id = null, bool $is_private = false ): void {

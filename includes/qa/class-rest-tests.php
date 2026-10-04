@@ -150,6 +150,7 @@ class REST_Tests {
 		$this->run_group_j_blocks();
 		$this->run_group_k_delete_account();
 		$this->test_subscriber_actions();
+		$this->test_approval_lifecycle_AP();
 		$this->test_ajax_reorder_spaces_X4();
 		$this->test_hook_jetonomy_post_publish_transition_H48();
 		$this->test_hook_jetonomy_reply_publish_transition_H49();
@@ -1533,6 +1534,96 @@ class REST_Tests {
 		}
 
 		return $response;
+	}
+
+
+	/**
+	 * Content held for approval announces nothing until a moderator approves it,
+	 * then announces exactly once, credited to the author (AP1-AP8).
+	 *
+	 * The create hook fired only at creation, while the content was pending, so
+	 * approval never notified subscribers or reached BuddyNext - but @mentions
+	 * already notified and activity/reputation were already awarded for content
+	 * nobody could read yet.
+	 */
+	private function test_approval_lifecycle_AP(): void {
+		global $wpdb;
+
+		if ( ! $this->test_user_id ) {
+			$this->skip( 'AP: approval lifecycle', 'no TL0 test user' );
+			return;
+		}
+
+		wp_set_current_user( $this->admin_id );
+		$space = $this->rest( 'POST', '/spaces', [
+			'title'    => 'QA-N approval space ' . wp_rand(),
+			'settings' => [ 'require_approval' => '1' ],
+		] );
+		$space_id = (int) ( $space->get_data()['id'] ?? 0 );
+		if ( 201 !== $space->get_status() || ! $space_id ) {
+			$this->check( 'AP: approval space created', false, wp_json_encode( $space->get_data() ) );
+			return;
+		}
+		$this->cleanup[] = [ 'type' => 'space_rest', 'id' => $space_id ];
+
+		$handle  = (string) get_userdata( $this->admin_id )->user_nicename;
+		$notif_t = table( 'notifications' );
+		$log_t   = table( 'activity_log' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$mentions = static function ( string $type, int $id ) use ( $wpdb, $notif_t ): int {
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notif_t} WHERE type = 'mention' AND object_type = %s AND object_id = %d", $type, $id ) );
+		};
+		$created = static function ( string $type, int $id ) use ( $wpdb, $log_t ): array {
+			return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM {$log_t} WHERE action = %s AND object_type = %s AND object_id = %d", 'created_' . $type, $type, $id ) ) );
+		};
+		// phpcs:enable
+
+		foreach ( [ 'post', 'reply' ] as $type ) {
+			if ( 'post' === $type ) {
+				$r = $this->rest( 'POST', "/spaces/{$space_id}/posts", [
+					'title'   => 'QA-N held post',
+					'content' => "<p>Hello @{$handle}</p>",
+					'type'    => 'discussion',
+				], $this->test_user_id );
+			} else {
+				// Admin's own post publishes (staff bypass), the member's reply is held.
+				wp_set_current_user( $this->admin_id );
+				$parent    = $this->rest( 'POST', "/spaces/{$space_id}/posts", [ 'title' => 'QA-N parent', 'content' => '<p>parent</p>', 'type' => 'discussion' ] );
+				$parent_id = (int) ( $parent->get_data()['id'] ?? 0 );
+				$r         = $this->rest( 'POST', "/posts/{$parent_id}/replies", [ 'content' => "<p>Hi @{$handle}</p>" ], $this->test_user_id );
+			}
+			$id = (int) ( $r->get_data()['id'] ?? 0 );
+			if ( 201 !== $r->get_status() || ! $id ) {
+				$this->check( "AP: member {$type} created in approval space", false, wp_json_encode( $r->get_data() ) );
+				continue;
+			}
+
+			$this->check( "AP: member {$type} is held as pending", 'pending' === ( $r->get_data()['status'] ?? '' ), (string) ( $r->get_data()['status'] ?? '' ) );
+			$this->check( "AP: pending {$type} sends no mention", 0 === $mentions( $type, $id ) );
+			$this->check( "AP: pending {$type} logs no activity / reputation", [] === $created( $type, $id ) );
+
+			// Approve as the admin: the activity must still be the author's.
+			wp_set_current_user( $this->admin_id );
+			$hook  = 'jetonomy_after_create_' . $type;
+			$fired = 0;
+			$probe = static function () use ( &$fired ) {
+				++$fired;
+			};
+			add_action( $hook, $probe );
+			\Jetonomy\Moderation\Moderation_Service::set_object_status( $this->admin_id, $type, $id, 'approve' );
+			remove_action( $hook, $probe );
+
+			$this->check( "AP: approving the {$type} fires its create hook once", 1 === $fired, (string) $fired );
+
+			$this->check( "AP: approved {$type} mentions exactly once", 1 === $mentions( $type, $id ), (string) $mentions( $type, $id ) );
+			$this->check(
+				"AP: approved {$type} activity logged once, for the author",
+				[ $this->test_user_id ] === $created( $type, $id ),
+				wp_json_encode( $created( $type, $id ) )
+			);
+		}
+
+		wp_set_current_user( $this->admin_id );
 	}
 
 

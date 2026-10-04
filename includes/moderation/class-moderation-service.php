@@ -640,6 +640,25 @@ class Moderation_Service {
 			Reply::update( $id, [ 'status' => $new_status ] );
 		}
 
+		// Approving content held for review is the moment it goes live, so it
+		// runs the same create hook a directly-published post/reply runs:
+		// subscriber notifications, @mentions, activity + reputation, webhooks,
+		// BuddyPress / FluentCommunity broadcasts. The hook already fired once at
+		// creation (data-attaching listeners such as polls and attachments need
+		// the request then), but every listener that announces content is
+		// publish-gated, so this is the first and only time they act. Null
+		// request, as in Post::publish_draft().
+		// ponytail: keyed on pending->publish, so re-approving a post that was
+		// live, then held, re-announces it; add a "first published" marker if
+		// holding live content becomes a common moderation flow.
+		if ( 'publish' === $new_status && 'pending' === ( $row->status ?? '' ) ) {
+			if ( 'post' === $type ) {
+				do_action( 'jetonomy_after_create_post', $id, (int) $row->space_id, null );
+			} else {
+				do_action( 'jetonomy_after_create_reply', $id, (int) $row->post_id, null );
+			}
+		}
+
 		// Single place every moderation path resolves pending flags. REST,
 		// admin AJAX (single + bulk), abilities, space-mod, and resolve_flag all
 		// funnel through here, so directly actioning content can no longer leave

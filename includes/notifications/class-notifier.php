@@ -372,7 +372,7 @@ class Notifier {
 	 * listened, so emailed replies were silently discarded. This mirrors the
 	 * REST controller's canonical post-create side-effects: row creation via
 	 * Reply::create() (counters + content_plain handled there), the
-	 * `jetonomy_after_create_reply` action (notifications), and @mention parsing.
+	 * `jetonomy_after_create_reply` action (notifications and @mentions).
 	 *
 	 * @param int    $post_id Forum post ID.
 	 * @param int    $user_id Author user ID.
@@ -424,12 +424,6 @@ class Notifier {
 		// WP_REST_Request, mirroring the post-create hook's null request arg
 		// (class-abilities.php, models/class-post.php).
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
-
-		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
-		if ( ! empty( $mentioned ) ) {
-			$post = \Jetonomy\Models\Post::find( $post_id );
-			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ), (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
-		}
 	}
 
 	/**
@@ -508,6 +502,8 @@ class Notifier {
 			return;
 		}
 
+		\Jetonomy\Mentions::notify_for( 'post', $post_id );
+
 		if ( Subscription::count_subscribers( 'space', $space_id ) > self::FANOUT_INLINE_MAX
 			&& $this->enqueue_fanout( 'jetonomy_fanout_post_subscribers', array( $post_id, $space_id ) ) ) {
 			return;
@@ -572,9 +568,13 @@ class Notifier {
 	public function on_reply_created( int $reply_id, int $post_id ): void {
 		$reply = Reply::find( $reply_id );
 		$post  = Post::find( $post_id );
-		if ( ! $reply || ! $post ) {
+		// Held, spam or trashed replies announce nothing; approval re-fires the
+		// create hook once the reply is live.
+		if ( ! $reply || ! $post || 'publish' !== ( $reply->status ?? '' ) ) {
 			return;
 		}
+
+		\Jetonomy\Mentions::notify_for( 'reply', $reply_id );
 
 		$actor_id  = (int) $reply->author_id;
 		$reply_url = $this->get_reply_url( $post, $reply_id );
@@ -652,7 +652,7 @@ class Notifier {
 	public function fanout_reply_subscribers( int $reply_id, int $post_id ): void {
 		$reply = Reply::find( $reply_id );
 		$post  = Post::find( $post_id );
-		if ( ! $reply || ! $post ) {
+		if ( ! $reply || ! $post || 'publish' !== ( $reply->status ?? '' ) ) {
 			return;
 		}
 
