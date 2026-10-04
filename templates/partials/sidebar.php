@@ -183,11 +183,11 @@ $bn_active = did_action( 'buddynext_loaded' );
 			<div class="jt-sidebar-stats">
 				<div class="jt-sidebar-stat">
 					<strong><?php echo (int) ( $space->post_count ?? 0 ); ?></strong>
-					<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></span>
+					<span><?php echo esc_html( \Jetonomy\count_noun( (int) ( $space->post_count ?? 0 ), 'topic' ) ); ?></span>
 				</div>
 				<div class="jt-sidebar-stat">
 					<strong><?php echo (int) ( $space->member_count ?? 0 ); ?></strong>
-					<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></span>
+					<span><?php echo esc_html( \Jetonomy\count_noun( (int) ( $space->member_count ?? 0 ), 'member' ) ); ?></span>
 				</div>
 			</div>
 			<?php

@@ -316,6 +316,18 @@ function count_label( int $count, string $noun ): string {
 }
 
 /**
+ * The noun alone, in the plural form that fits $count - for stats that print
+ * the number and its label as separate elements ("2" above "replies").
+ *
+ * @param int    $count Number the noun describes.
+ * @param string $noun  topic, reply, member, category or space.
+ * @return string
+ */
+function count_noun( int $count, string $noun ): string {
+	return trim( sprintf( count_label_format( $count, $noun ), '' ) );
+}
+
+/**
  * The site owner's label for a "Space". Back-compat wrapper over jetonomy_label()
  * kept so all existing space_label() call sites (150+) keep working untouched.
  *

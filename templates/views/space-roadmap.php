@@ -216,7 +216,7 @@ $space_url = \Jetonomy\route_url( 'space', $space->slug );
 							<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 								<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo esc_html( (int) $idea->vote_score ); ?></span>
 							<?php endif; ?>
-							<span><?php echo esc_html( (int) $idea->reply_count ); ?> <?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></span>
+							<span><?php echo esc_html( \Jetonomy\count_label( (int) $idea->reply_count, 'reply' ) ); ?></span>
 						</div>
 					</div>
 				<?php endforeach; ?>

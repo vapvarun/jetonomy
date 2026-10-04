@@ -283,11 +283,11 @@ $crumbs = [
 						</div>
 						<div class="jt-stat">
 							<div class="jt-stat-n"><?php echo esc_html( (int) $p_count ); ?></div>
-							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></div>
+							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $p_count, 'topic' ) ); ?></div>
 						</div>
 						<div class="jt-stat">
 							<div class="jt-stat-n"><?php echo esc_html( (int) $r_count ); ?></div>
-							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></div>
+							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $r_count, 'reply' ) ); ?></div>
 						</div>
 						<div class="jt-stat">
 							<div class="jt-stat-n"><?php echo esc_html( (int) $trust ); ?></div>
@@ -477,7 +477,7 @@ $crumbs = [
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-stat-n"><?php echo esc_html( (int) $uv->reply_count ); ?></div>
-									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
+									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $uv->reply_count, 'reply' ) ); ?></div>
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-time">
@@ -628,7 +628,7 @@ $crumbs = [
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-stat-n"><?php echo esc_html( (int) $bk_post->reply_count ); ?></div>
-									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
+									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $bk_post->reply_count, 'reply' ) ); ?></div>
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-time">
@@ -679,7 +679,7 @@ $crumbs = [
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-stat-n"><?php echo esc_html( (int) $r_post->reply_count ); ?></div>
-									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
+									<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $r_post->reply_count, 'reply' ) ); ?></div>
 								</div>
 								<div class="jt-row-stat">
 									<div class="jt-row-time">

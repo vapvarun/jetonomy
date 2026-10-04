@@ -1884,6 +1884,7 @@ class Model_Tests {
 		add_filter( 'ngettext', $polish, 10, 5 );
 		$this->check( 'PL1: a 3-form language gets each form (1/2/5/22)', '1 temat|2 tematy|5 tematów|22 tematy' === implode( '|', array_map( static fn( $n ) => \Jetonomy\count_label( $n, 'topic' ), [ 1, 2, 5, 22 ] ) ) );
 		remove_filter( 'ngettext', $polish, 10 );
+		$this->check( 'PL3: a stacked stat label agrees with its number', 'reply|replies|replies' === \Jetonomy\count_noun( 1, 'reply' ) . '|' . \Jetonomy\count_noun( 0, 'reply' ) . '|' . \Jetonomy\count_noun( 2, 'reply' ) );
 
 		$saved = get_option( 'jetonomy_settings', [] );
 		update_option( 'jetonomy_settings', array_merge( (array) $saved, [ 'topic_label_singular' => 'Thread', 'topic_label_plural' => 'Threads' ] ) );

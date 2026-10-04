@@ -255,7 +255,7 @@ $crumbs = [
 							</div>
 							<div>
 								<div class="jt-leader-stat-val"><?php echo (int) $leader->post_count; ?></div>
-								<div class="jt-leader-stat-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ); ?></div>
+								<div class="jt-leader-stat-lbl"><?php echo esc_html( \Jetonomy\count_noun( (int) $leader->post_count, 'topic' ) ); ?></div>
 							</div>
 						</div>
 					</div>
