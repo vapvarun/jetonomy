@@ -187,6 +187,7 @@ class Schema {
   KEY author_created (author_id,created_at),
   KEY status_created (status,created_at),
   KEY sitemap_status_id (status,id),
+  KEY status_votes (status,vote_score,reply_count),
   KEY slug (slug),
   FULLTEXT KEY ft_title_content (title,content_plain)
 ) ENGINE=InnoDB $charset_collate;";
@@ -249,7 +250,8 @@ class Schema {
   PRIMARY KEY  (user_id),
   KEY trust_reputation (trust_level,reputation),
   KEY trust_user (trust_level,user_id),
-  KEY seen_reputation (last_seen_at,reputation)
+  KEY seen_reputation (last_seen_at,reputation),
+  KEY reputation_user (reputation,user_id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 7. jt_notifications
@@ -265,7 +267,8 @@ class Schema {
   is_read tinyint(1) NOT NULL DEFAULT 0,
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
-  KEY user_read_created (user_id,is_read,created_at)
+  KEY user_read_created (user_id,is_read,created_at),
+  KEY read_created (is_read,created_at)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 8. jt_subscriptions
@@ -278,7 +281,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   UNIQUE KEY user_object (user_id,object_type,object_id),
-  KEY object_lookup (object_type,object_id)
+  KEY object_user (object_type,object_id,user_id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 9. jt_read_status

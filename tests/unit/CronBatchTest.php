@@ -191,10 +191,10 @@ class CronBatchTest extends WP_UnitTestCase {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Confirm that cleanup_old_notifications marks at most BATCH notifications
-	 * as read per invocation when more than BATCH old unread rows exist.
+	 * cleanup_old_notifications clears a backlog larger than BATCH in one run,
+	 * while each UPDATE stays capped at BATCH rows (no long lock).
 	 */
-	public function test_cleanup_old_notifications_caps_at_batch_size(): void {
+	public function test_cleanup_old_notifications_drains_backlog_in_batches(): void {
 		global $wpdb;
 		$table = table( 'notifications' );
 		$old   = '2020-01-01 00:00:00';
@@ -221,16 +221,23 @@ class CronBatchTest extends WP_UnitTestCase {
 		);
 		$this->assertGreaterThanOrEqual( $total, $before_unread );
 
+		$updates = 0;
+		$count   = static function ( $sql ) use ( &$updates ) {
+			if ( false !== strpos( $sql, 'SET is_read = 1' ) ) {
+				++$updates;
+				self::assertStringContainsString( 'LIMIT ' . self::BATCH, $sql );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $count );
 		( new Cron() )->cleanup_old_notifications();
+		remove_filter( 'query', $count );
 
 		$after_unread = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			"SELECT COUNT(*) FROM {$table} WHERE is_read = 0"
 		);
-		$this->assertSame(
-			self::BATCH,
-			$before_unread - $after_unread,
-			'cleanup_old_notifications must mark exactly BATCH rows as read per run'
-		);
+		$this->assertSame( 0, $after_unread, 'every old unread notification is marked read in one run' );
+		$this->assertGreaterThanOrEqual( 2, $updates, 'a backlog over BATCH takes more than one capped UPDATE' );
 	}
 
 	// -----------------------------------------------------------------------

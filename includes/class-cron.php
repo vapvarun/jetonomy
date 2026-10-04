@@ -428,21 +428,30 @@ class Cron {
 	/**
 	 * Mark old unread notifications as read (runs weekly, 30 days).
 	 *
-	 * Processes at most jetonomy_cron_batch_size rows per run (default 500)
-	 * to avoid long-running UPDATE locks on large communities.
+	 * Updates jetonomy_cron_batch_size rows at a time (default 500) so no
+	 * single UPDATE holds long locks, repeating until the backlog is clear or
+	 * the run's time budget is spent.
 	 */
 	public function cleanup_old_notifications(): void {
 		global $wpdb;
 		$table  = table( 'notifications' );
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
 		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_old_notifications' );
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->prepare(
-				"UPDATE {$table} SET is_read = 1 WHERE is_read = 0 AND created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$cutoff,
-				$batch
-			)
-		);
+
+		// Batches until the backlog is clear, within a 20 s budget: one 500-row
+		// pass a week fell behind on any community producing more than that.
+		// Index read_created makes each pass a range read; whatever the budget
+		// leaves is picked up next week.
+		$deadline = microtime( true ) + 20;
+		do {
+			$done = (int) $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				$wpdb->prepare(
+					"UPDATE {$table} SET is_read = 1 WHERE is_read = 0 AND created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$cutoff,
+					$batch
+				)
+			);
+		} while ( $done >= $batch && microtime( true ) < $deadline );
 	}
 
 	/**
