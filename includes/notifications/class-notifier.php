@@ -110,17 +110,19 @@ class Notifier {
 	 * @return array{subject: string, body: string} Empty pair on unknown type.
 	 */
 	public static function get_default_template( string $type ): array {
+		$topic    = \Jetonomy\jetonomy_label( 'topic', false, true );
+		$reply    = \Jetonomy\jetonomy_label( 'reply', false, true );
 		$defaults = array(
 			'user_welcome'          => array(
 				'subject' => __( '[{site}] Welcome to the community', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\nWelcome to {site}. Your account is ready. Jump in and introduce yourself, ask a question, or browse the latest discussions.\n\n{message}", 'jetonomy' ),
 			),
 			'reply_to_post'         => array(
-				'subject' => __( '[{site}] {actor_display_name} replied to your post', 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $topic ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the discussion to read the full reply and join the conversation.", 'jetonomy' ),
 			),
 			'reply_to_reply'        => array(
-				'subject' => __( '[{site}] {actor_display_name} replied to your comment', 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $reply ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nClick through to read the full thread.", 'jetonomy' ),
 			),
 			'mention'               => array(
@@ -133,23 +135,23 @@ class Notifier {
 			),
 			'idea_status_changed'   => array(
 				'subject' => __( '[{site}] Your idea was updated', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nThanks for sharing your idea. Open the post to see the latest updates.", 'jetonomy' ),
+				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nThanks for sharing your idea. Open the %s to see the latest updates.", 'jetonomy' ), $topic ),
 			),
 			'new_post_in_sub'       => array(
-				'subject' => __( '[{site}] New post in {space_title}', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to read more.", 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] New %s in {space_title}', 'jetonomy' ), $topic ),
+				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to read more.", 'jetonomy' ), $topic ),
 			),
 			'badge_earned'          => array(
 				'subject' => __( '[{site}] You earned a new badge', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nKeep contributing to unlock more.", 'jetonomy' ),
 			),
 			'vote_on_post'          => array(
-				'subject' => __( '[{site}] Your post received a vote', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] Your %s received a vote', 'jetonomy' ), $topic ),
+				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to see the discussion.", 'jetonomy' ), $topic ),
 			),
 			'reaction'              => array(
-				'subject' => __( '[{site}] Someone reacted to your post', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] Someone reacted to your %s', 'jetonomy' ), $topic ),
+				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to see the discussion.", 'jetonomy' ), $topic ),
 			),
 			'flag_resolved'         => array(
 				'subject' => __( '[{site}] Your report was reviewed', 'jetonomy' ),
@@ -356,9 +358,9 @@ class Notifier {
 		// so it gets the preference gate, the email and the community payload.
 		add_action( 'jetonomy_pro_badge_earned', [ $this, 'on_badge_earned' ], 10, 3 );
 
-		// The public door for a notification raised outside free (Pro private
-		// messages): preferences, block gate, push + host contract, email.
-		add_action( 'jetonomy_deliver_notification', [ $this, 'deliver' ], 10, 8 );
+		// The door for a notification raised by Jetonomy Pro (private messages):
+		// preferences, block gate, push + host contract, email.
+		add_action( 'jetonomy_deliver_notification', [ $this, 'deliver' ], 10, 6 );
 
 		// Join request — notify space admins
 		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
@@ -413,17 +415,26 @@ class Notifier {
 			return;
 		}
 
-		$reply_id = \Jetonomy\Models\Reply::create(
-			[
-				'post_id'       => $post_id,
-				'author_id'     => $user_id,
-				'content'       => $content,
-				'content_plain' => \jetonomy_content_to_plain( $content ),
-			]
-		);
+		// Same content rules + require_approval as the REST reply path.
+		$data     = [
+			'post_id'       => $post_id,
+			'author_id'     => $user_id,
+			'content'       => $content,
+			'content_plain' => \jetonomy_content_to_plain( $content ),
+		];
+		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return;
+		}
+		$data['status'] = $screened['status'];
+
+		$reply_id = \Jetonomy\Models\Reply::create( $data );
 
 		if ( is_wp_error( $reply_id ) || ! $reply_id ) {
 			return;
+		}
+		if ( $screened['flag'] ) {
+			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
 		}
 
 		// Canonical post-create side-effects (same as the REST controller).
@@ -552,8 +563,9 @@ class Notifier {
 				'post',
 				$post_id,
 				sprintf(
-					/* translators: 1: space name, 2: post title */
-					__( 'New post in %1$s: %2$s', 'jetonomy' ),
+					/* translators: 1: singular topic label, lowercase, 2: space name, 3: topic title */
+					__( 'New %1$s in %2$s: %3$s', 'jetonomy' ),
+					\Jetonomy\jetonomy_label( 'topic', false, true ),
 					$space_name,
 					mb_substr( $post->title, 0, 50 )
 				),
@@ -597,9 +609,10 @@ class Notifier {
 				'reply',
 				$reply_id,
 				sprintf(
-					/* translators: 1: replier display name, 2: post title. */
-					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
+					/* translators: 1: replier display name, 2: singular topic label, lowercase, 3: topic title. */
+					__( '%1$s replied to your %2$s "%3$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
+					\Jetonomy\jetonomy_label( 'topic', false, true ),
 					mb_substr( $post->title, 0, 50 )
 				),
 				$reply_url,
@@ -1108,11 +1121,8 @@ class Notifier {
 	 *                                 on the row so display layers (REST prepare_notification,
 	 *                                 the notifications template) mask the real actor without
 	 *                                 re-resolving the source object.
-	 * @param bool   $send_email       False when the caller throttles email itself
-	 *                                 (Pro DMs: one email per unread conversation);
-	 *                                 the row, push and host payload still go out.
 	 */
-	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', array $extra = array(), bool $actor_anonymous = false, bool $send_email = true ): void {
+	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', array $extra = array(), bool $actor_anonymous = false ): void {
 		// Load user preferences and global defaults.
 		$profile         = UserProfile::find_by_user( $user_id );
 		$settings        = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
@@ -1146,16 +1156,17 @@ class Notifier {
 		// keeps this a no-op for system notifications) — the read-surface
 		// filters already hide it from the recipient, and unblocking restores
 		// the history without needing to re-send anything.
-		if ( $send_email && ! self::recipient_blocked_actor( $user_id, $actor_id ) && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
+		if ( ! self::recipient_blocked_actor( $user_id, $actor_id ) && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
 	}
 
 	/**
 	 * Deliver a notification raised outside free's own listeners - the
-	 * `jetonomy_deliver_notification` action. Pro private messages use it so a
-	 * DM gets the same per-type preferences, block gate, push, host contract
-	 * and email as every forum notification, instead of a bare row.
+	 * `jetonomy_deliver_notification` action. Internal to Jetonomy Pro: private
+	 * messages use it so a DM gets the same per-type preferences, block gate,
+	 * push, host contract and email as every forum notification. Pro decides
+	 * whether to call it (once per unread conversation).
 	 *
 	 * @since 2.0.1
 	 * @param int    $user_id     Recipient.
@@ -1164,29 +1175,12 @@ class Notifier {
 	 * @param string $object_type Object type (e.g. 'message').
 	 * @param int    $object_id   Object id (e.g. conversation id).
 	 * @param string $message     Already-translated sentence.
-	 * @param string $url         Deep link; resolved via notification_deep_link() when empty.
-	 * @param bool   $send_email  False to skip email for this one (caller-side throttle).
 	 */
-	public function deliver( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', bool $send_email = true ): void {
+	public function deliver( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message ): void {
 		if ( $user_id <= 0 || '' === $type ) {
 			return;
 		}
-		if ( '' === $url ) {
-			$url = \Jetonomy\notification_deep_link( $object_type, $object_id );
-		}
-		$this->create_and_maybe_email( $user_id, $actor_id, $type, $object_type, $object_id, $message, $url, array(), false, $send_email );
-	}
-
-	/**
-	 * Is the Pro private-messaging extension live? Decides whether the
-	 * `message` notification type is offered in preference screens.
-	 *
-	 * @since 2.0.1
-	 * @return bool
-	 */
-	public static function messages_enabled(): bool {
-		return defined( 'JETONOMY_PRO_VERSION' )
-			&& in_array( 'private-messaging', (array) get_option( 'jetonomy_pro_extensions', array() ), true );
+		$this->create_and_maybe_email( $user_id, $actor_id, $type, $object_type, $object_id, $message, \Jetonomy\notification_deep_link( $object_type, $object_id ) );
 	}
 
 	/**
@@ -1575,7 +1569,7 @@ class Notifier {
 	/**
 	 * Render a branded notification email.
 	 *
-	 * Static so Mentions::notify() and other callers can reuse the same template.
+	 * Static so Mentions::notify_for() and other callers can reuse the same template.
 	 *
 	 * @param string   $type        Notification type key.
 	 * @param string   $message     Sentence shown above the CTA (plain text).
@@ -1622,7 +1616,8 @@ class Notifier {
 			'reaction'            => __( 'Reaction', 'jetonomy' ),
 			'accepted_answer'     => __( 'Answer Accepted', 'jetonomy' ),
 			'idea_status_changed' => __( 'Roadmap Update', 'jetonomy' ),
-			'new_post_in_sub'     => __( 'New Post', 'jetonomy' ),
+			/* translators: %s: the singular topic label. */
+			'new_post_in_sub'     => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'badge_earned'        => __( 'Achievement', 'jetonomy' ),
 			'moderation'          => __( 'Moderation', 'jetonomy' ),
 			'flag_resolved'       => __( 'Report Reviewed', 'jetonomy' ),
@@ -1632,15 +1627,18 @@ class Notifier {
 		];
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
+		/* translators: %s: the singular topic or reply label. */
+		$view_topic = sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 		$cta_labels = [
-			'reply_to_post'       => __( 'View Post', 'jetonomy' ),
-			'reply_to_reply'      => __( 'View Reply', 'jetonomy' ),
-			'mention'             => __( 'View Post', 'jetonomy' ),
-			'vote_on_post'        => __( 'View Post', 'jetonomy' ),
-			'reaction'            => __( 'View Post', 'jetonomy' ),
+			'reply_to_post'       => $view_topic,
+			/* translators: %s: the singular topic or reply label. */
+			'reply_to_reply'      => sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+			'mention'             => $view_topic,
+			'vote_on_post'        => $view_topic,
+			'reaction'            => $view_topic,
 			'accepted_answer'     => __( 'View Answer', 'jetonomy' ),
 			'idea_status_changed' => __( 'View Idea', 'jetonomy' ),
-			'new_post_in_sub'     => __( 'View Post', 'jetonomy' ),
+			'new_post_in_sub'     => $view_topic,
 			'badge_earned'        => __( 'View Your Badges', 'jetonomy' ),
 			'moderation'          => __( 'Review in Mod Queue', 'jetonomy' ),
 			'flag_resolved'       => __( 'Open the Community', 'jetonomy' ),

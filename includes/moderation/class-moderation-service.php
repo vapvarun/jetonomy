@@ -16,6 +16,7 @@ namespace Jetonomy\Moderation;
 defined( 'ABSPATH' ) || exit;
 
 use WP_Error;
+use Jetonomy\Models\ActivityLog;
 use Jetonomy\Models\Flag;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
@@ -140,7 +141,7 @@ class Moderation_Service {
 	 * This is the queue's SECOND source, and it is a different mechanism from
 	 * flags: a flag is a member REPORTING published content, while an
 	 * approval-hold is the space itself refusing to publish in the first
-	 * place (Base_Controller::should_hold_for_approval() writes
+	 * place (Moderation_Service::screen_new_content() writes
 	 * status = 'pending' and creates no flag row). Because nothing lands in
 	 * jt_flags, the flag-only queue showed "no pending flags" while held
 	 * posts piled up invisibly - reachable only from wp-admin, which is
@@ -510,6 +511,86 @@ class Moderation_Service {
 	}
 
 	/**
+	 * The status new member content is stored with: the one hold decision
+	 * every create/publish path runs (REST create, draft publish-now, the
+	 * scheduled publish, abilities, reply-by-email). Content rules
+	 * (jetonomy_check_content) first, then the space's require_approval unless
+	 * the author is space staff. Held content is stored `pending` and is
+	 * announced only when a moderator approves it.
+	 *
+	 * @param string $type      'post' or 'reply' (picks the block message).
+	 * @param array  $data      Content as stored: title/content, and status ('draft' skips screening).
+	 * @param int    $space_id  Space ID.
+	 * @param int    $author_id Content author.
+	 * @return array{status: string, flag: bool}|WP_Error WP_Error when a rule blocks it.
+	 */
+	public static function screen_new_content( string $type, array $data, int $space_id, int $author_id ) {
+		$status = (string) ( $data['status'] ?? 'publish' );
+		if ( 'draft' === $status ) {
+			return [
+				'status' => 'draft',
+				'flag'   => false,
+			]; // Screened when it is published.
+		}
+
+		/**
+		 * Check content against moderation rules before it is stored or published.
+		 *
+		 * @param string|null $action    null if no action, or 'flag', 'hold', 'block', 'spam'.
+		 * @param array       $data      Content data with 'title' (posts) and 'content' keys.
+		 * @param int         $space_id  Space ID.
+		 * @param int         $author_id Author user ID.
+		 */
+		$action = apply_filters( 'jetonomy_check_content', null, $data, $space_id, $author_id );
+		if ( 'block' === $action ) {
+			return new WP_Error(
+				'jetonomy_validation',
+				'post' === $type ? __( 'Your post was blocked by our content policy.', 'jetonomy' ) : __( 'Your reply was blocked by our content policy.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+		if ( 'hold' === $action ) {
+			$status = 'pending';
+		} elseif ( 'spam' === $action ) {
+			$status = 'spam';
+		}
+
+		if ( 'publish' === $status
+			&& ! empty( Space::get_settings( $space_id )['require_approval'] )
+			&& ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $author_id, $space_id ) ) {
+			$status = 'pending';
+		}
+
+		return [
+			'status' => $status,
+			'flag'   => 'flag' === $action,
+		];
+	}
+
+	/**
+	 * File the system flag a content rule asked for (the 'flag' outcome of
+	 * jetonomy_check_content). The content stays live; the flag puts it in the
+	 * moderation queue with reporter_id 0. Flag::create() bumps flag_count.
+	 *
+	 * @param string $type 'post' or 'reply'.
+	 * @param int    $id   Object row ID.
+	 */
+	public static function auto_flag( string $type, int $id ): void {
+		$flag_id = Flag::create(
+			[
+				'reporter_id' => 0,
+				'object_type' => $type,
+				'object_id'   => $id,
+				'reason'      => 'other',
+				'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
+			]
+		);
+		if ( $flag_id ) {
+			do_action( 'jetonomy_flag_created', (int) $flag_id, $type );
+		}
+	}
+
+	/**
 	 * Change status of a post or reply (approve / spam / hold / trash) with permission.
 	 *
 	 * Mirrors the existing controller::set_status behaviour and adds the
@@ -628,7 +709,7 @@ class Moderation_Service {
 			if ( 'publish' === $new_status
 				&& 'draft' === ( $row->status ?? '' )
 				&& ! empty( $row->published_at ) ) {
-				Post::publish_draft( $id );
+				Post::publish_draft( $id, false );
 			} else {
 				Post::update( $id, [ 'status' => $new_status ] );
 			}
@@ -640,18 +721,9 @@ class Moderation_Service {
 			Reply::update( $id, [ 'status' => $new_status ] );
 		}
 
-		// Approving content held for review is the moment it goes live, so it
-		// runs the same create hook a directly-published post/reply runs:
-		// subscriber notifications, @mentions, activity + reputation, webhooks,
-		// BuddyPress / FluentCommunity broadcasts. The hook already fired once at
-		// creation (data-attaching listeners such as polls and attachments need
-		// the request then), but every listener that announces content is
-		// publish-gated, so this is the first and only time they act. Null
-		// request, as in Post::publish_draft().
-		// ponytail: keyed on pending->publish, so re-approving a post that was
-		// live, then held, re-announces it; add a "first published" marker if
-		// holding live content becomes a common moderation flow.
-		if ( 'publish' === $new_status && 'pending' === ( $row->status ?? '' ) ) {
+		// Announce on approval only content that never went live (no created_* activity row yet).
+		if ( 'publish' === $new_status && in_array( $row->status ?? '', [ 'pending', 'spam' ], true )
+			&& ! ActivityLog::exists_for( (int) $row->author_id, 'created_' . $type, $type, $id ) ) {
 			if ( 'post' === $type ) {
 				do_action( 'jetonomy_after_create_post', $id, (int) $row->space_id, null );
 			} else {

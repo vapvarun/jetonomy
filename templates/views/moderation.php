@@ -91,7 +91,7 @@ if ( 'banned' === $jt_view && ! $jt_can_manage_bans ) {
 // ── Awaiting approval ────────────────────────────────────────────────────
 // The queue's second source. A flag is a member REPORTING published content;
 // an approval-hold is the space refusing to publish at all
-// (Base_Controller::should_hold_for_approval() writes status = 'pending' and
+// (Moderation_Service::screen_new_content() writes status = 'pending' and
 // creates no flag row). Because nothing lands in jt_flags, this page used to
 // say "No pending flags anywhere" while held submissions piled up invisibly -
 // approvable only from wp-admin, which a frontend-first community cannot ask

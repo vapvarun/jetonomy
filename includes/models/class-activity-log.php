@@ -35,6 +35,21 @@ class ActivityLog extends Model {
 	}
 
 	/**
+	 * Has $user_id logged $action on this object? Rides the user_created index.
+	 */
+	public static function exists_for( int $user_id, string $action, string $object_type, int $object_id ): bool {
+		return (bool) self::db()->get_var(
+			self::db()->prepare(
+				'SELECT 1 FROM ' . self::table() . ' WHERE user_id = %d AND action = %s AND object_type = %s AND object_id = %d LIMIT 1',
+				$user_id,
+				$action,
+				$object_type,
+				$object_id
+			)
+		);
+	}
+
+	/**
 	 * Get recent activity for a user.
 	 */
 	public static function list_for_user( int $user_id, int $limit = 20, int $offset = 0 ): array {

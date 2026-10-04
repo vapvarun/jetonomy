@@ -166,7 +166,7 @@ if ( ! $cancel_url ) {
 			'new_post_in_sub'     => sprintf( __( 'New %1$s in followed %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
 			'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 		];
-		if ( \Jetonomy\Notifications\Notifier::messages_enabled() ) {
+		if ( \Jetonomy\messaging_active() ) {
 			$notif_types['message'] = __( 'Private message', 'jetonomy' );
 		}
 		?>

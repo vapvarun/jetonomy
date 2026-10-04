@@ -19,7 +19,7 @@ use Jetonomy\Models\Revision;
 use Jetonomy\Models\Subscription;
 use Jetonomy\Models\Tag;
 use Jetonomy\Models\UserProfile;
-use Jetonomy\Models\Flag;
+use Jetonomy\Moderation\Moderation_Service;
 
 class Posts_Controller extends Base_Controller {
 
@@ -605,37 +605,12 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
-		// Skip moderation pipeline for draft posts — they're not published yet.
-		$moderation_action = null;
-		if ( 'draft' !== ( $post_data['status'] ?? '' ) ) {
-			/**
-			 * Check content against moderation rules before insertion.
-			 *
-			 * @param string|null $action   null if no action, or 'flag', 'hold', 'block', 'spam'.
-			 * @param array       $data     Post data array with 'title' and 'content' keys.
-			 * @param int         $space_id Space ID.
-			 * @param int         $user_id  Author user ID.
-			 */
-			$moderation_action = apply_filters( 'jetonomy_check_content', null, $post_data, $space_id, $user_id );
-
-			if ( 'block' === $moderation_action ) {
-				return $this->validation_error( __( 'Your post was blocked by our content policy.', 'jetonomy' ) );
-			}
-			if ( 'hold' === $moderation_action ) {
-				$post_data['status'] = 'pending';
-			}
-			if ( 'spam' === $moderation_action ) {
-				$post_data['status'] = 'spam';
-			}
-			// 'flag' is handled AFTER Post::create so we have a real $post_id
-			// to attach the Flag record to. The post still publishes; the
-			// flag surfaces it in the moderation queue for review.
-
-			// Per-space require_approval: hold unless the author is space staff.
-			if ( $this->should_hold_for_approval( (string) ( $post_data['status'] ?? '' ), $space_id, $user_id ) ) {
-				$post_data['status'] = 'pending';
-			}
+		// Content rules + require_approval; drafts are screened when published.
+		$screened = Moderation_Service::screen_new_content( 'post', $post_data, $space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return $screened;
 		}
+		$post_data['status'] = $screened['status'];
 
 		$post_id = Post::create( $post_data );
 
@@ -651,30 +626,13 @@ class Posts_Controller extends Base_Controller {
 			);
 		}
 
-		// Auto-flag: a moderation rule asked to flag this content. The post is
-		// already created and published; we now file a flag against it so it
-		// appears in the moderation queue with `reporter_id = 0` (system
-		// reporter). Flag::create handles the post.flag_count increment itself.
-		// No reputation deduction here — that's a user-action penalty, distinct
-		// from an automated review request.
-		if ( 'flag' === $moderation_action && $post_id > 0 ) {
-			$auto_flag_id = Flag::create(
-				array(
-					'reporter_id' => 0,
-					'object_type' => 'post',
-					'object_id'   => (int) $post_id,
-					'reason'      => 'other',
-					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-				)
-			);
-			if ( $auto_flag_id ) {
-				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'post' );
-			}
+		if ( $screened['flag'] ) {
+			Moderation_Service::auto_flag( 'post', (int) $post_id );
 		}
 
 		// Fire action for Activity_Tracker, Notifier, and other listeners.
 		// Skip for draft posts — they are not visible yet.
-		if ( 'draft' !== ( $post_data['status'] ?? 'publish' ) ) {
+		if ( 'draft' !== $post_data['status'] ) {
 			do_action( 'jetonomy_after_create_post', $post_id, $space_id, $request );
 		}
 
@@ -685,7 +643,7 @@ class Posts_Controller extends Base_Controller {
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_posts' );
 
 		// Auto-subscribe the author — only for published/pending posts, not drafts.
-		if ( 'draft' !== ( $post_data['status'] ?? 'publish' ) ) {
+		if ( 'draft' !== $post_data['status'] ) {
 			Subscription::subscribe( $user_id, 'post', $post_id );
 		}
 
@@ -878,18 +836,7 @@ class Posts_Controller extends Base_Controller {
 		// Auto-flag on edit when a rule asked to flag (mirrors the create path):
 		// the edit stays published but surfaces in the moderation queue.
 		if ( 'flag' === $moderation_action ) {
-			$auto_flag_id = Flag::create(
-				array(
-					'reporter_id' => 0,
-					'object_type' => 'post',
-					'object_id'   => (int) $id,
-					'reason'      => 'other',
-					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-				)
-			);
-			if ( $auto_flag_id ) {
-				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'post' );
-			}
+			Moderation_Service::auto_flag( 'post', (int) $id );
 		}
 
 		do_action( 'jetonomy_post_updated', $id, $space_id, $user_id );

@@ -122,15 +122,15 @@ class Community_Notification_Contract {
 				$item_id     = $reply_id;
 				$owner       = (int) $post->author_id === $user_id;
 				$grouped     = $owner
-					/* translators: 1: post title. {actor} and {others} are placeholders filled by the host; keep them. */
-					? sprintf( __( '{actor} and {others} replied to your post "%s"', 'jetonomy' ), $title )
+					/* translators: 1: singular topic label, lowercase, 2: topic title. {actor} and {others} are placeholders filled by the host; keep them. */
+					? sprintf( __( '{actor} and {others} replied to your %1$s "%2$s"', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), $title )
 					/* translators: 1: post title. {actor} and {others} are placeholders filled by the host; keep them. */
 					: sprintf( __( '{actor} and {others} replied in "%s"', 'jetonomy' ), $title );
 				// The host words a row left with ONE visible person from this, so it
 				// never names a member Jetonomy hides (a trashed or banned replier).
 				$single = $owner
-					/* translators: 1: post title. {actor} is a placeholder filled by the host; keep it. */
-					? sprintf( __( '{actor} replied to your post "%s"', 'jetonomy' ), $title )
+					/* translators: 1: singular topic label, lowercase, 2: topic title. {actor} is a placeholder filled by the host; keep it. */
+					? sprintf( __( '{actor} replied to your %1$s "%2$s"', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), $title )
 					/* translators: 1: post title. {actor} is a placeholder filled by the host; keep it. */
 					: sprintf( __( '{actor} replied in "%s"', 'jetonomy' ), $title );
 			}
@@ -231,7 +231,7 @@ class Community_Notification_Contract {
 				'description' => __( 'Someone mentioned you.', 'jetonomy' ),
 			),
 		);
-		if ( Notifier::messages_enabled() ) {
+		if ( \Jetonomy\messaging_active() ) {
 			$defs['message'] = array(
 				'label'       => __( 'Private messages', 'jetonomy' ),
 				'description' => __( 'Someone sent you a private message.', 'jetonomy' ),

@@ -54,7 +54,7 @@ $space_id = (int) $space->id;
 
 // Two panels, two sources. A flag is a member REPORTING published content; an
 // approval-hold is this space refusing to publish at all, via require_approval
-// (Base_Controller::should_hold_for_approval() writes status = 'pending' and
+// (Moderation_Service::screen_new_content() writes status = 'pending' and
 // creates no flag row). Held content therefore never appeared in a flag-only
 // queue - it was approvable from wp-admin and nowhere else, which is no use to
 // a space moderator who has no business in the WordPress dashboard.

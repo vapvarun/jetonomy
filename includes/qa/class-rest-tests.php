@@ -1165,7 +1165,7 @@ class REST_Tests {
 		$r    = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => $this->test_user_id ] );
 		$data = $r->get_data();
 		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
-		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()}" );
+		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()} " . wp_json_encode( $data ) . " uid=" . get_current_user_id() . " tu={$this->test_user_id}" );
 		$this->check( 'J1: response confirms blocked user', ! empty( $data['user_id'] ) && (int) $data['user_id'] === $this->test_user_id, 'missing/incorrect user_id' );
 
 		// J2: The block shows up in the viewer's list.
@@ -1586,8 +1586,51 @@ class REST_Tests {
 		$created = static function ( string $type, int $id ) use ( $wpdb, $log_t ): array {
 			return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM {$log_t} WHERE action = %s AND object_type = %s AND object_id = %d", 'created_' . $type, $type, $id ) ) );
 		};
+		$rows = static function ( string $type, int $id ) use ( $wpdb, $notif_t ): int {
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notif_t} WHERE object_type = %s AND object_id = %d", $type, $id ) );
+		};
 		// phpcs:enable
 
+		// Approve through the real wp-admin AJAX handler (Approve / Not Spam buttons).
+		$via_admin = static function ( string $type, int $id ): void {
+			$_POST    = [
+				'nonce'       => wp_create_nonce( 'jetonomy_admin' ),
+				'object_type' => $type,
+				'object_id'   => $id,
+			];
+			$_REQUEST = $_POST;
+			$stop     = static function () {
+				return static function () {
+					throw new \RuntimeException( 'ajax-done' );
+				};
+			};
+			add_filter( 'wp_doing_ajax', '__return_true' );
+			add_filter( 'wp_die_ajax_handler', $stop );
+			ob_start();
+			try {
+				( new \Jetonomy\Admin\Ajax\Moderation_Handler() )->ajax_approve_content();
+			} catch ( \RuntimeException $e ) {
+				unset( $e ); // wp_send_json_* ends the request here.
+			}
+			ob_end_clean();
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $stop );
+			$_POST    = [];
+			$_REQUEST = [];
+		};
+		$count_fires = static function ( string $type, callable $act ): int {
+			$hook  = 'jetonomy_after_create_' . $type;
+			$fired = 0;
+			$probe = static function () use ( &$fired ) {
+				++$fired;
+			};
+			add_action( $hook, $probe );
+			$act();
+			remove_action( $hook, $probe );
+			return $fired;
+		};
+
+		$held_post = 0;
 		foreach ( [ 'post', 'reply' ] as $type ) {
 			if ( 'post' === $type ) {
 				$r = $this->rest( 'POST', "/spaces/{$space_id}/posts", [
@@ -1610,18 +1653,26 @@ class REST_Tests {
 
 			$this->check( "AP: member {$type} is held as pending", 'pending' === ( $r->get_data()['status'] ?? '' ), (string) ( $r->get_data()['status'] ?? '' ) );
 			$this->check( "AP: pending {$type} sends no mention", 0 === $mentions( $type, $id ) );
+			$this->check( "AP: pending {$type} has zero notification rows", 0 === $rows( $type, $id ), (string) $rows( $type, $id ) );
 			$this->check( "AP: pending {$type} logs no activity / reputation", [] === $created( $type, $id ) );
 
-			// Approve as the admin: the activity must still be the author's.
+			// Approve as the admin: the activity must still be the author's. The
+			// post goes through the moderation queue (REST service entry), the
+			// reply through the wp-admin AJAX handler.
 			wp_set_current_user( $this->admin_id );
-			$hook  = 'jetonomy_after_create_' . $type;
-			$fired = 0;
-			$probe = static function () use ( &$fired ) {
-				++$fired;
-			};
-			add_action( $hook, $probe );
-			\Jetonomy\Moderation\Moderation_Service::set_object_status( $this->admin_id, $type, $id, 'approve' );
-			remove_action( $hook, $probe );
+			$fired = $count_fires(
+				$type,
+				function () use ( $type, $id, $via_admin ) {
+					if ( 'post' === $type ) {
+						\Jetonomy\Moderation\Moderation_Service::set_object_status( $this->admin_id, $type, $id, 'approve' );
+					} else {
+						$via_admin( $type, $id );
+					}
+				}
+			);
+			if ( 'post' === $type ) {
+				$held_post = $id;
+			}
 
 			$this->check( "AP: approving the {$type} fires its create hook once", 1 === $fired, (string) $fired );
 
@@ -1631,6 +1682,47 @@ class REST_Tests {
 				[ $this->test_user_id ] === $created( $type, $id ),
 				wp_json_encode( $created( $type, $id ) )
 			);
+		}
+
+		// Holding a live post and approving it again must not re-announce it.
+		if ( $held_post ) {
+			\Jetonomy\Moderation\Moderation_Service::set_object_status( $this->admin_id, 'post', $held_post, 'hold' );
+			$fired = $count_fires( 'post', fn() => $via_admin( 'post', $held_post ) );
+			$this->check( 'AP: re-approving a post that was live does not re-announce', 0 === $fired && 1 === $mentions( 'post', $held_post ), "fired={$fired} mentions=" . $mentions( 'post', $held_post ) );
+		}
+
+		// Not Spam on content caught as spam at creation (Akismet false positive) announces it once.
+		$spam_id = (int) \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $this->test_user_id,
+				'title'     => 'QA-N2 spam false positive',
+				'content'   => "<p>Hey @{$handle}</p>",
+				'status'    => 'spam',
+			]
+		);
+		$fired   = $count_fires( 'post', fn() => $via_admin( 'post', $spam_id ) );
+		$this->check( 'AP: approving spam content announces it once', 1 === $fired && 1 === $mentions( 'post', $spam_id ), "fired={$fired} mentions=" . $mentions( 'post', $spam_id ) );
+		\Jetonomy\Models\Post::delete( $spam_id );
+
+		// Draft then Publish now honours require_approval: held, silent until approved.
+		$draft    = $this->rest( 'POST', "/spaces/{$space_id}/posts", [
+			'title'   => 'QA-N2 draft publish-now',
+			'content' => "<p>Draft @{$handle}</p>",
+			'type'    => 'discussion',
+			'status'  => 'draft',
+		], $this->test_user_id );
+		$draft_id = (int) ( $draft->get_data()['id'] ?? 0 );
+		$now      = $draft_id ? $this->rest( 'PATCH', "/posts/{$draft_id}", [ 'status' => 'publish' ], $this->test_user_id ) : null;
+		$this->check(
+			'AP: publish-now of a member draft under require_approval is held',
+			$now && 'pending' === ( $now->get_data()['status'] ?? '' ) && 0 === $rows( 'post', $draft_id ),
+			$now ? wp_json_encode( [ $now->get_status(), $now->get_data()['status'] ?? '', $rows( 'post', $draft_id ) ] ) : 'no draft'
+		);
+		wp_set_current_user( $this->admin_id );
+		if ( $draft_id ) {
+			$fired = $count_fires( 'post', fn() => \Jetonomy\Moderation\Moderation_Service::set_object_status( $this->admin_id, 'post', $draft_id, 'approve' ) );
+			$this->check( 'AP: approving the held draft announces it once', 1 === $fired && 1 === $mentions( 'post', $draft_id ), "fired={$fired} mentions=" . $mentions( 'post', $draft_id ) );
 		}
 
 		wp_set_current_user( $this->admin_id );

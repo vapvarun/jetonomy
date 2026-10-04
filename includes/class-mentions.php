@@ -255,6 +255,13 @@ class Mentions {
 	 * @param int    $object_id   Post or reply ID.
 	 */
 	public static function notify_for( string $object_type, int $object_id ): void {
+		// Global veto (documented in Notification::create()) - bail before any
+		// query: during an import run every row would be vetoed anyway, and the
+		// parallel email path below must not fire either.
+		if ( ! apply_filters( 'jetonomy_notification_should_send', true ) ) {
+			return;
+		}
+
 		$object = 'reply' === $object_type ? Models\Reply::find( $object_id ) : Models\Post::find( $object_id );
 		if ( ! $object || 'publish' !== ( $object->status ?? '' ) ) {
 			return;
@@ -265,33 +272,12 @@ class Mentions {
 			return;
 		}
 
-		$post = 'reply' === $object_type ? Models\Post::find( (int) $object->post_id ) : $object;
-		self::notify(
-			$user_ids,
-			(int) $object->author_id,
-			$object_type,
-			$object_id,
-			'reply' === $object_type ? ( $post->title ?? __( 'your reply', 'jetonomy' ) ) : (string) $object->title,
-			(int) ( $post->space_id ?? 0 ),
-			(bool) ( $post->is_private ?? false )
-		);
-	}
+		$post          = 'reply' === $object_type ? Models\Post::find( (int) $object->post_id ) : $object;
+		$actor_id      = (int) $object->author_id;
+		$context_title = 'reply' === $object_type ? ( $post->title ?? __( 'your reply', 'jetonomy' ) ) : (string) $object->title;
+		$space_id      = (int) ( $post->space_id ?? 0 );
+		$is_private    = (bool) ( $post->is_private ?? false );
 
-	/**
-	 * Notify mentioned users.
-	 */
-	public static function notify( array $user_ids, int $actor_id, string $object_type, int $object_id, string $context_title, ?int $space_id = null, bool $is_private = false ): void {
-		// Global veto (documented in Notification::create()) — bail before the
-		// membership/visibility queries and the per-user loop: during an import
-		// run every row would be vetoed anyway, and the parallel email path in
-		// this method must not fire either.
-		if ( ! apply_filters( 'jetonomy_notification_should_send', true ) ) {
-			return;
-		}
-
-		$object          = 'reply' === $object_type
-			? Models\Reply::find( $object_id )
-			: Models\Post::find( $object_id );
 		$actor_name      = \Jetonomy\Author::for_display( $actor_id, $object )['name'] ?: __( 'Someone', 'jetonomy' );
 		$actor_anonymous = (bool) ( $object->is_anonymous ?? false );
 
@@ -300,7 +286,7 @@ class Mentions {
 		// permission check (that would be an N+1 at scale). A public space needs
 		// no filtering (everyone can read); a private/hidden space is gated to
 		// its members; an is_private post is gated to author + space staff.
-		if ( $space_id && ! empty( $user_ids ) ) {
+		if ( $space_id ) {
 			$space = Models\Space::find( $space_id );
 			if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 				$members  = Models\SpaceMember::members_among( $space_id, $user_ids );

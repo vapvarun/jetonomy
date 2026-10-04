@@ -94,33 +94,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
-	 * Should this write be held for moderation under the space's
-	 * require_approval setting?
-	 *
-	 * One shared definition for the post + reply create paths (1.5.0
-	 * consolidation — the previous copy-pasted blocks also checked
-	 * current_user_can() instead of the AUTHOR's capabilities, which
-	 * diverges on imports and on-behalf writes; audit B).
-	 *
-	 * @param string $requested_status Status the caller asked for ('' = default publish).
-	 * @param int    $space_id         Space ID.
-	 * @param int    $author_id        Content author user ID.
-	 * @return bool True when the content must be created as `pending`.
-	 */
-	protected function should_hold_for_approval( string $requested_status, int $space_id, int $author_id ): bool {
-		if ( '' !== $requested_status && 'publish' !== $requested_status ) {
-			return false; // Drafts/scheduled content is not publish-bound yet.
-		}
-
-		$settings = \Jetonomy\Models\Space::get_settings( $space_id );
-		if ( empty( $settings['require_approval'] ) ) {
-			return false;
-		}
-
-		return ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $author_id, $space_id );
-	}
-
-	/**
 	 * Validate and normalize a backdate string (e.g. `published_at`) to a UTC
 	 * `Y-m-d H:i:s` for storage.
 	 *

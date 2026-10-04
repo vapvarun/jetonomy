@@ -18,6 +18,7 @@ use Jetonomy\Models\Reply;
 use Jetonomy\Models\Revision;
 use Jetonomy\Models\Notification;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Moderation\Moderation_Service;
 
 class Replies_Controller extends Base_Controller {
 
@@ -324,31 +325,12 @@ class Replies_Controller extends Base_Controller {
 			}
 		}
 
-		/**
-		 * Check content against moderation rules before insertion.
-		 *
-		 * @param string|null $action   null if no action, or 'flag', 'hold', 'block', 'spam'.
-		 * @param array       $data     Reply data array with 'content' key.
-		 * @param int         $space_id Space ID.
-		 * @param int         $user_id  Author user ID.
-		 */
-		$moderation_action = apply_filters( 'jetonomy_check_content', null, $reply_data, $space_id, $user_id );
-
-		if ( 'block' === $moderation_action ) {
-			return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+		// Content rules + require_approval (the one shared hold decision).
+		$screened = Moderation_Service::screen_new_content( 'reply', $reply_data, $space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return $screened;
 		}
-		if ( 'hold' === $moderation_action ) {
-			$reply_data['status'] = 'pending';
-		}
-		if ( 'spam' === $moderation_action ) {
-			$reply_data['status'] = 'spam';
-		}
-		// 'flag' is handled AFTER Reply::create — see auto-flag block below.
-
-		// Per-space require_approval: hold unless the author is space staff.
-		if ( $this->should_hold_for_approval( (string) ( $reply_data['status'] ?? '' ), $space_id, $user_id ) ) {
-			$reply_data['status'] = 'pending';
-		}
+		$reply_data['status'] = $screened['status'];
 
 		$reply_id = Reply::create( $reply_data );
 
@@ -367,21 +349,8 @@ class Replies_Controller extends Base_Controller {
 		// Increment rate limit counter.
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_replies' );
 
-		// Auto-flag a reply when a moderation rule asked to flag the content.
-		// The reply still publishes; a Flag record surfaces it in the queue.
-		if ( 'flag' === $moderation_action && $reply_id > 0 ) {
-			$auto_flag_id = \Jetonomy\Models\Flag::create(
-				array(
-					'reporter_id' => 0,
-					'object_type' => 'reply',
-					'object_id'   => (int) $reply_id,
-					'reason'      => 'other',
-					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-				)
-			);
-			if ( $auto_flag_id ) {
-				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'reply' );
-			}
+		if ( $screened['flag'] ) {
+			Moderation_Service::auto_flag( 'reply', (int) $reply_id );
 		}
 
 		// For backdated replies, roll the parent's last_reply_at back to the reply's
@@ -506,18 +475,7 @@ class Replies_Controller extends Base_Controller {
 				$update_data['status'] = 'spam';
 			}
 			if ( 'flag' === $moderation_action ) {
-				$auto_flag_id = \Jetonomy\Models\Flag::create(
-					array(
-						'reporter_id' => 0,
-						'object_type' => 'reply',
-						'object_id'   => (int) $id,
-						'reason'      => 'other',
-						'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-					)
-				);
-				if ( $auto_flag_id ) {
-					do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'reply' );
-				}
+				Moderation_Service::auto_flag( 'reply', (int) $id );
 			}
 
 			// Create a revision before updating.

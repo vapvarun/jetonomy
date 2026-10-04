@@ -816,7 +816,7 @@ class Admin {
 			);
 			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : array();
 			foreach ( $notif_types as $nt ) {
-				if ( 'message' === $nt && ! \Jetonomy\Notifications\Notifier::messages_enabled() ) {
+				if ( 'message' === $nt && ! \Jetonomy\messaging_active() ) {
 					continue;
 				}
 				$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : array();

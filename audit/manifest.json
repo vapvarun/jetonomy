@@ -2141,9 +2141,9 @@
         "int $space_id",
         "WP_REST_Request|null $request"
       ],
-      "where": "includes/api/class-posts-controller.php (REST create); includes/models/class-post.php Post::publish_scheduled() (cron-published scheduled post, $request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending -> publish approval, $request null)",
+      "where": "includes/api/class-posts-controller.php (REST create); includes/models/class-post.php Post::publish_draft() (publish-now and cron-published scheduled post, $request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending/spam -> publish approval of never-announced content, $request null)",
       "consumed_by": "jetonomy-pro",
-      "audit_notes": "2.0.1: also fires at approval of held content. Fires at creation for pending/spam too, so every announcing listener (Notifier, Mentions::notify_for, Activity_Tracker, BuddyPress/FluentCommunity, Pro webhooks) gates on status = publish."
+      "audit_notes": "2.0.1: also fires at approval of held (pending) or spam content, only when the content was never announced (no created_post row in jt_activity_log), so hold-then-approve of live content does not re-announce. Fires at creation for pending/spam too, so every announcing listener (Notifier, Mentions::notify_for, Activity_Tracker, BuddyPress/FluentCommunity, Pro webhooks) gates on status = publish."
     },
     {
       "name": "jetonomy_after_create_reply",
@@ -2154,7 +2154,7 @@
         "int $post_id",
         "WP_REST_Request|null $request"
       ],
-      "where": "includes/api/class-replies-controller.php (REST create); includes/notifications/class-notifier.php on_reply_from_email() ($request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending -> publish approval, $request null)",
+      "where": "includes/api/class-replies-controller.php (REST create); includes/notifications/class-notifier.php on_reply_from_email() ($request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending/spam -> publish approval of never-announced content, $request null)",
       "consumed_by": "jetonomy-pro",
       "audit_notes": "2.0.1: also fires at approval of a held reply; announcing listeners gate on status = publish. 1.7.1: widened 2 -> 3 args to mirror jetonomy_after_create_post. The REST create path (class-replies-controller.php) now passes $request so jetonomy-pro's attachments extension can read attachment_ids from a JSON body on POST /posts/{id}/replies (previously silently dropped for mobile/JSON clients, which never populate $_POST)."
     },
@@ -2390,10 +2390,10 @@
     {
       "name": "jetonomy_deliver_notification",
       "type": "action",
-      "args": "user_id, actor_id, type, object_type, object_id, message, url, send_email",
+      "args": "user_id, actor_id, type, object_type, object_id, message",
       "where": "listened by includes/notifications/class-notifier.php Notifier::deliver(); fired by jetonomy-pro private-messaging notify_participants()",
       "consumed_by": "jetonomy-pro",
-      "audit_notes": "2.0.1: public door over Notifier::create_and_maybe_email() for notifications raised outside free. Pro DMs (type message) gain preferences, block gate, push/host contract and email; Pro falls back to a bare Notification::create() when has_action() is false (older free). send_email=false skips email only (one DM email per unread conversation). Email default for message is ON at read time via Notifier::default_email(); no migration."
+      "audit_notes": "2.0.1: internal door (Jetonomy Pro only, not a general extension point) over Notifier::create_and_maybe_email(). Pro DMs (type message) gain preferences, block gate, push/host contract and email; Pro calls it only for the first unread message per conversation until the recipient reads it (the Messages unread count/thread still show every message), and falls back to a bare Notification::create() when has_action() is false (older free). Deep link always resolved via notification_deep_link(). Email default for message is ON at read time via Notifier::default_email(); no migration."
     },
     {
       "name": "jetonomy_community_notification_types",
@@ -3037,8 +3037,8 @@
     {
       "name": "jetonomy_check_content",
       "type": "filter",
-      "args": "content, type",
-      "where": "includes/moderation/class-content-checker.php",
+      "args": "action (null|flag|hold|block|spam), data, space_id, author_id",
+      "where": "includes/moderation/class-moderation-service.php Moderation_Service::screen_new_content() (every create/publish path: REST post/reply create, draft publish-now, scheduled publish, abilities, reply-by-email); includes/api/class-posts-controller.php + class-replies-controller.php update_item() (edits)",
       "consumed_by": "jetonomy-pro"
     },
     {
@@ -4285,7 +4285,8 @@
     "ability_count_pair": 39,
     "capability_count": 23,
     "counted_by_table_ability": "table_count = len(tables), verified via SHOW TABLES LIKE \"wp_jt_%\" on a live install. ability_count = wp_register_ability() call sites in includes/class-abilities.php, cross-checked against wp_get_abilities() at runtime, split by jetonomy/ vs jetonomy-pro/ namespace (excludes core/* and any third-party abilities, e.g. yoast-seo/*, that happen to be registered on the measuring site). capability_count = len(capabilities) (WordPress jetonomy_* caps - a different thing from Abilities API abilities; do not conflate the two when writing marketing copy). Card 10330599826 found the bug report itself had a stale Pro ability figure (15, not 20) - always re-derive from wp_get_abilities() rather than trusting a previous audit's number.",
-    "delta_2026_09_27_view_beacon": "2.0.1 (Basecamp 10344051299): topic views counted by a client beacon POST /posts/{id}/view instead of on the page request. Removed the jt_viewed cookie, Template_Loader::count_view/parse_viewed_cookie and the unreleased jetonomy_view_dedupe_cookie filter (never shipped in a tag). GET /posts/{id} stops counting. Routes 81->82 (method endpoints 109->110); hooks 240->239 (filters 130->129)."
+    "delta_2026_09_27_view_beacon": "2.0.1 (Basecamp 10344051299): topic views counted by a client beacon POST /posts/{id}/view instead of on the page request. Removed the jt_viewed cookie, Template_Loader::count_view/parse_viewed_cookie and the unreleased jetonomy_view_dedupe_cookie filter (never shipped in a tag). GET /posts/{id} stops counting. Routes 81->82 (method endpoints 109->110); hooks 240->239 (filters 130->129).",
+    "delta_2026_10_04_2_0_1_approval_paths": "2.0.1 approval/notification review fixes. New Moderation_Service::screen_new_content() is the one hold decision (jetonomy_check_content, then space require_approval unless space staff) used by REST post/reply create, Post::publish_draft() (publish-now + scheduled cron; new optional bool $screen, false for moderator approval), Abilities create_post/create_reply and Notifier::on_reply_from_email(); Base_Controller::should_hold_for_approval() removed. New Moderation_Service::auto_flag() replaces four inline system-flag copies. New ActivityLog::exists_for() gates approval announce (pending/spam -> publish only when no created_* row). wp-admin Moderation_Handler approve/spam/trash now route through system_set_object_status(). Mentions::notify() merged into notify_for(). Notifier::messages_enabled() removed (use \\Jetonomy\\messaging_active()). jetonomy_deliver_notification args 8 -> 6 (url, send_email dropped). Abilities create_post no longer double-increments post_count. No route/table/hook count change."
   },
   "static_analysis": {
     "dead_listeners": [

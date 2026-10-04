@@ -1655,13 +1655,36 @@ class Post extends Model {
 	 * Shared core for both the scheduled-cron publish and a manual "publish now"
 	 * from the drafts UI / REST, so the two paths never drift.
 	 *
-	 * @param int $id Post ID.
-	 * @return bool True if a draft was published, false if it was not a draft.
+	 * Publishing is when a draft is screened (Moderation_Service::screen_new_content),
+	 * so under require_approval it goes to `pending`, not live.
+	 *
+	 * @param int  $id     Post ID.
+	 * @param bool $screen False when a moderator is approving it (already reviewed).
+	 * @return bool True if the draft left draft status, false if it was not a draft or a rule blocked it.
 	 */
-	public static function publish_draft( int $id ): bool {
+	public static function publish_draft( int $id, bool $screen = true ): bool {
 		$post = static::find( $id );
 		if ( ! $post || 'draft' !== ( $post->status ?? '' ) ) {
 			return false;
+		}
+
+		$screened = [
+			'status' => 'publish',
+			'flag'   => false,
+		];
+		if ( $screen ) {
+			$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content(
+				'post',
+				[
+					'title'   => (string) $post->title,
+					'content' => (string) $post->content,
+				],
+				(int) $post->space_id,
+				(int) $post->author_id
+			);
+			if ( is_wp_error( $screened ) ) {
+				return false;
+			}
 		}
 
 		// Clear published_at on the same write so the post stops rendering a
@@ -1677,7 +1700,7 @@ class Post extends Model {
 		static::update(
 			$id,
 			array(
-				'status'        => 'publish',
+				'status'        => $screened['status'],
 				'published_at'  => null,
 				'created_at'    => $now,
 				'last_reply_at' => $now,
@@ -1702,6 +1725,10 @@ class Post extends Model {
 		// documented as ($post_id, $space_id, $request|null)); request-reading
 		// listeners no-op safely on null.
 		do_action( 'jetonomy_after_create_post', $id, (int) $post->space_id, null );
+
+		if ( $screened['flag'] ) {
+			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'post', $id );
+		}
 
 		return true;
 	}

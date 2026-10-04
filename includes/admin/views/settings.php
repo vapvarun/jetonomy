@@ -713,7 +713,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 				];
-				if ( \Jetonomy\Notifications\Notifier::messages_enabled() ) {
+				if ( \Jetonomy\messaging_active() ) {
 					$notif_types['message'] = __( 'Private message', 'jetonomy' );
 				}
 				?>

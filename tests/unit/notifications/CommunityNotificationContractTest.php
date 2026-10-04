@@ -206,12 +206,12 @@ class CommunityNotificationContractTest extends WP_UnitTestCase {
 		$this->assertSame( 'post', $a['object_type'], 'the row is about the topic, so its status decides visibility' );
 		$this->assertSame( $post_id, $a['object_id'] );
 		$this->assertSame( \Jetonomy\notification_deep_link( 'post', $post_id ), $a['url'], 'the link is the topic, which always exists' );
-		$this->assertSame( '{actor} and {others} replied to your post "Grouped topic"', $a['message_grouped'] );
+		$this->assertSame( '{actor} and {others} replied to your topic "Grouped topic"', $a['message_grouped'] );
 		$this->assertSame( 'X replied to your post "Grouped topic"', $a['message'], 'the single-row wording is untouched' );
 		$this->assertSame( 'reply', $a['item_type'], 'the host keeps who did what: the reply is the item' );
 		$this->assertSame( $r1, $a['item_id'] );
 		$this->assertSame( $r2, $b['item_id'] );
-		$this->assertSame( '{actor} replied to your post "Grouped topic"', $a['message_single'], 'the wording for a row left with one visible person' );
+		$this->assertSame( '{actor} replied to your topic "Grouped topic"', $a['message_single'], 'the wording for a row left with one visible person' );
 	}
 
 	public function test_a_subscriber_gets_the_replied_in_wording_and_reply_to_reply_stays_per_reply(): void {
