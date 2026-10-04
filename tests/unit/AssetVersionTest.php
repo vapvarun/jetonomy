@@ -28,9 +28,16 @@ class AssetVersionTest extends WP_UnitTestCase {
 	}
 
 	public function test_loader_src_is_rewritten_for_plugin_assets_only(): void {
+		// The built .min is served (and versioned by its own mtime) unless
+		// SCRIPT_DEBUG asks for the readable source.
+		$file = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? 'assets/css/jetonomy.css' : 'assets/css/jetonomy.min.css';
 		$src  = JETONOMY_URL . 'assets/css/jetonomy.css?ver=' . JETONOMY_VERSION;
-		$want = JETONOMY_VERSION . '+' . filemtime( JETONOMY_DIR . 'assets/css/jetonomy.css' );
-		$this->assertStringContainsString( 'ver=' . $want, (string) apply_filters( 'style_loader_src', $src, 'jetonomy' ) );
+		$want = JETONOMY_URL . $file . '?ver=' . JETONOMY_VERSION . '+' . filemtime( JETONOMY_DIR . $file );
+		$this->assertSame( $want, (string) apply_filters( 'style_loader_src', $src, 'jetonomy' ) );
+
+		// A URL that already names the .min is versioned, never re-suffixed.
+		$min = JETONOMY_URL . 'assets/css/jetonomy.min.css?ver=' . JETONOMY_VERSION;
+		$this->assertStringContainsString( 'assets/css/jetonomy.min.css?', (string) apply_filters( 'style_loader_src', $min, 'jetonomy' ) );
 
 		// Another plugin's URL, and an explicit version, are left alone.
 		$other = 'https://example.org/wp-content/plugins/x/a.css?ver=' . JETONOMY_VERSION;
