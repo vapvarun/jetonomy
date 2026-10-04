@@ -299,6 +299,16 @@
       "id": "hook-consumed-never-fired:jetonomy_recount_backfill_batch",
       "reason": "False positive: fired by as_enqueue_async_action()/wp_schedule_single_event() in Recount_Backfill::enqueue() (class-recount-backfill.php:167-176), both passing self::BATCH_HOOK. The audit cannot resolve the class constant back to the add_action() literal at line 97, so the dynamic AS/WP-Cron dispatch is invisible to it. Verified 2026-09-22 reading the full backfill lifecycle (mark_pending -> register -> ensure_scheduled -> enqueue -> run_batch).",
       "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_community_notification_types",
+      "reason": "Host-fired filter of the community notification contract (docs/standards/integration.md): BuddyNext or another host community applies it and Jetonomy hooks it to declare its notification types and visibility. Out of scope by design, not dead.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_community_notification_visible",
+      "reason": "Host-fired filter of the community notification contract (docs/standards/integration.md): BuddyNext or another host community applies it and Jetonomy hooks it to declare its notification types and visibility. Out of scope by design, not dead.",
+      "severity": "error"
     }
   ],
   "triaged": "2026-06-11 - first run on the pair; full triage in commit message. Real findings carded: 9985243886 (email opt-out unsettable), 9985243976 (BP toggles no UI). 2026-08-18 - added the AS continuation hook (verified dispatching, see its reason)."
