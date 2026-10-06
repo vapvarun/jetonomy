@@ -98,6 +98,9 @@ class Content_Handler {
 		$data['edited_by'] = get_current_user_id();
 
 		Post::update( $id, $data );
+		// Same signal as a REST edit, so webhooks, search indexes and other
+		// listeners see edits made in wp-admin too.
+		do_action( 'jetonomy_post_updated', $id, (int) ( Post::find( $id )->space_id ?? 0 ), get_current_user_id() );
 		wp_send_json_success( [ 'message' => __( 'Post updated.', 'jetonomy' ) ] );
 	}
 
@@ -155,6 +158,8 @@ class Content_Handler {
 		$data['edited_by'] = get_current_user_id();
 
 		Reply::update( $id, $data );
+		$jt_reply = Reply::find( $id );
+		do_action( 'jetonomy_reply_updated', $id, (int) ( $jt_reply ? ( Post::find( (int) $jt_reply->post_id )->space_id ?? 0 ) : 0 ), get_current_user_id() );
 		wp_send_json_success( [ 'message' => __( 'Reply updated.', 'jetonomy' ) ] );
 	}
 

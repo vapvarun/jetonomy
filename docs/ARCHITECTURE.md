@@ -163,7 +163,7 @@ Universal interfaces for swappable providers:
 | Interface | Default Implementation | Purpose |
 |-----------|----------------------|---------|
 | `Membership_Adapter` | WP Roles | Map external memberships to space access |
-| `Search_Adapter` | MySQL FULLTEXT | Pluggable search backend |
+| `Search_Adapter`, `Search_Query_Adapter` | MySQL FULLTEXT | Pluggable search backend for REST, the search page, the app and Abilities |
 | `Email_Adapter` | wp_mail | Email delivery |
 | `AI_Adapter` | none (Pro registers Ollama, OpenAI, Anthropic, custom) | Pro AI: moderation, spam detection, suggestions, summaries |
 

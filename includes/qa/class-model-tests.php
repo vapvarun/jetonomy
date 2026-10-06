@@ -242,6 +242,7 @@ class Model_Tests {
 		$this->test_category_slug_and_colour();
 		$this->test_demo_data_route();
 		$this->test_breadcrumb_placement();
+		$this->test_search_adapter_routing();
 		$this->test_category_sibling_reorder();
 		$this->test_notification_space_read_gate();
 		$this->test_subscriber_fanout_batches();
@@ -2155,6 +2156,63 @@ class Model_Tests {
 		$slot   = $capture( static fn() => \Jetonomy\Template_Loader::breadcrumb_in_main() );
 		remove_filter( 'jetonomy_breadcrumb_placement', $inside );
 		$this->check( 'BP2: inside_main moves the trail into the in-main slot, printed once', '' === $before && 1 === substr_count( $slot, 'jt-crumb' ) );
+	}
+
+	/**
+	 * SA: REST /search runs through the search adapter. A plugin adapter that
+	 * implements the full query contract serves it; one with only the narrow
+	 * contract cannot carry the filters and leaves REST on MySQL; the
+	 * query-args filter result is used (Basecamp 10368526736).
+	 */
+	private function test_search_adapter_routing(): void {
+		$narrow = new class() implements \Jetonomy\Adapters\Search_Adapter {
+			public static bool $on = true;
+			public function is_active(): bool { return self::$on; }
+			public function index( string $object_type, int $object_id, array $data ): void {}
+			public function search( string $query, string $type, ?int $space_id, int $limit, int $offset ): array { return array(); }
+			public function delete( string $object_type, int $object_id ): void {}
+		};
+		\Jetonomy\Adapters\Adapter_Registry::register_search( 'qa-narrow', $narrow );
+		$this->check( 'SA1: an adapter without the full query contract does not take over REST search', \Jetonomy\Adapters\Adapter_Registry::get_search_query() instanceof \Jetonomy\Search\Fulltext_Search );
+		$narrow::$on = false;
+
+		$full = new class() extends \Jetonomy\Search\Fulltext_Search {
+			public static bool $on = true;
+			public function is_active(): bool { return self::$on; }
+			public function query( array $args ): array {
+				return array( 'items' => array( (object) array( 'id' => 987654, 'title' => 'QA SA stub', 'space_id' => 0, 'author_id' => 0 ) ), 'total' => 1 );
+			}
+		};
+		\Jetonomy\Adapters\Adapter_Registry::register_search( 'qa-full', $full );
+		$req = new \WP_REST_Request( 'GET', '/jetonomy/v1/search' );
+		$req->set_param( 'q', 'anything' );
+		$req->set_param( 'type', 'tag' );
+		$data = rest_do_request( $req )->get_data();
+		$full::$on = false;
+		$this->check( 'SA2: a plugin adapter with the full contract answers REST search', 987654 === (int) ( $data['data'][0]['id'] ?? 0 ) );
+
+		$one = static fn( array $args ): array => array_merge( $args, array( 'limit' => 1 ) );
+		add_filter( 'jetonomy_search_query_args', $one );
+		$found = \Jetonomy\Adapters\Adapter_Registry::get_search_query()->query( array( 'type' => 'tag', 'q' => '', 'limit' => 5 ) );
+		remove_filter( 'jetonomy_search_query_args', $one );
+		$this->check( 'SA3: jetonomy_search_query_args changes the query it filters', count( $found['items'] ) <= 1 );
+
+		// SA4/SA5: a plugin adapter is fed - index() on create, delete() on delete.
+		global $wpdb;
+		$post_id = (int) $wpdb->get_var( "SELECT id FROM " . table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$spy     = new class() extends \Jetonomy\Search\Fulltext_Search {
+			public static bool $on = true;
+			public static array $calls = array();
+			public function is_active(): bool { return self::$on; }
+			public function index( string $object_type, int $object_id, array $data ): void { self::$calls[] = "index:{$object_type}:{$object_id}"; }
+			public function delete( string $object_type, int $object_id ): void { self::$calls[] = "delete:{$object_type}:{$object_id}"; }
+		};
+		\Jetonomy\Adapters\Adapter_Registry::register_search( 'qa-spy', $spy );
+		do_action( 'jetonomy_after_create_post', $post_id, 0, null );
+		do_action( 'jetonomy_after_delete_post', 987655 );
+		$spy::$on = false;
+		$this->check( 'SA4: a plugin adapter is sent a published topic when it is created', $post_id > 0 && in_array( "index:post:{$post_id}", $spy::$calls, true ) );
+		$this->check( 'SA5: a plugin adapter is told when a topic is deleted', in_array( 'delete:post:987655', $spy::$calls, true ) );
 	}
 
 	/**

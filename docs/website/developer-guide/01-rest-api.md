@@ -244,7 +244,7 @@ Response includes `vote_score` (current net score) and `user_vote` (the caller's
 
 ## Search
 
-Full-text search across Posts, Replies, Spaces, and Tags. Uses MySQL `FULLTEXT` with Boolean Mode by default. Swap to a custom search adapter (Meilisearch, Algolia, etc.) via the Adapter System. See [05-adapters.md](./05-adapters.md).
+Full-text search across Posts, Replies, Spaces, and Tags. Uses MySQL `FULLTEXT` with Boolean Mode by default. A plugin that registers a `Search_Query_Adapter` (Meilisearch, Elasticsearch, etc.) takes over this route, the search page and the app. See [05-adapters.md](./05-adapters.md).
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|

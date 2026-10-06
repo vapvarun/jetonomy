@@ -628,6 +628,7 @@ final class Jetonomy {
 		Adapters\Adapter_Registry::init_defaults();
 		Adapters\Adapter_Registry::register_email( 'wp-mail', new Adapters\WP_Mail_Adapter() );
 		Adapters\Adapter_Registry::register_search( 'fulltext', new Search\Fulltext_Search() );
+		Search\Search_Indexer::init();
 
 		// Community media library hygiene: tag member uploads and hide them from
 		// the admin Media Library by default. register() self-gates to wp-admin.

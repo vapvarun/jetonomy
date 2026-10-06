@@ -218,7 +218,8 @@ Plugin version: 2.0.0 - 110 actions, 129 filters.
 | `jetonomy_rest_prepare_space` | response, space | includes/api/class-spaces-controller.php |
 | `jetonomy_rest_prepare_user` | response, user | includes/api/class-users-controller.php |
 | `jetonomy_schema` | array\|null $schema, string $route | includes/seo/class-schema-markup.php:102 |
-| `jetonomy_search_query_args` | args | includes/api/class-search-controller.php |
+| `jetonomy_search_query_args` | args (type, q, space_id, date_from, date_to, author_id, tag_slug, sort, limit, offset, with_total) | includes/search/class-fulltext-search.php |
+| `jetonomy_search_adapter` | id ('' = automatic) | includes/adapters/class-adapter-registry.php |
 | `jetonomy_seo_meta` |  | includes/class-template-loader.php |
 | `jetonomy_show_community_nav` | show | templates/ |
 | `jetonomy_show_sidebar` | show | templates/ |
