@@ -490,7 +490,7 @@ class Replies_Controller extends Base_Controller {
 
 			$update_data['content']       = $content;
 			$update_data['content_plain'] = jetonomy_content_to_plain( $content );
-			$update_data['edited_at']     = current_time( 'mysql' );
+			$update_data['edited_at']     = current_time( 'mysql', true );
 			$update_data['edited_by']     = $user_id;
 		}
 

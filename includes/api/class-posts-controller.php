@@ -823,7 +823,7 @@ class Posts_Controller extends Base_Controller {
 				)
 			);
 
-			$update_data['edited_at'] = current_time( 'mysql' );
+			$update_data['edited_at'] = current_time( 'mysql', true );
 			$update_data['edited_by'] = $user_id;
 		}
 

@@ -94,7 +94,7 @@ class Content_Handler {
 			wp_send_json_error( __( 'Nothing to update.', 'jetonomy' ) );
 		}
 
-		$data['edited_at'] = current_time( 'mysql' );
+		$data['edited_at'] = current_time( 'mysql', true );
 		$data['edited_by'] = get_current_user_id();
 
 		Post::update( $id, $data );
@@ -154,7 +154,7 @@ class Content_Handler {
 			wp_send_json_error( __( 'Nothing to update.', 'jetonomy' ) );
 		}
 
-		$data['edited_at'] = current_time( 'mysql' );
+		$data['edited_at'] = current_time( 'mysql', true );
 		$data['edited_by'] = get_current_user_id();
 
 		Reply::update( $id, $data );
