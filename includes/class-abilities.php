@@ -1297,12 +1297,12 @@ class Abilities {
 			$post,
 			\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
 		);
-		$author = get_userdata( (int) $post->author_id );
+		$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 		return [
 			'id'          => (int) $post->id,
 			'title'       => $post->title ?? '',
 			'content'     => $post->content ?? '',
-			'author_name' => $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ),
+			'author_name' => $author['name'],
 			'vote_score'  => (int) ( $post->vote_score ?? 0 ),
 			'reply_count' => (int) ( $post->reply_count ?? 0 ),
 			'status'      => $post->status ?? 'publish',

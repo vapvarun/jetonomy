@@ -266,11 +266,11 @@ class Shortcodes {
 		foreach ( $posts as $post ) {
 			$url    = route_url( 'post', $post->space_slug, $post->slug );
 			$time   = human_time_diff( strtotime( $post->created_at ), time() );
-			$author = get_userdata( (int) $post->author_id );
+			$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 			$out   .= '<div class="jt-shortcode-post">';
 			$out   .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-post-title">' . esc_html( $post->title ) . '</a>';
 			$out   .= '<div class="jt-shortcode-post-meta">';
-			$out   .= esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
+			$out   .= esc_html( $author['name'] );
 			$out   .= ' · ' . esc_html( $post->space_title ?? '' );
 			/* translators: %s: human-readable time difference. */
 			$out .= ' · ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time ) );
@@ -330,13 +330,13 @@ class Shortcodes {
 		foreach ( $posts as $post ) {
 			++$rank;
 			$url    = route_url( 'post', $post->space_slug, $post->slug );
-			$author = get_userdata( (int) $post->author_id );
+			$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 			$out   .= '<div class="jt-shortcode-post jt-shortcode-trending-post">';
 			$out   .= '<span class="jt-shortcode-trending-rank" aria-hidden="true">' . (int) $rank . '</span>';
 			$out   .= '<div class="jt-shortcode-trending-body">';
 			$out   .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-post-title">' . esc_html( $post->title ) . '</a>';
 			$out   .= '<div class="jt-shortcode-post-meta">';
-			$out   .= esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
+			$out   .= esc_html( $author['name'] );
 			if ( ! empty( $post->space_title ) ) {
 				$out .= ' · ' . esc_html( $post->space_title );
 			}

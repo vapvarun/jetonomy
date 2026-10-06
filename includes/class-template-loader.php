@@ -1409,9 +1409,10 @@ class Template_Loader {
 							// jt_user_profiles.display_name is never written by free or
 							// Pro, so the branch that preferred it was dead and only
 							// made this read disagree with every other byline.
-							$author_name                            = ! empty( $post->author_id )
-								? \Jetonomy\user_display_name( (int) $post->author_id )
-								: '';
+							// Author::for_display() masks an anonymous topic the same way the
+							// byline does; a masked author (id 0) emits no author meta at all.
+							$jt_display                             = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+							$author_name                            = $jt_display['id'] > 0 ? $jt_display['name'] : '';
 							$article_meta['article:author']         = $author_name;
 							$article_meta['article:published_time'] = ! empty( $post->created_at )
 								? gmdate( 'c', strtotime( (string) $post->created_at ) )

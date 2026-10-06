@@ -127,16 +127,14 @@ class Schema_Markup {
 			return null;
 		}
 
-		$author = get_userdata( (int) $post->author_id );
-		// Same resolver the page byline uses. Google compares structured data
-		// against visible content, so a site that renames members via
-		// jetonomy_user_display_name must not have its schema disagree.
-		$author_name = $author ? \Jetonomy\user_display_name( $author ) : 'Anonymous';
+		// Same resolver the page byline uses, so the schema never disagrees
+		// with the visible author and never names an anonymous one.
+		$author_name = \Jetonomy\Author::for_display( (int) $post->author_id, $post )['name'];
 		$base        = \Jetonomy\route_url( 'post', $space_slug, $slug );
 
 		if ( 'question' === $post->type && $post->accepted_reply_id ) {
-			$accepted      = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
-			$answer_author = $accepted ? get_userdata( (int) $accepted->author_id ) : null;
+			$accepted    = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+			$answer_name = $accepted ? \Jetonomy\Author::for_display( (int) $accepted->author_id, $accepted )['name'] : '';
 
 			return [
 				'@context'   => 'https://schema.org',
@@ -159,7 +157,7 @@ class Schema_Markup {
 						'upvoteCount' => max( 0, (int) $accepted->vote_score ),
 						'author'      => [
 							'@type' => 'Person',
-							'name'  => $answer_author ? \Jetonomy\user_display_name( $answer_author ) : 'Anonymous',
+							'name'  => $answer_name,
 						],
 						'url'         => \Jetonomy\reply_permalink( $space_slug, $slug, (int) $accepted->id ),
 					] : null,

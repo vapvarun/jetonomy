@@ -244,6 +244,7 @@ class Model_Tests {
 		$this->test_breadcrumb_placement();
 		$this->test_search_adapter_routing();
 		$this->test_notification_read_for_object();
+		$this->test_anonymous_author_masked_everywhere();
 		$this->test_category_sibling_reorder();
 		$this->test_notification_space_read_gate();
 		$this->test_subscriber_fanout_batches();
@@ -2250,6 +2251,51 @@ class Model_Tests {
 		$this->check( 'NR2: the host is told once, for the reader only', array( "message:{$object}:1" ) === $signals );
 
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . table( 'notifications' ) . ' WHERE object_type = %s AND object_id = %d', 'message', $object ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+	}
+
+	/**
+	 * AX: an anonymous topic never names its author outside the byline -
+	 * not in the page's SEO meta or JSON-LD, the shortcodes, or Abilities
+	 * (2.0.1 pre-release smoke found the page head and these siblings
+	 * reading author_id directly).
+	 */
+	private function test_anonymous_author_masked_everywhere(): void {
+		global $wpdb;
+		$space = $wpdb->get_row( "SELECT id, slug FROM " . table( 'spaces' ) . " WHERE visibility = 'public' AND status = 'active' ORDER BY id LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$author = (int) $wpdb->get_var( "SELECT ID FROM {$wpdb->users} WHERE ID > 1 ORDER BY ID DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		if ( ! $space || ! $author ) {
+			$this->skip( 'AX: anonymous author masking', 'needs a public space and a second user' );
+			return;
+		}
+		$real = \Jetonomy\user_display_name( $author );
+		$id   = Post::create(
+			[
+				'space_id'     => (int) $space->id,
+				'author_id'    => $author,
+				'title'        => 'QA AN ' . wp_generate_password( 6, false, false ),
+				'slug'         => 'qa-an-' . strtolower( wp_generate_password( 8, false, false ) ),
+				'content'      => '<p>QA anonymous masking</p>',
+				'status'       => 'publish',
+				'is_anonymous' => 1,
+			]
+		);
+		$post     = Post::find( (int) $id );
+		$previous = get_current_user_id();
+
+		try {
+			$html = wp_remote_retrieve_body( wp_remote_get( \Jetonomy\route_url( 'post', $space->slug, $post->slug ), [ 'timeout' => 20 ] ) );
+			$this->check( 'AX1: the anonymous topic page names no author in its SEO meta or JSON-LD', '' !== $html && false === strpos( $html, 'property="article:author"' ) && false === strpos( $html, esc_html( $real ) ) && false === strpos( $html, $real ) );
+
+			wp_set_current_user( 0 );
+			$recent = do_shortcode( '[jetonomy_recent_posts limit="50"]' );
+			$this->check( 'AX2: the recent posts shortcode shows the anonymous topic without its author', false !== strpos( $recent, $post->title ) && false === strpos( $recent, esc_html( $real ) ) );
+
+			$ability = ( new \Jetonomy\Abilities() )->execute_get_post( [ 'post_id' => (int) $id ] );
+			$this->check( 'AX3: the get-post ability masks the anonymous author', is_array( $ability ) && $real !== ( $ability['author_name'] ?? $real ) );
+		} finally {
+			wp_set_current_user( $previous );
+			Post::delete( (int) $id );
+		}
 	}
 
 	/**
