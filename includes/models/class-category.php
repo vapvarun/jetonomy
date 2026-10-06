@@ -40,9 +40,78 @@ class Category extends Model {
 			$data['parent_id'] = self::top_level_ancestor( (int) $data['parent_id'] );
 		}
 
+		// Every writer (wp-admin, REST, setup wizard, seeder, importers) gets a
+		// free slug here: a second "General" under another parent used to fail
+		// on the UNIQUE key with a bare "Failed to create category." (Basecamp
+		// 10375159877). Same rule as wp_insert_term(): suffix, never refuse.
+		$data['slug'] = self::unique_slug( (string) ( $data['slug'] ?? '' ) ?: (string) ( $data['name'] ?? '' ) );
+		$data         = self::normalize_color( $data, (int) ( $data['parent_id'] ?? 0 ) );
+
 		$id = static::insert( $data );
 		Space::bump_tree_generation();
 		return $id;
+	}
+
+	/**
+	 * A slug no other category uses: `$base`, then `$base-1`, `$base-2`...
+	 *
+	 * Checks every row, whatever its visibility. find_by_slug() filters by the
+	 * viewer, so it could not see a hidden category's slug and the insert
+	 * still hit the UNIQUE key.
+	 *
+	 * @param string $base       Requested slug or name; sanitized here.
+	 * @param int    $exclude_id Row being updated (0 on create).
+	 * @return string
+	 */
+	public static function unique_slug( string $base, int $exclude_id = 0 ): string {
+		$base = sanitize_title( $base );
+		if ( '' === $base ) {
+			$base = 'category';
+		}
+
+		$slug = $base;
+		$n    = 1;
+		while ( self::slug_taken( $slug, $exclude_id ) ) {
+			$slug = $base . '-' . $n;
+			++$n;
+		}
+		return $slug;
+	}
+
+	/**
+	 * Whether another category already uses `$slug`.
+	 *
+	 * @param string $slug       Slug.
+	 * @param int    $exclude_id Row being updated (0 on create).
+	 * @return bool
+	 */
+	private static function slug_taken( string $slug, int $exclude_id ): bool {
+		$table = static::table();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from the model.
+		return (bool) static::db()->get_var( static::db()->prepare( "SELECT id FROM {$table} WHERE slug = %s AND id <> %d LIMIT 1", $slug, $exclude_id ) );
+	}
+
+	/**
+	 * Colour is a top-level accent only (owner decision, Basecamp 10375031087):
+	 * it shows beside the category on the community home and nowhere else, so a
+	 * sub-category never stores one. Anything that is not a hex colour is
+	 * dropped rather than stored as free text.
+	 *
+	 * @param array $data      Column data; only touched when it carries `color` or a parent.
+	 * @param int   $parent_id Effective parent after this write (0 = top level).
+	 * @return array
+	 */
+	private static function normalize_color( array $data, int $parent_id ): array {
+		if ( $parent_id > 0 ) {
+			if ( array_key_exists( 'color', $data ) || array_key_exists( 'parent_id', $data ) ) {
+				$data['color'] = null;
+			}
+			return $data;
+		}
+		if ( array_key_exists( 'color', $data ) ) {
+			$data['color'] = sanitize_hex_color( (string) $data['color'] ) ?: null;
+		}
+		return $data;
 	}
 
 	/**
@@ -58,6 +127,29 @@ class Category extends Model {
 			if ( $error ) {
 				return $error;
 			}
+		}
+
+		if ( array_key_exists( 'slug', $data ) ) {
+			$slug = sanitize_title( (string) $data['slug'] );
+			if ( '' === $slug ) {
+				// Clearing the field means "derive it again", as on create.
+				$slug = self::unique_slug( (string) ( $data['name'] ?? static::find( $id )->name ?? '' ), $id );
+			} elseif ( self::slug_taken( $slug, $id ) ) {
+				// An explicit slug is the owner's choice (it is in shared links),
+				// so say why instead of quietly renaming it - wp_update_term() rule.
+				return new \WP_Error(
+					'jetonomy_slug_taken',
+					/* translators: %s: the category slug the owner typed. */
+					sprintf( __( 'The slug "%s" is already used by another category.', 'jetonomy' ), $slug ),
+					[ 'status' => 409 ]
+				);
+			}
+			$data['slug'] = $slug;
+		}
+
+		if ( array_key_exists( 'color', $data ) || array_key_exists( 'parent_id', $data ) ) {
+			$parent = array_key_exists( 'parent_id', $data ) ? (int) $data['parent_id'] : (int) ( static::find( $id )->parent_id ?? 0 );
+			$data   = self::normalize_color( $data, $parent );
 		}
 
 		$updated = parent::update( $id, $data );

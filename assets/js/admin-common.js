@@ -201,6 +201,18 @@
 					$(this).wpColorPicker();
 				}
 			});
+
+			// Colour is a top-level accent only: a sub-category never shows or
+			// stores one, so its field is hidden while a parent is chosen.
+			$(document).on('change', '#cat-parent, #edit-cat-parent', this.syncColorFields);
+			this.syncColorFields();
+		},
+
+		syncColorFields: function() {
+			$('[data-jt-color-field]').each(function() {
+				var parent = parseInt($($(this).data('jtColorField')).val(), 10) || 0;
+				$(this).prop('hidden', parent > 0);
+			});
 		},
 
 		// ── Code Editor ──
@@ -341,6 +353,7 @@
 					$color.val($link.data('color') || '');
 					$color.wpColorPicker();
 				}
+				self.syncColorFields();
 
 				$('#jetonomy-edit-category-modal').show();
 			});

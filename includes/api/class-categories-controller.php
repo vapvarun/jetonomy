@@ -129,12 +129,8 @@ class Categories_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Category name is required.', 'jetonomy' ) );
 		}
 
-		$slug = $request->get_param( 'slug' )
-			? sanitize_title( $request->get_param( 'slug' ) )
-			: sanitize_title( $name );
-
-		// Ensure slug is unique.
-		$slug = $this->unique_slug( $slug );
+		// Category::create() turns this into a free slug (name when empty).
+		$slug = sanitize_title( (string) $request->get_param( 'slug' ) );
 
 		$data = [
 			'name'        => $name,
@@ -142,7 +138,7 @@ class Categories_Controller extends Base_Controller {
 			'description' => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
 			'parent_id'   => absint( $request->get_param( 'parent_id' ) ) ?: null,
 			'icon'        => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
-			'color'       => sanitize_hex_color( (string) $request->get_param( 'color' ) ) ?: sanitize_text_field( (string) $request->get_param( 'color' ) ),
+			'color'       => (string) $request->get_param( 'color' ),
 			'visibility'  => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
 			'sort_order'  => absint( $request->get_param( 'sort_order' ) ),
 		];
@@ -196,7 +192,7 @@ class Categories_Controller extends Base_Controller {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );
 		}
 		if ( null !== $request->get_param( 'color' ) ) {
-			$data['color'] = sanitize_hex_color( $request->get_param( 'color' ) ) ?: sanitize_text_field( $request->get_param( 'color' ) );
+			$data['color'] = (string) $request->get_param( 'color' );
 		}
 		if ( null !== $request->get_param( 'visibility' ) ) {
 			$data['visibility'] = sanitize_text_field( $request->get_param( 'visibility' ) );
@@ -269,21 +265,6 @@ class Categories_Controller extends Base_Controller {
 			'space_count' => (int) ( $category->space_count ?? 0 ),
 			'created_at'  => $category->created_at ?? null,
 		];
-	}
-
-	/**
-	 * Generate a unique slug by appending a numeric suffix if needed.
-	 */
-	private function unique_slug( string $base_slug ): string {
-		$slug    = $base_slug;
-		$counter = 1;
-
-		while ( Category::find_by_slug( $slug ) ) {
-			$slug = $base_slug . '-' . $counter;
-			++$counter;
-		}
-
-		return $slug;
 	}
 
 	/**

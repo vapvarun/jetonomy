@@ -68,9 +68,11 @@ defined( 'ABSPATH' ) || exit;
 				);
 				?>
 			</div>
-			<div class="jetonomy-form-field">
+			<div class="jetonomy-form-field" data-jt-color-field="#cat-parent">
 				<label for="cat-color"><?php esc_html_e( 'Color', 'jetonomy' ); ?></label>
-				<input type="text" id="cat-color" class="jetonomy-color-picker" value="">
+				<input type="text" id="cat-color" class="jetonomy-color-picker" value="" aria-describedby="cat-color-help">
+				<?php /* translators: %s: plural category label (e.g. categories). */ ?>
+				<p class="description" id="cat-color-help"><?php echo esc_html( sprintf( __( 'Shown as an accent beside top-level %s on the community home.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?></p>
 			</div>
 		</div>
 		<p>
@@ -310,9 +312,11 @@ defined( 'ABSPATH' ) || exit;
 					);
 					?>
 				</div>
-				<div class="jetonomy-form-field">
+				<div class="jetonomy-form-field" data-jt-color-field="#edit-cat-parent">
 					<label for="edit-cat-color"><?php esc_html_e( 'Color', 'jetonomy' ); ?></label>
-					<input type="text" id="edit-cat-color" class="jetonomy-color-picker" value="">
+					<input type="text" id="edit-cat-color" class="jetonomy-color-picker" value="" aria-describedby="edit-cat-color-help">
+					<?php /* translators: %s: plural category label (e.g. categories). */ ?>
+					<p class="description" id="edit-cat-color-help"><?php echo esc_html( sprintf( __( 'Shown as an accent beside top-level %s on the community home.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?></p>
 				</div>
 			</div>
 			<p class="jetonomy-modal__actions">

@@ -239,6 +239,7 @@ class Model_Tests {
 		$this->test_media_cleanup_scope();
 		$this->test_category_space_count();
 		$this->test_category_hierarchy_rules();
+		$this->test_category_slug_and_colour();
 		$this->test_category_sibling_reorder();
 		$this->test_notification_space_read_gate();
 		$this->test_subscriber_fanout_batches();
@@ -2074,6 +2075,38 @@ class Model_Tests {
 			// Raw delete: fixtures must go even when a check above failed and
 			// left the tree in a state Category::delete() would refuse.
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE slug LIKE %s", '%' . $wpdb->esc_like( '-' . $suffix ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			Space::bump_tree_generation();
+		}
+	}
+
+	/**
+	 * CS: every category writer gets a free slug, an explicit slug clash on
+	 * edit is refused with a reason, and colour is a top-level accent only
+	 * (Basecamp 10375159877, 10375031087).
+	 */
+	private function test_category_slug_and_colour(): void {
+		global $wpdb;
+		$name = 'QA CS ' . wp_generate_password( 6, false, false );
+		$ids  = [];
+
+		try {
+			$ids[] = $top = Category::create( [ 'name' => $name, 'color' => '#2563eb' ] );
+			$ids[] = $dup = Category::create( [ 'name' => $name, 'color' => 'not-a-colour' ] );
+			$ids[] = $sub = Category::create( [ 'name' => $name . ' Sub', 'parent_id' => $top, 'color' => '#e11d48' ] );
+
+			$this->check( 'CS1: a second category with the same name gets its own slug instead of failing', $dup > 0 && Category::find( $dup )->slug === Category::find( $top )->slug . '-1' );
+			$this->check( 'CS2: a non-hex colour is dropped, a hex colour is kept on a top-level category', null === Category::find( $dup )->color && '#2563eb' === Category::find( $top )->color );
+			$this->check( 'CS3: a sub-category never stores a colour', null === Category::find( $sub )->color );
+
+			$clash = Category::update( $dup, [ 'slug' => Category::find( $top )->slug ] );
+			$this->check( 'CS4: editing a slug onto one in use is refused with 409', is_wp_error( $clash ) && 409 === ( $clash->get_error_data()['status'] ?? 0 ) );
+
+			Category::update( $dup, [ 'parent_id' => $top, 'color' => '#123456' ] );
+			$this->check( 'CS5: moving a category under a parent clears its colour', null === Category::find( $dup )->color );
+		} finally {
+			foreach ( array_reverse( array_filter( $ids ) ) as $id ) {
+				$wpdb->delete( table( 'categories' ), [ 'id' => (int) $id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			}
 			Space::bump_tree_generation();
 		}
 	}

@@ -58,10 +58,12 @@ class Setup_Handler {
 		$cat_id = Category::create(
 			[
 				'name'       => $cat_name,
-				'slug'       => sanitize_title( $cat_name ),
 				'visibility' => 'public',
 			]
 		);
+		if ( $cat_id <= 0 ) {
+			wp_send_json_error( __( 'Could not create the category. Please try again.', 'jetonomy' ) );
+		}
 
 		$space_id = Space::create(
 			[
@@ -69,7 +71,7 @@ class Setup_Handler {
 				'author_id'   => get_current_user_id(),
 				'type'        => $settings['default_space_type'],
 				'title'       => $space_name,
-				'slug'        => sanitize_title( $space_name ),
+				'slug'        => Space::unique_slug( sanitize_title( $space_name ) ),
 				'description' => $space_desc,
 				'visibility'  => 'public',
 				'join_policy' => 'open',

@@ -33,9 +33,9 @@
   "supplements_path": null,
   "qa_actions": {
     "command": "wp jetonomy qa-actions",
-    "expected_total": 453,
-    "verified_on": "2026-09-22",
-    "verified_version": "2.0.0",
+    "expected_total": 459,
+    "verified_on": "2026-10-06",
+    "verified_version": "2.0.1",
     "verified_on_site": "forums.local",
     "gate": "ZERO FAIL lines. The total is a tripwire for accidentally-skipped phases, not the pass condition.",
     "environment_dependent": true,
