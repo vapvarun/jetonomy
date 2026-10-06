@@ -3275,6 +3275,17 @@ const { state, actions } = store( 'jetonomy', {
             // Replace only the numeric run so the localized suffix survives;
             // drop the badge entirely when the queue hits zero (SSR hides it).
             const flagBadge = document.querySelector( '.jt-flag-count' );
+            // The sentence under the heading ("1 pending flag") went stale the
+            // same way; the server renders it for every reachable count.
+            const flagSentence = document.querySelector( '[data-jt-flag-sentences]' );
+            if ( flagSentence ) {
+                try {
+                    const sentences = JSON.parse( flagSentence.getAttribute( 'data-jt-flag-sentences' ) ) || {};
+                    const next      = Math.max( 0, ( parseInt( flagSentence.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
+                    flagSentence.setAttribute( 'data-count', String( next ) );
+                    if ( sentences[ next ] ) flagSentence.textContent = sentences[ next ];
+                } catch ( e ) { /* leave the server text as is */ }
+            }
             if ( flagBadge ) {
                 const nextCount = Math.max( 0, ( parseInt( flagBadge.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
                 if ( nextCount <= 0 ) {

@@ -159,7 +159,20 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 						<h1 class="jt-page-title jt-page-title-sm">
 							<?php echo esc_html( $space->title ); ?>
 						</h1>
-						<p class="jt-page-subtitle">
+						<?php
+						// On the flags panel the JS lowers this sentence as flags are
+						// resolved. It is plural-sensitive, so the translated sentence for
+						// every count it can reach is rendered here rather than built in JS.
+						$jt_flag_sentences = array();
+						if ( ! $jt_is_trash && 'approvals' !== $jt_view ) {
+							$jt_flag_max = min( $jt_flag_total, 100 );
+							for ( $jt_n = 0; $jt_n <= $jt_flag_max; $jt_n++ ) {
+								/* translators: %d: number of pending flags. */
+								$jt_flag_sentences[ $jt_n ] = sprintf( _n( '%d pending flag', '%d pending flags', $jt_n, 'jetonomy' ), $jt_n );
+							}
+						}
+						?>
+						<p class="jt-page-subtitle"<?php echo $jt_flag_sentences ? ' data-jt-flag-sentences="' . esc_attr( wp_json_encode( $jt_flag_sentences ) ) . '" data-count="' . (int) $jt_flag_total . '"' : ''; ?>>
 							<?php
 							// The subtitle follows the open panel - reporting the flag
 							// total over a screen of held submissions reads as a bug.
