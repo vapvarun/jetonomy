@@ -285,21 +285,28 @@ function prime_post_cards( array $posts ): array {
 	if ( ! $posts ) {
 		return array();
 	}
-	$ids     = array_map( static fn( $p ) => (int) $p->id, $posts );
-	$authors = array();
+	$ids        = array_map( static fn( $p ) => (int) $p->id, $posts );
+	$author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+	$authors    = array();
 	foreach ( $posts as $p ) {
 		$authors[ (int) $p->space_id ][] = (int) $p->author_id;
 	}
-	foreach ( $authors as $space_id => $user_ids ) {
-		Models\SpaceMember::warm_role_cache( $space_id, $user_ids );
-	}
-	Models\UserProfile::prime( array_map( static fn( $p ) => (int) $p->author_id, $posts ) );
+	// One query each for every space's author roles, the space rows, and the
+	// authors' WordPress user rows + meta: each card reads all three, and a
+	// list spanning many spaces (tag page) paid ~3 queries per topic for them.
+	Models\SpaceMember::warm_role_cache_many( $authors );
+	Models\Space::prime( array_keys( $authors ) );
+	cache_users( array_values( array_unique( array_filter( $author_ids ) ) ) );
+	Models\UserProfile::prime( $author_ids );
 	Models\Tag::for_posts( $ids );
 
 	$viewer = get_current_user_id();
 	if ( $viewer <= 0 ) {
 		return array();
 	}
+	// Each card's vote button asks the permission engine, which checks the
+	// viewer's ban in that topic's space.
+	Models\Restriction::prime_space_bans( $viewer, array_keys( $authors ) );
 	Models\Vote::user_votes_map( $viewer, 'post', $ids );
 	return Models\ReadStatus::last_read_for_posts( $viewer, $ids );
 }

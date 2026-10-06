@@ -704,14 +704,58 @@ class SpaceMember extends Model {
 	 * @return void
 	 */
 	public static function warm_role_cache( int $space_id, array $user_ids ): void {
-		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
-		if ( $space_id <= 0 || empty( $user_ids ) ) {
+		self::warm_role_cache_many( array( $space_id => $user_ids ) );
+	}
+
+	/**
+	 * warm_role_cache() for several spaces in ONE query.
+	 *
+	 * A tag page, drafts or search lists topics from many spaces; warming one
+	 * space at a time cost a query per distinct space (Basecamp 10369564133).
+	 * Pairs the query does not return are cached as null (no role), exactly as
+	 * the single-space path does.
+	 *
+	 * @param array<int,int[]> $by_space Space id => author ids in that space.
+	 */
+	public static function warm_role_cache_many( array $by_space ): void {
+		$pairs = array();
+		foreach ( $by_space as $space_id => $user_ids ) {
+			$space_id = (int) $space_id;
+			foreach ( array_unique( array_map( 'intval', (array) $user_ids ) ) as $uid ) {
+				if ( $space_id > 0 && $uid > 0 && ! array_key_exists( $space_id . '|' . $uid, self::$role_label_cache ) ) {
+					$pairs[ $space_id . '|' . $uid ] = array( $space_id, $uid );
+				}
+			}
+		}
+		if ( ! $pairs ) {
 			return;
 		}
-		$found = self::roles_for_users( $space_id, $user_ids );
-		foreach ( $user_ids as $uid ) {
-			$key                            = $space_id . '|' . $uid;
-			self::$role_label_cache[ $key ] = $found[ $uid ] ?? null;
+
+		$space_ids = array_values( array_unique( array_column( $pairs, 0 ) ) );
+		$user_ids  = array_values( array_unique( array_column( $pairs, 1 ) ) );
+		$db        = static::db();
+		$table     = static::table();
+		$space_ph  = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
+		$user_ph   = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $db->get_results(
+			$db->prepare(
+				"SELECT space_id, user_id, role FROM {$table}
+				WHERE space_id IN ({$space_ph})
+					AND user_id IN ({$user_ph})
+					AND role IN ('admin','moderator')",
+				array_merge( $space_ids, $user_ids )
+			)
+		) ?: [];
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$found = array();
+		foreach ( $rows as $row ) {
+			$found[ (int) $row->space_id . '|' . (int) $row->user_id ] = (string) $row->role;
+		}
+		foreach ( array_keys( $pairs ) as $key ) {
+			self::$role_label_cache[ $key ] = $found[ $key ] ?? null;
 		}
 	}
 

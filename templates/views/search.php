@@ -275,6 +275,8 @@ $crumbs = [
 						</h3>
 						<div class="jt-topics jt-mb-lg">
 							<?php
+							// Authors, profiles and spaces in one query each, not per row.
+							\Jetonomy\prime_post_cards( $posts );
 							foreach ( $posts as $post ) :
 								$time_ago       = human_time_diff( strtotime( $post->created_at ), time() );
 								$post_url       = \Jetonomy\route_url( 'post', $post->space_slug, $post->slug );

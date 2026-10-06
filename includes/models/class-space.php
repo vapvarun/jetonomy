@@ -33,6 +33,33 @@ class Space extends Model {
 	}
 
 	/**
+	 * Load several spaces into the find() cache with one query, so a list of
+	 * topics from many spaces (tag page, drafts, search) does not run one
+	 * find() query per space (Basecamp 10369564133). Already cached ids are
+	 * skipped, so priming twice never re-queries.
+	 *
+	 * @param int[] $ids Space ids.
+	 */
+	public static function prime( array $ids ): void {
+		$missing = array();
+		foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
+			if ( $id > 0 && false === Cache::get( "space:{$id}" ) ) {
+				$missing[] = $id;
+			}
+		}
+		if ( ! $missing ) {
+			return;
+		}
+
+		$ph = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$rows = static::db()->get_results( static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE id IN ({$ph})", ...$missing ) ) ?: array();
+		foreach ( $rows as $row ) {
+			Cache::set( "space:{$row->id}", $row, 300 );
+		}
+	}
+
+	/**
 	 * Bust every object-cache key that serves a space row.
 	 *
 	 * Row data lives once, under space:{id} (find()); find_by_slug() caches only

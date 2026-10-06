@@ -393,7 +393,9 @@ class Schema_Markup {
 		// Top 10 recent posts under this tag — gives the schema a real
 		// itemListElement instead of an empty container. Capped at 10 so a
 		// 50k-post tag still serializes to a reasonable JSON-LD payload.
-		$posts        = \Jetonomy\Models\Tag::list_by_tag( $tag->slug, 10 );
+		$posts = \Jetonomy\Models\Tag::list_by_tag( $tag->slug, 10 );
+		// wp_head runs before the page primes its cards: load the spaces once.
+		\Jetonomy\Models\Space::prime( array_map( static fn( $p ) => (int) $p->space_id, $posts ) );
 		$item_entries = array();
 		foreach ( $posts as $i => $post ) {
 			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
