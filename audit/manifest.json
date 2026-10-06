@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "jetonomy",
     "name": "Jetonomy",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "namespace": "Jetonomy",
     "main_file": "jetonomy.php",
     "text_domain": "jetonomy",
@@ -13,9 +13,9 @@
   },
   "rest": {
     "namespace": "jetonomy/v1",
-    "route_count": 82,
-    "method_endpoints": 110,
-    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-09-22. route_count INCLUDES the /jetonomy/v1 index route itself (81 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 87 entries covering 81 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
+    "route_count": 83,
+    "method_endpoints": 113,
+    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-10-06 (re-derived from rest_get_server() filtered to free controller classes). route_count INCLUDES the /jetonomy/v1 index route itself (82 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 88 entries covering 82 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
     "endpoints": [
       {
         "route": "/app/config",
@@ -1157,6 +1157,21 @@
         "capability": "jetonomy_manage_spaces",
         "ownership_check": null,
         "purpose": "Delete an access rule. Added 1.9.4."
+      },
+      {
+        "route": "/admin/demo-data",
+        "methods": [
+          "GET",
+          "POST",
+          "DELETE"
+        ],
+        "handler": "Admin_Controller::demo_data_status / import_demo_data / remove_demo_data",
+        "permission": "REST_Auth::auth_mutation (closure)",
+        "purpose": "Demo data status, import (replaces an earlier set), remove; same code as the Dashboard card and wp jetonomy demo-seed/demo-cleanup",
+        "auth": "login_required",
+        "capability": "manage_options",
+        "ownership_check": "not_applicable",
+        "audit_notes": "2.0.1. 401 guest, 403 member (qa-actions DD1-DD2)."
       }
     ]
   },
@@ -1230,13 +1245,6 @@
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_users",
       "purpose": "Change user trust level"
-    },
-    {
-      "action": "jetonomy_cleanup_sample_data",
-      "handler": "Admin\\Ajax\\Setup_Handler::cleanup_sample",
-      "nonce": "jetonomy_admin",
-      "capability": "manage_options",
-      "purpose": "Clean up sample data"
     },
     {
       "action": "jetonomy_create_category",
@@ -2474,7 +2482,7 @@
       "name": "jetonomy_post_updated",
       "type": "action",
       "args": "post_id",
-      "where": "includes/models/class-post.php",
+      "where": "includes/models/class-post.php; includes/api/class-posts-controller.php; includes/admin/ajax/class-content-handler.php (wp-admin edits, since 2.0.1)",
       "consumed_by": null
     },
     {
@@ -2600,7 +2608,7 @@
       "name": "jetonomy_reply_updated",
       "type": "action",
       "args": "reply_id",
-      "where": "includes/models/class-reply.php",
+      "where": "includes/models/class-reply.php; includes/api/class-replies-controller.php; includes/admin/ajax/class-content-handler.php (wp-admin edits, since 2.0.1)",
       "consumed_by": null
     },
     {
@@ -3576,7 +3584,7 @@
       "name": "jetonomy_search_query_args",
       "type": "filter",
       "args": "args",
-      "where": "includes/api/class-search-controller.php",
+      "where": "includes/search/class-fulltext-search.php",
       "consumed_by": null
     },
     {
@@ -3860,6 +3868,41 @@
       "where": "includes/import/class-bbpress-importer.php",
       "consumed_by": [],
       "purpose": "bbPress post_statuses imported per type (forum|topic|reply)."
+    },
+    {
+      "name": "jetonomy_breadcrumb_placement",
+      "type": "filter",
+      "args": "placement ('before_main'|'inside_main'), crumbs",
+      "where": "includes/class-template-loader.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_community_notification_read",
+      "type": "action",
+      "args": "object_type, object_id, user_id",
+      "where": "includes/models/class-notification.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_search_adapter",
+      "type": "filter",
+      "args": "id ('' = automatic)",
+      "where": "includes/adapters/class-adapter-registry.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_from_email",
+      "type": "filter",
+      "args": "email",
+      "where": "includes/adapters/class-wp-mail-adapter.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_from_name",
+      "type": "filter",
+      "args": "name",
+      "where": "includes/adapters/class-wp-mail-adapter.php",
+      "consumed_by": null
     }
   ],
   "buddypress_integration": {
@@ -4230,6 +4273,7 @@
     "changes_2_0_1": "2.0.1 (branch 2.0.1): base_slug() helper replaced ~20 inline reads; Router hooks pre_handle_404 (preempt_route_404) so resolved routes skip core's 404/no-store path; old-base 301 only on is_404(); Importer base gained map_source/find_imported/remember/import_category/get_tally and results()['already']; Import_Map gained find_many/record_many/match_legacy/legacy_category; bbPress importer reads _bbp_sticky_topics/_bbp_super_sticky_topics, _bbp_reply_to (parent_id) and links BuddyPress groups via _bbp_group_ids. No new hooks fired, no schema change. Later on 2.0.1: Post::delete/Reply::delete cascade via Space_Purge::delete_dependents() (replies batched 500, per-reply hooks kept); DELETE ?force=true on posts/replies; DELETE (non-force) or PATCH on an already-trashed post/reply returns 409 jetonomy_already_trashed (Base_Controller::already_trashed_error); scheduled drafts validated server-side (jetonomy_schedule_time_required / jetonomy_schedule_in_past 400, jetonomy_duplicate_scheduled 409 via Post::find_scheduled_duplicate) and published by a single armed action (Post::next_scheduled_at + Cron::arm_scheduled_publish, one-time option jetonomy_publish_single_armed); admin Trash filter + jetonomy_delete_content_permanently; Notifier::should_web()/delivery_channel() + Subscription::attach_delivery(); leaderboard_period_where requires reputation > 0; single jt_viewed cookie + jetonomy_view_dedupe_cookie filter + Privacy policy text; Importer::skip_orphan()/describe_tally()/load_mapped()/clean_slug()/is_source_active(), paged 'members' import phase, jetonomy_import_id_map option retired."
   },
   "generated": {
+    "delta_2026_10_06_2_0_1": "2.0.1 release reconciliation, re-derived from source and the live site. REST: 83 routes / 113 method endpoints (+GET/POST/DELETE /admin/demo-data). AJAX: 44 (-jetonomy_cleanup_sample_data, superseded by Demo_Seeder::remove() behind REST). Hooks: +jetonomy_breadcrumb_placement, +jetonomy_community_notification_read, +jetonomy_search_adapter, +jetonomy_email_from_email, +jetonomy_email_from_name; jetonomy_search_query_args now fires from Fulltext_Search::query() and its return value is used; jetonomy_post_updated / jetonomy_reply_updated also fire from wp-admin edits. New interface Adapters\\Search_Query_Adapter and class Search\\Search_Indexer. Unchanged: 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 8 cron hooks, 16 CLI groups, 15 admin pages. qa-actions 469 pass + 1 environment skip.",
     "delta_2026_08_20_1_9_4": "1.9.4 branch cut. plugin.version corrected to 1.9.4 - it had lagged at 1.9.1 for two releases because the release process bumps the header/constant/readme Stable tag (which build-release.sh triangulates) and never this field. Bumping it is now part of the release checklist. No surface changed at the cut: the 1.9.3 reconciliation (delta_2026_08_18_1_9_3) remains accurate - 80 REST routes, 43 AJAX, 225 hooks, 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 CLI commands, 6 cron hooks, 15 admin pages. Verified on 2026-08-20 against wp jetonomy qa-actions = 286/286 on buddynext.local. CLI GAP CLOSED: `jetonomy privacy` (subcommands scan, purge-orphans; Privacy_Command, registered at class-cli-dispatcher.php:47) was live but absent from wp_cli[] - the dispatcher has 14 subject roots, this file listed 13 plus the bare `jetonomy` catch-all. Verified live via `wp jetonomy privacy --help` on buddynext.local 2026-08-20.",
     "delta_2026_08_18_1_9_3": "1.9.3 reconciliation. Re-derived every jetonomy_* hook fired across includes/ and compared it to hooks_fired: 170 fired in includes (the remainder fire from templates/), ZERO missing from this file. Eleven hooks were added this release and each was recorded in the commit that introduced it: jetonomy_resolve_mention_handles, jetonomy_user_display_name, jetonomy_display_name_choices, jetonomy_reserved_display_names, jetonomy_user_handle, jetonomy_schema, jetonomy_space_purge_batch, plus jetonomy_space_transferred and jetonomy_space_purged. REST route count unchanged at 80 - DELETE /spaces/{id} gained a mode arg and POST/PATCH /spaces gained sort_order, but no route was added or removed. Tables, capabilities, blocks, shortcodes, CLI commands, cron hooks and admin pages all unchanged.",
     "delta_2026_08_06_1_9_1": "1.9.1 reconciliation. Checked v1.9.0..HEAD (55 commits) for every surface this file tracks: zero new REST routes, zero new AJAX handlers, zero added or removed hooks. The five apply_filters/do_action lines the diff shows as added (jetonomy_leaderboard_items, jetonomy_post_publish_transition, jetonomy_rest_prepare_post, jetonomy_post_list_results_for_space, jetonomy_rest_prepare_space) are pre-existing hooks moved by refactors, and all five were already listed. Counts are therefore unchanged: 80 routes, 43 AJAX, 214 hooks, 22 tables. The schema gained three indexes (jt_posts.slug, jt_user_profiles.seen_reputation, jt_tags.post_count); tables[] records name and purpose only, so no entry changed. plugin.version was still 1.9.0 and is now 1.9.1 - it lags because the release process bumps the plugin header, constant and readme Stable tag, which build-release.sh triangulates, but never this field.",
