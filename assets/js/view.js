@@ -3286,6 +3286,17 @@ const { state, actions } = store( 'jetonomy', {
                     if ( sentences[ next ] ) flagSentence.textContent = sentences[ next ];
                 } catch ( e ) { /* leave the server text as is */ }
             }
+            // The "Flags N" section tab is the third copy of the count.
+            const flagTab = document.querySelector( '[data-jt-flag-tab-count]' );
+            if ( flagTab ) {
+                const tabCount = Math.max( 0, ( parseInt( flagTab.getAttribute( 'data-jt-flag-tab-count' ), 10 ) || 0 ) - 1 );
+                if ( tabCount <= 0 ) {
+                    flagTab.remove();
+                } else {
+                    flagTab.setAttribute( 'data-jt-flag-tab-count', String( tabCount ) );
+                    flagTab.textContent = tabCount.toLocaleString( document.documentElement.lang || undefined );
+                }
+            }
             if ( flagBadge ) {
                 const nextCount = Math.max( 0, ( parseInt( flagBadge.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
                 if ( nextCount <= 0 ) {

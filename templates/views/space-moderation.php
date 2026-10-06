@@ -214,7 +214,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<a href="<?php echo esc_url( $jt_queue_url ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>" <?php echo 'flags' === $jt_view ? 'aria-current="page"' : ''; ?>>
 					<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
 					<?php if ( $jt_flag_total > 0 ) : ?>
-						<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $jt_flag_total ) ); ?></span>
+						<span class="jt-tab-count" data-jt-flag-tab-count="<?php echo (int) $jt_flag_total; ?>"><?php echo esc_html( number_format_i18n( $jt_flag_total ) ); ?></span>
 					<?php endif; ?>
 				</a>
 				<a href="<?php echo esc_url( add_query_arg( 'view', 'approvals', $jt_queue_url ) ); ?>" class="jt-profile-tab <?php echo 'approvals' === $jt_view ? 'active' : ''; ?>" <?php echo 'approvals' === $jt_view ? 'aria-current="page"' : ''; ?>>

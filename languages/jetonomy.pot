@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T10:04:28+00:00\n"
+"POT-Creation-Date: 2026-10-06T10:16:47+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -1577,7 +1577,7 @@ msgstr ""
 #: includes/admin/views/replies.php:272
 #: includes/functions.php:1458
 #: templates/views/moderation.php:304
-#: templates/views/space-moderation.php:226
+#: templates/views/space-moderation.php:227
 msgid "Trash"
 msgstr ""
 
@@ -9101,7 +9101,7 @@ msgstr ""
 
 #: templates/partials/moderation/approval-card.php:78
 #: templates/views/moderation.php:298
-#: templates/views/space-moderation.php:220
+#: templates/views/space-moderation.php:221
 msgid "Awaiting approval"
 msgstr ""
 
@@ -9683,7 +9683,7 @@ msgstr ""
 
 #. translators: %d: number of trashed posts and replies.
 #: templates/views/moderation.php:257
-#: templates/views/space-moderation.php:181
+#: templates/views/space-moderation.php:182
 #, php-format
 msgid "%d item in trash"
 msgid_plural "%d items in trash"
@@ -9692,7 +9692,7 @@ msgstr[1] ""
 
 #. translators: %d: number of submissions held for approval.
 #: templates/views/moderation.php:260
-#: templates/views/space-moderation.php:184
+#: templates/views/space-moderation.php:185
 #, php-format
 msgid "%d submission awaiting approval"
 msgid_plural "%d submissions awaiting approval"
@@ -9717,7 +9717,7 @@ msgstr[1] ""
 
 #. translators: %d: number of pending flags.
 #: templates/views/moderation.php:275
-#: templates/views/space-moderation.php:198
+#: templates/views/space-moderation.php:199
 #, php-format
 msgid "%d pending"
 msgid_plural "%d pending"
@@ -9726,7 +9726,7 @@ msgstr[1] ""
 
 #. translators: %d: number of submissions held for approval.
 #: templates/views/moderation.php:282
-#: templates/views/space-moderation.php:205
+#: templates/views/space-moderation.php:206
 #, php-format
 msgid "%d held"
 msgid_plural "%d held"
@@ -9734,12 +9734,12 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: templates/views/moderation.php:290
-#: templates/views/space-moderation.php:212
+#: templates/views/space-moderation.php:213
 msgid "Moderation sections"
 msgstr ""
 
 #: templates/views/moderation.php:292
-#: templates/views/space-moderation.php:214
+#: templates/views/space-moderation.php:215
 msgid "Flags"
 msgstr ""
 
@@ -9762,15 +9762,15 @@ msgid "Banned %s pagination"
 msgstr ""
 
 #: templates/views/moderation.php:383
-#: templates/views/space-moderation.php:231
+#: templates/views/space-moderation.php:232
 msgid "Content type"
 msgstr ""
 
 #. translators: %s: plural label of the items in this tab (topics or replies).
 #: templates/views/moderation.php:411
 #: templates/views/moderation.php:412
-#: templates/views/space-moderation.php:259
 #: templates/views/space-moderation.php:260
+#: templates/views/space-moderation.php:261
 #, php-format
 msgid "No %s in the trash."
 msgstr ""
@@ -9778,24 +9778,24 @@ msgstr ""
 #. translators: %s: plural label of the items in this tab (topics or replies).
 #: templates/views/moderation.php:415
 #: templates/views/moderation.php:416
-#: templates/views/space-moderation.php:263
 #: templates/views/space-moderation.php:264
+#: templates/views/space-moderation.php:265
 #, php-format
 msgid "No %s are waiting for approval."
 msgstr ""
 
 #: templates/views/moderation.php:421
-#: templates/views/space-moderation.php:269
+#: templates/views/space-moderation.php:270
 msgid "The trash is empty."
 msgstr ""
 
 #: templates/views/moderation.php:466
-#: templates/views/space-moderation.php:310
+#: templates/views/space-moderation.php:311
 msgid "Trash pagination"
 msgstr ""
 
 #: templates/views/moderation.php:466
-#: templates/views/space-moderation.php:310
+#: templates/views/space-moderation.php:311
 msgid "Awaiting approval pagination"
 msgstr ""
 
@@ -9822,7 +9822,7 @@ msgid "Review in queue"
 msgstr ""
 
 #: templates/views/moderation.php:561
-#: templates/views/space-moderation.php:346
+#: templates/views/space-moderation.php:347
 msgid "Moderation queue pagination"
 msgstr ""
 
@@ -10565,8 +10565,8 @@ msgid "You do not have permission to moderate this %s."
 msgstr ""
 
 #. translators: %d: number of pending flags.
-#: templates/views/space-moderation.php:170
-#: templates/views/space-moderation.php:187
+#: templates/views/space-moderation.php:171
+#: templates/views/space-moderation.php:188
 #, php-format
 msgid "%d pending flag"
 msgid_plural "%d pending flags"
