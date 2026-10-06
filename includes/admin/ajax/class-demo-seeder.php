@@ -802,45 +802,23 @@ class Demo_Seeder {
 			self::delete_in( $badges_t, 'id', $badge_ids );
 		}
 
-		// --- Flags ---
-
-		$flags_t = table( 'flags' );
-		self::delete_in( $flags_t, 'object_id', $post_ids, "AND object_type = 'post'" );
-		self::delete_in( $flags_t, 'object_id', $reply_ids, "AND object_type = 'reply'" );
-
-		// --- Votes ---
-
-		$votes_t = table( 'votes' );
-		self::delete_in( $votes_t, 'object_id', $post_ids, "AND object_type = 'post'" );
-		self::delete_in( $votes_t, 'object_id', $reply_ids, "AND object_type = 'reply'" );
-
-		// --- Tags + post-tag links ---
-		// Remove the post-to-tag links for every seeded post, then remove the
-		// tag definitions this seeder actually created (tracked ids only — tags
-		// that pre-existed the seed are left intact). Existence-checked so old
-		// manifests / fresh installs without the tables stay quiet.
-		$post_tags_t = table( 'post_tags' );
-		$tags_t      = table( 'tags' );
-		$tag_ids     = array_filter( array_map( 'absint', $manifest['tags'] ?? array() ) );
-
-		if ( $post_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $post_tags_t ) ) === $post_tags_t ) {
-			self::delete_in( $post_tags_t, 'post_id', $post_ids );
+		// --- Spaces and everything in them ---
+		// Space_Purge is the one complete delete: topics, replies, votes, flags,
+		// tag links, notifications, subscriptions, bookmarks, read state,
+		// activity and Pro relations, plus the host-bell removal signals. Raw
+		// deletes here used to leave notifications and bookmarks pointing at
+		// topics that no longer existed.
+		$space_ids = array_filter( array_map( 'absint', $manifest['spaces'] ?? array() ) );
+		foreach ( $space_ids as $space_id ) {
+			\Jetonomy\Space_Purge::purge( $space_id );
 		}
+
+		// --- Tag definitions the seeder created ---
+		// Tracked ids only; tags that pre-existed the seed are left intact.
+		$tags_t  = table( 'tags' );
+		$tag_ids = array_filter( array_map( 'absint', $manifest['tags'] ?? array() ) );
 		if ( $tag_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $tags_t ) ) === $tags_t ) {
 			self::delete_in( $tags_t, 'id', $tag_ids );
-		}
-
-		// --- Replies / Posts ---
-
-		self::delete_in( table( 'replies' ), 'id', $reply_ids );
-		self::delete_in( table( 'posts' ), 'id', $post_ids );
-
-		// --- Spaces ---
-
-		$space_ids = array_filter( array_map( 'absint', $manifest['spaces'] ?? array() ) );
-		if ( $space_ids ) {
-			self::delete_in( table( 'space_members' ), 'space_id', $space_ids );
-			self::delete_in( table( 'spaces' ), 'id', $space_ids );
 		}
 
 		// --- Categories ---
