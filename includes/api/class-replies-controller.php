@@ -18,7 +18,7 @@ use Jetonomy\Models\Reply;
 use Jetonomy\Models\Revision;
 use Jetonomy\Models\Notification;
 use Jetonomy\Models\UserProfile;
-use Jetonomy\Trust\Reputation;
+use Jetonomy\Moderation\Moderation_Service;
 
 class Replies_Controller extends Base_Controller {
 
@@ -84,6 +84,13 @@ class Replies_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					'args'                => array(
+						'force' => array(
+							'type'        => 'boolean',
+							'default'     => false,
+							'description' => __( 'Delete permanently instead of moving to trash. Space moderators and admins only.', 'jetonomy' ),
+						),
+					),
 				),
 			)
 		);
@@ -218,7 +225,7 @@ class Replies_Controller extends Base_Controller {
 		 * rather than facts about the post, and a CAPTCHA is meaningless for a
 		 * mail webhook.
 		 */
-		$gate = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post );
+		$gate = \Jetonomy\Permissions\Content_Gate::check( $user_id, $post, absint( $request->get_param( 'parent_id' ) ) );
 		if ( is_wp_error( $gate ) ) {
 			return $gate;
 		}
@@ -318,31 +325,12 @@ class Replies_Controller extends Base_Controller {
 			}
 		}
 
-		/**
-		 * Check content against moderation rules before insertion.
-		 *
-		 * @param string|null $action   null if no action, or 'flag', 'hold', 'block', 'spam'.
-		 * @param array       $data     Reply data array with 'content' key.
-		 * @param int         $space_id Space ID.
-		 * @param int         $user_id  Author user ID.
-		 */
-		$moderation_action = apply_filters( 'jetonomy_check_content', null, $reply_data, $space_id, $user_id );
-
-		if ( 'block' === $moderation_action ) {
-			return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+		// Content rules + require_approval (the one shared hold decision).
+		$screened = Moderation_Service::screen_new_content( 'reply', $reply_data, $space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return $screened;
 		}
-		if ( 'hold' === $moderation_action ) {
-			$reply_data['status'] = 'pending';
-		}
-		if ( 'spam' === $moderation_action ) {
-			$reply_data['status'] = 'spam';
-		}
-		// 'flag' is handled AFTER Reply::create — see auto-flag block below.
-
-		// Per-space require_approval: hold unless the author is space staff.
-		if ( $this->should_hold_for_approval( (string) ( $reply_data['status'] ?? '' ), $space_id, $user_id ) ) {
-			$reply_data['status'] = 'pending';
-		}
+		$reply_data['status'] = $screened['status'];
 
 		$reply_id = Reply::create( $reply_data );
 
@@ -361,21 +349,8 @@ class Replies_Controller extends Base_Controller {
 		// Increment rate limit counter.
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_replies' );
 
-		// Auto-flag a reply when a moderation rule asked to flag the content.
-		// The reply still publishes; a Flag record surfaces it in the queue.
-		if ( 'flag' === $moderation_action && $reply_id > 0 ) {
-			$auto_flag_id = \Jetonomy\Models\Flag::create(
-				array(
-					'reporter_id' => 0,
-					'object_type' => 'reply',
-					'object_id'   => (int) $reply_id,
-					'reason'      => 'other',
-					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-				)
-			);
-			if ( $auto_flag_id ) {
-				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'reply' );
-			}
+		if ( $screened['flag'] ) {
+			Moderation_Service::auto_flag( 'reply', (int) $reply_id );
 		}
 
 		// For backdated replies, roll the parent's last_reply_at back to the reply's
@@ -390,13 +365,9 @@ class Replies_Controller extends Base_Controller {
 		// $request->get_param() on the reply path work the same as on posts —
 		// e.g. attachment_ids from a JSON REST body (the mobile app), which the
 		// old 2-arg fire silently dropped (see attachments extension).
+		// @mentions are notified by the create-hook listener (Mentions::notify_for)
+		// once the reply is published, so a held reply mentions nobody until approved.
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, $request );
-
-		// Parse @mentions and notify.
-		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
-		if ( ! empty( $mentioned ) ) {
-			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ), (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
-		}
 
 		$reply = Reply::find( $reply_id );
 
@@ -469,6 +440,11 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Trashed content is restored or purged, not edited in place.
+		if ( 'trash' === ( $reply->status ?? '' ) ) {
+			return $this->already_trashed_error();
+		}
+
 		// Privacy toggle (1.9.0): same author-or-editor gate as content edits.
 		// Only applied when the client actually sent the param, so ordinary
 		// content edits don't silently reset the flag.
@@ -499,18 +475,7 @@ class Replies_Controller extends Base_Controller {
 				$update_data['status'] = 'spam';
 			}
 			if ( 'flag' === $moderation_action ) {
-				$auto_flag_id = \Jetonomy\Models\Flag::create(
-					array(
-						'reporter_id' => 0,
-						'object_type' => 'reply',
-						'object_id'   => (int) $id,
-						'reason'      => 'other',
-						'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-					)
-				);
-				if ( $auto_flag_id ) {
-					do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'reply' );
-				}
+				Moderation_Service::auto_flag( 'reply', (int) $id );
 			}
 
 			// Create a revision before updating.
@@ -525,7 +490,7 @@ class Replies_Controller extends Base_Controller {
 
 			$update_data['content']       = $content;
 			$update_data['content_plain'] = jetonomy_content_to_plain( $content );
-			$update_data['edited_at']     = current_time( 'mysql' );
+			$update_data['edited_at']     = current_time( 'mysql', true );
 			$update_data['edited_by']     = $user_id;
 		}
 
@@ -614,6 +579,34 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// ?force=true - permanent delete, moderators only. Mirrors
+		// DELETE /posts/{id}?force=true; restore is POST
+		// /spaces/{space_id}/moderation/approve/reply/{id}.
+		if ( rest_sanitize_boolean( $request->get_param( 'force' ) ) ) {
+			if ( ! $this->check_permission( 'delete_others_posts', $space_id ) ) {
+				return $this->permission_error();
+			}
+			$result = Reply::delete( $id );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			if ( true !== $result ) {
+				return new WP_Error( 'jetonomy_delete_failed', __( 'The reply could not be deleted.', 'jetonomy' ), array( 'status' => 500 ) );
+			}
+			return new WP_REST_Response(
+				array(
+					'deleted'   => true,
+					'permanent' => true,
+					'id'        => $id,
+				),
+				200
+			);
+		}
+
+		if ( 'trash' === ( $reply->status ?? '' ) ) {
+			return $this->already_trashed_error();
+		}
+
 		// Reply::update() detects the publish→trash transition and decrements
 		// post/user counters atomically — no manual pre-decrement needed.
 		Reply::update( $id, array( 'status' => 'trash' ) );
@@ -654,22 +647,8 @@ class Replies_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		$space_id        = (int) $post->space_id;
-		$post_author_id  = (int) $post->author_id;
-		$reply_author_id = (int) $reply->author_id;
-
-		// Accept-answer is a Q&A workflow. Other space types use the
-		// roadmap status (Ideas) or have no equivalent (Forum, Feed), so
-		// accepting on them would write `is_resolved=1` data that those
-		// types' read paths interpret differently. Refuse cleanly.
-		$space = \Jetonomy\Models\Space::find( $space_id );
-		if ( ! $space || 'qa' !== ( $space->type ?? '' ) ) {
-			return new \WP_Error(
-				'jetonomy_not_qa_space',
-				__( 'Accepted answers only apply to Q&A spaces.', 'jetonomy' ),
-				array( 'status' => 400 )
-			);
-		}
+		$space_id       = (int) $post->space_id;
+		$post_author_id = (int) $post->author_id;
 
 		// Only post author or a moderator/admin may accept a reply.
 		$can_accept = ( $post_author_id === $user_id )
@@ -679,19 +658,12 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Mark the reply as accepted and resolve the post.
-		Reply::mark_accepted( $id );
-		Post::accept_reply( (int) $post->id, $id );
-
-		// Fire action for Notifier and other listeners.
-		do_action( 'jetonomy_reply_accepted', $id, (int) $post->id );
-
-		// Award reputation to the reply author (skip self-award).
-		if ( $reply_author_id && $reply_author_id !== $user_id ) {
-			UserProfile::find_or_create( $reply_author_id );
-			Reputation::award( $reply_author_id, 'reply_accepted' );
-
-			// Notification handled by Notifier via jetonomy_reply_accepted hook above.
+		// One transaction shared with WP-CLI: both flags, the
+		// jetonomy_reply_accepted action (Notifier), the Q&A-only guard
+		// (400 jetonomy_not_qa_space) and the reputation award.
+		$accepted = Reply::accept_as_answer( $id, $user_id );
+		if ( is_wp_error( $accepted ) ) {
+			return $accepted;
 		}
 
 		$updated_reply = Reply::find( $id );
@@ -724,9 +696,8 @@ class Replies_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		$space_id        = (int) $post->space_id;
-		$post_author_id  = (int) $post->author_id;
-		$reply_author_id = (int) $reply->author_id;
+		$space_id       = (int) $post->space_id;
+		$post_author_id = (int) $post->author_id;
 
 		// Only post author or a moderator/admin may un-accept (mirrors accept).
 		$can_unaccept = ( $post_author_id === $user_id )
@@ -735,22 +706,11 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		if ( empty( $reply->is_accepted ) ) {
-			return new \WP_Error(
-				'jetonomy_not_accepted',
-				__( 'This reply is not the accepted answer.', 'jetonomy' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		Reply::unmark_accepted( $id );
-		Post::clear_accepted_reply( (int) $post->id );
-
-		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
-
-		// Revoke the reputation granted on acceptance (skip self, mirroring accept).
-		if ( $reply_author_id && $reply_author_id !== $user_id ) {
-			Reputation::revoke( $reply_author_id, 'reply_accepted' );
+		// Shared with WP-CLI: 400 jetonomy_not_accepted, both flags, the
+		// jetonomy_reply_unaccepted action and the reputation revoke.
+		$unaccepted = Reply::unaccept_as_answer( $id, $user_id );
+		if ( is_wp_error( $unaccepted ) ) {
+			return $unaccepted;
 		}
 
 		$updated_reply = Reply::find( $id );

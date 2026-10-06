@@ -32,6 +32,39 @@ class Content_Handler {
 		add_action( 'wp_ajax_jetonomy_update_reply', [ $this, 'ajax_update_reply' ] );
 		add_action( 'wp_ajax_jetonomy_delete_reply', [ $this, 'ajax_delete_reply' ] );
 		add_action( 'wp_ajax_jetonomy_bulk_content_action', [ $this, 'ajax_bulk_content_action' ] );
+		add_action( 'wp_ajax_jetonomy_delete_content_permanently', [ $this, 'ajax_delete_permanently' ] );
+	}
+
+	/**
+	 * Permanently delete topics or replies - the Trash screen's
+	 * "Delete Permanently" row action and bulk action.
+	 *
+	 * Through Post::delete() / Reply::delete(), never raw SQL, so a topic
+	 * takes its replies and every dependent row with it and author/space
+	 * counters stay right. Items already gone (another admin got there
+	 * first) are skipped, not reported as failures.
+	 */
+	public function ajax_delete_permanently(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$type = 'reply' === sanitize_key( wp_unslash( $_POST['type'] ?? 'post' ) ) ? 'reply' : 'post';
+		$ids  = array_filter( array_map( 'absint', (array) wp_unslash( $_POST['ids'] ?? [] ) ) );
+		if ( empty( $ids ) ) {
+			wp_send_json_error( __( 'Nothing selected.', 'jetonomy' ) );
+		}
+
+		$deleted = 0;
+		foreach ( $ids as $id ) {
+			$result = 'post' === $type ? Post::delete( $id ) : Reply::delete( $id );
+			if ( true === $result ) {
+				++$deleted;
+			}
+		}
+
+		wp_send_json_success( [ 'deleted' => $deleted ] );
 	}
 
 	public function ajax_update_post(): void {
@@ -61,10 +94,13 @@ class Content_Handler {
 			wp_send_json_error( __( 'Nothing to update.', 'jetonomy' ) );
 		}
 
-		$data['edited_at'] = current_time( 'mysql' );
+		$data['edited_at'] = current_time( 'mysql', true );
 		$data['edited_by'] = get_current_user_id();
 
 		Post::update( $id, $data );
+		// Same signal as a REST edit, so webhooks, search indexes and other
+		// listeners see edits made in wp-admin too.
+		do_action( 'jetonomy_post_updated', $id, (int) ( Post::find( $id )->space_id ?? 0 ), get_current_user_id() );
 		wp_send_json_success( [ 'message' => __( 'Post updated.', 'jetonomy' ) ] );
 	}
 
@@ -118,10 +154,12 @@ class Content_Handler {
 			wp_send_json_error( __( 'Nothing to update.', 'jetonomy' ) );
 		}
 
-		$data['edited_at'] = current_time( 'mysql' );
+		$data['edited_at'] = current_time( 'mysql', true );
 		$data['edited_by'] = get_current_user_id();
 
 		Reply::update( $id, $data );
+		$jt_reply = Reply::find( $id );
+		do_action( 'jetonomy_reply_updated', $id, (int) ( $jt_reply ? ( Post::find( (int) $jt_reply->post_id )->space_id ?? 0 ) : 0 ), get_current_user_id() );
 		wp_send_json_success( [ 'message' => __( 'Reply updated.', 'jetonomy' ) ] );
 	}
 

@@ -11,8 +11,7 @@
  * IntersectionObserver chain-loads pages on scroll, defeating the setting on
  * any community larger than the initial viewport. See Basecamp #9860293843.
  *
- * Reads i18n strings from window.jetonomyData.i18n if available, or
- * window.jetonomyPagination.i18n as a dedicated channel; falls back to English.
+ * Button labels are translated with wp.i18n.
  */
 (function () {
 	function bind(container) {
@@ -24,11 +23,8 @@
 		var btn = container.querySelector('.jt-load-more-trigger');
 		if (!btn) { return; }
 
-		var i18n = (window.jetonomyPagination && window.jetonomyPagination.i18n)
-			|| (window.jetonomyData && window.jetonomyData.i18n)
-			|| {};
-		var loadingLabel = i18n.loading || 'Loading...';
-		var loadMoreLabel = i18n.loadMore || 'Load More';
+		var loadingLabel = wp.i18n.__( 'Loading…', 'jetonomy' );
+		var loadMoreLabel = wp.i18n.__( 'Load More', 'jetonomy' );
 
 		var loading = false;
 

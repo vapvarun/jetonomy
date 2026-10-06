@@ -35,7 +35,7 @@
 	function maybeToast( opts, data, errOrResponse ) {
 		if ( opts.toastOnError === false ) return;
 		if ( typeof window.bnToast !== 'function' ) return;
-		var msg = ( data && data.message ) || opts.errorFallback || 'Something went wrong';
+		var msg = ( data && data.message ) || opts.errorFallback || window.wp.i18n.__( 'Something went wrong', 'jetonomy' );
 		try {
 			window.bnToast( msg, 'error' );
 		} catch ( _e ) {

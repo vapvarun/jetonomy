@@ -42,16 +42,17 @@ $crumbs = array(
 	),
 );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
 				<?php esc_html_e( 'My drafts', 'jetonomy' ); ?>
 			</h1>
 			<p class="jt-page-subtitle">
-				<?php esc_html_e( 'Posts you have saved as drafts. Pick one up where you left off.', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( /* translators: %s: plural topic label. */ __( '%s you have saved as drafts. Pick one up where you left off.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?>
 			</p>
 		</header>
 
@@ -62,14 +63,17 @@ $crumbs = array(
 				[
 					'icon'        => 'edit',
 					'message'     => __( 'No drafts yet.', 'jetonomy' ),
-					'description' => __( 'Start writing a post and choose "Save draft" — it will wait for you here until you publish.', 'jetonomy' ),
-					'cta_label'   => __( 'Start a post', 'jetonomy' ),
+					/* translators: %s: singular topic label. */
+					'description' => sprintf( __( 'Start writing a %s and choose "Save draft". It will wait for you here until you publish.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+					/* translators: %s: singular topic label. */
+					'cta_label'   => sprintf( __( 'Start a %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					'cta_url'     => $base . '/',
 				]
 			);
 			?>
 		<?php else : ?>
 			<div class="jt-topics">
+				<?php \Jetonomy\prime_post_cards( $drafts ); ?>
 				<?php foreach ( $drafts as $draft_post ) : ?>
 					<?php
 					// Reuse post-card for visual consistency with the rest of

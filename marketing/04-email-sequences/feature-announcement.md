@@ -58,9 +58,9 @@ You can mix and match. A SaaS company might run a Q&A support space, an Ideas ro
 
 Most WordPress forum plugins store topics as WordPress posts and replies as post metadata - a design that works fine at small scale and degrades badly as volume grows.
 
-Jetonomy uses dedicated MySQL tables - 22 of them - designed specifically for forum data patterns. Indexed correctly for the queries that actually run. Counters denormalized so that loading a space listing doesn't require counting replies across thousands of records.
+Jetonomy uses dedicated MySQL tables - 23 of them - designed specifically for forum data patterns. Indexed correctly for the queries that actually run. Counters denormalized so that loading a space listing doesn't require counting replies across thousands of records.
 
-The difference shows up when your community has 5,000 topics. Page loads stay under 300ms without caching. With Redis caching enabled, they stay under 50ms.
+Built for large communities: indexed queries, paginated lists, and object-cache aware throughout.
 
 ---
 

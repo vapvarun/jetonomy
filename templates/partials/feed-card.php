@@ -23,8 +23,7 @@ $jt_is_masked = (int) $display['id'] !== (int) $post->author_id;
 $profile      = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $space        = \Jetonomy\Models\Space::find( (int) $post->space_id );
 $has_unread   = isset( $has_unread ) ? (bool) $has_unread : false;
-$base         = \Jetonomy\base_url();
-$post_url     = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+$post_url     = \Jetonomy\route_url( 'post', ( $space->slug ?? '' ), $post->slug );
 $time_ago     = human_time_diff( strtotime( $post->created_at ), time() );
 $viewer_id    = get_current_user_id();
 $viewer_vote  = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
@@ -103,7 +102,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 		<?php endif; ?>
 
 		<a class="jt-feed-act" href="<?php echo esc_url( $post_url . '#replies' ); ?>"
-			aria-label="<?php printf( /* translators: %s: plural reply label. */ esc_attr__( 'View %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
+			aria-label="<?php printf( /* translators: %s: the topic or reply label, singular or plural. */ esc_attr__( 'View %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
 			<?php jetonomy_echo_icon( 'message-circle', 16 ); ?>
 			<span class="jt-feed-act-n"><?php echo esc_html( (int) $post->reply_count ); ?></span>
 			<?php if ( $has_unread ) : ?>

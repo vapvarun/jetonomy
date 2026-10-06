@@ -143,12 +143,12 @@ class Sitemap_Emitter {
 			}
 
 			if ( 'spaces' === $type ) {
-				$loc     = base_url() . '/s/' . $row->slug . '/';
+				$loc     = \Jetonomy\route_url( 'space', $row->slug );
 				$lastmod = $row->last_activity_at ?: $row->updated_at;
 				$def_pri = 0.7;
 				$def_frq = self::freq_from_age( $lastmod );
 			} else {
-				$loc     = base_url() . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/';
+				$loc     = \Jetonomy\route_url( 'post', $row->space_slug, $row->post_slug );
 				$lastmod = $row->last_reply_at ?: ( $row->updated_at ?: $row->created_at );
 				$def_pri = 0.5;
 				$def_frq = self::freq_from_age( $lastmod );
@@ -319,8 +319,7 @@ class Sitemap_Emitter {
 	 * get_base_slug() exactly so the emitted child URLs line up with the rewrite.
 	 */
 	public static function base_prefix(): string {
-		$settings = get_option( 'jetonomy_settings', array() );
-		return (string) ( $settings['base_slug'] ?? 'community' );
+		return \Jetonomy\base_slug();
 	}
 
 	/** Stored UTC datetime → W3C/ISO8601 (sitemaps expect W3C). */

@@ -25,7 +25,7 @@ See Pro Features
 
 ## SOCIAL PROOF BAR
 
-**23** custom database tables &nbsp;&nbsp; | &nbsp;&nbsp; **6** trust levels &nbsp;&nbsp; | &nbsp;&nbsp; **81** REST API endpoints &nbsp;&nbsp; | &nbsp;&nbsp; Sub-200ms at 50K topics &nbsp;&nbsp; | &nbsp;&nbsp; **5** space types
+**23** custom database tables &nbsp;&nbsp; | &nbsp;&nbsp; **6** trust levels &nbsp;&nbsp; | &nbsp;&nbsp; **81** REST API endpoints &nbsp;&nbsp; | &nbsp;&nbsp; Built for large communities &nbsp;&nbsp; | &nbsp;&nbsp; **5** space types
 
 ---
 
@@ -33,7 +33,7 @@ See Pro Features
 
 ### Built for performance, not just features
 
-Jetonomy stores community data in 23 dedicated MySQL tables with proper indexes - not in wp_posts and wp_postmeta. Reply counts, vote scores, and post counts are stored directly on each record, so there are no slow COUNT queries on page load. At 50,000 topics with Redis, pages load in under 200ms.
+Jetonomy stores community data in 23 dedicated MySQL tables with proper indexes - not in wp_posts and wp_postmeta. Reply counts, vote scores, and post counts are stored directly on each record, so there are no slow COUNT queries on page load. Built for large communities: indexed queries, paginated lists, and object-cache aware throughout.
 
 ### A community that moderates itself
 
@@ -125,7 +125,7 @@ Top answers surface automatically in Q&A spaces. Flagged content goes to a moder
 | Schema.org and SEO markup | Yes | Yes |
 | 81 REST API endpoints (141 with Pro) | Yes | Yes |
 | Template overrides | Yes | Yes |
-| WordPress Abilities API (19 free, 39 with Pro) | Yes | Yes |
+| WordPress Abilities API (19 free, 39 across free + Pro) | Yes | Yes |
 | Multisite network activation (tables on every subsite) | Yes | Yes |
 | Translatable interface with keyboard accessibility | Yes | Yes |
 | Emoji reactions | - | Yes |
@@ -155,7 +155,7 @@ The free plugin covers everything a real community needs. Pro adds the tools tha
 Yes. The free plugin is available at wbcomdesigns.com and includes all five space types, voting, trust levels, moderation, search, notifications, importers, and the full REST API. There are no paywalls or feature locks in the free version. Jetonomy Pro is a separate paid plugin that adds 15 additional modules, including AI integration with self-hosted Ollama support, site-wide announcements, private messaging, and more.
 
 ### Will it slow down my WordPress site?
-Jetonomy does not use wp_posts or wp_postmeta for community content. It uses 23 custom MySQL tables with indexes designed for forum query patterns. Reply counts and vote scores are stored as denormalized counters. No COUNT queries on page load. With Redis, pages load in under 200ms at 50,000 topics.
+Jetonomy does not use wp_posts or wp_postmeta for community content. It uses 23 custom MySQL tables with indexes designed for forum query patterns. Reply counts and vote scores are stored as denormalized counters. No COUNT queries on page load, indexed queries, paginated lists, and object-cache aware throughout.
 
 ### Does it work with my theme?
 Jetonomy uses CSS custom properties that pull values from your theme's theme.json - fonts, colors, border radius, and spacing. It works with any theme that follows the WordPress standard. If your theme doesn't use theme.json, Jetonomy falls back to sensible defaults.

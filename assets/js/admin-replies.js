@@ -2,8 +2,8 @@
  * Jetonomy — Replies admin page (reply moderation table).
  *
  * Inline-edit, row actions (trash / spam / restore), and bulk actions.
- * AJAX URL / nonce / i18n strings come from window.jetonomyAdmin and
- * page-specific window.jetonomyReplies localize. Loaded only on the
+ * AJAX URL / nonce come from window.jetonomyAdmin and the page-specific
+ * window.jetonomyReplies localize; UI strings use wp.i18n. Loaded only on the
  * Replies admin page (or wherever jt-replies-table renders).
  */
 (function () {
@@ -12,7 +12,17 @@
 	var cfg = {
 		ajaxUrl: (window.jetonomyAdmin && window.jetonomyAdmin.ajaxUrl) || window.ajaxurl,
 		nonce: (window.jetonomyReplies && window.jetonomyReplies.nonce) || (window.jetonomyAdmin && window.jetonomyAdmin.nonce) || '',
-		i18n: (window.jetonomyReplies && window.jetonomyReplies.i18n) || {}
+		i18n: {
+			confirmTrash:      wp.i18n.__( 'Move this to trash?', 'jetonomy' ),
+			confirmSpam:       wp.i18n.__( 'Mark this as spam?', 'jetonomy' ),
+			confirmDelete:     wp.i18n.__( 'Delete this reply permanently? This cannot be undone.', 'jetonomy' ),
+			confirmBulkDelete: wp.i18n.__( 'Delete the selected replies permanently? This cannot be undone.', 'jetonomy' ),
+			confirmBulk:       wp.i18n.__( 'Apply this action to all selected replies?', 'jetonomy' ),
+			saved:             wp.i18n.__( 'Saved!', 'jetonomy' ),
+			saveError:         wp.i18n.__( 'Save failed. Please try again.', 'jetonomy' ),
+			noneSelected:      wp.i18n.__( 'Please select at least one reply.', 'jetonomy' ),
+			noAction:          wp.i18n.__( 'Please choose a bulk action.', 'jetonomy' ),
+		}
 	};
 
 	// Modal toolkit (jetonomy-modals.js) is a hard dependency. Degrade
@@ -29,7 +39,13 @@
 		var params = new URLSearchParams();
 		params.set('action', action);
 		params.set('nonce', cfg.nonce);
-		Object.keys(data).forEach(function (k) { params.set(k, data[k]); });
+		Object.keys(data).forEach(function (k) {
+			if (Array.isArray(data[k])) {
+				data[k].forEach(function (v) { params.append(k + '[]', v); });
+			} else {
+				params.set(k, data[k]);
+			}
+		});
 		return fetch(cfg.ajaxUrl, {
 			method: 'POST',
 			credentials: 'same-origin',
@@ -131,7 +147,7 @@
 				if (res.success) {
 					var preview = (res.data && res.data.preview) ? res.data.preview : content.slice(0, 200);
 					viewEl.textContent = preview;
-					showFeedback(feedback, cfg.i18n.saved || 'Saved!', 'success');
+					showFeedback(feedback, cfg.i18n.saved, 'success');
 					setTimeout(function () {
 						editEl.style.display = 'none';
 						editEl.setAttribute('aria-hidden', 'true');
@@ -139,11 +155,11 @@
 						viewEl.style.display = '';
 					}, 1200);
 				} else {
-					var msg = (res.data && res.data.message) ? res.data.message : (cfg.i18n.saveError || 'Save failed.');
+					var msg = (res.data && res.data.message) ? res.data.message : cfg.i18n.saveError;
 					showFeedback(feedback, msg, 'error');
 				}
 			})
-			.catch(function () { showFeedback(feedback, cfg.i18n.saveError || 'Save failed.', 'error'); })
+			.catch(function () { showFeedback(feedback, cfg.i18n.saveError, 'error'); })
 			.finally(function () {
 				btn.disabled = false;
 				spinner.classList.remove('is-active');
@@ -154,12 +170,19 @@
 		var ajaxAction = 'approve' === action ? 'jetonomy_approve_content'
 			: 'spam' === action ? 'jetonomy_spam_content'
 				: 'jetonomy_trash_content';
+		var data = { type: 'reply', id: replyId };
 
-		ajax(ajaxAction, { type: 'reply', id: replyId })
+		// Permanent delete is not a status change - its own endpoint.
+		if ('delete' === action) {
+			ajaxAction = 'jetonomy_delete_content_permanently';
+			data = { type: 'reply', ids: [replyId] };
+		}
+
+		ajax(ajaxAction, data)
 			.then(function (res) {
 				if (!res.success) { return; }
 				var row = document.getElementById('jt-reply-row-' + replyId);
-				if ('trash' === action || 'spam' === action) {
+				if ('trash' === action || 'spam' === action || 'delete' === action) {
 					row.style.opacity = '0.4';
 					row.style.pointerEvents = 'none';
 					setTimeout(function () { row.remove(); }, 700);
@@ -175,9 +198,10 @@
 		e.preventDefault();
 		var action = link.dataset.action;
 		var replyId = link.dataset.id;
-		var confirmMsg = 'trash' === action ? (cfg.i18n.confirmTrash || 'Move this to trash?') : (cfg.i18n.confirmSpam || 'Mark this as spam?');
+		var confirmMsg = 'delete' === action ? cfg.i18n.confirmDelete
+			: 'trash' === action ? cfg.i18n.confirmTrash : cfg.i18n.confirmSpam;
 
-		if ('trash' === action || 'spam' === action) {
+		if ('trash' === action || 'spam' === action || 'delete' === action) {
 			_confirm(confirmMsg, { danger: true }).then(function (ok) {
 				if (ok) { performReplyAction(action, replyId); }
 			});
@@ -193,10 +217,10 @@
 	if (bulkBtn && bulkSelect) {
 		bulkBtn.addEventListener('click', function () {
 			var action = bulkSelect.value;
-			if (!action) { _alert(cfg.i18n.noAction || 'Please choose a bulk action.'); return; }
+			if (!action) { _alert(cfg.i18n.noAction); return; }
 
 			var checked = table.querySelectorAll('.jt-row-cb:checked');
-			if (!checked.length) { _alert(cfg.i18n.noneSelected || 'Please select at least one reply.'); return; }
+			if (!checked.length) { _alert(cfg.i18n.noneSelected); return; }
 
 			var ids = [];
 			checked.forEach(function (cb) { ids.push(cb.value); });
@@ -208,9 +232,12 @@
 			var runBulk = function () {
 				bulkBtn.disabled = true;
 				bulkSpinner.classList.add('is-active');
-				var promises = ids.map(function (id) {
-					return ajax(ajaxAction, { type: 'reply', id: id });
-				});
+				// One request for the whole selection when deleting permanently.
+				var promises = 'delete' === action
+					? [ajax('jetonomy_delete_content_permanently', { type: 'reply', ids: ids })]
+					: ids.map(function (id) {
+						return ajax(ajaxAction, { type: 'reply', id: id });
+					});
 				return Promise.allSettled(promises).then(function () {
 					bulkBtn.disabled = false;
 					bulkSpinner.classList.remove('is-active');
@@ -218,8 +245,9 @@
 				});
 			};
 
-			if ('trash' === action || 'spam' === action) {
-				_confirm(cfg.i18n.confirmBulk || 'Apply this action to all selected replies?', { danger: true }).then(function (ok) {
+			if ('trash' === action || 'spam' === action || 'delete' === action) {
+				var bulkMsg = 'delete' === action ? cfg.i18n.confirmBulkDelete : cfg.i18n.confirmBulk;
+				_confirm(bulkMsg, { danger: true }).then(function (ok) {
 					if (ok) { runBulk(); }
 				});
 			} else {

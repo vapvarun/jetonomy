@@ -150,6 +150,7 @@ class REST_Tests {
 		$this->run_group_j_blocks();
 		$this->run_group_k_delete_account();
 		$this->test_subscriber_actions();
+		$this->test_approval_lifecycle_AP();
 		$this->test_ajax_reorder_spaces_X4();
 		$this->test_hook_jetonomy_post_publish_transition_H48();
 		$this->test_hook_jetonomy_reply_publish_transition_H49();
@@ -366,6 +367,20 @@ class REST_Tests {
 		$this->check( 'B14: GET /posts/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'B14: response id matches fixture', (int) ( $data['id'] ?? 0 ) === $this->post_id, 'id mismatch' );
 		$this->check( 'B14: response has title + space_id', isset( $data['title'], $data['space_id'] ), 'missing title/space_id' );
+
+		// 14b. The view beacon is the only view counter: it answers with a
+		// `counted` flag, an immediate repeat is deduped, and a plain GET read
+		// no longer moves view_count.
+		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/view" );
+		$data = $r->get_data();
+		$this->check( 'B14b: POST /posts/{id}/view → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'B14b: response has boolean counted', is_bool( $data['counted'] ?? null ), 'missing counted' );
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/view" );
+		$this->check( 'B14b: repeat view inside the window is not counted', false === ( $r->get_data()['counted'] ?? null ), 'repeat was counted' );
+		$before = (int) ( \Jetonomy\Models\Post::find( $this->post_id )->view_count ?? 0 );
+		$this->rest( 'GET', "/posts/{$this->post_id}" );
+		$after = (int) ( \Jetonomy\Models\Post::find( $this->post_id )->view_count ?? 0 );
+		$this->check( 'B14b: GET /posts/{id} does not count a view', $before === $after, "view_count {$before} -> {$after}" );
 
 		$r    = $this->rest( 'GET', "/replies/{$this->reply_id}" );
 		$data = $r->get_data();
@@ -1055,15 +1070,22 @@ class REST_Tests {
 			return;
 		}
 
-		// We need an existing flag to target. Create one as admin, then attempt
-		// resolve as test_user (subscriber, no jetonomy_moderate capability).
-		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', '/flags', [
-				'object_type' => 'post',
-				'object_id'   => $this->post_id,
-				'reason'      => 'other',
-				'description' => 'Group G permission test flag',
-			] );
+		// We need an existing flag to target. Members cannot report their own
+		// content (E25d) and E25 already has the test user's report on the
+		// fixture post, so the test user reports the admin's fixture reply -
+		// then tries to resolve it without jetonomy_moderate.
+		if ( $this->reply_id ) {
+			$r = $this->rest(
+				'POST',
+				'/flags',
+				[
+					'object_type' => 'reply',
+					'object_id'   => $this->reply_id,
+					'reason'      => 'other',
+					'description' => 'Group G permission test flag',
+				],
+				$this->test_user_id
+			);
 			$data    = $r->get_data();
 			$flag_id = ! empty( $data['id'] ) ? (int) $data['id'] : 0;
 
@@ -1077,8 +1099,11 @@ class REST_Tests {
 				$this->skip( 'G34: permission test flag', 'flag creation failed' );
 			}
 		} else {
-			$this->skip( 'G34: non-mod resolve flag', 'no post_id' );
+			$this->skip( 'G34: non-mod resolve flag', 'no reply_id' );
 		}
+
+		// G34 acts as the test user; later groups (J blocks as the admin) must not inherit it.
+		wp_set_current_user( $this->admin_id );
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
@@ -1140,7 +1165,7 @@ class REST_Tests {
 		$r    = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => $this->test_user_id ] );
 		$data = $r->get_data();
 		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
-		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()}" );
+		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()} " . wp_json_encode( $data ) . " uid=" . get_current_user_id() . " tu={$this->test_user_id}" );
 		$this->check( 'J1: response confirms blocked user', ! empty( $data['user_id'] ) && (int) $data['user_id'] === $this->test_user_id, 'missing/incorrect user_id' );
 
 		// J2: The block shows up in the viewer's list.
@@ -1519,6 +1544,188 @@ class REST_Tests {
 		}
 
 		return $response;
+	}
+
+
+	/**
+	 * Content held for approval announces nothing until a moderator approves it,
+	 * then announces exactly once, credited to the author (AP1-AP8).
+	 *
+	 * The create hook fired only at creation, while the content was pending, so
+	 * approval never notified subscribers or reached BuddyNext - but @mentions
+	 * already notified and activity/reputation were already awarded for content
+	 * nobody could read yet.
+	 */
+	private function test_approval_lifecycle_AP(): void {
+		global $wpdb;
+
+		if ( ! $this->test_user_id ) {
+			$this->skip( 'AP: approval lifecycle', 'no TL0 test user' );
+			return;
+		}
+
+		wp_set_current_user( $this->admin_id );
+		$space = $this->rest( 'POST', '/spaces', [
+			'title'    => 'QA-N approval space ' . wp_rand(),
+			'settings' => [ 'require_approval' => '1' ],
+		] );
+		$space_id = (int) ( $space->get_data()['id'] ?? 0 );
+		if ( 201 !== $space->get_status() || ! $space_id ) {
+			$this->check( 'AP: approval space created', false, wp_json_encode( $space->get_data() ) );
+			return;
+		}
+		$this->cleanup[] = [ 'type' => 'space_rest', 'id' => $space_id ];
+
+		$handle  = (string) get_userdata( $this->admin_id )->user_nicename;
+		$notif_t = table( 'notifications' );
+		$log_t   = table( 'activity_log' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$mentions = static function ( string $type, int $id ) use ( $wpdb, $notif_t ): int {
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notif_t} WHERE type = 'mention' AND object_type = %s AND object_id = %d", $type, $id ) );
+		};
+		$created = static function ( string $type, int $id ) use ( $wpdb, $log_t ): array {
+			return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM {$log_t} WHERE action = %s AND object_type = %s AND object_id = %d", 'created_' . $type, $type, $id ) ) );
+		};
+		$rows = static function ( string $type, int $id ) use ( $wpdb, $notif_t ): int {
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notif_t} WHERE object_type = %s AND object_id = %d", $type, $id ) );
+		};
+		// phpcs:enable
+
+		// Approve through the real wp-admin AJAX handler (Approve / Not Spam buttons).
+		$via_admin = static function ( string $type, int $id ): void {
+			$_POST    = [
+				'nonce'       => wp_create_nonce( 'jetonomy_admin' ),
+				'object_type' => $type,
+				'object_id'   => $id,
+			];
+			$_REQUEST = $_POST;
+			$stop     = static function () {
+				return static function () {
+					throw new \RuntimeException( 'ajax-done' );
+				};
+			};
+			add_filter( 'wp_doing_ajax', '__return_true' );
+			add_filter( 'wp_die_ajax_handler', $stop );
+			ob_start();
+			try {
+				( new \Jetonomy\Admin\Ajax\Moderation_Handler() )->ajax_approve_content();
+			} catch ( \RuntimeException $e ) {
+				unset( $e ); // wp_send_json_* ends the request here.
+			}
+			ob_end_clean();
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $stop );
+			$_POST    = [];
+			$_REQUEST = [];
+		};
+		$count_fires = static function ( string $type, callable $act ): int {
+			$hook  = 'jetonomy_after_create_' . $type;
+			$fired = 0;
+			$probe = static function () use ( &$fired ) {
+				++$fired;
+			};
+			add_action( $hook, $probe );
+			$act();
+			remove_action( $hook, $probe );
+			return $fired;
+		};
+
+		$held_post = 0;
+		foreach ( [ 'post', 'reply' ] as $type ) {
+			if ( 'post' === $type ) {
+				$r = $this->rest( 'POST', "/spaces/{$space_id}/posts", [
+					'title'   => 'QA-N held post',
+					'content' => "<p>Hello @{$handle}</p>",
+					'type'    => 'discussion',
+				], $this->test_user_id );
+			} else {
+				// Admin's own post publishes (staff bypass), the member's reply is held.
+				wp_set_current_user( $this->admin_id );
+				$parent    = $this->rest( 'POST', "/spaces/{$space_id}/posts", [ 'title' => 'QA-N parent', 'content' => '<p>parent</p>', 'type' => 'discussion' ] );
+				$parent_id = (int) ( $parent->get_data()['id'] ?? 0 );
+				$r         = $this->rest( 'POST', "/posts/{$parent_id}/replies", [ 'content' => "<p>Hi @{$handle}</p>" ], $this->test_user_id );
+			}
+			$id = (int) ( $r->get_data()['id'] ?? 0 );
+			if ( 201 !== $r->get_status() || ! $id ) {
+				$this->check( "AP: member {$type} created in approval space", false, wp_json_encode( $r->get_data() ) );
+				continue;
+			}
+
+			$this->check( "AP: member {$type} is held as pending", 'pending' === ( $r->get_data()['status'] ?? '' ), (string) ( $r->get_data()['status'] ?? '' ) );
+			$this->check( "AP: pending {$type} sends no mention", 0 === $mentions( $type, $id ) );
+			$this->check( "AP: pending {$type} has zero notification rows", 0 === $rows( $type, $id ), (string) $rows( $type, $id ) );
+			$this->check( "AP: pending {$type} logs no activity / reputation", [] === $created( $type, $id ) );
+
+			// Approve as the admin: the activity must still be the author's. The
+			// post goes through the moderation queue (REST service entry), the
+			// reply through the wp-admin AJAX handler.
+			wp_set_current_user( $this->admin_id );
+			$fired = $count_fires(
+				$type,
+				function () use ( $type, $id, $via_admin ) {
+					if ( 'post' === $type ) {
+						\Jetonomy\Moderation\Moderation_Service::set_object_status( $this->admin_id, $type, $id, 'approve' );
+					} else {
+						$via_admin( $type, $id );
+					}
+				}
+			);
+			if ( 'post' === $type ) {
+				$held_post = $id;
+			}
+
+			$this->check( "AP: approving the {$type} fires its create hook once", 1 === $fired, (string) $fired );
+
+			$this->check( "AP: approved {$type} mentions exactly once", 1 === $mentions( $type, $id ), (string) $mentions( $type, $id ) );
+			$this->check(
+				"AP: approved {$type} activity logged once, for the author",
+				[ $this->test_user_id ] === $created( $type, $id ),
+				wp_json_encode( $created( $type, $id ) )
+			);
+		}
+
+		// Holding a live post and approving it again must not re-announce it.
+		if ( $held_post ) {
+			\Jetonomy\Moderation\Moderation_Service::set_object_status( $this->admin_id, 'post', $held_post, 'hold' );
+			$fired = $count_fires( 'post', fn() => $via_admin( 'post', $held_post ) );
+			$this->check( 'AP: re-approving a post that was live does not re-announce', 0 === $fired && 1 === $mentions( 'post', $held_post ), "fired={$fired} mentions=" . $mentions( 'post', $held_post ) );
+		}
+
+		// Not Spam on content caught as spam at creation (Akismet false positive) announces it once.
+		$spam_id = (int) \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $this->test_user_id,
+				'title'     => 'QA-N2 spam false positive',
+				'content'   => "<p>Hey @{$handle}</p>",
+				'status'    => 'spam',
+			]
+		);
+		$fired   = $count_fires( 'post', fn() => $via_admin( 'post', $spam_id ) );
+		$this->check( 'AP: approving spam content announces it once', 1 === $fired && 1 === $mentions( 'post', $spam_id ), "fired={$fired} mentions=" . $mentions( 'post', $spam_id ) );
+		\Jetonomy\Models\Post::delete( $spam_id );
+
+		// Draft then Publish now honours require_approval: held, silent until approved.
+		$draft    = $this->rest( 'POST', "/spaces/{$space_id}/posts", [
+			'title'   => 'QA-N2 draft publish-now',
+			'content' => "<p>Draft @{$handle}</p>",
+			'type'    => 'discussion',
+			'status'  => 'draft',
+		], $this->test_user_id );
+		$draft_id = (int) ( $draft->get_data()['id'] ?? 0 );
+		$now      = $draft_id ? $this->rest( 'PATCH', "/posts/{$draft_id}", [ 'status' => 'publish' ], $this->test_user_id ) : null;
+		$this->check(
+			'AP: publish-now of a member draft under require_approval is held',
+			$now && 'pending' === ( $now->get_data()['status'] ?? '' ) && 0 === $rows( 'post', $draft_id ),
+			$now ? wp_json_encode( [ $now->get_status(), $now->get_data()['status'] ?? '', $rows( 'post', $draft_id ) ] ) : 'no draft'
+		);
+		wp_set_current_user( $this->admin_id );
+		if ( $draft_id ) {
+			$fired = $count_fires( 'post', fn() => \Jetonomy\Moderation\Moderation_Service::set_object_status( $this->admin_id, 'post', $draft_id, 'approve' ) );
+			$this->check( 'AP: approving the held draft announces it once', 1 === $fired && 1 === $mentions( 'post', $draft_id ), "fired={$fired} mentions=" . $mentions( 'post', $draft_id ) );
+		}
+
+		wp_set_current_user( $this->admin_id );
 	}
 
 

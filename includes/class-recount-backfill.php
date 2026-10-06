@@ -140,6 +140,9 @@ final class Recount_Backfill {
 	 * @return void
 	 */
 	public static function ensure_scheduled(): void {
+		if ( ! Cron::is_scheduling_request() ) {
+			return;
+		}
 		$state = self::state();
 
 		if ( null === $state || ! empty( $state['done'] ) ) {

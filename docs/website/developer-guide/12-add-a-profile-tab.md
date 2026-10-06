@@ -80,8 +80,7 @@ Teach Jetonomy's router about the new URL pattern. The slug captured in `$matche
 
 ```php
 add_action( 'init', function() {
-    $settings  = get_option( 'jetonomy_settings', [] );
-    $base      = $settings['base_slug'] ?? 'community';
+    $base      = \Jetonomy\base_slug();
 
     add_rewrite_rule(
         '^' . preg_quote( $base, '^' ) . '/u/([^/]+)/portfolio/?$',
@@ -105,8 +104,7 @@ Hook into `jetonomy_profile_tabs` and append your tab. Build the URL from the `$
 
 ```php
 add_filter( 'jetonomy_profile_tabs', function( array $tabs, WP_User $user, bool $is_own ): array {
-    $settings = get_option( 'jetonomy_settings', [] );
-    $base     = $settings['base_slug'] ?? 'community';
+    $base     = \Jetonomy\base_slug();
 
     $tabs['portfolio'] = [
         'label' => __( 'Portfolio', 'my-plugin' ),
@@ -142,7 +140,7 @@ add_filter( 'jetonomy_template_map', function( array $map ): array {
 // Step 2 - rewrite rule.
 add_action( 'init', function() {
     $settings = get_option( 'jetonomy_settings', [] );
-    $base     = $settings['base_slug'] ?? 'community';
+    $base     = \Jetonomy\base_slug();
 
     add_rewrite_rule(
         '^' . preg_quote( $base, '^' ) . '/u/([^/]+)/portfolio/?$',
@@ -153,8 +151,7 @@ add_action( 'init', function() {
 
 // Step 3 - tab.
 add_filter( 'jetonomy_profile_tabs', function( array $tabs, WP_User $user, bool $is_own ): array {
-    $settings = get_option( 'jetonomy_settings', [] );
-    $base     = $settings['base_slug'] ?? 'community';
+    $base     = \Jetonomy\base_slug();
 
     $tabs['portfolio'] = [
         'label' => __( 'Portfolio', 'my-plugin' ),

@@ -26,7 +26,6 @@
 		"Map": "readonly",
 		"jetonomyData": "readonly",
 		"jetonomyHeader": "readonly",
-		"jetonomyLoginBlock": "readonly",
 		"jetonomyModalsI18n": "readonly",
 		"jetonomyUpload": "readonly",
 		"jetonomyRest": "readonly",

@@ -5,7 +5,6 @@ The Wbcom stack section of the Integrations tab lets you install companion plugi
 - Where to find the companion installer
 - Which companion plugins are available
 - How the install and activate flow works
-- How to extend the catalog with the `jetonomy_companions` filter
 
 Go to **Jetonomy → Settings → Integrations** to access the companion cards. The Integrations tab is always available, and the companion cards appear on every install regardless of which other plugins are active.
 
@@ -43,26 +42,10 @@ When you click "Install free", Jetonomy posts to the store at `wbcomdesigns.com`
 
 Once a companion is active, Jetonomy's integration code detects it on every load and enables the matching features. Deactivating a companion from the standard Plugins screen returns those features to their unconnected state; no Jetonomy data is removed.
 
-## Extending the Catalog
+> **Developers:** the companion catalog itself is extendable with the `jetonomy_companions` filter, so a third-party plugin can add its own card to this screen. See [Admin Extensions - Wbcom Companion Catalog](../developer-guide/20-admin-extensions.md#wbcom-companion-catalog) for the filter signature and an example.
 
-The companion catalog is filterable. Pro plugins and third-party integrations can add their own entries:
+## What's Next?
 
-```php
-add_filter( 'jetonomy_companions', function( array $companions ): array {
-    $companions['my-plugin'] = [
-        'label'     => 'My Plugin',
-        'why'       => 'Short description of what it adds.',
-        'detect'    => static fn() => defined( 'MY_PLUGIN_VERSION' ),
-        'free'      => [
-            'item_id'  => 0,      // EDD item ID; 0 disables one-click install.
-            'key'      => '',
-            'basename' => 'my-plugin/my-plugin.php',
-        ],
-        'store_url' => 'https://example.com/my-plugin/',
-        'unlocks'   => 'What lights up in Jetonomy when this is active.',
-    ];
-    return $companions;
-} );
-```
+See how member uploads are kept separate from your own media library.
 
-Set `item_id` to `0` to suppress the one-click install button and show only the "Learn more" store link. The `detect` callable is what Jetonomy uses to determine whether the companion is active - it should return `true` when the companion's capability is live.
+[Community Media →](17-community-media.md)

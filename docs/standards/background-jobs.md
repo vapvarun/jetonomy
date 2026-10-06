@@ -168,6 +168,11 @@ a ready-to-paste system-cron command built from the site's own URL:
    in Tools → Scheduled Actions and bulk-cancelable.
 2. **Idempotent guards** — `as_next_scheduled_action()` / `as_has_scheduled_action()`
    before scheduling; keep handlers idempotent (AS retries on failure).
+   **The guard itself is a DB query per job, so never run it on every request:** check and arm
+   recurring jobs only when `wp_doing_cron() || ( is_admin() && ! wp_doing_ajax() ) ||
+   ( defined( 'WP_CLI' ) && WP_CLI )`, plus activation (in Jetonomy: `Cron::is_scheduling_request()`).
+   The cron runner re-arms a lost job within one tick. A transient guard is not the fix: without a
+   persistent object cache the transient read is itself a query.
 3. **Batch sweeps** with a cursor/watermark + continuation; keep fan-outs
    (notifications, indexing) per-item async so each retries independently.
 4. **Prune** — let AS retention clear `actionscheduler_*` tables (on by default);

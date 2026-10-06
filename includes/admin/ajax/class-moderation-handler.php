@@ -9,8 +9,6 @@ namespace Jetonomy\Admin\Ajax;
 
 defined( 'ABSPATH' ) || exit;
 
-use Jetonomy\Models\Post;
-use Jetonomy\Models\Reply;
 use Jetonomy\Moderation\Moderation_Service;
 
 class Moderation_Handler {
@@ -23,56 +21,28 @@ class Moderation_Handler {
 	}
 
 	public function ajax_approve_content(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		// Accept both the legacy `object_type`/`object_id` names (used by the
-		// moderation queue UI) and the shorter `type`/`id` names posted by the
-		// Replies admin list. Either pair is valid input from trusted admin JS.
-		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? $_POST['type'] ?? '' ) );
-		$object_id   = absint( $_POST['object_id'] ?? $_POST['id'] ?? 0 );
-
-		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
-			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
-		}
-
-		if ( 'post' === $object_type ) {
-			Post::update( $object_id, [ 'status' => 'publish' ] );
-		} else {
-			Reply::update( $object_id, [ 'status' => 'publish' ] );
-		}
-
-		wp_send_json_success( [ 'message' => __( 'Content approved.', 'jetonomy' ) ] );
+		$this->set_status( 'approve', __( 'Content approved.', 'jetonomy' ) );
 	}
 
 	public function ajax_spam_content(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		// Accept both the legacy `object_type`/`object_id` names (used by the
-		// moderation queue UI) and the shorter `type`/`id` names posted by the
-		// Replies admin list. Either pair is valid input from trusted admin JS.
-		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? $_POST['type'] ?? '' ) );
-		$object_id   = absint( $_POST['object_id'] ?? $_POST['id'] ?? 0 );
-
-		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
-			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
-		}
-
-		if ( 'post' === $object_type ) {
-			Post::update( $object_id, [ 'status' => 'spam' ] );
-		} else {
-			Reply::update( $object_id, [ 'status' => 'spam' ] );
-		}
-
-		wp_send_json_success( [ 'message' => __( 'Marked as spam.', 'jetonomy' ) ] );
+		$this->set_status( 'spam', __( 'Marked as spam.', 'jetonomy' ) );
 	}
 
 	public function ajax_trash_content(): void {
+		$this->set_status( 'trash', __( 'Content trashed.', 'jetonomy' ) );
+	}
+
+	/**
+	 * Shared body of the approve / spam / trash buttons. Routes through the
+	 * moderation choke-point, like the REST and abilities paths, so approval
+	 * announces held content, pending flags resolve, and
+	 * jetonomy_content_moderated fires. The capability + nonce here are the
+	 * authorization, hence the trusted entry with this admin as the actor.
+	 *
+	 * @param string $action  'approve' | 'spam' | 'trash'.
+	 * @param string $message Success message.
+	 */
+	private function set_status( string $action, string $message ): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
 		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
@@ -88,13 +58,12 @@ class Moderation_Handler {
 			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
 		}
 
-		if ( 'post' === $object_type ) {
-			Post::update( $object_id, [ 'status' => 'trash' ] );
-		} else {
-			Reply::update( $object_id, [ 'status' => 'trash' ] );
+		$result = Moderation_Service::system_set_object_status( $object_type, $object_id, $action, get_current_user_id() );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Content trashed.', 'jetonomy' ) ] );
+		wp_send_json_success( [ 'message' => $message ] );
 	}
 
 	public function ajax_resolve_flag(): void {

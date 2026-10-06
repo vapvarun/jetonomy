@@ -9,7 +9,6 @@ namespace Jetonomy\Import;
 
 defined( 'ABSPATH' ) || exit;
 
-use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post as JtPost;
 use Jetonomy\Models\Reply as JtReply;
@@ -23,10 +22,42 @@ class WPForo_Importer extends Importer {
 		return 'wpForo';
 	}
 
+	protected function map_source(): string {
+		return 'wpforo';
+	}
+
+	/**
+	 * wpForo board currently being imported (0 = the default board).
+	 *
+	 * @var int
+	 */
+	private int $board_id = 0;
+
+	/**
+	 * jt_import_map source id for a row of the current board.
+	 *
+	 * Every board has its own tables and its own id sequence, so forum 3 on
+	 * board 2 is not forum 3 on the default board. The default board keeps the
+	 * bare id; other boards are prefixed.
+	 *
+	 * @param int|string $id Source row id.
+	 * @return string
+	 */
+	private function sid( $id ): string {
+		return $this->board_id ? $this->board_id . ':' . $id : (string) $id;
+	}
+
 	public function is_source_available(): bool {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpforo_forums';
 		return (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+	}
+
+	/**
+	 * wpForo itself loaded? The import works either way - see Importer::is_source_active().
+	 */
+	public function is_source_active(): bool {
+		return defined( 'WPFORO_VERSION' );
 	}
 
 	/**
@@ -48,13 +79,26 @@ class WPForo_Importer extends Importer {
 		];
 	}
 
+	/**
+	 * The rows the batches report as processed, so progress ends at 100%:
+	 * forums, topics, the posts that become replies (each topic's first post
+	 * is its body, not a reply), the likes and the profiles phase's rows. Counts the
+	 * default board, like get_source_stats().
+	 */
 	public function get_total_count(): int {
 		global $wpdb;
-		$p      = $wpdb->prefix;
-		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" );
-		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" );
-		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" );
-		return $forums + $topics + $posts;
+		$p = $wpdb->prefix;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$first    = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT topicid) FROM {$p}wpforo_posts" );
+		$profiles = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'wpforo_profiles' ) )
+			? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_profiles" )
+			: 0;
+		$src      = $this->likes_source( $p . 'wpforo_' );
+		$likes    = $src ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$src['table']} WHERE 1=1 {$src['where']}" ) : 0;
+		// phpcs:enable
+
+		return array_sum( $this->get_source_stats() ) - $first + $profiles + $likes;
 	}
 
 	/** Option holding the resolved board list for the run in progress. */
@@ -116,25 +160,16 @@ class WPForo_Importer extends Importer {
 		// Board-scoped uploads folder (wpforo, wpforo_2, ...). Boards cached by an
 		// older build have no 'media' key, so fall back to the default board's.
 		$this->media_dir = (string) ( $board['media'] ?? 'wpforo' );
+		$this->board_id  = (int) ( $board['board'] ?? 0 );
 
 		switch ( $phase ) {
 			case 'forums':
-				$cat_id = Category::create(
-					[
-						'name' => $board['cat_name'],
-						'slug' => $board['cat_slug'] . '-' . time(),
-					]
-				);
+				$this->import_forums( $board, $prefix );
 
-				$before = $this->imported;
-				$this->import_forums( (int) $cat_id, $prefix );
-				$this->persist_id_map();
-
-				return $this->next( 'topics', 0, $this->imported - $before );
+				return $this->next( 'topics', 0, $this->imported + $this->already );
 
 			case 'topics':
 				$r = $this->import_topics_batch( $prefix, $offset, $batch_size );
-				$this->persist_id_map();
 
 				// Ran out of time mid-page: resume at the exact row we stopped on.
 				if ( $r['processed'] < $r['fetched'] ) {
@@ -147,7 +182,6 @@ class WPForo_Importer extends Importer {
 
 			case 'replies':
 				$r = $this->import_replies_batch( $prefix, $offset, $batch_size );
-				$this->persist_id_map();
 
 				if ( $r['processed'] < $r['fetched'] ) {
 					return $this->next( 'replies', $offset + $r['processed'], $r['processed'] );
@@ -158,9 +192,15 @@ class WPForo_Importer extends Importer {
 					: $this->next( 'likes', 0, $r['processed'] );
 
 			case 'likes':
-				// Likes are a thin join table; one pass per board is bounded and cheap.
-				$this->import_likes( $prefix );
-				return $this->next( 'profiles', 0, 0 );
+				// Keyset-paged: $offset is the last like id consumed, so a retry
+				// after a timeout resumes where it stopped instead of at zero.
+				$r = $this->import_likes_batch( $prefix, $offset, $batch_size );
+
+				if ( $r['processed'] < $r['fetched'] || $r['fetched'] >= $batch_size ) {
+					return $this->next( 'likes', $r['cursor'], $r['processed'] );
+				}
+
+				return $this->next( 'profiles', 0, $r['processed'] );
 
 			case 'profiles':
 				$processed = $this->create_profiles_batch( $prefix, $offset, $batch_size );
@@ -233,6 +273,7 @@ class WPForo_Importer extends Importer {
 			}
 
 			$boards[] = [
+				'board'    => $board_id,
 				'prefix'   => $prefix,
 				// Each board uploads to its OWN folder: wpforo, wpforo_2, wpforo_3...
 				// (wpforo.php:503). Hardcoding 'wpforo' silently skipped every file on
@@ -305,14 +346,6 @@ class WPForo_Importer extends Importer {
 		];
 	}
 
-	/**
-	 * Persist the id_map so the next batch (a separate request) can resolve
-	 * parents. Import_Handler restores it into $this->id_map before each call.
-	 */
-	private function persist_id_map(): void {
-		update_option( 'jetonomy_import_id_map', $this->id_map, false );
-	}
-
 	public function run( array $options = [] ): array {
 		global $wpdb;
 
@@ -345,14 +378,18 @@ class WPForo_Importer extends Importer {
 				? 'imported-wpforo-' . sanitize_title( $board->title )
 				: 'imported-wpforo';
 
-			$cat_id = Category::create(
+			// Every board numbers its rows from 1, so board 1's forum 3 must not
+			// resolve as board 2's forum 3.
+			$this->id_map   = [];
+			$this->board_id = $board_id;
+			$this->import_forums(
 				[
-					'name' => $cat_name,
-					'slug' => $cat_slug,
-				]
+					'board'    => $board_id,
+					'cat_name' => $cat_name,
+					'cat_slug' => $cat_slug,
+				],
+				$prefix
 			);
-
-			$this->import_forums( $cat_id, $prefix );
 			$this->import_topics( $prefix );
 			$this->import_replies( $prefix );
 			$this->import_likes( $prefix );
@@ -362,49 +399,6 @@ class WPForo_Importer extends Importer {
 		$this->recount();
 
 		return $this->results();
-	}
-
-	/**
-	 * Order forums so every parent appears before its children.
-	 *
-	 * Breadth-first from the roots, then anything orphaned (a parent that no longer
-	 * exists) is appended so it still imports rather than being silently dropped.
-	 *
-	 * @param object[] $forums wpForo forum rows.
-	 * @return object[] Same rows, parents first.
-	 */
-	private function sort_forums_by_dependency( array $forums ): array {
-		$indexed  = [];
-		$children = [];
-
-		foreach ( $forums as $forum ) {
-			$indexed[ (int) $forum->forumid ] = $forum;
-			$parent                           = (int) ( $forum->parentid ?? 0 );
-			$children[ $parent ][]            = (int) $forum->forumid;
-		}
-
-		$ordered = [];
-		$queue   = $children[0] ?? [];
-
-		while ( ! empty( $queue ) ) {
-			$id = array_shift( $queue );
-			if ( ! isset( $indexed[ $id ] ) ) {
-				continue;
-			}
-			$ordered[] = $indexed[ $id ];
-			unset( $indexed[ $id ] );
-			if ( ! empty( $children[ $id ] ) ) {
-				array_splice( $queue, 0, 0, $children[ $id ] );
-			}
-		}
-
-		// Orphans: parent id points at a forum that isn't in the set. Import them
-		// anyway (flat) rather than losing the content entirely.
-		foreach ( $indexed as $leftover ) {
-			$ordered[] = $leftover;
-		}
-
-		return $ordered;
 	}
 
 	/**
@@ -519,11 +513,15 @@ class WPForo_Importer extends Importer {
 		];
 	}
 
-	private function import_forums( int $cat_id, string $p = '' ): void {
+	/**
+	 * Create a space per wpForo forum on one board, skipping any an earlier run imported.
+	 *
+	 * @param array  $board Board entry: board id, category name and slug.
+	 * @param string $p     Board table prefix.
+	 * @return void
+	 */
+	private function import_forums( array $board, string $p ): void {
 		global $wpdb;
-		if ( ! $p ) {
-			$p = $wpdb->prefix . 'wpforo_';
-		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$forums = $wpdb->get_results( "SELECT * FROM {$p}forums ORDER BY `order` ASC" );
@@ -532,9 +530,26 @@ class WPForo_Importer extends Importer {
 		// this loop used to ignore `parentid` entirely — every sub-forum landed as a
 		// top-level space and the whole board structure was flattened on import.
 		// Walk parents before children so a child can resolve its parent's new id.
-		$forums = $this->sort_forums_by_dependency( (array) $forums );
+		$forums = $this->sort_rows_parents_first( (array) $forums, 'forumid', 'parentid' );
+
+		$fingerprints = [];
+		foreach ( $forums as $forum ) {
+			$fingerprints[ $this->sid( $forum->forumid ) ] = [ 'slug' => self::forum_slug( $forum ) ];
+		}
+		$existing = $this->find_imported( 'space', $fingerprints );
+		$cat_id   = 0;
 
 		foreach ( $forums as $forum ) {
+			// Imported by an earlier run: map it so new topics under it import.
+			// Re-creating it used to fail on the slug and silently strand every
+			// new topic in the forum.
+			$sid = $this->sid( $forum->forumid );
+			if ( isset( $existing[ $sid ] ) ) {
+				$this->map_id( 'forum', $forum->forumid, $existing[ $sid ] );
+				++$this->already;
+				continue;
+			}
+
 			$parent_space_id = 0;
 			if ( ! empty( $forum->parentid ) && (int) $forum->parentid > 0 ) {
 				$mapped = $this->get_mapped_id( 'forum', (int) $forum->parentid );
@@ -542,6 +557,12 @@ class WPForo_Importer extends Importer {
 					$parent_space_id = $mapped;
 				}
 			}
+
+			$cat_id = $cat_id ?: $this->import_category(
+				$board['board'] ? 'board-' . $board['board'] : 'default',
+				(string) $board['cat_slug'],
+				[ 'name' => (string) $board['cat_name'] ]
+			);
 
 			// Preserve source access level — a members-only wpForo board must
 			// NOT land as a public Jetonomy space. See self::map_access().
@@ -553,7 +574,9 @@ class WPForo_Importer extends Importer {
 					'author_id'   => 1,
 					'type'        => 'forum',
 					'title'       => $forum->title,
-					'slug'        => $forum->slug ?: sanitize_title( $forum->title ),
+					// Identity lives in jt_import_map, so a slug the owner already
+					// uses imports beside it as "<slug>-1" instead of failing.
+					'slug'        => Space::unique_slug( self::clean_slug( self::forum_slug( $forum ) ) ?: 'forum-' . $forum->forumid ),
 					'description' => wp_strip_all_tags( $forum->description ?? '' ),
 					'visibility'  => $access['visibility'],
 					'join_policy' => $access['join_policy'],
@@ -563,11 +586,24 @@ class WPForo_Importer extends Importer {
 
 			if ( $space_id ) {
 				$this->map_id( 'forum', $forum->forumid, $space_id );
+				$this->remember( 'space', $sid, (int) $space_id );
 				++$this->imported;
 			} else {
+				$this->log_error( 'forum', $sid, 'Failed to create space' );
 				++$this->skipped;
 			}
 		}
+	}
+
+	/**
+	 * The slug a wpForo forum imports under - and the one every import before
+	 * 2.0.1 wrote verbatim, which is what legacy recognition matches on.
+	 *
+	 * @param object $forum wpForo forum row.
+	 * @return string
+	 */
+	private static function forum_slug( object $forum ): string {
+		return $forum->slug ?: sanitize_title( $forum->title );
 	}
 
 	/**
@@ -699,6 +735,24 @@ class WPForo_Importer extends Importer {
 			$first_posts_map[ (int) $fp->topicid ] = $fp;
 		}
 
+		// This page's forums, from memory or from jt_import_map (see load_mapped()).
+		$forum_ids = array_unique( array_map( 'intval', array_column( $topics, 'forumid' ) ) );
+		$this->load_mapped( 'forum', 'space', array_combine( $forum_ids, array_map( fn( $id ) => $this->sid( $id ), $forum_ids ) ) );
+
+		// One "already imported?" lookup for the whole page (see find_imported()).
+		$fingerprints = [];
+		foreach ( $topics as $topic ) {
+			$space_id = $this->get_mapped_id( 'forum', $topic->forumid );
+			if ( $space_id ) {
+				$fingerprints[ $this->sid( $topic->topicid ) ] = [
+					'parent'  => $space_id,
+					'author'  => (int) $topic->userid,
+					'created' => (string) ( $topic->created ?? '' ),
+				];
+			}
+		}
+		$existing = $this->find_imported( 'post', $fingerprints );
+
 		$consumed = 0;
 		$total    = count( $topics );
 
@@ -710,7 +764,15 @@ class WPForo_Importer extends Importer {
 
 			$space_id = $this->get_mapped_id( 'forum', $topic->forumid );
 			if ( ! $space_id ) {
-				++$this->skipped;
+				$this->skip_orphan( 'topic' );
+				continue;
+			}
+
+			// Imported by an earlier run: map it so its new replies resolve.
+			$sid = $this->sid( $topic->topicid );
+			if ( isset( $existing[ $sid ] ) ) {
+				$this->map_id( 'topic', $topic->topicid, $existing[ $sid ] );
+				++$this->already;
 				continue;
 			}
 
@@ -738,7 +800,7 @@ class WPForo_Importer extends Importer {
 					'author_id'     => (int) $topic->userid,
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
 					'title'         => $topic->title,
-					'slug'          => $topic->slug ?: sanitize_title( $topic->title ),
+					'slug'          => self::clean_slug( $topic->slug ?: $topic->title ) ?: 'topic-' . $topic->topicid,
 					'content'       => wp_kses_post( $content ),
 					'content_plain' => \jetonomy_content_to_plain( $content ),
 					'status'        => ( 0 === (int) ( $topic->status ?? 0 ) ) ? 'publish' : 'pending',
@@ -749,12 +811,14 @@ class WPForo_Importer extends Importer {
 			);
 
 			if ( is_wp_error( $post_id ) ) {
+				$this->log_error( 'topic', $sid, $post_id->get_error_message() );
 				++$this->skipped;
 				continue;
 			}
 
 			if ( $post_id ) {
 				$this->map_id( 'topic', $topic->topicid, $post_id );
+				$this->remember( 'post', $sid, (int) $post_id );
 
 				if ( $attachments ) {
 					$result = $this->migrate_attachments( 'post', (int) $post_id, $attachments, $content );
@@ -771,9 +835,6 @@ class WPForo_Importer extends Importer {
 					}
 				}
 
-				if ( $first_post ) {
-					$this->map_id( 'wpforo_post', $first_post->postid, 0 );
-				}
 				++$this->imported;
 			} else {
 				++$this->skipped;
@@ -947,13 +1008,43 @@ class WPForo_Importer extends Importer {
 		$consumed = 0;
 		$total    = count( $posts );
 
+		// This page's topics and threaded parents, from memory or from
+		// jt_import_map (see load_mapped()). A parent created earlier in this
+		// page is mapped as it is created.
+		$topic_ids  = array_unique( array_map( 'intval', array_column( $posts, 'topicid' ) ) );
+		$parent_ids = array_filter( array_unique( array_map( 'intval', array_column( $posts, 'parentid' ) ) ) );
+		$this->load_mapped( 'topic', 'post', array_combine( $topic_ids, array_map( fn( $id ) => $this->sid( $id ), $topic_ids ) ) );
+		$this->load_mapped( 'wpforo_reply', 'reply', array_combine( $parent_ids, array_map( fn( $id ) => $this->sid( $id ), $parent_ids ) ) );
+
+		$fingerprints = [];
+		foreach ( $posts as $wf_post ) {
+			$post_id = $this->get_mapped_id( 'topic', $wf_post->topicid );
+			if ( $post_id ) {
+				$fingerprints[ $this->sid( $wf_post->postid ) ] = [
+					'parent'  => $post_id,
+					'author'  => (int) $wf_post->userid,
+					'created' => (string) ( $wf_post->created ?? '' ),
+				];
+			}
+		}
+		$existing = $this->find_imported( 'reply', $fingerprints );
+
 		foreach ( $posts as $wf_post ) {
 			// Counted before any `continue` — see import_topic_rows().
 			++$consumed;
 
 			$post_id = $this->get_mapped_id( 'topic', $wf_post->topicid );
 			if ( ! $post_id ) {
-				++$this->skipped;
+				$this->skip_orphan( 'reply' );
+				continue;
+			}
+
+			// Imported by an earlier run. Still mapped, so a new threaded reply
+			// beneath it resolves its parent.
+			$sid = $this->sid( $wf_post->postid );
+			if ( isset( $existing[ $sid ] ) ) {
+				$this->map_id( 'wpforo_reply', $wf_post->postid, $existing[ $sid ] );
+				++$this->already;
 				continue;
 			}
 
@@ -987,12 +1078,14 @@ class WPForo_Importer extends Importer {
 			);
 
 			if ( is_wp_error( $reply_id ) ) {
+				$this->log_error( 'reply', $sid, $reply_id->get_error_message() );
 				++$this->skipped;
 				continue;
 			}
 
 			if ( $reply_id ) {
 				$this->map_id( 'wpforo_reply', $wf_post->postid, $reply_id );
+				$this->remember( 'reply', $sid, (int) $reply_id );
 
 				if ( $attachments ) {
 					$result = $this->migrate_attachments( 'reply', (int) $reply_id, $attachments, $body );
@@ -1021,28 +1114,137 @@ class WPForo_Importer extends Importer {
 		return $consumed;
 	}
 
+	/**
+	 * Where this board keeps its likes, or null when it has none.
+	 *
+	 * Since 2.0, wpForo moved likes (and Q&A votes) into `{prefix}reactions` and
+	 * dropped `{prefix}likes`; only pre-2.0 boards still have the old table.
+	 * A like is a reaction with value 1 (up-votes and the like reactions);
+	 * down-votes are not likes and are left out.
+	 *
+	 * @param string $p Board table prefix.
+	 * @return array{table:string, pk:string, where:string}|null
+	 */
+	private function likes_source( string $p ): ?array {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'reactions' ) ) ) {
+			return [
+				'table' => $p . 'reactions',
+				'pk'    => 'reactionid',
+				'where' => 'AND reaction = 1',
+			];
+		}
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'likes' ) ) ) {
+			return [
+				'table' => $p . 'likes',
+				'pk'    => 'likeid',
+				'where' => '',
+			];
+		}
+		// phpcs:enable
+
+		return null;
+	}
+
+	/**
+	 * Every like on a board, a page at a time (the single-shot CLI path).
+	 *
+	 * @param string $p Board table prefix.
+	 * @return void
+	 */
 	private function import_likes( string $p = '' ): void {
 		global $wpdb;
 		if ( ! $p ) {
 			$p = $wpdb->prefix . 'wpforo_';
 		}
 
-		$likes_table = $p . 'likes';
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $likes_table ) ) ) {
-			return;
+		$cursor = 0;
+		do {
+			$r      = $this->import_likes_batch( $p, $cursor, 500 );
+			$cursor = $r['cursor'];
+		} while ( $r['fetched'] > 0 );
+	}
+
+	/**
+	 * Turn one page of wpForo likes into reply votes.
+	 *
+	 * Keyset-paged on the like's primary key: $after is the last id consumed,
+	 * and the returned cursor is the id to resume after. Per page: one query
+	 * for the likes, one jt_import_map lookup for their replies, one jt_votes
+	 * lookup for the pairs that already exist - never a query per like.
+	 *
+	 * @param string $p     Board table prefix.
+	 * @param int    $after Resume after this like id.
+	 * @param int    $limit Page size.
+	 * @return array{fetched:int, processed:int, cursor:int}
+	 */
+	private function import_likes_batch( string $p, int $after, int $limit ): array {
+		global $wpdb;
+
+		$src = $this->likes_source( $p );
+		if ( ! $src ) {
+			return [
+				'fetched'   => 0,
+				'processed' => 0,
+				'cursor'    => $after,
+			];
 		}
 
-		$likes = $wpdb->get_results( "SELECT * FROM {$likes_table}" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted board table/column names.
+		$likes = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT {$src['pk']} AS id, userid, postid FROM {$src['table']} WHERE {$src['pk']} > %d {$src['where']} ORDER BY {$src['pk']} ASC LIMIT %d",
+				$after,
+				$limit
+			)
+		);
 
+		$post_ids = array_unique( array_map( 'intval', array_column( $likes, 'postid' ) ) );
+		if ( $post_ids ) {
+			$this->load_mapped( 'wpforo_reply', 'reply', array_combine( $post_ids, array_map( fn( $id ) => $this->sid( $id ), $post_ids ) ) );
+		}
+
+		$reply_ids = array_filter( array_map( fn( $id ) => (int) $this->get_mapped_id( 'wpforo_reply', $id ), $post_ids ) );
+		$voted     = Vote::voter_pairs( 'reply', array_column( $likes, 'userid' ), $reply_ids );
+
+		$total    = count( $likes );
+		$consumed = 0;
+		$cursor   = $after;
 		foreach ( $likes as $like ) {
-			$reply_id = $this->get_mapped_id( 'wpforo_reply', $like->postid );
-			if ( ! $reply_id ) {
-				continue;
+			++$consumed;
+			$cursor   = (int) $like->id;
+			$user_id  = (int) $like->userid;
+			$reply_id = (int) $this->get_mapped_id( 'wpforo_reply', $like->postid );
+
+			// Guests (email-only reactions) have no account to vote as; a
+			// like on a reply that was not imported has nothing to attach to.
+			if ( $user_id && $reply_id ) {
+				// A re-run maps replies an earlier run imported, and
+				// Vote::cast() TOGGLES a repeated vote - casting again would
+				// retract the like. Also covers one member's two reactions
+				// on the same post within this page.
+				if ( isset( $voted[ "{$user_id}|{$reply_id}" ] ) ) {
+					++$this->already;
+				} else {
+					Vote::cast( $user_id, 'reply', $reply_id, 1 );
+					$voted[ "{$user_id}|{$reply_id}" ] = true;
+					++$this->imported;
+				}
 			}
 
-			Vote::cast( (int) $like->userid, 'reply', $reply_id, 1 );
-			++$this->imported;
+			if ( $consumed < $total && $this->budget_spent() ) {
+				break;
+			}
 		}
+
+		return [
+			'fetched'   => $total,
+			'processed' => $consumed,
+			'cursor'    => $cursor,
+		];
 	}
 
 	private function create_profiles( string $p = '' ): void {

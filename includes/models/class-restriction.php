@@ -216,6 +216,44 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * Answer is_space_banned() for several spaces with one query, so a list of
+	 * topics from many spaces (tag page, drafts, search) does not check the
+	 * viewer's ban once per space (Basecamp 10369564133). Fills the same memo
+	 * is_space_banned() reads; spaces already answered are left alone.
+	 *
+	 * @param int   $user_id   Viewer.
+	 * @param int[] $space_ids Space ids.
+	 */
+	public static function prime_space_bans( int $user_id, array $space_ids ): void {
+		$ids = array();
+		foreach ( array_unique( array_map( 'intval', $space_ids ) ) as $sid ) {
+			if ( $sid > 0 && ! array_key_exists( "space_banned:{$user_id}:{$sid}", self::$memo ) ) {
+				$ids[] = $sid;
+			}
+		}
+		if ( $user_id <= 0 || ! $ids ) {
+			return;
+		}
+
+		$ph = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$banned = array_flip(
+			array_map(
+				'intval',
+				static::db()->get_col(
+					static::db()->prepare(
+						'SELECT space_id FROM ' . static::table() . " WHERE user_id = %d AND type = %s AND space_id IN ({$ph}) AND (expires_at IS NULL OR expires_at > %s)",
+						array_merge( array( $user_id, 'space_ban' ), $ids, array( now() ) )
+					)
+				)
+			)
+		);
+		foreach ( $ids as $sid ) {
+			self::memo( "space_banned:{$user_id}:{$sid}", static fn(): bool => isset( $banned[ $sid ] ) );
+		}
+	}
+
+	/**
 	 * Check whether a user is banned from a specific space (active, non-expired).
 	 *
 	 * @param int $user_id

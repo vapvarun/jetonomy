@@ -8,7 +8,8 @@ All adapters are managed through the static `Adapter_Registry` class (`includes/
 
 | Interface | Class (namespace `Jetonomy\Adapters\`) | What it controls |
 |-----------|---------------------------------------|-----------------|
-| `Search_Adapter` | `interface-search-adapter.php` | Full-text search for posts, replies, spaces |
+| `Search_Adapter` | `interface-search-adapter.php` | Keyword search for Abilities (MCP) |
+| `Search_Query_Adapter` | `interface-search-query-adapter.php` | The full community search: REST, search page, app and Abilities |
 | `Email_Adapter` | `interface-email-adapter.php` | Outbound notification emails |
 | `Membership_Adapter` | `interface-membership-adapter.php` | Membership level checks and gating |
 | `AI_Adapter` | `interface-ai-adapter.php` | AI chat completions and embeddings (text generation, moderation, semantic features) |
@@ -24,7 +25,7 @@ All adapters are managed through the static `Adapter_Registry` class (`includes/
 | `WP_Roles_Adapter` | Membership | Always (WP role-based membership fallback) |
 | `MemberPress_Adapter` | Membership | MemberPress plugin is active |
 | `PMPro_Adapter` | Membership | Paid Memberships Pro is active |
-| `Ollama_AI_Adapter` | AI | A local Ollama endpoint is configured |
+| `Ollama_AI_Adapter` | AI | Jetonomy Pro's AI extension has an Ollama provider configured (the class ships in free; Pro registers it) |
 
 ## Pro Adapters (Jetonomy Pro)
 
@@ -89,7 +90,16 @@ add_action( 'plugins_loaded', function() {
 
 ---
 
-## Search Adapter Interface
+## Search Adapter Interfaces
+
+Two interfaces, depending on how much of search your backend takes over:
+
+| Interface | Serves |
+|---|---|
+| `Search_Query_Adapter` (extends `Search_Adapter`, since 2.0.1) | Everything: `GET /jetonomy/v1/search`, the community search page, the companion app and Abilities (MCP) search |
+| `Search_Adapter` | Abilities (MCP) search only. The REST route, search page and app need tag, author, date and sort filters plus a total, which this interface cannot carry, so they stay on the built-in MySQL search instead of returning results that ignore the filters |
+
+The built-in `Jetonomy\Search\Fulltext_Search` implements `Search_Query_Adapter` with MySQL `FULLTEXT`.
 
 ```php
 namespace Jetonomy\Adapters;
@@ -98,120 +108,88 @@ interface Search_Adapter {
     /** Return true when this adapter is ready to handle queries. */
     public function is_active(): bool;
 
-    /** Index a document. Called when a post or reply is created or updated. */
+    /** Store or replace one published topic or reply in your index. */
     public function index( string $object_type, int $object_id, array $data ): void;
 
-    /**
-     * Execute a search query.
-     *
-     * @param string   $query      The search string.
-     * @param string   $type       'post', 'reply', or 'space'.
-     * @param int|null $space_id   Optional space filter.
-     * @param int      $limit      Max results (default 20).
-     * @param int      $offset     Pagination offset.
-     * @return array               Array of result objects with at least: id, title (posts/spaces) or content (replies).
-     */
+    /** Keyword search of one type ('post', 'reply' or 'space'). */
     public function search( string $query, string $type, ?int $space_id, int $limit, int $offset ): array;
 
-    /** Remove a document from the index. Called when a post or reply is deleted. */
+    /** Drop one topic or reply from your index. */
     public function delete( string $object_type, int $object_id ): void;
+}
+
+interface Search_Query_Adapter extends Search_Adapter {
+    /**
+     * $args: type ('post'|'reply'|'space'|'tag'), q, space_id, date_from, date_to (Y-m-d),
+     *        author_id, tag_slug, sort ('relevance'|'newest'|'votes'), limit, offset, with_total.
+     * An empty q with a space, tag or author is a listing of that scope, newest first.
+     *
+     * @return array{items: object[], total: int}
+     */
+    public function query( array $args ): array;
 }
 ```
 
-### Example: Custom Elasticsearch Adapter
+**What `query()` must return.** Rows must already exclude anything the current viewer may not read: private topics they did not write, topics in private or hidden spaces they are not a member of, and authors they blocked. Callers page through the rows and show `total`. Post rows carry the `jt_posts` columns plus `space_title` and `space_slug`; reply rows the `jt_replies` columns; space and tag rows their table columns. `total` may be 0 when `with_total` is false.
+
+**How your index is kept current.** While a plugin adapter is in use, Jetonomy calls `index( $type, $id, $row )` with the full row when a topic or reply is published (including when a held one is approved) or edited, and `delete( $type, $id )` when one is deleted or moderated out of `publish` (trashed, held, marked spam). Nothing is called while the built-in MySQL search is in use. Existing content is not sent retroactively: index it once from your own importer or a WP-CLI command when you switch backends.
+
+**Which adapter is used.** If more than one is registered, name yours on the `jetonomy_search_adapter` filter. Otherwise Jetonomy uses any active adapter a plugin registered over the built-in `fulltext` one, whatever the registration order:
+
+```php
+add_filter( 'jetonomy_search_adapter', fn() => 'elasticsearch' );
+```
+
+### Example: Elasticsearch adapter
+
+Extending `Fulltext_Search` keeps the MySQL answers for anything you choose not to handle (here: tags).
 
 ```php
 <?php
 namespace My_Plugin;
 
-use Jetonomy\Adapters\Search_Adapter;
+use Jetonomy\Search\Fulltext_Search;
 
-class Elasticsearch_Adapter implements Search_Adapter {
+class Elasticsearch_Adapter extends Fulltext_Search {
 
-    private \Elasticsearch\Client $client;
-
-    public function __construct() {
-        // Build your Elasticsearch client here.
-        $this->client = \Elasticsearch\ClientBuilder::create()
-            ->setHosts( [ get_option( 'my_plugin_es_host', 'localhost:9200' ) ] )
-            ->build();
-    }
+    public function __construct( private \Elasticsearch\Client $client ) {}
 
     public function is_active(): bool {
-        // Only activate when the Elasticsearch host option is set and the client connects.
-        $host = get_option( 'my_plugin_es_host' );
-        return ! empty( $host ) && $this->client->ping();
+        return (bool) get_option( 'my_plugin_es_host' );
     }
 
     public function index( string $object_type, int $object_id, array $data ): void {
-        $this->client->index( [
-            'index' => 'jetonomy_' . $object_type,
-            'id'    => $object_id,
-            'body'  => $data,
-        ] );
-    }
-
-    public function search( string $query, string $type, ?int $space_id, int $limit, int $offset ): array {
-        $must = [
-            [ 'multi_match' => [ 'query' => $query, 'fields' => [ 'title^3', 'content' ] ] ],
-        ];
-
-        if ( $space_id ) {
-            $must[] = [ 'term' => [ 'space_id' => $space_id ] ];
-        }
-
-        $params = [
-            'index' => 'jetonomy_' . $type,
-            'body'  => [
-                'query' => [ 'bool' => [ 'must' => $must ] ],
-                'from'  => $offset,
-                'size'  => $limit,
-            ],
-        ];
-
-        $raw = $this->client->search( $params );
-
-        // Map Elasticsearch hits to the flat object array Jetonomy expects.
-        return array_map(
-            fn( $hit ) => (object) array_merge( $hit['_source'], [ 'id' => (int) $hit['_id'] ] ),
-            $raw['hits']['hits'] ?? []
-        );
+        $this->client->index( [ 'index' => 'jetonomy_' . $object_type, 'id' => $object_id, 'body' => $data ] );
     }
 
     public function delete( string $object_type, int $object_id ): void {
-        $this->client->delete( [
-            'index' => 'jetonomy_' . $object_type,
-            'id'    => $object_id,
-        ] );
+        $this->client->delete( [ 'index' => 'jetonomy_' . $object_type, 'id' => $object_id ] );
+    }
+
+    public function query( array $args ): array {
+        if ( ! in_array( $args['type'] ?? 'post', [ 'post', 'reply' ], true ) ) {
+            return parent::query( $args ); // Spaces and tags stay on MySQL.
+        }
+        // Build the Elasticsearch query from q, space_id, author_id, tag_slug,
+        // dates and sort, including the viewer-visibility filters described above.
+        $raw = $this->client->search( my_plugin_build_es_query( $args, get_current_user_id() ) );
+        return [
+            'items' => array_map( fn( $hit ) => (object) $hit['_source'], $raw['hits']['hits'] ?? [] ),
+            'total' => (int) ( $raw['hits']['total']['value'] ?? 0 ),
+        ];
     }
 }
 ```
 
-**Register it:**
+**Register it** (any priority after Jetonomy loads; order no longer matters):
 
 ```php
-add_action( 'plugins_loaded', function() {
-    if ( ! class_exists( '\Jetonomy\Adapters\Adapter_Registry' ) ) {
-        return;
+add_action( 'plugins_loaded', function () {
+    if ( class_exists( '\Jetonomy\Adapters\Adapter_Registry' ) ) {
+        \Jetonomy\Adapters\Adapter_Registry::register_search( 'elasticsearch', new My_Plugin\Elasticsearch_Adapter( my_plugin_es_client() ) );
     }
-    \Jetonomy\Adapters\Adapter_Registry::register_search(
-        'elasticsearch',
-        new My_Plugin\Elasticsearch_Adapter()
-    );
 }, 15 );
 ```
-
-Jetonomy will call `is_active()` on every registered search adapter and use the first one that returns `true`. Because the built-in `Fulltext_Search` adapter always returns `true`, register your custom adapter before the defaults are initialized - or override it by making sure your adapter is registered first.
-
-The built-in defaults are initialized at `plugins_loaded` priority 10 via `Adapter_Registry::init_defaults()`. Registering at priority 15 means your adapter is added after the defaults, but since `get_search()` iterates in insertion order, you need to register at priority **9** if you want your adapter to take precedence:
-
-```php
-add_action( 'plugins_loaded', function() {
-    // Priority 9 - runs before Jetonomy's init_defaults() at priority 10.
-    \Jetonomy\Adapters\Adapter_Registry::register_search( 'elasticsearch', new My_Plugin\Elasticsearch_Adapter() );
-}, 9 );
-```
-
 ---
 
 ## Email Adapter Interface
@@ -424,7 +402,7 @@ interface AI_Adapter {
 }
 ```
 
-The built-in `Ollama_AI_Adapter` (free) talks to a local Ollama endpoint and activates only when one is configured. Jetonomy Pro's AI extension registers `OpenAI_AI_Adapter`, `Anthropic_AI_Adapter`, and `Custom_AI_Adapter` (any OpenAI-compatible endpoint). `Adapter_Registry::get_ai()` returns the first registered adapter whose `is_active()` returns `true`; pass an explicit ID to target a specific provider.
+The `Ollama_AI_Adapter` class ships in the free plugin, but free registers no AI provider. Jetonomy Pro's AI extension registers it when an Ollama provider is configured, along with `OpenAI_AI_Adapter`, `Anthropic_AI_Adapter`, and `Custom_AI_Adapter` (any OpenAI-compatible endpoint). `Adapter_Registry::get_ai()` returns the first registered adapter whose `is_active()` returns `true`; pass an explicit ID to target a specific provider.
 
 ### Example: Custom AI Adapter
 
@@ -565,7 +543,7 @@ add_action( 'plugins_loaded', function() {
         'my-ai',
         new My_Plugin\My_AI_Adapter()
     );
-}, 9 ); // Priority 9 ensures search adapter runs before built-in defaults at priority 10.
+}, 15 );
 ```
 
 ---

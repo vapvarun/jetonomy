@@ -17,7 +17,7 @@ Jetonomy is a modern WordPress forum plugin built for communities that grow past
 
 ## Why people switch from bbPress
 
-**The data storage problem is real.** bbPress stores every topic and reply as a WordPress custom post type. At 10,000 topics, your `wp_posts` table is doing far more work than it should - and it drags down your entire WordPress installation, not just the forum. Jetonomy uses 23 dedicated MySQL tables with proper indexes and denormalized counters, so a listing page never runs a COUNT query per row. Your forum can scale to 50,000+ topics with sub-200ms page loads when paired with Redis, and the rest of your site stays fast.
+**The data storage problem is real.** bbPress stores every topic and reply as a WordPress custom post type. At 10,000 topics, your `wp_posts` table is doing far more work than it should - and it drags down your entire WordPress installation, not just the forum. Jetonomy uses 23 dedicated MySQL tables with proper indexes, so forum queries never touch `wp_posts` or `wp_postmeta`, and the rest of your site stays fast as your community grows.
 
 **Moderation by hand is exhausting.** bbPress gives you WordPress roles: subscriber, contributor, moderator. You either trust someone to moderate or you do not. There is no middle ground, and there is no automation. Every piece of spam, every rule-breaking reply, every flagged post lands in your inbox. Jetonomy's trust level system automatically promotes members from Trust Level 0 (new, restricted) through to Trust Level 5 (community elder) based on their behavior. New accounts start rate-limited. Spam triggers automatic reputation penalties. The community manages itself more and more as it matures.
 
@@ -32,7 +32,7 @@ Jetonomy is a modern WordPress forum plugin built for communities that grow past
 | Feature | bbPress | Jetonomy |
 |---------|---------|---------|
 | Data storage | WordPress CPTs (wp_posts) | 23 dedicated MySQL tables |
-| Tested at 50K+ topics | No documented scale testing | Yes - sub-200ms with Redis |
+| Built for scale | No documented scale testing | Indexed queries, paginated lists, object-cache aware |
 | Q&A with accepted answers | Add-on required | Built in (per space type) |
 | Idea boards with status workflow | Not available | Built in |
 | Trust levels with auto-promotion | Not available | 6 levels, automatic |
@@ -46,7 +46,7 @@ Jetonomy is a modern WordPress forum plugin built for communities that grow past
 | Built-in bbPress importer | - | Yes, with dry run and progress tracking |
 | Anti-spam (invisible) | Akismet only | reCAPTCHA v3 + Cloudflare Turnstile |
 
-*Comparison based on bbPress 2.6.x with officially supported add-ons, May 2026.*
+*Comparison based on bbPress 2.6.18 with officially supported add-ons. Checked against source, September 2026.*
 
 ---
 
@@ -99,7 +99,7 @@ Your bbPress installation stays in place until you decide to remove it.
 
 ## When bbPress might still be the right choice
 
-bbPress requires PHP 7.2 and WordPress 5.0. If you are on older shared hosting that cannot meet Jetonomy's PHP 8.1 and WordPress 6.7 requirements, bbPress is the pragmatic choice until you can upgrade your stack.
+bbPress requires PHP 7.2 and WordPress 6.0. If you are on older shared hosting that cannot meet Jetonomy's PHP 8.1 and WordPress 6.7 requirements, bbPress is the pragmatic choice until you can upgrade your stack.
 
 If your community will stay under a few hundred topics and you are already invested in a specific bbPress add-on that meets your exact need, there is no reason to switch just to switch.
 

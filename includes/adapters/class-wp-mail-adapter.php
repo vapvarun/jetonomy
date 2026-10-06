@@ -26,7 +26,7 @@ class WP_Mail_Adapter implements Email_Adapter {
 			$headers = array_merge( $headers, $extra_headers );
 		} else {
 			// Fallback generic List-Unsubscribe.
-			$headers[] = 'List-Unsubscribe: <' . \Jetonomy\base_url() . '/notifications/' . '>';
+			$headers[] = 'List-Unsubscribe: <' . \Jetonomy\route_url( 'notifications' ) . '>';
 			$headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
 		}
 

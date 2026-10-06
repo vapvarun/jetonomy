@@ -17,13 +17,14 @@ $user_id   = get_current_user_id();
 $qualifies = \Jetonomy\Permissions\Capabilities::can_create_space_frontend();
 
 $default_type = sanitize_key( (string) ( $settings['default_space_type'] ?? 'forum' ) );
-if ( ! in_array( $default_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
+if ( ! in_array( $default_type, \Jetonomy\Models\Space::valid_types(), true ) ) {
 	$default_type = 'forum';
 }
 
-// Top-level categories for the Category select — mirrors the edit form (G5) so
-// the create form (G6) exposes the same space options the backend accepts.
-$categories = \Jetonomy\Models\Category::list_top_level();
+// Categories and their sub-categories for the Category select — mirrors the
+// edit form (G5) so the create form (G6) exposes the same options the backend
+// accepts. Top-level only hid every sub-category (Basecamp 10355160759).
+$categories = \Jetonomy\Models\Category::list_tree();
 
 $base   = \Jetonomy\base_url();
 $crumbs = array(
@@ -34,10 +35,11 @@ $crumbs = array(
 	),
 );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<h1 class="jt-page-title jt-mb-20">
 			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 			<?php echo esc_html( sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
@@ -70,7 +72,7 @@ $crumbs = array(
 				<div class="jt-form-row">
 					<label for="jt-ns-description"><?php esc_html_e( 'Description', 'jetonomy' ); ?></label>
 					<textarea id="jt-ns-description" name="description" rows="3" maxlength="280" class="jt-input"></textarea>
-					<p class="jt-form-help"><?php esc_html_e( '1–2 sentences. Sets expectations for what belongs here.', 'jetonomy' ); ?></p>
+					<p class="jt-form-help"><?php esc_html_e( '1-2 sentences. Sets expectations for what belongs here.', 'jetonomy' ); ?></p>
 				</div>
 
 				<div class="jt-form-row">
@@ -105,7 +107,7 @@ $crumbs = array(
 						<option value="0"><?php printf( /* translators: %s: singular category label. */ esc_html__( 'No %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></option>
 						<?php foreach ( $categories as $cat ) : ?>
 							<option value="<?php echo absint( $cat->id ); ?>">
-								<?php echo esc_html( $cat->name ); ?>
+								<?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>

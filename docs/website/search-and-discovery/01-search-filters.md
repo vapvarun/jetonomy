@@ -20,7 +20,7 @@ Results appear on the search results page at `/community/search/`. Each result c
 
 ![Search results page](../images/search-results.png)
 
-> **Tip:** Every word you type is required (AND), matched as a prefix - searching `email digest` finds posts containing both `email...` and `digest...`. Short words (under 4 characters) are ignored, so lead with the distinctive terms.
+> **Tip:** Every word you type is required (AND), matched as a prefix - searching `email digest` finds posts containing both `email...` and `digest...`. Short words (under 4 characters) are dropped when the search also has a longer word, so lead with the distinctive terms. A search made only of short words, such as `QA` or `v2`, still works as a plain substring match, just without relevance ranking.
 
 ## Filter Pills
 

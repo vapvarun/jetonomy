@@ -21,6 +21,9 @@
  *   object      $space        Space the item belongs to (pre-resolved by the caller).
  *   object|null $parent_post  For replies: the parent post, for title + permalink.
  *   string      $base         Jetonomy base URL for content links.
+ *   string      $mode         'approvals' (default) or 'trash'. The Trash tab
+ *                             reuses this card with Restore + Delete
+ *                             permanently in place of Approve + Reject.
  *
  * @package Jetonomy
  */
@@ -32,6 +35,7 @@ if ( empty( $item ) || empty( $space ) || empty( $kind ) ) {
 }
 
 $jt_is_reply    = 'reply' === $kind;
+$jt_is_trash    = 'trash' === ( $mode ?? '' );
 $jt_author      = get_userdata( (int) ( $item->author_id ?? 0 ) );
 $jt_author_name = $jt_author ? \Jetonomy\user_display_name( $jt_author ) : __( 'Unknown', 'jetonomy' );
 $jt_age         = human_time_diff( strtotime( (string) $item->created_at ), time() );
@@ -56,7 +60,7 @@ $jt_slug = $jt_is_reply
 	: (string) ( $item->slug ?? '' );
 
 $jt_permalink = $jt_slug
-	? $base . '/s/' . $space->slug . '/t/' . $jt_slug . '/'
+	? \Jetonomy\route_url( 'post', $space->slug, $jt_slug )
 	: '';
 
 // The JS appends "{action}/{kind}/{id}" to this.
@@ -68,12 +72,12 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 	data-act-endpoint="<?php echo esc_attr( $jt_endpoint ); ?>">
 	<div class="jt-mod-flag-head">
 		<span class="jt-mod-flag-type">
-			<?php echo $jt_is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html__( 'Post', 'jetonomy' ); ?>
+			<?php echo $jt_is_reply ? esc_html( \Jetonomy\jetonomy_label( 'reply' ) ) : esc_html( \Jetonomy\jetonomy_label( 'topic' ) ); ?>
 		</span>
 		<span class="jt-mod-flag-reason jt-mod-flag-reason--held">
-			<?php esc_html_e( 'Awaiting approval', 'jetonomy' ); ?>
+			<?php $jt_is_trash ? esc_html_e( 'In trash', 'jetonomy' ) : esc_html_e( 'Awaiting approval', 'jetonomy' ); ?>
 		</span>
-		<a class="jt-mod-flag-space" href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
+		<a class="jt-mod-flag-space" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 			<?php echo esc_html( (string) $space->title ); ?>
 		</a>
 		<span class="jt-mod-flag-reporter">
@@ -107,6 +111,27 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 				<?php esc_html_e( 'View', 'jetonomy' ); ?>
 			</a>
 		<?php endif; ?>
+		<?php if ( $jt_is_trash ) : ?>
+			<?php // Restore is the approve action: trash -> publish through the same moderation choke-point. ?>
+			<button type="button"
+				class="jt-btn jt-btn-fill jt-mod-approve"
+				data-wp-on--click="actions.moderateApproval"
+				data-action-name="approve">
+				<?php jetonomy_echo_icon( 'check-circle', 14 ); ?>
+				<?php esc_html_e( 'Restore', 'jetonomy' ); ?>
+			</button>
+			<?php // Permanent delete is DELETE /posts|replies/{id}?force=true, not a moderation status. ?>
+			<button type="button"
+				class="jt-btn jt-btn-ghost jt-btn-danger jt-mod-approve"
+				data-wp-on--click="actions.moderateApproval"
+				data-action-name="delete"
+				data-rest-method="DELETE"
+				data-rest-path="<?php echo esc_attr( ( $jt_is_reply ? '/replies/' : '/posts/' ) . absint( $item->id ) . '?force=true' ); ?>"
+				data-confirm="<?php echo esc_attr( $jt_is_reply ? sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Delete this %s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) : sprintf( /* translators: 1: singular topic label; 2: plural reply label. */ __( 'Delete this %1$s and all its %2$s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
+				<?php jetonomy_echo_icon( 'trash', 14 ); ?>
+				<?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?>
+			</button>
+		<?php else : ?>
 		<button type="button"
 			class="jt-btn jt-btn-fill jt-mod-approve"
 			data-wp-on--click="actions.moderateApproval"
@@ -122,5 +147,6 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 			<?php jetonomy_echo_icon( 'trash', 14 ); ?>
 			<?php esc_html_e( 'Reject', 'jetonomy' ); ?>
 		</button>
+		<?php endif; ?>
 	</div>
 </div>

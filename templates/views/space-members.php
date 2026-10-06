@@ -74,7 +74,6 @@ foreach ( $jt_member_users as $jt_u ) {
 	$jt_member_users_by_id[ (int) $jt_u->ID ] = $jt_u;
 }
 $category       = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base           = \Jetonomy\base_url();
 $viewer_id      = get_current_user_id();
 $viewer_is_sadm = \Jetonomy\Permissions\Permission_Engine::is_space_admin( $viewer_id, (int) $space->id );
 $viewer_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, (int) $space->id );
@@ -115,7 +114,7 @@ if ( $category ) {
 }
 $crumbs[] = [
 	'label' => $space->title,
-	'url'   => $base . '/s/' . $space->slug . '/',
+	'url'   => \Jetonomy\route_url( 'space', $space->slug ),
 ];
 $crumbs[] = [
 	'label' => \Jetonomy\jetonomy_label( 'member', true ),
@@ -129,10 +128,11 @@ $role_labels = [
 	'admin'     => __( 'Admin', 'jetonomy' ),
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<div class="jt-cat-page-row">
 				<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 				<div>
@@ -148,8 +148,7 @@ $role_labels = [
 					</h1>
 					<p class="jt-page-subtitle">
 						<?php
-						/* translators: 1: the count; 2: the label of the item (the configured noun). */
-						echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $space->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $space->member_count, true ) ) );
+						echo esc_html( \Jetonomy\count_label( (int) $space->member_count, 'member' ) );
 						?>
 					</p>
 				</div>
@@ -160,7 +159,7 @@ $role_labels = [
 				'space-tabs',
 				[
 					'space'     => $space,
-					'space_url' => $base . '/s/' . $space->slug . '/',
+					'space_url' => \Jetonomy\route_url( 'space', $space->slug ),
 					'active'    => 'members',
 				]
 			);
@@ -271,9 +270,7 @@ $role_labels = [
 					<ul class="jt-invite-list" data-jt-invite-list>
 						<?php foreach ( $jt_invites as $jt_invite ) : ?>
 							<?php
-							$jt_invite_url = home_url(
-								'/' . ( get_option( 'jetonomy_settings', [] )['base_slug'] ?? 'community' ) . '/invite/' . $jt_invite->token . '/'
-							);
+							$jt_invite_url = \Jetonomy\route_url( 'invite', $jt_invite->token );
 							$jt_invite_max = (int) $jt_invite->max_uses;
 							$jt_invite_use = (int) $jt_invite->use_count;
 							?>
@@ -469,7 +466,7 @@ $role_labels = [
 
 				<?php
 				if ( $jt_members_pages > 1 ) :
-					$jt_members_base_url = $base . '/s/' . $space->slug . '/members/';
+					$jt_members_base_url = \Jetonomy\route_url( 'space-members', $space->slug );
 					$jt_members_prev_url = add_query_arg( 'paged', max( 1, $jt_members_paged - 1 ), $jt_members_base_url );
 					$jt_members_next_url = add_query_arg( 'paged', min( $jt_members_pages, $jt_members_paged + 1 ), $jt_members_base_url );
 					?>

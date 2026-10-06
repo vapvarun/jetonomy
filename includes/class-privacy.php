@@ -38,6 +38,25 @@ class Privacy {
 		// this action per id, routing them into the very same body a live
 		// deletion runs — so the cleanup can never drift from the fix.
 		add_action( 'jetonomy_purge_orphan_user', [ $this, 'on_user_delete' ] );
+
+		add_action( 'admin_init', [ $this, 'add_privacy_policy_content' ] );
+	}
+
+	/**
+	 * Suggested text for Settings > Privacy > Policy Guide, so a site owner
+	 * declaring cookies has the plugin's own answer instead of guessing.
+	 */
+	public function add_privacy_policy_content(): void {
+		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+			return;
+		}
+		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'Jetonomy sets no cookies on community pages. It counts topic views with the storage described below.', 'jetonomy' ) . '</p>'
+			. '<p><strong class="privacy-policy-tutorial">' . esc_html__( 'Suggested text:', 'jetonomy' ) . '</strong> '
+			. esc_html__( 'When you open a discussion topic in our community, your browser notes the topic ID in session storage, which is cleared when you close the tab, so reloading a topic does not count as a new view. To stop a view from being counted twice, our server also keeps a one-way hash of your IP address and the topic ID for 30 minutes. Neither is used for tracking or advertising.', 'jetonomy' )
+			. '</p><p>'
+			. esc_html__( 'If you have an account, the topics, replies, votes, reactions, follows and profile details you add to the community are stored with your account. You can request an export or erasure of this data.', 'jetonomy' )
+			. '</p>';
+		wp_add_privacy_policy_content( 'Jetonomy', wp_kses_post( $content ) );
 	}
 
 	/**
@@ -78,7 +97,8 @@ class Privacy {
 			return;
 		}
 
-		$site_admin = $this->resolve_site_admin( $user_id );
+		// Resolved once: it is the same for every space this user owned.
+		$site_admin = \Jetonomy\Models\Space::fallback_owner( $user_id );
 
 		foreach ( $space_ids as $space_id ) {
 			$space_id = (int) $space_id;
@@ -90,9 +110,11 @@ class Privacy {
 			// unrelated member closed their account (Basecamp 10119343043, QA
 			// case B). Hand over attribution, leave the space running.
 			// Same successor rule the explicit delete flow uses, so the two
-			// cannot disagree about who inherits a space.
-			$heir = \Jetonomy\Models\Space::resolve_successor( $space_id, $user_id );
-			$heir = ( $heir && $heir !== $site_admin ) ? $heir : 0;
+			// cannot disagree about who inherits a space. Only step 1 of it
+			// here: whether a space admin survives decides archive vs keep,
+			// and a site administrator who is also a space admin is exactly
+			// such a survivor (Basecamp 10344393613).
+			$heir = \Jetonomy\Models\Space::surviving_admin( $space_id, $user_id );
 
 			if ( $heir ) {
 				// NOT archived: another admin is still running this space, so
@@ -118,27 +140,6 @@ class Privacy {
 			// the admin row; attribution without the row leaves it unmanageable.
 			\Jetonomy\Models\Space::hand_over( $space_id, $successor, $user_id, true );
 		}
-	}
-
-	/**
-	 * Lowest-id site administrator, excluding the departing user.
-	 *
-	 * @param int $exclude_user_id User being removed.
-	 * @return int Admin user id, or 0 when the site has no other administrator.
-	 */
-	private function resolve_site_admin( int $exclude_user_id ): int {
-		$admins = get_users(
-			[
-				'role'    => 'administrator',
-				'exclude' => [ $exclude_user_id ],
-				'orderby' => 'ID',
-				'order'   => 'ASC',
-				'number'  => 1,
-				'fields'  => 'ID',
-			]
-		);
-
-		return $admins ? (int) $admins[0] : 0;
 	}
 
 	/**

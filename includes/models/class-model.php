@@ -82,7 +82,7 @@ abstract class Model {
 	 * @param array $data Column => value pairs.
 	 * @return bool False only on a database error.
 	 */
-	public static function update( int $id, array $data ): bool {
+	public static function update( int $id, array $data ): bool|\WP_Error {
 		return false !== static::db()->update( static::table(), $data, [ 'id' => $id ] );
 	}
 

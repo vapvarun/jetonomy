@@ -76,8 +76,7 @@ if ( ! $space ) {
 
 ```php
 add_action( 'init', function() {
-    $settings = get_option( 'jetonomy_settings', [] );
-    $base     = $settings['base_slug'] ?? 'community';
+    $base     = \Jetonomy\base_slug();
 
     add_rewrite_rule(
         '^' . preg_quote( $base, '^' ) . '/s/([^/]+)/analytics/?$',
@@ -97,8 +96,7 @@ Append the tab inside the filter. When running under the `space-analytics` route
 
 ```php
 add_filter( 'jetonomy_space_tabs', function( array $tabs, object $space, bool $show_members ): array {
-    $settings      = get_option( 'jetonomy_settings', [] );
-    $base          = $settings['base_slug'] ?? 'community';
+    $base          = \Jetonomy\base_slug();
     $analytics_url = home_url( "/{$base}/s/{$space->slug}/analytics/" );
 
     // Detect whether we are currently on the analytics page.
@@ -142,7 +140,7 @@ add_filter( 'jetonomy_template_map', function( array $map ): array {
 // Step 2 - rewrite rule.
 add_action( 'init', function() {
     $settings = get_option( 'jetonomy_settings', [] );
-    $base     = $settings['base_slug'] ?? 'community';
+    $base     = \Jetonomy\base_slug();
 
     add_rewrite_rule(
         '^' . preg_quote( $base, '^' ) . '/s/([^/]+)/analytics/?$',
@@ -153,8 +151,7 @@ add_action( 'init', function() {
 
 // Step 3 - tab (handles both the space view and the analytics route).
 add_filter( 'jetonomy_space_tabs', function( array $tabs, object $space, bool $show_members ): array {
-    $settings      = get_option( 'jetonomy_settings', [] );
-    $base          = $settings['base_slug'] ?? 'community';
+    $base          = \Jetonomy\base_slug();
     $analytics_url = home_url( "/{$base}/s/{$space->slug}/analytics/" );
     $is_active     = ( 'space-analytics' === get_query_var( 'jetonomy_route' ) );
 

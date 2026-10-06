@@ -96,6 +96,7 @@ class Subscriptions_Controller extends Base_Controller {
 
 		$items = array_map( [ $this, 'prepare_subscription' ], $rows );
 		$items = $this->attach_subscription_targets( $items );
+		$items = Subscription::attach_delivery( $items, $user_id );
 
 		return $this->paginated_response(
 			$items,
@@ -152,6 +153,13 @@ class Subscriptions_Controller extends Base_Controller {
 			$via = 'both';
 		}
 
+		if ( 'post' === $object_type ) {
+			$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $object_id );
+			if ( is_wp_error( $live ) ) {
+				return $live;
+			}
+		}
+
 		$id = Subscription::subscribe( $user_id, $object_type, $object_id, $via );
 
 		// When INSERT IGNORE fires on a duplicate, insert_id is 0.
@@ -172,7 +180,9 @@ class Subscriptions_Controller extends Base_Controller {
 
 		$status = $id > 0 ? 201 : 200;
 
-		return new WP_REST_Response( $this->prepare_subscription( $row ), $status );
+		$item = $row ? Subscription::attach_delivery( [ $this->prepare_subscription( $row ) ], $user_id )[0] : [];
+
+		return new WP_REST_Response( $item, $status );
 	}
 
 	/**
@@ -235,6 +245,10 @@ class Subscriptions_Controller extends Base_Controller {
 			'user_id'     => (int) $subscription->user_id,
 			'object_type' => $subscription->object_type ?? '',
 			'object_id'   => (int) $subscription->object_id,
+			// Effective delivery ('both'|'web'|'email'|'none'), overwritten by
+			// Subscription::attach_delivery() from the member's notification
+			// preferences. The stored notify_via is only a fallback for an
+			// object type with no mapped notification.
 			'via'         => $subscription->notify_via ?? 'both',
 			'created_at'  => $subscription->created_at ?? null,
 		];
@@ -255,6 +269,9 @@ class Subscriptions_Controller extends Base_Controller {
 				'required' => true,
 				'minimum'  => 1,
 			],
+			// Accepted and stored for back-compat; it does not change delivery.
+			// Channels follow the member's notification preferences, and the
+			// response's `via` reports that effective channel.
 			'via'         => [
 				'type'     => 'string',
 				'required' => false,

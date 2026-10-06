@@ -53,8 +53,8 @@ if ( ! is_user_logged_in() ) :
 			<h2 class="jt-home-welcome-title"><?php echo esc_html( $jt_welcome_heading ); ?></h2>
 			<p class="jt-home-welcome-sub"><?php echo esc_html( $jt_welcome_sub ); ?></p>
 			<div class="jt-home-welcome-pulse">
-				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['members'] ) ); ?></strong> <?php echo esc_html( \Jetonomy\jetonomy_label( 'member', 1 !== (int) $jt_pulse['members'], true ) ); ?></span>
-				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts'] ) ); ?></strong> <?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', 1 !== (int) $jt_pulse['posts'], true ) ); ?></span>
+				<span class="jt-pulse-stat"><?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $jt_pulse['members'], 'member' ) ), '<strong>' . esc_html( number_format_i18n( (int) $jt_pulse['members'] ) ) . '</strong>' ), array( 'strong' => array() ) ); ?></span>
+				<span class="jt-pulse-stat"><?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $jt_pulse['posts'], 'topic' ) ), '<strong>' . esc_html( number_format_i18n( (int) $jt_pulse['posts'] ) ) . '</strong>' ), array( 'strong' => array() ) ); ?></span>
 				<?php if ( $jt_pulse['posts_week'] > 0 ) : ?>
 					<span class="jt-pulse-stat jt-pulse-stat--live"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts_week'] ) ); ?></strong> <?php esc_html_e( 'this week', 'jetonomy' ); ?></span>
 				<?php endif; ?>
@@ -118,10 +118,14 @@ if ( ! is_user_logged_in() ) :
 				// One grouped query (+ the WP4.4 tree cache) for every
 				// category section instead of one query per category (WP3.9).
 				$jt_spaces_by_cat = \Jetonomy\Models\Space::visible_by_category();
+				$jt_children      = \Jetonomy\Models\Category::children_by_parent();
 				?>
 				<?php foreach ( $categories as $category ) : ?>
-					<?php $spaces = $jt_spaces_by_cat[ (int) $category->id ] ?? []; ?>
-					<section class="jt-mb-md">
+					<?php
+					$spaces    = $jt_spaces_by_cat[ (int) $category->id ] ?? [];
+					$jt_accent = sanitize_hex_color( (string) ( $category->color ?? '' ) );
+					?>
+					<section class="jt-cat-section<?php echo $jt_accent ? ' jt-cat-section--accent' : ''; ?>"<?php echo $jt_accent ? ' style="--jt-cat-accent:' . esc_attr( $jt_accent ) . '"' : ''; ?>>
 						<div class="jt-cat-row">
 							<?php if ( ! empty( $category->icon ) ) : ?>
 								<?php jetonomy_render_space_icon( (string) $category->icon, 20, 'jt-cat-emoji' ); ?>
@@ -134,7 +138,7 @@ if ( ! is_user_logged_in() ) :
 							if ( 0 !== strcasecmp( trim( (string) $category->name ), trim( (string) $community_title ) ) ) :
 								?>
 								<h2 class="jt-cat-name">
-									<?php echo esc_html( $category->name ); ?>
+									<a href="<?php echo esc_url( \Jetonomy\route_url( 'category', $category->slug ) ); ?>"><?php echo esc_html( $category->name ); ?></a>
 								</h2>
 							<?php endif; ?>
 							<?php if ( ! empty( $category->description ) ) : ?>
@@ -142,12 +146,23 @@ if ( ! is_user_logged_in() ) :
 								<span class="jt-cat-desc"><?php echo esc_html( $category->description ); ?></span>
 							<?php endif; ?>
 						</div>
-						<?php jetonomy_render_space_grid( $spaces, $base ); ?>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'category-chips',
+							[
+								'children'      => $jt_children[ (int) $category->id ] ?? [],
+								'spaces_by_cat' => $jt_spaces_by_cat,
+							]
+						);
+						?>
+						<?php if ( ! empty( $spaces ) || empty( $jt_children[ (int) $category->id ] ) ) : ?>
+							<?php jetonomy_render_space_grid( $spaces, $base ); ?>
+						<?php endif; ?>
 					</section>
 				<?php endforeach; ?>
 
 				<?php if ( ! empty( $uncategorized_spaces ) ) : ?>
-					<section class="jt-mb-md">
+					<section class="jt-cat-section">
 						<div class="jt-cat-row">
 							<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 							<h2 class="jt-cat-name"><?php echo esc_html( sprintf( __( 'Other %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>

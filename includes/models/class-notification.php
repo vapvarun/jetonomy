@@ -71,12 +71,13 @@ class Notification extends Model {
 	 * @return object[]
 	 */
 	public static function list_for_user( int $user_id, int $limit = 20, int $offset = 0 ): array {
+		[ $visible_sql, $visible_params ] = self::visibility_sql( $user_id );
+
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
-				$user_id,
-				$limit,
-				$offset
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name + fixed fragment from visibility_sql(); values bound below.
+				'SELECT n.* FROM ' . static::table() . ' n WHERE n.user_id = %d' . $visible_sql . ' ORDER BY n.created_at DESC, n.id DESC LIMIT %d OFFSET %d',
+				array_merge( [ $user_id ], $visible_params, [ $limit, $offset ] )
 			)
 		) ?: [];
 	}
@@ -132,18 +133,16 @@ class Notification extends Model {
 			return (int) $cached;
 		}
 
-		// Must match list_for_user_with_targets()'s block exclusion or the
-		// header badge count disagrees with what the notifications list shows.
-		// (Blocking therefore busts this key — see BlockedUser::bust_cache.)
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'actor_id' );
-		$block_where   = '' !== $block_sql ? " AND {$block_sql}" : '';
-		$table         = static::table();
+		// Same visibility rules as every list/count path (visibility_sql()) or
+		// the header badge disagrees with what the notifications list shows.
+		[ $visible_sql, $visible_params ] = self::visibility_sql( $user_id );
+		$table                            = static::table();
 
 		$count = (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND is_read = 0{$block_where}",
-				$user_id
+				"SELECT COUNT(*) FROM {$table} n WHERE n.user_id = %d AND n.is_read = 0{$visible_sql}",
+				array_merge( [ $user_id ], $visible_params )
 			)
 		);
 
@@ -184,12 +183,11 @@ class Notification extends Model {
 	public static function count_for_user( int $user_id, string $filter = 'all' ): int {
 		[ $where, $params ] = self::filter_where( $filter );
 
-		// Must mirror list_for_user_with_targets()'s block exclusion exactly
-		// or pagination totals disagree with the visible list.
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, 'n', 'actor_id' );
-		if ( '' !== $block_sql ) {
-			$where .= ' AND ' . $block_sql;
-		}
+		// Must mirror list_for_user_with_targets() exactly or pagination
+		// totals disagree with the visible list.
+		[ $visible_sql, $visible_params ] = self::visibility_sql( $user_id );
+		$where                           .= $visible_sql;
+		$params                           = array_merge( $params, $visible_params );
 
 		$sql = 'SELECT COUNT(*) FROM ' . static::table() . ' n WHERE n.user_id = %d' . $where;
 
@@ -227,12 +225,10 @@ class Notification extends Model {
 
 		[ $where, $params ] = self::filter_where( $filter );
 
-		// Hide notifications whose actor is a user the viewer has blocked.
-		// no-op for guests/no-blocks. Must match count_for_user() exactly.
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, 'n', 'actor_id' );
-		if ( '' !== $block_sql ) {
-			$where .= ' AND ' . $block_sql;
-		}
+		// Blocked / banned actors and dead targets. Must match count_for_user().
+		[ $visible_sql, $visible_params ] = self::visibility_sql( $user_id );
+		$where                           .= $visible_sql;
+		$params                           = array_merge( $params, $visible_params );
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names interpolated; user data passed via $wpdb->prepare placeholders.
 		$sql = "SELECT n.*,
@@ -248,7 +244,7 @@ class Notification extends Model {
 			LEFT JOIN {$posts}   rp  ON ( n.object_type = 'reply' AND rp.id = r.post_id )
 			LEFT JOIN {$spaces}  rsp ON ( n.object_type = 'reply' AND rsp.id = rp.space_id )
 			WHERE n.user_id = %d{$where}
-			ORDER BY n.created_at DESC
+			ORDER BY n.created_at DESC, n.id DESC
 			LIMIT %d OFFSET %d";
 
 		$prepared = $wpdb->prepare( $sql, array_merge( [ $user_id ], $params, [ $limit, $offset ] ) );
@@ -314,6 +310,59 @@ class Notification extends Model {
 	}
 
 	/**
+	 * Mark one member's notifications about one object as read, here and in
+	 * the host community's bell.
+	 *
+	 * Opening a conversation (or anything else a notification points at) is
+	 * the read: nothing else ever cleared these rows, so a DM stayed unread in
+	 * Jetonomy's bell and the host's (Basecamp 10369320232).
+	 *
+	 * @param int    $user_id     The member who read it.
+	 * @param string $object_type Notification object_type ('message', 'post', ...).
+	 * @param int    $object_id   Object id.
+	 * @return int Rows marked read in Jetonomy's own table.
+	 */
+	public static function mark_read_for_object( int $user_id, string $object_type, int $object_id ): int {
+		if ( $user_id <= 0 || $object_id <= 0 || '' === $object_type ) {
+			return 0;
+		}
+
+		$updated = (int) static::db()->update(
+			static::table(),
+			[ 'is_read' => 1 ],
+			[
+				'user_id'     => $user_id,
+				'object_type' => $object_type,
+				'object_id'   => $object_id,
+				'is_read'     => 0,
+			]
+		);
+		if ( $updated > 0 ) {
+			self::bust_user_cache( $user_id );
+		}
+
+		/**
+		 * One member has read everything about an object.
+		 *
+		 * Part of the community notification contract: a host (BuddyNext)
+		 * marks that member's own bell rows for the object read. Unlike
+		 * jetonomy_community_notification_removed, which deletes the rows of
+		 * every recipient, this touches one member only, so reading a group
+		 * conversation leaves the other members' notifications alone. Fires
+		 * even when Jetonomy had no unread row: the host's may still be unread.
+		 *
+		 * @since 2.0.1
+		 *
+		 * @param string $object_type Object type, as in the notification payload.
+		 * @param int    $object_id   Object id.
+		 * @param int    $user_id     The member who read it.
+		 */
+		do_action( 'jetonomy_community_notification_read', $object_type, $object_id, $user_id );
+
+		return $updated;
+	}
+
+	/**
 	 * Return all filter-tab counts for a user in a single query.
 	 *
 	 * Used by the notifications page header to render badges next to each
@@ -336,11 +385,10 @@ class Notification extends Model {
 			return $cached;
 		}
 
-		// The filter-tab badges — same block exclusion as the list/unread
-		// counts so a badge never advertises a blocked user's content.
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'actor_id' );
-		$block_where   = '' !== $block_sql ? " AND {$block_sql}" : '';
-		$table         = static::table();
+		// The filter-tab badges — same visibility rules as the list/unread
+		// counts so a badge never advertises a row the list will not show.
+		[ $visible_sql, $visible_params ] = self::visibility_sql( $user_id );
+		$table                            = static::table();
 
 		$row = static::db()->get_row(
 			static::db()->prepare(
@@ -352,14 +400,12 @@ class Notification extends Model {
 					SUM(CASE WHEN type IN (%s, %s) THEN 1 ELSE 0 END)                     AS c_replies,
 					SUM(CASE WHEN type = %s THEN 1 ELSE 0 END)                            AS c_votes,
 					SUM(CASE WHEN type = %s THEN 1 ELSE 0 END)                            AS c_badges
-				FROM {$table}
-				WHERE user_id = %d{$block_where}",
-				'mention',
-				'reply_to_post',
-				'reply_to_reply',
-				'vote_on_post',
-				'badge_earned',
-				$user_id
+				FROM {$table} n
+				WHERE n.user_id = %d{$visible_sql}",
+				array_merge(
+					[ 'mention', 'reply_to_post', 'reply_to_reply', 'vote_on_post', 'badge_earned', $user_id ],
+					$visible_params
+				)
 			)
 		);
 
@@ -381,6 +427,174 @@ class Notification extends Model {
 
 		\Jetonomy\Cache::set( "notif:counts:{$user_id}", $counts, 60 );
 		return $counts;
+	}
+
+	/**
+	 * Notification types that stay visible even when their target is no
+	 * longer published. Their whole message IS the status change ("your post
+	 * was removed by a moderator", "your report was reviewed", "new flag to
+	 * review"), so hiding them once the target left `publish` would swallow
+	 * the only word the recipient gets.
+	 */
+	private const TARGET_STATUS_EXEMPT_TYPES = [ 'moderation', 'flag_resolved' ];
+
+	/**
+	 * The one WHERE fragment every notification read path applies, so the
+	 * bell, the filter-tab badges, the paginated list, and the app/REST/CLI
+	 * surfaces can never disagree on what a recipient is shown.
+	 *
+	 * A row is hidden when:
+	 * - its actor is someone the viewer blocked (BlockedUser::exclusion_sql);
+	 * - its actor is under an active site-wide ban (global_ban, unexpired) -
+	 *   served by jt_restrictions.user_type_space (user_id, type, ...);
+	 * - it points at a post or reply that is no longer publish (trash, spam,
+	 *   pending, draft), or a reply whose parent post is not - so a tap never
+	 *   lands on a 403 dead end. Primary-key lookups only. Written as "no
+	 *   non-publish target" rather than "a publish target exists" on purpose:
+	 *   hard deletes already remove their notifications (Post/Reply::delete(),
+	 *   space purge), and a row whose target id resolves to nothing is left
+	 *   to the renderer rather than silently dropped.
+	 *
+	 * Rows are not deleted: unbanning the actor or restoring the content brings
+	 * them back. The cached unread/tab counters are TTL-bounded (60s) against
+	 * a ban or a trash, the same as the other no-per-user-loop writes noted in
+	 * unread_count().
+	 *
+	 * Requires the notifications table to be aliased `n`. targets_visible() is
+	 * its PHP twin for a host that keeps its own copy of the rows - change both
+	 * together (NotificationVisibilityParityTest enforces it).
+	 *
+	 * @param int $user_id Recipient (viewer).
+	 * @return array{0:string,1:array<int,mixed>} { fragment with leading " AND", placeholder values }
+	 */
+	private static function visibility_sql( int $user_id ): array {
+		$restrictions = \Jetonomy\table( 'restrictions' );
+		$posts        = \Jetonomy\table( 'posts' );
+		$replies      = \Jetonomy\table( 'replies' );
+		$exempt       = "'" . implode( "','", self::TARGET_STATUS_EXEMPT_TYPES ) . "'";
+		$spaces       = \Jetonomy\table( 'spaces' );
+
+		// The target's space must still be readable by the viewer: a member
+		// removed from a private space kept seeing its topic titles here and in
+		// the host bell, and the link landed on a 403 (Basecamp 10345420194).
+		// Same set-based read rule search and feeds use; fails closed.
+		[ $read_p, $read_p_params ] = Space::content_visibility_sql( $user_id, 'nvs' );
+		[ $read_r, $read_r_params ] = Space::content_visibility_sql( $user_id, 'nvrs' );
+
+		$sql = " AND NOT EXISTS ( SELECT 1 FROM {$restrictions} nvr WHERE nvr.user_id = n.actor_id AND nvr.type = 'global_ban' AND ( nvr.expires_at IS NULL OR nvr.expires_at > %s ) )"
+			. " AND ( n.type IN ({$exempt})"
+			. " OR ( n.object_type = 'post' AND NOT EXISTS ( SELECT 1 FROM {$posts} nvp WHERE nvp.id = n.object_id AND ( nvp.status <> 'publish' OR NOT EXISTS ( SELECT 1 FROM {$spaces} nvs WHERE nvs.id = nvp.space_id AND {$read_p} ) ) ) )"
+			. " OR ( n.object_type = 'reply' AND NOT EXISTS ( SELECT 1 FROM {$replies} nvy INNER JOIN {$posts} nvyp ON nvyp.id = nvy.post_id WHERE nvy.id = n.object_id AND ( nvy.status <> 'publish' OR nvyp.status <> 'publish' OR NOT EXISTS ( SELECT 1 FROM {$spaces} nvrs WHERE nvrs.id = nvyp.space_id AND {$read_r} ) ) ) )"
+			. " OR n.object_type NOT IN ('post','reply') )";
+
+		$params = array_merge( [ now() ], $read_p_params, $read_r_params );
+
+		// Carry the block fragment's own params: past INLINE_CAP it switches to
+		// a `blocker_id = %d` subquery, which the old per-method copies dropped.
+		[ $block_sql, $block_params ] = BlockedUser::exclusion_sql( $user_id, 'n', 'actor_id' );
+		if ( '' !== $block_sql ) {
+			$sql   .= ' AND ' . $block_sql;
+			$params = array_merge( $params, $block_params );
+		}
+
+		return [ $sql, $params ];
+	}
+
+	/**
+	 * The PHP twin of visibility_sql(): which of these notification targets a
+	 * viewer may see, by the same rule, for a host plugin that holds its own
+	 * copy of the rows (the BuddyNext bell). SQL cannot be called from PHP, so
+	 * the rule is written twice; NotificationVisibilityParityTest runs both over
+	 * one fixture set and fails if they ever disagree.
+	 *
+	 * @param int                                                                                               $viewer_id Recipient viewing their list.
+	 * @param array<int|string,array{type?:string,object_type?:string,object_id?:int,actor_id?:int,item?:bool}> $targets   Rows on this page, any keys. `item` marks ONE event inside a grouped host row rather than a whole notification.
+	 * @return array<int|string,bool> Same keys, true = visible.
+	 */
+	public static function targets_visible( int $viewer_id, array $targets ): array {
+		$visible = array_fill_keys( array_keys( $targets ), true );
+		if ( empty( $targets ) ) {
+			return $visible;
+		}
+
+		global $wpdb;
+
+		// Actors under an active site-wide ban: one query for the page.
+		$actor_ids = array_values( array_unique( array_filter( array_map( static fn( $t ) => (int) ( $t['actor_id'] ?? 0 ), $targets ) ) ) );
+		$banned    = array();
+		if ( ! empty( $actor_ids ) ) {
+			$in = implode( ',', array_fill( 0, count( $actor_ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
+			$banned = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT user_id FROM ' . \Jetonomy\table( 'restrictions' ) . " WHERE type = 'global_ban' AND ( expires_at IS NULL OR expires_at > %s ) AND user_id IN ({$in})", array_merge( array( now() ), $actor_ids ) ) ) );
+		}
+		$blocked = BlockedUser::blocked_ids( $viewer_id );
+
+		$post_keys  = array();
+		$reply_keys = array();
+		foreach ( $targets as $key => $t ) {
+			$actor = (int) ( $t['actor_id'] ?? 0 );
+			if ( $actor > 0 && ( in_array( $actor, $banned, true ) || in_array( $actor, $blocked, true ) ) ) {
+				$visible[ $key ] = false;
+				continue;
+			}
+			$id = (int) ( $t['object_id'] ?? 0 );
+			if ( $id <= 0 || in_array( (string) ( $t['type'] ?? '' ), self::TARGET_STATUS_EXEMPT_TYPES, true ) ) {
+				continue;
+			}
+			switch ( (string) ( $t['object_type'] ?? '' ) ) {
+				case 'post':
+					$post_keys[ $key ] = $id;
+					break;
+				case 'reply':
+					$reply_keys[ $key ] = $id;
+					break;
+			}
+		}
+
+		// Dead targets: one query per table for the page. A target that resolves
+		// to nothing stays visible, exactly as visibility_sql() leaves it.
+		$dead_posts = array();
+		if ( ! empty( $post_keys ) ) {
+			$ids = array_values( array_unique( $post_keys ) );
+			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
+			[ $read, $read_params ] = Space::content_visibility_sql( $viewer_id, 's' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed tables, %d placeholders, $read from content_visibility_sql().
+			$dead_posts = array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT p.id FROM ' . \Jetonomy\table( 'posts' ) . " p WHERE p.id IN ({$in}) AND ( p.status <> 'publish' OR NOT EXISTS ( SELECT 1 FROM " . \Jetonomy\table( 'spaces' ) . " s WHERE s.id = p.space_id AND {$read} ) )", ...array_merge( $ids, $read_params ) ) ) );
+		}
+		$dead_replies = array();
+		$live_replies = array();
+		if ( ! empty( $reply_keys ) ) {
+			$ids = array_values( array_unique( $reply_keys ) );
+			$in  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed table, %d placeholders.
+			[ $read, $read_params ] = Space::content_visibility_sql( $viewer_id, 's' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted prefixed tables, %d placeholders, $read from content_visibility_sql().
+			$rows = (array) $wpdb->get_results( $wpdb->prepare( 'SELECT r.id, ( r.status <> \'publish\' OR p.status <> \'publish\' OR NOT EXISTS ( SELECT 1 FROM ' . \Jetonomy\table( 'spaces' ) . " s WHERE s.id = p.space_id AND {$read} ) ) AS dead FROM " . \Jetonomy\table( 'replies' ) . ' r INNER JOIN ' . \Jetonomy\table( 'posts' ) . " p ON p.id = r.post_id WHERE r.id IN ({$in})", ...array_merge( $read_params, $ids ) ) );
+			foreach ( $rows as $row ) {
+				$live_replies[] = (int) $row->id;
+				if ( (int) $row->dead ) {
+					$dead_replies[] = (int) $row->id;
+				}
+			}
+		}
+
+		foreach ( $post_keys as $key => $id ) {
+			if ( in_array( $id, $dead_posts, true ) ) {
+				$visible[ $key ] = false;
+			}
+		}
+		foreach ( $reply_keys as $key => $id ) {
+			// A missing target stays visible for a whole notification (the removal
+			// signal deletes the row), but an ITEM of a grouped host row has no row
+			// of its own to delete: a purged reply must drop out of the count.
+			$gone = ! empty( $targets[ $key ]['item'] ) && ! in_array( $id, $live_replies, true );
+			if ( $gone || in_array( $id, $dead_replies, true ) ) {
+				$visible[ $key ] = false;
+			}
+		}
+
+		return $visible;
 	}
 
 	/**

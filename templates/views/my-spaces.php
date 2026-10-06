@@ -54,10 +54,11 @@ $crumbs = array(
 	),
 );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
 				<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
@@ -101,7 +102,7 @@ $crumbs = array(
 						$label = ( 'admin' === $role ) ? __( 'Admin', 'jetonomy' ) : __( 'Mod', 'jetonomy' );
 						?>
 						<li class="jt-space-card jt-space-card--privileged">
-							<a class="jt-space-card-link" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/' ); ?>">
+							<a class="jt-space-card-link" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $sp->slug ) ); ?>">
 								<div class="jt-space-card-head">
 									<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon', $sp->type ?? '' ); ?>
 									<div class="jt-space-card-titlewrap">
@@ -120,13 +121,11 @@ $crumbs = array(
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
 									<?php
-									/* translators: %d: post count. */
-									echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
+									echo esc_html( \Jetonomy\count_label( (int) $sp->post_count, 'topic' ) );
 									?>
 									·
 									<?php
-									/* translators: 1: the count; 2: the label of the item (the configured noun). */
-									echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $sp->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $sp->member_count, true ) ) );
+									echo esc_html( \Jetonomy\count_label( (int) $sp->member_count, 'member' ) );
 									?>
 								</p>
 							</a>
@@ -137,11 +136,11 @@ $crumbs = array(
 										<span><?php esc_html_e( 'Edit', 'jetonomy' ); ?></span>
 									</a>
 								<?php endif; ?>
-								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/mod/' ); ?>">
+								<a class="jt-space-card-action" href="<?php echo esc_url( \Jetonomy\route_url( 'space-moderation', $sp->slug ) ); ?>">
 									<?php jetonomy_echo_icon( 'shield', 14 ); ?>
 									<span><?php esc_html_e( 'Mod queue', 'jetonomy' ); ?></span>
 								</a>
-								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/members/' ); ?>">
+								<a class="jt-space-card-action" href="<?php echo esc_url( \Jetonomy\route_url( 'space-members', $sp->slug ) ); ?>">
 									<?php jetonomy_echo_icon( 'users', 14 ); ?>
 									<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></span>
 								</a>
@@ -157,7 +156,7 @@ $crumbs = array(
 				<ul class="jt-space-list">
 					<?php foreach ( $member_spaces as $sp ) : ?>
 						<li class="jt-space-card">
-							<a class="jt-space-card-link" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/' ); ?>">
+							<a class="jt-space-card-link" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $sp->slug ) ); ?>">
 								<div class="jt-space-card-head">
 									<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon', $sp->type ?? '' ); ?>
 									<div class="jt-space-card-titlewrap">
@@ -171,13 +170,11 @@ $crumbs = array(
 								<?php endif; ?>
 								<p class="jt-space-card-meta">
 									<?php
-									/* translators: %d: post count. */
-									echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
+									echo esc_html( \Jetonomy\count_label( (int) $sp->post_count, 'topic' ) );
 									?>
 									·
 									<?php
-									/* translators: 1: the count; 2: the label of the item (the configured noun). */
-									echo esc_html( sprintf( __( '%1$d %2$s', 'jetonomy' ), (int) $sp->member_count, \Jetonomy\jetonomy_label( 'member', 1 !== (int) $sp->member_count, true ) ) );
+									echo esc_html( \Jetonomy\count_label( (int) $sp->member_count, 'member' ) );
 									?>
 								</p>
 							</a>

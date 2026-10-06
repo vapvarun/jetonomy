@@ -20,8 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$settings  = get_option( 'jetonomy_settings', array() );
-$base_slug = $settings['base_slug'] ?? 'community';
+$base_slug = \Jetonomy\base_slug();
 
 $back_url = admin_url( 'admin.php?page=jetonomy-content' );
 $page_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . absint( $post->id ) );
@@ -40,6 +39,10 @@ $front_url   = $space_slug && $post_slug
 
 // Shared with the Replies screen and the status badge below.
 $status_labels = \Jetonomy\content_status_labels( true );
+if ( ! empty( $trash_count ) ) {
+	/* translators: %d: number of items in the trash. */
+	$status_labels['trash'] = sprintf( __( 'Trash (%d)', 'jetonomy' ), (int) $trash_count );
+}
 ?>
 <div class="wrap jetonomy-admin">
 
@@ -129,9 +132,14 @@ $status_labels = \Jetonomy\content_status_labels( true );
 			<!-- Bulk actions -->
 			<select id="jt-bulk-action" aria-label="<?php esc_attr_e( 'Bulk action', 'jetonomy' ); ?>">
 				<option value=""><?php esc_html_e( 'Bulk Actions', 'jetonomy' ); ?></option>
-				<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
-				<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
-				<option value="spam"><?php esc_html_e( 'Mark as Spam', 'jetonomy' ); ?></option>
+				<?php if ( 'trash' === $current_status ) : ?>
+					<option value="approve"><?php esc_html_e( 'Restore', 'jetonomy' ); ?></option>
+					<option value="delete"><?php esc_html_e( 'Delete Permanently', 'jetonomy' ); ?></option>
+				<?php else : ?>
+					<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
+					<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
+					<option value="spam"><?php esc_html_e( 'Mark as Spam', 'jetonomy' ); ?></option>
+				<?php endif; ?>
 			</select>
 			<button type="button" class="button" id="jt-bulk-apply"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
 			<span class="spinner" id="jt-bulk-spinner" style="float:none;margin:0;"></span>
@@ -181,6 +189,8 @@ $status_labels = \Jetonomy\content_status_labels( true );
 			</thead>
 			<tbody id="jt-replies-tbody">
 				<?php
+				// One query for every author on the page, not one get_userdata() per row.
+				cache_users( array_map( 'intval', wp_list_pluck( $replies, 'author_id' ) ) );
 				foreach ( $replies as $r ) :
 					$author      = get_userdata( (int) $r->author_id );
 					$author_name = $author ? $author->display_name : __( 'Unknown', 'jetonomy' );
@@ -229,17 +239,16 @@ $status_labels = \Jetonomy\content_status_labels( true );
 
 							<!-- Row actions -->
 							<div class="row-actions">
+								<?php // Trashed rows are restored or deleted, not edited - core's Trash view offers no Edit either. ?>
+								<?php if ( 'trash' !== $r->status ) : ?>
 								<span class="edit">
 									<a href="#" class="jt-edit-trigger" data-reply-id="<?php echo absint( $r->id ); ?>">
 										<?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 									</a>
-									<?php if ( 'trash' !== $r->status ) : ?>
-										&nbsp;|&nbsp;
-									<?php endif; ?>
+									&nbsp;|&nbsp;
 								</span>
-								<?php if ( 'trash' !== $r->status ) : ?>
 									<?php if ( in_array( $r->status ?? '', array( 'spam', 'pending' ), true ) ) : ?>
-										<span class="approve">
+										<span class="jt-approve"><?php // Not "approve": core CSS hides .approve in every list table, so Approve / Not Spam never showed. ?>
 											<a href="#"
 												class="jt-action-link"
 												data-id="<?php echo absint( $r->id ); ?>"
@@ -285,6 +294,16 @@ $status_labels = \Jetonomy\content_status_labels( true );
 											data-action="approve"
 										>
 											<?php esc_html_e( 'Restore', 'jetonomy' ); ?>
+										</a>
+										&nbsp;|&nbsp;
+									</span>
+									<span class="delete">
+										<a href="#"
+											class="jt-action-link submitdelete"
+											data-id="<?php echo absint( $r->id ); ?>"
+											data-action="delete"
+										>
+											<?php esc_html_e( 'Delete Permanently', 'jetonomy' ); ?>
 										</a>
 									</span>
 								<?php endif; ?>
@@ -357,24 +376,16 @@ $status_labels = \Jetonomy\content_status_labels( true );
 wp_enqueue_script(
 	'jetonomy-admin-replies',
 	JETONOMY_URL . 'assets/js/admin-replies.js',
-	array( 'jetonomy-admin' ),
+	array( 'jetonomy-admin', 'wp-i18n' ),
 	JETONOMY_VERSION,
 	true
 );
+\Jetonomy\script_translations( 'jetonomy-admin-replies' );
 wp_localize_script(
 	'jetonomy-admin-replies',
 	'jetonomyReplies',
 	array(
 		'nonce' => $nonce_value,
-		'i18n'  => array(
-			'confirmTrash' => esc_html__( 'Move this to trash?', 'jetonomy' ),
-			'confirmSpam'  => esc_html__( 'Mark this as spam?', 'jetonomy' ),
-			'confirmBulk'  => esc_html__( 'Apply this action to all selected replies?', 'jetonomy' ),
-			'saved'        => esc_html__( 'Saved!', 'jetonomy' ),
-			'saveError'    => esc_html__( 'Save failed. Please try again.', 'jetonomy' ),
-			'noneSelected' => esc_html__( 'Please select at least one reply.', 'jetonomy' ),
-			'noAction'     => esc_html__( 'Please choose a bulk action.', 'jetonomy' ),
-		),
 	)
 );
 ?>

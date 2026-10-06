@@ -150,20 +150,21 @@ endif;
 			rows="6"
 			data-wp-on--input="actions.composeTopicBodyInput"
 			data-wp-bind--disabled="context.submitting"
-			placeholder="<?php esc_attr_e( 'Share the details… (Markdown supported)', 'jetonomy' ); ?>"></textarea>
+			placeholder="<?php esc_attr_e( 'Share the details…', 'jetonomy' ); ?>"></textarea>
 	<?php else : ?>
 		<div class="jt-editor" id="jt-post-editor">
 			<div class="jt-editor-bar">
 				<button type="button" data-cmd="bold" title="<?php esc_attr_e( 'Bold', 'jetonomy' ); ?>"><strong>B</strong></button>
 				<button type="button" data-cmd="italic" title="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>"><em>I</em></button>
 				<button type="button" data-cmd="code" title="<?php esc_attr_e( 'Code', 'jetonomy' ); ?>">&lt;/&gt;</button>
+				<button type="button" data-cmd="codeblock" title="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>">{ }</button>
 				<button type="button" data-cmd="link" title="<?php esc_attr_e( 'Link', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<button type="button" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 16 ); ?></button>
 				<button type="button" data-cmd="image" title="<?php esc_attr_e( 'Upload image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
 				<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it (QA card 10149499573). ?>
 				<button type="button" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>
 			</div>
-			<div class="jt-editor-body" contenteditable="true" data-placeholder="<?php esc_attr_e( 'Write your post...', 'jetonomy' ); ?>"></div>
+			<div class="jt-editor-body" contenteditable="true" data-placeholder="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Write your %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>"></div>
 		</div>
 	<?php endif; ?>
 </div>
@@ -177,8 +178,20 @@ endif;
  *
  * @param object|null $space The space object.
  */
+//
+// Output is collected into one .jt-compose-extras wrapper (printed only when
+// an extension rendered something) so tool buttons from different extensions
+// can share one row: a callback that marks its root .jt-compose-tool has its
+// .jt-btn laid out in a single row of secondary buttons and any panel it
+// owns (poll builder, upload strip) opened full width below that row.
+ob_start();
 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- caller-controlled hook (defaults to jetonomy_compose_extras) so embeds can pass a different surface-specific hook.
 do_action( $_fields_hook, $space );
+$_extras_html = trim( (string) ob_get_clean() );
+if ( '' !== $_extras_html ) {
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- extension markup, escaped by each hooked callback (same output do_action printed directly before).
+	echo '<div class="jt-compose-extras">' . $_extras_html . '</div>';
+}
 ?>
 
 <?php if ( $_show_private && is_user_logged_in() ) : ?>
@@ -227,7 +240,7 @@ do_action( $_fields_hook, $space );
 			</div>
 			<input type="hidden" name="published_at" value="">
 			<p class="jt-label-hint">
-				<?php esc_html_e( 'Your post will be published automatically at this date and time.', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Your %s will be published automatically at this date and time.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 			</p>
 		</div>
 	</div>

@@ -18,7 +18,7 @@ These three are the only built-in sources. Developers can add support for other 
 
 **Always take a full database backup before importing, no matter which source you use.** The importers read from your old forum's tables and never modify them, but importing creates new records in Jetonomy and cannot be automatically undone. A backup is your safety net if you want to start fresh.
 
-Keep your old forum plugin (bbPress, wpForo, or Asgaros) **active** during the import - each importer reads directly from that plugin's live tables. You can deactivate it once you have confirmed the import looks right.
+Your old forum plugin (bbPress, wpForo, or Asgaros) can be active or deactivated during the import - each importer reads that plugin's tables straight from the database. Keeping it active until you have checked the result lets you compare the two side by side. Import before you delete the old plugin, since some plugins remove their tables when they are deleted.
 
 ## Browser or WP-CLI?
 
@@ -55,10 +55,30 @@ When you open **Jetonomy → Import**, each forum plugin that Jetonomy detects a
 - **Stat preview** - each detected source shows a live count of what it found (for example Forums, Topics, Replies). This is read straight from your old forum so you can confirm Jetonomy sees your data before you start.
 - **Status badge** - one badge per card tells you the card's state:
   - **Available** - detected and ready to import; this is the normal first-time state.
+  - **Data found, plugin not active** - the old forum plugin is deactivated or deleted, but its forums are still in your database. You can import them without reactivating it.
   - **Previously Imported** - you have already run this import once. The card shows the date of the last import and how many records it brought over.
   - **Import Interrupted** - a browser import stopped before finishing. The card offers **Resume Import** to continue, or **Start Over** to begin again.
-- **Re-Import warning** - once a source shows **Previously Imported**, its button changes to **Re-Import** and the card warns that *re-importing may create duplicate content*. Clicking it asks you to confirm first. Only re-import if the previous import had a problem - running it a second time on top of a successful import will duplicate your topics and replies.
+- **Re-Import** - once a source shows **Previously Imported**, its button changes to **Re-Import**. The card explains that running it again imports only what is new since then, and asks you to confirm before it starts. See [Running an Import Again](#running-an-import-again).
+- **Already imported, skipped** - after a re-run, the result and the card show how many items were already in Jetonomy and were skipped, for example *"1,240 items were already imported and were skipped."* That number is the proof nothing was duplicated, not a list of failures.
+- **Not imported because the parent was not** - the result, the card and Past imports also say how many topics or replies were left out because the forum or topic they belong to was not imported, for example *"52 replies were not imported because their topic was not imported (for example, the topic is pending, spam or in the trash)."* This is why the imported count can be lower than the source count.
 - **Progress tracker** - while an import runs, a five-step tracker shows where it is: **Forums → Topics → Replies → Profiles → Finalize**, with a percentage progress bar underneath.
+
+## Running an Import Again
+
+Re-running an import is safe for all three sources. Jetonomy records every forum, topic and reply it imports, so a second run recognises what is already there, skips it, and adds only what is new. New topics and replies posted in a forum you already imported come across into the existing space.
+
+That makes the usual migration pattern work:
+
+1. Import once and check the result while your old forum stays live.
+2. Keep the old forum open to members while you set Jetonomy up.
+3. Just before you switch over, run the import again to bring in everything posted since the first run.
+
+**Imported on an earlier version?** Content brought over by an earlier Jetonomy release is recognised on the first re-run too: forums by their slug inside the category the importer created (never a space you made yourself), and topics and replies by their parent, author and original date. From then on it is tracked like any new import. A site that imported bbPress on 1.9.x can re-run the import to bring in the private, hidden and BuddyPress group forums the older importer skipped, without duplicating what is already there.
+
+Two limits to know:
+
+- A topic or reply whose source had no date cannot be recognised as imported by an earlier version, so a re-run imports it again.
+- A re-run does not rewrite rows that are already in Jetonomy, with one exception: bbPress replies an earlier version imported flat get their threading back, and only where the reply has no parent yet. Everything else an earlier version imported stays as it was (for example, stickies that were not kept), so nothing you have changed since is overwritten.
 
 ## After Any Import
 
@@ -66,7 +86,7 @@ These steps apply to every source. The individual guides list the same checklist
 
 - [ ] Visit your community home and confirm your spaces match your old forums.
 - [ ] Open several posts and confirm the content and replies came across intact.
-- [ ] **Re-assign moderators.** No importer brings over moderator assignments - set Space Moderator roles manually under **Jetonomy → Spaces**.
+- [ ] **Re-assign moderators.** Forum moderator assignments are not imported - set Space Moderator roles manually under **Jetonomy → Spaces**. (The one exception: a bbPress forum that belongs to a BuddyPress group brings the group's admins and moderators across with their roles.)
 - [ ] **Flush permalinks if spaces 404.** Go to **Jetonomy → Settings → Permalinks** and click Save. (The bbPress importer does this for you automatically; wpForo and Asgaros do not, so do it by hand if new spaces return a 404.)
 - [ ] **Clean up old shortcodes.** If your pages or widgets used your old forum's shortcodes, remove or replace them - they will print raw shortcode text while the old plugin is still active.
 - [ ] Once everything checks out, you can deactivate the old forum plugin.

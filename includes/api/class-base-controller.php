@@ -65,6 +65,20 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * A write against a trashed topic or reply that only makes sense on live
+	 * content (trashing it again, editing it).
+	 *
+	 * 409 Conflict, not 400: the request is well formed, it conflicts with the
+	 * item's current state. Returning 200 {"deleted":true} for a no-op told the
+	 * author it worked while nothing changed. The way forward is restore
+	 * (POST /spaces/{id}/moderation/approve/{type}/{id}) or a moderator's
+	 * DELETE ?force=true.
+	 */
+	protected function already_trashed_error(): WP_Error {
+		return \Jetonomy\Permissions\Content_Gate::trashed_error();
+	}
+
+	/**
 	 * Is this user trusted enough that we should skip Akismet / content spam checks?
 	 *
 	 * Site admins (manage_options) and space admins/moderators are whitelisted:
@@ -77,33 +91,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 */
 	protected function author_bypasses_spam_check( int $user_id, int $space_id ): bool {
 		return \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
-	}
-
-	/**
-	 * Should this write be held for moderation under the space's
-	 * require_approval setting?
-	 *
-	 * One shared definition for the post + reply create paths (1.5.0
-	 * consolidation — the previous copy-pasted blocks also checked
-	 * current_user_can() instead of the AUTHOR's capabilities, which
-	 * diverges on imports and on-behalf writes; audit B).
-	 *
-	 * @param string $requested_status Status the caller asked for ('' = default publish).
-	 * @param int    $space_id         Space ID.
-	 * @param int    $author_id        Content author user ID.
-	 * @return bool True when the content must be created as `pending`.
-	 */
-	protected function should_hold_for_approval( string $requested_status, int $space_id, int $author_id ): bool {
-		if ( '' !== $requested_status && 'publish' !== $requested_status ) {
-			return false; // Drafts/scheduled content is not publish-bound yet.
-		}
-
-		$settings = \Jetonomy\Models\Space::get_settings( $space_id );
-		if ( empty( $settings['require_approval'] ) ) {
-			return false;
-		}
-
-		return ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $author_id, $space_id );
 	}
 
 	/**

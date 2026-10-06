@@ -13,7 +13,7 @@ For use on the website FAQ page and support documentation.
 
 No external services are required. Jetonomy works on shared hosting, managed WordPress hosting (Kinsta, WP Engine, Cloudways), VPS, and dedicated servers.
 
-Optional but recommended: Redis or Memcached for object caching. When available, Jetonomy uses them automatically for space data, user profiles, and permission results. Pages load in under 200ms at 50,000 topics with Redis enabled.
+Optional but recommended: Redis or Memcached for object caching. When available, Jetonomy uses them automatically for space data, user profiles, and permission results, and is built for large communities: indexed queries, paginated lists, and object-cache aware throughout.
 
 For the WordPress Abilities API features (AI agent integration), WordPress 6.9+ is required.
 
@@ -72,7 +72,7 @@ Specific design decisions that affect performance:
 - Denormalized counters and dedicated `COUNT(*)` methods - page totals never come from loading rows and counting them.
 - FULLTEXT indexes for search - no linear table scans.
 
-Tested scale path: sub-200ms page loads at 50,000 topics with Redis. The architecture supports 10,000+ active users without any configuration changes. Scaling beyond that point involves infrastructure (more caching, read replicas), not code changes.
+Built for large communities: indexed queries, paginated lists, and object-cache aware throughout. The architecture supports 10,000+ active users without any configuration changes. Scaling beyond that point involves infrastructure (more caching, read replicas), not code changes.
 
 ---
 

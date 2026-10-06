@@ -78,7 +78,7 @@ class Admin_Bar {
 				'parent' => 'jetonomy-community',
 				'id'     => 'jetonomy-community-notifications',
 				'title'  => __( 'My notifications', 'jetonomy' ),
-				'href'   => esc_url( $base . '/notifications/' ),
+				'href'   => esc_url( route_url( 'notifications' ) ),
 			)
 		);
 
@@ -124,7 +124,7 @@ class Admin_Bar {
 							'parent' => 'jetonomy-community',
 							'id'     => 'jetonomy-community-edit-space',
 							'title'  => __( 'Edit this space', 'jetonomy' ),
-							'href'   => esc_url( $base . '/s/' . rawurlencode( $space->slug ) . '/edit/' ),
+							'href'   => esc_url( route_url( 'edit-space', rawurlencode( $space->slug ) ) ),
 						)
 					);
 				}

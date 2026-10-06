@@ -24,7 +24,17 @@ defined( 'ABSPATH' ) || exit;
 $jt_has_content = ( (int) ( $stats['active_spaces'] ?? 0 ) > 0 )
 	|| ( (int) ( $stats['total_posts'] ?? 0 ) > 0 );
 
-if ( ! get_option( 'jetonomy_setup_complete' ) && ! $jt_has_content ) : ?>
+// Printed after the Dashboard reloads from a demo-data import/removal, so the
+// owner sees the outcome instead of a silent page refresh.
+$jt_demo_done = sanitize_key( wp_unslash( $_GET['jt_demo'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag.
+if ( in_array( $jt_demo_done, array( 'imported', 'removed' ), true ) ) :
+	?>
+<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'imported' === $jt_demo_done ? __( 'Demo data imported.', 'jetonomy' ) : __( 'All demo data has been removed.', 'jetonomy' ) ); ?></p></div>
+	<?php
+endif;
+
+if ( ! get_option( 'jetonomy_setup_complete' ) && ! $jt_has_content ) :
+	?>
 <div class="notice notice-info" style="padding:20px;border-left-color:var(--jt-accent,#3B82F6);">
 	<h3 style="margin:0 0 8px;"><?php esc_html_e( 'Welcome to Jetonomy!', 'jetonomy' ); ?></h3>
 	<p><?php esc_html_e( 'Complete the setup wizard to create your first community space.', 'jetonomy' ); ?></p>
@@ -252,19 +262,32 @@ $stat_cards = array(
 				</div>
 			</div>
 
-			<?php if ( get_option( 'jetonomy_demo_data' ) ) : ?>
-			<!-- Demo Data Cleanup -->
-			<div class="jetonomy-dashboard-card jt-card--warning" id="jt-demo-card">
-				<h2><?php esc_html_e( 'Demo Data Active', 'jetonomy' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Sample content from the setup wizard is still present. Remove it when you\'re ready.', 'jetonomy' ); ?>
-				</p>
-				<button type="button" class="button button--danger" id="jetonomy-cleanup-demo">
-					<span class="dashicons dashicons-trash"></span>
-					<?php esc_html_e( 'Remove All Demo Data', 'jetonomy' ); ?>
-				</button>
+			<?php
+			// Both directions live on one card: an owner who skipped sample data in
+			// setup, or removed it, can bring it back here (Basecamp 10375019266).
+			$jt_demo = \Jetonomy\Admin\Ajax\Demo_Seeder::summary();
+			?>
+			<div class="jetonomy-dashboard-card<?php echo $jt_demo['active'] ? ' jt-card--warning' : ''; ?>" id="jt-demo-card" data-active="<?php echo $jt_demo['active'] ? '1' : '0'; ?>">
+				<?php if ( $jt_demo['active'] ) : ?>
+					<h2><?php esc_html_e( 'Demo Data Active', 'jetonomy' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'Sample content is still present. Remove it when you\'re ready; your own content is not affected.', 'jetonomy' ); ?>
+					</p>
+					<button type="button" class="button button--danger" id="jetonomy-cleanup-demo">
+						<span class="dashicons dashicons-trash" aria-hidden="true"></span>
+						<?php esc_html_e( 'Remove All Demo Data', 'jetonomy' ); ?>
+					</button>
+				<?php else : ?>
+					<h2><?php esc_html_e( 'Demo Data', 'jetonomy' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'Fill the community with sample categories, spaces, members and topics to try things out. You can remove it again in one click.', 'jetonomy' ); ?>
+					</p>
+					<button type="button" class="button" id="jetonomy-import-demo">
+						<span class="dashicons dashicons-download" aria-hidden="true"></span>
+						<?php esc_html_e( 'Import Demo Data', 'jetonomy' ); ?>
+					</button>
+				<?php endif; ?>
 			</div>
-			<?php endif; ?>
 
 			<!-- System Info -->
 			<div class="jetonomy-dashboard-card">

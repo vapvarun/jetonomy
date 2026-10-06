@@ -55,7 +55,7 @@ Jetonomy parses the incoming email using these rules:
 
 1. **Strip quoted content** - Lines that begin with `>` (standard email quoting) are removed. The reply contains only the new text the member typed.
 2. **Plain text preferred** - If the email has a plain text part, Jetonomy uses that. If not, it strips HTML and uses the text content.
-3. **Basic formatting preserved** - Line breaks are preserved. Links in the plain text body are converted to Markdown links.
+3. **Basic formatting preserved** - Paragraphs and line breaks are kept. Web addresses are kept as plain text; they are not turned into links.
 4. **Attachments ignored** - Image and file attachments in reply emails are not processed in v1.0.
 
 The parsed reply text goes through the same `wp_kses_post` sanitization as any other reply before it is saved.

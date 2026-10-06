@@ -69,7 +69,7 @@ if ( '' === $object_url && 'post' === $flag->object_type ) {
 		)
 	);
 	if ( $row ) {
-		$object_url = $base . '/s/' . $row->space_slug . '/t/' . $row->slug . '/';
+		$object_url = \Jetonomy\route_url( 'post', $row->space_slug, $row->slug );
 	}
 } elseif ( '' === $object_url && 'reply' === $flag->object_type ) {
 	global $wpdb;
@@ -89,7 +89,7 @@ if ( '' === $object_url && 'post' === $flag->object_type ) {
 		)
 	);
 	if ( $row ) {
-		$object_url = $base . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/';
+		$object_url = \Jetonomy\route_url( 'post', $row->space_slug, $row->post_slug );
 	}
 }
 ?>

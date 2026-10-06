@@ -79,7 +79,7 @@
 }
 
 .jt-nav-title {
-	font-size: 0.95rem;
+	font-size: 0.9375rem;
 	font-weight: 700;
 	letter-spacing: -0.005em;
 	color: var(--jt-text);
@@ -99,7 +99,7 @@
 }
 
 .jt-nav-category-title {
-	font-size: 0.72rem;
+	font-size: 0.75rem;
 	font-weight: 700;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
@@ -115,7 +115,7 @@ details.jt-nav-category > summary.jt-nav-category-title {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
+	gap: var(--jt-space-2);
 	user-select: none;
 	transition: color 0.15s ease;
 }
@@ -151,12 +151,12 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 10px;
+	gap: var(--jt-space-3);
 	padding: 7px 10px;
 	border-radius: var(--jt-radius-sm);
 	text-decoration: none;
 	color: var(--jt-text);
-	font-size: 0.9rem;
+	font-size: 0.9375rem;
 	font-weight: 500;
 	line-height: 1.35;
 	transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
@@ -174,7 +174,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-nav-space.is-active > a,
 .jt-nav-space > a[aria-current="page"] {
 	background: var(--jt-accent-light);
-	color: var(--jt-accent);
+	color: var(--jt-accent-strong);
 	font-weight: 600;
 }
 .jt-nav-count {
@@ -184,10 +184,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	min-width: 22px;
 	height: 20px;
 	padding: 0 6px;
-	border-radius: 999px;
+	border-radius: var(--jt-radius-full);
 	background: var(--jt-bg-subtle);
 	color: var(--jt-text-tertiary);
-	font-size: 0.7rem;
+	font-size: 0.75rem;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 }
@@ -205,16 +205,13 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 /* ─── Login block ──────────────────────────────────────────────────── */
 
-/* The login card is the call-to-action for every logged-out visitor, so it sits
-   slightly proud of the neutral widgets around it (nav, ABOUT, MANAGED BY),
-   which stay on var(--jt-bg). --jt-bg-subtle is the plugin's existing "raised
-   surface" step — mixed a few percent toward --jt-text — which makes it
-   mode-correct by construction: --jt-text is dark in light mode so the card goes
-   darker, and light in dark mode so it goes lighter. Either way it separates
-   from the page. Hardcoding "darker" would sink the card into a dark page, and a
-   fourth hand-rolled percentage is the duplication this file just removed. */
+/* The login card is the call-to-action for every logged-out visitor; the
+   accent bar across its top (::before) is what sets it apart. Its surface is
+   --jt-bg like every other card: on --jt-bg-subtle it was a grey card on a
+   near-identical grey page (Reign #fafbfd), so it read as sunken, not raised,
+   beside the white nav/feed cards. */
 .jt-login-block {
-	background: var(--jt-bg-subtle);
+	background: var(--jt-bg);
 	border: 1px solid var(--jt-border);
 	border-radius: var(--jt-radius-lg);
 	box-shadow: var(--jt-shadow-sm);
@@ -275,53 +272,58 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	margin: 0; /* spacing owned by the parent flex gap */
 }
 
+/* Segmented control spanning exactly the form's width (same edges as the
+   inputs). The selected tab is an accent fill so it is obvious which form is
+   showing; the other is muted. !important on the tab paint because the
+   community app neutralises theme button paint with `.jt-app button
+   { background: transparent !important }` (jetonomy.css) - that reset made
+   the old white "selected" pill invisible in the sidebar. */
 .jt-login-tabs {
 	display: flex;
-	gap: 2px;
-	padding: 3px;
-	margin-bottom: 16px;
-	background: var(--jt-bg-subtle);
-	border-radius: var(--jt-radius);
+	gap: var(--jt-space-1);
+	padding: var(--jt-space-1);
+	margin-bottom: var(--jt-space-4);
+	background: var(--jt-bg-muted);
+	border-radius: var(--jt-radius-full);
 }
 .jt-login-tab {
-	flex: 1;
-	padding: 7px 10px;
-	background: transparent;
-	border: 0;
-	border-radius: calc(var(--jt-radius) - 3px);
+	flex: 1 1 0;
+	min-block-size: var(--jt-tap, 40px);
+	padding: var(--jt-space-2) var(--jt-space-3);
+	background: transparent !important;
+	border: 0 !important;
+	border-radius: var(--jt-radius-full);
 	font: inherit;
-	font-size: 0.82rem;
+	font-size: var(--jt-text-sm, 0.8125rem);
 	font-weight: 600;
-	color: var(--jt-text-secondary);
+	color: var(--jt-text-secondary) !important;
 	cursor: pointer;
-	transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+	transition: color 0.15s ease, background-color 0.15s ease;
 }
-.jt-login-tab:hover,
-.jt-login-tab:focus-visible {
-	color: var(--jt-text);
+.jt-login-tab:hover {
+	color: var(--jt-text) !important;
 }
 .jt-login-tab:focus-visible {
 	outline: 2px solid var(--jt-accent);
-	outline-offset: -2px;
+	outline-offset: 2px;
 }
 .jt-login-tab.is-active {
-	background: var(--jt-bg);
-	color: var(--jt-text);
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+	background: var(--jt-accent) !important;
+	color: var(--jt-accent-fg) !important;
 }
 
 .jt-login-form {
 	display: none;
 	flex-direction: column;
-	gap: 12px;
+	gap: var(--jt-space-3);
 }
 .jt-login-form.is-active { display: flex; }
 
 .jt-login-label {
 	display: flex;
 	flex-direction: column;
-	gap: 5px;
-	font-size: 0.78rem;
+	gap: var(--jt-space-1);
+	font-size: 0.8125rem;
 	font-weight: 600;
 	color: var(--jt-text-secondary);
 	letter-spacing: 0.005em;
@@ -345,7 +347,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-text);
 	caret-color: var(--jt-text);
 	font: inherit;
-	font-size: 0.9rem;
+	font-size: 0.9375rem;
 	font-weight: 400;
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -373,8 +375,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	display: flex;
 	align-items: center;
 	min-height: var(--jt-tap);
-	gap: 7px;
-	font-size: 0.82rem;
+	gap: var(--jt-space-2);
+	font-size: 0.8125rem;
 	color: var(--jt-text-secondary);
 	cursor: pointer;
 }
@@ -393,9 +395,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	background: var(--jt-accent);
 	color: var(--jt-bg);
 	border: 0;
-	border-radius: var(--jt-radius);
+	border-radius: var(--jt-radius-full);
 	font: inherit;
-	font-size: 0.9rem;
+	font-size: 0.9375rem;
 	font-weight: 600;
 	cursor: pointer;
 	transition: background-color 0.15s ease, transform 0.1s ease;
@@ -416,21 +418,29 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	cursor: not-allowed;
 }
 
+/* A link in look and behaviour (it is a <button> only because it swaps the
+   form in place): accent text, underline on hover/focus, and a 40px-tall row
+   so it is a real tap target, not a 23px line of grey text. */
 .jt-login-lostpw {
 	align-self: flex-start;
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--jt-tap, 40px);
 	background: transparent;
 	border: 0;
 	padding: 0;
 	font: inherit;
-	font-size: 0.78rem;
-	color: var(--jt-text-tertiary);
+	font-size: var(--jt-text-sm, 0.8125rem);
+	font-weight: 500;
+	color: var(--jt-accent-strong, var(--jt-accent));
 	text-decoration: none;
+	text-underline-offset: 2px;
 	cursor: pointer;
 	transition: color 0.15s ease;
 }
 .jt-login-lostpw:hover,
 .jt-login-lostpw:focus-visible {
-	color: var(--jt-accent);
+	color: var(--jt-accent-strong, var(--jt-accent));
 	text-decoration: underline;
 }
 .jt-login-lostpw:focus-visible {
@@ -441,13 +451,13 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 .jt-login-forgot-intro {
 	margin: 0 0 4px;
-	font-size: 0.86rem;
+	font-size: 0.875rem;
 	color: var(--jt-text-secondary);
 	line-height: 1.45;
 }
 
 .jt-login-message {
-	font-size: 0.82rem;
+	font-size: 0.8125rem;
 	color: color-mix(in srgb, #dc2626 80%, var(--jt-text));
 	margin: 0;
 	min-height: 0;
@@ -481,7 +491,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-userpanel-head {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: var(--jt-space-3);
 	padding-bottom: 14px;
 	margin-bottom: 10px;
 	border-bottom: 1px solid var(--jt-border);
@@ -495,7 +505,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-userpanel-heading { min-width: 0; flex: 1; }
 .jt-userpanel-title {
-	font-size: 0.95rem;
+	font-size: 0.9375rem;
 	font-weight: 700;
 	color: var(--jt-text);
 	margin: 0 0 2px;
@@ -507,8 +517,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-userpanel-meta {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	font-size: 0.78rem;
+	gap: var(--jt-space-2);
+	font-size: 0.8125rem;
 	color: var(--jt-text-tertiary);
 	line-height: 1.2;
 }
@@ -522,10 +532,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	flex: 0 0 auto;
 	padding: 1px 6px;
 	background: var(--jt-accent-light);
-	color: var(--jt-accent);
-	border-radius: 999px;
+	color: var(--jt-accent-strong);
+	border-radius: var(--jt-radius-full);
 	font-weight: 700;
-	font-size: 0.7rem;
+	font-size: 0.75rem;
 	letter-spacing: 0.03em;
 }
 
@@ -538,12 +548,13 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
+	gap: var(--jt-space-2);
+	min-block-size: var(--jt-tap, 40px);
 	padding: 8px 10px;
-	border-radius: var(--jt-radius-sm);
+	border-radius: var(--jt-radius);
 	color: var(--jt-text);
 	text-decoration: none;
-	font-size: 0.88rem;
+	font-size: 0.875rem;
 	font-weight: 500;
 	transition: background-color 0.15s ease, color 0.15s ease;
 }
@@ -561,7 +572,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	border-top: 1px solid var(--jt-border);
 	border-radius: 0;
 	color: var(--jt-text-secondary);
-	font-size: 0.82rem;
+	font-size: 0.8125rem;
 }
 .jt-userpanel-link--logout:hover,
 .jt-userpanel-link--logout:focus-visible {
@@ -575,10 +586,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	min-width: 20px;
 	height: 20px;
 	padding: 0 6px;
-	border-radius: 999px;
+	border-radius: var(--jt-radius-full);
 	background: var(--jt-accent);
 	color: var(--jt-bg);
-	font-size: 0.72rem;
+	font-size: 0.75rem;
 	font-weight: 700;
 	font-variant-numeric: tabular-nums;
 }
@@ -598,14 +609,14 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--jt-space-3);
 	margin: 0 0 14px;
 	padding-bottom: 12px;
 	border-bottom: 1px solid var(--jt-border);
 }
 
 .jt-feed-title {
-	font-size: 0.95rem;
+	font-size: 0.9375rem;
 	font-weight: 700;
 	letter-spacing: -0.005em;
 	color: var(--jt-text);
@@ -619,7 +630,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 .jt-feed-viewall {
 	flex: 0 0 auto;
-	font-size: 0.78rem;
+	font-size: 0.8125rem;
 	font-weight: 600;
 	color: var(--jt-accent);
 	text-decoration: none;
@@ -665,9 +676,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-post {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	padding: 10px 10px;
-	border-radius: var(--jt-radius-sm);
+	gap: var(--jt-space-1);
+	padding: var(--jt-space-2) var(--jt-space-3);
+	border-radius: var(--jt-radius);
 	transition: background-color 0.15s ease;
 }
 .jt-shortcode-post + .jt-shortcode-post {
@@ -679,7 +690,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 .jt-shortcode-post-title {
 	color: var(--jt-text);
-	font-size: 0.92rem;
+	font-size: 0.9375rem;
 	font-weight: 600;
 	line-height: 1.35;
 	text-decoration: none;
@@ -696,7 +707,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 
 .jt-shortcode-post-meta {
-	font-size: 0.76rem;
+	font-size: 0.8125rem;
 	color: var(--jt-text-tertiary);
 	line-height: 1.3;
 }
@@ -704,8 +715,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-post-stats {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	font-size: 0.74rem;
+	gap: var(--jt-space-3);
+	font-size: 0.75rem;
 	color: var(--jt-text-secondary);
 	font-variant-numeric: tabular-nums;
 }
@@ -713,7 +724,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-empty {
 	padding: 18px 12px;
 	color: var(--jt-text-tertiary);
-	font-size: 0.88rem;
+	font-size: 0.875rem;
 	text-align: center;
 }
 
@@ -721,15 +732,15 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-spaces {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-	gap: 12px;
+	gap: var(--jt-space-3);
 }
 .jt-shortcode-space {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
-	padding: 14px;
+	gap: var(--jt-space-2);
+	padding: var(--jt-space-4);
 	border: 1px solid var(--jt-border);
-	border-radius: var(--jt-radius);
+	border-radius: var(--jt-radius-lg);
 	background: var(--jt-bg);
 	color: var(--jt-text);
 	text-decoration: none;
@@ -745,33 +756,72 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	outline-offset: 2px;
 }
 .jt-shortcode-space-desc {
-	font-size: 0.82rem;
+	font-size: 0.8125rem;
 	color: var(--jt-text-secondary);
 	line-height: 1.4;
 }
 .jt-shortcode-space-stats {
-	font-size: 0.74rem;
+	font-size: 0.75rem;
 	color: var(--jt-text-tertiary);
 	font-variant-numeric: tabular-nums;
 }
 
-/* Leaderboard */
+/* Standalone list shortcodes (page, page builder, the Leaderboard block)
+   draw the same card as the Forum Feed / Trending blocks. Bare, they were
+   rows floating on the page next to carded siblings: the leaderboard spread
+   a name and its score 800px apart with nothing framing the row. Inside a
+   feed block or a theme widget the container already draws the box. */
+:is(.jt-shortcode-recent-posts, .jt-shortcode-trending-posts, .jt-shortcode-leaderboard, .jt-shortcode-members) {
+	background: var(--jt-bg);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius-lg);
+	box-shadow: var(--jt-shadow-sm);
+	padding: var(--jt-space-5);
+	margin: 0 0 var(--jt-space-6);
+}
+.jt-feed-block > .jt-shortcode,
+[class*="widget_jetonomy_"] .jt-shortcode {
+	background: none;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 0;
+	margin: 0;
+}
+
+/* Leaderboard - rank badge like Trending's. A flex <li> drops its list
+   marker, so `list-style: decimal inside` never drew a number. */
 .jt-shortcode-leaderboard ol {
-	list-style: decimal inside;
+	list-style: none;
+	counter-reset: jt-rank;
 	margin: 0;
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--jt-space-1);
 }
 .jt-shortcode-leaderboard li {
+	counter-increment: jt-rank;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	padding: 8px 10px;
-	border-radius: var(--jt-radius-sm);
+	gap: var(--jt-space-3);
+	padding: var(--jt-space-2) 0;
 }
+.jt-shortcode-leaderboard li::before {
+	content: counter(jt-rank);
+	flex: 0 0 28px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 28px;
+	border-radius: var(--jt-radius-full);
+	background: var(--jt-accent-light);
+	color: var(--jt-accent-strong);
+	font-size: 0.8125rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+.jt-shortcode-leaderboard li > a { flex: 1 1 auto; min-width: 0; }
 .jt-shortcode-leaderboard li + li {
 	border-top: 1px solid var(--jt-border);
 }
@@ -782,7 +832,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-shortcode-leaderboard a:hover { color: var(--jt-accent); }
 .jt-shortcode-rep {
-	font-size: 0.78rem;
+	font-size: 0.8125rem;
 	color: var(--jt-text-tertiary);
 	font-variant-numeric: tabular-nums;
 }
@@ -791,30 +841,30 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-profile-card {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--jt-space-2);
 	padding: 16px;
 	border: 1px solid var(--jt-border);
-	border-radius: var(--jt-radius);
+	border-radius: var(--jt-radius-lg);
 	background: var(--jt-bg);
 }
 .jt-shortcode-profile-card a {
 	display: inline-flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--jt-space-2);
 	color: var(--jt-text);
 	text-decoration: none;
 }
 .jt-shortcode-profile-card a:hover { color: var(--jt-accent); }
 .jt-shortcode-profile-card p {
 	margin: 0;
-	font-size: 0.86rem;
+	font-size: 0.875rem;
 	color: var(--jt-text-secondary);
 	line-height: 1.45;
 }
 .jt-shortcode-profile-stats {
 	display: flex;
-	gap: 12px;
-	font-size: 0.78rem;
+	gap: var(--jt-space-3);
+	font-size: 0.8125rem;
 	color: var(--jt-text-tertiary);
 	font-variant-numeric: tabular-nums;
 }
@@ -829,7 +879,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--jt-space-3);
 	padding: 8px 10px;
 }
 .jt-shortcode-member + .jt-shortcode-member {
@@ -842,11 +892,41 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-shortcode-member a:hover { color: var(--jt-accent); }
 
+/* Inside a theme widget area the theme already draws the box (title,
+   border, padding). Card-styled shortcode output there became a card inside
+   a card, and each of the four classic widgets used a different row style
+   (boxed spaces, divided leaders, boxed profile). In a widget, every item is
+   one flat list row: text on the widget's own left edge, a hairline between
+   rows, the item name at the post-title size, no nested border. */
+[class*="widget_jetonomy_"] .jt-shortcode-spaces {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+[class*="widget_jetonomy_"] .jt-shortcode-leaderboard ol { gap: 0; }
+[class*="widget_jetonomy_"] :is(.jt-shortcode-post, .jt-shortcode-space, .jt-shortcode-leaderboard li, .jt-shortcode-member, .jt-shortcode-profile-card) {
+	padding: var(--jt-space-3) 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+[class*="widget_jetonomy_"] :is(.jt-shortcode-post, .jt-shortcode-space, .jt-shortcode-leaderboard li, .jt-shortcode-member) + :is(.jt-shortcode-post, .jt-shortcode-space, .jt-shortcode-leaderboard li, .jt-shortcode-member) {
+	border-top: 1px solid var(--jt-border);
+}
+[class*="widget_jetonomy_"] :is(.jt-shortcode-post, .jt-shortcode-space):hover {
+	background: transparent;
+}
+[class*="widget_jetonomy_"] :is(.jt-shortcode-space, .jt-shortcode-profile-card) strong {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
 /* Trending — two-column layout: rank badge + body */
 .jt-shortcode-trending-post {
 	flex-direction: row !important;
 	align-items: flex-start;
-	gap: 12px !important;
+	gap: var(--jt-space-3) !important;
 }
 .jt-shortcode-trending-rank {
 	flex: 0 0 28px;
@@ -856,10 +936,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	width: 28px;
 	height: 28px;
 	margin-top: 2px;
-	border-radius: var(--jt-radius-sm);
+	border-radius: var(--jt-radius-full);
 	background: var(--jt-accent-light);
-	color: var(--jt-accent);
-	font-size: 0.82rem;
+	color: var(--jt-accent-strong);
+	font-size: 0.8125rem;
 	font-weight: 700;
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
@@ -869,7 +949,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--jt-space-1);
 }
 .jt-shortcode-trending-post:hover .jt-shortcode-trending-rank {
 	background: var(--jt-accent);
@@ -883,19 +963,20 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-login-block,
 	.jt-feed-block {
 		padding: 16px;
-		border-radius: var(--jt-radius);
+		border-radius: var(--jt-radius-lg);
 	}
 	.jt-nav-space > a {
 		padding: 9px 10px;
-		font-size: 0.95rem;
+		font-size: 0.9375rem;
 	}
-	.jt-login-tab { font-size: 0.88rem; padding: 9px 10px; }
+	.jt-login-tab { font-size: 0.875rem; padding: 9px 10px; }
 	.jt-login-label > input { font-size: 16px; } /* avoid iOS zoom */
 	.jt-shortcode-post { padding: 10px 6px; }
-	.jt-shortcode-spaces { grid-template-columns: 1fr; gap: 10px; }
+	:is(.jt-shortcode-recent-posts, .jt-shortcode-trending-posts, .jt-shortcode-leaderboard, .jt-shortcode-members) { padding: var(--jt-space-4); }
+	.jt-shortcode-spaces { grid-template-columns: 1fr; gap: var(--jt-space-3); }
 	.jt-feed-header { margin-bottom: 12px; padding-bottom: 10px; }
-	.jt-feed-title { font-size: 0.9rem; }
-	.jt-shortcode-trending-rank { width: 26px; height: 26px; flex-basis: 26px; font-size: 0.78rem; }
+	.jt-feed-title { font-size: 0.9375rem; }
+	.jt-shortcode-trending-rank { width: 26px; height: 26px; flex-basis: 26px; font-size: 0.8125rem; }
 }
 
 /* ─── Dark mode ─────────────────────────────────────────────────────
@@ -923,11 +1004,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-embed {
 	display: flex;
 	flex-direction: column;
-	gap: 0.75rem;
+	gap: var(--jt-space-3);
 	padding: 1rem;
 	background: var(--jt-bg, var(--jt-bg, var(--wp--preset--color--base, #ffffff)));
 	border: 1px solid var(--jt-border, var(--jt-border, #e5e7eb));
-	border-radius: var(--jt-radius, 8px);
+	border-radius: var(--jt-radius-lg);
 	font-family: var(--jt-font, inherit);
 	color: var(--jt-text, var(--jt-text, var(--wp--preset--color--contrast, #1a1a1a)));
 	box-sizing: border-box;
@@ -937,9 +1018,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-embed.jt-compose-topic-login {
 	flex-direction: row;
 	align-items: flex-start;
-	gap: 1rem;
+	gap: var(--jt-space-4);
 	padding: 1.25rem 1.5rem;
-	background: var(--jt-bg-subtle, var(--jt-bg-subtle, #f9fafb));
 }
 
 .jt-compose-topic-login-icon {
@@ -951,7 +1031,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	height: 2.75rem;
 	border-radius: var(--jt-radius-full, 999px);
 	background: var(--jt-accent-light, color-mix(in srgb, var(--jt-accent, #3b82f6) 12%, transparent));
-	color: var(--jt-accent, #3b82f6);
+	color: var(--jt-accent-strong, #3b82f6);
 }
 
 .jt-compose-topic-login-body {
@@ -959,7 +1039,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.375rem;
+	gap: var(--jt-space-2);
 }
 
 .jt-compose-topic-login-title {
@@ -985,7 +1065,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-login-actions {
 	display: flex;
 	align-items: center;
-	gap: 1rem;
+	gap: var(--jt-space-4);
 	flex-wrap: wrap;
 	margin-top: 0.375rem;
 }
@@ -995,9 +1075,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	align-items: center;
 	justify-content: center;
 	padding: 0.5rem 1rem;
-	border-radius: var(--jt-radius-sm, 6px);
+	border-radius: var(--jt-radius-full);
 	background: var(--jt-accent, #3b82f6);
-	color: #fff;
+	color: var(--jt-accent-fg);
 	font-weight: 600;
 	text-decoration: none;
 	line-height: 1.2;
@@ -1006,7 +1086,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-login-primary:hover,
 .jt-compose-topic-login-primary:focus-visible {
 	background: var(--jt-accent-hover, color-mix(in srgb, var(--jt-accent, #3b82f6) 88%, #000));
-	color: #fff;
+	color: var(--jt-accent-hover-fg);
 	text-decoration: none;
 }
 .jt-compose-topic-login-primary:focus-visible {
@@ -1031,13 +1111,13 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-login-secondary:focus-visible {
 	outline: 2px solid var(--jt-accent, #3b82f6);
 	outline-offset: 3px;
-	border-radius: 2px;
+	border-radius: var(--jt-radius-sm);
 }
 
 .jt-compose-topic-field {
 	display: flex;
 	flex-direction: column;
-	gap: 0.25rem;
+	gap: var(--jt-space-1);
 }
 
 .jt-compose-topic-label {
@@ -1058,7 +1138,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	width: 100%;
 	padding: 0.5rem 0.75rem;
 	border: 1px solid var(--jt-border, var(--jt-border, #e5e7eb));
-	border-radius: var(--jt-radius-sm, 6px);
+	border-radius: var(--jt-radius);
 	background: var(--jt-bg, var(--jt-bg, #ffffff));
 	color: inherit;
 	font: inherit;
@@ -1082,7 +1162,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	gap: 0.75rem;
+	gap: var(--jt-space-3);
 	flex-wrap: wrap;
 }
 
@@ -1102,13 +1182,37 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	margin-top: 0.25rem;
 }
 
+/* Secondary actions an extension adds inside the embed (Pro's "Add Poll")
+   carry .jt-btn, which is only styled under .jt-app. Outside it they fell back
+   to the browser's grey button - 1.05:1 once the page went dark. Give them
+   the ghost button look from tokens. */
+.jt-compose-topic-embed .jt-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--jt-space-2);
+	min-block-size: var(--jt-tap, 40px);
+	padding: var(--jt-space-2) var(--jt-space-4);
+	border: 1.5px solid var(--jt-border-strong);
+	border-radius: var(--jt-radius-full);
+	background: var(--jt-bg);
+	color: var(--jt-text-secondary);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.jt-compose-topic-embed .jt-btn:hover,
+.jt-compose-topic-embed .jt-btn:focus-visible {
+	background: var(--jt-bg-hover);
+	color: var(--jt-text);
+}
+
 .jt-compose-topic-submit {
 	cursor: pointer;
 	padding: 0.5rem 1rem;
 	border: 0;
-	border-radius: var(--jt-radius-sm, 6px);
+	border-radius: var(--jt-radius-full);
 	background: var(--jt-accent, #3b82f6);
-	color: #fff;
+	color: var(--jt-accent-fg);
 	font: inherit;
 	font-weight: 600;
 	min-width: 8rem;
@@ -1125,7 +1229,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 /* Block editor preview — static mock so the block is safe to drop anywhere. */
 .jt-compose-topic-preview-frame {
 	border: 1px dashed var(--jt-border, #e5e7eb);
-	border-radius: var(--jt-radius, 8px);
+	border-radius: var(--jt-radius-lg);
 	padding: 1rem;
 	background: var(--jt-bg-subtle, #f9fafb);
 }
@@ -1139,11 +1243,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-preview-mock {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--jt-space-2);
 }
 .jt-compose-topic-preview-field {
 	height: 2rem;
-	border-radius: var(--jt-radius-sm, 6px);
+	border-radius: var(--jt-radius);
 	background: var(--jt-bg, #fff);
 	border: 1px solid var(--jt-border, #e5e7eb);
 }
@@ -1151,9 +1255,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-preview-button {
 	align-self: flex-end;
 	padding: 0.375rem 0.75rem;
-	border-radius: var(--jt-radius-sm, 6px);
+	border-radius: var(--jt-radius-full);
 	background: var(--jt-accent, #3b82f6);
-	color: #fff;
+	color: var(--jt-accent-fg);
 	font-size: 0.875rem;
 }
 
@@ -1161,7 +1265,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 @media (max-width: 640px) {
 	.jt-compose-topic-embed {
 		padding: 0.75rem;
-		border-radius: var(--jt-radius-sm, 6px);
+		border-radius: var(--jt-radius-lg);
 	}
 	.jt-compose-topic-actions {
 		flex-direction: column;
@@ -1177,13 +1281,13 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 	.jt-compose-topic-embed.jt-compose-topic-login {
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: var(--jt-space-3);
 		padding: 1rem;
 	}
 	.jt-compose-topic-login-actions {
 		flex-direction: column;
 		align-items: stretch;
-		gap: 0.625rem;
+		gap: var(--jt-space-3);
 	}
 	.jt-compose-topic-login-primary {
 		width: 100%;

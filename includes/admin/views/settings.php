@@ -144,8 +144,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tr>
 						<th scope="row"><label for="base_slug"><?php esc_html_e( 'Community Base URL', 'jetonomy' ); ?></label></th>
 						<td>
-							<input type="text" id="base_slug" name="jetonomy_settings[base_slug]" value="<?php echo esc_attr( $settings['base_slug'] ?? 'community' ); ?>" class="regular-text">
-							<p class="description"><?php echo esc_html( home_url( '/' ) ); ?><strong><?php echo esc_html( $settings['base_slug'] ?? 'community' ); ?></strong>/</p>
+							<input type="text" id="base_slug" name="jetonomy_settings[base_slug]" value="<?php echo esc_attr( \Jetonomy\base_slug() ); ?>" class="regular-text">
+							<p class="description"><?php echo esc_html( home_url( '/' ) ); ?><strong><?php echo esc_html( \Jetonomy\base_slug() ); ?></strong>/</p>
 						</td>
 					</tr>
 					<tr>
@@ -204,7 +204,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									</div>
 								</div>
 							<?php endforeach; ?>
-							<p class="description"><?php esc_html_e( 'Rename the nouns your community uses — singular and plural (e.g. Space → Forum / Forums, Topic → Thread / Threads, Member → Player / Players). Leave a field empty to keep the default. Custom labels are shown exactly as typed and are not translated, so on a non-English site enter them in your own language.', 'jetonomy' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Rename the nouns your community uses, singular and plural (e.g. Space → Forum / Forums, Topic → Thread / Threads, Member → Player / Players). Leave a field empty to keep the default. Custom labels are shown exactly as typed and are not translated, so on a non-English site enter them in your own language.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -467,8 +467,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											'upload_media' => __( 'Upload images', 'jetonomy' ),
 											'edit_own_posts' => __( 'Edit own posts', 'jetonomy' ),
 											'delete_own_posts' => __( 'Delete own posts', 'jetonomy' ),
-											/* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */
-											'create_spaces' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 											/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 											'join_spaces'  => sprintf( __( 'Join private %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
@@ -484,7 +482,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 												$jt_unlocks[] = $jt_ability_labels[ $jt_ab ];
 											}
 										}
-										echo $jt_unlocks ? esc_html( implode( ', ', $jt_unlocks ) ) : esc_html__( '—', 'jetonomy' );
+										echo $jt_unlocks ? esc_html( implode( ', ', $jt_unlocks ) ) : esc_html__( 'None', 'jetonomy' );
 										?>
 									</td>
 							</tr>
@@ -715,6 +713,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 				];
+				if ( \Jetonomy\messaging_active() ) {
+					$notif_types['message'] = __( 'Private message', 'jetonomy' );
+				}
 				?>
 				<table class="jt-notif-defaults-table jt-settings-matrix">
 					<thead>
@@ -728,12 +729,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<?php
 						foreach ( $notif_types as $type => $label ) :
 							// Fallbacks must match how Notifier consumes an unset type:
-							// web defaults ON ( ?? true ), but email defaults OFF
-							// ( should_email() uses !empty() ). Rendering email as
-							// checked-by-default showed types as ON that the notifier
-							// treats as OFF (the phantom-default this card targets).
+							// web defaults ON ( ?? true ); email uses the notifier's own
+							// default_email() (OFF except types added later, such as
+							// `message`), so the box never shows a phantom default.
 							$web_on   = isset( $notif_defaults[ $type ]['web'] ) ? (bool) $notif_defaults[ $type ]['web'] : true;
-							$email_on = isset( $notif_defaults[ $type ]['email'] ) ? (bool) $notif_defaults[ $type ]['email'] : false;
+							$email_on = \Jetonomy\Notifications\Notifier::default_email( $type, (array) $notif_defaults );
 							?>
 							<tr>
 								<th scope="row"><?php echo esc_html( $label ); ?></th>
@@ -905,7 +905,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<th scope="row"><?php esc_html_e( 'Theme appearance', 'jetonomy' ); ?></th>
 						<td>
 							<p class="description">
-								<?php esc_html_e( 'Fonts and colours follow your active theme automatically. To use a different accent, set one below — leave it at the default to keep matching your theme.', 'jetonomy' ); ?>
+								<?php esc_html_e( 'Fonts and colours follow your active theme automatically. To use a different accent, set one below, or leave it at the default to keep matching your theme.', 'jetonomy' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -933,7 +933,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Color Palette', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'Set the community colors directly — useful when your theme has no color tokens for Jetonomy to inherit. A colour you set here is applied in both light and dark mode and outranks the theme. Leave a field empty to keep the default; secondary shades (hover, muted text) derive automatically.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Set the community colors directly. This is useful when your theme has no color tokens for Jetonomy to inherit. A colour you set here is applied in both light and dark mode and outranks the theme. Leave a field empty to keep the default; secondary shades (hover, muted text) derive automatically.', 'jetonomy' ); ?></p>
 				</div>
 				<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 					<tr>
@@ -961,7 +961,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<th scope="row"><label for="bg_subtle_color"><?php esc_html_e( 'Subtle Background', 'jetonomy' ); ?></label></th>
 						<td>
 							<input type="text" id="bg_subtle_color" name="jetonomy_settings[bg_subtle_color]" value="<?php echo esc_attr( $settings['bg_subtle_color'] ?? '' ); ?>" class="jetonomy-color-picker">
-							<p class="description"><?php esc_html_e( 'Secondary surfaces — table headers, code, quiet panels.', 'jetonomy' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Secondary surfaces: table headers, code, quiet panels.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -1082,7 +1082,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'White Label', 'jetonomy' ); ?></h4>
-					<p><?php esc_html_e( 'Remove Jetonomy branding and replace it with your own logo and color scheme.', 'jetonomy' ); ?></p>
+					<p><?php esc_html_e( 'Replace Jetonomy branding with your own community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ); ?></p>
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
@@ -1257,7 +1257,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<?php
 							printf(
 								/* translators: 1: "App Review > Requests" breadcrumb, 2: "oembed_read" permission name */
-								esc_html__( 'Go to %1$s and request the %2$s permission. Meta typically approves in 1–3 business days. Your app stays in Development Mode until approved; embeds will work for the admin who created the app even before approval.', 'jetonomy' ),
+								esc_html__( 'Go to %1$s and request the %2$s permission. Meta typically approves in 1-3 business days. Your app stays in Development Mode until approved; embeds will work for the admin who created the app even before approval.', 'jetonomy' ),
 								'<strong>' . esc_html__( 'App Review → Requests', 'jetonomy' ) . '</strong>',
 								'<code>oembed_read</code>'
 							);
@@ -1458,7 +1458,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'White Label', 'jetonomy' ),
 						'icon' => 'dashicons-admin-appearance',
-						'desc' => __( 'Replace all Jetonomy branding: custom logo, name, footer, accent color, and CSS.', 'jetonomy' ),
+						'desc' => __( 'Replace Jetonomy branding: community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ),
 						'tier' => 'Agency',
 					],
 				];

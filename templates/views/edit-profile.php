@@ -65,7 +65,7 @@ if ( ! $cancel_url ) {
 		<div class="jt-form-group">
 			<label class="jt-label" for="jt-nickname"><?php esc_html_e( 'Nickname', 'jetonomy' ); ?></label>
 			<input type="text" id="jt-nickname" name="nickname" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'nickname', true ) ); ?>" required>
-			<p class="jt-field-hint"><?php esc_html_e( 'Required. Only shown if you pick it below.', 'jetonomy' ); ?></p>
+			<p class="jt-form-help"><?php esc_html_e( 'Required. Only shown if you pick it below.', 'jetonomy' ); ?></p>
 		</div>
 
 		<div class="jt-form-group">
@@ -154,15 +154,21 @@ if ( ! $cancel_url ) {
 		$notif_prefs   = $user_settings['notifications'] ?? [];
 		$global_defs   = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 		$notif_types   = [
-			'reply_to_post'       => __( 'Reply to my post', 'jetonomy' ),
+			/* translators: %s: singular topic label. */
+			'reply_to_post'       => sprintf( __( 'Reply to my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'reply_to_reply'      => __( 'Reply to my reply', 'jetonomy' ),
 			'mention'             => __( '@Mention', 'jetonomy' ),
-			'vote_on_post'        => __( 'Vote on my post', 'jetonomy' ),
+			/* translators: %s: singular topic label. */
+			'vote_on_post'        => sprintf( __( 'Vote on my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'accepted_answer'     => __( 'Accepted answer', 'jetonomy' ),
 			'idea_status_changed' => __( 'My idea roadmap status changed', 'jetonomy' ),
-			'new_post_in_sub'     => __( 'New post in followed space', 'jetonomy' ),
+			/* translators: 1: singular topic label; 2: singular space label. */
+			'new_post_in_sub'     => sprintf( __( 'New %1$s in followed %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
 			'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 		];
+		if ( \Jetonomy\messaging_active() ) {
+			$notif_types['message'] = __( 'Private message', 'jetonomy' );
+		}
 		?>
 		<div class="jt-form-group" id="notification-preferences">
 			<label class="jt-label"><?php esc_html_e( 'Notification Preferences', 'jetonomy' ); ?></label>
@@ -174,8 +180,8 @@ if ( ! $cancel_url ) {
 				</div>
 				<?php
 				foreach ( $notif_types as $key => $label ) :
-					$web_on   = isset( $notif_prefs[ $key ]['web'] ) ? ! empty( $notif_prefs[ $key ]['web'] ) : ! empty( $global_defs[ $key ]['web'] );
-					$email_on = isset( $notif_prefs[ $key ]['email'] ) ? ! empty( $notif_prefs[ $key ]['email'] ) : ! empty( $global_defs[ $key ]['email'] );
+					$web_on   = isset( $notif_prefs[ $key ]['web'] ) ? ! empty( $notif_prefs[ $key ]['web'] ) : (bool) ( $global_defs[ $key ]['web'] ?? true );
+					$email_on = isset( $notif_prefs[ $key ]['email'] ) ? ! empty( $notif_prefs[ $key ]['email'] ) : \Jetonomy\Notifications\Notifier::default_email( $key, (array) $global_defs );
 					?>
 					<div class="jt-notif-row">
 						<span><?php echo esc_html( $label ); ?></span>

@@ -58,6 +58,11 @@ final class Taxonomy_Journey {
 			$data['parent_id'] = (int) $input['parent_id'];
 		}
 
+		$parent_error = Category::parent_error( 0, (int) ( $data['parent_id'] ?? 0 ) );
+		if ( $parent_error ) {
+			return Journey_Result::from_wp_error( $parent_error );
+		}
+
 		$id = Category::create( $data );
 		if ( ! $id ) {
 			return Journey_Result::fail( 'Category::create() returned 0 — insert failed.' );
@@ -101,6 +106,9 @@ final class Taxonomy_Journey {
 		}
 
 		$ok = Category::update( $id, $patch );
+		if ( is_wp_error( $ok ) ) {
+			return Journey_Result::from_wp_error( $ok );
+		}
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Category::update(%d) returned false.', $id ) );
 		}

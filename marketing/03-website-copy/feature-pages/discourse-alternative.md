@@ -116,7 +116,7 @@ The comparison is not just about money. It is about simplicity: one platform, on
 
 Discourse has capabilities Jetonomy does not currently match. If you need a completely standalone forum platform that runs independently of WordPress, Discourse is purpose-built for that. If your community needs the full depth of Discourse's plugin ecosystem - specific integrations, specific forum behaviors, or specific admin tools built over years - those are legitimate reasons to stay on Discourse.
 
-If your community is very large (hundreds of thousands of posts, high-concurrency), Discourse's architecture is purpose-built for that scale. Jetonomy handles large communities well and is tested at 50,000+ topics, but Discourse at that tier has more operational tooling.
+If your community is very large (hundreds of thousands of posts, high-concurrency), Discourse's architecture is purpose-built for that scale. Jetonomy is built for large communities - indexed queries, paginated lists, object-cache aware - but Discourse at that tier has more operational tooling.
 
 The Discourse alternative case is strongest when your community is WordPress-centric, growing but not at massive scale, and the monthly hosting bill is a meaningful cost relative to the value you are getting.
 

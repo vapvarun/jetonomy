@@ -24,7 +24,9 @@ class Subscription extends Model {
 	 * @param int    $user_id
 	 * @param string $object_type
 	 * @param int    $object_id
-	 * @param string $via         Notification channel: 'email', 'in_app', or 'both'.
+	 * @param string $via         Stored in notify_via for back-compat only ('web'|'email'|'both').
+	 *                            Delivery never reads it - the member's notification
+	 *                            preferences decide (see attach_delivery()).
 	 * @return int Inserted row ID (0 if the row already existed due to INSERT IGNORE).
 	 */
 	public static function subscribe( int $user_id, string $object_type, int $object_id, string $via = 'both' ): int {
@@ -174,6 +176,50 @@ class Subscription extends Model {
 		return $items;
 	}
 
+	/**
+	 * Notification type a follow of each object type delivers
+	 * (see Notifier::fanout_post_subscribers / fanout_reply_subscribers).
+	 */
+	const NOTIFICATION_TYPES = [
+		'space' => 'new_post_in_sub',
+		'post'  => 'reply_to_post',
+	];
+
+	/**
+	 * Set each item's `via` to the channel(s) the member will ACTUALLY be
+	 * notified on for it: 'both' | 'web' | 'email' | 'none'.
+	 *
+	 * Single source for the My Subscriptions badge and GET /subscriptions.
+	 * It used to echo jt_subscriptions.notify_via, a value written once at
+	 * follow time (always 'both') that the notifier never reads - so a member
+	 * who had turned email off, or whose site defaults email off for new
+	 * posts in followed spaces, was told "Web + Email" while no mail was sent.
+	 *
+	 * Batched: every item belongs to one user and there are only two
+	 * notification types, so the preference read happens once per type
+	 * (profile + option are cached), never per row.
+	 *
+	 * @param array<int,array<string,mixed>> $items   Items with object_type.
+	 * @param int                            $user_id Subscriber.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function attach_delivery( array $items, int $user_id ): array {
+		$by_type = [];
+		foreach ( $items as &$item ) {
+			$type = self::NOTIFICATION_TYPES[ $item['object_type'] ?? '' ] ?? '';
+			if ( '' === $type ) {
+				continue;
+			}
+			if ( ! isset( $by_type[ $type ] ) ) {
+				$by_type[ $type ] = \Jetonomy\Notifications\Notifier::delivery_channel( $user_id, $type );
+			}
+			$item['via'] = $by_type[ $type ];
+		}
+		unset( $item );
+
+		return $items;
+	}
+
 	public static function unsubscribe( int $user_id, string $object_type, int $object_id ): bool {
 		$result = false !== static::db()->delete(
 			static::table(),
@@ -309,25 +355,27 @@ class Subscription extends Model {
 	}
 
 	/**
-	 * Return an array of user_ids subscribed to a given object.
+	 * User ids subscribed to an object, in user_id order.
 	 *
-	 * @param string $object_type
-	 * @param int    $object_id
+	 * With $limit > 0 it returns one batch after $after_user_id, so a fan-out
+	 * to thousands of subscribers can walk them in bounded steps (index
+	 * object_user covers the WHERE and the ORDER BY).
+	 *
+	 * @param string $object_type   'space' or 'post'.
+	 * @param int    $object_id     Object id.
+	 * @param int    $after_user_id Return only ids above this one.
+	 * @param int    $limit         Batch size; 0 returns every subscriber.
 	 * @return int[]
 	 */
-	public static function get_subscribers( string $object_type, int $object_id ): array {
-		$rows = static::db()->get_results(
-			static::db()->prepare(
-				'SELECT user_id FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d',
-				$object_type,
-				$object_id
-			)
-		);
-
-		if ( empty( $rows ) ) {
-			return [];
+	public static function get_subscribers( string $object_type, int $object_id, int $after_user_id = 0, int $limit = 0 ): array {
+		$sql  = 'SELECT user_id FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d AND user_id > %d ORDER BY user_id ASC';
+		$args = array( $object_type, $object_id, $after_user_id );
+		if ( $limit > 0 ) {
+			$sql   .= ' LIMIT %d';
+			$args[] = $limit;
 		}
 
-		return array_map( static fn( $row ) => (int) $row->user_id, $rows );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from literals and the trusted table name.
+		return array_map( 'intval', static::db()->get_col( static::db()->prepare( $sql, ...$args ) ) ?: array() );
 	}
 }

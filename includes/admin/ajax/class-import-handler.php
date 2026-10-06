@@ -57,8 +57,8 @@ class Import_Handler {
 			$importer->reset_run_state();
 		}
 
-		// Restore ID map from previous batch (empty after a reset above).
-		$importer->id_map = get_option( 'jetonomy_import_id_map', [] );
+		// Nothing to restore: each batch loads the parents it needs from
+		// jt_import_map (Importer::load_mapped()).
 
 		// Save resume point so the import can be resumed if interrupted.
 		$existing_resume = get_option( 'jetonomy_import_resume', [] );
@@ -105,6 +105,25 @@ class Import_Handler {
 		}
 		$skipped_files = (int) ( $import_errors['count'] ?? 0 );
 
+		// Rows actually created, rows an earlier run already brought over, and
+		// rows left out because their parent was not imported. Without the
+		// last two a re-run reads as "nothing happened", and a source count
+		// that does not add up reads as "nothing was skipped".
+		$tally       = (array) get_option( 'jetonomy_import_tally', [] );
+		$batch_tally = $importer->get_tally();
+		$orphans     = (array) ( $tally['orphans'] ?? [] );
+		foreach ( $batch_tally['orphans'] as $type => $count ) {
+			$orphans[ $type ] = (int) ( $orphans[ $type ] ?? 0 ) + (int) $count;
+		}
+		$tally = [
+			'imported'   => (int) ( $tally['imported'] ?? 0 ) + $batch_tally['imported'],
+			'already'    => (int) ( $tally['already'] ?? 0 ) + $batch_tally['already'],
+			'rethreaded' => (int) ( $tally['rethreaded'] ?? 0 ) + $batch_tally['rethreaded'],
+			'orphans'    => $orphans,
+		];
+		update_option( 'jetonomy_import_tally', $tally, false );
+		$summary = implode( ' ', \Jetonomy\Import\Importer::describe_tally( $tally ) );
+
 		// Calculate overall progress.
 		$total           = $importer->get_total_count();
 		$total_processed = absint( get_option( 'jetonomy_import_total_processed', 0 ) ) + $result['processed'];
@@ -114,6 +133,7 @@ class Import_Handler {
 
 		$phase_labels = [
 			'forums'   => __( 'Importing forums...', 'jetonomy' ),
+			'members'  => __( 'Adding members to private and group spaces...', 'jetonomy' ),
 			'topics'   => __( 'Importing topics...', 'jetonomy' ),
 			'replies'  => __( 'Importing replies...', 'jetonomy' ),
 			'profiles' => __( 'Creating user profiles...', 'jetonomy' ),
@@ -139,7 +159,10 @@ class Import_Handler {
 			$history            = get_option( 'jetonomy_import_history', [] );
 			$history[ $source ] = [
 				'completed_at' => current_time( 'mysql' ),
-				'imported'     => $total_processed,
+				'imported'     => $tally['imported'],
+				'already'      => $tally['already'],
+				'rethreaded'   => $tally['rethreaded'],
+				'orphans'      => $tally['orphans'],
 				'skipped'      => $skipped_files,
 				// Carry the sample into the durable record, not just the count.
 				// It used to be accumulated across every batch and then thrown away
@@ -159,8 +182,8 @@ class Import_Handler {
 			// died.
 			delete_option( 'jetonomy_import_resume' );
 			delete_option( 'jetonomy_import_total_processed' );
-			delete_option( 'jetonomy_import_id_map' );
 			delete_option( 'jetonomy_import_errors' );
+			delete_option( 'jetonomy_import_tally' );
 			\Jetonomy\Import\Importer::clear_progress();
 		}
 
@@ -174,6 +197,8 @@ class Import_Handler {
 				'percent'   => $percent,
 				'message'   => $phase_labels[ $result['phase'] ] ?? '',
 				'skipped'   => $skipped_files,
+				'imported'  => $tally['imported'],
+				'summary'   => $summary,
 			]
 		);
 	}

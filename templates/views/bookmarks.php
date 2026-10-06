@@ -45,16 +45,17 @@ $crumbs = array(
 	),
 );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
 				<?php esc_html_e( 'My bookmarks', 'jetonomy' ); ?>
 			</h1>
 			<p class="jt-page-subtitle">
-				<?php esc_html_e( 'Posts you have bookmarked. Quick access to anything you wanted to come back to.', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( /* translators: %s: plural topic label. */ __( '%s you have bookmarked. Quick access to anything you wanted to come back to.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?>
 			</p>
 		</header>
 
@@ -64,7 +65,8 @@ $crumbs = array(
 				'empty-state',
 				[
 					'icon'      => 'bookmark',
-					'message'   => __( "You haven't bookmarked anything yet. Bookmark posts to find them here later.", 'jetonomy' ),
+					/* translators: %s: plural topic label. */
+					'message'   => sprintf( __( "You haven't bookmarked anything yet. Bookmark %s to find them here later.", 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 					'cta_label' => __( 'Browse the community', 'jetonomy' ),
 					'cta_url'   => $base . '/',
 				]

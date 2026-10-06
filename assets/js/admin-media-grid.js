@@ -14,7 +14,11 @@
 	'use strict';
 
 	var COOKIE = 'jetonomy_show_community';
-	var i18n   = window.jetonomyMediaGrid || {};
+	var i18n   = {
+		label: wp.i18n.__( 'Community uploads', 'jetonomy' ),
+		show:  wp.i18n.__( 'Show community uploads', 'jetonomy' ),
+		hide:  wp.i18n.__( 'Hide community uploads', 'jetonomy' ),
+	};
 
 	function getCookie( name ) {
 		var match = document.cookie.match( '(?:^|; )' + name + '=([^;]*)' );
@@ -38,13 +42,13 @@
 		var label = document.createElement( 'label' );
 		label.className = 'screen-reader-text';
 		label.htmlFor = 'jetonomy-community-media-grid';
-		label.textContent = i18n.label || 'Community uploads';
+		label.textContent = i18n.label;
 
 		var select = document.createElement( 'select' );
 		select.id = 'jetonomy-community-media-grid';
 		select.className = 'attachment-filters jetonomy-community-media-grid';
-		select.appendChild( new Option( i18n.hide || 'Hide community uploads', '0', ! show, ! show ) );
-		select.appendChild( new Option( i18n.show || 'Show community uploads', '1', show, show ) );
+		select.appendChild( new Option( i18n.hide, '0', ! show, ! show ) );
+		select.appendChild( new Option( i18n.show, '1', show, show ) );
 
 		select.addEventListener( 'change', function () {
 			setCookie( COOKIE, '1' === select.value ? '1' : '0' );

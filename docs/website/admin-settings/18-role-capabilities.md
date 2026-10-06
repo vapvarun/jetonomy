@@ -99,3 +99,9 @@ This grid is site-wide. A member's role in an individual space - member, moderat
 The two combine rather than compete: a site-wide capability applies everywhere, and a space role applies only in its own space. Someone can be an ordinary member site-wide and a moderator of one space, or hold `jetonomy_moderate` site-wide and moderate everywhere.
 
 If you are troubleshooting "why can this member not do X", check this grid first, then their space role, then their trust level.
+
+## What's Next?
+
+Manage your community's global tag namespace from wp-admin.
+
+[Tags →](19-tags.md)

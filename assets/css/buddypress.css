@@ -52,7 +52,7 @@
 	background: var(--jt-accent, #3b82f6);
 	color: var(--jt-accent-fg, #fff); /* follows the accent, so a light accent still reads */
 	border: none;
-	border-radius: 6px;
+	border-radius: var(--jt-radius-full);
 	padding: 8px 18px;
 	font-size: 0.875rem;
 	font-weight: 600;
@@ -71,7 +71,7 @@
 	font-size: 0.9375rem;
 	padding: 48px 20px;
 	background: var(--jt-bg-subtle, #f8fafc);
-	border-radius: 8px;
+	border-radius: var(--jt-radius-lg);
 	border: 1px dashed var(--jt-border, #e2e8f0);
 }
 
@@ -92,8 +92,8 @@
 	border-bottom: 2px solid var(--jt-border, #e2e8f0);
 	background: var(--jt-bg-subtle, #f8fafc);
 }
-.jt-bp-topics th:first-child { border-radius: 8px 0 0 0; }
-.jt-bp-topics th:last-child { border-radius: 0 8px 0 0; }
+.jt-bp-topics th:first-child { border-radius: var(--jt-radius-lg) 0 0 0; }
+.jt-bp-topics th:last-child { border-radius: 0 var(--jt-radius-lg) 0 0; }
 
 .jt-bp-topics td {
 	padding: 14px 16px;
@@ -170,7 +170,7 @@
 	padding: 0;
 	margin-bottom: 24px;
 	border: 1px solid var(--jt-border, #e2e8f0);
-	border-radius: 8px;
+	border-radius: var(--jt-radius-lg);
 	overflow: hidden;
 }
 .jt-bp-stat {
@@ -241,7 +241,7 @@
 	color: var(--jt-text-secondary, #64748b);
 	background: var(--jt-bg-muted, #f1f5f9);
 	padding: 1px 8px;
-	border-radius: 4px;
+	border-radius: var(--jt-radius-full);
 	margin-inline-start: 6px;
 	vertical-align: middle;
 }
@@ -267,7 +267,7 @@
 	margin-top: 20px;
 	padding: 20px;
 	border: 1px solid var(--jt-border, #e2e8f0);
-	border-radius: 8px;
+	border-radius: var(--jt-radius-lg);
 	background: var(--jt-bg-subtle, #f8fafc);
 }
 .jt-bp-forum-settings h4 {
@@ -293,7 +293,7 @@
 	max-width: 400px;
 	padding: 8px 12px;
 	border: 1px solid var(--jt-border, #d1d5db);
-	border-radius: 6px;
+	border-radius: var(--jt-radius);
 	font-size: 0.9375rem;
 	background: var(--jt-bg, #fff);
 }

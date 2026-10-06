@@ -10,17 +10,26 @@ defined( 'ABSPATH' ) || exit;
 $post_slug = $data['slug'] ?? '';
 $post      = \Jetonomy\Models\Post::find_by_slug( $post_slug );
 
-if ( ! $post ) {
+// One not-found state for a missing topic and one the viewer may not read (a
+// 404 either way, so a private topic's existence is not disclosed). It was a
+// dead end; it now says what happened and leads back to the community.
+$jt_not_found = static function (): void {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
-			'icon'      => 'empty-search',
-			'icon_size' => 48,
-			'message'   => __( 'Post not found.', 'jetonomy' ),
-			'tone'      => 'warn',
+			'icon'        => 'empty-search',
+			'icon_size'   => 48,
+			'message'     => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			'description' => sprintf( /* translators: %s: the singular topic label, lowercase. */ __( 'This %s may have been removed, or the link is wrong.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			'cta_label'   => __( 'Back to the community', 'jetonomy' ),
+			'cta_url'     => \Jetonomy\base_url(),
 		]
 	);
+};
+
+if ( ! $post ) {
+	$jt_not_found();
 	return;
 }
 
@@ -34,6 +43,13 @@ $jt_viewer_id         = get_current_user_id();
 $jt_can_moderate_here = $jt_viewer_id
 	? \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'moderate', (int) $post->space_id )
 	: false;
+
+// Only a published topic takes member writes: Content_Gate refuses replies,
+// votes, reactions, bookmarks, follows and pins on anything else with a 409
+// (Basecamp 10335997408). Every write control below keys off this one flag
+// so the page never offers what the server refuses. The status notice (with
+// Restore / Delete permanently for moderators on trash) still renders.
+$jt_is_live = 'publish' === $post->status;
 
 // The non-published (pending / trash / spam) gate that used to live here is
 // now inside Permission_Engine::can_read_post() below — the same author-or-
@@ -71,16 +87,7 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 // (Basecamp 9803998504). Permission_Engine::can_read_post() is the single
 // source of truth — author + manage_options + space mod/admin only.
 if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
-	status_header( 404 );
-	\Jetonomy\Template_Loader::partial(
-		'empty-state',
-		[
-			'icon'      => 'empty-search',
-			'icon_size' => 48,
-			'message'   => __( 'Post not found.', 'jetonomy' ),
-			'tone'      => 'warn',
-		]
-	);
+	$jt_not_found();
 	return;
 }
 
@@ -101,7 +108,7 @@ if ( ! empty( $post->is_blocked_author ) ) {
 	?>
 	<div class="jt-post-blocked-tombstone" data-wp-interactive="jetonomy">
 		<?php jetonomy_echo_icon( 'shield', 32 ); ?>
-		<p><?php esc_html_e( 'Content hidden — you blocked this user.', 'jetonomy' ); ?></p>
+		<p><?php esc_html_e( 'Content hidden because you blocked this user.', 'jetonomy' ); ?></p>
 		<button class="jt-btn jt-btn-ghost" type="button"
 			data-wp-on--click="actions.unblockUser"
 			data-user-id="<?php echo (int) $post->author_id; ?>">
@@ -315,22 +322,63 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 	<?php
 }
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<?php if ( 'publish' !== $post->status ) : ?>
 				<div class="jt-notice jt-notice-warning">
 					<?php
 					if ( 'pending' === $post->status ) {
-						esc_html_e( 'This post is pending review and not yet publicly visible.', 'jetonomy' );
+						echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'This %s is pending review and not yet publicly visible.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 					} elseif ( 'spam' === $post->status ) {
-						esc_html_e( 'This post has been marked as spam.', 'jetonomy' );
+						echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'This %s has been marked as spam.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
+					} elseif ( 'trash' === $post->status ) {
+						echo esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'This %s is in the trash and hidden from the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
+					} elseif ( 'draft' === $post->status && ! empty( $post->published_at ) ) {
+						// published_at is UTC; show it in the site timezone.
+						echo esc_html(
+							sprintf(
+								/* translators: %s: scheduled publish date and time. */
+								__( 'Scheduled to publish on %s. It is hidden from the community until then.', 'jetonomy' ),
+								get_date_from_gmt( $post->published_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) )
+							)
+						);
+					} elseif ( 'draft' === $post->status ) {
+						esc_html_e( 'This is a draft and is hidden from the community until it is published.', 'jetonomy' );
 					} else {
-						/* translators: %s: post status */
-						echo esc_html( sprintf( __( 'This post has status: %s', 'jetonomy' ), $post->status ) );
+						/* translators: 1: singular topic label; 2: the raw status slug. */
+						echo esc_html( sprintf( __( 'This %1$s has status: %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), $post->status ) );
 					}
 					?>
+					<?php
+					// A trashed topic reaches this template only for its author
+					// and for moderators (can_read_post). Moderators get the way
+					// back - or out - right here, the one frontend surface a
+					// trashed topic has. The author does not: trashing is theirs,
+					// restoring and destroying are a moderator's call.
+					if ( 'trash' === $post->status && $jt_can_moderate_here ) :
+						?>
+						<div class="jt-notice-actions">
+							<button type="button" class="jt-btn jt-btn-fill jt-btn-sm"
+								data-wp-interactive="jetonomy"
+								data-wp-on--click="actions.trashedPostAction"
+								data-rest-method="POST"
+								data-rest-path="<?php echo esc_attr( '/spaces/' . (int) $post->space_id . '/moderation/approve/post/' . (int) $post->id ); ?>">
+								<?php esc_html_e( 'Restore', 'jetonomy' ); ?>
+							</button>
+							<button type="button" class="jt-btn jt-btn-ghost jt-btn-danger jt-btn-sm"
+								data-wp-interactive="jetonomy"
+								data-wp-on--click="actions.trashedPostAction"
+								data-rest-method="DELETE"
+								data-rest-path="<?php echo esc_attr( '/posts/' . (int) $post->id . '?force=true' ); ?>"
+								data-confirm="<?php echo esc_attr( sprintf( /* translators: 1: singular topic label; 2: plural reply label. */ __( 'Delete this %1$s and all its %2$s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
+								data-redirect="<?php echo esc_url( $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/mod/?view=trash' : \Jetonomy\base_url() . '/' ); ?>">
+								<?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?>
+							</button>
+						</div>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 			<!-- Post -->
@@ -350,7 +398,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// button to the meta row (it lands at the trailing edge
 					// via margin-inline-start: auto). Titled posts get the
 					// usual title-row with Follow on the right.
-					$jt_show_follow = is_user_logged_in();
+					$jt_show_follow = is_user_logged_in() && $jt_is_live;
 					if ( $jt_show_follow ) {
 						$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
 					}
@@ -540,9 +588,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// inside the cluster.
 					?>
 					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
-						<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
+						<div class="jt-vote-cluster" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
 							<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
-							<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
+							<?php if ( $jt_is_live && jetonomy_viewer_can_vote( $space ) ) : ?>
 							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 								aria-pressed="<?php echo 1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteUp"
@@ -592,7 +640,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					/* translators: %d: number of views */
 					$jt_view_count_label = sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count );
 					?>
-					<span class="jt-view-count" title="<?php echo esc_attr( $jt_view_count_label ); ?>" aria-label="<?php echo esc_attr( $jt_view_count_label ); ?>">
+					<?php // Only a published topic counts a view; the endpoint refuses anything else, so a pending/draft/trashed page would just log a 404. ?>
+					<span class="jt-view-count"<?php echo 'publish' === ( $post->status ?? '' ) ? ' data-jt-view-post="' . absint( $post->id ) . '"' : ''; ?> title="<?php echo esc_attr( $jt_view_count_label ); ?>" aria-label="<?php echo esc_attr( $jt_view_count_label ); ?>">
 						<?php jetonomy_echo_icon( 'eye', 14 ); ?>
 						<span class="n"><?php echo esc_html( (int) $post->view_count ); ?></span>
 					</span>
@@ -603,7 +652,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"
 					aria-label="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<?php
-				if ( is_user_logged_in() ) :
+				if ( is_user_logged_in() && $jt_is_live ) :
 					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
 					?>
 					<button class="jt-act jt-bookmark-btn <?php echo $is_bookmarked ? esc_attr( 'bookmarked' ) : ''; ?>"
@@ -658,14 +707,22 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						?>
 					<?php endif; ?>
 				<?php endif; ?>
-				<?php if ( $jt_can_moderate_here || (int) $post->author_id === get_current_user_id() ) : ?>
+				<?php
+				// A trashed topic is restored or deleted from the notice above,
+				// by a moderator. Edit / Make Private / Delete on it did nothing
+				// useful (DELETE on a trashed post is a 409), so its author has
+				// no menu at all and moderators keep only the moderation tools.
+				$jt_is_trashed = 'trash' === $post->status;
+				$jt_is_author  = (int) $post->author_id === get_current_user_id();
+				?>
+				<?php if ( $jt_can_moderate_here || ( $jt_is_author && ! $jt_is_trashed ) ) : ?>
 					<div class="jt-more-menu">
 						<button class="jt-act jt-more-trigger" type="button"
 							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
 						<div class="jt-more-dropdown" hidden>
-							<?php if ( (int) $post->author_id === get_current_user_id() || $jt_can_moderate_here ) : ?>
+							<?php if ( ! $jt_is_trashed && ( $jt_is_author || $jt_can_moderate_here ) ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
@@ -674,7 +731,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( $jt_can_moderate_here ) : ?>
+							<?php if ( $jt_can_moderate_here && $jt_is_live ) : ?>
 								<?php
 								/*
 								 * "Pin to space", not bare "Pin". Pro's
@@ -707,7 +764,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( (int) $post->author_id === get_current_user_id() || $jt_can_moderate_here ) : ?>
+							<?php if ( ! $jt_is_trashed && ( $jt_is_author || $jt_can_moderate_here ) ) : ?>
 								<button class="jt-more-item jt-more-item--danger"
 									data-wp-on--click="actions.deletePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
@@ -720,7 +777,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						</div>
 					</div>
 				<?php endif; ?>
-				<?php do_action( 'jetonomy_post_actions', $post ); ?>
+				<?php
+				// Pro hangs React, Pin to community and Add Poll here - all writes.
+				if ( $jt_is_live ) {
+					do_action( 'jetonomy_post_actions', $post );
+				}
+				?>
 				</div>
 			</article>
 
@@ -902,12 +964,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			// then 403s. Gate the composer on the same permission the server enforces so
 			// a read-only member never sees a Post Reply box they cannot submit - the
 			// Vote / New-Topic seam, applied to the reply surface.
-			$jt_can_reply_here = $jt_viewer_id
+			$jt_can_reply_here = $jt_is_live
+				&& $jt_viewer_id
 				&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
 			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
-					<?php printf( /* translators: %s: plural reply label. */ esc_html__( 'This post is closed and no longer accepts %s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					<?php printf( /* translators: 1: singular topic label; 2: plural reply label. */ esc_html__( 'This %1$s is closed and no longer accepts %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				</div>
 			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>

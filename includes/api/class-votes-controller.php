@@ -112,6 +112,13 @@ class Votes_Controller extends Base_Controller {
 			return $object;
 		}
 
+		// A trashed or unpublished post/reply takes no new votes (409).
+		// handle_unvote() stays open so an old vote can still be withdrawn.
+		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $type, $id );
+		if ( is_wp_error( $live ) ) {
+			return $live;
+		}
+
 		// Resolve space_id — replies don't have space_id directly.
 		if ( 'reply' === $type ) {
 			$parent_post = Post::find( (int) $object->post_id );

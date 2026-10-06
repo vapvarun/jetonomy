@@ -127,7 +127,7 @@ class Admin {
 			'jetonomy',
 			$jt_categories_label,
 			$jt_categories_label,
-			'jetonomy_manage_settings',
+			'jetonomy_manage_categories',
 			'jetonomy-categories',
 			array( $this, 'render_categories' )
 		);
@@ -635,15 +635,19 @@ class Admin {
 		// Only process if base_slug is present (General tab was submitted).
 		if ( isset( $input['base_slug'] ) ) {
 			$new_slug = sanitize_title( $input['base_slug'] ?? 'community' );
-			if ( $new_slug !== ( $existing['base_slug'] ?? '' ) ) {
+			// An unsaved key means the site has been running on the default, so
+			// that is the base its old links point at.
+			$old_base = sanitize_title( $existing['base_slug'] ?? 'community' );
+			if ( $new_slug !== $old_base ) {
 				// Delete the versioned flush key so Router re-registers rules on next load.
 				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
 
 				// Store the old slug so Router can 301-redirect old URLs.
-				$old_base = $existing['base_slug'] ?? '';
-				if ( ! empty( $old_base ) ) {
-					update_option( 'jetonomy_old_base_slug', $old_base, false );
-				}
+				update_option( 'jetonomy_old_base_slug', $old_base, false );
+			}
+			// Moving back onto the old slug retires the redirect.
+			if ( get_option( 'jetonomy_old_base_slug', '' ) === $new_slug ) {
+				delete_option( 'jetonomy_old_base_slug' );
 			}
 			$clean['base_slug']       = $new_slug;
 			$clean['community_title'] = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
@@ -665,7 +669,7 @@ class Admin {
 			$clean['activity_log_retention_days'] = min( 3650, max( 1, absint( $input['activity_log_retention_days'] ?? 90 ) ) );
 			$clean['replies_per_page']            = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
 			$raw_space_type                       = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
-			$clean['default_space_type']          = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
+			$clean['default_space_type']          = in_array( $raw_space_type, Space::valid_types(), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
 			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
 			// Community as homepage — unchecked checkboxes don't submit, so
@@ -806,9 +810,15 @@ class Admin {
 				// Was missing, so unchecking its admin default silently reverted
 				// to the seeded true/true — the toggle looked dead.
 				'idea_status_changed',
+				// Pro private messages. Only rendered (and so only submitted)
+				// while that extension is live; otherwise keep what is stored.
+				'message',
 			);
 			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : array();
 			foreach ( $notif_types as $nt ) {
+				if ( 'message' === $nt && ! \Jetonomy\messaging_active() ) {
+					continue;
+				}
 				$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : array();
 				$clean['notification_defaults'][ $nt ] = array(
 					'web'   => ! empty( $nt_data['web'] ),
@@ -1067,23 +1077,11 @@ class Admin {
 			wp_register_script(
 				'jetonomy-modals',
 				JETONOMY_URL . 'assets/js/jetonomy-modals.js',
-				array(),
+				array( 'wp-i18n' ),
 				JETONOMY_VERSION,
 				true
 			);
-			// Mirrors the front-end localize (Template_Loader::enqueue_assets) so
-			// jetonomy-modals.js has the same translated button defaults whether
-			// it loads on the community pages or in wp-admin.
-			wp_localize_script(
-				'jetonomy-modals',
-				'jetonomyModalsI18n',
-				array(
-					'cancel'  => __( 'Cancel', 'jetonomy' ),
-					'confirm' => __( 'Confirm', 'jetonomy' ),
-					'submit'  => __( 'Submit', 'jetonomy' ),
-					'ok'      => __( 'OK', 'jetonomy' ),
-				)
-			);
+			\Jetonomy\script_translations( 'jetonomy-modals' );
 		}
 		// Admin pages need the .jt-modal-* CSS classes the toolkit relies on,
 		// which live in the front-end stylesheet. Enqueue it on Jetonomy admin
@@ -1095,13 +1093,16 @@ class Admin {
 			JETONOMY_VERSION
 		);
 
+		// Not "admin.js": `wp i18n make-json` strips /.min.js$/ unescaped, which
+		// turns admin.js into a.js, so its translation JSON would never load.
 		wp_enqueue_script(
 			'jetonomy-admin',
-			JETONOMY_URL . 'assets/js/admin.js',
-			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals' ),
+			JETONOMY_URL . 'assets/js/admin-common.js',
+			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals', 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-admin' );
 
 		// Shared confirm-on-click delegate for [data-jt-confirm] markup.
 		// Replaces legacy inline event-attribute confirms that fight CSP,
@@ -1119,10 +1120,11 @@ class Admin {
 		wp_enqueue_script(
 			'jetonomy-icon-picker',
 			JETONOMY_URL . 'assets/js/jetonomy-icon-picker.js',
-			array(),
+			array( 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-icon-picker' );
 
 		wp_enqueue_style( 'wp-color-picker' );
 
@@ -1180,138 +1182,6 @@ class Admin {
 				'ajaxUrl'            => admin_url( 'admin-ajax.php' ),
 				'nonce'              => wp_create_nonce( 'jetonomy_admin' ),
 				'membershipAdapters' => $membership_adapters,
-				'i18n'               => array(
-					'confirmDelete'           => esc_html__( 'Are you sure? This cannot be undone.', 'jetonomy' ),
-					'confirmArchiveSpace'     => esc_html__( 'Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.', 'jetonomy' ),
-					'confirmPurgeSpace'       => esc_html__( 'Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.', 'jetonomy' ),
-					/* translators: %s: the space name the operator must retype. */
-					'purgeTypeToConfirm'      => esc_html__( 'This destroys every topic, reply and attachment in %s, including content written by other members. It cannot be undone. Type the space name to confirm.', 'jetonomy' ),
-					'purgeConfirmLabel'       => esc_html__( 'Delete permanently', 'jetonomy' ),
-					'purgeNameMismatch'       => esc_html__( 'That name did not match, so nothing was deleted.', 'jetonomy' ),
-					'confirmBan'              => esc_html__( 'Are you sure you want to ban this user?', 'jetonomy' ),
-					'confirmSpam'             => esc_html__( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
-					'confirmTrash'            => esc_html__( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
-					'saving'                  => esc_html__( 'Saving...', 'jetonomy' ),
-					'saved'                   => esc_html__( 'Saved!', 'jetonomy' ),
-					'deleted'                 => esc_html__( 'Deleted.', 'jetonomy' ),
-					'error'                   => esc_html__( 'Something went wrong.', 'jetonomy' ),
-					'importing'               => esc_html__( 'Importing...', 'jetonomy' ),
-					'importDone'              => esc_html__( 'Import complete!', 'jetonomy' ),
-					/* translators: %s: server-supplied error detail. */
-					'importErrorFormat'       => __( 'Error: %s', 'jetonomy' ),
-					'importErrorUnknown'      => esc_html__( 'Unknown error', 'jetonomy' ),
-					'selectImage'             => esc_html__( 'Select Image', 'jetonomy' ),
-					'useImage'                => esc_html__( 'Use this image', 'jetonomy' ),
-					'testEmailSent'           => esc_html__( 'Test email sent!', 'jetonomy' ),
-					'rewritesFlushed'         => esc_html__( 'Rewrite rules flushed.', 'jetonomy' ),
-					'unban'                   => esc_html__( 'Unban', 'jetonomy' ),
-					'ban'                     => esc_html__( 'Ban', 'jetonomy' ),
-					'demoCleanupConfirm'      => esc_html__( 'Delete all sample categories, spaces, posts, and replies from the setup wizard? Your own content is not affected.', 'jetonomy' ),
-					'demoCleanupRemoving'     => esc_html__( 'Removing...', 'jetonomy' ),
-					'revisionViewDiff'        => esc_html__( 'View diff', 'jetonomy' ),
-					'revisionHideDiff'        => esc_html__( 'Hide diff', 'jetonomy' ),
-					'tagNameRequired'         => esc_html__( 'Name is required.', 'jetonomy' ),
-					'tagDeleteConfirm'        => esc_html__( 'Delete this tag?', 'jetonomy' ),
-					'tagDeleteAttachedPrefix' => esc_html__( 'This tag is attached to', 'jetonomy' ),
-					'tagDeleteAttachedSuffix' => esc_html__( 'posts. Delete it and detach from all posts?', 'jetonomy' ),
-					'tagBulkSelectAtLeastOne' => esc_html__( 'Select at least one tag.', 'jetonomy' ),
-					'tagBulkDeleteConfirm'    => esc_html__( 'Delete the selected tags?', 'jetonomy' ),
-					'emailPreviewFailed'      => esc_html__( 'Preview failed.', 'jetonomy' ),
-					'emailPreviewTitle'       => esc_html__( 'Email Preview', 'jetonomy' ),
-					'emailSending'            => esc_html__( 'Sending...', 'jetonomy' ),
-					'emailSent'               => esc_html__( 'Sent.', 'jetonomy' ),
-					'emailSendFailed'         => esc_html__( 'Failed to send.', 'jetonomy' ),
-					/* translators: %s: email template label */
-					'emailResetConfirm'       => esc_html__( 'Reset %s to default? Your custom copy will be lost.', 'jetonomy' ),
-					'emailResetFailed'        => esc_html__( 'Reset failed.', 'jetonomy' ),
-					'hiddenForcesInvite'      => esc_html__( 'Hidden spaces must use Invite Only. Join policy switched.', 'jetonomy' ),
-					'hiddenRequiresInvite'    => esc_html__( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
-					'reloadPage'              => esc_html__( 'Reload page', 'jetonomy' ),
-					'importConnectionLost'    => esc_html__( 'Connection lost. You can resume this import later.', 'jetonomy' ),
-					/* translators: %d: number of attachment files that could not be recovered. */
-					'importSkippedFiles'      => esc_html__( '%d file(s) could not be recovered and were left linked in the original post text.', 'jetonomy' ),
-					'inviteCopied'            => esc_html__( 'Invite link copied to clipboard.', 'jetonomy' ),
-					'inviteRevokeConfirm'     => esc_html__( 'Revoke this invite link? Anyone holding it will no longer be able to join.', 'jetonomy' ),
-					'inviteNoLinks'           => esc_html__( 'No invite links yet.', 'jetonomy' ),
-					'inviteUnlimited'         => esc_html__( 'Unlimited', 'jetonomy' ),
-					'inviteNever'             => esc_html__( 'Never', 'jetonomy' ),
-					'inviteExpired'           => esc_html__( 'Expired', 'jetonomy' ),
-					// Column labels for JS-injected invite rows. They must match
-					// the headings jetonomy_admin_table() renders, because the
-					// responsive layout shows them as each cell's label on mobile.
-					'inviteLink'              => esc_html__( 'Invite Link', 'jetonomy' ),
-					'inviteUses'              => esc_html__( 'Uses', 'jetonomy' ),
-					'inviteExpires'           => esc_html__( 'Expires', 'jetonomy' ),
-					'actions'                 => esc_html__( 'Actions', 'jetonomy' ),
-					'showMoreDetails'         => esc_html__( 'Show more details', 'jetonomy' ),
-					// Access-rule composer preview. Keyed so the sentence and its
-					// mismatch warnings are translatable like everything else.
-					'rulePreview'             => array(
-						'whoFallback'      => __( 'People who match this rule', 'jetonomy' ),
-						/* translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as. */
-						'sentence'         => __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
-						'grants'           => array(
-							// NOT "but not take part". A rule admits; it does not
-							// restrict. On a public space anyone may join, a
-							// signed-in member posts whether or not a Read rule
-							// matches them, so the old wording contradicted the
-							// help table one screen away and promised a cap the
-							// rule cannot deliver.
-							'read'        => __( 'read posts and replies', 'jetonomy' ),
-							'participate' => __( 'read, post, reply, vote and report', 'jetonomy' ),
-							'full'        => __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s topics', 'jetonomy' ),
-						),
-						// The "who matches" half of the sentence. The grants map
-						// above says what someone may do; without this the owner
-						// got no help at all deciding WHO a rule catches, and the
-						// value field was a bare box with one placeholder for five
-						// different kinds of value. Write the consequence, not the
-						// definition, and say when the match ends where it can.
-						'typeNotes'        => array(
-							'everyone'    => __( 'Matches every visitor, signed in or not. Nobody is asked to log in first.', 'jetonomy' ),
-							'logged_in'   => __( 'Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.', 'jetonomy' ),
-							'role'        => __( 'Matches anyone holding this WordPress role. Most members hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ),
-							'capability'  => __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
-							'trust_level' => __( 'Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ),
-						),
-						// Membership adapters register their own types at runtime
-						// (membership:woocommerce, membership:wpfusion, ...), so
-						// they can't have a fixed entry above. %s is the adapter's
-						// own label, already the single source of truth for its
-						// name elsewhere in this screen.
-						/* translators: %s: the membership adapter's name, e.g. "WooCommerce Memberships". */
-						'membershipNote'   => __( 'Matches members who hold the %s level you pick below.', 'jetonomy' ),
-						// Per-type placeholder for the value box. One generic
-						// example cannot serve a role slug, a capability and a
-						// number at the same time.
-						'typePlaceholders' => array(
-							'role'        => __( 'subscriber', 'jetonomy' ),
-							'capability'  => __( 'edit_posts', 'jetonomy' ),
-							'trust_level' => __( '2', 'jetonomy' ),
-						),
-						// Roster-role labels for the derived value in the preview.
-						'roles'            => array(
-							'viewer'    => __( 'Viewer', 'jetonomy' ),
-							'member'    => __( 'Member', 'jetonomy' ),
-							'moderator' => __( 'Moderator', 'jetonomy' ),
-							'admin'     => __( 'Admin', 'jetonomy' ),
-						),
-						'warnRoleHigher'   => __( 'Heads up: the Space Role is more powerful than the Grants. Anyone added to the roster by "Sync Members" gets the role\'s abilities too.', 'jetonomy' ),
-						'warnGrantHigher'  => __( 'Heads up: the Grants are broader than the Space Role, so member lists will understate what these people can do.', 'jetonomy' ),
-					),
-					'copy'                    => esc_html__( 'Copy', 'jetonomy' ),
-					'revoke'                  => esc_html__( 'Revoke', 'jetonomy' ),
-					// Access-rule sync button + the import restart confirm. These
-					// were written inline in admin.js with no key, so they stayed
-					// English on every locale; the count was also concatenated,
-					// which no translator could reorder.
-					'sync'                    => esc_html__( 'Sync', 'jetonomy' ),
-					'syncing'                 => esc_html__( 'Syncing...', 'jetonomy' ),
-					/* translators: %d: number of memberships synced. */
-					'syncedFormat'            => esc_html__( 'Synced (%d)', 'jetonomy' ),
-					'importRestartConfirm'    => esc_html__( 'This will discard the interrupted import progress. Continue?', 'jetonomy' ),
-					'importRestartTitle'      => esc_html__( 'Restart import', 'jetonomy' ),
-				),
 			)
 		);
 
@@ -1325,34 +1195,38 @@ class Admin {
 			wp_enqueue_script(
 				'jetonomy-admin-dashboard',
 				JETONOMY_URL . 'assets/js/admin-dashboard.js',
-				array( 'jetonomy-admin' ),
+				array( 'jetonomy-admin', 'wp-i18n', 'wp-api-fetch' ),
 				JETONOMY_VERSION,
 				true
 			);
+			\Jetonomy\script_translations( 'jetonomy-admin-dashboard' );
 		} elseif ( str_ends_with( $hook, '_page_jetonomy-revisions' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-revisions',
 				JETONOMY_URL . 'assets/js/admin-revisions.js',
-				array( 'jetonomy-admin' ),
+				array( 'jetonomy-admin', 'wp-i18n' ),
 				JETONOMY_VERSION,
 				true
 			);
+			\Jetonomy\script_translations( 'jetonomy-admin-revisions' );
 		} elseif ( str_ends_with( $hook, '_page_jetonomy-tags' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-tags',
 				JETONOMY_URL . 'assets/js/admin-tags.js',
-				array( 'jetonomy-admin' ),
+				array( 'jetonomy-admin', 'wp-i18n' ),
 				JETONOMY_VERSION,
 				true
 			);
+			\Jetonomy\script_translations( 'jetonomy-admin-tags' );
 		} elseif ( str_ends_with( $hook, '_page_jetonomy-settings' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-settings',
 				JETONOMY_URL . 'assets/js/admin-settings.js',
-				array( 'jetonomy-admin' ),
+				array( 'jetonomy-admin', 'wp-i18n' ),
 				JETONOMY_VERSION,
 				true
 			);
+			\Jetonomy\script_translations( 'jetonomy-admin-settings' );
 		}
 	}
 
@@ -1388,8 +1262,7 @@ class Admin {
 			"SELECT * FROM {$activity_t} ORDER BY created_at DESC LIMIT 10"
 		) ?: array();
 
-		$settings  = get_option( 'jetonomy_settings', array() );
-		$base_slug = $settings['base_slug'] ?? 'community';
+		$base_slug = \Jetonomy\base_slug();
 
 		// Live 7-day pulse for the analytics teaser (real numbers, not a
 		// blurred screenshot — the widget demonstrates what Pro's analytics
@@ -1452,7 +1325,9 @@ class Admin {
 	public function render_categories(): void {
 		// Flat list of every category (for the parent-select dropdowns) —
 		// dropdown needs all values regardless of pagination.
-		$all_categories = $this->get_all_categories_nested();
+		// Parents only: categories nest two levels deep, so a sub-category
+		// can never be offered as a parent.
+		$all_categories = Category::list_top_level();
 
 		// Paginated top-level categories for the main table.
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
@@ -1511,7 +1386,7 @@ class Admin {
 				/* translators: %s: the singular label of the item (the configured noun). */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
-			$categories = $this->get_all_categories_flat();
+			$categories = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
 			// Explicit cap (plan WP1.5): the unbounded default rendered every
 			// member row on one screen. 1000 keeps this management surface
 			// functional; when the space is larger the view shows a notice so
@@ -1536,7 +1411,7 @@ class Admin {
 		if ( $filter_category ) {
 			$where[] = $wpdb->prepare( 'category_id = %d', $filter_category );
 		}
-		if ( $filter_type && in_array( $filter_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
+		if ( $filter_type && in_array( $filter_type, Space::valid_types(), true ) ) {
 			$where[] = $wpdb->prepare( 'type = %s', $filter_type );
 		}
 		if ( $filter_status && in_array( $filter_status, array( 'active', 'archived', 'locked' ), true ) ) {
@@ -1571,7 +1446,7 @@ class Admin {
 				$offset
 			)
 		) ?: array();
-		$categories = $this->get_all_categories_flat();
+		$categories = Category::list_tree();
 
 		include JETONOMY_DIR . 'includes/admin/views/spaces.php';
 	}
@@ -1971,22 +1846,6 @@ class Admin {
 
 	// ── Helpers ──
 
-	private function get_all_categories_nested(): array {
-		$top    = Category::list_top_level();
-		$result = array();
-		foreach ( $top as $cat ) {
-			$cat->children = Category::list_children( (int) $cat->id );
-			$result[]      = $cat;
-		}
-		return $result;
-	}
-
-	private function get_all_categories_flat(): array {
-		global $wpdb;
-		return $wpdb->get_results(
-			'SELECT * FROM ' . table( 'categories' ) . ' ORDER BY sort_order ASC, name ASC'
-		) ?: array();
-	}
 
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Spaces
@@ -2067,6 +1926,12 @@ class Admin {
 		} elseif ( 'all' !== $current_status ) {
 			$where .= ' AND p.status = %s';
 			$args[] = $current_status;
+		} else {
+			// WordPress convention: "All" is everything EXCEPT the trash, which
+			// has its own filter. Listing trashed topics under All is how a
+			// deleted topic stayed on screen with a Trash badge and looked
+			// undeletable (Basecamp 10335997408).
+			$where .= " AND p.status <> 'trash'";
 		}
 		if ( $search_query ) {
 			$where .= ' AND p.title LIKE %s';
@@ -2098,6 +1963,10 @@ class Admin {
 		$scheduled_count = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'draft' AND p.published_at IS NOT NULL"
 		);
+
+		// Same idea for Trash: now that All leaves it out, the filter label is
+		// the only place an owner learns there is anything in there.
+		$trash_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'trash'" );
 
 		// Site-timezone "now", for the view's Overdue split. Computed once here
 		// rather than per row.
@@ -2136,6 +2005,9 @@ class Admin {
 		if ( 'all' !== $current_status ) {
 			$where .= ' AND r.status = %s';
 			$args[] = $current_status;
+		} else {
+			// All excludes the trash, as on the topics screen.
+			$where .= " AND r.status <> 'trash'";
 		}
 		if ( $search_query ) {
 			$where .= ' AND r.content_plain LIKE %s';
@@ -2153,6 +2025,8 @@ class Admin {
 
 		$sql     = "SELECT r.* FROM {$replies_t} r WHERE {$where} ORDER BY r.created_at ASC LIMIT %d OFFSET %d";
 		$replies = $wpdb->get_results( $wpdb->prepare( $sql, ...array_merge( $args, array( $per_page, $offset ) ) ) ) ?: array();
+
+		$trash_count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = %d AND r.status = 'trash'", $post_id ) );
 
 		$nonce_value = wp_create_nonce( 'jetonomy_admin' );
 

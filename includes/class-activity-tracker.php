@@ -42,47 +42,36 @@ class Activity_Tracker {
 		add_action( 'jetonomy_idea_status_changed', [ $this, 'on_idea_status_changed' ], 5, 4 );
 	}
 
+	/**
+	 * Log the post and award the AUTHOR participation rep - once, when the post
+	 * is published. The create hook also fires for content held for review and
+	 * again when a moderator approves it; only the published moment counts, and
+	 * the author (not the approving moderator, nor nobody on a cron publish) is
+	 * the actor.
+	 */
 	public function on_post_created( int $post_id, int $space_id ): void {
-		$user_id = get_current_user_id();
-		if ( $user_id ) {
-			ActivityLog::log(
-				$user_id,
-				'created_post',
-				'post',
-				$post_id,
-				[
-					'space_id' => $space_id,
-				]
-			);
+		$post   = Post::find( $post_id );
+		$author = (int) ( $post->author_id ?? 0 );
+		if ( ! $post || 'publish' !== ( $post->status ?? '' ) || ! $author ) {
+			return;
 		}
 
-		// Award the AUTHOR a small participation rep, even when the post is
-		// published programmatically (scheduled cron, import) where there is no
-		// current user. Quality signals still dominate; the delta is owner-tunable.
-		$post = \Jetonomy\Models\Post::find( $post_id );
-		if ( $post && ! empty( $post->author_id ) ) {
-			\Jetonomy\Trust\Reputation::award( (int) $post->author_id, 'post_created' );
-		}
+		ActivityLog::log( $author, 'created_post', 'post', $post_id, [ 'space_id' => $space_id ] );
+		\Jetonomy\Trust\Reputation::award( $author, 'post_created' );
 	}
 
+	/**
+	 * Reply twin of on_post_created(): published replies only, credited to the author.
+	 */
 	public function on_reply_created( int $reply_id, int $post_id ): void {
-		$user_id = get_current_user_id();
-		if ( $user_id ) {
-			ActivityLog::log(
-				$user_id,
-				'created_reply',
-				'reply',
-				$reply_id,
-				[
-					'post_id' => $post_id,
-				]
-			);
+		$reply  = Reply::find( $reply_id );
+		$author = (int) ( $reply->author_id ?? 0 );
+		if ( ! $reply || 'publish' !== ( $reply->status ?? '' ) || ! $author ) {
+			return;
 		}
 
-		$reply = \Jetonomy\Models\Reply::find( $reply_id );
-		if ( $reply && ! empty( $reply->author_id ) ) {
-			\Jetonomy\Trust\Reputation::award( (int) $reply->author_id, 'reply_created' );
-		}
+		ActivityLog::log( $author, 'created_reply', 'reply', $reply_id, [ 'post_id' => $post_id ] );
+		\Jetonomy\Trust\Reputation::award( $author, 'reply_created' );
 	}
 
 	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {

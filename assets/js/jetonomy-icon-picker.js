@@ -7,9 +7,8 @@
  * and is identical on the frontend new-space form and every admin form that
  * needs to pick a Lucide icon (admin spaces, admin categories, Pro badges).
  *
- * i18n: reads window.jetonomyData.i18n.iconShowMore / iconShowFewer when
- * available; falls back to English strings otherwise so admin pages render
- * correctly even before jetonomy-data is localized.
+ * The show more / fewer labels are translated with wp.i18n, so the picker
+ * reads the same on admin pages, where jetonomyData is not localized.
  */
 (function () {
 	'use strict';
@@ -18,9 +17,8 @@
 		if (!pickerWrap || pickerWrap.dataset.jtIconPickerInit === '1') { return; }
 		pickerWrap.dataset.jtIconPickerInit = '1';
 
-		var i18n = (window.jetonomyData && window.jetonomyData.i18n) || {};
-		var moreLabelOpen = i18n.iconShowFewer || 'Show fewer icons';
-		var moreLabelClosed = i18n.iconShowMore || 'Show more icons';
+		var moreLabelOpen = wp.i18n.__( 'Show fewer icons', 'jetonomy' );
+		var moreLabelClosed = wp.i18n.__( 'Show more icons', 'jetonomy' );
 
 		var searchInput = pickerWrap.querySelector('[data-jt-icon-search]');
 		var moreBtn = pickerWrap.querySelector('[data-jt-icon-more]');

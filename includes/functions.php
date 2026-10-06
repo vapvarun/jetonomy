@@ -23,9 +23,154 @@ function table( string $name ): string {
  * @return string Base URL without trailing slash.
  */
 function base_url(): string {
-	$settings  = get_option( 'jetonomy_settings', [] );
-	$base_slug = $settings['base_slug'] ?? 'community';
-	return home_url( '/' . $base_slug );
+	return home_url( '/' . base_slug() );
+}
+
+/**
+ * Get the community base slug (e.g. 'discussion'), default 'community'.
+ *
+ * The one resolver for the setting: every URL, rewrite rule and admin label
+ * reads it here so a renamed base can never show up in one place and not
+ * another.
+ *
+ * @return string Base slug without slashes.
+ */
+function base_slug(): string {
+	$settings = get_option( 'jetonomy_settings', [] );
+	return (string) ( $settings['base_slug'] ?? 'community' );
+}
+
+/**
+ * URL of a community route, e.g. route_url( 'post', $space_slug, $post_slug ).
+ *
+ * THE map of the segments after the base slug. They are fixed English and not
+ * translatable or filterable by design - labels are display-only (Basecamp
+ * 10344391975). Keys are the router's jetonomy_route values; Router::add_rewrite_rules()
+ * holds the matching regexes, so a segment changed here must change there.
+ *
+ * Arguments are substituted verbatim - encode them at the call site where the
+ * caller already did (rawurlencode for logins / tag slugs), so URLs stay
+ * byte-identical to the hand-built ones this replaced.
+ *
+ * @param string                $route   Route key (see the map below).
+ * @param string|int|float|null ...$args Values for the %s placeholders, in order.
+ * @return string Absolute URL with a trailing slash, or '' for an unknown route.
+ */
+function route_url( string $route, ...$args ): string {
+	static $routes = array(
+		'connect-app'      => 'connect-app',
+		'category'         => 'category/%s',
+		'space'            => 's/%s',
+		'space-members'    => 's/%s/members',
+		'space-roadmap'    => 's/%s/roadmap',
+		'space-moderation' => 's/%s/mod',
+		'new-post'         => 's/%s/new',
+		'edit-space'       => 's/%s/edit',
+		'space-feed'       => 's/%s/feed',
+		'post'             => 's/%s/t/%s',
+		'profile'          => 'u/%s',
+		'edit-profile'     => 'u/%s/edit',
+		'notifications'    => 'notifications',
+		'search'           => 'search',
+		'leaderboard'      => 'leaderboard',
+		'moderation'       => 'mod',
+		'my-spaces'        => 'my-spaces',
+		'subscriptions'    => 'subscriptions',
+		'drafts'           => 'drafts',
+		'bookmarks'        => 'bookmarks',
+		'new-space'        => 'new-space',
+		'tag'              => 'tag/%s',
+		'invite'           => 'invite/%s',
+		'messages'         => 'messages',
+		'conversation'     => 'messages/%s',
+	);
+
+	if ( ! isset( $routes[ $route ] ) ) {
+		_doing_it_wrong( __FUNCTION__, esc_html( "Unknown Jetonomy route '{$route}'." ), '2.0.1' );
+		return '';
+	}
+
+	return base_url() . '/' . vsprintf( $routes[ $route ], $args ) . '/';
+}
+
+/**
+ * Cache-busting version for one asset file: "<version>+<mtime>".
+ *
+ * A fix shipped under an unchanged plugin version (a hotfix, a QA build, a
+ * site that pulled the branch) keeps the same ?ver=x.y.z, so browsers and CDNs
+ * keep serving the old file - the owner sees stale CSS after the fix landed.
+ * Appending the file's mtime changes the URL whenever the file changes. Falls
+ * back to the plain version when the file cannot be read.
+ *
+ * @param string $file    Absolute path to the asset.
+ * @param string $version Plugin version to prefix.
+ * @return string
+ */
+function asset_version( string $file, string $version ): string {
+	$mtime = is_readable( $file ) ? filemtime( $file ) : false;
+	return false !== $mtime ? $version . '+' . $mtime : $version;
+}
+
+/**
+ * Serve the minified build and version it by mtime, for every style, script
+ * and script module a plugin enqueues.
+ *
+ * Hooks the three loader-src filters once, so no enqueue site has to remember
+ * to do it. Only URLs under $base_url whose ?ver= is exactly $version are
+ * rewritten; an enqueue that passes its own explicit version is left alone.
+ * Pro calls this with its own URL, directory and version.
+ *
+ * Enqueues name the readable source (foo.js); the build ships foo.min.js
+ * beside it, and this swaps to it - about 55% less CSS and JS on every
+ * community page. The source is kept when SCRIPT_DEBUG is on, when no .min
+ * exists, or when the .min is older than its source (an edit not yet rebuilt),
+ * so a stale build can never hide a change. Script translations still match:
+ * WordPress strips ".min" when it maps a script to its JSON file.
+ *
+ * @param string $base_url Plugin URL (trailing slash).
+ * @param string $base_dir Plugin directory (trailing slash).
+ * @param string $version  Plugin version passed to the enqueues.
+ */
+function version_assets_by_mtime( string $base_url, string $base_dir, string $version ): void {
+	$rewrite = static function ( $src ) use ( $base_url, $base_dir, $version ) {
+		if ( ! is_string( $src ) || 0 !== strpos( $src, $base_url ) ) {
+			return $src;
+		}
+		$query = (string) wp_parse_url( $src, PHP_URL_QUERY );
+		parse_str( $query, $args );
+		if ( ( $args['ver'] ?? '' ) !== $version ) {
+			return $src;
+		}
+		$path = strtok( substr( $src, strlen( $base_url ) ), '?' );
+		if ( ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) && preg_match( '/(?<!\.min)\.(css|js)$/', $path ) ) {
+			$min = preg_replace( '/\.(css|js)$/', '.min.$1', $path );
+			if ( is_readable( $base_dir . $min ) && filemtime( $base_dir . $min ) >= ( is_readable( $base_dir . $path ) ? filemtime( $base_dir . $path ) : 0 ) ) {
+				$src  = $base_url . $min . substr( $src, strlen( $base_url ) + strlen( $path ) );
+				$path = $min;
+			}
+		}
+		return add_query_arg( 'ver', asset_version( $base_dir . $path, $version ), $src );
+	};
+	add_filter( 'style_loader_src', $rewrite );
+	add_filter( 'script_loader_src', $rewrite );
+	add_filter( 'script_module_loader_src', $rewrite );
+}
+
+/**
+ * Load Jetonomy's JS translations for classic script handles that use wp.i18n.
+ *
+ * The one place that knows the text domain and languages path for
+ * wp_set_script_translations(), so no enqueue site can drift from it. Call it
+ * after the handle is registered or enqueued. Script modules (view.js,
+ * compose-topic) cannot take script translations; they read PHP-localized
+ * state.i18n instead.
+ *
+ * @param string ...$handles Registered script handles.
+ */
+function script_translations( string ...$handles ): void {
+	foreach ( $handles as $handle ) {
+		wp_set_script_translations( $handle, 'jetonomy', JETONOMY_DIR . 'languages' );
+	}
 }
 
 /**
@@ -123,6 +268,117 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 	}
 
 	return $lower ? mb_strtolower( $label ) : $label;
+}
+
+/**
+ * Batch-load everything a list of topic cards reads, so each card costs no
+ * per-row queries: author role labels (per space, since a tag or drafts list
+ * mixes spaces), author profiles, tag pills, and the viewer's votes. Every
+ * page that renders post-card / feed-card rows calls this once first; the
+ * models keep a per-row fallback for theme-overridden partials.
+ *
+ * @param object[] $posts Topic rows about to render.
+ * @return array<int,int> post_id => the viewer's last-read reply id, for the
+ *                        "new replies" pill. Empty for guests.
+ */
+function prime_post_cards( array $posts ): array {
+	if ( ! $posts ) {
+		return array();
+	}
+	$ids        = array_map( static fn( $p ) => (int) $p->id, $posts );
+	$author_ids = array_map( static fn( $p ) => (int) $p->author_id, $posts );
+	$authors    = array();
+	foreach ( $posts as $p ) {
+		$authors[ (int) $p->space_id ][] = (int) $p->author_id;
+	}
+	// One query each for every space's author roles, the space rows, and the
+	// authors' WordPress user rows + meta: each card reads all three, and a
+	// list spanning many spaces (tag page) paid ~3 queries per topic for them.
+	Models\SpaceMember::warm_role_cache_many( $authors );
+	Models\Space::prime( array_keys( $authors ) );
+	cache_users( array_values( array_unique( array_filter( $author_ids ) ) ) );
+	Models\UserProfile::prime( $author_ids );
+	Models\Tag::for_posts( $ids );
+
+	$viewer = get_current_user_id();
+	if ( $viewer <= 0 ) {
+		return array();
+	}
+	// Each card's vote button asks the permission engine, which checks the
+	// viewer's ban in that topic's space.
+	Models\Restriction::prime_space_bans( $viewer, array_keys( $authors ) );
+	Models\Vote::user_votes_map( $viewer, 'post', $ids );
+	return Models\ReadStatus::last_read_for_posts( $viewer, $ids );
+}
+
+/**
+ * A translatable "N nouns" phrase as a sprintf format with %s for the number,
+ * e.g. "%s topics", so callers can style the number (wrap it in <strong>).
+ *
+ * Built-in nouns go through _n(), so languages with three or more plural
+ * forms (Polish, Russian, Arabic) get every form from their translation. A
+ * label the owner renamed (or one a filter changes) only has the singular and
+ * plural the owner typed, so it falls back to "number + label" in the
+ * owner's words - the best that is possible with two forms (Basecamp
+ * 10369320225).
+ *
+ * @param int    $count Number being counted.
+ * @param string $noun  One of: space, topic, reply, member, category.
+ * @return string Format containing one %s.
+ */
+function count_label_format( int $count, string $noun ): string {
+	$noun     = strtolower( $noun );
+	$noun     = isset( label_defaults()[ $noun ] ) ? $noun : 'space';
+	$settings = get_option( 'jetonomy_settings', array() );
+	$renamed  = '' !== trim( (string) ( $settings[ $noun . '_label_singular' ] ?? '' ) . (string) ( $settings[ $noun . '_label_plural' ] ?? '' ) )
+		|| has_filter( 'jetonomy_label' )
+		|| ( 'space' === $noun && has_filter( 'jetonomy_space_label' ) );
+
+	if ( $renamed ) {
+		return '%s ' . str_replace( '%', '%%', jetonomy_label( $noun, 1 !== $count, true ) );
+	}
+
+	switch ( $noun ) {
+		case 'topic':
+			/* translators: %s: number of topics. */
+			return _n( '%s topic', '%s topics', $count, 'jetonomy' );
+		case 'reply':
+			/* translators: %s: number of replies. */
+			return _n( '%s reply', '%s replies', $count, 'jetonomy' );
+		case 'member':
+			/* translators: %s: number of members. */
+			return _n( '%s member', '%s members', $count, 'jetonomy' );
+		case 'category':
+			/* translators: %s: number of categories. */
+			return _n( '%s category', '%s categories', $count, 'jetonomy' );
+		default:
+			/* translators: %s: number of spaces. */
+			return _n( '%s space', '%s spaces', $count, 'jetonomy' );
+	}
+}
+
+/**
+ * "N nouns" with the number formatted for the locale, plural-correct in every
+ * language. See count_label_format().
+ *
+ * @param int    $count Number being counted.
+ * @param string $noun  One of: space, topic, reply, member, category.
+ * @return string Unescaped.
+ */
+function count_label( int $count, string $noun ): string {
+	return sprintf( count_label_format( $count, $noun ), number_format_i18n( $count ) );
+}
+
+/**
+ * The noun alone, in the plural form that fits $count - for stats that print
+ * the number and its label as separate elements ("2" above "replies").
+ *
+ * @param int    $count Number the noun describes.
+ * @param string $noun  topic, reply, member, category or space.
+ * @return string
+ */
+function count_noun( int $count, string $noun ): string {
+	return trim( sprintf( count_label_format( $count, $noun ), '' ) );
 }
 
 /**
@@ -674,10 +930,8 @@ function community_profile_url( int $user_id ): string {
 		return '';
 	}
 
-	$settings  = get_option( 'jetonomy_settings', [] );
-	$base_slug = $settings['base_slug'] ?? 'community';
 	// rawurlencode because a login may legally contain a space or non-ASCII.
-	return home_url( '/' . $base_slug . '/u/' . rawurlencode( $user->user_login ) . '/' );
+	return route_url( 'profile', rawurlencode( $user->user_login ) );
 }
 
 /**
@@ -736,15 +990,16 @@ function get_profile_action_url( string $action, int $user_id ): string {
 	if ( '' === $base ) {
 		return '';
 	}
+	$edit = route_url( 'edit-profile', rawurlencode( get_userdata( $user_id )->user_login ) );
 
-	$suffixes = array(
-		'profile'               => '',
-		'edit'                  => 'edit/',
-		'notification-settings' => 'edit/#notification-preferences',
-		'badges'                => '#jt-badges',
-		'digest'                => '#digest-preferences',
+	$urls = array(
+		'profile'               => $base,
+		'edit'                  => $edit,
+		'notification-settings' => $edit . '#notification-preferences',
+		'badges'                => $base . '#jt-badges',
+		'digest'                => $base . '#digest-preferences',
 	);
-	$url      = $base . ( $suffixes[ $action ] ?? '' );
+	$url  = $urls[ $action ] ?? $base;
 
 	/**
 	 * Filter a Jetonomy-owned profile-action deep-link.
@@ -819,15 +1074,8 @@ function replies_per_page(): int {
 /**
  * A space's front URL.
  *
- * `base_url()` already keeps the configurable base slug in one place, but the
- * `/s/` segment after it is a literal repeated in ~90 places. That is fine for
- * a template inside this plugin, which moves whenever the router does, and not
- * fine for an integration in another plugin, which would keep pointing at a
- * path this one no longer serves.
- *
- * Same shape as reply_permalink() below. Existing call sites are deliberately
- * left alone - sweeping ninety of them is a change of its own - but nothing new
- * should compose this by hand.
+ * Kept as a public entry point for integrations in other plugins; it is a
+ * thin wrapper over route_url( 'space', ... ) with an empty-slug guard.
  *
  * @param string $space_slug Space slug.
  * @return string Front URL, or '' when the slug is unusable.
@@ -835,7 +1083,7 @@ function replies_per_page(): int {
 function space_permalink( string $space_slug ): string {
 	$space_slug = trim( $space_slug, '/' );
 
-	return '' === $space_slug ? '' : base_url() . '/s/' . $space_slug . '/';
+	return '' === $space_slug ? '' : route_url( 'space', $space_slug );
 }
 
 function reply_permalink( string $space_slug, string $post_slug, int $reply_id, ?int $page = null ): string {
@@ -843,7 +1091,7 @@ function reply_permalink( string $space_slug, string $post_slug, int $reply_id, 
 		return '';
 	}
 
-	$url  = base_url() . '/s/' . $space_slug . '/t/' . $post_slug . '/';
+	$url  = route_url( 'post', $space_slug, $post_slug );
 	$page = null !== $page ? max( 1, $page ) : Models\Reply::page_of( $reply_id, replies_per_page() );
 
 	if ( $page > 1 ) {
@@ -876,7 +1124,7 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 		if ( ! $space ) {
 			return '';
 		}
-		return base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+		return route_url( 'post', $space->slug, $post->slug );
 	}
 
 	if ( 'reply' === $object_type ) {
@@ -901,7 +1149,7 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 
 	if ( 'space' === $object_type ) {
 		$space = Models\Space::find( $object_id );
-		return $space ? base_url() . '/s/' . $space->slug . '/' : '';
+		return $space ? route_url( 'space', $space->slug ) : '';
 	}
 
 	/**
@@ -956,7 +1204,7 @@ function join_request_url_for( int $recipient_id, $space ): string {
 	// #jt-pending-requests anchors the pending list on the members page, so a
 	// space with many members doesn't land the reader above the fold and away
 	// from the thing the notification was about.
-	return base_url() . '/s/' . $space->slug . '/members/#jt-pending-requests';
+	return route_url( 'space-members', $space->slug ) . '#jt-pending-requests';
 }
 
 /**
@@ -1034,7 +1282,7 @@ function get_space_edit_url( $space ): string {
 	$use_frontend = (bool) apply_filters( 'jetonomy_use_frontend_space_edit', true, $space );
 
 	if ( $use_frontend && '' !== $slug ) {
-		return base_url() . '/s/' . rawurlencode( $slug ) . '/edit/';
+		return route_url( 'edit-space', rawurlencode( $slug ) );
 	}
 
 	if ( $id > 0 ) {

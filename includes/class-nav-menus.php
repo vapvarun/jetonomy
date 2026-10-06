@@ -14,13 +14,6 @@ defined( 'ABSPATH' ) || exit;
 
 class Nav_Menus {
 
-	/**
-	 * Placeholder path appended to the community base for the "My Profile"
-	 * menu item. Stored verbatim in postmeta; resolved per-visitor at render
-	 * time by resolve_self_profile_item().
-	 */
-	private const SELF_PROFILE_PATH = 'u/me/';
-
 	public function __construct() {
 		add_action( 'admin_head-nav-menus.php', [ $this, 'add_meta_box' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
@@ -57,7 +50,9 @@ class Nav_Menus {
 			return $item;
 		}
 
-		$placeholder = base_url() . '/' . self::SELF_PROFILE_PATH;
+		// "My Profile" menu items store this placeholder URL verbatim in
+		// postmeta; it is swapped for the visitor's own profile here.
+		$placeholder = route_url( 'profile', 'me' );
 		if ( untrailingslashit( $item->url ) !== untrailingslashit( $placeholder ) ) {
 			return $item;
 		}
@@ -110,7 +105,7 @@ class Nav_Menus {
 	 * Render the Community menu items meta box.
 	 */
 	public function render_meta_box(): void {
-		$base = home_url( '/' . $this->get_base_slug() . '/' );
+		$base = base_url() . '/';
 
 		$items = [
 			[
@@ -120,17 +115,17 @@ class Nav_Menus {
 			],
 			[
 				'title' => __( 'Search', 'jetonomy' ),
-				'url'   => $base . 'search/',
+				'url'   => route_url( 'search' ),
 				'class' => 'jetonomy-search',
 			],
 			[
 				'title' => __( 'Leaderboard', 'jetonomy' ),
-				'url'   => $base . 'leaderboard/',
+				'url'   => route_url( 'leaderboard' ),
 				'class' => 'jetonomy-leaderboard',
 			],
 			[
 				'title' => __( 'Notifications', 'jetonomy' ),
-				'url'   => $base . 'notifications/',
+				'url'   => route_url( 'notifications' ),
 				'class' => 'jetonomy-notifications',
 			],
 			[
@@ -138,7 +133,7 @@ class Nav_Menus {
 				// resolve_self_profile_item() so the item honours
 				// `jetonomy_profile_url` without baking a user into postmeta.
 				'title' => __( 'My Profile', 'jetonomy' ),
-				'url'   => $base . self::SELF_PROFILE_PATH,
+				'url'   => route_url( 'profile', 'me' ),
 				'class' => 'jetonomy-profile',
 			],
 		];
@@ -148,7 +143,7 @@ class Nav_Menus {
 		foreach ( $spaces as $space ) {
 			$items[] = [
 				'title' => $space->title,
-				'url'   => $base . 's/' . $space->slug . '/',
+				'url'   => route_url( 'space', $space->slug ),
 				'class' => 'jetonomy-space',
 			];
 		}
@@ -221,13 +216,5 @@ class Nav_Menus {
 		return $wpdb->get_results(
 			"SELECT title, slug FROM {$table} WHERE visibility = 'public' AND status = 'active' ORDER BY title ASC LIMIT 50"
 		);
-	}
-
-	/**
-	 * Get the community base slug.
-	 */
-	private function get_base_slug(): string {
-		$settings = get_option( 'jetonomy_settings', [] );
-		return $settings['base_slug'] ?? 'community';
 	}
 }

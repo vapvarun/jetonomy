@@ -62,7 +62,7 @@ Content (posts and replies) created by the student remains in the space - only a
 ## Typical Setup
 
 - One **Private** space per paid course, gated to enrollment
-- One **Public** space per free course for open discussion
+- One **Public** space per free course for open discussion. Create it yourself: auto-created Tutor LMS course spaces stay private, because Jetonomy cannot tell which Tutor courses are free (see the [LearnDash guide](04-learndash.md#auto-create-spaces-for-new-courses)).
 - One **Public** space for general Q&A open to all students
 
 ## Troubleshooting

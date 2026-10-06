@@ -82,7 +82,7 @@ https://wbcomdesigns.com/downloads/jetonomy/
 If you're a WordPress developer or agency building community features for clients, here's the technical picture on Jetonomy - the new forum plugin we released this week.
 
 **Database layer**
-23 custom MySQL tables - not WordPress post types or post meta. Tables are designed for forum query patterns, with proper composite indexes. Counters (reply_count, vote_score, post_count) are denormalized and updated on write. Cold queries against a 50,000-post community stay under 300ms. With Redis object caching, under 50ms.
+23 custom MySQL tables - not WordPress post types or post meta. Tables are designed for forum query patterns, with proper composite indexes. Counters (reply_count, vote_score, post_count) are denormalized and updated on write. Built for large communities: indexed queries, paginated lists, and object-cache aware throughout.
 
 **REST API**
 81 endpoints at `jetonomy/v1`. Offset pagination with `after`/`before` tokens on every list endpoint, over indexed purpose-built tables. Full rate limiting at the API layer. Response shapes are consistent and documented.

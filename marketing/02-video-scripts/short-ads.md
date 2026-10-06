@@ -25,7 +25,7 @@
 **NARRATOR:**
 (0:00) "If you are running bbPress, you have probably noticed the limitations."
 (0:05) "No voting. No trust levels. No Q&A mode. Every topic stored in wp_posts."
-(0:12) "Jetonomy is different. Custom database tables keep your forum fast, even at 50,000 topics."
+(0:12) "Jetonomy is different. Custom database tables, indexed queries, and object-cache support keep your forum fast as it grows."
 (0:20) "Trust levels let the community moderate itself. Q&A spaces surface the best answers. Idea boards let members vote on what matters."
 
 **VISUAL:** Jetonomy import wizard showing bbPress migration progress bar

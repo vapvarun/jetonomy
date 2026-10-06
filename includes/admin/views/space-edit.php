@@ -87,7 +87,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<select id="space-category">
 							<option value="0"><?php esc_html_e( '(None)', 'jetonomy' ); ?></option>
 							<?php foreach ( $categories as $space_cat ) : ?>
-								<option value="<?php echo absint( $space_cat->id ); ?>" <?php selected( $space->category_id, $space_cat->id ); ?>><?php echo esc_html( $space_cat->name ); ?></option>
+								<option value="<?php echo absint( $space_cat->id ); ?>" <?php selected( $space->category_id, $space_cat->id ); ?>><?php echo esc_html( \Jetonomy\Models\Category::picker_label( $space_cat ) ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</td>
@@ -327,9 +327,9 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			</div>
 
 			<?php
-			// Rows are injected by admin.js after an AJAX fetch, so this
+			// Rows are injected by admin-common.js after an AJAX fetch, so this
 			// renders the shell and the empty state only. The column order
-			// here is the contract admin.js builds rows against.
+			// here is the contract admin-common.js builds rows against.
 			jetonomy_admin_table(
 				array(
 					'table_id'    => 'jetonomy-invites-table',
@@ -512,7 +512,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				<?php
 				// Reads back the rule being composed in plain English, right
 				// where the two confusing selects are, and warns when Grants
-				// and Space Role disagree. Rendered by admin.js.
+				// and Space Role disagree. Rendered by admin-common.js.
 				?>
 				<p class="description jt-rule-preview" data-jt-rule-preview aria-live="polite"></p>
 			</div>
@@ -651,7 +651,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<?php
 							// Render empty (not 0) when no per-space override, so the "Default"
-							// placeholder surfaces and admin.js can save null on save.
+							// placeholder surfaces and admin-common.js can save null on save.
 							$ss_posts_per_page = isset( $space_settings['posts_per_page'] ) && '' !== $space_settings['posts_per_page'] && (int) $space_settings['posts_per_page'] > 0
 								? absint( $space_settings['posts_per_page'] )
 								: '';

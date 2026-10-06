@@ -18,10 +18,29 @@ run( array $options = [] ): array
 run_batch( string $phase, int $offset, int $batch_size ): array
 ```
 
-`run_batch()` is the batched-import driver: it processes rows for one
-`$phase` (`'forums'|'topics'|'replies'|'profiles'|'recount'`) starting at
-`$offset`, and returns `['phase', 'offset', 'done', 'processed']` so the
-caller (AJAX handler or `wp jetonomy import`) can resume across requests.
+`run_batch()` is the batched-import driver used by the Import screen: it
+processes rows for one `$phase` (`'forums'|'topics'|'replies'|'profiles'|'recount'`,
+plus any phase of your own) starting at `$offset`, and returns
+`['phase', 'offset', 'done', 'processed']` so the AJAX handler can resume
+across requests. `wp jetonomy import` calls `run()` instead.
+
+`get_total_count()` must count exactly the rows the batches report as
+`processed`, the profiles phase included, or the progress bar runs past 100%.
+A phase whose size is not known up front (bbPress's `members` phase) reports
+`processed = 0`.
+
+### Optional: `is_source_active()`
+
+```php
+public function is_source_active(): bool   // default true
+```
+
+`is_source_available()` asks "is there data to import"; this asks "is the
+source plugin itself running". Importers read the source tables directly, so
+data left behind by a deactivated or deleted plugin is still importable. The
+Import screen shows such a source as **Data found, plugin not active** instead
+of **Available**. The bundled importers check `class_exists( 'bbPress' )`,
+`defined( 'WPFORO_VERSION' )` and `class_exists( 'AsgarosForum' )`.
 
 ## Shared helpers on the base class
 
@@ -87,12 +106,9 @@ straight in dropped any child forum whose parent happened to sort later. Rows
 whose parent never resolves (orphans or cycles) are appended at the end rather
 than lost.
 
-Both free importers sort forum rows parents-first before creating spaces so the
-tree survives the migration, on the one-shot **and** the batched path: bbPress
-calls this shared base helper (`class-bbpress-importer.php:183` and `:449`);
-Asgaros runs an equivalent dependency sort in its own class
-(`class-asgaros-importer.php`). Either way `parent_id` is carried onto the new
-space.
+All three bundled importers run their forum rows through this helper before
+creating spaces, so the tree survives the migration and `parent_id` is carried
+onto the new space.
 
 ### `get_errors()`
 
@@ -108,6 +124,167 @@ then the import report renders the count plus a sample of up to 50 rows
 (`includes/admin/ajax/class-import-handler.php`,
 `includes/admin/views/import.php`) — so a skipped file is reported to the
 customer instead of vanishing behind a silent "Import complete!".
+
+## Re-runs: the import map
+
+Every bundled importer records what it created in `jt_import_map`
+(`Jetonomy\Models\Import_Map`, `includes/models/class-import-map.php`): one row
+per source forum, topic, reply and import category, keyed by importer slug,
+object type and source id. That record is the only "already imported?" check,
+so a re-run skips what exists and imports only what is new. The base class
+wraps it in four helpers.
+
+### `map_source()`
+
+```php
+protected function map_source(): string   // default ''
+```
+
+The slug your rows are recorded under (the bundled importers return `bbpress`,
+`wpforo`, `asgaros`). Override it to opt in. The default `''` opts out: the
+helpers below do nothing and `find_imported()` returns nothing, so an importer
+written before 2.0.1 behaves exactly as it did.
+
+### `find_imported()`
+
+```php
+protected function find_imported( string $type, array $rows ): array
+```
+
+Which rows of this batch an earlier run already imported. `$type` is `'space'`,
+`'post'` or `'reply'`. `$rows` is `source_id => fingerprint`; the return value
+is `source_id => existing Jetonomy id`, and rows not imported yet are absent.
+
+It runs one map lookup per batch, not per row. For source ids the map does not
+know, it falls back to a legacy fingerprint match for content imported before
+the map existed, and writes each match back to the map so it is exact from
+then on:
+
+| `$type` | Fingerprint | Matches |
+|---|---|---|
+| `space` | `[ 'slug' => ... ]` | A space with that slug inside a category whose slug starts with `imported-{map_source}` |
+| `post` | `[ 'parent' => space_id, 'author' => user_id, 'created' => 'Y-m-d H:i:s' ]` | A topic in that space by that author at that second |
+| `reply` | `[ 'parent' => post_id, 'author' => user_id, 'created' => 'Y-m-d H:i:s' ]` | A reply on that topic by that author at that second |
+
+`parent` is the **Jetonomy** id the row would be created under. A row already
+claimed by a map entry is never matched again, and two identical fingerprints
+pair off in id order. A legacy row whose source date was empty cannot be
+recognised. If you have no legacy content to recognise, pass an empty array as
+each fingerprint. A mapping whose Jetonomy row has since been deleted is
+dropped, so that row imports again.
+
+### `remember()`
+
+```php
+protected function remember( string $type, $source_id, int $object_id ): void
+```
+
+Record that a source row produced a Jetonomy row. Call it right after each
+successful create. No-op during a dry run or when `map_source()` is `''`.
+
+### `import_category()`
+
+```php
+protected function import_category( string $key, string $slug_prefix, array $args ): int
+```
+
+The category your spaces are filed under, created only when first needed.
+Resolution order: the category this importer recorded under `$key`, then the
+oldest category whose slug starts with `$slug_prefix` and holds a space (a
+pre-map import), then a new `Category::create( $args )` with slug
+`{$slug_prefix}-{time}`. Call it lazily, when a forum actually has to be
+created, so a re-run with nothing new creates no empty category. Use an
+`imported-{map_source}` prefix so the legacy space match above can find it.
+
+### Resolving parents across batches: `load_mapped()`
+
+```php
+protected function load_mapped( string $key, string $type, array $ids ): void
+```
+
+Every batch runs in a fresh request with an empty `$this->id_map`. Nothing is
+carried between batches (releases before 2.0.1 kept the whole map in the
+`jetonomy_import_id_map` option, rewritten every batch - about 10 MB at 500k
+replies). Before a row loop, load the parents this batch's rows point at from
+`jt_import_map`: `$key` is the id map type (`'forum'`, `'topic'`, ...), `$type`
+the map's object type (`'space'`, `'post'`, `'reply'`, `'category'`), and `$ids`
+is `local id => map source id`. One indexed query per call; ids already in
+memory are skipped, so it is harmless in `run()`.
+
+```php
+$forums = array_unique( array_map( 'intval', array_column( $topics, 'forum_id' ) ) );
+$this->load_mapped( 'forum', 'space', array_combine( $forums, $forums ) );
+```
+
+### Counting: `$already`, `skip_orphan()`, `get_tally()`, `describe_tally()`
+
+Increment `$this->already` (not `$this->skipped`) for each row
+`find_imported()` recognised. `$skipped` means "not imported";
+`$already` means "was already there". When a row is left out because its
+parent was not imported, call `$this->skip_orphan( 'topic' | 'reply' )`: it
+counts as skipped and records the reason.
+
+`get_tally()` returns
+`[ 'imported' => int, 'already' => int, 'rethreaded' => int, 'orphans' => [ type => int ] ]`
+for the batch driver, which accumulates it; `results()` carries the same keys
+beside `skipped` and `errors`. `Importer::describe_tally( $tally )` turns
+either into the translated sentences the Import screen, Past imports and
+`wp jetonomy import` all print.
+
+### Slugs: `clean_slug()`
+
+```php
+protected static function clean_slug( string $slug ): string
+```
+
+Drops emoji and symbols (which arrive percent-encoded from a WordPress-style
+slug) and keeps letters and digits of any script. Use it for new rows only;
+legacy recognition matches the slug an older release wrote verbatim.
+
+### Example
+
+A topics batch for a third-party importer:
+
+```php
+class My_Forum_Importer extends \Jetonomy\Import\Importer {
+
+    protected function map_source(): string {
+        return 'my-forum';
+    }
+
+    private function import_topic_rows( array $topics ): void {
+        $fingerprints = [];
+        foreach ( $topics as $t ) {
+            $fingerprints[ $t->id ] = [
+                'parent'  => (int) $this->get_mapped_id( 'forum', $t->forum_id ),
+                'author'  => (int) $t->user_id,
+                'created' => $t->created_at,
+            ];
+        }
+        $existing = $this->find_imported( 'post', $fingerprints );
+
+        foreach ( $topics as $t ) {
+            if ( isset( $existing[ $t->id ] ) ) {
+                // Keep it mapped so new replies under it still import.
+                $this->map_id( 'topic', $t->id, $existing[ $t->id ] );
+                ++$this->already;
+                continue;
+            }
+
+            $post_id = \Jetonomy\Models\Post::create( [ /* ... */ ] );
+            if ( $post_id && ! is_wp_error( $post_id ) ) {
+                $this->map_id( 'topic', $t->id, (int) $post_id );
+                $this->remember( 'post', $t->id, (int) $post_id );
+                ++$this->imported;
+            }
+        }
+    }
+}
+```
+
+Forums follow the same shape with `find_imported( 'space', ... )` and a
+`[ 'slug' => ... ]` fingerprint; call `import_category()` only when a forum is
+not already mapped.
 
 ## Per-batch time budget
 
@@ -131,24 +308,30 @@ apply_filters( 'jetonomy_import_batch_seconds', 15.0 );
 ```
 
 Check `budget_spent()` between rows and return early (persisting progress)
-once it trips — a batch that dies mid-request is worse than a slow one: the
-id map only persists on a completed batch, so a killed batch replays and
-duplicates already-imported content on resume.
+once it trips. A batch that dies mid-request is worse than a slow one: the
+driver resumes at the offset it last saw, so the rows the killed batch
+created are recognised as already imported only if each one was
+`remember()`ed right after it was created.
 
 ## Adding a new source importer
 
 1. Create `includes/import/class-{source}-importer.php`, extending
    `Jetonomy\Import\Importer`, implementing the abstract methods above.
-2. Use `map_id()` / `get_mapped_id()` to track old-ID → new-ID across
-   forums/topics/replies/profiles. If the source nests forums, run the forum
+2. Use `map_id()` / `get_mapped_id()` to track old-ID → new-ID within a
+   request, and `load_mapped()` at the top of each batch to bring in parents
+   an earlier batch created. If the source nests forums, run the forum
    rows through `sort_rows_parents_first()` before creating spaces so a parent
    is always mapped before its children reference it.
-3. Call `start_budget()` at the top of `run_batch()`, and `budget_spent()`
+3. Override `map_source()`, ask `find_imported()` before creating each batch,
+   and call `remember()` after each create, so re-runs are safe (see
+   [Re-runs: the import map](#re-runs-the-import-map)). File spaces under
+   `import_category()`.
+4. Call `start_budget()` at the top of `run_batch()`, and `budget_spent()`
    inside the per-row loop.
-4. For inline body media, call `register_body_media( $body, 'your-plugin-folder' )`.
+5. For inline body media, call `register_body_media( $body, 'your-plugin-folder' )`.
    For an explicit attachment box, resolve via `ensure_media_id()` then
    `link_attachment()`.
-5. Register the importer in `Jetonomy\Import\Import_Manager::init()`, or from
+6. Register the importer in `Jetonomy\Import\Import_Manager::init()`, or from
    outside the plugin via the `jetonomy_importers` filter:
 
 ```php

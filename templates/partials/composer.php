@@ -23,7 +23,7 @@ if ( ! is_user_logged_in() ) {
 
 $_post_id     = isset( $post_id ) ? (int) $post_id : 0;
 $_reply_to    = isset( $reply_to ) ? (int) $reply_to : 0;
-$_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: %s: singular reply label. */ __( 'Write your %s… (Markdown supported)', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) );
+$_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: %s: singular reply label. */ __( 'Write your %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) );
 ?>
 <div class="jt-editor"
 	data-wp-interactive="jetonomy"
@@ -32,6 +32,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 		<button type="button" class="jt-editor-bar-btn" data-cmd="bold" title="<?php esc_attr_e( 'Bold', 'jetonomy' ); ?>"><strong>B</strong></button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="italic" title="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>"><em>I</em></button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="code" title="<?php esc_attr_e( 'Code', 'jetonomy' ); ?>"><code>&lt;/&gt;</code></button>
+		<button type="button" class="jt-editor-bar-btn" data-cmd="codeblock" title="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>"><code>{ }</code></button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="link" title="<?php esc_attr_e( 'Link', 'jetonomy' ); ?>">
 			<?php jetonomy_echo_icon( 'link', 14 ); ?>
 		</button>
@@ -68,9 +69,11 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 		// 1.4.1 platform-aware hint: phones / tablets do not have a Ctrl key,
 		// so the desktop submit-shortcut copy reads as nonsense there. Detect
 		// touch via wp_is_mobile() (matches WP's own mobile signal) and swap.
+		// The editor formats through its toolbar; it does not convert typed
+		// Markdown, so the hint must not promise it (Basecamp 10320778207).
 		$_jt_composer_hint = wp_is_mobile()
-			? __( 'Markdown supported.', 'jetonomy' )
-			: __( 'Markdown · Ctrl+Enter to submit', 'jetonomy' );
+			? __( 'Use the toolbar to format.', 'jetonomy' )
+			: __( 'Use the toolbar to format · Ctrl+Enter to submit', 'jetonomy' );
 		?>
 		<span class="jt-editor-hint"><?php echo esc_html( $_jt_composer_hint ); ?></span>
 		<?php if ( is_user_logged_in() ) : ?>

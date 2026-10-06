@@ -36,7 +36,7 @@ Jetonomy is a WordPress-first community platform that started from the same ques
 | Forum layouts / space types | 4 layouts (all forum-style) | 4 types: Forum, Q&A, Ideas, Show & Tell |
 | Q&A with accepted answers | Basic question/answer | Full Q&A with accepted answers per space |
 | Idea boards with status workflow | Not built in | Built in with lanes and voting |
-| Voting | Likes only | Up and downvote with reputation impact |
+| Voting | Up and downvote | Up and downvote with reputation impact |
 | Anti-spam | reCAPTCHA v2 (checkbox) | reCAPTCHA v3 + Turnstile, both invisible |
 | Draft posts and scheduling | Not available | Built in free |
 | Real-time UI (no page reload) | Page reload required | WordPress Interactivity API |
@@ -45,11 +45,11 @@ Jetonomy is a WordPress-first community platform that started from the same ques
 | PMPro integration | Add-on required | Built in free |
 | Multisite network activation | No | Yes - tables provisioned per subsite |
 | Analytics dashboard | Basic stats (free tier) | Full dashboard with export (Pro) |
-| AI moderation and suggestions | No | Pro (OpenAI, Anthropic, or self-hosted Ollama) |
+| AI moderation and suggestions | Yes - via gVectors' hosted AI API (requires an API key and credits) | Pro (OpenAI, Anthropic, or self-hosted Ollama) |
 | Built-in wpForo importer | - | Yes, with dry run and progress tracking |
-| Schema.org QAPage markup | No | Yes (free) |
+| Schema.org QAPage markup | Yes (free) | Yes (free) |
 
-*Comparison based on wpForo 2.x with bundled add-ons, May 2026.*
+*Comparison based on wpForo 3.2.1 with bundled add-ons. Checked against source, September 2026.*
 
 ---
 

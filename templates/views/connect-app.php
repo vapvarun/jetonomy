@@ -89,6 +89,7 @@ if ( $jt_scheme_ok ) {
 						'connected'   => false,
 						'deepLink'    => '',
 						'error'       => '',
+						'errorText'   => __( 'Something went wrong. Please try again.', 'jetonomy' ),
 					)
 				);
 				// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -107,7 +108,7 @@ if ( $jt_scheme_ok ) {
 					<?php
 					printf(
 						/* translators: 1: member display name, 2: member login. */
-						esc_html__( 'You are signed in as %1$s (%2$s). The app gets its own access key for this account — you can see and revoke it any time from your profile in the dashboard.', 'jetonomy' ),
+						esc_html__( 'You are signed in as %1$s (%2$s). The app gets its own access key for this account. You can see and revoke it any time from your profile in the dashboard.', 'jetonomy' ),
 						'<strong>' . esc_html( \Jetonomy\user_display_name( $jt_viewer ) ) . '</strong>',
 						esc_html( $jt_viewer->user_login )
 					);

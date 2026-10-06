@@ -27,7 +27,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Space_Journey {
 
-	private const ALLOWED_TYPES         = [ 'forum', 'qa', 'ideas', 'chat' ];
 	private const ALLOWED_JOIN_POLICIES = [ 'open', 'approval', 'invite' ];
 
 	/**
@@ -55,8 +54,8 @@ final class Space_Journey {
 		$visibility  = (string) ( $input['visibility'] ?? 'public' );
 		$join_policy = (string) ( $input['join_policy'] ?? 'open' );
 
-		if ( ! in_array( $type, self::ALLOWED_TYPES, true ) ) {
-			return Journey_Result::fail( 'type must be one of: ' . implode( ', ', self::ALLOWED_TYPES ) );
+		if ( ! in_array( $type, Space::valid_types(), true ) ) {
+			return Journey_Result::fail( 'type must be one of: ' . implode( ', ', Space::valid_types() ) );
 		}
 		if ( ! in_array( $visibility, Space::visibility_values(), true ) ) {
 			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', Space::visibility_values() ) );
@@ -88,6 +87,9 @@ final class Space_Journey {
 		}
 
 		$id = Space::create( $data );
+		if ( is_wp_error( $id ) ) {
+			return Journey_Result::from_wp_error( $id );
+		}
 		if ( ! $id ) {
 			return Journey_Result::fail( 'Space::create() returned 0 — insert failed.' );
 		}
@@ -131,8 +133,8 @@ final class Space_Journey {
 			return Journey_Result::fail( sprintf( 'No updatable fields provided. Allowed: %s', implode( ', ', $allowed ) ) );
 		}
 
-		if ( isset( $patch['type'] ) && ! in_array( $patch['type'], self::ALLOWED_TYPES, true ) ) {
-			return Journey_Result::fail( 'type must be one of: ' . implode( ', ', self::ALLOWED_TYPES ) );
+		if ( isset( $patch['type'] ) && ! in_array( $patch['type'], Space::valid_types(), true ) ) {
+			return Journey_Result::fail( 'type must be one of: ' . implode( ', ', Space::valid_types() ) );
 		}
 		if ( isset( $patch['visibility'] ) && ! in_array( $patch['visibility'], Space::visibility_values(), true ) ) {
 			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', Space::visibility_values() ) );
@@ -155,6 +157,9 @@ final class Space_Journey {
 		}
 
 		$ok = Space::update( $id, $patch );
+		if ( is_wp_error( $ok ) ) {
+			return Journey_Result::from_wp_error( $ok );
+		}
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
 		}

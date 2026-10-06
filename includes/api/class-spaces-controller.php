@@ -372,7 +372,7 @@ class Spaces_Controller extends Base_Controller {
 				'data'         => AccessRule::find( (int) $id ),
 				'made_private' => $made_private,
 				'message'      => $made_private
-					? __( 'Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space.', 'jetonomy' )
+					? __( 'Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.', 'jetonomy' )
 					: __( 'Access rule added.', 'jetonomy' ),
 			],
 			201
@@ -616,11 +616,13 @@ class Spaces_Controller extends Base_Controller {
 
 		// When the client doesn't supply a type, fall back to the admin-configured default
 		// so Settings → Default Space Type actually controls new-space creation.
+		// A supplied but unknown type is refused (args enum + Space::create()),
+		// never silently swapped for the default.
 		$requested_type = sanitize_key( (string) $request->get_param( 'type' ) );
-		if ( ! in_array( $requested_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
+		if ( '' === $requested_type ) {
 			$jt_settings    = get_option( 'jetonomy_settings', array() );
 			$configured     = sanitize_key( (string) ( $jt_settings['default_space_type'] ?? 'forum' ) );
-			$requested_type = in_array( $configured, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $configured : 'forum';
+			$requested_type = in_array( $configured, Space::valid_types(), true ) ? $configured : 'forum';
 		}
 
 		$visibility  = sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public';
@@ -660,6 +662,9 @@ class Spaces_Controller extends Base_Controller {
 		$data = array_filter( $data, fn( $v ) => null !== $v && '' !== $v );
 
 		$id = Space::create( $data );
+		if ( is_wp_error( $id ) ) {
+			return $id;
+		}
 
 		if ( ! $id ) {
 			return new WP_Error(
@@ -801,7 +806,10 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		$data['updated_at'] = \Jetonomy\now();
-		Space::update( $id, $data );
+		$saved              = Space::update( $id, $data );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
+		}
 
 		$updated = Space::find( $id );
 
@@ -1363,9 +1371,7 @@ class Spaces_Controller extends Base_Controller {
 	 * REST controller being loaded. Within this controller there is one copy.
 	 */
 	private function invite_url( string $token ): string {
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$base_slug = $settings['base_slug'] ?? 'community';
-		return home_url( '/' . $base_slug . '/invite/' . $token . '/' );
+		return \Jetonomy\route_url( 'invite', $token );
 	}
 
 	/**
@@ -1568,6 +1574,7 @@ class Spaces_Controller extends Base_Controller {
 			'type'        => [
 				'type'     => 'string',
 				'required' => false,
+				'enum'     => Space::valid_types(),
 			],
 			'title'       => [
 				'type'     => 'string',

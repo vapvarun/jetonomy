@@ -62,10 +62,10 @@ $crumbs = array(
  * are rendered without an actor prefix.
  */
 $type_labels = array(
-	'reply_to_post'       => __( 'replied to your post', 'jetonomy' ),
-	'reply_to_reply'      => __( 'replied to your comment', 'jetonomy' ),
+	'reply_to_post'       => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'replied to your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+	'reply_to_reply'      => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'replied to your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 	'mention'             => __( 'mentioned you', 'jetonomy' ),
-	'vote_on_post'        => __( 'voted on your post', 'jetonomy' ),
+	'vote_on_post'        => sprintf( /* translators: %s: singular topic label. */ __( 'voted on your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 	'accepted_answer'     => sprintf( /* translators: %s: singular reply label. */ __( 'accepted your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 	'idea_status_changed' => __( 'updated your idea on the roadmap', 'jetonomy' ),
 	'new_post_in_sub'     => __( 'New activity in a space you follow', 'jetonomy' ),
@@ -112,11 +112,11 @@ if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
 }
 
 $empty_copy = array(
-	'all'      => array( __( 'No notifications yet', 'jetonomy' ), sprintf( /* translators: %s: plural member label. */ __( 'When %s reply to your posts or mention you, those updates land here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ),
+	'all'      => array( __( 'No notifications yet', 'jetonomy' ), sprintf( /* translators: 1: plural member label; 2: plural topic label. */ __( 'When %1$s reply to your %2$s or mention you, those updates land here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ),
 	'unread'   => array( __( "You're all caught up!", 'jetonomy' ), __( 'Nothing new since you last checked. Switch to All to see your history.', 'jetonomy' ) ),
-	'replies'  => array( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ), sprintf( /* translators: %s: plural reply label. */ __( '%s to your posts and comments will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ),
-	'mentions' => array( __( 'No mentions yet', 'jetonomy' ), sprintf( /* translators: %s: singular reply label. */ __( "When someone @-mentions you in a post or %s, you'll see it here.", 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
-	'votes'    => array( __( 'No votes yet', 'jetonomy' ), __( 'Upvotes on your posts will appear here.', 'jetonomy' ) ),
+	'replies'  => array( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ), sprintf( /* translators: 1: plural reply label; 2: plural topic label; 3: plural reply label, lowercase. */ __( '%1$s to your %2$s and %3$s will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ),
+	'mentions' => array( __( 'No mentions yet', 'jetonomy' ), sprintf( /* translators: 1: singular topic label; 2: singular reply label. */ __( 'When someone @-mentions you in a %1$s or %2$s, you\'ll see it here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
+	'votes'    => array( __( 'No votes yet', 'jetonomy' ), sprintf( /* translators: %s: plural topic label. */ __( 'Upvotes on your %s will appear here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ),
 	'badges'   => array( __( 'No badges yet', 'jetonomy' ), __( 'Earn badges by contributing to the community.', 'jetonomy' ) ),
 );
 
@@ -124,10 +124,11 @@ $empty_copy = array(
 // the Edit Profile page so we don't ship a parallel settings surface.
 $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_current_user_id() );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 <main>
+	<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 	<div class="jt-notifications-head">
 		<h1 class="jt-page-title"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></h1>
 		<div class="jt-notifications-head__actions">
@@ -219,7 +220,7 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 				// Build link to the relevant object using pre-joined slug columns.
 				$notif_url = $base;
 				if ( 'post' === $notif->object_type && ! empty( $notif->post_slug ) && ! empty( $notif->space_slug ) ) {
-					$notif_url = $base . '/s/' . $notif->space_slug . '/t/' . $notif->post_slug . '/';
+					$notif_url = \Jetonomy\route_url( 'post', $notif->space_slug, $notif->post_slug );
 				} elseif ( 'reply' === $notif->object_type && ! empty( $notif->reply_post_slug ) && ! empty( $notif->reply_space_slug ) ) {
 					$notif_url = \Jetonomy\reply_permalink( (string) $notif->reply_space_slug, (string) $notif->reply_post_slug, (int) $notif->object_id );
 				} elseif ( 'badge' === $notif->object_type ) {

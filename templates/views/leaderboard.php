@@ -59,7 +59,6 @@ if ( ! empty( $leader_ids ) ) {
 	\Jetonomy\Models\UserProfile::prime( $leader_ids );
 }
 
-$base   = \Jetonomy\base_url();
 $crumbs = [
 	[
 		'label' => __( 'Leaderboard', 'jetonomy' ),
@@ -67,10 +66,11 @@ $crumbs = [
 	],
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 <main>
+	<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 			<h1 class="jt-page-title">
 				<?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?>
@@ -88,8 +88,8 @@ $crumbs = [
 				);
 				foreach ( $jt_lb_periods as $jt_lb_key => $jt_lb_label ) :
 					$jt_lb_url = 'all' === $jt_lb_key
-						? $base . '/leaderboard/'
-						: add_query_arg( 'period', $jt_lb_key, $base . '/leaderboard/' );
+						? \Jetonomy\route_url( 'leaderboard' )
+						: add_query_arg( 'period', $jt_lb_key, \Jetonomy\route_url( 'leaderboard' ) );
 					?>
 					<a href="<?php echo esc_url( $jt_lb_url ); ?>"
 						class="jt-pill <?php echo $period === $jt_lb_key ? esc_attr( 'on' ) : ''; ?>"
@@ -151,7 +151,7 @@ $crumbs = [
 					<span class="jt-leader-name"><?php echo esc_html( \Jetonomy\jetonomy_label( 'member' ) ); ?></span>
 					<div class="jt-leader-stats">
 						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'rep', 'jetonomy' ); ?></div>
-						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>
+						<div class="jt-leader-stat-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ); ?></div>
 					</div>
 				</div>
 				<?php /* Appendable list — pagination-frontend.js targets .jt-leaderboard-list to inject page 2+ rows. */ ?>
@@ -256,7 +256,7 @@ $crumbs = [
 							</div>
 							<div>
 								<div class="jt-leader-stat-val"><?php echo (int) $leader->post_count; ?></div>
-								<div class="jt-leader-stat-lbl"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>
+								<div class="jt-leader-stat-lbl"><?php echo esc_html( \Jetonomy\count_noun( (int) $leader->post_count, 'topic' ) ); ?></div>
 							</div>
 						</div>
 					</div>

@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 81 REST routes (109 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 80 without it - do not cite the length of the manifest's endpoints array, which holds 86 entries for 80 unique paths), 44 AJAX handlers, 239 hooks fired (110 actions, 129 filters), 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and independently re-derived from source on 2026-09-08 (`wp jetonomy qa-actions` 396/396); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 83 REST routes (113 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 82 without it - do not cite the length of the manifest's endpoints array, which holds 88 entries for 82 unique paths), 44 AJAX handlers, 248 hooks fired (113 actions, 135 filters), 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and independently re-derived from source on 2026-10-06 for 2.0.1 (`wp jetonomy qa-actions` 469 pass + 1 environment skip); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -153,7 +153,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 - **WP**: 6.7+ required
 - **Namespace**: `Jetonomy\`
 - **Table prefix**: `jt_` (23 custom tables)
-- **REST API**: `jetonomy/v1` (86 endpoints, 22 controllers; 161 endpoints with Pro)
+- **REST API**: `jetonomy/v1` (87 endpoints, 22 controllers; 161 endpoints with Pro)
 
 ## Architecture
 - **Database**: Custom MySQL tables via `dbDelta()` - NOT WordPress CPTs
@@ -175,11 +175,11 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/models/` | 22 model classes (Category, Space, Post, Reply, Vote, etc.) |
 | `includes/permissions/class-permission-engine.php` | 3-layer permission resolver |
 | `includes/trust/` | Trust levels (0-5), reputation calculator, auto-evaluator |
-| `includes/api/` | 23 REST API controller classes (86 routes) |
+| `includes/api/` | 23 REST API controller classes (87 routes) |
 | `includes/adapters/` | 4 interfaces (membership, email, search, AI) + Adapter_Registry and the WP Roles, wp_mail, MemberPress, PMPro and Ollama adapters. Pro registers the rest (WooCommerce, RCP, LearnDash, Tutor). |
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |
-| `templates/` | 23 views + 14 partials (theme-overridable) |
+| `templates/` | 23 views + 17 partials (theme-overridable) |
 | `assets/css/jetonomy-tokens.css` | The `--jt-*` token layer (`:root` + dark). Dependency of BOTH `jetonomy` and `jetonomy-blocks` |
 | `assets/css/jetonomy.css` | Theme-adaptive CSS for the community app (consumes the tokens; declares none) |
 | `assets/js/view.js` | Interactivity API store (voting, sorting, polling) |
@@ -298,6 +298,9 @@ For release history, run `git log --oneline` or read `readme.txt`. For architect
 - Activity logging via `Activity_Tracker` hooks - no direct `ActivityLog::log()` in controllers
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
+- Community base slug/URL only via `\Jetonomy\base_slug()` / `\Jetonomy\base_url()` - never read `jetonomy_settings['base_slug']` inline or hardcode `/community/` (20 inline copies drifted; the admin Spaces list showed the wrong URL)
+- Community route URLs only via `\Jetonomy\route_url( 'post', $space_slug, $post_slug )` (keys = `jetonomy_route` values; the one map of fixed English segments lives in `includes/functions.php`) - never concatenate `/s/`, `/t/`, `/u/`, `/tag/`, `/mod/`... onto `base_url()`. Segments are fixed, not translated or filterable; `Router::add_rewrite_rules()` holds the matching regexes, so change both together. Arguments go in verbatim - `rawurlencode()` at the call site where needed
+- Importers: ask `Importer::find_imported()` before creating and call `Importer::remember()` after - `jt_import_map` is the only "already imported" record, and every importer shares that one check (re-runs must add only what is missing)
 
 ## CSS Token Rules (enforced - mirrors BuddyNext pattern)
 
@@ -338,9 +341,10 @@ Tokens inherit from WP preset tokens so they auto-adapt to the active theme:
 | Background | `--jt-bg`, `--jt-bg-subtle`, `--jt-bg-muted`, `--jt-bg-hover` |
 | Border | `--jt-border`, `--jt-border-strong` |
 | Semantic | `--jt-success`, `--jt-success-light`, `--jt-warn`, `--jt-warn-light`, `--jt-danger`, `--jt-danger-light` |
+| Text on tints / fills | `--jt-success-strong`, `--jt-warn-strong`, `--jt-danger-strong`, `--jt-accent-strong` (status text on its own `-light` tint, AA in both modes); `--jt-accent-fg` (text on `--jt-accent`); `--jt-danger-solid` + `--jt-danger-fg` (filled danger badges/buttons); `--jt-ink` (text on pastel trust-level fills). Never write `color: #fff` on a coloured fill. |
 | Trust levels | `--jt-tl0` … `--jt-tl5` |
 | Badge tiers | `--jt-badge-bronze`, `--jt-badge-silver`, `--jt-badge-gold` |
-| Radius | `--jt-radius`, `--jt-radius-sm`, `--jt-radius-lg`, `--jt-radius-full` |
+| Radius (one system, by role) | `--jt-radius-full` every button of every size, chips, pills, badges; `--jt-radius-lg` cards, panels, modals, composer; `--jt-radius` form controls (inputs read it explicitly so the theme cannot change them); `--jt-radius-sm` small inner marks (thumbnails, checkboxes). No literal px radii. |
 | Motion | `--jt-ease`, `--jt-dur` |
 
 ### The color-mix fallback pattern
@@ -348,15 +352,23 @@ Tokens inherit from WP preset tokens so they auto-adapt to the active theme:
 Derived color tokens use `color-mix()` for modern browsers with a hex fallback for older ones. Always write the hex fallback first, then override with `color-mix()` on the next line:
 
 ```css
-/* Correct - hex fallback first, color-mix second */
+/* Correct - hex fallback first, color-mix second, mixed toward the page background */
 --jt-text-secondary: #4B5563;
---jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
+--jt-text-secondary: color-mix(in srgb, var(--jt-text) 92%, var(--jt-bg));
 
 /* Wrong - skipping the fallback */
+--jt-text-secondary: color-mix(in srgb, var(--jt-text) 92%, var(--jt-bg));
+
+/* Wrong - mixing text toward `transparent`. The theme's text colour is often
+   already mid-grey, so fading it further dropped muted text to 3.2-3.9:1
+   (2.0.1 presentation review). Mix toward --jt-bg and check 4.5:1 on the
+   subtle/unread surfaces too. */
 --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
 ```
 
 ### Dark mode rule
+
+Dark surfaces adopt the host theme's dark palette (`--jt-page-bg`, then `--jt-bg` as its elevated step) - see `docs/standards/host-theme-color-adoption.md`. Any derived token (built with `var()`/`color-mix()`) must be re-declared in the `.jt-dark, [data-theme="dark"]` block too, or it keeps its light value.
 
 Never write per-component dark selectors. Dark mode overrides only live in `.jt-dark, [data-theme="dark"]` in `jetonomy-tokens.css`, by reassigning the `--jt-*` root tokens. Individual components automatically get dark mode by using the tokens:
 

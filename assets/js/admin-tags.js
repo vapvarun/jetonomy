@@ -2,14 +2,19 @@
  * Jetonomy — Tags admin page.
  *
  * Create / edit / delete tags via AJAX, including the edit modal and
- * bulk-delete flow. All user-visible strings come from
- * window.jetonomyAdmin.i18n. Loaded via the conditional enqueue in
+ * bulk-delete flow. User-visible strings are translated with wp.i18n.
+ * Loaded via the conditional enqueue in
  * Admin::enqueue_assets when the hook matches the Tags page.
  */
 (function () {
 	'use strict';
 
-	var i18n = (window.jetonomyAdmin && window.jetonomyAdmin.i18n) || {};
+	var i18n = {
+		tagNameRequired:         wp.i18n.__( 'Name is required.', 'jetonomy' ),
+		tagDeleteConfirm:        wp.i18n.__( 'Delete this tag?', 'jetonomy' ),
+		tagBulkSelectAtLeastOne: wp.i18n.__( 'Select at least one tag.', 'jetonomy' ),
+		tagBulkDeleteConfirm:    wp.i18n.__( 'Delete the selected tags?', 'jetonomy' ),
+	};
 
 	// Modal toolkit (jetonomy-modals.js) is a hard dependency. Degrade
 	// silently if it is absent rather than emitting native alert/confirm.
@@ -53,7 +58,7 @@
 			var name = document.getElementById('tag-name').value.trim();
 			var slug = document.getElementById('tag-slug').value.trim();
 			if (!name) {
-				_alert(i18n.tagNameRequired || 'Name is required.');
+				_alert(i18n.tagNameRequired);
 				return;
 			}
 			post('jetonomy_create_tag', { name: name, slug: slug }).then(function (res) {
@@ -99,9 +104,13 @@
 			e.preventDefault();
 			var id = this.dataset.id;
 			var count = parseInt(this.dataset.count || '0', 10);
-			var msg = i18n.tagDeleteConfirm || 'Delete this tag?';
+			var msg = i18n.tagDeleteConfirm;
 			if (count > 0) {
-				msg = (i18n.tagDeleteAttachedPrefix || 'This tag is attached to') + ' ' + count + ' ' + (i18n.tagDeleteAttachedSuffix || 'posts. Delete it and detach from all posts?');
+				msg = wp.i18n.sprintf(
+					/* translators: %d: number of posts the tag is attached to. */
+					wp.i18n._n( 'This tag is attached to %d post. Delete it and detach from all posts?', 'This tag is attached to %d posts. Delete it and detach from all posts?', count, 'jetonomy' ),
+					count
+				);
 			}
 			_confirm(msg, { danger: true }).then(function (ok) {
 				if (!ok) { return; }
@@ -126,10 +135,10 @@
 			if ('delete' !== action) { return; }
 			var ids = Array.from(document.querySelectorAll('.jetonomy-tag-cb:checked')).map(function (cb) { return cb.value; });
 			if (ids.length === 0) {
-				_alert(i18n.tagBulkSelectAtLeastOne || 'Select at least one tag.');
+				_alert(i18n.tagBulkSelectAtLeastOne);
 				return;
 			}
-			_confirm(i18n.tagBulkDeleteConfirm || 'Delete the selected tags?', { danger: true }).then(function (ok) {
+			_confirm(i18n.tagBulkDeleteConfirm, { danger: true }).then(function (ok) {
 				if (!ok) { return; }
 				post('jetonomy_bulk_delete_tags', { ids: ids }).then(function (res) {
 					if (res.success) { window.location.reload(); } else { showError(res); }

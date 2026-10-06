@@ -127,16 +127,14 @@ class Schema_Markup {
 			return null;
 		}
 
-		$author = get_userdata( (int) $post->author_id );
-		// Same resolver the page byline uses. Google compares structured data
-		// against visible content, so a site that renames members via
-		// jetonomy_user_display_name must not have its schema disagree.
-		$author_name = $author ? \Jetonomy\user_display_name( $author ) : 'Anonymous';
-		$base        = \Jetonomy\base_url() . '/s/' . $space_slug . '/t/' . $slug . '/';
+		// Same resolver the page byline uses, so the schema never disagrees
+		// with the visible author and never names an anonymous one.
+		$author_name = \Jetonomy\Author::for_display( (int) $post->author_id, $post )['name'];
+		$base        = \Jetonomy\route_url( 'post', $space_slug, $slug );
 
 		if ( 'question' === $post->type && $post->accepted_reply_id ) {
-			$accepted      = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
-			$answer_author = $accepted ? get_userdata( (int) $accepted->author_id ) : null;
+			$accepted    = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+			$answer_name = $accepted ? \Jetonomy\Author::for_display( (int) $accepted->author_id, $accepted )['name'] : '';
 
 			return [
 				'@context'   => 'https://schema.org',
@@ -159,7 +157,7 @@ class Schema_Markup {
 						'upvoteCount' => max( 0, (int) $accepted->vote_score ),
 						'author'      => [
 							'@type' => 'Person',
-							'name'  => $answer_author ? \Jetonomy\user_display_name( $answer_author ) : 'Anonymous',
+							'name'  => $answer_name,
 						],
 						'url'         => \Jetonomy\reply_permalink( $space_slug, $slug, (int) $accepted->id ),
 					] : null,
@@ -231,8 +229,7 @@ class Schema_Markup {
 			return null;
 		}
 
-		$base      = \Jetonomy\base_url();
-		$space_url = $base . '/s/' . $space->slug . '/';
+		$space_url = \Jetonomy\route_url( 'space', $space->slug );
 
 		// Cached 900s per space (plan WP4.9). The viewer is hard-coded to the
 		// guest path below (crawler-facing payload), so the whole schema is
@@ -269,7 +266,7 @@ class Schema_Markup {
 				// $i skipped a number whenever an injected row was dropped, and
 				// an ItemList with a gap in its positions is invalid.
 				'position' => count( $item_entries ) + 1,
-				'url'      => $base . '/s/' . $space->slug . '/t/' . $post->slug . '/',
+				'url'      => \Jetonomy\route_url( 'post', $space->slug, $post->slug ),
 				'name'     => $post->title,
 			);
 		}
@@ -313,7 +310,7 @@ class Schema_Markup {
 				'@type'       => 'SearchAction',
 				'target'      => array(
 					'@type'       => 'EntryPoint',
-					'urlTemplate' => $base . '/search/?q={search_term_string}',
+					'urlTemplate' => \Jetonomy\route_url( 'search' ) . '?q={search_term_string}',
 				),
 				'query-input' => 'required name=search_term_string',
 			),
@@ -389,13 +386,14 @@ class Schema_Markup {
 			return null;
 		}
 
-		$base    = \Jetonomy\base_url();
-		$tag_url = $base . '/tag/' . rawurlencode( $tag->slug ) . '/';
+		$tag_url = \Jetonomy\route_url( 'tag', rawurlencode( $tag->slug ) );
 
 		// Top 10 recent posts under this tag — gives the schema a real
 		// itemListElement instead of an empty container. Capped at 10 so a
 		// 50k-post tag still serializes to a reasonable JSON-LD payload.
-		$posts        = \Jetonomy\Models\Tag::list_by_tag( $tag->slug, 10 );
+		$posts = \Jetonomy\Models\Tag::list_by_tag( $tag->slug, 10 );
+		// wp_head runs before the page primes its cards: load the spaces once.
+		\Jetonomy\Models\Space::prime( array_map( static fn( $p ) => (int) $p->space_id, $posts ) );
 		$item_entries = array();
 		foreach ( $posts as $i => $post ) {
 			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
@@ -405,7 +403,7 @@ class Schema_Markup {
 			$item_entries[] = array(
 				'@type'    => 'ListItem',
 				'position' => $i + 1,
-				'url'      => $base . '/s/' . $space->slug . '/t/' . $post->post_slug . '/',
+				'url'      => \Jetonomy\route_url( 'post', $space->slug, $post->post_slug ),
 				'name'     => $post->title,
 			);
 		}
@@ -456,7 +454,7 @@ class Schema_Markup {
 			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 				$items[] = [
 					'name' => $space->title,
-					'url'  => $base . 's/' . $slug . '/',
+					'url'  => \Jetonomy\route_url( 'space', $slug ),
 				];
 			}
 		}
@@ -472,7 +470,7 @@ class Schema_Markup {
 			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 				$items[] = [
 					'name' => $space->title,
-					'url'  => $base . 's/' . $space_slug . '/',
+					'url'  => \Jetonomy\route_url( 'space', $space_slug ),
 				];
 			}
 			// can_render_post_text(): the crumb's `name` IS the post title, so a
@@ -482,7 +480,7 @@ class Schema_Markup {
 			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 				$items[] = [
 					'name' => $post->title,
-					'url'  => $base . 's/' . $space_slug . '/t/' . $slug . '/',
+					'url'  => \Jetonomy\route_url( 'post', $space_slug, $slug ),
 				];
 			}
 		}
@@ -506,26 +504,26 @@ class Schema_Markup {
 			if ( $tag ) {
 				$items[] = array(
 					'name' => '#' . $tag->name,
-					'url'  => $base . 'tag/' . rawurlencode( $tag->slug ) . '/',
+					'url'  => \Jetonomy\route_url( 'tag', rawurlencode( $tag->slug ) ),
 				);
 			}
 		}
 		if ( 'leaderboard' === $route ) {
 			$items[] = array(
 				'name' => __( 'Leaderboard', 'jetonomy' ),
-				'url'  => $base . 'leaderboard/',
+				'url'  => \Jetonomy\route_url( 'leaderboard' ),
 			);
 		}
 		if ( 'search' === $route ) {
 			$items[] = array(
 				'name' => __( 'Search', 'jetonomy' ),
-				'url'  => $base . 'search/',
+				'url'  => \Jetonomy\route_url( 'search' ),
 			);
 		}
 		if ( 'moderation' === $route ) {
 			$items[] = array(
 				'name' => __( 'Moderation', 'jetonomy' ),
-				'url'  => $base . 'mod/',
+				'url'  => \Jetonomy\route_url( 'moderation' ),
 			);
 		}
 

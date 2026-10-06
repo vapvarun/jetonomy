@@ -130,7 +130,10 @@
 			}
 		}
 
-		var nonce = activeNonce();
+		// opts.nonce === false sends no nonce: for public routes called from a
+		// page cache, where the localized nonce is stale by design and would
+		// only earn a 403 + refresh round-trip (e.g. the topic view beacon).
+		var nonce = opts.nonce === false ? '' : activeNonce();
 		if (nonce && !headers['X-WP-Nonce']) {
 			headers['X-WP-Nonce'] = nonce;
 		}

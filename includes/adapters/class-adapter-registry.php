@@ -222,13 +222,53 @@ class Adapter_Registry {
 		return null;
 	}
 
+	/**
+	 * The search adapter in use: the one the site names on
+	 * `jetonomy_search_adapter`, else any active adapter a plugin registered,
+	 * else the built-in 'fulltext' one. Registration order no longer decides:
+	 * the built-in adapter registers first, so a Meilisearch or Elasticsearch
+	 * adapter used to be shadowed by it.
+	 */
 	public static function get_search(): ?Search_Adapter {
-		foreach ( self::$search as $adapter ) {
-			if ( $adapter->is_active() ) {
+		/**
+		 * Choose the search adapter by the id it was registered with.
+		 *
+		 * @since 2.0.1
+		 *
+		 * @param string $id Adapter id, '' to let Jetonomy pick (a plugin's
+		 *                   active adapter over the built-in 'fulltext').
+		 */
+		$id = (string) apply_filters( 'jetonomy_search_adapter', '' );
+		if ( '' !== $id && isset( self::$search[ $id ] ) && self::$search[ $id ]->is_active() ) {
+			return self::$search[ $id ];
+		}
+
+		$fallback = null;
+		foreach ( self::$search as $key => $adapter ) {
+			if ( ! $adapter->is_active() ) {
+				continue;
+			}
+			if ( 'fulltext' !== $key ) {
 				return $adapter;
 			}
+			$fallback = $adapter;
 		}
-		return null;
+		return $fallback;
+	}
+
+	/**
+	 * The adapter that serves REST /search, the search page and the app. Only
+	 * an adapter implementing Search_Query_Adapter can carry their filters,
+	 * so one that implements the narrow interface alone leaves them on the
+	 * built-in MySQL search instead of answering with the filters ignored.
+	 */
+	public static function get_search_query(): Search_Query_Adapter {
+		$adapter = self::get_search();
+		if ( $adapter instanceof Search_Query_Adapter ) {
+			return $adapter;
+		}
+		$builtin = self::$search['fulltext'] ?? null;
+		return $builtin instanceof Search_Query_Adapter ? $builtin : new \Jetonomy\Search\Fulltext_Search();
 	}
 
 	public static function get_all_membership(): array {

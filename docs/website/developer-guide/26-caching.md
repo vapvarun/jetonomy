@@ -138,3 +138,17 @@ One `WHERE user_id IN (...)` query replaces N single-row lookups. Users with
 no profile row are cached as absent, so they don't re-query either. Jetonomy's
 own leaderboard, sidebar, and REST user lists already do this; the public
 seam exists so pages Jetonomy has never heard of can too.
+
+## Page caches and topic view counts
+
+Logged-out forum pages are cacheable, and a topic page response sets no cookie and writes nothing. Views are counted by the browser, not by the page request:
+
+- When a topic renders, `view.js` sends `POST /wp-json/jetonomy/v1/posts/{id}/view`. It fires once per browser session per topic (the topic ID goes in `sessionStorage`, never a cookie), including topics reached by client-side navigation.
+- The server counts the view only if the topic is published and readable by the requester, and only once per IP per topic in a 30-minute window, so replaying the request cannot inflate the count. The window is an atomic `wp_cache_add()` when a persistent object cache is present, a transient otherwise.
+- Because the beacon runs in the browser, a page served from the cache still counts. Crawlers that do not run JavaScript are not counted.
+
+Guests' beacons carry no REST nonce, because a cached page's nonce goes stale. Logged-in members' pages are not page-cached, so their beacon sends its nonce and the member is identified, which is what lets views of private-space topics count.
+
+`GET /posts/{id}` does not count a view. Custom clients that show a topic (a mobile app, an embed) should call the view route once when they display it.
+
+To verify on your cache, `curl -I` a logged-out topic URL: there is no `Set-Cookie` from Jetonomy, and a second request shows your cache's hit header.

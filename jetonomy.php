@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     2.0.0
+ * Version:     2.0.1
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '2.0.0' );
+define( 'JETONOMY_VERSION', '2.0.1' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -35,7 +35,7 @@ define( 'JETONOMY_VERSION', '2.0.0' );
 // upgrade block and Migration_1_9_3 never ran there. Keep this in step with
 // the newest key in Migrator::get_migrations() or the newest migration is
 // silently dead on exactly the sites that need it.
-define( 'JETONOMY_DB_VERSION', '2.0.0' );
+define( 'JETONOMY_DB_VERSION', '2.0.1.1' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -76,6 +76,7 @@ Jetonomy\Autoloader::register();
 // functions that the autoloader can't pick up. Must load BEFORE class-jetonomy so
 // Migrator runs (fired on plugins_loaded -> init) can call these helpers.
 require_once JETONOMY_DIR . 'includes/functions.php';
+\Jetonomy\version_assets_by_mtime( JETONOMY_URL, JETONOMY_DIR, JETONOMY_VERSION );
 
 // Public global helpers for templates (jetonomy_post_title_or_excerpt etc.).
 // Kept separate from functions.php because functions.php is namespaced
@@ -944,8 +945,6 @@ function jetonomy_render_markdown_images( string $content ): string {
 }
 
 function jetonomy_format_content( string $content ): string {
-	$base = \Jetonomy\base_url();
-
 	// Repair div-soup that older releases stored verbatim (see
 	// jetonomy_normalize_editor_html) - a no-op for clean content.
 	$content = jetonomy_normalize_editor_html( $content );
@@ -998,10 +997,10 @@ function jetonomy_format_content( string $content ): string {
 		// (`foo.com#section`) don't get linkified as tags.
 		$part = preg_replace_callback(
 			'/(?<![\w\/.:-])#([a-zA-Z0-9_-]+)/u',
-			function ( $matches ) use ( $base ) {
+			function ( $matches ) {
 				$tag  = $matches[1];
 				$slug = sanitize_title( $tag );
-				$url  = $base . '/tag/' . $slug . '/';
+				$url  = \Jetonomy\route_url( 'tag', $slug );
 				return '<a href="' . esc_url( $url ) . '" class="jt-tag-link">#' . esc_html( $tag ) . '</a>';
 			},
 			$part

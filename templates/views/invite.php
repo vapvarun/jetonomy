@@ -27,9 +27,6 @@ if ( empty( $token ) ) {
 
 $result = \Jetonomy\Models\InviteLink::accept( $token, get_current_user_id() );
 
-$settings  = get_option( 'jetonomy_settings', [] );
-$base_slug = $settings['base_slug'] ?? 'community';
-
 if ( is_wp_error( $result ) ) {
 	// Logged-out visitors with a VALID token get the invite panel with a
 	// login CTA; every other error renders as an empty state.
@@ -37,7 +34,11 @@ if ( is_wp_error( $result ) ) {
 		$error_data  = (array) $result->get_error_data();
 		$space_title = (string) ( $error_data['space_title'] ?? '' );
 		$space_desc  = (string) ( $error_data['space_description'] ?? '' );
-		$login_url   = wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) );
+		$invite_url  = home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) );
+		$login_url   = wp_login_url( $invite_url );
+		// Most invitees have no account yet: when the site allows sign-up,
+		// offer it first and bring them back here to accept the invite.
+		$signup_url = get_option( 'users_can_register' ) ? add_query_arg( 'redirect_to', rawurlencode( $invite_url ), wp_registration_url() ) : '';
 		?>
 		<div class="jt-narrow" style="text-align:center;padding:48px 0;">
 			<?php /* translators: %s: space title. */ ?>
@@ -45,7 +46,12 @@ if ( is_wp_error( $result ) ) {
 			<?php if ( '' !== $space_desc ) : ?>
 				<p class="jt-text-secondary"><?php echo esc_html( wp_strip_all_tags( $space_desc ) ); ?></p>
 			<?php endif; ?>
-			<a href="<?php echo esc_url( $login_url ); ?>" class="jt-btn jt-btn-fill"><?php esc_html_e( 'Log in to accept invite', 'jetonomy' ); ?></a>
+			<div class="jt-invite-actions">
+				<?php if ( $signup_url ) : ?>
+					<a href="<?php echo esc_url( $signup_url ); ?>" class="jt-btn jt-btn-fill"><?php esc_html_e( 'Create free account', 'jetonomy' ); ?></a>
+				<?php endif; ?>
+				<a href="<?php echo esc_url( $login_url ); ?>" class="jt-btn <?php echo $signup_url ? 'jt-btn-ghost' : 'jt-btn-fill'; ?>"><?php esc_html_e( 'Log in to accept invite', 'jetonomy' ); ?></a>
+			</div>
 		</div>
 		<?php
 		return;
@@ -64,6 +70,6 @@ if ( is_wp_error( $result ) ) {
 }
 
 // joined / already_member — straight into the space.
-$space_url = home_url( '/' . $base_slug . '/s/' . $result['space']->slug . '/' );
+$space_url = \Jetonomy\route_url( 'space', $result['space']->slug );
 echo '<meta http-equiv="refresh" content="0; url=' . esc_url( $space_url ) . '">';
 exit;

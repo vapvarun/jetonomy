@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "jetonomy",
     "name": "Jetonomy",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "namespace": "Jetonomy",
     "main_file": "jetonomy.php",
     "text_domain": "jetonomy",
@@ -13,9 +13,9 @@
   },
   "rest": {
     "namespace": "jetonomy/v1",
-    "route_count": 81,
-    "method_endpoints": 109,
-    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-09-22. route_count INCLUDES the /jetonomy/v1 index route itself (80 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 86 entries covering 80 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
+    "route_count": 83,
+    "method_endpoints": 113,
+    "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-10-06 (re-derived from rest_get_server() filtered to free controller classes). route_count INCLUDES the /jetonomy/v1 index route itself (82 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 88 entries covering 82 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
     "endpoints": [
       {
         "route": "/app/config",
@@ -244,7 +244,7 @@
         "auth": "public_with_handler",
         "capability": "ownership_or_edit_others",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1). 1.8.0: can_read_post now also gates STATUS - a non-publish post (trash/pending/spam) is readable only by its author or a moderator, everyone else gets 403; delete is a soft delete so this is what makes DELETE /posts/{id} actually stop serving the content. 1.8.0: blocked_author is ADVISORY ONLY - title/content/content_plain now come back empty server-side (Post::apply_block_tombstone) when it is true, so a client that ignores the flag still cannot render the blocked author's words. 1.9.3: response adds can_downvote - the server rejects a self-downvote with 400 and the web templates already hide the control on own content; computed from the pre-anonymised author so anonymous posts stay correct. 1.9.3: response also adds viewer_flagged - a second report is refused 409, and the API previously published nothing to read that state from."
+        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1). 1.8.0: can_read_post now also gates STATUS - a non-publish post (trash/pending/spam) is readable only by its author or a moderator, everyone else gets 403; delete is a soft delete so this is what makes DELETE /posts/{id} actually stop serving the content. 1.8.0: blocked_author is ADVISORY ONLY - title/content/content_plain now come back empty server-side (Post::apply_block_tombstone) when it is true, so a client that ignores the flag still cannot render the blocked author's words. 1.9.3: response adds can_downvote - the server rejects a self-downvote with 400 and the web templates already hide the control on own content; computed from the pre-anonymised author so anonymous posts stay correct. 1.9.3: response also adds viewer_flagged - a second report is refused 409, and the API previously published nothing to read that state from. 2.0.1: DELETE accepts force=true - permanent delete through Post::delete() (cascades replies + every dependent row), space moderators/admins only (delete_others_posts); authors can only trash. Restore is POST /spaces/{id}/moderation/approve/post/{id}. 2.0.1 (Basecamp 10344051299): GET no longer increments view_count - it is an API read (apps, MCP, refreshes) that double-counted; POST /posts/{id}/view is the single counter."
       },
       {
         "route": "/posts/(?P<id>\\d+)/close",
@@ -271,6 +271,19 @@
         "capability": "edit_others_posts",
         "ownership_check": "handler_enforces",
         "audit_notes": "Pin to top of space"
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)/view",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Posts_Controller::record_view",
+        "permission": "REST_Auth::auth_public_write (closure)",
+        "purpose": "Count one view of a topic (the single view counter)",
+        "auth": "public_rate_limited",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "2.0.1 (Basecamp 10344051299): fired by view.js once per browser session per topic (sessionStorage, no cookie) so topic page responses carry no Set-Cookie and page-cached hits still count. Handler 404s missing / non-publish / unreadable (can_read_post) topics identically to GET /posts/{id}. Server-side dedupe: one count per client_ip()+topic per Posts_Controller::VIEW_WINDOW (30 min) via atomic wp_cache_add with a persistent object cache, transient otherwise. No nonce required: guests send none (cached page nonce is stale); logged-in pages send theirs so private-space views resolve the member. Returns {counted: bool}."
       },
       {
         "route": "/posts/(?P<id>\\d+)/move",
@@ -365,7 +378,7 @@
         "auth": "GET: visibility_gated | PATCH/DELETE: login_required",
         "capability": "ownership_or_edit_others",
         "ownership_check": "handler_enforces",
-        "audit_notes": "1.9.1: GET/get_item re-registered deliberately. The 1.6.0 note recorded its absence as correct drift-removal, but the absence was itself the bug - a reply notification carries only the reply id, so with no GET the app could not resolve the parent thread and every reply notification was a dead tap (Basecamp 10159720057 / 10161329157). GET returns post_id and is gated on the PARENT post via Permission_Engine::can_read_post. Prior note: \"1.6.0 drift fix: no GET is registered on this route (only PATCH + DELETE) - the stale GET/get_item entry was removed.\" 1.9.3: response adds viewer_vote + can_downvote (see the /posts/{id}/replies note)."
+        "audit_notes": "1.9.1: GET/get_item re-registered deliberately. The 1.6.0 note recorded its absence as correct drift-removal, but the absence was itself the bug - a reply notification carries only the reply id, so with no GET the app could not resolve the parent thread and every reply notification was a dead tap (Basecamp 10159720057 / 10161329157). GET returns post_id and is gated on the PARENT post via Permission_Engine::can_read_post. Prior note: \"1.6.0 drift fix: no GET is registered on this route (only PATCH + DELETE) - the stale GET/get_item entry was removed.\" 1.9.3: response adds viewer_vote + can_downvote (see the /posts/{id}/replies note). 2.0.1: DELETE accepts force=true - permanent delete through Reply::delete(), space moderators/admins only; restore is POST /spaces/{id}/moderation/approve/reply/{id}."
       },
       {
         "route": "/replies/(?P<id>\\d+)/accept",
@@ -1144,6 +1157,21 @@
         "capability": "jetonomy_manage_spaces",
         "ownership_check": null,
         "purpose": "Delete an access rule. Added 1.9.4."
+      },
+      {
+        "route": "/admin/demo-data",
+        "methods": [
+          "GET",
+          "POST",
+          "DELETE"
+        ],
+        "handler": "Admin_Controller::demo_data_status / import_demo_data / remove_demo_data",
+        "permission": "REST_Auth::auth_mutation (closure)",
+        "purpose": "Demo data status, import (replaces an earlier set), remove; same code as the Dashboard card and wp jetonomy demo-seed/demo-cleanup",
+        "auth": "login_required",
+        "capability": "manage_options",
+        "ownership_check": "not_applicable",
+        "audit_notes": "2.0.1. 401 guest, 403 member (qa-actions DD1-DD2)."
       }
     ]
   },
@@ -1191,6 +1219,13 @@
       "purpose": "Bulk moderation action"
     },
     {
+      "action": "jetonomy_delete_content_permanently",
+      "handler": "Admin\\Ajax\\Content_Handler::ajax_delete_permanently",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Permanently delete trashed topics or replies (Content screen row + bulk action) via Post::delete()/Reply::delete()"
+    },
+    {
       "action": "jetonomy_bulk_delete_tags",
       "handler": "Admin\\Ajax\\Tags_Handler::bulk_delete",
       "nonce": "jetonomy_admin",
@@ -1210,13 +1245,6 @@
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_users",
       "purpose": "Change user trust level"
-    },
-    {
-      "action": "jetonomy_cleanup_sample_data",
-      "handler": "Admin\\Ajax\\Setup_Handler::cleanup_sample",
-      "nonce": "jetonomy_admin",
-      "capability": "manage_options",
-      "purpose": "Clean up sample data"
     },
     {
       "action": "jetonomy_create_category",
@@ -1724,7 +1752,15 @@
   "tables": [
     {
       "name": "{prefix}jt_categories",
-      "purpose": "Categories/sections"
+      "purpose": "Categories/sections. Two levels (top-level + sub-categories), enforced by Category::parent_error(); a hidden parent hides its branch (Category::listing_visibility_sql).",
+      "migrations": [
+        {
+          "version": "2.0.1",
+          "change": "Re-parent third-level, orphaned and cyclic categories to their top-level ancestor",
+          "purpose": "2.0.1 enforces two levels; pre-2.0.1 rows outside the rule would drop out of every listing.",
+          "file": "includes/db/migrations/class-migration_2_0_1.php"
+        }
+      ]
     },
     {
       "name": "{prefix}jt_spaces",
@@ -2113,8 +2149,9 @@
         "int $space_id",
         "WP_REST_Request|null $request"
       ],
-      "where": "includes/api/class-posts-controller.php (REST create); includes/models/class-post.php Post::publish_scheduled() (cron-published scheduled post, $request null); includes/class-abilities.php (programmatic create, $request null)",
-      "consumed_by": "jetonomy-pro"
+      "where": "includes/api/class-posts-controller.php (REST create); includes/models/class-post.php Post::publish_draft() (publish-now and cron-published scheduled post, $request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending/spam -> publish approval of never-announced content, $request null)",
+      "consumed_by": "jetonomy-pro",
+      "audit_notes": "2.0.1: also fires at approval of held (pending) or spam content, only when the content was never announced (no created_post row in jt_activity_log), so hold-then-approve of live content does not re-announce. Fires at creation for pending/spam too, so every announcing listener (Notifier, Mentions::notify_for, Activity_Tracker, BuddyPress/FluentCommunity, Pro webhooks) gates on status = publish."
     },
     {
       "name": "jetonomy_after_create_reply",
@@ -2125,9 +2162,9 @@
         "int $post_id",
         "WP_REST_Request|null $request"
       ],
-      "where": "includes/api/class-replies-controller.php (REST create); includes/notifications/class-notifier.php on_reply_from_email() ($request null); includes/class-abilities.php (programmatic create, $request null)",
+      "where": "includes/api/class-replies-controller.php (REST create); includes/notifications/class-notifier.php on_reply_from_email() ($request null); includes/class-abilities.php (programmatic create, $request null); includes/moderation/class-moderation-service.php apply_object_status() (pending/spam -> publish approval of never-announced content, $request null)",
       "consumed_by": "jetonomy-pro",
-      "audit_notes": "1.7.1: widened 2 -> 3 args to mirror jetonomy_after_create_post. The REST create path (class-replies-controller.php) now passes $request so jetonomy-pro's attachments extension can read attachment_ids from a JSON body on POST /posts/{id}/replies (previously silently dropped for mobile/JSON clients, which never populate $_POST)."
+      "audit_notes": "2.0.1: also fires at approval of a held reply; announcing listeners gate on status = publish. 1.7.1: widened 2 -> 3 args to mirror jetonomy_after_create_post. The REST create path (class-replies-controller.php) now passes $request so jetonomy-pro's attachments extension can read attachment_ids from a JSON body on POST /posts/{id}/replies (previously silently dropped for mobile/JSON clients, which never populate $_POST)."
     },
     {
       "name": "jetonomy_after_create_space",
@@ -2353,10 +2390,42 @@
     {
       "name": "jetonomy_notification_created",
       "type": "action",
-      "args": "notification_id, user_id, type, object_type, object_id, message, link",
+      "args": "notification_id, user_id, type, object_type, object_id, message, link, payload",
       "where": "includes/notifications/class-notifier.php, includes/class-mentions.php",
       "consumed_by": "jetonomy-pro",
-      "audit_notes": "1.8.0: BOTH fire sites now go through Notifier::emit_notification_created(), which does NOT fire this action when the recipient has blocked the actor (Notifier::recipient_blocked_actor). Consumers mirror a notification OUT of the app, so the gate belongs above the hook, not in each listener - Pro's web-push subscribed to the raw hook and fired 12 lines ABOVE the block check that correctly suppressed the matching EMAIL, so the same event produced a suppressed email and a delivered push. The signature is unchanged (7 args) and carries no actor_id, so a listener could not have made this decision itself. The notification ROW is still written; only the outbound mirror is withheld, and unblocking restores history without re-sending."
+      "audit_notes": "1.8.0: BOTH fire sites now go through Notifier::emit_notification_created(), which does NOT fire this action when the recipient has blocked the actor (Notifier::recipient_blocked_actor). Consumers mirror a notification OUT of the app, so the gate belongs above the hook, not in each listener - Pro's web-push subscribed to the raw hook and fired 12 lines ABOVE the block check that correctly suppressed the matching EMAIL, so the same event produced a suppressed email and a delivered push. The signature is unchanged (7 args) and carries no actor_id, so a listener could not have made this decision itself. The notification ROW is still written; only the outbound mirror is withheld, and unblocking restores history without re-sending. 2.0.1: an 8th argument was added - the community notification contract payload array (Community_Notification_Contract::payload()), built for every existing notification type. Existing listeners (Pro web-push, 7 accepted_args) never receive it, so this is additive."
+    },
+    {
+      "name": "jetonomy_deliver_notification",
+      "type": "action",
+      "args": "user_id, actor_id, type, object_type, object_id, message",
+      "where": "listened by includes/notifications/class-notifier.php Notifier::deliver(); fired by jetonomy-pro private-messaging notify_participants()",
+      "consumed_by": "jetonomy-pro",
+      "audit_notes": "2.0.1: internal door (Jetonomy Pro only, not a general extension point) over Notifier::create_and_maybe_email(). Pro DMs (type message) gain preferences, block gate, push/host contract and email; Pro calls it only for the first unread message per conversation until the recipient reads it (the Messages unread count/thread still show every message), and falls back to a bare Notification::create() when has_action() is false (older free). Deep link always resolved via notification_deep_link(). Email default for message is ON at read time via Notifier::default_email(); no migration."
+    },
+    {
+      "name": "jetonomy_community_notification_types",
+      "type": "filter",
+      "args": "types",
+      "where": "includes/notifications/class-community-notification-contract.php",
+      "consumed_by": "buddynext",
+      "audit_notes": "2.0.1: community notification contract. Declares Jetonomy's 13 notification type slugs (label, description, default_on) so a host plugin can show one settings switch per type. Declaring stands down BuddyNext's older undifferentiated jt.notification mirror."
+    },
+    {
+      "name": "jetonomy_community_notification_visible",
+      "type": "filter",
+      "args": "visible, viewer_id, targets",
+      "where": "includes/notifications/class-community-notification-contract.php",
+      "consumed_by": "buddynext",
+      "audit_notes": "2.0.1: community notification contract. Batched (one query per table per page) answer from Notification::targets_visible(), the PHP twin of visibility_sql(): hides a globally banned or blocked actor and a post/reply target that is not publish (moderation and flag_resolved exempt). Same rule as Jetonomy's own notifications list; a parity test keeps them equal."
+    },
+    {
+      "name": "jetonomy_community_notification_removed",
+      "type": "action",
+      "args": "object_type, object_id",
+      "where": "includes/notifications/class-community-notification-contract.php",
+      "consumed_by": "buddynext",
+      "audit_notes": "2.0.1: community notification contract. Fired on Post::delete()/Reply::delete() (permanent delete only, via jetonomy_after_delete_post/_reply) so a host removes every bell row about the deleted object. Trash is visibility, not removal."
     },
     {
       "name": "jetonomy_post_actions",
@@ -2413,7 +2482,7 @@
       "name": "jetonomy_post_updated",
       "type": "action",
       "args": "post_id",
-      "where": "includes/models/class-post.php",
+      "where": "includes/models/class-post.php; includes/api/class-posts-controller.php; includes/admin/ajax/class-content-handler.php (wp-admin edits, since 2.0.1)",
       "consumed_by": null
     },
     {
@@ -2539,7 +2608,7 @@
       "name": "jetonomy_reply_updated",
       "type": "action",
       "args": "reply_id",
-      "where": "includes/models/class-reply.php",
+      "where": "includes/models/class-reply.php; includes/api/class-replies-controller.php; includes/admin/ajax/class-content-handler.php (wp-admin edits, since 2.0.1)",
       "consumed_by": null
     },
     {
@@ -2976,8 +3045,8 @@
     {
       "name": "jetonomy_check_content",
       "type": "filter",
-      "args": "content, type",
-      "where": "includes/moderation/class-content-checker.php",
+      "args": "action (null|flag|hold|block|spam), data, space_id, author_id",
+      "where": "includes/moderation/class-moderation-service.php Moderation_Service::screen_new_content() (every create/publish path: REST post/reply create, draft publish-now, scheduled publish, abilities, reply-by-email); includes/api/class-posts-controller.php + class-replies-controller.php update_item() (edits)",
       "consumed_by": "jetonomy-pro"
     },
     {
@@ -3515,7 +3584,7 @@
       "name": "jetonomy_search_query_args",
       "type": "filter",
       "args": "args",
-      "where": "includes/api/class-search-controller.php",
+      "where": "includes/search/class-fulltext-search.php",
       "consumed_by": null
     },
     {
@@ -3799,6 +3868,41 @@
       "where": "includes/import/class-bbpress-importer.php",
       "consumed_by": [],
       "purpose": "bbPress post_statuses imported per type (forum|topic|reply)."
+    },
+    {
+      "name": "jetonomy_breadcrumb_placement",
+      "type": "filter",
+      "args": "placement ('before_main'|'inside_main'), crumbs",
+      "where": "includes/class-template-loader.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_community_notification_read",
+      "type": "action",
+      "args": "object_type, object_id, user_id",
+      "where": "includes/models/class-notification.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_search_adapter",
+      "type": "filter",
+      "args": "id ('' = automatic)",
+      "where": "includes/adapters/class-adapter-registry.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_from_email",
+      "type": "filter",
+      "args": "email",
+      "where": "includes/adapters/class-wp-mail-adapter.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_from_name",
+      "type": "filter",
+      "args": "name",
+      "where": "includes/adapters/class-wp-mail-adapter.php",
+      "consumed_by": null
     }
   ],
   "buddypress_integration": {
@@ -3858,7 +3962,7 @@
       },
       {
         "handle": "jetonomy-admin",
-        "path": "assets/js/admin.js",
+        "path": "assets/js/admin-common.js",
         "deps": [
           "jquery"
         ]
@@ -3925,8 +4029,8 @@
     },
     {
       "hook": "jetonomy_publish_scheduled",
-      "schedule": "hourly",
-      "purpose": "Publish posts whose published_at datetime has passed",
+      "schedule": "single (armed at the earliest scheduled published_at, re-armed after each run; Cron::arm_scheduled_publish)",
+      "purpose": "Publish posts whose published_at datetime has passed. 2.0.1: replaced the hourly recurring poll so topics go live on time and nothing runs when nothing is scheduled",
       "handler": "Cron::publish_scheduled_posts"
     },
     {
@@ -3982,9 +4086,9 @@
       "handler": "CLI\\Commands\\Reply_Command",
       "subcommands": [
         "create",
-        "list",
-        "update",
-        "delete"
+        "delete",
+        "accept",
+        "unaccept"
       ]
     },
     {
@@ -4126,7 +4230,10 @@
     "AJAX handlers live in includes/admin/ajax/",
     "Settings are merged, never replaced",
     "Use --jt-* CSS tokens for theming",
-    "Every release zip must come from bin/build-release.sh"
+    "Every release zip must come from bin/build-release.sh",
+    "Community base slug/URL come only from \\Jetonomy\\base_slug() / \\Jetonomy\\base_url() (includes/functions.php) - never read jetonomy_settings['base_slug'] directly or hardcode /community/",
+    "Community route URLs come only from \\Jetonomy\\route_url( $route, ...$args ) (includes/functions.php; one map of jetonomy_route key -> fixed English segment, e.g. 'post' => s/%s/t/%s) - never concatenate '/s/', '/t/', '/u/', '/tag/', '/mod/' etc. onto base_url(). Segments are fixed and not filterable (labels are display-only, Basecamp 10344391975); Router::add_rewrite_rules() and Pro's private-messaging rules hold the matching regexes. Older public wrappers (space_permalink, reply_permalink, community_profile_url, get_space_edit_url) call it internally",
+    "Importers never decide 'already imported' themselves: Importer::find_imported() (batched, jt_import_map + legacy fingerprint) before creating, Importer::remember() after; map_source() opts an importer in"
   ],
   "build_commands": {
     "release": "bin/build-release.sh",
@@ -4162,9 +4269,11 @@
       "v2 schema sections added on 2026-04-30 refresh. All `static_analysis.*` arrays default to []; populated entries are confirmed findings.",
       "dead_listeners: free's 6 candidates (jetonomy_cleanup_expired, jetonomy_cleanup_notifications, jetonomy_prune_activity, jetonomy_publish_scheduled, jetonomy_trust_evaluation, jetonomy_verification_reminder) are wp_schedule_event() cron hooks, not dead - fired by WP-Cron, not direct do_action.",
       "grid_track_overflow_risks: 4 bare 1fr tracks in fixed-column grids. Risk rated low (current cell content fits). Fix on next CSS sweep - convert to minmax(0, 1fr) for content-overflow safety."
-    ]
+    ],
+    "changes_2_0_1": "2.0.1 (branch 2.0.1): base_slug() helper replaced ~20 inline reads; Router hooks pre_handle_404 (preempt_route_404) so resolved routes skip core's 404/no-store path; old-base 301 only on is_404(); Importer base gained map_source/find_imported/remember/import_category/get_tally and results()['already']; Import_Map gained find_many/record_many/match_legacy/legacy_category; bbPress importer reads _bbp_sticky_topics/_bbp_super_sticky_topics, _bbp_reply_to (parent_id) and links BuddyPress groups via _bbp_group_ids. No new hooks fired, no schema change. Later on 2.0.1: Post::delete/Reply::delete cascade via Space_Purge::delete_dependents() (replies batched 500, per-reply hooks kept); DELETE ?force=true on posts/replies; DELETE (non-force) or PATCH on an already-trashed post/reply returns 409 jetonomy_already_trashed (Base_Controller::already_trashed_error); scheduled drafts validated server-side (jetonomy_schedule_time_required / jetonomy_schedule_in_past 400, jetonomy_duplicate_scheduled 409 via Post::find_scheduled_duplicate) and published by a single armed action (Post::next_scheduled_at + Cron::arm_scheduled_publish, one-time option jetonomy_publish_single_armed); admin Trash filter + jetonomy_delete_content_permanently; Notifier::should_web()/delivery_channel() + Subscription::attach_delivery(); leaderboard_period_where requires reputation > 0; single jt_viewed cookie + jetonomy_view_dedupe_cookie filter + Privacy policy text; Importer::skip_orphan()/describe_tally()/load_mapped()/clean_slug()/is_source_active(), paged 'members' import phase, jetonomy_import_id_map option retired."
   },
   "generated": {
+    "delta_2026_10_06_2_0_1": "2.0.1 release reconciliation, re-derived from source and the live site. REST: 83 routes / 113 method endpoints (+GET/POST/DELETE /admin/demo-data). AJAX: 44 (-jetonomy_cleanup_sample_data, superseded by Demo_Seeder::remove() behind REST). Hooks: +jetonomy_breadcrumb_placement, +jetonomy_community_notification_read, +jetonomy_search_adapter, +jetonomy_email_from_email, +jetonomy_email_from_name; jetonomy_search_query_args now fires from Fulltext_Search::query() and its return value is used; jetonomy_post_updated / jetonomy_reply_updated also fire from wp-admin edits. New interface Adapters\\Search_Query_Adapter and class Search\\Search_Indexer. Unchanged: 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 8 cron hooks, 16 CLI groups, 15 admin pages. qa-actions 469 pass + 1 environment skip.",
     "delta_2026_08_20_1_9_4": "1.9.4 branch cut. plugin.version corrected to 1.9.4 - it had lagged at 1.9.1 for two releases because the release process bumps the header/constant/readme Stable tag (which build-release.sh triangulates) and never this field. Bumping it is now part of the release checklist. No surface changed at the cut: the 1.9.3 reconciliation (delta_2026_08_18_1_9_3) remains accurate - 80 REST routes, 43 AJAX, 225 hooks, 22 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 CLI commands, 6 cron hooks, 15 admin pages. Verified on 2026-08-20 against wp jetonomy qa-actions = 286/286 on buddynext.local. CLI GAP CLOSED: `jetonomy privacy` (subcommands scan, purge-orphans; Privacy_Command, registered at class-cli-dispatcher.php:47) was live but absent from wp_cli[] - the dispatcher has 14 subject roots, this file listed 13 plus the bare `jetonomy` catch-all. Verified live via `wp jetonomy privacy --help` on buddynext.local 2026-08-20.",
     "delta_2026_08_18_1_9_3": "1.9.3 reconciliation. Re-derived every jetonomy_* hook fired across includes/ and compared it to hooks_fired: 170 fired in includes (the remainder fire from templates/), ZERO missing from this file. Eleven hooks were added this release and each was recorded in the commit that introduced it: jetonomy_resolve_mention_handles, jetonomy_user_display_name, jetonomy_display_name_choices, jetonomy_reserved_display_names, jetonomy_user_handle, jetonomy_schema, jetonomy_space_purge_batch, plus jetonomy_space_transferred and jetonomy_space_purged. REST route count unchanged at 80 - DELETE /spaces/{id} gained a mode arg and POST/PATCH /spaces gained sort_order, but no route was added or removed. Tables, capabilities, blocks, shortcodes, CLI commands, cron hooks and admin pages all unchanged.",
     "delta_2026_08_06_1_9_1": "1.9.1 reconciliation. Checked v1.9.0..HEAD (55 commits) for every surface this file tracks: zero new REST routes, zero new AJAX handlers, zero added or removed hooks. The five apply_filters/do_action lines the diff shows as added (jetonomy_leaderboard_items, jetonomy_post_publish_transition, jetonomy_rest_prepare_post, jetonomy_post_list_results_for_space, jetonomy_rest_prepare_space) are pre-existing hooks moved by refactors, and all five were already listed. Counts are therefore unchanged: 80 routes, 43 AJAX, 214 hooks, 22 tables. The schema gained three indexes (jt_posts.slug, jt_user_profiles.seen_reputation, jt_tags.post_count); tables[] records name and purpose only, so no entry changed. plugin.version was still 1.9.0 and is now 1.9.1 - it lags because the release process bumps the plugin header, constant and readme Stable tag, which build-release.sh triangulates, but never this field.",
@@ -4219,7 +4328,9 @@
     "ability_count_pro": 20,
     "ability_count_pair": 39,
     "capability_count": 23,
-    "counted_by_table_ability": "table_count = len(tables), verified via SHOW TABLES LIKE \"wp_jt_%\" on a live install. ability_count = wp_register_ability() call sites in includes/class-abilities.php, cross-checked against wp_get_abilities() at runtime, split by jetonomy/ vs jetonomy-pro/ namespace (excludes core/* and any third-party abilities, e.g. yoast-seo/*, that happen to be registered on the measuring site). capability_count = len(capabilities) (WordPress jetonomy_* caps - a different thing from Abilities API abilities; do not conflate the two when writing marketing copy). Card 10330599826 found the bug report itself had a stale Pro ability figure (15, not 20) - always re-derive from wp_get_abilities() rather than trusting a previous audit's number."
+    "counted_by_table_ability": "table_count = len(tables), verified via SHOW TABLES LIKE \"wp_jt_%\" on a live install. ability_count = wp_register_ability() call sites in includes/class-abilities.php, cross-checked against wp_get_abilities() at runtime, split by jetonomy/ vs jetonomy-pro/ namespace (excludes core/* and any third-party abilities, e.g. yoast-seo/*, that happen to be registered on the measuring site). capability_count = len(capabilities) (WordPress jetonomy_* caps - a different thing from Abilities API abilities; do not conflate the two when writing marketing copy). Card 10330599826 found the bug report itself had a stale Pro ability figure (15, not 20) - always re-derive from wp_get_abilities() rather than trusting a previous audit's number.",
+    "delta_2026_09_27_view_beacon": "2.0.1 (Basecamp 10344051299): topic views counted by a client beacon POST /posts/{id}/view instead of on the page request. Removed the jt_viewed cookie, Template_Loader::count_view/parse_viewed_cookie and the unreleased jetonomy_view_dedupe_cookie filter (never shipped in a tag). GET /posts/{id} stops counting. Routes 81->82 (method endpoints 109->110); hooks 240->239 (filters 130->129).",
+    "delta_2026_10_04_2_0_1_approval_paths": "2.0.1 approval/notification review fixes. New Moderation_Service::screen_new_content() is the one hold decision (jetonomy_check_content, then space require_approval unless space staff) used by REST post/reply create, Post::publish_draft() (publish-now + scheduled cron; new optional bool $screen, false for moderator approval), Abilities create_post/create_reply and Notifier::on_reply_from_email(); Base_Controller::should_hold_for_approval() removed. New Moderation_Service::auto_flag() replaces four inline system-flag copies. New ActivityLog::exists_for() gates approval announce (pending/spam -> publish only when no created_* row). wp-admin Moderation_Handler approve/spam/trash now route through system_set_object_status(). Mentions::notify() merged into notify_for(). Notifier::messages_enabled() removed (use \\Jetonomy\\messaging_active()). jetonomy_deliver_notification args 8 -> 6 (url, send_email dropped). Abilities create_post no longer double-increments post_count. No route/table/hook count change."
   },
   "static_analysis": {
     "dead_listeners": [

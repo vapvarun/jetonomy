@@ -89,7 +89,7 @@ These aren't complaints from a 20-minute trial. These are the things that made m
 
 ### 1. It stores everything in `wp_posts` and `wp_postmeta`
 
-This is the technical decision that causes almost every other problem on this list. Every forum, topic, and reply in bbPress is a WordPress post or comment. Every piece of metadata - reply counts, subscriptions, favorites, topic status - lives in `wp_postmeta`.
+This is the technical decision that causes almost every other problem on this list. Every forum, topic, and reply in bbPress is a WordPress custom post type. Every piece of metadata - reply counts, subscriptions, favorites, topic status - lives in `wp_postmeta`.
 
 For a 500-post forum, this is fine. Nobody notices. But here's what happened to my 15,000-post hobbyist community around month 18:
 
@@ -101,11 +101,11 @@ For a 500-post forum, this is fine. Nobody notices. But here's what happened to 
 
 I moved that site to managed WordPress hosting with Redis, threw money at the problem, and got it stable. But the root cause was architectural, not a hosting issue. At that scale, bbPress's approach of "forum posts are just WordPress posts" stops being a feature and starts being a tax on the whole site.
 
-### 2. Reply counts use COUNT queries on page load
+### 2. Counters live in `wp_postmeta`, not dedicated columns
 
-bbPress doesn't store a reply count directly on the topic record. When you load a forum listing, bbPress runs `SELECT COUNT(*)` for each topic to show "42 replies." At a few hundred topics per page, this adds up.
+To bbPress's credit, reply and topic counts aren't computed with a live `COUNT(*)` on every page load - they're stored as `_bbp_reply_count` / `_bbp_topic_count` postmeta and updated when a reply is created, edited, or deleted. The catch is where they live: postmeta rows don't get the indexing a dedicated column would, and they can drift out of sync after a bulk import or a direct database edit. When that happens, the fix is an admin "repair" tool that runs a real `COUNT(*)` across every post in the table to rebuild them.
 
-You can cache it, and Redis masks the problem, but the fundamental issue is that the data model wasn't designed for the query patterns that forums actually run.
+You can cache the reads, and Redis masks a lot of this, but the fundamental issue is that the data model wasn't designed for the query patterns that forums actually run.
 
 ### 3. Deep pages pay for the `wp_posts` data model
 
@@ -119,7 +119,7 @@ Here's the release history:
 - bbPress 2.6 - shipped 2020 (seven years later)
 - bbPress 2.7 - no release as of April 2026
 
-The last commit to the `develop` branch was over a year ago. The bbPress team hasn't abandoned the project - they've released minor fixes - but the pace means features I expected to see in 2020 are still missing in 2026. Q&A spaces. Accepted answers. Trust levels. Full-text search that rivals dedicated search plugins. A REST API worth building on. None of these are in bbPress today.
+bbPress still ships regular patch releases - 2.6.18 shipped in September 2026 - and the team hasn't abandoned the project. But the pace of new features means features I expected to see in 2020 are still missing in 2026. Q&A spaces. Accepted answers. Trust levels. Full-text search that rivals dedicated search plugins. A REST API worth building on. None of these are in bbPress today.
 
 ### 5. No REST API worth building on
 
@@ -151,7 +151,7 @@ There's a FULLTEXT search add-on (community, unofficial) but it's another moving
 
 I was running the 15,000-post hobbyist community, and I'd been getting increasing support tickets from members about performance. Pages were taking 3-4 seconds to load. The forum listing was the slowest page on the site.
 
-I ran Query Monitor and saw what was happening: bbPress was firing **47 separate queries** to render a single forum listing page. Reply counts (one per topic). Last reply metadata (one per topic). Subscription status (one per topic for the current user). Freshness data (one per topic). All of this was separate queries because the data was spread across `wp_posts`, `wp_postmeta`, `wp_comments`, and `wp_commentmeta`.
+I ran Query Monitor and saw what was happening: bbPress was firing **dozens of separate queries** to render a single forum listing page. Last reply metadata (one per topic). Subscription status (one per topic for the current user). Freshness data (one per topic). All of this was separate queries because the data was spread across `wp_posts` and `wp_postmeta`.
 
 I added Redis. I added object caching. The query count stayed high; the latency dropped because Redis masked the repeated queries. I tuned MySQL. I upgraded hosting. I bought time, but I didn't fix anything.
 
@@ -200,7 +200,7 @@ This is what I ended up switching to. Full disclosure: Wbcom Designs is the Word
 **What I liked - the architectural stuff that solved my bbPress problems:**
 
 - **23 custom MySQL tables** instead of `wp_posts`. My 15,000-post data imported cleanly with the built-in bbPress importer (dry run first, then resume on failure). After the import, my `wp_postmeta` shed several million rows. Site-wide admin pages got faster.
-- **Denormalized counters.** Reply counts, vote scores, and post counts are stored as columns directly on each topic record. No COUNT queries on page load. The listing page went from 47 queries to 12.
+- **Denormalized counters as real columns, not postmeta.** Reply counts, vote scores, and post counts are stored as columns directly on each topic record - not as separate meta rows that need their own lookup or an occasional repair-tool rebuild. The listing page went from dozens of queries to about a dozen.
 - **Pagination over purpose-built tables.** Still offset pagination, same as everyone else, but the `LIMIT`/`OFFSET` runs against indexed forum tables rather than `wp_posts` joined to `wp_postmeta`, and page totals come from dedicated `COUNT(*)` methods.
 - **Theme integration via `theme.json`.** Jetonomy reads my theme's brand color, font, and border radius automatically. I did zero CSS overrides. This was the first forum plugin I've tried that actually looked like it belonged in my theme out of the box.
 
@@ -232,7 +232,7 @@ Here's how bbPress stacks up against the three WordPress-native options I'd actu
 |---------|:-------:|:------:|:-------:|:--------:|
 | Free to install | Yes | Yes (with Pro upsells) | Yes | Yes |
 | Custom database tables (not `wp_posts`) | No | Yes | Yes | Yes (23 tables) |
-| Denormalized counters | No | Partial | Partial | Yes |
+| Denormalized counters as dedicated columns | No (postmeta) | Yes | Partial | Yes |
 | Theme.json integration | No | No | No | Yes |
 | Q&A with accepted answers | No | Yes (Pro) | No | Yes (free) |
 | Ideas / roadmap spaces | No | No | No | Yes (free) |
@@ -241,7 +241,7 @@ Here's how bbPress stacks up against the three WordPress-native options I'd actu
 | WordPress Abilities API | No | No | No | Yes (19 abilities) |
 | bbPress importer built in | N/A | Yes | No | Yes |
 | AI-powered moderation | No | No | No | Yes (Pro 1.3.0) |
-| Active development cadence | Slow (1 release in 7 years) | Active | Active | Very active |
+| Active development cadence | Regular patch releases, few new features | Active | Active | Very active |
 | Theme customization required | A lot | Some | Some | Almost none |
 
 I'm not saying any of these three is bad. wpForo is a legitimate option if you don't care about theme integration. Asgaros is great for tiny forums. I moved to Jetonomy because the architectural decisions (custom tables + denormalized counters + theme.json) solved the specific problems I was hitting, and because the Q&A and Ideas space types meant I could retire two other plugins I'd been gluing together.
@@ -327,7 +327,7 @@ As of April 2026, bbPress reports around 300,000 active installs on wordpress.or
 
 ### Can bbPress handle a large forum?
 
-Technically yes, but at scale the architectural decisions (storing content in `wp_posts`, no denormalized counters, offset pagination) start causing performance problems. I ran a 15,000-post community on bbPress and had to throw significant hosting resources at it to keep it fast. Above 50,000 posts, I'd expect real problems.
+Technically yes, but at scale the architectural decisions (storing content in `wp_posts`, counters as postmeta rather than dedicated columns, offset pagination over a shared table) start causing performance problems. I ran a 15,000-post community on bbPress and had to throw significant hosting resources at it to keep it fast.
 
 ### What's the best bbPress alternative for 2026?
 

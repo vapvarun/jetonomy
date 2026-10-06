@@ -9,7 +9,6 @@ namespace Jetonomy\Import;
 
 defined( 'ABSPATH' ) || exit;
 
-use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post as JtPost;
 use Jetonomy\Models\Reply as JtReply;
@@ -22,11 +21,22 @@ class Asgaros_Importer extends Importer {
 		return 'Asgaros Forum';
 	}
 
+	protected function map_source(): string {
+		return 'asgaros';
+	}
+
 	public function is_source_available(): bool {
 		global $wpdb;
 		return (bool) $wpdb->get_var(
 			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'forum_forums' )
 		);
+	}
+
+	/**
+	 * Asgaros Forum itself loaded? The import works either way - see Importer::is_source_active().
+	 */
+	public function is_source_active(): bool {
+		return class_exists( 'AsgarosForum', false );
 	}
 
 	public function get_source_stats(): array {
@@ -39,13 +49,27 @@ class Asgaros_Importer extends Importer {
 		];
 	}
 
+	/**
+	 * Exactly the rows the batches report as processed, so progress ends at
+	 * 100%: forums, topics, the posts that become replies (each topic's first
+	 * post is its body, not a reply), and the profiles phase's authors.
+	 */
 	public function get_total_count(): int {
 		global $wpdb;
-		$p      = $wpdb->prefix;
-		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_forums" );
-		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_topics" );
-		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_posts" );
-		return $forums + $topics + $posts;
+		$p = $wpdb->prefix;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$first   = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT parent_id) FROM {$p}forum_posts" );
+		$authors = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM (
+			     SELECT author_id FROM {$p}forum_topics WHERE author_id > 0
+			     UNION
+			     SELECT author_id FROM {$p}forum_posts WHERE author_id > 0
+			 ) authors"
+		);
+		// phpcs:enable
+
+		return array_sum( $this->get_source_stats() ) - $first + $authors;
 	}
 
 	/**
@@ -54,14 +78,14 @@ class Asgaros_Importer extends Importer {
 	 * This used to call run() — the entire import — inside a single AJAX request,
 	 * so any forum with real content hit max_execution_time and died with no
 	 * partial-progress recovery. Phases now page through the source tables the way
-	 * the bbPress importer does, and the caller (Import_Handler) persists the id_map
-	 * and a resume point between batches.
+	 * the bbPress importer does; each batch loads the parents it needs from
+	 * jt_import_map (load_mapped()) and the caller keeps a resume point.
 	 *
 	 * Phase order: forums -> topics -> replies -> profiles -> complete.
 	 *
 	 * FORUMS ARE DELIBERATELY NOT PAGED. A child forum can only be created once its
 	 * parent exists, so the set has to be dependency-sorted as a whole (see
-	 * sort_by_dependency()). Paging it would need a parent-before-child ordering
+	 * sort_rows_parents_first()). Paging it would need a parent-before-child ordering
 	 * that survives across batches, and Asgaros forum counts are bounded — they are
 	 * the board's categories/forums, tens of rows, not the content. The volume lives
 	 * in topics and posts, and those page.
@@ -84,27 +108,17 @@ class Asgaros_Importer extends Importer {
 
 		switch ( $phase ) {
 			case 'forums':
-				$cat_id = Category::create(
-					[
-						'name' => __( 'Imported from Asgaros', 'jetonomy' ),
-						'slug' => 'imported-asgaros-' . time(),
-					]
-				);
-
-				$before = $this->imported;
-				$this->import_forums( (int) $cat_id );
-				$this->persist_id_map();
+				$this->import_forums();
 
 				return [
 					'phase'     => 'topics',
 					'offset'    => 0,
 					'done'      => false,
-					'processed' => $this->imported - $before,
+					'processed' => $this->imported + $this->already,
 				];
 
 			case 'topics':
 				$r = $this->import_topics_batch( $offset, $batch_size );
-				$this->persist_id_map();
 
 				// Ran out of time mid-page: resume at the exact row we stopped on.
 				if ( $r['processed'] < $r['fetched'] ) {
@@ -126,7 +140,6 @@ class Asgaros_Importer extends Importer {
 
 			case 'replies':
 				$r = $this->import_replies_batch( $offset, $batch_size );
-				$this->persist_id_map();
 
 				if ( $r['processed'] < $r['fetched'] ) {
 					return [
@@ -178,23 +191,8 @@ class Asgaros_Importer extends Importer {
 		}
 	}
 
-	/**
-	 * Persist the id_map so the next batch (a separate request) can resolve
-	 * parents. Import_Handler restores it into $this->id_map before each call.
-	 */
-	private function persist_id_map(): void {
-		update_option( 'jetonomy_import_id_map', $this->id_map, false );
-	}
-
 	public function run( array $options = [] ): array {
-		$cat_id = Category::create(
-			[
-				'name' => __( 'Imported from Asgaros', 'jetonomy' ),
-				'slug' => 'imported-asgaros',
-			]
-		);
-
-		$this->import_forums( $cat_id );
+		$this->import_forums();
 		$this->import_topics();
 		$this->import_replies();
 		$this->create_profiles();
@@ -236,7 +234,7 @@ class Asgaros_Importer extends Importer {
 		];
 	}
 
-	private function import_forums( int $cat_id ): void {
+	private function import_forums(): void {
 		global $wpdb;
 		$p = $wpdb->prefix;
 
@@ -244,9 +242,25 @@ class Asgaros_Importer extends Importer {
 			"SELECT * FROM {$p}forum_forums ORDER BY sort ASC, id ASC"
 		);
 
-		$ordered = $this->sort_by_dependency( $forums );
+		$ordered = $this->sort_rows_parents_first( (array) $forums, 'id', 'parent_forum' );
+
+		$fingerprints = [];
+		foreach ( $ordered as $forum ) {
+			$fingerprints[ (int) $forum->id ] = [ 'slug' => self::forum_slug( $forum ) ];
+		}
+		$existing = $this->find_imported( 'space', $fingerprints );
+		$cat_id   = 0;
 
 		foreach ( $ordered as $forum ) {
+			// Imported by an earlier run: map it so new topics under it import,
+			// and do not create it again. Re-creating it is what used to hit the
+			// unique slug key and strand every new topic in the forum.
+			if ( isset( $existing[ (int) $forum->id ] ) ) {
+				$this->map_id( 'forum', (int) $forum->id, $existing[ (int) $forum->id ] );
+				++$this->already;
+				continue;
+			}
+
 			$parent_space_id = 0;
 			if ( (int) $forum->parent_forum > 0 ) {
 				$mapped = $this->get_mapped_id( 'forum', (int) $forum->parent_forum );
@@ -255,6 +269,7 @@ class Asgaros_Importer extends Importer {
 				}
 			}
 
+			$cat_id   = $cat_id ?: $this->import_category( 'default', 'imported-asgaros', [ 'name' => __( 'Imported from Asgaros', 'jetonomy' ) ] );
 			$access   = self::map_access( $forum );
 			$space_id = Space::create(
 				[
@@ -263,7 +278,9 @@ class Asgaros_Importer extends Importer {
 					'author_id'   => 1,
 					'type'        => 'forum',
 					'title'       => $forum->name,
-					'slug'        => sanitize_title( $forum->name ) ?: 'forum-' . $forum->id,
+					// Identity lives in jt_import_map, so a name that matches one
+					// of the owner's own spaces imports beside it as "<slug>-1".
+					'slug'        => Space::unique_slug( self::clean_slug( self::forum_slug( $forum ) ) ?: 'forum-' . $forum->id ),
 					'description' => wp_strip_all_tags( $forum->description ?? '' ),
 					'visibility'  => $access['visibility'],
 					'join_policy' => $access['join_policy'],
@@ -273,6 +290,7 @@ class Asgaros_Importer extends Importer {
 
 			if ( $space_id ) {
 				$this->map_id( 'forum', (int) $forum->id, $space_id );
+				$this->remember( 'space', (int) $forum->id, (int) $space_id );
 				++$this->imported;
 			} else {
 				$this->log_error( 'forum', $forum->id, 'Failed to create space' );
@@ -282,44 +300,14 @@ class Asgaros_Importer extends Importer {
 	}
 
 	/**
-	 * Sort forums so parents always appear before their children.
+	 * The slug an Asgaros forum imports under - and the one every import before
+	 * 2.0.1 wrote verbatim, which is what legacy recognition matches on.
 	 *
-	 * @param object[] $forums
-	 * @return object[]
+	 * @param object $forum Asgaros forum row.
+	 * @return string
 	 */
-	private function sort_by_dependency( array $forums ): array {
-		$indexed  = [];
-		$children = [];
-
-		foreach ( $forums as $forum ) {
-			$indexed[ $forum->id ] = $forum;
-			if ( 0 === (int) $forum->parent_forum ) {
-				$children[0][] = $forum->id;
-			} else {
-				$children[ $forum->parent_forum ][] = $forum->id;
-			}
-		}
-
-		$ordered = [];
-		$queue   = $children[0] ?? [];
-
-		while ( ! empty( $queue ) ) {
-			$id = array_shift( $queue );
-			if ( isset( $indexed[ $id ] ) ) {
-				$ordered[] = $indexed[ $id ];
-				if ( ! empty( $children[ $id ] ) ) {
-					array_splice( $queue, 0, 0, $children[ $id ] );
-				}
-			}
-		}
-
-		foreach ( $forums as $forum ) {
-			if ( ! in_array( $forum, $ordered, true ) ) {
-				$ordered[] = $forum;
-			}
-		}
-
-		return $ordered;
+	private static function forum_slug( object $forum ): string {
+		return sanitize_title( $forum->name ) ?: 'forum-' . $forum->id;
 	}
 
 	/**
@@ -560,6 +548,24 @@ class Asgaros_Importer extends Importer {
 			$first_posts_map[ (int) $fp->parent_id ] = $fp;
 		}
 
+		// This page's forums, from memory or from jt_import_map (see load_mapped()).
+		$forum_ids = array_unique( array_map( 'intval', array_column( $topics, 'parent_id' ) ) );
+		$this->load_mapped( 'forum', 'space', array_combine( $forum_ids, $forum_ids ) );
+
+		// One "already imported?" lookup for the whole page (see find_imported()).
+		$fingerprints = [];
+		foreach ( $topics as $topic ) {
+			$space_id = $this->get_mapped_id( 'forum', (int) $topic->parent_id );
+			if ( $space_id ) {
+				$fingerprints[ (int) $topic->id ] = [
+					'parent'  => $space_id,
+					'author'  => (int) ( $topic->author_id ?? 1 ),
+					'created' => (string) ( $first_posts_map[ (int) $topic->id ]->date ?? '' ),
+				];
+			}
+		}
+		$existing = $this->find_imported( 'post', $fingerprints );
+
 		foreach ( $topics as $topic ) {
 			// Counted before any `continue` so a skipped row still advances the
 			// offset — otherwise a page of all-skipped topics would stall the phase.
@@ -567,8 +573,14 @@ class Asgaros_Importer extends Importer {
 
 			$space_id = $this->get_mapped_id( 'forum', (int) $topic->parent_id );
 			if ( ! $space_id ) {
-				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->parent_id} not imported" );
-				++$this->skipped;
+				$this->skip_orphan( 'topic' );
+				continue;
+			}
+
+			// Imported by an earlier run: map it so its new replies resolve.
+			if ( isset( $existing[ (int) $topic->id ] ) ) {
+				$this->map_id( 'topic', (int) $topic->id, $existing[ (int) $topic->id ] );
+				++$this->already;
 				continue;
 			}
 
@@ -589,7 +601,7 @@ class Asgaros_Importer extends Importer {
 					'author_id'     => (int) ( $topic->author_id ?? 1 ),
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
 					'title'         => $topic->name,
-					'slug'          => sanitize_title( $topic->name ) ?: 'topic-' . $topic->id,
+					'slug'          => self::clean_slug( $topic->name ) ?: 'topic-' . $topic->id,
 					'content'       => wp_kses_post( $content ),
 					'content_plain' => \jetonomy_content_to_plain( $content ),
 					'status'        => $status,
@@ -607,6 +619,7 @@ class Asgaros_Importer extends Importer {
 
 			if ( $post_id ) {
 				$this->map_id( 'topic', (int) $topic->id, $post_id );
+				$this->remember( 'post', (int) $topic->id, (int) $post_id );
 
 				if ( $first_post ) {
 					// The upload list. (Inline images were adopted before create.)
@@ -616,7 +629,6 @@ class Asgaros_Importer extends Importer {
 						(int) $first_post->id,
 						$first_post->uploads ?? ''
 					);
-					$this->map_id( 'asgaros_post_skip', (int) $first_post->id, 0 );
 				}
 
 				++$this->imported;
@@ -666,13 +678,35 @@ class Asgaros_Importer extends Importer {
 		$consumed = 0;
 		$total    = count( $posts );
 
+		// This page's topics, from memory or from jt_import_map (see load_mapped()).
+		$topic_ids = array_unique( array_map( 'intval', array_column( $posts, 'parent_id' ) ) );
+		$this->load_mapped( 'topic', 'post', array_combine( $topic_ids, $topic_ids ) );
+
+		$fingerprints = [];
+		foreach ( $posts as $asgaros_post ) {
+			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
+			if ( $post_id ) {
+				$fingerprints[ (int) $asgaros_post->id ] = [
+					'parent'  => $post_id,
+					'author'  => (int) ( $asgaros_post->author_id ?? 1 ),
+					'created' => (string) ( $asgaros_post->date ?? '' ),
+				];
+			}
+		}
+		$existing = $this->find_imported( 'reply', $fingerprints );
+
 		foreach ( $posts as $asgaros_post ) {
 			// Counted before any `continue` (see import_topic_rows()).
 			++$consumed;
 
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
 			if ( ! $post_id ) {
-				++$this->skipped;
+				$this->skip_orphan( 'reply' );
+				continue;
+			}
+
+			if ( isset( $existing[ (int) $asgaros_post->id ] ) ) {
+				++$this->already;
 				continue;
 			}
 
@@ -705,7 +739,7 @@ class Asgaros_Importer extends Importer {
 			}
 
 			if ( $reply_id ) {
-				$this->map_id( 'asgaros_reply', (int) $asgaros_post->id, $reply_id );
+				$this->remember( 'reply', (int) $asgaros_post->id, (int) $reply_id );
 
 				$this->migrate_asgaros_uploads(
 					'reply',

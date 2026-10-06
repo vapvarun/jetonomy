@@ -96,7 +96,10 @@ class Leaderboards_Controller extends Base_Controller {
 		// jetonomy_leaderboard_items enrichment filter below runs on every
 		// response, cached or not, so host-plugin rows never freeze.
 		$lb_cacheable = ! has_filter( 'jetonomy_users_query_args' );
-		$lb_cache_key = "lb:{$period}:{$limit}:{$offset}";
+		// "v2" since the board dropped reputation <= 0 (2.0.1): TTL-only keys
+		// have no bust path, so a new key is how an upgraded site stops
+		// serving the old population's page and total.
+		$lb_cache_key = "lb:v2:{$period}:{$limit}:{$offset}";
 		if ( $lb_cacheable ) {
 			$cached = \Jetonomy\Cache::get( $lb_cache_key );
 			if ( is_array( $cached ) && isset( $cached['items'], $cached['total'] ) ) {
@@ -122,8 +125,7 @@ class Leaderboards_Controller extends Base_Controller {
 		$total   = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
 		$leaders = \Jetonomy\Models\UserProfile::list_for_leaderboard( $period, $limit, $offset, $order_by_sql );
 
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$base_slug = $settings['base_slug'] ?? 'community';
+		$base_slug = \Jetonomy\base_slug();
 
 		// Batch-fetch all leader users in one query to eliminate the
 		// per-row get_userdata() N+1. get_users() also primes the user

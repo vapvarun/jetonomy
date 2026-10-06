@@ -17,7 +17,7 @@ if ( ! empty( $reply->is_blocked_author ) ) {
 	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-blocked" data-wp-interactive="jetonomy">
 		<div class="jt-reply-body jt-reply-tombstone">
 			<?php jetonomy_echo_icon( 'shield', 16 ); ?>
-			<span><?php esc_html_e( 'Content hidden — you blocked this user.', 'jetonomy' ); ?></span>
+			<span><?php esc_html_e( 'Content hidden because you blocked this user.', 'jetonomy' ); ?></span>
 			<?php if ( is_user_logged_in() ) : ?>
 				<button class="jt-act jt-unblock-btn" type="button"
 					data-wp-on--click="actions.unblockUser"
@@ -43,7 +43,7 @@ if ( ! empty( $reply->is_private_hidden ) ) {
 	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-private-hidden" data-wp-interactive="jetonomy">
 		<div class="jt-reply-body jt-reply-tombstone">
 			<?php jetonomy_echo_icon( 'lock', 16 ); ?>
-			<span><?php printf( /* translators: 1: singular reply label; 2: singular topic label. */ esc_html__( 'Private %1$s — visible to the %2$s author and moderators.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></span>
+			<span><?php printf( /* translators: 1: singular reply label; 2: singular topic label. */ esc_html__( 'Private %1$s, visible to the %2$s author and moderators.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></span>
 		</div>
 	</div>
 	<?php
@@ -68,6 +68,11 @@ $jt_reply_viewer       = get_current_user_id();
 $jt_can_moderate_reply = $jt_reply_viewer
 	? \Jetonomy\Permissions\Permission_Engine::can( $jt_reply_viewer, 'moderate', (int) ( $post->space_id ?? 0 ) )
 	: false;
+
+// Same rule as single-post.php's $jt_is_live: a reply inside a trashed or
+// unpublished topic takes no votes, replies, quotes, reports, accepts or
+// reactions - Content_Gate answers all of them with a 409.
+$jt_thread_live = 'publish' === ( $post->status ?? 'publish' ) && 'publish' === ( $reply->status ?? 'publish' );
 
 // Shareable permalink for THIS reply — the affordance that makes a reply a
 // linkable thing rather than something only a notification can reach. The
@@ -193,9 +198,9 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		// one side. JS bindings are untouched and verified live.
 		?>
 		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
-		<div class="jt-vote-cluster" role="group" aria-label="<?php printf( /* translators: %s: singular reply label. */ esc_attr__( 'Vote on this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
+		<div class="jt-vote-cluster" role="group" aria-label="<?php printf( /* translators: %s: the singular label of the item (the configured noun). */ esc_attr__( 'Vote on this %s', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>">
 			<?php // "may actually vote here", not just "logged in": a Read-grant rule admits without granting the vote, and the server 403s the vote. ?>
-			<?php if ( jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
+			<?php if ( $jt_thread_live && jetonomy_viewer_can_vote( $space ?? null ) ) : ?>
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyUp"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -234,7 +239,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>
-		<?php if ( is_user_logged_in() ) : ?>
+		<?php if ( $jt_thread_live && is_user_logged_in() ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -248,7 +253,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				title="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 14 ); ?></button>
 		<?php endif; ?>
-		<?php if ( is_user_logged_in() && get_current_user_id() !== (int) $reply->author_id ) : ?>
+		<?php if ( $jt_thread_live && is_user_logged_in() && get_current_user_id() !== (int) $reply->author_id ) : ?>
 			<button class="jt-act"
 				data-wp-on--click="actions.flagReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -297,7 +302,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 	// so the button appears exactly when the action would succeed. Space-role
 	// moderators hold `close_posts` but not `moderate`, so this uses close_posts.
 	if (
-		is_user_logged_in()
+		$jt_thread_live
+		&& is_user_logged_in()
 		&& isset( $post, $space )
 		&& 'qa' === ( $space->type ?? '' )
 		&& (
@@ -339,6 +345,10 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<?php jetonomy_echo_icon( 'x-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Unaccept', 'jetonomy' ); ?></span>
 			</button>
 		<?php endif; ?>
-		<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
+		<?php
+		if ( $jt_thread_live ) {
+			do_action( 'jetonomy_reply_actions', $reply );
+		}
+		?>
 	</div>
 </div>

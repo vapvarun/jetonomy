@@ -19,7 +19,6 @@ class Setup_Handler {
 	public function __construct() {
 		add_action( 'wp_ajax_jetonomy_setup_save', [ $this, 'ajax_setup_save' ] );
 		add_action( 'wp_ajax_jetonomy_setup_create_sample', [ $this, 'ajax_setup_create_sample' ] );
-		add_action( 'wp_ajax_jetonomy_cleanup_sample_data', [ $this, 'ajax_cleanup_sample_data' ] );
 	}
 
 	public function ajax_setup_save(): void {
@@ -58,10 +57,12 @@ class Setup_Handler {
 		$cat_id = Category::create(
 			[
 				'name'       => $cat_name,
-				'slug'       => sanitize_title( $cat_name ),
 				'visibility' => 'public',
 			]
 		);
+		if ( $cat_id <= 0 ) {
+			wp_send_json_error( __( 'Could not create the category. Please try again.', 'jetonomy' ) );
+		}
 
 		$space_id = Space::create(
 			[
@@ -69,12 +70,16 @@ class Setup_Handler {
 				'author_id'   => get_current_user_id(),
 				'type'        => $settings['default_space_type'],
 				'title'       => $space_name,
-				'slug'        => sanitize_title( $space_name ),
+				'slug'        => Space::unique_slug( sanitize_title( $space_name ) ),
 				'description' => $space_desc,
 				'visibility'  => 'public',
 				'join_policy' => 'open',
 			]
 		);
+
+		if ( is_wp_error( $space_id ) ) {
+			wp_send_json_error( $space_id->get_error_message() );
+		}
 
 		$add_result = SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
 		if ( is_wp_error( $add_result ) ) {
@@ -100,7 +105,6 @@ class Setup_Handler {
 		}
 
 		$uid = get_current_user_id();
-		UserProfile::find_or_create( $uid );
 
 		$settings = get_option( 'jetonomy_settings', [] );
 
@@ -123,36 +127,12 @@ class Setup_Handler {
 		}
 		update_option( 'jetonomy_settings', $settings );
 
-		// Auto-cleanup any existing demo data before re-seeding.
-		$existing = get_option( 'jetonomy_demo_data', [] );
-		if ( ! empty( $existing ) ) {
-			Demo_Seeder::cleanup( $existing );
-		}
-
-		$demo = Demo_Seeder::seed( $uid );
-		update_option( 'jetonomy_demo_data', $demo, false );
+		Demo_Seeder::import( $uid );
 
 		flush_rewrite_rules();
 		update_option( 'jetonomy_setup_complete', true );
 
 		wp_send_json_success( [ 'message' => __( 'Sample community created with realistic multi-user content.', 'jetonomy' ) ] );
-	}
-
-	public function ajax_cleanup_sample_data(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		$demo = get_option( 'jetonomy_demo_data', [] );
-		if ( empty( $demo ) ) {
-			wp_send_json_error( __( 'No demo data found to clean up.', 'jetonomy' ) );
-		}
-
-		Demo_Seeder::cleanup( $demo );
-		delete_option( 'jetonomy_demo_data' );
-
-		wp_send_json_success( [ 'message' => __( 'All demo data has been removed.', 'jetonomy' ) ] );
 	}
 
 	/**
@@ -161,6 +141,6 @@ class Setup_Handler {
 	 */
 	private function sanitize_space_type( $value ): string {
 		$value = sanitize_key( (string) $value );
-		return in_array( $value, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $value : 'forum';
+		return in_array( $value, Space::valid_types(), true ) ? $value : 'forum';
 	}
 }

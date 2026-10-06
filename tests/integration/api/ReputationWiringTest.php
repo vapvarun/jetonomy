@@ -66,7 +66,7 @@ class ReputationWiringTest extends WP_UnitTestCase {
 				'slug'        => 'ws4b-discuss-' . uniqid(),
 				'category_id' => $cat_id,
 				'visibility'  => 'public',
-				'type'        => 'discussion',
+				'type'        => 'forum', // 'discussion' is a POST type; as a space type MySQL stored ''.
 			)
 		);
 		$this->ideas_space_id = Space::create(

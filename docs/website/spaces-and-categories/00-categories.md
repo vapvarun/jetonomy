@@ -55,7 +55,7 @@ Fill in the Add New Category form and click **Add Category**.
 |---|---|
 | Public | All visitors, including logged-out visitors, when guest access is on |
 | Private | Logged-in members only |
-| Hidden | Not shown in navigation or listings; the direct URL still works |
+| Hidden | Not shown in navigation or listings, and its URL returns *not found* to anyone who cannot manage categories |
 
 A category's visibility does not override the visibility of the individual spaces inside it. A public category can still contain private spaces - each space keeps its own [visibility setting](03-membership-policies.md).
 
@@ -75,7 +75,12 @@ Drag the handle icon at the far left of any row to reorder categories. The new o
 
 ## Child Categories
 
-Set **Parent Category** when creating or editing a category to nest it under an existing top-level category. The table shows children indented below their parent. Two nesting levels are supported.
+Set **Parent Category** when creating or editing a category to nest it under an existing top-level category. The table shows children indented below their parent.
+
+- **Two levels only.** A parent must be a top-level category, and a category that has sub-categories cannot become one itself. Jetonomy rejects anything deeper in wp-admin, the REST API and WP-CLI. Imports (for example nested bbPress forums) attach deeper levels to their top-level category, so every space still arrives.
+- **On the community home,** each category lists its own spaces followed by its sub-categories as links, with how many spaces each one holds. A sub-category page shows its parent in the breadcrumb.
+- **Deleting** a category is blocked while it still has sub-categories or active spaces. Move or delete them first. Archived spaces in it become uncategorised.
+- **Space counts** on a category count the spaces filed directly in it, not those in its sub-categories.
 
 ## Search
 

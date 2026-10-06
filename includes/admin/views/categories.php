@@ -68,9 +68,11 @@ defined( 'ABSPATH' ) || exit;
 				);
 				?>
 			</div>
-			<div class="jetonomy-form-field">
+			<div class="jetonomy-form-field" data-jt-color-field="#cat-parent">
 				<label for="cat-color"><?php esc_html_e( 'Color', 'jetonomy' ); ?></label>
-				<input type="text" id="cat-color" class="jetonomy-color-picker" value="">
+				<input type="text" id="cat-color" class="jetonomy-color-picker" value="" aria-describedby="cat-color-help">
+				<?php /* translators: %s: plural category label (e.g. categories). */ ?>
+				<p class="description" id="cat-color-help"><?php echo esc_html( sprintf( __( 'Shown as an accent beside top-level %s on the community home.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?></p>
 			</div>
 		</div>
 		<p>
@@ -146,8 +148,9 @@ defined( 'ABSPATH' ) || exit;
 				'rows'      => $jt_cat_rows,
 				'row_attrs' => static function ( $cat ): array {
 					return array(
-						'data-id' => (int) $cat->id,
-						'class'   => 'jetonomy-category-row' . ( $cat->jt_is_child ? ' jetonomy-category-child' : '' ),
+						'data-id'     => (int) $cat->id,
+						'data-parent' => (int) $cat->parent_id,
+						'class'       => 'jetonomy-category-row' . ( $cat->jt_is_child ? ' jetonomy-category-child' : '' ),
 					);
 				},
 				'empty'     => ! empty( $search )
@@ -168,25 +171,17 @@ defined( 'ABSPATH' ) || exit;
 				'cell'      => static function ( $cat, string $key ): void {
 					switch ( $key ) {
 						case 'name':
-							// Drag handle lives inside the identity cell now: a
+							// Drag handle lives inside the identity cell: a
 							// dedicated 30px column had no label to collapse
 							// under and broke the one-primary-cell contract.
-							//
-							// PARENTS ONLY. Pagination counts top-level rows and
-							// hydrates children inline on the parent's page, so a
-							// page can render more rows than per_page. Including
-							// children in the drag batch made it overflow into the
-							// next page's band and collide (Basecamp 10210539659).
-							// A child's sort_order is only ever compared against its
-							// siblings - list_children() orders WHERE parent_id = %d
-							// - so a position drawn from the parent sequence is
-							// meaningless for it in the first place.
-							if ( ! $cat->jt_is_child ) {
-								echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
-							}
+							// Every row gets one. A parent reorders among the
+							// top-level categories, a sub-category among its
+							// siblings; admin-common.js keeps each parent's
+							// sub-categories under it after a drop.
 							if ( $cat->jt_is_child ) {
 								echo '<span class="jetonomy-child-indent"></span>';
 							}
+							echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
 							echo '<strong>' . esc_html( $cat->name ) . '</strong>';
 							if ( ! $cat->jt_is_child && ! empty( $cat->description ) ) {
 								echo '<span class="description">' . esc_html( wp_trim_words( $cat->description, 12 ) ) . '</span>';
@@ -194,13 +189,13 @@ defined( 'ABSPATH' ) || exit;
 							?>
 							<div class="row-actions">
 								<span class="edit"><a href="#" class="jetonomy-edit-category" data-id="<?php echo absint( $cat->id ); ?>" data-name="<?php echo esc_attr( $cat->name ); ?>" data-slug="<?php echo esc_attr( $cat->slug ); ?>" data-description="<?php echo esc_attr( $cat->description ?? '' ); ?>" data-parent="<?php echo absint( $cat->parent_id ); ?>" data-icon="<?php echo esc_attr( $cat->icon ?? '' ); ?>" data-color="<?php echo esc_attr( $cat->color ?? '' ); ?>" data-visibility="<?php echo esc_attr( $cat->visibility ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
-								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/category/' . $cat->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
+								<span class="view"><a href="<?php echo esc_url( \Jetonomy\route_url( 'category', $cat->slug ) ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
 								<span class="delete"><a href="#" class="jetonomy-delete-category" data-id="<?php echo absint( $cat->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 							</div>
 							<?php
 							break;
 						case 'slug':
-							echo '<code>' . esc_html( wp_parse_url( \Jetonomy\base_url(), PHP_URL_PATH ) . '/category/' . $cat->slug . '/' ) . '</code>';
+							echo '<code>' . esc_html( wp_parse_url( \Jetonomy\route_url( 'category', $cat->slug ), PHP_URL_PATH ) ) . '</code>';
 							break;
 						case 'spaces':
 							echo absint( $cat->space_count );
@@ -317,9 +312,11 @@ defined( 'ABSPATH' ) || exit;
 					);
 					?>
 				</div>
-				<div class="jetonomy-form-field">
+				<div class="jetonomy-form-field" data-jt-color-field="#edit-cat-parent">
 					<label for="edit-cat-color"><?php esc_html_e( 'Color', 'jetonomy' ); ?></label>
-					<input type="text" id="edit-cat-color" class="jetonomy-color-picker" value="">
+					<input type="text" id="edit-cat-color" class="jetonomy-color-picker" value="" aria-describedby="edit-cat-color-help">
+					<?php /* translators: %s: plural category label (e.g. categories). */ ?>
+					<p class="description" id="edit-cat-color-help"><?php echo esc_html( sprintf( __( 'Shown as an accent beside top-level %s on the community home.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?></p>
 				</div>
 			</div>
 			<p class="jetonomy-modal__actions">

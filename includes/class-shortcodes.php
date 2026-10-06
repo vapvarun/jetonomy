@@ -211,7 +211,6 @@ class Shortcodes {
 			// silently queried space 0 and returned nothing.
 			$space_id = absint( $space->id );
 		}
-		$base = base_url();
 
 		global $wpdb;
 		$posts_tbl  = table( 'posts' );
@@ -244,7 +243,7 @@ class Shortcodes {
 			$where .= ' AND ' . $block_sql;
 		}
 
-		$order = 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC';
+		$order = ( 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC' ) . ', p.id DESC'; // id breaks same-second / equal-score ties.
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$query  = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
@@ -260,18 +259,18 @@ class Shortcodes {
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( empty( $posts ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No posts yet.', 'jetonomy' ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
 		foreach ( $posts as $post ) {
-			$url    = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
+			$url    = route_url( 'post', $post->space_slug, $post->slug );
 			$time   = human_time_diff( strtotime( $post->created_at ), time() );
-			$author = get_userdata( (int) $post->author_id );
+			$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 			$out   .= '<div class="jt-shortcode-post">';
 			$out   .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-post-title">' . esc_html( $post->title ) . '</a>';
 			$out   .= '<div class="jt-shortcode-post-meta">';
-			$out   .= esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
+			$out   .= esc_html( $author['name'] );
 			$out   .= ' · ' . esc_html( $post->space_title ?? '' );
 			/* translators: %s: human-readable time difference. */
 			$out .= ' · ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time ) );
@@ -319,7 +318,6 @@ class Shortcodes {
 			$space_id = absint( $space->id );
 		}
 		$window = absint( $atts['window'] ) ?: 7;
-		$base   = base_url();
 
 		$posts = Models\Post::list_trending( $limit, $space_id ?: null, $window );
 
@@ -331,14 +329,14 @@ class Shortcodes {
 		$out  = '<div class="jt-shortcode jt-shortcode-trending-posts">';
 		foreach ( $posts as $post ) {
 			++$rank;
-			$url    = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
-			$author = get_userdata( (int) $post->author_id );
+			$url    = route_url( 'post', $post->space_slug, $post->slug );
+			$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 			$out   .= '<div class="jt-shortcode-post jt-shortcode-trending-post">';
 			$out   .= '<span class="jt-shortcode-trending-rank" aria-hidden="true">' . (int) $rank . '</span>';
 			$out   .= '<div class="jt-shortcode-trending-body">';
 			$out   .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-post-title">' . esc_html( $post->title ) . '</a>';
 			$out   .= '<div class="jt-shortcode-post-meta">';
-			$out   .= esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
+			$out   .= esc_html( $author['name'] );
 			if ( ! empty( $post->space_title ) ) {
 				$out .= ' · ' . esc_html( $post->space_title );
 			}
@@ -385,7 +383,6 @@ class Shortcodes {
 			}
 			$category_id = absint( $category->id );
 		}
-		$base = base_url();
 
 		global $wpdb;
 		$spaces_tbl = table( 'spaces' );
@@ -402,7 +399,7 @@ class Shortcodes {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$spaces = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$spaces_tbl} WHERE {$where} ORDER BY post_count DESC LIMIT %d",
+				"SELECT * FROM {$spaces_tbl} WHERE {$where} ORDER BY post_count DESC, id ASC LIMIT %d",
 				...$args
 			)
 		) ?: array();
@@ -414,13 +411,13 @@ class Shortcodes {
 
 		$out = '<div class="jt-shortcode jt-shortcode-spaces">';
 		foreach ( $spaces as $space ) {
-			$url  = $base . '/s/' . $space->slug . '/';
+			$url  = route_url( 'space', $space->slug );
 			$out .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-space">';
 			$out .= '<strong>' . esc_html( $space->title ) . '</strong>';
 			if ( ! empty( $space->description ) ) {
 				$out .= '<span class="jt-shortcode-space-desc">' . esc_html( wp_trim_words( $space->description, 12 ) ) . '</span>';
 			}
-			$out .= '<span class="jt-shortcode-space-stats">' . (int) $space->post_count . ' ' . esc_html( _n( 'post', 'posts', (int) $space->post_count, 'jetonomy' ) ) . '</span>';
+			$out .= '<span class="jt-shortcode-space-stats">' . esc_html( \Jetonomy\count_label( (int) $space->post_count, 'topic' ) ) . '</span>';
 			$out .= '</a>';
 		}
 		$out .= '</div>';
@@ -437,23 +434,11 @@ class Shortcodes {
 		self::enqueue_styles();
 
 		$limit = absint( $atts['count'] ) ?: 10;
-		$base  = base_url();
 
-		global $wpdb;
-		$profiles_tbl = table( 'user_profiles' );
-
-		// Deliberately NOT block-filtered — a leaderboard is a ranking, not a
-		// content feed. Per-viewer filtering would re-rank the board and leak
-		// "you blocked someone" via rank gaps.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$leaders = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT %d",
-				$limit
-			)
-		) ?: array();
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// The Leaderboard page's own model query (same eligible population:
+		// real members with reputation > 0, same tie order). Also backs the
+		// leaderboard block and the classic widget, which render this shortcode.
+		$leaders = Models\UserProfile::list_for_leaderboard( 'all', $limit, 0 );
 
 		if ( empty( $leaders ) ) {
 			return '<div class="jt-shortcode-empty">' . esc_html__( 'No members yet.', 'jetonomy' ) . '</div>';
@@ -513,8 +498,9 @@ class Shortcodes {
 			$out .= '<p>' . esc_html( wp_trim_words( $profile->bio, 20 ) ) . '</p>';
 		}
 		$out .= '<div class="jt-shortcode-profile-stats">';
-		$out .= '<span>' . (int) ( $profile->reputation ?? 0 ) . ' rep</span>';
-		$out .= '<span>' . (int) ( $profile->post_count ?? 0 ) . ' ' . esc_html( _n( 'post', 'posts', (int) ( $profile->post_count ?? 0 ), 'jetonomy' ) ) . '</span>';
+		/* translators: %s: reputation points. */
+		$out .= '<span>' . esc_html( sprintf( _n( '%s point', '%s points', (int) ( $profile->reputation ?? 0 ), 'jetonomy' ), number_format_i18n( (int) ( $profile->reputation ?? 0 ) ) ) ) . '</span>';
+		$out .= '<span>' . esc_html( \Jetonomy\count_label( (int) ( $profile->post_count ?? 0 ), 'topic' ) ) . '</span>';
 		$out .= '</div></div>';
 
 		return $out;
@@ -588,7 +574,7 @@ class Shortcodes {
 			 FROM {$members_tbl} sm
 			 LEFT JOIN {$profiles_tbl} up ON up.user_id = sm.user_id
 			 WHERE sm.space_id = %d
-			 ORDER BY up.reputation DESC
+			 ORDER BY up.reputation DESC, sm.user_id ASC
 			 LIMIT %d",
 				$space_id,
 				$limit
@@ -703,7 +689,8 @@ class Shortcodes {
 					'i18n'          => array(
 						'chooseSpace'    => __( 'Choose a space first.', 'jetonomy' ),
 						'titleRequired'  => __( 'Title is required.', 'jetonomy' ),
-						'couldNotCreate' => __( 'Could not create the topic.', 'jetonomy' ),
+						/* translators: %s: singular topic label. */
+						'couldNotCreate' => sprintf( __( 'Could not create the %s.', 'jetonomy' ), jetonomy_label( 'topic', false, true ) ),
 						'networkError'   => __( 'Network error. Please try again.', 'jetonomy' ),
 					),
 				)

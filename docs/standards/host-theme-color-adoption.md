@@ -102,6 +102,27 @@ default plus a one-field override.
 WP `contrast`/`base` presets before a neutral default — page-builder text/bg/
 border slugs are not auto-adopted (too varied; risk of clashing with card UI).
 
+## Dark mode adopts the theme's dark palette too (2.0.1)
+
+In dark mode the surfaces follow the host theme's dark colours, the same way
+light mode follows its light ones. A fixed neutral near-black beside a
+blue-slate theme page reads as a second, unrelated product.
+
+- `--jt-page-bg` is the theme's dark page colour: BuddyX/BuddyX Pro
+  `--bx-color-bg`, Reign `--reign-site-body-bg-color`, BuddyNext `--bg`, else
+  `#121212`. WP's `--wp--preset--color--base` is deliberately not read: a theme
+  that toggles dark without flipping its presets would hand back white.
+- `--jt-bg` (the card surface) is the theme's own elevated token when it has
+  one (BuddyX `--bx-color-bg-elevated`), else `--jt-page-bg` lifted 6% toward
+  the text colour - same hue, one step lighter.
+- **Every derived token re-resolves under `.jt-dark, [data-theme="dark"]`**
+  (muted text, borders, tints, `-strong` shades). A custom property containing
+  `var()` is computed where it is declared, so a derived token declared only
+  on `:root` keeps its light value after the base tokens flip on `<body>`.
+  Add any new derived token to both blocks in `jetonomy-tokens.css`.
+- Check dark muted text at 4.5:1 on the accent-tinted pinned row as well as on
+  cards; that is the tightest surface.
+
 ## Verifying a new theme (do this, don't guess)
 
 ```
@@ -123,3 +144,4 @@ Add a theme to the chain only after this confirms (a) the exact token name and
 5. The PHP bridge (if any) maps only correctly-readable tokens and defers to the chain otherwise.
 6. New theme support is browser-verified (token name + contrast) before it lands.
 7. `grunt cssmin`/RTL regenerated so the `.min` matches source.
+8. Dark mode: surfaces read in the theme's dark hue on BuddyX, BuddyX Pro and Reign, and every derived token is re-declared in the dark block.

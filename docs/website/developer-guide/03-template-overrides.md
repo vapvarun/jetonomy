@@ -87,7 +87,7 @@ You do not need to copy all of these. Only create the files you want to customiz
 |------|-------------|
 | `partials/header.php` | Loaded at the top of every community page |
 | `partials/sidebar.php` | Loaded in space and home views |
-| `partials/breadcrumb.php` | Loaded in space, category, and post views |
+| `partials/breadcrumb.php` | The breadcrumb trail on every community page that has one |
 | `partials/post-card.php` | Iterated over in space and home views |
 | `partials/reply-card.php` | Iterated over in single-post view |
 | `partials/pagination.php` | Loaded at the bottom of listing pages |
@@ -222,8 +222,7 @@ The Jetonomy Router must know about new routes before they can receive traffic. 
 ```php
 // Register a custom rewrite rule for /community/events/.
 add_action( 'init', function() {
-    $settings  = get_option( 'jetonomy_settings', [] );
-    $base_slug = $settings['base_slug'] ?? 'community';
+    $base_slug = \Jetonomy\base_slug();
 
     add_rewrite_rule(
         '^' . preg_quote( $base_slug, '^' ) . '/events/?$',
@@ -274,3 +273,14 @@ Place overrides here and they will be detected automatically because Pro's `Temp
 - [Hooks Reference](./02-hooks-reference.md) - Inject content at specific points without overriding full templates
 - [REST API Reference](./01-rest-api.md) - Fetch data to power your custom templates
 - [Shortcodes, Widgets & Blocks](./04-shortcodes-widgets-blocks.md) - Embed community content on non-community pages
+
+## Breadcrumb placement
+
+Views print the breadcrumb with `\Jetonomy\Template_Loader::breadcrumb( $crumbs )` just before `<main>`, and call `\Jetonomy\Template_Loader::breadcrumb_in_main()` as the first line inside `<main>`. By default the trail prints in the first spot. To move it inside the main landmark on every page, return `inside_main` from the `jetonomy_breadcrumb_placement` filter:
+
+```php
+add_filter( 'jetonomy_breadcrumb_placement', fn() => 'inside_main' );
+```
+
+If you override a view, keep both calls so the filter keeps working. An override that still calls `Template_Loader::partial( 'breadcrumb', ... )` directly keeps printing the trail before `<main>`, whatever the filter returns.
+

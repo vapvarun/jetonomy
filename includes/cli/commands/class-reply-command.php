@@ -98,6 +98,11 @@ final class Reply_Command extends Base_Command {
 	/**
 	 * Mark a reply as the accepted answer for its parent post.
 	 *
+	 * Same transaction as POST /replies/{id}/accept: sets the reply's
+	 * is_accepted flag, resolves the post, notifies the reply author and
+	 * awards reputation. Q&A spaces only. Pass --user=<id> to record who
+	 * accepted (the post author accepting their own answer earns nothing).
+	 *
 	 * ## OPTIONS
 	 *
 	 * --post=<id>
@@ -122,6 +127,40 @@ final class Reply_Command extends Base_Command {
 		$post_id  = (int) ( $assoc['post'] ?? 0 );
 		$reply_id = (int) ( $assoc['reply'] ?? 0 );
 		$result   = ( new Content_Journey() )->accept_reply( $post_id, $reply_id );
+		$this->render( $result, $assoc );
+	}
+
+	/**
+	 * Clear the accepted answer on a post (reverse of `reply accept`).
+	 *
+	 * Same transaction as DELETE /replies/{id}/accept: clears the reply's
+	 * is_accepted flag, marks the post unresolved and revokes the acceptance
+	 * reputation. Fails when the reply is not the accepted answer.
+	 *
+	 * ## OPTIONS
+	 *
+	 * --post=<id>
+	 * : Parent post ID.
+	 *
+	 * --reply=<id>
+	 * : The currently accepted reply ID.
+	 *
+	 * [--format=<format>]
+	 * : Output format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 * ---
+	 *
+	 * ## EXAMPLES
+	 *     wp jetonomy reply unaccept --post=42 --reply=17
+	 */
+	public function unaccept( $args, $assoc ): void {
+		$post_id  = (int) ( $assoc['post'] ?? 0 );
+		$reply_id = (int) ( $assoc['reply'] ?? 0 );
+		$result   = ( new Content_Journey() )->unaccept_reply( $post_id, $reply_id );
 		$this->render( $result, $assoc );
 	}
 }

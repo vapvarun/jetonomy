@@ -184,7 +184,7 @@ The user gets three branded, translatable, keyboard-friendly modals in sequence 
 
 ## Localisation: `window.jetonomyModalsI18n`
 
-Jetonomy localises four default button labels onto `window.jetonomyModalsI18n` via `wp_localize_script`. The script is registered on both the front-end and inside wp-admin, so the global is reliably available wherever the toolkit JS is loaded.
+The toolkit publishes its four default button labels on `window.jetonomyModalsI18n` when it loads. The script is registered on both the front-end and inside wp-admin, so the global is reliably available wherever the toolkit JS is loaded.
 
 **Shape:**
 
@@ -197,7 +197,7 @@ window.jetonomyModalsI18n = {
 };
 ```
 
-The values are translated through WordPress's standard i18n pipeline - if your site loads a `jetonomy` translation file, the strings arrive pre-translated and the modals adopt the active locale automatically.
+The values are translated with `wp.i18n` from Jetonomy's JavaScript translation files (`languages/jetonomy-{locale}-{hash}.json`), so the modals adopt the active locale automatically.
 
 ### How third-party callers should use it
 

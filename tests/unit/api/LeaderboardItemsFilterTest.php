@@ -21,6 +21,9 @@ class LeaderboardItemsFilterTest extends WP_UnitTestCase {
 	public function test_leaderboard_items_filter_enriches_rows(): void {
 		$user_id = $this->factory()->user->create();
 		UserProfile::find_or_create( $user_id );
+		// Only reputation > 0 is ranked; a 0-rep member would leave the board
+		// empty and the loop below would assert nothing.
+		UserProfile::_apply_reputation_delta( $user_id, 10 );
 		wp_set_current_user( $user_id );
 
 		$cb = function ( $items, $request ) {
@@ -39,6 +42,7 @@ class LeaderboardItemsFilterTest extends WP_UnitTestCase {
 		$this->assertEquals( 200, $response->get_status() );
 		$data = $response->get_data();
 		$this->assertArrayHasKey( 'data', $data );
+		$this->assertNotEmpty( $data['data'] );
 		foreach ( (array) $data['data'] as $row ) {
 			$this->assertSame( 'gold', $row['wb_gam_level'] ?? null, 'Filter-injected key must survive to the response' );
 		}

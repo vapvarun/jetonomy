@@ -365,7 +365,7 @@ class Abilities {
 					 * 403 and the ability created reply #2411 in the same
 					 * space, for the same member.
 					 */
-					return \Jetonomy\Permissions\Content_Gate::check( get_current_user_id(), $post );
+					return \Jetonomy\Permissions\Content_Gate::check( get_current_user_id(), $post, (int) ( $input['parent_id'] ?? 0 ) );
 				},
 				'meta'                => [
 					'annotations'  => [
@@ -721,7 +721,7 @@ class Abilities {
 						'type'        => [
 							'type'        => 'string',
 							'description' => 'Space type.',
-							'enum'        => [ 'forum', 'qa', 'ideas', 'feed' ],
+							'enum'        => Space::valid_types(),
 							'default'     => 'forum',
 						],
 						'visibility'  => [
@@ -1229,18 +1229,25 @@ class Abilities {
 
 		$slug       = sanitize_title( $title );
 		$is_private = ! empty( $input['is_private'] ) ? 1 : 0;
-		$post_id    = Post::create(
-			[
-				'space_id'      => $space_id,
-				'author_id'     => $user_id,
-				'title'         => $title,
-				'slug'          => $slug,
-				'content'       => $content,
-				'content_plain' => \jetonomy_content_to_plain( $content ),
-				'type'          => $type,
-				'is_private'    => $is_private,
-			]
-		);
+		$data       = [
+			'space_id'      => $space_id,
+			'author_id'     => $user_id,
+			'title'         => $title,
+			'slug'          => $slug,
+			'content'       => $content,
+			'content_plain' => \jetonomy_content_to_plain( $content ),
+			'type'          => $type,
+			'is_private'    => $is_private,
+		];
+
+		// Same content rules + require_approval as the REST create path.
+		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'post', $data, $space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return $screened;
+		}
+		$data['status'] = $screened['status'];
+
+		$post_id = Post::create( $data );
 
 		if ( is_wp_error( $post_id ) ) {
 			return $post_id;
@@ -1260,20 +1267,21 @@ class Abilities {
 			}
 		}
 
-		UserProfile::increment_post_count( $user_id );
+		// Post::create() already counted a published post on the author's profile.
 		Subscription::subscribe( $user_id, 'post', $post_id );
 		do_action( 'jetonomy_after_create_post', $post_id, $space_id, null );
+		if ( $screened['flag'] ) {
+			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'post', (int) $post_id );
+		}
 
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$base_slug = $settings['base_slug'] ?? 'community';
-		$space     = Space::find( $space_id );
-		$post      = Post::find( $post_id );
+		$space = Space::find( $space_id );
+		$post  = Post::find( $post_id );
 
 		return [
 			'id'         => $post_id,
 			'title'      => $title,
 			'is_private' => (bool) $is_private,
-			'url'        => home_url( "/{$base_slug}/s/" . ( $space->slug ?? '' ) . '/t/' . ( $post->slug ?? $slug ) . '/' ),
+			'url'        => \Jetonomy\route_url( 'post', $space->slug ?? '', $post->slug ?? $slug ),
 		];
 	}
 
@@ -1289,12 +1297,12 @@ class Abilities {
 			$post,
 			\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
 		);
-		$author = get_userdata( (int) $post->author_id );
+		$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 		return [
 			'id'          => (int) $post->id,
 			'title'       => $post->title ?? '',
 			'content'     => $post->content ?? '',
-			'author_name' => $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ),
+			'author_name' => $author['name'],
 			'vote_score'  => (int) ( $post->vote_score ?? 0 ),
 			'reply_count' => (int) ( $post->reply_count ?? 0 ),
 			'status'      => $post->status ?? 'publish',
@@ -1351,6 +1359,14 @@ class Abilities {
 			$data['parent_id'] = (int) $input['parent_id'];
 		}
 
+		// Same content rules + require_approval as the REST reply path.
+		$parent   = Post::find( $post_id );
+		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) ( $parent->space_id ?? 0 ), $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return $screened;
+		}
+		$data['status'] = $screened['status'];
+
 		$reply_id = Reply::create( $data );
 		if ( is_wp_error( $reply_id ) ) {
 			return $reply_id;
@@ -1368,6 +1384,9 @@ class Abilities {
 		// mirroring the post-create hook's null request arg a few lines up in
 		// execute_create_post().
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
+		if ( $screened['flag'] ) {
+			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
+		}
 
 		return [
 			'id'      => $reply_id,
@@ -1407,6 +1426,11 @@ class Abilities {
 		$object_type = sanitize_text_field( $input['object_type'] );
 		$object_id   = (int) $input['object_id'];
 		$value       = (int) $input['value'];
+
+		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( $object_type, $object_id );
+		if ( is_wp_error( $live ) ) {
+			return $live;
+		}
 
 		$result = Vote::cast( $user_id, $object_type, $object_id, $value );
 		if ( is_wp_error( $result ) ) {
@@ -1576,6 +1600,9 @@ class Abilities {
 		}
 
 		$space_id = Space::create( $data );
+		if ( is_wp_error( $space_id ) ) {
+			return $space_id;
+		}
 		if ( ! $space_id ) {
 			return new WP_Error( 'create_failed', __( 'Failed to create space.', 'jetonomy' ) );
 		}

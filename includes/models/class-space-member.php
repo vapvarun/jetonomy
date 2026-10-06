@@ -255,8 +255,7 @@ class SpaceMember extends Model {
 			);
 		}
 
-		$visibility  = (string) ( $space->visibility ?? 'public' );
-		$join_policy = (string) ( $space->join_policy ?? 'open' );
+		$mode = Space::join_mode( (string) ( $space->visibility ?? 'public' ), (string) ( $space->join_policy ?? 'open' ) );
 
 		/*
 		 * A hidden space is not discoverable, so there is no such thing as
@@ -265,7 +264,7 @@ class SpaceMember extends Model {
 		 * the same error, so the response cannot be used to tell a hidden space
 		 * apart from an invite-only one by probing ids.
 		 */
-		if ( 'invite' === $join_policy || 'hidden' === $visibility ) {
+		if ( 'invite' === $mode ) {
 			return new \WP_Error(
 				'jetonomy_invite_only',
 				__( 'This space is invite-only.', 'jetonomy' ),
@@ -273,7 +272,7 @@ class SpaceMember extends Model {
 			);
 		}
 
-		if ( 'approval' === $join_policy || 'private' === $visibility ) {
+		if ( 'request' === $mode ) {
 			if ( JoinRequest::find_pending( $space_id, $user_id ) ) {
 				return [
 					'status'          => 'pending',
@@ -705,14 +704,58 @@ class SpaceMember extends Model {
 	 * @return void
 	 */
 	public static function warm_role_cache( int $space_id, array $user_ids ): void {
-		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
-		if ( $space_id <= 0 || empty( $user_ids ) ) {
+		self::warm_role_cache_many( array( $space_id => $user_ids ) );
+	}
+
+	/**
+	 * warm_role_cache() for several spaces in ONE query.
+	 *
+	 * A tag page, drafts or search lists topics from many spaces; warming one
+	 * space at a time cost a query per distinct space (Basecamp 10369564133).
+	 * Pairs the query does not return are cached as null (no role), exactly as
+	 * the single-space path does.
+	 *
+	 * @param array<int,int[]> $by_space Space id => author ids in that space.
+	 */
+	public static function warm_role_cache_many( array $by_space ): void {
+		$pairs = array();
+		foreach ( $by_space as $space_id => $user_ids ) {
+			$space_id = (int) $space_id;
+			foreach ( array_unique( array_map( 'intval', (array) $user_ids ) ) as $uid ) {
+				if ( $space_id > 0 && $uid > 0 && ! array_key_exists( $space_id . '|' . $uid, self::$role_label_cache ) ) {
+					$pairs[ $space_id . '|' . $uid ] = array( $space_id, $uid );
+				}
+			}
+		}
+		if ( ! $pairs ) {
 			return;
 		}
-		$found = self::roles_for_users( $space_id, $user_ids );
-		foreach ( $user_ids as $uid ) {
-			$key                            = $space_id . '|' . $uid;
-			self::$role_label_cache[ $key ] = $found[ $uid ] ?? null;
+
+		$space_ids = array_values( array_unique( array_column( $pairs, 0 ) ) );
+		$user_ids  = array_values( array_unique( array_column( $pairs, 1 ) ) );
+		$db        = static::db();
+		$table     = static::table();
+		$space_ph  = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
+		$user_ph   = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $db->get_results(
+			$db->prepare(
+				"SELECT space_id, user_id, role FROM {$table}
+				WHERE space_id IN ({$space_ph})
+					AND user_id IN ({$user_ph})
+					AND role IN ('admin','moderator')",
+				array_merge( $space_ids, $user_ids )
+			)
+		) ?: [];
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$found = array();
+		foreach ( $rows as $row ) {
+			$found[ (int) $row->space_id . '|' . (int) $row->user_id ] = (string) $row->role;
+		}
+		foreach ( array_keys( $pairs ) as $key ) {
+			self::$role_label_cache[ $key ] = $found[ $key ] ?? null;
 		}
 	}
 
@@ -876,52 +919,5 @@ class SpaceMember extends Model {
 				$user_id
 			)
 		);
-	}
-	/**
-	 * The owning admin of each of many spaces, in ONE query.
-	 *
-	 * Per-space callers should use list_privileged(); that is right for a space
-	 * page,
-	 * which renders exactly one. A directory renders dozens, and calling it in
-	 * that loop is a query per card on the first render - the N+1 shape this
-	 * codebase keeps having to remove. Fetching them together keeps a listing
-	 * flat however many spaces it shows.
-	 *
-	 * Admins only. A moderator helps run a space but does not own it, and the
-	 * directory has room for one name.
-	 *
-	 * @param int[] $space_ids Spaces to resolve.
-	 * @return array<int,int> space_id => owning user id. Sparse: a space with
-	 *                        no admin row is simply absent.
-	 */
-	public static function owners_for_spaces( array $space_ids ): array {
-		$ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ), static fn ( int $i ): bool => $i > 0 ) ) );
-		if ( empty( $ids ) ) {
-			return array();
-		}
-
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		$rows         = static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
-				'SELECT space_id, user_id FROM ' . static::table() . "
-				 WHERE space_id IN ({$placeholders}) AND role = 'admin'
-				 ORDER BY space_id ASC, joined_at ASC, user_id ASC",
-				...$ids
-			)
-		) ?: array();
-
-		// First admin per space wins - the ORDER BY makes that the
-		// longest-standing one, which is the closest thing to an owner the
-		// roster records.
-		$owners = array();
-		foreach ( $rows as $row ) {
-			$sid = (int) $row->space_id;
-			if ( ! isset( $owners[ $sid ] ) ) {
-				$owners[ $sid ] = (int) $row->user_id;
-			}
-		}
-
-		return $owners;
 	}
 }

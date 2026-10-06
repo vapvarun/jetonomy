@@ -287,6 +287,13 @@ class Reply extends Model {
 		}
 
 		if ( true === $result ) {
+			// Votes, flags, notifications, activity, revisions, attachment
+			// links and Pro's rows for this reply - the same relation map a
+			// space purge and Post::delete() use. Child replies are left in
+			// place on purpose: build_threaded() renders a reply whose parent
+			// is gone as a root, so nobody else's words disappear with it.
+			\Jetonomy\Space_Purge::delete_dependents( 'reply', array( $id ) );
+
 			/**
 			 * Fires after a reply row is deleted, whatever deleted it.
 			 *
@@ -415,44 +422,180 @@ class Reply extends Model {
 	/**
 	 * Mark a reply as the accepted answer.
 	 *
-	 * Clears any previously-accepted reply on the same post before marking
-	 * the new one, so a Q&A post always has at most one accepted reply.
+	 * The flip is one conditional UPDATE (`... AND is_accepted = 0`), so it
+	 * is an atomic check-and-set: when two requests race, MySQL lets exactly
+	 * one of them change the row. Callers use the return value to decide
+	 * whether side effects (hooks, reputation) belong to them.
+	 *
+	 * Any other accepted reply on the same post is cleared afterwards, so a
+	 * Q&A post keeps at most one accepted reply.
 	 *
 	 * @param int $id Reply ID.
+	 * @return bool True when this call flipped the flag 0 -> 1.
 	 */
-	public static function mark_accepted( int $id ): void {
+	public static function mark_accepted( int $id ): bool {
 		$reply = static::find( $id );
 		if ( ! $reply ) {
-			return;
+			return false;
 		}
 
+		$won = self::set_accepted_flag( $id, 1 );
+
 		$post_id = (int) $reply->post_id;
-		if ( $post_id > 0 ) {
-			// Clear any other accepted reply on this post first. Worst case
-			// between the two updates is zero accepted replies, which is a
-			// safe state. Two accepted replies is the broken state we prevent.
-			static::db()->update(
-				static::table(),
-				array( 'is_accepted' => 0 ),
-				array(
-					'post_id'     => $post_id,
-					'is_accepted' => 1,
-				),
-				array( '%d' ),
-				array( '%d', '%d' )
+		if ( $won && $post_id > 0 ) {
+			static::db()->query(
+				static::db()->prepare(
+					'UPDATE ' . static::table() . ' SET is_accepted = 0 WHERE post_id = %d AND is_accepted = 1 AND id <> %d',
+					$post_id,
+					$id
+				)
 			);
 		}
 
-		static::update( $id, array( 'is_accepted' => 1 ) );
+		return $won;
 	}
 
 	/**
 	 * Clear the accepted flag on a reply (reverse of mark_accepted()).
 	 *
+	 * Same atomic check-and-set as mark_accepted().
+	 *
 	 * @param int $id Reply ID.
+	 * @return bool True when this call flipped the flag 1 -> 0.
 	 */
-	public static function unmark_accepted( int $id ): void {
-		static::update( $id, array( 'is_accepted' => 0 ) );
+	public static function unmark_accepted( int $id ): bool {
+		return self::set_accepted_flag( $id, 0 );
+	}
+
+	/**
+	 * Flip is_accepted only if it currently holds the opposite value.
+	 *
+	 * @param int $id    Reply ID.
+	 * @param int $value 1 to accept, 0 to clear.
+	 * @return bool True when exactly this call changed the row.
+	 */
+	private static function set_accepted_flag( int $id, int $value ): bool {
+		$changed = static::db()->query(
+			static::db()->prepare(
+				'UPDATE ' . static::table() . ' SET is_accepted = %d WHERE id = %d AND is_accepted = %d',
+				$value,
+				$id,
+				1 - $value
+			)
+		);
+		if ( 1 !== (int) $changed ) {
+			return false;
+		}
+		self::bust_thread( (int) ( static::find( $id )->post_id ?? 0 ) );
+		return true;
+	}
+
+	/**
+	 * Accept a reply as its post's answer - the one "accept" transaction.
+	 *
+	 * Writes both sides (reply is_accepted + post accepted_reply_id /
+	 * is_resolved), fires jetonomy_reply_accepted (Notifier, Pro badges) and
+	 * awards the reply author. REST and WP-CLI both call this; the CLI used to
+	 * run Post::accept_reply() alone, leaving the reply's own flag at 0.
+	 *
+	 * Authorization is the caller's job (REST: post author or close_posts;
+	 * CLI: whoever runs it). Idempotent, also under concurrency: only the
+	 * request whose conditional UPDATE flips is_accepted 0 -> 1 fires the
+	 * hook and awards, so a double tap or a retried request arriving while
+	 * the first is still running cannot award +15 twice.
+	 *
+	 * @param int $id       Reply ID.
+	 * @param int $actor_id Who accepted (0 = system/CLI). No self-award.
+	 * @return true|\WP_Error
+	 */
+	public static function accept_as_answer( int $id, int $actor_id ) {
+		$reply = static::find( $id );
+		if ( ! $reply ) {
+			return new \WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		$post = Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
+		}
+
+		// A trashed or unpublished reply, or one inside such a topic, cannot
+		// become the accepted answer (409). Shared by REST and WP-CLI.
+		$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'reply', $id );
+		if ( is_wp_error( $live ) ) {
+			return $live;
+		}
+
+		// Accepted answers are a Q&A workflow. Other space types read
+		// is_resolved differently (Ideas roadmap) or not at all.
+		$space = Space::find( (int) $post->space_id );
+		if ( ! $space || 'qa' !== ( $space->type ?? '' ) ) {
+			return new \WP_Error(
+				'jetonomy_not_qa_space',
+				__( 'Accepted answers only apply to Q&A spaces.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! self::mark_accepted( $id ) ) {
+			// Already accepted (earlier or by a concurrent request). Heal a
+			// post row that lost its pointer, but award nothing.
+			if ( (int) ( $post->accepted_reply_id ?? 0 ) !== $id ) {
+				Post::accept_reply( (int) $post->id, $id );
+			}
+			return true;
+		}
+
+		Post::accept_reply( (int) $post->id, $id );
+
+		do_action( 'jetonomy_reply_accepted', $id, (int) $post->id );
+
+		$author_id = (int) $reply->author_id;
+		if ( $author_id && $author_id !== $actor_id ) {
+			UserProfile::find_or_create( $author_id );
+			\Jetonomy\Trust\Reputation::award( $author_id, 'reply_accepted' );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Reverse of accept_as_answer(): clear both sides, fire
+	 * jetonomy_reply_unaccepted, revoke the acceptance reputation.
+	 *
+	 * @param int $id       Reply ID.
+	 * @param int $actor_id Who un-accepted (0 = system/CLI). No self-revoke.
+	 * @return true|\WP_Error
+	 */
+	public static function unaccept_as_answer( int $id, int $actor_id ) {
+		$reply = static::find( $id );
+		if ( ! $reply ) {
+			return new \WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		$post = Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
+		}
+
+		$author_id = (int) $reply->author_id;
+		// Atomic: of N concurrent un-accepts only one flips the row, so the
+		// revoke cannot run twice.
+		if ( ! self::unmark_accepted( $id ) ) {
+			return new \WP_Error(
+				'jetonomy_not_accepted',
+				__( 'This reply is not the accepted answer.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		Post::clear_accepted_reply( (int) $post->id );
+
+		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
+
+		if ( $author_id && $author_id !== $actor_id ) {
+			\Jetonomy\Trust\Reputation::revoke( $author_id, 'reply_accepted' );
+		}
+
+		return true;
 	}
 
 	/**
@@ -772,6 +915,64 @@ class Reply extends Model {
 		}
 
 		return (int) $version;
+	}
+
+	/**
+	 * Give parentless replies the parent they should have had, in one write.
+	 *
+	 * For importers repairing threading on rows an older release created flat.
+	 * Only a NULL parent is filled, and only with a reply on the same post, so
+	 * a reply that has been re-threaded or moved since is never overwritten.
+	 *
+	 * @param array<int,int> $parents Reply id => parent reply id.
+	 * @return int Replies changed.
+	 */
+	public static function fill_missing_parents( array $parents ): int {
+		$parents = array_filter(
+			array_map( 'intval', $parents ),
+			static fn( int $parent, $id ): bool => $parent > 0 && $parent !== (int) $id,
+			ARRAY_FILTER_USE_BOTH
+		);
+		if ( ! $parents ) {
+			return 0;
+		}
+
+		$db    = static::db();
+		$table = static::table();
+		$ids   = array_unique( array_merge( array_keys( $parents ), array_values( $parents ) ) );
+		$in    = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name + placeholder list.
+		$rows = $db->get_results( $db->prepare( "SELECT id, post_id, parent_id FROM {$table} WHERE id IN ({$in})", ...$ids ), OBJECT_K );
+
+		$case    = '';
+		$args    = [];
+		$targets = [];
+		$posts   = [];
+		foreach ( $parents as $id => $parent ) {
+			$child = $rows[ $id ] ?? null;
+			if ( ! $child || null !== $child->parent_id || ! isset( $rows[ $parent ] ) || $rows[ $parent ]->post_id !== $child->post_id ) {
+				continue;
+			}
+			$case     .= ' WHEN %d THEN %d';
+			$args[]    = (int) $id;
+			$args[]    = $parent;
+			$targets[] = (int) $id;
+
+			$posts[ (int) $child->post_id ] = true;
+		}
+		if ( ! $targets ) {
+			return 0;
+		}
+
+		$in = implode( ',', array_fill( 0, count( $targets ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name, CASE arms and placeholder list.
+		$changed = (int) $db->query( $db->prepare( "UPDATE {$table} SET parent_id = CASE id{$case} END WHERE id IN ({$in}) AND parent_id IS NULL", ...$args, ...$targets ) );
+
+		foreach ( array_keys( $posts ) as $post_id ) {
+			self::bust_thread( $post_id );
+		}
+
+		return $changed;
 	}
 
 	/**
@@ -1535,7 +1736,7 @@ class Reply extends Model {
 		if ( $new_post && $new_space ) {
 			// Built the same way every other topic URL in the plugin is - there is
 			// no shared permalink helper to call.
-			$new_url = \Jetonomy\base_url() . '/s/' . $new_space->slug . '/t/' . $new_post->slug . '/';
+			$new_url = \Jetonomy\route_url( 'post', $new_space->slug, $new_post->slug );
 
 			static::create(
 				array(

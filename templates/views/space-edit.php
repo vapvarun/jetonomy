@@ -56,7 +56,7 @@ $base   = \Jetonomy\base_url();
 $crumbs = array(
 	array(
 		'label' => $space->title,
-		'url'   => $base . '/s/' . $space->slug . '/',
+		'url'   => \Jetonomy\route_url( 'space', $space->slug ),
 	),
 	array(
 		'label' => __( 'Edit', 'jetonomy' ),
@@ -66,32 +66,22 @@ $crumbs = array(
 
 $current_icon   = (string) ( $space->icon ?? '' );
 $space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
-$categories     = \Jetonomy\Models\Category::list_top_level();
-
-// The space's CURRENT category must always be an option, even when the editor
-// cannot otherwise see it. list_top_level() is visibility-filtered, so a space
-// admin who is not a category manager got a dropdown with no option for the
-// hidden category their space is already in - the select fell back to "No
-// category" and saving silently unfiled the space, which (if its own
-// visibility was public) published it. The editor cannot MOVE a space into a
-// category they cannot see; they just must not lose the one it is in.
-$jt_current_cat_id = (int) ( $space->category_id ?? 0 );
-if ( $jt_current_cat_id > 0 && ! in_array( $jt_current_cat_id, array_map( 'intval', array_column( $categories, 'id' ) ), true ) ) {
-	$jt_current_cat = \Jetonomy\Models\Category::find( $jt_current_cat_id );
-	if ( $jt_current_cat ) {
-		$categories[] = $jt_current_cat;
-	}
-}
+// The space's CURRENT category stays an option even when the editor cannot
+// otherwise see it (hidden category, non-manager space admin); without it the
+// select fell back to "No category" and saving silently unfiled - and possibly
+// published - the space. list_tree() keeps it.
+$categories     = \Jetonomy\Models\Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
 $posts_per_page = isset( $space_settings['posts_per_page'] ) && '' !== $space_settings['posts_per_page'] && (int) $space_settings['posts_per_page'] > 0
 	? absint( $space_settings['posts_per_page'] )
 	: '';
 $prefixes       = ! empty( $space_settings['prefixes'] ) ? (array) $space_settings['prefixes'] : array();
 $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
 				<?php
@@ -201,7 +191,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					<option value="0"><?php printf( /* translators: %s: singular category label. */ esc_html__( 'No %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
 						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( (int) ( $space->category_id ?? 0 ), (int) $cat->id ); ?>>
-							<?php echo esc_html( $cat->name ); ?>
+							<?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
@@ -269,7 +259,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 				<button type="submit" class="jt-btn jt-btn-fill">
 					<?php esc_html_e( 'Save changes', 'jetonomy' ); ?>
 				</button>
-				<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
+				<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 					<?php esc_html_e( 'Cancel', 'jetonomy' ); ?>
 				</a>
 				<span class="jt-form-saved" data-jt-saved hidden>
@@ -337,7 +327,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 							data-wp-on--click="actions.deleteSpace"
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-mode="transfer"
-							data-redirect="<?php echo esc_attr( $base . '/s/' . $space->slug . '/' ); ?>"
+							data-redirect="<?php echo esc_attr( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
 							data-confirm="<?php echo esc_attr( $jt_confirm_archive ); ?>">
 							<?php esc_html_e( 'Archive and hand over', 'jetonomy' ); ?>
 						</button>

@@ -46,7 +46,7 @@ class App_Config_Controller extends Base_Controller {
 	public function get_config( WP_REST_Request $request ): WP_REST_Response {
 		$settings   = (array) get_option( 'jetonomy_settings', array() );
 		$pro_active = defined( 'JETONOMY_PRO_VERSION' );
-		$branding   = $this->branding( $pro_active, $settings );
+		$branding   = $this->branding( $settings );
 
 		// App display name: the Community Title (Settings → General), falling
 		// back to the WordPress site name. Shown as the community name in-app.
@@ -127,36 +127,20 @@ class App_Config_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Resolve branding. Free cannot call Pro classes, so read the shared
-	 * options directly: prefer the Pro white-label row when Pro is active,
-	 * otherwise fall back to the free Appearance accent color.
+	 * Resolve branding from the free Appearance settings (accent + logo).
 	 *
-	 * @param bool  $pro_active Whether the Pro plugin is loaded.
-	 * @param array $settings   The `jetonomy_settings` option.
+	 * Pro white-label carries only the community name, footer text and the
+	 * wp-admin menu label/icon; it never wrote the logo, accent or login
+	 * background keys this used to read from it (Basecamp 10368526675).
+	 * `login_bg_url` stays in the payload, empty, so the app contract holds.
+	 *
+	 * @param array $settings The `jetonomy_settings` option.
 	 * @return array{accent_color:string,logo_url:string,login_bg_url:string}
 	 */
-	private function branding( bool $pro_active, array $settings ): array {
-		$accent   = '';
-		$logo     = '';
+	private function branding( array $settings ): array {
+		$accent   = (string) ( $settings['accent_color'] ?? '#0073aa' );
+		$logo     = (string) ( $settings['logo_url'] ?? '' );
 		$login_bg = '';
-
-		if ( $pro_active ) {
-			$wl       = (array) get_option( 'jetonomy_pro_white_label', array() );
-			$accent   = (string) ( $wl['accent_color'] ?? '' );
-			$logo     = (string) ( $wl['logo_url'] ?? ( $wl['header_logo_url'] ?? '' ) );
-			$login_bg = (string) ( $wl['login_bg_url'] ?? '' );
-		}
-
-		if ( '' === $accent ) {
-			// Free Appearance tab default (Settings → Appearance → Accent).
-			$accent = (string) ( $settings['accent_color'] ?? '#0073aa' );
-		}
-
-		if ( '' === $logo ) {
-			// Free Appearance tab logo (Settings → Appearance → Logo). Pro
-			// white-label, when set, overrides this above.
-			$logo = (string) ( $settings['logo_url'] ?? '' );
-		}
 
 		return array(
 			'accent_color' => $accent,

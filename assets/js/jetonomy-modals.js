@@ -15,6 +15,7 @@
  *
  *   window.jetonomyConfirm( message [, opts] )
  *     opts.title?, opts.confirmLabel?, opts.cancelLabel?, opts.danger?
+ *     (danger = red confirm button, initial focus on Cancel)
  *     resolves true on confirm, false on cancel/ESC/backdrop
  *
  *   window.jetonomyAlert( message [, opts] )
@@ -30,6 +31,18 @@
  */
 ( function () {
 	'use strict';
+
+	var __ = wp.i18n.__;
+
+	// Default button labels, translated by wp.i18n. Also published as
+	// window.jetonomyModalsI18n, the documented read-only global third-party
+	// UI may read (docs/website/developer-guide/09-modal-toolkit.md).
+	var labels = window.jetonomyModalsI18n = {
+		cancel: __( 'Cancel', 'jetonomy' ),
+		confirm: __( 'Confirm', 'jetonomy' ),
+		submit: __( 'Submit', 'jetonomy' ),
+		ok: __( 'OK', 'jetonomy' ),
+	};
 
 	if ( window.jetonomyConfirm && window.jetonomyAlert && window.jetonomyPrompt ) {
 		// Already registered (defensive against double-enqueue).
@@ -105,19 +118,12 @@
 		var actions = document.createElement( 'div' );
 		actions.className = 'jt-modal-actions';
 
-		// Translated button defaults. Set via wp_localize_script on the
-		// `jetonomy-modals` handle on both front-end + wp-admin. English
-		// fallbacks below stay as defense-in-depth if the localize call
-		// is ever skipped (e.g. on a page that enqueues the script handle
-		// before the localize ran).
-		var i18n = ( typeof window !== 'undefined' && window.jetonomyModalsI18n ) || {};
-
 		var cancelBtn = null;
 		if ( opts.kind !== 'alert' ) {
 			cancelBtn = document.createElement( 'button' );
 			cancelBtn.type = 'button';
 			cancelBtn.className = 'jt-btn jt-btn-ghost';
-			cancelBtn.textContent = opts.cancelLabel || i18n.cancel || 'Cancel';
+			cancelBtn.textContent = opts.cancelLabel || labels.cancel;
 			actions.appendChild( cancelBtn );
 		}
 
@@ -125,9 +131,9 @@
 		okBtn.type = 'button';
 		okBtn.className = 'jt-btn ' + ( opts.danger ? 'jt-btn-danger' : 'jt-btn-fill' );
 		okBtn.textContent = opts.confirmLabel
-			|| ( opts.kind === 'alert' ? ( i18n.ok || 'OK' )
-			   : opts.kind === 'prompt' ? ( i18n.submit || 'Submit' )
-			   : ( i18n.confirm || 'Confirm' ) );
+			|| ( opts.kind === 'alert' ? labels.ok
+			   : opts.kind === 'prompt' ? labels.submit
+			   : labels.confirm );
 		actions.appendChild( okBtn );
 		box.appendChild( actions );
 
@@ -248,12 +254,17 @@
 
 			document.body.appendChild( dom.overlay );
 
-			// Focus management: prompt → input first; otherwise → primary button.
+			// Focus management: prompt → input first; a danger confirm → Cancel,
+			// so a reflexive Enter backs out instead of destroying something
+			// (the button is native, Enter activates the focused one);
+			// otherwise → primary button.
 			if ( dom.input ) {
 				dom.input.focus();
 				if ( opts.defaultValue ) {
 					dom.input.select();
 				}
+			} else if ( opts.danger && dom.cancelBtn ) {
+				dom.cancelBtn.focus();
 			} else {
 				dom.okBtn.focus();
 			}

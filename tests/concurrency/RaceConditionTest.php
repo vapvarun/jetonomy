@@ -157,4 +157,66 @@ class RaceConditionTest extends WP_UnitTestCase {
 		$this->assertEquals( $reply_id, (int) $post->accepted_reply_id,
 			'accepted_reply_id must remain correct after a double accept.' );
 	}
+
+	/**
+	 * Two concurrent accepts of the same reply award once (Basecamp 10148436758).
+	 *
+	 * Replays the interleave that awarded +30: request A has flipped the
+	 * reply's is_accepted but not yet written the post, when request B runs.
+	 * B used to see "not fully accepted", redo the writes and award again.
+	 * The flip is now one conditional UPDATE, so B loses the row and only
+	 * heals the post side.
+	 */
+	public function test_concurrent_accept_awards_once(): void {
+		$asker    = $this->factory()->user->create( [ 'role' => 'subscriber' ] );
+		$answerer = $this->factory()->user->create( [ 'role' => 'subscriber' ] );
+		$qa_space = Space::create(
+			[
+				'title' => 'Race QA',
+				'slug'  => 'race-qa-' . uniqid(),
+				'type'  => 'qa',
+			],
+			0
+		);
+		$post_id  = Post::create( [
+			'space_id'  => $qa_space,
+			'author_id' => $asker,
+			'title'     => 'Race accept',
+			'slug'      => 'race-accept-' . uniqid(),
+			'content'   => '<p>q</p>',
+			'status'    => 'publish',
+		] );
+		$reply_id = Reply::create( [
+			'post_id'   => $post_id,
+			'author_id' => $answerer,
+			'content'   => '<p>a</p>',
+			'status'    => 'publish',
+		] );
+
+		$awards = 0;
+		$count  = static function () use ( &$awards ) {
+			++$awards;
+		};
+		add_action( 'jetonomy_reply_accepted', $count );
+
+		// Request A mid-flight: reply row flipped, post row not yet written.
+		$this->assertTrue( Reply::mark_accepted( $reply_id ) );
+		$this->assertFalse( Reply::mark_accepted( $reply_id ), 'A second flip must lose the row.' );
+
+		// Request B arrives now.
+		$this->assertTrue( Reply::accept_as_answer( $reply_id, $asker ) );
+		$this->assertSame( 0, $awards, 'The losing request fired the accept hook / award.' );
+		$this->assertSame( $reply_id, (int) Post::find( $post_id )->accepted_reply_id, 'Loser must still heal the post side.' );
+
+		// Un-accept: two in a row revoke once.
+		$this->assertTrue( Reply::unaccept_as_answer( $reply_id, $asker ) );
+		$again = Reply::unaccept_as_answer( $reply_id, $asker );
+		$this->assertWPError( $again );
+		$this->assertSame( 'jetonomy_not_accepted', $again->get_error_code() );
+
+		// A clean accept wins the row and awards exactly once.
+		$this->assertTrue( Reply::accept_as_answer( $reply_id, $asker ) );
+		$this->assertTrue( Reply::accept_as_answer( $reply_id, $asker ) );
+		$this->assertSame( 1, $awards );
+	}
 }

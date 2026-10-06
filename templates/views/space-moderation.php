@@ -54,12 +54,12 @@ $space_id = (int) $space->id;
 
 // Two panels, two sources. A flag is a member REPORTING published content; an
 // approval-hold is this space refusing to publish at all, via require_approval
-// (Base_Controller::should_hold_for_approval() writes status = 'pending' and
+// (Moderation_Service::screen_new_content() writes status = 'pending' and
 // creates no flag row). Held content therefore never appeared in a flag-only
 // queue - it was approvable from wp-admin and nowhere else, which is no use to
 // a space moderator who has no business in the WordPress dashboard.
 $jt_view = sanitize_key( wp_unslash( $_GET['view'] ?? 'flags' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-if ( ! in_array( $jt_view, [ 'flags', 'approvals' ], true ) ) {
+if ( ! in_array( $jt_view, [ 'flags', 'approvals', 'trash' ], true ) ) {
 	$jt_view = 'flags';
 }
 
@@ -88,12 +88,23 @@ $jt_held_posts   = Moderation_Service::count_pending_approvals( $user_id, 'post'
 $jt_held_replies = Moderation_Service::count_pending_approvals( $user_id, 'reply', $space_id );
 $jt_held_total   = $jt_held_posts + $jt_held_replies;
 
-$jt_held_count = 'reply' === $jt_kind ? $jt_held_replies : $jt_held_posts;
+// The Trash panel reuses the approvals list, card and pagination: both are
+// "content in a non-published state waiting on a moderator's decision".
+// Trash counts only run when the panel is open - trash is not a queue that
+// needs a badge nagging from every other tab.
+$jt_is_trash     = 'trash' === $jt_view;
+$jt_list_posts   = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'post', $space_id ) : $jt_held_posts;
+$jt_list_replies = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, 'reply', $space_id ) : $jt_held_replies;
+
+$jt_held_count = 'reply' === $jt_kind ? $jt_list_replies : $jt_list_posts;
 $jt_held_pages = max( 1, (int) ceil( $jt_held_count / $per_page ) );
 $jt_held_paged = min( $jt_raw_paged, $jt_held_pages );
-$jt_held       = 'approvals' === $jt_view && $jt_held_count > 0
-	? Moderation_Service::list_pending_approvals( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page )
-	: [];
+$jt_held       = [];
+if ( 'flags' !== $jt_view && $jt_held_count > 0 ) {
+	$jt_held = $jt_is_trash
+		? Moderation_Service::list_trashed( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page )
+		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, $space_id, $per_page, ( $jt_held_paged - 1 ) * $per_page );
+}
 
 // Batch-resolve what the cards need. Every held item is in THIS space, so only
 // the reply parents and the author cache need priming.
@@ -125,7 +136,7 @@ if ( $category ) {
 }
 $crumbs[] = [
 	'label' => $space->title,
-	'url'   => $base . '/s/' . $space->slug . '/',
+	'url'   => \Jetonomy\route_url( 'space', $space->slug ),
 ];
 $crumbs[] = [
 	'label' => __( 'Moderation', 'jetonomy' ),
@@ -134,10 +145,11 @@ $crumbs[] = [
 
 $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id . '/moderation/flags/' ) );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<div class="jt-mod-wrap jt-mod-queue">
 			<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 				<div class="jt-cat-page-row">
@@ -147,11 +159,28 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 						<h1 class="jt-page-title jt-page-title-sm">
 							<?php echo esc_html( $space->title ); ?>
 						</h1>
-						<p class="jt-page-subtitle">
+						<?php
+						// On the flags panel the JS lowers this sentence as flags are
+						// resolved. It is plural-sensitive, so the translated sentence for
+						// every count it can reach is rendered here rather than built in JS.
+						$jt_flag_sentences = array();
+						if ( ! $jt_is_trash && 'approvals' !== $jt_view ) {
+							$jt_flag_max = min( $jt_flag_total, 100 );
+							for ( $jt_n = 0; $jt_n <= $jt_flag_max; $jt_n++ ) {
+								/* translators: %d: number of pending flags. */
+								$jt_flag_sentences[ $jt_n ] = sprintf( _n( '%d pending flag', '%d pending flags', $jt_n, 'jetonomy' ), $jt_n );
+							}
+						}
+						?>
+						<p class="jt-page-subtitle"<?php echo $jt_flag_sentences ? ' data-jt-flag-sentences="' . esc_attr( wp_json_encode( $jt_flag_sentences ) ) . '" data-count="' . (int) $jt_flag_total . '"' : ''; ?>>
 							<?php
 							// The subtitle follows the open panel - reporting the flag
 							// total over a screen of held submissions reads as a bug.
-							if ( 'approvals' === $jt_view ) {
+							if ( $jt_is_trash ) {
+								$jt_trash_total = $jt_list_posts + $jt_list_replies;
+								/* translators: %d: number of trashed posts and replies. */
+								echo esc_html( sprintf( _n( '%d item in trash', '%d items in trash', $jt_trash_total, 'jetonomy' ), $jt_trash_total ) );
+							} elseif ( 'approvals' === $jt_view ) {
 								/* translators: %d: number of submissions held for approval. */
 								echo esc_html( sprintf( _n( '%d submission awaiting approval', '%d submissions awaiting approval', $jt_held_total, 'jetonomy' ), $jt_held_total ) );
 							} else {
@@ -180,12 +209,12 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 				<?php endif; ?>
 			</div>
 
-			<?php $jt_queue_url = $base . '/s/' . $space->slug . '/mod/'; ?>
+			<?php $jt_queue_url = \Jetonomy\route_url( 'space-moderation', $space->slug ); ?>
 			<nav class="jt-profile-tabs" aria-label="<?php esc_attr_e( 'Moderation sections', 'jetonomy' ); ?>">
 				<a href="<?php echo esc_url( $jt_queue_url ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>" <?php echo 'flags' === $jt_view ? 'aria-current="page"' : ''; ?>>
 					<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
 					<?php if ( $jt_flag_total > 0 ) : ?>
-						<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $jt_flag_total ) ); ?></span>
+						<span class="jt-tab-count" data-jt-flag-tab-count="<?php echo (int) $jt_flag_total; ?>"><?php echo esc_html( number_format_i18n( $jt_flag_total ) ); ?></span>
 					<?php endif; ?>
 				</a>
 				<a href="<?php echo esc_url( add_query_arg( 'view', 'approvals', $jt_queue_url ) ); ?>" class="jt-profile-tab <?php echo 'approvals' === $jt_view ? 'active' : ''; ?>" <?php echo 'approvals' === $jt_view ? 'aria-current="page"' : ''; ?>>
@@ -194,19 +223,22 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 						<span class="jt-tab-count"><?php echo esc_html( number_format_i18n( $jt_held_total ) ); ?></span>
 					<?php endif; ?>
 				</a>
+				<a href="<?php echo esc_url( add_query_arg( 'view', 'trash', $jt_queue_url ) ); ?>" class="jt-profile-tab <?php echo $jt_is_trash ? 'active' : ''; ?>" <?php echo $jt_is_trash ? 'aria-current="page"' : ''; ?>>
+					<?php esc_html_e( 'Trash', 'jetonomy' ); ?>
+				</a>
 			</nav>
 
-			<?php if ( 'approvals' === $jt_view ) : ?>
-				<nav class="jt-subtabs" aria-label="<?php esc_attr_e( 'Held content type', 'jetonomy' ); ?>">
+			<?php if ( 'flags' !== $jt_view ) : ?>
+				<nav class="jt-subtabs" aria-label="<?php esc_attr_e( 'Content type', 'jetonomy' ); ?>">
 					<?php
 					$jt_kind_tabs = [
-						'post'  => [ __( 'Posts', 'jetonomy' ), $jt_held_posts ],
-						'reply' => [ \Jetonomy\jetonomy_label( 'reply', true ), $jt_held_replies ],
+						'post'  => [ \Jetonomy\jetonomy_label( 'topic', true ), $jt_list_posts ],
+						'reply' => [ \Jetonomy\jetonomy_label( 'reply', true ), $jt_list_replies ],
 					];
 					foreach ( $jt_kind_tabs as $jt_kind_key => $jt_kind_meta ) :
 						$jt_kind_url = add_query_arg(
 							[
-								'view' => 'approvals',
+								'view' => $jt_view,
 								'kind' => $jt_kind_key,
 							],
 							$jt_queue_url
@@ -223,13 +255,19 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 
 				<?php if ( empty( $jt_held ) ) : ?>
 					<?php
-					$jt_held_empty = 'reply' === $jt_kind
-						? sprintf( /* translators: %s: plural reply label. */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
-						: __( 'No posts are waiting for approval.', 'jetonomy' );
+					if ( $jt_is_trash ) {
+						$jt_held_empty = 'reply' === $jt_kind
+							? sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s in the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+							: sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s in the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
+					} else {
+						$jt_held_empty = 'reply' === $jt_kind
+							? sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+							: sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
+					}
 					\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_held_empty ] );
 					?>
 				<?php else : ?>
-					<div class="jt-card jt-card-flush" data-jt-mod-queue="approvals" data-space-id="<?php echo absint( $space->id ); ?>">
+					<div class="jt-card jt-card-flush" data-jt-mod-queue="approvals" data-space-id="<?php echo absint( $space->id ); ?>"<?php echo $jt_is_trash ? ' data-empty-text="' . esc_attr__( 'The trash is empty.', 'jetonomy' ) . '"' : ''; ?>>
 						<?php
 						foreach ( $jt_held as $jt_item ) :
 							$jt_parent = 'reply' === $jt_kind
@@ -248,6 +286,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 									'space'       => $space,
 									'parent_post' => $jt_parent,
 									'base'        => $base,
+									'mode'        => $jt_view,
 								]
 							);
 						endforeach;
@@ -258,7 +297,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 					if ( $jt_held_pages > 1 ) :
 						$jt_held_base = add_query_arg(
 							[
-								'view' => 'approvals',
+								'view' => $jt_view,
 								'kind' => $jt_kind,
 							],
 							$jt_queue_url
@@ -269,7 +308,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 								'paged' => $jt_held_paged,
 								'pages' => $jt_held_pages,
 								'base'  => $jt_held_base,
-								'label' => __( 'Awaiting approval pagination', 'jetonomy' ),
+								'label' => $jt_is_trash ? __( 'Trash pagination', 'jetonomy' ) : __( 'Awaiting approval pagination', 'jetonomy' ),
 							]
 						);
 					endif;

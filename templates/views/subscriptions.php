@@ -20,17 +20,20 @@ $jt_total    = \Jetonomy\Models\Subscription::count_for_user( $jt_user_id );
 $jt_rows     = \Jetonomy\Models\Subscription::list_for_user( $jt_user_id, $jt_per_page, $jt_offset );
 $jt_base     = \Jetonomy\base_url();
 
-// Resolve titles/slugs via the shared model resolver (same source REST uses).
-$jt_items = \Jetonomy\Models\Subscription::attach_targets(
-	array_map(
-		static fn( $r ) => array(
-			'id'          => (int) $r->id,
-			'object_type' => (string) $r->object_type,
-			'object_id'   => (int) $r->object_id,
-			'via'         => (string) ( $r->notify_via ?? 'both' ),
-		),
-		$jt_rows
-	)
+// Resolve titles/slugs and the real delivery channel via the shared model
+// resolvers (same source REST uses).
+$jt_items = \Jetonomy\Models\Subscription::attach_delivery(
+	\Jetonomy\Models\Subscription::attach_targets(
+		array_map(
+			static fn( $r ) => array(
+				'id'          => (int) $r->id,
+				'object_type' => (string) $r->object_type,
+				'object_id'   => (int) $r->object_id,
+			),
+			$jt_rows
+		)
+	),
+	$jt_user_id
 );
 
 $jt_spaces_subs = array_values( array_filter( $jt_items, static fn( $i ) => 'space' === $i['object_type'] ) );
@@ -40,6 +43,7 @@ $jt_via_labels = array(
 	'web'   => __( 'Web', 'jetonomy' ),
 	'email' => __( 'Email', 'jetonomy' ),
 	'both'  => __( 'Web + Email', 'jetonomy' ),
+	'none'  => __( 'Notifications off', 'jetonomy' ),
 );
 
 /**
@@ -57,13 +61,13 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 			<li class="jt-subs-row">
 				<div class="jt-subs-main">
 					<?php if ( $item['exists'] && '' !== $item['title'] ) : ?>
-						<a class="jt-subs-title" href="<?php echo esc_url( 'space' === $type ? $base . '/s/' . $item['slug'] . '/' : $base . '/s/' . ( $item['space_slug'] ?? '' ) . '/t/' . $item['slug'] . '/' ); ?>">
+						<a class="jt-subs-title" href="<?php echo esc_url( 'space' === $type ? \Jetonomy\route_url( 'space', $item['slug'] ) : \Jetonomy\route_url( 'post', ( $item['space_slug'] ?? '' ), $item['slug'] ) ); ?>">
 							<?php echo esc_html( $item['title'] ); ?>
 						</a>
 					<?php else : ?>
 						<span class="jt-subs-title jt-subs-title--gone"><?php esc_html_e( 'No longer available', 'jetonomy' ); ?></span>
 					<?php endif; ?>
-					<span class="jt-subs-via"><?php echo esc_html( $via_labels[ $item['via'] ] ?? $via_labels['both'] ); ?></span>
+					<span class="jt-subs-via"><?php echo esc_html( $via_labels[ $item['via'] ?? '' ] ?? $via_labels['web'] ); ?></span>
 				</div>
 				<button class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
 					data-wp-on--click="actions.unsubscribeRow"
@@ -83,8 +87,18 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 
 <div class="jt-app" data-wp-interactive="jetonomy">
 	<div class="jt-container">
-		<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'trail' => array( __( 'My Subscriptions', 'jetonomy' ) ) ) ); ?>
+		<?php
+		\Jetonomy\Template_Loader::breadcrumb(
+			array(
+				array(
+					'label' => __( 'My Subscriptions', 'jetonomy' ),
+					'url'   => '',
+				),
+			)
+		);
+		?>
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 				<h1 class="jt-page-title"><?php esc_html_e( 'My Subscriptions', 'jetonomy' ); ?></h1>
 			</div>

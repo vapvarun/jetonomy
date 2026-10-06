@@ -38,8 +38,7 @@ class OEmbed_Controller extends Base_Controller {
 	 * registration is global so we also hook `init` directly.
 	 */
 	public static function register_provider(): void {
-		$settings  = get_option( 'jetonomy_settings', array() );
-		$base_slug = trim( (string) ( $settings['base_slug'] ?? 'community' ), '/' );
+		$base_slug = trim( \Jetonomy\base_slug(), '/' );
 		$pattern   = home_url( '/' . $base_slug . '/s/*' );
 
 		wp_oembed_add_provider( $pattern, rest_url( 'jetonomy/v1/oembed' ), false );
@@ -146,7 +145,7 @@ class OEmbed_Controller extends Base_Controller {
 		$excerpt = self::build_excerpt( $post );
 		$thumb   = self::extract_first_image( (string) $post->content );
 
-		$canonical = \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+		$canonical = \Jetonomy\route_url( 'post', $space->slug, $post->slug );
 
 		// Resolve response type: callers can pass `?type=link` to force the
 		// simple link variant; default is `rich` so consumers that render HTML
@@ -195,7 +194,7 @@ class OEmbed_Controller extends Base_Controller {
 					'author_url'    => $author_url,
 					'author_avatar' => $author_avatar,
 					'space_title'   => (string) ( $space->title ?? '' ),
-					'space_url'     => \Jetonomy\base_url() . '/s/' . $space->slug . '/',
+					'space_url'     => \Jetonomy\route_url( 'space', $space->slug ),
 					'reply_count'   => (int) ( $post->reply_count ?? 0 ),
 					'vote_score'    => (int) ( $post->vote_score ?? 0 ),
 					'thumb'         => $thumb,
@@ -295,8 +294,7 @@ class OEmbed_Controller extends Base_Controller {
 			return null;
 		}
 
-		$settings  = get_option( 'jetonomy_settings', array() );
-		$base_slug = trim( (string) ( $settings['base_slug'] ?? 'community' ), '/' );
+		$base_slug = trim( \Jetonomy\base_slug(), '/' );
 		$regex     = '#^/' . preg_quote( $base_slug, '#' ) . '/s/([^/]+)/t/([^/]+)/?$#';
 
 		if ( ! preg_match( $regex, $path, $m ) ) {

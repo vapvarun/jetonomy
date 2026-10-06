@@ -458,6 +458,10 @@ final class Space_Purge {
 			// actually lost content instead of every profile on the site.
 			$authors = self::author_ids( $post_slice, $reply_slice );
 
+			// Same for tags: the post_tags rows go in bulk below, so read which
+			// tags they touch first and rebuild just those counts afterwards.
+			$tag_ids = Models\Tag::ids_for_posts( $post_slice );
+
 			foreach ( self::relations() as $r ) {
 				if ( 'reply' === $r['ref'] && $reply_slice ) {
 					$n = self::delete_where_in( $r, $reply_slice );
@@ -493,6 +497,18 @@ final class Space_Purge {
 			);
 			if ( $n > 0 ) {
 				$removed[ table( 'posts' ) . '.id:post' ] = $n;
+			}
+
+			Models\Tag::recount( $tag_ids );
+
+			// The rows went in bulk, so Post::delete() / Reply::delete() never
+			// ran and their delete hooks never told the host community to drop
+			// its bell rows. Same signal, for the ids this slice removed.
+			foreach ( $reply_slice as $reply_id ) {
+				do_action( 'jetonomy_community_notification_removed', 'reply', (int) $reply_id );
+			}
+			foreach ( $post_slice as $post_id ) {
+				do_action( 'jetonomy_community_notification_removed', 'post', (int) $post_id );
 			}
 
 			return [
@@ -537,6 +553,9 @@ final class Space_Purge {
 
 		Models\Space::bust_cache( $space_id, $slug );
 
+		// Space-level notifications (join requests and the like) go with it.
+		do_action( 'jetonomy_community_notification_removed', 'space', $space_id );
+
 		return [
 			'done'    => true,
 			'removed' => $removed,
@@ -575,6 +594,42 @@ final class Space_Purge {
 		do_action( 'jetonomy_space_purged', $space_id, $removed );
 
 		return $removed;
+	}
+
+	/**
+	 * Delete every row that hangs off a set of topics or replies.
+	 *
+	 * The one-object half of this class's map: Post::delete() and
+	 * Reply::delete() call it so a hard delete of a single topic or reply
+	 * cleans up exactly what a space purge would have cleaned up for it -
+	 * votes, flags, notifications, activity, attachments, revisions, tags,
+	 * bookmarks, read state, subscriptions, and whatever Pro adds through
+	 * `jetonomy_space_relations` - from the same declaration, with no second
+	 * list to drift.
+	 *
+	 * The object rows themselves are NOT touched, and for `post` neither are
+	 * its replies: the caller owns those, because they carry counters and
+	 * hooks this class knows nothing about.
+	 *
+	 * @param string $ref 'post' or 'reply'.
+	 * @param int[]  $ids Object ids.
+	 * @return int Rows removed.
+	 */
+	public static function delete_dependents( string $ref, array $ids ): int {
+		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+		if ( ! $ids || ! in_array( $ref, [ 'post', 'reply' ], true ) ) {
+			return 0;
+		}
+
+		$replies = table( 'replies' );
+		$n       = 0;
+		foreach ( self::relations() as $r ) {
+			if ( $ref !== $r['ref'] || $r['self'] || ( $replies === $r['table'] && 'post_id' === $r['column'] ) ) {
+				continue;
+			}
+			$n += self::delete_where_in( $r, $ids );
+		}
+		return $n;
 	}
 
 	/**
@@ -688,7 +743,19 @@ final class Space_Purge {
 	/** Does a table exist? Pro tables are absent when the extension never ran. */
 	private static function table_exists( string $table ): bool {
 		global $wpdb;
+
+		// Only a positive answer is remembered: a table never disappears
+		// mid-request, but a Pro extension may create one. Without this every
+		// single-topic delete paid one SHOW TABLES per relation.
+		static $exists = [];
+		if ( isset( $exists[ $table ] ) ) {
+			return true;
+		}
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+			$exists[ $table ] = true;
+			return true;
+		}
+		return false;
 	}
 }

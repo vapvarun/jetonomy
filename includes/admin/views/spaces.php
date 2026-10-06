@@ -45,7 +45,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 						<select id="space-category">
 							<option value="0"><?php esc_html_e( '(None)', 'jetonomy' ); ?></option>
 							<?php foreach ( $categories as $cat ) : ?>
-								<option value="<?php echo absint( $cat->id ); ?>"><?php echo esc_html( $cat->name ); ?></option>
+								<option value="<?php echo absint( $cat->id ); ?>"><?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</td>
@@ -55,7 +55,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<td>
 						<?php
 						$jt_settings       = get_option( 'jetonomy_settings', array() );
-						$default_new_space = in_array( $jt_settings['default_space_type'] ?? 'forum', array( 'forum', 'qa', 'ideas', 'feed' ), true )
+						$default_new_space = in_array( $jt_settings['default_space_type'] ?? 'forum', \Jetonomy\Models\Space::valid_types(), true )
 							? $jt_settings['default_space_type']
 							: 'forum';
 						?>
@@ -155,7 +155,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				<select name="category_id">
 					<option value=""><?php esc_html_e( 'All Categories', 'jetonomy' ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
-						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $filter_category, (int) $cat->id ); ?>><?php echo esc_html( $cat->name ); ?></option>
+						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $filter_category, (int) $cat->id ); ?>><?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<select name="type">
@@ -273,11 +273,11 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 								echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
 							}
 							echo '<strong><a href="' . esc_url( $edit_url ) . '">' . esc_html( $space->title ) . '</a></strong>';
-							echo '<br><code>/community/s/' . esc_html( $space->slug ) . '/</code>';
+							echo '<br><code>/' . esc_html( \Jetonomy\base_slug() . '/s/' . $space->slug ) . '/</code>';
 							?>
 							<div class="row-actions">
 								<span class="edit"><a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
-								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
+								<span class="view"><a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
 								<?php
 								// Two separate actions rather than one Delete with a
 								// mode picker: the safe one and the irreversible one

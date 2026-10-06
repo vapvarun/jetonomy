@@ -54,9 +54,9 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/spaces` | Public | List spaces (paginated) |
-| POST | `/spaces` | `manage_options` | Create a space |
+| POST | `/spaces` | `manage_options` | Create a space. `type` is one of `forum`, `qa`, `ideas`, `feed` (omit it to use Settings > Default Space Type); any other value returns `400`. |
 | GET | `/spaces/{id}` | Public | Get a single space |
-| PATCH | `/spaces/{id}` | Moderator / Admin | Update space settings. Accepts `sort_order` to place the space within its category. |
+| PATCH | `/spaces/{id}` | Moderator / Admin | Update space settings. Accepts `sort_order` to place the space within its category. An unknown `type` returns `400` and nothing is saved. |
 | DELETE | `/spaces/{id}` | Space admin | Remove a space. `?mode=transfer` (default) hands it to a successor and archives it, keeping all content, and returns `deleted:false`. `?mode=purge` destroys it and everything in it, returns `202`, and runs in the background. Purge additionally requires `manage_options` unless the site owner has allowed space admins to purge. |
 | GET | `/spaces/{id}/members` | Public / Members only if private | List space members |
 | POST | `/spaces/{id}/members` | Logged in | Join a space |
@@ -68,7 +68,7 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | GET | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | List the membership access rules gating a space. Added 1.9.4. |
 | POST | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | Add an access rule (membership level / role / tag that grants access). Added 1.9.4. |
 | DELETE | `/access-rules/{rule_id}` | `jetonomy_manage_spaces` | Remove an access rule. Note the path is top-level, not nested under `/spaces/{id}` - the rule id is globally unique. Added 1.9.4. |
-| GET | `/spaces/{id}/join-requests` | Space admin | List pending requests to join this space |
+| GET | `/spaces/{id}/join-requests` | Space admin | List pending requests to join this space. When a `PATCH /spaces/{id}` (or the admin screen, or `wp jetonomy space update`) changes `join_policy` / `visibility` so the space no longer takes requests, the pending ones are settled at once: approved and added as members if the space is now open, denied if it is now invite-only. Each requester gets the usual approved / not-approved notification. |
 | POST | `/spaces/{id}/join-requests/{request_id}/approve` | Space admin | Approve a join request and add the member |
 | POST | `/spaces/{id}/join-requests/{request_id}/deny` | Space admin | Deny a join request |
 | GET | `/spaces/{id}/invites` | Space admin | List the space's invite links |
@@ -115,11 +115,12 @@ Posts are individual discussion threads (topics) inside a Space.
 |--------|-------|------|-------------|
 | GET | `/spaces/{space_id}/posts` | Public | List posts in a space |
 | POST | `/spaces/{space_id}/posts` | Logged in | Create a post |
-| GET | `/posts/{id}` | Public | Get a single post |
+| GET | `/posts/{id}` | Public | Get a single post. Does not count a view |
 | PATCH | `/posts/{id}` | Author / Moderator | Update a post |
-| DELETE | `/posts/{id}` | Author / Moderator | Delete a post |
+| DELETE | `/posts/{id}` | Author / Moderator | Move a post to trash. `?force=true` deletes it permanently with all its replies (space moderators and admins only). Restore with `POST /spaces/{space_id}/moderation/approve/post/{id}` |
 | POST | `/posts/{id}/close` | Moderator / Admin | Toggle closed status |
 | POST | `/posts/{id}/pin` | Moderator / Admin | Toggle pinned status |
+| POST | `/posts/{id}/view` | Public (no nonce) | Count one view of a published topic the requester can read. Counted at most once per IP per topic every 30 minutes; returns `{ "counted": bool }`. Missing, unpublished and unreadable topics all return the same 404. The topic page calls it once per browser session; custom clients call it once when they display a topic |
 | POST | `/posts/{id}/move` | Moderator / Admin | Move to another space |
 | POST | `/posts/{id}/merge` | Moderator / Admin | Merge into another post |
 | POST | `/posts/{id}/idea-status` | Space Moderator | Set the roadmap status on an idea-type post (`planned`, `in_progress`, `shipped`, `declined`) |
@@ -194,8 +195,8 @@ Replies are threaded responses to a Post.
 | POST | `/posts/{post_id}/replies` | Logged in | Create a reply |
 | GET | `/replies/{id}` | Public | Get a single reply |
 | PATCH | `/replies/{id}` | Author / Moderator | Update a reply |
-| DELETE | `/replies/{id}` | Author / Moderator | Delete a reply |
-| POST | `/replies/{id}/accept` | Post author / Moderator | Accept as answer |
+| DELETE | `/replies/{id}` | Author / Moderator | Move a reply to trash. `?force=true` deletes it permanently (space moderators and admins only). Restore with `POST /spaces/{space_id}/moderation/approve/reply/{id}` |
+| POST | `/replies/{id}/accept` | Post author / Moderator | Accept as answer. Safe to retry: repeated or simultaneous calls award the answerer's reputation once. |
 | DELETE | `/replies/{id}/accept` | Post author / Moderator | Un-accept a reply, returning the topic to unanswered |
 | POST | `/replies/{id}/split` | Moderator / Admin | Split this reply into a new standalone post |
 
@@ -209,7 +210,7 @@ Replies are threaded responses to a Post.
 
 **POST /replies/{id}/accept**
 
-Marks this reply as the accepted answer. Only the original post author or a moderator can call this. Fires the `jetonomy_reply_accepted` action hook and awards +15 reputation to the reply author.
+Marks this reply as the accepted answer. Only the original post author or a moderator can call this, and only in a Q&A space (`400 jetonomy_not_qa_space` otherwise). Fires the `jetonomy_reply_accepted` action hook and awards +15 reputation to the reply author. Re-accepting the reply that is already accepted returns 200 without firing the hook or awarding again. `wp jetonomy reply accept` runs the same transaction.
 
 ```javascript
 await fetch( `/wp-json/jetonomy/v1/replies/${replyId}/accept`, {
@@ -243,7 +244,7 @@ Response includes `vote_score` (current net score) and `user_vote` (the caller's
 
 ## Search
 
-Full-text search across Posts, Replies, Spaces, and Tags. Uses MySQL `FULLTEXT` with Boolean Mode by default. Swap to a custom search adapter (Meilisearch, Algolia, etc.) via the Adapter System. See [05-adapters.md](./05-adapters.md).
+Full-text search across Posts, Replies, Spaces, and Tags. Uses MySQL `FULLTEXT` with Boolean Mode by default. A plugin that registers a `Search_Query_Adapter` (Meilisearch, Elasticsearch, etc.) takes over this route, the search page and the app. See [05-adapters.md](./05-adapters.md).
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
@@ -337,6 +338,12 @@ Subscriptions track which Spaces or Posts a user follows for new-content notific
 
 These are batch-loaded - two queries per page (one for posts, one for spaces), never a lookup per row.
 
+**`via` is the effective delivery channel (changed in 2.0.1)**
+
+`via` reports how the caller will actually be notified about the followed item: `both`, `web`, `email`, or `none`. It is computed from the same rules the notifier uses (the member's master email opt-out, their per-type preferences, then the site's notification defaults) for the notification type the follow produces - `new_post_in_sub` for a space, `reply_to_post` for a topic. Before 2.0.1 it echoed the value stored when the follow was created (always `both`), which never affected delivery. `none` is new: the member has turned both channels off for that type.
+
+`POST /subscriptions` still accepts `via` (`web`/`email`/`both`) for backward compatibility, and still stores it, but it does not change delivery. To change how a member is notified, update their notification preferences. The response's `via` is the effective channel, like `GET`.
+
 ---
 
 ## Moderation
@@ -358,7 +365,7 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
 | GET | `/spaces/{id}/moderation/flags` | Space Admin | List flags filed within a specific space |
 | POST | `/spaces/{id}/moderation/flags/{flag_id}/resolve` | Space Admin | Resolve a flag within a specific space |
-| POST | `/spaces/{id}/moderation/{action}/{type}/{obj_id}` | Space Admin | Moderate content in a specific space (`action`: `approve`, `spam`, or `trash`; `type`: `post` or `reply`) |
+| POST | `/spaces/{id}/moderation/{action}/{type}/{obj_id}` | Space Admin | Moderate content in a specific space (`action`: `approve`, `spam`, or `trash`; `type`: `post` or `reply`). `approve` on trashed content restores it |
 
 Resolving a flag as `valid` applies the full resolution contract on every surface (1.5.0 fix): the flagged content is trashed, any other pending flags on the same object are cleared with it, the reporter earns +5 reputation, and the `jetonomy_flag_resolved` action fires (so Pro webhooks see the event). Earlier versions skipped these side effects when the flag was resolved through this global REST route specifically.
 
@@ -551,6 +558,9 @@ These endpoints require the `manage_options` capability (administrators only).
 |--------|-------|------|-------------|
 | POST | `/admin/recount` | Admin (`manage_options`) | Rebuild all denormalized counters (reply counts, vote scores, post counts) |
 | POST | `/admin/users/trust-level` | Admin (`manage_options`) | Manually set a user's trust level |
+| GET | `/admin/demo-data` | Admin (`manage_options`) | Whether demo data is loaded: `{ active, counts: { users, categories, spaces, posts, replies } }` |
+| POST | `/admin/demo-data` | Admin (`manage_options`) | Import the demo community (replaces an earlier demo set). Returns `201` with the same shape plus `message` |
+| DELETE | `/admin/demo-data` | Admin (`manage_options`) | Remove the demo data; your own content is untouched. `404` when there is none |
 
 ---
 

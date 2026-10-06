@@ -24,8 +24,7 @@ if ( ! $space ) {
 	return;
 }
 
-$base      = \Jetonomy\base_url();
-$space_url = $base . '/s/' . esc_attr( $space->slug ) . '/';
+$space_url = \Jetonomy\route_url( 'space', esc_attr( $space->slug ) );
 
 // Permission gate. Template_Loader only guarantees the visitor is logged in and
 // the space exists — it does NOT check that they may post here. Without this,
@@ -90,7 +89,13 @@ $jt_submit_labels = array(
 );
 $jt_submit_label  = $jt_submit_labels[ $post_type ] ?? sprintf( /* translators: %s: the label of the item (the configured noun); "Post" is the verb. */ __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 if ( function_exists( 'wp_interactivity_state' ) ) {
-	wp_interactivity_state( 'jetonomy', array( 'submitLabel' => $jt_submit_label ) );
+	wp_interactivity_state(
+		'jetonomy',
+		array(
+			'submitLabel'  => $jt_submit_label,
+			'publishLabel' => $jt_submit_label,
+		)
+	);
 }
 
 \Jetonomy\Template_Loader::partial(

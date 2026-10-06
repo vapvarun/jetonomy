@@ -17,12 +17,9 @@ if ( ! apply_filters( 'jetonomy_show_sidebar', true ) ) {
 	return;
 }
 
-$base = \Jetonomy\base_url();
-
 global $wpdb;
-$posts_tbl    = \Jetonomy\table( 'posts' );
-$spaces_tbl   = \Jetonomy\table( 'spaces' );
-$profiles_tbl = \Jetonomy\table( 'user_profiles' );
+$posts_tbl  = \Jetonomy\table( 'posts' );
+$spaces_tbl = \Jetonomy\table( 'spaces' );
 
 // Trending: top voted published posts, optionally scoped to the current space.
 // Before 1.3.6 this widget ignored is_private entirely and leaked private
@@ -116,15 +113,14 @@ $trending = \Jetonomy\Cache::remember(
 // runs on 100% of page views, and the bare ORDER BY reputation filesorts.
 // TTL-only by design: a 10-minute-stale Top Members widget is invisible,
 // and busting on every reputation write would defeat the point.
+//
+// Reads the leaderboard model, not its own query, so the widget ranks exactly
+// the population the Leaderboard page does (members with reputation > 0).
+// The key changed from 'sidebar:leaders' when that rule landed, so an upgraded
+// site does not serve the old unfiltered list for the rest of the TTL.
 $leaders = \Jetonomy\Cache::remember(
-	'sidebar:leaders',
-	static function () use ( $wpdb, $profiles_tbl ) {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT 5"
-		) ?: [];
-	},
+	'sidebar:top-members',
+	static fn() => \Jetonomy\Models\UserProfile::list_for_leaderboard( 'all', 5, 0 ),
 	600
 );
 
@@ -165,13 +161,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 		<?php
 		/**
 		 * Insert a custom widget or ad before the About card. Fires in space scope.
-		 * Use jetonomy_show_sidebar_about to hide the About card.
+		 * Use jetonomy_show_sidebar_about to show or hide the About card. Off
+		 * by default on the space page itself, whose header already shows the
+		 * description and counts.
 		 *
 		 * @param object $space Current space object.
 		 */
 		do_action( 'jetonomy_sidebar_before_about', $space );
 		?>
-		<?php if ( apply_filters( 'jetonomy_show_sidebar_about', true, $space ) ) : ?>
+		<?php if ( apply_filters( 'jetonomy_show_sidebar_about', 'space' !== get_query_var( 'jetonomy_route' ), $space ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
@@ -187,11 +185,11 @@ $bn_active = did_action( 'buddynext_loaded' );
 			<div class="jt-sidebar-stats">
 				<div class="jt-sidebar-stat">
 					<strong><?php echo (int) ( $space->post_count ?? 0 ); ?></strong>
-					<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></span>
+					<span><?php echo esc_html( \Jetonomy\count_noun( (int) ( $space->post_count ?? 0 ), 'topic' ) ); ?></span>
 				</div>
 				<div class="jt-sidebar-stat">
 					<strong><?php echo (int) ( $space->member_count ?? 0 ); ?></strong>
-					<span><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></span>
+					<span><?php echo esc_html( \Jetonomy\count_noun( (int) ( $space->member_count ?? 0 ), 'member' ) ); ?></span>
 				</div>
 			</div>
 			<?php
@@ -220,11 +218,11 @@ $bn_active = did_action( 'buddynext_loaded' );
 			?>
 			<?php if ( is_user_logged_in() ) : ?>
 				<div class="jt-sidebar-links">
-					<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/members/' ); ?>" class="jt-sidebar-link-text">
-						<?php printf( /* translators: %s: plural member label. */ esc_html__( 'View all %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
+					<a href="<?php echo esc_url( \Jetonomy\route_url( 'space-members', $space->slug ) ); ?>" class="jt-sidebar-link-text">
+						<?php printf( /* translators: %s: the plural label of the item (the configured noun). */ esc_html__( 'View all %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 					</a>
 					<?php if ( \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( get_current_user_id(), (int) $space->id ) ) : ?>
-						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/mod/' ); ?>" class="jt-sidebar-link-text jt-sidebar-link-mod">
+						<a href="<?php echo esc_url( \Jetonomy\route_url( 'space-moderation', $space->slug ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-mod">
 							<?php jetonomy_echo_icon( 'shield', 14 ); ?>
 							<?php esc_html_e( 'Moderation queue', 'jetonomy' ); ?>
 						</a>
@@ -320,7 +318,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 				<div class="jt-trend">
 					<div>
 						<div class="jt-trend-title">
-							<a href="<?php echo esc_url( $base . '/s/' . $t_post->space_slug . '/t/' . $t_post->slug . '/' ); ?>">
+							<a href="<?php echo esc_url( \Jetonomy\route_url( 'post', $t_post->space_slug, $t_post->slug ) ); ?>">
 								<?php echo esc_html( jetonomy_post_title_or_excerpt( $t_post ) ); ?>
 							</a>
 						</div>
@@ -336,12 +334,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 									$v
 								)
 								. ' · '
-								. sprintf(
-									/* translators: 1: the count; 2: the label of the item (the configured noun). */
-									__( '%1$d %2$s', 'jetonomy' ),
-									$r,
-									\Jetonomy\jetonomy_label( 'reply', 1 !== (int) $r, true )
-								)
+								. \Jetonomy\count_label( (int) $r, 'reply' )
 							);
 							?>
 						</div>
@@ -413,7 +406,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 				</div>
 			<?php endforeach; ?>
 			<div class="jt-sidebar-link">
-				<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>"><?php esc_html_e( 'View full leaderboard', 'jetonomy' ); ?></a>
+				<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>"><?php esc_html_e( 'View full leaderboard', 'jetonomy' ); ?></a>
 			</div>
 		</div>
 	</div>
@@ -451,7 +444,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
 			<div class="jt-tags">
 				<?php foreach ( $popular_tags as $tag ) : ?>
-					<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
+					<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">
 						<?php echo esc_html( $tag->name ); ?>
 						<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
 					</a>

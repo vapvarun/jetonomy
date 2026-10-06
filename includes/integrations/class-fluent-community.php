@@ -317,8 +317,7 @@ class Fluent_Community {
 			return;
 		}
 
-		$base      = $this->jetonomy_base_slug();
-		$topic_url = home_url( '/' . $base . '/s/' . $jt_space->slug . '/t/' . $post->slug . '/' );
+		$topic_url = \Jetonomy\route_url( 'post', $jt_space->slug, $post->slug );
 
 		// Generous excerpt — we want the FC feed post to read as a
 		// standalone preview, not a bait-and-switch that forces a click.
@@ -726,8 +725,7 @@ class Fluent_Community {
 			return $links;
 		}
 
-		$base    = $this->jetonomy_base_slug();
-		$url     = home_url( '/' . $base . '/s/' . $jt_space->slug . '/' );
+		$url     = \Jetonomy\route_url( 'space', $jt_space->slug );
 		$links[] = array(
 			'title'    => $this->get_tab_label(),
 			'url'      => esc_url_raw( $url ),
@@ -883,7 +881,6 @@ class Fluent_Community {
 		}
 
 		$label       = $this->get_tab_label();
-		$base        = $this->jetonomy_base_slug();
 		$user        = get_userdata( $user_id );
 		$profile_url = $user ? \Jetonomy\get_profile_url( (int) $user->ID ) : '';
 
@@ -893,12 +890,12 @@ class Fluent_Community {
 			<h3><?php echo esc_html( $label ); ?></h3>
 
 			<?php if ( ! empty( $started ) ) : ?>
-				<h4><?php esc_html_e( 'Topics started', 'jetonomy' ); ?></h4>
+				<h4><?php echo esc_html( sprintf( /* translators: %s: plural topic label. */ __( '%s started', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></h4>
 				<ul>
 					<?php foreach ( $started as $p ) : ?>
 						<?php
 						$space = isset( $p->space_id ) ? Space::find( (int) $p->space_id ) : null;
-						$purl  = $space ? home_url( '/' . $base . '/s/' . $space->slug . '/t/' . $p->slug . '/' ) : '';
+						$purl  = $space ? \Jetonomy\route_url( 'post', $space->slug, $p->slug ) : '';
 						?>
 						<li>
 							<?php if ( $purl ) : ?>
@@ -918,7 +915,7 @@ class Fluent_Community {
 						<?php
 						$slug_space = isset( $r->space_slug ) ? (string) $r->space_slug : '';
 						$slug_post  = isset( $r->post_slug ) ? (string) $r->post_slug : '';
-						$title_post = isset( $r->post_title ) && '' !== $r->post_title ? (string) $r->post_title : __( 'Untitled topic', 'jetonomy' );
+						$title_post = isset( $r->post_title ) && '' !== $r->post_title ? (string) $r->post_title : sprintf( /* translators: %s: singular topic label. */ __( 'Untitled %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) );
 						$reply_id   = isset( $r->id ) ? (int) $r->id : 0;
 						$purl       = ( '' !== $slug_space && '' !== $slug_post && $reply_id )
 							? \Jetonomy\reply_permalink( $slug_space, $slug_post, $reply_id )
@@ -936,12 +933,12 @@ class Fluent_Community {
 			<?php endif; ?>
 
 			<?php if ( ! empty( $followed ) ) : ?>
-				<h4><?php esc_html_e( 'Topics followed', 'jetonomy' ); ?></h4>
+				<h4><?php echo esc_html( sprintf( /* translators: %s: plural topic label. */ __( '%s followed', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></h4>
 				<ul>
 					<?php foreach ( $followed as $p ) : ?>
 						<?php
 						$space = isset( $p->space_id ) ? Space::find( (int) $p->space_id ) : null;
-						$purl  = $space ? home_url( '/' . $base . '/s/' . $space->slug . '/t/' . $p->slug . '/' ) : '';
+						$purl  = $space ? \Jetonomy\route_url( 'post', $space->slug, $p->slug ) : '';
 						?>
 						<li>
 							<?php if ( $purl ) : ?>
@@ -960,7 +957,7 @@ class Fluent_Community {
 					<?php foreach ( $bookmarks as $p ) : ?>
 						<?php
 						$space = isset( $p->space_id ) ? Space::find( (int) $p->space_id ) : null;
-						$purl  = $space ? home_url( '/' . $base . '/s/' . $space->slug . '/t/' . $p->slug . '/' ) : '';
+						$purl  = $space ? \Jetonomy\route_url( 'post', $space->slug, $p->slug ) : '';
 						?>
 						<li>
 							<?php if ( $purl ) : ?>
@@ -1045,17 +1042,6 @@ class Fluent_Community {
 	 *  Helpers  (pair map, URL/slug, space lookups)
 	 * ══════════════════════════════════════════════
 	 */
-
-	/**
-	 * Resolve the Jetonomy base URL slug (defaults to "community").
-	 *
-	 * @return string
-	 */
-	private function jetonomy_base_slug(): string {
-		$settings = get_option( 'jetonomy_settings', array() );
-		$slug     = is_array( $settings ) && ! empty( $settings['base_slug'] ) ? (string) $settings['base_slug'] : 'community';
-		return trim( $slug, '/' );
-	}
 
 	/**
 	 * Current configured tab label (defaults to "Discussions").

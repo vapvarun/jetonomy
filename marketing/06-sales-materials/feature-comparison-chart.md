@@ -1,13 +1,13 @@
 # Jetonomy vs bbPress vs wpForo - Feature Comparison
 
-**Version:** 1.4.4
-**Last updated:** May 2026
+**Version:** 2.0.1
+**Last updated:** September 2026
 
 ---
 
 ## Notes on methodology
 
-This comparison reflects the state of each plugin as of May 2026. bbPress is compared against its current stable release (2.6.x) plus officially supported add-ons. wpForo is compared against wpForo 2.x with its bundled add-ons. Where a feature requires a paid add-on to enable, it is noted.
+This comparison was fact-checked against the installed bbPress 2.6.18 and wpForo 3.2.1 source and settings on 2026-09-27 - not against memory or an earlier version of this chart. bbPress is compared against its current stable release plus officially supported add-ons. wpForo is compared against its current stable release with its bundled add-ons. Where a feature requires a paid add-on to enable, it is noted.
 
 This comparison is honest. Where competitors do something well, that is noted. The goal is to help you make an informed decision, not to make competitors look bad.
 
@@ -19,13 +19,13 @@ This comparison is honest. Where competitors do something well, that is noted. T
 |---|---|---|---|
 | Data storage | 23 custom MySQL tables | WordPress CPTs (wp_posts + wp_postmeta) | Custom tables |
 | Avoids wp_postmeta bloat | Yes | No - heavy wp_postmeta use | Yes |
-| Denormalized counters (no COUNT on load) | Yes | No | Partial |
-| Object cache support (Redis/Memcached) | Yes | Partial (WP object cache) | Partial |
-| Tested at 50K+ topics | Yes - sub-200ms with Redis | No documented scale testing | Limited documentation |
+| Denormalized counters (no COUNT on load) | Yes | Yes - reply/topic/voice counts stored as postmeta, updated on write | Yes - dedicated count columns on the topics/posts tables |
+| Object cache support (Redis/Memcached) | Yes | Partial (WP object cache) | Partial (WP object cache) |
+| Built for scale | Indexed queries, paginated lists, object-cache aware | No documented scale testing | No documented scale testing |
 | Server-side rendered HTML | Yes - WP Interactivity API | Yes - classic PHP templates | Yes |
 | Multisite (network activation installs everywhere) | Yes | No | No |
-| PHP version requirement | 8.1+ | 7.2+ | 7.4+ |
-| WordPress version requirement | 6.7+ | 5.0+ | 5.5+ |
+| PHP version requirement | 8.1+ | 7.2+ | 7.1+ |
+| WordPress version requirement | 6.7+ | 6.0+ | 5.2+ |
 
 **Honest note:** bbPress has the lightest footprint and works on the widest range of hosting. If you have a small community on older infrastructure, bbPress's lower requirements may matter.
 
@@ -54,16 +54,16 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
 | Rich text editor (posts) | Yes | Limited | Yes |
-| Threaded replies | Yes - 3 levels, collapsible | No - flat replies | Yes - configurable depth |
+| Threaded replies | Yes - 3 levels, collapsible | Yes - configurable depth (2 levels by default) | Yes - configurable depth |
 | Smart loading for long threads | Yes | No | No |
 | Voting (posts and replies) | Yes | Partial (add-on) | Yes |
 | Accepted answers | Yes | Add-on required | Yes |
 | Ideas with status tracking | Yes | No | No |
 | Real-time new reply banner | Yes | No | No |
 | Sort replies (oldest/newest/best) | Yes | No | Yes |
-| Tags on posts | Yes | No | Yes |
+| Tags on posts | Yes | Yes - topic-tag taxonomy (topics only, not replies) | Yes |
 | Post attachments (media library) | Yes | No (add-on) | Yes |
-| Emoji reactions | Jetonomy Pro | No | Add-on required |
+| Emoji reactions | Jetonomy Pro | No | Partial - Like/Dislike free, expanded reaction set via paid Advanced Reactions add-on |
 | Polls | Jetonomy Pro | No | Add-on required |
 | Private messaging | Jetonomy Pro | No (add-on) | Add-on required |
 
@@ -99,8 +99,8 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Automatic spam reputation penalty | Yes | No | No |
 | Revision history for edits | Yes | No | Yes |
 | Auto-moderation rules | Jetonomy Pro | No | Add-on required |
-| AI spam detection + content moderation | Jetonomy Pro (self-hosted Ollama or OpenAI/Anthropic) | No | No |
-| AI reply suggestions and thread summaries | Jetonomy Pro | No | No |
+| AI spam detection + content moderation | Jetonomy Pro (self-hosted Ollama or OpenAI/Anthropic) | No | Yes - via gVectors' hosted AI API (requires an API key and credits) |
+| AI reply suggestions and thread summaries | Jetonomy Pro | No | Yes - AI Chat Assistant, Suggest Reply, Topic Summarization (same gVectors AI API) |
 
 ---
 
@@ -135,8 +135,8 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Schema.org markup (DiscussionForumPosting) | Yes | No | Partial |
-| Schema.org QAPage with acceptedAnswer | Yes | No | No |
+| Schema.org markup (DiscussionForumPosting) | Yes | No | Yes |
+| Schema.org QAPage with acceptedAnswer | Yes | No | Yes |
 | BreadcrumbList structured data | Yes | No | Partial |
 | Open Graph tags | Yes | No | Yes |
 | Twitter card tags | Yes | No | Yes |
@@ -155,7 +155,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Template override system | Yes - theme/jetonomy/ | Yes - theme/bbpress/ | Partial |
 | Action and filter hooks | Yes - throughout | Yes - throughout | Yes |
 | Adapter pattern for integrations | Yes (search, email, realtime, membership) | No | No |
-| WordPress Abilities API support | Yes - 19 abilities free (39 with Pro) | No | No |
+| WordPress Abilities API support | Yes - 19 abilities free (39 across free + Pro) | No | No |
 | Clean uninstall (removes all data) | Yes | Partial | Yes |
 | Composer autoloader | No | No | No |
 
@@ -218,7 +218,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 ## Summary
 
 **Choose Jetonomy if:**
-- Performance at scale matters - custom tables and denormalized counters make a measurable difference above a few thousand topics
+- Performance at scale matters - custom tables avoid the wp_postmeta bloat bbPress adds to every WordPress query, not just forum queries
 - You want automated spam control that requires no configuration
 - You need Q&A, Ideas, Show & Tell, or Social Feed spaces alongside standard forums
 - You need site-wide announcements that reach members across every space (Pro)
@@ -237,3 +237,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 - You need built-in statistics on the free plan
 - You have an existing wpForo community and no reason to migrate
 - You prefer wpForo's visual style and admin interface
+
+---
+
+Checked against bbPress 2.6.18 and wpForo 3.2.1 on 2026-09-27.

@@ -619,32 +619,18 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 			echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</p>';
 			return;
 		}
-		// One query for every owner on the grid, plus one to warm the user cache,
-		// instead of a lookup per card.
-		$jt_owners    = \Jetonomy\Models\SpaceMember::owners_for_spaces( array_map( static fn ( $s ) => (int) $s->id, $spaces ) );
-		$jt_owner_ids = array_values( array_unique( $jt_owners ) );
-		if ( $jt_owner_ids ) {
-			get_users(
-				array(
-					'include'     => $jt_owner_ids,
-					'fields'      => 'all_with_meta',
-					'number'      => count( $jt_owner_ids ),
-					'count_total' => false,
-				)
-			);
-		}
 
 		echo '<div class="jt-space-grid">';
 		foreach ( $spaces as $space ) {
 			?>
-			<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
+			<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
 				class="jt-card jt-space-card jt-no-underline jt-block">
 				<div class="jt-space-card-inner">
 					<?php
 					// Always route through the icon helper so a stored "message-circle"
 					// renders as the Lucide SVG (not as the literal text). The helper
 					// also defends against legacy emoji values and dashicon prefixes.
-					jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' );
+					jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-icon', $space->type ?? '' );
 					?>
 					<div class="jt-space-card-body">
 						<div class="jt-space-card-title">
@@ -667,12 +653,10 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 						<?php endif; ?>
 						<div class="jt-space-card-stats">
 							<span class="jt-space-card-stat">
-								<strong><?php echo (int) $space->post_count; ?></strong>
-								<?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', (int) $space->post_count !== 1, true ) ); ?>
+								<?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $space->post_count, 'topic' ) ), '<strong>' . esc_html( number_format_i18n( (int) $space->post_count ) ) . '</strong>' ), array( 'strong' => array() ) ); ?>
 							</span>
 							<span class="jt-space-card-stat">
-								<strong><?php echo (int) $space->member_count; ?></strong>
-								<?php echo esc_html( \Jetonomy\jetonomy_label( 'member', (int) $space->member_count !== 1, true ) ); ?>
+								<?php echo wp_kses( sprintf( esc_html( \Jetonomy\count_label_format( (int) $space->member_count, 'member' ) ), '<strong>' . esc_html( number_format_i18n( (int) $space->member_count ) ) . '</strong>' ), array( 'strong' => array() ) ); ?>
 							</span>
 							<?php
 							// Recency tells a newcomer the space is alive — totals alone
@@ -683,27 +667,6 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 								<span class="jt-space-card-stat jt-space-card-activity"><?php echo esc_html( $jt_activity ); ?></span>
 							<?php endif; ?>
 						</div>
-						<?php
-						// Who runs this space. The single space page has said this in
-						// its "Managed by" sidebar card since 1.4.0; the directory -
-						// where someone is deciding which space to open - did not.
-						// Resolved in ONE query for the whole grid by
-						// SpaceMember::owners_for_spaces(), not per card.
-						$jt_owner_id = $jt_owners[ (int) $space->id ] ?? 0;
-						if ( $jt_owner_id ) :
-							$jt_owner = get_userdata( $jt_owner_id );
-							if ( $jt_owner ) :
-								?>
-								<div class="jt-space-card-owner">
-									<?php
-									/* translators: %s: display name of the space's owning admin. */
-									echo esc_html( sprintf( __( 'Managed by %s', 'jetonomy' ), \Jetonomy\user_display_name( $jt_owner ) ) );
-									?>
-								</div>
-								<?php
-							endif;
-						endif;
-						?>
 					</div>
 				</div>
 			</a>

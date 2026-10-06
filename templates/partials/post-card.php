@@ -22,8 +22,7 @@ $has_unread = isset( $has_unread ) ? (bool) $has_unread : false;
 $show_bookmark_toggle = isset( $show_bookmark_toggle ) ? (bool) $show_bookmark_toggle : false;
 $initials             = '' !== $display['name'] ? strtoupper( mb_substr( $display['name'], 0, 2 ) ) : '??';
 $trust                = $profile ? (int) $profile->trust_level : 0;
-$base                 = \Jetonomy\base_url();
-$post_url             = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+$post_url             = \Jetonomy\route_url( 'post', ( $space->slug ?? '' ), $post->slug );
 $time_ago             = human_time_diff( strtotime( $post->created_at ), time() );
 $tags                 = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 $viewer_id            = get_current_user_id();
@@ -54,7 +53,7 @@ if ( $prefix_name && $space ) {
 <div class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
 	data-wp-interactive="jetonomy">
 	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
-		<div class="jt-votes" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
+		<div class="jt-votes" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Vote on this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>">
 			<?php // Not "is logged in" - "may actually vote here". A Read-grant rule admits without granting the vote. ?>
 			<?php if ( jetonomy_viewer_can_vote( $space ) ) : ?>
 				<button type="button" class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
@@ -155,7 +154,7 @@ if ( $prefix_name && $space ) {
 				// instead of inert <span> elements. CSS selectors stay
 				// `.jt-tag` so existing styles still apply (the `<a>` carries
 				// the same class).
-				$jt_tag_url = \Jetonomy\base_url() . '/tag/' . rawurlencode( (string) $post_tag->slug ) . '/';
+				$jt_tag_url = \Jetonomy\route_url( 'tag', rawurlencode( (string) $post_tag->slug ) );
 				?>
 				<a class="jt-tag" href="<?php echo esc_url( $jt_tag_url ); ?>"><?php echo esc_html( $post_tag->name ); ?></a>
 			<?php endforeach; ?>
@@ -163,7 +162,7 @@ if ( $prefix_name && $space ) {
 	</div>
 	<div class="jt-row-stat">
 		<div class="jt-row-stat-n"><?php echo (int) $post->reply_count; ?></div>
-		<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
+		<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $post->reply_count, 'reply' ) ); ?></div>
 	</div>
 	<div class="jt-row-stat">
 		<div class="jt-row-time">

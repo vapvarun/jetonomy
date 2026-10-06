@@ -85,8 +85,7 @@ $posts = $wpdb->get_results(
 	)
 ) ?: [];
 
-$base    = \Jetonomy\base_url();
-$tag_url = $base . '/tag/' . $tag->slug . '/';
+$tag_url = \Jetonomy\route_url( 'tag', $tag->slug );
 
 $crumbs = [
 	[
@@ -95,16 +94,16 @@ $crumbs = [
 	],
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<div class="jt-flex jt-items-center jt-gap-12 jt-mb-20">
-				<span class="jt-tag jt-tag-hero"><?php echo esc_html( $tag->name ); ?></span>
+				<h1 class="jt-page-title"><?php echo esc_html( $tag->name ); ?></h1>
 				<span class="jt-tag-count-label">
 					<?php
-					/* translators: %d: post count. */
-					echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $tag->post_count, 'jetonomy' ), (int) $tag->post_count ) );
+					echo esc_html( \Jetonomy\count_label( (int) $tag->post_count, 'topic' ) );
 					?>
 				</span>
 				<?php
@@ -124,7 +123,7 @@ $crumbs = [
 					$jt_tag_compose_url = add_query_arg(
 						'tag',
 						rawurlencode( $tag->slug ),
-						$base . '/s/' . rawurlencode( $jt_tag_post_space ) . '/new/'
+						\Jetonomy\route_url( 'new-post', rawurlencode( $jt_tag_post_space ) )
 					);
 					?>
 					<a href="<?php echo esc_url( $jt_tag_compose_url ); ?>" class="jt-btn jt-btn-fill jt-btn-sm jt-ml-auto">
@@ -162,12 +161,13 @@ $crumbs = [
 					[
 						'icon'      => 'message-circle',
 						'icon_size' => 48,
-						'message'   => __( 'No posts with this tag yet.', 'jetonomy' ),
+						'message'   => sprintf( /* translators: %s: plural topic label. */ __( 'No %s with this tag yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 					]
 				);
 				?>
 			<?php else : ?>
 				<div class="jt-topics">
+					<?php \Jetonomy\prime_post_cards( $posts ); ?>
 					<?php foreach ( $posts as $post ) : ?>
 						<?php \Jetonomy\Template_Loader::partial( 'post-card', [ 'post' => $post ] ); ?>
 					<?php endforeach; ?>

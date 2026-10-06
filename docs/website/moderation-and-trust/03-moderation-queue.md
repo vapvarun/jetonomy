@@ -83,6 +83,7 @@ Space moderators work at `/community/mod/` (everything they moderate) or
 |---|---|
 | **Flags** | Content other members reported. |
 | **Awaiting approval** | Content the space itself held back, because the space has *New posts require moderator approval* switched on. Split into **Posts** and **Replies** sub-tabs, each with its own count. |
+| **Trash** | Topics and replies that were deleted. Split into **Posts** and **Replies** sub-tabs. Each item has **Restore** (publish it again) and **Delete permanently** (remove it and, for a topic, all of its replies - cannot be undone). |
 | **Banned members** | Active bans and silences. Only shown to moderators who hold the site-wide `jetonomy_moderate` capability, since lifting a ban requires it. |
 
 Each tab carries a count so you can see there is work waiting without opening

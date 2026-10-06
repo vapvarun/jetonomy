@@ -23,6 +23,9 @@ class Notifier {
 	/** Days an email unsubscribe link stays valid. */
 	private const UNSUB_TTL_DAYS = 60;
 
+	/** Types whose email is on when no stored default exists (see default_email()). */
+	private const EMAIL_ON_WHEN_UNSET = array( 'message' );
+
 	public function __construct() {
 		$this->register_hooks();
 	}
@@ -107,17 +110,19 @@ class Notifier {
 	 * @return array{subject: string, body: string} Empty pair on unknown type.
 	 */
 	public static function get_default_template( string $type ): array {
+		$topic    = \Jetonomy\jetonomy_label( 'topic', false, true );
+		$reply    = \Jetonomy\jetonomy_label( 'reply', false, true );
 		$defaults = array(
 			'user_welcome'          => array(
 				'subject' => __( '[{site}] Welcome to the community', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\nWelcome to {site}. Your account is ready. Jump in and introduce yourself, ask a question, or browse the latest discussions.\n\n{message}", 'jetonomy' ),
 			),
 			'reply_to_post'         => array(
-				'subject' => __( '[{site}] {actor_display_name} replied to your post', 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic or reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $topic ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the discussion to read the full reply and join the conversation.", 'jetonomy' ),
 			),
 			'reply_to_reply'        => array(
-				'subject' => __( '[{site}] {actor_display_name} replied to your comment', 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic or reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $reply ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nClick through to read the full thread.", 'jetonomy' ),
 			),
 			'mention'               => array(
@@ -130,23 +135,23 @@ class Notifier {
 			),
 			'idea_status_changed'   => array(
 				'subject' => __( '[{site}] Your idea was updated', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nThanks for sharing your idea. Open the post to see the latest updates.", 'jetonomy' ),
+				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nThanks for sharing your idea. Open the %s to see the latest updates.", 'jetonomy' ), $topic ),
 			),
 			'new_post_in_sub'       => array(
-				'subject' => __( '[{site}] New post in {space_title}', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to read more.", 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] New %s in {space_title}', 'jetonomy' ), $topic ),
+				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to read more.", 'jetonomy' ), $topic ),
 			),
 			'badge_earned'          => array(
 				'subject' => __( '[{site}] You earned a new badge', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nKeep contributing to unlock more.", 'jetonomy' ),
 			),
 			'vote_on_post'          => array(
-				'subject' => __( '[{site}] Your post received a vote', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] Your %s received a vote', 'jetonomy' ), $topic ),
+				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to see the discussion.", 'jetonomy' ), $topic ),
 			),
 			'reaction'              => array(
-				'subject' => __( '[{site}] Someone reacted to your post', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
+				'subject' => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] Someone reacted to your %s', 'jetonomy' ), $topic ),
+				'body'    => sprintf( /* translators: %s: singular topic label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the %s to see the discussion.", 'jetonomy' ), $topic ),
 			),
 			'flag_resolved'         => array(
 				'subject' => __( '[{site}] Your report was reviewed', 'jetonomy' ),
@@ -317,8 +322,8 @@ class Notifier {
 		// Background fan-out handlers — fired from Action Scheduler (or the
 		// WP-Cron fallback) when a subscriber set is too large to notify inline
 		// in the create request. Same callbacks the inline path uses.
-		add_action( 'jetonomy_fanout_post_subscribers', [ $this, 'fanout_post_subscribers' ], 10, 2 );
-		add_action( 'jetonomy_fanout_reply_subscribers', [ $this, 'fanout_reply_subscribers' ], 10, 2 );
+		add_action( 'jetonomy_fanout_post_subscribers', [ $this, 'fanout_post_subscribers' ], 10, 3 );
+		add_action( 'jetonomy_fanout_reply_subscribers', [ $this, 'fanout_reply_subscribers' ], 10, 3 );
 
 		// Reply submitted by email (Reply-by-Email Pro extension fires this).
 		// Nothing in free listened before, so emailed replies were silently lost.
@@ -349,6 +354,14 @@ class Notifier {
 		// reactions only on the 0->1 transition, so no per-reaction spam).
 		add_action( 'jetonomy_pro_first_reaction', [ $this, 'on_first_reaction' ], 10, 3 );
 
+		// Custom badge earned (fired by Pro) - same door as a trust-level promotion,
+		// so it gets the preference gate, the email and the community payload.
+		add_action( 'jetonomy_pro_badge_earned', [ $this, 'on_badge_earned' ], 10, 3 );
+
+		// The door for a notification raised by Jetonomy Pro (private messages):
+		// preferences, block gate, push + host contract, email.
+		add_action( 'jetonomy_deliver_notification', [ $this, 'deliver' ], 10, 6 );
+
 		// Join request — notify space admins
 		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
 		add_action( 'jetonomy_join_request_approved', [ $this, 'on_join_request_approved' ], 10, 3 );
@@ -368,7 +381,7 @@ class Notifier {
 	 * listened, so emailed replies were silently discarded. This mirrors the
 	 * REST controller's canonical post-create side-effects: row creation via
 	 * Reply::create() (counters + content_plain handled there), the
-	 * `jetonomy_after_create_reply` action (notifications), and @mention parsing.
+	 * `jetonomy_after_create_reply` action (notifications and @mentions).
 	 *
 	 * @param int    $post_id Forum post ID.
 	 * @param int    $user_id Author user ID.
@@ -402,17 +415,26 @@ class Notifier {
 			return;
 		}
 
-		$reply_id = \Jetonomy\Models\Reply::create(
-			[
-				'post_id'       => $post_id,
-				'author_id'     => $user_id,
-				'content'       => $content,
-				'content_plain' => \jetonomy_content_to_plain( $content ),
-			]
-		);
+		// Same content rules + require_approval as the REST reply path.
+		$data     = [
+			'post_id'       => $post_id,
+			'author_id'     => $user_id,
+			'content'       => $content,
+			'content_plain' => \jetonomy_content_to_plain( $content ),
+		];
+		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return;
+		}
+		$data['status'] = $screened['status'];
+
+		$reply_id = \Jetonomy\Models\Reply::create( $data );
 
 		if ( is_wp_error( $reply_id ) || ! $reply_id ) {
 			return;
+		}
+		if ( $screened['flag'] ) {
+			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
 		}
 
 		// Canonical post-create side-effects (same as the REST controller).
@@ -420,12 +442,6 @@ class Notifier {
 		// WP_REST_Request, mirroring the post-create hook's null request arg
 		// (class-abilities.php, models/class-post.php).
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
-
-		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
-		if ( ! empty( $mentioned ) ) {
-			$post = \Jetonomy\Models\Post::find( $post_id );
-			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ), (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
-		}
 	}
 
 	/**
@@ -467,29 +483,61 @@ class Notifier {
 	private const FANOUT_INLINE_MAX = 25;
 
 	/**
-	 * Enqueue a fan-out hook to run off the request path, so a write into a
-	 * large space/thread returns immediately and the subscriber loop runs on the
-	 * next tick instead of blocking the author.
+	 * Subscribers notified per background run. Each one can send an email, so
+	 * a run stays well inside a PHP time limit; the next batch is queued from
+	 * the last user id until the list is exhausted.
+	 */
+	private const FANOUT_BATCH = 100;
+
+	/**
+	 * Queue a fan-out batch off the request path: Action Scheduler first (the
+	 * background-jobs standard), WP-Cron when AS is absent or refuses.
 	 *
-	 * Uses a WP-Cron single event: it persists to the cron option (verifiable
-	 * and reliable in every context, CLI included) and fires on the next page
-	 * load, which on an active community is within seconds. This is the
-	 * reactive-single-shot mechanism from the background-jobs standard. Action
-	 * Scheduler was intentionally not used here because its enqueue is not
-	 * observably persisted outside a normal web request, which risks silently
-	 * dropping the fan-out — and a lost notification is worse than a slightly
-	 * delayed one.
+	 * The return value is load-bearing: false means nothing was queued, and
+	 * the caller then runs the batch inline rather than dropping it.
 	 *
 	 * @param string $hook Action hook name.
 	 * @param array  $args Positional args passed to the callback.
-	 * @return bool True if the work was scheduled (caller then skips inline run).
+	 * @return bool True when the batch is queued.
 	 */
 	private function enqueue_fanout( string $hook, array $args ): bool {
-		// Don't stack a duplicate if an identical fan-out is already queued.
+		if ( function_exists( 'as_enqueue_async_action' ) && did_action( 'action_scheduler_init' ) ) {
+			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, $args, 'jetonomy' ) ) {
+				return true;
+			}
+			if ( as_enqueue_async_action( $hook, $args, 'jetonomy' ) ) {
+				return true;
+			}
+		}
 		if ( wp_next_scheduled( $hook, $args ) ) {
 			return true;
 		}
 		return false !== wp_schedule_single_event( time(), $hook, $args );
+	}
+
+	/**
+	 * Walk one object's subscribers in FANOUT_BATCH steps, calling $notify for
+	 * each user id. After a full batch the rest is queued as the next run; if
+	 * nothing can be queued it carries on inline, so no subscriber is skipped.
+	 *
+	 * @param string   $object_type 'space' or 'post'.
+	 * @param int      $object_id   Object id.
+	 * @param int      $after       Last user id already notified.
+	 * @param string   $hook        Hook that runs the next batch.
+	 * @param array    $hook_args   Leading args for that hook (the cursor is appended).
+	 * @param callable $notify      fn( int $user_id ): void.
+	 */
+	private function fanout_batches( string $object_type, int $object_id, int $after, string $hook, array $hook_args, callable $notify ): void {
+		do {
+			$batch = Subscription::get_subscribers( $object_type, $object_id, $after, self::FANOUT_BATCH );
+			foreach ( $batch as $user_id ) {
+				$notify( $user_id );
+			}
+			if ( count( $batch ) < self::FANOUT_BATCH ) {
+				return;
+			}
+			$after = (int) end( $batch );
+		} while ( ! $this->enqueue_fanout( $hook, array_merge( $hook_args, array( $after ) ) ) );
 	}
 
 	/**
@@ -503,6 +551,8 @@ class Notifier {
 		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
 			return;
 		}
+
+		\Jetonomy\Mentions::notify_for( 'post', $post_id );
 
 		if ( Subscription::count_subscribers( 'space', $space_id ) > self::FANOUT_INLINE_MAX
 			&& $this->enqueue_fanout( 'jetonomy_fanout_post_subscribers', array( $post_id, $space_id ) ) ) {
@@ -518,7 +568,7 @@ class Notifier {
 	 * Runs inline for small spaces and from Action Scheduler for large ones; the
 	 * body is identical either way, so the notifications produced are the same.
 	 */
-	public function fanout_post_subscribers( int $post_id, int $space_id ): void {
+	public function fanout_post_subscribers( int $post_id, int $space_id, int $after = 0 ): void {
 		$post = Post::find( $post_id );
 		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
 			return;
@@ -526,17 +576,16 @@ class Notifier {
 
 		$space = Space::find( $space_id );
 		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-		$space_name  = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
-		$actor_id    = (int) $post->author_id;
-		$post_url    = $this->get_post_url( $post );
-		$subscribers = Subscription::get_subscribers( 'space', $space_id );
+		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		$actor_id   = (int) $post->author_id;
+		$post_url   = $this->get_post_url( $post );
 		// Actor is the post author; an anonymous post must not leak the real
 		// author via the notification row's actor_id (avatar/name/profile).
 		$is_anon = (bool) ( $post->is_anonymous ?? false );
 
-		foreach ( $subscribers as $sub_user_id ) {
+		$notify = function ( int $sub_user_id ) use ( $actor_id, $post_id, $space_name, $post, $post_url, $is_anon ): void {
 			if ( $sub_user_id === $actor_id ) {
-				continue;
+				return;
 			}
 			$this->create_and_maybe_email(
 				$sub_user_id,
@@ -545,8 +594,9 @@ class Notifier {
 				'post',
 				$post_id,
 				sprintf(
-					/* translators: 1: space name, 2: post title */
-					__( 'New post in %1$s: %2$s', 'jetonomy' ),
+					/* translators: 1: singular topic label, lowercase, 2: space name, 3: topic title */
+					__( 'New %1$s in %2$s: %3$s', 'jetonomy' ),
+					\Jetonomy\jetonomy_label( 'topic', false, true ),
 					$space_name,
 					mb_substr( $post->title, 0, 50 )
 				),
@@ -554,7 +604,9 @@ class Notifier {
 				array(),
 				$is_anon
 			);
-		}
+		};
+
+		$this->fanout_batches( 'space', $space_id, $after, 'jetonomy_fanout_post_subscribers', array( $post_id, $space_id ), $notify );
 	}
 
 	/**
@@ -568,9 +620,13 @@ class Notifier {
 	public function on_reply_created( int $reply_id, int $post_id ): void {
 		$reply = Reply::find( $reply_id );
 		$post  = Post::find( $post_id );
-		if ( ! $reply || ! $post ) {
+		// Held, spam or trashed replies announce nothing; approval re-fires the
+		// create hook once the reply is live.
+		if ( ! $reply || ! $post || 'publish' !== ( $reply->status ?? '' ) ) {
 			return;
 		}
+
+		\Jetonomy\Mentions::notify_for( 'reply', $reply_id );
 
 		$actor_id  = (int) $reply->author_id;
 		$reply_url = $this->get_reply_url( $post, $reply_id );
@@ -586,9 +642,10 @@ class Notifier {
 				'reply',
 				$reply_id,
 				sprintf(
-					/* translators: 1: replier display name, 2: post title. */
-					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
+					/* translators: 1: replier display name, 2: singular topic label, lowercase, 3: topic title. */
+					__( '%1$s replied to your %2$s "%3$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
+					\Jetonomy\jetonomy_label( 'topic', false, true ),
 					mb_substr( $post->title, 0, 50 )
 				),
 				$reply_url,
@@ -645,10 +702,10 @@ class Notifier {
 	 * and the post author, who are notified directly). Inline for small threads,
 	 * from Action Scheduler for large ones; identical body either way.
 	 */
-	public function fanout_reply_subscribers( int $reply_id, int $post_id ): void {
+	public function fanout_reply_subscribers( int $reply_id, int $post_id, int $after = 0 ): void {
 		$reply = Reply::find( $reply_id );
 		$post  = Post::find( $post_id );
-		if ( ! $reply || ! $post ) {
+		if ( ! $reply || ! $post || 'publish' !== ( $reply->status ?? '' ) ) {
 			return;
 		}
 
@@ -657,10 +714,9 @@ class Notifier {
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
 		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
 
-		$subscribers = Subscription::get_subscribers( 'post', $post_id );
-		foreach ( $subscribers as $sub_user_id ) {
+		$notify = function ( int $sub_user_id ) use ( $actor_id, $reply_id, $reply, $post, $reply_url, $ctx_extra, $is_anon ): void {
 			if ( $sub_user_id === $actor_id || $sub_user_id === (int) $post->author_id ) {
-				continue;
+				return;
 			}
 			$this->create_and_maybe_email(
 				$sub_user_id,
@@ -678,7 +734,9 @@ class Notifier {
 				$ctx_extra,
 				$is_anon
 			);
-		}
+		};
+
+		$this->fanout_batches( 'post', $post_id, $after, 'jetonomy_fanout_reply_subscribers', array( $reply_id, $post_id ), $notify );
 	}
 
 	/**
@@ -986,6 +1044,28 @@ class Notifier {
 	}
 
 	/**
+	 * Notify a member who earned a custom badge (Pro fires the action).
+	 *
+	 * @param int    $user_id  Member who earned it.
+	 * @param int    $badge_id Badge id.
+	 * @param object $badge    Badge row.
+	 */
+	public function on_badge_earned( int $user_id, int $badge_id, object $badge ): void {
+		$this->create_and_maybe_email(
+			$user_id,
+			0, // system notification
+			'badge_earned',
+			'badge',
+			$badge_id,
+			sprintf(
+				/* translators: %s: badge name. */
+				__( 'Congratulations! You earned the %s badge', 'jetonomy' ),
+				(string) ( $badge->name ?? '' )
+			)
+		);
+	}
+
+	/**
 	 * Notify content author when a moderator acts on their content.
 	 */
 	public function on_content_moderated( string $action, string $object_type, int $object_id, int $moderator_id ): void {
@@ -1084,8 +1164,7 @@ class Notifier {
 		$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 
 		// Check web preference before creating notification.
-		$web_enabled = $user_prefs[ $type ]['web'] ?? $global_defaults[ $type ]['web'] ?? true;
-		if ( $web_enabled ) {
+		if ( self::should_web( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$notification_id = Notification::create(
 				[
 					'user_id'         => $user_id,
@@ -1099,7 +1178,7 @@ class Notifier {
 				]
 			);
 
-			self::emit_notification_created( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url );
+			self::emit_notification_created( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url, $actor_anonymous );
 		}
 
 		// Check email preference via the shared gate (profile + defaults already
@@ -1114,6 +1193,44 @@ class Notifier {
 		if ( ! self::recipient_blocked_actor( $user_id, $actor_id ) && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
+	}
+
+	/**
+	 * Deliver a notification raised outside free's own listeners - the
+	 * `jetonomy_deliver_notification` action. Internal to Jetonomy Pro: private
+	 * messages use it so a DM gets the same per-type preferences, block gate,
+	 * push, host contract and email as every forum notification. Pro decides
+	 * whether to call it (once per unread conversation).
+	 *
+	 * @since 2.0.1
+	 * @param int    $user_id     Recipient.
+	 * @param int    $actor_id    Acting member (0 = system).
+	 * @param string $type        Notification type (e.g. 'message').
+	 * @param string $object_type Object type (e.g. 'message').
+	 * @param int    $object_id   Object id (e.g. conversation id).
+	 * @param string $message     Already-translated sentence.
+	 */
+	public function deliver( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message ): void {
+		if ( $user_id <= 0 || '' === $type ) {
+			return;
+		}
+		$this->create_and_maybe_email( $user_id, $actor_id, $type, $object_type, $object_id, $message, \Jetonomy\notification_deep_link( $object_type, $object_id ) );
+	}
+
+	/**
+	 * Email default for a type the owner has not stored a default for.
+	 *
+	 * Types added after a site seeded notification_defaults have no stored
+	 * key; these are ON by default and the rest stay OFF. Read-time, so no
+	 * migration and no reseeding of owner-customised defaults.
+	 *
+	 * @since 2.0.1
+	 * @param string $type            Notification type.
+	 * @param array  $global_defaults Stored notification_defaults.
+	 * @return bool
+	 */
+	public static function default_email( string $type, array $global_defaults ): bool {
+		return (bool) ( $global_defaults[ $type ]['email'] ?? in_array( $type, self::EMAIL_ON_WHEN_UNSET, true ) );
 	}
 
 	/**
@@ -1167,8 +1284,9 @@ class Notifier {
 	 * @param int    $object_id       Object ID.
 	 * @param string $message         Rendered human sentence.
 	 * @param string $url             Deep link.
+	 * @param bool   $actor_anonymous The actor's content is anonymous (the contract payload then carries no actor).
 	 */
-	public static function emit_notification_created( int $notification_id, int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '' ): void {
+	public static function emit_notification_created( int $notification_id, int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', bool $actor_anonymous = false ): void {
 		if ( self::recipient_blocked_actor( $user_id, $actor_id ) ) {
 			return;
 		}
@@ -1183,8 +1301,24 @@ class Notifier {
 		 * $message (rendered human sentence) and $url (deep link) are appended
 		 * so consumers can mirror the notification 1:1 without re-deriving
 		 * them. Backward-compatible: existing 5-arg listeners are unaffected.
+		 *
+		 * The 8th argument is the community notification contract payload (see
+		 * Community_Notification_Contract::payload()) — existing listeners
+		 * registered with fewer accepted_args never receive it, so this is
+		 * additive. It is an empty array when the notification shouldn't reach
+		 * a host's inbox (e.g. the actor notifying themself).
 		 */
-		do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
+		do_action(
+			'jetonomy_notification_created',
+			$notification_id,
+			$user_id,
+			$type,
+			$object_type,
+			$object_id,
+			$message,
+			$url,
+			Community_Notification_Contract::payload( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url, $actor_anonymous )
+		);
 	}
 
 	/**
@@ -1222,9 +1356,7 @@ class Notifier {
 		}
 
 		if ( null === $user_prefs ) {
-			$profile    = UserProfile::find_by_user( $user_id );
-			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
-			$user_prefs = is_array( $settings ) ? ( $settings['notifications'] ?? [] ) : [];
+			$user_prefs = self::user_prefs( $user_id );
 		}
 		if ( isset( $user_prefs[ $type ]['email'] ) ) {
 			return ! empty( $user_prefs[ $type ]['email'] );
@@ -1233,7 +1365,78 @@ class Notifier {
 		if ( null === $global_defaults ) {
 			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 		}
-		return ! empty( $global_defaults[ $type ]['email'] );
+		return self::default_email( $type, (array) $global_defaults );
+	}
+
+	/**
+	 * Should this user receive a WEB (in-app) notification row for this type?
+	 *
+	 * The web half of the delivery decision, kept beside should_email() so
+	 * create_and_maybe_email() and delivery_channel() share one rule:
+	 * per-user per-type pref, then the admin default, then on.
+	 *
+	 * @since 2.0.1
+	 * @param int        $user_id         Recipient.
+	 * @param string     $type            Notification type.
+	 * @param array|null $user_prefs      Pre-loaded per-user notifications map.
+	 * @param array|null $global_defaults Pre-loaded admin notification_defaults map.
+	 * @return bool
+	 */
+	public static function should_web( int $user_id, string $type, ?array $user_prefs = null, ?array $global_defaults = null ): bool {
+		if ( null === $user_prefs ) {
+			$user_prefs = self::user_prefs( $user_id );
+		}
+		if ( null === $global_defaults ) {
+			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+		}
+		return (bool) ( $user_prefs[ $type ]['web'] ?? $global_defaults[ $type ]['web'] ?? true );
+	}
+
+	/**
+	 * The channel(s) a notification of $type will actually reach this user on.
+	 *
+	 * Derived from should_web() + should_email() - the same gates delivery
+	 * uses - so a surface that shows "how will I be notified" (the My
+	 * Subscriptions badge, GET /subscriptions `via`) cannot drift from what
+	 * the notifier does. The stored jt_subscriptions.notify_via column is
+	 * NOT consulted: delivery never read it, so displaying it lied.
+	 *
+	 * @since 2.0.1
+	 * @param int        $user_id         Recipient.
+	 * @param string     $type            Notification type.
+	 * @param array|null $user_prefs      Pre-loaded per-user notifications map.
+	 * @param array|null $global_defaults Pre-loaded admin notification_defaults map.
+	 * @return string 'both' | 'web' | 'email' | 'none'.
+	 */
+	public static function delivery_channel( int $user_id, string $type, ?array $user_prefs = null, ?array $global_defaults = null ): string {
+		if ( null === $user_prefs ) {
+			$user_prefs = self::user_prefs( $user_id );
+		}
+		if ( null === $global_defaults ) {
+			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+		}
+		$web   = self::should_web( $user_id, $type, $user_prefs, $global_defaults );
+		$email = self::should_email( $user_id, $type, $user_prefs, $global_defaults );
+
+		if ( $web && $email ) {
+			return 'both';
+		}
+		if ( $web ) {
+			return 'web';
+		}
+		return $email ? 'email' : 'none';
+	}
+
+	/**
+	 * A user's per-type notification preference map (profile settings JSON).
+	 *
+	 * @param int $user_id User ID.
+	 * @return array
+	 */
+	private static function user_prefs( int $user_id ): array {
+		$profile  = UserProfile::find_by_user( $user_id );
+		$settings = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
+		return is_array( $settings ) && is_array( $settings['notifications'] ?? null ) ? $settings['notifications'] : [];
 	}
 
 	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {
@@ -1400,7 +1603,7 @@ class Notifier {
 	/**
 	 * Render a branded notification email.
 	 *
-	 * Static so Mentions::notify() and other callers can reuse the same template.
+	 * Static so Mentions::notify_for() and other callers can reuse the same template.
 	 *
 	 * @param string   $type        Notification type key.
 	 * @param string   $message     Sentence shown above the CTA (plain text).
@@ -1414,7 +1617,7 @@ class Notifier {
 	public static function render_email_template( string $type, string $message, \WP_User $user, string $unsub_url = '', string $content_url = '', array $extra = array() ): string {
 		$site_name     = esc_html( get_bloginfo( 'name' ) );
 		$community_url = '' !== $content_url ? esc_url( $content_url ) : esc_url( \Jetonomy\base_url() . '/' );
-		$notif_url     = esc_url( \Jetonomy\base_url() . '/notifications/' );
+		$notif_url     = esc_url( \Jetonomy\route_url( 'notifications' ) );
 		$unsub_link    = $unsub_url ? esc_url( $unsub_url ) : '';
 		$home_url      = esc_url( home_url( '/' ) );
 
@@ -1447,29 +1650,35 @@ class Notifier {
 			'reaction'            => __( 'Reaction', 'jetonomy' ),
 			'accepted_answer'     => __( 'Answer Accepted', 'jetonomy' ),
 			'idea_status_changed' => __( 'Roadmap Update', 'jetonomy' ),
-			'new_post_in_sub'     => __( 'New Post', 'jetonomy' ),
+			/* translators: %s: the singular label of the item (the configured noun). */
+			'new_post_in_sub'     => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'badge_earned'        => __( 'Achievement', 'jetonomy' ),
 			'moderation'          => __( 'Moderation', 'jetonomy' ),
 			'flag_resolved'       => __( 'Report Reviewed', 'jetonomy' ),
 			'join_request'        => __( 'Join Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
+			'message'             => __( 'Private Message', 'jetonomy' ),
 		];
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
+		/* translators: %s: the topic or reply label, singular or plural. */
+		$view_topic = sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
 		$cta_labels = [
-			'reply_to_post'       => __( 'View Post', 'jetonomy' ),
-			'reply_to_reply'      => __( 'View Reply', 'jetonomy' ),
-			'mention'             => __( 'View Post', 'jetonomy' ),
-			'vote_on_post'        => __( 'View Post', 'jetonomy' ),
-			'reaction'            => __( 'View Post', 'jetonomy' ),
+			'reply_to_post'       => $view_topic,
+			/* translators: %s: the topic or reply label, singular or plural. */
+			'reply_to_reply'      => sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+			'mention'             => $view_topic,
+			'vote_on_post'        => $view_topic,
+			'reaction'            => $view_topic,
 			'accepted_answer'     => __( 'View Answer', 'jetonomy' ),
 			'idea_status_changed' => __( 'View Idea', 'jetonomy' ),
-			'new_post_in_sub'     => __( 'View Post', 'jetonomy' ),
+			'new_post_in_sub'     => $view_topic,
 			'badge_earned'        => __( 'View Your Badges', 'jetonomy' ),
 			'moderation'          => __( 'Review in Mod Queue', 'jetonomy' ),
 			'flag_resolved'       => __( 'Open the Community', 'jetonomy' ),
 			'join_request'        => __( 'Review Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
+			'message'             => __( 'Read Message', 'jetonomy' ),
 		];
 		$cta_text   = $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' );
 
@@ -1535,7 +1744,7 @@ class Notifier {
 		$space = Space::find( $space_id );
 		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 		$name = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
-		$url  = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
+		$url  = $space ? \Jetonomy\route_url( 'space', $space->slug ) : '';
 		$this->create_and_maybe_email(
 			$user_id,
 			$reviewed_by,
@@ -1655,7 +1864,7 @@ class Notifier {
 		if ( ! $space ) {
 			return \Jetonomy\base_url() . '/';
 		}
-		return \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+		return \Jetonomy\route_url( 'post', $space->slug, $post->slug );
 	}
 
 	/**

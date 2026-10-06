@@ -71,73 +71,31 @@ class Categories_Controller extends Base_Controller {
 	/**
 	 * GET /categories — List all top-level categories with nested children.
 	 *
-	 * Batched (plan WP3.9): the old shape ran one Space::list_by_category
-	 * per top-level category plus one Category::list_children per NODE of
-	 * the tree, unbounded depth — the community landing page's endpoint at
-	 * 30-50 queries. Now: one categories fetch grouped by parent_id (the
-	 * recursion walks PHP arrays) + the shared, tree-cached space grouping.
+	 * Categories nest two levels deep, so the tree is list_top_level() plus
+	 * children_by_parent(): two visibility-filtered queries, both through the
+	 * Category model, plus the shared tree-cached space grouping. Every node
+	 * carries `spaces` and `children` (empty on a sub-category), the shape the
+	 * companion app types declare (Basecamp 10355161085).
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response {
-		global $wpdb;
-
-		// Visibility is filtered HERE as well as in the Category model because
-		// this route deliberately does not go through it: the batched shape
-		// above fetches the whole tree in one query and recurses in PHP. That
-		// optimisation is why a model-level fix alone left this endpoint
-		// serving `hidden` categories — including the `visibility` field — to
-		// anonymous callers. Same predicate, so there is still one rule.
-		[ $vis_where, $vis_values ] = Category::listing_visibility_sql();
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table() is a trusted prefixed name; $vis_where is literal SQL from listing_visibility_sql().
-		$sql = 'SELECT * FROM ' . \Jetonomy\table( 'categories' ) . " WHERE {$vis_where} ORDER BY sort_order ASC, name ASC";
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-		$all_categories = $wpdb->get_results(
-			empty( $vis_values ) ? $sql : $wpdb->prepare( $sql, ...$vis_values )
-		) ?: [];
-
-		$by_parent = [];
-		foreach ( $all_categories as $cat ) {
-			$by_parent[ (int) ( $cat->parent_id ?? 0 ) ][] = $cat;
-		}
-
+		$children      = Category::children_by_parent();
 		$spaces_by_cat = Space::visible_by_category();
 
-		$items = [];
-		foreach ( $by_parent[0] ?? [] as $category ) {
+		$node = function ( object $category ) use ( $spaces_by_cat ): array {
 			$item             = $this->prepare_category( $category );
 			$item['spaces']   = $spaces_by_cat[ (int) $category->id ] ?? [];
-			$item['children'] = $this->build_children( $by_parent, (int) $category->id );
+			$item['children'] = [];
+			return $item;
+		};
+
+		$items = [];
+		foreach ( Category::list_top_level() as $category ) {
+			$item             = $node( $category );
+			$item['children'] = array_map( $node, $children[ (int) $category->id ] ?? [] );
 			$items[]          = $item;
 		}
 
 		return $this->paginated_response( $items, [ 'total' => count( $items ) ] );
-	}
-
-	/**
-	 * Recursively format child categories from the pre-grouped map — no
-	 * queries inside the recursion (plan WP3.9). The seen-guard makes a
-	 * corrupt cyclic parent_id terminate instead of recursing forever.
-	 *
-	 * @param array<int, object[]> $by_parent Categories grouped by parent_id.
-	 * @param int                  $parent_id Current parent.
-	 * @param array<int, true>     $seen      Visited category ids.
-	 */
-	private function build_children( array $by_parent, int $parent_id, array $seen = [] ): array {
-		$result = [];
-
-		foreach ( $by_parent[ $parent_id ] ?? [] as $child ) {
-			$cid = (int) $child->id;
-			if ( isset( $seen[ $cid ] ) ) {
-				continue;
-			}
-			$seen[ $cid ]     = true;
-			$item             = $this->prepare_category( $child );
-			$item['children'] = $this->build_children( $by_parent, $cid, $seen );
-			$result[]         = $item;
-		}
-
-		return $result;
 	}
 
 	/**
@@ -171,12 +129,8 @@ class Categories_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Category name is required.', 'jetonomy' ) );
 		}
 
-		$slug = $request->get_param( 'slug' )
-			? sanitize_title( $request->get_param( 'slug' ) )
-			: sanitize_title( $name );
-
-		// Ensure slug is unique.
-		$slug = $this->unique_slug( $slug );
+		// Category::create() turns this into a free slug (name when empty).
+		$slug = sanitize_title( (string) $request->get_param( 'slug' ) );
 
 		$data = [
 			'name'        => $name,
@@ -184,10 +138,15 @@ class Categories_Controller extends Base_Controller {
 			'description' => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
 			'parent_id'   => absint( $request->get_param( 'parent_id' ) ) ?: null,
 			'icon'        => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
-			'color'       => sanitize_hex_color( (string) $request->get_param( 'color' ) ) ?: sanitize_text_field( (string) $request->get_param( 'color' ) ),
+			'color'       => (string) $request->get_param( 'color' ),
 			'visibility'  => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
 			'sort_order'  => absint( $request->get_param( 'sort_order' ) ),
 		];
+
+		$parent_error = Category::parent_error( 0, (int) $data['parent_id'] );
+		if ( $parent_error ) {
+			return $parent_error;
+		}
 
 		$id = Category::create( array_filter( $data, fn( $v ) => null !== $v && '' !== $v ) );
 
@@ -227,13 +186,13 @@ class Categories_Controller extends Base_Controller {
 			$data['description'] = sanitize_textarea_field( $request->get_param( 'description' ) );
 		}
 		if ( null !== $request->get_param( 'parent_id' ) ) {
-			$data['parent_id'] = absint( $request->get_param( 'parent_id' ) ) ?: null;
+			$data['parent_id'] = absint( $request->get_param( 'parent_id' ) );
 		}
 		if ( null !== $request->get_param( 'icon' ) ) {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );
 		}
 		if ( null !== $request->get_param( 'color' ) ) {
-			$data['color'] = sanitize_hex_color( $request->get_param( 'color' ) ) ?: sanitize_text_field( $request->get_param( 'color' ) );
+			$data['color'] = (string) $request->get_param( 'color' );
 		}
 		if ( null !== $request->get_param( 'visibility' ) ) {
 			$data['visibility'] = sanitize_text_field( $request->get_param( 'visibility' ) );
@@ -246,7 +205,10 @@ class Categories_Controller extends Base_Controller {
 			return $this->validation_error( __( 'No fields provided for update.', 'jetonomy' ) );
 		}
 
-		Category::update( $id, $data );
+		$result = Category::update( $id, $data );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		$updated = Category::find( $id );
 
@@ -265,6 +227,9 @@ class Categories_Controller extends Base_Controller {
 		}
 
 		$deleted = Category::delete( $id );
+		if ( is_wp_error( $deleted ) ) {
+			return $deleted;
+		}
 
 		if ( ! $deleted ) {
 			return new WP_Error(
@@ -300,21 +265,6 @@ class Categories_Controller extends Base_Controller {
 			'space_count' => (int) ( $category->space_count ?? 0 ),
 			'created_at'  => $category->created_at ?? null,
 		];
-	}
-
-	/**
-	 * Generate a unique slug by appending a numeric suffix if needed.
-	 */
-	private function unique_slug( string $base_slug ): string {
-		$slug    = $base_slug;
-		$counter = 1;
-
-		while ( Category::find_by_slug( $slug ) ) {
-			$slug = $base_slug . '-' . $counter;
-			++$counter;
-		}
-
-		return $slug;
 	}
 
 	/**

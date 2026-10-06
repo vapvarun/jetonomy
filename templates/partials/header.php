@@ -29,29 +29,35 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 	return;
 }
 ?>
+<?php
+// Items marked jt-nav-dup are also in the phone bottom tab bar below, so the
+// phone layout hides them here (jetonomy.css, <= 640px) and drops the whole
+// row when nothing unique is left. Anything without the class (Moderation,
+// the Pro Messages link, other jetonomy_header_nav_items) stays reachable.
+?>
 <nav class="jt-community-nav" aria-label="<?php esc_attr_e( 'Community navigation', 'jetonomy' ); ?>">
 	<div class="jt-community-nav-inner">
 		<div class="jt-community-nav-links">
-			<a href="<?php echo esc_url( $base . '/' ); ?>" class="<?php echo 'home' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Community', 'jetonomy' ); ?>">
+			<a href="<?php echo esc_url( $base . '/' ); ?>" class="jt-nav-dup<?php echo 'home' === $current_route ? ' active' : ''; ?>" title="<?php esc_attr_e( 'Community', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'home', 18 ); ?>
 				<span class="jt-nav-label"><?php esc_html_e( 'Community', 'jetonomy' ); ?></span>
 			</a>
-			<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="<?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Search', 'jetonomy' ); ?>">
+			<a href="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-nav-dup<?php echo 'search' === $current_route ? ' active' : ''; ?>" title="<?php esc_attr_e( 'Search', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'search', 18 ); ?>
 				<span class="jt-nav-label"><?php esc_html_e( 'Search', 'jetonomy' ); ?></span>
 			</a>
-			<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="<?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Leaderboard', 'jetonomy' ); ?>">
+			<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>" class="jt-nav-dup<?php echo 'leaderboard' === $current_route ? ' active' : ''; ?>" title="<?php esc_attr_e( 'Leaderboard', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'award', 18 ); ?>
 				<span class="jt-nav-label"><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span>
 			</a>
 			<?php if ( $user_id ) : ?>
-				<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" class="<?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'My Profile', 'jetonomy' ); ?>">
+				<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" class="jt-nav-dup<?php echo 'profile' === $current_route ? ' active' : ''; ?>" title="<?php esc_attr_e( 'My Profile', 'jetonomy' ); ?>">
 					<?php jetonomy_echo_icon( 'user', 18 ); ?>
 					<span class="jt-nav-label"><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
 				</a>
 			<?php endif; ?>
 			<?php if ( $user_id && \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $user_id ) ) : ?>
-				<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="<?php echo in_array( $current_route, array( 'moderation', 'space-moderation' ), true ) ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Moderation', 'jetonomy' ); ?>">
+				<a href="<?php echo esc_url( \Jetonomy\route_url( 'moderation' ) ); ?>" class="<?php echo in_array( $current_route, array( 'moderation', 'space-moderation' ), true ) ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Moderation', 'jetonomy' ); ?>">
 					<?php jetonomy_echo_icon( 'shield', 18 ); ?>
 					<span class="jt-nav-label"><?php esc_html_e( 'Moderation', 'jetonomy' ); ?></span>
 				</a>
@@ -61,7 +67,8 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 
 		<div class="jt-community-nav-actions">
 			<?php if ( $user_id ) : ?>
-				<div class="jt-notif-dropdown-wrap">
+				<?php // jt-nav-dup: the phone tab bar's Alerts tab is the same destination. ?>
+				<div class="jt-notif-dropdown-wrap jt-nav-dup">
 					<button type="button" class="jt-community-nav-notif" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">
 						<?php jetonomy_echo_icon( 'bell', 16 ); ?>
 						<?php if ( $unread > 0 ) : ?>
@@ -76,7 +83,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 						<div class="jt-notif-panel-body">
 							<div class="jt-notif-panel-loading"><?php esc_html_e( 'Loading...', 'jetonomy' ); ?></div>
 						</div>
-						<a href="<?php echo esc_url( $base . '/notifications/' ); ?>" class="jt-notif-panel-footer">
+						<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" class="jt-notif-panel-footer">
 							<?php esc_html_e( 'View all notifications', 'jetonomy' ); ?>
 						</a>
 					</div>
@@ -100,16 +107,16 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 		<?php jetonomy_echo_icon( 'home', 20 ); ?>
 		<span><?php esc_html_e( 'Home', 'jetonomy' ); ?></span>
 	</a>
-	<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-mobile-tab <?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>">
+	<a href="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-mobile-tab <?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 		<?php jetonomy_echo_icon( 'search', 20 ); ?>
 		<span><?php esc_html_e( 'Search', 'jetonomy' ); ?></span>
 	</a>
-	<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
+	<a href="<?php echo esc_url( \Jetonomy\route_url( 'leaderboard' ) ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 		<?php jetonomy_echo_icon( 'award', 20 ); ?>
 		<span><?php esc_html_e( 'Ranks', 'jetonomy' ); ?></span>
 	</a>
 	<?php if ( $user_id ) : ?>
-		<a href="<?php echo esc_url( $base . '/notifications/' ); ?>" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
+		<a href="<?php echo esc_url( \Jetonomy\route_url( 'notifications' ) ); ?>" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 			<?php jetonomy_echo_icon( 'bell', 20 ); ?>
 			<span><?php esc_html_e( 'Alerts', 'jetonomy' ); ?></span>
 			<?php if ( $unread > 0 ) : ?>
@@ -147,10 +154,11 @@ wp_enqueue_style(
 wp_enqueue_script(
 	'jetonomy-header',
 	JETONOMY_URL . 'assets/js/header.js',
-	array( 'jetonomy-rest' ),
+	array( 'jetonomy-rest', 'wp-i18n' ),
 	JETONOMY_VERSION,
 	true
 );
+\Jetonomy\script_translations( 'jetonomy-header' );
 wp_localize_script(
 	'jetonomy-header',
 	'jetonomyHeader',
@@ -162,24 +170,10 @@ wp_localize_script(
 		'restNotif'    => rest_url( 'jetonomy/v1/notifications' ),
 		'restMarkRead' => rest_url( 'jetonomy/v1/notifications/mark-all-read' ),
 		'restSearch'   => rest_url( 'jetonomy/v1/search' ),
+		// Label-dependent copy only; header.js translates the rest with wp.i18n.
 		'i18n'         => array(
-			'noNotifs'         => esc_html__( 'No notifications yet.', 'jetonomy' ),
-			'noResults'        => esc_html__( 'No results found.', 'jetonomy' ),
-			'searchPH'         => esc_html__( 'Search discussions...', 'jetonomy' ),
-			'shortcuts'        => esc_html__( 'Keyboard Shortcuts', 'jetonomy' ),
-			'close'            => esc_html__( 'Close', 'jetonomy' ),
-			'loadFail'         => esc_html__( 'Failed to load', 'jetonomy' ),
-			'escKey'           => esc_html_x( 'ESC', 'keyboard key label shown next to the search overlay', 'jetonomy' ),
-			// WS4-C: keyboard-shortcut labels + hover-card trust line.
-			'kbSearch'         => esc_html__( 'Search', 'jetonomy' ),
-			'kbNavigate'       => esc_html__( 'Navigate up/down', 'jetonomy' ),
-			'kbOpenSelected'   => esc_html__( 'Open selected', 'jetonomy' ),
-			'kbHome'           => esc_html__( 'Home', 'jetonomy' ),
-			'kbThisHelp'       => esc_html__( 'This help', 'jetonomy' ),
-			/* translators: 1: trust level number, 2: reputation points. */
-			'trustLevelFormat' => __( 'Level %1$d · %2$d rep', 'jetonomy' ),
-			/* translators: %s: plural reply label. The %%1$d (post count) and %%2$d (reply count) are filled in by JS. */
-			'hcStatsFormat'    => sprintf( __( '%%1$d posts · %%2$d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			/* translators: 1: plural topic label, 2: plural reply label. The %%1$d (topic count) and %%2$d (reply count) are filled in by JS. */
+			'hcStatsFormat' => sprintf( __( '%%1$d %1$s · %%2$d %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 		),
 	)
 );

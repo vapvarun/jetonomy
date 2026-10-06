@@ -170,6 +170,20 @@ class SpacePurgeTest extends WP_UnitTestCase {
 		$this->assertNotNull( Space::find( $this->live_space ), 'bystander space was destroyed' );
 	}
 
+	public function test_purge_recounts_the_tags_its_topics_carried(): void {
+		[ $space_id, $post_id ] = $this->seed_space( 'tagged-doomed' );
+		$tag_id                 = \Jetonomy\Models\Tag::find_or_create( 'qa-purge-tag' );
+		\Jetonomy\Models\Tag::attach_to_post( $post_id, $tag_id );
+		\Jetonomy\Models\Tag::attach_to_post( $this->live_post, $tag_id );
+
+		$count = fn() => (int) \Jetonomy\Models\Tag::find( $tag_id )->post_count;
+		$this->assertSame( 2, $count() );
+
+		Space_Purge::purge( $space_id );
+
+		$this->assertSame( 1, $count(), 'the purged topic no longer counts; the live one still does' );
+	}
+
 	public function test_purge_leaves_other_spaces_alone(): void {
 		global $wpdb;
 		[ $space_id ] = $this->seed_space( 'doomed-b' );

@@ -1,10 +1,97 @@
 (function($) {
 	'use strict';
 
+	const { __, _n, sprintf } = wp.i18n;
+
 	var Jetonomy = {
 		nonce: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.nonce : '',
 		ajaxUrl: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.ajaxUrl : '',
-		i18n: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.i18n : {},
+		// UI copy, translated in the browser by wp.i18n (JSON files in languages/).
+		i18n: {
+			confirmDelete:        __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
+			confirmUnban:         __( 'Lift this restriction? The member can post again right away.', 'jetonomy' ),
+			confirmArchiveSpace:  __( 'Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.', 'jetonomy' ),
+			confirmPurgeSpace:    __( 'Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.', 'jetonomy' ),
+			/* translators: %s: the space name the operator must retype. */
+			purgeTypeToConfirm:   __( 'This destroys every topic, reply and attachment in %s, including content written by other members. It cannot be undone. Type the space name to confirm.', 'jetonomy' ),
+			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
+			purgeNameMismatch:    __( 'That name did not match, so nothing was deleted.', 'jetonomy' ),
+			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
+			confirmTrash:         __( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
+			saving:               __( 'Saving…', 'jetonomy' ),
+			saved:                __( 'Saved!', 'jetonomy' ),
+			error:                __( 'Something went wrong.', 'jetonomy' ),
+			importDone:           __( 'Import complete!', 'jetonomy' ),
+			/* translators: %s: server-supplied error detail. */
+			importErrorFormat:    __( 'Error: %s', 'jetonomy' ),
+			importErrorUnknown:   __( 'Unknown error', 'jetonomy' ),
+			selectImage:          __( 'Select Image', 'jetonomy' ),
+			useImage:             __( 'Use this image', 'jetonomy' ),
+			unban:                __( 'Unban', 'jetonomy' ),
+			ban:                  __( 'Ban', 'jetonomy' ),
+			hiddenForcesInvite:   __( 'Hidden spaces must use Invite Only. Join policy switched.', 'jetonomy' ),
+			hiddenRequiresInvite: __( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
+			reloadPage:           __( 'Reload page', 'jetonomy' ),
+			importConnectionLost: __( 'Connection lost. You can resume this import later.', 'jetonomy' ),
+			inviteCopied:         __( 'Invite link copied to clipboard.', 'jetonomy' ),
+			inviteRevokeConfirm:  __( 'Revoke this invite link? Anyone holding it will no longer be able to join.', 'jetonomy' ),
+			inviteUnlimited:      __( 'Unlimited', 'jetonomy' ),
+			inviteNever:          __( 'Never', 'jetonomy' ),
+			inviteExpired:        __( 'Expired', 'jetonomy' ),
+			// Column labels for JS-injected invite rows. They must match the
+			// headings jetonomy_admin_table() renders, because the responsive
+			// layout shows them as each cell's label on mobile.
+			inviteLink:           __( 'Invite Link', 'jetonomy' ),
+			inviteUses:           __( 'Uses', 'jetonomy' ),
+			inviteExpires:        __( 'Expires', 'jetonomy' ),
+			actions:              __( 'Actions', 'jetonomy' ),
+			showMoreDetails:      __( 'Show more details', 'jetonomy' ),
+			copy:                 __( 'Copy', 'jetonomy' ),
+			revoke:               __( 'Revoke', 'jetonomy' ),
+			prefixLabel:          __( 'Label', 'jetonomy' ),
+			removePrefix:         __( 'Remove prefix', 'jetonomy' ),
+			sync:                 __( 'Sync', 'jetonomy' ),
+			syncing:              __( 'Syncing…', 'jetonomy' ),
+			/* translators: %d: number of memberships synced. */
+			syncedFormat:         __( 'Synced (%d)', 'jetonomy' ),
+			importRestartConfirm: __( 'This will discard the interrupted import progress. Continue?', 'jetonomy' ),
+			importRestartTitle:   __( 'Restart import', 'jetonomy' ),
+			// Access-rule composer preview: the sentence and its "who matches" notes.
+			rulePreview: {
+				whoFallback: __( 'People who match this rule', 'jetonomy' ),
+				/* translators: 1: who the rule matches, 2: what they may do, 3: the space role they are recorded as. */
+				sentence: __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
+				// A rule admits; it does not restrict, so no "but not take part".
+				grants: {
+					read:        __( 'read posts and replies', 'jetonomy' ),
+					participate: __( 'read, post, reply, vote and report', 'jetonomy' ),
+					full:        __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s topics', 'jetonomy' ),
+				},
+				// The consequence of each rule type, not its definition.
+				typeNotes: {
+					everyone:    __( 'Matches every visitor, signed in or not. Nobody is asked to log in first.', 'jetonomy' ),
+					logged_in:   __( 'Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.', 'jetonomy' ),
+					role:        __( 'Matches anyone holding this WordPress role. Most members hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ),
+					capability:  __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
+					trust_level: __( 'Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ),
+				},
+				/* translators: %s: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. */
+				membershipNote: __( 'Matches members who hold the %s level you pick below.', 'jetonomy' ),
+				// One generic example cannot serve a role slug, a capability and a number.
+				typePlaceholders: {
+					role:        __( 'subscriber', 'jetonomy' ),
+					capability:  __( 'edit_posts', 'jetonomy' ),
+					trust_level: __( '2', 'jetonomy' ),
+				},
+				// Roster-role labels for the derived value in the preview.
+				roles: {
+					viewer:    __( 'Viewer', 'jetonomy' ),
+					member:    __( 'Member', 'jetonomy' ),
+					moderator: __( 'Moderator', 'jetonomy' ),
+					admin:     __( 'Admin', 'jetonomy' ),
+				},
+			},
+		},
 
 		init: function() {
 			this.bindDashboard();
@@ -113,6 +200,18 @@
 				if (!$(this).hasClass('wp-color-picker')) {
 					$(this).wpColorPicker();
 				}
+			});
+
+			// Colour is a top-level accent only: a sub-category never shows or
+			// stores one, so its field is hidden while a parent is chosen.
+			$(document).on('change', '#cat-parent, #edit-cat-parent', this.syncColorFields);
+			this.syncColorFields();
+		},
+
+		syncColorFields: function() {
+			$('[data-jt-color-field]').each(function() {
+				var parent = parseInt($($(this).data('jtColorField')).val(), 10) || 0;
+				$(this).prop('hidden', parent > 0);
 			});
 		},
 
@@ -254,6 +353,7 @@
 					$color.val($link.data('color') || '');
 					$color.wpColorPicker();
 				}
+				self.syncColorFields();
 
 				$('#jetonomy-edit-category-modal').show();
 			});
@@ -316,27 +416,37 @@
 				});
 			});
 
-			// Drag-sort Categories
+			// Drag-sort Categories. A parent reorders among the top-level
+			// categories, a sub-category among its siblings. After any drop the
+			// rows are regrouped so every sub-category sits under its own parent
+			// again: a dragged parent carries its sub-categories, and a
+			// sub-category dropped elsewhere keeps only its order among siblings.
 			if ($('#jetonomy-categories-list').length) {
-				$('#jetonomy-categories-list').sortable({
+				var $catList = $('#jetonomy-categories-list');
+				$catList.sortable({
 					handle: '.jetonomy-drag-handle',
 					placeholder: 'ui-sortable-placeholder',
-					update: function() {
+					update: function(event, ui) {
+						var parentId = parseInt(ui.item.data('parent'), 10) || 0;
+						var $children = $catList.children('tr.jetonomy-category-child');
+
+						$catList.children('tr[data-id]').not('.jetonomy-category-child').each(function() {
+							var $parent = $(this);
+							$parent.after($children.filter('[data-parent="' + $parent.data('id') + '"]'));
+						});
+
 						var order = [];
-						// Parent rows only. Children render inline on their parent's
-						// page, so counting them would make the batch larger than
-						// per_page and its tail would overwrite the next page's
-						// positions - the same corruption this handler was fixed for,
-						// reachable from page 1 (Basecamp 10210539659).
-						$('#jetonomy-categories-list tr[data-id]').not('.jetonomy-category-child').each(function() {
+						$catList.children('tr[data-id][data-parent="' + parentId + '"]').each(function() {
 							order.push($(this).data('id'));
 						});
-						// Only the rendered page is submitted, so the handler needs the
-						// page context to turn these into absolute positions. Without it
-						// page 2 renumbers from 0 and collides with page 1.
+						// Top-level rows are one page of a paginated list, so the
+						// handler needs the page context to turn them into absolute
+						// positions (Basecamp 10210539659). A sibling group always
+						// renders whole under its parent.
 						var ctx = self.listPageContext();
 						self.ajax('jetonomy_reorder_categories', {
 							order: order,
+							parent_id: parentId,
 							paged: ctx.paged,
 							per_page: ctx.perPage
 						}).done(function(res) {
@@ -412,7 +522,7 @@
 				$vis.off('change.jtCouple').on('change.jtCouple', function() {
 					if ($(this).val() === 'hidden' && $join.val() !== 'invite') {
 						$join.val('invite').trigger('change.jtCoupleSilent');
-						ensureNote(self.i18n.hiddenForcesInvite || 'Hidden spaces must be invite-only.');
+						ensureNote(self.i18n.hiddenForcesInvite);
 					}
 				});
 				$join.off('change.jtCouple').on('change.jtCouple', function(e) {
@@ -421,7 +531,7 @@
 					}
 					if ($vis.val() === 'hidden' && $(this).val() !== 'invite') {
 						$vis.val('private');
-						ensureNote(self.i18n.hiddenRequiresInvite || 'Switched visibility to Private — Hidden requires invite-only.');
+						ensureNote(self.i18n.hiddenRequiresInvite);
 					}
 				});
 			};
@@ -538,7 +648,7 @@
 				var gate;
 				if (mode === 'purge' && title && typeof window.jetonomyPrompt === 'function') {
 					gate = window.jetonomyPrompt(
-						(self.i18n.purgeTypeToConfirm || '%s').replace('%s', title),
+						(self.i18n.purgeTypeToConfirm).replace('%s', title),
 						{
 							danger: true,
 							requireMatch: title,
@@ -589,8 +699,8 @@
 				$('#jt-prefixes-config').toggle(this.checked);
 			});
 			$(document).on('click', '#jt-add-prefix', function() {
-				var labelPlaceholder = Jetonomy.i18n.prefixLabel || 'Label';
-				var removeTitle      = Jetonomy.i18n.removePrefix || 'Remove';
+				var labelPlaceholder = Jetonomy.i18n.prefixLabel;
+				var removeTitle      = Jetonomy.i18n.removePrefix;
 				var row = '<div class="jt-prefix-row">' +
 					'<input type="text" class="jt-prefix-name" placeholder="' + $('<div>').text(labelPlaceholder).html() + '" maxlength="50">' +
 					'<input type="color" class="jt-prefix-color" value="#3B82F6">' +
@@ -826,7 +936,7 @@
 					var matches = activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; });
 
 					if (!matches.length) {
-						$results.append('<div class="jetonomy-ac-empty">No matches</div>');
+						$results.append($('<div class="jetonomy-ac-empty"/>').text(__('No matches', 'jetonomy')));
 						$results.show();
 						return;
 					}
@@ -882,7 +992,11 @@
 					});
 
 					if (matches.length > shown.length) {
-						$results.append('<div class="jetonomy-ac-empty">' + (matches.length - shown.length) + ' more — refine search</div>');
+						var hidden = matches.length - shown.length;
+						$results.append($('<div class="jetonomy-ac-empty"/>').text(
+							/* translators: %d: number of matching levels not shown in the list. */
+							sprintf(_n('%d more. Refine your search to see it.', '%d more. Refine your search to see them.', hidden, 'jetonomy'), hidden)
+						));
 					}
 					$results.show();
 				}
@@ -956,11 +1070,11 @@
 					var roleTxt  = (i18n.roles && i18n.roles[role]) || role;
 					var grantTxt = (i18n.grants && i18n.grants[grants]) || grants;
 
-					var who = i18n.whoFallback || 'People who match this rule';
+					var who = i18n.whoFallback;
 					var val = $('#rule-value').is(':visible') ? $('#rule-value').val() : $('#rule-value-membership-search').val();
 					if (val) { who = typeSel + ': ' + val; }
 
-					var sentence = (i18n.sentence || '%1$s can %2$s. They are recorded as %3$s.')
+					var sentence = (i18n.sentence)
 						.replace('%1$s', who)
 						.replace('%2$s', grantTxt)
 						.replace('%3$s', roleTxt);
@@ -1050,7 +1164,7 @@
 			// Sync existing memberships for a rule
 			$(document).on('click', '.jetonomy-sync-rule', function() {
 				var $btn = $(this);
-				$btn.prop('disabled', true).text(self.i18n.syncing || 'Syncing...');
+				$btn.prop('disabled', true).text(self.i18n.syncing);
 
 				self.ajax('jetonomy_sync_access_rule', {
 					space_id: $btn.data('space-id'),
@@ -1062,14 +1176,14 @@
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);
-						$btn.text((self.i18n.syncedFormat || 'Synced (%d)').replace('%d', res.data.synced));
+						$btn.text((self.i18n.syncedFormat).replace('%d', res.data.synced));
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
-						$btn.text(self.i18n.sync || 'Sync');
+						$btn.text(self.i18n.sync);
 					}
 				}).fail(function() {
 					self.toast(self.i18n.error, 'error');
-					$btn.text(self.i18n.sync || 'Sync');
+					$btn.text(self.i18n.sync);
 				}).always(function() {
 					$btn.prop('disabled', false);
 				});
@@ -1164,10 +1278,10 @@
 				var i18n = self.i18n;
 				var uses = invite.max_uses > 0
 					? (invite.used_count + ' / ' + invite.max_uses)
-					: (invite.used_count + ' / ' + (i18n.inviteUnlimited || 'Unlimited'));
-				var expires = invite.expires_at ? invite.expires_at : (i18n.inviteNever || 'Never');
+					: (invite.used_count + ' / ' + (i18n.inviteUnlimited));
+				var expires = invite.expires_at ? invite.expires_at : (i18n.inviteNever);
 				if (!invite.is_valid) {
-					expires = (i18n.inviteExpired || 'Expired');
+					expires = (i18n.inviteExpired);
 				}
 				// These rows are injected after the shell renders, so they must
 				// carry the same core small-screen contract jetonomy_admin_table()
@@ -1175,24 +1289,24 @@
 				// cell, data-colname everywhere). Without it the responsive CSS
 				// has nothing to collapse and the row stays a wide strip.
 				var $tr = $('<tr>').attr('data-invite-id', invite.id);
-				$('<td>', { 'class': 'column-link column-primary', 'data-colname': i18n.inviteLink || 'Invite Link' })
+				$('<td>', { 'class': 'column-link column-primary', 'data-colname': i18n.inviteLink })
 					.append($('<code>').text(invite.invite_url))
 					.append($('<button>', {
 						type: 'button',
 						'class': 'toggle-row',
 						'aria-expanded': 'false'
-					}).append($('<span>', { 'class': 'screen-reader-text' }).text(i18n.showMoreDetails || 'Show more details')))
+					}).append($('<span>', { 'class': 'screen-reader-text' }).text(i18n.showMoreDetails)))
 					.appendTo($tr);
-				$('<td>', { 'class': 'column-uses', 'data-colname': i18n.inviteUses || 'Uses' }).text(uses).appendTo($tr);
-				$('<td>', { 'class': 'column-expires', 'data-colname': i18n.inviteExpires || 'Expires' }).text(expires).appendTo($tr);
-				var $actions = $('<td>', { 'class': 'column-actions', 'data-colname': i18n.actions || 'Actions' });
+				$('<td>', { 'class': 'column-uses', 'data-colname': i18n.inviteUses }).text(uses).appendTo($tr);
+				$('<td>', { 'class': 'column-expires', 'data-colname': i18n.inviteExpires }).text(expires).appendTo($tr);
+				var $actions = $('<td>', { 'class': 'column-actions', 'data-colname': i18n.actions });
 				$('<button>', { type: 'button', 'class': 'button button-small jetonomy-copy-invite' })
 					.attr('data-url', invite.invite_url)
-					.text(i18n.copy || 'Copy')
+					.text(i18n.copy)
 					.appendTo($actions);
 				$('<button>', { type: 'button', 'class': 'button button-small button-link-delete jetonomy-revoke-invite' })
 					.attr('data-id', invite.id)
-					.text(' ' + (i18n.revoke || 'Revoke'))
+					.text(' ' + (i18n.revoke))
 					.appendTo($actions);
 				$actions.appendTo($tr);
 				return $tr;
@@ -1217,7 +1331,7 @@
 			function copyToClipboard(text) {
 				if (navigator.clipboard && navigator.clipboard.writeText) {
 					navigator.clipboard.writeText(text).then(function() {
-						self.toast(self.i18n.inviteCopied || 'Copied.');
+						self.toast(self.i18n.inviteCopied);
 					}).catch(function() {
 						self.toast(self.i18n.error, 'error');
 					});
@@ -1227,7 +1341,7 @@
 				$tmp[0].select();
 				try {
 					document.execCommand('copy');
-					self.toast(self.i18n.inviteCopied || 'Copied.');
+					self.toast(self.i18n.inviteCopied);
 				} catch (e) {
 					self.toast(self.i18n.error, 'error');
 				}
@@ -1410,7 +1524,7 @@
 				// Pass the danger tone so the OK button renders red. Unbanning
 				// is destructive (the user immediately regains site access) and
 				// should look like every other destructive admin confirm.
-				self.confirmAsync(self.i18n.confirmUnban || self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+				self.confirmAsync(self.i18n.confirmUnban).then(function(ok) {
 					if (!ok) return;
 					$btn.prop('disabled', true);
 
@@ -1518,7 +1632,8 @@
 				var username = $(this).data('username');
 
 				$('#ban-user-id').val(userId);
-				$('#ban-user-label').text('Banning: ' + username);
+				/* translators: %s: username of the member being banned. */
+				$('#ban-user-label').text(sprintf(__('Banning: %s', 'jetonomy'), username));
 				$('#ban-type').val('global_ban');
 				$('#ban-reason').val('');
 				$('#ban-duration').val('permanent');
@@ -1533,7 +1648,8 @@
 				var username = $row.find('.column-username strong').text();
 
 				$('#ban-user-id').val(userId);
-				$('#ban-user-label').text('Silencing: ' + username);
+				/* translators: %s: username of the member being silenced. */
+				$('#ban-user-label').text(sprintf(__('Silencing: %s', 'jetonomy'), username));
 				$('#ban-type').val('silence');
 				$('#ban-reason').val('');
 				$('#ban-duration').val('7d');
@@ -1599,8 +1715,8 @@
 			$(document).on('click', '.jetonomy-import-restart-btn', function() {
 				var $btn = $(this);
 				self.confirmAsync(
-					self.i18n.importRestartConfirm || 'This will discard the interrupted import progress. Continue?',
-					{ danger: true, title: self.i18n.importRestartTitle || 'Restart import' }
+					self.i18n.importRestartConfirm,
+					{ danger: true, title: self.i18n.importRestartTitle }
 				).then(function(ok) {
 					if (!ok) return;
 					self.startImport($btn.data('source'), 'forums', 0, true);
@@ -1630,6 +1746,9 @@
 			statusPct.textContent    = '0%';
 
 			function updateStepIndicator(phase) {
+				// Granting members to private and group spaces belongs to the
+				// Forums step; it has no step of its own.
+				if (phase === 'members') { phase = 'forums'; }
 				var found = false;
 				// Iterate in reverse so steps before the active one get marked done
 				for (var i = steps.length - 1; i >= 0; i--) {
@@ -1644,8 +1763,9 @@
 				}
 			}
 
-			function buildCompleteNotice(processed, skipped) {
+			function buildCompleteNotice(processed, skipped, summary) {
 				skipped = parseInt(skipped, 10) || 0;
+				processed = parseInt(processed, 10) || 0;
 				var notice = document.createElement('div');
 				// A partial success is a warning, not a clean success — the site owner
 				// needs to know some files did not come across rather than seeing a
@@ -1653,20 +1773,40 @@
 				notice.className = skipped > 0 ? 'notice notice-warning' : 'notice notice-success';
 				var p = document.createElement('p');
 				var strong = document.createElement('strong');
-				strong.textContent = (Jetonomy.i18n.importDone || 'Import complete!') + ' ';
+				strong.textContent = (Jetonomy.i18n.importDone) + ' ';
 				p.appendChild(strong);
-				p.appendChild(document.createTextNode(processed + ' records imported successfully. '));
+				p.appendChild(document.createTextNode(
+					/* translators: %d: number of records imported. */
+					sprintf(_n('%d record imported successfully.', '%d records imported successfully.', processed, 'jetonomy'), processed) + ' '
+				));
+				// What was not created and why: already imported by an earlier run
+				// (or "0 records imported" reads as a failure), and rows left out
+				// because their topic or forum was not imported (or the source
+				// count does not add up). Server-worded: Importer::describe_tally().
+				if (summary) {
+					p.appendChild(document.createTextNode(summary + ' '));
+				}
 				if (skipped > 0) {
 					var warn = document.createElement('strong');
-					var tmpl = Jetonomy.i18n.importSkippedFiles || '%d file(s) could not be recovered and were left linked in the original post text.';
-					warn.textContent = tmpl.replace('%d', skipped) + ' ';
+					warn.textContent = sprintf(
+						/* translators: %d: number of attachment files that could not be recovered. */
+						_n('%d file could not be recovered and was left linked in the original post text.', '%d files could not be recovered and were left linked in the original post text.', skipped, 'jetonomy'),
+						skipped
+					) + ' ';
 					p.appendChild(warn);
 				}
 				var link = document.createElement('a');
 				link.href = '';
-				link.textContent = Jetonomy.i18n.reloadPage || 'Reload page';
+				link.textContent = Jetonomy.i18n.reloadPage;
+				// Split around the placeholder so the link can sit anywhere the
+				// translation puts it.
+				var reloadParts = (
+					/* translators: %s: the "Reload page" link. */
+					__('%s to see updated status.', 'jetonomy')
+				).split('%s');
+				p.appendChild(document.createTextNode(reloadParts[0]));
 				p.appendChild(link);
-				p.appendChild(document.createTextNode(' to see updated status.'));
+				p.appendChild(document.createTextNode(reloadParts.slice(1).join('%s')));
 				notice.appendChild(p);
 				return notice;
 			}
@@ -1691,8 +1831,8 @@
 					.then(function(r) { return r.json(); })
 					.then(function(res) {
 						if (!res.success) {
-							var errFmt    = Jetonomy.i18n.importErrorFormat || 'Error: %s';
-							var errDetail = res.data || (Jetonomy.i18n.importErrorUnknown || 'Unknown error');
+							var errFmt    = Jetonomy.i18n.importErrorFormat;
+							var errDetail = res.data || (Jetonomy.i18n.importErrorUnknown);
 							statusText.textContent  = errFmt.replace('%s', errDetail);
 							actionDiv.style.display = 'block';
 							return;
@@ -1710,7 +1850,7 @@
 							progressFill.style.width = '100%';
 							statusPct.textContent    = '100%';
 							progress.classList.add('jetonomy-import-progress--done');
-							statusText.textContent   = Jetonomy.i18n.importDone || 'Import complete!';
+							statusText.textContent   = Jetonomy.i18n.importDone;
 
 							steps.forEach(function(s) {
 								s.classList.remove('jetonomy-step--active');
@@ -1719,7 +1859,7 @@
 
 							results.style.display = 'block';
 							while (results.firstChild) { results.removeChild(results.firstChild); }
-							results.appendChild(buildCompleteNotice(d.processed, d.skipped));
+							results.appendChild(buildCompleteNotice(d.imported, d.skipped, d.summary));
 
 							// Only auto-reload a CLEAN import. The reload exists to reveal the
 							// "Previously Imported" state, which is fine when there is nothing
@@ -1735,7 +1875,7 @@
 						}
 					})
 					.catch(function() {
-						statusText.textContent  = Jetonomy.i18n.importConnectionLost || 'Connection lost. You can resume this import later.';
+						statusText.textContent  = Jetonomy.i18n.importConnectionLost;
 						actionDiv.style.display = 'block';
 					});
 			}

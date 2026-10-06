@@ -9,6 +9,7 @@ namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Cache;
 use function Jetonomy\now;
 
 class Category extends Model {
@@ -32,7 +33,225 @@ class Category extends Model {
 			$data
 		);
 
-		return static::insert( $data );
+		// Interactive callers reject a bad parent with parent_error() first;
+		// this keeps machine writers (importers, seeders) inside the two-level
+		// rule instead of failing a long import over one deep forum.
+		if ( ! empty( $data['parent_id'] ) ) {
+			$data['parent_id'] = self::top_level_ancestor( (int) $data['parent_id'] );
+		}
+
+		// Every writer (wp-admin, REST, setup wizard, seeder, importers) gets a
+		// free slug here: a second "General" under another parent used to fail
+		// on the UNIQUE key with a bare "Failed to create category." (Basecamp
+		// 10375159877). Same rule as wp_insert_term(): suffix, never refuse.
+		$data['slug'] = self::unique_slug( (string) ( $data['slug'] ?? '' ) ?: (string) ( $data['name'] ?? '' ) );
+		$data         = self::normalize_color( $data, (int) ( $data['parent_id'] ?? 0 ) );
+
+		$id = static::insert( $data );
+		Space::bump_tree_generation();
+		return $id;
+	}
+
+	/**
+	 * A slug no other category uses: `$base`, then `$base-1`, `$base-2`...
+	 *
+	 * Checks every row, whatever its visibility. find_by_slug() filters by the
+	 * viewer, so it could not see a hidden category's slug and the insert
+	 * still hit the UNIQUE key.
+	 *
+	 * @param string $base       Requested slug or name; sanitized here.
+	 * @param int    $exclude_id Row being updated (0 on create).
+	 * @return string
+	 */
+	public static function unique_slug( string $base, int $exclude_id = 0 ): string {
+		$base = sanitize_title( $base );
+		if ( '' === $base ) {
+			$base = 'category';
+		}
+
+		$slug = $base;
+		$n    = 1;
+		while ( self::slug_taken( $slug, $exclude_id ) ) {
+			$slug = $base . '-' . $n;
+			++$n;
+		}
+		return $slug;
+	}
+
+	/**
+	 * Whether another category already uses `$slug`.
+	 *
+	 * @param string $slug       Slug.
+	 * @param int    $exclude_id Row being updated (0 on create).
+	 * @return bool
+	 */
+	private static function slug_taken( string $slug, int $exclude_id ): bool {
+		$table = static::table();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from the model.
+		return (bool) static::db()->get_var( static::db()->prepare( "SELECT id FROM {$table} WHERE slug = %s AND id <> %d LIMIT 1", $slug, $exclude_id ) );
+	}
+
+	/**
+	 * Colour is a top-level accent only (owner decision, Basecamp 10375031087):
+	 * it shows beside the category on the community home and nowhere else, so a
+	 * sub-category never stores one. Anything that is not a hex colour is
+	 * dropped rather than stored as free text.
+	 *
+	 * @param array $data      Column data; only touched when it carries `color` or a parent.
+	 * @param int   $parent_id Effective parent after this write (0 = top level).
+	 * @return array
+	 */
+	private static function normalize_color( array $data, int $parent_id ): array {
+		if ( $parent_id > 0 ) {
+			if ( array_key_exists( 'color', $data ) || array_key_exists( 'parent_id', $data ) ) {
+				$data['color'] = null;
+			}
+			return $data;
+		}
+		if ( array_key_exists( 'color', $data ) ) {
+			$data['color'] = sanitize_hex_color( (string) $data['color'] ) ?: null;
+		}
+		return $data;
+	}
+
+	/**
+	 * Update a category, refusing a parent that breaks the two-level rule.
+	 *
+	 * @param int   $id   Category id.
+	 * @param array $data Column => value pairs.
+	 * @return bool|\WP_Error
+	 */
+	public static function update( int $id, array $data ): bool|\WP_Error {
+		if ( array_key_exists( 'parent_id', $data ) ) {
+			$error = self::parent_error( $id, (int) $data['parent_id'] );
+			if ( $error ) {
+				return $error;
+			}
+		}
+
+		if ( array_key_exists( 'slug', $data ) ) {
+			$slug = sanitize_title( (string) $data['slug'] );
+			if ( '' === $slug ) {
+				// Clearing the field means "derive it again", as on create.
+				$slug = self::unique_slug( (string) ( $data['name'] ?? static::find( $id )->name ?? '' ), $id );
+			} elseif ( self::slug_taken( $slug, $id ) ) {
+				// An explicit slug is the owner's choice (it is in shared links),
+				// so say why instead of quietly renaming it - wp_update_term() rule.
+				return new \WP_Error(
+					'jetonomy_slug_taken',
+					/* translators: %s: the category slug the owner typed. */
+					sprintf( __( 'The slug "%s" is already used by another category.', 'jetonomy' ), $slug ),
+					[ 'status' => 409 ]
+				);
+			}
+			$data['slug'] = $slug;
+		}
+
+		if ( array_key_exists( 'color', $data ) || array_key_exists( 'parent_id', $data ) ) {
+			$parent = array_key_exists( 'parent_id', $data ) ? (int) $data['parent_id'] : (int) ( static::find( $id )->parent_id ?? 0 );
+			$data   = self::normalize_color( $data, $parent );
+		}
+
+		$updated = parent::update( $id, $data );
+		// The cached space tree is grouped by category and filtered by its
+		// visibility, so a rename, move or visibility change must retire it.
+		Space::bump_tree_generation();
+		return $updated;
+	}
+
+	/**
+	 * Delete a category only when nothing is filed under it.
+	 *
+	 * The one guard every caller routes through. REST used to delete a parent
+	 * outright, leaving its sub-categories pointing at a missing row (gone
+	 * from every listing and unrepairable in wp-admin) and its spaces filed
+	 * under nothing (Basecamp 10355160875). Live spaces (anything not archived,
+	 * locked included) and sub-categories block the delete; archived spaces are
+	 * moved to uncategorised so a restore does not land in a deleted category.
+	 *
+	 * @param int $id Category id.
+	 * @return bool|\WP_Error 409 WP_Error while spaces or sub-categories remain.
+	 */
+	public static function delete( int $id ): bool|\WP_Error {
+		$spaces = \Jetonomy\table( 'spaces' );
+		if ( (int) static::db()->get_var( static::db()->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE category_id = %d AND status <> 'archived'", $id ) ) > 0 ) {
+			return new \WP_Error( 'jetonomy_category_has_spaces', __( 'Cannot delete a category that contains spaces. Move or delete the spaces first.', 'jetonomy' ), [ 'status' => 409 ] );
+		}
+
+		if ( static::count( [ 'parent_id' => $id ] ) > 0 ) {
+			return new \WP_Error( 'jetonomy_category_has_children', __( 'Cannot delete a category that has sub-categories. Delete them first.', 'jetonomy' ), [ 'status' => 409 ] );
+		}
+
+		$parked = static::db()->get_col(
+			static::db()->prepare( "SELECT id FROM {$spaces} WHERE category_id = %d AND status = 'archived'", $id )
+		);
+		foreach ( $parked as $space_id ) {
+			Space::update( (int) $space_id, [ 'category_id' => 0 ] );
+		}
+
+		$deleted = parent::delete( $id );
+		Space::bump_tree_generation();
+		return $deleted;
+	}
+
+	/**
+	 * Why `$parent_id` cannot be the parent of category `$id`, or null if it can.
+	 *
+	 * Categories nest two levels deep: a top-level category and its
+	 * sub-categories. A parent must exist, must itself be top-level, and a
+	 * category that already has sub-categories cannot become one. Those rules
+	 * also rule out self-parenting and cycles.
+	 *
+	 * @param int $id        Category being written (0 when creating).
+	 * @param int $parent_id Proposed parent (0 = top level).
+	 * @return \WP_Error|null
+	 */
+	public static function parent_error( int $id, int $parent_id ): ?\WP_Error {
+		if ( $parent_id <= 0 ) {
+			return null;
+		}
+
+		$message = null;
+		$parent  = static::find( $parent_id );
+		if ( $parent_id === $id ) {
+			$message = __( 'A category cannot be its own parent.', 'jetonomy' );
+		} elseif ( ! $parent ) {
+			$message = __( 'The parent category does not exist.', 'jetonomy' );
+		} elseif ( (int) $parent->parent_id > 0 ) {
+			$message = __( 'Categories nest two levels deep. Choose a top-level category as the parent.', 'jetonomy' );
+		} elseif ( $id > 0 && static::count( [ 'parent_id' => $id ] ) > 0 ) {
+			$message = __( 'This category has sub-categories, so it cannot become a sub-category itself.', 'jetonomy' );
+		}
+
+		return $message ? new \WP_Error( 'jetonomy_invalid_parent', $message, [ 'status' => 400 ] ) : null;
+	}
+
+	/**
+	 * The top-level category `$id` sits under: itself when already top-level,
+	 * the highest existing ancestor when a parent row is missing, 0 when `$id`
+	 * itself is missing or the chain loops.
+	 *
+	 * Visited-set walk so pre-2.0.1 rows with a cycle cannot loop.
+	 *
+	 * @param int $id Category id.
+	 * @return int
+	 */
+	public static function top_level_ancestor( int $id ): int {
+		$seen = [];
+		$last = 0;
+		while ( $id > 0 && ! isset( $seen[ $id ] ) ) {
+			$seen[ $id ] = true;
+			$row         = static::find( $id );
+			if ( ! $row ) {
+				return $last;
+			}
+			$last = $id;
+			if ( (int) $row->parent_id <= 0 ) {
+				return $id;
+			}
+			$id = (int) $row->parent_id;
+		}
+		return 0;
 	}
 
 	/**
@@ -65,10 +284,15 @@ class Category extends Model {
 
 		if ( $user_id > 0 && ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_manage_categories' ) ) ) {
 			$result = [ '1=1', [] ];
-		} elseif ( $user_id <= 0 ) {
-			$result = [ "{$col}visibility = 'public'", [] ];
 		} else {
-			$result = [ "{$col}visibility IN ('public','private')", [] ];
+			$allowed = $user_id <= 0 ? "'public'" : "'public','private'";
+			// A hidden parent hides its whole branch: a sub-category is visible
+			// only when its parent is too. Categories nest two levels deep, so
+			// one parent check covers the tree.
+			$result = [
+				"{$col}visibility IN ({$allowed}) AND ( {$col}parent_id IS NULL OR {$col}parent_id = 0 OR {$col}parent_id IN ( SELECT jt_vp.id FROM " . \Jetonomy\table( 'categories' ) . " jt_vp WHERE jt_vp.visibility IN ({$allowed}) ) )",
+				[],
+			];
 		}
 
 		/**
@@ -88,11 +312,24 @@ class Category extends Model {
 	 * viewer who may not see it, so direct-URL access cannot bypass the
 	 * listings the same predicate governs.
 	 *
+	 * Memoised per request: the category route resolves the same slug from
+	 * the template, the document title and the SEO paths. The key carries the
+	 * tree generation every category write bumps, so a write in the same
+	 * request is seen by the next lookup.
+	 *
 	 * @param string   $slug
 	 * @param int|null $user_id Viewer ID (null resolves to the current user).
 	 * @return object|null
 	 */
 	public static function find_by_slug( string $slug, ?int $user_id = null ): ?object {
+		static $memo = array();
+
+		$user_id = $user_id ?? get_current_user_id();
+		$key     = $slug . '|' . $user_id . '|' . (int) Cache::get( 'cat_tree_gen' );
+		if ( array_key_exists( $key, $memo ) ) {
+			return $memo[ $key ] ? clone $memo[ $key ] : null;
+		}
+
 		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from listing_visibility_sql() with literal SQL only.
@@ -103,6 +340,8 @@ class Category extends Model {
 				...$vis_values
 			)
 		);
+
+		$memo[ $key ] = $row ? clone $row : null;
 		return $row ?: null;
 	}
 
@@ -176,6 +415,85 @@ class Category extends Model {
 	}
 
 	/**
+	 * Visible sub-categories grouped by parent id, in one query.
+	 *
+	 * Categories nest two levels deep, so this plus list_top_level() is the
+	 * whole tree. Replaces one list_children() query per parent on the
+	 * directory, the category page, the navigation block and the admin list.
+	 *
+	 * @param int|null $user_id    Viewer ID (null resolves to the current user).
+	 * @param int[]    $parent_ids Limit to these parents (empty = every parent).
+	 * @return array<int, object[]> Parent id => children ordered like list_children().
+	 */
+	public static function children_by_parent( ?int $user_id = null, array $parent_ids = [] ): array {
+		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
+
+		$parent_ids = array_values( array_filter( array_map( 'intval', $parent_ids ) ) );
+		$in         = '';
+		if ( ! empty( $parent_ids ) ) {
+			$in         = ' AND parent_id IN (' . implode( ',', array_fill( 0, count( $parent_ids ), '%d' ) ) . ')';
+			$vis_values = array_merge( $parent_ids, $vis_values );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is %d placeholders, $vis_where literal SQL from listing_visibility_sql().
+		$sql = 'SELECT * FROM ' . static::table() . " WHERE parent_id > 0{$in} AND {$vis_where} ORDER BY sort_order ASC, name ASC";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows = static::db()->get_results( empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values ) ) ?: [];
+
+		$grouped = [];
+		foreach ( $rows as $row ) {
+			$grouped[ (int) $row->parent_id ][] = $row;
+		}
+		return $grouped;
+	}
+
+	/**
+	 * Every visible category in display order (each parent followed by its
+	 * sub-categories), with a `depth` of 0 or 1 for indenting a picker.
+	 *
+	 * `$keep_id` is always included (appended if the viewer cannot see it), so a
+	 * picker for an existing space never drops the category it is already in
+	 * and a save cannot silently unfile it.
+	 *
+	 * @param int|null $user_id Viewer ID (null resolves to the current user).
+	 * @param int      $keep_id Category that must stay selectable (0 = none).
+	 * @return object[]
+	 */
+	public static function list_tree( ?int $user_id = null, int $keep_id = 0 ): array {
+		$children = self::children_by_parent( $user_id );
+		$tree     = [];
+		foreach ( self::list_top_level( $user_id ) as $top ) {
+			$top->depth = 0;
+			$tree[]     = $top;
+			foreach ( $children[ (int) $top->id ] ?? [] as $child ) {
+				$child->depth = 1;
+				$tree[]       = $child;
+			}
+		}
+		if ( $keep_id > 0 && ! in_array( $keep_id, array_map( 'intval', array_column( $tree, 'id' ) ), true ) ) {
+			$kept = static::find( $keep_id );
+			if ( $kept ) {
+				$kept->depth = 0;
+				$tree[]      = $kept;
+			}
+		}
+		return $tree;
+	}
+
+	/**
+	 * A category's name indented by its list_tree() depth, for a <select>.
+	 *
+	 * Three non-breaking spaces per level, as wp_dropdown_categories() does.
+	 *
+	 * @param object $category Row from list_tree().
+	 * @return string Unescaped.
+	 */
+	public static function picker_label( object $category ): string {
+		return str_repeat( "\u{00A0}", 3 * (int) ( $category->depth ?? 0 ) ) . $category->name;
+	}
+
+	/**
 	 * Paginated list of top-level categories for the admin page.
 	 *
 	 * @param string $search   Optional LIKE filter against name.
@@ -220,9 +538,10 @@ class Category extends Model {
 		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: [];
 
 		// Hydrate children inline (children share parent's page; usually a small
-		// number per parent, no need to paginate those).
+		// number per parent, no need to paginate those) - one query for the page.
+		$children = self::children_by_parent( null, array_column( $rows, 'id' ) );
 		foreach ( $rows as $row ) {
-			$row->children = self::list_children( (int) $row->id );
+			$row->children = $children[ (int) $row->id ] ?? [];
 		}
 
 		return [

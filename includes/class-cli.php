@@ -126,13 +126,21 @@ class CLI {
 
 		\WP_CLI::success(
 			sprintf(
-				'%sImport complete. Imported: %d, Skipped: %d, Errors: %d',
+				'%sImport complete. Imported: %d, Already imported: %d, Skipped: %d, Errors: %d',
 				$prefix,
 				$result['imported'],
+				$result['already'] ?? 0,
 				$result['skipped'],
 				count( $result['errors'] )
 			)
 		);
+
+		// The same sentences the Import screen shows: what an earlier run
+		// already brought over, what was re-threaded, and what was left out
+		// because its topic or forum was not imported.
+		foreach ( \Jetonomy\Import\Importer::describe_tally( $result ) as $line ) {
+			\WP_CLI::log( $line );
+		}
 
 		if ( ! empty( $result['errors'] ) ) {
 			\WP_CLI::warning( 'Errors:' );
@@ -306,10 +314,7 @@ class CLI {
 				\WP_CLI::error( 'Demo data already exists. Run with --force to replace it, or run `wp jetonomy demo-cleanup` first.' );
 				return;
 			}
-			\WP_CLI::log( 'Cleaning up existing demo data...' );
-			Demo_Seeder::cleanup( $existing );
-			delete_option( 'jetonomy_demo_data' );
-			\WP_CLI::log( 'Done.' );
+			\WP_CLI::log( 'Replacing the existing demo data...' );
 		}
 
 		$admin_id = (int) get_option(
@@ -324,8 +329,7 @@ class CLI {
 		);
 
 		\WP_CLI::log( 'Seeding demo users...' );
-		$demo = Demo_Seeder::seed( $admin_id );
-		update_option( 'jetonomy_demo_data', $demo, false );
+		$demo = Demo_Seeder::import( $admin_id );
 		flush_rewrite_rules();
 
 		\WP_CLI::log( sprintf( '  Users created:     %d', count( $demo['users'] ) ) );
@@ -364,8 +368,7 @@ class CLI {
 
 		\WP_CLI::log( sprintf( 'Removing %d posts, %d replies, %d users, %d spaces...', count( $demo['posts'] ?? [] ), count( $demo['replies'] ?? [] ), count( $demo['users'] ?? [] ), count( $demo['spaces'] ?? [] ) ) );
 
-		Demo_Seeder::cleanup( $demo );
-		delete_option( 'jetonomy_demo_data' );
+		Demo_Seeder::remove();
 
 		\WP_CLI::success( 'All demo data removed.' );
 	}

@@ -12,7 +12,14 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
  */
 const jtModalI18n = () => ( ( typeof window !== 'undefined' && window.jetonomyData && window.jetonomyData.i18n ) || {} );
 
-function jetonomyConfirm( message ) {
+// opts.danger: red confirm button and initial focus on Cancel, so Enter backs
+// out of a destructive action. Delegates to the shared toolkit
+// (jetonomy-modals.js, which also handles Esc and focus trapping) wherever it
+// is loaded; the inline dialog below is only for surfaces without it.
+function jetonomyConfirm( message, opts = {} ) {
+	if ( 'function' === typeof window.jetonomyConfirm ) {
+		return window.jetonomyConfirm( message, opts );
+	}
 	return new Promise( ( resolve ) => {
 		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
@@ -30,7 +37,7 @@ function jetonomyConfirm( message ) {
 		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( false ); } );
 		const okBtn = document.createElement( 'button' );
-		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.className = 'jt-btn ' + ( opts.danger ? 'jt-btn-danger' : 'jt-btn-fill' );
 		okBtn.textContent = t.modalConfirm || 'Confirm';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( true ); } );
 		actions.appendChild( cancelBtn );
@@ -39,7 +46,7 @@ function jetonomyConfirm( message ) {
 		overlay.appendChild( box );
 		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( false ); } } );
 		document.body.appendChild( overlay );
-		okBtn.focus();
+		( opts.danger ? cancelBtn : okBtn ).focus();
 	} );
 }
 
@@ -49,7 +56,7 @@ function jetonomyPrompt( message, options ) {
 	// requireMatch turns this into a type-to-confirm gate: the submit button
 	// stays disabled until the typed text matches exactly. Used for actions
 	// with no undo, so the weight of the confirmation matches the weight of
-	// the action - the same contract admin.js already uses for space purge.
+	// the action - the same contract admin-common.js already uses for space purge.
 	const requireMatch = opts.requireMatch ? String( opts.requireMatch ) : '';
 
 	return new Promise( ( resolve ) => {
@@ -880,6 +887,13 @@ const { state, actions } = store( 'jetonomy', {
         // Localized label for the threaded-reply toggle button. Reads this
         // element's context (collapsed + childCount) and state.i18n so the
         // button translates (was inline English in the data-wp-text expr).
+        // Sub-category chips: the panel (or chevron) whose subId is the one
+        // open in the shared wrapper context.
+        get isSubOpen() {
+            const ctx = getContext() || {};
+            return !! ctx.subId && ctx.openSub === ctx.subId;
+        },
+
         get threadToggleLabel() {
             const ctx  = getContext() || {};
             const i18n = state.i18n || {};
@@ -1154,7 +1168,7 @@ const { state, actions } = store( 'jetonomy', {
 
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const ok = yield window.jetonomyConfirm(
-                ( i18n.liftConfirmFormat || 'Lift the restriction on %s?' ).replace( '%s', name || '' ),
+                ( i18n.liftConfirmFormat || 'Lift the restriction on %s? They regain full access right away.' ).replace( '%s', name || '' ),
                 { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift' }
             );
             if ( ! ok ) return;
@@ -1566,10 +1580,14 @@ const { state, actions } = store( 'jetonomy', {
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { status: 'publish' } } );
             if ( res.ok ) {
-                if ( window.bnToast ) window.bnToast( state.i18n?.draftPublished || 'Published.' );
+                // A space that requires approval holds it instead of publishing.
+                const held = [ 'pending', 'spam' ].includes( res.data && res.data.status );
+                if ( window.bnToast ) window.bnToast( held ? state.i18n?.pendingNotice : ( state.i18n?.draftPublished || 'Published.' ) );
                 row.remove();
-                // Last draft gone — reload so the server renders the empty state.
-                if ( ! document.querySelector( '.jt-row--draft' ) ) window.location.reload();
+                // Last draft gone — reload so the server renders the empty state,
+                // after the held notice has been on screen long enough to read.
+                // ponytail: fixed delay; carry the notice across the reload if it ever needs to persist.
+                if ( ! document.querySelector( '.jt-row--draft' ) ) window.setTimeout( () => window.location.reload(), held ? 3000 : 0 );
             } else {
                 btn.disabled = false;
                 if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.genericError || 'Could not publish.' );
@@ -1999,7 +2017,7 @@ const { state, actions } = store( 'jetonomy', {
                     } ),
                 revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Could not update follow state.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -2061,7 +2079,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Could not update follow state.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -2084,7 +2102,7 @@ const { state, actions } = store( 'jetonomy', {
                     {
                         title: state.i18n?.leaveSpace || 'Leave space',
                         confirmLabel: state.i18n?.leave || 'Leave',
-                        cancelLabel: state.i18n?.cancelLabel || 'Cancel',
+                        cancelLabel: state.i18n?.cancel || 'Cancel',
                     }
                 )
                 : true;
@@ -2105,7 +2123,7 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             if ( window.bnToast ) {
-                window.bnToast( ( res.data && res.data.message ) || state.i18n?.leaveFailed || 'Could not leave. Please try again.' );
+                window.bnToast( ( res.data && res.data.message ) || state.i18n?.leaveSpaceFailed || 'Could not leave. Please try again.' );
             }
         },
 
@@ -2339,7 +2357,7 @@ const { state, actions } = store( 'jetonomy', {
                     setBookmarked( snap.wasBookmarked );
                 },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Could not update bookmark.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -2763,7 +2781,7 @@ const { state, actions } = store( 'jetonomy', {
             const targetId = yield jetonomyPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId, sourceTitle );
             if ( ! targetId ) return;
 
-            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', { danger: true } ) ) ) return;
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }/merge`, {
@@ -2844,7 +2862,7 @@ const { state, actions } = store( 'jetonomy', {
             const spaceSlug = el.ref.dataset.spaceSlug;
             if ( ! postId ) return;
 
-            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?', { danger: true } ) ) ) return;
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }`, {
@@ -2864,6 +2882,40 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Restore / delete permanently a trashed topic (moderators) ──
+        // The route, method, confirm text and redirect all come from the
+        // button, so Restore (POST space-scoped approve) and Delete
+        // permanently (DELETE /posts/{id}?force=true) share one action.
+        *trashedPostAction() {
+            const btn = getElement().ref;
+            const path = btn.getAttribute( 'data-rest-path' );
+            if ( ! path ) return;
+
+            const confirmMsg = btn.getAttribute( 'data-confirm' );
+            if ( confirmMsg && ! ( yield jetonomyConfirm( confirmMsg, { danger: true } ) ) ) return;
+
+            btn.disabled = true;
+            try {
+                const res = yield window.jetonomyRest.restFetch( path, {
+                    method: btn.getAttribute( 'data-rest-method' ) || 'POST',
+                } );
+                if ( res.ok ) {
+                    const redirect = btn.getAttribute( 'data-redirect' );
+                    if ( redirect ) {
+                        window.location.assign( redirect );
+                    } else {
+                        window.location.reload();
+                    }
+                    return;
+                }
+                btn.disabled = false;
+                if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.failedDelete || 'Failed to delete.' );
+            } catch {
+                btn.disabled = false;
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+            }
+        },
+
         // ── Delete reply ──
         *deleteReply( event ) {
             const trigger = triggerOf( event );
@@ -2871,7 +2923,7 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
-            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?', { danger: true } ) ) ) return;
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/replies/${ replyId }`, {
@@ -2916,7 +2968,7 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.reload();
                 } else {
                     const err = res.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to unblock.' );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                     trigger.disabled = false;
                 }
             } catch {
@@ -2947,7 +2999,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: () => { /* No optimistic UI — helper toasts on error. */ },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Failed to accept.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -2971,7 +3023,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: () => { /* No optimistic UI — helper toasts on error. */ },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Failed to update.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
         },
 
@@ -3029,8 +3081,14 @@ const { state, actions } = store( 'jetonomy', {
                     allBtns.forEach( ( b ) => { b.disabled = false; } );
                 },
                 toastOnError: true,
-                errorFallback: state.i18n?.failedSave || 'Could not update status.',
+                errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
+        },
+
+        // ── Sub-category chip: show / hide its spaces (one open at a time) ──
+        toggleSub() {
+            const ctx = getContext();
+            ctx.openSub = ctx.openSub === ctx.subId ? 0 : ctx.subId;
         },
 
         // ── Toggle collapsible thread ──
@@ -3217,6 +3275,28 @@ const { state, actions } = store( 'jetonomy', {
             // Replace only the numeric run so the localized suffix survives;
             // drop the badge entirely when the queue hits zero (SSR hides it).
             const flagBadge = document.querySelector( '.jt-flag-count' );
+            // The sentence under the heading ("1 pending flag") went stale the
+            // same way; the server renders it for every reachable count.
+            const flagSentence = document.querySelector( '[data-jt-flag-sentences]' );
+            if ( flagSentence ) {
+                try {
+                    const sentences = JSON.parse( flagSentence.getAttribute( 'data-jt-flag-sentences' ) ) || {};
+                    const next      = Math.max( 0, ( parseInt( flagSentence.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
+                    flagSentence.setAttribute( 'data-count', String( next ) );
+                    if ( sentences[ next ] ) flagSentence.textContent = sentences[ next ];
+                } catch ( e ) { /* leave the server text as is */ }
+            }
+            // The "Flags N" section tab is the third copy of the count.
+            const flagTab = document.querySelector( '[data-jt-flag-tab-count]' );
+            if ( flagTab ) {
+                const tabCount = Math.max( 0, ( parseInt( flagTab.getAttribute( 'data-jt-flag-tab-count' ), 10 ) || 0 ) - 1 );
+                if ( tabCount <= 0 ) {
+                    flagTab.remove();
+                } else {
+                    flagTab.setAttribute( 'data-jt-flag-tab-count', String( tabCount ) );
+                    flagTab.textContent = tabCount.toLocaleString( document.documentElement.lang || undefined );
+                }
+            }
             if ( flagBadge ) {
                 const nextCount = Math.max( 0, ( parseInt( flagBadge.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
                 if ( nextCount <= 0 ) {
@@ -3255,7 +3335,7 @@ const { state, actions } = store( 'jetonomy', {
 
             // Purge asks the admin to TYPE the space name; archive is a plain
             // confirm. Matching the weight of the gate to the weight of the
-            // action is the point — the same split admin.js makes.
+            // action is the point — the same split admin-common.js makes.
             let confirmed;
             if ( 'purge' === mode && title && 'function' === typeof window.jetonomyPrompt ) {
                 const typed = yield window.jetonomyPrompt( message, {
@@ -3289,7 +3369,7 @@ const { state, actions } = store( 'jetonomy', {
                     // The route's own messages are written for humans — "No one
                     // else can take over this space", "restricted to site
                     // administrators" — so surface them rather than a generic.
-                    errorEl.textContent = ( res.data && res.data.message ) || i18n.error || 'Could not delete. Please try again.';
+                    errorEl.textContent = ( res.data && res.data.message ) || i18n.deleteFailed || 'Could not delete. Please try again.';
                     errorEl.hidden = false;
                 } 
                 return;
@@ -3325,7 +3405,7 @@ const { state, actions } = store( 'jetonomy', {
             // Approve does not — it is the outcome the author already asked for.
             const confirmMsg = btn.getAttribute( 'data-confirm' );
             if ( confirmMsg && 'function' === typeof window.jetonomyConfirm ) {
-                const ok = yield window.jetonomyConfirm( confirmMsg );
+                const ok = yield window.jetonomyConfirm( confirmMsg, { danger: true } );
                 if ( ! ok ) return;
             }
 
@@ -3333,10 +3413,16 @@ const { state, actions } = store( 'jetonomy', {
             let path = endpoint + action + '/' + kind + '/' + objectId;
             if ( base && 0 === path.indexOf( base ) ) path = path.slice( base.length );
 
+            // A button can name its own route instead - the Trash tab's
+            // "Delete permanently" is DELETE /posts|replies/{id}?force=true,
+            // not a moderation status change.
+            const method = btn.getAttribute( 'data-rest-method' ) || 'POST';
+            if ( btn.getAttribute( 'data-rest-path' ) ) path = btn.getAttribute( 'data-rest-path' );
+
             const buttons = card.querySelectorAll( '.jt-mod-approve' );
             buttons.forEach( ( b ) => { b.disabled = true; } );
 
-            const res = yield window.jetonomyRest.restFetch( path, { method: 'POST' } );
+            const res = yield window.jetonomyRest.restFetch( path, { method } );
             if ( ! res.ok ) {
                 // Re-enable rather than strand the row: the usual cause is another
                 // moderator having already handled it, and the message says so.
@@ -3346,7 +3432,7 @@ const { state, actions } = store( 'jetonomy', {
                 const p = document.createElement( 'p' );
                 p.className = 'jt-mod-flag-error';
                 p.setAttribute( 'role', 'alert' );
-                p.textContent = ( res.data && res.data.message ) || i18n.approvalFailed || 'Could not update this submission.';
+                p.textContent = ( res.data && res.data.message ) || i18n.approvalFailed || 'Could not update this submission. It may have been handled by another moderator.';
                 card.appendChild( p );
                 return;
             }
@@ -3373,7 +3459,7 @@ const { state, actions } = store( 'jetonomy', {
                 wrapper.className = 'jt-empty';
                 const msg = document.createElement( 'div' );
                 msg.className = 'jt-empty-text';
-                msg.textContent = i18n.approvalsClean || 'Nothing left awaiting approval.';
+                msg.textContent = container.getAttribute( 'data-empty-text' ) || i18n.approvalsClean || 'Nothing left awaiting approval.';
                 wrapper.appendChild( msg );
                 container.parentNode.replaceChild( wrapper, container );
             }
@@ -3446,7 +3532,7 @@ const { state, actions } = store( 'jetonomy', {
                     // don't append.
                     if ( 'pending' === payload.status || 'spam' === payload.status ) {
                         body.innerHTML = '';
-                        if ( window.bnToast ) window.bnToast( state.i18n?.pendingNotice || 'Your reply is awaiting moderation and will appear once approved.' );
+                        if ( window.bnToast ) window.bnToast( state.i18n?.pendingReplyNotice || 'Your reply is awaiting moderation and will appear once approved.' );
                     } else {
                         // Top-level replies append in place; nested replies and any
                         // append miss fall back to a full reload.
@@ -3463,7 +3549,7 @@ const { state, actions } = store( 'jetonomy', {
                     }
                 } else {
                     const err = response.data || {};
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to post reply.' );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                 }
             } catch {
                 if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
@@ -3517,7 +3603,7 @@ const { state, actions } = store( 'jetonomy', {
             ctx.postStatus    = 'publish';
             ctx.showScheduler = false;
             actions._closePublishMenus();
-            state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+            state.submitLabel = actions._submitLabelFor( ctx );
         },
 
         selectSaveDraft() {
@@ -3525,7 +3611,7 @@ const { state, actions } = store( 'jetonomy', {
             ctx.postStatus    = 'draft';
             ctx.showScheduler = false;
             actions._closePublishMenus();
-            state.submitLabel = state.i18n?.saveDraft || 'Save Draft';
+            state.submitLabel = actions._submitLabelFor( ctx );
         },
 
         selectSchedule() {
@@ -3533,7 +3619,22 @@ const { state, actions } = store( 'jetonomy', {
             ctx.postStatus    = 'draft';
             ctx.showScheduler = true;
             actions._closePublishMenus();
-            state.submitLabel = state.i18n?.schedule || 'Schedule';
+            state.submitLabel = actions._submitLabelFor( ctx );
+        },
+
+        // The composer's submit label for its current publish mode. Every
+        // place that sets the label routes through here, so Publish now reads
+        // in the space type's own words (state.publishLabel, set by the
+        // composer page: "Post Question", "Submit Idea", ...) and an idle or
+        // failed submit never swaps Save Draft / Schedule for a publish label.
+        _submitLabelFor( ctx ) {
+            if ( ctx?.showScheduler ) {
+                return state.i18n?.schedule || 'Schedule';
+            }
+            if ( 'draft' === ctx?.postStatus ) {
+                return state.i18n?.saveDraft || 'Save Draft';
+            }
+            return state.publishLabel || 'Post Topic';
         },
 
         // ── Shared post-compose generator (1.4.3) ──
@@ -3602,7 +3703,7 @@ const { state, actions } = store( 'jetonomy', {
                 state.isSubmitting = false;
                 ctx.submitting     = false;
                 if ( 'state' === o.errorSink ) {
-                    state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+                    state.submitLabel = actions._submitLabelFor( ctx );
                 }
             };
 
@@ -3618,7 +3719,7 @@ const { state, actions } = store( 'jetonomy', {
                 || document.querySelector( '.jt-compose-topic-embed .jt-compose-topic-form' );
 
             if ( ! form ) {
-                writeError( state.i18n?.failedSave || 'Failed to create post.' );
+                writeError( state.i18n?.failedSave || 'Failed to save.' );
                 setIdle();
                 return;
             }
@@ -3687,16 +3788,20 @@ const { state, actions } = store( 'jetonomy', {
                 // the core post scheduler. We intentionally do NOT stamp the
                 // browser's timezone here — the scheduled time means "this time
                 // in the site's timezone", regardless of where the author is.
+                //
+                // Date AND time are both required. A missing time used to fall
+                // back to midnight, so "today, no time picked" was already in
+                // the past and went live at the next run. The server rejects
+                // a past or time-less schedule too; this only saves the trip.
                 if ( dateVal && timeVal ) {
                     publishedAt = dateVal + 'T' + timeVal + ':00';
-                } else if ( dateVal ) {
-                    publishedAt = dateVal + 'T00:00:00';
                 }
             }
             if ( o.collectSchedule && 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
-                state.isSubmitting = false;
-                state.submitLabel  = state.i18n?.schedule || 'Schedule';
-                if ( window.bnToast ) window.bnToast( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
+                const msg = state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.';
+                writeError( msg );
+                if ( window.bnToast ) window.bnToast( msg );
+                setIdle();
                 return;
             }
 
@@ -3753,7 +3858,7 @@ const { state, actions } = store( 'jetonomy', {
             // normalises the response into { ok, status, data }. Using it here
             // means a stale nonce no longer eats the post silently.
             if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
-                writeError( state.i18n?.failedSave || 'Failed to create post.' );
+                writeError( state.i18n?.failedSave || 'Failed to save.' );
                 setIdle();
                 return;
             }
@@ -3766,7 +3871,7 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! result.ok ) {
                 const errMsg = ( result.data && result.data.message )
                     ? result.data.message
-                    : ( state.i18n?.failedSave || 'Failed to create post.' );
+                    : ( state.i18n?.failedSave || 'Failed to save.' );
                 writeError( errMsg );
                 if ( window.bnToast ) window.bnToast( errMsg );
                 setIdle();
@@ -3792,8 +3897,16 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
+            // Draft or scheduled: leave the form for the saved item, the same
+            // as a published topic. Staying put with the fields still filled
+            // (and the button reset to "Post Topic") made the natural next
+            // click queue a second copy. The item's page says whether it is a
+            // draft or when it is scheduled to publish.
+            if ( 'draft' === status && slug && spaceSlug && state.communityBase ) {
+                window.location.href = `${ state.communityBase }/s/${ spaceSlug }/t/${ slug }/`;
+                return;
+            }
             if ( 'draft' === status ) {
-                state.submitLabel  = state.i18n?.saveDraft || 'Save Draft';
                 setIdle();
                 if ( window.bnToast ) window.bnToast( state.i18n?.draftSaved || 'Draft saved. You can find it in your profile under Drafts.' );
                 return;
@@ -4042,7 +4155,7 @@ const { state, actions } = store( 'jetonomy', {
                         const cfErr = cfResponse.data || {};
                         if ( window.bnToast ) {
                             window.bnToast(
-                                cfErr.message || ( state.i18n?.failedSaveProfile || 'Some custom fields could not be saved.' ),
+                                cfErr.message || ( state.i18n?.failedSaveProfile || 'Failed to save profile.' ),
                                 'error'
                             );
                         }
@@ -4566,4 +4679,42 @@ const { state, actions } = store( 'jetonomy', {
     }
     document.addEventListener( 'jetonomy:navigated', focusComposer );
     window.addEventListener( 'hashchange', focusComposer );
+} )();
+
+/**
+ * Topic view beacon. The one place a topic view is counted.
+ *
+ * The topic page response does no counting and sets no cookie, so a page cache
+ * can store it - and a cached hit never runs PHP, so the count has to come from
+ * the browser. Once per browser session per topic (sessionStorage, no cookie),
+ * POST /posts/{id}/view; the server adds its own per-IP window against replays.
+ * Guests send no nonce (a cached page's nonce is stale by design); a logged-in
+ * member's page is never cached, so its nonce is fresh and identifies them,
+ * which private-space topics need. Re-runs on `jetonomy:navigated` so a topic
+ * reached by client-side navigation counts too.
+ */
+( function () {
+    function countView() {
+        const el = document.querySelector( '[data-jt-view-post]' );
+        const id = el ? parseInt( el.getAttribute( 'data-jt-view-post' ), 10 ) : 0;
+        if ( ! id || ! window.jetonomyRest ) return;
+        const key = 'jetonomy_view_' + id;
+        try {
+            if ( window.sessionStorage.getItem( key ) ) return;
+            window.sessionStorage.setItem( key, '1' );
+        } catch ( e ) {
+            // Storage blocked: count anyway; the server window still dedupes.
+        }
+        window.jetonomyRest.restFetch( '/posts/' + id + '/view', {
+            method: 'POST',
+            nonce: document.body.classList.contains( 'logged-in' ),
+        } );
+    }
+
+    if ( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', countView );
+    } else {
+        countView();
+    }
+    document.addEventListener( 'jetonomy:navigated', countView );
 } )();

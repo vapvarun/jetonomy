@@ -2,8 +2,8 @@
  * Jetonomy — Content admin page (post/reply moderation table).
  *
  * Inline-edit, row actions (trash / spam / restore), and bulk actions.
- * AJAX URL / nonce / i18n strings come from window.jetonomyAdmin and
- * the page-specific window.jetonomyContent localize. Loaded only on
+ * AJAX URL / nonce come from window.jetonomyAdmin and the page-specific
+ * window.jetonomyContent localize; UI strings use wp.i18n. Loaded only on
  * the Content admin page.
  */
 (function () {
@@ -12,7 +12,17 @@
 	var cfg = {
 		ajaxUrl: (window.jetonomyAdmin && window.jetonomyAdmin.ajaxUrl) || window.ajaxurl,
 		nonce: (window.jetonomyContent && window.jetonomyContent.nonce) || (window.jetonomyAdmin && window.jetonomyAdmin.nonce) || '',
-		i18n: (window.jetonomyContent && window.jetonomyContent.i18n) || {}
+		i18n: {
+			confirmTrash:      wp.i18n.__( 'Move this to trash?', 'jetonomy' ),
+			confirmSpam:       wp.i18n.__( 'Mark this as spam?', 'jetonomy' ),
+			confirmDelete:     wp.i18n.__( 'Delete permanently? The topic and all of its replies are removed and cannot be restored.', 'jetonomy' ),
+			confirmBulkDelete: wp.i18n.__( 'Delete the selected topics permanently, with all of their replies? This cannot be undone.', 'jetonomy' ),
+			confirmBulk:       wp.i18n.__( 'Apply this action to all selected posts?', 'jetonomy' ),
+			saved:             wp.i18n.__( 'Saved!', 'jetonomy' ),
+			saveError:         wp.i18n.__( 'Save failed. Please try again.', 'jetonomy' ),
+			noneSelected:      wp.i18n.__( 'Please select at least one post.', 'jetonomy' ),
+			noAction:          wp.i18n.__( 'Please choose a bulk action.', 'jetonomy' ),
+		}
 	};
 
 	// Modal toolkit (jetonomy-modals.js) is a hard dependency on every
@@ -119,14 +129,14 @@
 					saveRow.querySelector('.jt-inline-edit').setAttribute('aria-hidden', 'true');
 					titleView.style.display = '';
 					saveRow.querySelector('.row-actions').style.display = '';
-					showFeedback(feedback, cfg.i18n.saved || 'Saved!', 'success');
+					showFeedback(feedback, cfg.i18n.saved, 'success');
 				} else {
-					showFeedback(feedback, (res.data && res.data.message) || cfg.i18n.saveError || 'Save failed.', 'error');
+					showFeedback(feedback, (res.data && res.data.message) || cfg.i18n.saveError, 'error');
 				}
 			}).catch(function () {
 				saveBtn.disabled = false;
 				spinner.classList.remove('is-active');
-				showFeedback(feedback, cfg.i18n.saveError || 'Save failed.', 'error');
+				showFeedback(feedback, cfg.i18n.saveError, 'error');
 			});
 			return;
 		}
@@ -146,6 +156,12 @@
 				var data = { status: statusParam };
 				data[idParam] = actionPostId;
 
+				// Permanent delete is not a status change - its own endpoint.
+				if ('delete' === action) {
+					ajaxAction = 'jetonomy_delete_content_permanently';
+					data = { type: type, ids: [actionPostId] };
+				}
+
 				ajax(ajaxAction, data).then(function (res) {
 					if (res.success) {
 						var actionRow = actionLink.closest('tr');
@@ -159,7 +175,8 @@
 				performAction();
 				return;
 			}
-			var confirmMsg = 'trash' === action ? (cfg.i18n.confirmTrash || 'Move this to trash?') : (cfg.i18n.confirmSpam || 'Mark this as spam?');
+			var confirmMsg = 'delete' === action ? cfg.i18n.confirmDelete
+				: 'trash' === action ? cfg.i18n.confirmTrash : cfg.i18n.confirmSpam;
 			_confirm(confirmMsg, { danger: true }).then(function (ok) {
 				if (ok) { performAction(); }
 			});
@@ -183,13 +200,13 @@
 		bulkBtn.addEventListener('click', function () {
 			var action = bulkSelect.value;
 			if (!action) {
-				_alert(cfg.i18n.noAction || 'Please choose a bulk action.');
+				_alert(cfg.i18n.noAction);
 				return;
 			}
 			if (!table) { return; }
 			var checked = table.querySelectorAll('.jt-row-cb:checked');
 			if (!checked.length) {
-				_alert(cfg.i18n.noneSelected || 'Please select at least one post.');
+				_alert(cfg.i18n.noneSelected);
 				return;
 			}
 			var ids = [];
@@ -200,11 +217,10 @@
 			var runBulk = function () {
 				bulkBtn.disabled = true;
 				bulkSpinner.classList.add('is-active');
-				ajax('jetonomy_bulk_content_action', {
-					bulk_action: bulkAction,
-					type: 'post',
-					ids: ids
-				}).then(function () {
+				var request = 'delete' === action
+					? ajax('jetonomy_delete_content_permanently', { type: 'post', ids: ids })
+					: ajax('jetonomy_bulk_content_action', { bulk_action: bulkAction, type: 'post', ids: ids });
+				request.then(function () {
 					bulkBtn.disabled = false;
 					bulkSpinner.classList.remove('is-active');
 					window.location.reload();
@@ -214,8 +230,9 @@
 				});
 			};
 
-			if ('trash' === action || 'spam' === action) {
-				_confirm(cfg.i18n.confirmBulk || 'Apply this action to all selected posts?', { danger: true }).then(function (ok) {
+			if ('trash' === action || 'spam' === action || 'delete' === action) {
+				var bulkMsg = 'delete' === action ? cfg.i18n.confirmBulkDelete : cfg.i18n.confirmBulk;
+				_confirm(bulkMsg, { danger: true }).then(function (ok) {
 					if (ok) { runBulk(); }
 				});
 			} else {

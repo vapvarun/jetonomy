@@ -12,7 +12,7 @@ A topic is the primary unit of discussion in Jetonomy - every conversation, ques
 
 - How to open the new post form in a space
 - Every field in the post composer and what it does
-- How Markdown formatting works in the content editor
+- How to format content with the editor toolbar
 - How content moderation and rate limiting affect new members
 - Whether posts publish immediately or wait for approval
 
@@ -50,7 +50,7 @@ The title field is optional for Social Feed spaces, where short-form posts witho
 
 ### Content
 
-The content field supports rich text via a Markdown toolbar. You do not need to know Markdown syntax - the toolbar buttons handle formatting for you.
+The content field is a rich-text editor. Format text with the toolbar buttons; the editor does not convert typed Markdown, so characters such as `**` or a line of three backticks stay as plain text.
 
 **Toolbar options:**
 
@@ -59,15 +59,12 @@ The content field supports rich text via a Markdown toolbar. You do not need to 
 | B | Bold text |
 | I | Italic text |
 | `< >` | Inline code |
+| `{ }` | Code block (keeps spacing and line breaks) |
 | Link | Insert a hyperlink |
 | Quote | Block quote |
 | Image | Upload an image from your device |
 
-You can also type Markdown directly if you prefer:
-- `**bold**` → **bold**
-- `*italic*` → *italic*
-- `` `code` `` → `code`
-- `> quote` → block quote
+To post several lines of code, click **Code block** first and paste the code into the block, so its spacing is kept and it scrolls instead of wrapping.
 
 Images are uploaded to the WordPress media library. Each image is inserted as a standard `<img>` tag in the content. There is no separate file attachment field - all media goes inline.
 

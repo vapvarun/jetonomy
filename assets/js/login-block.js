@@ -1,7 +1,7 @@
 /**
  * Jetonomy Login block — tab switching + login/register/lost-password submit.
  *
- * Vanilla JS, no dependencies. Enqueued only when the Login block renders.
+ * Vanilla JS; depends only on wp-i18n. Enqueued only when the Login block renders.
  *
  * Login         → POST /jetonomy/v1/auth/login         (1.4.0 A.2 commit 2)
  * Register      → POST /jetonomy/v1/auth/register      (1.4.0 A.3 commit 2)
@@ -15,24 +15,17 @@
 ( function () {
 	'use strict';
 
-	/**
-	 * Localized string with an English fallback. Every message this block shows
-	 * lands on a logged-out visitor, so none of them may be English-only.
-	 *
-	 * @param {string} key      Key in jetonomyLoginBlock.i18n.
-	 * @param {string} fallback English default.
-	 * @return {string} Localized string.
-	 */
-	function lbI18n( key, fallback ) {
-		var d = window.jetonomyLoginBlock && window.jetonomyLoginBlock.i18n;
-		return ( d && d[ key ] ) || fallback;
-	}
+	// Every message this block shows lands on a logged-out visitor, so all of
+	// them are translated (wp.i18n).
+	var __ = wp.i18n.__;
 
 	function activateTab( block, name ) {
 		block.querySelectorAll( '.jt-login-tab' ).forEach( function ( tab ) {
 			var active = tab.dataset.jtTab === name;
 			tab.classList.toggle( 'is-active', active );
 			tab.setAttribute( 'aria-selected', active ? 'true' : 'false' );
+			// Roving tabindex: Tab reaches only the selected tab; arrows move.
+			tab.setAttribute( 'tabindex', active ? '0' : '-1' );
 		} );
 		block.querySelectorAll( '.jt-login-form' ).forEach( function ( form ) {
 			form.classList.toggle( 'is-active', form.dataset.jtPanel === name );
@@ -165,7 +158,7 @@
 			.then( function ( payload ) {
 				if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
 					var msg = ( payload.json && payload.json.message )
-						|| lbI18n( 'genericError', 'Something went wrong. Please try again.' );
+						|| __( 'Something went wrong. Please try again.', 'jetonomy' );
 					setMessage( form, msg, false );
 					// When the visitor's account is still pending email
 					// confirmation, surface a Resend button alongside the
@@ -177,11 +170,11 @@
 					if ( unlock ) { unlock(); }
 					return;
 				}
-				setMessage( form, payload.json.message || lbI18n( 'signedIn', 'Signed in.' ), true );
+				setMessage( form, payload.json.message || __( 'Signed in.', 'jetonomy' ), true );
 				window.location.reload();
 			} )
 			.catch( function () {
-				setMessage( form, lbI18n( 'networkError', 'Network error. Please try again.' ), false );
+				setMessage( form, __( 'Network error. Please try again.', 'jetonomy' ), false );
 				if ( unlock ) { unlock(); }
 			} );
 	}
@@ -197,8 +190,8 @@
 		if ( ! holder || holder.querySelector( '.jt-login-resend' ) ) {
 			return;
 		}
-		var resendLabel = lbI18n( 'resendConfirmation', 'Resend confirmation email' );
-		var sendingLabel = lbI18n( 'sending', 'Sending…' );
+		var resendLabel = __( 'Resend confirmation email', 'jetonomy' );
+		var sendingLabel = __( 'Sending…', 'jetonomy' );
 		var btn = document.createElement( 'button' );
 		btn.type = 'button';
 		btn.className = 'jt-login-resend';
@@ -223,7 +216,7 @@
 			} ).then( function ( res ) {
 				return res.json().catch( function () { return {}; } );
 			} ).then( function ( json ) {
-				btn.textContent = ( json && json.message ) || lbI18n( 'resendSent', 'If an account is waiting on confirmation, a new link is on its way.' );
+				btn.textContent = ( json && json.message ) || __( 'If an account is waiting on confirmation, a new link is on its way.', 'jetonomy' );
 			} ).catch( function () {
 				btn.disabled = false;
 				btn.textContent = resendLabel;
@@ -280,7 +273,7 @@
 		} ).then( function ( payload ) {
 			if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
 				var msg = ( payload.json && payload.json.message )
-					|| lbI18n( 'genericError', 'Something went wrong. Please try again.' );
+					|| __( 'Something went wrong. Please try again.', 'jetonomy' );
 				setMessage( form, msg, false );
 				if ( unlock ) { unlock(); }
 				return;
@@ -289,15 +282,15 @@
 			// Show the masked-email success message and DON'T reload — the
 			// visitor needs to click the link in their inbox first.
 			if ( payload.json.requires_verification ) {
-				setMessage( form, payload.json.message || lbI18n( 'accountCreatedConfirm', 'Account created. Check your email to confirm.' ), true );
+				setMessage( form, payload.json.message || __( 'Account created. Check your email to confirm.', 'jetonomy' ), true );
 				renderResendVerificationLink( block, form, body.username || body.email || '' );
 				if ( unlock ) { unlock(); }
 				return;
 			}
-			setMessage( form, payload.json.message || lbI18n( 'accountCreated', 'Account created.' ), true );
+			setMessage( form, payload.json.message || __( 'Account created.', 'jetonomy' ), true );
 			window.location.reload();
 		} ).catch( function () {
-			setMessage( form, lbI18n( 'networkError', 'Network error. Please try again.' ), false );
+			setMessage( form, __( 'Network error. Please try again.', 'jetonomy' ), false );
 			if ( unlock ) { unlock(); }
 		} );
 	}
@@ -337,7 +330,7 @@
 		} ).then( function ( payload ) {
 			if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
 				var msg = ( payload.json && payload.json.message )
-					|| lbI18n( 'genericError', 'Something went wrong. Please try again.' );
+					|| __( 'Something went wrong. Please try again.', 'jetonomy' );
 				setMessage( form, msg, false );
 				if ( unlock ) { unlock(); }
 				return;
@@ -345,12 +338,12 @@
 			// Success: keep the panel open, show the inline message,
 			// clear the input. No reload — the user is still anonymous
 			// and needs to wait for the email.
-			setMessage( form, payload.json.message || lbI18n( 'resetLinkSent', 'Reset link sent.' ), true );
+			setMessage( form, payload.json.message || __( 'Reset link sent.', 'jetonomy' ), true );
 			var input = form.querySelector( '[name="user_login"]' );
 			if ( input ) { input.value = ''; }
 			if ( unlock ) { unlock(); }
 		} ).catch( function () {
-			setMessage( form, lbI18n( 'networkError', 'Network error. Please try again.' ), false );
+			setMessage( form, __( 'Network error. Please try again.', 'jetonomy' ), false );
 			if ( unlock ) { unlock(); }
 		} );
 	}
@@ -362,6 +355,24 @@
 				activateTab( block, tab.dataset.jtTab );
 			} );
 		} );
+
+		// WAI-ARIA tabs keyboard model: Left/Right (and Home/End) move between
+		// the Log in / Register tabs and select the one focused.
+		var tablist = block.querySelector( '.jt-login-tabs' );
+		if ( tablist ) {
+			tablist.addEventListener( 'keydown', function ( e ) {
+				var tabs = Array.prototype.slice.call( tablist.querySelectorAll( '.jt-login-tab' ) );
+				var i = tabs.indexOf( document.activeElement );
+				if ( i < 0 ) { return; }
+				var rtl = 'rtl' === getComputedStyle( tablist ).direction;
+				var next = { ArrowRight: rtl ? i - 1 : i + 1, ArrowLeft: rtl ? i + 1 : i - 1, Home: 0, End: tabs.length - 1 }[ e.key ];
+				if ( undefined === next ) { return; }
+				e.preventDefault();
+				var tab = tabs[ ( next + tabs.length ) % tabs.length ];
+				activateTab( block, tab.dataset.jtTab );
+				tab.focus();
+			} );
+		}
 
 		var loginForm = block.querySelector( '.jt-login-form[data-jt-panel="login"]' );
 		if ( loginForm ) {

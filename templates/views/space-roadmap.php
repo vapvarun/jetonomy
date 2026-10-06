@@ -104,29 +104,25 @@ foreach ( $jt_status_count_rows as $jt_count_row ) {
 
 // Canonical column order (mirrors Post::valid_idea_statuses()). Owners
 // move ideas left to right; "declined" sits at the end as the off-ramp.
-// One colour per stage. Planned and In Progress both used --jt-warn, so the
-// two leftmost columns were indistinguishable and the colour carried no
-// information at all — the whole point of a status board. Accent reads as
-// "committed, queued", warn as "in flight".
+// One colour per stage, set in jetonomy.css from the column's data-jt-status
+// (accent = committed/queued, warn = in flight, success = shipped). It used to
+// be an inline style here, which painted the raw status hue as title text
+// (2.4-2.9:1) and boxed the header on themes that style div borders.
 $columns = array(
 	'planned'     => array(
 		'label' => __( 'Planned', 'jetonomy' ),
-		'color' => 'var(--jt-accent)',
 		'posts' => array(),
 	),
 	'in_progress' => array(
 		'label' => __( 'In Progress', 'jetonomy' ),
-		'color' => 'var(--jt-warn)',
 		'posts' => array(),
 	),
 	'shipped'     => array(
 		'label' => __( 'Shipped', 'jetonomy' ),
-		'color' => 'var(--jt-success)',
 		'posts' => array(),
 	),
 	'declined'    => array(
 		'label' => __( 'Declined', 'jetonomy' ),
-		'color' => 'var(--jt-text-tertiary)',
 		'posts' => array(),
 	),
 );
@@ -154,7 +150,6 @@ foreach ( array_keys( $columns ) as $jt_col_status ) {
 }
 
 $category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base     = \Jetonomy\base_url();
 
 $crumbs = array();
 if ( $category ) {
@@ -165,80 +160,83 @@ if ( $category ) {
 }
 $crumbs[]  = array(
 	'label' => $space->title,
-	'url'   => $base . '/s/' . $space->slug . '/',
+	'url'   => \Jetonomy\route_url( 'space', $space->slug ),
 );
 $crumbs[]  = array(
 	'label' => __( 'Roadmap', 'jetonomy' ),
 	'url'   => '',
 );
-$space_url = $base . '/s/' . $space->slug . '/';
+$space_url = \Jetonomy\route_url( 'space', $space->slug );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
+<main>
+	<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 
-<div class="jt-cat-page-row">
-	<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
-	<div>
-		<h1 class="jt-page-title jt-page-title-sm">
-			<?php echo esc_html( $space->title ); ?>
-		</h1>
-		<p class="jt-page-subtitle"><?php esc_html_e( 'Roadmap', 'jetonomy' ); ?></p>
-	</div>
-</div>
-
-<?php
-\Jetonomy\Template_Loader::partial(
-	'space-tabs',
-	[
-		'space'     => $space,
-		'space_url' => $space_url,
-		'active'    => 'roadmap',
-	]
-);
-?>
-
-<div class="jt-kanban">
-	<?php foreach ( $columns as $col_key => $col ) : ?>
-		<div class="jt-col" data-jt-status="<?php echo esc_attr( $col_key ); ?>">
-			<div class="jt-col-head" style="border-color:<?php echo esc_attr( $col['color'] ); ?>;">
-				<span class="jt-col-title" style="color:<?php echo esc_attr( $col['color'] ); ?>;">
-					<?php echo esc_html( $col['label'] ); ?>
-				</span>
-				<span class="jt-col-n"><?php echo esc_html( $col['total'] ?? count( $col['posts'] ) ); ?></span>
-			</div>
-			<?php if ( empty( $col['posts'] ) ) : ?>
-				<p class="jt-kanban-empty"><?php esc_html_e( 'No ideas here yet.', 'jetonomy' ); ?></p>
-			<?php else : ?>
-				<?php foreach ( $col['posts'] as $idea ) : ?>
-					<?php $idea_url = $base . '/s/' . $space->slug . '/t/' . $idea->slug . '/'; ?>
-					<div class="jt-idea jt-row-clickable" data-jt-href="<?php echo esc_url( $idea_url ); ?>">
-						<div class="jt-idea-title"><?php echo esc_html( $idea->title ); ?></div>
-						<?php if ( ! empty( $idea->content ) ) : ?>
-							<div class="jt-idea-excerpt">
-								<?php echo esc_html( wp_trim_words( wp_strip_all_tags( $idea->content ), 22, '…' ) ); ?>
-							</div>
-						<?php endif; ?>
-						<div class="jt-idea-meta">
-							<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
-								<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo esc_html( (int) $idea->vote_score ); ?></span>
-							<?php endif; ?>
-							<span><?php echo esc_html( (int) $idea->reply_count ); ?> <?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></span>
-						</div>
-					</div>
-				<?php endforeach; ?>
-				<?php if ( ( $col['total'] ?? 0 ) > count( $col['posts'] ) ) : ?>
-					<p class="jt-kanban-more">
-						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>">
-							<?php
-							printf(
-								/* translators: %d: number of additional ideas not shown in this column. */
-								esc_html( _n( '+%d more idea in the space feed', '+%d more ideas in the space feed', (int) ( $col['total'] - count( $col['posts'] ) ), 'jetonomy' ) ),
-								(int) ( $col['total'] - count( $col['posts'] ) )
-							);
-							?>
-						</a>
-					</p>
-				<?php endif; ?>
-			<?php endif; ?>
+	<div class="jt-cat-page-row">
+		<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
+		<div>
+			<h1 class="jt-page-title jt-page-title-sm">
+				<?php echo esc_html( $space->title ); ?>
+			</h1>
+			<p class="jt-page-subtitle"><?php esc_html_e( 'Roadmap', 'jetonomy' ); ?></p>
 		</div>
-	<?php endforeach; ?>
-</div>
+	</div>
+
+	<?php
+	\Jetonomy\Template_Loader::partial(
+		'space-tabs',
+		[
+			'space'     => $space,
+			'space_url' => $space_url,
+			'active'    => 'roadmap',
+		]
+	);
+	?>
+
+	<div class="jt-kanban">
+		<?php foreach ( $columns as $col_key => $col ) : ?>
+			<div class="jt-col" data-jt-status="<?php echo esc_attr( $col_key ); ?>">
+				<div class="jt-col-head">
+					<span class="jt-col-title">
+						<?php echo esc_html( $col['label'] ); ?>
+					</span>
+					<span class="jt-col-n"><?php echo esc_html( $col['total'] ?? count( $col['posts'] ) ); ?></span>
+				</div>
+				<?php if ( empty( $col['posts'] ) ) : ?>
+					<p class="jt-kanban-empty"><?php esc_html_e( 'No ideas here yet.', 'jetonomy' ); ?></p>
+				<?php else : ?>
+					<?php foreach ( $col['posts'] as $idea ) : ?>
+						<?php $idea_url = \Jetonomy\route_url( 'post', $space->slug, $idea->slug ); ?>
+						<div class="jt-idea jt-row-clickable" data-jt-href="<?php echo esc_url( $idea_url ); ?>">
+							<div class="jt-idea-title"><?php echo esc_html( $idea->title ); ?></div>
+							<?php if ( ! empty( $idea->content ) ) : ?>
+								<div class="jt-idea-excerpt">
+									<?php echo esc_html( wp_trim_words( wp_strip_all_tags( $idea->content ), 22, '…' ) ); ?>
+								</div>
+							<?php endif; ?>
+							<div class="jt-idea-meta">
+								<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
+									<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo esc_html( (int) $idea->vote_score ); ?></span>
+								<?php endif; ?>
+								<span><?php echo esc_html( \Jetonomy\count_label( (int) $idea->reply_count, 'reply' ) ); ?></span>
+							</div>
+						</div>
+					<?php endforeach; ?>
+					<?php if ( ( $col['total'] ?? 0 ) > count( $col['posts'] ) ) : ?>
+						<p class="jt-kanban-more">
+							<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
+								<?php
+								printf(
+									/* translators: %d: number of additional ideas not shown in this column. */
+									esc_html( _n( '+%d more idea in the space feed', '+%d more ideas in the space feed', (int) ( $col['total'] - count( $col['posts'] ) ), 'jetonomy' ) ),
+									(int) ( $col['total'] - count( $col['posts'] ) )
+								);
+								?>
+							</a>
+						</p>
+					<?php endif; ?>
+				<?php endif; ?>
+			</div>
+		<?php endforeach; ?>
+	</div>
+</main>

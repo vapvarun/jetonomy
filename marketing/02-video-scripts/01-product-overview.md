@@ -26,8 +26,8 @@
 ### THE SOLUTION (0:30 - 1:00)
 
 **VISUAL:** Jetonomy community home page - 3 categories, 10 spaces with emoji icons
-**NARRATOR:** "Jetonomy uses 23 custom database tables. Your forum grows without touching wp_posts. Page loads stay under 200 milliseconds even at 50,000 topics."
-**ON-SCREEN TEXT:** "23 custom tables. Sub-200ms."
+**NARRATOR:** "Jetonomy uses 23 custom database tables. Your forum grows without touching wp_posts. Indexed queries, paginated lists, and object-cache support built in for large communities."
+**ON-SCREEN TEXT:** "23 custom tables. Built for scale."
 
 **VISUAL:** Topic page with trust level badges on reply cards
 **NARRATOR:** "And moderation? Jetonomy handles it automatically. New members start restricted. As they contribute - posting, answering questions, earning upvotes - they advance through six trust levels. Top members can edit, moderate, and manage. You set the thresholds once."

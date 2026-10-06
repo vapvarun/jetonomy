@@ -84,7 +84,7 @@ Create and manage posts within spaces.
 | `create` | Create a new post |
 | `list` | List posts |
 | `update <id>` | Update a post |
-| `delete <id>` | Delete a post |
+| `delete <id>` | Permanently delete a post, its replies and everything attached to them |
 
 **Flags - create:** `--space=<id>` `--author=<id>` `--title=<title>` `--content=<content>` `[--status=<status>]` `[--slug=<slug>]` `[--format=<format>]`
 
@@ -108,19 +108,19 @@ Create and manage replies on posts.
 | Subcommand | Description |
 |------------|-------------|
 | `create` | Create a reply |
-| `list` | List replies for a post |
-| `update <id>` | Update a reply |
-| `delete <id>` | Delete a reply |
-| `accept` | Mark a reply as the accepted answer |
+| `delete <id>` | Permanently delete a reply and its votes, flags and notifications. Replies nested under it stay |
+| `accept` | Mark a reply as the accepted answer. Same result as `POST /replies/{id}/accept`: the reply is flagged accepted, the question is resolved, the answerer is notified and earns reputation. Q&A spaces only |
+| `unaccept` | Clear the accepted answer. Same result as `DELETE /replies/{id}/accept`: the question returns to unresolved and the acceptance reputation is revoked |
 
 **Flags - create:** `--post=<id>` `--author=<id>` `--content=<content>` `[--parent=<id>]` `[--status=<status>]` `[--format=<format>]`
 
-**Flags - accept:** `--post=<id>` `--reply=<id>` `[--format=<format>]`
+**Flags - accept / unaccept:** `--post=<id>` `--reply=<id>` `[--format=<format>]`. The reply must belong to that post. Add the global `--user=<id>` to record who accepted; the answerer earns nothing when accepting their own reply.
 
 ```bash
 wp jetonomy reply create --post=42 --author=3 --content="Great idea"
 wp jetonomy reply create --post=42 --author=3 --content="Nested reply" --parent=17
-wp jetonomy reply accept --post=42 --reply=17
+wp jetonomy reply accept --post=42 --reply=17 --user=1
+wp jetonomy reply unaccept --post=42 --reply=17 --user=1
 ```
 
 ---
@@ -446,6 +446,23 @@ wp jetonomy content scan-plain --format=json
 # Fix it, in passes, until done reports true
 wp jetonomy content backfill-plain
 wp jetonomy content backfill-plain --seconds=60
+```
+
+### demo-seed / demo-cleanup
+
+Load or remove the sample community: about 20 members, 4 categories, 20 spaces, 220 topics and their replies, votes, accepted answers and pending flags, plus Pro reactions, polls and DM threads when Jetonomy Pro is active. Only the rows the seeder records are removed, so your own content is never touched. The Dashboard's **Demo Data** card and `POST`/`DELETE /jetonomy/v1/admin/demo-data` run the same code.
+
+| Command | Description |
+|---------|-------------|
+| `demo-seed` | Seed the demo community. Stops if demo data already exists. |
+| `demo-seed --force` | Replace the existing demo data with a fresh set. |
+| `demo-seed --model --force` | Development only: empty ALL Jetonomy content first, then seed. Refused on production environments. |
+| `demo-cleanup` | Remove the demo data. |
+
+```bash
+wp jetonomy demo-seed
+wp jetonomy demo-seed --force
+wp jetonomy demo-cleanup
 ```
 
 ---

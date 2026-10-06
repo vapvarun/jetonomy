@@ -58,9 +58,7 @@ class Template_Loader {
 				if ( count( $mod_space_ids ) === 1 ) {
 					$mod_first = \Jetonomy\Models\Space::find( (int) $mod_space_ids[0] );
 					if ( $mod_first ) {
-						$mod_settings  = get_option( 'jetonomy_settings', array() );
-						$mod_base_slug = $mod_settings['base_slug'] ?? 'community';
-						wp_safe_redirect( home_url( '/' . $mod_base_slug . '/s/' . $mod_first->slug . '/mod/' ) );
+						wp_safe_redirect( route_url( 'space-moderation', $mod_first->slug ) );
 						exit;
 					}
 				}
@@ -85,9 +83,7 @@ class Template_Loader {
 				$jt_is_member = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() )
 					|| \Jetonomy\Models\AccessRule::grants_access( get_current_user_id(), (int) $jt_space->id );
 				if ( ! $jt_is_member && in_array( $jt_join_policy, array( 'invite', 'approval' ), true ) ) {
-					$jt_settings  = get_option( 'jetonomy_settings', array() );
-					$jt_base_slug = $jt_settings['base_slug'] ?? 'community';
-					wp_safe_redirect( home_url( '/' . $jt_base_slug . '/s/' . $jt_space->slug . '/' ) );
+					wp_safe_redirect( route_url( 'space', $jt_space->slug ) );
 					exit;
 				}
 			}
@@ -291,7 +287,7 @@ class Template_Loader {
 				'apiBase'        => rest_url( 'jetonomy/v1' ),
 				'_nonce'         => wp_create_nonce( 'wp_rest' ),
 				'nonce'          => wp_create_nonce( 'wp_rest' ),
-				'communityBase'  => home_url( '/' . ( $settings['base_slug'] ?? 'community' ) ),
+				'communityBase'  => home_url( '/' . \Jetonomy\base_slug() ),
 				'currentPostId'  => 0,
 				'postScores'     => new \stdClass(),
 				'replyScores'    => new \stdClass(),
@@ -300,6 +296,9 @@ class Template_Loader {
 				'isSubmitting'   => false,
 				/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
 				'submitLabel'    => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+				// The Publish-now label; new-post.php overrides it per space type.
+				/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
+				'publishLabel'   => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 				'submitError'    => '',
 				'msgComposeOpen' => false,
 				'i18n'           => array(
@@ -318,12 +317,20 @@ class Template_Loader {
 					'followingSpace'        => sprintf( __( 'Following %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					/* translators: %s: the unfollowed space or topic title. */
 					'unfollowedSpace'       => sprintf( __( 'Unfollowed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					// Leave-space confirm (actions.leaveSpace).
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'leaveSpace'            => sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'confirmLeaveSpace'     => sprintf( __( 'Leave this %s? You can rejoin at any time.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					'leave'                 => __( 'Leave', 'jetonomy' ),
+					'leaveSpaceFailed'      => __( 'Could not leave. Please try again.', 'jetonomy' ),
 					'copyLink'              => __( 'Copy link', 'jetonomy' ),
 					'bookmark'              => __( 'Bookmark', 'jetonomy' ),
 					'removeBookmark'        => __( 'Remove bookmark', 'jetonomy' ),
 					'bookmarked'            => __( 'Bookmarked', 'jetonomy' ),
 					'bookmarkRemoved'       => __( 'Bookmark removed', 'jetonomy' ),
-					'reportPrompt'          => __( 'Why are you reporting this post?', 'jetonomy' ),
+					/* translators: %s: the singular label of the item (the configured noun). */
+					'reportPrompt'          => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
 					'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
 					// Scoped, to match the "Pin to space" control. Pro can pin to
@@ -371,8 +378,6 @@ class Template_Loader {
 					/* translators: %s: the singular reply label the site owner configured (lowercase). */
 					'cancelReply'           => sprintf( __( 'Cancel %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'posting'               => __( 'Posting...', 'jetonomy' ),
-					/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
-					'postTopic'             => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 					/* translators: %d: number of new items; %s: the reply label (substituted server-side). */
 					'newReply'              => sprintf( __( '%%d new %s. Click to refresh.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					/* translators: %d: number of new items; %s: the reply label (substituted server-side). */
@@ -404,7 +409,8 @@ class Template_Loader {
 					'failed'                => __( 'Failed', 'jetonomy' ),
 					'failedSaveProfile'     => __( 'Failed to save profile.', 'jetonomy' ),
 					'schedule'              => __( 'Schedule', 'jetonomy' ),
-					'editPost'              => __( 'Edit post', 'jetonomy' ),
+					/* translators: %s: the label of the item being edited (the configured noun). */
+					'editPost'              => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					/* translators: %s: the label of the item being edited (the configured noun). */
 					'editReply'             => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'unaccepted'            => __( 'Marked as unanswered', 'jetonomy' ),
@@ -422,9 +428,12 @@ class Template_Loader {
 					'madePrivate'           => sprintf( __( '%s is now private', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 					/* translators: %s: the singular topic label the site owner configured. */
 					'madePublic'            => sprintf( __( '%s is now public', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					'pendingNotice'         => __( 'Your post is awaiting moderation and will appear once approved.', 'jetonomy' ),
+					/* translators: %s: singular topic or reply label. */
+					'pendingNotice'         => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+					/* translators: %s: singular topic or reply label. */
+					'pendingReplyNotice'    => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'reportPlaceholder'     => __( 'Describe the issue...', 'jetonomy' ),
-					/* translators: %s: the singular reply label the site owner configured. */
+					/* translators: %s: the singular label of the item (the configured noun). */
 					'reportReplyPrompt'     => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'reportUserPrompt'      => __( 'Why are you reporting this user?', 'jetonomy' ),
 					'reportUserPlaceholder' => __( 'Describe the issue...', 'jetonomy' ),
@@ -456,14 +465,10 @@ class Template_Loader {
 			)
 		);
 
-		// Enqueue Interactivity API module. Asset version uses filemtime()
-		// (with the plugin version as a fallback) so any in-place hotfix
-		// shipped under the same plugin version still busts browser + CDN
-		// caches — a site stuck on a cached view.js?ver=x.y.z would
-		// otherwise never pick up an x.y.z hotfix.
-		$view_file    = JETONOMY_DIR . 'assets/js/view.js';
-		$view_mtime   = file_exists( $view_file ) ? (string) filemtime( $view_file ) : '';
-		$view_version = '' !== $view_mtime ? JETONOMY_VERSION . '+' . $view_mtime : JETONOMY_VERSION;
+		// Enqueue Interactivity API module. Every Jetonomy asset URL is
+		// versioned by file mtime in one place - see
+		// \Jetonomy\version_assets_by_mtime() - so enqueues pass the plain
+		// plugin version.
 
 		// WS3-A primitives (1.4.3): shared optimistic-action helper and smart
 		// dropdown positioner. Registered as classic scripts so window globals
@@ -471,7 +476,8 @@ class Template_Loader {
 		// downstream consumer evaluates. Depend on jetonomy-data so they share
 		// its enqueue context; the script-module below loads after them in
 		// document order. Callsite migration lands in WS3-B.
-		wp_enqueue_script( 'jetonomy-optimistic', JETONOMY_URL . 'assets/js/lib/optimistic.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
+		wp_enqueue_script( 'jetonomy-optimistic', JETONOMY_URL . 'assets/js/lib/optimistic.min.js', array( 'jetonomy-data', 'wp-i18n' ), JETONOMY_VERSION, true );
+		\Jetonomy\script_translations( 'jetonomy-optimistic' );
 		wp_enqueue_script( 'jetonomy-smart-dropdown', JETONOMY_URL . 'assets/js/lib/smart-dropdown.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
 
 		// Shared Pro custom-field collector (window.jetonomyCollectCustomFields).
@@ -493,7 +499,7 @@ class Template_Loader {
 					'import' => 'dynamic',
 				),
 			),
-			$view_version
+			JETONOMY_VERSION
 		);
 
 		// Pagination hydrator: re-wires data-wp-on--click directives on reply
@@ -501,14 +507,11 @@ class Template_Loader {
 		// module so it can pull the live IA store ref via the @wordpress/
 		// interactivity import. See pagination-hydrator.js header for the
 		// fallback strategy.
-		$ph_file    = JETONOMY_DIR . 'assets/js/pagination-hydrator.js';
-		$ph_mtime   = file_exists( $ph_file ) ? (string) filemtime( $ph_file ) : '';
-		$ph_version = '' !== $ph_mtime ? JETONOMY_VERSION . '+' . $ph_mtime : JETONOMY_VERSION;
 		wp_enqueue_script_module(
 			'jetonomy-pagination-hydrator',
 			JETONOMY_URL . 'assets/js/pagination-hydrator.js',
 			array( '@wordpress/interactivity', 'jetonomy-view' ),
-			$ph_version
+			JETONOMY_VERSION
 		);
 
 		// Shared global for non-Interactivity JS on community pages (link preview
@@ -522,24 +525,11 @@ class Template_Loader {
 			wp_register_script(
 				'jetonomy-modals',
 				JETONOMY_URL . 'assets/js/jetonomy-modals.js',
-				array(),
+				array( 'wp-i18n' ),
 				JETONOMY_VERSION,
 				true
 			);
-			// Default button labels for jetonomyConfirm / jetonomyAlert /
-			// jetonomyPrompt when no override is passed. Localized so the
-			// toolkit works in every language Jetonomy itself supports —
-			// previously these were hard-coded English in the JS bundle.
-			wp_localize_script(
-				'jetonomy-modals',
-				'jetonomyModalsI18n',
-				array(
-					'cancel'  => __( 'Cancel', 'jetonomy' ),
-					'confirm' => __( 'Confirm', 'jetonomy' ),
-					'submit'  => __( 'Submit', 'jetonomy' ),
-					'ok'      => __( 'OK', 'jetonomy' ),
-				)
-			);
+			\Jetonomy\script_translations( 'jetonomy-modals' );
 		}
 		wp_enqueue_script( 'jetonomy-modals' );
 
@@ -562,10 +552,6 @@ class Template_Loader {
 					'approvalFailed'         => esc_html__( 'Could not update this submission. It may have been handled by another moderator.', 'jetonomy' ),
 					'approvalsClean'         => esc_html__( 'Nothing left awaiting approval.', 'jetonomy' ),
 					'roleUpdateFailed'       => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
-					'loading'                => esc_html__( 'Loading...', 'jetonomy' ),
-					'loadMore'               => esc_html__( 'Load More', 'jetonomy' ),
-					'iconShowFewer'          => esc_html__( 'Show fewer icons', 'jetonomy' ),
-					'iconShowMore'           => esc_html__( 'Show more icons', 'jetonomy' ),
 					'uploading'              => esc_html__( 'Uploading...', 'jetonomy' ),
 					'uploaded'               => esc_html__( 'Uploaded.', 'jetonomy' ),
 					'uploadFailed'           => esc_html__( 'Upload failed.', 'jetonomy' ),
@@ -576,21 +562,12 @@ class Template_Loader {
 					'saveFailed'             => esc_html__( 'Could not save changes.', 'jetonomy' ),
 					'prefixLabel'            => esc_html__( 'Label', 'jetonomy' ),
 					'removePrefix'           => esc_html__( 'Remove prefix', 'jetonomy' ),
-					// Composer + Join-Space gate strings (consumed by composer.js).
-					'quoteSelected'          => esc_html__( 'Quote', 'jetonomy' ),
-					'joining'                => esc_html__( 'Joining...', 'jetonomy' ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'joinSpace'              => esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ),
+					// Space danger zone (actions.deleteSpace).
+					'purgeConfirmLabel'      => esc_html__( 'Delete permanently', 'jetonomy' ),
+					'deleteFailed'           => esc_html__( 'Could not delete. Please try again.', 'jetonomy' ),
+					// Join-Space failure toast (composer.js); carries the owner's space noun.
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
-					'requesting'             => esc_html__( 'Requesting...', 'jetonomy' ),
-					'awaitingApproval'       => esc_html__( 'Awaiting Approval', 'jetonomy' ),
-					'requestToJoin'          => esc_html__( 'Request to Join', 'jetonomy' ),
-					'submitting'             => esc_html__( 'Submitting...', 'jetonomy' ),
-					'requestSent'            => esc_html__( 'Request Sent', 'jetonomy' ),
-					'requestSubmitted'       => esc_html__( 'Request submitted. Awaiting approval.', 'jetonomy' ),
-					'requestFailed'          => esc_html__( 'Could not submit request.', 'jetonomy' ),
-					'noMentionMatches'       => esc_html__( 'No matches', 'jetonomy' ),
 					'memberBanned'           => esc_html__( 'Banned', 'jetonomy' ),
 					// Modal helpers in view.js (jetonomyConfirm / jetonomyPrompt /
 					// jetonomySpacePicker / jetonomyPostPicker). These live OUTSIDE the
@@ -603,8 +580,6 @@ class Template_Loader {
 					'modalMerge'             => esc_html__( 'Merge', 'jetonomy' ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'loadingSpaces'          => esc_html( sprintf( __( 'Loading %s…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'selectSpacePlaceholder' => esc_html( sprintf( __( 'Select a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'noOtherSpaces'          => esc_html( sprintf( __( 'No other %s available', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: plural space label. */
@@ -629,14 +604,6 @@ class Template_Loader {
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
 						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
 					),
-					// WS4-C: composer mobile-nav close + link prompt.
-					'closeMenu'              => esc_html__( 'Close menu', 'jetonomy' ),
-					'linkPromptUrl'          => esc_html__( 'Enter URL:', 'jetonomy' ),
-					'linkPromptPlaceholder'  => esc_html__( 'https://example.com', 'jetonomy' ),
-					// WS4-C: moderation flag actions in view.js.
-					'contentRemoved'         => esc_html__( 'Content removed', 'jetonomy' ),
-					'flagDismissed'          => esc_html__( 'Flag dismissed', 'jetonomy' ),
-					'failed'                 => esc_html__( 'Failed', 'jetonomy' ),
 					'failedSaveProfile'      => esc_html__( 'Failed to save profile.', 'jetonomy' ),
 					// WS4-C: space-members ban dialog (translator placeholders).
 					/* translators: 1: member display name (substituted client-side); 2: singular space label; 3: plural topic label; 4: plural reply label. */
@@ -644,7 +611,6 @@ class Template_Loader {
 					/* translators: %s: the singular member label the site owner configured. */
 					'banMemberTitle'         => esc_html( sprintf( __( 'Ban %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
-					'banFailed'              => esc_html__( 'Ban failed. Please try again.', 'jetonomy' ),
 					// Frontend member moderation from a profile (site ban / silence / lift).
 					/* translators: %s: member display name. */
 					'banSiteConfirmFormat'   => esc_html__( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ),
@@ -686,10 +652,11 @@ class Template_Loader {
 		wp_enqueue_script(
 			'jetonomy-pagination',
 			JETONOMY_URL . 'assets/js/pagination-frontend.js',
-			array( 'jetonomy-data' ),
+			array( 'jetonomy-data', 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-pagination' );
 
 		// Icon picker wiring. Self-discovers every [data-jt-icon-picker] on
 		// the page so any template (frontend new-space, space-edit, or a
@@ -697,10 +664,11 @@ class Template_Loader {
 		wp_enqueue_script(
 			'jetonomy-icon-picker',
 			JETONOMY_URL . 'assets/js/jetonomy-icon-picker.js',
-			array( 'jetonomy-data' ),
+			array( 'jetonomy-data', 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-icon-picker' );
 
 		// Per-route page scripts: NONE remain. Every former per-route surface
 		// (new-space, edit-space, space-members, notifications, moderation) is now
@@ -713,10 +681,11 @@ class Template_Loader {
 		wp_enqueue_script(
 			'jetonomy-composer',
 			JETONOMY_URL . 'assets/js/composer.js',
-			array( 'jetonomy-modals', 'jetonomy-rest' ),
+			array( 'jetonomy-modals', 'jetonomy-rest', 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
+		\Jetonomy\script_translations( 'jetonomy-composer' );
 
 		// Localize REST data for composer.js (image upload + instant search).
 		// 1.4.0 A.1 commit 3: legacy `ajaxUrl` + `nonce` keys removed; the
@@ -754,8 +723,10 @@ class Template_Loader {
 		// Pre-flight 404 detection: check before get_header() sends HTTP headers.
 		self::maybe_set_404( $data );
 
-		// Track post view + set deduplication cookie before any output.
-		self::maybe_track_post_view( $data );
+		// Mark the topic read for a logged-in viewer. Views are NOT counted
+		// here: the topic page's view beacon (view.js -> POST /posts/{id}/view)
+		// counts them, so this response sets no cookie and stays page-cacheable.
+		self::maybe_mark_post_read( $data );
 
 		// Set up SEO
 		self::set_seo_meta( $data );
@@ -1005,14 +976,11 @@ class Template_Loader {
 		}
 		wp_enqueue_script( 'jetonomy-data' );
 
-		$jr_file    = JETONOMY_DIR . 'assets/js/jetonomy-rest.js';
-		$jr_mtime   = file_exists( $jr_file ) ? (string) filemtime( $jr_file ) : '';
-		$jr_version = '' !== $jr_mtime ? JETONOMY_VERSION . '+' . $jr_mtime : JETONOMY_VERSION;
 		wp_enqueue_script(
 			'jetonomy-rest',
 			JETONOMY_URL . 'assets/js/jetonomy-rest.js',
 			array( 'jetonomy-data' ),
-			$jr_version,
+			JETONOMY_VERSION,
 			true
 		);
 	}
@@ -1349,7 +1317,7 @@ class Template_Loader {
 						$title = self::seo_display_name( 'category', (string) $data['slug'], ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) ) );
 						/* translators: 1: plural space label, 2: category name, 3: site title. */
 						$desc      = sprintf( __( '%1$s in the %2$s category on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name );
-						$url       = $base . '/category/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$url       = route_url( 'category', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $title;
 						break;
 					case 'space':
@@ -1380,23 +1348,23 @@ class Template_Loader {
 									$title = $space->title . ' — ' . \Jetonomy\jetonomy_label( 'member', true );
 									/* translators: 1: plural member label, 2: space title, 3: singular space label, 4: site title. */
 									$desc = sprintf( __( '%1$s of the %2$s %3$s on %4$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
-									$url  = $base . '/s/' . $space->slug . '/members/';
+									$url  = route_url( 'space-members', $space->slug );
 									break;
 								case 'space-roadmap':
 									$title = $space->title . ' — ' . __( 'Roadmap', 'jetonomy' );
 									/* translators: 1: space title, 2: singular space label, 3: site title. */
 									$desc = sprintf( __( 'Roadmap for the %1$s %2$s on %3$s.', 'jetonomy' ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
-									$url  = $base . '/s/' . $space->slug . '/roadmap/';
+									$url  = route_url( 'space-roadmap', $space->slug );
 									break;
 								case 'space-moderation':
 									$title = $space->title . ' — ' . __( 'Moderation', 'jetonomy' );
 									/* translators: %s: site title. */
 									$desc    = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $space->title );
-									$url     = $base . '/s/' . $space->slug . '/mod/';
+									$url     = route_url( 'space-moderation', $space->slug );
 									$noindex = true; // Mod tools never indexed.
 									break;
 								default:
-									$url = $base . '/s/' . $space->slug . '/';
+									$url = route_url( 'space', $space->slug );
 							}
 
 							if ( $is_private ) {
@@ -1429,7 +1397,7 @@ class Template_Loader {
 								? wp_strip_all_tags( (string) $post->content_plain )
 								: wp_strip_all_tags( (string) $post->content );
 							$desc         = trim( preg_replace( '/\s+/', ' ', $desc ) );
-							$url          = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+							$url          = route_url( 'post', ( $space->slug ?? '' ), $post->slug );
 							$og_type      = 'article';
 							$twitter_card = 'summary_large_image';
 							$image_alt    = $post->title;
@@ -1441,9 +1409,10 @@ class Template_Loader {
 							// jt_user_profiles.display_name is never written by free or
 							// Pro, so the branch that preferred it was dead and only
 							// made this read disagree with every other byline.
-							$author_name                            = ! empty( $post->author_id )
-								? \Jetonomy\user_display_name( (int) $post->author_id )
-								: '';
+							// Author::for_display() masks an anonymous topic the same way the
+							// byline does; a masked author (id 0) emits no author meta at all.
+							$jt_display                             = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+							$author_name                            = $jt_display['id'] > 0 ? $jt_display['name'] : '';
 							$article_meta['article:author']         = $author_name;
 							$article_meta['article:published_time'] = ! empty( $post->created_at )
 								? gmdate( 'c', strtotime( (string) $post->created_at ) )
@@ -1489,21 +1458,21 @@ class Template_Loader {
 						$title = '#' . (string) $data['slug'];
 						/* translators: 1: tag name, 2: site title. */
 						$desc      = sprintf( __( 'Discussions tagged %1$s on %2$s.', 'jetonomy' ), $title, $site_name );
-						$url       = $base . '/tag/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$url       = route_url( 'tag', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $title;
 						break;
 					case 'leaderboard':
 						$title = __( 'Top members', 'jetonomy' );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Top contributors and most-helpful members on %s.', 'jetonomy' ), $site_name );
-						$url       = $base . '/leaderboard/';
+						$url       = route_url( 'leaderboard' );
 						$image_alt = $site_name;
 						break;
 					case 'search':
 						$title = __( 'Search the community', 'jetonomy' );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Search discussions, replies, members, and tags on %s.', 'jetonomy' ), $site_name );
-						$url       = $base . '/search/';
+						$url       = route_url( 'search' );
 						$image_alt = $site_name;
 						// Honour the owner's choice. This was hard-coded true, so
 						// Settings > SEO > "Noindex search pages" visibly saved and
@@ -1519,7 +1488,7 @@ class Template_Loader {
 						$title = __( 'Moderation Queue', 'jetonomy' );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $site_name );
-						$url       = $base . '/mod/';
+						$url       = route_url( 'moderation' );
 						$image_alt = $site_name;
 						$noindex   = true; // Admin tooling.
 						break;
@@ -1531,21 +1500,21 @@ class Template_Loader {
 						$title = self::compose_route_title( $slug, ucfirst( str_replace( '-', ' ', $slug ) ) );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Compose a new discussion on %s.', 'jetonomy' ), $site_name );
-						$url       = $base . ( '' !== $slug ? '/s/' . rawurlencode( $slug ) . '/new/' : '/new/' );
+						$url       = '' !== $slug ? route_url( 'new-post', rawurlencode( $slug ) ) : $base . '/new/';
 						$image_alt = $site_name;
 						$noindex   = true; // Composer page.
 						break;
 					case 'notifications':
 						$title     = __( 'Notifications', 'jetonomy' );
 						$desc      = __( 'Your community notifications.', 'jetonomy' );
-						$url       = $base . '/notifications/';
+						$url       = route_url( 'notifications' );
 						$image_alt = $site_name;
 						$noindex   = true; // Personal logged-in view.
 						break;
 					case 'edit-profile':
 						$title     = __( 'Edit profile', 'jetonomy' );
 						$desc      = __( 'Edit your community profile.', 'jetonomy' );
-						$url       = $base . '/u/me/edit/';
+						$url       = route_url( 'edit-profile', 'me' );
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in form.
 						break;
@@ -1553,7 +1522,7 @@ class Template_Loader {
 						$title = __( 'You are invited', 'jetonomy' );
 						/* translators: %s: site title. */
 						$desc      = sprintf( __( 'Accept your community invite to %s.', 'jetonomy' ), $site_name );
-						$url       = $base . '/invite/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$url       = route_url( 'invite', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $site_name;
 						$noindex   = true; // One-shot landing.
 						break;
@@ -1562,7 +1531,7 @@ class Template_Loader {
 						$title = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						/* translators: 1: plural space label, 2: plural space label, 3: site title. */
 						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
-						$url       = $base . '/my-spaces/';
+						$url       = route_url( 'my-spaces' );
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
 						break;
@@ -1570,7 +1539,7 @@ class Template_Loader {
 						$title = __( 'My Subscriptions', 'jetonomy' );
 						/* translators: 1: plural topic label, 2: plural space label (e.g. Spaces), 3: site name */
 						$desc      = sprintf( __( '%1$s and %2$s you follow on %3$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\space_label( true, true ), $site_name );
-						$url       = $base . '/subscriptions/';
+						$url       = route_url( 'subscriptions' );
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
 						break;
@@ -1579,7 +1548,7 @@ class Template_Loader {
 						$title = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: 1: singular space label, 2: site title. */
 						$desc      = sprintf( __( 'Start a new community %1$s on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $site_name );
-						$url       = $base . '/new-space/';
+						$url       = route_url( 'new-space' );
 						$image_alt = $site_name;
 						$noindex   = true; // Composer page.
 						break;
@@ -1588,21 +1557,21 @@ class Template_Loader {
 						$title = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: %s: singular space label. */
 						$desc      = sprintf( __( 'Edit your community %s settings.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
-						$url       = $base . '/s/' . rawurlencode( (string) $data['slug'] ) . '/edit/';
+						$url       = route_url( 'edit-space', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in editor view.
 						break;
 					case 'drafts':
 						$title     = __( 'My drafts', 'jetonomy' );
 						$desc      = __( 'Your saved drafts on the community.', 'jetonomy' );
-						$url       = $base . '/drafts/';
+						$url       = route_url( 'drafts' );
 						$image_alt = $site_name;
 						$noindex   = true; // Personal logged-in view.
 						break;
 					case 'bookmarks':
 						$title     = __( 'My bookmarks', 'jetonomy' );
-						$desc      = __( 'Posts you have bookmarked on the community.', 'jetonomy' );
-						$url       = $base . '/bookmarks/';
+						$desc      = sprintf( /* translators: %s: plural topic label. */ __( '%s you have bookmarked on the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) );
+						$url       = route_url( 'bookmarks' );
 						$image_alt = $site_name;
 						$noindex   = true; // Personal logged-in view.
 						break;
@@ -1750,12 +1719,14 @@ class Template_Loader {
 	}
 
 	/**
-	 * Track a post view with 24-hour cookie deduplication.
+	 * Clear a topic's "new replies" pill for the logged-in viewer.
 	 *
-	 * Must run before get_header() so that setcookie() fires before any output.
+	 * 1.4.0 C.5: records the latest reply id (or 0 if no replies yet), so the
+	 * space view stops flagging the thread. Guests have no read state.
 	 */
-	private static function maybe_track_post_view( array $data ): void {
-		if ( 'post' !== $data['route'] || empty( $data['slug'] ) ) {
+	private static function maybe_mark_post_read( array $data ): void {
+		$user_id = get_current_user_id();
+		if ( $user_id <= 0 || 'post' !== $data['route'] || empty( $data['slug'] ) ) {
 			return;
 		}
 
@@ -1764,24 +1735,11 @@ class Template_Loader {
 			return;
 		}
 
-		$cookie = 'jt_viewed_' . (int) $post->id;
-        // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
-		if ( empty( $_COOKIE[ $cookie ] ) ) {
-			\Jetonomy\Models\Post::increment_view_count( (int) $post->id );
-			setcookie( $cookie, '1', time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+		$latest_reply_id = (int) ( $post->last_reply_id ?? 0 );
+		if ( 0 === $latest_reply_id && (int) $post->reply_count > 0 ) {
+			$latest_reply_id = (int) \Jetonomy\Models\Reply::latest_id_for_post( (int) $post->id );
 		}
-
-		// 1.4.0 C.5 — wire ReadStatus::mark_read so opening a thread clears
-		// its "new replies" pill on the space view. Records the latest reply
-		// id (or 0 if no replies yet) for the current user.
-		$user_id = get_current_user_id();
-		if ( $user_id > 0 ) {
-			$latest_reply_id = (int) ( $post->last_reply_id ?? 0 );
-			if ( 0 === $latest_reply_id && (int) $post->reply_count > 0 ) {
-				$latest_reply_id = (int) \Jetonomy\Models\Reply::latest_id_for_post( (int) $post->id );
-			}
-			\Jetonomy\Models\ReadStatus::mark_read( $user_id, (int) $post->id, $latest_reply_id );
-		}
+		\Jetonomy\Models\ReadStatus::mark_read( $user_id, (int) $post->id, $latest_reply_id );
 	}
 
 	/**
@@ -1846,6 +1804,53 @@ class Template_Loader {
 				}
 				break;
 		}
+	}
+
+	/**
+	 * Crumbs held back until the view opens <main> (inside_main placement).
+	 *
+	 * @var array<int,array<string,mixed>>|null
+	 */
+	private static ?array $deferred_crumbs = null;
+
+	/**
+	 * Print the breadcrumb trail where the view calls this (just before
+	 * <main>), or hold it for breadcrumb_in_main() when the site moved it
+	 * inside the main landmark (Basecamp 10272509253).
+	 *
+	 * @param array<int,array<string,mixed>> $crumbs Crumbs, each with label and optional url.
+	 */
+	public static function breadcrumb( array $crumbs ): void {
+		/**
+		 * Where the community breadcrumb trail renders.
+		 *
+		 * 'before_main' (default) prints it above the page's <main> landmark;
+		 * 'inside_main' prints it as the first thing inside <main>, for themes
+		 * whose layout styles the main region. Deliberately a filter, not a
+		 * setting: it is a per-theme layout choice.
+		 *
+		 * @since 2.0.1
+		 *
+		 * @param string                         $placement 'before_main' or 'inside_main'.
+		 * @param array<int,array<string,mixed>> $crumbs    The trail for this page.
+		 */
+		if ( 'inside_main' === apply_filters( 'jetonomy_breadcrumb_placement', 'before_main', $crumbs ) ) {
+			self::$deferred_crumbs = $crumbs;
+			return;
+		}
+		self::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) );
+	}
+
+	/**
+	 * Print a trail breadcrumb() held back; called right after <main> opens.
+	 */
+	public static function breadcrumb_in_main(): void {
+		if ( null === self::$deferred_crumbs ) {
+			return;
+		}
+		$crumbs                = self::$deferred_crumbs;
+		self::$deferred_crumbs = null;
+		self::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) );
 	}
 
 	/**

@@ -68,7 +68,6 @@ if ( ! in_array( $sort, [ 'relevance', 'newest', 'votes' ], true ) ) {
 	$sort = 'relevance';
 }
 
-$base   = \Jetonomy\base_url();
 $posts  = [];
 $spaces = [];
 $tags   = [];
@@ -86,133 +85,55 @@ $jt_has_filters = ( $date_from || $date_to || $author_id || '' !== $author_name 
 $jt_has_query   = ( '' !== $q && strlen( $q ) >= 2 );
 $jt_searching   = ( $jt_has_query || $jt_has_filters );
 
+$jt_posts_total = 0;
 if ( $jt_searching && ! $jt_author_unresolved ) {
-	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search();
-	if ( ! $search_adapter ) {
-		$search_adapter = new \Jetonomy\Search\Fulltext_Search();
-	}
+	// Same search, same rules as REST /search and the app: one adapter call per
+	// group instead of this view's own SQL (Basecamp 10368526736). Post rows
+	// already carry space_title / space_slug.
+	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search_query();
 
 	if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
-		if ( $date_from || $date_to || $author_id || '' !== $author_name || $tag_slug || 'relevance' !== $sort ) {
-			// Use direct filtered query when advanced filters are active.
-			global $wpdb;
-			$posts_tbl  = \Jetonomy\table( 'posts' );
-			$spaces_tbl = \Jetonomy\table( 'spaces' );
-			// The relevance clause only belongs here when there IS a keyword.
-			// AGAINST('') matches no row, so binding it unconditionally made
-			// every filter-only request ("show me this author's topics", the
-			// kind you bookmark) return nothing - while REST answered the same
-			// query fine. The filters were let into this branch before the
-			// query stopped requiring a keyword, which is why the landing page
-			// looked fixed and the results were still empty.
-			$where  = [ "p.status = 'publish'" ];
-			$params = [];
-
-			if ( $jt_has_query ) {
-				array_unshift( $where, 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)' );
-				$params[] = $q;
-			}
-
-			if ( $date_from ) {
-				$where[]  = 'p.created_at >= %s';
-				$params[] = $date_from . ' 00:00:00';
-			}
-			if ( $date_to ) {
-				$where[]  = 'p.created_at <= %s';
-				$params[] = $date_to . ' 23:59:59';
-			}
-			if ( $author_id ) {
-				$where[]  = 'p.author_id = %d AND p.is_anonymous = 0';
-				$params[] = $author_id;
-			}
-
-			// Private-post visibility guard — same single source of truth the REST
-			// controller and search adapter use, so this direct filtered query can't
-			// leak private posts. Global search page (no space context) => pass null,
-			// which applies the author-or-public rule with no privileged bypass.
-			// Columns are unambiguous across the joined tag tables, so no alias needed.
-			list( $vis_sql, $vis_params ) = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-			if ( '' !== $vis_sql ) {
-				$where[] = $vis_sql;
-				$params  = array_merge( $params, $vis_params );
-			}
-
-			// Space-level content gate — exclude posts whose parent space the
-			// viewer cannot read (private/hidden unless member). The non-filtered
-			// search path already applies this; without it the advanced-filter
-			// branch leaked private/hidden-space posts to any viewer.
-			list( $space_vis_sql, $space_vis_params ) = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
-			if ( '1=1' !== $space_vis_sql ) {
-				$where[] = $space_vis_sql;
-				$params  = array_merge( $params, $space_vis_params );
-			}
-
-			// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-			list( $jt_search_block_sql ) = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-			if ( '' !== $jt_search_block_sql ) {
-				$where[] = $jt_search_block_sql;
-			}
-
-			$order_by  = 'votes' === $sort ? 'p.vote_score DESC' : 'p.created_at DESC';
-			$where_sql = implode( ' AND ', $where );
-
-			if ( $tag_slug ) {
-				$tags_tbl   = \Jetonomy\table( 'tags' );
-				$pt_tbl     = \Jetonomy\table( 'post_tags' );
-				$tag_params = array_merge( [ $tag_slug ], $params, [ $per_page, $offset ] );
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$sql = $wpdb->prepare(
-					"SELECT p.* FROM {$posts_tbl} p INNER JOIN {$spaces_tbl} s ON s.id = p.space_id INNER JOIN {$pt_tbl} pt ON pt.post_id = p.id INNER JOIN {$tags_tbl} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
-					...$tag_params
-				);
-			} else {
-				$paged_params = array_merge( $params, [ $per_page, $offset ] );
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$sql = $wpdb->prepare(
-					"SELECT p.* FROM {$posts_tbl} p INNER JOIN {$spaces_tbl} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
-					...$paged_params
-				);
-			}
-
-			$posts = $wpdb->get_results( $sql ) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		} else {
-			$posts = $search_adapter->search( $q, 'post', null, $per_page, $offset );
-		}
-
-		// Enrich post results with space slug/title for display.
-		$space_cache = [];
-		foreach ( $posts as $post ) {
-			$sid = (int) $post->space_id;
-			if ( ! isset( $space_cache[ $sid ] ) ) {
-				$space_cache[ $sid ] = \Jetonomy\Models\Space::find( $sid );
-			}
-			$sp                = $space_cache[ $sid ];
-			$post->space_slug  = $sp ? $sp->slug : '';
-			$post->space_title = $sp ? $sp->title : '';
-		}
+		$jt_found       = $search_adapter->query(
+			[
+				'type'      => 'post',
+				'q'         => $jt_has_query ? $q : '',
+				'date_from' => $date_from ?: null,
+				'date_to'   => $date_to ?: null,
+				'author_id' => $author_id ?: null,
+				'tag_slug'  => $tag_slug ?: null,
+				'sort'      => $sort,
+				'limit'     => $per_page,
+				'offset'    => $offset,
+			]
+		);
+		$posts          = $jt_found['items'];
+		$jt_posts_total = $jt_found['total'];
 	}
 
 	// Spaces and tags are keyword searches - the advanced filters (author, date,
 	// tag) describe topics, not either of these. Without this guard a
-	// filter-only request searched them for '', and the tag LIKE '%%' matched
-	// every tag on the site, so "this author's topics" came back decorated with
-	// 15 arbitrary tags.
+	// filter-only request searched them for '', which matched every tag on the
+	// site, so "this author's topics" came back decorated with arbitrary tags.
 	if ( $jt_has_query && in_array( $filter, [ 'all', 'spaces' ], true ) ) {
-		$spaces = $search_adapter->search( $q, 'space', null, 10, 0 );
+		$spaces = $search_adapter->query(
+			[
+				'type'       => 'space',
+				'q'          => $q,
+				'limit'      => 10,
+				'with_total' => false,
+			]
+		)['items'];
 	}
 
 	if ( $jt_has_query && in_array( $filter, [ 'all', 'tags' ], true ) ) {
-		global $wpdb;
-		$tags_tbl = \Jetonomy\table( 'tags' );
-		$like     = '%' . $wpdb->esc_like( $q ) . '%';
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$tags = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tags_tbl} WHERE name LIKE %s ORDER BY post_count DESC LIMIT 15",
-				$like
-			)
-		) ?: [];
+		$tags = $search_adapter->query(
+			[
+				'type'       => 'tag',
+				'q'          => $q,
+				'limit'      => 15,
+				'with_total' => false,
+			]
+		)['items'];
 	}
 }
 
@@ -225,12 +146,13 @@ $crumbs = [
 	],
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<!-- Search form -->
-			<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-search-page-form" autocomplete="off">
+			<form method="get" action="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-search-page-form" autocomplete="off">
 				<div class="jt-search-page-input">
 					<span class="jt-search-page-icon" aria-hidden="true"><?php jetonomy_echo_icon( 'search', 20 ); ?></span>
 					<input type="text" name="q"
@@ -261,7 +183,7 @@ $crumbs = [
 					?>
 					open<?php endif; ?>>
 					<summary class="jt-search-filters-toggle"><?php esc_html_e( 'Filters', 'jetonomy' ); ?> <?php jetonomy_echo_icon( 'chevron-down', 12 ); ?></summary>
-					<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-search-filters-form">
+					<form method="get" action="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-search-filters-form">
 						<input type="hidden" name="q" value="<?php echo esc_attr( $q ); ?>">
 						<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>">
 						<div class="jt-filter-row">
@@ -287,7 +209,7 @@ $crumbs = [
 						</div>
 						<div class="jt-filter-actions">
 							<button type="submit" class="jt-btn jt-btn-fill jt-btn-sm"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
-							<a href="<?php echo esc_url( add_query_arg( 'q', $q, $base . '/search/' ) ); ?>" class="jt-btn jt-btn-ghost jt-btn-sm"><?php esc_html_e( 'Clear', 'jetonomy' ); ?></a>
+							<a href="<?php echo esc_url( add_query_arg( 'q', $q, \Jetonomy\route_url( 'search' ) ) ); ?>" class="jt-btn jt-btn-ghost jt-btn-sm"><?php esc_html_e( 'Clear', 'jetonomy' ); ?></a>
 						</div>
 					</form>
 				</details>
@@ -298,7 +220,7 @@ $crumbs = [
 						<?php
 						$filters = [
 							'all'    => __( 'All', 'jetonomy' ),
-							'posts'  => __( 'Posts', 'jetonomy' ),
+							'posts'  => \Jetonomy\jetonomy_label( 'topic', true ),
 							'spaces' => \Jetonomy\space_label( true ),
 							'tags'   => __( 'Tags', 'jetonomy' ),
 						];
@@ -308,7 +230,7 @@ $crumbs = [
 									'q'      => $q,
 									'filter' => $key,
 								],
-								$base . '/search/'
+								\Jetonomy\route_url( 'search' )
 							);
 							?>
 							<a href="<?php echo esc_url( $f_url ); ?>"
@@ -353,9 +275,11 @@ $crumbs = [
 						</h3>
 						<div class="jt-topics jt-mb-lg">
 							<?php
+							// Authors, profiles and spaces in one query each, not per row.
+							\Jetonomy\prime_post_cards( $posts );
 							foreach ( $posts as $post ) :
 								$time_ago       = human_time_diff( strtotime( $post->created_at ), time() );
-								$post_url       = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
+								$post_url       = \Jetonomy\route_url( 'post', $post->space_slug, $post->slug );
 								$excerpt        = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
 								$author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 								?>
@@ -382,17 +306,13 @@ $crumbs = [
 									</div>
 									<div class="jt-row-stat">
 										<div class="jt-row-stat-n"><?php echo (int) $post->reply_count; ?></div>
-										<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ); ?></div>
-									</div>
-									<div class="jt-row-stat">
-										<div class="jt-row-stat-n"><?php echo (int) $post->vote_score; ?></div>
-										<div class="jt-row-stat-l"><?php esc_html_e( 'votes', 'jetonomy' ); ?></div>
+										<div class="jt-row-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $post->reply_count, 'reply' ) ); ?></div>
 									</div>
 								</a>
 							<?php endforeach; ?>
 						</div>
 
-						<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $posts ) >= $per_page ] ); ?>
+						<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => ( $offset + count( $posts ) ) < $jt_posts_total ] ); ?>
 					<?php endif; ?>
 
 					<?php if ( ! empty( $spaces ) ) : ?>
@@ -401,17 +321,17 @@ $crumbs = [
 						</h3>
 						<div class="jt-space-grid jt-mb-lg">
 							<?php foreach ( $spaces as $space ) : ?>
-								<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
+								<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
 									class="jt-card jt-space-card jt-no-underline jt-block">
 									<div class="jt-space-card-inner">
-										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-cat-emoji', $space->type ?? '' ); ?>
+										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-icon', $space->type ?? '' ); ?>
 										<div>
 											<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
 											<?php if ( ! empty( $space->description ) ) : ?>
 												<div class="jt-space-card-excerpt jt-mt-sm"><?php echo esc_html( wp_trim_words( $space->description, 12 ) ); ?></div>
 											<?php endif; ?>
 											<div class="jt-space-card-stat jt-mt-sm">
-												<?php echo esc_html( (int) $space->post_count ); ?> <?php esc_html_e( 'posts', 'jetonomy' ); ?>
+												<?php echo esc_html( \Jetonomy\count_label( (int) $space->post_count, 'topic' ) ); ?>
 											</div>
 										</div>
 									</div>
@@ -426,7 +346,7 @@ $crumbs = [
 						</h3>
 						<div class="jt-tags">
 							<?php foreach ( $tags as $tag ) : ?>
-								<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
+								<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">
 									<?php echo esc_html( $tag->name ); ?>
 									<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
 								</a>

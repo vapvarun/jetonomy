@@ -66,45 +66,41 @@ class Layout_CSS {
 	private function build_rules( array $settings ): string {
 		$css = '';
 
+		// Every theme selector below is limited to the community app's OWN
+		// ancestors via `:has(#jetonomy-app)`. A bare `body.jt-page .container`
+		// also matched the theme header's and footer's `.container`, so "Full
+		// Width" stretched the site header edge-to-edge on Reign / BuddyX /
+		// BuddyX Pro (logo pinned to the viewport edge, header no longer lined
+		// up with the rest of the site), and "Hide sidebar" hid Reign's footer
+		// widget row because it is a `.widget-area` too. Browsers without
+		// `:has()` skip the rule and keep the theme default width - never a
+		// broken header.
+		$app_wrappers = ':is(.site-content,.entry-content,.content-area,#primary,main#main,.container,.wrap):has(#jetonomy-app)';
+
 		// ── Container width ──
-		// Targets common WordPress theme container classes inside community pages.
-		// `body.jt-page` keeps every override scoped to Jetonomy routes only, so
-		// the same theme class on a regular WP page is untouched.
 		$width = isset( $settings['container_width'] ) ? (string) $settings['container_width'] : 'theme';
 		if ( 'full' === $width || 'custom' === $width ) {
 			$value = 'full' === $width
 				? '100%'
 				: max( 600, min( 2400, absint( $settings['container_width_custom'] ?? 1280 ) ) ) . 'px';
 
-			$css .= 'body.jt-page .site-content,'
-				. 'body.jt-page .entry-content,'
-				. 'body.jt-page .content-area,'
-				. 'body.jt-page #primary,'
-				. 'body.jt-page main#main,'
-				. 'body.jt-page .container,'
-				. 'body.jt-page .wrap,'
+			$css .= 'body.jt-page ' . $app_wrappers . ','
 				. 'body.jt-page #jetonomy-app,'
-				. 'body.jt-page .jt-app,'
 				. 'body.jt-page .jt-container'
 				. '{max-width:' . $value . ';width:100%;margin-inline:auto;}';
 		}
 
 		// ── Sidebar visibility ──
-		// Hides common sidebar containers shipped by most WP themes. Uses
-		// `display:none` rather than width tricks so the main column reflows.
+		// Only a sidebar that sits BESIDE the app (a direct child of one of its
+		// ancestors) is the theme's content sidebar; widget areas inside the
+		// header or footer are left alone. `display:none` so the column reflows.
 		$sidebar = isset( $settings['sidebar_visibility'] ) ? (string) $settings['sidebar_visibility'] : 'theme';
 		if ( 'hide' === $sidebar ) {
-			$css .= 'body.jt-page #secondary,'
-				. 'body.jt-page .widget-area,'
-				. 'body.jt-page .sidebar,'
-				. 'body.jt-page aside.sidebar,'
-				. 'body.jt-page .sidebar-primary'
+			$css .= 'body.jt-page :has(#jetonomy-app)>:is(#secondary,.widget-area,.sidebar,.sidebar-primary)'
 				. '{display:none!important;}';
 
 			// Let the main column reclaim the space the sidebar left behind.
-			$css .= 'body.jt-page #primary,'
-				. 'body.jt-page .content-area,'
-				. 'body.jt-page main#main'
+			$css .= 'body.jt-page :is(#primary,.content-area,main#main):has(#jetonomy-app)'
 				. '{width:100%!important;float:none!important;margin-inline:auto;}';
 		}
 

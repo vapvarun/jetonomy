@@ -7,8 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$settings  = get_option( 'jetonomy_settings', [] );
-$base_slug = $settings['base_slug'] ?? 'community';
+$base_slug = \Jetonomy\base_slug();
 $site_url  = trailingslashit( home_url() );
 $nonce     = wp_create_nonce( 'jetonomy_setup' );
 $ajax_url  = admin_url( 'admin-ajax.php' );
@@ -38,10 +37,11 @@ wp_enqueue_style(
 wp_enqueue_script(
 	'jetonomy-setup-wizard',
 	JETONOMY_URL . 'assets/js/setup-wizard.js',
-	array(),
+	array( 'wp-i18n' ),
 	JETONOMY_VERSION,
 	true
 );
+\Jetonomy\script_translations( 'jetonomy-setup-wizard' );
 wp_localize_script(
 	'jetonomy-setup-wizard',
 	'jetonomySetup',
@@ -49,12 +49,10 @@ wp_localize_script(
 		'ajaxUrl' => $ajax_url,
 		'nonce'   => $nonce,
 		'siteUrl' => $site_url,
+		// The one label-dependent string; the rest use wp.i18n in the script.
 		'i18n'    => array(
-			'slugRequired'         => esc_html__( 'Please enter a community URL slug.', 'jetonomy' ),
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			'fillCategoryAndSpace' => esc_html( sprintf( __( 'Please fill in the category and %s name.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
-			'genericError'         => esc_html__( 'Something went wrong. Please try again.', 'jetonomy' ),
-			'networkError'         => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
 		),
 	)
 );

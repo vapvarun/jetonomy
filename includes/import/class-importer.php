@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Attachment;
 use Jetonomy\Models\Category;
+use Jetonomy\Models\Import_Map;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
@@ -24,6 +25,37 @@ abstract class Importer {
 	protected array $errors = [];
 	protected int $imported = 0;
 	protected int $skipped  = 0;
+
+	/**
+	 * Source rows an earlier run already brought over, recognised and skipped.
+	 *
+	 * Kept apart from $skipped, which means "could not import": an owner
+	 * re-running an import needs to read "40 already imported" as the
+	 * guarantee it is, not as 40 failures.
+	 *
+	 * @var int
+	 */
+	protected int $already = 0;
+
+	/**
+	 * Replies an earlier release imported flat that this run re-threaded.
+	 *
+	 * @var int
+	 */
+	protected int $rethreaded = 0;
+
+	/**
+	 * Source rows left out because their parent was not imported, per type.
+	 *
+	 * A reply whose topic is pending, spam or trashed at the source is not
+	 * imported, on purpose. Counted apart from failures so the owner can be
+	 * told why ("52 replies ... their topic was not imported") instead of
+	 * reading "nothing was skipped" beside a source count that does not add up.
+	 *
+	 * @var array<string,int> 'topic' | 'reply' => count.
+	 */
+	protected array $orphans = [];
+
 	/**
 	 * Placeholder id recorded in the id map during a dry run.
 	 *
@@ -73,9 +105,30 @@ abstract class Importer {
 
 	/**
 	 * Get the total count of records to import.
-	 * Used to calculate progress percentage.
+	 *
+	 * Used to calculate progress percentage, so it must count every row the
+	 * batches report as processed - the profiles phase included, or progress
+	 * runs past 100%.
 	 */
 	abstract public function get_total_count(): int;
+
+	/**
+	 * Is the source forum plugin itself running?
+	 *
+	 * Deliberately separate from is_source_available(), which only asks
+	 * whether there is data to import. Importers read the source tables
+	 * directly, so an owner who deactivated (or deleted) the old forum can
+	 * still import - often the only copy of that content left is in those
+	 * tables. The screen says "plugin not active" instead of pretending the
+	 * plugin is there, or hiding content the owner can still rescue.
+	 *
+	 * Third-party importers that do not override it are treated as active.
+	 *
+	 * @return bool
+	 */
+	public function is_source_active(): bool {
+		return true;
+	}
 
 	/**
 	 * Run a single batch of the import.
@@ -170,10 +223,225 @@ abstract class Importer {
 	 * own source-specific resume options, calling parent::reset_run_state() first.
 	 */
 	public function reset_run_state(): void {
+		// Releases before 2.0.1 carried the whole id map between batches in
+		// this option. It is no longer written (see load_mapped()); deleted so
+		// a run aborted on an older version leaves nothing behind.
 		delete_option( 'jetonomy_import_id_map' );
 		delete_option( 'jetonomy_import_total_processed' );
 		delete_option( 'jetonomy_import_errors' );
+		delete_option( 'jetonomy_import_tally' );
 		$this->id_map = [];
+	}
+
+	/**
+	 * Slug this importer records its rows under in jt_import_map.
+	 *
+	 * Every bundled importer overrides it. The default '' opts out, so a
+	 * third-party importer registered through `jetonomy_importers` before the
+	 * map existed keeps working exactly as it did.
+	 *
+	 * @return string
+	 */
+	protected function map_source(): string {
+		return '';
+	}
+
+	/**
+	 * Which of this batch's source rows did an earlier run already import?
+	 *
+	 * THE one "already imported?" check every importer uses, so a re-run adds
+	 * only what is missing and never duplicates. One lookup per batch, not per
+	 * row: jt_import_map first, then - for rows it does not know - the legacy
+	 * fingerprint match for content imported before the map existed (see
+	 * Import_Map::match_legacy()). Legacy matches are written back to the map,
+	 * so each one is inferred once and exact from then on.
+	 *
+	 * @param string $type 'space', 'post' or 'reply'.
+	 * @param array  $rows source_id => legacy fingerprint (see match_legacy()).
+	 * @return array source_id => existing Jetonomy id. Rows not imported yet are absent.
+	 */
+	protected function find_imported( string $type, array $rows ): array {
+		$source = $this->map_source();
+		if ( '' === $source || ! $rows ) {
+			return [];
+		}
+
+		$found  = Import_Map::find_many( $source, $type, array_keys( $rows ) );
+		$legacy = Import_Map::match_legacy( $source, $type, array_diff_key( $rows, $found ) );
+
+		if ( $legacy && ! $this->dry_run ) {
+			Import_Map::record_many( $source, $type, $legacy );
+		}
+
+		return $found + $legacy;
+	}
+
+	/**
+	 * Load this batch's parents from jt_import_map into the in-memory id map.
+	 *
+	 * Every batch runs in its own request, so the id map starts empty. It used
+	 * to be carried between batches in one option that held EVERY mapping made
+	 * so far - reloaded and rewritten per batch, so a 500k-reply forum wrote a
+	 * ~10 MB option a thousand times. jt_import_map already records every row
+	 * an import created, so a batch now asks it for just the parents its own
+	 * rows point at: one indexed lookup of at most batch-size ids.
+	 *
+	 * Ids already in memory (created earlier in this request, or by run(),
+	 * which keeps the whole import in one process) are not looked up again.
+	 *
+	 * @param string $key  id map type, e.g. 'forum', 'topic', 'reply'.
+	 * @param string $type jt_import_map object_type: 'space', 'post', 'reply', 'category'.
+	 * @param array  $ids  Local id map key => jt_import_map source id.
+	 * @return void
+	 */
+	protected function load_mapped( string $key, string $type, array $ids ): void {
+		$ids = array_diff_key( $ids, $this->id_map[ $key ] ?? [] );
+		if ( ! $ids || '' === $this->map_source() ) {
+			return;
+		}
+
+		$found = Import_Map::find_many( $this->map_source(), $type, array_values( $ids ) );
+		foreach ( $ids as $local => $source_id ) {
+			if ( isset( $found[ (string) $source_id ] ) ) {
+				$this->id_map[ $key ][ $local ] = $found[ (string) $source_id ];
+			}
+		}
+	}
+
+	/**
+	 * Count a row left out because its parent was not imported.
+	 *
+	 * @param string $type 'topic' or 'reply'.
+	 * @return void
+	 */
+	protected function skip_orphan( string $type ): void {
+		++$this->skipped;
+		$this->orphans[ $type ] = ( $this->orphans[ $type ] ?? 0 ) + 1;
+	}
+
+	/**
+	 * A slug that reads cleanly in the address bar.
+	 *
+	 * Source slugs are WordPress-style, so an emoji or symbol in a forum title
+	 * arrives percent-encoded ("off-topic-cafe-%e2%98%95"). Letters, combining
+	 * marks and digits of any script are kept (WordPress encodes those too, and
+	 * browsers show them decoded); everything else is dropped. The marks (\p{M})
+	 * matter: Indic vowel signs and viramas (हिंदी, বাংলা, தமிழ்) and decomposed
+	 * Latin accents are marks, not letters, and dropping them broke every word
+	 * into fragments. sanitize_title() -> remove_accents() then folds accented
+	 * Latin, NFD included, to plain ASCII.
+	 *
+	 * Used for NEW rows only. Legacy recognition still matches the slug an
+	 * earlier release wrote verbatim.
+	 *
+	 * @param string $slug Source slug or title.
+	 * @return string Clean slug; '' when nothing sluggable is left.
+	 */
+	protected static function clean_slug( string $slug ): string {
+		return sanitize_title( (string) preg_replace( '/[^\p{L}\p{M}\p{N}\-]+/u', '-', urldecode( $slug ) ) );
+	}
+
+	/**
+	 * Record that a source row produced a Jetonomy row.
+	 *
+	 * @param string     $type      'space', 'post', 'reply'.
+	 * @param int|string $source_id Source primary key.
+	 * @param int        $object_id Jetonomy id just created.
+	 * @return void
+	 */
+	protected function remember( string $type, $source_id, int $object_id ): void {
+		if ( '' !== $this->map_source() && ! $this->dry_run ) {
+			Import_Map::record( $this->map_source(), $type, $source_id, $object_id );
+		}
+	}
+
+	/**
+	 * The category this source's spaces are filed under, created only when needed.
+	 *
+	 * A re-run used to create a fresh "Imported from ..." category every time,
+	 * so each re-import left another empty one behind. Resolution order: the
+	 * category this importer recorded, then the one a pre-map import used, then
+	 * a new one. Callers ask for it only when a forum actually has to be
+	 * created, so a re-run that finds nothing new creates nothing.
+	 *
+	 * @param string $key         Map key for the category ('default', or a board key).
+	 * @param string $slug_prefix Slug prefix, e.g. 'imported-bbpress'. A timestamp is appended.
+	 * @param array  $args        Category::create() args (name, description, ...).
+	 * @return int Category id.
+	 */
+	protected function import_category( string $key, string $slug_prefix, array $args ): int {
+		if ( $this->dry_run ) {
+			return self::DRY_RUN_ID;
+		}
+
+		$source = $this->map_source();
+		$cat_id = '' === $source ? 0 : Import_Map::find( $source, 'category', $key );
+		if ( $cat_id ) {
+			return $cat_id;
+		}
+
+		$cat_id = Import_Map::legacy_category( $slug_prefix );
+		if ( ! $cat_id ) {
+			$cat_id = (int) Category::create( array_merge( $args, [ 'slug' => $slug_prefix . '-' . time() ] ) );
+		}
+
+		$this->remember( 'category', $key, $cat_id );
+
+		return $cat_id;
+	}
+
+	/**
+	 * Created vs already-there counts for this request, for the batch driver.
+	 *
+	 * @return array{imported:int, already:int, rethreaded:int, orphans:array<string,int>}
+	 */
+	public function get_tally(): array {
+		return [
+			'imported'   => $this->imported,
+			'already'    => $this->already,
+			'rethreaded' => $this->rethreaded,
+			'orphans'    => $this->orphans,
+		];
+	}
+
+	/**
+	 * The owner-facing sentences for a tally: already imported, re-threaded,
+	 * and left out because their parent was not imported.
+	 *
+	 * The one wording the Import screen, the Past imports record and
+	 * `wp jetonomy import` all print, so they cannot tell the owner different
+	 * stories about the same run.
+	 *
+	 * @param array $tally get_tally()/results() shape, possibly accumulated across batches.
+	 * @return string[] Translated sentences; empty when there is nothing to say.
+	 */
+	public static function describe_tally( array $tally ): array {
+		$lines   = [];
+		$already = (int) ( $tally['already'] ?? 0 );
+		$thread  = (int) ( $tally['rethreaded'] ?? 0 );
+		$orphans = (array) ( $tally['orphans'] ?? [] );
+
+		if ( $already > 0 ) {
+			/* translators: %s: number of items a previous import already brought over. */
+			$lines[] = sprintf( _n( '%s item was already imported and was skipped.', '%s items were already imported and were skipped.', $already, 'jetonomy' ), number_format_i18n( $already ) );
+		}
+		if ( $thread > 0 ) {
+			/* translators: %s: number of replies whose threading was restored. */
+			$lines[] = sprintf( _n( '%s reply from an earlier import had its threading restored.', '%s replies from an earlier import had their threading restored.', $thread, 'jetonomy' ), number_format_i18n( $thread ) );
+		}
+
+		$topics = (int) ( $orphans['topic'] ?? 0 );
+		if ( $topics > 0 ) {
+			/* translators: %s: number of topics left out. */
+			$lines[] = sprintf( _n( '%s topic was not imported because its forum was not imported (for example, the forum is a draft or in the trash).', '%s topics were not imported because their forum was not imported (for example, the forum is a draft or in the trash).', $topics, 'jetonomy' ), number_format_i18n( $topics ) );
+		}
+		$replies = (int) ( $orphans['reply'] ?? 0 );
+		if ( $replies > 0 ) {
+			/* translators: %s: number of replies left out. */
+			$lines[] = sprintf( _n( '%s reply was not imported because its topic was not imported (for example, the topic is pending, spam or in the trash).', '%s replies were not imported because their topic was not imported (for example, the topic is pending, spam or in the trash).', $replies, 'jetonomy' ), number_format_i18n( $replies ) );
+		}
+
+		return $lines;
 	}
 
 	/**
@@ -288,11 +556,14 @@ abstract class Importer {
 	 */
 	protected function results(): array {
 		return [
-			'source'   => $this->get_source_name(),
-			'imported' => $this->imported,
-			'skipped'  => $this->skipped,
-			'errors'   => $this->errors,
-			'dry_run'  => $this->dry_run,
+			'source'     => $this->get_source_name(),
+			'imported'   => $this->imported,
+			'skipped'    => $this->skipped,
+			'already'    => $this->already,
+			'rethreaded' => $this->rethreaded,
+			'orphans'    => $this->orphans,
+			'errors'     => $this->errors,
+			'dry_run'    => $this->dry_run,
 		];
 	}
 

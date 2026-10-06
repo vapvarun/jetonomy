@@ -2,7 +2,8 @@
  * Jetonomy — Setup wizard.
  *
  * 3-step wizard run from the standalone setup page. Reads ajax URL,
- * nonce, site URL, and i18n strings from window.jetonomySetup.
+ * nonce, site URL and the one label-dependent string from
+ * window.jetonomySetup; the rest are translated with wp.i18n.
  */
 (function () {
 	'use strict';
@@ -12,6 +13,7 @@
 	var nonce = cfg.nonce;
 	var siteUrl = cfg.siteUrl;
 	var i18n = cfg.i18n || {};
+	var __ = wp.i18n.__;
 
 	if (!ajaxUrl || !nonce || !siteUrl) { return; }
 
@@ -75,7 +77,7 @@
 			hideError('jt-error-1');
 			var slug = slugInput ? sanitizeSlug(slugInput.value) : 'community';
 			if (!slug) {
-				showError('jt-error-1', i18n.slugRequired || 'Please enter a community URL slug.');
+				showError('jt-error-1', __( 'Please enter a community URL slug.', 'jetonomy' ));
 				return;
 			}
 			showStep(2);
@@ -107,12 +109,12 @@
 			} else {
 				var msg = (res.data && typeof res.data === 'object' && res.data.message)
 					? String(res.data.message)
-					: (i18n.genericError || 'Something went wrong. Please try again.');
+					: __( 'Something went wrong. Please try again.', 'jetonomy' );
 				showError(errorId, msg);
 			}
 		}).catch(function () {
 			setLoading(btn, false);
-			showError(errorId, i18n.networkError || 'Network error. Please try again.');
+			showError(errorId, __( 'Network error. Please try again.', 'jetonomy' ));
 		});
 	}
 
@@ -130,7 +132,7 @@
 			var spaceDesc = spaceDescEl ? spaceDescEl.value : '';
 
 			if (!catName.trim() || !spaceName.trim()) {
-				showError('jt-error-2', i18n.fillCategoryAndSpace || 'Please fill in the category and space name.');
+				showError('jt-error-2', i18n.fillCategoryAndSpace);
 				return;
 			}
 

@@ -60,6 +60,10 @@ When you publish a new course in LearnDash, a private discussion space is automa
 - A membership access rule linking the course to the space
 - The course author assigned as space admin
 
+**Free-course spaces.** The option to make spaces for free courses public appears only for an LMS where Jetonomy can tell which courses are free: Learnomy out of the box, or any LMS once your site returns true from the `jetonomy_pro_course_is_free` filter for the courses it considers free. For LearnDash, Tutor LMS, LifterLMS, Sensei LMS and MasterStudy LMS the tab instead says their course spaces always stay private, because guessing wrong would make a paid course's discussion public.
+
+Anyone who can manage Jetonomy settings can change and save this tab: administrators, and any role you grant `jetonomy_manage_settings` under **Settings → Permissions**.
+
 ## Enrollment and Un-enrollment Events
 
 | LearnDash Event | Jetonomy Action |

@@ -410,10 +410,8 @@ class Notifications_Controller extends Base_Controller {
 		}
 
 		// Fast path: pre-joined slugs come from list_for_user_with_targets().
-		$base = \Jetonomy\base_url();
-
 		if ( 'post' === $object_type && ! empty( $notification->post_slug ) && ! empty( $notification->space_slug ) ) {
-			return $base . '/s/' . $notification->space_slug . '/t/' . $notification->post_slug . '/';
+			return \Jetonomy\route_url( 'post', $notification->space_slug, $notification->post_slug );
 		}
 
 		if ( 'reply' === $object_type && ! empty( $notification->reply_post_slug ) && ! empty( $notification->reply_space_slug ) ) {

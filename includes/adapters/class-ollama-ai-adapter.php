@@ -21,30 +21,18 @@ class Ollama_AI_Adapter implements AI_Adapter {
 	}
 
 	/**
-	 * Stored Ollama provider settings.
+	 * Stored Ollama provider settings, from Jetonomy Pro's AI tab.
 	 *
-	 * Reads Pro's AI settings FIRST, then free's own `jetonomy_settings['ai']`.
-	 *
-	 * This adapter used to read only the free key - which no screen anywhere
-	 * writes. Pro's AI tab stores its providers under
-	 * `jetonomy_pro_ai_settings`, so ticking "Ollama" there had no effect and
-	 * is_active() could never return true: the provider was permanently
-	 * unreachable however the owner configured it. Free is still consulted so a
-	 * site can configure Ollama through a filter or a mu-plugin without Pro.
+	 * AI is a Pro feature: Pro's AI extension registers this adapter, and its
+	 * settings live under `jetonomy_pro_ai_settings`. Free registers no AI
+	 * provider and stores no AI settings.
 	 *
 	 * @return array<string, mixed>
 	 */
 	private static function ollama_settings(): array {
 		$pro = get_option( 'jetonomy_pro_ai_settings', array() );
-		$pro = is_array( $pro ) ? ( $pro['providers']['ollama'] ?? array() ) : array();
 
-		if ( ! empty( $pro ) ) {
-			return (array) $pro;
-		}
-
-		$free = get_option( 'jetonomy_settings', array() );
-
-		return is_array( $free ) ? (array) ( $free['ai']['providers']['ollama'] ?? array() ) : array();
+		return is_array( $pro ) ? (array) ( $pro['providers']['ollama'] ?? array() ) : array();
 	}
 
 	public function is_active(): bool {

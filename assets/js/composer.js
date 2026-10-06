@@ -1,21 +1,8 @@
 /**
  * Jetonomy Reply Composer
- * Simple contenteditable enhancement with toolbar actions
+ * Simple contenteditable enhancement with toolbar actions.
+ * UI strings are translated with wp.i18n.
  */
-
-/**
- * Translate a single string via the localized jetonomyData.i18n payload from
- * includes/class-template-loader.php. The English fallback is the safety net
- * if the localize block did not deliver — composer.js still runs.
- *
- * @param {string} key
- * @param {string} fallback English fallback shipped with the source.
- * @returns {string}
- */
-function jtI18n( key, fallback ) {
-    var d = window.jetonomyData && window.jetonomyData.i18n;
-    return ( d && d[ key ] ) || fallback;
-}
 
 // Mobile hamburger navigation
 document.addEventListener( 'DOMContentLoaded', function() {
@@ -28,7 +15,7 @@ document.addEventListener( 'DOMContentLoaded', function() {
                 var close = document.createElement( 'button' );
                 close.className = 'jt-mobile-close';
                 close.innerHTML = '&times;';
-                close.setAttribute( 'aria-label', ( window.jetonomyData && window.jetonomyData.i18n && window.jetonomyData.i18n.closeMenu ) || 'Close menu' );
+                close.setAttribute( 'aria-label', wp.i18n.__( 'Close menu', 'jetonomy' ) );
                 close.addEventListener( 'click', function() { nav.classList.remove( 'open' ); } );
                 nav.prepend( close );
             }
@@ -57,8 +44,179 @@ document.addEventListener( 'DOMContentLoaded', () => {
             const range = sel.getRangeAt( 0 );
             if ( body.contains( range.commonAncestorContainer ) ) {
                 savedRange = range.cloneRange();
+                syncBlockButtons();
             }
         } );
+
+        // Code block and Quote are toggles over one block element each. The
+        // bare formatBlock call had no way back out: clicking again nested a
+        // second block, and Enter only ever added lines inside it, so text
+        // typed after a code block stayed in the <pre> (QA 10320778207).
+        const BLOCK_TAGS = { codeblock: 'pre', quote: 'blockquote' };
+        const MEDIA = 'img, video, iframe, audio, hr, table';
+
+        // Innermost `selector` block around the caret, inside this composer.
+        const caretBlock = ( selector ) => {
+            const sel = window.getSelection();
+            if ( ! sel || ! sel.rangeCount ) return null;
+            const node = sel.getRangeAt( 0 ).startContainer;
+            const el = node.nodeType === 1 ? node : node.parentElement;
+            const block = el && el.closest( selector );
+            return block && block !== body && body.contains( block ) ? block : null;
+        };
+
+        const syncBlockButtons = () => {
+            Object.keys( BLOCK_TAGS ).forEach( ( cmd ) => {
+                const btn = toolbar.querySelector( '[data-cmd="' + cmd + '"]' );
+                if ( btn ) btn.setAttribute( 'aria-pressed', caretBlock( BLOCK_TAGS[ cmd ] ) ? 'true' : 'false' );
+            } );
+        };
+        syncBlockButtons();
+
+        // DOM edits below bypass the browser's own input event; mentions and
+        // the unsaved-changes guard listen for it.
+        const changed = () => {
+            body.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+            syncBlockButtons();
+        };
+
+        // Turn a block back into ordinary text: a <p> holding its content, or
+        // its own paragraphs when it already has them.
+        const unwrapBlock = ( block ) => {
+            const sel = window.getSelection();
+            const r = sel.rangeCount ? sel.getRangeAt( 0 ) : null;
+            const caret = r && r.startContainer !== block ? [ r.startContainer, r.startOffset ] : null;
+
+            // A <pre> can hold typed newlines as text; a <p> would fold them into spaces.
+            if ( block.tagName === 'PRE' ) {
+                const walker = document.createTreeWalker( block, NodeFilter.SHOW_TEXT );
+                const texts = [];
+                while ( walker.nextNode() ) texts.push( walker.currentNode );
+                texts.forEach( ( t ) => {
+                    if ( t.data.indexOf( '\n' ) === -1 ) return;
+                    const parts = t.data.split( '\n' );
+                    const frag = document.createDocumentFragment();
+                    parts.forEach( ( part, i ) => {
+                        if ( i ) frag.appendChild( document.createElement( 'br' ) );
+                        if ( part ) frag.appendChild( document.createTextNode( part ) );
+                    } );
+                    t.replaceWith( frag );
+                } );
+            }
+
+            const hasParagraphs = Array.from( block.children ).some( ( c ) => /^(P|DIV|PRE|BLOCKQUOTE|UL|OL|H[1-6])$/.test( c.tagName ) );
+            let target = block.parentNode;
+            if ( hasParagraphs ) {
+                while ( block.firstChild ) block.parentNode.insertBefore( block.firstChild, block );
+            } else {
+                target = document.createElement( 'p' );
+                while ( block.firstChild ) target.appendChild( block.firstChild );
+                if ( ! target.firstChild ) target.appendChild( document.createElement( 'br' ) );
+                block.parentNode.insertBefore( target, block );
+            }
+            block.remove();
+
+            if ( caret && caret[ 0 ].isConnected && body.contains( caret[ 0 ] ) ) {
+                sel.collapse( caret[ 0 ], Math.min( caret[ 1 ], caret[ 0 ].nodeType === 3 ? caret[ 0 ].length : caret[ 0 ].childNodes.length ) );
+            } else if ( ! hasParagraphs ) {
+                sel.collapse( target, target.childNodes.length );
+            }
+        };
+
+        const toggleBlock = ( tag ) => {
+            const block = caretBlock( tag );
+            if ( block ) {
+                unwrapBlock( block );
+                changed();
+            } else {
+                // With a bare caret, formatBlock wraps only the caret's
+                // <br>-line and nests it inside the <p> (<p>a<br><pre>b</pre></p>).
+                // Select the whole enclosing paragraph first so it converts as one.
+                const sel = window.getSelection();
+                if ( sel.rangeCount && sel.isCollapsed ) {
+                    let node = sel.anchorNode;
+                    while ( node && node !== body && ! ( node.nodeType === 1 && /^(P|DIV)$/.test( node.nodeName ) ) ) {
+                        node = node.parentNode;
+                    }
+                    if ( node && node !== body ) {
+                        const range = document.createRange();
+                        range.selectNodeContents( node );
+                        sel.removeAllRanges();
+                        sel.addRange( range );
+                    }
+                }
+                // A real <pre> block: the server keeps its whitespace
+                // (jetonomy_sanitize_editor_content), unlike typed ``` fences.
+                document.execCommand( 'formatBlock', false, tag );
+                syncBlockButtons();
+            }
+        };
+
+        // Content of a range as plain lines: <br> and paragraph starts become "\n".
+        const rangeLines = ( range ) => {
+            const d = document.createElement( 'div' );
+            d.appendChild( range.cloneContents() );
+            d.querySelectorAll( 'br' ).forEach( ( br ) => br.replaceWith( '\n' ) );
+            d.querySelectorAll( 'p, div' ).forEach( ( p ) => p.prepend( '\n' ) );
+            return d;
+        };
+
+        // Drop the empty last line of `el`: a trailing <br>, "\n" or empty paragraph.
+        const trimLastLine = ( el ) => {
+            for ( let n = el.lastChild; n; n = el.lastChild ) {
+                if ( n.nodeType === 3 ) {
+                    if ( n.data === '' ) { n.remove(); continue; }
+                    if ( n.data.endsWith( '\n' ) ) n.data = n.data.slice( 0, -1 );
+                    return;
+                }
+                if ( n.nodeType !== 1 ) { n.remove(); continue; }
+                if ( n.nodeName === 'BR' ) { n.remove(); return; }
+                if ( n.textContent === '' && ! n.querySelector( MEDIA ) ) {
+                    n.remove();
+                    if ( /^(P|DIV)$/.test( n.nodeName ) ) return;
+                    continue;
+                }
+                el = n;
+            }
+        };
+
+        // Enter on an empty last line of a code block or quote leaves it
+        // (the usual "double Enter" exit): drop that line and continue in a
+        // new paragraph after the block. Any other Enter keeps its native
+        // behaviour, so code still gets its newlines.
+        const exitBlockOnEmptyLine = ( e ) => {
+            const sel = window.getSelection();
+            if ( ! sel || ! sel.rangeCount || ! sel.isCollapsed ) return;
+            const block = caretBlock( 'pre, blockquote' );
+            if ( ! block ) return;
+            const range = sel.getRangeAt( 0 );
+
+            const tail = document.createRange();
+            tail.selectNodeContents( block );
+            tail.setStart( range.startContainer, range.startOffset );
+            const after = rangeLines( tail );
+            if ( after.textContent.trim() !== '' || after.querySelector( MEDIA ) ) return;
+
+            const head = document.createRange();
+            head.selectNodeContents( block );
+            head.setEnd( range.startContainer, range.startOffset );
+            const before = rangeLines( head );
+            const emptyBlock = before.textContent.trim() === '' && ! before.querySelector( MEDIA );
+            if ( ! emptyBlock && ! before.textContent.endsWith( '\n' ) ) return;
+
+            e.preventDefault();
+            const p = document.createElement( 'p' );
+            p.appendChild( document.createElement( 'br' ) );
+            if ( emptyBlock ) {
+                block.replaceWith( p );
+            } else {
+                tail.deleteContents();
+                trimLastLine( block );
+                block.after( p );
+            }
+            sel.collapse( p, 0 );
+            changed();
+        };
 
         const restoreSelection = () => {
             body.focus();
@@ -115,8 +273,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     }
 
                     window.jetonomyPrompt(
-                        jtI18n( 'linkPromptUrl', 'Enter URL:' ),
-                        { placeholder: jtI18n( 'linkPromptPlaceholder', 'https://example.com' ) }
+                        wp.i18n.__( 'Enter URL:', 'jetonomy' ),
+                        { placeholder: wp.i18n.__( 'https://example.com', 'jetonomy' ) }
                     ).then( ( raw ) => {
                         if ( ! raw ) return;
                         const trimmed = raw.trim();
@@ -136,7 +294,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     break;
                 }
                 case 'quote':
-                    document.execCommand( 'formatBlock', false, 'blockquote' );
+                case 'codeblock':
+                    toggleBlock( BLOCK_TAGS[ cmd ] );
                     break;
             }
         } );
@@ -161,6 +320,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 e.preventDefault();
                 const submitBtn = composer.querySelector( '.jt-btn-fill' );
                 if ( submitBtn ) submitBtn.click();
+                return;
+            }
+            if ( e.key === 'Enter' && ! e.shiftKey && ! e.altKey && ! e.ctrlKey && ! e.metaKey && ! e.isComposing ) {
+                exitBlockOnEmptyLine( e );
             }
         } );
     } );
@@ -236,7 +399,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         // Show uploading placeholder
         var placeholder = document.createElement( 'div' );
         placeholder.className = 'jt-upload-placeholder';
-        placeholder.textContent = jtI18n( 'uploading', 'Uploading\u2026' );
+        placeholder.textContent = wp.i18n.__( 'Uploading…', 'jetonomy' );
         editor.appendChild( placeholder );
 
         // 1.4.0 A.1: POST /jetonomy/v1/media replaces wp_ajax_jetonomy_upload_image.
@@ -266,7 +429,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var doUpload = function () {
             if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
                 placeholder.remove();
-                if ( window.bnToast ) { window.bnToast( jtI18n( 'uploadFailed', 'Upload failed' ), 'error' ); }
+                if ( window.bnToast ) { window.bnToast( wp.i18n.__( 'Upload failed.', 'jetonomy' ), 'error' ); }
                 return;
             }
             window.jetonomyRest.restFetch( '/media', {
@@ -286,7 +449,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     editor.appendChild( img );
                     editor.appendChild( document.createElement( 'br' ) );
                 } else {
-                    var msg = ( res.data && res.data.message ) ? res.data.message : jtI18n( 'uploadFailed', 'Upload failed' );
+                    var msg = ( res.data && res.data.message ) ? res.data.message : wp.i18n.__( 'Upload failed.', 'jetonomy' );
                     if ( window.bnToast ) { window.bnToast( msg, 'error' ); }
                 }
             } );
@@ -357,7 +520,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
     var quoteBtn = document.createElement('button');
     quoteBtn.className = 'jt-quote-btn';
-    quoteBtn.textContent = jtI18n( 'quoteSelected', 'Quote' );
+    quoteBtn.textContent = wp.i18n.__( 'Quote', 'jetonomy' );
     quoteBtn.style.display = 'none';
     document.body.appendChild(quoteBtn);
 
@@ -395,8 +558,19 @@ document.addEventListener( 'DOMContentLoaded', () => {
             var editor = composer.querySelector('.jt-editor-body');
             if (!editor) return;
 
-            var quote = '<blockquote class="jt-quote"><cite>' + authorName + '</cite>' + text + '</blockquote><p></p>';
-            editor.innerHTML += quote;
+            // Build nodes, never an HTML string: the selection is plain text that
+            // can read like markup (a post showing "<img onerror=...>" as text),
+            // and concatenating it into innerHTML ran it in the quoter's session.
+            var quote = document.createElement('blockquote');
+            quote.className = 'jt-quote';
+            if (authorName) {
+                var cite = document.createElement('cite');
+                cite.textContent = authorName;
+                quote.appendChild(cite);
+            }
+            quote.appendChild(document.createTextNode(text));
+            editor.appendChild(quote);
+            editor.appendChild(document.createElement('p'));
             editor.focus();
             composer.scrollIntoView({ behavior: 'smooth', block: 'center' });
             quoteBtn.style.display = 'none';
@@ -548,7 +722,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 emojiBtn.setAttribute('aria-controls', 'jt-emoji-picker');
                 emojiBtn.setAttribute('aria-expanded', 'true');
                 // Localized name comes from the trigger's own title.
-                sharedPicker.setAttribute('aria-label', emojiBtn.getAttribute('title') || emojiBtn.getAttribute('aria-label') || 'Insert emoji');
+                sharedPicker.setAttribute('aria-label', emojiBtn.getAttribute('title') || emojiBtn.getAttribute('aria-label') || wp.i18n.__( 'Insert emoji', 'jetonomy' ));
                 if ( sharedPicker.parentElement !== document.body ) {
                     document.body.appendChild( sharedPicker );
                 }
@@ -601,8 +775,11 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var nonce   = btn.dataset.nonce;
         if (!spaceId) return;
 
+        // Restore the server-rendered label on failure: it carries the owner's
+        // configured space noun, which this script cannot know.
+        var label = btn.textContent;
         btn.disabled = true;
-        btn.textContent = jtI18n( 'joining', 'Joining\u2026' );
+        btn.textContent = wp.i18n.__( 'Joining…', 'jetonomy' );
 
         window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -613,8 +790,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 window.location.reload();
             } else {
                 btn.disabled = false;
-                btn.textContent = jtI18n( 'joinSpace', 'Join Space' );
-                (window.bnToast ? window.bnToast((res.data && res.data.message) || jtI18n( 'joinSpaceFailed', 'Could not join space.' ), 'error') : null);
+                btn.textContent = label;
+                (window.bnToast ? window.bnToast((res.data && res.data.message) || ( window.jetonomyData && window.jetonomyData.i18n && window.jetonomyData.i18n.joinSpaceFailed ) || wp.i18n.__( 'Something went wrong. Please try again.', 'jetonomy' ), 'error') : null);
             }
         });
     });
@@ -630,7 +807,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if (!spaceId) return;
 
         btn.disabled = true;
-        btn.textContent = jtI18n( 'requesting', 'Requesting\u2026' );
+        btn.textContent = wp.i18n.__( 'Requesting…', 'jetonomy' );
 
         window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -640,16 +817,16 @@ document.addEventListener( 'DOMContentLoaded', () => {
             var data = res.data || {};
             if (data.status === 'pending') {
                 btn.disabled = true;
-                btn.textContent = jtI18n( 'awaitingApproval', 'Awaiting Approval' );
+                btn.textContent = wp.i18n.__( 'Awaiting Approval', 'jetonomy' );
                 btn.classList.remove('jt-btn-fill');
                 btn.classList.add('jt-btn-outline');
-                (window.bnToast ? window.bnToast(data.message || jtI18n( 'requestSubmitted', 'Request submitted. Awaiting approval.' ), 'success') : null);
+                (window.bnToast ? window.bnToast(data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), 'success') : null);
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
                 btn.disabled = false;
-                btn.textContent = jtI18n( 'requestToJoin', 'Request to Join' );
-                (window.bnToast ? window.bnToast(data.message || 'Could not submit request.', 'error') : null);
+                btn.textContent = wp.i18n.__( 'Request to Join', 'jetonomy' );
+                (window.bnToast ? window.bnToast(data.message || wp.i18n.__( 'Could not submit request.', 'jetonomy' ), 'error') : null);
             }
         });
     });
@@ -666,7 +843,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if (!spaceId) return;
 
         var submitBtn = form.querySelector('[type="submit"]');
-        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'submitting', 'Submitting\u2026' ); }
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = wp.i18n.__( 'Submitting…', 'jetonomy' ); }
 
         window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -675,13 +852,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             var data = res.data || {};
             if (data.status === 'pending') {
-                showGateMessage(form, data.message || jtI18n( 'requestSubmitted', 'Request submitted. Awaiting approval.' ), false);
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'requestSent', 'Request Sent' ); }
+                showGateMessage(form, data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), false);
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = wp.i18n.__( 'Request Sent', 'jetonomy' ); }
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = jtI18n( 'requestToJoin', 'Request to Join' ); }
-                showGateMessage(form, data.message || 'Could not submit request.', true);
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = wp.i18n.__( 'Request to Join', 'jetonomy' ); }
+                showGateMessage(form, data.message || wp.i18n.__( 'Could not submit request.', 'jetonomy' ), true);
             }
         });
     });
@@ -763,7 +940,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if ( ! matches.length ) {
             var empty = document.createElement( 'div' );
             empty.className = 'jt-mention-empty';
-            empty.textContent = jtI18n( 'noMentionMatches', 'No matches' );
+            empty.textContent = wp.i18n.__( 'No matches', 'jetonomy' );
             dropdown.appendChild( empty );
             return;
         }

@@ -8,7 +8,7 @@
  * some in-app browsers suppress scripted custom-scheme navigation.
  *
  * Error copy comes from the SERVER response (already translated); the
- * fallback literals below only cover a dead-network case.
+ * context's translated errorText only covers a dead-network case.
  */
 import { store, getContext } from '@wordpress/interactivity';
 
@@ -66,10 +66,10 @@ store( 'jetonomy/connect-app', {
 					// "Open the app" link stays as the fallback.
 					window.location.href = data.deep_link;
 				} else {
-					c.error = ( data && data.message ) || 'Something went wrong. Please try again.';
+					c.error = ( data && data.message ) || c.errorText;
 				}
 			} catch ( _e ) {
-				c.error = 'Something went wrong. Please try again.';
+				c.error = c.errorText;
 			}
 			c.busy = false;
 		},

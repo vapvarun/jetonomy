@@ -19,7 +19,7 @@ use Jetonomy\Models\Revision;
 use Jetonomy\Models\Subscription;
 use Jetonomy\Models\Tag;
 use Jetonomy\Models\UserProfile;
-use Jetonomy\Models\Flag;
+use Jetonomy\Moderation\Moderation_Service;
 
 class Posts_Controller extends Base_Controller {
 
@@ -101,6 +101,13 @@ class Posts_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					'args'                => array(
+						'force' => array(
+							'type'        => 'boolean',
+							'default'     => false,
+							'description' => __( 'Delete permanently instead of moving to trash. Space moderators and admins only.', 'jetonomy' ),
+						),
+					),
 				),
 			)
 		);
@@ -123,6 +130,21 @@ class Posts_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'pin_post' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+			)
+		);
+
+		// Topic view beacon. Public on purpose: views are counted from the topic
+		// page by a client-side beacon (view.js) so the page response itself
+		// stays cookie-free and page-cacheable. A cached page's nonce is stale
+		// by design, so a guest's beacon carries none. Abuse is bounded by
+		// record_view()'s per-IP, per-topic window, not by auth.
+		register_rest_route(
+			$ns,
+			'/posts/(?P<id>\d+)/view',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'record_view' ),
+				'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'post_view' ) ),
 			)
 		);
 
@@ -334,9 +356,55 @@ class Posts_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		Post::increment_view_count( $id );
-
+		// No view is counted here. This is an API read (apps, MCP, embeds,
+		// refreshes after an edit), and counting it double-counted every topic
+		// a client fetched and rendered. POST /posts/{id}/view is the one counter.
 		return new WP_REST_Response( $this->prepare_post( $post ), 200 );
+	}
+
+	/** Seconds one IP's view of one topic is counted once for. */
+	const VIEW_WINDOW = 30 * MINUTE_IN_SECONDS;
+
+	/**
+	 * POST /posts/{id}/view - count one view of a topic.
+	 *
+	 * The single view counter. The topic page fires it once per browser session
+	 * per topic (sessionStorage, no cookie), so page responses carry no
+	 * Set-Cookie and a page-cached hit still counts. The server adds a cheap
+	 * per-IP, per-topic window so replaying the request cannot inflate a count.
+	 *
+	 * No nonce is required. A guest's beacon sends none, because a cached
+	 * page's nonce is stale by design; a logged-in member's page is never
+	 * page-cached, so view.js sends its fresh nonce and the member is resolved,
+	 * which is what lets views of private-space topics count. A topic that is
+	 * missing, unpublished, or unreadable by the requester answers the same 404
+	 * as GET /posts/{id}, so the route cannot be used to probe for private
+	 * topics. The window keys on IP alone, so guests and members count alike.
+	 */
+	public function record_view( $request ) {
+		$id   = absint( $request->get_param( 'id' ) );
+		$post = Post::find( $id );
+
+		if ( ! $post || 'publish' !== $post->status || ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+			return $this->not_found( 'Post' );
+		}
+
+		$key = 'jt_view_' . md5( ( \Jetonomy\client_ip() ?: 'unknown' ) . '|' . $id );
+		if ( wp_using_ext_object_cache() ) {
+			// Atomic: of a concurrent burst exactly one add() wins.
+			$first = wp_cache_add( $key, 1, 'jetonomy_views', self::VIEW_WINDOW );
+		} else {
+			// ponytail: get-then-set can let a few truly concurrent requests
+			// through without a persistent object cache; sequential replays
+			// are blocked. Good enough for an approximate counter.
+			$first = false === get_transient( $key ) && set_transient( $key, 1, self::VIEW_WINDOW );
+		}
+
+		if ( $first ) {
+			Post::increment_view_count( $id );
+		}
+
+		return new WP_REST_Response( array( 'counted' => (bool) $first ), 200 );
 	}
 
 	/**
@@ -506,6 +574,27 @@ class Posts_Controller extends Base_Controller {
 				if ( $is_publishing && ! current_user_can( 'manage_options' ) ) {
 					return $this->permission_error();
 				}
+				if ( ! $is_publishing ) {
+					$schedule_error = $this->validate_schedule( (string) $raw_published_at, $backdate );
+					if ( $schedule_error ) {
+						return $schedule_error;
+					}
+					// A second click on the composer (or a retried request)
+					// must not queue a second copy that goes live beside the
+					// first. Same author, space, title and instant is never
+					// two intended topics.
+					$existing = Post::find_scheduled_duplicate( $user_id, $space_id, $title, $backdate );
+					if ( $existing ) {
+						return new WP_Error(
+							'jetonomy_duplicate_scheduled',
+							__( 'You already scheduled this for the same time. Find it in your profile under Drafts.', 'jetonomy' ),
+							array(
+								'status'  => 409,
+								'post_id' => (int) $existing->id,
+							)
+						);
+					}
+				}
 				$post_data['published_at'] = $backdate;
 				if ( $is_publishing ) {
 					// For backdated publishes, sync the sort/display columns so listings order correctly.
@@ -516,37 +605,12 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
-		// Skip moderation pipeline for draft posts — they're not published yet.
-		$moderation_action = null;
-		if ( 'draft' !== ( $post_data['status'] ?? '' ) ) {
-			/**
-			 * Check content against moderation rules before insertion.
-			 *
-			 * @param string|null $action   null if no action, or 'flag', 'hold', 'block', 'spam'.
-			 * @param array       $data     Post data array with 'title' and 'content' keys.
-			 * @param int         $space_id Space ID.
-			 * @param int         $user_id  Author user ID.
-			 */
-			$moderation_action = apply_filters( 'jetonomy_check_content', null, $post_data, $space_id, $user_id );
-
-			if ( 'block' === $moderation_action ) {
-				return $this->validation_error( __( 'Your post was blocked by our content policy.', 'jetonomy' ) );
-			}
-			if ( 'hold' === $moderation_action ) {
-				$post_data['status'] = 'pending';
-			}
-			if ( 'spam' === $moderation_action ) {
-				$post_data['status'] = 'spam';
-			}
-			// 'flag' is handled AFTER Post::create so we have a real $post_id
-			// to attach the Flag record to. The post still publishes; the
-			// flag surfaces it in the moderation queue for review.
-
-			// Per-space require_approval: hold unless the author is space staff.
-			if ( $this->should_hold_for_approval( (string) ( $post_data['status'] ?? '' ), $space_id, $user_id ) ) {
-				$post_data['status'] = 'pending';
-			}
+		// Content rules + require_approval; drafts are screened when published.
+		$screened = Moderation_Service::screen_new_content( 'post', $post_data, $space_id, $user_id );
+		if ( is_wp_error( $screened ) ) {
+			return $screened;
 		}
+		$post_data['status'] = $screened['status'];
 
 		$post_id = Post::create( $post_data );
 
@@ -562,30 +626,13 @@ class Posts_Controller extends Base_Controller {
 			);
 		}
 
-		// Auto-flag: a moderation rule asked to flag this content. The post is
-		// already created and published; we now file a flag against it so it
-		// appears in the moderation queue with `reporter_id = 0` (system
-		// reporter). Flag::create handles the post.flag_count increment itself.
-		// No reputation deduction here — that's a user-action penalty, distinct
-		// from an automated review request.
-		if ( 'flag' === $moderation_action && $post_id > 0 ) {
-			$auto_flag_id = Flag::create(
-				array(
-					'reporter_id' => 0,
-					'object_type' => 'post',
-					'object_id'   => (int) $post_id,
-					'reason'      => 'other',
-					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-				)
-			);
-			if ( $auto_flag_id ) {
-				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'post' );
-			}
+		if ( $screened['flag'] ) {
+			Moderation_Service::auto_flag( 'post', (int) $post_id );
 		}
 
 		// Fire action for Activity_Tracker, Notifier, and other listeners.
 		// Skip for draft posts — they are not visible yet.
-		if ( 'draft' !== ( $post_data['status'] ?? 'publish' ) ) {
+		if ( 'draft' !== $post_data['status'] ) {
 			do_action( 'jetonomy_after_create_post', $post_id, $space_id, $request );
 		}
 
@@ -596,7 +643,7 @@ class Posts_Controller extends Base_Controller {
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_posts' );
 
 		// Auto-subscribe the author — only for published/pending posts, not drafts.
-		if ( 'draft' !== ( $post_data['status'] ?? 'publish' ) ) {
+		if ( 'draft' !== $post_data['status'] ) {
 			Subscription::subscribe( $user_id, 'post', $post_id );
 		}
 
@@ -614,15 +661,9 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
+		// @mentions are notified by the create-hook listener (Mentions::notify_for),
+		// only once the post is published - including later, on approval.
 		$post = Post::find( $post_id );
-
-		// Parse @mentions and notify — only for published posts.
-		if ( 'draft' !== ( $post_data['status'] ?? 'publish' ) ) {
-			$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
-			if ( ! empty( $mentioned ) ) {
-				\Jetonomy\Mentions::notify( $mentioned, $user_id, 'post', $post_id, $title, (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
-			}
-		}
 
 		return new WP_REST_Response( $this->prepare_post( $post ), 201 );
 	}
@@ -652,6 +693,11 @@ class Posts_Controller extends Base_Controller {
 
 		if ( ! $can_edit ) {
 			return $this->permission_error();
+		}
+
+		// Trashed content is restored or purged, not edited in place.
+		if ( 'trash' === ( $post->status ?? '' ) ) {
+			return $this->already_trashed_error();
 		}
 
 		// Publish-now: an author (or moderator) can publish their own draft
@@ -706,6 +752,13 @@ class Posts_Controller extends Base_Controller {
 			$backdate = $this->sanitize_backdate( $raw_published_at );
 			if ( is_wp_error( $backdate ) ) {
 				return $backdate;
+			}
+			// On a draft, published_at is the schedule, not a backdate.
+			if ( null !== $backdate && 'draft' === ( $post->status ?? '' ) ) {
+				$schedule_error = $this->validate_schedule( (string) $raw_published_at, $backdate );
+				if ( $schedule_error ) {
+					return $schedule_error;
+				}
 			}
 			if ( null !== $backdate ) {
 				$update_data['published_at']  = $backdate;
@@ -770,7 +823,7 @@ class Posts_Controller extends Base_Controller {
 				)
 			);
 
-			$update_data['edited_at'] = current_time( 'mysql' );
+			$update_data['edited_at'] = current_time( 'mysql', true );
 			$update_data['edited_by'] = $user_id;
 		}
 
@@ -783,18 +836,7 @@ class Posts_Controller extends Base_Controller {
 		// Auto-flag on edit when a rule asked to flag (mirrors the create path):
 		// the edit stays published but surfaces in the moderation queue.
 		if ( 'flag' === $moderation_action ) {
-			$auto_flag_id = Flag::create(
-				array(
-					'reporter_id' => 0,
-					'object_type' => 'post',
-					'object_id'   => (int) $id,
-					'reason'      => 'other',
-					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-				)
-			);
-			if ( $auto_flag_id ) {
-				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'post' );
-			}
+			Moderation_Service::auto_flag( 'post', (int) $id );
 		}
 
 		do_action( 'jetonomy_post_updated', $id, $space_id, $user_id );
@@ -824,7 +866,45 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Validate a schedule time for a draft.
+	 *
+	 * The raw value must carry a time of day: a date alone used to be read as
+	 * midnight, so "today, no time picked" went live at the next run. The
+	 * normalized UTC value must be in the future, compared against the UTC
+	 * clock it is stored in (sanitize_backdate() already read a naive value
+	 * in the site timezone).
+	 *
+	 * @param string $raw Raw published_at from the request.
+	 * @param string $utc Normalized UTC 'Y-m-d H:i:s' from sanitize_backdate().
+	 * @return WP_Error|null Error to return, or null when the schedule is valid.
+	 */
+	private function validate_schedule( string $raw, string $utc ): ?WP_Error {
+		if ( ! preg_match( '/\d{1,2}:\d{2}/', $raw ) ) {
+			return new WP_Error(
+				'jetonomy_schedule_time_required',
+				__( 'Choose a time as well as a date to schedule this.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+		if ( strtotime( $utc . ' UTC' ) <= time() ) {
+			return new WP_Error(
+				'jetonomy_schedule_in_past',
+				__( 'The scheduled time has already passed. Choose a time in the future, or publish now.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+		return null;
+	}
+
+	/**
 	 * DELETE /posts/{id} — Soft-delete (trash) a post.
+	 *
+	 * `?force=true` deletes it permanently instead, through Post::delete()
+	 * (replies and everything hanging off the topic go with it). Same
+	 * convention as core's wp/v2 routes. Moderator-only: an author can trash
+	 * their own topic but not destroy it, so a moderator can always review or
+	 * restore what was removed. Restoring is POST
+	 * /spaces/{space_id}/moderation/approve/post/{id}.
 	 */
 	public function delete_item( $request ) {
 		$user_id = $this->require_auth();
@@ -847,6 +927,31 @@ class Posts_Controller extends Base_Controller {
 
 		if ( ! $can_delete ) {
 			return $this->permission_error();
+		}
+
+		if ( rest_sanitize_boolean( $request->get_param( 'force' ) ) ) {
+			if ( ! $this->check_permission( 'delete_others_posts', $space_id ) ) {
+				return $this->permission_error();
+			}
+			$result = Post::delete( $id );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			if ( true !== $result ) {
+				return new WP_Error( 'jetonomy_delete_failed', __( 'The post could not be deleted.', 'jetonomy' ), array( 'status' => 500 ) );
+			}
+			return new WP_REST_Response(
+				array(
+					'deleted'   => true,
+					'permanent' => true,
+					'id'        => $id,
+				),
+				200
+			);
+		}
+
+		if ( 'trash' === ( $post->status ?? '' ) ) {
+			return $this->already_trashed_error();
 		}
 
 		// Post::update() detects the publish→trash transition and decrements
@@ -978,6 +1083,14 @@ class Posts_Controller extends Base_Controller {
 
 		// Toggle: unpin if already pinned, pin if not.
 		$new_value = $post->is_sticky ? 0 : 1;
+
+		// Pinning a trashed or unpublished topic is refused; unpinning stays open.
+		if ( 1 === $new_value ) {
+			$live = \Jetonomy\Permissions\Content_Gate::target_is_live( 'post', $id );
+			if ( is_wp_error( $live ) ) {
+				return $live;
+			}
+		}
 
 		// Cap the number of pinned topics per space so the top of a space
 		// stays scarce. Default 3, filterable per space. Only checked when

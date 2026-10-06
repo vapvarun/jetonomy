@@ -96,7 +96,7 @@ Custom Badges registers these endpoints under `jetonomy/v1`:
 | `GET` | `/badges` | List all defined badges and their settings |
 | `POST` | `/badges` | Create a badge |
 | `PATCH` | `/badges/{id}` | Update a badge |
-| `DELETE` | `/badges/{id}` | Delete a badge |
+| `DELETE` | `/badges/{id}` | Deactivate a badge (it stays in the database and can be reactivated with `PATCH`) |
 | `POST` | `/users/{id}/badges` | Award a badge to a member |
 
 Badges can be created, edited, and awarded entirely through REST, so you can automate awards from your own tooling or grant a badge as part of an external workflow. Listing badges is open to any logged-in member; creating, editing, deleting, and awarding require `manage_options`. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.

@@ -14,6 +14,7 @@ Your community is installed and the wizard is complete. This guide walks you thr
 
 - How to organize spaces with categories
 - How to create your first real space and choose the right type
+- How to send a test email before you invite anyone
 - How to invite members with a shareable link
 - How to customize the look and feel
 - How to import from bbPress or wpForo if you are migrating
@@ -65,6 +66,16 @@ To create a space, you can use either the wp-admin form or the front-end Create 
 **From the front end** (so non-admin owners can create spaces too): visit `/community/new-space/` while signed in. The form is identical and is available to any role you've enabled under **Jetonomy → Settings → General**, in the **Front-end space creation** field.
 
 Your space is immediately available on the community frontend under its category.
+
+## Send a Test Email Before You Invite Anyone
+
+Jetonomy emails members for verification, replies, mentions, join approvals and more, all sent through WordPress's own `wp_mail()`. Before you invite anyone, confirm mail actually leaves your server:
+
+1. Go to **Jetonomy → Settings → Email**.
+2. Scroll to the bottom and click **Send Test Email**. It sends a test message to your WordPress admin email address, confirming `wp_mail()` works and that your From name and address apply correctly.
+3. While you're on that screen, click **Preview** next to any notification template to see it rendered with sample data before a member ever receives it.
+
+If the test email does not arrive within a few minutes, install an SMTP plugin (WP Mail SMTP, FluentSMTP, or similar) - most shared hosting cannot reliably send mail without one. See [Email Settings](../admin-settings/03-email.md) for the full reference.
 
 ## Invite Members
 

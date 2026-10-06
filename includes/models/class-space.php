@@ -33,6 +33,33 @@ class Space extends Model {
 	}
 
 	/**
+	 * Load several spaces into the find() cache with one query, so a list of
+	 * topics from many spaces (tag page, drafts, search) does not run one
+	 * find() query per space (Basecamp 10369564133). Already cached ids are
+	 * skipped, so priming twice never re-queries.
+	 *
+	 * @param int[] $ids Space ids.
+	 */
+	public static function prime( array $ids ): void {
+		$missing = array();
+		foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
+			if ( $id > 0 && false === Cache::get( "space:{$id}" ) ) {
+				$missing[] = $id;
+			}
+		}
+		if ( ! $missing ) {
+			return;
+		}
+
+		$ph = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$rows = static::db()->get_results( static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE id IN ({$ph})", ...$missing ) ) ?: array();
+		foreach ( $rows as $row ) {
+			Cache::set( "space:{$row->id}", $row, 300 );
+		}
+	}
+
+	/**
 	 * Bust every object-cache key that serves a space row.
 	 *
 	 * Row data lives once, under space:{id} (find()); find_by_slug() caches only
@@ -73,17 +100,25 @@ class Space extends Model {
 	 *
 	 * @param int   $id   Space ID.
 	 * @param array $data Column data.
-	 * @return bool
+	 * @return bool|\WP_Error WP_Error (400) when `type` is not a valid space type.
 	 */
-	public static function update( int $id, array $data ): bool {
+	public static function update( int $id, array $data ): bool|\WP_Error {
+		$invalid = self::check_type( $data );
+		if ( $invalid ) {
+			return $invalid;
+		}
+
 		$slug_changing = ! empty( $data['slug'] );
 		$type_changing = ! empty( $data['type'] );
 		// A space counts toward a category only while it is active and in one,
 		// so BOTH a category move and a status change can alter two counters.
 		$count_changing = array_key_exists( 'category_id', $data ) || array_key_exists( 'status', $data );
+		// Visibility and join_policy together decide whether this space takes
+		// join requests at all (see join_mode()).
+		$access_changing = array_key_exists( 'join_policy', $data ) || array_key_exists( 'visibility', $data );
 
 		// One read covers every comparison below.
-		$existing = ( $slug_changing || $type_changing || $count_changing ) ? parent::find( $id ) : null;
+		$existing = ( $slug_changing || $type_changing || $count_changing || $access_changing ) ? parent::find( $id ) : null;
 		$old_slug = $slug_changing ? ( $existing->slug ?? null ) : null;
 		$old_type = $type_changing ? ( $existing->type ?? null ) : null;
 
@@ -133,6 +168,24 @@ class Space extends Model {
 		// result (Basecamp 10210058401). Ideas spaces had the same gap.
 		if ( $type_changing && $old_type && $old_type !== $data['type'] ) {
 			self::retype_posts( $id, (string) $data['type'] );
+		}
+
+		/*
+		 * Settle the request queue when the space stops taking requests.
+		 * Pending rows used to linger after approval -> open/invite, looking
+		 * unprocessed in the owner's queue forever (Basecamp 10148432976).
+		 * Every writer - REST PATCH, admin AJAX, WP-CLI - funnels through
+		 * here, so this is the one place that sees all of them.
+		 */
+		if ( $result && $access_changing && $existing ) {
+			$was = self::join_mode( (string) ( $existing->visibility ?? 'public' ), (string) ( $existing->join_policy ?? 'open' ) );
+			$now = self::join_mode(
+				(string) ( $data['visibility'] ?? ( $existing->visibility ?? 'public' ) ),
+				(string) ( $data['join_policy'] ?? ( $existing->join_policy ?? 'open' ) )
+			);
+			if ( 'request' === $was && 'request' !== $now ) {
+				JoinRequest::resolve_pending_for_space( $id, 'open' === $now, get_current_user_id() );
+			}
 		}
 
 		self::bust_cache( $id );
@@ -283,9 +336,27 @@ class Space extends Model {
 	 * @return int Successor user ID, or 0 when nobody qualifies.
 	 */
 	public static function resolve_successor( int $space_id, int $excluding = 0 ): int {
+		return static::surviving_admin( $space_id, $excluding ) ?: static::fallback_owner( $excluding );
+	}
+
+	/**
+	 * The surviving space admin who inherits, if any (precedence step 1).
+	 *
+	 * Split out so a caller can tell "a space admin is still running this space"
+	 * from "nobody is, fall back to the site admin". Privacy used to infer that
+	 * by comparing the successor with the site admin, which misread a site
+	 * admin who is ALSO a space admin as a stranded space and archived it
+	 * (Basecamp 10344393613). Any role counts here, site administrator included:
+	 * the question is only whether a space admin row survives.
+	 *
+	 * @param int $space_id  Space to look in.
+	 * @param int $excluding User to exclude (the departing owner).
+	 * @return int Space admin user ID, or 0 when none survives.
+	 */
+	public static function surviving_admin( int $space_id, int $excluding = 0 ): int {
 		$members = \Jetonomy\table( 'space_members' );
 
-		$heir = (int) static::db()->get_var(
+		return (int) static::db()->get_var(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
 				"SELECT user_id FROM {$members} WHERE space_id = %d AND user_id <> %d AND role = 'admin' ORDER BY joined_at ASC, user_id ASC LIMIT 1",
@@ -293,11 +364,15 @@ class Space extends Model {
 				$excluding
 			)
 		);
+	}
 
-		if ( $heir ) {
-			return $heir;
-		}
-
+	/**
+	 * Lowest-id site administrator, the owner of last resort (precedence step 2).
+	 *
+	 * @param int $excluding User to exclude (the departing owner).
+	 * @return int User ID, or 0 when no other site administrator exists.
+	 */
+	public static function fallback_owner( int $excluding = 0 ): int {
 		$admins = get_users(
 			[
 				'capability' => 'manage_options',
@@ -355,9 +430,15 @@ class Space extends Model {
 	 *                                  space admin. Defaults to the
 	 *                                  current logged-in user. Pass 0
 	 *                                  to skip seeding entirely.
-	 * @return int Inserted row ID.
+	 * @return int|\WP_Error Inserted row ID (0 when the insert failed), or
+	 *                       WP_Error (400) when `type` is not a valid space type.
 	 */
-	public static function create( array $data, ?int $creator_user_id = null ): int {
+	public static function create( array $data, ?int $creator_user_id = null ): int|\WP_Error {
+		$invalid = self::check_type( $data );
+		if ( $invalid ) {
+			return $invalid;
+		}
+
 		$now  = now();
 		$data = array_merge(
 			[
@@ -1491,6 +1572,68 @@ class Space extends Model {
 				'description' => __( 'Only members can find this space. It is invite-only.', 'jetonomy' ),
 			],
 		];
+	}
+
+	/**
+	 * Space types a space can be. Mirrors the `type` ENUM in class-schema.php;
+	 * MySQL silently stores '' for anything else, so every writer validates
+	 * against this list rather than a local copy.
+	 *
+	 * @return string[]
+	 */
+	public static function valid_types(): array {
+		return array( 'forum', 'qa', 'ideas', 'feed' );
+	}
+
+	/**
+	 * Refuse a write whose `type` is not a valid space type.
+	 *
+	 * The one gate for every writer (REST, admin AJAX, CLI, Abilities,
+	 * importers, integrations): without it MySQL coerces an unknown value to
+	 * '' and the space loses every type-driven view.
+	 *
+	 * @param array $data Column data about to be written.
+	 * @return \WP_Error|null Null when `type` is absent or valid.
+	 */
+	private static function check_type( array $data ): ?\WP_Error {
+		if ( ! array_key_exists( 'type', $data ) || in_array( $data['type'], self::valid_types(), true ) ) {
+			return null;
+		}
+		return new \WP_Error(
+			'jetonomy_invalid_space_type',
+			sprintf(
+				/* translators: 1: rejected space type, 2: comma-separated list of valid space types. */
+				__( 'Invalid space type "%1$s". Use one of: %2$s.', 'jetonomy' ),
+				is_scalar( $data['type'] ) ? (string) $data['type'] : gettype( $data['type'] ),
+				implode( ', ', self::valid_types() )
+			),
+			array( 'status' => 400 )
+		);
+	}
+
+	/**
+	 * How a non-member gets into a space, from its visibility + join_policy.
+	 *
+	 * - 'invite'  : hidden, or invite-only - only an invite link admits.
+	 * - 'request' : approval policy, or a private space - joining files a
+	 *               JoinRequest for an admin to review.
+	 * - 'open'    : anyone may join directly.
+	 *
+	 * The single statement of the rule SpaceMember::join() enforces, so the
+	 * join gate and the request-queue cleanup in update() cannot disagree.
+	 *
+	 * @param string $visibility  'public' | 'private' | 'hidden'.
+	 * @param string $join_policy 'open' | 'approval' | 'invite'.
+	 * @return string 'invite' | 'request' | 'open'
+	 */
+	public static function join_mode( string $visibility, string $join_policy ): string {
+		if ( 'invite' === $join_policy || 'hidden' === $visibility ) {
+			return 'invite';
+		}
+		if ( 'approval' === $join_policy || 'private' === $visibility ) {
+			return 'request';
+		}
+		return 'open';
 	}
 
 	/**

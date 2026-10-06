@@ -16,7 +16,7 @@ use Jetonomy\DB\Schema;
  * would otherwise fan out subscriber + mention notifications and EMAILS per
  * row. Mirrors BuddyNext's buddynext_notification_should_send. Checked at
  * the two funnels everything flows through - Notification::create() (rows)
- * and Notifier::should_email() (emails) - plus Mentions::notify() so an
+ * and Notifier::should_email() (emails) - plus Mentions::notify_for() so an
  * import skips the mention scan entirely.
  */
 class NotificationVetoTest extends WP_UnitTestCase {
@@ -66,7 +66,14 @@ class NotificationVetoTest extends WP_UnitTestCase {
 
 		add_filter( 'jetonomy_notification_should_send', '__return_false' );
 
-		Mentions::notify( [ $this->recipient ], $this->actor, 'post', 1, 'Imported topic' );
+		$post_id = \Jetonomy\Models\Post::create(
+			[
+				'author_id' => $this->actor,
+				'title'     => 'Imported topic',
+				'content'   => 'Hi @' . get_userdata( $this->recipient )->user_login,
+			]
+		);
+		Mentions::notify_for( 'post', (int) $post_id );
 
 		$count = (int) $wpdb->get_var(
 			$wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_notifications WHERE user_id = %d", $this->recipient )

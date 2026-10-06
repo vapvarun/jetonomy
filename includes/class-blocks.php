@@ -63,32 +63,11 @@ class Blocks {
 		wp_register_script(
 			'jetonomy-login-block',
 			JETONOMY_URL . 'assets/js/login-block.js',
-			array(),
+			array( 'wp-i18n' ),
 			JETONOMY_VERSION,
 			true
 		);
-		wp_localize_script(
-			'jetonomy-login-block',
-			'jetonomyLoginBlock',
-			array(
-				'i18n' => array(
-					'resendConfirmation'    => esc_html__( 'Resend confirmation email', 'jetonomy' ),
-					'sending'               => esc_html__( 'Sending...', 'jetonomy' ),
-					// Every outcome message this block can show. They were English
-					// literals in login-block.js with only these two keys defined,
-					// so a visitor on a translated site got their sign-in, sign-up
-					// and password-reset feedback in English - on the one surface a
-					// first-time visitor is guaranteed to see.
-					'genericError'          => esc_html__( 'Something went wrong. Please try again.', 'jetonomy' ),
-					'networkError'          => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
-					'signedIn'              => esc_html__( 'Signed in.', 'jetonomy' ),
-					'accountCreated'        => esc_html__( 'Account created.', 'jetonomy' ),
-					'accountCreatedConfirm' => esc_html__( 'Account created. Check your email to confirm.', 'jetonomy' ),
-					'resetLinkSent'         => esc_html__( 'Reset link sent.', 'jetonomy' ),
-					'resendSent'            => esc_html__( 'If an account is waiting on confirmation, a new link is on its way.', 'jetonomy' ),
-				),
-			)
-		);
+		\Jetonomy\script_translations( 'jetonomy-login-block' );
 
 		// Compose-topic block/shortcode piggybacks on the main view bundle —
 		// that's where the Interactivity API `jetonomy` store lives. Registering
@@ -101,17 +80,12 @@ class Blocks {
 		// The main template loader also enqueues this module on community
 		// routes; WordPress dedupes by handle so registering here is safe.
 		if ( function_exists( 'wp_register_script_module' ) ) {
-			// Asset version uses filemtime() (with the plugin version as a
-			// fallback) so any in-place hotfix shipped under the same plugin
-			// version still busts browser + CDN caches.
-			$view_file    = JETONOMY_DIR . 'assets/js/view.js';
-			$view_mtime   = file_exists( $view_file ) ? (string) filemtime( $view_file ) : '';
-			$view_version = '' !== $view_mtime ? JETONOMY_VERSION . '+' . $view_mtime : JETONOMY_VERSION;
+			// Versioned by file mtime via \Jetonomy\version_assets_by_mtime().
 			wp_register_script_module(
 				'jetonomy-compose-topic',
 				JETONOMY_URL . 'assets/js/view.js',
 				array( '@wordpress/interactivity' ),
-				$view_version
+				JETONOMY_VERSION
 			);
 		}
 
@@ -124,7 +98,7 @@ class Blocks {
 			JETONOMY_VERSION,
 			true
 		);
-		wp_set_script_translations( 'jetonomy-compose-topic-block', 'jetonomy', JETONOMY_DIR . 'languages' );
+		\Jetonomy\script_translations( 'jetonomy-compose-topic-block' );
 
 		// One editor script registers all the server-rendered blocks
 		// (forum-feed, trending, space-list, leaderboard, navigation,
@@ -139,7 +113,7 @@ class Blocks {
 			JETONOMY_VERSION,
 			true
 		);
-		wp_set_script_translations( 'jetonomy-blocks-editor', 'jetonomy', JETONOMY_DIR . 'languages' );
+		\Jetonomy\script_translations( 'jetonomy-blocks-editor' );
 
 		// Editor-only stylesheet — frames the preview cards + harmonises the
 		// Compose Topic mock so the family reads as one Jetonomy set in the
@@ -404,7 +378,7 @@ class Blocks {
 		}
 		$atts .= ' sort="' . esc_attr( $attributes['sort'] ?? 'latest' ) . '"';
 
-		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, __( 'Recent topics', 'jetonomy' ) ) : '';
+		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, sprintf( /* translators: %s: plural topic label the site owner configured. */ __( 'Recent %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) : '';
 
 		return '<div class="wp-block-jetonomy-forum-feed jt-feed-block jt-app">'
 			. $header
@@ -434,7 +408,7 @@ class Blocks {
 			$atts .= ' window="' . $window . '"';
 		}
 
-		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, __( 'Trending topics', 'jetonomy' ) ) : '';
+		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, sprintf( /* translators: %s: plural topic label the site owner configured. */ __( 'Trending %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) : '';
 
 		return '<div class="wp-block-jetonomy-trending jt-feed-block jt-trending-block jt-app">'
 			. $header
@@ -454,10 +428,9 @@ class Blocks {
 		if ( $space_id > 0 && class_exists( Space::class ) ) {
 			$space = Space::find( $space_id );
 			if ( $space && ! empty( $space->slug ) ) {
-				$link = $base . '/s/' . rawurlencode( (string) $space->slug ) . '/';
+				$link = route_url( 'space', rawurlencode( (string) $space->slug ) );
 				if ( '' === $custom_title ) {
-					/* translators: %s: space title */
-					$heading_text = sprintf( __( '%s · Topics', 'jetonomy' ), (string) ( $space->title ?? '' ) );
+					$heading_text = sprintf( /* translators: 1: space title, 2: plural topic label. */ __( '%1$s · %2$s', 'jetonomy' ), (string) ( $space->title ?? '' ), \Jetonomy\jetonomy_label( 'topic', true ) );
 				}
 			}
 		}
@@ -516,7 +489,7 @@ class Blocks {
 		if ( '' === $slug || '' === $title ) {
 			return '';
 		}
-		$url        = \Jetonomy\base_url() . '/s/' . rawurlencode( $slug ) . '/';
+		$url        = route_url( 'space', rawurlencode( $slug ) );
 		$is_active  = $slug === $active_slug;
 		$aria_attr  = $is_active ? ' aria-current="page"' : '';
 		$active_cls = $is_active ? ' is-active' : '';
@@ -562,6 +535,7 @@ class Blocks {
 		// per render below, AFTER the cache — the cache holds space DATA,
 		// never per-page HTML (safety review, WP4.4).
 		$spaces_by_cat = Space::visible_by_category( $user_id );
+		$children      = Category::children_by_parent( $user_id );
 
 		$sections = array();
 
@@ -572,13 +546,26 @@ class Blocks {
 			}
 			// Same per-category runaway cap the old list_visible carried.
 			$spaces = array_slice( $spaces_by_cat[ $category_id ] ?? array(), 0, 200 );
-			if ( $hide_empty && empty( $spaces ) ) {
+			$subs   = $children[ $category_id ] ?? array();
+			if ( $hide_empty ) {
+				$subs = array_filter( $subs, fn( $sub ) => ! empty( $spaces_by_cat[ (int) $sub->id ] ) );
+			}
+			if ( $hide_empty && empty( $spaces ) && empty( $subs ) ) {
 				continue;
 			}
 
 			$items_html = '';
 			foreach ( $spaces as $space ) {
 				$items_html .= self::render_space_item( $space, $active_slug, $show_count );
+			}
+			// Sub-categories link to their own page, as on the community home;
+			// their spaces were missing from this block entirely (Basecamp 10355160441).
+			foreach ( $subs as $sub ) {
+				$items_html .= sprintf(
+					'<li class="jt-nav-space jt-nav-subcategory"><a href="%1$s">%2$s</a></li>',
+					esc_url( \Jetonomy\route_url( 'category', $sub->slug ) ),
+					esc_html( (string) $sub->name )
+				);
 			}
 
 			$category_name = (string) ( $category->name ?? '' );
@@ -642,7 +629,6 @@ class Blocks {
 
 		$user_id = get_current_user_id();
 		$user    = wp_get_current_user();
-		$base    = \Jetonomy\base_url();
 		$avatar  = get_avatar( $user_id, 48, '', $user->display_name, array( 'class' => 'jt-userpanel-avatar' ) );
 
 		// Trust level (cheap read from user_profiles).
@@ -660,11 +646,11 @@ class Blocks {
 
 		$profile_url   = \Jetonomy\get_profile_url( $user_id );
 		$edit_url      = \Jetonomy\get_profile_action_url( 'edit', (int) $user->ID );
-		$notifs_url    = $base . '/notifications/';
-		$messages_url  = $base . '/messages/';
-		$my_spaces_url = $base . '/my-spaces/';
-		$subs_url      = $base . '/subscriptions/';
-		$new_space_url = $base . '/new-space/';
+		$notifs_url    = route_url( 'notifications' );
+		$messages_url  = route_url( 'messages' );
+		$my_spaces_url = route_url( 'my-spaces' );
+		$subs_url      = route_url( 'subscriptions' );
+		$new_space_url = route_url( 'new-space' );
 
 		// 1.4.0 G6 — show "Create space" link only to viewers who could
 		// actually complete the flow. Same gate as the /new-space/ form and
@@ -815,7 +801,7 @@ class Blocks {
 					<button type="button" class="jt-login-tab is-active" data-jt-tab="login" role="tab" aria-selected="true">
 						<?php esc_html_e( 'Log in', 'jetonomy' ); ?>
 					</button>
-					<button type="button" class="jt-login-tab" data-jt-tab="register" role="tab" aria-selected="false">
+					<button type="button" class="jt-login-tab" data-jt-tab="register" role="tab" aria-selected="false" tabindex="-1">
 						<?php esc_html_e( 'Register', 'jetonomy' ); ?>
 					</button>
 				</div>

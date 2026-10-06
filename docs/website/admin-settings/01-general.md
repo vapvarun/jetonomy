@@ -22,7 +22,11 @@ This is the URL prefix for all Jetonomy pages on your site. With the default val
 
 You can change this to any URL-safe string, for example `forum`, `hub`, or `discuss`. Jetonomy automatically flushes rewrite rules when you change the base URL and save settings.
 
-> **Warning:** Changing the base URL after your community has content will break all existing links. If you must change it on a live site, set up 301 redirects from the old slug to the new one.
+**Old links keep working.** When you change the base URL, Jetonomy remembers the previous slug and sends a permanent (301) redirect from old addresses to the new ones, so `yoursite.com/community/s/general/` goes to `yoursite.com/forum/s/general/`. Bookmarks, shared links and search engines follow it without any setup on your part.
+
+- The redirect only applies when nothing else on your site answers that address. If a real page or another plugin uses the old slug, that page keeps working and is not redirected.
+- Only the most recent previous slug is redirected. If you rename twice, links using the first slug stop redirecting.
+- Changing back to the old slug removes the redirect.
 
 ## Community Title
 
@@ -171,6 +175,8 @@ Rename the built-in words your community uses. Each of the five nouns has a sing
 | Category / Categories | Board, Section |
 
 The labels you type are shown exactly as entered, everywhere the community renders that noun - on the front end, in the admin menu, and in the mobile app. Leave a field blank to keep the default.
+
+**Labels change words, not web addresses.** The fixed parts of community URLs stay the same whatever you call things: `/s/` for a space, `/t/` for a topic, `/u/` for a profile, `/category/`, `/my-spaces/`, `/new-space/`, `/leaderboard/` and so on. Links members have bookmarked or shared keep working when you rename a noun, and every visible link text, heading and menu item uses your label. To change the first part of every address (for example `/community/` to `/lounges/`), use the **Community Base URL** setting above.
 
 Note: a custom label bypasses translation, so on a non-English site an English custom label shows in English. Developers can override any label programmatically with the `jetonomy_label` filter (see the Developer Guide → Hooks Reference → Terminology).
 

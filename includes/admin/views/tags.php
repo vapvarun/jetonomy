@@ -160,7 +160,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 									<?php
 									$count = absint( $tag->post_count ?? 0 );
 									if ( $count > 0 ) {
-										$tag_url = \Jetonomy\base_url() . '/tag/' . rawurlencode( $tag->slug ) . '/';
+										$tag_url = \Jetonomy\route_url( 'tag', rawurlencode( $tag->slug ) );
 										echo '<a href="' . esc_url( $tag_url ) . '" target="_blank" rel="noopener">' . esc_html( (string) $count ) . '</a>';
 									} else {
 										echo '<span class="jetonomy-count-zero">0</span>';

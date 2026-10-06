@@ -180,8 +180,8 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			'empty-state',
 			[
 				'icon'    => 'lock',
-				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-				'message' => sprintf( __( 'This %s is private. Join to access posts and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				/* translators: 1: the singular space label the site owner configured (e.g. space, group); 2: plural topic label. */
+				'message' => sprintf( __( 'This %1$s is private. Join to access its %2$s and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				'tone'    => 'forbidden',
 			]
 		);
@@ -244,9 +244,11 @@ $posts       = \Jetonomy\Models\Post::$_jt_list_fn(
 // real total (same visibility population as the listing) against what's shown.
 $_jt_total    = \Jetonomy\Models\Post::count_by_space_visible( (int) $space->id, (int) $_jt_user_id, (bool) $_jt_is_priv, $sort );
 $_jt_has_more = ( $paged * $limit ) < $_jt_total;
-$category     = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base         = \Jetonomy\base_url();
-$space_url    = $base . '/s/' . $space->slug . '/';
+$space_url    = \Jetonomy\route_url( 'space', $space->slug );
+
+// find_visible(): a member admitted to a space inside a hidden category must
+// not see that category named or linked in the breadcrumb (it would 404).
+$category = $space->category_id ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 
 // Sub-spaces of this space. An import maps sub-forums to child spaces, and
 // until now nothing rendered that: the parent listed no children and the child
@@ -264,17 +266,26 @@ if ( $jt_parent && \Jetonomy\Models\Space::concealed_from_viewer( $jt_parent, $_
 	$jt_parent = null;
 }
 
+// Home > Parent category > Category > ... Each category crumb links to its
+// page; nothing on a space page led back to its category (Basecamp 10355161213).
 $crumbs = [];
 if ( $category ) {
+	$jt_parent_cat = (int) $category->parent_id > 0 ? \Jetonomy\Models\Category::find_visible( (int) $category->parent_id ) : null;
+	if ( $jt_parent_cat ) {
+		$crumbs[] = [
+			'label' => $jt_parent_cat->name,
+			'url'   => \Jetonomy\route_url( 'category', $jt_parent_cat->slug ),
+		];
+	}
 	$crumbs[] = [
 		'label' => $category->name,
-		'url'   => '',
+		'url'   => \Jetonomy\route_url( 'category', $category->slug ),
 	];
 }
 if ( $jt_parent ) {
 	$crumbs[] = [
 		'label' => $jt_parent->title,
-		'url'   => $base . '/s/' . $jt_parent->slug . '/',
+		'url'   => \Jetonomy\route_url( 'space', $jt_parent->slug ),
 	];
 }
 $crumbs[] = [
@@ -282,10 +293,11 @@ $crumbs[] = [
 	'url'   => '',
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<?php if ( ! empty( $space->cover_image ) ) : ?>
 			<div class="jt-space-cover jt-space-cover--image" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')">
 		<?php else : ?>
@@ -328,7 +340,7 @@ $crumbs[] = [
 						?>
 						<p class="jt-space-edit-cta">
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
-								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
+								href="<?php echo esc_url( \Jetonomy\route_url( 'edit-space', $space->slug ) ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
 								<?php /* translators: %s: the label of the item being edited (the configured noun). */ ?>
 								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
@@ -339,11 +351,11 @@ $crumbs[] = [
 				<div class="jt-space-nums">
 					<div class="jt-num">
 						<div class="jt-num-val"><?php echo esc_html( (int) $space->post_count ); ?></div>
-						<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></div>
+						<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\count_noun( (int) $space->post_count, 'topic' ) ); ?></div>
 					</div>
 					<div class="jt-num">
 						<div class="jt-num-val"><?php echo esc_html( (int) $space->member_count ); ?></div>
-						<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\jetonomy_label( 'member', true ) ); ?></div>
+						<div class="jt-num-lbl"><?php echo esc_html( \Jetonomy\count_noun( (int) $space->member_count, 'member' ) ); ?></div>
 					</div>
 				</div>
 				<?php
@@ -421,10 +433,10 @@ $crumbs[] = [
 			<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">
 				<?php if ( 'archived' === $space_status ) : ?>
 					<?php /* translators: 1: singular space label (e.g. space, group); 2: plural reply label. */ ?>
-					<?php echo esc_html( sprintf( __( 'This %1$s is archived. New posts and %2$s are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					<?php echo esc_html( sprintf( /* translators: 1: singular space label; 2: plural topic label; 3: plural reply label. */ __( 'This %1$s is archived. New %2$s and %3$s are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				<?php else : ?>
 					<?php /* translators: 1: singular space label (e.g. space, group); 2: plural reply label. */ ?>
-					<?php echo esc_html( sprintf( __( 'This %1$s is locked. New posts and %2$s are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+					<?php echo esc_html( sprintf( /* translators: 1: singular space label; 2: plural topic label; 3: plural reply label. */ __( 'This %1$s is locked. New %2$s and %3$s are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>
@@ -435,27 +447,23 @@ $crumbs[] = [
 			?>
 
 			<?php if ( ! empty( $jt_sub_spaces ) ) : ?>
-				<?php /* translators: %s: the plural space label the site owner configured. */ ?>
+				<?php /* translators: %s: a plural label the site owner configured (e.g. spaces, categories). */ ?>
 				<nav class="jt-subspaces" aria-label="<?php echo esc_attr( sprintf( __( 'Sub-%s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>">
 					<h2 class="jt-subspaces__title">
 						<?php
-						/* translators: %s: the plural space label the site owner configured. */
+						/* translators: %s: a plural label the site owner configured (e.g. spaces, categories). */
 						printf( esc_html__( 'Sub-%s', 'jetonomy' ), esc_html( \Jetonomy\space_label( true, true ) ) );
 						?>
 					</h2>
 					<ul class="jt-subspaces__list">
 						<?php foreach ( $jt_sub_spaces as $jt_sub ) : ?>
 							<li class="jt-subspaces__item">
-								<a class="jt-subspaces__link" href="<?php echo esc_url( $base . '/s/' . $jt_sub->slug . '/' ); ?>">
+								<a class="jt-subspaces__link" href="<?php echo esc_url( \Jetonomy\route_url( 'space', $jt_sub->slug ) ); ?>">
 									<?php jetonomy_render_space_icon( $jt_sub->icon ?? '', 20, 'jt-space-emoji' ); ?>
 									<span class="jt-subspaces__name"><?php echo esc_html( $jt_sub->title ); ?></span>
 									<span class="jt-subspaces__count">
 										<?php
-										printf(
-											/* translators: %s: number of topics in the sub-space. */
-											esc_html( _n( '%s topic', '%s topics', (int) $jt_sub->post_count, 'jetonomy' ) ),
-											esc_html( number_format_i18n( (int) $jt_sub->post_count ) )
-										);
+										echo esc_html( \Jetonomy\count_label( (int) $jt_sub->post_count, 'topic' ) );
 										?>
 									</span>
 								</a>
@@ -512,7 +520,7 @@ $crumbs[] = [
 					 */
 					?>
 				<?php elseif ( \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id ) ) : ?>
-					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
+					<a href="<?php echo esc_url( \Jetonomy\route_url( 'new-post', $space->slug ) ); ?>" class="jt-btn jt-btn-fill">
 						<?php
 						// Shared label, so the button and the composer heading it
 						// leads to never disagree (they used to: "+ New Post"
@@ -543,7 +551,7 @@ $crumbs[] = [
 				if ( 'unanswered' === $sort ) {
 					$_jt_no_posts_msg = ( 'qa' === $_jt_space_type )
 						? __( 'Every question has an accepted answer.', 'jetonomy' )
-						: sprintf( /* translators: %s: plural reply label. */ __( 'No posts without %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) );
+						: sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'No %1$s without %2$s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) );
 				} else {
 					switch ( $_jt_space_type ) {
 						case 'qa':
@@ -556,7 +564,8 @@ $crumbs[] = [
 							$_jt_no_posts_msg = __( 'No ideas yet. Suggest the first one and let the community vote.', 'jetonomy' );
 							break;
 						default:
-							$_jt_no_posts_msg = __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+							/* translators: %s: plural topic label. */
+							$_jt_no_posts_msg = sprintf( __( 'No %s yet. Be the first to start a discussion!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 					}
 				}
 				$_jt_cta_by_type = [
@@ -564,7 +573,7 @@ $crumbs[] = [
 					'feed'  => __( 'Share an update', 'jetonomy' ),
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
 				];
-				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? __( 'New Post', 'jetonomy' );
+				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? \Jetonomy\compose_label( $_jt_space_type );
 				// Mirror the space-header New Topic gate (Permission_Engine::can,
 				// which folds in membership, admin, trust AND the access rule's
 				// grant LEVEL) instead of the binary $_jt_rule_admits - a Read-only
@@ -577,46 +586,16 @@ $crumbs[] = [
 						'icon'      => 'empty-posts',
 						'message'   => $_jt_no_posts_msg,
 						'cta_label' => $_jt_can_post ? $_jt_post_cta : '',
-						'cta_url'   => $_jt_can_post ? ( $space_url . 'new/' ) : '',
+						'cta_url'   => $_jt_can_post ? ( \Jetonomy\route_url( 'new-post', $space->slug ) ) : '',
 					]
 				);
 				?>
 			<?php else : ?>
 				<?php
-				// 1.4.0 G3: warm the per-request role-label cache so each
-				// post-card partial below is O(1) instead of issuing one
-				// SpaceMember query per author. Single bulk query for the
-				// whole list. Author IDs are unique-deduped inside the
-				// model helper.
-				\Jetonomy\Models\SpaceMember::warm_role_cache(
-					(int) $space->id,
-					array_map( static fn( $p ) => (int) $p->author_id, $posts )
-				);
-
-				// WP3.7: batch the remaining per-card lookups for the page —
-				// author profiles (fills the profile:{id} keys the cards
-				// read), tag pills (Tag::list_for_post memo) and the viewer's
-				// votes (Vote::get_user_vote memo). Each card then costs zero
-				// per-row queries for these; unprimed surfaces (drafts / tag /
-				// bookmarks views, theme-overridden partials) keep the
-				// per-row fallback inside the models.
-				$jt_page_post_ids = array_map( static fn( $p ) => (int) $p->id, $posts );
-				\Jetonomy\Models\UserProfile::prime(
-					array_map( static fn( $p ) => (int) $p->author_id, $posts )
-				);
-				\Jetonomy\Models\Tag::for_posts( $jt_page_post_ids );
-
-				// 1.4.0 C.5: bulk-load the viewer's last-read reply id per
-				// post so each card can render a "new replies" pill in O(1).
-				$jt_read_map = array();
+				// One batch load for every card on the page (roles, profiles,
+				// tags, the viewer's votes and last-read ids).
+				$jt_read_map = \Jetonomy\prime_post_cards( $posts );
 				$jt_viewer   = get_current_user_id();
-				if ( $jt_viewer > 0 ) {
-					$jt_read_map = \Jetonomy\Models\ReadStatus::last_read_for_posts(
-						$jt_viewer,
-						$jt_page_post_ids
-					);
-					\Jetonomy\Models\Vote::user_votes_map( $jt_viewer, 'post', $jt_page_post_ids );
-				}
 				?>
 				<?php
 				// Feed spaces render the post body inline as a social-feed
