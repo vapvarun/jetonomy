@@ -145,6 +145,7 @@ Plugin version: 2.0.0 - 110 actions, 129 filters.
 | `jetonomy_before_vote` | user_id, object_type, object_id, vote_value | includes/models/class-vote.php |
 | `jetonomy_blocked_user_ids` | $ids (int[]), $viewer_id (int) | includes/models/class-blocked-user.php (BlockedUser::blocked_ids) |
 | `jetonomy_breadcrumb_html` | html, crumbs | templates/partials/breadcrumb.php |
+| `jetonomy_breadcrumb_placement` | placement (`before_main` \| `inside_main`), crumbs | includes/class-template-loader.php |
 | `jetonomy_can_create_space_frontend` | $can (bool), $user_id (int, 0 when logged out) | includes/permissions/class-capabilities.php (Capabilities::can_create_space_frontend) |
 | `jetonomy_category_listing_visibility_sql` | result, user_id, alias | includes/models/class-category.php:66 |
 | `jetonomy_check_content` | content, type | includes/moderation/class-content-checker.php |

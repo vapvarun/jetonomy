@@ -87,8 +87,18 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 
 <div class="jt-app" data-wp-interactive="jetonomy">
 	<div class="jt-container">
-		<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'trail' => array( __( 'My Subscriptions', 'jetonomy' ) ) ) ); ?>
+		<?php
+		\Jetonomy\Template_Loader::breadcrumb(
+			array(
+				array(
+					'label' => __( 'My Subscriptions', 'jetonomy' ),
+					'url'   => '',
+				),
+			)
+		);
+		?>
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 				<h1 class="jt-page-title"><?php esc_html_e( 'My Subscriptions', 'jetonomy' ); ?></h1>
 			</div>

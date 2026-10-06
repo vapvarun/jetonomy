@@ -223,7 +223,7 @@ $crumbs = [
 	],
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <?php
 /*
@@ -238,6 +238,7 @@ $crumbs = [
 ?>
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 
 <div class="jt-mod-wrap jt-mod-dashboard">
 	<div class="jt-mod-dashboard-head">

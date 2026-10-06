@@ -35,10 +35,11 @@ $crumbs = array(
 	),
 );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<h1 class="jt-page-title jt-mb-20">
 			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 			<?php echo esc_html( sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>

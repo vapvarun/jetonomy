@@ -1806,6 +1806,53 @@ class Template_Loader {
 	}
 
 	/**
+	 * Crumbs held back until the view opens <main> (inside_main placement).
+	 *
+	 * @var array<int,array<string,mixed>>|null
+	 */
+	private static ?array $deferred_crumbs = null;
+
+	/**
+	 * Print the breadcrumb trail where the view calls this (just before
+	 * <main>), or hold it for breadcrumb_in_main() when the site moved it
+	 * inside the main landmark (Basecamp 10272509253).
+	 *
+	 * @param array<int,array<string,mixed>> $crumbs Crumbs, each with label and optional url.
+	 */
+	public static function breadcrumb( array $crumbs ): void {
+		/**
+		 * Where the community breadcrumb trail renders.
+		 *
+		 * 'before_main' (default) prints it above the page's <main> landmark;
+		 * 'inside_main' prints it as the first thing inside <main>, for themes
+		 * whose layout styles the main region. Deliberately a filter, not a
+		 * setting: it is a per-theme layout choice.
+		 *
+		 * @since 2.0.1
+		 *
+		 * @param string                         $placement 'before_main' or 'inside_main'.
+		 * @param array<int,array<string,mixed>> $crumbs    The trail for this page.
+		 */
+		if ( 'inside_main' === apply_filters( 'jetonomy_breadcrumb_placement', 'before_main', $crumbs ) ) {
+			self::$deferred_crumbs = $crumbs;
+			return;
+		}
+		self::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) );
+	}
+
+	/**
+	 * Print a trail breadcrumb() held back; called right after <main> opens.
+	 */
+	public static function breadcrumb_in_main(): void {
+		if ( null === self::$deferred_crumbs ) {
+			return;
+		}
+		$crumbs                = self::$deferred_crumbs;
+		self::$deferred_crumbs = null;
+		self::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) );
+	}
+
+	/**
 	 * Helper to load a partial template.
 	 */
 	public static function partial( string $name, array $args = array() ): void {

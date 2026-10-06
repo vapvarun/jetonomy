@@ -145,10 +145,11 @@ $crumbs[] = [
 
 $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id . '/moderation/flags/' ) );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<div class="jt-mod-wrap jt-mod-queue">
 			<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 				<div class="jt-cat-page-row">

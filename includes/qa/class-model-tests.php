@@ -241,6 +241,7 @@ class Model_Tests {
 		$this->test_category_hierarchy_rules();
 		$this->test_category_slug_and_colour();
 		$this->test_demo_data_route();
+		$this->test_breadcrumb_placement();
 		$this->test_category_sibling_reorder();
 		$this->test_notification_space_read_gate();
 		$this->test_subscriber_fanout_batches();
@@ -2130,6 +2131,30 @@ class Model_Tests {
 		$status = rest_do_request( new \WP_REST_Request( 'POST', '/jetonomy/v1/admin/demo-data' ) )->get_status();
 		wp_set_current_user( $previous );
 		$this->check( 'DD2: a guest cannot import demo data', 401 === $status );
+	}
+
+	/**
+	 * BP: the breadcrumb prints before <main> by default and moves to the
+	 * in-main slot when a site asks for it (Basecamp 10272509253).
+	 */
+	private function test_breadcrumb_placement(): void {
+		$crumbs  = array( array( 'label' => 'QA BP', 'url' => '' ) );
+		$capture = static function ( callable $fn ): string {
+			ob_start();
+			$fn();
+			return (string) ob_get_clean();
+		};
+
+		$before = $capture( static fn() => \Jetonomy\Template_Loader::breadcrumb( $crumbs ) );
+		$slot   = $capture( static fn() => \Jetonomy\Template_Loader::breadcrumb_in_main() );
+		$this->check( 'BP1: by default the trail prints before <main> and the in-main slot stays empty', str_contains( $before, 'jt-crumb' ) && '' === $slot );
+
+		$inside = static fn(): string => 'inside_main';
+		add_filter( 'jetonomy_breadcrumb_placement', $inside );
+		$before = $capture( static fn() => \Jetonomy\Template_Loader::breadcrumb( $crumbs ) );
+		$slot   = $capture( static fn() => \Jetonomy\Template_Loader::breadcrumb_in_main() );
+		remove_filter( 'jetonomy_breadcrumb_placement', $inside );
+		$this->check( 'BP2: inside_main moves the trail into the in-main slot, printed once', '' === $before && 1 === substr_count( $slot, 'jt-crumb' ) );
 	}
 
 	/**

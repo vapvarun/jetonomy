@@ -42,10 +42,11 @@ $crumbs = array(
 	),
 );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 	<main>
+		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
 				<?php esc_html_e( 'My drafts', 'jetonomy' ); ?>

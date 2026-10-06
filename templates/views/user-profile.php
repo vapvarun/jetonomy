@@ -175,10 +175,11 @@ $crumbs = [
 	],
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<!-- Profile card -->
 			<div class="jt-profile jt-mb-md">
 				<div class="jt-profile-banner"></div>

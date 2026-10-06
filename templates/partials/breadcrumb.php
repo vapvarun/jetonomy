@@ -32,13 +32,10 @@ ob_start();
  * eighteen template overrides (Basecamp 10272509253). Return '' to suppress
  * it, or rebuild it from $crumbs.
  *
- * Ceiling worth knowing: every view calls this partial immediately BEFORE it
- * opens <main>, and no view exposes a hook inside <main>. So suppressing the
- * trail here and re-emitting it inside the main region still needs a template
- * override for the specific view - this filter removes the need to override
- * all eighteen, not the need to override any. Moving placement itself under
- * filter control means moving the render out of the views and into
- * Template_Loader, which is a real refactor rather than a hook.
+ * Placement is a separate filter, jetonomy_breadcrumb_placement: views print
+ * the trail through Template_Loader::breadcrumb() before <main> and call
+ * Template_Loader::breadcrumb_in_main() right after opening it, so a site can
+ * move the trail inside the main landmark without any template override.
  *
  * Output is already escaped; a filter returning markup owns its own escaping.
  *

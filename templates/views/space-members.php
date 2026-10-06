@@ -128,10 +128,11 @@ $role_labels = [
 	'admin'     => __( 'Admin', 'jetonomy' ),
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<div class="jt-cat-page-row">
 				<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 				<div>

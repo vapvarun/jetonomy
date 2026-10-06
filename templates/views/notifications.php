@@ -124,10 +124,11 @@ $empty_copy = array(
 // the Edit Profile page so we don't ship a parallel settings surface.
 $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_current_user_id() );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 <main>
+	<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 	<div class="jt-notifications-head">
 		<h1 class="jt-page-title"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></h1>
 		<div class="jt-notifications-head__actions">

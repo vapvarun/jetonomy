@@ -94,10 +94,11 @@ $crumbs = [
 	],
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<div class="jt-flex jt-items-center jt-gap-12 jt-mb-20">
 				<h1 class="jt-page-title"><?php echo esc_html( $tag->name ); ?></h1>
 				<span class="jt-tag-count-label">

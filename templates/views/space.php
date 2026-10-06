@@ -293,10 +293,11 @@ $crumbs[] = [
 	'url'   => '',
 ];
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<?php if ( ! empty( $space->cover_image ) ) : ?>
 			<div class="jt-space-cover jt-space-cover--image" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')">
 		<?php else : ?>

@@ -57,10 +57,11 @@ $crumbs[] = [
 
 $jt_children = \Jetonomy\Models\Category::list_children( (int) $category->id );
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<div class="jt-cat-page-row">
 				<?php if ( ! empty( $category->icon ) ) : ?>
 					<?php jetonomy_render_space_icon( (string) $category->icon, 32, 'jt-cat-page-emoji' ); ?>

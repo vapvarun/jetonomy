@@ -322,10 +322,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 	<?php
 }
 ?>
-<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+<?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
+			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 			<?php if ( 'publish' !== $post->status ) : ?>
 				<div class="jt-notice jt-notice-warning">
 					<?php
