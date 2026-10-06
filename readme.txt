@@ -294,6 +294,7 @@ Safer forum imports, a complete trash workflow for moderators, faster pages on l
 * Improve  - Tag, drafts, and search pages load their topics with a fixed number of queries however many topics they list.
 * Improve  - Searches for very short words match topic titles only, so they stay fast on large communities.
 * Improve  - Community pages load the smaller minified stylesheets and scripts.
+* Improve  - A visitor opening a space invite without an account is offered Create free account, and returns to the invite after signing up.
 * Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
 * Fix      - bbPress imports keep sticky topics and threaded replies, and re-running the import restores threading on replies an earlier version imported flat.
 * Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.
@@ -338,7 +339,9 @@ Safer forum imports, a complete trash workflow for moderators, faster pages on l
 * Fix      - The edited time of topics and replies is stored in UTC, so apps no longer show it shifted by the site's time zone.
 * Fix      - Topic and reply edits made in wp-admin now reach webhooks and other integrations, the same as edits made on the site.
 * Fix      - Running the setup wizard again with a category or space name that already exists now works.
+* Fix      - The pending flag count in the moderation queue goes down as each flag is resolved, without a reload.
 * Security - Quoting a topic or reply can no longer run script hidden in the quoted text.
+* Security - Anonymous topics and replies no longer reveal their author in page metadata, structured data, or the Recent and Trending widgets.
 * Dev      - New POST /posts/{id}/view REST route counts a topic view, and GET /posts/{id} no longer counts one, so apps call the new route when they show a topic.
 * Dev      - wp jetonomy reply unaccept is new, reply accept marks the reply itself, space create accepts the feed type, and space delete --mode=purge --yes skips the prompt as documented.
 * Dev      - GET /categories includes spaces on sub-category nodes, and its tree is two levels deep.
