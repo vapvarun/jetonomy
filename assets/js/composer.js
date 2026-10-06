@@ -558,8 +558,19 @@ document.addEventListener( 'DOMContentLoaded', () => {
             var editor = composer.querySelector('.jt-editor-body');
             if (!editor) return;
 
-            var quote = '<blockquote class="jt-quote"><cite>' + authorName + '</cite>' + text + '</blockquote><p></p>';
-            editor.innerHTML += quote;
+            // Build nodes, never an HTML string: the selection is plain text that
+            // can read like markup (a post showing "<img onerror=...>" as text),
+            // and concatenating it into innerHTML ran it in the quoter's session.
+            var quote = document.createElement('blockquote');
+            quote.className = 'jt-quote';
+            if (authorName) {
+                var cite = document.createElement('cite');
+                cite.textContent = authorName;
+                quote.appendChild(cite);
+            }
+            quote.appendChild(document.createTextNode(text));
+            editor.appendChild(quote);
+            editor.appendChild(document.createElement('p'));
             editor.focus();
             composer.scrollIntoView({ behavior: 'smooth', block: 'center' });
             quoteBtn.style.display = 'none';
