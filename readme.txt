@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -264,10 +264,13 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
-= 2.0.1 - Unreleased =
+= 2.0.1 - October 2026 =
 
-Safer forum imports, a complete trash workflow for moderators, and fixes for URLs, page caching, notifications, and leaderboards.
+Safer forum imports, a complete trash workflow for moderators, faster pages on large communities, pluggable search, and fixes for URLs, page caching, notifications, and leaderboards.
 
+* New      - The Dashboard can import the demo community again after it was skipped during setup or removed, and the REST API can check, import, and remove it.
+* New      - Each sub-category on the community home and its parent's page has a button that shows its spaces right there, without leaving the page.
+* New      - A search plugin such as Meilisearch or Elasticsearch can now power the search page, the REST API, and the app, and is kept up to date as topics and replies change.
 * Improve  - Re-running an import skips everything already imported and adds only new content, and the Import screen reports how many items were already imported.
 * Improve  - A site that imported from bbPress on an earlier version can re-run the import to bring in the private, hidden, and BuddyPress group forums the old importer skipped, without duplicating anything.
 * Improve  - Logged-out community pages can now be stored by page caches such as LiteSpeed Cache and WP Rocket.
@@ -286,6 +289,11 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Improve  - The community home shows each category's description under its name, separates categories with a divider, and uses the category colour as an accent.
 * Improve  - Every place that names topics follows a renamed Topic label, including empty states, profile tabs, drafts, search filters, the leaderboard, moderation screens, and notification emails.
 * Improve  - A held topic or reply that a moderator approves, or marks as not spam, now notifies subscribers and mentioned members, reaches activity feeds such as BuddyNext, and credits the author's reputation, the same as content posted directly.
+* Improve  - Notifications to spaces and topics with many followers go out in batches in the background, so every follower is notified on large communities.
+* Improve  - New database indexes keep trending topics, follower notifications, leaderboards, and the old-notification cleanup fast on large communities.
+* Improve  - Tag, drafts, and search pages load their topics with a fixed number of queries however many topics they list.
+* Improve  - Searches for very short words match topic titles only, so they stay fast on large communities.
+* Improve  - Community pages load the smaller minified stylesheets and scripts.
 * Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
 * Fix      - bbPress imports keep sticky topics and threaded replies, and re-running the import restores threading on replies an earlier version imported flat.
 * Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.
@@ -322,11 +330,24 @@ Safer forum imports, a complete trash workflow for moderators, and fixes for URL
 * Fix      - Approving a topic or reply that was already live and then held no longer notifies everyone a second time.
 * Fix      - Topics created through the Abilities API no longer count twice on the author's profile.
 * Fix      - Purging a space now clears its notifications from a connected community bell, such as BuddyNext, for the space and every topic and reply in it.
+* Fix      - Adding a category with a name that is already used now works instead of failing, and changing a slug to one that is taken explains why.
+* Fix      - The category Color setting is offered only for top-level categories, where the colour is shown.
+* Fix      - Removing demo data also removes its notifications, bookmarks, and subscriptions, and no longer fails when run outside wp-admin.
+* Fix      - The search page and the REST API return the same results for the same search, and the search page no longer offers Load More on its last page.
+* Fix      - The Roadmap page has a main content landmark for screen readers, and My Subscriptions shows its breadcrumb.
+* Fix      - The edited time of topics and replies is stored in UTC, so apps no longer show it shifted by the site's time zone.
+* Fix      - Topic and reply edits made in wp-admin now reach webhooks and other integrations, the same as edits made on the site.
+* Fix      - Running the setup wizard again with a category or space name that already exists now works.
+* Security - Quoting a topic or reply can no longer run script hidden in the quoted text.
 * Dev      - New POST /posts/{id}/view REST route counts a topic view, and GET /posts/{id} no longer counts one, so apps call the new route when they show a topic.
 * Dev      - wp jetonomy reply unaccept is new, reply accept marks the reply itself, space create accepts the feed type, and space delete --mode=purge --yes skips the prompt as documented.
 * Dev      - GET /categories includes spaces on sub-category nodes, and its tree is two levels deep.
 * Dev      - The free plugin no longer registers an Ollama AI provider or runs a hidden AI spam check. AI features are part of Jetonomy Pro.
 * Dev      - The message notification type is part of the community notification contract, and the jetonomy_check_content filter now runs on every create and publish path.
+* Dev      - New jetonomy_breadcrumb_placement filter renders the breadcrumb inside the main content area on every community page.
+* Dev      - New Search_Query_Adapter interface and jetonomy_search_adapter filter, and the jetonomy_search_query_args filter's return value is now used.
+* Dev      - New jetonomy_community_notification_read action and Notification::mark_read_for_object() let a host community mark one member's notifications as read.
+* Dev      - New GET, POST and DELETE /admin/demo-data REST route; the jetonomy_cleanup_sample_data AJAX action is removed.
 
 = 2.0.0 - September 2026 =
 
