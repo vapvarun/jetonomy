@@ -243,6 +243,7 @@ class Model_Tests {
 		$this->test_demo_data_route();
 		$this->test_breadcrumb_placement();
 		$this->test_search_adapter_routing();
+		$this->test_notification_read_for_object();
 		$this->test_category_sibling_reorder();
 		$this->test_notification_space_read_gate();
 		$this->test_subscriber_fanout_batches();
@@ -2213,6 +2214,42 @@ class Model_Tests {
 		$spy::$on = false;
 		$this->check( 'SA4: a plugin adapter is sent a published topic when it is created', $post_id > 0 && in_array( "index:post:{$post_id}", $spy::$calls, true ) );
 		$this->check( 'SA5: a plugin adapter is told when a topic is deleted', in_array( 'delete:post:987655', $spy::$calls, true ) );
+	}
+
+	/**
+	 * NR: reading an object reads that member's notifications about it, here
+	 * and (one signal) in the host's bell; other recipients keep theirs unread
+	 * (Basecamp 10369320232).
+	 */
+	private function test_notification_read_for_object(): void {
+		global $wpdb;
+		$object = 900000 + wp_rand( 1, 99999 );
+		$ids    = array();
+		foreach ( array( 1, 2 ) as $uid ) {
+			$ids[ $uid ] = \Jetonomy\Models\Notification::create(
+				array(
+					'user_id'     => $uid,
+					'actor_id'    => 0,
+					'type'        => 'message',
+					'object_type' => 'message',
+					'object_id'   => $object,
+					'message'     => 'QA NR',
+				)
+			);
+		}
+		$signals = array();
+		$spy     = static function ( $type, $id, $user ) use ( &$signals ): void {
+			$signals[] = "{$type}:{$id}:{$user}";
+		};
+		add_action( 'jetonomy_community_notification_read', $spy, 10, 3 );
+		$marked = \Jetonomy\Models\Notification::mark_read_for_object( 1, 'message', $object );
+		remove_action( 'jetonomy_community_notification_read', $spy, 10 );
+
+		$read = static fn( int $id ): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT is_read FROM ' . table( 'notifications' ) . ' WHERE id = %d', $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$this->check( 'NR1: the reader\'s notification about the object is marked read, another member\'s is not', 1 === $marked && 1 === $read( (int) $ids[1] ) && 0 === $read( (int) $ids[2] ) );
+		$this->check( 'NR2: the host is told once, for the reader only', array( "message:{$object}:1" ) === $signals );
+
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . table( 'notifications' ) . ' WHERE object_type = %s AND object_id = %d', 'message', $object ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**

@@ -310,6 +310,59 @@ class Notification extends Model {
 	}
 
 	/**
+	 * Mark one member's notifications about one object as read, here and in
+	 * the host community's bell.
+	 *
+	 * Opening a conversation (or anything else a notification points at) is
+	 * the read: nothing else ever cleared these rows, so a DM stayed unread in
+	 * Jetonomy's bell and the host's (Basecamp 10369320232).
+	 *
+	 * @param int    $user_id     The member who read it.
+	 * @param string $object_type Notification object_type ('message', 'post', ...).
+	 * @param int    $object_id   Object id.
+	 * @return int Rows marked read in Jetonomy's own table.
+	 */
+	public static function mark_read_for_object( int $user_id, string $object_type, int $object_id ): int {
+		if ( $user_id <= 0 || $object_id <= 0 || '' === $object_type ) {
+			return 0;
+		}
+
+		$updated = (int) static::db()->update(
+			static::table(),
+			[ 'is_read' => 1 ],
+			[
+				'user_id'     => $user_id,
+				'object_type' => $object_type,
+				'object_id'   => $object_id,
+				'is_read'     => 0,
+			]
+		);
+		if ( $updated > 0 ) {
+			self::bust_user_cache( $user_id );
+		}
+
+		/**
+		 * One member has read everything about an object.
+		 *
+		 * Part of the community notification contract: a host (BuddyNext)
+		 * marks that member's own bell rows for the object read. Unlike
+		 * jetonomy_community_notification_removed, which deletes the rows of
+		 * every recipient, this touches one member only, so reading a group
+		 * conversation leaves the other members' notifications alone. Fires
+		 * even when Jetonomy had no unread row: the host's may still be unread.
+		 *
+		 * @since 2.0.1
+		 *
+		 * @param string $object_type Object type, as in the notification payload.
+		 * @param int    $object_id   Object id.
+		 * @param int    $user_id     The member who read it.
+		 */
+		do_action( 'jetonomy_community_notification_read', $object_type, $object_id, $user_id );
+
+		return $updated;
+	}
+
+	/**
 	 * Return all filter-tab counts for a user in a single query.
 	 *
 	 * Used by the notifications page header to render badges next to each
