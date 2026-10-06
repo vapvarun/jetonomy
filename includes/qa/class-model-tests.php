@@ -2287,7 +2287,7 @@ class Model_Tests {
 			$this->check( 'AX1: the anonymous topic page names no author in its SEO meta or JSON-LD', '' !== $html && false === strpos( $html, 'property="article:author"' ) && false === strpos( $html, esc_html( $real ) ) && false === strpos( $html, $real ) );
 
 			wp_set_current_user( 0 );
-			$recent = do_shortcode( '[jetonomy_recent_posts limit="50"]' );
+			$recent = do_shortcode( '[jetonomy_recent_posts count="50" space_id="' . (int) $space->id . '"]' );
 			$this->check( 'AX2: the recent posts shortcode shows the anonymous topic without its author', false !== strpos( $recent, $post->title ) && false === strpos( $recent, esc_html( $real ) ) );
 
 			$ability = ( new \Jetonomy\Abilities() )->execute_get_post( [ 'post_id' => (int) $id ] );

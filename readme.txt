@@ -340,6 +340,7 @@ Safer forum imports, a complete trash workflow for moderators, faster pages on l
 * Fix      - Topic and reply edits made in wp-admin now reach webhooks and other integrations, the same as edits made on the site.
 * Fix      - Running the setup wizard again with a category or space name that already exists now works.
 * Fix      - The pending flag count in the moderation queue goes down as each flag is resolved, without a reload.
+* Fix      - The recent topics, top spaces and space leaders shortcodes keep a stable order when items tie, so the same topic no longer drops in and out of the list.
 * Security - Quoting a topic or reply can no longer run script hidden in the quoted text.
 * Security - Anonymous topics and replies no longer reveal their author in page metadata, structured data, or the Recent and Trending widgets.
 * Dev      - New POST /posts/{id}/view REST route counts a topic view, and GET /posts/{id} no longer counts one, so apps call the new route when they show a topic.

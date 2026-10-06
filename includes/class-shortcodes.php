@@ -243,7 +243,7 @@ class Shortcodes {
 			$where .= ' AND ' . $block_sql;
 		}
 
-		$order = 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC';
+		$order = ( 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC' ) . ', p.id DESC'; // id breaks same-second / equal-score ties.
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$query  = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
@@ -399,7 +399,7 @@ class Shortcodes {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$spaces = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$spaces_tbl} WHERE {$where} ORDER BY post_count DESC LIMIT %d",
+				"SELECT * FROM {$spaces_tbl} WHERE {$where} ORDER BY post_count DESC, id ASC LIMIT %d",
 				...$args
 			)
 		) ?: array();
@@ -574,7 +574,7 @@ class Shortcodes {
 			 FROM {$members_tbl} sm
 			 LEFT JOIN {$profiles_tbl} up ON up.user_id = sm.user_id
 			 WHERE sm.space_id = %d
-			 ORDER BY up.reputation DESC
+			 ORDER BY up.reputation DESC, sm.user_id ASC
 			 LIMIT %d",
 				$space_id,
 				$limit
