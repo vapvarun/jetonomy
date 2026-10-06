@@ -38,7 +38,9 @@ class TaxonomyJourneyTest extends WP_UnitTestCase {
 		Schema::create_tables();
 
 		$this->journey = new Taxonomy_Journey();
-		$this->suffix  = uniqid( 'tj_', true );
+		// Slug-safe: Category::create() sanitizes slugs since 2.0.1, so the dot
+		// in uniqid( '', true ) would come back as a hyphen.
+		$this->suffix  = str_replace( '.', '', uniqid( 'tj_', true ) );
 
 		$this->category_id = (int) Category::create(
 			[
