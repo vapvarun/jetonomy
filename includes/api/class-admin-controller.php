@@ -9,6 +9,7 @@ namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Admin\Ajax\Demo_Seeder;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -67,6 +68,57 @@ class Admin_Controller extends Base_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$ns,
+			'/admin/demo-data',
+			array(
+				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'demo_data_status' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
+				),
+				array(
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'import_demo_data' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
+				),
+				array(
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'remove_demo_data' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * GET /admin/demo-data - Whether demo data is loaded, and how much.
+	 */
+	public function demo_data_status(): WP_REST_Response {
+		return new WP_REST_Response( Demo_Seeder::summary(), 200 );
+	}
+
+	/**
+	 * POST /admin/demo-data - Load the demo community (replaces an earlier set).
+	 */
+	public function import_demo_data(): WP_REST_Response {
+		Demo_Seeder::import( get_current_user_id() );
+		$data            = Demo_Seeder::summary();
+		$data['message'] = __( 'Demo data imported.', 'jetonomy' );
+		return new WP_REST_Response( $data, 201 );
+	}
+
+	/**
+	 * DELETE /admin/demo-data - Remove the demo set; owner content is untouched.
+	 */
+	public function remove_demo_data(): WP_REST_Response|WP_Error {
+		if ( ! Demo_Seeder::remove() ) {
+			return new WP_Error( 'jetonomy_no_demo_data', __( 'No demo data found to clean up.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		$data            = Demo_Seeder::summary();
+		$data['message'] = __( 'All demo data has been removed.', 'jetonomy' );
+		return new WP_REST_Response( $data, 200 );
 	}
 
 	/**

@@ -52,6 +52,55 @@ class Demo_Seeder {
 	// ── Entry point ────────────────────────────────────────────────────────────
 
 	/**
+	 * The one way to load demo data, used by the setup wizard, the Dashboard
+	 * and POST /admin/demo-data (Basecamp 10375019266). Re-running replaces
+	 * the previous demo set instead of adding a second one.
+	 *
+	 * @param int $admin_id Site administrator who owns the demo spaces.
+	 * @return array Manifest stored in `jetonomy_demo_data`.
+	 */
+	public static function import( int $admin_id ): array {
+		self::remove();
+		UserProfile::find_or_create( $admin_id );
+		$demo = self::seed( $admin_id );
+		update_option( 'jetonomy_demo_data', $demo, false );
+		return $demo;
+	}
+
+	/**
+	 * Delete the demo set recorded in `jetonomy_demo_data`. Owner content is
+	 * never touched: only ids the seeder recorded are deleted.
+	 *
+	 * @return bool False when there was no demo data to remove.
+	 */
+	public static function remove(): bool {
+		$demo = get_option( 'jetonomy_demo_data', array() );
+		if ( empty( $demo ) || ! is_array( $demo ) ) {
+			return false;
+		}
+		self::cleanup( $demo );
+		delete_option( 'jetonomy_demo_data' );
+		return true;
+	}
+
+	/**
+	 * What the current demo set holds, for the Dashboard and REST.
+	 *
+	 * @return array{active:bool,counts:array<string,int>}
+	 */
+	public static function summary(): array {
+		$demo   = get_option( 'jetonomy_demo_data', array() );
+		$counts = array();
+		foreach ( array( 'users', 'categories', 'spaces', 'posts', 'replies' ) as $key ) {
+			$counts[ $key ] = is_array( $demo ) ? count( (array) ( $demo[ $key ] ?? array() ) ) : 0;
+		}
+		return array(
+			'active' => ! empty( $demo ),
+			'counts' => $counts,
+		);
+	}
+
+	/**
 	 * Seed the full model-community dataset and return a manifest for cleanup.
 	 *
 	 * @param int $admin_id WP user ID of the site administrator.
@@ -373,6 +422,8 @@ class Demo_Seeder {
 		$prior      = get_option( 'jetonomy_demo_data', array() );
 		$user_ids   = array_filter( array_map( 'absint', $prior['users'] ?? array() ) );
 		$profiles_t = table( 'user_profiles' );
+		// wp_delete_user() lives in wp-admin; REST and WP-CLI requests do not load it.
+		require_once ABSPATH . 'wp-admin/includes/user.php';
 		foreach ( $user_ids as $uid ) {
 			$wpdb->delete( $profiles_t, array( 'user_id' => $uid ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			wp_delete_user( $uid );
@@ -800,6 +851,8 @@ class Demo_Seeder {
 		// --- Users ---
 
 		$profiles_t = table( 'user_profiles' );
+		// wp_delete_user() lives in wp-admin; REST and WP-CLI requests do not load it.
+		require_once ABSPATH . 'wp-admin/includes/user.php';
 		foreach ( $user_ids as $uid ) {
 			$wpdb->delete( $profiles_t, array( 'user_id' => $uid ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			wp_delete_user( $uid );

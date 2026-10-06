@@ -63,11 +63,14 @@ The right sidebar has a Quick Actions card with three buttons:
 
 Use **Flush Rules** any time your community URLs return 404s after changing the base slug, activating a new plugin, or running a migration.
 
-## Demo Data Notice
+## Demo Data
 
-If you used the setup wizard's demo-data option, a yellow card labeled **Demo Data Active** appears below Quick Actions. Click **Remove All Demo Data** to delete all demo posts, replies, spaces, and the related setup option.
+The **Demo Data** card below Quick Actions works in both directions:
 
-This card only appears while `jetonomy_demo_data` option is set. It disappears permanently once you click Remove.
+- **Import Demo Data** appears when no demo content is loaded - for example, if you skipped sample data in the setup wizard or removed it earlier. It adds sample members, categories, spaces and topics so you can try the community out. Importing again replaces the previous demo set rather than adding a second one.
+- **Remove All Demo Data** appears while demo content is loaded (the card is yellow and titled **Demo Data Active**). It deletes only the demo members, categories, spaces, posts and replies; your own content is not affected.
+
+Both actions ask you to confirm first, then reload the Dashboard with a confirmation notice. The same actions are available from WP-CLI (`wp jetonomy demo-seed`, `wp jetonomy demo-cleanup`) and the REST API (`/jetonomy/v1/admin/demo-data`).
 
 ## System Info
 

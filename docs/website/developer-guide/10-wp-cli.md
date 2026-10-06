@@ -448,6 +448,23 @@ wp jetonomy content backfill-plain
 wp jetonomy content backfill-plain --seconds=60
 ```
 
+### demo-seed / demo-cleanup
+
+Load or remove the sample community: about 20 members, 4 categories, 20 spaces, 220 topics and their replies, votes, accepted answers and pending flags, plus Pro reactions, polls and DM threads when Jetonomy Pro is active. Only the rows the seeder records are removed, so your own content is never touched. The Dashboard's **Demo Data** card and `POST`/`DELETE /jetonomy/v1/admin/demo-data` run the same code.
+
+| Command | Description |
+|---------|-------------|
+| `demo-seed` | Seed the demo community. Stops if demo data already exists. |
+| `demo-seed --force` | Replace the existing demo data with a fresh set. |
+| `demo-seed --model --force` | Development only: empty ALL Jetonomy content first, then seed. Refused on production environments. |
+| `demo-cleanup` | Remove the demo data. |
+
+```bash
+wp jetonomy demo-seed
+wp jetonomy demo-seed --force
+wp jetonomy demo-cleanup
+```
+
 ---
 
 ## Pro Commands

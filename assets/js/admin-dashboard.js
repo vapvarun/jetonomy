@@ -1,25 +1,35 @@
 /**
  * Jetonomy — admin Dashboard page.
  *
- * Removes the demo-data card via AJAX. Loaded only on the Jetonomy
- * Dashboard admin page, and only when the demo-data card is present.
- * UI strings are translated with wp.i18n.
+ * Imports or removes demo data through /jetonomy/v1/admin/demo-data. Both
+ * reload the Dashboard (its stats change) with a jt_demo arg, so the PHP
+ * view prints the success notice after the reload. UI strings use wp.i18n.
  */
 (function () {
-	var btn = document.getElementById('jetonomy-cleanup-demo');
-	if (!btn) {
+	// The jt_demo arg only carries the post-reload notice; drop it so a later
+	// refresh does not repeat the notice.
+	var here = new URL(window.location.href);
+	if (here.searchParams.has('jt_demo')) {
+		here.searchParams.delete('jt_demo');
+		window.history.replaceState(null, '', here.toString());
+	}
+
+	var card = document.getElementById('jt-demo-card');
+	if (!card || !window.wp || !wp.apiFetch) {
 		return;
 	}
 	var i18n = {
-		demoCleanupConfirm:  wp.i18n.__( 'Delete all sample categories, spaces, posts, and replies from the setup wizard? Your own content is not affected.', 'jetonomy' ),
-		demoCleanupRemoving: wp.i18n.__( 'Removing…', 'jetonomy' ),
-		error:               wp.i18n.__( 'Something went wrong.', 'jetonomy' ),
+		removeConfirm: wp.i18n.__( 'Delete all sample categories, spaces, posts, and replies? Your own content is not affected.', 'jetonomy' ),
+		importConfirm: wp.i18n.__( 'Add sample members, categories, spaces and topics to this community? You can remove them again in one click.', 'jetonomy' ),
+		removing:      wp.i18n.__( 'Removing…', 'jetonomy' ),
+		importing:     wp.i18n.__( 'Importing…', 'jetonomy' ),
+		error:         wp.i18n.__( 'Something went wrong.', 'jetonomy' ),
 	};
 
 	// Modal toolkit (jetonomy-modals.js) is a hard dependency on every
 	// Jetonomy admin page. Degrade silently if it is absent rather than
-	// emitting native alert/confirm; destructive paths resolve to false
-	// so cleanup never runs without the customer's express confirmation.
+	// emitting native alert/confirm; both paths resolve to false so nothing
+	// runs without the owner's express confirmation.
 	var _alert = function (msg) {
 		return typeof window.jetonomyAlert === 'function' ? window.jetonomyAlert(msg) : Promise.resolve();
 	};
@@ -27,33 +37,34 @@
 		return typeof window.jetonomyConfirm === 'function' ? window.jetonomyConfirm(msg, opts) : Promise.resolve(false);
 	};
 
-	btn.addEventListener('click', function () {
-		var msg = i18n.demoCleanupConfirm;
-		_confirm(msg, { danger: true }).then(function (ok) {
-			if (!ok) { return; }
-			btn.disabled = true;
-			btn.textContent = i18n.demoCleanupRemoving;
-			fetch(window.ajaxurl, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-				body: new URLSearchParams({
-					action: 'jetonomy_cleanup_sample_data',
-					nonce: window.jetonomyAdmin.nonce
-				}),
-				credentials: 'same-origin'
-			})
-				.then(function (r) { return r.json(); })
-				.then(function (res) {
-					if (res.success) {
-						var card = document.getElementById('jt-demo-card');
-						if (card) {
-							card.remove();
-						}
-					} else {
-						_alert(res.data || i18n.error);
+	function run(btn, method, confirmMsg, busyLabel, done, danger) {
+		btn.addEventListener('click', function () {
+			_confirm(confirmMsg, { danger: danger }).then(function (ok) {
+				if (!ok) { return; }
+				var label = Array.prototype.slice.call(btn.childNodes);
+				btn.disabled = true;
+				btn.textContent = busyLabel;
+				wp.apiFetch({ path: '/jetonomy/v1/admin/demo-data', method: method })
+					.then(function () {
+						var url = new URL(window.location.href);
+						url.searchParams.set('jt_demo', done);
+						window.location.assign(url.toString());
+					})
+					.catch(function (err) {
 						btn.disabled = false;
-					}
-				});
+						btn.replaceChildren.apply(btn, label);
+						_alert((err && err.message) || i18n.error);
+					});
+			});
 		});
-	});
+	}
+
+	var remove = document.getElementById('jetonomy-cleanup-demo');
+	if (remove) {
+		run(remove, 'DELETE', i18n.removeConfirm, i18n.removing, 'removed', true);
+	}
+	var add = document.getElementById('jetonomy-import-demo');
+	if (add) {
+		run(add, 'POST', i18n.importConfirm, i18n.importing, 'imported', false);
+	}
 })();

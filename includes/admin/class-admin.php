@@ -1195,7 +1195,7 @@ class Admin {
 			wp_enqueue_script(
 				'jetonomy-admin-dashboard',
 				JETONOMY_URL . 'assets/js/admin-dashboard.js',
-				array( 'jetonomy-admin', 'wp-i18n' ),
+				array( 'jetonomy-admin', 'wp-i18n', 'wp-api-fetch' ),
 				JETONOMY_VERSION,
 				true
 			);

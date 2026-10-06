@@ -347,6 +347,173 @@
         }
       }
     },
+    "/admin/demo-data": {
+      "get": {
+        "tags": [
+          "App Config"
+        ],
+        "summary": "Demo data status",
+        "operationId": "adminDemoDataStatus",
+        "description": "Whether demo data is loaded, and how much. Requires manage_options.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "integer"
+                        },
+                        "categories": {
+                          "type": "integer"
+                        },
+                        "spaces": {
+                          "type": "integer"
+                        },
+                        "posts": {
+                          "type": "integer"
+                        },
+                        "replies": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "App Config"
+        ],
+        "summary": "Import demo data",
+        "operationId": "adminDemoDataImport",
+        "description": "Load the demo community; replaces an earlier demo set. Requires manage_options.",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "integer"
+                        },
+                        "categories": {
+                          "type": "integer"
+                        },
+                        "spaces": {
+                          "type": "integer"
+                        },
+                        "posts": {
+                          "type": "integer"
+                        },
+                        "replies": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "App Config"
+        ],
+        "summary": "Remove demo data",
+        "operationId": "adminDemoDataRemove",
+        "description": "Delete the demo set; owner content is untouched. Requires manage_options.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "integer"
+                        },
+                        "categories": {
+                          "type": "integer"
+                        },
+                        "spaces": {
+                          "type": "integer"
+                        },
+                        "posts": {
+                          "type": "integer"
+                        },
+                        "replies": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "No demo data to remove"
+          }
+        }
+      }
+    },
     "/ai/suggest-reply": {
       "post": {
         "tags": [

@@ -240,6 +240,7 @@ class Model_Tests {
 		$this->test_category_space_count();
 		$this->test_category_hierarchy_rules();
 		$this->test_category_slug_and_colour();
+		$this->test_demo_data_route();
 		$this->test_category_sibling_reorder();
 		$this->test_notification_space_read_gate();
 		$this->test_subscriber_fanout_batches();
@@ -2109,6 +2110,26 @@ class Model_Tests {
 			}
 			Space::bump_tree_generation();
 		}
+	}
+
+	/**
+	 * DD: demo data can be brought back after it was skipped or removed - the
+	 * route exists for all three verbs and is admin-only (Basecamp 10375019266).
+	 * Does not seed: that would rewrite the site's demo set on every QA run.
+	 */
+	private function test_demo_data_route(): void {
+		$routes  = rest_get_server()->get_routes();
+		$methods = array();
+		foreach ( (array) ( $routes['/jetonomy/v1/admin/demo-data'] ?? array() ) as $handler ) {
+			$methods = array_merge( $methods, array_keys( (array) ( $handler['methods'] ?? array() ) ) );
+		}
+		$this->check( 'DD1: /admin/demo-data answers GET, POST and DELETE', ! array_diff( array( 'GET', 'POST', 'DELETE' ), $methods ) );
+
+		$previous = get_current_user_id();
+		wp_set_current_user( 0 );
+		$status = rest_do_request( new \WP_REST_Request( 'POST', '/jetonomy/v1/admin/demo-data' ) )->get_status();
+		wp_set_current_user( $previous );
+		$this->check( 'DD2: a guest cannot import demo data', 401 === $status );
 	}
 
 	/**
