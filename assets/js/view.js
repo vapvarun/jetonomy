@@ -887,6 +887,13 @@ const { state, actions } = store( 'jetonomy', {
         // Localized label for the threaded-reply toggle button. Reads this
         // element's context (collapsed + childCount) and state.i18n so the
         // button translates (was inline English in the data-wp-text expr).
+        // Sub-category chips: the panel (or chevron) whose subId is the one
+        // open in the shared wrapper context.
+        get isSubOpen() {
+            const ctx = getContext() || {};
+            return !! ctx.subId && ctx.openSub === ctx.subId;
+        },
+
         get threadToggleLabel() {
             const ctx  = getContext() || {};
             const i18n = state.i18n || {};
@@ -3076,6 +3083,12 @@ const { state, actions } = store( 'jetonomy', {
                 toastOnError: true,
                 errorFallback: state.i18n?.failedSave || 'Failed to save.',
             } );
+        },
+
+        // ── Sub-category chip: show / hide its spaces (one open at a time) ──
+        toggleSub() {
+            const ctx = getContext();
+            ctx.openSub = ctx.openSub === ctx.subId ? 0 : ctx.subId;
         },
 
         // ── Toggle collapsible thread ──

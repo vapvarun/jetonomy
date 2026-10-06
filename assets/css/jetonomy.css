@@ -270,6 +270,10 @@
      above (and the theme) would otherwise flatten. Each carries !important to
      beat the blanket; the design tokens keep them theme-adaptive. */
   .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-accent-fg) !important; border-color: transparent !important; }
+  /* Sub-category chevron: the chip's own surface, and the accent tint while its spaces are shown. */
+  .jt-app button.jt-cat-chip-toggle { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; }
+  .jt-app button.jt-cat-chip-toggle:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-accent) !important; }
+  .jt-app button.jt-cat-chip-toggle[aria-expanded="true"] { background-color: var(--jt-accent-light) !important; color: var(--jt-accent-strong) !important; border-color: var(--jt-accent) !important; }
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
@@ -1201,6 +1205,18 @@
   .jt-app .jt-cat-chip:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); color: var(--jt-text); }
   .jt-app .jt-cat-chip:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-cat-chip-count { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); background: var(--jt-bg-muted); border-radius: var(--jt-radius-full); padding: 0 var(--jt-space-2); }
+  /* Sub-category chip + chevron read as one pill; the chevron shows that sub-category's spaces inline (Basecamp 10375135686). Every property is set here so a theme styling bare `button` cannot restyle it. */
+  .jt-cat-chip-group { display: inline-flex; align-items: stretch; }
+  .jt-app .jt-cat-chip-group .jt-cat-chip { border-start-end-radius: 0; border-end-end-radius: 0; }
+  .jt-app .jt-cat-chip-toggle { appearance: none; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; margin: 0; padding: 0 var(--jt-space-2); border: 1px solid var(--jt-border); border-inline-start: 0; border-start-start-radius: 0; border-end-start-radius: 0; border-start-end-radius: var(--jt-radius-full); border-end-end-radius: var(--jt-radius-full); font: inherit; line-height: 1; text-transform: none; box-shadow: none; cursor: pointer; transition: border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
+  .jt-app .jt-cat-chip-toggle:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
+  .jt-app .jt-cat-chip-toggle svg { transition: transform var(--jt-dur) var(--jt-ease); }
+  .jt-app .jt-cat-chip-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+  /* The open panel is a nested group: an accent rule and its own heading keep its spaces apart from the parent's grid below. */
+  .jt-cat-sub-panel { margin-top: var(--jt-space-3); padding-inline-start: var(--jt-space-3); border-inline-start: 2px solid var(--jt-accent); }
+  .jt-app .jt-cat-sub-title { margin: 0 0 var(--jt-space-2); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
+  .jt-cat-subs + * { margin-top: var(--jt-space-3); }
+  @media (prefers-reduced-motion: reduce) { .jt-app .jt-cat-chip-toggle svg { transition: none; } }
   /* No padding, and the host theme's paragraph margin zeroed: an empty
      category used to start its text 20px under the heading (8px padding + the
      theme's ~12px p margin) and sit 69px from the next section, against 12px
