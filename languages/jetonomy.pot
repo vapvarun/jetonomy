@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T09:07:59+00:00\n"
+"POT-Creation-Date: 2026-10-06T10:04:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -849,7 +849,7 @@ msgstr ""
 #: includes/class-template-loader.php:1191
 #: includes/class-template-loader.php:1360
 #: includes/notifications/class-notifier.php:1656
-#: includes/seo/class-schema-markup.php:527
+#: includes/seo/class-schema-markup.php:525
 #: templates/partials/header.php:60
 #: templates/partials/header.php:62
 #: templates/partials/icon-picker.php:98
@@ -931,7 +931,7 @@ msgstr ""
 #: includes/class-template-loader.php:1207
 #: includes/class-template-loader.php:1311
 #: includes/integrations/class-fluent-community.php:1080
-#: includes/seo/class-schema-markup.php:445
+#: includes/seo/class-schema-markup.php:443
 #: templates/partials/header.php:41
 #: templates/partials/header.php:43
 #: templates/views/home.php:27
@@ -1202,7 +1202,7 @@ msgstr ""
 #: includes/admin/views/tags.php:103
 #: includes/class-nav-menus.php:117
 #: includes/class-template-loader.php:1213
-#: includes/seo/class-schema-markup.php:521
+#: includes/seo/class-schema-markup.php:519
 #: templates/partials/header.php:45
 #: templates/partials/header.php:47
 #: templates/partials/header.php:112
@@ -1286,7 +1286,7 @@ msgstr[1] ""
 #: includes/class-template-loader.php:413
 #: includes/class-template-loader.php:415
 #: includes/class-template-loader.php:1247
-#: includes/class-template-loader.php:1556
+#: includes/class-template-loader.php:1557
 #: templates/partials/sidebar.php:239
 #: templates/views/space-edit.php:89
 #: templates/views/space.php:346
@@ -1577,7 +1577,7 @@ msgstr ""
 #: includes/admin/views/replies.php:272
 #: includes/functions.php:1458
 #: templates/views/moderation.php:304
-#: templates/views/space-moderation.php:214
+#: templates/views/space-moderation.php:226
 msgid "Trash"
 msgstr ""
 
@@ -4919,10 +4919,7 @@ msgstr ""
 #: includes/api/class-notifications-controller.php:358
 #: includes/api/class-oembed-controller.php:140
 #: includes/api/class-replies-controller.php:813
-#: includes/class-abilities.php:1305
 #: includes/class-author.php:60
-#: includes/class-shortcodes.php:273
-#: includes/class-shortcodes.php:339
 #: includes/integrations/class-buddypress.php:237
 #: includes/integrations/class-buddypress.php:883
 #: templates/partials/avatar.php:17
@@ -5557,7 +5554,7 @@ msgstr ""
 
 #: includes/class-admin-bar.php:99
 #: includes/class-template-loader.php:1229
-#: includes/class-template-loader.php:1514
+#: includes/class-template-loader.php:1515
 msgid "Edit profile"
 msgstr ""
 
@@ -5627,7 +5624,7 @@ msgstr ""
 
 #: includes/class-blocks.php:245
 #: includes/class-nav-menus.php:122
-#: includes/seo/class-schema-markup.php:515
+#: includes/seo/class-schema-markup.php:513
 #: templates/partials/header.php:49
 #: templates/partials/header.php:51
 #: templates/views/leaderboard.php:64
@@ -5722,7 +5719,7 @@ msgstr ""
 #: includes/class-blocks.php:691
 #: includes/class-nav-menus.php:127
 #: includes/class-template-loader.php:1226
-#: includes/class-template-loader.php:1507
+#: includes/class-template-loader.php:1508
 #: templates/partials/header.php:72
 #: templates/partials/header.php:80
 #: templates/views/notifications.php:39
@@ -5737,7 +5734,7 @@ msgstr ""
 #. translators: %s: the plural space label the site owner configured (e.g. spaces, groups).
 #: includes/class-blocks.php:703
 #: includes/class-template-loader.php:1236
-#: includes/class-template-loader.php:1530
+#: includes/class-template-loader.php:1531
 #: templates/views/my-spaces.php:52
 #: templates/views/my-spaces.php:65
 #, php-format
@@ -5746,7 +5743,7 @@ msgstr ""
 
 #: includes/class-blocks.php:706
 #: includes/class-template-loader.php:1239
-#: includes/class-template-loader.php:1538
+#: includes/class-template-loader.php:1539
 #: templates/views/subscriptions.php:94
 #: templates/views/subscriptions.php:103
 msgid "My Subscriptions"
@@ -6773,37 +6770,37 @@ msgid "Roadmap"
 msgstr ""
 
 #: includes/class-template-loader.php:1210
-#: includes/class-template-loader.php:1464
+#: includes/class-template-loader.php:1465
 msgid "Top members"
 msgstr ""
 
 #: includes/class-template-loader.php:1216
-#: includes/class-template-loader.php:1487
+#: includes/class-template-loader.php:1488
 msgid "Moderation Queue"
 msgstr ""
 
 #: includes/class-template-loader.php:1232
-#: includes/class-template-loader.php:1521
+#: includes/class-template-loader.php:1522
 msgid "You are invited"
 msgstr ""
 
 #. translators: %s: the singular space label the site owner configured (e.g. space, group).
 #: includes/class-template-loader.php:1243
-#: includes/class-template-loader.php:1547
+#: includes/class-template-loader.php:1548
 #: templates/views/new-space.php:45
 #, php-format
 msgid "Create a %s"
 msgstr ""
 
 #: includes/class-template-loader.php:1250
-#: includes/class-template-loader.php:1564
+#: includes/class-template-loader.php:1565
 #: templates/views/drafts.php:40
 #: templates/views/drafts.php:52
 msgid "My drafts"
 msgstr ""
 
 #: includes/class-template-loader.php:1253
-#: includes/class-template-loader.php:1571
+#: includes/class-template-loader.php:1572
 #: templates/views/bookmarks.php:43
 #: templates/views/bookmarks.php:55
 msgid "My bookmarks"
@@ -6833,90 +6830,90 @@ msgstr ""
 
 #. translators: %s: site title.
 #: includes/class-template-loader.php:1362
-#: includes/class-template-loader.php:1489
+#: includes/class-template-loader.php:1490
 #, php-format
 msgid "Moderation queue for %s."
 msgstr ""
 
 #. translators: 1: user login, 2: site title.
-#: includes/class-template-loader.php:1444
+#: includes/class-template-loader.php:1445
 #, php-format
 msgid "Community profile for @%1$s on %2$s."
 msgstr ""
 
 #. translators: 1: tag name, 2: site title.
-#: includes/class-template-loader.php:1459
-#: includes/seo/class-schema-markup.php:419
+#: includes/class-template-loader.php:1460
+#: includes/seo/class-schema-markup.php:417
 #, php-format
 msgid "Discussions tagged %1$s on %2$s."
 msgstr ""
 
 #. translators: %s: site title.
-#: includes/class-template-loader.php:1466
+#: includes/class-template-loader.php:1467
 #, php-format
 msgid "Top contributors and most-helpful members on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1471
+#: includes/class-template-loader.php:1472
 msgid "Search the community"
 msgstr ""
 
 #. translators: %s: site title.
-#: includes/class-template-loader.php:1473
+#: includes/class-template-loader.php:1474
 #, php-format
 msgid "Search discussions, replies, members, and tags on %s."
 msgstr ""
 
 #. translators: %s: site title.
-#: includes/class-template-loader.php:1501
+#: includes/class-template-loader.php:1502
 #, php-format
 msgid "Compose a new discussion on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1508
+#: includes/class-template-loader.php:1509
 msgid "Your community notifications."
 msgstr ""
 
-#: includes/class-template-loader.php:1515
+#: includes/class-template-loader.php:1516
 msgid "Edit your community profile."
 msgstr ""
 
 #. translators: %s: site title.
-#: includes/class-template-loader.php:1523
+#: includes/class-template-loader.php:1524
 #, php-format
 msgid "Accept your community invite to %s."
 msgstr ""
 
 #. translators: 1: plural space label, 2: plural space label, 3: site title.
-#: includes/class-template-loader.php:1532
+#: includes/class-template-loader.php:1533
 #, php-format
 msgid "%1$s you run and %2$s you are part of on %3$s."
 msgstr ""
 
 #. translators: 1: plural topic label, 2: plural space label (e.g. Spaces), 3: site name
-#: includes/class-template-loader.php:1540
+#: includes/class-template-loader.php:1541
 #, php-format
 msgid "%1$s and %2$s you follow on %3$s."
 msgstr ""
 
 #. translators: 1: singular space label, 2: site title.
-#: includes/class-template-loader.php:1549
+#: includes/class-template-loader.php:1550
 #, php-format
 msgid "Start a new community %1$s on %2$s."
 msgstr ""
 
 #. translators: %s: singular space label.
-#: includes/class-template-loader.php:1558
+#: includes/class-template-loader.php:1559
 #, php-format
 msgid "Edit your community %s settings."
 msgstr ""
 
-#: includes/class-template-loader.php:1565
+#: includes/class-template-loader.php:1566
 msgid "Your saved drafts on the community."
 msgstr ""
 
 #. translators: %s: plural topic label.
-#: includes/class-template-loader.php:1572
+#: includes/class-template-loader.php:1573
 #, php-format
 msgid "%s you have bookmarked on the community."
 msgstr ""
@@ -8505,7 +8502,7 @@ msgstr ""
 msgid "Please try again later."
 msgstr ""
 
-#: includes/seo/class-schema-markup.php:308
+#: includes/seo/class-schema-markup.php:306
 msgid "Community discussion forum"
 msgstr ""
 
@@ -9104,7 +9101,7 @@ msgstr ""
 
 #: templates/partials/moderation/approval-card.php:78
 #: templates/views/moderation.php:298
-#: templates/views/space-moderation.php:208
+#: templates/views/space-moderation.php:220
 msgid "Awaiting approval"
 msgstr ""
 
@@ -9595,6 +9592,7 @@ msgid "this week"
 msgstr ""
 
 #: templates/views/home.php:64
+#: templates/views/invite.php:51
 msgid "Create free account"
 msgstr ""
 
@@ -9617,12 +9615,12 @@ msgid "Other %s"
 msgstr ""
 
 #. translators: %s: space title.
-#: templates/views/invite.php:41
+#: templates/views/invite.php:45
 #, php-format
 msgid "You've been invited to join %s"
 msgstr ""
 
-#: templates/views/invite.php:45
+#: templates/views/invite.php:53
 msgid "Log in to accept invite"
 msgstr ""
 
@@ -9685,7 +9683,7 @@ msgstr ""
 
 #. translators: %d: number of trashed posts and replies.
 #: templates/views/moderation.php:257
-#: templates/views/space-moderation.php:169
+#: templates/views/space-moderation.php:181
 #, php-format
 msgid "%d item in trash"
 msgid_plural "%d items in trash"
@@ -9694,7 +9692,7 @@ msgstr[1] ""
 
 #. translators: %d: number of submissions held for approval.
 #: templates/views/moderation.php:260
-#: templates/views/space-moderation.php:172
+#: templates/views/space-moderation.php:184
 #, php-format
 msgid "%d submission awaiting approval"
 msgid_plural "%d submissions awaiting approval"
@@ -9719,7 +9717,7 @@ msgstr[1] ""
 
 #. translators: %d: number of pending flags.
 #: templates/views/moderation.php:275
-#: templates/views/space-moderation.php:186
+#: templates/views/space-moderation.php:198
 #, php-format
 msgid "%d pending"
 msgid_plural "%d pending"
@@ -9728,7 +9726,7 @@ msgstr[1] ""
 
 #. translators: %d: number of submissions held for approval.
 #: templates/views/moderation.php:282
-#: templates/views/space-moderation.php:193
+#: templates/views/space-moderation.php:205
 #, php-format
 msgid "%d held"
 msgid_plural "%d held"
@@ -9736,12 +9734,12 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: templates/views/moderation.php:290
-#: templates/views/space-moderation.php:200
+#: templates/views/space-moderation.php:212
 msgid "Moderation sections"
 msgstr ""
 
 #: templates/views/moderation.php:292
-#: templates/views/space-moderation.php:202
+#: templates/views/space-moderation.php:214
 msgid "Flags"
 msgstr ""
 
@@ -9764,15 +9762,15 @@ msgid "Banned %s pagination"
 msgstr ""
 
 #: templates/views/moderation.php:383
-#: templates/views/space-moderation.php:219
+#: templates/views/space-moderation.php:231
 msgid "Content type"
 msgstr ""
 
 #. translators: %s: plural label of the items in this tab (topics or replies).
 #: templates/views/moderation.php:411
 #: templates/views/moderation.php:412
-#: templates/views/space-moderation.php:247
-#: templates/views/space-moderation.php:248
+#: templates/views/space-moderation.php:259
+#: templates/views/space-moderation.php:260
 #, php-format
 msgid "No %s in the trash."
 msgstr ""
@@ -9780,24 +9778,24 @@ msgstr ""
 #. translators: %s: plural label of the items in this tab (topics or replies).
 #: templates/views/moderation.php:415
 #: templates/views/moderation.php:416
-#: templates/views/space-moderation.php:251
-#: templates/views/space-moderation.php:252
+#: templates/views/space-moderation.php:263
+#: templates/views/space-moderation.php:264
 #, php-format
 msgid "No %s are waiting for approval."
 msgstr ""
 
 #: templates/views/moderation.php:421
-#: templates/views/space-moderation.php:257
+#: templates/views/space-moderation.php:269
 msgid "The trash is empty."
 msgstr ""
 
 #: templates/views/moderation.php:466
-#: templates/views/space-moderation.php:298
+#: templates/views/space-moderation.php:310
 msgid "Trash pagination"
 msgstr ""
 
 #: templates/views/moderation.php:466
-#: templates/views/space-moderation.php:298
+#: templates/views/space-moderation.php:310
 msgid "Awaiting approval pagination"
 msgstr ""
 
@@ -9824,7 +9822,7 @@ msgid "Review in queue"
 msgstr ""
 
 #: templates/views/moderation.php:561
-#: templates/views/space-moderation.php:334
+#: templates/views/space-moderation.php:346
 msgid "Moderation queue pagination"
 msgstr ""
 
@@ -10567,7 +10565,8 @@ msgid "You do not have permission to moderate this %s."
 msgstr ""
 
 #. translators: %d: number of pending flags.
-#: templates/views/space-moderation.php:175
+#: templates/views/space-moderation.php:170
+#: templates/views/space-moderation.php:187
 #, php-format
 msgid "%d pending flag"
 msgid_plural "%d pending flags"
