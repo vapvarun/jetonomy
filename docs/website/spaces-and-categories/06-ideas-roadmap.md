@@ -16,7 +16,7 @@ Every Ideas space includes a built-in roadmap view. Instead of scrolling through
 
 ## What the Roadmap Shows
 
-![Ideas roadmap view with four status lanes - Planned, In Progress, Shipped, and Declined - each holding idea cards sorted by vote score](../images/spaces-and-categories/ideas-roadmap.png)
+![Ideas roadmap view with four status lanes - Planned, In Progress, Shipped, and Declined - each holding idea cards sorted by vote score](../images/spaces-and-categories/ideas-roadmap.webp)
 
 The roadmap is a dedicated view of an Ideas space that groups all ideas by their current status. Access it at:
 

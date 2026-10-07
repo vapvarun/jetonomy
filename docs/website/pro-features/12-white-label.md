@@ -31,7 +31,7 @@ Go to **Jetonomy → Settings → Branding**.
 
 Upload your own logo (SVG or PNG, max 400×100 px) to replace the Jetonomy logo in the community navigation bar. Leave the logo field blank to show no logo at all.
 
-![White Label branding settings panel](../images/pro-white-label.png)
+![White Label branding settings panel](../images/pro-white-label.webp)
 > **Tip:** Use the Custom CSS injection field to apply brand-specific color overrides without editing any theme files. The CSS injects after Jetonomy's own stylesheet so your values always win.
 
 ## Admin Menu Customization

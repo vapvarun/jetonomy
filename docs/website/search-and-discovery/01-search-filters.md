@@ -18,7 +18,7 @@ The search bar sits in the community navigation, visible on every page. Type any
 
 Results appear on the search results page at `/community/search/`. Each result card shows the content type, the space it belongs to, the author, the date, and a short excerpt with your search term highlighted.
 
-![Search results page](../images/search-results.png)
+![Search results page](../images/search-results.webp)
 
 > **Tip:** Every word you type is required (AND), matched as a prefix - searching `email digest` finds posts containing both `email...` and `digest...`. Short words (under 4 characters) are dropped when the search also has a longer word, so lead with the distinctive terms. A search made only of short words, such as `QA` or `v2`, still works as a plain substring match, just without relevance ranking.
 
@@ -39,7 +39,7 @@ Click any pill to filter. The URL updates so you can share a filtered search lin
 
 Click the **Filters** disclosure to expand the advanced filter bar. It auto-expands whenever any filter is already active. These filters stack - you can combine them in any combination.
 
-![Search page with the Filters disclosure expanded, showing the Date from, Date to, Author, Tag, and Sort order controls](../images/search-and-discovery/search-advanced-filters.png)
+![Search page with the Filters disclosure expanded, showing the Date from, Date to, Author, Tag, and Sort order controls](../images/search-and-discovery/search-advanced-filters.webp)
 
 ### Date Range
 

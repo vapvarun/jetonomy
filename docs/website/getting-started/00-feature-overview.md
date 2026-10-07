@@ -8,7 +8,7 @@ order: 0
 
 Everything Jetonomy does, on one page. This is the fastest way to see whether Jetonomy fits your community - it groups every feature by what it actually does for you, links straight to the deep-dive guide for each area, and marks which features are free and which are Jetonomy Pro.
 
-![The Jetonomy community home page showing categories, spaces, and recent activity](../images/community-home.png)
+![The Jetonomy community home page showing categories, spaces, and recent activity](../images/community-home.webp)
 
 ## How to Use This Page
 

@@ -8,7 +8,7 @@ The Extensions screen is your control panel for turning individual Jetonomy Pro 
 
 Go to **Jetonomy → Extensions** to access this screen. This menu item is added by Jetonomy Pro and is not visible on free-only installs.
 
-![Extensions screen showing the Pro extension cards in a grid with category filters and on/off toggles](../images/pro-extensions.png)
+![Extensions screen showing the Pro extension cards in a grid with category filters and on/off toggles](../images/pro-extensions.webp)
 
 ## Required Capability
 

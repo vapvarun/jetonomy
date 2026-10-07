@@ -8,7 +8,7 @@ The General settings tab is the first place to go after installation. It control
 - How to configure pagination for posts and replies
 - How the Public / Private access control works
 
-![General settings](../images/admin-general.png)
+![General settings](../images/admin-general.webp)
 
 Go to **Jetonomy → Settings** to access these options. All changes take effect on save.
 

@@ -6,7 +6,7 @@ order: 0
 
 Categories are the top-level groupings members see on your community home page - think of them as the tabs or sections that organize your spaces. Every space belongs to a category, so it makes sense to set up your categories first, then create spaces inside them.
 
-![Jetonomy Categories admin screen with the Add New Category form on the left and the category table on the right](../images/admin-categories.png)
+![Jetonomy Categories admin screen with the Add New Category form on the left and the category table on the right](../images/admin-categories.webp)
 
 ## What You Will Learn
 

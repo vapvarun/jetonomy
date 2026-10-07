@@ -1,6 +1,6 @@
 Email notifications bring members back to your community even when they are not actively browsing. Jetonomy sends a notification email for every in-app event type, and both you and your members have control over which emails are delivered.
 
-![Admin email settings with notification toggles and sender configuration](../images/admin-email.png)
+![Admin email settings with notification toggles and sender configuration](../images/admin-email.webp)
 
 ## What You Will Learn
 

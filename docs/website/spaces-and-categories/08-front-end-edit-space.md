@@ -6,7 +6,7 @@ order: 8
 
 Since Jetonomy 1.4.0, space owners and moderators can edit their space directly from the front-end. They click an **Edit space** button in the space header and adjust the title, description, cover image, icon, type, visibility, join policy, moderation approval, category, posts-per-page, and prefixes without ever loading wp-admin.
 
-![Front-end Edit Space page at /community/s/<slug>/edit/ with the Edit space button visible in the space header and the editable fields below](../images/spaces-and-categories/edit-space-form.png)
+![Front-end Edit Space page at /community/s/<slug>/edit/ with the Edit space button visible in the space header and the editable fields below](../images/spaces-and-categories/edit-space-form.webp)
 
 ## What You Will Learn
 

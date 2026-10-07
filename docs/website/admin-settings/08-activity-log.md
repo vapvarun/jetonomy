@@ -9,7 +9,7 @@ The Activity Log admin page shows you every audit-worthy event in your community
 
 Go to **Jetonomy → Activity Log** to access the page.
 
-![Activity Log admin page showing a filtered list of community events with user, type, and date-range filters](../images/admin-activity-log.png)
+![Activity Log admin page showing a filtered list of community events with user, type, and date-range filters](../images/admin-activity-log.webp)
 
 ## What Gets Logged
 

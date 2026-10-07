@@ -10,7 +10,7 @@ The mobile app reads your branding **straight from your WordPress settings**, so
 
 > **Requires Jetonomy 1.6.0 or newer.** On older versions the app falls back to its default styling.
 
-![The mobile app sign-in screen branded from WordPress settings: the community logo, the community name, and the accent color applied to the sign-in button and links](../images/mobile-app/00-login.png)
+![The mobile app sign-in screen branded from WordPress settings: the community logo, the community name, and the accent color applied to the sign-in button and links](../images/mobile-app/00-login.webp)
 
 ## What You Will Learn
 
@@ -54,7 +54,7 @@ GET /wp-json/jetonomy/v1/app/config
 
 which returns your `app_name` (Community Title), `accent_color`, and `logo_url`. The app re-reads it whenever it connects, so updates appear without shipping a new build.
 
-![A community's accent color applied throughout the mobile app - the active feed tab, links, and the compose button all use the brand color](../images/mobile-app/01-home.png)
+![A community's accent color applied throughout the mobile app - the active feed tab, links, and the compose button all use the brand color](../images/mobile-app/01-home.webp)
 
 ## In-app branding vs the home-screen icon
 

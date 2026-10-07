@@ -2,7 +2,7 @@ Understand what your community is doing, where it is growing, and who is driving
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Analytics dashboard showing charts and top contributor table](../images/pro-analytics.png)
+![Analytics dashboard showing charts and top contributor table](../images/pro-analytics.webp)
 ## What You Will Learn
 
 - How to access the Analytics dashboard
@@ -38,7 +38,7 @@ Use the date range picker at the top right to select any custom range. Preset sh
 
 All charts and tables update instantly when you change the range.
 
-![The analytics date-range picker, showing the preset shortcuts (Last 7 days, Last 30 days, Last 90 days, This month, Last month) and the custom range option](../images/pro-analytics-date-filter.png)
+![The analytics date-range picker, showing the preset shortcuts (Last 7 days, Last 30 days, Last 90 days, This month, Last month) and the custom range option](../images/pro-analytics-date-filter.webp)
 ## Overview Metrics
 
 The top row shows four headline numbers for your selected range:

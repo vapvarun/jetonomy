@@ -4,7 +4,7 @@ The Tags admin screen manages the global tag namespace members use to connect re
 
 Go to **Jetonomy → Tags** in your WordPress admin. This screen requires the `jetonomy_manage_settings` capability - administrators by default, and any other role you grant it to on the [Role Capability Mapping](18-role-capabilities.md) grid.
 
-![Jetonomy Tags admin screen: a table of tags with post counts, a bulk-action dropdown, a search box, and the Add New Tag form](../images/search-and-discovery/admin-tags.png)
+![Jetonomy Tags admin screen: a table of tags with post counts, a bulk-action dropdown, a search box, and the Add New Tag form](../images/search-and-discovery/admin-tags.webp)
 
 ## What It Lists
 

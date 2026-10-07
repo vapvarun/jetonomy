@@ -1,6 +1,6 @@
 Bringing an existing forum into Jetonomy? This page covers everything that is the same across all three importers - which source to pick, how to read the import screen, and the checklist to run after any import. Then follow the guide for your specific forum software.
 
-![Jetonomy Import screen showing detected forum sources with stat previews and Import buttons](../images/admin-import.png)
+![Jetonomy Import screen showing detected forum sources with stat previews and Import buttons](../images/admin-import.webp)
 
 ## Which Importer Do I Need?
 

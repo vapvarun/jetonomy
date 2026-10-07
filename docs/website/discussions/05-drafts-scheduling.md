@@ -6,7 +6,7 @@ order: 5
 
 Not every post is ready to publish the moment you start writing it. Drafts let you save work-in-progress posts and come back to them later. Scheduled posts let you write now and publish at a specific date and time automatically.
 
-![Post composer with draft and schedule publishing options](../images/new-post-form.png)
+![Post composer with draft and schedule publishing options](../images/new-post-form.webp)
 
 ## What You Will Learn
 
@@ -84,7 +84,7 @@ If a post's scheduled time is missed (for example, because the queue did not run
 
 ## The Split-Button UI
 
-![Post composer publish split-button expanded, showing Save as Draft and Schedule options with the date and time picker open](../images/discussions/draft-schedule-split-button.png)
+![Post composer publish split-button expanded, showing Save as Draft and Schedule options with the date and time picker open](../images/discussions/draft-schedule-split-button.webp)
 
 The publish button in the post composer is a split button:
 

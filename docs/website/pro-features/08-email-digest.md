@@ -2,7 +2,7 @@ Send a curated summary of community activity to members' inboxes - daily or week
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Email digest preview showing top posts from the week](../images/pro-email-digest.png)
+![Email digest preview showing top posts from the week](../images/pro-email-digest.webp)
 ## What You Will Learn
 
 - How to enable and configure the Email Digest
@@ -48,7 +48,7 @@ You can toggle each content section on or off in the digest settings. At least o
 
 > **How the new sections work:** badges and polls are tracked in a per-user buffer that's capped at 100 events with a 30-day TTL. The buffer is cleared only after a successful send, so opted-out members never accumulate state, and a missed send doesn't lose the activity.
 
-![The Jetonomy, Settings, Email Digest panel, showing the daily and weekly send-time fields and the per-section content toggles](../images/pro-email-digest-settings.png)
+![The Jetonomy, Settings, Email Digest panel, showing the daily and weekly send-time fields and the per-section content toggles](../images/pro-email-digest-settings.webp)
 > **Tip:** Keeping "Replies to your topics" on is the single most effective setting. Members always care more about activity on their own posts than about the broader community.
 
 ## Member Notification Preferences

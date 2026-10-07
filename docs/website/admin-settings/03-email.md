@@ -1,6 +1,6 @@
 The Email settings tab controls which notification emails Jetonomy sends, what name and address they come from, and how to test your email configuration.
 
-![Email settings with From name, From address, and notification type toggles](../images/admin-email.png)
+![Email settings with From name, From address, and notification type toggles](../images/admin-email.webp)
 
 ## What You Will Learn
 

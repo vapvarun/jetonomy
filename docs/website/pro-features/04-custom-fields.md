@@ -2,7 +2,7 @@ Add structured fields to member profiles - collect the information that matters 
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Custom fields displayed on a member profile page](../images/pro-custom-fields.png)
+![Custom fields displayed on a member profile page](../images/pro-custom-fields.webp)
 ## What You Will Learn
 
 - How to create and manage custom profile fields
@@ -38,7 +38,7 @@ A generic WordPress profile has a bio and a website URL. That is not enough for 
 
 4. Click **Save Field**.
 
-![The Custom Fields admin page, listing existing fields with the Add Field form open showing the Label, Field Key, Type, Required, Visibility, and Description settings](../images/pro-custom-fields-admin.png)
+![The Custom Fields admin page, listing existing fields with the Add Field form open showing the Label, Field Key, Type, Required, Visibility, and Description settings](../images/pro-custom-fields-admin.webp)
 ## Field Types
 
 | Type | Best for |

@@ -1,6 +1,6 @@
 How Jetonomy compares to Asgaros Forum - moving up from a lightweight forum to a full discussion platform.
 
-![Jetonomy community home page with modern spaces, voting, and trust-level badges](../images/community-home.png)
+![Jetonomy community home page with modern spaces, voting, and trust-level badges](../images/community-home.webp)
 
 ## What You Will Learn
 
@@ -42,7 +42,7 @@ Asgaros Forum is a focused, traditional forum: categories, forums, sub-forums, t
 
 Asgaros relies on you (or assigned moderators) to approve content and watch for problems. Jetonomy's trust level system automatically promotes members as they contribute. New users start restricted; active, helpful members gradually earn the ability to edit, moderate, and manage - without any manual role changes. You set the thresholds once and the community moderates itself.
 
-![A trust-level badge shown next to a member's name on a reply](../images/why-jetonomy/trust-level-badge.png)
+![A trust-level badge shown next to a member's name on a reply](../images/why-jetonomy/trust-level-badge.webp)
 
 ### Voting and Reputation
 

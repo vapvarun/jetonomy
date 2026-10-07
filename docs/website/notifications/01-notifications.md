@@ -1,6 +1,6 @@
 Notifications keep your community members in the loop without requiring them to check back manually. Every relevant activity (replies, mentions, votes) surfaces instantly in the notification bell so members always know when something needs their attention.
 
-![Notifications panel showing recent activity alerts and unread count](../images/notifications.png)
+![Notifications panel showing recent activity alerts and unread count](../images/notifications.webp)
 
 ## What You Will Learn
 
@@ -63,7 +63,7 @@ The dropdown shows your most recent notifications, roughly the last 10 to 20 ite
 
 The full page lists every notification you have received, loading 20 at a time with a **Load More** button at the bottom. A weekly background job marks unread notifications older than 30 days as read. Notifications are not auto-deleted from the database.
 
-![Full notifications page showing the All / Unread / Mentions / Replies / Votes / Badges filter tabs with count badges, and the bulk-select toolbar with Mark read and Delete buttons above selected rows](../images/notifications-full-page.png)
+![Full notifications page showing the All / Unread / Mentions / Replies / Votes / Badges filter tabs with count badges, and the bulk-select toolbar with Mark read and Delete buttons above selected rows](../images/notifications-full-page.webp)
 
 ### Filter Tabs
 
@@ -105,7 +105,7 @@ When a community requires email verification at signup (**Jetonomy → Settings 
 
 Each member can control which notification types they receive. Go to **Profile → Edit Profile → Notifications** (at `/community/u/your-username/edit/`).
 
-![Edit Profile Notifications tab showing the per-type Web and Email toggle grid with the Pause all email notifications switch below it](../images/edit-profile-notifications.png)
+![Edit Profile Notifications tab showing the per-type Web and Email toggle grid with the Pause all email notifications switch below it](../images/edit-profile-notifications.webp)
 
 Options are:
 

@@ -1,6 +1,6 @@
 The Anti-Spam tab lets you add invisible bot protection to post and reply submission - without disrupting the experience for legitimate members.
 
-![Anti-spam settings with provider selection, API keys, and score threshold](../images/admin-antispam.png)
+![Anti-spam settings with provider selection, API keys, and score threshold](../images/admin-antispam.webp)
 
 ## What You Will Learn
 

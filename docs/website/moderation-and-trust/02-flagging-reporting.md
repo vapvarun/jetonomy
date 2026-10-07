@@ -1,6 +1,6 @@
 Flagging lets any logged-in member report content that breaks your community rules. It is the first step in the moderation pipeline - members surface problems, and your moderators review and act.
 
-![Admin moderation dashboard showing flagged content awaiting review](../images/admin-moderation.png)
+![Admin moderation dashboard showing flagged content awaiting review](../images/admin-moderation.webp)
 
 ## What You Will Learn
 
@@ -18,7 +18,7 @@ Flagging lets any logged-in member report content that breaks your community rul
 
 Every topic and every reply has a **...** (more actions) menu. Open it and click **Report**. A prompt dialog appears asking why you are reporting the content. Type a brief description of the problem - for example, "This contains spam links" or "This is abusive toward another member" - and confirm.
 
-![Member reporting a post: the ... menu Report action and the "Why are you reporting this post?" reason prompt](../images/report-dialog.png)
+![Member reporting a post: the ... menu Report action and the "Why are you reporting this post?" reason prompt](../images/report-dialog.webp)
 
 The flag is saved immediately and you receive a confirmation message. The text you type is stored as the flag's description; the member-side report files every flag under the **Other** reason category, and moderators see that category alongside your description when they review it.
 

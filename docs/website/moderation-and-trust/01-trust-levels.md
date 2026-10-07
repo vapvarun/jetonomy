@@ -1,6 +1,6 @@
 Jetonomy's trust system automatically promotes reliable members to higher privilege levels as they earn reputation - so you spend less time manually managing who can do what, and your most active members get recognized for their contributions.
 
-![Permissions settings with trust level thresholds and promotion rules](../images/admin-permissions.png)
+![Permissions settings with trust level thresholds and promotion rules](../images/admin-permissions.webp)
 
 ## What You Will Learn
 
@@ -78,7 +78,7 @@ Demotion works the same way. If a member's reputation falls below a threshold (f
 
 > **Tip:** You can set a member's trust level directly from **Jetonomy → Users** in the WordPress admin. Find the user and click **Change Trust Level**, then pick the level. This is a manual override that sets the level immediately - useful for elevating a known expert or correcting an edge case.
 
-![Jetonomy Users admin page listing community members with per-row Change Trust Level and Ban / Unban controls](../images/admin-users.png)
+![Jetonomy Users admin page listing community members with per-row Change Trust Level and Ban / Unban controls](../images/admin-users.webp)
 
 The **Jetonomy → Users** page is the central place to manage individual members: each row shows the member's trust level, post and reputation stats, and per-row controls to **Change Trust Level** and to **Ban / Unban** (covered in [Banning Members](05-banning-members.md)).
 

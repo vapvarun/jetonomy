@@ -12,7 +12,7 @@ The leaderboard turns quality participation into something visible and worth com
 
 The community leaderboard is available at `/community/leaderboard/`. Any member - and guests, if your community is public - can view it. No login is required.
 
-![Leaderboard page](../images/leaderboard.png)
+![Leaderboard page](../images/leaderboard.webp)
 
 Members are ranked by total reputation score, highest first. Only members with a reputation above zero are ranked: a new member starts at 0 and appears on the board, the Top Members widget and the "Your rank" badge once they earn their first point. Members whose score has dropped to zero or below are left off too. The total shown next to "Your rank" counts the same ranked members. The leaderboard updates in real time as reputation changes - there is no daily cache delay between earning reputation and appearing in the rankings.
 

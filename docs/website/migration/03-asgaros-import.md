@@ -1,6 +1,6 @@
 Move your existing Asgaros Forum community into Jetonomy - forums, topics, replies, and user profiles - using the built-in Asgaros importer.
 
-![Import tool with Asgaros source selected and migration progress](../images/admin-import.png)
+![Import tool with Asgaros source selected and migration progress](../images/admin-import.webp)
 
 > **New to migration?** Read the [Migration overview](00-overview.md) first - it explains how to read the import screen (stat previews, status badges, the progress tracker) and the backup rule that applies to every import.
 

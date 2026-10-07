@@ -6,7 +6,7 @@ order: 3
 
 Every space has two controls: who can see it (visibility) and how members get in (join policy). Combining them gives you precise control over every access scenario - from fully public forums to invite-only private communities. The two controls are independent in every combination except one: a Hidden space is always Invite Only (see the note under Hidden below).
 
-![Per-space access controls on the space edit screen: the Visibility selector (Public/Private/Hidden), the Join Policy selector (Open/Approval/Invite), and the Who Can Post / Who Can Reply dropdowns](../images/spaces-and-categories/space-access-controls.png)
+![Per-space access controls on the space edit screen: the Visibility selector (Public/Private/Hidden), the Join Policy selector (Open/Approval/Invite), and the Who Can Post / Who Can Reply dropdowns](../images/spaces-and-categories/space-access-controls.webp)
 
 ## What You Will Learn
 
@@ -70,7 +70,7 @@ When a user clicks **Join**, they submit a join request. The request goes to the
 
 In wp-admin, moderators see pending requests on the space's own edit screen: **Jetonomy → Spaces → [space] → Edit → Join Requests**. They can approve or decline each request, and the user gets a notification when their request is reviewed.
 
-![The Join Requests tab on the wp-admin space edit screen, listing pending requests with the requester, their message, how long ago they asked, and Approve and Deny buttons](../images/admin-space-join-requests.png)
+![The Join Requests tab on the wp-admin space edit screen, listing pending requests with the requester, their message, how long ago they asked, and Approve and Deny buttons](../images/admin-space-join-requests.webp)
 
 > **Do not see a Join Requests tab?** It only appears when the space's join policy is set to **Approval Required**, or when the space already has pending requests. On an Open space there is nothing to approve, so the tab stays hidden. Set the policy first, on the **General** tab of the same screen.
 
@@ -91,7 +91,7 @@ You can create invite links from either surface:
 
 Each link has a configurable usage limit and optional expiry date, and you can see how many times each link has been used.
 
-![The Invite links panel on the front-end space Members page, with Max uses and Expires fields, a Generate invite link button, and an existing link showing its usage count alongside Copy and Revoke buttons](../images/space-members-invite-panel.png)
+![The Invite links panel on the front-end space Members page, with Max uses and Expires fields, a Generate invite link button, and an existing link showing its usage count alongside Copy and Revoke buttons](../images/space-members-invite-panel.webp)
 
 > **Invite links are space-admin only - moderators cannot see them.** This is deliberate, and it is a stricter rule than the one for join requests: an invite link is a bearer credential into a space that may be hidden, so listing the links discloses them. Space moderators can approve join requests but cannot view or mint invite links. The REST API applies the same rule server-side, so this is a real permission boundary, not just a hidden panel.
 

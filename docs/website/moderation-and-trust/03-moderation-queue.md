@@ -1,6 +1,6 @@
 The moderation queue is your single dashboard for everything that needs human review - posts waiting for approval, flagged content, and items caught by spam filters. You can action everything from one page without digging through individual topics.
 
-![Admin moderation queue with pending items and per-row action controls](../images/admin-moderation.png)
+![Admin moderation queue with pending items and per-row action controls](../images/admin-moderation.webp)
 
 ## What You Will Learn
 
@@ -105,7 +105,7 @@ In wp-admin the queue shows content from all spaces by default. Use the **Space*
 
 Space moderators who do not have global admin access see only their own spaces' items when they visit `/community/mod/`. They do not see content from spaces they do not moderate.
 
-![Frontend moderation dashboard at /community/mod/ as a space moderator sees it, scoped to their own spaces](../images/frontend-mod-queue.png)
+![Frontend moderation dashboard at /community/mod/ as a space moderator sees it, scoped to their own spaces](../images/frontend-mod-queue.webp)
 
 > **Fixed in 1.4.1:** moderators of multiple spaces now see every queue they own when they visit `/community/mod/`. Earlier versions could redirect a multi-space moderator away from the dashboard if access checks ran in the wrong order. If you have moderators who report "I can see one space's queue but not the others," update to 1.4.1 and the dashboard will load all of them.
 

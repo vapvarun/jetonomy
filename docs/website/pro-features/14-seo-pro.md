@@ -2,7 +2,7 @@ Give every space its own meta titles, Open Graph images, Twitter Cards, schema m
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![The SEO tab inside a space's settings panel, showing the meta title, meta description, and Open Graph image fields](../images/pro-seo-space-tab.png)
+![The SEO tab inside a space's settings panel, showing the meta title, meta description, and Open Graph image fields](../images/pro-seo-space-tab.webp)
 ## What You Will Learn
 
 - Why community SEO is different from page/post SEO

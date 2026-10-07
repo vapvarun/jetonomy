@@ -8,7 +8,7 @@ order: 2
 
 After you activate Jetonomy, a three-step wizard walks you through the only decisions you need to make before your community goes live. The whole process takes about two minutes.
 
-![Jetonomy setup wizard with step-by-step configuration](../images/setup-wizard.png)
+![Jetonomy setup wizard with step-by-step configuration](../images/setup-wizard.webp)
 
 ## What You Will Learn
 
@@ -24,7 +24,7 @@ The wizard runs in a full-screen overlay. You can close it at any time. Your pro
 
 ## Step 1: Community URL
 
-![Setup wizard Step 1: the community URL slug field with a default-space-type selector below it](../images/getting-started/setup-wizard-step-1-url.png)
+![Setup wizard Step 1: the community URL slug field with a default-space-type selector below it](../images/getting-started/setup-wizard-step-1-url.webp)
 
 Choose the slug where your community will live on your site.
 
@@ -51,7 +51,7 @@ You can create spaces of any type regardless of what you choose here. This setti
 
 ## Step 2: First Space
 
-![Setup wizard Step 2: the choice between Path A (create your first space) and Path B (load sample data)](../images/getting-started/setup-wizard-step-2-first-space.png)
+![Setup wizard Step 2: the choice between Path A (create your first space) and Path B (load sample data)](../images/getting-started/setup-wizard-step-2-first-space.webp)
 
 This step gets real content into your community so it is ready to share the moment you finish. Choose the path that fits where you are right now.
 

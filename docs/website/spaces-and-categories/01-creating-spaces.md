@@ -6,7 +6,7 @@ order: 1
 
 Spaces are the discussion areas inside your community - each one has its own topic listing, member list, and settings. This guide shows you how to create, configure, and manage them.
 
-![Admin space editor with name, description, and settings fields](../images/admin-space-edit.png)
+![Admin space editor with name, description, and settings fields](../images/admin-space-edit.webp)
 
 ## What You Will Learn
 

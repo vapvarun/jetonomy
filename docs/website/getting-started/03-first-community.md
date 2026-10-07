@@ -8,7 +8,7 @@ order: 3
 
 Your community is installed and the wizard is complete. This guide walks you through what to do next, from organizing your spaces to inviting your first members, so your community is genuinely ready for people on day one.
 
-![Community home page showing spaces organized by category](../images/community-home.png)
+![Community home page showing spaces organized by category](../images/community-home.webp)
 
 ## What You Will Learn
 
@@ -32,7 +32,7 @@ To create a category:
 
 Your category appears in the table on the right. Drag rows to reorder them. The order here is the order your members see on the community home page.
 
-![Jetonomy Categories admin: the add-category form on the left and the drag-to-reorder category table on the right](../images/getting-started/admin-categories-add-and-reorder.png)
+![Jetonomy Categories admin: the add-category form on the left and the drag-to-reorder category table on the right](../images/getting-started/admin-categories-add-and-reorder.webp)
 
 > **Tip:** Start with two to four broad categories. You can always add more later. Common patterns: "Support / General / Announcements" for a product community, or "Ideas / Questions / Showcase" for a creator community.
 
@@ -61,7 +61,7 @@ To create a space, you can use either the wp-admin form or the front-end Create 
 6. Set the join policy: **Open**, **Request to join**, or **Invite only**.
 7. Click **Save Space**.
 
-![The Add Space form showing the Lucide icon picker and the visibility and join-policy selectors](../images/admin-space-edit.png)
+![The Add Space form showing the Lucide icon picker and the visibility and join-policy selectors](../images/admin-space-edit.webp)
 
 **From the front end** (so non-admin owners can create spaces too): visit `/community/new-space/` while signed in. The form is identical and is available to any role you've enabled under **Jetonomy → Settings → General**, in the **Front-end space creation** field.
 
@@ -89,7 +89,7 @@ You do not need to wait for members to discover your community organically. Jeto
 4. Set an expiry date, or leave it open with no expiry.
 5. Copy the link and share it via email, Slack, social media, or anywhere else.
 
-![The Generate Invite Link panel showing the expiry option and the copyable invite URL](../images/getting-started/space-generate-invite-link.png)
+![The Generate Invite Link panel showing the expiry option and the copyable invite URL](../images/getting-started/space-generate-invite-link.webp)
 
 When someone visits the link, they are added to the space immediately after logging in or creating a WordPress account.
 
@@ -114,7 +114,7 @@ To adjust further:
 
 If you are migrating an existing community, Jetonomy includes a built-in importer for three sources.
 
-![The Jetonomy Import screen with the source selector and a detected-data summary such as "Found: 12 forums, 3,847 topics, 28,419 replies"](../images/admin-import.png)
+![The Jetonomy Import screen with the source selector and a detected-data summary such as "Found: 12 forums, 3,847 topics, 28,419 replies"](../images/admin-import.webp)
 
 1. Go to **Jetonomy → Import**.
 2. Select your source plugin: **bbPress**, **wpForo**, or **Asgaros Forum**.

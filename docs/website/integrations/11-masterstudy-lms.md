@@ -2,7 +2,7 @@ Connect MasterStudy LMS course enrollment to Jetonomy spaces - students get a de
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](images/integrations-settings.png)
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](../images/admin-integrations.webp)
 
 > MasterStudy LMS works like the other LMS integrations for adding members. The course picker, the **Sync Members** button, and the Auto-Create card are shown in the [LearnDash guide](04-learndash.md), which is the lead LMS reference for this section. (One difference: MasterStudy does not fire a removal hook - see Important Note on Removal below.)
 

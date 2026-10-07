@@ -23,7 +23,7 @@ The Categories screen is split into two panels side by side:
 - **Left - Add New Category form** for creating a new category
 - **Right - Categories table** listing existing categories and their children
 
-![Categories admin screen showing the two-panel layout: the Add New Category form on the left and the drag-to-reorder categories table on the right](../images/admin-categories.png)
+![Categories admin screen showing the two-panel layout: the Add New Category form on the left and the drag-to-reorder categories table on the right](../images/admin-categories.webp)
 
 ## Creating a Category
 

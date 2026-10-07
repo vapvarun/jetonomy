@@ -14,7 +14,7 @@ The Jetonomy app is published under **your** developer accounts, as **your** app
 - What it takes to publish your own branded app
 - The accounts and tools involved (and the no-EAS alternatives)
 
-![The Communities screen, where a member can switch between several Jetonomy communities or add another](../images/mobile-app/07-communities.png)
+![The Communities screen, where a member can switch between several Jetonomy communities or add another](../images/mobile-app/07-communities.webp)
 
 ## Getting the app source
 

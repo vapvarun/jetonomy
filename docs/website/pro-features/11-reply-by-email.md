@@ -48,7 +48,7 @@ Back in **Jetonomy → Settings → Reply by Email**, enter the reply domain (e.
 
 Jetonomy now generates per-user, per-topic reply addresses using that domain.
 
-![The Jetonomy, Settings, Reply by Email screen, showing the Inbound Endpoint URL and the reply domain field](../images/pro-reply-by-email-settings.png)
+![The Jetonomy, Settings, Reply by Email screen, showing the Inbound Endpoint URL and the reply domain field](../images/pro-reply-by-email-settings.webp)
 ## Email Parsing
 
 Jetonomy parses the incoming email using these rules:

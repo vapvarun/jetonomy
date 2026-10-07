@@ -2,7 +2,7 @@ Design your own badges, set the conditions that earn them, and watch members com
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Badges displayed on a member profile page](../images/pro-badges.png)
+![Badges displayed on a member profile page](../images/pro-badges.webp)
 ## What You Will Learn
 
 - How to create a badge with a name, icon, and tier
@@ -36,7 +36,7 @@ Trust levels and reputation points are invisible to casual members. Badges are v
 4. Set the award conditions (see below).
 5. Click **Save Badge**.
 
-![The Create Badge editor, showing the name, description, icon upload, Bronze/Silver/Gold tier selector, and auto-award criteria settings](../images/pro-badges-editor.png)
+![The Create Badge editor, showing the name, description, icon upload, Bronze/Silver/Gold tier selector, and auto-award criteria settings](../images/pro-badges-editor.webp)
 ## Award Conditions
 
 ### Auto-Award

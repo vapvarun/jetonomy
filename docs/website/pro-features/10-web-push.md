@@ -24,7 +24,7 @@ Web Push requires a VAPID key pair to authenticate your server with browsers.
 
 > **Important:** VAPID keys are generated once. If you regenerate them, all existing push subscriptions are invalidated and members must subscribe again. Only regenerate if you believe your private key has been compromised.
 
-![Web Push settings page with VAPID key fields and enable toggle](../images/pro-web-push.png)
+![Web Push settings page with VAPID key fields and enable toggle](../images/pro-web-push.webp)
 ## Service Worker Registration
 
 Jetonomy automatically registers a service worker (`/community/sw.js`) on every community page. You do not need to create or configure the service worker - this happens at extension activation.

@@ -6,7 +6,7 @@ order: 7
 
 Since Jetonomy 1.4.0, members with the right role can create a new space without ever opening wp-admin. The front-end Create Space page lives at `/community/new-space/` and gives community owners a way to delegate space creation to trusted regulars, team leads, or paying members without handing out WordPress admin access.
 
-![Front-end Create Space form at /community/new-space/ showing the Title, Description, Type, Visibility, Join policy, Category, and Icon fields](../images/spaces-and-categories/new-space-form.png)
+![Front-end Create Space form at /community/new-space/ showing the Title, Description, Type, Visibility, Join policy, Category, and Icon fields](../images/spaces-and-categories/new-space-form.webp)
 
 ## What You Will Learn
 
@@ -59,7 +59,7 @@ The form does its own validation in the browser before submission, then again on
 
 The icon field is not a free-text field. Jetonomy ships with a Lucide icon picker so every space gets a consistent, professionally-drawn icon.
 
-![Lucide icon picker open, showing the 16 default icons, the Show more button, and the search field at the top](../images/spaces-and-categories/icon-picker.png)
+![Lucide icon picker open, showing the 16 default icons, the Show more button, and the search field at the top](../images/spaces-and-categories/icon-picker.webp)
 
 The picker shows 16 default icons up front, covering the most common community space themes: users, hand, megaphone, message-circle, help-circle, lightbulb, star, rocket, book-open, award, shield, pin, bookmark, home, hash, and folder.
 
