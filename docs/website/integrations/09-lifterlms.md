@@ -1,3 +1,5 @@
+# LifterLMS
+
 Connect LifterLMS course and membership enrollment to Jetonomy spaces - students get a dedicated discussion area when they enroll, and lose access when removed.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).

@@ -1,3 +1,5 @@
+# SEO Pro
+
 Give every space its own meta titles, Open Graph images, Twitter Cards, schema markup, and sitemap rules - without touching your site-wide SEO plugin.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).

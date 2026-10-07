@@ -1,3 +1,5 @@
+# Site Announcements
+
 Feature an important post at the top of every space across your whole community.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -16,7 +18,7 @@ Feature an important post at the top of every space across your whole community.
 Site Announcements is one of the Pro extensions, enabled the same way as the others:
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Site Announcements** and click **Enable**.
+2. Find **Site Announcements** and switch its toggle on.
 3. A **Pin to community** button appears in the action bar of every post for administrators.
 
 ## Announcements vs Space Pinning

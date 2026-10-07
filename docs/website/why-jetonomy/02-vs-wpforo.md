@@ -1,3 +1,5 @@
+# Jetonomy vs wpForo
+
 How Jetonomy compares to wpForo - two modern forum plugins with different approaches.
 
 ![Jetonomy Q&A space showing an accepted-answer callout - a feature wpForo's basic question/answer mode does not offer](../images/why-jetonomy/qa-accepted-answer.webp)

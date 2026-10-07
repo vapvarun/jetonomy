@@ -1,3 +1,5 @@
+# Privacy and GDPR
+
 Jetonomy plugs into WordPress's own privacy tools rather than building a separate system, so a data request or a deletion request is handled the same way you would already handle one for any other plugin. This page is the owner's runbook: what to do when a member asks for their data, what happens when an account is deleted, and what to put in your privacy policy.
 
 ## What You Will Learn

@@ -1,3 +1,5 @@
+# Users
+
 The Users admin screen gives moderators and administrators a full view of every community member - with one-click access to ban, silence, or change trust level without leaving wp-admin.
 
 ## What You Will Learn

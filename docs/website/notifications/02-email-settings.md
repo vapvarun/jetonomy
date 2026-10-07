@@ -1,3 +1,5 @@
+# Email Settings
+
 Email notifications bring members back to your community even when they are not actively browsing. Jetonomy sends a notification email for every in-app event type, and both you and your members have control over which emails are delivered.
 
 ![Admin email settings with notification toggles and sender configuration](../images/admin-email.webp)
@@ -30,7 +32,7 @@ Jetonomy ships with ten notification types. Each one sends email by default, or 
 | Moderator action on your content | Yes |
 | Space join request | Yes |
 
-The defaults above are what Jetonomy applies when a new member signs up. Administrators set these site-wide defaults in **Jetonomy → Settings → Email**; the full settings reference, including the matching web (in-app) defaults, lives in [Email Settings](../admin-settings/03-email.md). Each member can then override any type for themselves (see "How Members Control Their Preferences" below).
+The defaults above apply to every member who has not saved their own choice for that type. Administrators set these site-wide defaults in **Jetonomy → Settings → Email**; the full settings reference, including the matching web (in-app) defaults, lives in [Email Settings](../admin-settings/03-email.md). Each member can then override any type for themselves (see "How Members Control Their Preferences" below).
 
 > **Tip:** "New post in followed space", vote, and badge emails are off by default because they can occur frequently. A member who follows many active spaces would otherwise receive a high volume of email. Let members opt in rather than having to opt out.
 
@@ -67,13 +69,13 @@ Any placeholder with no value for a given event renders as an empty string, so i
 
 The community-wide defaults - which types email by default, the From name, the From address, email branding, and the editable templates - all live on the admin **Jetonomy → Settings → Email** screen. That screen is documented in full, with every setting key, default, and location, in [Email Settings](../admin-settings/03-email.md).
 
-Changes to defaults apply only to new members who sign up after the change. Existing members keep their current preferences.
+Changes to defaults take effect immediately for every member who has not saved a choice for that type, whether they joined before or after the change. A member who has saved their own choice for a type keeps it.
 
 ## How Members Control Their Preferences
 
-Each member can override the defaults from their profile settings at `/community/u/their-username/edit/` under the **Notifications** tab. Every notification type has a separate toggle for in-app and email delivery.
+Each member can override the defaults on their **Edit Profile** page at `/community/u/their-username/edit/`, in the **Notification Preferences** section. Every notification type has a separate toggle for **Web** (in-app) and **Email** delivery.
 
-Members can disable all notification emails at once with the **Pause all email** toggle. This is the equivalent of a temporary snooze - all preferences are preserved so they can turn email back on later.
+Members can stop all notification emails at once by ticking **Pause all email notifications**. They still see web notifications. This is the equivalent of a temporary snooze - all preferences are preserved so they can untick it later.
 
 ## One-Click Unsubscribe
 

@@ -1,3 +1,5 @@
+# General
+
 The General settings tab is the first place to go after installation. It controls your community URL, pagination defaults, and who can read or participate.
 
 ## What You Will Learn

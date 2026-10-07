@@ -1,3 +1,5 @@
+# Activity Log
+
 The Activity Log admin page shows you every audit-worthy event in your community - who created a post, who approved a reply, who banned a member, when a role changed. Read-only and filterable.
 
 ## What You Will Learn

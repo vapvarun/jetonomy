@@ -1,15 +1,19 @@
+# Access Control
+
 The Access Control setting decides whether your community is open to the public or hidden behind sign-in. Pick the right mode in one place and Jetonomy enforces it across every page and the REST API.
 
 ## What You Will Learn
 
 - The difference between Public and Private community modes
-- Which pages stay reachable in Private mode (sign-in, register, lost password)
+- Why sign-in, register, and lost password stay reachable in Private mode
 - How REST API access changes between the two modes
 - When to switch and what to expect
 
-Go to **Jetonomy → Settings → General** and find the **Access Control** card to choose the mode. It is one card on the General tab, not a separate sub-page - the same `guest_read` toggle introduced under [Guest Access on the General Settings page](01-general.md#guest-access-public--private).
+Go to **Jetonomy → Settings → General** and find the **Access Control** card. Under **Community Access**, choose **Public community** or **Private community**. It is one card on the General tab, not a separate sub-page - the same `guest_read` toggle introduced under [Guest Access on the General Settings page](01-general.md#guest-access-public--private).
 
 ## Public Mode (default)
+
+This is the **Public community** option: "Anyone can read topics and replies. Visitors must log in to post, reply, or vote."
 
 Anyone - including search engines and visitors who haven't signed in - can read posts, replies, and member profiles. Posting and voting still require sign-in.
 
@@ -23,9 +27,11 @@ Use Public mode when:
 
 ## Private Mode
 
-Every community page requires sign-in. Guests visiting `/community/` or any space, post, tag, or profile URL are redirected to the sign-in page. The REST API also rejects unauthenticated requests for community data.
+This is the **Private community** option: "Only logged-in members can view any forum content. Everyone else is redirected to the login page."
 
-The sign-in, register, and forgot-password pages stay reachable so guests can still create an account or recover access.
+Every community page requires sign-in. Guests visiting `/community/` or any space, post, tag, or profile URL are redirected to the WordPress login page. The REST API also rejects unauthenticated requests for community data.
+
+Jetonomy has no sign-in, register, or lost-password pages of its own. Those are WordPress's own pages, which sit outside your community, so Private mode never blocks them. Whether guests can create an account depends on the **Anyone can register** setting under **Settings → General** in WordPress.
 
 Use Private mode when:
 
@@ -35,12 +41,7 @@ Use Private mode when:
 
 ## What Stays Public in Private Mode
 
-These pages are intentionally exempt so guests can sign up and recover access:
-
-- The sign-in page
-- The registration page
-- The forgot-password page
-- Email verification and password-reset confirmation links
+The WordPress sign-in, registration, and forgot-password pages are not part of the community, so guests can always reach them to sign up and recover access.
 
 Everything else - homepage, spaces, posts, replies, tags, member profiles, leaderboard, search - is gated.
 

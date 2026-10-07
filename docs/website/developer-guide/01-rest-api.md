@@ -1,3 +1,5 @@
+# REST API
+
 Jetonomy exposes a full REST API under the `jetonomy/v1` namespace: 81 routes (109 method-endpoints) in the free plugin, and 141 routes (193 method-endpoints) with Jetonomy Pro active. All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
 
 **Base URL:** `https://example.com/wp-json/jetonomy/v1/`
@@ -760,7 +762,7 @@ const data = await res.json();
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| GET | `/settings/white-label` | Admin (`manage_options`) | Get current white-label settings (logo, colors, footer text) |
+| GET | `/settings/white-label` | Admin (`manage_options`) | Get current white-label settings (brand name, admin menu label and icon, admin footer text) |
 | PATCH | `/settings/white-label` | Admin (`manage_options`) | Save white-label settings |
 
 ### AI (`ai` extension)

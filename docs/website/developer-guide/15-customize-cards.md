@@ -1,3 +1,5 @@
+# Customize Cards
+
 Inject badges, buttons, counts, and metadata into post cards, reply cards, space cards, and member rows using purpose-built hooks - no template override required for most use cases.
 
 ---

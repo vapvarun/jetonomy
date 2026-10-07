@@ -1,3 +1,5 @@
+# File Attachments
+
 Let members attach images, PDFs, and documents to topics and replies, with server-rendered preview cards and a lazy-loaded inline PDF viewer.
 
 > **PRO** - Attaching new files (the composer), the lightbox, the inline PDF viewer, and file type/size limits require [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/). As of 1.8.0, viewing attachments that already exist on a post does not - the free Jetonomy plugin displays them on its own, and keeps displaying them even if Pro is later deactivated.
@@ -29,7 +31,7 @@ The free Jetonomy plugin already renders any attachment that lands on a post or 
 
 ## Enabling File Attachments
 
-1. Go to **Jetonomy → Extensions**, find **File Attachments**, and click **Enable**.
+1. Go to **Jetonomy → Extensions**, find **File Attachments**, and switch its toggle on.
 2. The composer gains an **Attach files** control - a full **Attach files** button on the new-topic form, and a compact paperclip icon in the reply toolbar.
 
 ## Configuring Allowed Types, Size, and Count

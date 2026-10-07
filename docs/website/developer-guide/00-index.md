@@ -1,3 +1,5 @@
+# Developer Guide
+
 The Developer Guide is the technical reference for extending, embedding, and integrating Jetonomy. Every page here is written for developers - if you are configuring the community from wp-admin, start with the Getting Started and Admin Settings sections instead.
 
 Use this page as a map: each guide is grouped by what you are trying to do, so you can jump straight to the right reference no matter where you landed.

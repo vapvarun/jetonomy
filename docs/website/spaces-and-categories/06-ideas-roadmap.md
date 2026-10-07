@@ -4,14 +4,14 @@ category: "spaces-and-categories"
 order: 6
 ---
 
-Every Ideas space includes a built-in roadmap view. Instead of scrolling through a flat list of feature requests, visitors can see all ideas organized by status - what is planned, what is being built, what has shipped, and what will not be pursued. This page explains the roadmap, the status lanes, and how status changes are communicated to your community.
+Every Ideas space includes a built-in roadmap view. Instead of scrolling through a flat list of feature requests, visitors can see all ideas organized by status - what is planned, what is being built, what has shipped, and what will not be pursued. This page explains the roadmap, the status lanes, and who is told when a status changes.
 
 ## What You Will Learn
 
 - Where to find the roadmap view
 - What the four status lanes mean
 - How admins update an idea's status
-- How status changes surface in notifications and the activity log
+- Who is notified when a status changes
 - What the roadmap looks like for community members
 
 ## What the Roadmap Shows
@@ -48,25 +48,22 @@ New ideas submitted by members have no status by default. They appear in the mai
 Any space moderator or admin can change an idea's status:
 
 1. Open the idea (the single post view).
-2. Find the **Status** control in the post meta area below the title.
-3. Select a new status from the dropdown: Planned, In Progress, Shipped, or Declined.
-4. Click **Update Status**.
+2. Find the **Status:** row of buttons below the title: Planned, In Progress, Shipped, and Declined.
+3. Click the status you want.
 
-The status change saves immediately. A system entry appears in the reply thread showing what the status changed from and to, with a timestamp. This gives the idea's full history in one place.
+Each click saves immediately, and the colored pill next to the title updates. There is no save button and no way to clear a status once it is set. You can only switch to a different one.
 
-You can also update status from the space admin panel at **Jetonomy → Spaces → [Space Name] → Posts**. The status column is editable inline from that view, which is useful for processing a batch of ideas at once.
+Status is set from the idea page only. The space edit screen in wp-admin has no Posts tab, so there is no batch editing of statuses.
 
 ## How Status Changes Surface in Notifications
 
-When an idea's status changes, Jetonomy sends notifications across three channels:
+When an idea's status changes, Jetonomy records it and notifies the idea's author:
 
-**Activity log** - A system activity entry is created in the idea's reply thread, visible to anyone who opens that idea.
+**Activity log** - An entry records who changed the status, and from what to what. It is for your own audit trail. It does not appear in the idea's reply thread.
 
-**Email digest** - If a member follows the Ideas space and has email digest enabled, the status change is included in their next digest email (daily or weekly depending on their preference).
+**In-app notification and email** - The idea's author gets a notification, "Your idea ... is now ...", and an email if their notification settings allow it. Nobody else is notified, and no notification is sent when you change the status of your own idea.
 
-**In-app inbox** - The idea author receives an in-app notification immediately. All followers of the Ideas space also receive an in-app notification.
-
-Members who do not follow the space will not receive notifications about that specific status change. Encourage members to follow the space after submitting an idea so they stay informed.
+Followers of the space are not notified, and status changes are not included in digest emails. Encourage members to check the roadmap to follow progress.
 
 ## Customer-Visible Behaviors
 
@@ -78,7 +75,7 @@ What members see at each stage:
 - **Shipped** - Moves to the Shipped lane. Badge shows "Shipped." Upvote button remains available so members can react positively to the delivery.
 - **Declined** - Moves to the Declined lane. Badge shows "Declined." Vote controls remain visible.
 
-Ideas can be moved between statuses at any time. Moving a shipped idea back to In Progress (for a revision, for example) is valid and will notify followers again.
+Ideas can be moved between statuses at any time. Moving a shipped idea back to In Progress (for a revision, for example) is valid and notifies the idea's author again.
 
 ## What's Next?
 

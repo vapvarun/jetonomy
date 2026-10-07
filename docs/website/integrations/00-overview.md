@@ -1,3 +1,5 @@
+# Integrations Overview
+
 Jetonomy connects to the membership, course, and community plugins you already run, so a member's access to a discussion space follows their subscription, course enrolment, or group membership automatically. This page is the map of every integration - what each one does, and whether it is in the free plugin or needs Jetonomy Pro.
 
 ## What You Will Learn

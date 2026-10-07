@@ -66,7 +66,7 @@ the space to the top.
 
 **Visibility** - Controls who can see the space and its content. Options: Public, Private, or Hidden. See [Membership & Join Policies](03-membership-policies.md) for details.
 
-**Join Policy** - Controls how members gain access. Options: Open, Approval Required, or Invite Only.
+**Join Policy** - Controls how members gain access. Options: Open, Requires Approval, or Invite Only.
 
 > **Defaults:** if you leave Visibility and Join Policy untouched, a new space is **Public + Open** - anyone can find, read, and join it. Change them for private or invite-only spaces. Note that Hidden visibility always forces Invite Only; see [Membership & Join Policies](03-membership-policies.md).
 

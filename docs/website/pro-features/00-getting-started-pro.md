@@ -1,3 +1,5 @@
+# Getting Started with Pro
+
 Activate your license, switch on the extensions you need, and understand which capabilities gate each Pro feature.
 
 > **PRO** - This section covers [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -27,7 +29,7 @@ Jetonomy Pro ships seventeen extensions. None of them do anything until you swit
 
 1. Go to **Jetonomy → Extensions** (the `jetonomy-extensions` page).
 2. Each extension shows a card with its name, description, and a toggle.
-3. Click **Enable** on the extensions you want. The toggle persists the choice to the `jetonomy_pro_extensions` option (an array of extension IDs).
+3. Switch on the toggle for each extension you want. The toggle persists the choice to the `jetonomy_pro_extensions` option (an array of extension IDs).
 4. Enabling an extension runs any one-time setup it needs (for example, creating its database tables) and registers its hooks, REST routes, and admin screens immediately.
 
 Disable an extension at any time from the same page. Disabling stops the feature and unregisters its hooks; it does not delete the data the extension already stored.

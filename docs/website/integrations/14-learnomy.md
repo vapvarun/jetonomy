@@ -1,3 +1,5 @@
+# Learnomy
+
 Connect Learnomy course enrollment, cohort membership, and membership-plan subscriptions to Jetonomy spaces - students get a discussion area automatically when they enroll, join a cohort, or subscribe, and lose access when they leave.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).

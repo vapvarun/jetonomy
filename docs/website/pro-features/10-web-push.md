@@ -1,3 +1,5 @@
+# Web Push Notifications
+
 Reach members with browser push notifications - even when they have closed your site.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).

@@ -1,3 +1,5 @@
+# LearnDash
+
 Connect LearnDash course and group enrollment to Jetonomy spaces - students get dedicated discussion areas automatically when they enroll, and lose access when they un-enroll.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).

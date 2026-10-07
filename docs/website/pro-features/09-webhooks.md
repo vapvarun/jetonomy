@@ -1,3 +1,5 @@
+# Webhooks
+
 Automatically send community events to any external URL - connect Jetonomy to Slack, Zapier, your CRM, or any custom pipeline.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -17,7 +19,7 @@ Jetonomy lives inside WordPress - but your business does not. Your team lives in
 ## Enabling Webhooks
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Outbound Webhooks** and click **Enable**.
+2. Find **Outbound Webhooks** and switch its toggle on.
 3. A **Webhooks** item appears under the Jetonomy admin menu.
 
 ## Creating a Webhook

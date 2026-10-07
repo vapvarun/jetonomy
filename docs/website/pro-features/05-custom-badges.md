@@ -1,3 +1,5 @@
+# Custom Badges
+
 Design your own badges, set the conditions that earn them, and watch members compete to collect them.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -17,7 +19,7 @@ Trust levels and reputation points are invisible to casual members. Badges are v
 ## Enabling Custom Badges
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Custom Badges** and click **Enable**.
+2. Find **Custom Badges** and switch its toggle on.
 3. A **Badges** item appears under the Jetonomy admin menu.
 
 ## Creating a Badge

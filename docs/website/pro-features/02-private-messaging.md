@@ -1,3 +1,5 @@
+# Private Messaging
+
 Let members send direct messages to each other - one-on-one or in small groups - without leaving your community.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -23,7 +25,7 @@ Private Messaging adds a dedicated inbox at `/community/messages/`. Members can 
 ## Enabling Private Messaging
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Private Messaging** and click **Enable**.
+2. Find **Private Messaging** and switch its toggle on.
 3. A **Messages** link appears automatically in the community navigation bar.
 
 No additional configuration is required to go live.

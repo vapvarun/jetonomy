@@ -1,3 +1,5 @@
+# MasterStudy LMS
+
 Connect MasterStudy LMS course enrollment to Jetonomy spaces - students get a dedicated discussion area when they enroll in a course.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).

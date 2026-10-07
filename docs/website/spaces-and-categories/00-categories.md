@@ -26,7 +26,7 @@ A space must be assigned to a category to appear in the community navigation. So
 
 Go to **Jetonomy → Categories** in your WordPress admin.
 
-This screen is administrator-only by default - it requires the `jetonomy_manage_settings` capability, which is granted only to administrators. Editors and other roles do not see this page.
+This screen is administrator-only by default - it requires the `jetonomy_manage_categories` capability, which is granted only to administrators by default. Editors and other roles do not see this page.
 
 ## Page Layout
 
@@ -55,9 +55,14 @@ Fill in the Add New Category form and click **Add Category**.
 |---|---|
 | Public | All visitors, including logged-out visitors, when guest access is on |
 | Private | Logged-in members only |
-| Hidden | Not shown in navigation or listings, and its URL returns *not found* to anyone who cannot manage categories |
+| Hidden | Not shown in navigation or listings, and its URL returns *not found* to anyone who cannot manage categories. Its spaces are hidden too (see below) |
 
-A category's visibility does not override the visibility of the individual spaces inside it. A public category can still contain private spaces - each space keeps its own [visibility setting](03-membership-policies.md).
+A space is never more visible than its category:
+
+- A space in a **Private** category is hidden from logged-out visitors, even if the space itself is Public.
+- A space in a **Hidden** category is hidden from everyone except administrators and people already admitted to that space, meaning its members or people an access rule lets in. Anyone else who opens the space's address sees "Space not found."
+
+A public category can still contain private or hidden spaces - each space keeps its own [visibility setting](03-membership-policies.md), and the stricter of the two applies.
 
 ## Editing a Category
 
@@ -67,7 +72,7 @@ Click **Edit** in the row actions under any category name. An **Edit Category** 
 
 Click **Delete** in the row actions. A confirmation prompt appears before the delete runs.
 
-> **Warning:** Deleting a category does not delete the spaces inside it. Those spaces lose their category assignment and become "uncategorized," which means they drop out of the community navigation until you reassign them. There is no undo - reassign the spaces first if you want to keep them visible.
+> **Warning:** You cannot delete a category that still holds spaces or sub-categories. Jetonomy shows "Cannot delete a category that contains spaces. Move or delete the spaces first." Move the spaces to another category (or delete them) first. Archived spaces do not block the delete: they become "uncategorized." There is no undo.
 
 ## Reordering Categories
 
@@ -79,7 +84,7 @@ Set **Parent Category** when creating or editing a category to nest it under an 
 
 - **Two levels only.** A parent must be a top-level category, and a category that has sub-categories cannot become one itself. Jetonomy rejects anything deeper in wp-admin, the REST API and WP-CLI. Imports (for example nested bbPress forums) attach deeper levels to their top-level category, so every space still arrives.
 - **On the community home,** each category lists its own spaces followed by its sub-categories as links, with how many spaces each one holds. A sub-category page shows its parent in the breadcrumb.
-- **Deleting** a category is blocked while it still has sub-categories or active spaces. Move or delete them first. Archived spaces in it become uncategorised.
+- **Deleting** a category is blocked while it still has sub-categories or spaces that are not archived (locked spaces count). Move or delete them first. Archived spaces in it become uncategorised.
 - **Space counts** on a category count the spaces filed directly in it, not those in its sub-categories.
 
 ## Search

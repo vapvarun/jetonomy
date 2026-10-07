@@ -1,3 +1,5 @@
+# Integrations
+
 The Integrations tab connects Jetonomy to companion plugins and keeps Jetonomy and BuddyPress group activity in sync. The tab is always available under **Jetonomy → Settings**; the BuddyPress sync card described on this page appears inside it only when BuddyPress with the Groups component is active.
 
 ## What You Will Learn

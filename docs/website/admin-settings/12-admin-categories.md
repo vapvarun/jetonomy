@@ -1,3 +1,5 @@
+# Categories
+
 Categories let you group related spaces under a shared label so members can browse a subset of your community without seeing everything at once.
 
 > This is the admin reference for the Categories screen. For how categories fit alongside spaces in your community structure, see [Categories](../spaces-and-categories/00-categories.md) in the Spaces & Categories guide.

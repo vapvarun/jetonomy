@@ -1,3 +1,5 @@
+# Banning Members
+
 Approving, marking as spam, and trashing all act on a single piece of content. Banning acts on the person. When a member is not just posting one bad item but is repeatedly disruptive - or is a confirmed bad actor - you ban the account so they cannot keep posting. This guide covers the three ban types, how long a ban lasts, and where to manage bans.
 
 ![Jetonomy Users admin page listing community members with per-row Ban / Unban and Change Trust Level controls](../images/admin-users.webp)

@@ -1,3 +1,5 @@
+# Polls
+
 Attach a poll to any topic and let your community vote - perfect for decisions, feedback, and feature prioritization.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -18,7 +20,7 @@ Asking a question in text is passive. Attaching a poll turns the same question i
 ## Enabling Polls
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Polls** and click **Enable**.
+2. Find **Polls** and switch its toggle on.
 3. A **+ Add Poll** button appears at the bottom of the post composer.
 
 ## Creating a Poll

@@ -1,3 +1,5 @@
+# Leaderboard
+
 The leaderboard turns quality participation into something visible and worth competing for. Your top contributors are recognized publicly, which encourages every member to engage more thoughtfully.
 
 ## What You Will Learn

@@ -1,3 +1,5 @@
+# Customize Emails
+
 Jetonomy's notification emails flow through a single pipeline: event → `Notifier` → subject/body resolution → filters → HTML render → email adapter. Every stage exposes a filter so you can adjust any aspect - subject line, body text, logo, accent color, headers, or the full rendered HTML - without replacing core template files.
 
 **Source references:**

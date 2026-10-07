@@ -1,3 +1,5 @@
+# Tags
+
 The Tags admin screen manages the global tag namespace members use to connect related discussions across every space. This is the admin reference for that screen; for how tags work on the front end - adding them to a topic, tag pages, the Popular Tags sidebar - see [Tags](../search-and-discovery/02-tags.md) in the Search & Discovery guide.
 
 ## Where to Find It

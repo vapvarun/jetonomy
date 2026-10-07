@@ -1,3 +1,5 @@
+# Moderation Queue
+
 The moderation queue is your single dashboard for everything that needs human review - posts waiting for approval, flagged content, and items caught by spam filters. You can action everything from one page without digging through individual topics.
 
 ![Admin moderation queue with pending items and per-row action controls](../images/admin-moderation.webp)
@@ -21,6 +23,8 @@ There are two moderation surfaces, and they do not show the same tabs.
 - **Front end** - `/community/mod/`, plus a per-space queue at
   `/community/s/{slug}/mod/`. This is where **space moderators** work; they do
   not need access to the WordPress dashboard at all.
+
+Who can open them depends on the `jetonomy_moderate` capability (Editor and above by default) or a **Moderator** or **Admin** role in a space. A member's [trust level](01-trust-levels.md), including TL4 and TL5, never grants access to either queue. A space moderator who looks after exactly one space is sent straight from `/community/mod/` to that space's queue. One who looks after two or more spaces sees the `/community/mod/` page limited to their own spaces. Only site administrators and `jetonomy_moderate` holders see the queue for every space.
 
 The sections below describe the wp-admin tabs. See
 [The front-end queue](#the-front-end-queue) for what a space moderator sees.

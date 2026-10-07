@@ -1,3 +1,5 @@
+# Trending
+
 Trending surfaces the discussions that are catching fire right now, so members always see what the community is talking about today - not just the all-time greatest hits. It is one of the three ways members discover content in Jetonomy, alongside [search](01-search-filters.md) and [tags](02-tags.md).
 
 ![Trending topics ranked by recent engagement](../images/search-and-discovery/trending-block.webp)

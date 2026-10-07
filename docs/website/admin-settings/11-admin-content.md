@@ -1,3 +1,5 @@
+# Content
+
 The Posts and Replies admin screen lets you view, search, edit, and moderate every piece of content in your community without visiting the front end.
 
 ## What You Will Learn

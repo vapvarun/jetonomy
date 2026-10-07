@@ -1,3 +1,5 @@
+# Search Filters
+
 Jetonomy's search finds content across your entire community in real time - topics, spaces, and tags - and lets you narrow results with powerful filters so members always land on exactly what they need.
 
 ## What You Will Learn

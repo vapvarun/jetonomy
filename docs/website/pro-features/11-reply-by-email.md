@@ -1,3 +1,5 @@
+# Reply by Email
+
 Let members reply to community discussions directly from their email client - no login required for that one reply.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -5,9 +7,9 @@ Let members reply to community discussions directly from their email client - no
 ## What You Will Learn
 
 - How Reply by Email works end to end
-- How to configure the inbound email endpoint
+- How to choose and configure an inbound method (IMAP or webhook)
 - How emails are parsed and turned into replies
-- How to test the feature and handle parsing errors
+- What limits and security checks apply
 
 ## Why Reply by Email Matters
 
@@ -15,76 +17,74 @@ Every step between "I got a notification" and "I posted a reply" loses members. 
 
 ## How It Works
 
-1. Jetonomy sends a notification email for a new reply or mention.
-2. The email contains a **Reply to this post** call to action with a unique reply-to address.
+1. Jetonomy sends a notification email for a reply to a member's post or to a member's reply.
+2. That email carries a unique Reply-To address like `reply+TOKEN@yourdomain.com`.
 3. The member replies to that email.
-4. The inbound email is delivered to your configured endpoint.
-5. Jetonomy parses the email, strips quoted content, and creates a community reply attributed to that member.
+4. The reply reaches Jetonomy, either because Jetonomy checks a mailbox (IMAP) or because your email provider forwards it to a webhook.
+5. Jetonomy removes quoted text and creates a community reply attributed to that member.
 
-Each reply-to address is unique to the member and the topic - it encodes an authentication token so no login is required.
+Each Reply-To address is unique to the member and the topic. It encodes a signed token, so no login is required.
 
 ## Configuration
 
-Reply by Email requires an inbound email endpoint - a URL that receives incoming emails from your email provider. Most email providers (SendGrid Inbound Parse, Mailgun Inbound Routes, Postmark Inbound, or Amazon SES with SNS) can forward inbound email as an HTTP POST to a URL.
+Reply by Email needs two things switched on: the extension itself and the feature setting.
 
-### Step 1: Get Your Inbound Endpoint URL
+1. Go to **Jetonomy → Extensions**, find **Reply by Email**, and switch its toggle on.
+2. Go to **Jetonomy → Settings → Reply by Email**.
+3. Tick **Enable Reply by Email** and fill in the fields below.
+4. Click **Save Reply by Email Settings**.
 
-1. Go to **Jetonomy → Settings → Reply by Email**.
-2. Copy the **Inbound Endpoint URL**. It looks like:
+![The Jetonomy, Settings, Reply by Email screen](../images/pro-reply-by-email-settings.webp)
 
-```
-https://yoursite.com/wp-json/jetonomy/v1/email/inbound
-```
+| Field | Description |
+|-------|-------------|
+| **Enable Reply by Email** | Turns the feature on. Off by default. |
+| **Email Domain** | The domain used in Reply-To addresses, for example `reply.yoursite.com`. Defaults to your site's domain. Mail sent to this domain must be delivered to the mailbox or provider you set up below. |
+| **Inbound Method** | **IMAP Polling (WP-Cron, every 5 minutes)** or **Inbound Webhook (SendGrid / Mailgun)**. |
 
-### Step 2: Configure Your Email Provider
+### Method 1: IMAP Polling
 
-Point your email provider's inbound parsing feature at the Jetonomy endpoint URL. The exact steps vary by provider - follow your provider's documentation for "inbound email parsing" or "inbound routing."
+Jetonomy logs in to a mailbox that receives mail for your Email Domain and checks its unread messages every 5 minutes. Your server's PHP needs the IMAP extension. Ask your host if you are not sure.
 
-Set up a dedicated inbound domain or subdomain for replies. Example: `reply.yoursite.com`. Your provider resolves inbound mail sent to `*@reply.yoursite.com` and forwards the parsed payload to your Jetonomy endpoint.
+| Field | Description |
+|-------|-------------|
+| **IMAP Host** | Your mail server, for example `mail.yourdomain.com` |
+| **IMAP Port** | The mail server port |
+| **IMAP Username** | The mailbox login |
+| **IMAP Password** | The mailbox password. Leave it blank when saving to keep the current password. |
+| **IMAP Encryption** | **SSL/TLS (port 993)** or **STARTTLS (port 143)** |
 
-### Step 3: Enter Your Reply Domain
+### Method 2: Inbound Webhook
 
-Back in **Jetonomy → Settings → Reply by Email**, enter the reply domain (e.g. `reply.yoursite.com`) and click **Save**.
+Your email provider (SendGrid Inbound Parse or Mailgun Inbound Routes) receives the mail and forwards it to your site.
 
-Jetonomy now generates per-user, per-topic reply addresses using that domain.
+1. Choose **Inbound Webhook (SendGrid / Mailgun)** and save.
+2. Copy the **Inbound Webhook URL**. It looks like `https://yoursite.com/wp-json/jetonomy/v1/reply-by-email/inbound`.
+3. In your provider's account, point inbound parsing for your Email Domain at that URL.
+4. Copy the **Webhook Secret** shown on the settings screen into your provider's signing setup.
 
-![The Jetonomy, Settings, Reply by Email screen, showing the Inbound Endpoint URL and the reply domain field](../images/pro-reply-by-email-settings.webp)
+Jetonomy rejects any webhook request that is not signed with the Webhook Secret, so the secret is required even though the screen calls it optional. Jetonomy creates the secret for you and never changes it when you save.
+
 ## Email Parsing
 
 Jetonomy parses the incoming email using these rules:
 
-1. **Strip quoted content** - Lines that begin with `>` (standard email quoting) are removed. The reply contains only the new text the member typed.
-2. **Plain text preferred** - If the email has a plain text part, Jetonomy uses that. If not, it strips HTML and uses the text content.
-3. **Basic formatting preserved** - Paragraphs and line breaks are kept. Web addresses are kept as plain text; they are not turned into links.
-4. **Attachments ignored** - Image and file attachments in reply emails are not processed in v1.0.
+1. **Quoted lines removed** - Lines that begin with `>` (standard email quoting) are dropped, so the reply contains only the new text the member typed.
+2. **Signature removed** - Everything after a standard `-- ` signature separator line is dropped.
+3. **Plain text only** - Jetonomy reads the plain text part of the email. Blank lines become paragraph breaks.
+4. **Attachments ignored** - Images and files in reply emails are not processed.
 
-The parsed reply text goes through the same `wp_kses_post` sanitization as any other reply before it is saved.
+The reply goes through the same `wp_kses_post` sanitization as any other reply before it is saved. An email with no text left after cleanup is rejected.
 
-## Parsing Rules Configuration
+## Limits and Security
 
-You can adjust how Jetonomy handles edge cases:
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| **Min reply length** | 5 characters | Rejects replies shorter than this (catches accidental sends) |
-| **Max reply length** | 10,000 characters | Truncates anything longer |
-| **Strip signatures** | On | Removes common signature separators (`-- `, `Sent from my iPhone`, etc.) |
-
-## Security
-
-Each reply-to address contains a signed token that ties the email address to a specific WordPress user and topic. Jetonomy verifies the token before creating any reply. An attacker who intercepts or guesses a reply address cannot post as another member - the token is cryptographically bound to the user ID.
-
-Tokens expire after 30 days. Notification emails older than 30 days cannot be replied to by email.
-
-## Testing Reply by Email
-
-1. Go to **Jetonomy → Settings → Reply by Email**.
-2. Click **Send Test Email** to send a sample notification to your admin email address.
-3. Reply to that email with any text.
-4. Return to the admin and click **Check Last Inbound** to see the parsed result.
+- Each Reply-To address holds a signed token tied to one member and one topic. Jetonomy checks the signature before creating any reply, so a guessed address cannot post as another member.
+- Tokens expire after 7 days. Notification emails older than 7 days cannot be replied to by email.
+- Each member can post at most 10 replies by email per hour.
+- The webhook route is public, so its signature check is the only access control. Keep your Webhook Secret private.
 
 ## What's Next?
 
-Remove all Jetonomy branding and present the community as entirely your own.
+Rebrand the WordPress admin with your own name and icon.
 
-[White Label & Branding →](12-white-label.md)
+[White Label →](12-white-label.md)

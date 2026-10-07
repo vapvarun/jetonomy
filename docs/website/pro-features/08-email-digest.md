@@ -1,3 +1,5 @@
+# Email Digest
+
 Send a curated summary of community activity to members' inboxes - daily or weekly - so they never feel out of the loop.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -17,7 +19,7 @@ Most community members are not daily visitors. They join, participate a few time
 ## Enabling Email Digest
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Email Digest** and click **Enable**.
+2. Find **Email Digest** and switch its toggle on.
 3. Go to **Jetonomy → Settings → Email Digest** to configure sending times and content rules.
 
 ## Configuring the Digest

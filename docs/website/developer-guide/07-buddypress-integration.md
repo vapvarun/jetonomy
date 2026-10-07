@@ -1,3 +1,5 @@
+# BuddyPress Integration
+
 Developer reference for the BuddyPress coexistence integration. This page is for plugin/theme developers extending or debugging the integration. End users should start with the [BuddyPress integration guide](../integrations/13-buddypress.md).
 
 ## What You Will Learn

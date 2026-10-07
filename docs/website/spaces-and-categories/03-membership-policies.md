@@ -6,7 +6,7 @@ order: 3
 
 Every space has two controls: who can see it (visibility) and how members get in (join policy). Combining them gives you precise control over every access scenario - from fully public forums to invite-only private communities. The two controls are independent in every combination except one: a Hidden space is always Invite Only (see the note under Hidden below).
 
-![Per-space access controls on the space edit screen: the Visibility selector (Public/Private/Hidden), the Join Policy selector (Open/Approval/Invite), and the Who Can Post / Who Can Reply dropdowns](../images/spaces-and-categories/space-access-controls.webp)
+![Per-space access controls on the space edit screen: the Visibility selector (Public/Private/Hidden), the Join Policy selector (Open/Requires Approval/Invite Only), and the Who Can Post / Who Can Reply dropdowns](../images/spaces-and-categories/space-access-controls.webp)
 
 ## What You Will Learn
 
@@ -32,11 +32,17 @@ Use Public when you want maximum reach and SEO value. Most community spaces shou
 
 ### Private
 
-The space itself appears in listings and search results, so any visitor can discover it. Only members can read the posts and replies. Non-members see the space name and description, then a **Join** or **Request to Join** button depending on the join policy: Open spaces show "Join" for an instant-access join; Approval Required spaces show "Request to Join" for a moderated admission.
+The space itself appears in the space listings for signed-in members, so they can discover it. Only members can read the posts and replies. Logged-out visitors do not see private spaces in listings. If they open the space's address, they see "This space is private. Please log in to request access." and a **Log In** button.
+
+A signed-in person who is not a member sees a message instead of the content, based on the join policy:
+
+- **Open** - "This space is private. Join to access its topics and discussions." with a **Join Space** button that admits them instantly.
+- **Requires Approval** - "This space requires approval to join. Submit a request below." with an optional message box and a **Join** button. After they submit, they see "Your request to join this space is awaiting approval."
+- **Invite Only** - "This space is invite-only. You need an invitation to join." with no button.
 
 The discoverable part is the space, not its content. A post inside a private or hidden space is not leaked to non-members anywhere: it is excluded from search results, from oEmbed and link-preview cards, from tag pages, from trending and popular lists, and from the recent-posts widgets and home feed. A non-member cannot pull the post body in through any of these public surfaces - only members (and admins) see it.
 
-Private is the right choice when the community should be findable but the content should be gated. It is distinct from Hidden: a Private space is visible in the directory and search; a Hidden space is not listed anywhere.
+Private is the right choice when the community should be findable by signed-in people but the content should be gated. It is distinct from Hidden: a Private space is listed for signed-in people; a Hidden space is not listed for anyone but its members.
 
 Use Private for paid membership communities, internal team discussions, or beta program spaces where content should be gated but the space itself should be findable.
 
@@ -44,11 +50,11 @@ Use Private for paid membership communities, internal team discussions, or beta 
 
 The space does not appear in any listing, search result, or category navigation. Only members who have already joined - and admins - can see it.
 
-Members can only reach a hidden space via a direct link or an invite link you share with them.
+Anyone else who opens its address, logged in or not, sees a "Space not found." page, so the space's name is never disclosed. People join through an invite link you share with them.
 
 Use Hidden for admin-only spaces, private moderator discussion boards, or early access groups where you control every invitation.
 
-> **Hidden spaces are always Invite Only.** Because a Hidden space has no public Join button, its join policy is locked to Invite Only - members can only enter through an [invite link](#invite-only) you share. If you pick Hidden in wp-admin, the join policy is switched to Invite Only for you automatically (and if you set a Hidden space back to Open or Approval Required, the visibility drops to Private). From the front-end create/edit form or the REST API, the same combination is rejected on save with the message "Hidden spaces must use the invite-only join policy" - so always pair Hidden with Invite Only.
+> **Hidden spaces are always Invite Only.** Because a Hidden space has no public Join button, its join policy is locked to Invite Only - members can only enter through an [invite link](#invite-only) you share. If you pick Hidden in wp-admin, the join policy is switched to Invite Only for you automatically (and if you set a Hidden space back to Open or Requires Approval, the visibility drops to Private). From the front-end create/edit form or the REST API, the same combination is rejected on save with the message "Hidden spaces must use the invite-only join policy" - so always pair Hidden with Invite Only.
 
 > **Note:** WP Admins and space admins can always see hidden spaces in the admin panel, regardless of their membership status.
 
@@ -64,7 +70,7 @@ Members who join an Open space can post and reply immediately (subject to your p
 
 Use Open for general discussion spaces, community-wide help channels, and any space where you want minimal friction.
 
-### Approval Required
+### Requires Approval
 
 When a user clicks **Join**, they submit a join request. The request goes to the space moderators and admins for review.
 
@@ -72,13 +78,13 @@ In wp-admin, moderators see pending requests on the space's own edit screen: **J
 
 ![The Join Requests tab on the wp-admin space edit screen, listing pending requests with the requester, their message, how long ago they asked, and Approve and Deny buttons](../images/admin-space-join-requests.webp)
 
-> **Do not see a Join Requests tab?** It only appears when the space's join policy is set to **Approval Required**, or when the space already has pending requests. On an Open space there is nothing to approve, so the tab stays hidden. Set the policy first, on the **General** tab of the same screen.
+> **Do not see a Join Requests tab?** It only appears when the space's join policy is set to **Requires Approval**, or when the space already has pending requests. On an Open space there is nothing to approve, so the tab stays hidden. Set the policy first, on the **General** tab of the same screen.
 
-Since 1.5.0, space moderators can also handle requests from the community front-end, without opening wp-admin. On the space **Members** page (`/community/s/:slug/members/`), a "Pending join requests" panel lists each requester with **Approve** and **Deny** buttons. Approving admits the member instantly and emails the requester that they are in; denying clears the request. This is the same approve/admit path as the wp-admin tab, so a space moderator who has no wp-admin access can still run an Approval Required space end to end.
+Since 1.5.0, space moderators can also handle requests from the community front-end, without opening wp-admin. On the space **Members** page (`/community/s/:slug/members/`), a "Pending join requests" panel lists each requester with **Approve** and **Deny** buttons. Approving admits the member instantly and emails the requester that they are in; denying clears the request. This is the same approve/admit path as the wp-admin tab, so a space moderator who has no wp-admin access can still run an Requires Approval space end to end.
 
 Approved members can then post and reply immediately.
 
-Use Approval Required when you want to vet members before they can participate - for example, a verified customer support channel or a professional community with admission criteria.
+Use Requires Approval when you want to vet members before they can participate - for example, a verified customer support channel or a professional community with admission criteria.
 
 ### Invite Only
 
@@ -103,11 +109,13 @@ Use Invite Only for private groups, course cohorts, or closed communities where 
 
 Beyond join policy, each space has two additional settings that control what members can do once inside:
 
+Find both on the space's **Settings** tab (**Jetonomy → Spaces → Edit → Settings**).
+
 **Who Can Post** - Controls who can create new topics in this space.
 
 | Setting | Effect |
 |---------|--------|
-| (Use Global Default) | Falls back to the community-wide Who Can Post setting |
+| Anyone who can see it (no restriction) | No extra per-space restriction |
 | Members Only | All members of the space can post |
 | Moderators & Admins | Only space moderators and admins can post |
 | Admins Only | Only space admins (and site admins) can post |
@@ -116,7 +124,7 @@ Beyond join policy, each space has two additional settings that control what mem
 
 | Setting | Effect |
 |---------|--------|
-| (Use Global Default) | Falls back to the community-wide Who Can Reply setting |
+| Anyone who can see it (no restriction) | No extra per-space restriction |
 | Members Only | All members of the space can reply |
 | Moderators & Admins | Only space moderators and admins can reply |
 
@@ -145,9 +153,9 @@ The dropdown is hidden for members who cannot manage roles, and a member cannot 
 | Goal | Visibility | Join Policy |
 |------|------------|-------------|
 | Public community forum | Public | Open |
-| Paid membership forum | Private | Approval Required |
+| Paid membership forum | Private | Invite Only (plan holders get in through an [access rule](04-space-settings.md)) |
 | Team-only internal channel | Hidden | Invite Only |
-| Verified customer support | Public | Approval Required |
+| Verified customer support | Public | Requires Approval |
 | Early access beta group | Hidden | Invite Only |
 | Course community | Private | Open (link-gated via Invite Only) |
 

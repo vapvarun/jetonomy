@@ -1,3 +1,5 @@
+# Why Jetonomy
+
 Why Jetonomy - a modern, scalable discussion platform that brings forums, Q&A, idea boards, and a social feed together in one WordPress plugin.
 
 ![Jetonomy community home page with modern UI and space listings](../images/community-home.webp)

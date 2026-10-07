@@ -10,6 +10,8 @@ Everything Jetonomy does, on one page. This is the fastest way to see whether Je
 
 ![The Jetonomy community home page showing categories, spaces, and recent activity](../images/community-home.webp)
 
+> **Prefer step-by-step?** Start with [Try It With Demo Content](../how-to/07-try-it-with-demo-content.md), then pick a goal from the [How-To Guides](../how-to/00-overview.md).
+
 ## How to Use This Page
 
 Each section below is a job your community needs done - publishing discussions, organizing them, keeping them clean, recognizing contributors, and so on. Read the benefit, scan what is included, then follow the links to the full guide for anything you want to set up.

@@ -1,3 +1,5 @@
+# SEO
+
 The SEO settings tab controls how Jetonomy pages appear in search engines - XML sitemaps, structured data, meta title patterns, and robots directives for specific page types.
 
 ![SEO settings with sitemap toggle, meta title patterns, and robots directives](../images/admin-seo.webp)

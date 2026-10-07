@@ -1,3 +1,5 @@
+# Wbcom Stack Installer
+
 The Wbcom stack section of the Integrations tab lets you install companion plugins from the Wbcom family without leaving WordPress. Each companion adds a distinct capability alongside your Jetonomy community. Installing is one click for free companions; Pro companions require your own valid license from the store.
 
 ## What You Will Learn

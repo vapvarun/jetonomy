@@ -45,7 +45,7 @@ Every space setting that is editable in wp-admin is editable from the front-end.
 | Category | Which community category the space belongs to |
 | Type | Forum, Q&A, Ideas, or Feed |
 | Visibility | Public, Private, or Hidden |
-| Join policy | Open, Approval Required, or Invite Only |
+| Join policy | Open, Approval required, or Invite Only |
 | Require moderator approval for new posts | When checked, new posts are held in the moderation queue until a moderator approves them |
 | Posts per page | A number from 1 to 100; leave blank to use the site default |
 | Post prefixes | Optional tags shown in front of post titles (e.g. "Bug", "Idea") |

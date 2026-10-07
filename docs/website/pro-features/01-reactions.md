@@ -1,3 +1,5 @@
+# Reactions
+
 Add expressive emoji reactions to every post and reply - so members can respond instantly without writing a full reply.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -24,7 +26,7 @@ The reaction counts are displayed as chips directly below the post body. Each ch
 ## Enabling Reactions
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Reactions** and click **Enable**.
+2. Find **Reactions** and switch its toggle on.
 3. Reactions appear on all posts and replies immediately - no page-level configuration needed.
 
 > **Tip:** Enabling Reactions does not affect any existing posts. Historical content simply starts with zero reactions.

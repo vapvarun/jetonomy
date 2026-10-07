@@ -1,3 +1,5 @@
+# Migrating to Jetonomy
+
 Bringing an existing forum into Jetonomy? This page covers everything that is the same across all three importers - which source to pick, how to read the import screen, and the checklist to run after any import. Then follow the guide for your specific forum software.
 
 ![Jetonomy Import screen showing detected forum sources with stat previews and Import buttons](../images/admin-import.webp)
@@ -87,7 +89,7 @@ These steps apply to every source. The individual guides list the same checklist
 - [ ] Visit your community home and confirm your spaces match your old forums.
 - [ ] Open several posts and confirm the content and replies came across intact.
 - [ ] **Re-assign moderators.** Forum moderator assignments are not imported - set Space Moderator roles manually under **Jetonomy → Spaces**. (The one exception: a bbPress forum that belongs to a BuddyPress group brings the group's admins and moderators across with their roles.)
-- [ ] **Flush permalinks if spaces 404.** Go to **Jetonomy → Settings → Permalinks** and click Save. (The bbPress importer does this for you automatically; wpForo and Asgaros do not, so do it by hand if new spaces return a 404.)
+- [ ] **Flush permalinks if spaces 404.** Go to **Jetonomy → Dashboard**, find **Quick Actions**, and click **Flush Rules**. (The bbPress importer does this for you automatically; wpForo and Asgaros do not, so do it by hand if new spaces return a 404.)
 - [ ] **Clean up old shortcodes.** If your pages or widgets used your old forum's shortcodes, remove or replace them - they will print raw shortcode text while the old plugin is still active.
 - [ ] Once everything checks out, you can deactivate the old forum plugin.
 - [ ] If the import reported files it could not recover, open those specific posts and re-attach or re-upload the file by hand.

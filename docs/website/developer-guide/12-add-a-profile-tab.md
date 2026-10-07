@@ -1,3 +1,5 @@
+# Add a Profile Tab
+
 Add a custom tab to a member's profile page using the `jetonomy_profile_tabs` filter - no template override needed. The tab appears next to Posts, Replies, and Votes; clicking it loads a separate route that you register alongside the tab.
 
 ---

@@ -1,3 +1,5 @@
+# Extend the Frontend
+
 Jetonomy's frontend runs on the WordPress Interactivity API (`@wordpress/interactivity`). The store is keyed `'jetonomy'` and handles voting, navigation, bookmarks, moderation actions, and more. After every client-side page swap the store dispatches a `jetonomy:navigated` document event so companion scripts can re-initialize without duplicating nav logic. All REST calls go through a shared `window.jetonomyRest.restFetch` client.
 
 This page explains how to extend the store, keep scripts alive across navigation, and call REST endpoints from your own JavaScript.

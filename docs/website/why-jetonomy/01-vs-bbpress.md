@@ -1,3 +1,5 @@
+# Jetonomy vs bbPress
+
 How Jetonomy compares to bbPress - and why communities are switching to a modern forum experience.
 
 ![Jetonomy community home page with modern UI and space listings](../images/community-home.webp)

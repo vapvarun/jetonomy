@@ -1,3 +1,5 @@
+# Profiles
+
 Every member in your community has a public profile page that shows who they are, how much they contribute, and what they have been up to. Profiles build trust between members and give contributors the recognition they have earned.
 
 ## What You Will Learn

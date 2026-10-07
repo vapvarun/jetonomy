@@ -1,3 +1,5 @@
+# Shortcodes, Widgets and Blocks
+
 Jetonomy includes eight shortcodes, four classic widgets, and eight Gutenberg blocks so you can embed community content anywhere on your WordPress site - sidebars, pages, posts, or block-based layouts.
 
 ## What You Will Learn
@@ -53,11 +55,12 @@ Displays a list of the most recent published posts across your community or with
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `count` | int | `5` | Number of posts to display |
-| `space_id` | int | `0` | Restrict to a space. `0` = all spaces |
-| `sort` | string | `latest` | `latest` or `votes` |
+| `space_id` | int or slug | `0` | Restrict to a space, by numeric ID or slug. `0` = all spaces. An ID or slug that matches no space shows a notice to editors |
+| `sort` | string | `latest` | `latest` for newest first. Any other value, such as `votes`, sorts by vote score |
 
 ```
 [jetonomy_recent_posts count="5" space_id="3" sort="votes"]
+[jetonomy_recent_posts count="5" space_id="announcements"]
 ```
 
 Each post card shows the title, author name, space name, time ago, vote score, and reply count.
@@ -73,7 +76,7 @@ Displays a ranked list of "hot" posts using a time-decayed score of recent votes
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `count` | int | `5` | Number of posts to display |
-| `space_id` | int | `0` | Restrict to a space. `0` = all spaces |
+| `space_id` | int or slug | `0` | Restrict to a space, by numeric ID or slug. `0` = all spaces |
 | `window` | int | `7` | Days of history used for the hot score |
 
 ```
@@ -143,7 +146,7 @@ Displays a list of members for a specific space, ordered by reputation.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `space_id` | int | - | **Required.** ID of the space |
+| `space_id` | int or slug | - | **Required.** Numeric ID or slug of the space |
 | `count` | int | `10` | Number of members to display |
 
 ```
@@ -161,7 +164,7 @@ Lets signed-in members start a new topic from **any** WordPress page, post, or p
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `mode` | string | `picker` | `picker` (show a space select) or `fixed` (post to one space) |
-| `space_id` | int | `0` | Space ID to post into. Only used when `mode="fixed"`. Invalid IDs degrade to picker at render time. |
+| `space_id` | int or slug | `0` | Space ID or slug to post into. Only used when `mode="fixed"`. A value that matches no space shows a notice to editors; a space the viewer cannot post in degrades to the picker at render time. |
 | `types` | CSV | `topic,question,idea` | Allowed post types for this embed |
 
 ```
@@ -194,7 +197,7 @@ Jetonomy registers four classic widgets for use in any theme widget area. Each w
 
 Displays recent forum posts in any sidebar or widget area.
 
-**Settings:** Title, Count, Space (optional filter), Sort order
+**Settings:** Title, Number of posts (1 to 20). The widget always shows the newest posts from all spaces. For a space filter or vote sorting, use `[jetonomy_recent_posts]` instead.
 
 ### Leaderboard Widget
 
@@ -225,11 +228,11 @@ Each classic widget above can also be embedded directly into any page or page-bu
 | `id` | string | yes | Widget id: `jetonomy_recent_posts`, `jetonomy_leaderboard`, `jetonomy_active_spaces`, or `jetonomy_user_stats` |
 | `title` | string | no | Override the widget's title (otherwise the widget's saved Customizer title or the default) |
 | `count` | int | no | For Recent Posts, Leaderboard, and Active Spaces |
-| `space_id` | int | no | For Recent Posts, optional space filter |
-| `sort` | string | no | For Recent Posts: `latest` or `votes` |
+
+The Recent Posts widget has no space or sort setting, so `[jetonomy_widget]` does not support them either. Use `[jetonomy_recent_posts]` for those.
 
 ```
-[jetonomy_widget id="jetonomy_recent_posts" count="8" sort="latest"]
+[jetonomy_widget id="jetonomy_recent_posts" count="8"]
 [jetonomy_widget id="jetonomy_leaderboard" count="10"]
 [jetonomy_widget id="jetonomy_active_spaces" count="6"]
 [jetonomy_widget id="jetonomy_user_stats" title="Your stats"]
@@ -276,7 +279,7 @@ Renders a live post feed from a selected space or all spaces.
 |-----------|------|---------|-------------|
 | `count` | number | `5` | Posts to show |
 | `spaceId` | number | `0` | Space ID (0 = all spaces) |
-| `sort` | string | `latest` | `latest` or `votes` |
+| `sort` | string | `latest` | Set in the editor's **Sort** control: **Latest** (`latest`) or **Top voted** (`top`) |
 | `showHeader` | boolean | `false` | Render a space header above the feed |
 | `title` | string | `''` | Custom title when `showHeader` is on |
 

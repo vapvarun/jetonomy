@@ -1,3 +1,5 @@
+# Analytics
+
 Understand what your community is doing, where it is growing, and who is driving it - all from a single admin dashboard.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -17,7 +19,7 @@ You cannot grow what you cannot measure. The Analytics dashboard turns raw commu
 ## Enabling Analytics
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Analytics** and click **Enable**.
+2. Find **Analytics** and switch its toggle on.
 3. An **Analytics** item appears under the Jetonomy admin menu.
 
 Analytics begin recording from the moment you enable the extension. Historical data before activation is not backfilled.

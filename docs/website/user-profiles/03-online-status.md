@@ -1,3 +1,5 @@
+# Online Status
+
 The online status green dot shows which members are currently active in your community. It makes conversations feel more live and helps members know when is a good time to expect a quick reply.
 
 ![User profile page showing avatar with online status indicator](../images/profile-page.webp)

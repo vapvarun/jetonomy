@@ -1,3 +1,5 @@
+# Extensions
+
 The Extensions screen is your control panel for turning individual Jetonomy Pro features on or off. It appears in the Jetonomy menu only when Jetonomy Pro is active.
 
 ## What You Will Learn

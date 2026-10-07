@@ -1,3 +1,5 @@
+# Theme Compatibility
+
 Jetonomy works with any WordPress theme. Its CSS inherits from your theme's design tokens automatically, so the community looks native - not bolted on.
 
 ![Community home page adapting to the active WordPress theme](../images/community-home.webp)

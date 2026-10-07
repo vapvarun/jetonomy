@@ -26,7 +26,7 @@ Forum is the default type. It is the right choice for general discussion, suppor
 - Members post a topic with a title and rich content.
 - Replies thread up to three levels deep (reply to a reply to a reply).
 - Votes on replies surface the best contributions via the Best sort, but no reply is formally "accepted."
-- Topics can be sorted by Newest, Oldest, or Best on the space listing page.
+- Topics can be sorted by Latest, Popular, or Unanswered on the space listing page.
 
 Use Forum for: support channels, general discussion, community announcements, staff Q&A sessions.
 
@@ -38,7 +38,7 @@ Q&A is built for questions that have a definitive best answer. It follows the mo
 
 - Every post is a question. The title should be phrased as a question.
 - Replies are answers. Each answer is voted on independently.
-- The post author sees an **Accept** button on every reply. Clicking it marks that reply as the accepted answer and pins it to the top of the reply list, regardless of sort order.
+- The post author, and anyone who can close topics in the space (space moderators and admins), sees an **Accept** button on each reply that is not yet accepted. Clicking it marks that reply as the accepted answer. The accepted reply shows an **Accepted** tag and stays in its normal place in the thread. If it sits on a later page of a long thread, it also appears in an **Accepted answer** box above the replies. The same people can click **Unaccept** to undo it.
 - The accepted answer author earns a reputation bonus (+15 points).
 - The post listing shows an "Answered" badge on topics with an accepted answer. This badge also appears on the space list so members can see at a glance which Q&A spaces have resolved questions.
 
@@ -63,8 +63,9 @@ Ideas is built for feature requests, product feedback, and roadmap voting. Each 
 | Shipped | Completed and available |
 | Declined | Will not be implemented |
 
-- Status updates appear in the reply thread as a system activity entry, so members can see when an idea's status changed.
-- The space listing page has a filter bar showing counts per status, making it easy to browse the roadmap.
+- The current status shows as a colored pill next to the idea's title. Space moderators and admins change it with the **Status:** buttons on the idea page. Each click saves immediately.
+- Each status change is recorded in the activity log, and the idea's author gets a notification. The reply thread does not show it.
+- An Ideas space has an **Ideas** tab and a **Roadmap** tab. The roadmap groups ideas into a lane per status. See [Ideas Roadmap](06-ideas-roadmap.md).
 
 Use Ideas for: product feedback boards, feature request trackers, community roadmaps, vote-to-prioritize workflows.
 
@@ -104,7 +105,7 @@ The button only appears for a visitor who is actually allowed to post in the spa
 
 You can change the type of an existing space at any time. Either open it in **Jetonomy → Spaces** in wp-admin, or use the **Edit space** button on the space header itself (front-end edit), and update the **Type** field.
 
-The change takes effect immediately for all new posts. Existing posts keep their original structure. A Q&A post does not lose its accepted answer, and an Ideas post does not lose its status history.
+The change takes effect immediately for all new posts. Existing posts keep their original structure. A Q&A post does not lose its accepted answer, and an Ideas post does not lose its status.
 
 If you change a Q&A space to Forum, the Accept button disappears from the UI but existing accepted answers remain stored in the database.
 

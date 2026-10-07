@@ -1,3 +1,5 @@
+# Jetonomy vs Asgaros Forum
+
 How Jetonomy compares to Asgaros Forum - moving up from a lightweight forum to a full discussion platform.
 
 ![Jetonomy community home page with modern spaces, voting, and trust-level badges](../images/community-home.webp)

@@ -1,3 +1,5 @@
+# Tags
+
 Tags connect related discussions across your entire community. A member searching for help with "payments" can click the payments tag and instantly see every relevant topic - no matter which space it lives in.
 
 ![Tag page listing all topics associated with a specific tag](../images/tag-page.webp)

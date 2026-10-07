@@ -1,3 +1,5 @@
+# Tutor LMS
+
 Connect Tutor LMS course enrollment to Jetonomy spaces - students get a dedicated discussion area automatically when they enroll, and lose access when they cancel or are removed.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).

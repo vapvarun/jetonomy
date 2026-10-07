@@ -1,3 +1,5 @@
+# FluentCommunity Integration
+
 Developer reference for the FluentCommunity coexistence integration shipped in Jetonomy 1.3.8. This page is for plugin/theme developers extending or debugging the integration. End users should start with the [FluentCommunity integration guide](../integrations/12-fluent-community.md).
 
 ## What You Will Learn
