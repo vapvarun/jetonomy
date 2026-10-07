@@ -1,3 +1,5 @@
+# Visibility and Access Matrix
+
 Jetonomy 1.4.1 introduced the **Public / Private community toggle** documented in [Access Control Settings](../admin-settings/07-access-control.md). On the code side that toggle is enforced through two pieces:
 
 1. A small helper class - `Jetonomy\Visibility` - that every front-end template and REST permission callback can call to decide "is this caller allowed to see community content right now?"

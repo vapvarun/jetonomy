@@ -46,14 +46,9 @@
       "description": "Member profiles, reputation scores, online status, and a leaderboard that ranks your top contributors."
     },
     {
-      "name": "Mobile App",
-      "folder": "mobile-app",
-      "description": "Give your community a native iOS and Android app. Brand it from wp-admin (logo, color, community name), connect members with WordPress Application Passwords, and publish your own branded build."
-    },
-    {
-      "name": "Pro Features",
-      "folder": "pro-features",
-      "description": "Jetonomy Pro extensions: private messaging, polls, reactions, custom badges, advanced moderation, analytics, webhooks, and AI."
+      "name": "Admin Settings",
+      "folder": "admin-settings",
+      "description": "Configure permissions, email, appearance, SEO, anti-spam, access control, and the activity log from wp-admin."
     },
     {
       "name": "Integrations",
@@ -61,14 +56,24 @@
       "description": "Gate spaces with MemberPress, Paid Memberships Pro, WooCommerce, LearnDash, and Tutor LMS, and connect BuddyPress and FluentCommunity."
     },
     {
-      "name": "Admin Settings",
-      "folder": "admin-settings",
-      "description": "Configure permissions, email, appearance, SEO, anti-spam, access control, and the activity log from wp-admin."
-    },
-    {
       "name": "Migration",
       "folder": "migration",
       "description": "Import your existing forum from bbPress, wpForo, or Asgaros Forum without losing topics, replies, or members."
+    },
+    {
+      "name": "Pro Features",
+      "folder": "pro-features",
+      "description": "Jetonomy Pro extensions: private messaging, polls, reactions, custom badges, advanced moderation, analytics, webhooks, and AI."
+    },
+    {
+      "name": "Mobile App",
+      "folder": "mobile-app",
+      "description": "Give your community a native iOS and Android app. Brand it from wp-admin (logo, color, community name), connect members with WordPress Application Passwords, and publish your own branded build."
+    },
+    {
+      "name": "Developer Guide",
+      "folder": "developer-guide",
+      "description": "Extend Jetonomy with the REST API, hooks, WP-CLI, blocks, shortcodes, and template overrides."
     },
     {
       "name": "Why Jetonomy",
@@ -84,11 +89,6 @@
       "name": "FAQ",
       "folder": "faq",
       "description": "Quick answers to the most common questions about Jetonomy and Jetonomy Pro, grouped by topic."
-    },
-    {
-      "name": "Developer Guide",
-      "folder": "developer-guide",
-      "description": "Extend Jetonomy with the REST API, hooks, WP-CLI, blocks, shortcodes, and template overrides."
     }
   ]
 }
