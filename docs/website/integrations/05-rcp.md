@@ -1,6 +1,8 @@
+# Restrict Content Pro
+
 Gate Jetonomy spaces by Restrict Content Pro subscription level - with automatic access on activation and automatic removal on expiry or cancellation.
 
-![The Jetonomy admin settings screen](../images/admin-settings.png)
+![The Jetonomy admin settings screen](../images/admin-settings.webp)
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 

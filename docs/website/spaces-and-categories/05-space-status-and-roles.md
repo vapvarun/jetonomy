@@ -41,13 +41,16 @@ Archiving a public space leaves it public and readable. If you want it gone from
 
 ## Member roles
 
-Every member of a space holds one of three roles.
+Every member of a space holds one of four roles.
 
-| Role | Can post | Can moderate content | Can manage the space |
-|---|---|---|---|
-| **Member** | Yes | No | No |
-| **Moderator** | Yes | Yes | No |
-| **Admin** | Yes | Yes | Yes |
+| Role | Can read | Can post | Can moderate content | Can manage the space |
+|---|---|---|---|---|
+| **Viewer** | Yes | No | No | No |
+| **Member** | Yes | Yes | No | No |
+| **Moderator** | Yes | Yes | Yes | No |
+| **Admin** | Yes | Yes | Yes | Yes |
+
+**Viewer** is read-only. A viewer is on the space's member list but cannot post, reply or vote there. Use it for people you want to follow a space without taking part. It is also the role that **Read** access rules give out.
 
 **Member** is the default for anyone who joins.
 
@@ -60,12 +63,12 @@ These roles are scoped to one space. Someone can be an admin of one space and an
 ## Promoting a member
 
 1. Go to **Jetonomy -> Spaces** and click **Edit** on the space.
-2. Scroll to the **Members** list.
-3. Find the member and change the dropdown beside their name to **Moderator** or **Admin**.
+2. Open the **Members** tab.
+3. Find the member and change the dropdown beside their name to **Viewer**, **Member**, **Moderator** or **Admin**.
 
 The change saves immediately - there is no separate Save button for the members list - and takes effect on their next page load.
 
-To add someone who is not yet a member, use the **Add member** control above the list: choose the user, pick the role, and add them. This bypasses any join request or approval the space would normally require.
+To add someone who is not yet a member, use the **Add member** control above the list: choose the user, pick the role, and click **Add**. This bypasses any join request or approval the space would normally require.
 
 ### Two guards
 
@@ -85,6 +88,6 @@ PATCH /wp-json/jetonomy/v1/spaces/{id}/members/{user_id}
 { "role": "moderator" }
 ```
 
-Valid roles are `member`, `moderator` and `admin`. The caller needs space-admin rights, and the same two guards apply.
+Valid roles are `viewer`, `member`, `moderator` and `admin`. The caller needs space-admin rights, and the same two guards apply.
 
 See the [REST API reference](../developer-guide/01-rest-api.md) for the full endpoint list.

@@ -1,8 +1,10 @@
+# Analytics
+
 Understand what your community is doing, where it is growing, and who is driving it - all from a single admin dashboard.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Analytics dashboard showing charts and top contributor table](../images/pro-analytics.png)
+![Analytics dashboard showing charts and top contributor table](../images/pro-analytics.webp)
 ## What You Will Learn
 
 - How to access the Analytics dashboard
@@ -17,7 +19,7 @@ You cannot grow what you cannot measure. The Analytics dashboard turns raw commu
 ## Enabling Analytics
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Analytics** and click **Enable**.
+2. Find **Analytics** and switch its toggle on.
 3. An **Analytics** item appears under the Jetonomy admin menu.
 
 Analytics begin recording from the moment you enable the extension. Historical data before activation is not backfilled.
@@ -38,7 +40,7 @@ Use the date range picker at the top right to select any custom range. Preset sh
 
 All charts and tables update instantly when you change the range.
 
-![The analytics date-range picker, showing the preset shortcuts (Last 7 days, Last 30 days, Last 90 days, This month, Last month) and the custom range option](../images/pro-analytics-date-filter.png)
+![The analytics date-range picker, showing the preset shortcuts (Last 7 days, Last 30 days, Last 90 days, This month, Last month) and the custom range option](../images/pro-analytics-date-filter.webp)
 ## Overview Metrics
 
 The top row shows four headline numbers for your selected range:

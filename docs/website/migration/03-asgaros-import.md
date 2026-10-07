@@ -1,6 +1,8 @@
+# Asgaros Forum Import
+
 Move your existing Asgaros Forum community into Jetonomy - forums, topics, replies, and user profiles - using the built-in Asgaros importer.
 
-![Import tool with Asgaros source selected and migration progress](../images/admin-import.png)
+![Import tool with Asgaros source selected and migration progress](../images/admin-import.webp)
 
 > **New to migration?** Read the [Migration overview](00-overview.md) first - it explains how to read the import screen (stat previews, status badges, the progress tracker) and the backup rule that applies to every import.
 
@@ -56,13 +58,13 @@ Move your existing Asgaros Forum community into Jetonomy - forums, topics, repli
 
 **Always take a full database backup before you run the Asgaros import** - that is your way to undo if you want to start over. There is no preview mode for Asgaros: only the bbPress importer supports a true `--dry-run` that counts records without writing them. The Asgaros importer always writes data, so a backup (not a dry run) is your safety net.
 
-> **Heads up:** The `--dry-run` flag is accepted on the `wp jetonomy import asgaros` command, but the Asgaros importer does not act on it - it performs the real import either way. Do not use it expecting a preview.
+> **Heads up:** The `wp jetonomy import asgaros` command refuses the `--dry-run` flag and stops with an error, because the Asgaros importer cannot preview. Nothing is imported when this happens.
 
 ## Running the Import
 
 1. Go to **Jetonomy → Import** in your WordPress admin.
 2. Select **Asgaros Forum** as the source.
-3. Click **Start Import**.
+3. Click **Import from Asgaros Forum**.
 
 The importer works in batches (forums, topics, replies, then profiles) and the progress bar advances as it goes. If it is interrupted, return to **Jetonomy → Import** and click **Resume Import** to continue from where it stopped, or **Start Over** to begin again. Either way, anything already imported is skipped, not duplicated.
 
@@ -85,7 +87,7 @@ wp --path="/path/to/wordpress" jetonomy import asgaros
 
 WP-CLI is the recommended way to import larger Asgaros databases - it is not subject to browser timeouts and prints an `Imported / Skipped / Errors` summary when finished.
 
-> **Note:** The `--dry-run` flag is accepted by the command but is **not honored** by the Asgaros importer - it will still write data. Take a backup first.
+> **Note:** The `--dry-run` flag is refused for Asgaros (the command stops with an error). Take a backup first instead.
 
 ## Post-Import Checklist
 
@@ -95,7 +97,7 @@ After the import completes:
 - [ ] Confirm that sub-forums appear as sub-spaces under their parent
 - [ ] Open several posts from different spaces and verify content is intact
 - [ ] Assign Space Moderator roles to your former forum moderators (moderator assignments are not imported)
-- [ ] Go to **Settings → Permalinks** and click Save to flush rewrite rules (the Asgaros importer does not flush them automatically, so this step is needed if new spaces return a 404)
+- [ ] Go to **Jetonomy → Dashboard → Quick Actions** and click **Flush Rules** (the Asgaros importer does not flush them automatically, so this step is needed if new spaces return a 404)
 - [ ] Consider deactivating Asgaros after confirming the import - it is no longer needed
 
 ## Re-running an Import

@@ -1,3 +1,5 @@
+# FluentCommunity
+
 When FluentCommunity is active alongside Jetonomy, the two plugins coexist as one product. Members navigate between the social feed and the forum without noticing two separate systems, and admins pair spaces in one click.
 
 ## What You Will Learn

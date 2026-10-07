@@ -1,3 +1,5 @@
+# Content
+
 The Posts and Replies admin screen lets you view, search, edit, and moderate every piece of content in your community without visiting the front end.
 
 ## What You Will Learn
@@ -9,7 +11,7 @@ The Posts and Replies admin screen lets you view, search, edit, and moderate eve
 
 Go to **Jetonomy → Posts and Replies** to access this screen.
 
-![Posts and Replies admin screen showing the content list with the status filter and an inline edit panel open](../images/admin-content.png)
+![Posts and Replies admin screen showing the content list with the status filter and an inline edit panel open](../images/admin-content.webp)
 
 ## Required Capability
 

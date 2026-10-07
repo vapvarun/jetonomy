@@ -25,18 +25,15 @@ Use private topics for:
 - Personal asks to a space owner that do not need a full private message thread
 - Sensitive billing or legal questions where a full support ticket is too formal
 
-### Enabling Private Topics on a Space
+### Private Topics Are Always Available
 
-Private topics are an opt-in feature per space. The space owner turns them on from **Jetonomy → Spaces → (your space) → Settings → Posting**.
-
-1. Toggle **Allow private topics** on.
-2. Save.
-
-If the setting is off, the Private toggle does not appear in the new post composer and members cannot create private topics in the space.
+There is no setting to turn private topics on or off. Every signed-in member sees the Private checkbox in the new post composer, in every space.
 
 ### Creating a Private Topic
 
-When the feature is enabled for a space, a **Private** toggle appears at the bottom of the new post composer. Turn it on before submitting and your topic is flagged as private.
+A **Private: only you and moderators can see this topic** checkbox appears near the bottom of the new post composer. Tick it before submitting and your topic is flagged as private.
+
+To change it later, open the topic's **More options** menu and choose **Make Private** or **Make Public**. Only the topic author and moderators see that menu.
 
 Private topics show a **Private** badge next to the title on the topic page. The badge is visible only to you and to moderators (other members cannot see the topic at all).
 
@@ -53,7 +50,7 @@ Private topics show a **Private** badge next to the title on the topic page. The
 
 A moderator can reply to a private topic, mark it resolved, or escalate it to a full support ticket using whatever workflow your community has. The topic author is notified of replies the same way they would be on a normal topic.
 
-> **Note:** Private topics are different from private spaces. A private space is hidden entirely - a member either has access to everything in it or nothing at all. A private topic is a one-off exception inside an otherwise public space. Pick private spaces for ongoing confidential work (staff lounges, paying customer lounges) and private topics for one-off sensitive conversations.
+> **Note:** Private topics are different from private spaces. A private space gates all of its content behind membership - a person either has access to everything in it or nothing at all. A private topic is a one-off exception inside an otherwise public space. Pick private spaces for ongoing confidential work (staff lounges, paying customer lounges) and private topics for one-off sensitive conversations.
 
 ## Topic Prefixes
 
@@ -63,31 +60,28 @@ Prefixes are configured per space by the space owner. Different spaces can have 
 
 ### Enabling and Creating Prefixes
 
-Go to **Jetonomy → Spaces → (your space) → Settings → Prefixes**.
+Go to **Jetonomy → Spaces → (your space) → Settings** and find **Topic Prefixes**.
 
-1. Toggle **Enable topic prefixes** on.
-2. Click **Add Prefix**.
-3. Type a short label (up to 20 characters).
-4. Pick a color from the palette, or enter a custom hex value.
-5. Save.
+1. Tick **Enable topic prefixes for this space**.
+2. Click **+ Add Prefix**.
+3. Type a short **Label** (up to 50 characters).
+4. Pick a color with the color input.
+5. Click **Save Settings**.
 
-Repeat for each prefix you want. Re-ordering a prefix in the admin changes its order in the composer picker. Prefixes you no longer need can be deleted - topics that used a deleted prefix revert to having no prefix.
+Repeat for each prefix you want. Click the **×** next to a prefix to remove it. A prefix needs both a label and a color to be saved. A topic that already used a removed prefix keeps showing its label, but no longer in the prefix's color.
+
+Space admins can also turn prefixes on from the space's front-end edit screen.
 
 ### Using a Prefix When Creating a Topic
 
-When prefixes are enabled for a space, a **Prefix** dropdown appears next to the title field in the new post composer. Members pick one prefix per topic, or leave it blank.
-
-If the space is configured with **Require prefix** enabled, the composer rejects the submission unless a prefix is selected.
+When prefixes are enabled and at least one exists, a **Prefix (optional)** dropdown appears in the new post composer. Members pick one prefix per topic, or leave it blank. There is no setting to require a prefix.
 
 ### Where Prefixes Appear
 
 - In the space listing next to the topic title
-- On the topic page, in the topic header above the title
-- In search results
-- In notification emails that reference the topic
-- In the admin moderation queue
+- On the topic page, in the topic header next to the title
 
-Filter the space listing by prefix by clicking any prefix label - the listing re-renders to show only topics with that prefix.
+Prefixes are plain labels. Clicking one does not filter the listing.
 
 ### Prefix Color Guidelines
 

@@ -34,7 +34,7 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_vote` | Vote on posts and replies |
 | `jetonomy_flag` | Report content to moderators |
 | `jetonomy_join_spaces` | Join spaces that allow it |
-| `jetonomy_upload_media` | Attach files and images |
+| `jetonomy_upload_media` | Attach files and images (one of four capabilities that allow uploads, see [Common changes](#common-changes)) |
 | `jetonomy_create_spaces` | Create spaces programmatically |
 
 ### Moderating
@@ -88,7 +88,7 @@ If a custom role should behave like a full community member everywhere rather th
 
 **Moderators who cannot delete.** Give a role `jetonomy_moderate` but leave `jetonomy_delete_others_posts` unticked. They can work the queue, resolve reports and hide content without permanently removing anyone's writing.
 
-**No file uploads.** Untick `jetonomy_upload_media` everywhere below Administrator. Useful where storage or moderation load is a concern.
+**Stopping file and image uploads.** Unticking `jetonomy_upload_media` on its own does not stop uploads. The upload route lets a member in if their role holds **any one** of these: WordPress's own `upload_files`, `jetonomy_upload_media`, `jetonomy_create_posts`, or `jetonomy_create_replies`. Subscribers hold the create-posts and create-replies capabilities by default, so they can upload even though `jetonomy_upload_media` only starts at Contributor. To stop a role uploading, untick all three Jetonomy capabilities for it, and make sure the role does not hold `upload_files`. WordPress gives `upload_files` to Author, Editor and Administrator, and this grid cannot remove it. Unticking those capabilities also stops the role posting and replying, so there is no way to block uploads while keeping posting for the same role. Banned and silenced members cannot upload regardless.
 
 **Analytics for a manager.** Tick `jetonomy_view_analytics` for a role that holds nothing else. They see the numbers without gaining any content control.
 

@@ -1,3 +1,5 @@
+# Activity Log
+
 The Activity Log admin page shows you every audit-worthy event in your community - who created a post, who approved a reply, who banned a member, when a role changed. Read-only and filterable.
 
 ## What You Will Learn
@@ -9,7 +11,7 @@ The Activity Log admin page shows you every audit-worthy event in your community
 
 Go to **Jetonomy → Activity Log** to access the page.
 
-![Activity Log admin page showing a filtered list of community events with user, type, and date-range filters](../images/admin-activity-log.png)
+![Activity Log admin page showing a filtered list of community events with user, type, and date-range filters](../images/admin-activity-log.webp)
 
 ## What Gets Logged
 

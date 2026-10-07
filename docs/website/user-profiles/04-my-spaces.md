@@ -28,7 +28,7 @@ If your theme overrides the header template, the link may not appear automatical
 
 ## The Two Sections
 
-![My Spaces page showing the "Spaces you run" section with Admin and Mod role badges and Edit, Mod queue, and Members quick-action buttons, above the "Spaces you're in" section](../images/my-spaces.png)
+![My Spaces page showing the "Spaces you run" section with Admin and Mod role badges and Edit, Mod queue, and Members quick-action buttons, above the "Spaces you're in" section](../images/my-spaces.webp)
 
 The page is split into two sections, stacked top to bottom.
 

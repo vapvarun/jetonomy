@@ -42,7 +42,7 @@ The app reads each person's role from WordPress, so there is nothing extra to se
 
 Being an admin in WordPress *is* the connection - no extra "register the app" action is needed.
 
-![A member's profile in the mobile app, showing their reputation, badges, and posts](../images/mobile-app/05-profile.png)
+![A member's profile in the mobile app, showing their reputation, badges, and posts](../images/mobile-app/05-profile.webp)
 
 ## Revoking access
 

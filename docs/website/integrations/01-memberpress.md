@@ -1,8 +1,10 @@
+# MemberPress
+
 Connect MemberPress membership levels to Jetonomy spaces - so paying members automatically land in the right discussion areas the moment their subscription activates.
 
 > **Available in Jetonomy free.** The MemberPress and Paid Memberships Pro adapters ship in the free plugin - you do not need Jetonomy Pro to gate spaces by these two membership plugins. (WooCommerce, Restrict Content Pro, and all LMS integrations require Jetonomy Pro.)
 
-![Jetonomy admin settings panel for configuring integrations](../images/admin-settings.png)
+![Jetonomy admin settings panel for configuring integrations](../images/admin-settings.webp)
 
 ## What You Will Learn
 
@@ -21,16 +23,17 @@ Jetonomy checks for MemberPress automatically on every page load. No configurati
 
 This is the standard Access Rules flow that every membership and LMS integration in this section follows. The other integration guides link back here for the full walkthrough.
 
-![Jetonomy Access Rules tab showing a saved membership rule with its Type, Value and Access level columns](images/access-rules-with-rule.png)
 
 1. Go to **Jetonomy → Spaces** and open the space you want to gate.
-2. Click the **Access Rules** tab in the space settings panel.
-3. Set **Rule Type** to your MemberPress level (membership levels appear in the dropdown once MemberPress is active).
-4. Pick the membership level in the **Value** field.
-5. Choose the **Access level** the rule grants - Read, Participate, or Full (see below). Participate is the default and the right answer for most paid spaces.
-6. Click **Add Rule**. The rule appears in the table below the form, and the form reads your rule back to you in plain English before you save it.
+2. Click the **Access Rules** tab.
+3. In the first dropdown, choose **MemberPress**. The dropdown lists the type of rule (Everyone, Logged In, WP Role, Capability, Trust Level) and one entry for each active membership plugin.
+4. A search box appears next to it. Type to search and pick your membership level there.
+5. In the last dropdown, choose what the rule grants: **Read**, **Participate**, or **Full** (see below). **Participate** is preselected and is the right answer for most paid spaces.
+6. Click **Add Rule**. The rule appears in the **Access Rules** table below the form, and the form reads your rule back to you in plain English before you save it.
 
-Members who hold the selected level gain access to this space at the level you chose. Members without it see the space as locked (or hidden, depending on your space visibility setting).
+Members who hold the selected level gain access to this space at the level you chose.
+
+> **A rule only adds access.** It never locks anyone out. A Public space is already readable by everyone, so a rule on it restricts nothing, and Jetonomy warns you on the Access Rules tab. To sell access to a space, set **Visibility** to **Private** and **Join Policy** to **Invite Only** on the space's **General** tab. Plan holders still get in automatically through the rule.
 
 > **Tip:** Add more than one rule if you want to grant access for more than one membership level. Rules are evaluated top to bottom by priority, and a member passes on the first rule they match.
 
@@ -112,9 +115,9 @@ In either case you can point the button wherever you like with the `jetonomy_mem
 
 | Space Visibility | Non-member sees... |
 |---|---|
-| Public | Space listed, content visible, locked from posting |
-| Private | Space listed with lock icon, content hidden |
-| Hidden | Space not listed at all |
+| Public | Space listed and content readable by everyone. A rule only adds access, such as posting |
+| Private | Signed-in people can find the space but see a lock message instead of content. Logged-out visitors do not see it listed |
+| Hidden | Space not listed, and anyone without access sees "Space not found." |
 
 ## Developer Hook
 
@@ -132,7 +135,7 @@ add_action( 'jetonomy_membership_activated', function( int $user_id, string $lev
 
 ## Troubleshooting
 
-**Access rules dropdown is empty** - MemberPress may not be active. Check **Plugins → Installed Plugins** and confirm MemberPress is activated.
+**No MemberPress entry in the first Access Rules dropdown** - MemberPress may not be active. Check **Plugins → Installed Plugins** and confirm MemberPress is activated.
 
 **Member not joining on activation** - Ensure the membership level ID in the Access Rule exactly matches the level in MemberPress. Level IDs are numeric; check the MemberPress level edit URL for the ID.
 

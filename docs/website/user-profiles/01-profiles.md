@@ -1,3 +1,5 @@
+# Profiles
+
 Every member in your community has a public profile page that shows who they are, how much they contribute, and what they have been up to. Profiles build trust between members and give contributors the recognition they have earned.
 
 ## What You Will Learn
@@ -13,7 +15,7 @@ Every member in your community has a public profile page that shows who they are
 
 Every member has a profile page at `/community/u/their-username/`. Anyone can visit this page - no login is required unless your community is set to private.
 
-![User profile page](../images/profile-page.png)
+![User profile page](../images/profile-page.webp)
 
 ### Header Section
 
@@ -67,7 +69,7 @@ Shows unpublished draft topics saved by this member. This tab is visible only to
 
 Members can edit their own profile at `/community/u/their-username/edit/`. This page is accessible from the **Edit Profile** button on the profile page header.
 
-![Edit Profile page with display name, bio, avatar upload, and notification preference fields](../images/edit-profile.png)
+![Edit Profile page with display name, bio, avatar upload, and notification preference fields](../images/edit-profile.webp)
 
 Editable fields:
 
@@ -77,7 +79,7 @@ Editable fields:
 - Avatar - upload a JPG, PNG, GIF, or WebP. After choosing a non-GIF image, a crop dialog opens: drag to reposition, use the slider to zoom, then **Crop and upload** saves a square avatar (animated GIFs upload as-is to preserve animation). The "Remove photo" button reverts to the Gravatar.
 - Notification preferences (email and in-app toggles per type)
 
-![Avatar crop dialog open with the image preview, zoom slider, and Crop and upload button](../images/edit-profile-avatar-crop.png)
+![Avatar crop dialog open with the image preview, zoom slider, and Crop and upload button](../images/edit-profile-avatar-crop.webp)
 
 WordPress Administrators can edit any member's profile from the standard WordPress Users admin as well.
 

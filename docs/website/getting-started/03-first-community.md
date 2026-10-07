@@ -8,7 +8,7 @@ order: 3
 
 Your community is installed and the wizard is complete. This guide walks you through what to do next, from organizing your spaces to inviting your first members, so your community is genuinely ready for people on day one.
 
-![Community home page showing spaces organized by category](../images/community-home.png)
+![Community home page showing spaces organized by category](../images/community-home.webp)
 
 ## What You Will Learn
 
@@ -32,7 +32,7 @@ To create a category:
 
 Your category appears in the table on the right. Drag rows to reorder them. The order here is the order your members see on the community home page.
 
-![Jetonomy Categories admin: the add-category form on the left and the drag-to-reorder category table on the right](../images/getting-started/admin-categories-add-and-reorder.png)
+![Jetonomy Categories admin: the add-category form on the left and the drag-to-reorder category table on the right](../images/getting-started/admin-categories-add-and-reorder.webp)
 
 > **Tip:** Start with two to four broad categories. You can always add more later. Common patterns: "Support / General / Announcements" for a product community, or "Ideas / Questions / Showcase" for a creator community.
 
@@ -53,15 +53,15 @@ To create a space, you can use either the wp-admin form or the front-end Create 
 
 **From wp-admin:**
 
-1. Go to **Jetonomy → Spaces → Add Space**.
-2. Enter a name and optional description.
-3. Pick an icon from the visual Lucide picker (16 defaults plus a search field).
-4. Choose the space type.
-5. Set visibility: **Public** (anyone can see it), **Private** (members only see content), or **Hidden** (not listed, invite only).
-6. Set the join policy: **Open**, **Request to join**, or **Invite only**.
-7. Click **Save Space**.
+1. Go to **Jetonomy → Spaces** and click **Add New**.
+2. Enter a **Title** and optional **Description**.
+3. Pick a **Category** and the space **Type**.
+4. Set **Visibility**: **Public** (anyone can find and read it), **Private** (anyone signed in can find it, only members can read it), or **Hidden** (only members can find it, invite only).
+5. Set the **Join Policy**: **Open**, **Requires Approval**, or **Invite Only**.
+6. Pick an icon from the visual Lucide picker (16 defaults plus a search field).
+7. Click **Create Space**. When you edit a space later, the button is **Update Space**.
 
-![The Add Space form showing the Lucide icon picker and the visibility and join-policy selectors](../images/admin-space-edit.png)
+![The Add Space form showing the Lucide icon picker and the visibility and join-policy selectors](../images/admin-space-edit.webp)
 
 **From the front end** (so non-admin owners can create spaces too): visit `/community/new-space/` while signed in. The form is identical and is available to any role you've enabled under **Jetonomy → Settings → General**, in the **Front-end space creation** field.
 
@@ -83,13 +83,15 @@ You do not need to wait for members to discover your community organically. Jeto
 
 ### Generate an Invite Link
 
-1. Go to **Jetonomy → Spaces** and click on your space.
-2. Click **Members** in the space navigation.
-3. Click **Generate Invite Link**.
-4. Set an expiry date, or leave it open with no expiry.
+1. Go to **Jetonomy → Spaces** and edit your space.
+2. Open the **Members** tab and find the **Invite Links** section.
+3. Set **Max uses** (0 means unlimited) and an **Expires** date, or leave **Expires** blank for no expiry.
+4. Click **Generate invite link**.
 5. Copy the link and share it via email, Slack, social media, or anywhere else.
 
-![The Generate Invite Link panel showing the expiry option and the copyable invite URL](../images/getting-started/space-generate-invite-link.png)
+Space admins can also do this from the space's **Members** page on the community front end.
+
+![The invite link panel showing the Max uses and Expires fields and the copyable invite URL](../images/getting-started/space-generate-invite-link.webp)
 
 When someone visits the link, they are added to the space immediately after logging in or creating a WordPress account.
 
@@ -114,15 +116,16 @@ To adjust further:
 
 If you are migrating an existing community, Jetonomy includes a built-in importer for three sources.
 
-![The Jetonomy Import screen with the source selector and a detected-data summary such as "Found: 12 forums, 3,847 topics, 28,419 replies"](../images/admin-import.png)
+![The Jetonomy Import screen showing a card for each detected forum plugin with its record counts](../images/admin-import.webp)
 
 1. Go to **Jetonomy → Import**.
-2. Select your source plugin: **bbPress**, **wpForo**, or **Asgaros Forum**.
-3. Jetonomy auto-detects your existing data and shows a summary, for example: "Found: 12 forums, 3,847 topics, 28,419 replies."
-4. Run a **Dry Run** first to check for any mapping issues.
-5. Click **Start Import** when you are ready.
+2. Jetonomy auto-detects your existing data and shows a card for each source it finds, with the number of forums, topics, and replies.
+3. Back up your database. The import cannot be automatically reversed.
+4. Click **Import from bbPress**, **Import from wpForo**, or **Import from Asgaros Forum**.
 
-Imports run in background batches. You can close your browser and come back. The import continues via WP-Cron and resumes from where it left off if interrupted.
+The import runs in batches from your browser, with a progress bar. Keep the tab open until it finishes. If it is interrupted, return to **Jetonomy → Import** and click **Resume Import** to continue from where it stopped.
+
+The browser import has no preview mode. Only the bbPress importer can preview, using WP-CLI: `wp jetonomy import bbpress --dry-run`. See [bbPress import](../migration/01-bbpress-import.md) for details.
 
 **What gets migrated:**
 
@@ -163,3 +166,5 @@ The community sidebar (where the theme layout places it) shows active members, t
 Now that your community is live and populated, learn how to organize it further with spaces and categories, including visibility rules and per-space permissions.
 
 [Spaces and Categories →](../spaces-and-categories/01-creating-spaces.md)
+
+Have a specific goal in mind? The [How-To Guides](../how-to/00-overview.md) walk through the most common ones step by step: launching a support forum, running a members-only community, restricting a space to paying members, collecting feature requests, adding moderators, and more.

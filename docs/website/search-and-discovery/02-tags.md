@@ -1,6 +1,8 @@
+# Tags
+
 Tags connect related discussions across your entire community. A member searching for help with "payments" can click the payments tag and instantly see every relevant topic - no matter which space it lives in.
 
-![Tag page listing all topics associated with a specific tag](../images/tag-page.png)
+![Tag page listing all topics associated with a specific tag](../images/tag-page.webp)
 
 ## What You Will Learn
 
@@ -73,7 +75,7 @@ Encouraging consistent tag use - especially in high-traffic spaces - pays divide
 
 Members create tags on the fly as they post, but admins get a dedicated management screen for the whole global tag namespace at **Jetonomy → Tags** in the WordPress admin. Managing tags here requires the `jetonomy_manage_settings` capability.
 
-![Jetonomy Tags admin screen: a table of tags with post counts, a bulk-action dropdown, a search box, and the Add New Tag form](../images/search-and-discovery/admin-tags.png)
+![Jetonomy Tags admin screen: a table of tags with post counts, a bulk-action dropdown, a search box, and the Add New Tag form](../images/search-and-discovery/admin-tags.webp)
 
 The page lists every tag with its post count and gives you these controls:
 

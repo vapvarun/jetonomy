@@ -1,3 +1,5 @@
+# Anonymous Posting
+
 Let members post topics and replies without showing their name or avatar to other members, with an audited admin-only reveal.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
@@ -18,7 +20,7 @@ Some conversations only happen if the poster's name is hidden - a support questi
 
 Anonymous posting needs two switches, both on. It never appears with only one of them set.
 
-1. **Site-wide:** Go to **Jetonomy → Extensions**, find **Anonymous Posting**, and click **Enable**. This is the global master switch - there is no separate settings screen for it.
+1. **Site-wide:** Go to **Jetonomy → Extensions**, find **Anonymous Posting**, and switch its toggle on. This is the global master switch - there is no separate settings screen for it.
 2. **Per space:** Open the space, go to **Edit → Anonymous**, tick **Allow anonymous posts in this space**, and save.
 
 Turn the space option on only where it fits - a support, feedback, or sensitive-topics space, for example. Leave it off everywhere else. A space where the option is off never shows the anonymous controls, even while the extension is enabled globally.
@@ -38,7 +40,15 @@ The anonymity flag is never trusted from the client alone. Every post and reply 
 
 ## Revealing the Real Author
 
-Only **site administrators** can reveal who is behind an anonymous post or reply - space moderators cannot. An admin uses the **Reveal author** button on the post or reply. The real name is shown only for that explicit action; ordinary admin browsing still shows "Anonymous."
+Only **site administrators** can reveal who is behind an anonymous post or reply - space moderators cannot. An admin uses the **Reveal author** button on the post or reply. On the community pages, the real name is shown only for that explicit action; ordinary browsing still shows "Anonymous."
+
+**Admin screens show the real account name without a reveal.** The anonymity mask applies to what other members see, not to your management screens. Administrators and moderators see the real account name in:
+
+- The **Author** column of **Jetonomy → Content**.
+- The **Author** column in the pending lists under **Jetonomy → Moderation**.
+- The "by [name]" line on **Awaiting approval** cards in the front-end moderation queue.
+
+Only the **Reveal author** button writes an entry to the activity log. Viewing these screens does not. Treat your moderators accordingly: anyone who can open them can see who wrote an anonymous item.
 
 Every reveal is written to the activity log, recording who revealed it, which item, and when - so reveals stay accountable. Use this sparingly, for abuse investigations rather than routine browsing.
 

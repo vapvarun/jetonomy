@@ -1,8 +1,10 @@
+# LearnDash
+
 Connect LearnDash course and group enrollment to Jetonomy spaces - students get dedicated discussion areas automatically when they enroll, and lose access when they un-enroll.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](images/integrations-settings.png)
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](../images/admin-integrations.webp)
 
 LearnDash is the lead LMS integration in this section. The other four LMS guides (Tutor, LifterLMS, Sensei, MasterStudy) work the same way and link back here for the screenshots and the shared Access Rules walkthrough.
 
@@ -20,7 +22,6 @@ Jetonomy Pro detects LearnDash automatically when both plugins are active. A **L
 
 ## Gating a Space by Course Enrollment
 
-![The Access Rules course picker with a searchable dropdown autocompleting course names as you type](images/course-search-autocomplete.png)
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LearnDash Course** from the rule type dropdown.

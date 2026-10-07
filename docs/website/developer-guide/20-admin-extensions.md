@@ -1,3 +1,5 @@
+# Admin Extensions
+
 Jetonomy registers its admin UI under a single top-level menu (Jetonomy → Dashboard / Spaces / Categories / Users / Moderation / Settings / Import). Every admin page exposes action and filter hooks so companion plugins and Pro extensions can inject tabs, widgets, and settings panels without patching core files.
 
 ## Admin Pages at a Glance

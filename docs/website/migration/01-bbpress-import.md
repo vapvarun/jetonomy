@@ -1,6 +1,6 @@
 Move your existing bbPress community into Jetonomy - forums, topics, replies and user data - using the built-in importer.
 
-![Import tool interface with source selection and progress tracking](../images/admin-import.png)
+![Import tool interface with source selection and progress tracking](../images/admin-import.webp)
 
 > **New to migration?** Read the [Migration overview](00-overview.md) first - it explains how to read the import screen (stat previews, status badges, the progress tracker) and the backup rule that applies to every import.
 
@@ -61,11 +61,11 @@ Complete these steps before starting the import:
 
 1. Go to **Jetonomy → Import** in your WordPress admin.
 2. Select **bbPress** as the source.
-3. Click **Start Import**.
+3. Click **Import from bbPress**.
 
-The importer processes records in batches of 500. A progress bar shows completion percentage, current batch, and estimated time remaining.
+The importer processes records in batches of 500. A progress bar shows the completion percentage and the current step (Forums, Topics, Replies, Profiles, Finalize).
 
-Do not close the browser tab while the import is running. If the page refreshes or you navigate away, the import will pause - but can be resumed (see below).
+Keep the browser tab open while the import is running. Your browser drives each batch, so closing the tab, refreshing or navigating away stops the import. It can be resumed (see below).
 
 ## Dry-Run Mode
 
@@ -120,7 +120,7 @@ After the import completes, verify the following:
 - [ ] Check that user profiles show post counts
 - [ ] Assign Space Moderator roles to your former forum moderators (moderator assignments are not imported)
 - [ ] Test creating a new post as a regular user
-- [ ] If new spaces return a 404, visit **Jetonomy → Settings → Permalinks** and click Save to flush rewrite rules (normally done automatically on import completion)
+- [ ] If new spaces return a 404, go to **Jetonomy → Dashboard → Quick Actions** and click **Flush Rules** (normally done automatically on import completion)
 - [ ] If you used bbPress shortcodes on pages, remove or replace them - they will output raw shortcode text now that bbPress is still active
 
 > **Note:** After a successful import, you can deactivate bbPress. Your community data is now in Jetonomy's tables and bbPress is no longer needed.

@@ -6,7 +6,7 @@ order: 4
 
 Bookmarks and following are how members stay connected to the content they care about. Bookmarks are a personal reading list. Following a space is a subscription to that space's activity. Together they make sure your community members never lose track of an important discussion.
 
-![Topic page with bookmark, follow, and share action buttons](../images/single-topic-replies.png)
+![Topic page with bookmark, follow, and share action buttons](../images/single-topic-replies.webp)
 
 ## What You Will Learn
 

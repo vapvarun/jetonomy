@@ -1,8 +1,10 @@
+# Paid Memberships Pro
+
 Gate Jetonomy spaces by Paid Memberships Pro subscription level - with automatic access granted on activation and revoked on cancellation or expiry.
 
 > **Available in Jetonomy free.** The Paid Memberships Pro adapter ships in the free plugin - Jetonomy Pro is not required to gate spaces by PMPro levels.
 
-![Jetonomy admin settings showing integration configuration options](../images/admin-settings.png)
+![Jetonomy admin settings showing integration configuration options](../images/admin-settings.webp)
 
 ## What You Will Learn
 

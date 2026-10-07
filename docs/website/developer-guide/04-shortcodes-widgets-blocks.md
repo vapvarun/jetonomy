@@ -1,3 +1,5 @@
+# Shortcodes, Widgets and Blocks
+
 Jetonomy includes eight shortcodes, four classic widgets, and eight Gutenberg blocks so you can embed community content anywhere on your WordPress site - sidebars, pages, posts, or block-based layouts.
 
 ## What You Will Learn
@@ -53,11 +55,12 @@ Displays a list of the most recent published posts across your community or with
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `count` | int | `5` | Number of posts to display |
-| `space_id` | int | `0` | Restrict to a space. `0` = all spaces |
-| `sort` | string | `latest` | `latest` or `votes` |
+| `space_id` | int or slug | `0` | Restrict to a space, by numeric ID or slug. `0` = all spaces. An ID or slug that matches no space shows a notice to editors |
+| `sort` | string | `latest` | `latest` for newest first. Any other value, such as `votes`, sorts by vote score |
 
 ```
 [jetonomy_recent_posts count="5" space_id="3" sort="votes"]
+[jetonomy_recent_posts count="5" space_id="announcements"]
 ```
 
 Each post card shows the title, author name, space name, time ago, vote score, and reply count.
@@ -73,7 +76,7 @@ Displays a ranked list of "hot" posts using a time-decayed score of recent votes
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `count` | int | `5` | Number of posts to display |
-| `space_id` | int | `0` | Restrict to a space. `0` = all spaces |
+| `space_id` | int or slug | `0` | Restrict to a space, by numeric ID or slug. `0` = all spaces |
 | `window` | int | `7` | Days of history used for the hot score |
 
 ```
@@ -143,7 +146,7 @@ Displays a list of members for a specific space, ordered by reputation.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `space_id` | int | - | **Required.** ID of the space |
+| `space_id` | int or slug | - | **Required.** Numeric ID or slug of the space |
 | `count` | int | `10` | Number of members to display |
 
 ```
@@ -161,7 +164,7 @@ Lets signed-in members start a new topic from **any** WordPress page, post, or p
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `mode` | string | `picker` | `picker` (show a space select) or `fixed` (post to one space) |
-| `space_id` | int | `0` | Space ID to post into. Only used when `mode="fixed"`. Invalid IDs degrade to picker at render time. |
+| `space_id` | int or slug | `0` | Space ID or slug to post into. Only used when `mode="fixed"`. A value that matches no space shows a notice to editors; a space the viewer cannot post in degrades to the picker at render time. |
 | `types` | CSV | `topic,question,idea` | Allowed post types for this embed |
 
 ```
@@ -169,7 +172,7 @@ Lets signed-in members start a new topic from **any** WordPress page, post, or p
 [jetonomy_compose_topic mode="fixed" space_id="5"]
 ```
 
-![Compose Topic shortcode rendered on a regular WordPress page](../images/developer-guide/compose-topic-frontend.png)
+![Compose Topic shortcode rendered on a regular WordPress page](../images/developer-guide/compose-topic-frontend.webp)
 
 **Behavior**
 
@@ -182,7 +185,7 @@ Companion REST endpoint: `GET /jetonomy/v1/spaces?postable_by_me=1` returns the 
 
 When the title is filled but the body is empty, an inline error banner appears above the title - no silent failures, no lost input:
 
-![Inline validation banner when the body is empty](../images/developer-guide/compose-topic-validation.png)
+![Inline validation banner when the body is empty](../images/developer-guide/compose-topic-validation.webp)
 
 ---
 
@@ -194,7 +197,7 @@ Jetonomy registers four classic widgets for use in any theme widget area. Each w
 
 Displays recent forum posts in any sidebar or widget area.
 
-**Settings:** Title, Count, Space (optional filter), Sort order
+**Settings:** Title, Number of posts (1 to 20). The widget always shows the newest posts from all spaces. For a space filter or vote sorting, use `[jetonomy_recent_posts]` instead.
 
 ### Leaderboard Widget
 
@@ -225,11 +228,11 @@ Each classic widget above can also be embedded directly into any page or page-bu
 | `id` | string | yes | Widget id: `jetonomy_recent_posts`, `jetonomy_leaderboard`, `jetonomy_active_spaces`, or `jetonomy_user_stats` |
 | `title` | string | no | Override the widget's title (otherwise the widget's saved Customizer title or the default) |
 | `count` | int | no | For Recent Posts, Leaderboard, and Active Spaces |
-| `space_id` | int | no | For Recent Posts, optional space filter |
-| `sort` | string | no | For Recent Posts: `latest` or `votes` |
+
+The Recent Posts widget has no space or sort setting, so `[jetonomy_widget]` does not support them either. Use `[jetonomy_recent_posts]` for those.
 
 ```
-[jetonomy_widget id="jetonomy_recent_posts" count="8" sort="latest"]
+[jetonomy_widget id="jetonomy_recent_posts" count="8"]
 [jetonomy_widget id="jetonomy_leaderboard" count="10"]
 [jetonomy_widget id="jetonomy_active_spaces" count="6"]
 [jetonomy_widget id="jetonomy_user_stats" title="Your stats"]
@@ -247,7 +250,7 @@ All blocks live in the **Widgets** category of the block inserter and answer to 
 
 This is how the content blocks render on a published page - Forum Feed, Trending, Space List, and Leaderboard dropped onto a regular WordPress page. Because blocks and shortcodes share the same render path, the matching `[jetonomy_*]` shortcodes produce identical output:
 
-![Forum Feed, Trending, Spaces, and Leaderboard blocks rendered on a published WordPress page](../images/developer-guide/blocks-showcase.png)
+![Forum Feed, Trending, Spaces, and Leaderboard blocks rendered on a published WordPress page](../images/developer-guide/blocks-showcase.webp)
 
 ### Backend (editor) vs frontend (published) render *(1.4.0+)*
 
@@ -264,7 +267,7 @@ Block inserter visibility was tightened in 1.4.0 - every block now registers an 
 
 In the block editor each block paints the same lightweight preview card - a **JETONOMY** badge, the block name, and a hint that reflects the current settings (`All public spaces`, `7 day window`, `Categories → spaces tree, permission-aware`) - so you can lay out a page without firing a single REST call:
 
-![Jetonomy blocks shown as static preview cards in the Gutenberg block editor](../images/developer-guide/blocks-editor.png)
+![Jetonomy blocks shown as static preview cards in the Gutenberg block editor](../images/developer-guide/blocks-editor.webp)
 
 ### `jetonomy/forum-feed`
 
@@ -276,7 +279,7 @@ Renders a live post feed from a selected space or all spaces.
 |-----------|------|---------|-------------|
 | `count` | number | `5` | Posts to show |
 | `spaceId` | number | `0` | Space ID (0 = all spaces) |
-| `sort` | string | `latest` | `latest` or `votes` |
+| `sort` | string | `latest` | Set in the editor's **Sort** control: **Latest** (`latest`) or **Top voted** (`top`) |
 | `showHeader` | boolean | `false` | Render a space header above the feed |
 | `title` | string | `''` | Custom title when `showHeader` is on |
 
@@ -339,7 +342,7 @@ Scales to sites with thousands of spaces - the rendered tree uses Jetonomy's cac
 
 This block is block-only - there is no shortcode twin - so the rendered output is shown here:
 
-![Jetonomy Navigation block rendered in a community sidebar as a permission-aware Category to Space tree](../images/developer-guide/block-navigation.png)
+![Jetonomy Navigation block rendered in a community sidebar as a permission-aware Category to Space tree](../images/developer-guide/block-navigation.webp)
 
 ---
 
@@ -347,7 +350,7 @@ This block is block-only - there is no shortcode twin - so the rendered output i
 
 Renders a compact profile card for logged-in viewers - avatar, display name, notifications count, quick links to Profile / Notifications / Messages / Edit Profile / Logout. Empty for logged-out viewers so the sidebar layout doesn't shift.
 
-![Jetonomy User Panel block showing a logged-in member's avatar, name, notifications count, and quick links](../images/developer-guide/block-user-panel.png)
+![Jetonomy User Panel block showing a logged-in member's avatar, name, notifications count, and quick links](../images/developer-guide/block-user-panel.webp)
 
 **Block Attributes**
 
@@ -363,7 +366,7 @@ Auto-injects at the top of the community sidebar for logged-in viewers so admins
 
 Renders an inline login and register panel for the community sidebar. Logged-out viewers see Login and Register tabs without leaving the page. Logged-in viewers get nothing rendered - no layout shift when state changes.
 
-![Jetonomy Login block showing the Login and Register tabs rendered inline on a community page](../images/developer-guide/block-login.png)
+![Jetonomy Login block showing the Login and Register tabs rendered inline on a community page](../images/developer-guide/block-login.webp)
 
 **Block Attributes**
 
@@ -394,7 +397,7 @@ Gutenberg equivalent of `[jetonomy_compose_topic]`. Drop it on any page, post, o
 
 **Editor experience**
 
-![Compose Topic block in the Gutenberg editor](../images/developer-guide/compose-topic-block-editor.png)
+![Compose Topic block in the Gutenberg editor](../images/developer-guide/compose-topic-block-editor.webp)
 
 - The block editor shows a **static preview** (no live REST calls) - safe to drop into any page without hitting the server.
 - Inspector controls: Mode select (picker / fixed), Space ID (visible only when Mode is fixed), Allowed types (comma-separated).

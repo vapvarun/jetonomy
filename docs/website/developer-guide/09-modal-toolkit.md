@@ -1,3 +1,5 @@
+# Modal Toolkit
+
 Jetonomy ships a small JavaScript toolkit that replaces native `window.confirm`, `window.alert`, and `window.prompt` with branded, accessible modal dialogs. The toolkit lives in `assets/js/jetonomy-modals.js` and is enqueued on every community page and inside wp-admin.
 
 **Globals:** `window.jetonomyConfirm`, `window.jetonomyAlert`, `window.jetonomyPrompt`

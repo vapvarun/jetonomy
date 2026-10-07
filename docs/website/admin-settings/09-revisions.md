@@ -1,3 +1,5 @@
+# Revisions
+
 The Revisions admin page lets you browse every saved revision of every post and reply, and compare any two of them side-by-side. Use it to see what changed when a member edits, or to recover content from an earlier version.
 
 ## What You Will Learn
@@ -33,7 +35,7 @@ Each row shows the post title, the editor, when the change was saved, and the si
 
 ## Side-by-Side Diff
 
-![Revisions diff view showing the before and after versions of a post side by side, with added text highlighted green and removed text highlighted red](../images/admin-revisions.png)
+![Revisions diff view showing the before and after versions of a post side by side, with added text highlighted green and removed text highlighted red](../images/admin-revisions.webp)
 
 Click any revision to open the diff view. Pick two revisions from the same post and you'll see:
 

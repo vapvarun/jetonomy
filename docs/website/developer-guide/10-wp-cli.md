@@ -521,16 +521,21 @@ wp jetonomy-pro custom-fields delete 4
 
 ### white-label
 
-Set white-label branding for the community frontend.
+Manage White Label branding (wp-admin brand name, admin menu label and icon, admin footer text).
 
 | Subcommand | Description |
 |------------|-------------|
-| `set-logo` | Replace the community logo |
-| `set-colors` | Set primary and accent brand colors |
+| `get` | Show the current branding settings |
+| `update` | Update one or more fields: `--community-name`, `--footer-text`, `--admin-label`, `--admin-icon` |
+| `reset` | Delete the branding option so defaults apply |
+| `preview` | Show the branding values as wp-admin renders them |
+| `export` | Write the settings to JSON (`--to=<file_path>` for a file) |
+| `import` | Load a JSON payload written by `export` |
 
 ```bash
-wp jetonomy-pro white-label set-logo --url=https://example.com/logo.png
-wp jetonomy-pro white-label set-colors --primary="#1a73e8" --accent="#fbbc04"
+wp jetonomy-pro white-label get
+wp jetonomy-pro white-label update --community-name="Acme Community" --admin-label="Community"
+wp jetonomy-pro white-label export --to=/tmp/branding.json
 ```
 
 ---

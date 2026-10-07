@@ -10,7 +10,7 @@ Jetonomy communities have a native **iOS and Android app**. Your members get a r
 
 > **Requires Jetonomy 1.6.0 or newer** for the per-site branding endpoint (`/app/config`). Older sites still work with default styling.
 
-![The Jetonomy mobile app home feed, themed with a community's own accent color, showing topics sorted by Hot, New, or Top](../images/mobile-app/01-home.png)
+![The Jetonomy mobile app home feed, themed with a community's own accent color, showing topics sorted by Hot, New, or Top](../images/mobile-app/01-home.webp)
 
 ## What you will learn
 
@@ -39,7 +39,7 @@ Both use the same codebase. You set the in-app branding (logo, color, name) the 
 
 ## What members can do
 
-![The Spaces screen in the mobile app, listing forums and Q&A spaces with category filters, member counts, and recent activity](../images/mobile-app/02-spaces.png)
+![The Spaces screen in the mobile app, listing forums and Q&A spaces with category filters, member counts, and recent activity](../images/mobile-app/02-spaces.webp)
 
 - Browse the feed across spaces (Hot / New / Top), post topics and questions, reply, and vote
 - Join forums, Q&A, and idea spaces; get notifications; search

@@ -1,106 +1,94 @@
 {
-  "product_name": "Jetonomy",
-  "product_slug": "jetonomy",
-  "product_type": "plugin",
+  "product": "Jetonomy",
+  "productType": "plugin",
+  "shortId": "jtnmy",
   "version": "2.0.1",
   "tagline": "Next-gen Discussion Platform for WordPress",
-  "short_id": "jtnmy",
-  "categories": [
+  "sections": [
     {
-      "slug": "getting-started",
       "name": "Getting Started",
-      "description": "Install Jetonomy, run the setup wizard, and launch your WordPress forum or Q&A community in minutes.",
-      "order": 1
+      "folder": "getting-started",
+      "description": "Install Jetonomy, run the setup wizard, and launch your WordPress forum or Q&A community in minutes."
     },
     {
-      "slug": "spaces-and-categories",
+      "name": "How-To Guides",
+      "folder": "how-to",
+      "description": "Step-by-step recipes for the things community owners do most: launch a support forum, run a members-only community, collect feature requests, invite members, and more."
+    },
+    {
       "name": "Spaces & Categories",
-      "description": "Organize your community into categories and Forum, Q&A, Ideas, or Feed spaces with membership and join controls.",
-      "order": 2
+      "folder": "spaces-and-categories",
+      "description": "Organize your community into categories and Forum, Q&A, Ideas, or Feed spaces with membership and join controls."
     },
     {
-      "slug": "discussions",
       "name": "Discussions & Topics",
-      "description": "Create topics, post threaded replies, upvote and downvote, accept answers, and save drafts in your community.",
-      "order": 3
+      "folder": "discussions",
+      "description": "Create topics, post threaded replies, upvote and downvote, accept answers, and save drafts in your community."
     },
     {
-      "slug": "search-and-discovery",
       "name": "Search & Discovery",
-      "description": "Help members find discussions with full-text search, cross-space tags, and filters.",
-      "order": 4
+      "folder": "search-and-discovery",
+      "description": "Help members find discussions with full-text search, cross-space tags, and filters."
     },
     {
-      "slug": "moderation-and-trust",
       "name": "Moderation & Trust",
-      "description": "Keep your community safe with trust levels 0 to 5, content flagging, a moderation queue, anti-spam, and member banning.",
-      "order": 5
+      "folder": "moderation-and-trust",
+      "description": "Keep your community safe with trust levels 0 to 5, content flagging, a moderation queue, anti-spam, and member banning."
     },
     {
-      "slug": "notifications",
       "name": "Notifications & Email",
-      "description": "Bring members back with in-app notifications, email alerts, and Pro private messaging, digests, and web push.",
-      "order": 6
+      "folder": "notifications",
+      "description": "Bring members back with in-app notifications, email alerts, and Pro private messaging, digests, and web push."
     },
     {
-      "slug": "user-profiles",
       "name": "User Profiles & Leaderboard",
-      "description": "Member profiles, reputation scores, online status, and a leaderboard that ranks your top contributors.",
-      "order": 7
+      "folder": "user-profiles",
+      "description": "Member profiles, reputation scores, online status, and a leaderboard that ranks your top contributors."
     },
     {
-      "slug": "mobile-app",
       "name": "Mobile App",
-      "description": "Give your community a native iOS and Android app. Brand it from wp-admin (logo, color, community name), connect members with WordPress Application Passwords, and publish your own branded build.",
-      "order": 8
+      "folder": "mobile-app",
+      "description": "Give your community a native iOS and Android app. Brand it from wp-admin (logo, color, community name), connect members with WordPress Application Passwords, and publish your own branded build."
     },
     {
-      "slug": "pro-features",
       "name": "Pro Features",
-      "description": "Jetonomy Pro extensions: private messaging, polls, reactions, custom badges, advanced moderation, analytics, webhooks, and AI.",
-      "order": 9
+      "folder": "pro-features",
+      "description": "Jetonomy Pro extensions: private messaging, polls, reactions, custom badges, advanced moderation, analytics, webhooks, and AI."
     },
     {
-      "slug": "integrations",
       "name": "Integrations",
-      "description": "Gate spaces with MemberPress, Paid Memberships Pro, WooCommerce, LearnDash, and Tutor LMS, and connect BuddyPress and FluentCommunity.",
-      "order": 10
+      "folder": "integrations",
+      "description": "Gate spaces with MemberPress, Paid Memberships Pro, WooCommerce, LearnDash, and Tutor LMS, and connect BuddyPress and FluentCommunity."
     },
     {
-      "slug": "admin-settings",
       "name": "Admin Settings",
-      "description": "Configure permissions, email, appearance, SEO, anti-spam, access control, and the activity log from wp-admin.",
-      "order": 11
+      "folder": "admin-settings",
+      "description": "Configure permissions, email, appearance, SEO, anti-spam, access control, and the activity log from wp-admin."
     },
     {
-      "slug": "migration",
       "name": "Migration",
-      "description": "Import your existing forum from bbPress, wpForo, or Asgaros Forum without losing topics, replies, or members.",
-      "order": 12
+      "folder": "migration",
+      "description": "Import your existing forum from bbPress, wpForo, or Asgaros Forum without losing topics, replies, or members."
     },
     {
-      "slug": "why-jetonomy",
       "name": "Why Jetonomy",
-      "description": "How Jetonomy compares to bbPress, wpForo, Asgaros Forum, and other community platforms, and how it scales to communities with thousands of topics.",
-      "order": 13
+      "folder": "why-jetonomy",
+      "description": "How Jetonomy compares to bbPress, wpForo, Asgaros Forum, and other community platforms, and how it scales to communities with thousands of topics."
     },
     {
-      "slug": "troubleshooting",
       "name": "Troubleshooting",
-      "description": "Fix a member who cannot post, a community page that 404s, email that is not arriving, or an integration that stopped granting access - plus every Jetonomy error message and what it means.",
-      "order": 14
+      "folder": "troubleshooting",
+      "description": "Fix a member who cannot post, a community page that 404s, email that is not arriving, or an integration that stopped granting access - plus every Jetonomy error message and what it means."
     },
     {
-      "slug": "faq",
       "name": "FAQ",
-      "description": "Quick answers to the most common questions about Jetonomy and Jetonomy Pro, grouped by topic.",
-      "order": 15
+      "folder": "faq",
+      "description": "Quick answers to the most common questions about Jetonomy and Jetonomy Pro, grouped by topic."
     },
     {
-      "slug": "developer-guide",
       "name": "Developer Guide",
-      "description": "Extend Jetonomy with the REST API, hooks, WP-CLI, blocks, shortcodes, and template overrides.",
-      "order": 16
+      "folder": "developer-guide",
+      "description": "Extend Jetonomy with the REST API, hooks, WP-CLI, blocks, shortcodes, and template overrides."
     }
   ]
 }

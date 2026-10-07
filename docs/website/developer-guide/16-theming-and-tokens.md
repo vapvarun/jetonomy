@@ -1,3 +1,5 @@
+# Theming and Design Tokens
+
 Jetonomy uses a single set of CSS custom properties - the `--jt-*` token system - to control every colour, radius, and font across the community UI. All tokens are declared in one place, adopt the active theme's own brand colour automatically, and can be overridden from multiple layers: the admin accent/palette fields, the `jetonomy_dynamic_css` filter, or a child-theme stylesheet. This page explains the full layering chain.
 
 **Source references:**

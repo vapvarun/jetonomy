@@ -6,7 +6,7 @@ order: 1
 
 Spaces are the discussion areas inside your community - each one has its own topic listing, member list, and settings. This guide shows you how to create, configure, and manage them.
 
-![Admin space editor with name, description, and settings fields](../images/admin-space-edit.png)
+![Admin space editor with name, description, and settings fields](../images/admin-space-edit.webp)
 
 ## What You Will Learn
 
@@ -66,7 +66,7 @@ the space to the top.
 
 **Visibility** - Controls who can see the space and its content. Options: Public, Private, or Hidden. See [Membership & Join Policies](03-membership-policies.md) for details.
 
-**Join Policy** - Controls how members gain access. Options: Open, Approval Required, or Invite Only.
+**Join Policy** - Controls how members gain access. Options: Open, Requires Approval, or Invite Only.
 
 > **Defaults:** if you leave Visibility and Join Policy untouched, a new space is **Public + Open** - anyone can find, read, and join it. Change them for private or invite-only spaces. Note that Hidden visibility always forces Invite Only; see [Membership & Join Policies](03-membership-policies.md).
 

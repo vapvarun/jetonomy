@@ -1,3 +1,5 @@
+# Coming from BuddyPress or BuddyBoss
+
 A reference for developers who know BuddyPress or BuddyBoss and want to understand how Jetonomy maps to those concepts. This page covers concept-level differences, API equivalents for common tasks, and an honest account of where no equivalent exists.
 
 If you want to run Jetonomy alongside an active BuddyPress install, start with the [BuddyPress Integration](./07-buddypress-integration.md) developer reference, which covers the coexistence layer (group-to-space pairing, member sync, activity broadcast, and the comment-to-reply bridge).

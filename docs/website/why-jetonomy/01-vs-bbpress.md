@@ -1,6 +1,8 @@
+# Jetonomy vs bbPress
+
 How Jetonomy compares to bbPress - and why communities are switching to a modern forum experience.
 
-![Jetonomy community home page with modern UI and space listings](../images/community-home.png)
+![Jetonomy community home page with modern UI and space listings](../images/community-home.webp)
 
 ## What You Will Learn
 
@@ -44,7 +46,7 @@ bbPress relies entirely on WordPress roles. You either trust someone to moderate
 
 Jetonomy's trust level system automatically promotes members as they contribute. New users start restricted. Active, helpful members gradually earn the ability to edit, moderate, and manage - without any manual role changes.
 
-![A trust-level badge shown next to a member's name on a reply](../images/why-jetonomy/trust-level-badge.png)
+![A trust-level badge shown next to a member's name on a reply](../images/why-jetonomy/trust-level-badge.webp)
 
 ### Modern User Experience
 

@@ -1,8 +1,10 @@
+# Sensei LMS
+
 Connect Sensei LMS course enrollment to Jetonomy spaces - students get a dedicated discussion area when enrolled, and lose access when withdrawn.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](images/integrations-settings.png)
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](../images/admin-integrations.webp)
 
 > Sensei LMS works exactly like the other LMS integrations. The course picker, the **Sync Members** button, and the Auto-Create card are shown in the [LearnDash guide](04-learndash.md), which is the lead LMS reference for this section.
 

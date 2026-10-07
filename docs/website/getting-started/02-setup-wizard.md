@@ -8,7 +8,7 @@ order: 2
 
 After you activate Jetonomy, a three-step wizard walks you through the only decisions you need to make before your community goes live. The whole process takes about two minutes.
 
-![Jetonomy setup wizard with step-by-step configuration](../images/setup-wizard.png)
+![Jetonomy setup wizard with step-by-step configuration](../images/setup-wizard.webp)
 
 ## What You Will Learn
 
@@ -18,13 +18,13 @@ After you activate Jetonomy, a three-step wizard walks you through the only deci
 
 ## Opening the Wizard
 
-Click the blue notice at the top of your WordPress dashboard, or go to **Jetonomy → Dashboard** and click **Launch Setup Wizard**.
+The wizard opens automatically the first time you activate Jetonomy. To open it again, go to **Jetonomy → Dashboard** and click **Run Setup Wizard** in the welcome notice.
 
-The wizard runs in a full-screen overlay. You can close it at any time. Your progress is saved, and you can return to finish it later.
+That notice only shows until setup is complete and your community has no content. The wizard is its own page (`admin.php?page=jetonomy-setup`), not an overlay.
 
 ## Step 1: Community URL
 
-![Setup wizard Step 1: the community URL slug field with a default-space-type selector below it](../images/getting-started/setup-wizard-step-1-url.png)
+![Setup wizard Step 1: the community URL slug field with a default-space-type selector below it](../images/getting-started/setup-wizard-step-1-url.webp)
 
 Choose the slug where your community will live on your site.
 
@@ -36,14 +36,14 @@ The default is `community`, which gives you `yoursite.com/community/`. You can c
 | `forum` | `yoursite.com/forum/` |
 | `hub` | `yoursite.com/hub/` |
 
-**Default space type:** Also on this screen, choose the default type for new spaces you create. Your options are:
+**Default Community Type:** Also on this screen, choose the default type for new spaces you create. Your options are:
 
-- **Forum** - open-ended threaded discussion
-- **Q&A** - questions with votable answers; the best answer can be marked accepted
-- **Ideas** - feature requests and votes with a status-lane roadmap
-- **Feed** - short-form cards for status updates, introductions, and sharing work
+- **Forum** - threaded discussions, replies, topics
+- **Q&A** - questions, answers, accepted solution
+- **Ideas** - feature requests, voting, planned, in progress, shipped and declined roadmap lanes
+- **Show & Tell** - short-form feed for status updates, screenshots, and quick wins (called **Feed** elsewhere in Jetonomy)
 
-You can create spaces of any type regardless of what you choose here. This setting just controls the default when you click "Add Space" later.
+You can create spaces of any type regardless of what you choose here. This setting just controls the type that is preselected when you click **Add New** on **Jetonomy → Spaces** later.
 
 > **Tip:** You can change your community URL slug later in **Jetonomy → Settings → General**. Jetonomy automatically flushes permalink rules when you save.
 
@@ -51,7 +51,7 @@ You can create spaces of any type regardless of what you choose here. This setti
 
 ## Step 2: First Space
 
-![Setup wizard Step 2: the choice between Path A (create your first space) and Path B (load sample data)](../images/getting-started/setup-wizard-step-2-first-space.png)
+![Setup wizard Step 2: the choice between Path A (create your first space) and Path B (load sample data)](../images/getting-started/setup-wizard-step-2-first-space.webp)
 
 This step gets real content into your community so it is ready to share the moment you finish. Choose the path that fits where you are right now.
 
@@ -59,26 +59,27 @@ This step gets real content into your community so it is ready to share the mome
 
 Choose this if you are setting up a production site and want to start with your own content.
 
-1. Enter a name for your first space (e.g., "General Discussion").
-2. The space uses the default type you picked in Step 1 (**Forum**, **Q&A**, **Ideas**, or **Feed**). You can change a space's type any time under **Jetonomy → Spaces → Edit**.
-3. Click **Create Space**.
+1. Enter a **Category Name** (the default is "General"). Categories group related spaces together.
+2. Enter a **Space Name** (the default is "Community Discussion") and an optional **Space Description**.
+3. The space uses the default type you picked in Step 1. You can change a space's type any time under **Jetonomy → Spaces → Edit**.
+4. Click **Create Space**.
 
-Your space is created and visible immediately after you finish the wizard.
+Your space is created as Public with an Open join policy, and it is visible immediately after you finish the wizard.
 
 ### Path B: Load Sample Data
 
-Choose this if you want to try Jetonomy's features before committing to a structure.
+Choose this if you want to try Jetonomy's features before committing to a structure. Click the **Create sample data instead** button under the form instead of **Create Space**.
 
-Jetonomy seeds your site with a complete, realistic community:
+Jetonomy imports a demo community into your site:
 
-- **Four categories** - Start Here, Product & Engineering, Community, and Help & Support
-- **A full set of spaces across all four types** - Forum, Q&A, Ideas, and Feed - so you can see how each type behaves (for example, "Feature Requests" is an Ideas space with a roadmap, "Bug Reports" is a Q&A space with accepted answers, and "Announcements" is a Feed space)
+- **Categories** to group the spaces
+- **Spaces across all four types** - Forum, Q&A, Ideas, and Feed - so you can see how each type behaves
 - **Demo users** with realistic avatars, trust level badges, and posting history
 - **Sample posts and replies** - enough content to see voting, accepted answers, tags, and notifications working in context
 
 This lets you experience the full community interface as a regular member would see it, without writing any content yourself.
 
-When you are ready to go live, click **Remove Demo Data** on the Jetonomy dashboard. Every demo post, reply, space, category, and user record is deleted in a single operation. Any real content you added alongside the demo data is preserved.
+When you are ready to go live, go to **Jetonomy → Dashboard** and click **Remove All Demo Data** on the **Demo Data Active** card. Every demo post, reply, space, category, and user record is deleted in a single operation. Any real content you added alongside the demo data is preserved. If you skipped the sample data, the same card has an import button so you can add it later.
 
 > **Note:** Demo data is tracked internally via a `jetonomy_demo_data` record. Removal is precise and does not affect any content you created yourself.
 
@@ -86,8 +87,8 @@ When you are ready to go live, click **Remove Demo Data** on the Jetonomy dashbo
 
 The final screen confirms your community is live and gives you two quick links:
 
-- **Visit your community** - opens `yoursite.com/community/` in a new tab so you can see the frontend immediately.
-- **Go to admin dashboard** - takes you to **Jetonomy → Dashboard** where you can manage spaces, moderate content, and configure settings.
+- **Visit Community** - opens `yoursite.com/community/` in a new tab so you can see the frontend immediately.
+- **Go to Dashboard** - takes you to **Jetonomy → Dashboard** where you can manage spaces, moderate content, and configure settings.
 
 Everything you configured in the wizard can be changed later:
 

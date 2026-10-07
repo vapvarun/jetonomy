@@ -6,7 +6,7 @@ order: 4
 
 Each space can override the global Jetonomy defaults with its own settings. This page is a complete reference for every per-space option, how it interacts with global settings, and how invite links work.
 
-![Admin space editor showing per-space configuration options](../images/admin-space-edit.png)
+![Admin space editor showing per-space configuration options](../images/admin-space-edit.webp)
 
 ## What You Will Learn
 
@@ -159,7 +159,7 @@ Invite links let you bring specific people into a space without opening up gener
 
 **From the front-end:** open the space **Members** page, find the **Invite links** panel, and generate a link. You can copy or revoke any existing link from the same panel.
 
-![The Invite links panel on the front-end space Members page, with Max uses and Expires fields, a Generate invite link button, and an existing link showing its usage count alongside Copy and Revoke buttons](../images/space-members-invite-panel.png)
+![The Invite links panel on the front-end space Members page, with Max uses and Expires fields, a Generate invite link button, and an existing link showing its usage count alongside Copy and Revoke buttons](../images/space-members-invite-panel.webp)
 
 **From wp-admin:**
 

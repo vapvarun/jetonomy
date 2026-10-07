@@ -1,6 +1,8 @@
+# Built to Scale
+
 How Jetonomy is built to handle communities of any size - from 10 members to 100,000+.
 
-![Space page with sidebar showing topic listings and member activity](../images/space-with-sidebar.png)
+![Space page with sidebar showing topic listings and member activity](../images/space-with-sidebar.webp)
 
 ## What You Will Learn
 

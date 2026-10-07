@@ -1,6 +1,8 @@
+# Jetonomy vs wpForo
+
 How Jetonomy compares to wpForo - two modern forum plugins with different approaches.
 
-![Jetonomy Q&A space showing an accepted-answer callout - a feature wpForo's basic question/answer mode does not offer](../images/why-jetonomy/qa-accepted-answer.png)
+![Jetonomy Q&A space showing an accepted-answer callout - a feature wpForo's basic question/answer mode does not offer](../images/why-jetonomy/qa-accepted-answer.webp)
 
 ## What You Will Learn
 
@@ -44,7 +46,7 @@ wpForo uses manual user groups (similar to WordPress roles). You create groups, 
 
 Jetonomy automates this entirely. New members start restricted and earn trust through participation. The community moderates itself as members advance through trust levels. You configure the thresholds once and the system handles promotions automatically.
 
-![A trust-level badge shown next to a member's name on a reply](../images/why-jetonomy/trust-level-badge.png)
+![A trust-level badge shown next to a member's name on a reply](../images/why-jetonomy/trust-level-badge.webp)
 
 ### Invisible Anti-Spam
 

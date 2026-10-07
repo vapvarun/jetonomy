@@ -6,7 +6,7 @@ order: 1
 
 A topic is the primary unit of discussion in Jetonomy - every conversation, question, idea, or update starts here. This guide walks through everything that happens from the moment a member clicks "New Post" to when their topic goes live.
 
-![New post form with title, content editor, tags, and publish options](../images/new-post-form.png)
+![New post form with title, content editor, tags, and publish options](../images/new-post-form.webp)
 
 ## What You Will Learn
 

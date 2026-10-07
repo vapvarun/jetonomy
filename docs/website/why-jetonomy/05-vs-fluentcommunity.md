@@ -1,6 +1,8 @@
+# Jetonomy vs FluentCommunity
+
 How Jetonomy compares to other community platforms - FluentCommunity, Discourse, and BuddyBoss forums.
 
-![Jetonomy community home page with modern spaces, voting, and trust-level badges](../images/community-home.png)
+![Jetonomy community home page with modern spaces, voting, and trust-level badges](../images/community-home.webp)
 
 ## What You Will Learn
 

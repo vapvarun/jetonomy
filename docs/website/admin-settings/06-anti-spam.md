@@ -1,6 +1,8 @@
+# Anti-Spam
+
 The Anti-Spam tab lets you add invisible bot protection to post and reply submission - without disrupting the experience for legitimate members.
 
-![Anti-spam settings with provider selection, API keys, and score threshold](../images/admin-antispam.png)
+![Anti-spam settings with provider selection, API keys, and score threshold](../images/admin-antispam.webp)
 
 ## What You Will Learn
 
@@ -20,12 +22,12 @@ Members at Trust Level 2 or above are exempt from all anti-spam checks. Admins a
 ## Choosing a Provider
 
 **Setting:** `captcha_provider`
-**Default:** None (`none`)
-**Options:** None (`none`), Google reCAPTCHA v3 (`recaptcha_v3`), Cloudflare Turnstile (`turnstile`)
+**Default:** Disabled (`none`)
+**Options:** Disabled (`none`), Google reCAPTCHA v3 (invisible) (`recaptcha_v3`), Cloudflare Turnstile (privacy-friendly) (`turnstile`)
 
 | Provider | How It Works | User Visibility |
 |---|---|---|
-| None | No spam protection | - |
+| Disabled | No CAPTCHA protection | - |
 | Google reCAPTCHA v3 | Score-based, no user interaction | Invisible (small badge) |
 | Cloudflare Turnstile | Smart challenge, no image puzzle | Invisible (small badge) |
 

@@ -18,7 +18,7 @@ Jetonomy can handle Login, Register, and Forgot Password right inside your commu
 
 ## Where the Forms Appear
 
-![The Jetonomy Login block rendered inline on a page, showing the Login, Register, and Lost Password tabs](../images/getting-started/login-block-tabs.png)
+![The Jetonomy Login block rendered inline on a page, showing the Login, Register, and Lost Password tabs](../images/getting-started/login-block-tabs.webp)
 
 In-page auth is delivered by the **Login block** (`wp:jetonomy/login`). Place the block on any page or template, and it renders Login, Register, and Lost Password tabs inline, styled to match your community. The forms submit to Jetonomy's own `/auth/*` REST endpoints, so a visitor signs in or registers without ever leaving the page the block is on.
 
@@ -91,7 +91,7 @@ The auth surface uses the same `--jt-*` design tokens as the rest of Jetonomy. T
 
 ### Light Auth Surface in Dark Mode
 
-![The Login block staying light while the surrounding community page is in dark mode](../images/getting-started/login-block-light-in-dark-mode.png)
+![The Login block staying light while the surrounding community page is in dark mode](../images/getting-started/login-block-light-in-dark-mode.webp)
 
 There's one intentional exception: the Login block stays in light mode even when the rest of your community is in dark mode. This is a deliberate UX choice. Sign-in forms in dark mode are statistically harder to read and easier to mistype, especially on mobile. Keeping the auth surface light maintains form readability where it matters most: at the point of conversion.
 

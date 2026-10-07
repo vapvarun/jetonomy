@@ -1,3 +1,5 @@
+# Extend the REST API
+
 Jetonomy's REST API lives at `jetonomy/v1`. This page covers three extension points: adding fields to an existing response via the `jetonomy_rest_prepare_*` filters, registering a new endpoint in the same namespace, and hooking into the content moderation intercept `jetonomy_check_content`.
 
 **Source references:**

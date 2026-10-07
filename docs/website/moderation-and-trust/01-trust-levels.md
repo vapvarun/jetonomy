@@ -1,6 +1,8 @@
+# Trust Levels
+
 Jetonomy's trust system automatically promotes reliable members to higher privilege levels as they earn reputation - so you spend less time manually managing who can do what, and your most active members get recognized for their contributions.
 
-![Permissions settings with trust level thresholds and promotion rules](../images/admin-permissions.png)
+![Permissions settings with trust level thresholds and promotion rules](../images/admin-permissions.webp)
 
 ## What You Will Learn
 
@@ -27,25 +29,35 @@ Promotion to levels 1-3 is based on a combination of activity stats, not a singl
 
 ## What Each Level Unlocks
 
-Trust levels expand what a member can do without moderator intervention.
+Trust levels only change a few things. What a member can do day to day comes from their WordPress role capabilities and their space role, not from their trust level. Here is what trust level actually controls, and what it does not.
 
 | Capability | TL0 | TL1 | TL2 | TL3 | TL4 | TL5 |
 |------------|-----|-----|-----|-----|-----|-----|
 | Create topics | Yes | Yes | Yes | Yes | Yes | Yes |
 | Post replies | Yes | Yes | Yes | Yes | Yes | Yes |
 | Flag content | Yes | Yes | Yes | Yes | Yes | Yes |
-| Upload images | No | Yes | Yes | Yes | Yes | Yes |
-| Edit / delete own posts | No | Yes | Yes | Yes | Yes | Yes |
-| Daily post and rate limit lifted | No | Yes | Yes | Yes | Yes | Yes |
+| Upload images | Yes | Yes | Yes | Yes | Yes | Yes |
+| Edit / delete own posts | Yes | Yes | Yes | Yes | Yes | Yes |
+| Free of the daily post, reply and vote limits | No | Yes | Yes | Yes | Yes | Yes |
 | Skip CAPTCHA | No | No | Yes | Yes | Yes | Yes |
-| Create new spaces | No | No | Yes | Yes | Yes | Yes |
-| Recategorize and rename others' topics | No | No | No | Yes | Yes | Yes |
-| Moderate content and manage members | No | No | No | No | Yes | Yes |
-| Manage settings, categories, and analytics | No | No | No | No | No | Yes |
+| Edit others' topics, move, close and pin topics | See below | See below | See below | Yes, if the role allows it | Yes, if the role allows it | Yes, if the role allows it |
 
-Each level adds to the one below it - a Trusted member (TL3) keeps everything TL1 and TL2 unlocked and gains the recategorize/rename abilities on top. Note that the higher levels are not just lifted limits: TL2 members can start their own spaces, TL3 members can tidy up the category and titles of any topic, and TL4/TL5 members effectively act as community staff (moderation, member management, and - at TL5 - settings, categories, and analytics).
+**Controlled by trust level**
 
-Space moderators and WordPress admins always have full capabilities regardless of trust level.
+- **Daily limits.** Brand-new TL0 accounts have daily caps on topics, replies and votes. TL1 and above have none. Administrators and moderators are never limited.
+- **CAPTCHA.** TL2 and above skip the CAPTCHA check.
+- **Edit, move, close and pin others' topics.** A role that holds these capabilities (Editor and above by default) also needs TL3. Space Moderators, Space Admins and WordPress administrators are not held to this.
+
+**Not controlled by trust level**
+
+- **Uploads and editing or deleting your own posts.** Every member's role gets the capabilities by default, so every trust level can do them. To change this, edit the role in [Role Capabilities](../admin-settings/18-role-capabilities.md).
+- **Moderation.** Trust level never makes someone a moderator. Moderating needs the `jetonomy_moderate` capability (Editor and above by default) or a **Moderator** or **Admin** role in the space. TL4 ("Leader") and TL5 ("Moderator") are names only. Promoting a member to TL4 or TL5 does not give them moderation tools, access to the moderation queue, or any admin screen.
+- **Managing settings, categories and analytics.** These need the matching capabilities, which Administrators hold. TL5 does not grant them.
+- **Creating spaces.** Front-end space creation follows the **Front-end space creation** role list in **Jetonomy → Settings → General**. Trust level does not unlock it. The permission engine also lists TL4 plus the `jetonomy_create_spaces` capability as a requirement for programmatic checks, but the front-end form and the REST route do not use it.
+
+The **Unlocks** column on the Permissions settings screen is a summary of each level's intent. Use the table above as the source of truth for what is enforced.
+
+Space Moderators and Space Admins can moderate inside their own space regardless of trust level. WordPress administrators bypass all of these checks.
 
 > **Note:** "Rate limit lifted" at TL1 refers to the per-day posting caps that apply to brand-new (TL0) accounts - 3 topics, 10 replies, and 5 votes per day by default. Those caps and how to tune them are covered in [Anti-Spam Protection → Rate Limiting for New Members](04-anti-spam.md#rate-limiting-for-new-members).
 
@@ -78,7 +90,7 @@ Demotion works the same way. If a member's reputation falls below a threshold (f
 
 > **Tip:** You can set a member's trust level directly from **Jetonomy → Users** in the WordPress admin. Find the user and click **Change Trust Level**, then pick the level. This is a manual override that sets the level immediately - useful for elevating a known expert or correcting an edge case.
 
-![Jetonomy Users admin page listing community members with per-row Change Trust Level and Ban / Unban controls](../images/admin-users.png)
+![Jetonomy Users admin page listing community members with per-row Change Trust Level and Ban / Unban controls](../images/admin-users.webp)
 
 The **Jetonomy → Users** page is the central place to manage individual members: each row shows the member's trust level, post and reputation stats, and per-row controls to **Change Trust Level** and to **Ban / Unban** (covered in [Banning Members](05-banning-members.md)).
 
@@ -107,7 +119,7 @@ Each trust level has a colored badge that appears on a member's avatar across to
 
 ## Why Trust-Based Moderation Beats Manual Role Assignment
 
-In a traditional forum, you manually decide who is a "trusted" member. That does not scale. With Jetonomy's trust system, your community self-selects. Members who contribute quality content earn their way to higher levels automatically. You only need to intervene in edge cases - banning bad actors or manually elevating a known expert to a higher level.
+In a traditional forum, you manually decide who is a "trusted" member. That does not scale. With Jetonomy's trust system, members who contribute quality content earn their way past the new-account limits and the CAPTCHA automatically. You only need to intervene in edge cases - banning bad actors, or assigning a known expert as a Space Moderator so they can moderate.
 
 ## For Developers
 

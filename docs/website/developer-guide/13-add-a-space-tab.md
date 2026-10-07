@@ -1,3 +1,5 @@
+# Add a Space Tab
+
 Add a custom tab to a space page using the `jetonomy_space_tabs` filter. The tab appears alongside Discussions (or Questions / Ideas / Posts), Roadmap, and Members; clicking it loads a route you register separately.
 
 ---

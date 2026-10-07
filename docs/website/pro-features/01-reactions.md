@@ -1,8 +1,10 @@
+# Reactions
+
 Add expressive emoji reactions to every post and reply - so members can respond instantly without writing a full reply.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Reaction chips below a community post](../images/pro-reactions.png)
+![Reaction chips below a community post](../images/pro-reactions.webp)
 ## What You Will Learn
 
 - How to enable Reactions for your community
@@ -20,11 +22,11 @@ Every post and every reply in your community shows a reaction strip. Members cli
 
 The reaction counts are displayed as chips directly below the post body. Each chip shows the emoji and the total count. Hovering a chip reveals the names of recent reactors.
 
-![The reaction strip on a post, showing the eight default emoji options a member can pick from](../images/pro-reactions-strip.png)
+![The reaction strip on a post, showing the eight default emoji options a member can pick from](../images/pro-reactions-strip.webp)
 ## Enabling Reactions
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
-2. Find **Reactions** and click **Enable**.
+2. Find **Reactions** and switch its toggle on.
 3. Reactions appear on all posts and replies immediately - no page-level configuration needed.
 
 > **Tip:** Enabling Reactions does not affect any existing posts. Historical content simply starts with zero reactions.
@@ -55,7 +57,7 @@ Different spaces have different tones. A Support space might not need a Celebrat
 3. Toggle individual emojis on or off for this space.
 4. Save. The change takes effect immediately for all posts in that space.
 
-![The Reactions tab inside a space's settings panel, with a per-emoji on/off toggle for that space](../images/pro-reactions-space-settings.png)
+![The Reactions tab inside a space's settings panel, with a per-emoji on/off toggle for that space](../images/pro-reactions-space-settings.webp)
 ## REST API
 
 The Reactions extension registers these endpoints under `jetonomy/v1`:

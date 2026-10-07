@@ -1,3 +1,5 @@
+# License
+
 The License tab is where you activate your Jetonomy Pro license key. Activating unlocks every Pro extension and turns on automatic updates. This tab appears only when Jetonomy Pro is installed and active.
 
 ## What You Will Learn

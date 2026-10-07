@@ -1,3 +1,5 @@
+# Add a Nav Item
+
 Add a link or button to Jetonomy's community top nav using the `jetonomy_header_nav_items` action - no template override needed.
 
 ---

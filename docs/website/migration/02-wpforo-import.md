@@ -1,6 +1,8 @@
+# wpForo Import
+
 Move your existing wpForo community into Jetonomy - forums, topics, replies, and user profiles - using the built-in wpForo importer.
 
-![Import tool with wpForo source selected and migration progress](../images/admin-import.png)
+![Import tool with wpForo source selected and migration progress](../images/admin-import.webp)
 
 > **New to migration?** Read the [Migration overview](00-overview.md) first - it explains how to read the import screen (stat previews, status badges, the progress tracker) and the backup rule that applies to every import.
 
@@ -64,7 +66,7 @@ wpForo and Jetonomy structure their data differently in a few key areas:
 
 1. Go to **Jetonomy → Import** in your WordPress admin.
 2. Select **wpForo** as the source.
-3. Click **Start Import**.
+3. Click **Import from wpForo**.
 
 The importer works through each board in batches (forums, topics, replies, likes, then profiles) and the progress bar advances as it goes. Very large wpForo databases are still best imported via WP-CLI to avoid browser timeouts.
 
@@ -72,7 +74,7 @@ The importer works through each board in batches (forums, topics, replies, likes
 
 **Always take a full database backup before you run the wpForo import** - that is your way to undo if you want to start over. There is no preview mode for wpForo: only the bbPress importer supports a true `--dry-run` that counts records without writing them. The wpForo importer always writes data, so a backup (not a dry run) is your safety net.
 
-> **Heads up:** The `--dry-run` flag is accepted on the `wp jetonomy import wpforo` command, but the wpForo importer does not act on it - it performs the real import either way. Do not use it expecting a preview.
+> **Heads up:** The `wp jetonomy import wpforo` command refuses the `--dry-run` flag with an error and imports nothing. Only the bbPress importer can preview.
 
 ## Estimated Import Times
 
@@ -97,7 +99,7 @@ wp --path="/path/to/wordpress" jetonomy import wpforo
 
 WP-CLI is the recommended way to import larger wpForo databases - it is not subject to browser timeouts and prints an `Imported / Skipped / Errors` summary when finished.
 
-> **Note:** The `--dry-run` flag is accepted by the command but is **not honored** by the wpForo importer - it will still write data. Take a backup first.
+> **Note:** `--dry-run` is refused for wpForo (only bbPress supports it). Take a backup first.
 
 ## Space Types After Import
 
@@ -108,7 +110,7 @@ All imported wpForo forums become standard **Forum** spaces in Jetonomy. wpForo 
 The importer preserves each board's read access instead of flattening everything to public. It reads the wpForo forum's `groups_can_view` setting:
 
 - A forum that **guests can read** imports as a **Public** space with an **Open** join policy - anyone can find and read it.
-- A forum that was **members-only** (guests are not in the allow-list) imports as a **Private** space with an **Approval Required** join policy - the content stays gated and new members are vetted, exactly as it was on wpForo. A members-only board is never opened up to the public by the import.
+- A forum that was **members-only** (guests are not in the allow-list) imports as a **Private** space with a **Requires Approval** join policy - the content stays gated and new members are vetted, exactly as it was on wpForo. A members-only board is never opened up to the public by the import.
 - When wpForo records no access signal at all, the space defaults to Public - the importer only tightens access when there is a clear restriction to preserve.
 
 > **For developers:** map access per site with the `jetonomy_import_space_visibility` filter. It receives the resolved `[ visibility, join_policy ]` array, the importer slug (`wpforo`), and the source forum row, so you can force every imported board private, whitelist specific boards to public, or apply your own rule. Any value the filter returns is validated against the allowed visibility and join-policy options before it is saved.

@@ -1,3 +1,5 @@
+# Abilities API
+
 Expose your community to AI agents and automation through the WordPress Abilities API - 19 free abilities plus 20 more with Pro, each enforcing the same permissions as the REST API.
 
 ## What You Will Learn

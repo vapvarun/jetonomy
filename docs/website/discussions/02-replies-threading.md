@@ -6,7 +6,7 @@ order: 2
 
 Replies are where conversations happen. Jetonomy's reply system supports threaded discussions, multiple sort orders, accepted answers in Q&A spaces, and efficient loading for threads with hundreds of contributions.
 
-![Single topic page with threaded replies and voting controls](../images/single-topic-replies.png)
+![Single topic page with threaded replies and voting controls](../images/single-topic-replies.webp)
 
 ## What You Will Learn
 
@@ -65,7 +65,7 @@ Sort preference is stored per-session - if you change it on one topic, it persis
 
 In Q&A spaces, the person who asked the question (the topic author) decides which reply is the accepted answer. This signals to everyone else that the question has been solved and surfaces the winning reply at the top of the thread.
 
-![Q&A question with an accepted answer pinned to the top, showing the green Accepted tag and the Accepted answer callout box](../images/discussions/accepted-answer.png)
+![Q&A question with an accepted answer pinned to the top, showing the green Accepted tag and the Accepted answer callout box](../images/discussions/accepted-answer.webp)
 
 ### Marking an Answer as Accepted
 

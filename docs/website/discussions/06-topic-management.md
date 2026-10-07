@@ -6,7 +6,7 @@ order: 6
 
 Space moderators have a full toolkit for organizing, curating, and controlling discussions. Every action in this guide requires moderator permission on the space where the topic lives - or site-wide admin access.
 
-![Admin moderation panel with content review and bulk action controls](../images/admin-moderation.png)
+![Admin moderation panel with content review and bulk action controls](../images/admin-moderation.webp)
 
 ## What You Will Learn
 
@@ -33,7 +33,7 @@ Use this when a topic was posted in the wrong space - for example, a bug report 
 
 1. Open the topic.
 2. Click the **...** menu at the top right of the topic.
-3. Select **Move Topic**.
+3. Select **Move**.
 4. A modal appears with a searchable space picker. Type to filter spaces by name.
 5. Select the destination space.
 6. Click **Move**.
@@ -49,7 +49,7 @@ All replies, votes, bookmarks, and subscriptions move with the topic. Nothing is
 Use this when two members post the same question or idea in the same space. Merging moves all replies from the source topic into the target topic and deletes the source.
 
 1. Open the topic you want to remove (the duplicate).
-2. Click the **...** menu and select **Merge Topic**.
+2. Click the **...** menu and select **Merge**.
 3. A modal appears with a search field. Search for the target topic by title.
 4. Select the target topic.
 5. Click **Merge**.
@@ -64,7 +64,7 @@ Use this when a reply inside a topic starts a new conversation that deserves its
 
 1. Find the reply you want to split.
 2. Click the **...** menu on that reply.
-3. Select **Split to New Topic**.
+3. Select **Split to Topic**. (The word "Topic" follows the name you have given topics in your community labels.)
 4. A modal appears asking for the new topic title.
 5. Enter the title and click **Split**.
 
@@ -103,7 +103,7 @@ To reopen a topic, click the **...** menu and select **Reopen Topic**.
 Deleting a topic moves it to trash. It disappears from the space listing and is no longer accessible to members. The space's post count decrements.
 
 1. Open the topic.
-2. Click the **...** menu and select **Delete Topic**.
+2. Click the **...** menu and select **Delete**.
 3. Confirm the deletion in the prompt.
 
 Only a moderator can bring a trashed topic back or remove it for good. Authors can trash their own topics but cannot restore or permanently delete them.

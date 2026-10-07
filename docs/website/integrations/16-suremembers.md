@@ -1,3 +1,5 @@
+# SureMembers
+
 Connect SureMembers access groups to Jetonomy spaces - when a member is granted an access group, Jetonomy Pro adds them to every linked space, and revoking the group removes them. Joining a space can also grant access groups back to the member, so the link runs both ways.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).

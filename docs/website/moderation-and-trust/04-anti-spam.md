@@ -1,6 +1,8 @@
+# Anti-Spam
+
 Spam is the fastest way to kill a community's quality. Jetonomy has multiple layers of protection that work silently in the background - your real members never know they are there.
 
-![Anti-spam settings with CAPTCHA provider selection and API key fields](../images/admin-antispam.png)
+![Anti-spam settings with CAPTCHA provider selection and API key fields](../images/admin-antispam.webp)
 
 ## What You Will Learn
 
@@ -30,14 +32,14 @@ Choose Cloudflare Turnstile if your community has members who are privacy-consci
 1. Go to [google.com/recaptcha](https://www.google.com/recaptcha/) and create a v3 site.
 2. Add your domain to the allowed domains list.
 3. Copy the **Site Key** and **Secret Key**.
-4. In **Jetonomy → Settings → Anti-Spam**, select **reCAPTCHA v3**, paste both keys, and click **Save**.
+4. In **Jetonomy → Settings → Anti-Spam**, set **Provider** to **Google reCAPTCHA v3 (invisible)**, paste both keys, and save. The default provider is **Disabled**, which turns CAPTCHA off.
 
 ## Setting Up Cloudflare Turnstile
 
 1. Log in to your Cloudflare dashboard and go to **Turnstile**.
 2. Add a site and set the widget mode to **Invisible**.
 3. Copy the **Site Key** and **Secret Key**.
-4. In **Jetonomy → Settings → Anti-Spam**, select **Cloudflare Turnstile**, paste both keys, and click **Save**.
+4. In **Jetonomy → Settings → Anti-Spam**, set **Provider** to **Cloudflare Turnstile (privacy-friendly)**, paste both keys, and save.
 
 > **Note:** After saving, Jetonomy automatically loads the CAPTCHA script on the post and reply forms. You do not need to add any code to your theme.
 
@@ -49,9 +51,11 @@ This means your most active, trusted members post without any friction while new
 
 ## Akismet Integration
 
-If the Akismet plugin is active on your site, Jetonomy sends every new post and reply through Akismet's spam detection API as a second layer of protection. Content that passes CAPTCHA but that Akismet marks as spam is held in the moderation queue rather than published.
+If the Akismet plugin is active on your site, Jetonomy sends every new post and reply through Akismet's spam detection API as a second layer of protection. Content that passes CAPTCHA but that Akismet marks as spam is saved with the **Spam** status rather than published. Members never see it. It does not go to the Awaiting approval queue.
 
-See the [Moderation Queue](03-moderation-queue.md) guide for how to review Akismet-held content.
+To review it, go to **Jetonomy → Content** in the WordPress admin and filter by **Spam**. If Akismet got it wrong, use the **Not Spam** row action to restore it. Site admins and space admins or moderators are never checked by Akismet.
+
+See the [Moderation Queue](03-moderation-queue.md) guide for how the review queue works.
 
 Akismet and CAPTCHA work independently. You can run both at the same time for maximum protection, or use either one alone.
 
@@ -75,9 +79,9 @@ Trust Level 0 members (brand-new accounts) are subject to posting rate limits re
 | Replies per day | 10 |
 | Votes per day | 5 |
 
-Limits reset after 24 hours. Members at Trust Level 1 and above are exempt from all rate limits.
+Limits reset after 24 hours. Members at Trust Level 1 and above are exempt from all rate limits, as are administrators and moderators.
 
-You can adjust the default thresholds at **Jetonomy → Settings → Permissions**. Setting a limit to 0 disables it for that trust level.
+You can adjust the thresholds at **Jetonomy → Settings → Permissions**, in the **Rate Limits for New Users (Level 0)** card: **Posts per Day**, **Replies per Day** and **Votes per Day**. The lowest value you can enter is 1. You cannot switch these limits off. To remove the limit for a member, raise them to Trust Level 1.
 
 > **Tip:** Rate limiting is your best defense against coordinated spam from many new accounts. Even if a bot farm passes CAPTCHA, each account can only post 3 topics before hitting the daily limit.
 

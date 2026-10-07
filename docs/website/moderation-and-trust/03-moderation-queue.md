@@ -1,6 +1,8 @@
+# Moderation Queue
+
 The moderation queue is your single dashboard for everything that needs human review - posts waiting for approval, flagged content, and items caught by spam filters. You can action everything from one page without digging through individual topics.
 
-![Admin moderation queue with pending items and per-row action controls](../images/admin-moderation.png)
+![Admin moderation queue with pending items and per-row action controls](../images/admin-moderation.webp)
 
 ## What You Will Learn
 
@@ -21,6 +23,8 @@ There are two moderation surfaces, and they do not show the same tabs.
 - **Front end** - `/community/mod/`, plus a per-space queue at
   `/community/s/{slug}/mod/`. This is where **space moderators** work; they do
   not need access to the WordPress dashboard at all.
+
+Who can open them depends on the `jetonomy_moderate` capability (Editor and above by default) or a **Moderator** or **Admin** role in a space. A member's [trust level](01-trust-levels.md), including TL4 and TL5, never grants access to either queue. A space moderator who looks after exactly one space is sent straight from `/community/mod/` to that space's queue. One who looks after two or more spaces sees the `/community/mod/` page limited to their own spaces. Only site administrators and `jetonomy_moderate` holders see the queue for every space.
 
 The sections below describe the wp-admin tabs. See
 [The front-end queue](#the-front-end-queue) for what a space moderator sees.
@@ -105,7 +109,7 @@ In wp-admin the queue shows content from all spaces by default. Use the **Space*
 
 Space moderators who do not have global admin access see only their own spaces' items when they visit `/community/mod/`. They do not see content from spaces they do not moderate.
 
-![Frontend moderation dashboard at /community/mod/ as a space moderator sees it, scoped to their own spaces](../images/frontend-mod-queue.png)
+![Frontend moderation dashboard at /community/mod/ as a space moderator sees it, scoped to their own spaces](../images/frontend-mod-queue.webp)
 
 > **Fixed in 1.4.1:** moderators of multiple spaces now see every queue they own when they visit `/community/mod/`. Earlier versions could redirect a multi-space moderator away from the dashboard if access checks ran in the wrong order. If you have moderators who report "I can see one space's queue but not the others," update to 1.4.1 and the dashboard will load all of them.
 

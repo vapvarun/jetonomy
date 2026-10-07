@@ -1,3 +1,5 @@
+# Adapters
+
 Jetonomy uses a universal adapter pattern for every external integration point. Instead of hard-coding a dependency on a specific search engine, email provider, membership plugin, or AI provider, each integration is represented by a PHP interface. You implement the interface, register your adapter, and Jetonomy uses it everywhere.
 
 All adapters are managed through the static `Adapter_Registry` class (`includes/adapters/class-adapter-registry.php`).

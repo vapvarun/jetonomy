@@ -12,9 +12,9 @@ A first-time visitor who lands on your community home page sees a welcome banner
 
 The banner has three parts:
 
-**Heading** - A short introductory line. The default reads "Welcome to [community title]", where the title comes from your community name in settings.
+**Heading** - A short introductory line. The default reads "Welcome to [community title]", where the title comes from the **Community Title** field in **Jetonomy → Settings**.
 
-**Subheading** - One sentence of context. If you have set a community tagline under **Jetonomy → Settings → General**, it appears here. If you have not set a tagline, the default reads: "Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the spaces you care about."
+**Subheading** - One sentence of context. There is no settings field for it. The default reads: "Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the spaces you care about."
 
 **Community pulse** - Three live numbers drawn from your community data: total member count, total post count, and posts published this week. The "this week" figure only appears when it is greater than zero, so a brand-new community with no recent activity shows only the member and post counts. The pulse numbers are cached for one hour so the query does not run on every page view.
 
@@ -26,7 +26,7 @@ Only signed-out visitors see the banner. Logged-in members go straight to the sp
 
 ## Customise
 
-The heading and subheading are both filterable. Add the following to your theme's `functions.php` or a site-specific plugin to override them:
+You cannot change the banner text from the admin screens. The heading and subheading are both filterable. Add the following to your theme's `functions.php` or a site-specific plugin to override them:
 
 ```php
 // Override the welcome heading.
