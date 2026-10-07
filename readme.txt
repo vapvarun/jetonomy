@@ -295,6 +295,7 @@ Safer forum imports, a complete trash workflow for moderators, faster pages on l
 * Improve  - Searches for very short words match topic titles only, so they stay fast on large communities.
 * Improve  - Community pages load the smaller minified stylesheets and scripts.
 * Improve  - A visitor opening a space invite without an account is offered Create free account, and returns to the invite after signing up.
+* Fix      - Importing the demo community no longer runs out of memory on sites running Query Monitor, and an import that stops part way can still be removed.
 * Fix      - wpForo and Asgaros re-imports no longer miss topics posted to an already-imported forum, and Asgaros no longer reports database errors on a re-run.
 * Fix      - bbPress imports keep sticky topics and threaded replies, and re-running the import restores threading on replies an earlier version imported flat.
 * Fix      - Imported BuddyPress group forums are linked to their group, and the group's members get access to the space.

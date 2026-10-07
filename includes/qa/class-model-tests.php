@@ -2262,12 +2262,27 @@ class Model_Tests {
 	private function test_anonymous_author_masked_everywhere(): void {
 		global $wpdb;
 		$space = $wpdb->get_row( "SELECT id, slug FROM " . table( 'spaces' ) . " WHERE visibility = 'public' AND status = 'active' ORDER BY id LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-		$author = (int) $wpdb->get_var( "SELECT ID FROM {$wpdb->users} WHERE ID > 1 ORDER BY ID DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		if ( ! $space || ! $author ) {
-			$this->skip( 'AX: anonymous author masking', 'needs a public space and a second user' );
+		if ( ! $space ) {
+			$this->skip( 'AX: anonymous author masking', 'needs a public space' );
 			return;
 		}
-		$real = \Jetonomy\user_display_name( $author );
+		// A throwaway author with a unique name: an existing member may have
+		// signed topics in the same space, and their name showing beside those
+		// is correct, not a leak.
+		$token  = wp_generate_password( 8, false, false );
+		$author = wp_insert_user(
+			[
+				'user_login'   => 'jt_qa_ax_' . strtolower( $token ),
+				'user_email'   => 'jt-qa-ax-' . strtolower( $token ) . '@example.invalid',
+				'user_pass'    => wp_generate_password( 24 ),
+				'display_name' => 'QA Anon ' . $token,
+			]
+		);
+		if ( is_wp_error( $author ) ) {
+			$this->skip( 'AX: anonymous author masking', 'could not create a test author' );
+			return;
+		}
+		$real   = \Jetonomy\user_display_name( $author );
 		$id   = Post::create(
 			[
 				'space_id'     => (int) $space->id,
@@ -2295,6 +2310,8 @@ class Model_Tests {
 		} finally {
 			wp_set_current_user( $previous );
 			Post::delete( (int) $id );
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+			wp_delete_user( $author );
 		}
 	}
 
