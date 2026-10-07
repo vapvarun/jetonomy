@@ -60,6 +60,12 @@ class Demo_Seeder {
 	 * @return array Manifest stored in `jetonomy_demo_data`.
 	 */
 	public static function import( int $admin_id ): array {
+		// One seed runs ~25k queries. Lift the admin memory limit, and stop
+		// Query Monitor keeping a backtrace for every one of them, which on its
+		// own pushed the request past 256MB (Basecamp 10375917700).
+		wp_raise_memory_limit( 'admin' );
+		do_action( 'qm/cease' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.NamingConventions.ValidHookName.UseUnderscores -- Query Monitor's hook.
+
 		self::remove();
 		UserProfile::find_or_create( $admin_id );
 		$demo = self::seed( $admin_id );
@@ -132,6 +138,7 @@ class Demo_Seeder {
 
 		$u             = self::create_users( $now );
 		$demo['users'] = array_values( $u );
+		self::checkpoint( $demo );
 
 		// login → id, with the administrator addressable as 'admin'.
 		$by_login          = $u;
@@ -206,6 +213,8 @@ class Demo_Seeder {
 				}
 			}
 		}
+
+		self::checkpoint( $demo );
 
 		// ── Posts + replies ──────────────────────────────────────────────────────
 
@@ -359,6 +368,7 @@ class Demo_Seeder {
 					$votable_replies[] = (int) $thread_reply_ids[ array_rand( $thread_reply_ids ) ];
 				}
 			}
+			self::checkpoint( $demo );
 		}
 
 		// ── Long-tail votes ───────────────────────────────────────────────────
@@ -377,6 +387,7 @@ class Demo_Seeder {
 		// ── Badges ─────────────────────────────────────────────────────────────
 
 		$demo['badges'] = self::seed_badges( $all_ids, $by_login, $now );
+		self::checkpoint( $demo );
 
 		// ── Pro data ───────────────────────────────────────────────────────────
 
@@ -1099,6 +1110,16 @@ class Demo_Seeder {
 		}
 
 		return $created_ids;
+	}
+
+	/**
+	 * Save what has been seeded so far, so a run that dies part way still
+	 * shows Remove demo data and can be cleaned up.
+	 *
+	 * @param array $demo Manifest built so far.
+	 */
+	private static function checkpoint( array $demo ): void {
+		update_option( 'jetonomy_demo_data', $demo, false );
 	}
 
 	/**
