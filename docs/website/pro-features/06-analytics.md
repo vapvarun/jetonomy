@@ -4,7 +4,7 @@ Understand what your community is doing, where it is growing, and who is driving
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Analytics dashboard showing charts and top contributor table](../images/pro-analytics.webp)
+![Community Analytics with post, reply, active user and vote totals, the activity trend, top spaces and top contributors](../images/pro-analytics.webp)
 ## What You Will Learn
 
 - How to access the Analytics dashboard
