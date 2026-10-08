@@ -40,7 +40,7 @@ Use the date range picker at the top right to select any custom range. Preset sh
 
 All charts and tables update instantly when you change the range.
 
-![The analytics date-range picker, showing the preset shortcuts (Last 7 days, Last 30 days, Last 90 days, This month, Last month) and the custom range option](../images/pro-analytics-date-filter.webp)
+![The period buttons on Community Analytics (7 Days, 30 Days, 90 Days) with Export CSV, above the totals for the selected period](../images/pro-analytics-date-filter.webp)
 ## Overview Metrics
 
 The top row shows four headline numbers for your selected range:
