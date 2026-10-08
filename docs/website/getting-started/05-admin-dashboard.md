@@ -8,7 +8,7 @@ order: 4
 
 The Jetonomy admin dashboard is your first stop after logging in to wp-admin. It shows a live snapshot of community health and gives you one-click access to the most common management tasks.
 
-![The Jetonomy admin dashboard: six stat cards across the top, the Recent Activity feed on the left, and the Quick Actions, Demo Data, and System Info panels in the right sidebar](../images/getting-started/admin-dashboard.webp)
+![The Jetonomy admin dashboard: six stat cards across the top, the Recent Activity feed on the left, and the Quick Actions and System Info panels in the right sidebar](../images/getting-started/admin-dashboard.webp)
 
 ## What You Will Learn
 

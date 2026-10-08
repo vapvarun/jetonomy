@@ -94,7 +94,7 @@ Still on the **Email** tab, the **Email Templates** card lets you edit emails wi
 
 Leave a field blank to keep the default.
 
-![Email settings with sender fields and notification toggles](../images/admin-email.webp)
+![Email settings with From name, From address, and notification type toggles](../images/admin-email.webp)
 
 ## Optional (Pro): Digest and reply by email
 

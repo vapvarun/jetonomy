@@ -4,7 +4,7 @@ Connect MemberPress membership levels to Jetonomy spaces - so paying members aut
 
 > **Available in Jetonomy free.** The MemberPress and Paid Memberships Pro adapters ship in the free plugin - you do not need Jetonomy Pro to gate spaces by these two membership plugins. (WooCommerce, Restrict Content Pro, and all LMS integrations require Jetonomy Pro.)
 
-![Jetonomy admin settings panel for configuring integrations](../images/admin-settings.webp)
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](../images/admin-integrations.webp)
 
 ## What You Will Learn
 
@@ -22,7 +22,6 @@ Jetonomy checks for MemberPress automatically on every page load. No configurati
 ## Setting Up an Access Rule
 
 This is the standard Access Rules flow that every membership and LMS integration in this section follows. The other integration guides link back here for the full walkthrough.
-
 
 1. Go to **Jetonomy → Spaces** and open the space you want to gate.
 2. Click the **Access Rules** tab.

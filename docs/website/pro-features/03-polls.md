@@ -81,8 +81,6 @@ Because of this, the total vote count on a multiple-choice poll can be higher th
 
 Enabling the extension adds a **Polls** submenu under the Jetonomy admin menu (`jetonomy-pro-polls`). It lists every poll in your community with its post, type, total votes, and close state, so you can review and close polls without opening each topic.
 
-![The Polls admin list page, showing every poll with its post, type, total votes, and close state](../images/pro-polls-admin.webp)
-
 ## REST API
 
 Polls registers these endpoints under `jetonomy/v1`:

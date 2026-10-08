@@ -4,7 +4,7 @@ Gate Jetonomy spaces by Paid Memberships Pro subscription level - with automatic
 
 > **Available in Jetonomy free.** The Paid Memberships Pro adapter ships in the free plugin - Jetonomy Pro is not required to gate spaces by PMPro levels.
 
-![Jetonomy admin settings showing integration configuration options](../images/admin-settings.webp)
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](../images/admin-integrations.webp)
 
 ## What You Will Learn
 
