@@ -73,6 +73,7 @@ $all_ai = \Jetonomy\Adapters\Adapter_Registry::get_all_ai();
 
 > **There is no realtime adapter.** Only membership, search, email, and AI adapters exist - four interfaces, four `register_*()` methods on `Adapter_Registry`, and no `register_realtime()`. Live updates (new replies, notification counts) are delivered by REST polling against the updates endpoint, not by a pluggable realtime backend. Older docs listed "real-time" among the adapter interfaces - that was never implemented. If you need push-based delivery, open an issue; do not implement the other adapter interfaces expecting a realtime seam to exist.
 
+
 The Registry returns `null` when no active adapter is found for a type - always null-check before calling methods.
 
 **Registration timing:** Register your adapters at `plugins_loaded`. Use priority 9 if you want your adapter to override a built-in default (e.g. replacing built-in search). Use priority 15 for additive adapters that do not need to override defaults (e.g. adding a new membership source):

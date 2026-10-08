@@ -8,6 +8,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 > The 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) are documented with usage examples on the dedicated **[Attachment Hooks](24-attachment-hooks.md)** page.
 
+
 ## Posts
 
 | Hook | What it does | Args | Source |

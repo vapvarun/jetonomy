@@ -22,6 +22,7 @@ Jetonomy Pro detects LearnDash automatically when both plugins are active. A **L
 
 ## Gating a Space by Course Enrollment
 
+
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LearnDash Course** from the rule type dropdown.
 3. Start typing the course name - a searchable dropdown shows all published LearnDash courses.
