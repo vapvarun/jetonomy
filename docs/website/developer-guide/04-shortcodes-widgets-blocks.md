@@ -2,6 +2,8 @@
 
 Jetonomy includes eight shortcodes, four classic widgets, and eight Gutenberg blocks so you can embed community content anywhere on your WordPress site - sidebars, pages, posts, or block-based layouts.
 
+![The jetonomy_compose_topic shortcode rendered on a regular WordPress page](../images/developer-guide/compose-topic-frontend.webp)
+
 ## What You Will Learn
 
 - How to use the eight built-in shortcodes and their attributes

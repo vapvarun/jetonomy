@@ -2,6 +2,8 @@
 
 Notifications keep your community members in the loop without requiring them to check back manually. Every relevant activity (replies, mentions, votes) surfaces instantly in the notification bell so members always know when something needs their attention.
 
+![The notifications page with All, Unread, Replies, Mentions, Votes and Badges tabs, Mark all as read and Settings](../images/notifications-full-page.webp)
+
 ![Notifications panel showing recent activity alerts and unread count](../images/notifications.webp)
 
 ## What You Will Learn

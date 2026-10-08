@@ -2,6 +2,10 @@
 
 Every member in your community has a public profile page that shows who they are, how much they contribute, and what they have been up to. Profiles build trust between members and give contributors the recognition they have earned.
 
+![Edit Profile with name fields, public display name, bio, avatar upload and the notification preferences grid](../images/edit-profile.webp)
+
+![A member profile with bio, reputation, topic and reply counts, badges, and tabs for topics, replies, votes, bookmarks and drafts](../images/profile-page.webp)
+
 ## What You Will Learn
 
 - What a member profile page shows
