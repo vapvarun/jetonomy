@@ -55,7 +55,7 @@ Members who have not voted see the options. Members who have voted see the live 
 
 Results display as horizontal percentage bars with the option label, the percentage, and the raw vote count. Bars fill in proportion to the leading option.
 
-![Voted poll results with horizontal percentage bars, each option's percentage and raw vote count, and the total vote tally below](../images/pro-polls-results.webp)
+![A poll on a topic after voting: each option as a bar with its percentage, and the total number of votes below](../images/pro-polls-results.webp)
 The total vote count appears below the bar chart. If the poll has a close date, a countdown shows how much time remains.
 
 ## Closing a Poll
