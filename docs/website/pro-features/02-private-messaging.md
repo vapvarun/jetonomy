@@ -4,7 +4,7 @@ Let members send direct messages to each other - one-on-one or in small groups -
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Messages inbox showing conversation list](../images/pro-messages-list.webp)
+![The Messages inbox with the conversation list on the left](../images/pro-messages-list.webp)
 ## What You Will Learn
 
 - How to enable Private Messaging
@@ -21,7 +21,7 @@ When members can message each other directly, your community becomes a platform 
 
 Private Messaging adds a dedicated inbox at `/community/messages/`. Members can start a new conversation with any other member, or create a group conversation with up to 20 participants. Each conversation is a persistent thread - messages appear in chronological order, and new messages are loaded automatically via polling.
 
-![Single conversation thread view](../images/pro-message-thread.webp)
+![A conversation open in Messages, with the thread on the right and the reply box below](../images/pro-message-thread.webp)
 ## Enabling Private Messaging
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.

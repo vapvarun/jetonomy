@@ -4,7 +4,7 @@ Add expressive emoji reactions to every post and reply - so members can respond 
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Reaction chips below a community post](../images/pro-reactions.webp)
+![Reaction chips with counts under a topic and under each reply, next to the React button](../images/pro-reactions.webp)
 ## What You Will Learn
 
 - How to enable Reactions for your community
