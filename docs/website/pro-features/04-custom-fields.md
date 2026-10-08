@@ -40,7 +40,7 @@ A generic WordPress profile has a bio and a website URL. That is not enough for 
 
 4. Click **Save Field**.
 
-![The Custom Fields admin page, listing existing fields with the Add Field form open showing the Label, Field Key, Type, Required, Visibility, and Description settings](../images/pro-custom-fields-admin.webp)
+![The Custom Field Builder with the Add New Field form: name, slug, type, context, description and required or searchable options](../images/pro-custom-fields-admin.webp)
 ## Field Types
 
 | Type | Best for |

@@ -2,6 +2,8 @@
 
 Send a curated summary of community activity to members' inboxes - daily or weekly - so they never feel out of the loop.
 
+![Email Digest settings with the enable switch, default frequency, sender name and address, and subscription statistics](../images/pro-email-digest-settings.webp)
+
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![Email digest preview showing top posts from the week](../images/pro-email-digest.webp)
