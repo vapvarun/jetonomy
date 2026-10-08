@@ -6,6 +6,8 @@ order: 10
 
 Members normally start a topic from inside a space. But you can also drop a "start a topic" box onto any WordPress page, post, or landing page - so a visitor can begin a discussion without first navigating into the community. Jetonomy gives you two ways to do this, and both produce the same box: a **Gutenberg block** and a **shortcode**.
 
+![The compose box on a regular WordPress page, with a space picker, title, content, Add Poll and the private option](../images/discussions/embedded-composer.webp)
+
 ## What You Will Learn
 
 - Where the embedded composer is useful
