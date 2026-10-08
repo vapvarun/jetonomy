@@ -2,6 +2,8 @@
 
 Attach a poll to any topic and let your community vote - perfect for decisions, feedback, and feature prioritization.
 
+![Poll Management screen listing each poll with its type, voters, status and actions](../images/pro-polls-admin.webp)
+
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
 ![A poll attached to a community post, showing each option as a horizontal percentage bar with its vote count](../images/pro-polls-result-bars.webp)
