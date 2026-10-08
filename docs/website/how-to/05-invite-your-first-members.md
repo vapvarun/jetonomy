@@ -51,7 +51,7 @@ You can do this from the community side or from wp-admin.
 
 **In wp-admin:** open **Jetonomy → Spaces → Edit → Members** and use the **Invite Links** section, which has the same fields and a table of links.
 
-![The Invite links panel on a space Members page](../images/space-members-invite-panel.webp)
+![The Invite links panel on a space Members page, with Max uses and Expires fields and the Generate invite link button, above the member list](../images/space-members-invite-panel.webp)
 
 Each link lists **Uses** and **Expires**. A link that has run out is marked **No longer works**. Click **Revoke** to cancel one early. Anyone still holding it will not be able to join.
 

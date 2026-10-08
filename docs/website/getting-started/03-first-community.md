@@ -91,7 +91,7 @@ You do not need to wait for members to discover your community organically. Jeto
 
 Space admins can also do this from the space's **Members** page on the community front end.
 
-![The invite link panel showing the Max uses and Expires fields and the copyable invite URL](../images/getting-started/space-generate-invite-link.webp)
+![The Invite links panel on a space Members page, with Max uses and Expires fields and the Generate invite link button, above the member list](../images/getting-started/space-generate-invite-link.webp)
 
 When someone visits the link, they are added to the space immediately after logging in or creating a WordPress account.
 
