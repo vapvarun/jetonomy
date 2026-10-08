@@ -76,7 +76,7 @@ When a user clicks **Join**, they submit a join request. The request goes to the
 
 In wp-admin, moderators see pending requests on the space's own edit screen: **Jetonomy → Spaces → [space] → Edit → Join Requests**. They can approve or decline each request, and the user gets a notification when their request is reviewed.
 
-![The Join Requests tab on the wp-admin space edit screen, listing pending requests with the requester, their message, how long ago they asked, and Approve and Deny buttons](../images/admin-space-join-requests.webp)
+![The Join Requests tab on the space edit screen, listing pending requests with the member, their message and Approve and Deny buttons](../images/admin-space-join-requests.webp)
 
 > **Do not see a Join Requests tab?** It only appears when the space's join policy is set to **Requires Approval**, or when the space already has pending requests. On an Open space there is nothing to approve, so the tab stays hidden. Set the policy first, on the **General** tab of the same screen.
 

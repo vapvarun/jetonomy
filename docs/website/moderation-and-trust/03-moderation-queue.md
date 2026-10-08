@@ -2,7 +2,7 @@
 
 The moderation queue is your single dashboard for everything that needs human review - posts waiting for approval, flagged content, and items caught by spam filters. You can action everything from one page without digging through individual topics.
 
-![Admin moderation queue with pending items and per-row action controls](../images/admin-moderation.webp)
+![The Moderation screen on its Flags tab, listing each flagged topic with the reason, the reporter and the Valid and Dismiss actions](../images/admin-moderation.webp)
 
 ## What You Will Learn
 

@@ -35,7 +35,7 @@ The poll builder lets you:
 - Choose **Single choice** (members pick one) or **Multiple choice** (members pick several).
 - Optionally set a **Close date** - the poll stops accepting votes automatically at that date and time.
 
-![The poll builder open in the post composer, with the option list, the single/multiple choice selector, and the optional close-date field](../images/pro-polls-composer.webp)
+![The poll builder open in the new topic form, with the question, options, single or multiple choice and an optional close date](../images/pro-polls-composer.webp)
 The poll is attached to the topic and saved together when you click **Post**. You cannot attach a poll to a reply - only to top-level topics.
 
 > **Tip:** You can add or remove a poll from an existing topic by editing the post. Removing a poll permanently deletes all votes cast on it.

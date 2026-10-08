@@ -86,7 +86,7 @@ With **Requires Approval**, you and the space moderators are notified when someo
 
 The requester is told the result. Approved people can post straight away.
 
-![Pending join requests with Approve and Deny buttons](../images/admin-space-join-requests.webp)
+![The Join Requests tab on the space edit screen, listing pending requests with the member, their message and Approve and Deny buttons](../images/admin-space-join-requests.webp)
 
 ## Check that it works
 
