@@ -159,7 +159,7 @@ Invite links let you bring specific people into a space without opening up gener
 
 **From the front-end:** open the space **Members** page, find the **Invite links** panel, and generate a link. You can copy or revoke any existing link from the same panel.
 
-![The Invite links panel on the front-end space Members page, with Max uses and Expires fields, a Generate invite link button, and an existing link showing its usage count alongside Copy and Revoke buttons](../images/space-members-invite-panel.webp)
+![The Invite links panel on a space Members page, with Max uses and Expires fields and the Generate invite link button, above the member list](../images/space-members-invite-panel.webp)
 
 **From wp-admin:**
 

@@ -97,7 +97,7 @@ You can create invite links from either surface:
 
 Each link has a configurable usage limit and optional expiry date, and you can see how many times each link has been used.
 
-![The Invite links panel on the front-end space Members page, with Max uses and Expires fields, a Generate invite link button, and an existing link showing its usage count alongside Copy and Revoke buttons](../images/space-members-invite-panel.webp)
+![The Invite links panel on a space Members page, with Max uses and Expires fields and the Generate invite link button, above the member list](../images/space-members-invite-panel.webp)
 
 > **Invite links are space-admin only - moderators cannot see them.** This is deliberate, and it is a stricter rule than the one for join requests: an invite link is a bearer credential into a space that may be hidden, so listing the links discloses them. Space moderators can approve join requests but cannot view or mint invite links. The REST API applies the same rule server-side, so this is a real permission boundary, not just a hidden panel.
 
