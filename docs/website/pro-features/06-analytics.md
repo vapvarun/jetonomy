@@ -30,15 +30,9 @@ Go to **Jetonomy → Analytics**. The dashboard opens on the last 30 days by def
 
 ### Date Range Filter
 
-Use the date range picker at the top right to select any custom range. Preset shortcuts:
+Use the period buttons at the top left to switch between **7 Days**, **30 Days** and **90 Days**.
 
-- Last 7 days
-- Last 30 days
-- Last 90 days
-- This month
-- Last month
-
-All charts and tables update instantly when you change the range.
+All charts and tables update when you change the period. The REST API also accepts a custom range in days.
 
 ![The period buttons on Community Analytics (7 Days, 30 Days, 90 Days) with Export CSV, above the totals for the selected period](../images/pro-analytics-date-filter.webp)
 ## Overview Metrics
