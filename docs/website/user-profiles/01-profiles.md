@@ -15,8 +15,6 @@ Every member in your community has a public profile page that shows who they are
 
 Every member has a profile page at `/community/u/their-username/`. Anyone can visit this page - no login is required unless your community is set to private.
 
-![User profile page](../images/profile-page.webp)
-
 ### Header Section
 
 The profile header shows:
@@ -68,8 +66,6 @@ Shows unpublished draft topics saved by this member. This tab is visible only to
 ## Editing a Profile
 
 Members can edit their own profile at `/community/u/their-username/edit/`. This page is accessible from the **Edit Profile** button on the profile page header.
-
-![Edit Profile page with display name, bio, avatar upload, and notification preference fields](../images/edit-profile.webp)
 
 Editable fields:
 

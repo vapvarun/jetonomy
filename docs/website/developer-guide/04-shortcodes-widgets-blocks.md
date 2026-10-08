@@ -172,8 +172,6 @@ Lets signed-in members start a new topic from **any** WordPress page, post, or p
 [jetonomy_compose_topic mode="fixed" space_id="5"]
 ```
 
-![Compose Topic shortcode rendered on a regular WordPress page](../images/developer-guide/compose-topic-frontend.webp)
-
 **Behavior**
 
 - **Logged-out viewers** see a "Sign in to start a new topic" CTA that redirects back to the current URL after login - no form exposure, no wasted scroll.
@@ -184,8 +182,6 @@ Lets signed-in members start a new topic from **any** WordPress page, post, or p
 Companion REST endpoint: `GET /jetonomy/v1/spaces?postable_by_me=1` returns the user's postable spaces.
 
 When the title is filled but the body is empty, an inline error banner appears above the title - no silent failures, no lost input:
-
-![Inline validation banner when the body is empty](../images/developer-guide/compose-topic-validation.webp)
 
 ---
 

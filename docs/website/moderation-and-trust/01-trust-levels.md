@@ -2,7 +2,7 @@
 
 Jetonomy's trust system automatically promotes reliable members to higher privilege levels as they earn reputation - so you spend less time manually managing who can do what, and your most active members get recognized for their contributions.
 
-![Permissions settings with trust level thresholds and promotion rules](../images/admin-permissions.webp)
+![Permissions settings with trust level thresholds, rate limits and role capabilities](../images/admin-permissions.webp)
 
 ## What You Will Learn
 

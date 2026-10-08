@@ -4,7 +4,6 @@ Automatically send community events to any external URL - connect Jetonomy to Sl
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-![Webhook management page listing configured endpoints](../images/pro-webhooks.webp)
 ## What You Will Learn
 
 - How to create and manage webhook endpoints

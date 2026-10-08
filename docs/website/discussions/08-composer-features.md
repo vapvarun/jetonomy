@@ -85,8 +85,6 @@ On mobile the pill sits at the top-right of the card, sized for thumb readabilit
 
 ## "Managed by" Sidebar Card
 
-![Space sidebar "Managed by" card listing the space admins and moderators with avatars and role badges](../images/discussions/managed-by-card.webp)
-
 Every space page now shows a "Managed by" card in the sidebar. The card lists the space admin(s) and moderator(s) with their avatars and a small role badge next to each name.
 
 ### What the Card Shows

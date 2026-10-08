@@ -2,7 +2,7 @@
 
 When BuddyNext is active alongside Jetonomy, the two plugins integrate automatically - sharing design tokens and letting BuddyNext own the page header and navigation, without any configuration.
 
-![The Jetonomy admin settings screen](../images/admin-settings.webp)
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](../images/admin-integrations.webp)
 
 ## What You Will Learn
 

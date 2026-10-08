@@ -6,8 +6,6 @@ order: 5
 
 Not every post is ready to publish the moment you start writing it. Drafts let you save work-in-progress posts and come back to them later. Scheduled posts let you write now and publish at a specific date and time automatically.
 
-![Post composer with draft and schedule publishing options](../images/new-post-form.webp)
-
 ## What You Will Learn
 
 - How to save a post as a draft

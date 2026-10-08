@@ -35,7 +35,7 @@ If the keys and the provider do not match, a "Heads up:" notice appears at the t
 
 Members at trust level 2 or above, and administrators, skip this check. See [Anti-Spam Settings](../admin-settings/06-anti-spam.md) for every field.
 
-![Anti-spam settings with provider selection and keys](../images/admin-antispam.webp)
+![Anti-spam settings with CAPTCHA provider selection and API key fields](../images/admin-antispam.webp)
 
 ## Step 2: Slow down brand-new members
 

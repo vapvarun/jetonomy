@@ -12,7 +12,6 @@ The **Code** column is the identifier the REST API returns. You will see it in a
 
 > Generated from the plugin source, so the wording matches what members actually see. A message that is not listed here comes from WordPress or another plugin, not from Jetonomy.
 
-
 ## Signing in and registering
 
 | Message | Code | What it means |

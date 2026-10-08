@@ -2,7 +2,7 @@
 
 Gate Jetonomy spaces by Restrict Content Pro subscription level - with automatic access on activation and automatic removal on expiry or cancellation.
 
-![The Jetonomy admin settings screen](../images/admin-settings.webp)
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](../images/admin-integrations.webp)
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 

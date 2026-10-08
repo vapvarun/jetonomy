@@ -44,7 +44,7 @@ The **Accent** picker shows `#0073aa` when nothing is set. That value means "kee
 
 Button text turns black or white on its own so it stays readable on your colour.
 
-![Appearance settings with the Color Palette card](../images/admin-appearance.webp)
+![Appearance settings with logo, color palette, layout and custom CSS](../images/admin-appearance.webp)
 
 ## Step 3: Check dark mode
 

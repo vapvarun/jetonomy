@@ -4,7 +4,6 @@ Connect Learnomy course enrollment, cohort membership, and membership-plan subsc
 
 > **PRO** - This feature requires [Jetonomy Pro](https://wbcomdesigns.com/downloads/jetonomy-pro/).
 
-
 Learnomy stores its courses, membership plans, enrollments, and subscriptions in its own custom tables, not in WordPress posts. Jetonomy Pro connects to it through Learnomy's public model API, so gating a space by a Learnomy course works the same as the LearnDash flow.
 
 ## What You Will Learn
@@ -41,7 +40,6 @@ You can use both. A course-wide space for everyone, plus a private space per coh
 
 A course, a cohort and a Learnomy Space each carry the same **Community** switch, in the same words, wherever you edit them. Turn it on and the object gets its room; everything after that is automatic.
 
-
 | | Course | Cohort | Learnomy Space | Membership plan |
 |---|---|---|---|---|
 | The **Community** switch | Yes | Yes | Yes | - |
@@ -58,7 +56,6 @@ A course, a cohort and a Learnomy Space each carry the same **Community** switch
 You will also see a **Linked community** panel on these screens. That is the occasional case: pointing this object at a community that already exists, rather than making a new one. The switch above it is the decision; the panel is only for reusing something you built earlier.
 
 ## Gating a Space by Course Enrollment
-
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **Learnomy Course** from the rule type dropdown.
