@@ -38,7 +38,7 @@ Jetonomy lives inside WordPress - but your business does not. Your team lives in
 
 4. Click **Save Webhook**.
 
-![The Add Webhook form, with the URL, Events, Secret, and Active fields](../images/pro-webhooks-editor.webp)
+![Webhooks settings: the registered webhook with its events and status, and the Add Webhook form with Payload URL, Events and Active](../images/pro-webhooks-editor.webp)
 ## Available Events
 
 Subscribe to any combination of these events:
