@@ -33,7 +33,6 @@ Jetonomy lives inside WordPress - but your business does not. Your team lives in
 |---------|-------------|
 | **URL** | The HTTPS endpoint that will receive the POST request |
 | **Events** | Which community events trigger this webhook |
-| **Secret** | Optional signing secret for verifying payload authenticity |
 | **Active** | Toggle the webhook on or off without deleting it |
 
 4. Click **Save Webhook**.
@@ -89,7 +88,7 @@ The `data` object varies by event type. All events include `event`, `timestamp`,
 
 ## Verifying Payloads
 
-If you set a secret, Jetonomy includes an `X-Jetonomy-Signature` header with each request. The value is an HMAC-SHA256 signature of the raw request body, signed with your secret.
+Jetonomy creates a signing secret for every webhook when you add it; you do not type one. Open the webhook to copy its secret. Every request carries an `X-Jetonomy-Signature` header: `sha256=` followed by an HMAC-SHA256 signature of the raw request body, signed with that secret.
 
 Verify on your server:
 
