@@ -25,6 +25,7 @@ class Admin {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_notices', array( $this, 'render_permalink_notice' ) );
 		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
 		// A6: intercepts the CSV export request before any output is sent so
 		// the download streams cleanly without admin-header HTML interleaving.
@@ -294,6 +295,29 @@ class Admin {
 	}
 
 	// ── Settings API ──
+
+	/**
+	 * Tell the owner when Plain permalinks make the community unreachable.
+	 *
+	 * Every route is a rewrite rule, and Plain permalinks have none, so
+	 * /community/ silently served the homepage (Basecamp 10375642554).
+	 */
+	public function render_permalink_notice(): void {
+		if ( '' !== (string) get_option( 'permalink_structure' ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$screen = get_current_screen();
+		if ( $screen && 'options-permalink' === $screen->id ) {
+			return;
+		}
+		printf(
+			'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
+			esc_html__( 'Jetonomy:', 'jetonomy' ),
+			esc_html__( 'your community cannot be reached while permalinks are set to Plain. Visitors see the homepage instead.', 'jetonomy' ),
+			esc_url( admin_url( 'options-permalink.php' ) ),
+			esc_html__( 'Choose a permalink structure', 'jetonomy' )
+		);
+	}
 
 	public function register_settings(): void {
 		// The Settings page renders under jetonomy_manage_settings, but the form

@@ -33,6 +33,15 @@ class Router {
 		// anything else hooking parse_request or template_redirect.
 		add_action( 'parse_request', [ $this, 'claim_sitemap_request' ], 0 );
 		add_action( 'parse_query', [ $this, 'correct_query_state' ], 1 );
+		// The SEO Framework titles a page from its WP object. Our virtual routes
+		// have none, so it printed "Untitled" plus a second og: set over ours
+		// (Basecamp 10392446286). Jetonomy is the SEO source on its own routes;
+		// a mapped front page (no jetonomy_route) stays with the SEO plugin.
+		// Read early on purpose: TSF memoises this before template_include.
+		add_filter(
+			'the_seo_framework_query_supports_seo',
+			static fn( $supported ) => '' !== (string) get_query_var( 'jetonomy_route' ) ? false : $supported
+		);
 		// Keep core off its 404 path for a resolved route. Our routes are
 		// virtual, so the main query finds no posts and WP::handle_404() would
 		// queue nocache_headers() - which assert_route_state() cannot take
