@@ -190,8 +190,7 @@ wp_head();
 
 		<button type="button" class="jt-btn jt-btn--ghost" id="jt-create-sample">
 			<?php jetonomy_echo_icon( 'plus', 16 ); ?>
-			<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
-			<?php echo esc_html( sprintf( __( 'Create sample data instead (2 categories, 6 %s across all four types, ~12 posts)', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>
+			<?php esc_html_e( 'Import the demo community instead', 'jetonomy' ); ?>
 			<span class="jt-spinner" style="border-color:rgba(100,116,139,.4);border-top-color:#64748b;"></span>
 		</button>
 

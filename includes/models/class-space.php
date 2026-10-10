@@ -752,9 +752,9 @@ class Space extends Model {
 		// the space's OWN visibility says. A public space in a `hidden`
 		// category answered HTTP 200 with its title to anyone holding the URL,
 		// which made a hidden category cosmetic - the owner staged content in
-		// it and it was publicly reachable the whole time. Membership does not
-		// exempt: hiding the category is a decision about the whole branch, and
-		// the owner can undo it by changing one field.
+		// it and it was publicly reachable the whole time. Members of the space
+		// itself are exempt (concealed_by_category() checks admitted() first);
+		// everyone else gets the hidden category's answer.
 		if ( self::concealed_by_category( $space, $user_id ) ) {
 			return true;
 		}

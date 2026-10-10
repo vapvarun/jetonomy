@@ -65,16 +65,12 @@ $_jt_unmet_membership = $_jt_user_id
 
 if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) {
 	if ( ! $_jt_user_id ) {
-		// Guest — prompt to log in. Hidden and private spaces use distinct
-		// copy so the message does not lie about the space's actual setting:
-		// the sidebar already shows "Hidden" via ucfirst($space->visibility)
-		// and the home/category listings show a Hidden badge, so the gate
-		// message must agree.
-		$gate_message = $_jt_is_hidden
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			? sprintf( __( 'This %s is hidden. Log in to check whether you have access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			: sprintf( __( 'This %s is private. Please log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		// Guest - prompt to log in. Only private spaces get here: a hidden
+		// space answers 404 to guests before this template runs
+		// (Space::concealed_from_viewer), so its existence is never confirmed
+		// (Basecamp 10380389673).
+		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+		$gate_message = sprintf( __( 'This %s is private. Please log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			[

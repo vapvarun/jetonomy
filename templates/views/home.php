@@ -39,12 +39,12 @@ if ( ! is_user_logged_in() ) :
 		/* translators: %s: community title. */
 		sprintf( __( 'Welcome to %s', 'jetonomy' ), $community_title )
 	);
+	// No setting writes a tagline; the subheading is changed through this
+	// filter (Basecamp 10380388868).
 	$jt_welcome_sub = (string) apply_filters(
 		'jetonomy_home_welcome_subheading',
-		! empty( $settings['community_tagline'] )
-			? (string) $settings['community_tagline']
-			/* translators: %s: plural space label. */
-			: sprintf( __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
+		/* translators: %s: plural space label. */
+		sprintf( __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
 	);
 	$jt_pulse = jetonomy_community_pulse();
 	?>
