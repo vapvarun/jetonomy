@@ -1912,15 +1912,65 @@ class Post extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Recalculate reply count on target.
+		// The rest of the source moves with it (Basecamp 10375374349): votes,
+		// subscribers and bookmarks. UPDATE IGNORE skips a member who already
+		// has a row on the target (unique keys), and those leftovers are then
+		// dropped, so nobody votes or subscribes twice.
+		$votes = \Jetonomy\table( 'votes' );
+		$subs  = \Jetonomy\table( 'subscriptions' );
+		$marks = \Jetonomy\table( 'bookmarks' );
+		$db    = static::db();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		foreach ( array( $votes, $subs ) as $object_table ) {
+			$db->query( $db->prepare( "UPDATE IGNORE {$object_table} SET object_id = %d WHERE object_type = 'post' AND object_id = %d", $target_id, $source_id ) );
+			$db->query( $db->prepare( "DELETE FROM {$object_table} WHERE object_type = 'post' AND object_id = %d", $source_id ) );
+		}
+		$db->query( $db->prepare( "UPDATE IGNORE {$marks} SET post_id = %d WHERE post_id = %d", $target_id, $source_id ) );
+		$db->query( $db->prepare( "DELETE FROM {$marks} WHERE post_id = %d", $source_id ) );
+		$vote_score = (int) $db->get_var( $db->prepare( "SELECT COALESCE( SUM( value ), 0 ) FROM {$votes} WHERE object_type = 'post' AND object_id = %d", $target_id ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// Keep the source's opening post readable in the target, as split does
+		// for the thread it leaves: a real reply by the same author, dated when
+		// it was written, headed so readers know where it came from.
+		$donor_reply = Reply::create(
+			array(
+				'post_id'      => $target_id,
+				'author_id'    => (int) $source->author_id,
+				'is_anonymous' => (int) ( $source->is_anonymous ?? 0 ),
+				'created_at'   => (string) $source->created_at,
+				'content'      => sprintf(
+					/* translators: %s: title of the topic that was merged in. */
+					'<p><em>' . esc_html__( 'Merged from "%s":', 'jetonomy' ) . '</em></p>',
+					esc_html( (string) $source->title )
+				) . (string) $source->content,
+			)
+		);
+
+		$replies_t = \Jetonomy\table( 'replies' );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( is_int( $donor_reply ) && $donor_reply > 0 ) {
+			// The opening post's files travel with its text.
+			$attachments = \Jetonomy\table( 'attachments' );
+			$db->query( $db->prepare( "UPDATE {$attachments} SET object_type = 'reply', object_id = %d WHERE object_type = 'post' AND object_id = %d", $donor_reply, $source_id ) );
+		}
+		// The backdated donor reply must not move the thread's activity back.
+		$last_reply_at = $db->get_var( $db->prepare( "SELECT MAX( created_at ) FROM {$replies_t} WHERE post_id = %d AND status = 'publish'", $target_id ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// Recalculate reply count, score and last activity on target.
 		$new_count = Reply::count_by_post( $target_id );
 		static::update(
 			$target_id,
 			array(
-				'reply_count' => $new_count,
-				'updated_at'  => now(),
+				'reply_count'   => $new_count,
+				'vote_score'    => $vote_score,
+				'last_reply_at' => $last_reply_at,
+				'updated_at'    => now(),
 			)
 		);
+		Vote::reset_memo();
+		Subscription::reset_memo();
 
 		// Trash the source post. The publish→trash transition inside update()
 		// already decrements the space's post_count and the author's post_count

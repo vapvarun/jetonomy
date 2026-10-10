@@ -34,10 +34,12 @@ if ( empty( $item ) || empty( $space ) || empty( $kind ) ) {
 	return;
 }
 
-$jt_is_reply    = 'reply' === $kind;
-$jt_is_trash    = 'trash' === ( $mode ?? '' );
-$jt_author      = get_userdata( (int) ( $item->author_id ?? 0 ) );
-$jt_author_name = $jt_author ? \Jetonomy\user_display_name( $jt_author ) : __( 'Unknown', 'jetonomy' );
+$jt_is_reply = 'reply' === $kind;
+$jt_is_trash = 'trash' === ( $mode ?? '' );
+// Same identity rule as everywhere else: an anonymous item reads "Anonymous"
+// to moderators too, and only an explicit (logged) reveal shows the name
+// (Basecamp 10380388683).
+$jt_author_name = \Jetonomy\Author::for_display( (int) ( $item->author_id ?? 0 ), $item )['name'];
 $jt_age         = human_time_diff( strtotime( (string) $item->created_at ), time() );
 
 // content_plain is maintained on both tables; fall back for rows written

@@ -189,13 +189,12 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 					opt.textContent = s.title;
 					select.appendChild( opt );
 				} );
+				// The placeholder stayed on "Loading…" after the list arrived and
+				// read as stuck (Basecamp 10392446204); it now says what to do.
 				if ( select.options.length <= 1 ) {
-					// Only the placeholder — no other spaces available.
-					const noneOpt = document.createElement( 'option' );
-					noneOpt.textContent = t.noOtherSpaces || 'No other spaces available';
-					noneOpt.disabled = true;
-					select.appendChild( noneOpt );
+					loadingOpt.textContent = t.noOtherSpaces || 'No other spaces available';
 				} else {
+					loadingOpt.textContent = t.chooseSpaceOption || 'Choose a space…';
 					select.addEventListener( 'change', () => { okBtn.disabled = ! select.value; } );
 				}
 			} )
@@ -2781,7 +2780,7 @@ const { state, actions } = store( 'jetonomy', {
             const targetId = yield jetonomyPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId, sourceTitle );
             if ( ! targetId ) return;
 
-            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', { danger: true } ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? Its post, replies, votes and followers move there and this topic goes to the trash.', { danger: true } ) ) ) return;
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }/merge`, {

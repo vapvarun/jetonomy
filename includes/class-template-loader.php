@@ -353,7 +353,7 @@ class Template_Loader {
 					/* translators: %s: the singular topic label the site owner configured. */
 					'mergeTopicTitle'       => sprintf( __( 'Merge into another %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					/* translators: 1: singular topic label, 2: plural reply label the site owner configured. */
-					'confirmMerge'          => sprintf( __( 'Merge this %1$s into the selected one? All %2$s will be moved and this %1$s will be deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+					'confirmMerge'          => sprintf( __( 'Merge this %1$s into the selected one? Its post, %2$s, votes and followers move there and this %1$s goes to the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					/* translators: %s: the plural topic label the site owner configured. */
 					'topicMerged'           => sprintf( __( '%s merged successfully.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
 					/* translators: %s: the plural topic label the site owner configured. */
@@ -582,6 +582,8 @@ class Template_Loader {
 					'loadingSpaces'          => esc_html( sprintf( __( 'Loading %s…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'noOtherSpaces'          => esc_html( sprintf( __( 'No other %s available', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'chooseSpaceOption'      => esc_html( sprintf( __( 'Choose a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					/* translators: %s: plural space label. */
 					'failedLoadSpaces'       => esc_html( sprintf( __( 'Failed to load %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: the singular topic label the site owner configured. */

@@ -309,7 +309,8 @@
         "auth": "login_required",
         "capability": "edit_others_posts",
         "ownership_check": "handler_enforces",
-        "audit_notes": "Merge with another post"
+        "audit_notes": "Merge with another post",
+        "notes": "2.0.2: Post::merge_into() also moves votes (score recomputed, a member's duplicate vote dropped), subscriptions and bookmarks; the source's opening post becomes a reply 'Merged from \"title\"' by its author at its original time (attachments follow); source goes to trash; last_reply_at never moves back. Basecamp 10375374349."
       },
       {
         "route": "/posts/(?P<id>\\d+)/vote",
