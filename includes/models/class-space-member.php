@@ -159,13 +159,22 @@ class SpaceMember extends Model {
 	/**
 	 * Remove a user from a space and decrement the space's member_count.
 	 *
-	 * @param int $space_id
-	 * @param int $user_id
+	 * @param int  $space_id        Space ID.
+	 * @param int  $user_id         User ID.
+	 * @param bool $keep_last_admin Refuse when this would remove the space's
+	 *                              last admin. Pass true from manual
+	 *                              management (wp-admin, REST leave/remove).
+	 * @return \WP_Error|bool WP_Error when refused, else whether a row went.
 	 */
-	public static function remove( int $space_id, int $user_id ): \WP_Error|bool {
-		$last_admin = self::last_admin_error( $space_id, self::get_role( $space_id, $user_id ), null );
-		if ( $last_admin ) {
-			return $last_admin;
+	public static function remove( int $space_id, int $user_id, bool $keep_last_admin = false ): \WP_Error|bool {
+		// Only a person managing the space opts into the last-admin rule.
+		// Revocations (membership expiry, group leave, automations) must
+		// always remove, or a lapsed last admin keeps access.
+		if ( $keep_last_admin ) {
+			$last_admin = self::last_admin_error( $space_id, self::get_role( $space_id, $user_id ), null );
+			if ( $last_admin ) {
+				return $last_admin;
+			}
 		}
 
 		$deleted = static::db()->delete(
@@ -315,9 +324,11 @@ class SpaceMember extends Model {
 	 * @param int    $space_id Space ID.
 	 * @param int    $user_id  User ID.
 	 * @param string $role     Target role (one of self::VALID_ROLES).
+	 * @param bool   $keep_last_admin Refuse demoting the space's last admin.
+	 *                                Pass true from manual management only.
 	 * @return \WP_Error|bool True on success (incl. no-op), WP_Error otherwise.
 	 */
-	public static function set_role( int $space_id, int $user_id, string $role ): \WP_Error|bool {
+	public static function set_role( int $space_id, int $user_id, string $role, bool $keep_last_admin = false ): \WP_Error|bool {
 		if ( ! in_array( $role, self::VALID_ROLES, true ) ) {
 			return new \WP_Error(
 				'invalid_role',
@@ -340,7 +351,9 @@ class SpaceMember extends Model {
 			return true; // Idempotent — nothing to change.
 		}
 
-		$last_admin = self::last_admin_error( $space_id, $old_role, $role );
+		// Opt-in, as in remove(): automations that demote on a plan change
+		// must not leave someone holding admin rights they lost.
+		$last_admin = $keep_last_admin ? self::last_admin_error( $space_id, $old_role, $role ) : null;
 		if ( $last_admin ) {
 			return $last_admin;
 		}

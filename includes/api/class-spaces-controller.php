@@ -1103,7 +1103,7 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		$removed = SpaceMember::remove( $id, $user_id );
+		$removed = SpaceMember::remove( $id, $user_id, true );
 		if ( is_wp_error( $removed ) ) {
 			return $removed;
 		}
@@ -1296,7 +1296,7 @@ class Spaces_Controller extends Base_Controller {
 		// One role-update path: set_role() owns the write, cache-bust, the
 		// role-changed event and the last-admin rule (shared with wp-admin,
 		// Basecamp 10392987587). Permission and self-demotion stay REST policy.
-		$result = SpaceMember::set_role( $id, $user_id, $role );
+		$result = SpaceMember::set_role( $id, $user_id, $role, true );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}

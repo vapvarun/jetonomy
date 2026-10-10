@@ -1239,7 +1239,7 @@
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Change member role",
-      "notes": "Last-admin rule enforced by SpaceMember::set_role() (shared with REST/front end, 2.0.2); UI select reverts on refusal."
+      "notes": "Calls SpaceMember::set_role( ..., true ): refuses demoting the last admin (shared with REST, 2.0.2); automations demote without the rule. UI select reverts on refusal."
     },
     {
       "action": "jetonomy_change_trust_level",
@@ -1366,7 +1366,7 @@
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Remove member from space",
-      "notes": "SpaceMember::remove() returns WP_Error jetonomy_last_admin_required for a space's last admin (2.0.2)."
+      "notes": "Calls SpaceMember::remove( ..., true ): refuses the space's last admin (2.0.2). The rule is opt-in; revocation paths (roster sync, BuddyPress, Automator) always remove."
     },
     {
       "action": "jetonomy_reorder_categories",

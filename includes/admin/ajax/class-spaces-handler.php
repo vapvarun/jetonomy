@@ -423,7 +423,7 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
 		}
 
-		$removed = SpaceMember::remove( $space_id, $user_id );
+		$removed = SpaceMember::remove( $space_id, $user_id, true );
 		if ( is_wp_error( $removed ) ) {
 			wp_send_json_error( $removed->get_error_message() );
 		}
@@ -454,7 +454,7 @@ class Spaces_Handler {
 		// still add() a brand-new member so this admin control keeps working for
 		// both cases.
 		$result = SpaceMember::is_member( $space_id, $user_id )
-			? SpaceMember::set_role( $space_id, $user_id, $role )
+			? SpaceMember::set_role( $space_id, $user_id, $role, true )
 			: SpaceMember::add( $space_id, $user_id, $role );
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( $result->get_error_message() );
