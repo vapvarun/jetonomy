@@ -14,6 +14,7 @@ class Capabilities {
 	private const ROLE_MAP = [
 		'subscriber'    => [
 			'jetonomy_read',
+			'jetonomy_upload_media',
 			'jetonomy_create_posts',
 			'jetonomy_create_replies',
 			'jetonomy_edit_own_posts',
@@ -22,7 +23,7 @@ class Capabilities {
 			'jetonomy_flag',
 			'jetonomy_join_spaces',
 		],
-		'contributor'   => [ 'jetonomy_upload_media' ],
+		'contributor'   => [],
 		'author'        => [ 'jetonomy_create_spaces' ],
 		'editor'        => [
 			'jetonomy_edit_others_posts',
@@ -47,14 +48,23 @@ class Capabilities {
 	 * Option holding the site owner's role => caps overrides.
 	 *
 	 * Absent role key = that role uses the ROLE_MAP default. Present key =
-	 * the role's Jetonomy caps are EXACTLY the stored list (an empty list is
-	 * a valid "none" choice). Administrator is never stored: admins always
+	 * the role's Jetonomy caps are EXACTLY the stored list. An empty list is
+	 * a "none" choice only for a ROLE_MAP role; a role without defaults is
+	 * never stored empty, so it stays unmapped and keeps the engine's space
+	 * membership fallback (Basecamp 10392987680). Administrator is never stored: admins always
 	 * hold every cap, so a site owner cannot lock themselves out of the
 	 * mapping screen (Basecamp 9725751235 - the mapping used to be
 	 * hard-coded and the settings card literally said "This mapping is
 	 * fixed").
 	 */
 	public const ROLE_CAPS_OPTION = 'jetonomy_role_caps';
+
+	/**
+	 * Either cap lets a user upload (images in the composer, Pro attachments).
+	 * Posting caps no longer imply it, so unticking Upload media on the
+	 * Permissions tab really stops a role (Basecamp 10380388502).
+	 */
+	public const UPLOAD_CAPS = [ 'upload_files', 'jetonomy_upload_media' ];
 
 	/**
 	 * The default cumulative cap set per core role, from ROLE_MAP.
@@ -317,6 +327,22 @@ class Capabilities {
 	 *
 	 * @return string[]
 	 */
+	/**
+	 * Whether the user may upload media. Same rule the REST routes enforce,
+	 * so templates hide controls a refused request would sit behind.
+	 *
+	 * @param int $user_id User ID; 0 = current user.
+	 */
+	public static function can_upload( int $user_id = 0 ): bool {
+		$user_id = $user_id ?: get_current_user_id();
+		foreach ( self::UPLOAD_CAPS as $cap ) {
+			if ( user_can( $user_id, $cap ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static function all(): array {
 		return array_values( array_unique( array_merge( ...array_values( self::ROLE_MAP ) ) ) );
 	}

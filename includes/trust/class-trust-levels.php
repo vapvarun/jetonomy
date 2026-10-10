@@ -24,8 +24,12 @@ class Trust_Levels {
 	 *   name          - Human-readable label.
 	 *   requirements  - Stats thresholds that must ALL be met for auto-promotion.
 	 *   rate_limits   - Override limits applied at this level (empty = no limits).
-	 *   abilities     - Additional actions unlocked at this level.
-	 *   restrictions  - Constraints still in place at this level.
+	 *   abilities     - What reaching this level changes, and ONLY what the
+	 *                   engine enforces: the rate-limit lift (Rate_Limiter) and
+	 *                   the trust floors in Permission_Engine::can(). The
+	 *                   Permissions tab prints these, so an entry nothing
+	 *                   enforces promises owners a power members never get
+	 *                   (Basecamp 10380389141).
 	 */
 	private const LEVELS = [
 		0 => [
@@ -36,8 +40,7 @@ class Trust_Levels {
 				'create_replies' => 10,
 				'vote'           => 5,
 			],
-			'abilities'    => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ],
-			'restrictions' => [ 'rate_limited', 'no_upload_media', 'no_create_spaces' ],
+			'abilities'    => [],
 		],
 		1 => [
 			'name'         => 'Member',
@@ -47,8 +50,7 @@ class Trust_Levels {
 				'replies_received' => 10,
 			],
 			'rate_limits'  => [],
-			'abilities'    => [ 'upload_media', 'edit_own_posts', 'delete_own_posts' ],
-			'restrictions' => [ 'no_create_spaces' ],
+			'abilities'    => [ 'no_rate_limits' ],
 		],
 		2 => [
 			'name'         => 'Regular',
@@ -61,8 +63,7 @@ class Trust_Levels {
 			// Not create_spaces: creating a space needs the jetonomy_create_spaces
 			// capability plus trust level 4 (Permission_Engine), so listing it here
 			// told owners Regular members could do it (Basecamp 10368526692).
-			'abilities'    => [ 'join_spaces' ],
-			'restrictions' => [],
+			'abilities'    => [],
 		],
 		3 => [
 			'name'         => 'Trusted',
@@ -72,22 +73,19 @@ class Trust_Levels {
 				'reputation'  => 200,
 			],
 			'rate_limits'  => [],
-			'abilities'    => [ 'recategorize_posts', 'rename_topics' ],
-			'restrictions' => [],
+			'abilities'    => [ 'edit_others_posts', 'move_posts', 'close_posts', 'pin_posts' ],
 		],
 		4 => [
 			'name'         => 'Leader',
 			'requirements' => [], // Manually granted.
 			'rate_limits'  => [],
-			'abilities'    => [ 'moderate', 'manage_users' ],
-			'restrictions' => [],
+			'abilities'    => [ 'create_spaces' ],
 		],
 		5 => [
 			'name'         => 'Moderator',
 			'requirements' => [], // Manually granted.
 			'rate_limits'  => [],
-			'abilities'    => [ 'manage_settings', 'manage_categories', 'view_analytics' ],
-			'restrictions' => [],
+			'abilities'    => [],
 		],
 	];
 

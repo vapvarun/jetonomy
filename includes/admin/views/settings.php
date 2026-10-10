@@ -462,19 +462,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<td data-colname="<?php esc_attr_e( 'Replies Received', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Replies Received for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
 									<td class="description" data-colname="<?php esc_attr_e( 'What this unlocks', 'jetonomy' ); ?>">
 										<?php
-										// Surface what each level unlocks (data from Trust_Levels::LEVELS).
+										// Surface what each level unlocks (data from Trust_Levels::LEVELS,
+										// which lists only what the engine enforces - Basecamp 10380389141).
 										$jt_ability_labels = array(
-											'upload_media' => __( 'Upload images', 'jetonomy' ),
-											'edit_own_posts' => __( 'Edit own posts', 'jetonomy' ),
-											'delete_own_posts' => __( 'Delete own posts', 'jetonomy' ),
-											/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
-											'join_spaces'  => sprintf( __( 'Join private %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+											'no_rate_limits' => __( 'No daily posting limits', 'jetonomy' ),
 											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
-											'close_posts'  => __( 'Close topics', 'jetonomy' ),
-											'pin_posts'    => __( 'Pin topics', 'jetonomy' ),
-											'moderate'     => __( 'Moderate content', 'jetonomy' ),
-											'recategorize_posts' => __( 'Recategorize topics', 'jetonomy' ),
-											'rename_topics' => __( 'Rename topics', 'jetonomy' ),
+											'move_posts'  => __( 'Move topics', 'jetonomy' ),
+											'close_posts' => __( 'Close topics', 'jetonomy' ),
+											'pin_posts'   => __( 'Pin topics', 'jetonomy' ),
 										);
 										$jt_unlocks        = array();
 										foreach ( ( \Jetonomy\Trust\Trust_Levels::get( $level )['abilities'] ?? array() ) as $jt_ab ) {
@@ -483,6 +478,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											}
 										}
 										echo $jt_unlocks ? esc_html( implode( ', ', $jt_unlocks ) ) : esc_html__( 'None', 'jetonomy' );
+										if ( $jt_unlocks && 3 === $level ) {
+											// The trust floor only matters for a role already ticked for these caps above.
+											echo '<br>' . esc_html__( 'Only for roles that already have these permissions.', 'jetonomy' );
+										}
 										?>
 									</td>
 							</tr>

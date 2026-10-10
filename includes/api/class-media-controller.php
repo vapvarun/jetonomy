@@ -31,14 +31,12 @@ class Media_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'upload_image' ],
-					// Login + nonce + the upload-capability matrix in one call:
-					// auth_mutation() passes only when the user holds ANY of these
-					// caps, so a read-only subscriber can no longer push files into
-					// the media library. upload_image() adds the restriction
-					// (ban/silence) re-check that capabilities alone don't express.
-					'permission_callback' => REST_Auth::auth_mutation(
-						array( 'upload_files', 'jetonomy_upload_media', 'jetonomy_create_posts', 'jetonomy_create_replies' )
-					),
+					// Login + nonce + the upload caps in one call. Posting caps are
+					// deliberately not enough: the Permissions tab's Upload media
+					// box has to be able to stop a role (Basecamp 10380388502).
+					// upload_image() adds the restriction (ban/silence) re-check
+					// that capabilities alone don't express.
+					'permission_callback' => REST_Auth::auth_mutation( \Jetonomy\Permissions\Capabilities::UPLOAD_CAPS ),
 				],
 				[
 					// GET /jetonomy/v1/media — list community uploads (owner view).

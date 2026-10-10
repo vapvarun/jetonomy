@@ -55,7 +55,7 @@ Trust levels only change a few things. What a member can do day to day comes fro
 - **Managing settings, categories and analytics.** These need the matching capabilities, which Administrators hold. TL5 does not grant them.
 - **Creating spaces.** Front-end space creation follows the **Front-end space creation** role list in **Jetonomy → Settings → General**. Trust level does not unlock it. The permission engine also lists TL4 plus the `jetonomy_create_spaces` capability as a requirement for programmatic checks, but the front-end form and the REST route do not use it.
 
-The **Unlocks** column on the Permissions settings screen is a summary of each level's intent. Use the table above as the source of truth for what is enforced.
+The **What this unlocks** column on the Permissions settings screen lists only what the engine enforces: no daily limits from TL1, and the TL3 minimum for editing, moving, closing and pinning others' topics.
 
 Space Moderators and Space Admins can moderate inside their own space regardless of trust level. WordPress administrators bypass all of these checks.
 

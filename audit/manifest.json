@@ -945,7 +945,7 @@
         "permission": "REST_Auth::auth_mutation (cap-OR closure)",
         "purpose": "Upload media (image, video, file)",
         "auth": "login_required",
-        "capability": "upload_files | jetonomy_upload_media | jetonomy_create_posts | jetonomy_create_replies (ANY)",
+        "capability": "Capabilities::UPLOAD_CAPS = upload_files | jetonomy_upload_media (ANY); posting caps no longer imply upload (2.0.2, Basecamp 10380388502). Templates gate the image button on Capabilities::can_upload().",
         "ownership_check": null,
         "audit_notes": "Upload media. Capability matrix enforced in the permission_callback (was auth_mutation('read') — any logged-in user; F13); upload_image() additionally re-checks Restriction::is_banned/is_silenced and returns 403. 1.9.1: GET was registered in code but missing from this entry; the app calls GET /media (api/media.ts) and the app->plugin parity check flagged it as a broken call. Verified against the live route table (GET,POST)."
       },
@@ -1630,7 +1630,7 @@
       "group": "jetonomy_settings",
       "type": "array",
       "default": {},
-      "controls": "Per-role Jetonomy capability overrides (role => cap[]). Absent role = ROLE_MAP default; present role = EXACTLY the stored list (empty list is a valid 'none').",
+      "controls": "Per-role Jetonomy capability overrides (role => cap[]). Absent role = ROLE_MAP default; present role = EXACTLY the stored list. An empty list is 'none' only for a ROLE_MAP role; the save path never stores an empty list for a role without defaults, so third-party roles keep the space-membership fallback (2.0.2, Basecamp 10392987680; Migration_2_0_2 heals sites that already stored them).",
       "notes": "1.8.1 (Basecamp 9725751235): the role -> capability mapping is now editable. Owned by Permissions\\Capabilities (ROLE_CAPS_OPTION, default_map/effective_map/labels); Capabilities::register() SYNCS (adds AND revokes) against effective_map(). Administrator is never stored and is pinned to all() so an owner cannot lock themselves out. First sync snapshots live drift (hand-granted caps on custom roles) into the option so upgrades never change effective permissions. Saved via the Settings screen role_caps matrix (sanitize_settings role_caps branch, gated by the role_caps_submitted marker + validated against Capabilities::all() and get_editable_roles()). Tests: tests/unit/permissions/RoleCapsMappingTest.php."
     }
   ],

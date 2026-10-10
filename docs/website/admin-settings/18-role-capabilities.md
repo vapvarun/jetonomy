@@ -34,7 +34,7 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_vote` | Vote on posts and replies |
 | `jetonomy_flag` | Report content to moderators |
 | `jetonomy_join_spaces` | Join spaces that allow it |
-| `jetonomy_upload_media` | Attach files and images (one of four capabilities that allow uploads, see [Common changes](#common-changes)) |
+| `jetonomy_upload_media` | Attach files and images (see [Common changes](#common-changes)) |
 | `jetonomy_create_spaces` | Create spaces programmatically |
 
 ### Moderating
@@ -66,8 +66,8 @@ Out of the box, capabilities accumulate up the role hierarchy - each role holds 
 
 | Role | Adds |
 |---|---|
-| **Subscriber** | Read, create topics and replies, edit and delete own posts, vote, report, join spaces |
-| **Contributor** | Upload media |
+| **Subscriber** | Read, create topics and replies, edit and delete own posts, upload media, vote, report, join spaces |
+| **Contributor** | Nothing extra |
 | **Author** | Create spaces |
 | **Editor** | Edit and delete others' posts, moderate, manage users, move, close and pin topics |
 | **Administrator** | Manage settings, categories, all spaces, badges, analytics and extensions |
@@ -84,11 +84,13 @@ If a custom role should behave like a full community member everywhere rather th
 
 ## Common changes
 
+**Roles from other plugins.** Roles such as Customer or Student start with nothing ticked. Leaving them that way is safe: their members can still read and take part in the spaces they belong to. Tick boxes only when you want that role to have site-wide abilities.
+
 **Read-only community.** Untick `jetonomy_create_posts` and `jetonomy_create_replies` for Subscriber. Members can read and vote but not post. Useful for an announcement-style community.
 
 **Moderators who cannot delete.** Give a role `jetonomy_moderate` but leave `jetonomy_delete_others_posts` unticked. They can work the queue, resolve reports and hide content without permanently removing anyone's writing.
 
-**Stopping file and image uploads.** Unticking `jetonomy_upload_media` on its own does not stop uploads. The upload route lets a member in if their role holds **any one** of these: WordPress's own `upload_files`, `jetonomy_upload_media`, `jetonomy_create_posts`, or `jetonomy_create_replies`. Subscribers hold the create-posts and create-replies capabilities by default, so they can upload even though `jetonomy_upload_media` only starts at Contributor. To stop a role uploading, untick all three Jetonomy capabilities for it, and make sure the role does not hold `upload_files`. WordPress gives `upload_files` to Author, Editor and Administrator, and this grid cannot remove it. Unticking those capabilities also stops the role posting and replying, so there is no way to block uploads while keeping posting for the same role. Banned and silenced members cannot upload regardless.
+**Stopping file and image uploads.** Untick `jetonomy_upload_media` for the role. Members of that role keep posting and replying, but the image button and Attach files disappear and the upload routes refuse them. WordPress's own `upload_files` (Author, Editor and Administrator) also allows uploads, and this grid cannot remove it. Banned and silenced members cannot upload regardless.
 
 **Analytics for a manager.** Tick `jetonomy_view_analytics` for a role that holds nothing else. They see the numbers without gaining any content control.
 

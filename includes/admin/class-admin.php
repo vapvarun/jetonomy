@@ -617,14 +617,23 @@ class Admin {
 		if ( ! empty( $input['role_caps_submitted'] ) ) {
 			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
 			$roles      = array_keys( get_editable_roles() );
+			$defaults   = \Jetonomy\Permissions\Capabilities::default_map();
 			$overrides  = array();
 			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
 			foreach ( $roles as $role_slug ) {
 				if ( 'administrator' === $role_slug ) {
 					continue; // Admins always hold every cap - never stored.
 				}
-				$caps                    = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
-				$overrides[ $role_slug ] = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
+				$caps = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
+				$caps = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
+				// An empty row only means "none" for a role with defaults to take
+				// away. Storing it for a third-party role (Customer, Student) marked
+				// it mapped and cut its members off from their own spaces on the
+				// first save of this tab (Basecamp 10392987680).
+				if ( ! $caps && ! isset( $defaults[ $role_slug ] ) ) {
+					continue;
+				}
+				$overrides[ $role_slug ] = $caps;
 			}
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $overrides, false );
 			\Jetonomy\Permissions\Capabilities::register();
