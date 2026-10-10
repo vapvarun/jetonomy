@@ -423,7 +423,10 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
 		}
 
-		SpaceMember::remove( $space_id, $user_id );
+		$removed = SpaceMember::remove( $space_id, $user_id );
+		if ( is_wp_error( $removed ) ) {
+			wp_send_json_error( $removed->get_error_message() );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Member removed.', 'jetonomy' ) ) );
 	}

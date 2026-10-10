@@ -41,6 +41,10 @@ class Users_Handler {
 			$type = 'global_ban';
 		}
 
+		if ( 'space_ban' === $type && ! $space_id ) {
+			wp_send_json_error( __( 'A space ban needs a space. Ban the member from that space\'s Members screen.', 'jetonomy' ) );
+		}
+
 		/*
 		 * WHO may be targeted, not just who may moderate.
 		 *

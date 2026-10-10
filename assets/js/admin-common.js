@@ -865,7 +865,11 @@
 				});
 			});
 
-			// Change member role
+			// Change member role. Remember the saved value so a refused change
+			// (last admin) snaps back instead of showing a role that did not save.
+			$(document).on('focus', '.jetonomy-change-member-role', function() {
+				$(this).data('saved', $(this).val());
+			});
 			$(document).on('change', '.jetonomy-change-member-role', function() {
 				var $select = $(this);
 				var spaceId = $select.data('space-id');
@@ -878,8 +882,12 @@
 					role: role
 				}).done(function(res) {
 					if (res.success) {
+						$select.data('saved', role);
 						self.toast(res.data.message);
 					} else {
+						if (undefined !== $select.data('saved')) {
+							$select.val($select.data('saved'));
+						}
 						self.toast(res.data || self.i18n.error, 'error');
 					}
 				});

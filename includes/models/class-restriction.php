@@ -108,6 +108,13 @@ class Restriction extends Model {
 			return 0;
 		}
 
+		// is_space_banned() matches an exact space, so a space ban with no
+		// space restricts nothing while every caller reports success
+		// (Basecamp 10392987727).
+		if ( 'space_ban' === $type && ! $space_id ) {
+			return 0;
+		}
+
 		$data = [
 			'user_id'    => $user_id,
 			'type'       => $type,

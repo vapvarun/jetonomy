@@ -162,7 +162,12 @@ class SpaceMember extends Model {
 	 * @param int $space_id
 	 * @param int $user_id
 	 */
-	public static function remove( int $space_id, int $user_id ): void {
+	public static function remove( int $space_id, int $user_id ): \WP_Error|bool {
+		$last_admin = self::last_admin_error( $space_id, self::get_role( $space_id, $user_id ), null );
+		if ( $last_admin ) {
+			return $last_admin;
+		}
+
 		$deleted = static::db()->delete(
 			static::table(),
 			[
@@ -195,6 +200,7 @@ class SpaceMember extends Model {
 
 		// G1 cache invalidation — see add() comment.
 		self::bust_privileged_cache( $space_id );
+		return (bool) $deleted;
 	}
 
 	/**
@@ -332,6 +338,11 @@ class SpaceMember extends Model {
 
 		if ( $old_role === $role ) {
 			return true; // Idempotent — nothing to change.
+		}
+
+		$last_admin = self::last_admin_error( $space_id, $old_role, $role );
+		if ( $last_admin ) {
+			return $last_admin;
 		}
 
 		/**
@@ -788,6 +799,27 @@ class SpaceMember extends Model {
 	 * @param int $space_id
 	 * @return int
 	 */
+	/**
+	 * The one last-admin rule every entry point shares (front end, wp-admin,
+	 * REST, integrations): a space never loses its final admin by demotion
+	 * or removal (Basecamp 10392987587).
+	 *
+	 * @param int         $space_id Space ID.
+	 * @param string|null $old_role The member's current role.
+	 * @param string|null $new_role Target role, or null when removing.
+	 * @return \WP_Error|null Error when the change would leave no admin.
+	 */
+	private static function last_admin_error( int $space_id, ?string $old_role, ?string $new_role ): ?\WP_Error {
+		if ( 'admin' !== $old_role || 'admin' === $new_role || self::count_admins( $space_id ) > 1 ) {
+			return null;
+		}
+		return new \WP_Error(
+			'jetonomy_last_admin_required',
+			__( 'A space must keep at least one admin. Promote someone else first.', 'jetonomy' ),
+			array( 'status' => 400 )
+		);
+	}
+
 	public static function count_admins( int $space_id ): int {
 		$db    = static::db();
 		$table = static::table();

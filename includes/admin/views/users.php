@@ -237,7 +237,6 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 						<select id="ban-type">
 							<option value="global_ban"><?php esc_html_e( 'Global Ban', 'jetonomy' ); ?></option>
 							<option value="silence"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></option>
-							<option value="space_ban"><?php esc_html_e( 'Space Ban', 'jetonomy' ); ?></option>
 						</select>
 					</td>
 				</tr>

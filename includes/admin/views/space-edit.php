@@ -458,7 +458,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<p>
 						<?php
 						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-						echo esc_html( sprintf( __( 'To sell access to this %s, set Visibility to Private and Join Policy to Invite Only on the Settings tab. Plan holders still get in automatically through this rule.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+						echo esc_html( sprintf( __( 'To sell access to this %s, set Visibility to Private and Join Policy to Invite Only on the General tab. Plan holders still get in automatically through this rule.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
 						?>
 					</p>
 				</div>

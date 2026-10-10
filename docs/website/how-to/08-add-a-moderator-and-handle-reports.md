@@ -84,7 +84,7 @@ On the front-end **Flags** tab, the matching buttons are **Remove** and **Dismis
 
 On **Pending Posts** and **Pending Replies** in wp-admin, you get **Approve**, **Spam** and **Trash**. Choose **Spam** for obvious junk. On the front-end **Awaiting approval** tab, the buttons are **Approve** and **Reject**.
 
-To act on a person, go to **Jetonomy → Users**, find them, and click **Ban**. In the **Ban User** dialog pick a **Type** (**Global Ban**, **Silence** or **Space Ban**), a **Duration** and an optional **Reason**. See [Banning Members](../moderation-and-trust/05-banning-members.md) for what each type does.
+To act on a person, go to **Jetonomy → Users**, find them, and click **Ban**. In the **Ban User** dialog pick a **Type** (**Global Ban** or **Silence**), a **Duration** and an optional **Reason**. To ban someone from one space only, open that space's **Members** page on the front end and click **Ban** next to them. See [Banning Members](../moderation-and-trust/05-banning-members.md) for what each type does.
 
 To undo a ban, use **Unban** on the wp-admin **Banned Users** tab, or **Lift** on the front-end **Banned Members** tab.
 

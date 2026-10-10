@@ -1103,7 +1103,10 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		SpaceMember::remove( $id, $user_id );
+		$removed = SpaceMember::remove( $id, $user_id );
+		if ( is_wp_error( $removed ) ) {
+			return $removed;
+		}
 
 		return new WP_REST_Response(
 			[
@@ -1290,17 +1293,9 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		if ( 'admin' === $current_role && 'admin' !== $role && SpaceMember::count_admins( $id ) <= 1 ) {
-			return new WP_Error(
-				'jetonomy_last_admin_required',
-				__( 'A space must keep at least one admin. Promote someone else first.', 'jetonomy' ),
-				[ 'status' => 400 ]
-			);
-		}
-
-		// One role-update path — set_role() owns the write, cache-bust, and the
-		// role-changed event. The policy guards above (permission, self-demote,
-		// last-admin) stay here as REST-layer policy.
+		// One role-update path: set_role() owns the write, cache-bust, the
+		// role-changed event and the last-admin rule (shared with wp-admin,
+		// Basecamp 10392987587). Permission and self-demotion stay REST policy.
 		$result = SpaceMember::set_role( $id, $user_id, $role );
 		if ( is_wp_error( $result ) ) {
 			return $result;
