@@ -1630,7 +1630,7 @@
       "group": "jetonomy_settings",
       "type": "array",
       "default": {},
-      "controls": "Per-role Jetonomy capability overrides (role => cap[]). Absent role = ROLE_MAP default; present role = EXACTLY the stored list. An empty list is 'none' only for a ROLE_MAP role; the save path never stores an empty list for a role without defaults, so third-party roles keep the space-membership fallback (2.0.2, Basecamp 10392987680; Migration_2_0_2 heals sites that already stored them).",
+      "controls": "Per-role Jetonomy capability overrides (role => cap[]). Absent role = ROLE_MAP default; present role = EXACTLY the stored list. An empty list is a valid 'none'. The save path skips a row the owner never touched (never stored, holds no Jetonomy cap, still empty) so third-party roles keep the space-membership fallback; a third-party role stored empty shows a notice on the Permissions tab with a one-click reset (role_caps_reset unmaps it). Nothing is widened automatically (2.0.2, Basecamp 10392987680).",
       "notes": "1.8.1 (Basecamp 9725751235): the role -> capability mapping is now editable. Owned by Permissions\\Capabilities (ROLE_CAPS_OPTION, default_map/effective_map/labels); Capabilities::register() SYNCS (adds AND revokes) against effective_map(). Administrator is never stored and is pinned to all() so an owner cannot lock themselves out. First sync snapshots live drift (hand-granted caps on custom roles) into the option so upgrades never change effective permissions. Saved via the Settings screen role_caps matrix (sanitize_settings role_caps branch, gated by the role_caps_submitted marker + validated against Capabilities::all() and get_editable_roles()). Tests: tests/unit/permissions/RoleCapsMappingTest.php."
     }
   ],

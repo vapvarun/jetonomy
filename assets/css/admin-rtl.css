@@ -3679,6 +3679,18 @@ tr.jetonomy-moderated td {
 	-webkit-overflow-scrolling: touch;
 }
 
+/* Locked third-party role notice: the reset button carries a role name,
+   so it has to wrap instead of running off a phone screen. */
+.jetonomy-admin .jt-role-locked-notice .button {
+	height: auto;
+	min-height: 32px;
+	padding-block: 4px;
+	line-height: 1.4;
+	white-space: normal;
+	text-align: start;
+	margin-inline-start: 4px;
+}
+
 .jetonomy-admin .jt-role-caps-locked {
 	display: flex;
 	align-items: center;

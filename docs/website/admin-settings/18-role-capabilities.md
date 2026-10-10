@@ -84,7 +84,7 @@ If a custom role should behave like a full community member everywhere rather th
 
 ## Common changes
 
-**Roles from other plugins.** Roles such as Customer or Student start with nothing ticked. Leaving them that way is safe: their members can still read and take part in the spaces they belong to. Tick boxes only when you want that role to have site-wide abilities.
+**Roles from other plugins.** Roles such as Customer or Student start with nothing ticked. Leaving them that way is safe: their members can still read and take part in the spaces they belong to. Tick boxes only when you want that role to have site-wide abilities. If a role from another plugin was saved with nothing ticked, its members cannot read or post anywhere and this screen shows a warning with a **Give members access to their spaces** button. Click it to return the role to space-membership access; leave it if blocking that role was your intention.
 
 **Read-only community.** Untick `jetonomy_create_posts` and `jetonomy_create_replies` for Subscriber. Members can read and vote but not post. Useful for an announcement-style community.
 

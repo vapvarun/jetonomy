@@ -534,6 +534,32 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					}
 					?>
 				<input type="hidden" name="jetonomy_settings[role_caps_submitted]" value="1">
+					<?php
+					// Third-party roles saved with nothing ticked are locked out of every
+					// space. 2.0.1 stored them that way on any save of this tab, so offer
+					// the owner a one-click way back instead of guessing (Basecamp 10392987680).
+					$jt_stored_caps = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+					$jt_role_defs   = \Jetonomy\Permissions\Capabilities::default_map();
+					foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) :
+						if ( isset( $jt_role_defs[ $jt_role_slug ] ) || ! is_array( $jt_stored_caps ) || ! array_key_exists( $jt_role_slug, $jt_stored_caps ) || $jt_stored_caps[ $jt_role_slug ] ) {
+							continue;
+						}
+						?>
+						<div class="notice notice-warning inline jt-role-locked-notice">
+							<p>
+								<?php
+								/* translators: %s: role name, e.g. Customer. */
+								echo esc_html( sprintf( __( 'Members with the %s role cannot read or post in any space, because nothing is ticked for this role.', 'jetonomy' ), $jt_role_label ) );
+								?>
+								<button type="submit" class="button button-small" name="jetonomy_settings[role_caps_reset]" value="<?php echo esc_attr( $jt_role_slug ); ?>">
+									<?php
+									/* translators: %s: role name. */
+									echo esc_html( sprintf( __( 'Give %s members access to their spaces', 'jetonomy' ), $jt_role_label ) );
+									?>
+								</button>
+							</p>
+						</div>
+					<?php endforeach; ?>
 				<div class="jt-matrix-scroll">
 				<table class="wp-list-table widefat jt-settings-matrix jt-settings-matrix--wide" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>

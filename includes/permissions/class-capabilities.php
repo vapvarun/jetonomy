@@ -48,10 +48,10 @@ class Capabilities {
 	 * Option holding the site owner's role => caps overrides.
 	 *
 	 * Absent role key = that role uses the ROLE_MAP default. Present key =
-	 * the role's Jetonomy caps are EXACTLY the stored list. An empty list is
-	 * a "none" choice only for a ROLE_MAP role; a role without defaults is
-	 * never stored empty, so it stays unmapped and keeps the engine's space
-	 * membership fallback (Basecamp 10392987680). Administrator is never stored: admins always
+	 * the role's Jetonomy caps are EXACTLY the stored list (an empty list is
+	 * a valid "none" choice). The Permissions tab never stores a row the
+	 * owner left untouched, so third-party roles keep the engine's space
+	 * membership fallback until someone configures them (Basecamp 10392987680). Administrator is never stored: admins always
 	 * hold every cap, so a site owner cannot lock themselves out of the
 	 * mapping screen (Basecamp 9725751235 - the mapping used to be
 	 * hard-coded and the settings card literally said "This mapping is

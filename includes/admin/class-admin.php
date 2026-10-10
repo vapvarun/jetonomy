@@ -588,6 +588,24 @@ class Admin {
 		return $clean;
 	}
 
+	/**
+	 * Whether a role currently holds any Jetonomy capability.
+	 *
+	 * @param string $role_slug Role slug.
+	 */
+	private static function role_holds_jetonomy_cap( string $role_slug ): bool {
+		$role = get_role( $role_slug );
+		if ( ! $role ) {
+			return false;
+		}
+		foreach ( \Jetonomy\Permissions\Capabilities::all() as $cap ) {
+			if ( $role->has_cap( $cap ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public function sanitize_settings( $input ): array {
 		// Merge with existing settings so saving one tab doesn't wipe another.
 		$existing = get_option( 'jetonomy_settings', array() );
@@ -606,7 +624,7 @@ class Admin {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				// Drop only the mapping - the rest of the Permissions tab
 				// (trust thresholds, rate limits) is still theirs to save.
-				unset( $input['role_caps'], $input['role_caps_submitted'] );
+				unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'] );
 				add_settings_error(
 					'jetonomy_settings',
 					'jetonomy_role_caps_forbidden',
@@ -617,7 +635,8 @@ class Admin {
 		if ( ! empty( $input['role_caps_submitted'] ) ) {
 			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
 			$roles      = array_keys( get_editable_roles() );
-			$defaults   = \Jetonomy\Permissions\Capabilities::default_map();
+			$stored     = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+			$stored     = is_array( $stored ) ? $stored : array();
 			$overrides  = array();
 			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
 			foreach ( $roles as $role_slug ) {
@@ -626,18 +645,25 @@ class Admin {
 				}
 				$caps = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
 				$caps = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
-				// An empty row only means "none" for a role with defaults to take
-				// away. Storing it for a third-party role (Customer, Student) marked
-				// it mapped and cut its members off from their own spaces on the
-				// first save of this tab (Basecamp 10392987680).
-				if ( ! $caps && ! isset( $defaults[ $role_slug ] ) ) {
+				// A row the owner never touched (never stored, holds no Jetonomy
+				// cap, still empty) stays unmapped so the role keeps the space
+				// membership fallback. Storing it cut Customer/Student members off
+				// on the first save of this tab (Basecamp 10392987680). A row that
+				// was stored or held caps and is now empty is a deliberate "none".
+				if ( ! $caps && ! array_key_exists( $role_slug, $stored ) && ! self::role_holds_jetonomy_cap( $role_slug ) ) {
 					continue;
 				}
 				$overrides[ $role_slug ] = $caps;
 			}
+			// "Give members access" on a locked third-party role: unmap it so the
+			// space-membership fallback applies again (Basecamp 10392987680).
+			$reset = sanitize_key( $input['role_caps_reset'] ?? '' );
+			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) ) {
+				unset( $overrides[ $reset ] );
+			}
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $overrides, false );
 			\Jetonomy\Permissions\Capabilities::register();
-			unset( $input['role_caps'], $input['role_caps_submitted'] );
+			unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'] );
 		}
 
 		// ── General tab ──
