@@ -1213,6 +1213,9 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$success = Post::merge_into( $source_id, $target_id );
+		if ( is_wp_error( $success ) ) {
+			return $success;
+		}
 
 		if ( ! $success ) {
 			return new WP_Error(

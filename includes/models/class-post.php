@@ -1883,19 +1883,32 @@ class Post extends Model {
 	/**
 	 * Merge a source post into a target post.
 	 *
-	 * Moves all replies from the source post to the target, recalculates
-	 * reply counts, and trashes the source post.
+	 * Moves replies, votes, subscribers, bookmarks and the opening post (as a
+	 * reply) from the source to the target, recalculates counts, and trashes
+	 * the source. A private source is refused.
 	 *
 	 * @param int $source_id Source post ID (will be trashed).
 	 * @param int $target_id Target post ID (receives replies).
-	 * @return bool True on success.
+	 * @return bool|\WP_Error True on success, false if either post is missing,
+	 *                        WP_Error when the source is private.
 	 */
-	public static function merge_into( int $source_id, int $target_id ): bool {
+	public static function merge_into( int $source_id, int $target_id ): bool|\WP_Error {
 		$source = static::find( $source_id );
 		$target = static::find( $target_id );
 
 		if ( ! $source || ! $target ) {
 			return false;
+		}
+
+		// Merging publishes the source's replies (and its opening post) in the
+		// target, so a private topic would stop being private. The moderator
+		// makes it public first, on purpose.
+		if ( ! empty( $source->is_private ) ) {
+			return new \WP_Error(
+				'jetonomy_merge_private',
+				__( 'This topic is private. Make it public before merging it.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
 		}
 
 		$replies_table = \Jetonomy\table( 'replies' );
@@ -1932,20 +1945,26 @@ class Post extends Model {
 
 		// Keep the source's opening post readable in the target, as split does
 		// for the thread it leaves: a real reply by the same author, dated when
-		// it was written, headed so readers know where it came from.
-		$donor_reply = Reply::create(
-			array(
-				'post_id'      => $target_id,
-				'author_id'    => (int) $source->author_id,
-				'is_anonymous' => (int) ( $source->is_anonymous ?? 0 ),
-				'created_at'   => (string) $source->created_at,
-				'content'      => sprintf(
-					/* translators: %s: title of the topic that was merged in. */
-					'<p><em>' . esc_html__( 'Merged from "%s":', 'jetonomy' ) . '</em></p>',
-					esc_html( (string) $source->title )
-				) . (string) $source->content,
-			)
-		);
+		// it was written, headed so readers know where it came from. It keeps
+		// the source's standing: an unapproved opening post arrives awaiting
+		// approval, and spam or a draft is never copied.
+		$donor_reply = 0;
+		if ( in_array( $source->status, array( 'publish', 'pending' ), true ) ) {
+			$donor_reply = Reply::create(
+				array(
+					'post_id'      => $target_id,
+					'author_id'    => (int) $source->author_id,
+					'is_anonymous' => (int) ( $source->is_anonymous ?? 0 ),
+					'status'       => (string) $source->status,
+					'created_at'   => (string) $source->created_at,
+					'content'      => sprintf(
+						/* translators: %s: title of the topic that was merged in. */
+						'<p><em>' . esc_html__( 'Merged from "%s":', 'jetonomy' ) . '</em></p>',
+						esc_html( (string) $source->title )
+					) . (string) $source->content,
+				)
+			);
+		}
 
 		$replies_t = \Jetonomy\table( 'replies' );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

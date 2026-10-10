@@ -61,7 +61,7 @@ What moves to the target topic:
 - **Votes.** The target's score includes the duplicate's votes. A member who voted on both keeps only their vote on the target.
 - **Followers and bookmarks.** Members who followed or bookmarked the duplicate now follow or have bookmarked the target.
 
-The duplicate itself goes to the trash rather than being deleted.
+The duplicate itself goes to the trash rather than being deleted. A private topic cannot be merged: make it public first. If the duplicate's opening post was still awaiting approval, it arrives in the target awaiting approval too.
 
 > **Warning:** Everything above stays on the target topic even if you restore the duplicate from the trash, so check the target before confirming.
 
