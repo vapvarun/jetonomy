@@ -1209,7 +1209,8 @@
       "handler": "Admin\\Ajax\\Users_Handler::ban",
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_users",
-      "purpose": "Ban user"
+      "purpose": "Ban user",
+      "notes": "Global ban or silence only (2.0.2). A space_ban without space_id is refused here and in Restriction::ban(); space bans come from the front-end space Members page (REST)."
     },
     {
       "action": "jetonomy_bulk_content_action",
@@ -1237,7 +1238,8 @@
       "handler": "Admin\\Ajax\\Spaces_Handler::change_role",
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
-      "purpose": "Change member role"
+      "purpose": "Change member role",
+      "notes": "Last-admin rule enforced by SpaceMember::set_role() (shared with REST/front end, 2.0.2); UI select reverts on refusal."
     },
     {
       "action": "jetonomy_change_trust_level",
@@ -1363,7 +1365,8 @@
       "handler": "Admin\\Ajax\\Spaces_Handler::remove_member",
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
-      "purpose": "Remove member from space"
+      "purpose": "Remove member from space",
+      "notes": "SpaceMember::remove() returns WP_Error jetonomy_last_admin_required for a space's last admin (2.0.2)."
     },
     {
       "action": "jetonomy_reorder_categories",
