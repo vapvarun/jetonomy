@@ -308,7 +308,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<legend class="screen-reader-text"><?php echo esc_html( sprintf( __( 'Roles allowed to create %s from the front end', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></legend>
 								<?php foreach ( $jt_role_groups as $jt_group ) : ?>
 									<?php if ( ! empty( $jt_group['keys'] ) ) : ?>
-										<p style="margin:12px 0 4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#646970;"><?php echo esc_html( $jt_group['label'] ); ?></p>
+										<p style="margin:12px 0 4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--jt-admin-text-wp-2, #646970);"><?php echo esc_html( $jt_group['label'] ); ?></p>
 										<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;max-width:520px;">
 											<?php foreach ( $jt_group['keys'] as $jt_rk ) : ?>
 												<label style="display:flex;align-items:center;gap:6px;margin:0;">
@@ -573,7 +573,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<?php foreach ( $jt_cap_labels as $jt_cap => $jt_cap_label ) : ?>
 							<tr>
-								<th scope="row"><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $jt_cap ); ?></code></th>
+								<th scope="row"><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:var(--jt-admin-text-wp-2, #646970);"><?php echo esc_html( $jt_cap ); ?></code></th>
 								<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
 									<td data-colname="<?php echo esc_attr( $jt_role_label ); ?>">
 										<input type="checkbox"
@@ -848,7 +848,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$body    = isset( $row['body'] ) ? (string) $row['body'] : '';
 							?>
 							<tr data-jt-email-type="<?php echo esc_attr( $type ); ?>">
-								<th scope="row"><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $type ); ?></code></th>
+								<th scope="row"><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:var(--jt-admin-text-wp-2, #646970);"><?php echo esc_html( $type ); ?></code></th>
 								<td data-colname="<?php esc_attr_e( 'Subject', 'jetonomy' ); ?>">
 									<input type="text"
 										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: notification type */ __( 'Email subject for %s', 'jetonomy' ), $label ) ); ?>"
@@ -898,10 +898,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jetonomy-modal__overlay"></div>
 				<div class="jetonomy-modal__content" style="max-width:720px;">
 					<h2 id="jetonomy-email-preview-subject"><?php esc_html_e( 'Email Preview', 'jetonomy' ); ?></h2>
-					<p class="description" style="margin:0 0 12px;color:#646970;">
+					<p class="description" style="margin:0 0 12px;color:var(--jt-admin-text-wp-2, #646970);">
 						<?php esc_html_e( 'Preview rendered with sample data. Save the page to persist overrides.', 'jetonomy' ); ?>
 					</p>
-					<iframe id="jetonomy-email-preview-iframe" style="width:100%;height:520px;border:1px solid #dcdcde;border-radius:6px;background:#fff;" title="<?php esc_attr_e( 'Email preview', 'jetonomy' ); ?>"></iframe>
+					<iframe id="jetonomy-email-preview-iframe" style="width:100%;height:520px;border:1px solid var(--jt-admin-border-wp, #dcdcde);border-radius:6px;background:var(--jt-admin-white, #fff);" title="<?php esc_attr_e( 'Email preview', 'jetonomy' ); ?>"></iframe>
 					<p class="jetonomy-modal__actions">
 						<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Close', 'jetonomy' ); ?></button>
 					</p>
@@ -1380,16 +1380,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		<?php elseif ( 'free-vs-pro' === $active_tab && ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 
 			<!-- Hero -->
-			<div class="jt-settings-card" style="background: linear-gradient(135deg, #EDE9FE, #FEF3C7); border: none;">
+			<div class="jt-settings-card" style="background: linear-gradient(135deg, var(--jt-admin-pro-light, #EDE9FE), var(--jt-admin-warn-light, #FEF3C7)); border: none;">
 				<div style="text-align: center; padding: 12px 0;">
-					<h2 style="margin: 0 0 8px; font-size: 22px; color: #1F2937;"><?php esc_html_e( 'Unlock 13 Pro Extensions', 'jetonomy' ); ?></h2>
-					<p style="margin: 0 0 16px; color: #4B5563; font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
+					<h2 style="margin: 0 0 8px; font-size: 22px; color: var(--jt-admin-text, #1F2937);"><?php esc_html_e( 'Unlock 13 Pro Extensions', 'jetonomy' ); ?></h2>
+					<p style="margin: 0 0 16px; color: var(--jt-admin-text-2, #4B5563); font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
 						<?php esc_html_e( 'Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more. Each feature is an independent module you enable only when you need it.', 'jetonomy' ); ?>
 					</p>
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary button-hero" target="_blank" style="font-size: 14px; padding: 8px 28px;">
 						<?php esc_html_e( 'Get Jetonomy Pro. Starting at $69/yr.', 'jetonomy' ); ?>
 					</a>
-					<p style="margin: 8px 0 0; font-size: 12px; color: #6B7280;">
+					<p style="margin: 8px 0 0; font-size: 12px; color: var(--jt-admin-text-3, #6B7280);">
 						<?php
 						/* translators: %s: coupon code */
 						printf( esc_html__( 'Use code %s for 30%% off lifetime plans.', 'jetonomy' ), '<strong>Jetonomy30</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static trusted HTML tag.
@@ -1490,15 +1490,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				?>
 				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 16px;">
 					<?php foreach ( $jt_pro_exts as $ext ) : ?>
-					<div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; background: #fff;">
+					<div style="border: 1px solid var(--jt-admin-border, #E5E7EB); border-radius: 8px; padding: 16px; background: var(--jt-admin-white, #fff);">
 						<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
 							<span class="dashicons <?php echo esc_attr( $ext['icon'] ); ?>" style="color: var(--jt-admin-pro, #7C3AED); font-size: 18px; width: 18px; height: 18px;"></span>
 							<strong style="font-size: 13px;"><?php echo esc_html( $ext['name'] ); ?></strong>
-							<span style="margin-left: auto; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; background: <?php echo 'Agency' === $ext['tier'] ? '#FEF3C7' : ( 'Growth' === $ext['tier'] ? '#E0E7FF' : '#F0FDF4' ); ?>; color: <?php echo 'Agency' === $ext['tier'] ? '#92400E' : ( 'Growth' === $ext['tier'] ? '#3730A3' : '#166534' ); ?>;">
+							<span class="jt-tier-badge jt-tier-badge--<?php echo esc_attr( sanitize_html_class( strtolower( (string) $ext['tier'] ) ) ); ?>">
 								<?php echo esc_html( $ext['tier'] ); ?>
 							</span>
 						</div>
-						<p style="margin: 0; font-size: 12.5px; color: #6B7280; line-height: 1.5;"><?php echo esc_html( $ext['desc'] ); ?></p>
+						<p style="margin: 0; font-size: 12.5px; color: var(--jt-admin-text-3, #6B7280); line-height: 1.5;"><?php echo esc_html( $ext['desc'] ); ?></p>
 					</div>
 					<?php endforeach; ?>
 				</div>

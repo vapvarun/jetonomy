@@ -4229,3 +4229,9 @@ tr.jetonomy-moderated td {
 	flex-wrap: wrap;
 	max-width: 100%;
 }
+
+/* Pro extension tier badge on the Free vs Pro tab. */
+.jetonomy-admin .jt-tier-badge { margin-inline-start: auto; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; background: var(--jt-admin-success-light, #f0fdf4); color: var(--jt-admin-success-dark, #166534); }
+.jetonomy-admin .jt-tier-badge--agency { background: var(--jt-admin-warn-light, #fef3c7); color: var(--jt-admin-warn-dark, #92400e); }
+.jetonomy-admin .jt-tier-badge--growth { background: var(--jt-admin-info-light, #e0e7ff); color: var(--jt-admin-info-dark, #3730a3); }
+
