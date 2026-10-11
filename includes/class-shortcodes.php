@@ -451,7 +451,7 @@ class Shortcodes {
 				continue;
 			}
 			$url  = get_profile_url( (int) $leader->user_id );
-			$out .= '<li><a href="' . esc_url( $url ) . '">' . esc_html( $user->display_name ) . '</a>';
+			$out .= '<li><a href="' . esc_url( $url ) . '">' . esc_html( user_display_name( $user ) ) . '</a>';
 			$out .= ' <span class="jt-shortcode-rep">' . (int) $leader->reputation . ' rep</span></li>';
 		}
 		$out .= '</ol></div>';
@@ -491,7 +491,7 @@ class Shortcodes {
 
 		$out  = '<div class="jt-shortcode jt-shortcode-profile-card">';
 		$out .= '<a href="' . esc_url( $url ) . '">';
-		$out .= '<strong>' . esc_html( $user->display_name ) . '</strong>';
+		$out .= '<strong>' . esc_html( user_display_name( $user ) ) . '</strong>';
 		$out .= '<span class="jt-tl" data-jt-tl="' . $trust . '">' . $trust . '</span>';
 		$out .= '</a>';
 		if ( ! empty( $profile->bio ) ) {
@@ -594,7 +594,7 @@ class Shortcodes {
 			}
 			$url  = get_profile_url( (int) $m->user_id );
 			$out .= '<div class="jt-shortcode-member">';
-			$out .= '<a href="' . esc_url( $url ) . '">' . esc_html( $user->display_name ) . '</a>';
+			$out .= '<a href="' . esc_url( $url ) . '">' . esc_html( user_display_name( $user ) ) . '</a>';
 			$out .= ' <span class="jt-shortcode-rep">' . (int) $m->reputation . ' rep</span>';
 			$out .= '</div>';
 		}

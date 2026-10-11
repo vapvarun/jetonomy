@@ -1441,12 +1441,12 @@ class Template_Loader {
 						if ( $user ) {
 							$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
 							$bio     = $profile && ! empty( $profile->bio ) ? wp_strip_all_tags( (string) $profile->bio ) : '';
-							$title   = $user->display_name;
+							$title   = user_display_name( $user );
 							/* translators: 1: user login, 2: site title. */
 							$desc      = $bio !== '' ? $bio : sprintf( __( 'Community profile for @%1$s on %2$s.', 'jetonomy' ), $user->user_login, $site_name );
 							$url       = \Jetonomy\get_profile_url( (int) $user->ID );
 							$image     = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
-							$image_alt = $user->display_name;
+							$image_alt = user_display_name( $user );
 						}
 						// Settings > SEO > "Noindex member profiles". This branch
 						// never read the setting: Schema_Markup emitted the tag

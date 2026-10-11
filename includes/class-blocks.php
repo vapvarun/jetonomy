@@ -629,7 +629,7 @@ class Blocks {
 
 		$user_id = get_current_user_id();
 		$user    = wp_get_current_user();
-		$avatar  = get_avatar( $user_id, 48, '', $user->display_name, array( 'class' => 'jt-userpanel-avatar' ) );
+		$avatar  = get_avatar( $user_id, 48, '', user_display_name( $user ), array( 'class' => 'jt-userpanel-avatar' ) );
 
 		// Trust level (cheap read from user_profiles).
 		$profile     = class_exists( \Jetonomy\Models\UserProfile::class ) ? \Jetonomy\Models\UserProfile::find_by_user( $user_id ) : null;
@@ -663,7 +663,7 @@ class Blocks {
 		$logout_url    = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
 		$title         = isset( $attributes['title'] ) && '' !== $attributes['title']
 			? (string) $attributes['title']
-			: sprintf( /* translators: %s: user display name */ __( 'Hi, %s', 'jetonomy' ), $user->display_name );
+			: sprintf( /* translators: %s: user display name */ __( 'Hi, %s', 'jetonomy' ), user_display_name( $user ) );
 
 		ob_start();
 		?>
