@@ -350,11 +350,10 @@ class Model_Tests {
 		$this->check( 'SP2: the split reply still leaves the source thread', $moved );
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery
-		$wpdb->delete( $replies_t, array( 'post_id' => $post_id ) );
-		$wpdb->delete( table( 'posts' ), array( 'id' => $post_id ) );
+		// Through the model so the counters create() bumped are reversed.
+		Post::delete( $post_id );
 		if ( $new_post_id > 0 ) {
-			$wpdb->delete( $replies_t, array( 'post_id' => $new_post_id ) );
-			$wpdb->delete( table( 'posts' ), array( 'id' => $new_post_id ) );
+			Post::delete( $new_post_id );
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery
 	}
@@ -632,8 +631,8 @@ class Model_Tests {
 			! in_array( (int) $post_id, $queued, true )
 		);
 
-		$wpdb->delete( $posts_t, array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->delete( $posts_t, array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		Post::delete( $post_id );
+		Post::delete( $overdue_id );
 	}
 
 	/**
@@ -2075,7 +2074,7 @@ class Model_Tests {
 			);
 		} finally {
 			if ( $space ) {
-				Space::delete( $space );
+				\Jetonomy\Space_Purge::purge( (int) $space ); // Members and content too, not just the row.
 			}
 			// Raw delete: fixtures must go even when a check above failed and
 			// left the tree in a state Category::delete() would refuse.
@@ -2294,6 +2293,11 @@ class Model_Tests {
 				'is_anonymous' => 1,
 			]
 		);
+		// Pro gates anonymity per space and drops the flag when the space has
+		// not opted in. This test is about masking, not the gate.
+		if ( empty( Post::find( (int) $id )->is_anonymous ) ) {
+			Post::update( (int) $id, [ 'is_anonymous' => 1 ] );
+		}
 		$post     = Post::find( (int) $id );
 		$previous = get_current_user_id();
 
@@ -2446,7 +2450,7 @@ class Model_Tests {
 		Space::update( $space_id, array( 'category_id' => $cat_a, 'status' => 'active' ) );
 		$this->check( 'SC4: a move and a restore in one call stay exact', $exact(), $detail() );
 
-		$wpdb->delete( $spaces, array( 'id' => $space_id ) );
+		\Jetonomy\Space_Purge::purge( $space_id ); // The creator's membership goes too.
 		$wpdb->delete( $cats, array( 'id' => $cat_a ) );
 		$wpdb->delete( $cats, array( 'id' => $cat_b ) );
 	}

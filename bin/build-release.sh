@@ -193,6 +193,9 @@ mkdir -p "$STAGE"
 EXCLUDES_FILE="$(mktemp)"
 trap 'rm -f "$EXCLUDES_FILE"' EXIT
 cat > "$EXCLUDES_FILE" <<'EOF'
+# The QA harness (wp jetonomy qa-actions) writes test data; it is a
+# developer tool, run from a git checkout, never shipped to site owners.
+includes/qa/
 .git/
 .github/
 .githooks/

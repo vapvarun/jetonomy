@@ -694,7 +694,7 @@ class Journey_Tests {
 				\Jetonomy\Models\Reply::delete( (int) $fixture['id'] );
 				break;
 			case 'space':
-				\Jetonomy\Models\Space::delete( (int) $fixture['id'] );
+				\Jetonomy\Space_Purge::purge( (int) $fixture['id'] ); // Members and content too, not just the row.
 				break;
 			case 'space_member':
 				\Jetonomy\Models\SpaceMember::remove( (int) $fixture['space_id'], (int) $fixture['user_id'] );

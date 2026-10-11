@@ -940,8 +940,13 @@ class CLI {
 	 * @subcommand qa-actions
 	 */
 	public function qa_actions( $args, $assoc_args ): void {
+		if ( ! class_exists( '\\Jetonomy\\QA\\REST_Tests' ) ) {
+			\WP_CLI::error( 'qa-actions is a developer tool and is not included in release builds. Run it from a git checkout of the plugin.' );
+		}
 		\WP_CLI::log( '' );
 		\WP_CLI::log( '--- Jetonomy Action Tests ---' );
+
+		$footprint_before = self::qa_footprint();
 
 		\WP_CLI::log( '' );
 		\WP_CLI::log( 'Phase 1: REST Round-Trip Tests' );
@@ -970,6 +975,14 @@ class CLI {
 		// build could report a green suite while asserting almost nothing.
 		$total_skip = $r1['skipped'] + $r2['skipped'] + $r3['skipped'] + $r4['skipped'];
 
+		// The suite runs on real sites: every fixture must leave the data and
+		// its counters exactly as it found them.
+		$footprint_after = self::qa_footprint();
+		if ( $footprint_after !== $footprint_before ) {
+			++$total_fail;
+			\WP_CLI::warning( 'Fixtures left data behind. Before: ' . wp_json_encode( $footprint_before ) . ' After: ' . wp_json_encode( $footprint_after ) );
+		}
+
 		\WP_CLI::log( '' );
 		\WP_CLI::log( '--------------------------------------' );
 		\WP_CLI::log( sprintf( '  REST Tests:     %d/%d', $r1['pass'], $r1['pass'] + $r1['fail'] ) );
@@ -987,6 +1000,24 @@ class CLI {
 		} else {
 			\WP_CLI::success( sprintf( 'All %d action tests passed. Full stack verified.', $total_pass ) );
 		}
+	}
+
+	/**
+	 * Row counts and stored counters a leak-free QA run must not change.
+	 *
+	 * @return array<string,int>
+	 */
+	private static function qa_footprint(): array {
+		global $wpdb;
+		$spaces  = \Jetonomy\table( 'spaces' );
+		$members = \Jetonomy\table( 'space_members' );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row                   = $wpdb->get_row( "SELECT COUNT(*) AS spaces, COALESCE( SUM( post_count ), 0 ) AS post_counts, COALESCE( SUM( member_count ), 0 ) AS member_counts FROM {$spaces}", ARRAY_A );
+		$row['posts']          = $wpdb->get_var( 'SELECT COUNT(*) FROM ' . \Jetonomy\table( 'posts' ) );
+		$row['replies']        = $wpdb->get_var( 'SELECT COUNT(*) FROM ' . \Jetonomy\table( 'replies' ) );
+		$row['orphan_members'] = $wpdb->get_var( "SELECT COUNT(*) FROM {$members} m LEFT JOIN {$spaces} s ON s.id = m.space_id WHERE s.id IS NULL" );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return array_map( 'intval', (array) $row );
 	}
 
 

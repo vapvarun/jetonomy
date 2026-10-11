@@ -1329,9 +1329,7 @@ class REST_Tests {
 		if ( $sub_post_id ) {
 			$r = $this->rest( 'DELETE', '/posts/' . $sub_post_id, [], $this->test_user_id );
 			$this->check( 'H47: Subscriber deletes own post → 200', $r->get_status() === 200 );
-			// Remove from cleanup since we just deleted it. Entries are
-			// associative ([type, id]) and posts are pushed as 'post_rest'.
-			$this->cleanup = array_filter( $this->cleanup, fn( $item ) => ! ( 'post_rest' === ( $item['type'] ?? '' ) && $sub_post_id === ( $item['id'] ?? 0 ) ) );
+			// A member's delete only trashes; it stays in cleanup for the forced delete.
 		}
 
 		// Restore admin.
@@ -1353,12 +1351,14 @@ class REST_Tests {
 
 		foreach ( array_reverse( $this->cleanup ) as $item ) {
 			switch ( $item['type'] ) {
+				// force: a plain DELETE only trashes, and teardown must leave
+				// nothing behind (the run asserts the site is unchanged).
 				case 'post_rest':
-					$this->rest( 'DELETE', "/posts/{$item['id']}" );
+					$this->rest( 'DELETE', "/posts/{$item['id']}", [ 'force' => true ] );
 					break;
 
 				case 'reply_rest':
-					$this->rest( 'DELETE', "/replies/{$item['id']}" );
+					$this->rest( 'DELETE', "/replies/{$item['id']}", [ 'force' => true ] );
 					break;
 
 				case 'space_rest':
