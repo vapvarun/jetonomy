@@ -476,6 +476,7 @@ class REST_Tests {
 		}
 
 		$this->test_media_B13();
+		$this->test_private_reply_and_hidden_space_PV1();
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
@@ -2112,6 +2113,65 @@ class REST_Tests {
 	 * verifying methods. Covering the GET keeps the
 	 * manifest entry honest instead of relying on it being remembered.
 	 */
+	/**
+	 * PV1: a private reply is private on every read path, and a hidden space
+	 * never confirms it exists.
+	 *
+	 * GET /replies/{id} and the profile Replies list used to return the body
+	 * of a private reply to anyone; /privileged-members answered 200 for a
+	 * hidden space that every other route answers 404 for.
+	 */
+	private function test_private_reply_and_hidden_space_PV1(): void {
+		if ( ! $this->post_id ) {
+			$this->skip( 'PV1: private reply', 'no test post' );
+			return;
+		}
+
+		$r        = $this->rest( 'POST', "/posts/{$this->post_id}/replies", array( 'content' => '<p>PV1 private body</p>', 'is_private' => true ), $this->test_user_id );
+		$reply_id = (int) ( $r->get_data()['id'] ?? 0 );
+		$this->check( 'PV1: private reply created', $reply_id > 0, "HTTP {$r->get_status()}" );
+		if ( ! $reply_id ) {
+			return;
+		}
+		$this->cleanup[] = array( 'type' => 'reply_rest', 'id' => $reply_id );
+
+		$guest = $this->rest( 'GET', "/replies/{$reply_id}", array(), 0 )->get_data();
+		$this->check(
+			'PV1: GET /replies/{id} as guest hides a private body',
+			! empty( $guest['is_private_hidden'] ) && false === strpos( (string) wp_json_encode( $guest ), 'PV1 private body' ),
+			'body or flag wrong'
+		);
+
+		$author = $this->rest( 'GET', "/replies/{$reply_id}", array(), $this->test_user_id )->get_data();
+		$this->check( 'PV1: GET /replies/{id} shows the author their own private reply', empty( $author['is_private_hidden'] ), 'author was refused' );
+
+		wp_set_current_user( 0 );
+		$rows = array_filter( \Jetonomy\Models\Reply::list_by_user( $this->test_user_id, 50 ), static fn( $row ) => (int) $row->id === $reply_id );
+		$row  = reset( $rows );
+		$this->check( 'PV1: profile replies list hides a private body from guests', $row && ! empty( $row->is_private_hidden ) && '' === (string) ( $row->content ?? '' ), 'row missing or body present' );
+
+		wp_set_current_user( $this->admin_id );
+		$space_id = \Jetonomy\Models\Space::create(
+			array(
+				'title'       => 'PV1 hidden ' . wp_generate_password( 6, false ),
+				'visibility'  => 'hidden',
+				'join_policy' => 'invite',
+				'type'        => 'forum',
+				'author_id'   => $this->admin_id,
+			)
+		);
+		if ( is_wp_error( $space_id ) || ! $space_id ) {
+			$this->skip( 'PV1: hidden space', 'could not create fixture' );
+			return;
+		}
+		$this->cleanup[] = array( 'type' => 'space_rest', 'id' => (int) $space_id );
+
+		$status = $this->rest( 'GET', "/spaces/{$space_id}/privileged-members", array(), 0 )->get_status();
+		$this->check( 'PV1: /privileged-members of a hidden space is 404 for a guest', 404 === $status, "HTTP {$status}" );
+
+		wp_set_current_user( $this->admin_id );
+	}
+
 	private function test_media_B13(): void {
 		$r    = $this->rest( 'GET', '/media', array( 'per_page' => 5 ), $this->admin_id );
 		$data = $r->get_data();

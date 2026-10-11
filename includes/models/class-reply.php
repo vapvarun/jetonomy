@@ -1330,26 +1330,35 @@ class Reply extends Model {
 			$gate_sql .= ' AND ' . $block_sql;
 		}
 
+		// post_content_plain gives feed-space topics (stored without a title) a
+		// readable "on <excerpt>" line in the profile Replies tab.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return static::db()->get_results(
+		$rows = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				// post_content_plain is selected so feed-space parent posts
-				// (which store an empty title by design — 1.4.3 WS1) can
-				// still render a human-readable "on <excerpt>" string in
-				// the user-profile Replies tab.
-				"SELECT r.*, p.title AS post_title, p.slug AS post_slug, p.content_plain AS post_content_plain, sp.slug AS space_slug, sp.title AS space_title
+				"SELECT r.*, p.title AS post_title, p.slug AS post_slug, p.content_plain AS post_content_plain,
+				        p.author_id AS post_author_id, p.space_id AS post_space_id, sp.slug AS space_slug, sp.title AS space_title
 				 FROM {$replies_tbl} r
 				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
 				 WHERE r.author_id = %d AND r.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
-				 ORDER BY r.created_at DESC
+				 ORDER BY r.created_at DESC, r.id DESC
 				 LIMIT %d OFFSET %d",
 				$user_id,
 				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
 		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Private replies stay in the list (pagination stays even) but lose their body.
+		foreach ( $rows as $row ) {
+			$post = (object) array(
+				'author_id' => (int) $row->post_author_id,
+				'space_id'  => (int) $row->post_space_id,
+			);
+			self::apply_private_tombstone( $row, $post, get_current_user_id() );
+		}
+		return $rows;
 	}
 
 	/**

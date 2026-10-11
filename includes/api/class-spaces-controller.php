@@ -547,23 +547,12 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	public function get_item( $request ) {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
 		$user_id = get_current_user_id();
-
-		// Concealment before permission, and 404 not 403: the browser path
-		// (Space::concealed_from_viewer) already answers
-		// 404 for a space whose existence is hidden from this viewer, and a 403
-		// here would confirm the space exists to the same stranger the template
-		// refuses to tell. Covers both a `hidden` space and any space inside a
-		// category the viewer cannot see.
-		if ( Space::concealed_from_viewer( $space, (int) $user_id ) ) {
-			return $this->not_found( 'Space' );
-		}
 
 		// Admission, not the roster. Asking SpaceMember alone refused a 403 to
 		// exactly the learners a course's access rule exists to admit - the web
@@ -925,16 +914,15 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * GET /spaces/{id}/privileged-members — Admins + moderators of a space.
 	 *
-	 * Powers the front-end "Managed by" sidebar card (1.4.0 G1) and is the
-	 * canonical REST surface for any third-party integrator or future
-	 * mobile / native client that wants to render "who runs this space".
-	 * Publicly readable — same visibility as the About card.
+	 * Powers the "Managed by" sidebar card and any client that shows who runs
+	 * a space. Visible on public and private spaces, so non-members know whom
+	 * to ask for access; a hidden space answers 404 like the space itself.
 	 */
 	public function get_privileged_members( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
 		$limit = absint( $request->get_param( 'limit' ) );
@@ -960,27 +948,34 @@ class Spaces_Controller extends Base_Controller {
 	}
 
 	/**
+	 * A space, or a 404 when this viewer may not know it exists.
+	 *
+	 * 404 rather than 403 for a hidden space (or one in a hidden category):
+	 * a 403 would confirm to a stranger that the space exists, which the
+	 * page itself never does.
+	 *
+	 * @param int $id Space ID.
+	 * @return object|WP_Error
+	 */
+	private function find_unconcealed_space( int $id ) {
+		$space = Space::find( $id );
+		if ( ! $space || Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+			return $this->not_found( 'Space' );
+		}
+		return $space;
+	}
+
+	/**
 	 * GET /spaces/{id}/members — List all members of a space.
 	 */
 	public function get_members( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id    = absint( $request->get_param( 'id' ) );
-		$space = Space::find( $id );
-
-		if ( ! $space ) {
-			return $this->not_found( 'Space' );
+		$space = $this->find_unconcealed_space( $id );
+		if ( is_wp_error( $space ) ) {
+			return $space;
 		}
 
 		$user_id = get_current_user_id();
-
-		// Concealment before permission, and 404 not 403: the browser path
-		// (Space::concealed_from_viewer) already answers
-		// 404 for a space whose existence is hidden from this viewer, and a 403
-		// here would confirm the space exists to the same stranger the template
-		// refuses to tell. Covers both a `hidden` space and any space inside a
-		// category the viewer cannot see.
-		if ( Space::concealed_from_viewer( $space, (int) $user_id ) ) {
-			return $this->not_found( 'Space' );
-		}
 
 		// Same admission test as the space itself: someone who may read the space
 		// may see who is in it. Gating this on the roster hid the member list

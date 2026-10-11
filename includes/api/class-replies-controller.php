@@ -402,6 +402,10 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Same placeholder the thread shows; cloned so the cached row keeps its body.
+		$reply = clone $reply;
+		Reply::apply_private_tombstone( $reply, $post, get_current_user_id() );
+
 		$enriched = $this->enrich_with_author( array( $reply ) );
 
 		return new WP_REST_Response( $this->prepare_reply( $enriched[0] ), 200 );
