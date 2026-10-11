@@ -9,7 +9,7 @@
  * `jetonomy_reply_from_email` and Notifier::on_reply_from_email(), had none of
  * them.
  *
- * Reproduced before this existed (Basecamp 10228771444), each request carrying
+ * Reproduced before this existed, each request carrying
  * a VALID webhook signature so nothing was hiding behind the auth fix:
  *
  *   banned member replies          HTTP 200  reply created
@@ -28,7 +28,7 @@
  * Named for CONTENT, not replies, deliberately. It started as a reply-only
  * helper and within the hour turned out to be needed for post creation too:
  * the WP Abilities create-post and create-reply paths could both write into an
- * ARCHIVED space that REST refuses (Basecamp 10228771444, follow-up audit). A
+ * ARCHIVED space that REST refuses. A
  * gate named for one caller is a gate the next caller does not think to look
  * for, which is the exact failure this whole batch of cards is made of.
  *
@@ -71,7 +71,7 @@ class Content_Gate {
 		 * Only a published topic takes replies. A trashed one kept accepting
 		 * them on every surface - REST 201, the ability, emailed replies - so
 		 * its author could keep a thread nobody else can see alive
-		 * (Basecamp 10335997408). Drafts and scheduled topics (drafts with a
+		 * Drafts and scheduled topics (drafts with a
 		 * published_at) are refused too: there is no thread yet.
 		 */
 		$live = self::status_error( $post );
@@ -115,7 +115,7 @@ class Content_Gate {
 		 * single-post.php has always promised exactly that - it renders the
 		 * composer plus a "As a moderator, you can still add a reply" notice -
 		 * while this gate rejected everyone, so the UI offered a reply the
-		 * server refused with a 403 (Basecamp 10272481541).
+		 * server refused with a 403.
 		 *
 		 * The permission slug must stay `moderate`, the same one the template
 		 * tests, or the display/enforce split just moves rather than closes.

@@ -28,7 +28,7 @@ class Reputation {
 	 * Points awarded (or deducted) per action type.
 	 *
 	 * Keys are stable identifiers passed to {@see award()} / {@see revoke()}.
-	 * Some entries are populated for use by WS4-B (currently un-wired callsites).
+	 * Some entries are defined ahead of the callsites that will award them.
 	 */
 	private const POINTS_MAP = array(
 		// Small participation award for publishing content. Quality signals

@@ -107,13 +107,13 @@ class Privacy {
 			// another space admin survives, the space is still fully manageable
 			// by them and nothing needs rescuing - archiving it would take a
 			// healthy space read-only for its whole membership because one
-			// unrelated member closed their account (Basecamp 10119343043, QA
-			// case B). Hand over attribution, leave the space running.
+			// unrelated member closed their account.
+			// Hand over attribution, leave the space running.
 			// Same successor rule the explicit delete flow uses, so the two
 			// cannot disagree about who inherits a space. Only step 1 of it
 			// here: whether a space admin survives decides archive vs keep,
 			// and a site administrator who is also a space admin is exactly
-			// such a survivor (Basecamp 10344393613).
+			// such a survivor.
 			$heir = \Jetonomy\Models\Space::surviving_admin( $space_id, $user_id );
 
 			if ( $heir ) {
@@ -782,7 +782,6 @@ class Privacy {
 				// The purge also deleted this user's space_members rows. If they
 				// held admin/moderator, the "Managed by" sidebar card served the
 				// deleted user from priv_members_{sid} for up to its TTL
-				// (caching plan WP0.4).
 				\Jetonomy\Models\SpaceMember::bust_privileged_cache( (int) $sid );
 			}
 		}

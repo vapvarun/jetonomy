@@ -50,7 +50,7 @@ class Users_Handler {
 		 *
 		 * The cap check above is satisfied by the editor role out of the box, so
 		 * without this an editor could global_ban user 1 and lock the owner out
-		 * of their own site (Basecamp 10227908469). Restriction::ban() enforces
+		 * of their own site. Restriction::ban() enforces
 		 * the same rule as a backstop; this call is here so the moderator gets
 		 * the reason instead of a bare failure.
 		 */

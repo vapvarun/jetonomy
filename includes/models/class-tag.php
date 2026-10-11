@@ -160,14 +160,14 @@ class Tag extends Model {
 	/**
 	 * Per-request memo of per-post tag lists (default cap only), filled
 	 * per-row on miss and in bulk by for_posts(). Cleared on attach/detach
-	 * and via Cache::flush() (plan U1).
+	 * and via Cache::flush().
 	 *
 	 * @var array<int, object[]>
 	 */
 	private static array $post_memo = [];
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -181,7 +181,7 @@ class Tag extends Model {
 	}
 
 	/**
-	 * Register the memo reset with the shared registry once (plan U1).
+	 * Register the memo reset with the shared registry once.
 	 */
 	private static function register_memo_reset(): void {
 		if ( ! self::$memo_registered ) {
@@ -195,7 +195,7 @@ class Tag extends Model {
 	}
 
 	/**
-	 * Batch-fill the list_for_post() memo for a page of posts (plan WP3.7).
+	 * Batch-fill the list_for_post() memo for a page of posts.
 	 *
 	 * One IN-query for the whole page — the space listing called
 	 * list_for_post() per card (20 JOINs per page). Empties are seeded so

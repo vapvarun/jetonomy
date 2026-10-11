@@ -150,7 +150,6 @@ class Replies_Controller extends Base_Controller {
 		// but a space-level check left every reply under a trashed or pending
 		// post readable — so deleting a topic did not take its conversation with
 		// it, and a private topic's thread answered to non-members
-		// (Basecamp 10105628594).
 		// 404, not 403, and for the same reason GET /posts/{id} answers 404: a
 		// 403 on the thread confirms the topic exists to a viewer the post
 		// route refuses to tell. Two answers to one question is the leak.
@@ -286,7 +285,7 @@ class Replies_Controller extends Base_Controller {
 
 		// Carry the client-requested flag into the create data. Free only
 		// plumbs it through — Pro validates/enforces it via the
-		// `jetonomy_before_create_reply` filter (see Task 12).
+		// `jetonomy_before_create_reply` filter.
 		$reply_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
 
 		// Private reply (1.9.0): author's choice at compose time. Readable only
@@ -380,7 +379,7 @@ class Replies_Controller extends Base_Controller {
 	 * Exists so a client holding only a reply id can resolve its parent thread:
 	 * the payload carries `post_id`. Reply notifications carry the reply id and
 	 * nothing else, so without this route the app had no way to route the tap and
-	 * every reply notification was a dead end (Basecamp 10159720057 / 10161329157).
+	 * every reply notification was a dead end.
 	 *
 	 * Read gate is the parent post's, not the reply's — a reply is only as visible
 	 * as the thread it lives in, and Permission_Engine::can_read_post already
@@ -894,7 +893,6 @@ class Replies_Controller extends Base_Controller {
 		 * moderators would make them unreachable to themselves. The API
 		 * published nothing to read that rule from, so the app rendered a Block
 		 * control on staff replys and the tap failed
-		 * (Basecamp 10207937443 / 10203753031).
 		 *
 		 * Same shape, and the same fix, as can_downvote directly above: a
 		 * server-owned rule gets a server-published flag rather than every
@@ -906,7 +904,7 @@ class Replies_Controller extends Base_Controller {
 			&& $real_author_id !== $uid
 			&& ! user_can( $real_author_id, 'manage_options' )
 			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
-		// See the identical note in prepare_post() — Basecamp 10202766654.
+		// See the identical note in prepare_post().
 		$data['viewer_flagged'] = isset( $reply->viewer_flagged )
 			? (bool) $reply->viewer_flagged
 			: \Jetonomy\Models\Flag::has_reported( $uid, 'reply', (int) $reply->id );

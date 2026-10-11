@@ -839,7 +839,7 @@ class BuddyPress {
 
 		// Visibility-aware listing so BuddyPress activity-stream widgets don't
 		// surface private topics to non-author, non-privileged viewers
-		// (Basecamp 9803998504). Uses the same gate as the space template.
+		// Uses the same gate as the space template.
 		$bp_user_id       = get_current_user_id();
 		$bp_is_privileged = $bp_user_id
 			&& ( user_can( $bp_user_id, 'manage_options' )

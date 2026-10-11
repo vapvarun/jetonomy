@@ -276,7 +276,6 @@ class Model_Tests {
 	 * the confusion the notices exist to end. jetonomy_compose_topic was worse:
 	 * its check sat inside the 'fixed' branch while the default mode is
 	 * 'picker', so a bogus id rendered a complete working compose form
-	 * (Basecamp 10266123693).
 	 *
 	 * Also pins that a slug and the matching numeric id produce the SAME output,
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
@@ -867,7 +866,7 @@ class Model_Tests {
 	 * hard-delete at all - they soft-trash via update( status => trash ) - so the
 	 * hook fired on a RESTORABLE post and Pro's attachments listener dropped its
 	 * link rows; and a genuine hard delete through the model fired nothing, so
-	 * those rows orphaned forever (Basecamp 10268067864).
+	 * those rows orphaned forever.
 	 *
 	 * These assert the contract from the model's side, which is the side every
 	 * caller shares: CLI, journeys, abilities and REST alike.
@@ -1010,7 +1009,7 @@ class Model_Tests {
 	 * STRANDED if the leaver was its last admin; one with another admin is still
 	 * fully manageable and must keep running. The first version of this fix
 	 * archived both, so one member closing their account took healthy spaces
-	 * read-only for their entire membership (Basecamp 10119343043, QA case B).
+	 * read-only for their entire membership.
 	 *
 	 * Drives real wp_delete_user() rather than calling the private transfer
 	 * directly, because the hook wiring is half of what is being asserted.
@@ -1080,7 +1079,7 @@ class Model_Tests {
 		);
 
 		// C: the surviving co-admin IS the site administrator. Still a survivor,
-		// so the space must stay running (Basecamp 10344393613).
+		// so the space must stay running.
 		$site_admin = \Jetonomy\Models\Space::fallback_owner( (int) $owner );
 		$by_admin   = $make_space( 'qa-transfer-siteadmin-' . $suffix, (int) $owner );
 		\Jetonomy\Models\SpaceMember::add( $by_admin, $site_admin, 'admin' );
@@ -1132,7 +1131,7 @@ class Model_Tests {
 	 * Manual-reorder primitive, shared by categories and spaces.
 	 *
 	 * Had no coverage at all, which is why two corruptions shipped in a row on
-	 * the categories screen (Basecamp 10210539659): first the batch index was
+	 * the categories screen: first the batch index was
 	 * written as an absolute position, then the batch itself turned out to be
 	 * longer than per_page because child rows render inline on the parent's page.
 	 * Both silently overwrote the next page's positions.
@@ -1929,7 +1928,6 @@ class Model_Tests {
 	/**
 	 * PL: count phrases go through _n() so languages with 3+ plural forms
 	 * translate every count; a renamed noun falls back to the owner's words
-	 * (Basecamp 10369320225).
 	 */
 	private function test_count_label_plurals(): void {
 		$polish = static function ( $t, $s, $p, $n, $d ) {
@@ -1961,7 +1959,7 @@ class Model_Tests {
 	/**
 	 * NV: a notification about a topic in a private space disappears for a
 	 * member who can no longer read that space, on the Jetonomy list and the
-	 * host bell twin alike (Basecamp 10345420194).
+	 * host bell twin alike.
 	 */
 	private function test_notification_space_read_gate(): void {
 		global $wpdb;
@@ -2000,7 +1998,7 @@ class Model_Tests {
 	/**
 	 * CH: categories nest two levels deep, a hidden parent hides its branch,
 	 * and a category cannot be deleted from under its sub-categories or live
-	 * spaces (Basecamp 10355160875, 10355160993).
+	 * spaces.
 	 */
 	private function test_category_hierarchy_rules(): void {
 		global $wpdb;
@@ -2086,7 +2084,6 @@ class Model_Tests {
 	/**
 	 * CS: every category writer gets a free slug, an explicit slug clash on
 	 * edit is refused with a reason, and colour is a top-level accent only
-	 * (Basecamp 10375159877, 10375031087).
 	 */
 	private function test_category_slug_and_colour(): void {
 		global $wpdb;
@@ -2117,7 +2114,7 @@ class Model_Tests {
 
 	/**
 	 * DD: demo data can be brought back after it was skipped or removed - the
-	 * route exists for all three verbs and is admin-only (Basecamp 10375019266).
+	 * route exists for all three verbs and is admin-only.
 	 * Does not seed: that would rewrite the site's demo set on every QA run.
 	 */
 	private function test_demo_data_route(): void {
@@ -2137,7 +2134,7 @@ class Model_Tests {
 
 	/**
 	 * BP: the breadcrumb prints before <main> by default and moves to the
-	 * in-main slot when a site asks for it (Basecamp 10272509253).
+	 * in-main slot when a site asks for it.
 	 */
 	private function test_breadcrumb_placement(): void {
 		$crumbs  = array( array( 'label' => 'QA BP', 'url' => '' ) );
@@ -2163,7 +2160,7 @@ class Model_Tests {
 	 * SA: REST /search runs through the search adapter. A plugin adapter that
 	 * implements the full query contract serves it; one with only the narrow
 	 * contract cannot carry the filters and leaves REST on MySQL; the
-	 * query-args filter result is used (Basecamp 10368526736).
+	 * query-args filter result is used.
 	 */
 	private function test_search_adapter_routing(): void {
 		$narrow = new class() implements \Jetonomy\Adapters\Search_Adapter {
@@ -2219,7 +2216,6 @@ class Model_Tests {
 	/**
 	 * NR: reading an object reads that member's notifications about it, here
 	 * and (one signal) in the host's bell; other recipients keep theirs unread
-	 * (Basecamp 10369320232).
 	 */
 	private function test_notification_read_for_object(): void {
 		global $wpdb;
@@ -2322,7 +2318,7 @@ class Model_Tests {
 	/**
 	 * CR: the admin reorder saves one sibling group, and the server decides
 	 * which ids belong to it - sub-categories can be reordered, and a stale or
-	 * forged batch cannot move rows outside its group (Basecamp 10355161693).
+	 * forged batch cannot move rows outside its group.
 	 */
 	private function test_category_sibling_reorder(): void {
 		global $wpdb;

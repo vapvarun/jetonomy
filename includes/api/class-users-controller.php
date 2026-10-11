@@ -211,7 +211,7 @@ class Users_Controller extends Base_Controller {
 				'is_banned'    => 'global_ban' === $rtype,
 				// Server-authoritative ban eligibility: viewer must moderate;
 				// staff and self are never bannable. Stops the app offering Ban
-				// on an admin (Basecamp: ban button shown for administrators).
+				// on an admin (ban button shown for administrators).
 				'can_ban'      => get_current_user_id() > 0
 					&& current_user_can( 'jetonomy_moderate' )
 					&& $uid !== get_current_user_id()
@@ -256,7 +256,7 @@ class Users_Controller extends Base_Controller {
 
 		$users = array();
 		if ( $space_id > 0 ) {
-			// Membership scoping via a JOIN inside WP_User_Query (plan WP1.4).
+			// Membership scoping via a JOIN inside WP_User_Query.
 			// The old shape fetched EVERY member id unbounded (a 500-member
 			// space materialized 500 ids into PHP and fed them back as a
 			// 500-element IN) — and a LIMIT there would have made results
@@ -267,7 +267,7 @@ class Users_Controller extends Base_Controller {
 			// search_columns must match the global branch below — without it
 			// WP_User_Query's default set includes user_email, which lets a
 			// space member fish for other members' email addresses by typing
-			// an address prefix and seeing it resolve (Basecamp: WP0.10).
+			// an address prefix and seeing it resolve.
 			global $wpdb;
 			$members_tbl = table( 'space_members' );
 			$join_member = static function ( $query ) use ( $wpdb, $members_tbl, $space_id ): void {
@@ -370,7 +370,7 @@ class Users_Controller extends Base_Controller {
 			),
 			200
 		);
-		// Client-tier only (plan WP4.13): app screen mounts re-fetch /users/me
+		// Client-tier only: app screen mounts re-fetch /users/me
 		// constantly; a short private cache absorbs the churn without a
 		// server-side payload cache stacking over the row caches.
 		$response->header( 'Cache-Control', 'private, max-age=30' );
@@ -420,7 +420,7 @@ class Users_Controller extends Base_Controller {
 			 * screen had no way to know - and the app drew its Ban control
 			 * identically before and after a ban landed, giving the moderator no
 			 * feedback that their action had taken and inviting them to press it
-			 * again (Basecamp 10217068821).
+			 * again.
 			 *
 			 * null when unrestricted. Same server-owned-rule, server-published-flag
 			 * pattern as can_block_author and can_downvote.
@@ -428,7 +428,7 @@ class Users_Controller extends Base_Controller {
 			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
 			// Server-authoritative ban eligibility (viewer must moderate; staff
 			// and self are never bannable) so the profile screen hides Ban on an
-			// admin (Basecamp: ban button shown for administrators).
+			// admin (ban button shown for administrators).
 			'can_ban'          => get_current_user_id() > 0
 				&& current_user_can( 'jetonomy_moderate' )
 				&& $id !== get_current_user_id()
@@ -487,7 +487,7 @@ class Users_Controller extends Base_Controller {
 			 * screen had no way to know - and the app drew its Ban control
 			 * identically before and after a ban landed, giving the moderator no
 			 * feedback that their action had taken and inviting them to press it
-			 * again (Basecamp 10217068821).
+			 * again.
 			 *
 			 * null when unrestricted. Same server-owned-rule, server-published-flag
 			 * pattern as can_block_author and can_downvote.
@@ -495,7 +495,7 @@ class Users_Controller extends Base_Controller {
 			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
 			// Server-authoritative ban eligibility (viewer must moderate; staff
 			// and self are never bannable) so the profile screen hides Ban on an
-			// admin (Basecamp: ban button shown for administrators).
+			// admin (ban button shown for administrators).
 			'can_ban'          => get_current_user_id() > 0
 				&& current_user_can( 'jetonomy_moderate' )
 				&& $id !== get_current_user_id()
@@ -975,7 +975,7 @@ class Users_Controller extends Base_Controller {
 				// (25 of 26 here), so ORDER BY created_at alone lets MySQL return
 				// tied rows in any order. Consecutive pages then repeat some rows
 				// and skip others — this list served id 10 on both page 3 and
-				// page 4 while dropping id 1 entirely (Basecamp 10161324385).
+				// page 4 while dropping id 1 entirely.
 				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$tbl} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
 				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
@@ -1002,7 +1002,7 @@ class Users_Controller extends Base_Controller {
 		// prepared shape /feed returns, not the minimal columns this route used to.
 		$posts = $this->enrich_with_author( $posts, 'author_id' );
 		// Batch viewer state too — prepare_post() otherwise runs 2 point
-		// queries per row for the bookmark/vote flags (plan WP3.4).
+		// queries per row for the bookmark/vote flags.
 		$posts = $this->enrich_viewer_state( $posts );
 		$items = array_map( [ $this, 'prepare_post' ], $posts );
 

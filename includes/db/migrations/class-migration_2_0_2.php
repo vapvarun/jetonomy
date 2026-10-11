@@ -3,14 +3,14 @@
  * 2.0.2: role capability mapping repairs.
  *
  * - Uploads are now gated on jetonomy_upload_media / upload_files alone
- *   (Basecamp 10380388502). Until now anyone who could post could upload,
+ * Until now anyone who could post could upload,
  *   so roles that can post are granted jetonomy_upload_media here and no
  *   site loses uploads on update. Contributor, Author and Editor shipped
  *   with the cap ticked, so a stored row without it is the owner's own
  *   choice and is left alone. Stored rows are never widened otherwise.
  * - Space bans stored without a space (the wp-admin Users dialog wrote them)
  *   never applied anywhere; they are removed so the Banned list stops
- *   showing bans that do nothing (Basecamp 10392987727).
+ *   showing bans that do nothing.
  *
  * @package Jetonomy
  */

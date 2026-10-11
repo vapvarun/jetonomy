@@ -7,7 +7,7 @@
  * router used to render inline and `exit` during `template_redirect` instead;
  * that fires BEFORE template_include, so anything gating on the later hook - a
  * maintenance-mode, membership or coming-soon plugin - never ran at all
- * (Basecamp 10278698087). A file that WordPress loads normally, at the moment
+ * A file that WordPress loads normally, at the moment
  * it loads templates, leaves every one of those callbacks a turn to replace it.
  *
  * @package Jetonomy

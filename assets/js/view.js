@@ -161,7 +161,6 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		// This asked for /spaces with no params, so it got the default 20 and
 		// silently dropped the rest - on a bbPress import, where each forum
 		// becomes a space, most targets were simply absent from the dialog
-		// (Basecamp 10268682629).
 		//
 		// The endpoint caps `limit` at 100, so pages are followed until the
 		// reported total is reached. No search box: a native <select> already
@@ -190,7 +189,7 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 					select.appendChild( opt );
 				} );
 				// The placeholder stayed on "Loading…" after the list arrived and
-				// read as stuck (Basecamp 10392446204); it now says what to do.
+				// read as stuck; it now says what to do.
 				if ( select.options.length <= 1 ) {
 					loadingOpt.textContent = t.noOtherSpaces || 'No other spaces available';
 				} else {
@@ -997,7 +996,7 @@ const { state, actions } = store( 'jetonomy', {
                 // #jt-badges, #digest-preferences, …) on soft navigation. A full
                 // page load scrolls to the hash automatically; a region swap does
                 // NOT, so without this EVERY in-app deep-link with a fragment
-                // landed at the top of the new page (Basecamp 10244152181 - the
+                // lands at the top of the new page (e.g. the
                 // Notifications "Settings" button). scroll-margin-top on the
                 // target clears the sticky header. Falls back to top when there
                 // is no fragment or nothing matches.
@@ -1870,11 +1869,9 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = replyCard.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
-            // [Basecamp 9808714691 analog — same root cause as editPost]
-            // Old implementation used bodyEl.innerText into a <textarea>, so
-            // images, links, and inline formatting were stripped every time
-            // a user edited a reply. Now we use a contenteditable div seeded
-            // with bodyEl.innerHTML, and submit innerHTML on save. Server-
+            // The editor is a contenteditable div seeded with bodyEl.innerHTML (not a
+            // <textarea> seeded with innerText, which strips images, links and inline
+            // formatting on every edit); innerHTML is submitted on save. Server-
             // side wp_kses_post (Replies_Controller::update_item) still
             // polices which tags survive.
             bodyEl.style.display = 'none';
@@ -2128,22 +2125,16 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Share post ──
         //
-        // [Basecamp 9808920407] — Previously the dropdown was inserted as a
-        // SIBLING of the share button via `el.ref.after()` and positioned with
-        // CSS `bottom: 100%; left: 0`. Two compounding problems:
-        //   1. `position: absolute` anchors to the nearest positioned ancestor,
-        //      not a sibling — so the dropdown anchored to `.jt-post-foot` (the
-        //      shared parent), which is wider than the button and at the bottom
-        //      of the post card. With `bottom: 100%` the dropdown rendered
-        //      ~180px ABOVE that container, which for posts near the viewport
-        //      top put it off-screen at `top: -184.57px`. User saw "nothing".
-        //   2. The `.jt-more-dropdown` sibling pattern was fixed the same way
-        //      in 1.3.6 (Basecamp 9803818273 — see jetonomy.css `.jt-more-
-        //      dropdown` comment). Share was a missed sibling.
-        // Fix: append the dropdown to document.body with `position: fixed` and
-        // viewport-computed coordinates. Layout of `.jt-post-foot` can no
-        // longer affect anchoring. Right-aligned to the button's right edge,
-        // clamped to the viewport left edge so it never overflows horizontally.
+        // The dropdown is appended to document.body with `position: fixed` and
+        // viewport-computed coordinates, not inserted as a sibling of the share
+        // button. A sibling with `position: absolute; bottom: 100%` anchors to the
+        // nearest positioned ancestor (`.jt-post-foot`, the shared parent), which is
+        // wider than the button and at the bottom of the post card, so for posts
+        // near the viewport top the dropdown lands off-screen. Same approach as
+        // `.jt-more-dropdown` (see the jetonomy.css `.jt-more-dropdown` comment).
+        // Layout of `.jt-post-foot` cannot affect anchoring. Right-aligned to the
+        // button's right edge, clamped to the viewport left edge so it never
+        // overflows horizontally.
         sharePost() {
             const el = getElement();
             const url = el.ref.dataset.postUrl;
@@ -2452,10 +2443,9 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Toggle "more" dropdown menu ──
         //
-        // [1.4.3 WS3-B] Migrated to jetonomySmartDropdown — fixes
-        // Basecamp 9886004438: the last-reply More menu was clipped by
-        // overflow because the panel was absolutely positioned inside the
-        // reply card. The shared primitive uses `position: fixed`, flips up
+        // Uses jetonomySmartDropdown: a panel absolutely positioned inside the
+        // reply card gets clipped by overflow (the last-reply More menu). The
+        // shared primitive uses `position: fixed`, flips up
         // when there is no room below, and shifts to stay inside the
         // viewport. `group: 'jt-more'` ensures opening one closes the prior.
         toggleMoreMenu( event ) {
@@ -2498,19 +2488,13 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = article.querySelector( '.jt-post-body' );
             if ( ! bodyEl ) return;
 
-            // [Basecamp 9808714691 part 2] Previously this editor used a
-            // <textarea> seeded with bodyEl.innerText.trim() — which strips
-            // <img> tags and all HTML. On save the plain text was PATCHed
-            // back and the server's wp_kses_post pass had no image markup to
-            // preserve, so uploaded images were silently dropped from every
-            // edited post.
-            //
-            // Fix: render the editor as a contenteditable <div> seeded with
-            // bodyEl.innerHTML. The server already kses'd this markup before
-            // we rendered it, so re-using it as editor source is safe. On
-            // save we send editor.innerHTML so images, links, and inline
-            // formatting round-trip intact. Text-only edits still work —
-            // the user just types and the image stays visible in place.
+            // The editor is a contenteditable <div> seeded with bodyEl.innerHTML, not a
+            // <textarea> seeded with innerText, which strips <img> tags and all HTML and
+            // would silently drop uploaded images from every edited post. The server
+            // already kses'd this markup before we rendered it, so re-using it as
+            // editor source is safe. On save we send editor.innerHTML so images,
+            // links, and inline formatting round-trip intact. Text-only edits still
+            // work - the user just types and the image stays visible in place.
             bodyEl.style.display = 'none';
 
             // Pro custom-fields renders a hidden, pre-filled editable block
@@ -3559,7 +3543,7 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Publish mode menu ──
         //
-        // [1.4.3 WS3-B] Migrated to jetonomySmartDropdown. Previous
+        // Migrated to jetonomySmartDropdown. Previous
         // implementation used state.publishMenuOpen + data-wp-bind--hidden,
         // which couldn't flip placement when the trigger sat near the
         // viewport bottom. The shared primitive handles flip/outside-click/
@@ -3742,8 +3726,8 @@ const { state, actions } = store( 'jetonomy', {
             // `editor` mode reads innerHTML so we preserve formatting; we
             // additionally validate against textContent because an
             // "interacted-then-cleared" contenteditable holds <br>/&nbsp; in
-            // innerHTML which is truthy and was the root cause of
-            // Basecamp #9808714691 (silent submit-fail when body was empty).
+            // innerHTML which is truthy and would otherwise cause a
+            // silent submit-fail when the body is empty.
             // `textarea` mode reads .value directly.
             let content      = '';
             let contentPlain = '';
@@ -3773,7 +3757,7 @@ const { state, actions } = store( 'jetonomy', {
             // ── Schedule ──────────────────────────────────────────────────────
             // Two native inputs (date + hour + minute) get merged into an
             // ISO-like local datetime so Firefox's missing time-picker
-            // popup doesn't block scheduling. See Basecamp #9788118420.
+            // popup doesn't block scheduling.
             const postStatus = ctx.postStatus || 'publish';
             let publishedAt  = '';
             if ( o.collectSchedule && ctx.showScheduler ) {
@@ -4586,7 +4570,7 @@ const { state, actions } = store( 'jetonomy', {
 } )();
 
 /**
- * Avatar image-error fallback (Basecamp 10110833991).
+ * Avatar image-error fallback.
  *
  * templates/partials/avatar.php renders every avatar <img> with a hidden
  * sibling `.jt-avatar-fallback` initials span. When the image URL is dead

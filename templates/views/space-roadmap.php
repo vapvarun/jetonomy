@@ -79,7 +79,7 @@ if ( '' !== $jt_block_sql ) {
 	$jt_private_sql .= ' AND ' . $jt_block_sql;
 }
 
-// Bounded per-column fetch (caching plan WP1.2). The old single query had
+// Bounded per-column fetch. The old single query had
 // no LIMIT — every idea in the space, longtext bodies included, loaded to
 // bucket into 4 columns in PHP; fatal on a 10k-post space. Now: one
 // GROUP BY for the TRUE column counts (the jt-col-n badges must not lie

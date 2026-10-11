@@ -399,8 +399,8 @@ class Notifier {
 		 * A valid reply token proves WHO is replying and nothing else. Without
 		 * this a banned member could keep posting for as long as they held any
 		 * notification email, and emailed replies landed on closed posts and
-		 * into archived spaces (Basecamp 10228771444, reproduced with correctly
-		 * signed requests so it was not masked by the signature fix).
+		 * into archived spaces (even with correctly
+		 * signed requests, so the signature check does not stop them).
 		 *
 		 * Reply::create() has no gate of its own, so this is the last point at
 		 * which anything can say no.
@@ -1020,7 +1020,7 @@ class Notifier {
 
 		// Single source of truth - see Trust_Levels::label(). This list used to be
 		// a copy, which is how the admin Users screen drifted a level away from
-		// what this email says (Basecamp 10210059424).
+		// what this email says.
 		$level_names = [];
 		for ( $lvl = 1; $lvl <= 5; $lvl++ ) {
 			$level_names[ $lvl ] = \Jetonomy\Trust\Trust_Levels::label( $lvl );
@@ -1478,7 +1478,7 @@ class Notifier {
 			'{message}'            => wp_strip_all_tags( $message ),
 			'{type}'               => $type,
 			'{url}'                => $url,
-			// Enriched placeholders (1.3.6 — Basecamp 9725671512). Safe
+			// Enriched placeholders. Safe
 			// fallback to empty string when the caller didn't provide them,
 			// so existing templates don't render literal "{post_title}" text.
 			'{post_title}'         => (string) ( $extra['post_title'] ?? '' ),

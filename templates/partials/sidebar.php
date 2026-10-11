@@ -23,7 +23,7 @@ $spaces_tbl = \Jetonomy\table( 'spaces' );
 
 // Trending: top voted published posts, optionally scoped to the current space.
 // Before 1.3.6 this widget ignored is_private entirely and leaked private
-// topics into the sidebar for anyone with space access (Basecamp 9803998504).
+// topics into the sidebar for anyone with space access.
 // Non-privileged viewers now see only public topics + their own private ones;
 // admin / space-mod / space-admin callers still see everything.
 $_jt_trend_user    = get_current_user_id();
@@ -52,14 +52,14 @@ if ( '1=1' !== $_jt_space_vis_sql ) {
 [ $_jt_trend_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
 $_jt_trend_block_clause  = '' !== $_jt_trend_block_sql ? ' AND ' . $_jt_trend_block_sql : '';
 
-// Cached 300s per exact viewer class (plan WP4.1) — the unindexed
+// Cached 300s per exact viewer class — the unindexed
 // vote_score/reply_count filesort ran on 100% of page views. Bucket
 // covers EVERY viewer-dependent clause above (U2): privileged viewers
 // of the scope share 'priv' (no private/visibility filtering), guests
 // share 'guest' (no blocks by definition), and any other logged-in
 // viewer gets a per-user key (own-private + blocks bind their id).
 // TTL-only: 5-minute staleness on a trending widget is invisible.
-// NOTE (plan WP4.1): unifying this all-time-top query onto
+// NOTE: unifying this all-time-top query onto
 // Post::list_trending()'s 7-day hot ranking is a PRODUCT decision —
 // it changes what every sidebar shows — and is deferred, not smuggled
 // in with the cache; queries are byte-identical to before.
@@ -109,7 +109,7 @@ $trending = \Jetonomy\Cache::remember(
 // ranking/leaderboard, not a content feed; per-viewer filtering would
 // re-rank the board and leak "you blocked someone" via rank gaps.
 //
-// Cached 600s under ONE global key (plan WP4.2) — zero viewer variance,
+// Cached 600s under ONE global key — zero viewer variance,
 // runs on 100% of page views, and the bare ORDER BY reputation filesorts.
 // TTL-only by design: a 10-minute-stale Top Members widget is invisible,
 // and busting on every reputation write would defeat the point.
@@ -130,7 +130,7 @@ if ( ! empty( $leaders ) ) {
 	\Jetonomy\Models\UserProfile::prime( array_map( static fn( $r ) => (int) $r->user_id, $leaders ) );
 }
 
-// Popular tags. Cached 900s under one global key (plan WP4.3) — fully
+// Popular tags. Cached 900s under one global key — fully
 // shared, ordered by post_count (indexed since 1.9.2), moves only on
 // post publish. TTL-only: staleness is invisible on a tag cloud.
 $popular_tags = \Jetonomy\Cache::remember(

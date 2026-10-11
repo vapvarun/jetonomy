@@ -488,7 +488,7 @@ class BBPress_Importer extends Importer {
 	 * That link is FREE as of 1.7.1 — this comment used to say it was Pro, and that
 	 * "enabling Pro later reveals them". Both halves are now false, and the second
 	 * was false in a way that mattered: it promised a reveal that no code performed,
-	 * because link rows were only ever written during import (Basecamp 10093054077).
+	 * because link rows were only ever written during import.
 	 * Attachments moved to free (Attachments::register() is in the unconditional
 	 * bootstrap; the importer links via the free Attachment model regardless of
 	 * whether Pro is active), so the rows are written here on every site and free

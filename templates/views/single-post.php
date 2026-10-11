@@ -46,7 +46,7 @@ $jt_can_moderate_here = $jt_viewer_id
 
 // Only a published topic takes member writes: Content_Gate refuses replies,
 // votes, reactions, bookmarks, follows and pins on anything else with a 409
-// (Basecamp 10335997408). Every write control below keys off this one flag
+// Every write control below keys off this one flag
 // so the page never offers what the server refuses. The status notice (with
 // Restore / Delete permanently for moderators on trash) still renders.
 $jt_is_live = 'publish' === $post->status;
@@ -55,7 +55,7 @@ $jt_is_live = 'publish' === $post->status;
 // now inside Permission_Engine::can_read_post() below — the same author-or-
 // moderator rule, same 404 + "Post not found" outcome, but enforced for the
 // REST route, oEmbed, JSON-LD and the Pro extensions too, all of which read
-// posts through that method and none of which had it (Basecamp 10105628594).
+// posts through that method and none of which had it.
 
 $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
@@ -84,7 +84,7 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 // Per-post privacy gate. Before 1.3.6 a subscriber with space access could
 // reach a private topic via direct URL because neither the template nor the
 // status/visibility checks above looked at is_private on the post itself
-// (Basecamp 9803998504). Permission_Engine::can_read_post() is the single
+// Permission_Engine::can_read_post() is the single
 // source of truth — author + manage_options + space mod/admin only.
 if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 	$jt_not_found();
@@ -213,7 +213,7 @@ $jt_accepted_on_page  = $jt_accepted_reply_id
 
 // Prime attachments for exactly what this page renders: the paged tree
 // (walked above) plus the off-page accepted-answer card, which is by
-// construction NOT in $reply_batch when the callout shows (plan WP1.3).
+// construction NOT in $reply_batch when the callout shows.
 // The hook-driven whole-thread primes then no-op for this post.
 $jt_prime_ids = $jt_reply_ids;
 if ( $jt_accepted_reply_id && ! $jt_accepted_on_page ) {
@@ -221,10 +221,10 @@ if ( $jt_accepted_reply_id && ! $jt_accepted_on_page ) {
 }
 \Jetonomy\Models\Attachment::prime_rendered_replies( (int) $post->id, $jt_prime_ids );
 // Publish the rendered set for hook-driven primes (Pro reactions reads it
-// on jetonomy_before_replies — plan WP3.1).
+// on jetonomy_before_replies).
 \Jetonomy\Models\Reply::set_rendered_ids( (int) $post->id, $jt_prime_ids );
 
-// WP3.7: batch the per-reply-card lookups over the SAME rendered set —
+// Batch the per-reply-card lookups over the SAME rendered set —
 // author profiles and the viewer's reply votes. The walker covers nested
 // children, so reply-card.php's per-row Vote::get_user_vote (30+ point
 // queries on a full page) reads the memo instead.
@@ -602,7 +602,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							</button>
 								<?php
 								// Hide downvote on own content — self-downvote was
-								// landing at -1 (Basecamp 9803889865).
+								// landing at -1.
 								if ( (int) $post->author_id !== get_current_user_id() ) :
 									?>
 							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
@@ -770,7 +770,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php // Gate matches the TARGET: the jetonomy-spaces admin page requires jetonomy_manage_settings, so a space-level moderator (subscriber WP role) must not see a link that lands on Access Denied (Basecamp 10115337948). The moderation actions above correctly stay on the space-role gate. ?>
+							<?php // Gate matches the TARGET: the jetonomy-spaces admin page requires jetonomy_manage_settings, so a space-level moderator (subscriber WP role) must not see a link that lands on Access Denied. The moderation actions above correctly stay on the space-role gate. ?>
 							<?php if ( current_user_can( 'jetonomy_manage_settings' ) ) : ?>
 								<a class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>"><?php jetonomy_echo_icon( 'settings', 14 ); ?> <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
 							<?php endif; ?>

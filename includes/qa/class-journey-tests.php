@@ -249,7 +249,7 @@ class Journey_Tests {
 					// mapping must stay deterministic across ties via the id
 					// tiebreak on BOTH sides of the contract. SQL-side paging
 					// without the id tiebreak repeats/skips tied rows between
-					// pages — the Basecamp 10161324235 bug class (plan WP1.1b).
+					// pages.
 					'created_at' => gmdate( 'Y-m-d H:i:s', time() + min( $i, 3 ) ),
 				]
 			);
@@ -280,7 +280,7 @@ class Journey_Tests {
 		// Depth-2 grandchild (child OF the child). Nesting is unbounded in
 		// the data model — the depth cap only caps the CSS label — so any
 		// SQL-side children fetch that stops at depth 1 silently drops this
-		// row from the rendered thread (plan WP1.1a). It must render on its
+		// row from the rendered thread. It must render on its
 		// top-level ancestor's page like every other descendant.
 		$grandchild = \Jetonomy\Models\Reply::create(
 			[

@@ -76,7 +76,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 				?>
 			<?php else : ?>
 				<?php
-				// Shared responsive primitive (Basecamp 10146440826 / 10146443346):
+				// Shared responsive primitive:
 				// the four moderation tabs hid records and actions on mobile.
 				jetonomy_admin_table(
 					array(
@@ -118,7 +118,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									}
 									break;
 								case 'author':
-									// Anonymous stays anonymous here too (Basecamp 10380388683).
+									// Anonymous stays anonymous here too.
 									echo esc_html( \Jetonomy\Author::for_display( (int) $p->author_id, $p )['name'] );
 									break;
 								case 'space':

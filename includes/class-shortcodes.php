@@ -64,7 +64,7 @@ class Shortcodes {
 	 * trusted, so a non-existent id kept a truthy value, the query matched
 	 * nothing, and the owner was shown an EMPTY state for a space that does not
 	 * exist. That is indistinguishable from a real empty space, which is the
-	 * confusion the notices were added to end (Basecamp 10266123693).
+	 * confusion the notices were added to end.
 	 *
 	 * @param string $ref Numeric id or slug. '' and '0' mean "not supplied".
 	 * @return object|null
@@ -643,7 +643,6 @@ class Shortcodes {
 		// complete, working compose form and a member could write a topic aimed
 		// at a space that does not exist. In fixed mode it silently degraded to
 		// a picker instead, giving the owner no clue their id was wrong
-		// (Basecamp 10266123693).
 		$space_ref = trim( (string) $atts['space_id'] );
 		if ( '' !== $space_ref && '0' !== $space_ref ) {
 			$space = self::resolve_space_ref( $space_ref );
@@ -669,7 +668,7 @@ class Shortcodes {
 		// composePost submits through window.jetonomyRest.restFetch, which is
 		// only enqueued on community routes by Template_Loader::render(). The
 		// embed can land on any WP page, so pull in the client (plus the
-		// minimal jetonomyData payload) here too. Basecamp #9967059857.
+		// minimal jetonomyData payload) here too.
 		Template_Loader::enqueue_rest_client();
 
 		// Seed the Interactivity API state with the REST base + nonce.

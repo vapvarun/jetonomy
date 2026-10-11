@@ -163,7 +163,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// has_more is (offset + count) < total. If a paginating caller passes total
 		// but forgets offset, offset silently reads 0 and every page compares
 		// against page 1 — has_more is stuck true, a "Load more" that never ends.
-		// The per-space moderation route shipped exactly this (Basecamp 10105626990).
+		// The per-space moderation route shipped exactly this.
 		//
 		// offset is not optional when the response actually paginates, so say so out
 		// loud rather than assume it. The fix is not "add the missing line to one
@@ -191,7 +191,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// keyset. Worse, the id filter ran as `id > %d` against a DESC sort — the
 		// filter direction contradicted the sort direction, so every "next page"
 		// returned the top of the list again and the client looped forever
-		// (Basecamp 10161324385 / 10161324235).
 		//
 		// Offset is the only scheme that works uniformly here, so it lives in the
 		// shared helper rather than being re-derived per controller — that
@@ -365,7 +364,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * showing the same rows to the same moderator. This enrichment was written
 	 * inline in the global controller, so the per-space screen never got it and
 	 * rendered "Reported by unknown" long after the global screen was fixed
-	 * (Basecamp 10092652706, 10092724637). One implementation, both callers: the
+	 * One implementation, both callers: the
 	 * next queue cannot inherit the bug by being written somewhere else.
 	 *
 	 * The raw flag row carries only reporter_id. A moderation queue that cannot
@@ -454,7 +453,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// appears COLD — measured warm, in a process that has already seen those
 		// users, the same code reads clean. That is how "batch-loaded, no N+1"
 		// passed review twice, mine included: a fixture where every row shared one
-		// reporter cannot see a per-person cost at all (Basecamp 10105928436).
+		// reporter cannot see a per-person cost at all.
 		//
 		// Priming here rather than in each caller: this is the one place that
 		// already knows the whole id set, and a fix living in the callers is a fix
@@ -497,12 +496,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * POST rows in two batched queries, so prepare_post() can read the
 	 * pre-resolved value instead of running a per-row lookup (N+1).
 	 *
-	 * Lives on the base class (moved from Posts_Controller, plan WP3.4) so
+	 * Lives on the base class so
 	 * the search and user-posts lists can batch too. TYPE-GATED to post
 	 * rows: the vote map is keyed object_type='post', and search's reply/
 	 * space rows carry their own `id` column — enriching those would pin a
 	 * false "you voted" state onto any reply whose id collides with a post
-	 * id the viewer voted on (safety review, WP3.4). Rows without space_id
+	 * id the viewer voted on. Rows without space_id
 	 * are not post rows; bail rather than mislabel.
 	 *
 	 * No-op for logged-out callers — prepare_post() then falls back to the
@@ -535,7 +534,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// costs one query per page rather than one per row.
 		$flagged = \Jetonomy\Models\Flag::reporter_flag_map( $uid, 'post', $ids );
 		// Warm the subscription memo so prepare_post()'s is_subscribed flag
-		// (plan WP6.2) costs zero per-row queries on every list path.
+		// costs zero per-row queries on every list path.
 		\Jetonomy\Models\Subscription::warm_viewer_subscriptions( $uid, 'post', $ids );
 
 		foreach ( $posts as $post ) {
@@ -622,7 +621,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Every wpdb column comes back as a string, so a row handed straight to
 	 * json_encode ships `"id":"1","post_count":"12"`. A typed client doing
 	 * `post_count > 0` or sorting numerically then gets wrong answers
-	 * (Basecamp 10161324553).
 	 *
 	 * For rows that have a real serializer, use it — this is the fallback for
 	 * shapes that do not (search's reply rows carry joined post/space columns;
@@ -657,7 +655,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * which meant every numeric came out as a STRING ("id":"1","post_count":"1")
 	 * and internal columns (`settings` as a raw JSON string, `sort_order`,
 	 * `parent_id`) leaked to clients — a typed client doing `post_count > 0` or
-	 * sorting numerically got wrong answers (Basecamp 10161324553). One
+	 * sorting numerically got wrong answers. One
 	 * serializer means a space cannot have two different shapes depending on
 	 * which endpoint returned it.
 	 *
@@ -713,7 +711,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * shape as /feed and /spaces/{id}/posts instead of casting the raw DB row.
 	 * Raw rows meant string-typed numerics, no _gmt twins and no author
 	 * enrichment, so the same post had two shapes depending on which endpoint
-	 * returned it (Basecamp 10161324553).
+	 * returned it.
 	 *
 	 * Self-contained by design - it calls no $this-> helpers, and falls back to
 	 * per-item author lookup when the row was not batch-enriched.
@@ -875,7 +873,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 		 * moderators would make them unreachable to themselves. The API
 		 * published nothing to read that rule from, so the app rendered a Block
 		 * control on staff posts and the tap failed
-		 * (Basecamp 10207937443 / 10203753031).
 		 *
 		 * Same shape, and the same fix, as can_downvote directly above: a
 		 * server-owned rule gets a server-published flag rather than every
@@ -891,7 +888,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// moderator action, so unlike can_block_author this also requires the
 		// VIEWER to hold jetonomy_moderate. Staff authors are never bannable -
 		// this is what stops the app offering "Ban" on an admin's post
-		// (Basecamp: ban button shown for administrators). Absent before 1.9.4,
+		// (ban button shown for administrators). Absent before 1.9.4,
 		// so the app falls back to a local check on older sites.
 		$data['can_ban'] = $uid > 0
 			&& user_can( $uid, 'jetonomy_moderate' )
@@ -908,7 +905,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		$data['viewer_flagged'] = isset( $post->viewer_flagged )
 			? (bool) $post->viewer_flagged
 			: \Jetonomy\Models\Flag::has_reported( $uid, 'post', (int) $post->id );
-		// Additive (plan WP6.2): the web JS fetched a whole /subscriptions
+		// Additive: the web JS fetched a whole /subscriptions
 		// list per topic view just to render the follow toggle. Batched on
 		// list paths by enrich_viewer_state()'s subscription warm; the memo
 		// keeps unwarmed single-item paths at one query. prepare_space

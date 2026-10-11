@@ -151,8 +151,8 @@ class Votes_Controller extends Base_Controller {
 
 		// Self-downvote block: an author downvoting their own post or reply
 		// drives the displayed score negative in a way that contradicts "I'm
-		// posting my view" (see Basecamp 9803889865 — admin voting down own
-		// topic left it at −1).
+		// posting my view" (an admin voting down their own
+		// topic would leave it at −1).
 		if ( -1 === $value && $is_self ) {
 			return $this->validation_error( __( 'You cannot downvote your own content.', 'jetonomy' ) );
 		}

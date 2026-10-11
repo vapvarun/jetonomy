@@ -51,18 +51,16 @@ class Capabilities {
 	 * the role's Jetonomy caps are EXACTLY the stored list (an empty list is
 	 * a valid "none" choice). The Permissions tab never stores a row the
 	 * owner left untouched, so third-party roles keep the engine's space
-	 * membership fallback until someone configures them (Basecamp 10392987680). Administrator is never stored: admins always
+	 * membership fallback until someone configures them. Administrator is never stored: admins always
 	 * hold every cap, so a site owner cannot lock themselves out of the
-	 * mapping screen (Basecamp 9725751235 - the mapping used to be
-	 * hard-coded and the settings card literally said "This mapping is
-	 * fixed").
+	 * mapping screen.
 	 */
 	public const ROLE_CAPS_OPTION = 'jetonomy_role_caps';
 
 	/**
 	 * Either cap lets a user upload (images in the composer, Pro attachments).
 	 * Posting caps no longer imply it, so unticking Upload media on the
-	 * Permissions tab really stops a role (Basecamp 10380388502).
+	 * Permissions tab really stops a role.
 	 */
 	public const UPLOAD_CAPS = [ 'upload_files', 'jetonomy_upload_media' ];
 
@@ -243,7 +241,7 @@ class Capabilities {
 	 * `current_user_can( 'jetonomy_create_spaces' )` before consulting the
 	 * admin's allow-list — and since that cap is granted cumulatively to
 	 * author and up, unticking Author or Editor under Settings → General did
-	 * nothing at all (Basecamp 10118734782). The setting could only ever
+	 * nothing at all. The setting could only ever
 	 * restrict subscribers and contributors, which was not what it said.
 	 *
 	 * The cap still gates programmatic paths (CLI, Abilities). It no longer
@@ -357,7 +355,7 @@ class Capabilities {
 	 * @return array<string, bool>
 	 */
 	public static function map_for_user( int $user_id ): array {
-		// Cached 60s per user (plan WP4.13) — /users/me runs on app boot and
+		// Cached 60s per user — /users/me runs on app boot and
 		// screen mounts, and this walks the whole capability set through
 		// user_can() each time. A whole-payload /users/me cache was rejected
 		// by the ownership map (it would stack over the profile/user row

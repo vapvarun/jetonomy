@@ -75,7 +75,7 @@ class Categories_Controller extends Base_Controller {
 	 * children_by_parent(): two visibility-filtered queries, both through the
 	 * Category model, plus the shared tree-cached space grouping. Every node
 	 * carries `spaces` and `children` (empty on a sub-category), the shape the
-	 * companion app types declare (Basecamp 10355161085).
+	 * companion app types declare.
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response {
 		$children      = Category::children_by_parent();

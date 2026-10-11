@@ -527,13 +527,13 @@ class Blocks {
 
 		$categories = Category::list_top_level();
 
-		// One grouped, tree-cached query for the whole block (plan
-		// WP3.9/4.4) — this ran a list_visible() PER CATEGORY, each of
-		// which also ran a COUNT this block never read (2N+2 queries).
-		// Same visibility predicate as before (both paths resolve to
+		// One grouped, tree-cached query for the whole block.
+		// A per-category list_visible() would run one query PER CATEGORY, each of
+		// which also runs a COUNT this block never reads (2N+2 queries).
+		// Same visibility predicate as list_visible() (both paths resolve to
 		// listing_visibility_sql). The active-space highlight is applied
 		// per render below, AFTER the cache — the cache holds space DATA,
-		// never per-page HTML (safety review, WP4.4).
+		// never per-page HTML.
 		$spaces_by_cat = Space::visible_by_category( $user_id );
 		$children      = Category::children_by_parent( $user_id );
 
@@ -559,7 +559,7 @@ class Blocks {
 				$items_html .= self::render_space_item( $space, $active_slug, $show_count );
 			}
 			// Sub-categories link to their own page, as on the community home;
-			// their spaces were missing from this block entirely (Basecamp 10355160441).
+			// their spaces were missing from this block entirely.
 			foreach ( $subs as $sub ) {
 				$items_html .= sprintf(
 					'<li class="jt-nav-space jt-nav-subcategory"><a href="%1$s">%2$s</a></li>',
@@ -638,7 +638,7 @@ class Blocks {
 		// Unread notifications count — through the model, not raw SQL. The
 		// hand-rolled query here skipped the blocked-actor exclusion the model
 		// applies, so this badge and the header badge could disagree for any
-		// viewer with blocks (caching plan WP0.11). One implementation, one
+		// viewer with blocks. One implementation, one
 		// future cache/bust point.
 		$unread = class_exists( \Jetonomy\Models\Notification::class )
 			? \Jetonomy\Models\Notification::unread_count( $user_id )

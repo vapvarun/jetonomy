@@ -457,7 +457,6 @@ class Flag extends Model {
 	 * filtered against a query that could never return them and always came back
 	 * empty. Same dead UI the global screen had, for the same moderator — the
 	 * global route got fixed and this one was never migrated
-	 * (Basecamp 10092724637, 10092652706).
 	 *
 	 * @param string $status   'pending'|'valid'|'dismissed'|'all'.
 	 * @param int    $space_id Space to scope to.

@@ -26,7 +26,7 @@ class Restriction extends Model {
 	 * by default, so an editor could issue a global_ban against the site
 	 * administrator; reject_banned_login() then refuses that account at
 	 * wp_signon(), locking the owner out of their own site with recovery only
-	 * by DB edit or WP-CLI. Reproduced end to end (Basecamp 10227908469): the
+	 * by DB edit or WP-CLI. Reproduced end to end: the
 	 * AJAX handler returned {"success":true}, a jt_restrictions row was written
 	 * against user 1, and the authenticate filter then returned
 	 * jetonomy_user_banned.
@@ -110,7 +110,6 @@ class Restriction extends Model {
 
 		// is_space_banned() matches an exact space, so a space ban with no
 		// space restricts nothing while every caller reports success
-		// (Basecamp 10392987727).
 		if ( 'space_ban' === $type && ! $space_id ) {
 			return 0;
 		}
@@ -150,14 +149,14 @@ class Restriction extends Model {
 	 * asks ~5 distinct actions — without the memo that is 15-20 identical
 	 * single-row lookups per request. Request-scoped only (never the object
 	 * cache): a ban must take effect on the very next request, and within
-	 * this request ban()/remove_ban() reset it (caching plan WP0.1).
+	 * this request ban()/remove_ban() reset it.
 	 *
 	 * @var array<string, bool>
 	 */
 	private static array $memo = array();
 
 	/**
-	 * Whether the reset is registered with Cache::flush() (plan U1).
+	 * Whether the reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -225,7 +224,7 @@ class Restriction extends Model {
 	/**
 	 * Answer is_space_banned() for several spaces with one query, so a list of
 	 * topics from many spaces (tag page, drafts, search) does not check the
-	 * viewer's ban once per space (Basecamp 10369564133). Fills the same memo
+	 * viewer's ban once per space. Fills the same memo
 	 * is_space_banned() reads; spaces already answered are left alone.
 	 *
 	 * @param int   $user_id   Viewer.

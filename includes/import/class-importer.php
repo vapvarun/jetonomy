@@ -63,7 +63,7 @@ abstract class Importer {
 	 * still how a child row checks that its parent was handled. Mapping 0 made
 	 * every one of those checks fail: `! $mapped` cannot tell "parent was never
 	 * imported" from "dry run, nothing was created", so a clean dry run reported
-	 * an error per topic and per reply (Basecamp 10210057225).
+	 * an error per topic and per reply.
 	 *
 	 * Negative so it can never collide with a real auto-increment id, and truthy
 	 * so the existing parent checks read correctly without touching each one.

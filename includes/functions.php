@@ -718,7 +718,6 @@ function display_name_choices( \WP_User $user ): array {
 	// are member-writable through the same endpoint: setting
 	// nickname="Administrator" and then selecting it was a two-call
 	// impersonation that the first version of this check missed entirely
-	// (Basecamp 10210055850, QA bounce).
 	$choices = array_filter(
 		$choices,
 		static fn( $name ) => ! is_reserved_display_name( (string) $name )
@@ -1173,7 +1172,6 @@ function notification_deep_link( string $object_type, int $object_id ): string {
  * bell dropdown. They used to build this URL independently — the first two
  * had copies of the same logic and the third had none at all, so the bell
  * resolved join requests to an empty URL and fell back to /notifications/
- * (Basecamp 10118686521).
  *
  * Recipient-dependent by necessity: wp-admin cap-holders get the Join
  * Requests tab, everyone else (space admins and moderators who own the space

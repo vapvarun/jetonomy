@@ -54,10 +54,10 @@ final class Jetonomy {
 		// save, a role change) happen on requests where they never load.
 		// Before this, only the GDPR erase path busted the key, so a
 		// display-name change stayed stale in every REST-rendered author
-		// block for up to 300s (caching plan WP0.3).
+		// block for up to 300s.
 		$bust_user_row = static function ( $user_id ): void {
 			Cache::delete( 'user:' . (int) $user_id );
-			// The REST capabilities map (caps:{id}, plan WP4.13) derives from
+			// The REST capabilities map (caps:{id}) derives from
 			// the user's roles — bust it alongside the row.
 			Cache::delete( 'caps:' . (int) $user_id );
 			// Registering, renaming or removing a user can create or clear a
@@ -168,7 +168,7 @@ final class Jetonomy {
 		// Activating both plugins in one command therefore dropped every Pro
 		// extension route: /community/messages/ went 200 -> 301 with the rule
 		// simply absent and nothing logged, until someone flushed permalinks by
-		// hand (Basecamp 10268070986).
+		// hand.
 		//
 		// Leaving the option unset costs one extra flush on the next request and
 		// lets the existing deferred mechanism do its job, which fixes this for
@@ -471,7 +471,7 @@ final class Jetonomy {
 		$current = get_option( 'jetonomy_db_version', '0.0.0' );
 
 		if ( version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
-			// Concurrency guard (caching plan WP5.0): after an update, every
+			// Concurrency guard: after an update, every
 			// in-flight request reads the old version and enters this block.
 			// MySQL serialises the ALTERs so the losers used to pile up on the
 			// table metadata lock instead of serving pages. First requester
@@ -645,8 +645,8 @@ final class Jetonomy {
 		// AI is a Pro feature. The AI_Adapter registry slot and the Ollama
 		// adapter class stay in free because Pro's AI extension registers and
 		// consumes them; free registers no AI provider and runs no AI check.
-		// (2.0.1 removed a free Ollama spam detector that no screen could
-		// enable - Basecamp 10368526756.)
+		// (Free ships no Ollama spam detector, because no screen could
+		// enable one.)
 
 		// PMPro adapter (conditional)
 		if ( defined( 'PMPRO_VERSION' ) ) {

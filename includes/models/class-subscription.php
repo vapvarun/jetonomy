@@ -44,7 +44,7 @@ class Subscription extends Model {
 		);
 
 		// A toggle mid-request must be visible to the next is_subscribed()
-		// in the same process (WP3.8 memo).
+		// in the same process.
 		self::reset_memo();
 
 		return (int) static::db()->insert_id;
@@ -113,8 +113,8 @@ class Subscription extends Model {
 	 * their own post while it waits on moderation.
 	 *
 	 * Space branch: the column is `title`, not `name` - jt_spaces has never
-	 * had a `name` (the wrong column once made every space subscription
-	 * render as "Space no longer available", Basecamp 10092766769).
+	 * had a `name` (the wrong column makes every space subscription
+	 * render as "Space no longer available").
 	 *
 	 * @param array<int,array<string,mixed>> $items Items with object_type + object_id.
 	 * @return array<int,array<string,mixed>> Items with title, slug, exists added.
@@ -236,14 +236,14 @@ class Subscription extends Model {
 	/**
 	 * Per-request memo for is_subscribed(), filled per-row on miss and in
 	 * bulk by warm_viewer_subscriptions(). Cleared on subscribe/unsubscribe
-	 * and via Cache::flush() (plan U1) so a toggle mid-request reads fresh.
+	 * and via Cache::flush() so a toggle mid-request reads fresh.
 	 *
 	 * @var array<string, bool>
 	 */
 	private static array $memo = [];
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -258,7 +258,7 @@ class Subscription extends Model {
 
 	/**
 	 * Bulk-fill the is_subscribed() memo for one viewer over a set of
-	 * objects (plan WP3.8). One IN-query, negatives included, so a list
+	 * objects. One IN-query, negatives included, so a list
 	 * serializer's per-row is_subscribed() calls cost zero further queries.
 	 *
 	 * @param int    $user_id     Viewer.
@@ -289,7 +289,7 @@ class Subscription extends Model {
 	}
 
 	/**
-	 * Register the memo reset with the shared registry once (plan U1).
+	 * Register the memo reset with the shared registry once.
 	 */
 	private static function register_memo_reset(): void {
 		if ( ! self::$memo_registered ) {

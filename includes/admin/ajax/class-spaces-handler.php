@@ -262,7 +262,7 @@ class Spaces_Handler {
 	 *
 	 * Positions are absolute via the shared reorder primitive, so a drag on
 	 * page 2 cannot renumber over page 1 - the defect this shipped alongside
-	 * fixing for categories (Basecamp 10210539659).
+	 * fixing for categories.
 	 */
 	public function ajax_reorder_spaces(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );

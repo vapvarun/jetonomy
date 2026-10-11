@@ -277,7 +277,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 		 * allow_space_admin_purge server-side, but nothing on the frontend ever
 		 * called it - the setting's own description promises space admins can
 		 * delete their space, and the only way to do it was wp-admin, which a
-		 * space admin has no reason to be able to reach (Basecamp 10221373732).
+		 * space admin has no reason to be able to reach.
 		 *
 		 * Two actions, because the route has two modes and they are not the same
 		 * decision:

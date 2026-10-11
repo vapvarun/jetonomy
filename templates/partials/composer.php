@@ -72,7 +72,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 		// so the desktop submit-shortcut copy reads as nonsense there. Detect
 		// touch via wp_is_mobile() (matches WP's own mobile signal) and swap.
 		// The editor formats through its toolbar; it does not convert typed
-		// Markdown, so the hint must not promise it (Basecamp 10320778207).
+		// Markdown, so the hint must not promise it.
 		$_jt_composer_hint = wp_is_mobile()
 			? __( 'Use the toolbar to format.', 'jetonomy' )
 			: __( 'Use the toolbar to format · Ctrl+Enter to submit', 'jetonomy' );

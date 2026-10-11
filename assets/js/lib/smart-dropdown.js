@@ -17,8 +17,6 @@
  *     onClose:        null,
  *   } );
  *   dd.open(); dd.close(); dd.toggle(); dd.destroy(); dd.isOpen;
- *
- * Foundation for WS3-A; callsites migrate in WS3-B.
  */
 ( function ( window, document ) {
 	'use strict';

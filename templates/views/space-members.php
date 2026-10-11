@@ -349,9 +349,9 @@ $role_labels = [
 				?>
 			<?php else : ?>
 				<?php
-				// WP3.7: fill the profile:{id} keys once for the page — the
+				// Fill the profile:{id} keys once for the page — the
 				// loop below reads UserProfile::find_by_user per row, which
-				// was ~50 cold queries per roster page.
+				// would cost ~50 cold queries per roster page.
 				\Jetonomy\Models\UserProfile::prime(
 					array_map( static fn( $m ) => (int) $m->user_id, $members )
 				);

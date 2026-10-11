@@ -19,7 +19,6 @@ defined( 'ABSPATH' ) || exit;
 // list (New / Basic / Member / Regular / Leader / Elder) which sat a full level
 // off the names the promotion email and Permissions tab used, so a member
 // promoted to level 2 was emailed "Regular" and listed here as "Member"
-// (Basecamp 10210059424).
 $trust_labels = array();
 for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 	$trust_labels[ $jt_tl ] = \Jetonomy\Trust\Trust_Levels::label( $jt_tl );
@@ -28,7 +27,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Users', 'jetonomy' ); ?></h1>
 
-	<?php // Role-clarity explainer (Basecamp 9725751235): the #1 new-owner question is "how does someone become a Jetonomy user?". Collapsible so it costs experienced owners one line. ?>
+	<?php // Role-clarity explainer: the #1 new-owner question is "how does someone become a Jetonomy user?". Collapsible so it costs experienced owners one line. ?>
 	<details class="jt-roles-explainer">
 		<summary><?php esc_html_e( 'How users, roles, and trust levels fit together', 'jetonomy' ); ?></summary>
 		<div class="jt-roles-explainer__body">
@@ -59,14 +58,14 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 					// a name level 5 has not carried since the ladder was
 					// renamed, so the one surface that had just been fixed to
 					// stop keeping a local copy still shipped one in its own
-					// explainer (Basecamp 10212758778).
+					// explainer.
 					$trust_labels[5],
 					// Directory, not the deep link to 08-users-roles-and-trust.md.
 					// `blob/HEAD` resolves against the DEFAULT branch, and that
 					// file lands there only when the release branch merges - so
-					// the in-product link 404'd for anyone who clicked it before
-					// release (Basecamp 9725751235, bounced twice on exactly
-					// this). The directory exists on main today and gains the
+					// the in-product link would 404 for anyone who clicked it before
+					// release.
+					// The directory exists on main today and gains the
 					// guide at merge, so the link is correct in both states.
 					'<a href="https://github.com/vapvarun/jetonomy/tree/HEAD/docs/website/getting-started" target="_blank" rel="noopener">' . esc_html__( 'Browse the setup guides', 'jetonomy' ) . '</a>'
 				);

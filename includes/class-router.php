@@ -29,13 +29,13 @@ class Router {
 		// consults it. AIOSEO matches `^(.+)-sitemap\.xml$` on `parse_request`
 		// at priority 10, so `community-sitemap.xml` looked to it like an object
 		// type called "community" and it served its own 404 XML over ours
-		// (Basecamp 10268378037). Priority 0 puts us ahead of that and of
+		// Priority 0 puts us ahead of that and of
 		// anything else hooking parse_request or template_redirect.
 		add_action( 'parse_request', [ $this, 'claim_sitemap_request' ], 0 );
 		add_action( 'parse_query', [ $this, 'correct_query_state' ], 1 );
 		// The SEO Framework titles a page from its WP object. Our virtual routes
 		// have none, so it printed "Untitled" plus a second og: set over ours
-		// (Basecamp 10392446286). Jetonomy is the SEO source on its own routes;
+		// Jetonomy is the SEO source on its own routes;
 		// a mapped front page (no jetonomy_route) stays with the SEO plugin.
 		// Read early on purpose: TSF memoises this before template_include.
 		add_filter(
@@ -72,11 +72,9 @@ class Router {
 		// template_redirect hooks will be run ... Instead, use the
 		// template_include filter hook."
 		//
-		// The first attempt at Basecamp 10278698087 moved the render to
-		// template_redirect priority 9999 so later callbacks on THAT hook could
-		// still refuse the request. It looked fixed because the verification
-		// gates all hooked template_redirect - and it did not fix the plugin the
-		// card actually named, which enforces on `template_include` at 999999.
+		// A late template_redirect priority (say 9999) lets later callbacks on THAT
+		// hook still refuse the request, but it cannot help a plugin that enforces
+		// on `template_include` (e.g. at 999999).
 		// WordPress fires template_redirect BEFORE template_include, so exiting
 		// anywhere on the earlier hook means the later one never runs at all. No
 		// priority on template_redirect can fix that; only moving hooks can.
@@ -152,9 +150,9 @@ class Router {
 	 * whole request — and everything downstream reads that lie: core's
 	 * wp_get_document_title(), themes, breadcrumbs, and SEO plugins.
 	 *
-	 * That is the root cause of Basecamp 10101954870: Yoast read `is_home` and
-	 * published the Posts page's title AND a canonical pointing at it, on every
-	 * Space and topic. Rank Math escaped only because it omits tags it cannot
+	 * That is the root cause of Yoast reading `is_home` and
+	 * publishing the Posts page's title AND a canonical pointing at it, on every
+	 * Space and topic. Rank Math escapes only because it omits tags it cannot
 	 * confidently build. The fix is not to argue with either plugin — it is to
 	 * stop lying about the query. Doing so is vendor-neutral: it fixes Yoast,
 	 * Rank Math, AIOSEO, SEOPress and core in one move, with no SEO-plugin code.

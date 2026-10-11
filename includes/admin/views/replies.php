@@ -26,7 +26,7 @@ $back_url = admin_url( 'admin.php?page=jetonomy-content' );
 $page_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . absint( $post->id ) );
 
 // Post author & space.
-// Anonymous stays anonymous in wp-admin too (Basecamp 10380388683).
+// Anonymous stays anonymous in wp-admin too.
 $post_author_name = \Jetonomy\Author::for_display( (int) $post->author_id, $post )['name'];
 
 $space       = \Jetonomy\Models\Space::find( (int) $post->space_id );
@@ -307,7 +307,7 @@ if ( ! empty( $trash_count ) ) {
 									</span>
 								<?php endif; ?>
 							</div>
-							<?php // Core small-screen expander: Author/Status/Date were hidden below 783px with no way to reveal them (Basecamp 10150581570). ?>
+							<?php // Core small-screen expander: Author/Status/Date were hidden below 783px with no way to reveal them. ?>
 							<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Author', 'jetonomy' ); ?>"><?php echo esc_html( $author_name ); ?></td>

@@ -172,7 +172,7 @@ class Categories_Handler {
 		// (list_top_level() / list_children() order by sort_order), so mixing
 		// groups would write meaningless numbers. A stale cached admin script
 		// that still sends children in a top-level batch therefore cannot
-		// corrupt the order - they are simply dropped (Basecamp 10210539659).
+		// corrupt the order - they are simply dropped.
 		$parent_id = absint( $_POST['parent_id'] ?? 0 );
 		$siblings  = $parent_id
 			? Category::list_children( $parent_id, get_current_user_id() )
@@ -185,7 +185,7 @@ class Categories_Handler {
 
 		// Absolute positions, never the batch index. The browser only submits
 		// the rows it rendered, so on page 2 the index restarts at 0 and would
-		// renumber those rows over the top of page 1 (Basecamp 10210539659).
+		// renumber those rows over the top of page 1.
 		// Sub-categories always render in full under their parent, so their
 		// batch is the whole group and starts at 0.
 		$offset = $parent_id ? 0 : jetonomy_reorder_offset(

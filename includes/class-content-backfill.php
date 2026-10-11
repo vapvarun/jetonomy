@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
  * derivation and every writer routes through it — but fixing the writer does
  * not fix the rows already written, and `content_plain` is what feed excerpts,
  * notification text, search snippets, FULLTEXT search and the mobile app's
- * Quote action all read (Basecamp 10207964048).
+ * Quote action all read.
  *
  * On-demand, not automatic
  * ------------------------

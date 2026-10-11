@@ -35,8 +35,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
         // Track the selection range inside the composer body while the user
         // is interacting with it. Saved on every selectionchange that lands
         // within `body` so we can restore it after `prompt()` / `confirm()`
-        // steals focus (Basecamp 9803832443: Link button did nothing because
-        // prompt blurred the composer and createLink had nothing to wrap).
+        // steals focus (otherwise the Link button does nothing: the
+        // prompt blurs the composer and createLink has nothing to wrap).
         let savedRange = null;
         document.addEventListener( 'selectionchange', () => {
             const sel = window.getSelection();

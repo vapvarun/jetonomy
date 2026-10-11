@@ -139,8 +139,8 @@ class Notifications_Controller extends Base_Controller {
 
 		// Batch-warm the actor users before the per-row serializer runs —
 		// prepare_notification() does get_userdata + avatar + profile-url per
-		// row, which was ~3 cold queries x 20 rows on every bell fetch (plan
-		// WP3.5), and the bell fires on every web page view. Built from the
+		// row, which costs ~3 cold queries x 20 rows on every bell fetch,
+		// and the bell fires on every web page view. Built from the
 		// ALREADY-MASKED actor id (anonymous rows contribute 0, which
 		// batch_load_users drops) so the batch never warms caches for
 		// identities this response deliberately hides.

@@ -87,7 +87,7 @@ class Leaderboards_Controller extends Base_Controller {
 		$limit        = (int) $args['limit'];
 		$offset       = (int) $args['offset'];
 
-		// Cached 300s per page (plan WP4.6) — the board is fully shared by
+		// Cached 300s per page — the board is fully shared by
 		// design (deliberately not per-viewer filtered) and changes only on
 		// reputation events; a 5-minute-stale ranking is invisible (TTL-only).
 		// Skipped entirely when a third party filters the QUERY SHAPE via
@@ -198,7 +198,7 @@ class Leaderboards_Controller extends Base_Controller {
 			];
 		}
 
-		// Cache the UNFILTERED rows (plan WP4.6) — the enrichment filter
+		// Cache the UNFILTERED rows — the enrichment filter
 		// below is per-request by contract and must never be frozen.
 		if ( $lb_cacheable ) {
 			\Jetonomy\Cache::set(

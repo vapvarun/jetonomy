@@ -79,7 +79,7 @@ final class Space_Purge {
 	 * The synchronous purge() drains everything in one request, which is fine
 	 * for an orphan sweep of a handful of rows and completely wrong for a real
 	 * community space - a space with 50k topics and their replies cannot be
-	 * deleted inside one PHP request (Basecamp 10119343634).
+	 * deleted inside one PHP request.
 	 *
 	 * THE FIRST BATCH RUNS IN THIS REQUEST. Handing the whole job to Action
 	 * Scheduler and returning "queued" was silently a no-op wherever the AS
@@ -87,7 +87,7 @@ final class Space_Purge {
 	 * with no system cron, a firewalled staging box. On those sites the
 	 * operator saw "Space and all its content are being deleted", the row
 	 * faded out, and the space was still there on reload. Forever: nothing
-	 * ever drained the queue (Basecamp 10217204334, reproduced with 9 AS
+	 * ever drained the queue (9 AS
 	 * actions stuck pending after 20 front-end requests).
 	 *
 	 * CHUNK is 500 topics, so a space smaller than that - which is nearly all

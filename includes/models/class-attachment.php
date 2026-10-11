@@ -187,7 +187,7 @@ class Attachment {
 	protected static array $view_primed = array();
 
 	/**
-	 * Prime exactly the reply ids a view is about to render (plan WP1.3).
+	 * Prime exactly the reply ids a view is about to render.
 	 *
 	 * The single-post view knows the paged tree it renders (incl. the
 	 * off-page accepted-answer card), so it primes THAT set instead of every
@@ -214,7 +214,7 @@ class Attachment {
 	 * Skipped when prime_rendered_replies() already covered this post — the
 	 * hook-driven callers (free jetonomy_after_post_content, Pro
 	 * jetonomy_before_replies) fire after the view's scoped prime, and
-	 * re-running the whole-thread query would undo the WP1.3 bound. The
+	 * re-running the whole-thread query would undo that scoped bound. The
 	 * whole-post path stays for direct callers and free/pro version skew.
 	 */
 	public static function prime_for_post( int $post_id ): void {

@@ -84,7 +84,6 @@ class UserProfile extends Model {
 	 * layers from the loop that causes it, and it only shows COLD. Warm, in a
 	 * process that has already seen those users, the same code measures clean —
 	 * which is exactly how a "batch-loaded, no N+1" claim survived review twice
-	 * (Basecamp 10105928436).
 	 *
 	 * Seeds the same key find_by_user() reads, so callers need no new code path:
 	 * prime once, then call it normally and it answers from cache.
@@ -147,7 +146,7 @@ class UserProfile extends Model {
 		);
 		Cache::delete( "profile:{$user_id}" );
 		// trust_level feeds the permission trust gates — clear the verdict
-		// memo so a promotion applies within the same request (WP0.1).
+		// memo so a promotion applies within the same request.
 		if ( array_key_exists( 'trust_level', $data ) ) {
 			\Jetonomy\Permissions\Permission_Engine::reset_memo();
 		}

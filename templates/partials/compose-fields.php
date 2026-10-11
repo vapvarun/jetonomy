@@ -272,7 +272,7 @@ if ( '' !== $_extras_html ) {
 					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 				</button>
 				<?php
-				// [1.4.3 WS3-B] Visibility now driven by jetonomySmartDropdown
+				// Visibility now driven by jetonomySmartDropdown
 				// (togglePublishMenu); removed `data-wp-bind--hidden` so JS owns
 				// display + position. Initial `hidden` attribute prevents flash
 				// before the primitive attaches.

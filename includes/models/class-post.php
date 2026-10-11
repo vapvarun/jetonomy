@@ -355,7 +355,6 @@ class Post extends Model {
 		// that looks it up. A hard delete used to remove the topic and leave
 		// every reply behind pointing at a post_id that no longer resolved -
 		// still counted on their authors, still in search and activity
-		// (Basecamp 10344032754).
 		if ( $post ) {
 			self::delete_replies( $id );
 		}
@@ -404,7 +403,7 @@ class Post extends Model {
 			 * pointing at posts that no longer existed. Attachment GC did not
 			 * catch them either, because it checks whether the media FILE still
 			 * exists, not the post - so an orphan with a live file was never
-			 * collected (Basecamp 10268067864).
+			 * collected.
 			 *
 			 * The model is where every caller converges, so this is the only
 			 * place the hook can be guaranteed.
@@ -529,7 +528,7 @@ class Post extends Model {
 	 * the view, schema markup x2). Misses are deliberately never memoized:
 	 * unique_post_slug() loops `while ( find_by_slug() )` as its duplicate
 	 * guard, and a cached miss there mints duplicate slugs — the exact bug
-	 * Space's negative slug cache had (caching plan WP2.2 / graveyard #5).
+	 * Space's negative slug cache had.
 	 * Reset on every post write (update/delete) and via Cache::flush() (U1).
 	 *
 	 * @var array<string, object>
@@ -537,7 +536,7 @@ class Post extends Model {
 	private static array $slug_memo = [];
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -620,7 +619,7 @@ class Post extends Model {
 		// non-unique — 25 of 26 seeded posts shared a single created_at second —
 		// and without a unique final key MySQL may return tied rows in any order,
 		// so consecutive pages of the same list could repeat or skip rows
-		// (Basecamp 10161324235). Tiebreaker direction matches its key's.
+		// Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
 				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
@@ -683,7 +682,7 @@ class Post extends Model {
 		// last_reply_at/created_at, so an id filter does not follow the sort at all,
 		// and `id >` against a DESC sort actively contradicts it — every "next page"
 		// returned the top of the list again and clients looped forever
-		// (Basecamp 10161324235). Offset is the only scheme these sorts support.
+		// Offset is the only scheme these sorts support.
 		$offset = $after > 0 ? $after : $offset;
 
 		$results = static::db()->get_results(
@@ -725,7 +724,7 @@ class Post extends Model {
 		// non-unique — 25 of 26 seeded posts shared a single created_at second —
 		// and without a unique final key MySQL may return tied rows in any order,
 		// so consecutive pages of the same list could repeat or skip rows
-		// (Basecamp 10161324235). Tiebreaker direction matches its key's.
+		// Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
 				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
@@ -805,7 +804,7 @@ class Post extends Model {
 	}
 
 	/**
-	 * Card-projection variant of list_by_space_visible() (plan WP5.4).
+	 * Card-projection variant of list_by_space_visible().
 	 *
 	 * The topic-card templates render title + a trimmed excerpt — never the
 	 * body — yet the full method dragged `content` LONGTEXT for every row.
@@ -914,7 +913,7 @@ class Post extends Model {
 	 * @return int
 	 */
 	public static function count_by_space_visible( int $space_id, int $user_id, bool $is_privileged, string $sort = 'latest' ): int {
-		// Cached 120s per viewer bucket (plan WP4.10): the COUNT doubles the
+		// Cached 120s per viewer bucket: the COUNT doubles the
 		// query cost of the hottest list on the site for a pager number that
 		// barely moves. Bucket honors EVERY viewer-dependent clause below
 		// (U2): privileged viewers share 'priv' (they see everything),
@@ -924,8 +923,7 @@ class Post extends Model {
 		// set is unbounded per space, so no write can enumerate it, and a
 		// ≤120s-stale pager count is invisible. The denormalized
 		// jt_spaces.post_count is a DIFFERENT population and is never
-		// substituted here (the reverted Basecamp 10118693115 bug —
-		// plan graveyard #1).
+		// substituted here (it would give wrong pager counts).
 		$bucket = $is_privileged ? 'priv' : ( $user_id > 0 ? "u{$user_id}" : 'guest' );
 		$key    = "postcount:{$space_id}:{$sort}:{$bucket}";
 		$cached = Cache::get( $key );
@@ -1384,7 +1382,7 @@ class Post extends Model {
 				break;
 		}
 
-		// hot/top ORDERING cache (plan WP4.5). hot_score is computed per row
+		// hot/top ORDERING cache. hot_score is computed per row
 		// and unindexable — every feed request full-scanned the visible post
 		// set TWICE (COUNT + filesort). Cache the id ORDER + total only,
 		// 90s, TTL-only (decay-ranked sorts make staleness invisible; 'new'
@@ -1925,7 +1923,7 @@ class Post extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// The rest of the source moves with it (Basecamp 10375374349): votes,
+		// The rest of the source moves with it: votes,
 		// subscribers and bookmarks. UPDATE IGNORE skips a member who already
 		// has a row on the target (unique keys), and those leftovers are then
 		// dropped, so nobody votes or subscribes twice.
@@ -1994,7 +1992,7 @@ class Post extends Model {
 		// Trash the source post. The publish→trash transition inside update()
 		// already decrements the space's post_count and the author's post_count
 		// — an explicit decrement here double-counted (-2 per merge), the same
-		// bug class as Reply::split_to_post (Basecamp 10161324705 / plan WP0.8).
+		// bug class as Reply::split_to_post.
 		static::update( $source_id, array( 'status' => 'trash' ) );
 
 		do_action( 'jetonomy_post_merged', $source_id, $target_id );

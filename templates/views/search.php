@@ -88,7 +88,7 @@ $jt_searching   = ( $jt_has_query || $jt_has_filters );
 $jt_posts_total = 0;
 if ( $jt_searching && ! $jt_author_unresolved ) {
 	// Same search, same rules as REST /search and the app: one adapter call per
-	// group instead of this view's own SQL (Basecamp 10368526736). Post rows
+	// group instead of this view's own SQL. Post rows
 	// already carry space_title / space_slug.
 	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search_query();
 

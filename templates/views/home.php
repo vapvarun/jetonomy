@@ -40,7 +40,7 @@ if ( ! is_user_logged_in() ) :
 		sprintf( __( 'Welcome to %s', 'jetonomy' ), $community_title )
 	);
 	// No setting writes a tagline; the subheading is changed through this
-	// filter (Basecamp 10380388868).
+	// filter.
 	$jt_welcome_sub = (string) apply_filters(
 		'jetonomy_home_welcome_subheading',
 		/* translators: %s: plural space label. */
@@ -79,7 +79,7 @@ if ( ! is_user_logged_in() ) :
 	 *
 	 * Deliberately NOT a compose button. A global "New topic" has to answer
 	 * "into which space?", and a picker on the primary landing page is a
-	 * bigger change than the problem warrants (Basecamp 10227705351). Naming
+	 * bigger change than the problem warrants. Naming
 	 * where posting happens turns the dead end into a signpost, which is the
 	 * whole gap.
 	 */
@@ -115,8 +115,8 @@ if ( ! is_user_logged_in() ) :
 				?>
 			<?php else : ?>
 				<?php
-				// One grouped query (+ the WP4.4 tree cache) for every
-				// category section instead of one query per category (WP3.9).
+				// One grouped query (the tree cache) for every
+				// category section instead of one query per category.
 				$jt_spaces_by_cat = \Jetonomy\Models\Space::visible_by_category();
 				$jt_children      = \Jetonomy\Models\Category::children_by_parent();
 				?>

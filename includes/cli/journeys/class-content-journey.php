@@ -120,7 +120,6 @@ final class Content_Journey {
 
 		// Same normalize+kses contract as create and the REST controllers -
 		// the update path was the last writer that could persist raw div soup
-		// (Basecamp 10138808747 deep follow-up).
 		if ( isset( $patch['content'] ) ) {
 			$patch['content'] = jetonomy_sanitize_editor_content( (string) $patch['content'] );
 		}

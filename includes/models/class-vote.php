@@ -58,7 +58,7 @@ class Vote extends Model {
 
 		// The write below (insert / flip / retract) must be visible to the
 		// next get_user_vote() in this request — clear the memo before the
-		// transaction so post-cast reads repopulate fresh (plan WP3.7).
+		// transaction so post-cast reads repopulate fresh.
 		self::reset_memo();
 
 		$started = static::db()->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -223,18 +223,18 @@ class Vote extends Model {
 	/**
 	 * Per-request memo for get_user_vote(), filled per-row on miss and in
 	 * bulk (negatives included) by user_votes_map() — the memo-in-model
-	 * design from plan WP3.7: templates call user_votes_map() once for the
+	 * design: templates call user_votes_map() once for the
 	 * page's ids, and every per-row get_user_vote() in the card partials
 	 * (including theme-overridden copies and unprimed surfaces like drafts /
 	 * tag / bookmarks views) reads the memo or falls back per-row. Cleared
-	 * by cast() and via Cache::flush() (plan U1).
+	 * by cast() and via Cache::flush().
 	 *
 	 * @var array<string, ?int>
 	 */
 	private static array $memo = array();
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -248,7 +248,7 @@ class Vote extends Model {
 	}
 
 	/**
-	 * Register the memo reset with the shared registry once (plan U1).
+	 * Register the memo reset with the shared registry once.
 	 */
 	private static function register_memo_reset(): void {
 		if ( ! self::$memo_registered ) {
@@ -297,7 +297,7 @@ class Vote extends Model {
 		}
 
 		// Fill the get_user_vote() memo, negatives included, so per-row
-		// lookups over these ids cost zero further queries (plan WP3.7).
+		// lookups over these ids cost zero further queries.
 		self::register_memo_reset();
 		foreach ( $object_ids as $oid ) {
 			self::$memo[ "{$user_id}|{$object_type}|{$oid}" ] = $map[ $oid ] ?? null;

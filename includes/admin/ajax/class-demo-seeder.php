@@ -53,7 +53,7 @@ class Demo_Seeder {
 
 	/**
 	 * The one way to load demo data, used by the setup wizard, the Dashboard
-	 * and POST /admin/demo-data (Basecamp 10375019266). Re-running replaces
+	 * and POST /admin/demo-data. Re-running replaces
 	 * the previous demo set instead of adding a second one.
 	 *
 	 * @param int $admin_id Site administrator who owns the demo spaces.
@@ -62,7 +62,7 @@ class Demo_Seeder {
 	public static function import( int $admin_id ): array {
 		// One seed runs ~25k queries. Lift the admin memory limit, and stop
 		// Query Monitor keeping a backtrace for every one of them, which on its
-		// own pushed the request past 256MB (Basecamp 10375917700).
+		// own pushed the request past 256MB.
 		wp_raise_memory_limit( 'admin' );
 		do_action( 'qm/cease' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.NamingConventions.ValidHookName.UseUnderscores -- Query Monitor's hook.
 
@@ -398,7 +398,7 @@ class Demo_Seeder {
 
 		// ── Recount ────────────────────────────────────────────────────────────
 		// Rebuild every denormalized counter from the canonical tables so the
-		// seeded site never ships drifted stats (Basecamp 10161324705). The
+		// seeded site never ships drifted stats. The
 		// content above goes through the models, but votes/backdating touch rows
 		// directly, and a bulk seed is exactly the "explicit recount after bulk"
 		// path the Recount service exists for.

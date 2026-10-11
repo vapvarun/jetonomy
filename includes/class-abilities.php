@@ -226,7 +226,7 @@ class Abilities {
 				// only asks "can you read this SPACE", which returns true for
 				// any guest on a public space and says nothing about the post's
 				// status or is_private. This route reads one post by id, so it
-				// gates on the post (Basecamp 10105628594).
+				// gates on the post.
 				'permission_callback' => function ( $input ) {
 					$post = Post::find( (int) $input['post_id'] );
 					if ( ! $post ) {
@@ -360,10 +360,9 @@ class Abilities {
 					 * was short one: it checked is_closed but not whether the
 					 * SPACE was archived or locked, so this ability could reply
 					 * into an archived space that REST refuses with
-					 * jetonomy_space_restricted. Reproduced during the
-					 * follow-up audit on Basecamp 10228771444 - REST returned
-					 * 403 and the ability created reply #2411 in the same
-					 * space, for the same member.
+					 * jetonomy_space_restricted. Without this gate the ability
+					 * would create the reply in the same space for the same
+					 * member that REST answers with 403.
 					 */
 					return \Jetonomy\Permissions\Content_Gate::check( get_current_user_id(), $post, (int) ( $input['parent_id'] ?? 0 ) );
 				},
@@ -1316,7 +1315,7 @@ class Abilities {
 		$after    = (int) ( $input['after'] ?? 0 );
 		$sort     = $input['sort'] ?? 'latest';
 
-		// Filter is_private topics for non-privileged callers (Basecamp 9803998504).
+		// Filter is_private topics for non-privileged callers.
 		// Permission_Engine::is_space_privileged() covers space mods/admins; site
 		// admins bypass via the manage_options clause inside list_by_space_visible.
 		$user_id       = get_current_user_id();
@@ -1460,7 +1459,7 @@ class Abilities {
 
 	public function execute_list_spaces( $input ) {
 		$category_id = (int) ( $input['category_id'] ?? 0 );
-		// Explicit cap (plan WP1.5): list_all()'s 0-default is unbounded and
+		// Explicit cap: list_all()'s 0-default is unbounded and
 		// this payload has no pagination, so an agent on a huge network would
 		// materialize every row. The payload shape stays a flat array (a
 		// conditional wrapper would break consumers exactly when a big site
@@ -1542,7 +1541,7 @@ class Abilities {
 		 * This branch used to test only `visibility === 'private'` and call
 		 * SpaceMember::add() for everything else, which let a subscriber join a
 		 * HIDDEN or INVITE-ONLY space and read every post in it, while REST
-		 * refused the identical request (Basecamp 10227908583). It also called
+		 * refused the identical request. It also called
 		 * Models\JoinRequest::create(), which does not exist - the model method
 		 * is create_request() - so the one case it did try to gate fataled
 		 * instead of gating.
@@ -1556,7 +1555,7 @@ class Abilities {
 	}
 
 	public function execute_list_space_members( $input ) {
-		// Explicit cap (plan WP1.5) — same reasoning as execute_list_spaces:
+		// Explicit cap — same reasoning as execute_list_spaces:
 		// unbounded default + per-row get_userdata/profile below = a 5000-member
 		// space materializes and enriches every row for one agent call.
 		$members = SpaceMember::list_by_space( (int) $input['space_id'], 200 );

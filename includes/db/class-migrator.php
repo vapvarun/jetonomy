@@ -22,7 +22,7 @@ class Migrator {
 		// hosts with tight max_execution_time. An ALTER that outlives the PHP
 		// limit completes server-side but the version never gets stamped, so
 		// every subsequent request re-enters the whole loop. Lift the limits
-		// for the migration pass (caching plan WP5.0).
+		// for the migration pass.
 		ignore_user_abort( true );
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- disabled_functions on some hosts.

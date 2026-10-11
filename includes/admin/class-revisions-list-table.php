@@ -72,7 +72,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		// overridden to Title, Type sat ahead of the rule's reach: it stayed
 		// display:table-cell, table-layout:fixed squeezed it to 0 width, and at
 		// 390px the header rendered as T Y P E down the page with every row
-		// spelling P o s t beneath it (Basecamp 10212987797).
+		// spelling P o s t beneath it.
 		//
 		// Every core list table puts its primary first for this reason. Do not
 		// reorder these two without re-checking 390px.
@@ -90,7 +90,7 @@ class Revisions_List_Table extends \WP_List_Table {
 	 *
 	 * Type used to be the first column and therefore WP's default primary, so a
 	 * phone showed a column of "Post" / "Reply" with no way to tell the rows
-	 * apart (Basecamp 10146443346). The title is the identity.
+	 * apart. The title is the identity.
 	 *
 	 * Title is now first, so this override restates WP's default rather than
 	 * changing it. Kept deliberately: it pins the intent, so reordering the

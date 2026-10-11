@@ -29,7 +29,6 @@ class Trust_Levels {
 	 *                   the trust floors in Permission_Engine::can(). The
 	 *                   Permissions tab prints these, so an entry nothing
 	 *                   enforces promises owners a power members never get
-	 *                   (Basecamp 10380389141).
 	 */
 	private const LEVELS = [
 		0 => [
@@ -62,7 +61,7 @@ class Trust_Levels {
 			'rate_limits'  => [],
 			// Not create_spaces: creating a space needs the jetonomy_create_spaces
 			// capability plus trust level 4 (Permission_Engine), so listing it here
-			// told owners Regular members could do it (Basecamp 10368526692).
+			// told owners Regular members could do it.
 			'abilities'    => [],
 		],
 		3 => [
@@ -158,12 +157,9 @@ class Trust_Levels {
 	/**
 	 * Translated display name for a trust level.
 	 *
-	 * THE single source of truth for what a member sees. Three surfaces used to
-	 * carry their own hardcoded list and had drifted a full level apart
-	 * (Basecamp 10210059424): the admin Users screen called level 1 "Basic",
-	 * level 2 "Member" and level 5 "Elder", while the promotion email and the
-	 * Permissions tab used the LEVELS names. A member promoted to level 2 got
-	 * an email saying "Regular" and appeared on the Users screen as "Member".
+	 * THE single source of truth for what a member sees. The admin Users
+	 * screen, the promotion email and the Permissions tab all read it, so a
+	 * member promoted to a level sees the same name everywhere.
 	 *
 	 * Separate from name() on purpose. name() returns the canonical untranslated
 	 * string and is what `trust_level_name` carries in REST payloads and CLI

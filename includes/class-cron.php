@@ -365,7 +365,7 @@ class Cron {
 				// profile:{id} BEFORE the action below fires, so its four
 				// listeners (activity tracker, notifier, Pro badges, Pro
 				// webhooks) re-read the promoted level instead of a cached
-				// stale row (caching plan WP0.2).
+				// stale row.
 				UserProfile::update_profile( (int) $profile->user_id, [ 'trust_level' => $new_level ] );
 				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
 				++$promoted;

@@ -39,7 +39,6 @@ class AccessRule extends Model {
 		// A rule written mid-request must be visible to the next
 		// list_for_space() in the same process — the Pro course provisioner
 		// creates a rule and the integration reads the list in one flow
-		// (caching plan WP2.3).
 		self::reset_memo();
 
 		return $id;
@@ -59,7 +58,6 @@ class AccessRule extends Model {
 	 * role / capability / trust-level rule attached to a PUBLIC space silently
 	 * does nothing - the owner configures a gate, sees no error, and the content
 	 * stays open. That is the "configured but content still accessible" report
-	 * (Basecamp 10000074550).
 	 *
 	 * Rather than fail the save, flip the space to Private so the rule means what
 	 * the owner clearly intended, and let the caller tell them it happened.
@@ -101,14 +99,14 @@ class AccessRule extends Model {
 	 * several call sites), and every pass re-fans-out to the membership
 	 * adapters. Only the DB list is memoized; resolve_access() itself stays
 	 * live so third-party entitlements granted mid-request (a checkout
-	 * completing) are never frozen (caching plan WP2.3).
+	 * completing) are never frozen.
 	 *
 	 * @var array<int, object[]>
 	 */
 	private static array $memo = [];
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */

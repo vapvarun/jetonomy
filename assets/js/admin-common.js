@@ -441,7 +441,7 @@
 						});
 						// Top-level rows are one page of a paginated list, so the
 						// handler needs the page context to turn them into absolute
-						// positions (Basecamp 10210539659). A sibling group always
+						// positions. A sibling group always
 						// renders whole under its parent.
 						var ctx = self.listPageContext();
 						self.ajax('jetonomy_reorder_categories', {
@@ -2013,8 +2013,8 @@
 		// Opener: prefer whatever the user actually activated. A dialog opened
 		// from an async callback (the email preview waits on its AJAX) enhances
 		// long after the click, by which point document.activeElement is <body>
-		// - so Escape restored focus to nothing (Basecamp 10146440810, a11y
-		// addendum). lastActivated is the control the user pressed, tracked
+		// - so Escape would restore focus to nothing.
+		// lastActivated is the control the user pressed, tracked
 		// below, and is only fallen back on when activeElement is not useful.
 		var opener = document.activeElement;
 		if ( ! opener || opener === document.body || opener === document.documentElement ) {

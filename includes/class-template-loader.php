@@ -396,14 +396,14 @@ class Template_Loader {
 					'noMessageMatches'      => sprintf( __( 'No matches. You can only message people who share at least one %s with you.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'recipientRequired'     => __( 'Please enter a recipient.', 'jetonomy' ),
 					'userNotFound'          => __( 'User not found: ', 'jetonomy' ),
-					// Pro Private Messaging — conversation actions (kebab menu, WS3-C).
+					// Pro Private Messaging — conversation actions (kebab menu).
 					'muteFailed'            => __( 'Could not update mute setting.', 'jetonomy' ),
 					'archiveFailed'         => __( 'Could not archive the conversation.', 'jetonomy' ),
 					'leaveFailed'           => __( 'Could not leave the conversation.', 'jetonomy' ),
 					'blockFailed'           => __( 'Could not update block setting.', 'jetonomy' ),
 					'confirmLeave'          => __( 'Leave this conversation? You will not receive new messages.', 'jetonomy' ),
 					'confirmBlock'          => __( 'Block this user? They will no longer be able to message you here.', 'jetonomy' ),
-					// WS4-C: moderation flag toasts + profile-save failure (consumed by view.js via state.i18n).
+					// moderation flag toasts + profile-save failure (consumed by view.js via state.i18n).
 					'contentRemoved'        => __( 'Content removed', 'jetonomy' ),
 					'flagDismissed'         => __( 'Flag dismissed', 'jetonomy' ),
 					'failed'                => __( 'Failed', 'jetonomy' ),
@@ -443,7 +443,7 @@ class Template_Loader {
 					'topicReopened'         => sprintf( __( '%s reopened', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 					/* translators: %s: the singular topic label the site owner configured. */
 					'failedClose'           => sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					// WS4-C: Pro Polls strings consumed via state.i18n in pro-view.js.
+					// Pro Polls strings consumed via state.i18n in pro-view.js.
 					'failedSubmitVote'      => __( 'Failed to submit vote. Please try again.', 'jetonomy' ),
 					'voteSingular'          => __( '1 vote', 'jetonomy' ),
 					/* translators: %d: vote count. */
@@ -470,12 +470,12 @@ class Template_Loader {
 		// \Jetonomy\version_assets_by_mtime() - so enqueues pass the plain
 		// plugin version.
 
-		// WS3-A primitives (1.4.3): shared optimistic-action helper and smart
+		// Primitives (1.4.3): shared optimistic-action helper and smart
 		// dropdown positioner. Registered as classic scripts so window globals
 		// (jetonomyOptimistic, jetonomySmartDropdown) exist before any
 		// downstream consumer evaluates. Depend on jetonomy-data so they share
 		// its enqueue context; the script-module below loads after them in
-		// document order. Callsite migration lands in WS3-B.
+		// document order.
 		wp_enqueue_script( 'jetonomy-optimistic', JETONOMY_URL . 'assets/js/lib/optimistic.min.js', array( 'jetonomy-data', 'wp-i18n' ), JETONOMY_VERSION, true );
 		\Jetonomy\script_translations( 'jetonomy-optimistic' );
 		wp_enqueue_script( 'jetonomy-smart-dropdown', JETONOMY_URL . 'assets/js/lib/smart-dropdown.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
@@ -607,7 +607,7 @@ class Template_Loader {
 						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
 					),
 					'failedSaveProfile'      => esc_html__( 'Failed to save profile.', 'jetonomy' ),
-					// WS4-C: space-members ban dialog (translator placeholders).
+					// space-members ban dialog (translator placeholders).
 					/* translators: 1: member display name (substituted client-side); 2: singular space label; 3: plural topic label; 4: plural reply label. */
 					'banConfirmFormat'       => sprintf( __( 'Ban %1$s from this %2$s? They will lose access to its %3$s and %4$s until you lift the ban.', 'jetonomy' ), '%s', \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					/* translators: %s: the singular member label the site owner configured. */
@@ -960,7 +960,7 @@ class Template_Loader {
 	 * localize only fires on embed surfaces (compose-topic shortcode/block
 	 * on a regular WP page) where no other Jetonomy script has run. Without
 	 * this, view.js actions that go through restFetch fail before the
-	 * request is made (Basecamp #9967059857).
+	 * request is made.
 	 *
 	 * @since 1.5.0
 	 */
@@ -1329,7 +1329,7 @@ class Template_Loader {
 						$space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
 						// A concealed space's <head> must look exactly like a
 						// missing space's: no title/desc/og/image (pairs with the
-						// 404 in maybe_set_404 — Basecamp 10105630168).
+						// 404 in maybe_set_404).
 						if ( $space && \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 							$space = null;
 						}
@@ -1379,7 +1379,6 @@ class Template_Loader {
 						// Same permission gate as single-post.php — without this, the meta
 						// description, OG tags, article:* metadata, and oEmbed discovery URL
 						// for a private topic leak into every non-author response's <head>
-						// (Basecamp 9803998504).
 						//
 						// can_render_post_text() (not can_read_post()) because the <head> is
 						// also where a BLOCKED author's words were still arriving: the body
@@ -1818,7 +1817,7 @@ class Template_Loader {
 	/**
 	 * Print the breadcrumb trail where the view calls this (just before
 	 * <main>), or hold it for breadcrumb_in_main() when the site moved it
-	 * inside the main landmark (Basecamp 10272509253).
+	 * inside the main landmark.
 	 *
 	 * @param array<int,array<string,mixed>> $crumbs Crumbs, each with label and optional url.
 	 */

@@ -83,7 +83,7 @@ class Schema_Markup {
 		 * adjust that entity rather than emit a competing one: SEO Pro used to
 		 * print its own DiscussionForumPosting from wp_head, so a Q&A topic
 		 * carried both QAPage and DiscussionForumPosting and told Google two
-		 * different things about the same page (Basecamp 10212231937). There was
+		 * different things about the same page. There was
 		 * no seam here, which is precisely why it re-implemented instead.
 		 *
 		 * Return null to suppress emission entirely.
@@ -116,7 +116,6 @@ class Schema_Markup {
 		// applies to og:* / meta description / article:* metadata. Without
 		// this, JSON-LD leaks the full content of a private post to
 		// logged-out crawlers even though the HTML view returns 403/404
-		// (Basecamp 9803998504 regression).
 		//
 		// 1.8.0: that shared check is now can_render_post_text(), so this
 		// emit inherits the blocked-author gate too — `headline` and `text`
@@ -231,7 +230,7 @@ class Schema_Markup {
 
 		$space_url = \Jetonomy\route_url( 'space', $space->slug );
 
-		// Cached 900s per space (plan WP4.9). The viewer is hard-coded to the
+		// Cached 900s per space. The viewer is hard-coded to the
 		// guest path below (crawler-facing payload), so the whole schema is
 		// globally shareable — yet it re-ran a full post listing on every
 		// space view purely for JSON-LD humans never see. Busted from

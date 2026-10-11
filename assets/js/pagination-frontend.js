@@ -9,7 +9,7 @@
  * Why click-only (not infinite scroll): the posts_per_page / replies_per_page
  * settings are a customer contract — "show N items per page". An auto-firing
  * IntersectionObserver chain-loads pages on scroll, defeating the setting on
- * any community larger than the initial viewport. See Basecamp #9860293843.
+ * any community larger than the initial viewport.
  *
  * Button labels are translated with wp.i18n.
  */

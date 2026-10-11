@@ -177,7 +177,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							// across other sections. Space/Topic/Reply/Member/Category each get a
 							// singular + plural pair; both forms are explicit because we never
 							// auto-pluralise (breaks on irregulars like Person/Persons).
-							// Explicit per-field labels + a 12px gap (Basecamp 10150582271).
+							// Explicit per-field labels + a 12px gap.
 							$jt_defaults    = \Jetonomy\label_defaults();
 							$jt_noun_titles = array(
 								'space'    => esc_html__( 'Space', 'jetonomy' ),
@@ -416,7 +416,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			$rl_defaults = \Jetonomy\Permissions\Rate_Limiter::defaults();
 			// Built from Trust_Levels::label() so renaming the ladder in one
 			// place updates this tab, the Users screen and the promotion email
-			// together (Basecamp 10210059424).
+			// together.
 			$level_names = [];
 			foreach ( [ 1, 2, 3 ] as $jt_lvl ) {
 				$level_names[ $jt_lvl ] = sprintf(
@@ -463,7 +463,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									<td class="description" data-colname="<?php esc_attr_e( 'What this unlocks', 'jetonomy' ); ?>">
 										<?php
 										// Surface what each level unlocks (data from Trust_Levels::LEVELS,
-										// which lists only what the engine enforces - Basecamp 10380389141).
+										// which lists only what the engine enforces).
 										$jt_ability_labels = array(
 											'no_rate_limits' => __( 'No daily posting limits', 'jetonomy' ),
 											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
@@ -512,7 +512,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
-			<!-- Role -> Capability Mapping (editable - Basecamp 9725751235) -->
+			<!-- Role -> Capability Mapping (editable) -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Role Capability Mapping', 'jetonomy' ); ?></p>
@@ -537,7 +537,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<?php
 					// Third-party roles saved with nothing ticked are locked out of every
 					// space. 2.0.1 stored them that way on any save of this tab, so offer
-					// the owner a one-click way back instead of guessing (Basecamp 10392987680).
+					// the owner a one-click way back instead of guessing.
 					$jt_stored_caps = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
 					$jt_role_defs   = \Jetonomy\Permissions\Capabilities::default_map();
 					foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) :

@@ -45,7 +45,7 @@ class WP_Mail_Adapter implements Email_Adapter {
 	 * ours. Learnomy's Notification_Service::filter_mail_from() does exactly
 	 * that at priority 20, which left a community that had configured
 	 * community@example.com sending as the WordPress admin address, breaking
-	 * SPF/DKIM alignment (Basecamp 10280327270).
+	 * SPF/DKIM alignment.
 	 *
 	 * The filters are registered immediately before the send and removed
 	 * immediately after, at a priority high enough to be the final word, so

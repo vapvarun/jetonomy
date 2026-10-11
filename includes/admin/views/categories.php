@@ -114,7 +114,6 @@ defined( 'ABSPATH' ) || exit;
 		// its child flag so the cell renderer can indent. The renderer emits
 		// the responsive contract (column-primary / data-colname / toggle-row)
 		// this hand-rolled table omitted - which is why it clipped on mobile
-		// (Basecamp 10146440768, root cause 10146443346).
 		$jt_cat_rows = array();
 		foreach ( (array) ( $categories ?? array() ) as $jt_cat ) {
 			$jt_cat->jt_is_child = false;

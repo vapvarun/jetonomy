@@ -145,8 +145,8 @@ final class OEmbed_Provider implements Provider_Interface {
 	 * hour on failure. Cross-host redirects to unrelated domains are
 	 * treated as suspicious and discarded.
 	 *
-	 * Customer report: Basecamp 9809230457 / Zoho 39463 — paying customer
-	 * could not embed any TikTok share URL because TikTok's mobile Share
+	 * Why: customers
+	 * cannot embed any TikTok share URL because TikTok's mobile Share
 	 * button hands out the `/t/<code>/` short form, which WP's hardcoded
 	 * tiktok.com canonical-video provider regex doesn't match.
 	 */

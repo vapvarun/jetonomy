@@ -361,7 +361,7 @@ class REST_Tests {
 		// 14–16. Single-item detail reads on the fixtures Group A/B created.
 		// These endpoints previously had no direct test — they were marked
 		// covered only by a stem-match against Pro extension tests, which
-		// moved to the Pro repo (Basecamp 10161768864).
+		// moved to the Pro repo.
 		$r    = $this->rest( 'GET', "/posts/{$this->post_id}" );
 		$data = $r->get_data();
 		$this->check( 'B14: GET /posts/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
@@ -636,8 +636,8 @@ class REST_Tests {
 			$this->check( 'E24: POST /bookmarks (off) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'E24: bookmarked = false', empty( $data['bookmarked'] ), 'bookmarked was not false' );
 
-			// 25. Create flag. Reporting your own content is server-rejected
-			// (Basecamp 10130360032), so the reporter is the TL0 test user
+			// 25. Create flag. Reporting your own content is server-rejected,
+			// so the reporter is the TL0 test user
 			// flagging the admin-authored post - same actor-switch pattern the
 			// self-downvote step uses above.
 			if ( $this->test_user_id ) {
@@ -876,7 +876,7 @@ class REST_Tests {
 		// Router::prioritize_rules() handles them; AIOSEO never registers a
 		// rewrite rule at all - it matches `^(.+)-sitemap\.xml$` on
 		// parse_request and served its own 404 XML over ours until we started
-		// claiming the URL at parse_request priority 0 (Basecamp 10268378037).
+		// claiming the URL at parse_request priority 0.
 		//
 		// Asserts content-type AND body, never the status code alone. The
 		// broken state returned 200 with an HTML page: a status-only check
@@ -896,7 +896,7 @@ class REST_Tests {
 		// the first page. The picker asked for /spaces with no params, took the
 		// default 20 and rendered them in a <select>, so on a bbPress import -
 		// one space per imported forum - most targets were simply absent and
-		// Move was unusable (Basecamp 10268682629).
+		// Move was unusable.
 		//
 		// Asserts REACHABILITY, not a row count or a search term: any check tied
 		// to a specific number goes green the moment someone raises the cap while
@@ -1463,7 +1463,7 @@ class REST_Tests {
 	 * core post column changed, and it did so BEFORE jetonomy_after_update_post
 	 * fired - so Pro's custom-fields listener never ran and the value could not
 	 * be saved on its own. The only workaround was to send a title you did not
-	 * want to change (Basecamp 10268069890).
+	 * want to change.
 	 *
 	 * Free deliberately knows nothing about custom_fields: an extension declares
 	 * interest through jetonomy_post_update_has_extension_data. This asserts the
@@ -2081,7 +2081,7 @@ class REST_Tests {
 		// owned by any session, so remove them via the models rather than REST.
 		// Model deletes (not raw $wpdb->delete) so the space's post_count and the
 		// post's reply_count decrement — raw row deletes leaked +1 space
-		// post_count per run (Basecamp 10161324705). Reply first, then post, so
+		// post_count per run. Reply first, then post, so
 		// the reply's parent-post decrement lands on a row that still exists.
 		wp_set_current_user( $this->admin_id );
 		if ( $reply_id ) {
@@ -2115,7 +2115,7 @@ class REST_Tests {
 	 * Added in 1.9.1. The route has registered GET + POST for some time, but the
 	 * manifest listed only POST, so the app's `GET /media` call (api/media.ts)
 	 * showed up as a call to a nonexistent route once the parity check started
-	 * verifying methods (Basecamp 10161335087). Covering the GET keeps the
+	 * verifying methods. Covering the GET keeps the
 	 * manifest entry honest instead of relying on it being remembered.
 	 */
 	private function test_media_B13(): void {

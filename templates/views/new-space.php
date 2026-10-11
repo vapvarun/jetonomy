@@ -23,7 +23,7 @@ if ( ! in_array( $default_type, \Jetonomy\Models\Space::valid_types(), true ) ) 
 
 // Categories and their sub-categories for the Category select — mirrors the
 // edit form (G5) so the create form (G6) exposes the same options the backend
-// accepts. Top-level only hid every sub-category (Basecamp 10355160759).
+// accepts. Top-level only hid every sub-category.
 $categories = \Jetonomy\Models\Category::list_tree();
 
 $base   = \Jetonomy\base_url();

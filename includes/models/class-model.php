@@ -45,7 +45,7 @@ abstract class Model {
 	 * Post/Reply create+update call this so EVERY writer - REST, wp-admin
 	 * AJAX, CLI journeys, Abilities, the importers, Pro reply-by-email -
 	 * shares one normalize+kses choke point instead of each remembering both
-	 * halves (Basecamp 10138808747: several remembered only the kses half,
+	 * halves (some writers remembered only the kses half,
 	 * so contenteditable div soup persisted through them). Also derives the
 	 * FULLTEXT `content_plain` copy when the writer did not supply one, so a
 	 * forgetful writer can no longer create content that search cannot find.

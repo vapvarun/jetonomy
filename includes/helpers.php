@@ -413,7 +413,7 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	 * Render an admin data table that satisfies the responsive contract.
 	 *
 	 * THE shared list-table primitive for Free and Pro admin screens
-	 * (Basecamp 10146443346). Hand-rolled `<table>` markup kept omitting the
+	 * Hand-rolled `<table>` markup kept omitting the
 	 * core small-screen semantics (`column-primary`, `data-colname`,
 	 * `.toggle-row`), so the shared responsive CSS could never activate and
 	 * every non-compliant screen clipped or overflowed on mobile/iPad. This
@@ -578,7 +578,7 @@ if ( ! function_exists( 'jetonomy_register_token_style' ) ) {
 	 * screen looks empty rather than broken.
 	 *
 	 * That is exactly how the space-delete dialog shipped invisible in wp-admin
-	 * in 1.9.3 (Basecamp 10217204334) - the front end declared the dependency,
+	 * in 1.9.3 - the front end declared the dependency,
 	 * wp-admin did not, and the two enqueues had drifted apart because each one
 	 * open-coded its own wp_register_style() call. Registration is idempotent
 	 * (WordPress dedupes by handle), so every caller can call this

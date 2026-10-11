@@ -68,7 +68,6 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		// Guest - prompt to log in. Only private spaces get here: a hidden
 		// space answers 404 to guests before this template runs
 		// (Space::concealed_from_viewer), so its existence is never confirmed
-		// (Basecamp 10380389673).
 		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 		$gate_message = sprintf( __( 'This %s is private. Please log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
@@ -217,10 +216,10 @@ $offset = ( $paged - 1 ) * $limit;
 // Use the visibility-aware listing so private topics (is_private = 1) are
 // filtered out for non-author, non-privileged viewers — before 1.3.6 this
 // called list_by_space() which returned them to everyone with space access,
-// including subscribers who were never supposed to see them (Basecamp 9803998504).
+// including subscribers who were never supposed to see them.
 $_jt_is_priv = $_jt_user_id
 	&& ( $_jt_is_admin || \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $_jt_user_id, (int) $space->id ) );
-// Card projection for topic-card spaces (plan WP5.4): those cards render
+// Card projection for topic-card spaces: those cards render
 // title + trimmed excerpt only, so drop `content` LONGTEXT and truncate
 // content_plain. FEED spaces render the full body inline (feed-card.php)
 // and stay on the SELECT * method — trimming it was the safety review's
@@ -263,7 +262,7 @@ if ( $jt_parent && \Jetonomy\Models\Space::concealed_from_viewer( $jt_parent, $_
 }
 
 // Home > Parent category > Category > ... Each category crumb links to its
-// page; nothing on a space page led back to its category (Basecamp 10355161213).
+// page; nothing on a space page led back to its category.
 $crumbs = [];
 if ( $category ) {
 	$jt_parent_cat = (int) $category->parent_id > 0 ? \Jetonomy\Models\Category::find_visible( (int) $category->parent_id ) : null;

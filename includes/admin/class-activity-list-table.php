@@ -67,7 +67,7 @@ class Activity_List_Table extends \WP_List_Table {
 		// overridden to Actor, Date stayed display:table-cell, table-layout:fixed
 		// squeezed it to 0 width, and at 390px it spilled a character per line.
 		//
-		// Same defect the Revisions screen had (Basecamp 10212987797): both
+		// Same defect the Revisions screen had: both
 		// overrode the primary in the 10146443346 batch without reordering.
 		// Do not reorder these two without re-checking 390px - the browser gate
 		// in tests/browser/admin-tables.spec.js asserts it.
@@ -85,7 +85,7 @@ class Activity_List_Table extends \WP_List_Table {
 	 *
 	 * WP_List_Table makes the first column primary, which here was the date -
 	 * so every collapsed row on a phone read "22 minutes ago" and nothing
-	 * distinguished one entry from the next (Basecamp 10146443346). The actor
+	 * distinguished one entry from the next. The actor
 	 * is the identity in an activity log; the rest expands behind the toggle.
 	 *
 	 * Actor is now first, so this restates WP's default rather than changing it.
@@ -197,7 +197,7 @@ class Activity_List_Table extends \WP_List_Table {
 		// the name against get_column_headers( $this->screen ) - and a custom admin
 		// page registers no screen columns, so the check fails and it silently
 		// falls back to the first column. That put the DATE in the mobile primary
-		// cell, so every collapsed row read "22 minutes ago" (Basecamp 10146443346).
+		// cell, so every collapsed row read "22 minutes ago".
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns(), 'actor' );
 
 		[ $where, $args ] = $this->build_where();

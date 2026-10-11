@@ -120,7 +120,7 @@ $stat_cards = array(
 				);
 				?>
 			<?php else : ?>
-				<table class="wp-list-table widefat striped"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
+				<table class="wp-list-table widefat striped"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere -->
 					<thead>
 						<tr>
 							<th scope="col" class="column-primary"><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
@@ -222,7 +222,7 @@ $stat_cards = array(
 							// column-primary + data-colname put this table on the same
 							// mobile collapse contract as every other admin list, and
 							// collapse it around WHO acted rather than leaving the
-							// phone with four unlabelled cells (Basecamp 10146443346).
+							// phone with four unlabelled cells.
 							?>
 							<tr>
 								<td class="column-primary" data-colname="<?php esc_attr_e( 'User', 'jetonomy' ); ?>">
@@ -264,7 +264,7 @@ $stat_cards = array(
 
 			<?php
 			// Both directions live on one card: an owner who skipped sample data in
-			// setup, or removed it, can bring it back here (Basecamp 10375019266).
+			// setup, or removed it, can bring it back here.
 			$jt_demo = \Jetonomy\Admin\Ajax\Demo_Seeder::summary();
 			?>
 			<div class="jetonomy-dashboard-card<?php echo $jt_demo['active'] ? ' jt-card--warning' : ''; ?>" id="jt-demo-card" data-active="<?php echo $jt_demo['active'] ? '1' : '0'; ?>">
@@ -292,7 +292,7 @@ $stat_cards = array(
 			<!-- System Info -->
 			<div class="jetonomy-dashboard-card">
 				<h2><?php esc_html_e( 'System Info', 'jetonomy' ); ?></h2>
-				<table class="widefat"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
+				<table class="widefat"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere -->
 					<tbody>
 						<tr>
 							<td><strong><?php esc_html_e( 'Plugin Version', 'jetonomy' ); ?></strong></td>

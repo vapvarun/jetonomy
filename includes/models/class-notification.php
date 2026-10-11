@@ -122,7 +122,7 @@ class Notification extends Model {
 	 * @return int
 	 */
 	public static function unread_count( int $user_id ): int {
-		// Cached 60s (plan WP4.7): the highest-QPS query in the plugin —
+		// Cached 60s: the highest-QPS query in the plugin —
 		// the header bell reads it on EVERY page view for every logged-in
 		// user. Busted by every named write path via bust_user_cache();
 		// the cron bulk mark-read/prune, space purge and privacy erase have
@@ -151,7 +151,7 @@ class Notification extends Model {
 	}
 
 	/**
-	 * Bust the cached notification counters for one user (plan WP4.7).
+	 * Bust the cached notification counters for one user.
 	 *
 	 * The single bust point for notif:unread:{id} + notif:counts:{id} —
 	 * called from create(), mark_read(), mark_all_read(), delete_for_user(),
@@ -315,7 +315,7 @@ class Notification extends Model {
 	 *
 	 * Opening a conversation (or anything else a notification points at) is
 	 * the read: nothing else ever cleared these rows, so a DM stayed unread in
-	 * Jetonomy's bell and the host's (Basecamp 10369320232).
+	 * Jetonomy's bell and the host's.
 	 *
 	 * @param int    $user_id     The member who read it.
 	 * @param string $object_type Notification object_type ('message', 'post', ...).
@@ -377,7 +377,7 @@ class Notification extends Model {
 	 * @return array<string,int>
 	 */
 	public static function counts_by_filter( int $user_id ): array {
-		// Cached 60s alongside notif:unread (plan WP4.7) — this single-pass
+		// Cached 60s alongside notif:unread — this single-pass
 		// SUM(CASE) walks the user's ENTIRE notification history per render.
 		// Same bust point (bust_user_cache), same TTL-bounded exceptions.
 		$cached = \Jetonomy\Cache::get( "notif:counts:{$user_id}" );
@@ -476,7 +476,7 @@ class Notification extends Model {
 
 		// The target's space must still be readable by the viewer: a member
 		// removed from a private space kept seeing its topic titles here and in
-		// the host bell, and the link landed on a 403 (Basecamp 10345420194).
+		// the host bell, and the link landed on a 403.
 		// Same set-based read rule search and feeds use; fails closed.
 		[ $read_p, $read_p_params ] = Space::content_visibility_sql( $user_id, 'nvs' );
 		[ $read_r, $read_r_params ] = Space::content_visibility_sql( $user_id, 'nvrs' );

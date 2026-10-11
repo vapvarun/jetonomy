@@ -300,7 +300,7 @@ class Admin {
 	 * Tell the owner when Plain permalinks make the community unreachable.
 	 *
 	 * Every route is a rewrite rule, and Plain permalinks have none, so
-	 * /community/ silently served the homepage (Basecamp 10375642554).
+	 * /community/ silently served the homepage.
 	 */
 	public function render_permalink_notice(): void {
 		if ( '' !== (string) get_option( 'permalink_structure' ) || ! current_user_can( 'manage_options' ) ) {
@@ -635,7 +635,7 @@ class Admin {
 		$existing = get_option( 'jetonomy_settings', array() );
 		$clean    = is_array( $existing ) ? $existing : array();
 
-		// ── Permissions tab: role -> capability mapping (Basecamp 9725751235) ──
+		// ── Permissions tab: role -> capability mapping ──
 		// Lives in its own option (not jetonomy_settings) and resyncs the live
 		// WP roles immediately, so unticking a box revokes on save. The hidden
 		// role_caps_submitted marker distinguishes "tab posted with everything
@@ -672,7 +672,7 @@ class Admin {
 				// A row the owner never touched (never stored, holds no Jetonomy
 				// cap, still empty) stays unmapped so the role keeps the space
 				// membership fallback. Storing it cut Customer/Student members off
-				// on the first save of this tab (Basecamp 10392987680). A row that
+				// on the first save of this tab. A row that
 				// was stored or held caps and is now empty is a deliberate "none".
 				if ( ! $caps && ! array_key_exists( $role_slug, $stored ) && ! self::role_holds_jetonomy_cap( $role_slug ) ) {
 					continue;
@@ -680,7 +680,7 @@ class Admin {
 				$overrides[ $role_slug ] = $caps;
 			}
 			// "Give members access" on a locked third-party role: unmap it so the
-			// space-membership fallback applies again (Basecamp 10392987680).
+			// space-membership fallback applies again.
 			$reset = sanitize_key( $input['role_caps_reset'] ?? '' );
 			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) ) {
 				unset( $overrides[ $reset ] );
@@ -760,7 +760,7 @@ class Admin {
 			// showing it unticked, and the feature behind it stayed off. That is
 			// what made "let space admins delete a space" impossible to turn on:
 			// the AJAX guard reads allow_space_admin_purge, which could never
-			// become true (Basecamp 10217204334).
+			// become true.
 			//
 			// An unchecked checkbox submits nothing, so absence inside a
 			// General-tab save means OFF - the same rule front_page above uses.
@@ -971,7 +971,7 @@ class Admin {
 			return $text;
 		}
 		// Our screens name the product, so White Label's brand substitution
-		// has something to replace (Basecamp 10393009873).
+		// has something to replace.
 		/* translators: %s: plugin name. */
 		$text = sprintf( __( 'Thank you for building your community with %s.', 'jetonomy' ), 'Jetonomy' );
 		/**
@@ -1450,7 +1450,7 @@ class Admin {
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
 			$categories = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
-			// Explicit cap (plan WP1.5): the unbounded default rendered every
+			// Explicit cap: the unbounded default rendered every
 			// member row on one screen. 1000 keeps this management surface
 			// functional; when the space is larger the view shows a notice so
 			// members past the cap are never SILENTLY hidden from the only
@@ -1993,7 +1993,7 @@ class Admin {
 			// WordPress convention: "All" is everything EXCEPT the trash, which
 			// has its own filter. Listing trashed topics under All is how a
 			// deleted topic stayed on screen with a Trash badge and looked
-			// undeletable (Basecamp 10335997408).
+			// undeletable.
 			$where .= " AND p.status <> 'trash'";
 		}
 		if ( $search_query ) {

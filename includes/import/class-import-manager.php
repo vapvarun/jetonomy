@@ -88,7 +88,6 @@ class Import_Manager {
 		if ( ! empty( $options['dry_run'] ) ) {
 			// Refuse rather than run for real. An importer that ignores the flag
 			// would otherwise treat "show me what would happen" as "do it"
-			// (Basecamp 10210057225 follow-up).
 			if ( ! $importer->supports_dry_run() ) {
 				return array(
 					'imported' => 0,

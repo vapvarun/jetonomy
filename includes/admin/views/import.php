@@ -264,8 +264,6 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 	 * a notice that a 3s reload ate, and the per-item reasons were accumulated
 	 * across batches and then delete_option'd on completion. "27 files skipped" is
 	 * not something an owner can act on; WHICH files is.
-	 *
-	 * Basecamp 10093054077 (gap 2).
 	 */
 	if ( ! empty( $import_history ) ) :
 		?>

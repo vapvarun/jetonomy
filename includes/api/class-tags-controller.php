@@ -49,7 +49,7 @@ class Tags_Controller extends Base_Controller {
 					 * at any parameter combination. A site that imports a large
 					 * forum passes 100 tags easily, and the truncation is
 					 * silent - the app showed one alphabetical page and no
-					 * indication the rest existed (Basecamp 10252924147).
+					 * indication the rest existed.
 					 */
 					'offset' => [
 						'type'    => 'integer',

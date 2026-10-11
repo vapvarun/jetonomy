@@ -120,7 +120,7 @@ class Theme_Integration {
 		// Applied in BOTH modes: dropping the palette-controlled tokens from
 		// the dark bridge too lets the owner's :root value win under
 		// `.jt-dark`, instead of the theme's dark primary silently replacing
-		// it (Basecamp: custom accent discarded in dark mode). The runtime
+		// it (custom accent discarded in dark mode). The runtime
 		// contrast guard derives a readable --jt-accent-fg from whatever the
 		// accent resolves to, so a palette accent stays legible on dark.
 		$jt_settings = get_option( 'jetonomy_settings', array() );

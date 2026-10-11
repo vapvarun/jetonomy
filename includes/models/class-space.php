@@ -35,7 +35,7 @@ class Space extends Model {
 	/**
 	 * Load several spaces into the find() cache with one query, so a list of
 	 * topics from many spaces (tag page, drafts, search) does not run one
-	 * find() query per space (Basecamp 10369564133). Already cached ids are
+	 * find() query per space. Already cached ids are
 	 * skipped, so priming twice never re-queries.
 	 *
 	 * @param int[] $ids Space ids.
@@ -80,13 +80,13 @@ class Space extends Model {
 		}
 		Cache::delete_many( $keys );
 		// The decoded-settings memo sits above the row cache — clear it with
-		// the row or merge_settings()'s read-modify-write reads stale (WP2.6).
+		// the row or merge_settings()'s read-modify-write reads stale.
 		unset( self::$settings_memo[ $id ] );
 		// The category tree holds row COPIES (title, visibility, counts) —
-		// a rename/visibility change must go cold with the row (WP4.4).
+		// a rename/visibility change must go cold with the row.
 		self::bump_tree_generation();
 		// Visibility / join-policy / settings changes alter permission
-		// verdicts — clear the request-scope verdict memo (WP0.1).
+		// verdicts — clear the request-scope verdict memo.
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 
@@ -165,7 +165,7 @@ class Space extends Model {
 		// drives real behaviour, not just a label: schema markup only emits
 		// QAPage with acceptedAnswer for `question`, so a forum space switched
 		// to Q&A used to keep every post as `topic` and silently lose the rich
-		// result (Basecamp 10210058401). Ideas spaces had the same gap.
+		// result. Ideas spaces had the same gap.
 		if ( $type_changing && $old_type && $old_type !== $data['type'] ) {
 			self::retype_posts( $id, (string) $data['type'] );
 		}
@@ -173,7 +173,7 @@ class Space extends Model {
 		/*
 		 * Settle the request queue when the space stops taking requests.
 		 * Pending rows used to linger after approval -> open/invite, looking
-		 * unprocessed in the owner's queue forever (Basecamp 10148432976).
+		 * unprocessed in the owner's queue forever.
 		 * Every writer - REST PATCH, admin AJAX, WP-CLI - funnels through
 		 * here, so this is the one place that sees all of them.
 		 */
@@ -346,7 +346,7 @@ class Space extends Model {
 	 * from "nobody is, fall back to the site admin". Privacy used to infer that
 	 * by comparing the successor with the site admin, which misread a site
 	 * admin who is ALSO a space admin as a stranded space and archived it
-	 * (Basecamp 10344393613). Any role counts here, site administrator included:
+	 * Any role counts here, site administrator included:
 	 * the question is only whether a space admin row survives.
 	 *
 	 * @param int $space_id  Space to look in.
@@ -468,12 +468,12 @@ class Space extends Model {
 		// Without this bust, a probe for a slug that didn't exist yet (the
 		// REST unique_slug() duplicate guard does exactly that) left a cached
 		// "no such slug" for 300s — so a second create in that window minted a
-		// duplicate slug on persistent-cache installs (caching plan WP0.9).
+		// duplicate slug on persistent-cache installs.
 		if ( ! empty( $data['slug'] ) ) {
 			Cache::delete( 'space:slug:' . (string) $data['slug'] );
 		}
 
-		// A new space must appear in the cached category tree (WP4.4).
+		// A new space must appear in the cached category tree.
 		self::bump_tree_generation();
 
 		if ( ! empty( $data['category_id'] ) ) {
@@ -609,7 +609,7 @@ class Space extends Model {
 	 *
 	 * Replaces the old "public OR member" listing rule, under which `private`
 	 * spaces were as invisible as `hidden` ones — collapsing two distinct
-	 * visibility states into one (Basecamp: "Private+open spaces invisible").
+	 * visibility states into one ("Private+open spaces invisible").
 	 *
 	 * Site owners can widen (e.g. show private to guests) or narrow (e.g. hide
 	 * invite-only) per site via the `jetonomy_space_listing_visibility_sql`
@@ -729,9 +729,9 @@ class Space extends Model {
 	 * Should this space's EXISTENCE be concealed from the viewer?
 	 *
 	 * A `hidden` space promises "only members can find this space". Listings
-	 * already honour that (listing_visibility_sql), but a direct URL used to
+	 * already honour that (listing_visibility_sql), but a direct URL would
 	 * answer HTTP 200 with the space's title — disclosing that the space
-	 * exists and what it is called (Basecamp 10105630168; product decision:
+	 * exists and what it is called (product decision:
 	 * a non-member gets a 404, the stronger reading of "hidden").
 	 *
 	 * Semantics deliberately mirror the single-post space gate
@@ -927,12 +927,12 @@ class Space extends Model {
 	 */
 	/**
 	 * ALL top-level spaces visible to the viewer, grouped by category_id in
-	 * ONE query (plan WP3.9). Key 0 collects uncategorized spaces. Replaces
+	 * ONE query. Key 0 collects uncategorized spaces. Replaces
 	 * the per-category list_by_category()/list_visible() loops on the home
 	 * page, the navigation block (which also ran a discarded COUNT per
 	 * category) and GET /categories.
 	 *
-	 * Cached 600s per viewer bucket via a generation key (plan WP4.4):
+	 * Cached 600s per viewer bucket via a generation key:
 	 * guest and admin are shared classes, every other viewer gets a
 	 * per-user key (the membership subquery binds their id). The key
 	 * embeds cat_tree_gen, bumped by bump_tree_generation() from
@@ -941,7 +941,7 @@ class Space extends Model {
 	 * the bump it would keep serving the old name. Caching is SKIPPED
 	 * entirely when a third party filters
 	 * jetonomy_space_listing_visibility_sql — the bucket cannot model an
-	 * arbitrary predicate (safety review, WP4.4).
+	 * arbitrary predicate.
 	 *
 	 * @param int|null $user_id Viewer ID; null = current user.
 	 * @return array<int, object[]> category_id => space rows (sort_order, title).
@@ -989,7 +989,7 @@ class Space extends Model {
 
 	/**
 	 * Bump the tree generation so every cat_tree:{gen}:{bucket} key goes
-	 * cold (plan WP4.4) — the per-user bucket set is unenumerable, so a
+	 * cold — the per-user bucket set is unenumerable, so a
 	 * generation bump is the sanctioned versioned-key invalidation. A
 	 * missing/evicted gen re-seeds at 1; a lingering old key under a reused
 	 * gen is bounded by the 600s data TTL (documented, same worst case as
@@ -1158,7 +1158,7 @@ class Space extends Model {
 		self::bust_cache( $id );
 		// The space's cached JSON-LD lists its recent posts + post_count —
 		// every publish transition and move lands here with the space id in
-		// hand, making this the single bust point for it (plan WP4.9).
+		// hand, making this the single bust point for it.
 		Cache::delete( "schema:space:{$id}" );
 	}
 
@@ -1390,14 +1390,14 @@ class Space extends Model {
 	 * re-json_decode-ing the same blob 20x per space page (one per card).
 	 * Reset inside bust_cache() — merge_settings() is read-modify-write, so
 	 * a memo the existing bust cannot reach would silently revert the first
-	 * of two settings writes in one process (caching plan WP2.6).
+	 * of two settings writes in one process.
 	 *
 	 * @var array<int, array>
 	 */
 	private static array $settings_memo = [];
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -1463,7 +1463,7 @@ class Space extends Model {
 	 * - A cleared `posts_per_page` DROPS the key instead of storing `""` or 0.
 	 *   The front-end edit form sends `""` for "use the default"; storing that
 	 *   left a phantom per-space value that read back as a limit of 1 on any
-	 *   surface resolving it with `??` (Basecamp 10118693115). Absent means
+	 *   surface resolving it with `??`. Absent means
 	 *   "fall through to global", and only absent says it unambiguously.
 	 *
 	 * @param int   $space_id Space ID.

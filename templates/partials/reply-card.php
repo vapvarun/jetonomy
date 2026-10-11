@@ -37,7 +37,7 @@ if ( ! empty( $reply->is_blocked_author ) ) {
 // Reply::apply_private_tombstone() when THIS viewer may not read the text
 // (not the author, not the topic author, not staff). Same keep-the-node
 // contract as the blocked tombstone above: children stay attached, counts
-// and deep-link page math stay viewer-independent (Basecamp 9804279999).
+// and deep-link page math stay viewer-independent.
 if ( ! empty( $reply->is_private_hidden ) ) {
 	?>
 	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-private-hidden" data-wp-interactive="jetonomy">
@@ -211,7 +211,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			</button>
 				<?php
 				// Hide downvote on own replies — self-downvote was landing at
-				// -1 (Basecamp 9803889865).
+				// -1.
 				if ( (int) $reply->author_id !== get_current_user_id() ) :
 					?>
 			<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"

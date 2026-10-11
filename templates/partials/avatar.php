@@ -21,7 +21,7 @@ $name       = $user ? \Jetonomy\user_display_name( $user ) : __( 'Anonymous', 'j
 	// The initials fallback ships alongside the <img>, hidden. An <img> whose
 	// URL 404s (deleted upload, dead CDN entry) otherwise renders as
 	// broken-image alt text with nothing to fall back to - Firefox shows the
-	// alt string where Chromium/WebKit collapse it (Basecamp 10110833991).
+	// alt string where Chromium/WebKit collapse it.
 	// view.js swaps the pair on the img's error event; no inline JS.
 	?>
 	<img src="<?php echo esc_url( $avatar_url ); ?>"

@@ -300,7 +300,7 @@ class Reply extends Model {
 			 * Moved here from Replies_Controller::delete_item() in 1.9.5 - see
 			 * the matching note in Post::delete(). Firing from the controller
 			 * only held the contract on the REST path and orphaned Pro's
-			 * attachment rows on every other one (Basecamp 10268067864).
+			 * attachment rows on every other one.
 			 *
 			 * @since 1.4.1
 			 * @param int $id Deleted reply ID.
@@ -390,7 +390,7 @@ class Reply extends Model {
 		// The old `id > %d` keyset branch was wrong for every sort but 'oldest':
 		// under `created_at DESC` or `vote_score DESC` an id filter does not follow
 		// the sort, so each next page re-served the head of the thread
-		// (Basecamp 10161324235). Offset matches how has_more/cursor_next are
+		// Offset matches how has_more/cursor_next are
 		// computed in paginated_response(), so the two can no longer disagree.
 		$offset = $after > 0 ? $after : $offset;
 
@@ -1004,7 +1004,7 @@ class Reply extends Model {
 	 * @return array Threaded reply tree.
 	 */
 	private static function build_threaded( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = 0, int $offset = 0 ): array {
-		// SQL-side pagination (caching plan WP1.1). The old shape fetched the
+		// SQL-side pagination. The old shape fetched the
 		// WHOLE thread — every reply row incl. longtext bodies — into PHP and
 		// array_slice()d the top level, so a 500-reply topic transferred all
 		// 500 bodies to render 30. Now: one bounded top-level page, then the
@@ -1014,16 +1014,16 @@ class Reply extends Model {
 		// contract the journey test asserts, incl. tied created_at.
 		// - 'newest'/'best' carry explicit id tiebreaks; without them a
 		// LIMIT/OFFSET repeats or skips tied rows between pages (the
-		// Basecamp 10161324235 bug class). Note 'best' pages can shift
-		// as votes land mid-pagination — the old whole-thread snapshot
-		// couldn't; accepted and documented in the plan.
+		// classic paging bug). Note 'best' pages can shift
+		// as votes land mid-pagination, which a whole-thread snapshot
+		// would not do; this is accepted.
 		// - Children always render oldest-first regardless of top sort
 		// (the old flat query's order).
 		// - ORPHANS RENDER AS ROOTS. A published reply whose parent row is
-		// missing, pending, spammed or trashed used to be unreachable: the
-		// level walk starts at parent_id 0 and never descends to it. It was
-		// still counted, so a topic advertised "3 replies" and rendered
-		// none - the customer report behind Basecamp 10295178703, and
+		// missing, pending, spammed or trashed would be unreachable: the
+		// level walk starts at parent_id 0 and never descends to it. It would be
+		// counted, so a topic would advertise "3 replies" and render
+		// none - and
 		// reproducible by any moderator who trashes a reply that has
 		// children. Resolved at READ time via the LEFT JOIN below rather
 		// than by reparenting rows on delete: restore the parent and the
@@ -1132,8 +1132,8 @@ class Reply extends Model {
 	/**
 	 * Reply ids the single-post view is rendering this request, per post
 	 * (paged tree + off-page accepted answer). Published by the view so
-	 * hook-driven batch primes (Pro reactions on jetonomy_before_replies,
-	 * plan WP3.1) can scope to the rendered set without a new public hook
+	 * hook-driven batch primes (Pro reactions on jetonomy_before_replies)
+	 * can scope to the rendered set without a new public hook
 	 * carrying ids. Request-scope by nature; empty on non-view requests,
 	 * in which case consumers keep their per-row fallback.
 	 *

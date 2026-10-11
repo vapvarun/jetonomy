@@ -38,7 +38,6 @@ $jt_is_reply = 'reply' === $kind;
 $jt_is_trash = 'trash' === ( $mode ?? '' );
 // Same identity rule as everywhere else: an anonymous item reads "Anonymous"
 // to moderators too, and only an explicit (logged) reveal shows the name
-// (Basecamp 10380388683).
 $jt_author_name = \Jetonomy\Author::for_display( (int) ( $item->author_id ?? 0 ), $item )['name'];
 $jt_age         = human_time_diff( strtotime( (string) $item->created_at ), time() );
 

@@ -72,7 +72,7 @@ class Feed_Controller extends Posts_Controller {
 		// now live in the base controller so every list endpoint shares one
 		// implementation. This controller used to carry its own private copy, which
 		// is exactly why /feed got fixed in 1.9.1 while /users/{id}/posts and
-		// /spaces/{id}/posts stayed broken (Basecamp 10161324385 / 10161324235).
+		// /spaces/{id}/posts stayed broken.
 		$offset = max( 0, (int) $pagination['offset'] );
 
 		$result = Post::list_global_feed(

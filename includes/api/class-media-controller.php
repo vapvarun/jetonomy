@@ -33,7 +33,7 @@ class Media_Controller extends Base_Controller {
 					'callback'            => [ $this, 'upload_image' ],
 					// Login + nonce + the upload caps in one call. Posting caps are
 					// deliberately not enough: the Permissions tab's Upload media
-					// box has to be able to stop a role (Basecamp 10380388502).
+					// box has to be able to stop a role.
 					// upload_image() adds the restriction (ban/silence) re-check
 					// that capabilities alone don't express.
 					'permission_callback' => REST_Auth::auth_mutation( \Jetonomy\Permissions\Capabilities::UPLOAD_CAPS ),

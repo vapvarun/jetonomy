@@ -152,7 +152,7 @@ class Verification_Reminder {
 			array( '%d' )
 		);
 		// Raw profile write — bust like every other profile writer so a cached
-		// row never drifts from the table (caching plan WP0.5).
+		// row never drifts from the table.
 		\Jetonomy\Cache::delete( "profile:{$user_id}" );
 	}
 

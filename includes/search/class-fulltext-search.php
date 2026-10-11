@@ -45,7 +45,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 
 	/**
 	 * The one MySQL search behind REST /search, the search page, the app and
-	 * Abilities (Basecamp 10368526736). It used to exist three times - in the
+	 * Abilities. It used to exist three times - in the
 	 * REST controller, in the search template and here - and the copies had
 	 * drifted (different short-term handling, ordering and space rules).
 	 *
@@ -702,7 +702,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 	 * was a silent empty result set: `q=QA` returned 0 against 26 posts titled
 	 * "QA Post N", while `q=Post` returned all 26. Short queries are common in a
 	 * forum (acronyms, product codes, "v2"), so members reasonably concluded
-	 * search was broken (Basecamp 10161324553).
+	 * search was broken.
 	 *
 	 * Below the floor we scan with LIKE instead. That cannot use the FULLTEXT
 	 * index, so it matches TITLE columns only: body columns (content_plain)

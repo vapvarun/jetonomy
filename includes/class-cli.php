@@ -100,7 +100,7 @@ class CLI {
 		// Check support BEFORE promising anything. This used to print "no data
 		// will be written" and then hand off to an importer that ignored the
 		// flag entirely, so wpforo and asgaros ran a real import under a dry-run
-		// banner (Basecamp 10210057225). Never advertise what we cannot honour.
+		// banner. Never advertise what we cannot honour.
 		if ( $dry_run && ! Import_Manager::supports_dry_run( $source ) ) {
 			\WP_CLI::error(
 				sprintf(

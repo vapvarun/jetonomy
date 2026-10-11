@@ -5,7 +5,7 @@
  * Post type is behavioural, not cosmetic. Schema_Markup emits QAPage with
  * acceptedAnswer only for `question`, so a Q&A space whose posts were still
  * `topic` silently served DiscussionForumPosting and lost the rich result the
- * comparison chart sells (Basecamp 10210058401).
+ * comparison chart sells.
  *
  * Two ways sites got here, neither of which the owner could see:
  *   - Every importer hardcodes `topic`, so migrated content never matched a

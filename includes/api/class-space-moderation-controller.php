@@ -123,7 +123,7 @@ class Space_Moderation_Controller extends Base_Controller {
 		// it listed pending-only regardless of the requested status, returned every
 		// row in the space (limit was ignored — 34 rows against limit=20), and
 		// carried no reporter, no total and no has_more. All three were fixed on the
-		// global route and never migrated here (Basecamp 10092724637, 10092652706).
+		// global route and never migrated here.
 		$pagination = $this->get_pagination( $request );
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];

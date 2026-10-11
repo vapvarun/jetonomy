@@ -168,7 +168,7 @@ class Search_Controller extends Base_Controller {
 		$offset = max( 0, (int) $pagination['offset'] );
 
 		// One search behind every entry point: the built-in MySQL search, or an
-		// adapter a plugin registered (Basecamp 10368526736).
+		// adapter a plugin registered.
 		$adapter = \Jetonomy\Adapters\Adapter_Registry::get_search_query();
 		$scope   = compact( 'q', 'space_id', 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' );
 
@@ -220,7 +220,7 @@ class Search_Controller extends Base_Controller {
 						// Shared serializer, not `(array) $row` — see
 						// Base_Controller::prepare_space(). Casting the raw row here
 						// shipped string-typed numerics and internal columns to
-						// clients (Basecamp 10161324553).
+						// clients.
 						'spaces' => array_map(
 							function ( $row ) {
 								$item         = $this->prepare_space( $row );
@@ -284,7 +284,7 @@ class Search_Controller extends Base_Controller {
 			$results = $this->enrich_with_author( $results );
 		}
 		// Viewer state (bookmark/vote) batched too — without this prepare_post()
-		// fell through to 2 point queries PER ROW (plan WP3.4). Post rows only;
+		// fell through to 2 point queries PER ROW. Post rows only;
 		// the base method's type-gate additionally refuses reply/space rows.
 		if ( 'post' === $type ) {
 			$results = $this->enrich_viewer_state( $results );
@@ -296,7 +296,7 @@ class Search_Controller extends Base_Controller {
 				// endpoints use, so an object cannot have one shape from /search and
 				// a different one from /feed or /spaces/{id}/posts. Casting the raw
 				// DB row here shipped string-typed numerics, no _gmt twins and no
-				// author enrichment (Basecamp 10161324553).
+				// author enrichment.
 				switch ( $type ) {
 					case 'space':
 						$item = $this->prepare_space( $row );

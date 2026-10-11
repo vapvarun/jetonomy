@@ -339,7 +339,7 @@ class Spaces_Controller extends Base_Controller {
 	 * public spaces are always readable - so the space is switched to Private and
 	 * the response says so. Without that shared call this route would have
 	 * recreated the "configured but content still accessible" bug
-	 * (Basecamp 10000074550) on a second surface.
+	 * on a second surface.
 	 */
 	public function create_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$space_id = (int) $request->get_param( 'id' );
@@ -495,7 +495,7 @@ class Spaces_Controller extends Base_Controller {
 			// Target-space filter for the move-topic picker. POST /posts/{id}/move
 			// requires move_posts in BOTH source and target, but the picker used
 			// to list every visible space - so it offered targets the move would
-			// then refuse (Basecamp 10268682629). Filtering here, not in JS,
+			// then refuse. Filtering here, not in JS,
 			// because doing it client-side would ship the names of spaces the
 			// viewer cannot move into.
 			//
@@ -516,7 +516,7 @@ class Spaces_Controller extends Base_Controller {
 			}
 		}
 
-		// Batch the viewer flags before serializing (plan WP3.8):
+		// Batch the viewer flags before serializing:
 		// prepare_space() reads is_member/viewer_role (get_role memo) and
 		// is_subscribed (subscription memo) per row — 30 spaces cost 90 point
 		// queries before these two warms; now 2 IN-queries for the page.
@@ -556,7 +556,7 @@ class Spaces_Controller extends Base_Controller {
 		$user_id = get_current_user_id();
 
 		// Concealment before permission, and 404 not 403: the browser path
-		// (Space::concealed_from_viewer, Basecamp 10105630168) already answers
+		// (Space::concealed_from_viewer) already answers
 		// 404 for a space whose existence is hidden from this viewer, and a 403
 		// here would confirm the space exists to the same stranger the template
 		// refuses to tell. Covers both a `hidden` space and any space inside a
@@ -855,7 +855,7 @@ class Spaces_Controller extends Base_Controller {
 		// A space contains other members' topics and replies; dropping it
 		// destroys their contributions, not just the owner's. This mirrors
 		// delete_account(), which already defaults to anonymize-not-destroy for
-		// the same reason (Basecamp 10119343634).
+		// the same reason.
 		$mode = (string) ( $request->get_param( 'mode' ) ?: 'transfer' );
 
 		if ( 'purge' === $mode ) {
@@ -878,7 +878,7 @@ class Spaces_Controller extends Base_Controller {
 			// Queued, not inline. A space with 50k topics and their replies
 			// cannot be deleted inside one request, and this endpoint is
 			// reachable from a browser - the caller must not be holding the
-			// connection while it drains (Basecamp 10119343634).
+			// connection while it drains.
 			//
 			// Space_Purge removes children before the space row, so the space
 			// stays discoverable until the last batch and an interrupted purge
@@ -976,7 +976,7 @@ class Spaces_Controller extends Base_Controller {
 		$user_id = get_current_user_id();
 
 		// Concealment before permission, and 404 not 403: the browser path
-		// (Space::concealed_from_viewer, Basecamp 10105630168) already answers
+		// (Space::concealed_from_viewer) already answers
 		// 404 for a space whose existence is hidden from this viewer, and a 403
 		// here would confirm the space exists to the same stranger the template
 		// refuses to tell. Covers both a `hidden` space and any space inside a
@@ -1003,7 +1003,7 @@ class Spaces_Controller extends Base_Controller {
 
 		// Batch-warm the users before the per-row serializer — prepare_member()
 		// does get_userdata + profile + avatar per row, ~3 cold queries x 50
-		// rows per roster page (plan WP3.6). batch_load_users() transitively
+		// rows per roster page. batch_load_users() transitively
 		// primes the WP user cache + UserProfile::prime.
 		$this->batch_load_users( array_map( static fn( $m ) => (int) $m->user_id, $members ) );
 
@@ -1039,7 +1039,7 @@ class Spaces_Controller extends Base_Controller {
 		 *
 		 * It used to own the rules outright, which is how the WP Abilities
 		 * join-space path came to disagree with it - same request, one refused
-		 * and one admitted (Basecamp 10227908583). Two copies of a rule is one
+		 * and one admitted. Two copies of a rule is one
 		 * copy too many; the facade is now the single answer for every caller.
 		 */
 		$result = SpaceMember::join( $id, get_current_user_id(), $message );
@@ -1294,8 +1294,8 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		// One role-update path: set_role() owns the write, cache-bust, the
-		// role-changed event and the last-admin rule (shared with wp-admin,
-		// Basecamp 10392987587). Permission and self-demotion stay REST policy.
+		// role-changed event and the last-admin rule (shared with wp-admin).
+		// Permission and self-demotion stay REST policy.
 		$result = SpaceMember::set_role( $id, $user_id, $role, true );
 		if ( is_wp_error( $result ) ) {
 			return $result;

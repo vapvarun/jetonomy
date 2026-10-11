@@ -92,7 +92,7 @@ class Category extends Model {
 	}
 
 	/**
-	 * Colour is a top-level accent only (owner decision, Basecamp 10375031087):
+	 * Colour is a top-level accent only (owner decision):
 	 * it shows beside the category on the community home and nowhere else, so a
 	 * sub-category never stores one. Anything that is not a hex colour is
 	 * dropped rather than stored as free text.
@@ -165,7 +165,7 @@ class Category extends Model {
 	 * The one guard every caller routes through. REST used to delete a parent
 	 * outright, leaving its sub-categories pointing at a missing row (gone
 	 * from every listing and unrepairable in wp-admin) and its spaces filed
-	 * under nothing (Basecamp 10355160875). Live spaces (anything not archived,
+	 * under nothing. Live spaces (anything not archived,
 	 * locked included) and sub-categories block the delete; archived spaces are
 	 * moved to uncategorised so a restore does not land in a deleted category.
 	 *

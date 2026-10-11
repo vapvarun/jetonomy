@@ -180,7 +180,7 @@ final class Space_Journey {
 	 * This used to call Space::delete(), which removes the space ROW and
 	 * nothing else: it lost the owner and orphaned every child row across the
 	 * 21 declared relations. Same defect the REST route had, and the CLI is the
-	 * path most likely to be pointed at a large space (Basecamp 10119343634).
+	 * path most likely to be pointed at a large space.
 	 *
 	 * `transfer` hands the space to its successor and archives it. `purge`
 	 * destroys it and everything in it, and runs SYNCHRONOUSLY here rather than

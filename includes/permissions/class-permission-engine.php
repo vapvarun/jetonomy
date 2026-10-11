@@ -33,7 +33,7 @@ class Permission_Engine {
 	 *
 	 * Replaces the old 60s persistent perm:{} object cache, which was never
 	 * busted anywhere — a ban, silence, or role demotion kept granting for up
-	 * to a minute across every web node (caching plan WP0.1). What a verdict
+	 * to a minute across every web node. What a verdict
 	 * costs to recompute is a handful of single-row indexed lookups, and the
 	 * shared Restriction primitives are themselves memoized per request — so
 	 * a request-scope memo is as fast on the pages that matter and is
@@ -46,7 +46,7 @@ class Permission_Engine {
 	private static array $memo = array();
 
 	/**
-	 * Whether the reset is registered with Cache::flush() (plan U1).
+	 * Whether the reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -88,7 +88,7 @@ class Permission_Engine {
 	 * holds ZERO Jetonomy caps, so Layer 1 rejected those users before Layer 2
 	 * could consider their roster row or a matching access rule. An owner could
 	 * put someone on a space roster, or gate a space on a paid tier, and the
-	 * people who matched still could not take part (Basecamp 10168260921).
+	 * people who matched still could not take part.
 	 *
 	 * Deliberately member-grade ONLY. Every moderation action is absent and
 	 * must stay absent: a rule stored with space_role=admin, or a roster row
@@ -248,7 +248,6 @@ class Permission_Engine {
 				} else {
 					// Resolved here and reused by Layer 2 below. The membership
 					// adapter fan-out must not run twice for one check
-					// (caching plan WP2.3).
 					$jt_access          = AccessRule::resolve_access( $user_id, $space_id );
 					$jt_access_resolved = true;
 					$jt_has_claim       = null !== $jt_access;
@@ -301,7 +300,7 @@ class Permission_Engine {
 		// Resolve access rules ONCE. grants_access() is just
 		// resolve_access() !== null, and calling both re-ran the membership
 		// adapter fan-out (LearnDash/Woo/MemberPress lookups) twice for every
-		// non-member view of a private space (caching plan WP2.3).
+		// non-member view of a private space.
 		$access = $jt_access_resolved ? $jt_access : AccessRule::resolve_access( $user_id, $space_id );
 
 		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
@@ -545,7 +544,7 @@ class Permission_Engine {
 	}
 
 	/**
-	 * May this viewer read a PRIVATE reply's text? (1.9.0, Basecamp 9804279999)
+	 * May this viewer read a PRIVATE reply's text?
 	 *
 	 * Companion to {@see self::can_read_post()}'s private-post branch, with one
 	 * addition: the PARENT TOPIC's author always sees private replies on their

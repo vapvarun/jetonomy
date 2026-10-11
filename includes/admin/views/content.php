@@ -156,7 +156,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 				cache_users( array_map( 'intval', wp_list_pluck( $posts, 'author_id' ) ) );
 				foreach ( $posts as $p ) :
 					// Anonymous stays anonymous in wp-admin too; only an explicit
-					// (logged) reveal shows the name (Basecamp 10380388683).
+					// (logged) reveal shows the name.
 					$author_name = \Jetonomy\Author::for_display( (int) $p->author_id, $p )['name'];
 
 					$space_slug = $p->space_slug ?? '';

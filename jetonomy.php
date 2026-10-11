@@ -119,7 +119,7 @@ add_action(
 // would fatal inside the SDK the moment it instantiates a src class — the
 // entry file registers callbacks against \EasyDigitalDownloads\Updater\Versions
 // with no guard of its own, so requiring it half-present white-screened every
-// page (Basecamp 10163871548; the WB Listora 1.2.1 stripped-SDK shape). Guard
+// page (the WB Listora stripped-SDK shape). Guard
 // on the source being present and degrade to "updates disabled" with a soft
 // admin notice instead — licensing only gates updates, never features, so the
 // community keeps working. Mirrors BuddyNext (the portfolio reference for this
@@ -724,7 +724,7 @@ function jetonomy_maybe_enqueue_embed_scripts( string $content ): void {
  * `<br><br>`. wpautop() skips block-level tags, so those divs were stored and
  * rendered as-is - and because the CSS spacing contract targets
  * `.jt-post-body p`, consecutive paragraphs collided with 0px between them
- * (Basecamp 10138808747, measured: p->div 12px, div->div 0px).
+ * (measured: p->div 12px, div->div 0px).
  *
  * Called at BOTH ends, one implementation:
  *  - write time (posts/replies create + update, before wp_kses_post) so new
@@ -754,8 +754,8 @@ function jetonomy_normalize_editor_html( string $content ): string {
 	// wrapper, tearing the embed
 	// (`<div class="embed">one<br><br>two</div>` -> `...one</p><p>two</p></div>`).
 	// The detection is whitespace-class based - `<div\tclass=...>` and
-	// `<div\nclass=...>` count, not just the literal "<div " (QA probe,
-	// Basecamp 10138808747 reopen). Composer output never contains attributed
+	// `<div\nclass=...>` count, not just the literal "<div ".
+	// Composer output never contains attributed
 	// divs, so the reported case is always still covered.
 	if ( preg_match( '/<div\s+[^>]/i', $content ) ) {
 		return $content;
@@ -798,7 +798,7 @@ function jetonomy_normalize_editor_html( string $content ): string {
  * Post::create/update and Reply::create/update run every 'content' write
  * through this, so every writer - REST, wp-admin AJAX, CLI journeys,
  * Abilities, the importers, Pro reply-by-email - shares ONE choke point
- * (Basecamp 10138808747: per-writer sanitizing let div soup persist via
+ * (per-writer sanitizing lets div soup persist via
  * the paths that forgot the normalize half). Idempotent: normalized clean
  * HTML passes through byte-identical, so pre-sanitized callers lose nothing.
  *
@@ -828,7 +828,6 @@ function jetonomy_sanitize_editor_content( string $content ): string {
  * Both were visible wherever content_plain surfaces: the mobile app's Quote
  * action, feed excerpts, notification text, search snippets and FULLTEXT
  * search itself, which could not match a phrase spanning a block boundary
- * (Basecamp 10207964048).
  *
  * Order matters. Block closers become newlines BEFORE the strip (afterwards
  * there is no boundary left to find), and entities are decoded AFTER it
@@ -875,7 +874,7 @@ function jetonomy_content_to_plain( string $content ): string {
  *
  * The feed-space derived title used to strip the WHOLE body and take the
  * first 60 characters, so a multi-paragraph status ran its paragraphs
- * together in the headline and the slug (Basecamp 10138808747 reopen). A
+ * together in the headline and the slug (reopen). A
  * headline is the first paragraph, not the first 60 bytes of everything.
  *
  * @param string $content Stored/normalized HTML or plain text.

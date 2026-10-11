@@ -7,7 +7,7 @@
  * - $spaces_by_cat array    Space::visible_by_category() map, for the counts.
  *
  * A space filed in a sub-category used to be invisible on the directory
- * (Basecamp 10355160441). Each chip links to the sub-category page and counts
+ * Each chip links to the sub-category page and counts
  * only the spaces this viewer can see, so a hidden space is never disclosed by
  * a number.
  *
@@ -24,7 +24,7 @@ $jt_spaces_by_cat = $spaces_by_cat ?? [];
 ?>
 <?php
 // Each chip keeps its link to the sub-category page; the chevron beside it
-// shows that sub-category's spaces right here (Basecamp 10375135686). Panels
+// shows that sub-category's spaces right here. Panels
 // are rendered from the same visible-space map as the counts, so no extra
 // query and no space the viewer cannot see. One panel open at a time keeps
 // the chip row from reflowing under the pointer.

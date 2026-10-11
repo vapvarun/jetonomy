@@ -406,7 +406,7 @@ class SpaceMember extends Model {
 	 * Distinct from $role_label_cache on purpose: that map collapses
 	 * member/viewer to null for the role-pill template, so sharing it here
 	 * would make is_member() deny real members of private spaces after a
-	 * warm_role_cache() pass seeded the viewer's own id (caching plan WP2.1).
+	 * warm_role_cache() pass seeded the viewer's own id.
 	 * This map stores the exact role ('admin'/'moderator'/'member'/'viewer')
 	 * and null only for genuine non-members. get_role() is called 5-10x per
 	 * space-scoped page with identical args (is_member, Permission_Engine
@@ -420,7 +420,7 @@ class SpaceMember extends Model {
 	private static array $role_cache = [];
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -428,7 +428,7 @@ class SpaceMember extends Model {
 
 	/**
 	 * Bulk-fill the get_role() memo for ONE viewer across many spaces
-	 * (plan WP3.8) — the inverse axis of warm_role_cache(), which warms
+	 * — the inverse axis of warm_role_cache(), which warms
 	 * many users in one space. One IN-query, negatives included, so the
 	 * spaces-list serializer's per-row is_member()/get_role() pair costs
 	 * zero further queries.
@@ -614,8 +614,8 @@ class SpaceMember extends Model {
 		\Jetonomy\Cache::delete( 'priv_members_' . $space_id );
 		// A role change also changes permission verdicts (Layer 0d mod bypass
 		// + Layer 2 space-role perms) — clear the request-scope verdict memo
-		// so a promotion/demotion applies within the same request (WP0.1),
-		// and both role memos so get_role()/role_label() re-read (WP2.1).
+		// so a promotion/demotion applies within the same request,
+		// and both role memos so get_role()/role_label() re-read.
 		// Full-map reset, not per-key: add() reads is_member() BEFORE its
 		// write, and the callers of this method don't all know which user
 		// changed.
@@ -735,7 +735,7 @@ class SpaceMember extends Model {
 	 * warm_role_cache() for several spaces in ONE query.
 	 *
 	 * A tag page, drafts or search lists topics from many spaces; warming one
-	 * space at a time cost a query per distinct space (Basecamp 10369564133).
+	 * space at a time cost a query per distinct space.
 	 * Pairs the query does not return are cached as null (no role), exactly as
 	 * the single-space path does.
 	 *
@@ -815,7 +815,7 @@ class SpaceMember extends Model {
 	/**
 	 * The one last-admin rule every entry point shares (front end, wp-admin,
 	 * REST, integrations): a space never loses its final admin by demotion
-	 * or removal (Basecamp 10392987587).
+	 * or removal.
 	 *
 	 * @param int         $space_id Space ID.
 	 * @param string|null $old_role The member's current role.

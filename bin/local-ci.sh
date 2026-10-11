@@ -179,6 +179,14 @@ fi
 # free Jetonomy from Pro are exempt: Pro cannot run without its base.
 #
 # Pro has no runner of its own, so it is gated from here alongside free.
+step "Comment references (free + pro)"
+if bin/check-comment-refs.sh && { [ -z "$PRO" ] || "$PRO/bin/check-comment-refs.sh"; }; then
+    ok "no tracker/plan references in source"
+else
+    fail "tracker/plan references in source"
+    FAILED_GATES+=("comment-refs")
+fi
+
 step "Cross-plugin guards (free)"
 if php bin/check-cross-plugin-guards.php; then
     ok "cross-plugin guards free clean"

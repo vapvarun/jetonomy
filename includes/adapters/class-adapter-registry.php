@@ -75,7 +75,7 @@ class Adapter_Registry {
 	 * adapter shipped without someone remembering to add its prefix — WP Fusion
 	 * and SureMembers both landed after it was written, so their rules rendered
 	 * as raw `wpfusion_123` / `suremembers_5` on the Access Rules screen
-	 * (Basecamp 10126146658). A registry lookup cannot drift that way.
+	 * A registry lookup cannot drift that way.
 	 *
 	 * `wp-roles` is skipped: its ids are bare role slugs with no prefix, it is
 	 * excluded from the membership picker, and a `membership` rule should never
