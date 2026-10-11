@@ -7,7 +7,9 @@
 set -u
 cd "$(dirname "$0")/.." || exit 2
 BASELINE=audit/wpdb-baseline.txt
-ALLOWED='^(includes/models/|includes/db/|includes/cli/|includes/qa/|includes/class-cli\.php)'
+# One-time and repair code (imports, the demo seeder, GDPR export/erase, backfills,
+# recount, the purge service) runs once per site, so it may keep its own queries.
+ALLOWED='^(includes/models/|includes/db/|includes/cli/|includes/qa/|includes/class-cli\.php|includes/import/|includes/admin/ajax/class-demo-seeder\.php|includes/class-privacy(-backfill)?\.php|includes/class-[a-z-]+-backfill\.php|includes/class-recount\.php|includes/class-space-purge\.php)'
 
 current=$(grep -rnF '$wpdb' includes templates --include='*.php' 2>/dev/null \
 	| grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*|/\*|#)' \

@@ -24,7 +24,10 @@ Check: `grep -rnE 'Basecamp [0-9]|WP[0-9]\.[0-9]|Task [0-9]+' includes templates
   Controllers, admin screens, importers, extensions and templates call model
   methods; they never touch `$wpdb`.
 - Templates receive data. A template that runs a query is a defect.
-- Migrations, the DB schema and CLI are the documented exceptions.
+- Migrations, the DB schema and CLI are the documented exceptions, and so is
+  one-time or repair code: importers, the demo seeder, GDPR export/erase,
+  backfills, recount and the purge service. They run once per site, so
+  moving their queries buys nothing and risks the riskiest code.
 
 Check: `bin/check-data-layer.sh` (pre-commit and local CI) fails when any
 file's `$wpdb` use outside the data layer grows past `audit/wpdb-baseline.txt`;
