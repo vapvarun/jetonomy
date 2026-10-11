@@ -328,12 +328,15 @@ class Spaces_Handler {
 			// admin is a member with a space-level role rather than a WordPress
 			// one. See Spaces_Controller::delete_item().
 			\Jetonomy\Space_Purge::queue( $id );
+			$deleted = null === Space::find( $id );
 
 			wp_send_json_success(
 				array(
-					'message' => __( 'Space and all its content are being deleted.', 'jetonomy' ),
+					'message' => $deleted
+						? __( 'Space and all its content were deleted.', 'jetonomy' )
+						: __( 'This space is locked and its content is being deleted in the background.', 'jetonomy' ),
 					'mode'    => 'purge',
-					'removed' => true,
+					'removed' => $deleted,
 				)
 			);
 		} else {

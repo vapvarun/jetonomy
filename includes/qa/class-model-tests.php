@@ -232,6 +232,7 @@ class Model_Tests {
 		$this->test_reorder();
 		$this->test_space_ownership_transfer();
 		$this->test_space_hand_over_rules();
+		$this->test_space_purge_stops_on_db_error();
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
 		$this->test_leaderboard_ranking();
@@ -1224,6 +1225,40 @@ class Model_Tests {
 		foreach ( $users as $uid ) {
 			wp_delete_user( (int) $uid );
 		}
+	}
+
+	/**
+	 * PG: a database error during a purge stops it with the space intact.
+	 *
+	 * A failed topic-id read used to look like "no topics left", so the purge
+	 * deleted the space row and orphaned every reply.
+	 */
+	private function test_space_purge_stops_on_db_error(): void {
+		global $wpdb;
+		$slug  = 'qa-pg-' . wp_generate_password( 6, false, false );
+		$space = (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA PG', 'slug' => $slug, 'type' => 'forum', 'author_id' => 1 ), 1 );
+		$posts = \Jetonomy\table( 'posts' );
+		$now   = current_time( 'mysql', true );
+		$wpdb->insert( $posts, array( 'space_id' => $space, 'author_id' => 1, 'title' => 'PG', 'slug' => $slug . '-t', 'content' => 'x', 'content_plain' => 'x', 'status' => 'publish', 'created_at' => $now, 'last_reply_at' => $now ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$topic = (int) $wpdb->insert_id;
+		$reply = \Jetonomy\Models\Reply::create( array( 'post_id' => $topic, 'author_id' => 1, 'content' => 'PG reply', 'status' => 'publish' ) );
+
+		$break = static function ( $sql ) use ( $posts, $space ) {
+			return false !== strpos( (string) $sql, "SELECT id FROM {$posts} WHERE space_id = {$space}" ) ? 'SELECT qa_pg_missing_column FROM qa_pg_missing_table' : $sql;
+		};
+		add_filter( 'query', $break );
+		$suppress = $wpdb->suppress_errors( true );
+		\Jetonomy\Space_Purge::purge( $space );
+		$wpdb->suppress_errors( $suppress );
+		remove_filter( 'query', $break );
+
+		$this->check(
+			'PG1: a failed read keeps the space, its topic and its reply',
+			null !== \Jetonomy\Models\Space::find( $space ) && null !== \Jetonomy\Models\Post::find( $topic ) && null !== \Jetonomy\Models\Reply::find( (int) $reply )
+		);
+
+		\Jetonomy\Space_Purge::purge( $space );
+		$this->check( 'PG2: the purge then completes once the database answers', null === \Jetonomy\Models\Space::find( $space ) && null === \Jetonomy\Models\Reply::find( (int) $reply ) );
 	}
 
 	/**

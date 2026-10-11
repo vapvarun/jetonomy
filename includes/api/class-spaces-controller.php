@@ -886,14 +886,17 @@ class Spaces_Controller extends Base_Controller {
 			// category.space_count is decremented by the purge itself when it
 			// reaches the space row, so it is NOT adjusted here - doing both
 			// would double-count.
+			// "deleted" only when the space row is really gone; a large space
+			// is locked and finishes in the background.
+			$deleted = null === Space::find( $id );
 			return new WP_REST_Response(
 				array(
-					'deleted' => true,
+					'deleted' => $deleted,
 					'mode'    => 'purge',
 					'id'      => $id,
-					'queued'  => $queued,
+					'queued'  => $queued && ! $deleted,
 				),
-				202
+				$deleted ? 200 : 202
 			);
 		}
 
