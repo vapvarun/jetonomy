@@ -87,11 +87,53 @@ A second implementation of any of these is a defect, even if it works.
   or stops booting (including a lapsed Pro license).
 - Revocation paths (membership expiry, group leave, automations) always
   revoke; guards that protect data integrity are opt-in for manual actions.
-- Tests and fixtures never leave data behind: delete through the real purge
-  path in reverse order and assert counters are unchanged after a run.
+- Tests and fixtures never leave data behind and never act as a real user:
+  they create throwaway users, delete through the real purge path, and the
+  run fails if the row count of any jt_ table, or the admin's rows in plugins
+  that listen to our hooks, differs afterwards.
 - Dev-only code (the `includes/qa` harness) is excluded from the release zip.
 
 ## 7. Suppressions are a budget
 
 `phpcs:ignore` / `@phpstan-ignore` lines are counted; most exist because of
 rule 2 and disappear with it. Baseline: free 635, Pro 437.
+
+## 8. Closing a bug fix
+
+A fix is done when the card carries this evidence, not when the code is
+written. Each rule below comes from a fix that came back from QA (2.0.2: 19
+cards in one pass, most fixed on the one path the card named).
+
+1. **Reach list first.** Before coding, list every reader and writer of the
+   data or flag (grep the column, option or meta key and the function) across
+   free and Pro and every entry point: front end, wp-admin, REST, Abilities,
+   WP-CLI, jobs, emails and notifications, feeds, oEmbed, JSON-LD, sitemaps,
+   blocks and shortcodes, uninstall. Post it on the card; tick each one as
+   fixed, checked-unaffected, or not covered with the reason.
+2. **Fix the class, not the instance.** Name the rule the bug broke ("private
+   means author, topic author and staff only"; "a DB error is not 'nothing
+   left'") and apply it wherever it holds: reads and writes, lists and single
+   items, inline and queued paths. When several symptoms share a helper, fix
+   the helper.
+3. **Every check has a negative case and fails on the old code.** Test what
+   must not happen (an unedited post shows no "edited" marker; a guest gets no
+   private text; an unticked role is refused). Fixtures reach depth 3, a second
+   page, blank and spaces-only input, an existing row from before the fix.
+   Stash the fix once and confirm the new check fails.
+4. **Run the card's acceptance bar exactly as written** and paste the output
+   into the fix comment.
+5. **A gate is evidence only if it can fail.** Plant one bad sample before
+   relying on a script, sniff or leak check.
+6. **Policy is the owner's call.** Who gets access, what money or data does,
+   what is shown to whom: ask with options and a recommendation. Never narrow
+   a card's scope quietly.
+7. **Review your own new path.** A fix that moves data, changes an audience or
+   adds an output gets the same privacy and permission check as the bug.
+   Private and anonymous flags survive every copy and move.
+8. **Docs follow the change.** Grep docs, help text and the readme for the
+   old label, command or route, and check documented commands against
+   `wp help` and the registered routes.
+
+The fix comment states: commits, root cause (`file:line`, how established),
+the reach list, what changed, exact retest steps, the acceptance output,
+regression check ids, and what was not covered.
