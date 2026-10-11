@@ -1176,11 +1176,20 @@ class Model_Tests {
 		$this->check( 'HO5: the former owner stays on as a moderator', 'moderator' === \Jetonomy\Models\SpaceMember::get_role( $space, (int) $users['owner'] ) );
 		$this->check( 'HO6: the hook names the real previous owner', array( array( $space, (int) $users['owner'], (int) $users['heir'] ) ) === $fired, wp_json_encode( $fired ) );
 
+		$this->check( 'HO10: the new owner may undo their hand-over archive', \Jetonomy\Models\Space::can_unarchive( $after, (int) $users['heir'] ) );
+		$this->check( 'HO11: editors cannot write reserved settings keys', ! array_key_exists( '_qa_forged', \Jetonomy\Models\Space::merge_settings( $space, array( '_qa_forged' => 1 ) ) ) );
+
 		$again = \Jetonomy\Models\Space::archive_and_hand_over( $space );
 		$noop  = \Jetonomy\Models\Space::hand_over( $space, (int) $users['heir'] );
 		$ghost = \Jetonomy\Models\Space::hand_over( PHP_INT_MAX, (int) $users['heir'] );
 		$this->check( 'HO7: an archived space cannot be handed over again', is_wp_error( $again ) && 'jetonomy_space_archived' === $again->get_error_code() );
 		$this->check( 'HO8: no-op and missing-space hand-overs fail and fire nothing', is_wp_error( $noop ) && is_wp_error( $ghost ) && 1 === count( $fired ) );
+
+		// A site admin re-archiving (wp-admin) clears the marker: the owner may
+		// not undo an archive a site admin imposed, nor lift a lock.
+		\Jetonomy\Models\Space::update( $space, array( 'status' => 'active' ) );
+		\Jetonomy\Models\Space::update( $space, array( 'status' => 'archived' ) );
+		$this->check( 'HO12: an archive a site admin imposed stays out of the owner\'s reach', ! \Jetonomy\Models\Space::can_unarchive( \Jetonomy\Models\Space::find( $space ), (int) $users['heir'] ) );
 
 		// GDPR erase: a co-admin inherits, the space keeps running.
 		$erased = $make( 'qa-ho-erase-' . $suffix, (int) $users['leaver'] );

@@ -14,6 +14,10 @@ use Jetonomy\Cache;
 
 class Space extends Model {
 
+	/** Settings key set by hand_over() when it archives; reserved, never editable. */
+	public const HANDOVER_ARCHIVE = '_handover_archive';
+
+
 	protected static function table_name(): string {
 		return 'spaces';
 	}
@@ -106,6 +110,17 @@ class Space extends Model {
 		$invalid = self::check_type( $data );
 		if ( $invalid ) {
 			return $invalid;
+		}
+
+		// The hand-over marker lets an owner undo the archive their hand-over
+		// made. Any other status change (wp-admin, unarchive) clears it, so it
+		// can never unlock an archive or lock a site admin imposed.
+		if ( array_key_exists( 'status', $data ) && ! array_key_exists( 'settings', $data ) ) {
+			$settings = self::get_settings( $id );
+			if ( isset( $settings[ self::HANDOVER_ARCHIVE ] ) ) {
+				unset( $settings[ self::HANDOVER_ARCHIVE ] );
+				$data['settings'] = $settings ? wp_json_encode( $settings ) : '';
+			}
 		}
 
 		$slug_changing = ! empty( $data['slug'] );
@@ -309,7 +324,8 @@ class Space extends Model {
 
 		$data = array( 'author_id' => $to_user_id );
 		if ( $archive ) {
-			$data['status'] = 'archived';
+			$data['status']   = 'archived';
+			$data['settings'] = wp_json_encode( array_merge( self::get_settings( $space_id ), array( self::HANDOVER_ARCHIVE => 1 ) ) );
 		}
 		self::update( $space_id, $data );
 
@@ -380,6 +396,25 @@ class Space extends Model {
 			return false;
 		}
 		return (int) $space->author_id === $user_id || user_can( $user_id, 'manage_options' );
+	}
+
+	/**
+	 * Whether a user may bring an archived space back: a site admin, or the
+	 * owner when the archive came from a hand-over (never one a site admin
+	 * imposed).
+	 *
+	 * @param object $space   Space row.
+	 * @param int    $user_id User.
+	 * @return bool
+	 */
+	public static function can_unarchive( object $space, int $user_id ): bool {
+		if ( $user_id <= 0 || 'archived' !== ( $space->status ?? '' ) ) {
+			return false;
+		}
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+		return (int) $space->author_id === $user_id && ! empty( self::get_settings( (int) $space->id )[ self::HANDOVER_ARCHIVE ] );
 	}
 
 	/**
@@ -1534,6 +1569,13 @@ class Space extends Model {
 	 * @return array Merged, normalized settings ready to encode.
 	 */
 	public static function merge_settings( int $space_id, array $incoming ): array {
+		// Keys starting with '_' are written by the plugin itself, never by an editor.
+		foreach ( array_keys( $incoming ) as $key ) {
+			if ( str_starts_with( (string) $key, '_' ) ) {
+				unset( $incoming[ $key ] );
+			}
+		}
+
 		if ( isset( $incoming['prefixes'] ) && is_array( $incoming['prefixes'] ) ) {
 			$clean_prefixes = array();
 			foreach ( $incoming['prefixes'] as $prefix ) {

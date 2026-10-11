@@ -294,7 +294,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 		$jt_may_purge     = current_user_can( 'manage_options' ) || ! empty( $jt_settings['allow_space_admin_purge'] );
 		$jt_viewer_id     = get_current_user_id();
 		$jt_successor     = \Jetonomy\Models\Space::can_hand_over( $space, $jt_viewer_id ) ? \Jetonomy\Models\Space::resolve_successor( (int) $space->id ) : 0;
-		$jt_can_unarchive = 'archived' === ( $space->status ?? '' ) && ( (int) $space->author_id === $jt_viewer_id || current_user_can( 'manage_options' ) );
+		$jt_can_unarchive = \Jetonomy\Models\Space::can_unarchive( $space, $jt_viewer_id );
 		$jt_space_one     = \Jetonomy\space_label( false, true );
 
 		/* translators: 1: singular space label the site owner configured; 2: plural member label. */

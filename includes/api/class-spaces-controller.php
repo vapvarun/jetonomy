@@ -742,13 +742,13 @@ class Spaces_Controller extends Base_Controller {
 			$data['join_policy'] = sanitize_text_field( $request->get_param( 'join_policy' ) );
 		}
 
-		// Unarchive only: archiving goes through the hand-over (DELETE). The same
-		// people who may hand a space over may bring it back.
+		// Unarchive only: archiving goes through the hand-over (DELETE), and a
+		// locked space or an archive a site admin imposed stays as it is.
 		if ( null !== $request->get_param( 'status' ) ) {
 			if ( 'active' !== $request->get_param( 'status' ) ) {
 				return new WP_Error( 'jetonomy_invalid_status', __( 'A space can only be set back to active here.', 'jetonomy' ), array( 'status' => 400 ) );
 			}
-			if ( (int) $space->author_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+			if ( ! Space::can_unarchive( $space, $user_id ) ) {
 				return $this->permission_error();
 			}
 			$data['status'] = 'active';
