@@ -1092,20 +1092,7 @@ class Fluent_Community {
 	 * @param string $active_tab Currently active tab slug.
 	 */
 	public function register_settings_tab( $active_tab ): void {
-		$url       = add_query_arg(
-			array(
-				'page' => 'jetonomy-settings',
-				'tab'  => 'fluent-community',
-			),
-			admin_url( 'admin.php' )
-		);
-		$is_active = 'fluent-community' === $active_tab;
-		printf(
-			'<a href="%s" class="jt-snav-link%s"><span class="dashicons dashicons-groups" aria-hidden="true"></span>%s</a>',
-			esc_url( $url ),
-			$is_active ? ' jt-snav-link--active' : '',
-			esc_html__( 'FluentCommunity', 'jetonomy' )
-		);
+		\Jetonomy\settings_tab_link( 'fluent-community', __( 'FluentCommunity', 'jetonomy' ), 'dashicons-groups', (string) $active_tab );
 	}
 
 	/**

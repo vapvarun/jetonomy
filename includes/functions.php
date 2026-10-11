@@ -30,6 +30,28 @@ function community_title(): string {
 }
 
 /**
+ * Print one link in the Settings screen's sidebar.
+ *
+ * Free's own tabs, integrations and Pro extensions all render their entry
+ * through here, so every row has the same icon, spacing and active state.
+ *
+ * @param string $slug       Tab slug (the ?tab= value).
+ * @param string $label      Visible, already translated label.
+ * @param string $icon       Dashicon class, e.g. 'dashicons-heart'.
+ * @param string $active_tab Slug of the tab being viewed.
+ */
+function settings_tab_link( string $slug, string $label, string $icon, string $active_tab ): void {
+	printf(
+		'<a href="%1$s" class="jt-snav-link%2$s"%3$s><span class="dashicons %4$s" aria-hidden="true"></span>%5$s</a>',
+		esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=' . rawurlencode( $slug ) ) ),
+		$slug === $active_tab ? ' jt-snav-link--active' : '',
+		$slug === $active_tab ? ' aria-current="page"' : '',
+		esc_attr( $icon ),
+		esc_html( $label )
+	);
+}
+
+/**
  * Get the community base URL (e.g. http://forums.local/discussion).
  *
  * Reads the `base_slug` from jetonomy_settings (default: 'community').

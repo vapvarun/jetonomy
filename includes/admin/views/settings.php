@@ -103,13 +103,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 			</div>
 			<nav class="jt-settings-sidebar-nav" aria-label="<?php esc_attr_e( 'Settings navigation', 'jetonomy' ); ?>">
-				<?php foreach ( $tab_labels as $slug => $label ) : ?>
-				<a href="<?php echo esc_url( $settings_url . '&tab=' . $slug ); ?>"
-					class="jt-snav-link<?php echo esc_attr( $active_tab === $slug ? ' jt-snav-link--active' : '' ); ?>">
-					<span class="dashicons <?php echo esc_attr( $tab_icons[ $slug ] ); ?>" aria-hidden="true"></span>
-					<?php echo esc_html( $label ); ?>
-				</a>
-				<?php endforeach; ?>
+				<?php
+				foreach ( $tab_labels as $slug => $label ) {
+					\Jetonomy\settings_tab_link( $slug, $label, $tab_icons[ $slug ], $active_tab );
+				}
+				?>
 
 				<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
@@ -123,11 +121,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 				<?php if ( defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
-				<a href="<?php echo esc_url( $settings_url . '&tab=license' ); ?>"
-					class="jt-snav-link<?php echo esc_attr( 'license' === $active_tab ? ' jt-snav-link--active' : '' ); ?>">
-					<span class="dashicons dashicons-shield-alt" aria-hidden="true"></span>
-					<?php esc_html_e( 'License', 'jetonomy' ); ?>
-				</a>
+					<?php \Jetonomy\settings_tab_link( 'license', __( 'License', 'jetonomy' ), 'dashicons-shield-alt', $active_tab ); ?>
 				<?php endif; ?>
 
 				<?php if ( $advanced_tabs_html ) : ?>
