@@ -20,7 +20,8 @@ namespace Jetonomy\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Revision;
-use function Jetonomy\table;
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 
 if ( ! class_exists( '\WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -192,8 +193,6 @@ class Revisions_List_Table extends \WP_List_Table {
 	 * @param array<int, object> $rows
 	 */
 	private function prime_title_cache( array $rows ): void {
-		global $wpdb;
-
 		$post_ids  = array();
 		$reply_ids = array();
 		foreach ( $rows as $row ) {
@@ -209,39 +208,12 @@ class Revisions_List_Table extends \WP_List_Table {
 			}
 		}
 
-		if ( ! empty( $post_ids ) ) {
-			$post_ids  = array_values( array_unique( $post_ids ) );
-			$posts_t   = table( 'posts' );
-			$placehold = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
-			$post_rows = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT id, title FROM {$posts_t} WHERE id IN ({$placehold})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					...$post_ids
-				)
-			) ?: array();
-			foreach ( $post_rows as $pr ) {
-				$this->title_cache[ 'post:' . (int) $pr->id ] = (string) $pr->title;
-			}
+		foreach ( Post::titles_by_ids( array_unique( $post_ids ) ) as $id => $title ) {
+			$this->title_cache[ 'post:' . $id ] = $title;
 		}
 
-		if ( ! empty( $reply_ids ) ) {
-			$reply_ids  = array_values( array_unique( $reply_ids ) );
-			$replies_t  = table( 'replies' );
-			$posts_t    = table( 'posts' );
-			$placehold  = implode( ',', array_fill( 0, count( $reply_ids ), '%d' ) );
-			$reply_rows = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT r.id, p.title AS post_title
-					 FROM {$replies_t} r
-					 LEFT JOIN {$posts_t} p ON p.id = r.post_id
-					 WHERE r.id IN ({$placehold})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					...$reply_ids
-				)
-			) ?: array();
-			foreach ( $reply_rows as $rr ) {
-				$post_title                                    = (string) ( $rr->post_title ?? '' );
-				$this->title_cache[ 'reply:' . (int) $rr->id ] = $post_title;
-			}
+		foreach ( Reply::parents_by_ids( array_unique( $reply_ids ) ) as $id => $parent ) {
+			$this->title_cache[ 'reply:' . $id ] = $parent['title'];
 		}
 	}
 

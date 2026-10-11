@@ -22,7 +22,7 @@ namespace Jetonomy\Notifications;
 
 defined( 'ABSPATH' ) || exit;
 
-use function Jetonomy\table;
+use Jetonomy\Models\UserProfile;
 
 class Verification_Reminder {
 
@@ -63,7 +63,8 @@ class Verification_Reminder {
 			return;
 		}
 
-		$candidates = self::find_candidates( $hours );
+		// Oldest registrations first so a backlog drains predictably.
+		$candidates = UserProfile::list_awaiting_verification_reminder( gmdate( 'Y-m-d H:i:s', time() - ( $hours * HOUR_IN_SECONDS ) ), self::BATCH_SIZE );
 		if ( empty( $candidates ) ) {
 			return;
 		}
@@ -72,11 +73,11 @@ class Verification_Reminder {
 			$user_id = (int) $row->user_id;
 
 			// Guard against ghost rows: profile exists but the WP user has
-			// been deleted. mark_sent() would still run against a stale
+			// been deleted. The stamp still runs against a stale
 			// row, but skipping the email keeps wp_mail() happy.
 			$user = get_userdata( $user_id );
 			if ( ! $user || empty( $user->user_email ) ) {
-				self::mark_sent( $user_id );
+				UserProfile::mark_verification_reminder_sent( $user_id );
 				continue;
 			}
 
@@ -86,7 +87,7 @@ class Verification_Reminder {
 			// verified after the SELECT but before this iteration.
 			$pending = (bool) get_user_meta( $user_id, '_jetonomy_pending_verification', true );
 			if ( ! $pending ) {
-				self::mark_sent( $user_id );
+				UserProfile::mark_verification_reminder_sent( $user_id );
 				continue;
 			}
 
@@ -94,66 +95,13 @@ class Verification_Reminder {
 			// in A10-WORK-BRIEF.md as the only outbound-email preference
 			// the reminder is required to respect.
 			if ( get_user_meta( $user_id, 'jetonomy_email_opt_out', true ) ) {
-				self::mark_sent( $user_id );
+				UserProfile::mark_verification_reminder_sent( $user_id );
 				continue;
 			}
 
 			self::send_reminder( $user_id, $user );
-			self::mark_sent( $user_id );
+			UserProfile::mark_verification_reminder_sent( $user_id );
 		}
-	}
-
-	/**
-	 * Pull the next batch of profiles that registered ≥ $hours ago and
-	 * still need the reminder. Ordered by oldest-first so backlog drains
-	 * predictably.
-	 *
-	 * @param int $hours Minimum hours since registration.
-	 * @return array<int,object>
-	 */
-	private static function find_candidates( int $hours ): array {
-		global $wpdb;
-
-		$profiles = table( 'user_profiles' );
-		$cutoff   = gmdate( 'Y-m-d H:i:s', time() - ( $hours * HOUR_IN_SECONDS ) );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT user_id, created_at
-				 FROM {$profiles}
-				 WHERE verification_reminder_sent_at IS NULL
-				   AND created_at <= %s
-				 ORDER BY created_at ASC
-				 LIMIT %d",
-				$cutoff,
-				self::BATCH_SIZE
-			)
-		);
-
-		return is_array( $rows ) ? $rows : array();
-	}
-
-	/**
-	 * Stamp `verification_reminder_sent_at` so this user is excluded from
-	 * every subsequent SELECT. Called whether or not we actually sent the
-	 * email — verified users + opted-out users get the same treatment so
-	 * the cron doesn't keep re-evaluating them on every tick.
-	 *
-	 * @param int $user_id WP user id.
-	 */
-	private static function mark_sent( int $user_id ): void {
-		global $wpdb;
-		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			table( 'user_profiles' ),
-			array( 'verification_reminder_sent_at' => current_time( 'mysql', true ) ),
-			array( 'user_id' => $user_id ),
-			array( '%s' ),
-			array( '%d' )
-		);
-		// Raw profile write — bust like every other profile writer so a cached
-		// row never drifts from the table.
-		\Jetonomy\Cache::delete( "profile:{$user_id}" );
 	}
 
 	/**

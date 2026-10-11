@@ -792,32 +792,11 @@ class Notifier {
 		}
 
 		// Check for existing vote notification on same object within last hour.
-		global $wpdb;
-		$table        = \Jetonomy\table( 'notifications' );
-		$one_hour_ago = gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$existing = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT id, message FROM {$table} WHERE user_id = %d AND type = 'vote_on_post' AND object_type = %s AND object_id = %d AND created_at > %s ORDER BY created_at DESC LIMIT 1",
-				$author_id,
-				$object_type,
-				$object_id,
-				$one_hour_ago
-			)
-		);
+		$existing = Notification::find_recent_for_object( $author_id, 'vote_on_post', $object_type, $object_id, gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) );
 
 		if ( $existing ) {
 			// Update existing — show current total vote count.
-			$votes_table = \Jetonomy\table( 'votes' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$vote_count = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(DISTINCT v.user_id) FROM {$votes_table} v WHERE v.object_type = %s AND v.object_id = %d",
-					$object_type,
-					$object_id
-				)
-			);
+			$vote_count = \Jetonomy\Models\Vote::count_voters( $object_type, $object_id );
 
 			$message = sprintf(
 				// translators: 1: vote count, 2: content title.
@@ -826,13 +805,12 @@ class Notifier {
 				'"' . $title . '"'
 			);
 
-			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-				$table,
+			Notification::update(
+				(int) $existing->id,
 				array(
 					'message'    => $message,
 					'created_at' => now(),
-				),
-				array( 'id' => (int) $existing->id )
+				)
 			);
 		} else {
 			// Create new notification via email-aware path.
@@ -1781,15 +1759,7 @@ class Notifier {
 		$recipient_ids = array();
 
 		// 1. Space-level admins and moderators from jt_space_members.
-		global $wpdb;
-		$members_table = \Jetonomy\table( 'space_members' );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$space_admins = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT user_id FROM {$members_table} WHERE space_id = %d AND role IN ('admin', 'moderator')",
-				$space_id
-			)
-		);
+		$space_admins = \Jetonomy\Models\SpaceMember::staff_user_ids( $space_id );
 		foreach ( $space_admins as $admin_id ) {
 			$recipient_ids[ (int) $admin_id ] = true;
 		}

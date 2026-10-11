@@ -2348,4 +2348,141 @@ class Post extends Model {
 		}
 		return array( $where, $args );
 	}
+
+	/**
+	 * Count behind {@see self::list_by_author()}, under the same viewer gate.
+	 *
+	 * @param int $user_id Author user ID.
+	 * @return int
+	 */
+	public static function count_by_author( int $user_id ): int {
+		$spaces_tbl = \Jetonomy\table( 'spaces' );
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 's' );
+
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT COUNT(*) FROM ' . static::table() . " p
+				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
+				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}",
+				$user_id,
+				...$gate_params
+			)
+		);
+	}
+
+	/**
+	 * Ids of every topic an author wrote that is not in the trash.
+	 *
+	 * @param int $user_id Author user ID.
+	 * @return int[]
+	 */
+	public static function ids_by_author( int $user_id ): array {
+		return array_map(
+			'intval',
+			(array) static::db()->get_col(
+				static::db()->prepare( 'SELECT id FROM ' . static::table() . " WHERE author_id = %d AND status != 'trash'", $user_id )
+			)
+		);
+	}
+
+	/**
+	 * Topics whose body contains a text fragment (e.g. an upload's file path).
+	 *
+	 * @param string $fragment Literal text, LIKE-escaped here.
+	 * @return int
+	 */
+	public static function count_content_containing( string $fragment ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE content LIKE %s', '%' . static::db()->esc_like( $fragment ) . '%' )
+		);
+	}
+
+	/**
+	 * Latest or most popular published topics the current viewer may read,
+	 * site-wide or in one space, with the space slug and title joined.
+	 *
+	 * @param int    $limit    Max rows.
+	 * @param int    $space_id Space, or 0 for every space.
+	 * @param string $sort     'latest', or anything else for popular.
+	 * @return object[]
+	 */
+	public static function list_recent_visible( int $limit, int $space_id = 0, string $sort = 'latest' ): array {
+		$spaces_tbl = \Jetonomy\table( 'spaces' );
+
+		$where = "p.status = 'publish'";
+		$args  = array();
+		if ( $space_id > 0 ) {
+			$where .= ' AND p.space_id = %d';
+			$args[] = $space_id;
+		}
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
+
+		$order  = 'latest' === $sort ? 'p.created_at DESC, p.id DESC' : self::popular_order( 'p' );
+		$args   = array_merge( $args, $gate_params );
+		$args[] = $limit;
+
+		$query = 'SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
+		          FROM ' . static::table() . " p
+		          LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+		          WHERE {$where}{$gate_sql}
+		          ORDER BY {$order}
+		          LIMIT %d";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return static::db()->get_results( static::db()->prepare( $query, ...$args ) ) ?: array();
+	}
+
+	/**
+	 * SQL shared by the sitemap queries: published, non-private topics in
+	 * active spaces a guest can list.
+	 *
+	 * @return string FROM ... WHERE fragment.
+	 */
+	private static function sitemap_from_where(): string {
+		// The sitemap is crawler-facing, so the viewer is always a guest, and the
+		// guest LISTING predicate (category visibility included) is what belongs in it.
+		[ $vis_s ] = Space::listing_visibility_sql( 0, 's' );
+		return 'FROM ' . static::table() . ' p INNER JOIN ' . \Jetonomy\table( 'spaces' ) . " s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND {$vis_s} AND s.status = 'active'";
+	}
+
+	/**
+	 * Every sitemap topic id, ascending.
+	 *
+	 * @return int[]
+	 */
+	public static function sitemap_ids(): array {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', (array) static::db()->get_col( 'SELECT p.id ' . self::sitemap_from_where() . ' ORDER BY p.id ASC' ) );
+	}
+
+	/**
+	 * Newest change across sitemap topics (reply, edit or creation time).
+	 *
+	 * @return string UTC MySQL datetime, or '' when there are none.
+	 */
+	public static function sitemap_lastmod(): string {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (string) static::db()->get_var( "SELECT MAX(GREATEST(COALESCE(p.last_reply_at,'1970-01-01'), COALESCE(p.updated_at,'1970-01-01'), COALESCE(p.created_at,'1970-01-01'))) " . self::sitemap_from_where() );
+	}
+
+	/**
+	 * One keyset page of sitemap topics after an id.
+	 *
+	 * @param int $start_after Last id of the previous page.
+	 * @param int $limit       Page size.
+	 * @return object[] Rows with id, post_slug, space_slug, space_id, last_reply_at, updated_at, created_at.
+	 */
+	public static function list_sitemap_page( int $start_after, int $limit ): array {
+		return (array) static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.id, p.slug AS post_slug, s.slug AS space_slug, s.id AS space_id, p.last_reply_at, p.updated_at, p.created_at ' . self::sitemap_from_where() . ' AND p.id > %d ORDER BY p.id ASC LIMIT %d',
+				$start_after,
+				$limit
+			)
+		);
+	}
 }

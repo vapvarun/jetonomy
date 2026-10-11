@@ -996,4 +996,83 @@ class SpaceMember extends Model {
 			)
 		);
 	}
+
+	/**
+	 * User ids of a space's admins and moderators (uncached, unbounded).
+	 *
+	 * @param int $space_id Space.
+	 * @return int[]
+	 */
+	public static function staff_user_ids( int $space_id ): array {
+		return array_map(
+			'intval',
+			(array) static::db()->get_col(
+				static::db()->prepare( 'SELECT user_id FROM ' . static::table() . " WHERE space_id = %d AND role IN ('admin', 'moderator')", $space_id )
+			)
+		);
+	}
+
+	/**
+	 * A space's members ranked by reputation (highest first), with role and
+	 * trust level. Not block-filtered: it is a roster, not a content feed.
+	 *
+	 * @param int $space_id Space.
+	 * @param int $limit    Max rows.
+	 * @return object[] Rows with user_id, role, reputation, trust_level.
+	 */
+	public static function list_top_by_reputation( int $space_id, int $limit ): array {
+		$profiles_tbl = \Jetonomy\table( 'user_profiles' );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT sm.user_id, sm.role, up.reputation, up.trust_level
+				 FROM ' . static::table() . " sm
+				 LEFT JOIN {$profiles_tbl} up ON up.user_id = sm.user_id
+				 WHERE sm.space_id = %d
+				 ORDER BY up.reputation DESC, sm.user_id ASC
+				 LIMIT %d",
+				$space_id,
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * One keyset page of roster rows granted by a membership tier, in
+	 * (space_id, user_id) order after the given position.
+	 *
+	 * @param int $last_space Space id of the previous page's last row.
+	 * @param int $last_user  User id of the previous page's last row.
+	 * @param int $limit      Page size.
+	 * @return object[] Rows with space_id, user_id.
+	 */
+	public static function list_tier_rows_after( int $last_space, int $last_user, int $limit ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT space_id, user_id FROM ' . static::table() . "
+				 WHERE source = 'tier'
+				   AND ( space_id > %d OR ( space_id = %d AND user_id > %d ) )
+				 ORDER BY space_id ASC, user_id ASC
+				 LIMIT %d",
+				$last_space,
+				$last_space,
+				$last_user,
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How a member came to be on a space's roster (the source column).
+	 *
+	 * @param int $space_id Space.
+	 * @param int $user_id  Member.
+	 * @return string|null Null when there is no roster row.
+	 */
+	public static function find_source( int $space_id, int $user_id ): ?string {
+		$source = static::db()->get_var(
+			static::db()->prepare( 'SELECT source FROM ' . static::table() . ' WHERE space_id = %d AND user_id = %d', $space_id, $user_id )
+		);
+		return null === $source ? null : (string) $source;
+	}
 }

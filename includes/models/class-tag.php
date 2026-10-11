@@ -426,4 +426,17 @@ class Tag extends Model {
 		$deleted = (bool) parent::delete( $id );
 		return $deleted;
 	}
+
+	/**
+	 * Tags A to Z, paginated.
+	 *
+	 * @param int $limit  Page size.
+	 * @param int $offset Offset.
+	 * @return object[]
+	 */
+	public static function list_alphabetical( int $limit, int $offset = 0 ): array {
+		return static::db()->get_results(
+			static::db()->prepare( 'SELECT * FROM ' . static::table() . ' ORDER BY name ASC LIMIT %d OFFSET %d', $limit, $offset )
+		) ?: array();
+	}
 }

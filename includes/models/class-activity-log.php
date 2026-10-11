@@ -97,6 +97,118 @@ class ActivityLog extends Model {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function export_rows( array $filters ): array {
+		[ $where, $args ] = self::filter_where( $filters );
+		$sql              = 'SELECT id, user_id, action, object_type, object_id, metadata, created_at FROM ' . self::table() . ' WHERE ' . $where . ' ORDER BY created_at DESC LIMIT 50000';
+		$rows             = $args ? self::db()->get_results( self::db()->prepare( $sql, ...$args ), ARRAY_A ) : self::db()->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * One page of the wp-admin Activity Log, ordered by time.
+	 *
+	 * @param array{user_id:int,action:string,date_from:string,date_to:string} $filters Active filters.
+	 * @param string                                                           $order   'ASC' or 'DESC'.
+	 * @param int                                                              $limit   Page size.
+	 * @param int                                                              $offset  Offset.
+	 * @return object[]
+	 */
+	public static function list_filtered( array $filters, string $order, int $limit, int $offset ): array {
+		[ $where, $args ] = self::filter_where( $filters );
+		$order            = 'ASC' === $order ? 'ASC' : 'DESC';
+		$sql              = 'SELECT * FROM ' . self::table() . " WHERE {$where} ORDER BY created_at {$order} LIMIT %d OFFSET %d";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql holds only the table name, placeholders and a whitelisted direction.
+		return self::db()->get_results( self::db()->prepare( $sql, ...array_merge( $args, array( $limit, $offset ) ) ) ) ?: array();
+	}
+
+	/**
+	 * Row count behind {@see self::list_filtered()}.
+	 *
+	 * @param array{user_id:int,action:string,date_from:string,date_to:string} $filters Active filters.
+	 * @return int
+	 */
+	public static function count_filtered( array $filters ): int {
+		[ $where, $args ] = self::filter_where( $filters );
+		$sql              = 'SELECT COUNT(*) FROM ' . self::table() . " WHERE {$where}";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+		return (int) ( $args ? self::db()->get_var( self::db()->prepare( $sql, ...$args ) ) : self::db()->get_var( $sql ) );
+	}
+
+	/**
+	 * Every distinct non-empty action in the log, A to Z, for the type filter.
+	 *
+	 * @return string[]
+	 */
+	public static function list_actions(): array {
+		return array_map( 'strval', self::db()->get_col( 'SELECT DISTINCT action FROM ' . self::table() . " WHERE action <> '' ORDER BY action ASC" ) );
+	}
+
+	/**
+	 * Recent log rows since a moment, newest first, for live-update polling.
+	 *
+	 * @param string $since UTC MySQL datetime (exclusive).
+	 * @return object[] Rows with action, object_type, object_id, created_at.
+	 */
+	public static function list_since( string $since ): array {
+		return self::db()->get_results(
+			self::db()->prepare(
+				'SELECT action, object_type, object_id, created_at FROM ' . self::table() . ' WHERE created_at > %s ORDER BY created_at DESC LIMIT 50',
+				$since
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Recent log rows since a moment about one space's topics and replies,
+	 * newest first. The created_at filter runs first and the space match is an
+	 * IN( subquery ), so a large space never becomes a literal id list.
+	 *
+	 * @param string $since    UTC MySQL datetime (exclusive).
+	 * @param int    $space_id Space.
+	 * @return object[] Rows with action, object_type, object_id, created_at.
+	 */
+	public static function list_since_in_space( string $since, int $space_id ): array {
+		$posts_table   = table( 'posts' );
+		$replies_table = table( 'replies' );
+		return self::db()->get_results(
+			self::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT action, object_type, object_id, created_at
+				 FROM ' . self::table() . "
+				 WHERE created_at > %s
+				   AND (
+				     ( object_type = 'post' AND object_id IN ( SELECT id FROM {$posts_table} WHERE space_id = %d ) )
+				     OR ( object_type = 'reply' AND object_id IN ( SELECT r.id FROM {$replies_table} r INNER JOIN {$posts_table} p ON r.post_id = p.id WHERE p.space_id = %d ) )
+				   )
+				 ORDER BY created_at DESC
+				 LIMIT 50",
+				$since,
+				$space_id,
+				$space_id
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Delete up to $limit rows older than a moment (retention pruning).
+	 *
+	 * @param string $cutoff UTC MySQL datetime.
+	 * @param int    $limit  Max rows per call.
+	 * @return int Rows deleted.
+	 */
+	public static function delete_before( string $cutoff, int $limit ): int {
+		return (int) self::db()->query(
+			self::db()->prepare( 'DELETE FROM ' . self::table() . ' WHERE created_at < %s LIMIT %d', $cutoff, $limit )
+		);
+	}
+
+	/**
+	 * WHERE clause and args for the Activity Log filters, shared by the list
+	 * table and the CSV export so both show the same rows.
+	 *
+	 * @param array{user_id:int,action:string,date_from:string,date_to:string} $filters Filters.
+	 * @return array{0:string,1:array<int,mixed>}
+	 */
+	private static function filter_where( array $filters ): array {
 		$clauses = array( '1=1' );
 		$args    = array();
 		if ( (int) $filters['user_id'] > 0 ) {
@@ -115,8 +227,6 @@ class ActivityLog extends Model {
 			$clauses[] = 'created_at <= %s';
 			$args[]    = $filters['date_to'] . ' 23:59:59';
 		}
-		$sql  = 'SELECT id, user_id, action, object_type, object_id, metadata, created_at FROM ' . self::table() . ' WHERE ' . implode( ' AND ', $clauses ) . ' ORDER BY created_at DESC LIMIT 50000';
-		$rows = $args ? self::db()->get_results( self::db()->prepare( $sql, ...$args ), ARRAY_A ) : self::db()->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
-		return is_array( $rows ) ? $rows : array();
+		return array( implode( ' AND ', $clauses ), $args );
 	}
 }

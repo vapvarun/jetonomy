@@ -439,4 +439,21 @@ class Vote extends Model {
 			}
 		}
 	}
+
+	/**
+	 * Distinct members who voted on an object.
+	 *
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int    $object_id   Object id.
+	 * @return int
+	 */
+	public static function count_voters( string $object_type, int $object_id ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(DISTINCT v.user_id) FROM ' . static::table() . ' v WHERE v.object_type = %s AND v.object_id = %d',
+				$object_type,
+				$object_id
+			)
+		);
+	}
 }

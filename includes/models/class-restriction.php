@@ -503,4 +503,20 @@ class Restriction extends Model {
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 		return $result;
 	}
+
+	/**
+	 * Delete up to $limit restrictions whose expiry has passed.
+	 *
+	 * @param int $limit Max rows per call.
+	 * @return int Rows deleted.
+	 */
+	public static function delete_expired( int $limit ): int {
+		return (int) static::db()->query(
+			static::db()->prepare(
+				'DELETE FROM ' . static::table() . ' WHERE expires_at IS NOT NULL AND expires_at < %s LIMIT %d',
+				current_time( 'mysql', true ),
+				$limit
+			)
+		);
+	}
 }

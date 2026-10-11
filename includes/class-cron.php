@@ -12,7 +12,6 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Notifications\Verification_Reminder;
 use Jetonomy\Trust\Trust_Evaluator;
-use function Jetonomy\table;
 
 class Cron {
 
@@ -274,24 +273,7 @@ class Cron {
 	 *                                                    processed, promotions made.
 	 */
 	public static function run_trust_batch( int $after, int $limit ): array {
-		global $wpdb;
-		$profiles_t = table( 'user_profiles' );
-		$replies_t  = table( 'replies' );
-		$posts_t    = table( 'posts' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$profiles = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT user_id, post_count, reply_count, reputation, trust_level, created_at
-				 FROM {$profiles_t}
-				 WHERE trust_level < 4 AND user_id > %d
-				 ORDER BY user_id ASC
-				 LIMIT %d",
-				$after,
-				$limit
-			)
-		);
+		$profiles = UserProfile::list_for_trust_batch( $after, $limit );
 
 		if ( empty( $profiles ) ) {
 			return array(
@@ -301,24 +283,8 @@ class Cron {
 			);
 		}
 
-		$user_ids        = wp_list_pluck( $profiles, 'user_id' );
-		$id_placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
-
 		// Batch-fetch replies-received for the whole slice (one query, no N+1).
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		$replies_received_rows = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.author_id, COUNT(*) AS cnt
-				 FROM {$replies_t} r
-				 INNER JOIN {$posts_t} p ON r.post_id = p.id
-				 WHERE p.author_id IN ({$id_placeholders})
-				   AND r.author_id != p.author_id
-				   AND r.status = 'publish'
-				 GROUP BY p.author_id",
-				...$user_ids
-			)
-		);
+		$replies_received_rows = \Jetonomy\Models\Reply::count_received_by_authors( array_map( 'intval', wp_list_pluck( $profiles, 'user_id' ) ) );
 
 		$replies_received_map = array();
 		foreach ( $replies_received_rows as $row ) {
@@ -393,16 +359,7 @@ class Cron {
 	 * to avoid long-running DELETE locks on large communities.
 	 */
 	public function cleanup_expired_restrictions(): void {
-		global $wpdb;
-		$table = table( 'restrictions' );
-		$batch = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_expired_restrictions' );
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE expires_at IS NOT NULL AND expires_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				current_time( 'mysql', true ),
-				$batch
-			)
-		);
+		\Jetonomy\Models\Restriction::delete_expired( (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_expired_restrictions' ) );
 	}
 
 	/**
@@ -413,8 +370,6 @@ class Cron {
 	 * Deletes in batches of 5 000 to avoid lock contention, looping until all expired rows are removed.
 	 */
 	public function prune_activity_log(): void {
-		global $wpdb;
-		$table    = table( 'activity_log' );
 		$settings = get_option( 'jetonomy_settings', array() );
 		$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
 		if ( $days <= 0 ) {
@@ -423,12 +378,7 @@ class Cron {
 		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
 		// Delete in batches to avoid lock contention, loop until done.
 		do {
-			$deleted = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$wpdb->prepare(
-					"DELETE FROM {$table} WHERE created_at < %s LIMIT 5000", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					$cutoff
-				)
-			);
+			$deleted = \Jetonomy\Models\ActivityLog::delete_before( $cutoff, 5000 );
 		} while ( $deleted >= 5000 );
 	}
 
@@ -440,8 +390,6 @@ class Cron {
 	 * the run's time budget is spent.
 	 */
 	public function cleanup_old_notifications(): void {
-		global $wpdb;
-		$table  = table( 'notifications' );
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
 		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_old_notifications' );
 
@@ -451,13 +399,7 @@ class Cron {
 		// leaves is picked up next week.
 		$deadline = microtime( true ) + 20;
 		do {
-			$done = (int) $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-				$wpdb->prepare(
-					"UPDATE {$table} SET is_read = 1 WHERE is_read = 0 AND created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					$cutoff,
-					$batch
-				)
-			);
+			$done = \Jetonomy\Models\Notification::mark_read_before( $cutoff, $batch );
 		} while ( $done >= $batch && microtime( true ) < $deadline );
 	}
 

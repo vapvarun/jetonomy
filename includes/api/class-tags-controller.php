@@ -14,7 +14,6 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\Models\Tag;
 use Jetonomy\API\REST_Auth;
-use function Jetonomy\table;
 
 class Tags_Controller extends Base_Controller {
 
@@ -228,24 +227,8 @@ class Tags_Controller extends Base_Controller {
 		$offset = absint( $request->get_param( 'offset' ) ?? 0 );
 		$sort   = $request->get_param( 'sort' ) ?? 'popular';
 
-		global $wpdb;
-		$tags_table = table( 'tags' );
-
-		if ( 'alphabetical' === $sort ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$tags = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT * FROM {$tags_table} ORDER BY name ASC LIMIT %d OFFSET %d",
-					$limit,
-					$offset
-				)
-			) ?: array();
-		} else {
-			$tags = Tag::list_popular( $limit, $offset );
-		}
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tags_table}" );
+		$tags  = 'alphabetical' === $sort ? Tag::list_alphabetical( $limit, $offset ) : Tag::list_popular( $limit, $offset );
+		$total = Tag::count();
 
 		return $this->paginated_response(
 			$tags,

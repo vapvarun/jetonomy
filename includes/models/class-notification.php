@@ -638,4 +638,42 @@ class Notification extends Model {
 				return array( '', array() );
 		}
 	}
+
+	/**
+	 * A member's newest notification of a type about one object since a moment,
+	 * so repeated events can update it instead of stacking new rows.
+	 *
+	 * @param int    $user_id     Recipient.
+	 * @param string $type        Notification type.
+	 * @param string $object_type Object type.
+	 * @param int    $object_id   Object id.
+	 * @param string $since       UTC MySQL datetime (exclusive).
+	 * @return object|null Row with id, message.
+	 */
+	public static function find_recent_for_object( int $user_id, string $type, string $object_type, int $object_id, string $since ): ?object {
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT id, message FROM ' . static::table() . ' WHERE user_id = %d AND type = %s AND object_type = %s AND object_id = %d AND created_at > %s ORDER BY created_at DESC LIMIT 1',
+				$user_id,
+				$type,
+				$object_type,
+				$object_id,
+				$since
+			)
+		);
+		return $row ?: null;
+	}
+
+	/**
+	 * Mark up to $limit unread notifications older than a moment as read.
+	 *
+	 * @param string $cutoff UTC MySQL datetime.
+	 * @param int    $limit  Max rows per call.
+	 * @return int Rows changed.
+	 */
+	public static function mark_read_before( string $cutoff, int $limit ): int {
+		return (int) static::db()->query(
+			static::db()->prepare( 'UPDATE ' . static::table() . ' SET is_read = 1 WHERE is_read = 0 AND created_at < %s LIMIT %d', $cutoff, $limit )
+		);
+	}
 }

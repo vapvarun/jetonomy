@@ -568,4 +568,87 @@ class UserProfile extends Model {
 		}
 		return array( implode( ' AND ', $where ), $args );
 	}
+
+	/**
+	 * One keyset slice of profiles still eligible for automatic promotion
+	 * (trust level below 4), by user id. Served by the trust_user index.
+	 *
+	 * @param int $after Return rows with user_id greater than this.
+	 * @param int $limit Slice size.
+	 * @return object[] Rows with user_id, post_count, reply_count, reputation, trust_level, created_at.
+	 */
+	public static function list_for_trust_batch( int $after, int $limit ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT user_id, post_count, reply_count, reputation, trust_level, created_at
+				 FROM ' . static::table() . '
+				 WHERE trust_level < 4 AND user_id > %d
+				 ORDER BY user_id ASC
+				 LIMIT %d',
+				$after,
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Profiles whose avatar URL contains a text fragment (e.g. an upload's file path).
+	 *
+	 * @param string $fragment Literal text, LIKE-escaped here.
+	 * @return int
+	 */
+	public static function count_avatar_containing( string $fragment ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE avatar_url LIKE %s', '%' . static::db()->esc_like( $fragment ) . '%' )
+		);
+	}
+
+	/**
+	 * Profile rows for a set of users, read straight from the table (no cache).
+	 *
+	 * @param int[] $user_ids User ids (non-empty).
+	 * @return object[]
+	 */
+	public static function list_by_user_ids( array $user_ids ): array {
+		if ( ! $user_ids ) {
+			return array();
+		}
+		$placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		return static::db()->get_results( static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE user_id IN ({$placeholders})", ...$user_ids ) ) ?: array();
+	}
+
+	/**
+	 * Profiles created at or before a moment that have not had the
+	 * verification reminder yet, oldest first.
+	 *
+	 * @param string $cutoff UTC MySQL datetime.
+	 * @param int    $limit  Batch size.
+	 * @return object[] Rows with user_id, created_at.
+	 */
+	public static function list_awaiting_verification_reminder( string $cutoff, int $limit ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT user_id, created_at
+				 FROM ' . static::table() . '
+				 WHERE verification_reminder_sent_at IS NULL
+				   AND created_at <= %s
+				 ORDER BY created_at ASC
+				 LIMIT %d',
+				$cutoff,
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Stamp the verification reminder as handled for a user, so the reminder
+	 * sweep skips them from now on.
+	 *
+	 * @param int $user_id WP user id.
+	 * @return bool
+	 */
+	public static function mark_verification_reminder_sent( int $user_id ): bool {
+		return self::update_profile( $user_id, array( 'verification_reminder_sent_at' => current_time( 'mysql', true ) ) );
+	}
 }

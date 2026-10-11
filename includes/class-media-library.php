@@ -249,8 +249,6 @@ class Media_Library {
 	 * @return bool True when referenced (or when we cannot be sure).
 	 */
 	private static function is_referenced( int $attachment_id ): bool {
-		global $wpdb;
-
 		$url  = (string) wp_get_attachment_url( $attachment_id );
 		$file = (string) get_post_meta( $attachment_id, '_wp_attached_file', true );
 
@@ -263,36 +261,18 @@ class Media_Library {
 		// than the full URL: an offload plugin (S3/R2) rewrites the host, so a
 		// full-URL match would miss and the file would look unused.
 		$needle = '' !== $file ? $file : wp_basename( $url );
-		$like   = '%' . $wpdb->esc_like( $needle ) . '%';
 
 		// 1. A link row, when the importer wrote one.
-		$links = \Jetonomy\table( 'attachments' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$links} WHERE attachment_id = %d", $attachment_id ) ) > 0 ) {
-			return true;
-		}
-
 		// 2. Inline in a post or a reply body - how the composer actually uses
 		// an upload, and what the data-loss report was about.
-		foreach ( array( 'posts', 'replies' ) as $table_key ) {
-			$table = \Jetonomy\table( $table_key );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE content LIKE %s", $like ) ) > 0 ) {
-				return true;
-			}
-		}
-
 		// 3. A member's avatar.
-		$profiles = \Jetonomy\table( 'user_profiles' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$profiles} WHERE avatar_url LIKE %s", $like ) ) > 0 ) {
-			return true;
-		}
-
 		// 4. A space cover or icon.
-		$spaces = \Jetonomy\table( 'spaces' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE cover_image LIKE %s OR icon LIKE %s", $like, $like ) ) > 0 ) {
+		if ( \Jetonomy\Models\Attachment::count_links_to( $attachment_id ) > 0
+			|| \Jetonomy\Models\Post::count_content_containing( $needle ) > 0
+			|| \Jetonomy\Models\Reply::count_content_containing( $needle ) > 0
+			|| \Jetonomy\Models\UserProfile::count_avatar_containing( $needle ) > 0
+			|| \Jetonomy\Models\Space::count_images_containing( $needle ) > 0
+		) {
 			return true;
 		}
 
@@ -357,15 +337,13 @@ class Media_Library {
 	public static function cleanup_abandoned_uploads(): array {
 		global $wpdb;
 
-		$links_table = \Jetonomy\table( 'attachments' );
-		$cutoff      = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
 
 		// Link rows whose WP attachment is gone - belt and braces against a
 		// manual media-library deletion bypassing the cascade. Safe on the
 		// first run too: this removes only dangling rows in our own table, it
 		// deletes no files, so it is not subject to the report-first rule.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "DELETE a FROM {$links_table} a LEFT JOIN {$wpdb->posts} p ON p.ID = a.attachment_id WHERE p.ID IS NULL" );
+		\Jetonomy\Models\Attachment::delete_dangling_links();
 
 		/*
 		 * CANDIDATES, not victims. This selects uploads of ours past the grace

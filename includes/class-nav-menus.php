@@ -139,7 +139,7 @@ class Nav_Menus {
 		);
 
 		// Add dynamic spaces
-		$spaces = $this->get_spaces();
+		$spaces = \Jetonomy\Models\Space::list_public_titles();
 		foreach ( $spaces as $space ) {
 			$items[] = array(
 				'title' => $space->title,
@@ -205,16 +205,5 @@ class Nav_Menus {
 			</p>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Get all public spaces for the menu.
-	 */
-	private function get_spaces(): array {
-		global $wpdb;
-		$table = table( 'spaces' );
-		return $wpdb->get_results(
-			"SELECT title, slug FROM {$table} WHERE visibility = 'public' AND status = 'active' ORDER BY title ASC LIMIT 50"
-		);
 	}
 }

@@ -1888,4 +1888,107 @@ class Space extends Model {
 			)
 		) ?: array();
 	}
+
+	/**
+	 * Spaces whose cover or icon contains a text fragment (e.g. an upload's file path).
+	 *
+	 * @param string $fragment Literal text, LIKE-escaped here.
+	 * @return int
+	 */
+	public static function count_images_containing( string $fragment ): int {
+		$like = '%' . static::db()->esc_like( $fragment ) . '%';
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE cover_image LIKE %s OR icon LIKE %s', $like, $like )
+		);
+	}
+
+	/**
+	 * Every sitemap space id (active spaces a guest can list), ascending.
+	 *
+	 * @return int[]
+	 */
+	public static function sitemap_ids(): array {
+		[ $vis ] = self::listing_visibility_sql( 0 );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', (array) static::db()->get_col( 'SELECT id FROM ' . static::table() . " WHERE {$vis} AND status = 'active' ORDER BY id ASC" ) );
+	}
+
+	/**
+	 * Newest activity or edit across sitemap spaces.
+	 *
+	 * @return string UTC MySQL datetime, or '' when there are none.
+	 */
+	public static function sitemap_lastmod(): string {
+		[ $vis ] = self::listing_visibility_sql( 0 );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (string) static::db()->get_var( "SELECT MAX(GREATEST(COALESCE(last_activity_at,'1970-01-01'), COALESCE(updated_at,'1970-01-01'))) FROM " . static::table() . " WHERE {$vis} AND status = 'active'" );
+	}
+
+	/**
+	 * One keyset page of sitemap spaces after an id.
+	 *
+	 * @param int $start_after Last id of the previous page.
+	 * @param int $limit       Page size.
+	 * @return object[] Rows with id, slug, last_activity_at, updated_at.
+	 */
+	public static function list_sitemap_page( int $start_after, int $limit ): array {
+		[ $vis ] = self::listing_visibility_sql( 0 );
+		return (array) static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT id, slug, last_activity_at, updated_at FROM ' . static::table() . " WHERE {$vis} AND status = 'active' AND id > %d ORDER BY id ASC LIMIT %d",
+				$start_after,
+				$limit
+			)
+		);
+	}
+
+	/**
+	 * Active public spaces with the most topics first, optionally in one category.
+	 *
+	 * @param int $limit       Max rows.
+	 * @param int $category_id Category, or 0 for all.
+	 * @return object[]
+	 */
+	public static function list_public_by_post_count( int $limit, int $category_id = 0 ): array {
+		$where = "status = 'active' AND visibility = 'public'";
+		$args  = array();
+		if ( $category_id > 0 ) {
+			$where .= ' AND category_id = %d';
+			$args[] = $category_id;
+		}
+		$args[] = $limit;
+
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY post_count DESC, id ASC LIMIT %d",
+				...$args
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Title and slug of active public spaces, A to Z, for the nav-menu picker.
+	 *
+	 * @param int $limit Max rows.
+	 * @return object[]
+	 */
+	public static function list_public_titles( int $limit = 50 ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT title, slug FROM ' . static::table() . " WHERE visibility = 'public' AND status = 'active' ORDER BY title ASC LIMIT %d",
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Sum of every space's denormalised topic counter (cheaper than counting topics).
+	 *
+	 * @return int
+	 */
+	public static function sum_post_counts(): int {
+		return (int) static::db()->get_var( 'SELECT COALESCE(SUM(post_count),0) FROM ' . static::table() );
+	}
 }

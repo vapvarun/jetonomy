@@ -320,4 +320,28 @@ class Attachment {
 
 		return $out;
 	}
+
+	/**
+	 * Link rows pointing at one media item, across every post and reply.
+	 *
+	 * @param int $attachment_id WP attachment id.
+	 * @return int
+	 */
+	public static function count_links_to( int $attachment_id ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE attachment_id = %d', $attachment_id ) );
+	}
+
+	/**
+	 * Delete link rows whose WP attachment no longer exists (a media-library
+	 * delete that bypassed the cascade). Deletes no files.
+	 *
+	 * @return int Rows deleted.
+	 */
+	public static function delete_dangling_links(): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->query( 'DELETE a FROM ' . static::table() . " a LEFT JOIN {$wpdb->posts} p ON p.ID = a.attachment_id WHERE p.ID IS NULL" );
+	}
 }

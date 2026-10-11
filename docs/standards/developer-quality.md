@@ -28,6 +28,12 @@ Check: `grep -rnE 'Basecamp [0-9]|WP[0-9]\.[0-9]|Task [0-9]+' includes templates
   one-time or repair code: importers, the demo seeder, GDPR export/erase,
   backfills, recount and the purge service. They run once per site, so
   moving their queries buys nothing and risks the riskiest code.
+- The full-text search backend (`includes/search/`) is part of the data
+  layer: it builds the search queries for posts, replies, spaces and tags in
+  one place, behind a backend that can be swapped.
+- An integration reading another plugin's own tables (BuddyPress group meta,
+  FluentCommunity tables) keeps that read in its adapter; anything it reads
+  from Jetonomy's tables goes through our models.
 
 Check: `bin/check-data-layer.sh` (pre-commit and local CI) fails when any
 file's `$wpdb` use outside the data layer grows past `audit/wpdb-baseline.txt`;

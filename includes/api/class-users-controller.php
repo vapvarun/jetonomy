@@ -793,20 +793,12 @@ class Users_Controller extends Base_Controller {
 		// real-world timeout, move it to a background job (Action Scheduler)
 		// per the plugin's background-jobs standard rather than inlining a
 		// batch/cursor here.
-		global $wpdb;
-		$posts_t   = table( 'posts' );
-		$replies_t = table( 'replies' );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$posts_t} WHERE author_id = %d AND status != 'trash'", $user_id ) );
-		foreach ( $post_ids as $post_id ) {
-			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/posts/' . (int) $post_id ) );
+		foreach ( \Jetonomy\Models\Post::ids_by_author( $user_id ) as $post_id ) {
+			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/posts/' . $post_id ) );
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$reply_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$replies_t} WHERE author_id = %d AND status != 'trash'", $user_id ) );
-		foreach ( $reply_ids as $reply_id ) {
-			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/replies/' . (int) $reply_id ) );
+		foreach ( \Jetonomy\Models\Reply::ids_by_author( $user_id ) as $reply_id ) {
+			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/replies/' . $reply_id ) );
 		}
 	}
 
@@ -931,68 +923,13 @@ class Users_Controller extends Base_Controller {
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];
 
-		global $wpdb;
-		$tbl        = table( 'posts' );
-		$spaces_tbl = table( 'spaces' );
-
-		// Space-visibility + per-post is_private gate so private/hidden-space
-		// posts (and private posts in public spaces) stay hidden from
-		// non-members / non-authors. Cross-space context → $space_id null.
-		// is_anonymous = 0 (both queries below) is an anonymity guard: an
-		// anonymous post must never surface on the real author's public
-		// profile stream, even to the author themselves — that would
+		// Post::list_by_author() applies the viewer's space access, the per-post
+		// is_private gate and their blocks. is_anonymous = 0 is an anonymity
+		// guard: an anonymous post must never surface on the real author's
+		// public profile stream, even to the author themselves - that would
 		// deanonymize it by correlation.
-		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
-		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-
-		$gate_sql    = '';
-		$gate_params = array();
-		if ( '1=1' !== $space_vis_sql ) {
-			$gate_sql   .= ' AND ' . $space_vis_sql;
-			$gate_params = array_merge( $gate_params, $space_vis_params );
-		}
-		if ( '' !== $priv_sql ) {
-			$gate_sql   .= ' AND ' . $priv_sql;
-			$gate_params = array_merge( $gate_params, $priv_params );
-		}
-
-		// Hide this profile's posts entirely when the VIEWER has blocked $id.
-		// no-op for guests/no-blocks; must match the COUNT(*) below exactly.
-		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$gate_sql .= ' AND ' . $block_sql;
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$posts = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				// `p.id DESC` is a tiebreaker, not decoration: created_at is
-				// second-granular and bulk-created posts routinely share one second
-				// (25 of 26 here), so ORDER BY created_at alone lets MySQL return
-				// tied rows in any order. Consecutive pages then repeat some rows
-				// and skip others — this list served id 10 on both page 3 and
-				// page 4 while dropping id 1 entirely.
-				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$tbl} p
-				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
-				 ORDER BY p.created_at DESC, p.id DESC LIMIT %d OFFSET %d",
-				$id,
-				...array_merge( $gate_params, array( $limit, $offset ) )
-			)
-		) ?: array();
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$tbl} p
-				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}",
-				$id,
-				...$gate_params
-			)
-		);
+		$posts = \Jetonomy\Models\Post::list_by_author( $id, $limit, $offset );
+		$total = \Jetonomy\Models\Post::count_by_author( $id );
 
 		// Match the feed's batch author enrichment (base controller) so profile post
 		// cards render the author avatar/name instead of a blank "?" row — the same

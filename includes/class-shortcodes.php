@@ -207,51 +207,10 @@ class Shortcodes {
 			$space_id = absint( $space->id );
 		}
 
-		global $wpdb;
-		$posts_tbl  = table( 'posts' );
-		$spaces_tbl = table( 'spaces' );
-
-		$where = "p.status = 'publish'";
-		$args  = array();
-		if ( $space_id > 0 ) {
-			$where .= ' AND p.space_id = %d';
-			$args[] = $space_id;
-		}
-
-		// Space-visibility + per-post is_private gate so the recent-posts
-		// shortcode (and the forum-feed / trending blocks + recent-posts widget
-		// that delegate to it) never leak private/hidden-space posts.
-		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
-		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-		if ( '1=1' !== $space_vis_sql ) {
-			$where .= ' AND ' . $space_vis_sql;
-			$args   = array_merge( $args, $space_vis_params );
-		}
-		if ( '' !== $priv_sql ) {
-			$where .= ' AND ' . $priv_sql;
-			$args   = array_merge( $args, $priv_params );
-		}
-
-		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$where .= ' AND ' . $block_sql;
-		}
-
-		$order = 'latest' === $atts['sort'] ? 'p.created_at DESC, p.id DESC' : \Jetonomy\Models\Post::popular_order( 'p' );
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$query  = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
-		          FROM {$posts_tbl} p
-		          LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		          WHERE {$where}
-		          ORDER BY {$order}
-		          LIMIT %d";
-		$args[] = $limit;
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$posts = $wpdb->get_results( $wpdb->prepare( $query, ...$args ) ) ?: array();
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Viewer-gated (space access, private topics, blocked authors) so the
+		// shortcode, and the forum-feed / trending blocks and recent-posts
+		// widget that delegate to it, never leak private or hidden-space posts.
+		$posts = Models\Post::list_recent_visible( $limit, $space_id, (string) $atts['sort'] );
 
 		if ( empty( $posts ) ) {
 			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
@@ -379,26 +338,7 @@ class Shortcodes {
 			$category_id = absint( $category->id );
 		}
 
-		global $wpdb;
-		$spaces_tbl = table( 'spaces' );
-
-		$where = "status = 'active' AND visibility = 'public'";
-		$args  = array();
-		if ( $category_id > 0 ) {
-			$where .= ' AND category_id = %d';
-			$args[] = $category_id;
-		}
-		$args[] = $limit;
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$spaces = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$spaces_tbl} WHERE {$where} ORDER BY post_count DESC, id ASC LIMIT %d",
-				...$args
-			)
-		) ?: array();
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$spaces = Models\Space::list_public_by_post_count( $limit, $category_id );
 
 		if ( empty( $spaces ) ) {
 			return '<div class="jt-shortcode-empty">' . esc_html__( 'No spaces yet.', 'jetonomy' ) . '</div>';
@@ -554,28 +494,10 @@ class Shortcodes {
 
 		$limit = absint( $atts['count'] ) ?: 10;
 
-		global $wpdb;
-		$members_tbl  = table( 'space_members' );
-		$profiles_tbl = table( 'user_profiles' );
-
 		// Deliberately NOT block-filtered — a member roster/ranking, not a
 		// content feed. Per-viewer filtering would re-rank the list and leak
 		// "you blocked someone" via a missing row.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$members = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT sm.user_id, sm.role, up.reputation, up.trust_level
-			 FROM {$members_tbl} sm
-			 LEFT JOIN {$profiles_tbl} up ON up.user_id = sm.user_id
-			 WHERE sm.space_id = %d
-			 ORDER BY up.reputation DESC, sm.user_id ASC
-			 LIMIT %d",
-				$space_id,
-				$limit
-			)
-		) ?: array();
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$members = Models\SpaceMember::list_top_by_reputation( $space_id, $limit );
 
 		if ( empty( $members ) ) {
 			return '<div class="jt-shortcode-empty">' . esc_html__( 'No members yet.', 'jetonomy' ) . '</div>';

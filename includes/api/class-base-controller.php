@@ -473,13 +473,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 		}
 		$ids = array_unique( array_map( 'intval', $ids ) );
 
-		global $wpdb;
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . \Jetonomy\table( 'user_profiles' ) . " WHERE user_id IN ({$placeholders})", ...$ids ) );
-
 		$map = array();
-		foreach ( $rows as $row ) {
+		foreach ( UserProfile::list_by_user_ids( $ids ) as $row ) {
 			$map[ (int) $row->user_id ] = $row;
 		}
 		return $map;

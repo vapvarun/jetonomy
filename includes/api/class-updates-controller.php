@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
-use function Jetonomy\table;
+use Jetonomy\Models\ActivityLog;
+use Jetonomy\Models\Reply;
 
 class Updates_Controller extends Base_Controller {
 
@@ -96,14 +97,21 @@ class Updates_Controller extends Base_Controller {
 			);
 		}
 
-		global $wpdb;
-
 		if ( 'post' === $scope ) {
-			$data = $this->get_post_updates( $wpdb, $id, $since_dt );
-		} elseif ( 'space' === $scope ) {
-			$data = $this->get_space_updates( $wpdb, $id, $since_dt );
+			$data = Reply::ids_since( $id, $since_dt );
 		} else {
-			$data = $this->get_global_updates( $wpdb, $since_dt );
+			$rows = 'space' === $scope ? ActivityLog::list_since_in_space( $since_dt, $id ) : ActivityLog::list_since( $since_dt );
+			$data = array_map(
+				static function ( $row ) {
+					return array(
+						'action'      => $row->action,
+						'object_type' => $row->object_type,
+						'object_id'   => (int) $row->object_id,
+						'created_at'  => $row->created_at,
+					);
+				},
+				$rows
+			);
 		}
 
 		$response = new WP_REST_Response(
@@ -122,113 +130,6 @@ class Updates_Controller extends Base_Controller {
 		$response->header( 'Cache-Control', 'no-cache' );
 
 		return $response;
-	}
-
-	/**
-	 * Query global activity log since a datetime.
-	 *
-	 * @param \wpdb  $wpdb
-	 * @param string $since MySQL datetime string.
-	 * @return array
-	 */
-	private function get_global_updates( \wpdb $wpdb, string $since ): array {
-		$log_table = table( 'activity_log' );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT action, object_type, object_id, created_at FROM {$log_table} WHERE created_at > %s ORDER BY created_at DESC LIMIT 50",
-				$since
-			)
-		) ?: array();
-
-		return array_map(
-			function ( $row ) {
-				return array(
-					'action'      => $row->action,
-					'object_type' => $row->object_type,
-					'object_id'   => (int) $row->object_id,
-					'created_at'  => $row->created_at,
-				);
-			},
-			$rows
-		);
-	}
-
-	/**
-	 * Query activity log for objects within a specific space.
-	 *
-	 * Uses a subquery to find post IDs belonging to the space, then filters
-	 * activity log entries for those objects. No JOINs — separate queries.
-	 *
-	 * @param \wpdb  $wpdb
-	 * @param int    $space_id
-	 * @param string $since MySQL datetime string.
-	 * @return array
-	 */
-	private function get_space_updates( \wpdb $wpdb, int $space_id, string $since ): array {
-		$log_table     = table( 'activity_log' );
-		$posts_table   = table( 'posts' );
-		$replies_table = table( 'replies' );
-
-		// Match the (small, recent) "created_at > since" slice against the space
-		// via IN(subquery) rather than materialising every post id in the space
-		// // into a literal IN() list, which would build a ~20k-placeholder prepared statement
-		// // on EVERY poll for a 10k-post space. Subqueries are semi-joined by MySQL and
-		// ride the posts.space_id / replies.post_id indexes; created_at is
-		// filtered first so the subqueries run against few rows.
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT action, object_type, object_id, created_at
-				 FROM {$log_table}
-				 WHERE created_at > %s
-				   AND (
-				     ( object_type = 'post' AND object_id IN ( SELECT id FROM {$posts_table} WHERE space_id = %d ) )
-				     OR ( object_type = 'reply' AND object_id IN ( SELECT r.id FROM {$replies_table} r INNER JOIN {$posts_table} p ON r.post_id = p.id WHERE p.space_id = %d ) )
-				   )
-				 ORDER BY created_at DESC
-				 LIMIT 50", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$since,
-				$space_id,
-				$space_id
-			)
-		) ?: array();
-
-		return array_map(
-			function ( $row ) {
-				return array(
-					'action'      => $row->action,
-					'object_type' => $row->object_type,
-					'object_id'   => (int) $row->object_id,
-					'created_at'  => $row->created_at,
-				);
-			},
-			$rows
-		);
-	}
-
-	/**
-	 * Query new replies for a specific post since a datetime.
-	 *
-	 * @param \wpdb  $wpdb
-	 * @param int    $post_id
-	 * @param string $since MySQL datetime string.
-	 * @return array Array of reply IDs.
-	 */
-	private function get_post_updates( \wpdb $wpdb, int $post_id, string $since ): array {
-		$replies_table = table( 'replies' );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT id FROM {$replies_table} WHERE post_id = %d AND created_at > %s ORDER BY created_at ASC",
-				$post_id,
-				$since
-			)
-		);
-
-		return array_map( 'intval', $ids ?: array() );
 	}
 
 	/**

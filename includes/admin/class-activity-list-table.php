@@ -13,7 +13,7 @@ namespace Jetonomy\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
-use function Jetonomy\table;
+use Jetonomy\Models\ActivityLog;
 
 if ( ! class_exists( '\WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -151,43 +151,9 @@ class Activity_List_Table extends \WP_List_Table {
 	}
 
 	/**
-	 * Build the WHERE clause + bind args for the active filters.
-	 *
-	 * @return array{0: string, 1: array<int, mixed>}
-	 */
-	private function build_where(): array {
-		global $wpdb;
-		$filters = self::read_filters();
-
-		$clauses = array( '1=1' );
-		$args    = array();
-
-		if ( $filters['user_id'] > 0 ) {
-			$clauses[] = 'user_id = %d';
-			$args[]    = $filters['user_id'];
-		}
-		if ( '' !== $filters['action'] ) {
-			$clauses[] = 'action = %s';
-			$args[]    = $filters['action'];
-		}
-		if ( '' !== $filters['date_from'] ) {
-			$clauses[] = 'created_at >= %s';
-			$args[]    = $filters['date_from'] . ' 00:00:00';
-		}
-		if ( '' !== $filters['date_to'] ) {
-			$clauses[] = 'created_at <= %s';
-			$args[]    = $filters['date_to'] . ' 23:59:59';
-		}
-
-		return array( implode( ' AND ', $clauses ), $args );
-	}
-
-	/**
 	 * Hydrate items + pagination state.
 	 */
 	public function prepare_items(): void {
-		global $wpdb;
-
 		$per_page = $this->get_items_per_page( 'jetonomy_activity_per_page', 20 );
 		$paged    = max( 1, absint( $this->get_pagenum() ) );
 		$offset   = ( $paged - 1 ) * $per_page;
@@ -200,29 +166,17 @@ class Activity_List_Table extends \WP_List_Table {
 		// cell, so every collapsed row read "22 minutes ago".
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns(), 'actor' );
 
-		[ $where, $args ] = $this->build_where();
-		$activity_t       = table( 'activity_log' );
+		$filters = self::read_filters();
 
 		// Count first — lets the pager render even when the page query
 		// returns fewer rows than expected (e.g. last page partially full).
-		$count_sql         = "SELECT COUNT(*) FROM {$activity_t} WHERE {$where}";
-		$this->total_items = (int) ( $args ? $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) ) : $wpdb->get_var( $count_sql ) );
+		$this->total_items = ActivityLog::count_filtered( $filters );
 
-		// Order by — only created_at is sortable; whitelist defends
-		// against tampered ?orderby= values.
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only sort UI.
-		$orderby = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'created_at';
-		$order   = isset( $_GET['order'] ) && 'asc' === strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) ? 'ASC' : 'DESC';
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-		if ( 'created_at' !== $orderby ) {
-			$orderby = 'created_at';
-		}
+		// Only created_at is sortable (KEY created), so only the direction is read.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only sort UI.
+		$order = isset( $_GET['order'] ) && 'asc' === strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) ? 'ASC' : 'DESC';
 
-		$sql       = "SELECT * FROM {$activity_t} WHERE {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-		$full_args = array_merge( $args, array( $per_page, $offset ) );
-		$rows      = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: array();
-
-		$this->items = $rows;
+		$this->items = ActivityLog::list_filtered( $filters, $order, $per_page, $offset );
 
 		$this->set_pagination_args(
 			array(
@@ -245,10 +199,7 @@ class Activity_List_Table extends \WP_List_Table {
 		if ( null !== $this->known_actions ) {
 			return $this->known_actions;
 		}
-		global $wpdb;
-		$activity_t          = table( 'activity_log' );
-		$rows                = $wpdb->get_col( "SELECT DISTINCT action FROM {$activity_t} WHERE action <> '' ORDER BY action ASC" );
-		$this->known_actions = is_array( $rows ) ? array_map( 'strval', $rows ) : array();
+		$this->known_actions = ActivityLog::list_actions();
 		return $this->known_actions;
 	}
 

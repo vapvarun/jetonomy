@@ -406,4 +406,24 @@ class Subscription extends Model {
 		);
 		return is_array( $rows ) ? $rows : array();
 	}
+
+	/**
+	 * A member's subscription row for one object.
+	 *
+	 * @param int    $user_id     Member.
+	 * @param string $object_type 'space' or 'post'.
+	 * @param int    $object_id   Object id.
+	 * @return object|null
+	 */
+	public static function find_for( int $user_id, string $object_type, int $object_id ): ?object {
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d AND object_type = %s AND object_id = %d',
+				$user_id,
+				$object_type,
+				$object_id
+			)
+		);
+		return $row ?: null;
+	}
 }

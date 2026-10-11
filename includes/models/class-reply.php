@@ -1923,4 +1923,79 @@ class Reply extends Model {
 		}
 		return array( $where, $args );
 	}
+
+	/**
+	 * Ids of a topic's replies created after a moment, oldest first, for
+	 * live-update polling.
+	 *
+	 * @param int    $post_id Topic.
+	 * @param string $since   UTC MySQL datetime (exclusive).
+	 * @return int[]
+	 */
+	public static function ids_since( int $post_id, string $since ): array {
+		$ids = static::db()->get_col(
+			static::db()->prepare(
+				'SELECT id FROM ' . static::table() . ' WHERE post_id = %d AND created_at > %s ORDER BY created_at ASC',
+				$post_id,
+				$since
+			)
+		);
+		return array_map( 'intval', $ids ?: array() );
+	}
+
+	/**
+	 * Published replies each author received on their topics from other
+	 * members, for a batch of authors in one query.
+	 *
+	 * @param int[] $user_ids Topic authors (non-empty).
+	 * @return object[] Rows with author_id and cnt; authors with none are absent.
+	 */
+	public static function count_received_by_authors( array $user_ids ): array {
+		if ( ! $user_ids ) {
+			return array();
+		}
+		$posts_t         = \Jetonomy\table( 'posts' );
+		$id_placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.author_id, COUNT(*) AS cnt
+				 FROM ' . static::table() . " r
+				 INNER JOIN {$posts_t} p ON r.post_id = p.id
+				 WHERE p.author_id IN ({$id_placeholders})
+				   AND r.author_id != p.author_id
+				   AND r.status = 'publish'
+				 GROUP BY p.author_id",
+				...$user_ids
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Ids of every reply an author wrote that is not in the trash.
+	 *
+	 * @param int $user_id Author user ID.
+	 * @return int[]
+	 */
+	public static function ids_by_author( int $user_id ): array {
+		return array_map(
+			'intval',
+			(array) static::db()->get_col(
+				static::db()->prepare( 'SELECT id FROM ' . static::table() . " WHERE author_id = %d AND status != 'trash'", $user_id )
+			)
+		);
+	}
+
+	/**
+	 * Replies whose body contains a text fragment (e.g. an upload's file path).
+	 *
+	 * @param string $fragment Literal text, LIKE-escaped here.
+	 * @return int
+	 */
+	public static function count_content_containing( string $fragment ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE content LIKE %s', '%' . static::db()->esc_like( $fragment ) . '%' )
+		);
+	}
 }

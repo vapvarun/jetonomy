@@ -132,7 +132,7 @@ class Membership_Roster_Sync {
 		AccessRule::reset_memo();
 
 		foreach ( AccessRule::spaces_for_level( $level_id ) as $space_id ) {
-			if ( self::SOURCE !== self::row_source( $space_id, $user_id ) ) {
+			if ( self::SOURCE !== SpaceMember::find_source( $space_id, $user_id ) ) {
 				// Not ours to remove: they joined manually, by invite, or the
 				// row predates provenance and is backfilled 'manual'.
 				continue;
@@ -170,31 +170,15 @@ class Membership_Roster_Sync {
 	 * tier rows, carry a cross-run cursor like the trust evaluator does.
 	 */
 	public static function reconcile(): void {
-		global $wpdb;
-
 		// Fresh request (cron), but be explicit: decisions must read current rules.
 		AccessRule::reset_memo();
 
-		$table      = \Jetonomy\table( 'space_members' );
 		$per_page   = 500;
 		$last_space = 0;
 		$last_user  = 0;
 
 		do {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$rows    = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT space_id, user_id FROM {$table}
-					 WHERE source = 'tier'
-					   AND ( space_id > %d OR ( space_id = %d AND user_id > %d ) )
-					 ORDER BY space_id ASC, user_id ASC
-					 LIMIT %d",
-					$last_space,
-					$last_space,
-					$last_user,
-					$per_page
-				)
-			);
+			$rows    = SpaceMember::list_tier_rows_after( $last_space, $last_user, $per_page );
 			$fetched = count( $rows );
 
 			foreach ( $rows as $row ) {
@@ -208,28 +192,5 @@ class Membership_Roster_Sync {
 				}
 			}
 		} while ( $fetched === $per_page );
-	}
-
-	/**
-	 * Provenance of one roster row, or null when there is no row.
-	 *
-	 * @param int $space_id Space.
-	 * @param int $user_id  Member.
-	 */
-	private static function row_source( int $space_id, int $user_id ): ?string {
-		global $wpdb;
-
-		$table = \Jetonomy\table( 'space_members' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$source = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT source FROM {$table} WHERE space_id = %d AND user_id = %d",
-				$space_id,
-				$user_id
-			)
-		);
-
-		return null === $source ? null : (string) $source;
 	}
 }

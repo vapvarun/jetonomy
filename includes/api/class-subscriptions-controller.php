@@ -14,7 +14,6 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Subscription;
-use function Jetonomy\table;
 
 class Subscriptions_Controller extends Base_Controller {
 
@@ -71,28 +70,8 @@ class Subscriptions_Controller extends Base_Controller {
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];
 
-		global $wpdb;
-		$tbl = table( 'subscriptions' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
-				$user_id,
-				$limit,
-				$offset
-			)
-		) ?: array();
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$tbl} WHERE user_id = %d",
-				$user_id
-			)
-		);
+		$rows  = Subscription::list_for_user( $user_id, $limit, $offset );
+		$total = Subscription::count_for_user( $user_id );
 
 		$items = array_map( array( $this, 'prepare_subscription' ), $rows );
 		$items = $this->attach_subscription_targets( $items );
@@ -164,19 +143,7 @@ class Subscriptions_Controller extends Base_Controller {
 
 		// When INSERT IGNORE fires on a duplicate, insert_id is 0.
 		// Fetch the row regardless to return a consistent response.
-		global $wpdb;
-		$tbl = table( 'subscriptions' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE user_id = %d AND object_type = %s AND object_id = %d",
-				$user_id,
-				$object_type,
-				$object_id
-			)
-		);
+		$row = Subscription::find_for( $user_id, $object_type, $object_id );
 
 		$status = $id > 0 ? 201 : 200;
 
@@ -196,17 +163,7 @@ class Subscriptions_Controller extends Base_Controller {
 
 		$id = absint( $request->get_param( 'id' ) );
 
-		global $wpdb;
-		$tbl = table( 'subscriptions' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$subscription = $wpdb->get_row(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE id = %d",
-				$id
-			)
-		);
+		$subscription = Subscription::find( $id );
 
 		if ( ! $subscription ) {
 			return $this->not_found( 'Subscription' );
