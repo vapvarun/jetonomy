@@ -173,9 +173,8 @@ class Updates_Controller extends Base_Controller {
 
 		// Match the (small, recent) "created_at > since" slice against the space
 		// via IN(subquery) rather than materialising every post id in the space
-		// into a literal IN() list. A 10k-post space previously built a
-		// ~20k-placeholder prepared statement on EVERY poll (plus the array_fill
-		// / implode to construct it). Subqueries are semi-joined by MySQL and
+		// // into a literal IN() list, which would build a ~20k-placeholder prepared statement
+		// // on EVERY poll for a 10k-post space. Subqueries are semi-joined by MySQL and
 		// ride the posts.space_id / replies.post_id indexes; created_at is
 		// filtered first so the subqueries run against few rows.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared

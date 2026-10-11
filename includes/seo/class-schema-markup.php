@@ -33,7 +33,7 @@ class Schema_Markup {
 		}
 
 		// Shared defaults union so the admin checkboxes (Default: On) and these
-		// consumers agree — previously an absent seo_noindex_* / seo_sitemap key
+		// consumers agree - an absent seo_noindex_* / seo_sitemap key reads as the UI default.
 		// read as OFF despite the UI. See Jetonomy\seo_settings().
 		$settings = \Jetonomy\seo_settings();
 
@@ -80,11 +80,9 @@ class Schema_Markup {
 		 * Filter the primary schema entity for a Jetonomy route.
 		 *
 		 * A page gets ONE primary entity. This filter exists so an extension can
-		 * adjust that entity rather than emit a competing one: SEO Pro used to
-		 * print its own DiscussionForumPosting from wp_head, so a Q&A topic
-		 * carried both QAPage and DiscussionForumPosting and told Google two
-		 * different things about the same page. There was
-		 * no seam here, which is precisely why it re-implemented instead.
+		 * adjust that entity rather than emit a competing one (a Q&A topic carrying both
+		 * QAPage and DiscussionForumPosting tells Google two different things about the
+		 * same page).
 		 *
 		 * Return null to suppress emission entirely.
 		 *

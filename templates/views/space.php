@@ -203,13 +203,10 @@ if ( ! in_array( $sort, array( 'latest', 'popular', 'unanswered' ), true ) ) {
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $paged = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
-// Resolve per-page through the model, never inline. This used to re-implement
-// the space → global → 20 chain with `??`, which only falls through on null —
-// so a stored `posts_per_page: ""` (what the front-end edit form sends for
-// "use the default", view.js) evaluated to (int) '' = 0 and clamped to a limit
-// of 1. The space then rendered a single topic with "Load More" under it while
-// the REST path, which already used the model, correctly said 20 (Basecamp
-// 10118693115). One resolver, one answer, every surface.
+// Resolve per-page through the model, never inline: the space -> global -> 20 chain
+// with `??` only falls through on null, so a stored `posts_per_page: ""` (what the
+// front-end edit form sends for "use the default", view.js) would evaluate to (int) '' = 0
+// and clamp to a limit of 1. One resolver, one answer, every surface.
 $limit  = \Jetonomy\Models\Space::get_posts_per_page( (int) $space->id );
 $offset = ( $paged - 1 ) * $limit;
 
@@ -518,8 +515,7 @@ $crumbs[] = array(
 					<a href="<?php echo esc_url( \Jetonomy\route_url( 'new-post', $space->slug ) ); ?>" class="jt-btn jt-btn-fill">
 						<?php
 						// Shared label, so the button and the composer heading it
-						// leads to never disagree (they used to: "+ New Post"
-						// here, "New Topic" on the page it opened).
+						// leads to never disagree.
 						/* translators: %s: the compose action for this space type, e.g. "Ask a Question". */
 						echo esc_html( sprintf( __( '+ %s', 'jetonomy' ), \Jetonomy\compose_label( (string) $space->type ) ) );
 						?>

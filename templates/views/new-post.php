@@ -129,6 +129,16 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 		data-wp-text="state.submitError"
 		hidden></div>
 
+	<?php
+	/**
+	 * Filters the Interactivity API action run when the new-post form is submitted.
+	 *
+	 * @since 1.3.2
+	 *
+	 * @param string $action Action path. Default "actions.submitNewPost".
+	 * @return string Action path.
+	 */
+	?>
 	<form id="jt-new-post-form" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="<?php echo esc_attr( apply_filters( 'jetonomy_new_post_submit_action', 'actions.submitNewPost' ) ); ?>"

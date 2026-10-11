@@ -46,12 +46,10 @@ class Shortcodes {
 	/**
 	 * Explain a misconfigured shortcode to whoever can fix it.
 	 *
-	 * These paths used to `return ''`, so a site owner who mistyped an
-	 * attribute got a blank region and no way to tell a broken shortcode from
-	 * an empty one - while the very same file renders a `jt-shortcode-empty`
-	 * message for genuinely-empty data. Only users who can edit see this:
-	 * visitors keep the silent output, so a misconfiguration never surfaces
-	 * editor guidance on a public page.
+	 * A blank region would hide a mistyped attribute from the owner, so these paths
+	 * explain it (genuinely empty data renders `jt-shortcode-empty`). Only users who
+	 * can edit see this: visitors keep the silent output, so editor guidance never
+	 * surfaces on a public page.
 	 *
 	 * @param string $message What the author needs to change.
 	 * @return string
@@ -59,12 +57,9 @@ class Shortcodes {
 	/**
 	 * Resolve a space reference (numeric id or slug) to a row, or null.
 	 *
-	 * Shared so every shortcode answers the same question. The first pass of
-	 * this work verified only the slug branch: a numeric ref was cast and
-	 * trusted, so a non-existent id kept a truthy value, the query matched
-	 * nothing, and the owner was shown an EMPTY state for a space that does not
-	 * exist. That is indistinguishable from a real empty space, which is the
-	 * confusion the notices were added to end.
+	 * Shared so every shortcode answers the same question. A numeric ref is looked up
+	 * like a slug, so a non-existent id yields null (a notice) rather than an EMPTY
+	 * state that looks like a real empty space.
 	 *
 	 * @param string $ref Numeric id or slug. '' and '0' mean "not supplied".
 	 * @return object|null
@@ -637,12 +632,9 @@ class Shortcodes {
 		$space    = null;
 		$postable = array();
 
-		// A supplied space that does not exist is an authoring mistake in EVERY
-		// mode, not just 'fixed'. The check used to live inside the fixed branch
-		// while the default mode is 'picker', so `space_id="99999"` rendered a
-		// complete, working compose form and a member could write a topic aimed
-		// at a space that does not exist. In fixed mode it silently degraded to
-		// a picker instead, giving the owner no clue their id was wrong
+		// A supplied space that does not exist is an authoring mistake in EVERY mode, so
+		// the owner gets a notice instead of a working compose form aimed at nothing
+		// (fixed mode would otherwise degrade silently to a picker).
 		$space_ref = trim( (string) $atts['space_id'] );
 		if ( '' !== $space_ref && '0' !== $space_ref ) {
 			$space = self::resolve_space_ref( $space_ref );

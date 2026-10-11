@@ -160,15 +160,10 @@ $crumbs = array(
 				/*
 				 * Numbering is COMPETITION rank, not position in the array.
 				 *
-				 * The row number used to be the loop index, while the "Your
-				 * rank #N" badge above used UserProfile::rank_for_user() —
-				 * standard 1224 ranking, where ties share a rank. So two
-				 * members tied on reputation were both correctly told "#10"
-				 * by the badge and then listed as 10 and 11, and the second
-				 * one saw a badge contradicting the row they were standing on.
-				 *
-				 * The badge was right; the list was wrong. Ranks are derived
-				 * here from reputation so both agree by construction.
+				 * The row number is the competition rank, like the "Your rank #N" badge above
+				 * (UserProfile::rank_for_user(), standard 1224 ranking, where ties share a rank), so
+				 * two members tied on reputation are both "#10" and the badge never contradicts the
+				 * row. Ranks are derived here from reputation so both agree by construction.
 				 *
 				 * The first row is seeded from rank_for_user() rather than the
 				 * offset, because a tie can straddle a page boundary: the top
@@ -181,10 +176,9 @@ $crumbs = array(
 					<?php
 					$lu = $leader_user_by_id[ (int) $leader->user_id ] ?? null;
 					if ( ! $lu ) {
-						// Should no longer happen: profiles without a WP user are
-						// excluded by the leaderboard query itself, because a
-						// skipped row here used to consume its number and leave a
-						// visible hole in the sequence (… 17, 18, 20).
+						// Should not happen: profiles without a WP user are excluded by the leaderboard
+						// query itself, because a skipped row here would consume its number and leave a
+						// visible hole in the sequence (... 17, 18, 20).
 						continue;
 					}
 					$jt_comp_rank = $jt_comp_ranks[ (int) $rank ] ?? ( $offset + (int) $rank + 1 );

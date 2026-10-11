@@ -82,11 +82,9 @@ class Moderation_Handler {
 		// Delegate to the canonical service so this admin path picks up the
 		// per-object permission gate, the sibling cascade, and the
 		// jetonomy_flag_resolved / jetonomy_after_resolve_flag actions.
-		// The frontend moderation queue and the CLI journey already use
-		// this code path; before this refactor only this admin AJAX hop
-		// went through inline Flag::resolve + Post/Reply trash, leaving
-		// stale "pending" siblings on the same content and skipping any
-		// downstream listeners (analytics, audit log, reputation).
+		// The frontend moderation queue and the CLI journey use this code path too, so no
+		// stale "pending" siblings remain and downstream listeners (analytics, audit log,
+		// reputation) always run.
 		$result = Moderation_Service::resolve_flag( get_current_user_id(), $flag_id, $resolution );
 		if ( is_wp_error( $result ) ) {
 			$status = 0;

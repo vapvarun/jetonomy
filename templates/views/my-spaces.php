@@ -89,8 +89,8 @@ $crumbs = array(
 		<?php
 		// One H1 ("My Spaces") + the per-card ADMIN / MOD pill is enough
 		// to tell the viewer which spaces they run vs are just in. The
-		// section eyebrows that used to live here read as a third
-		// heading layer saying the same thing — dropped.
+		// section eyebrows are omitted: they would read as a third heading layer saying the
+		// same thing.
 		?>
 
 		<?php if ( ! empty( $privileged_spaces ) ) : ?>

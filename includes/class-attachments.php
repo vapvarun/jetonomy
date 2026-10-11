@@ -30,10 +30,9 @@ class Attachments {
 		add_filter( 'jetonomy_after_post_content', array( $this, 'render_post' ), 20, 2 );
 		add_filter( 'jetonomy_after_reply_content', array( $this, 'render_reply' ), 20, 2 );
 
-		// The REST payload is FREE too. It used to be injected by Pro, which meant the
-		// mobile app saw no attachments at all on a free site — the data was there and
-		// simply never left the server. Pro enriches each item through
-		// `jetonomy_rest_attachment_data`, so a Pro site's payload is unchanged.
+		// The REST payload is FREE too, so the mobile app sees attachments on a free site.
+		// Pro enriches each item through `jetonomy_rest_attachment_data`; a Pro site's
+		// payload is unchanged.
 		add_filter( 'jetonomy_rest_prepare_post', array( $this, 'inject_post_payload' ), 10, 2 );
 		add_filter( 'jetonomy_rest_prepare_reply', array( $this, 'inject_reply_payload' ), 10, 2 );
 	}

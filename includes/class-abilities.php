@@ -1214,15 +1214,9 @@ class Abilities {
 		 * Leave type empty when the caller did not set one and let
 		 * Post::create() derive it from the space.
 		 *
-		 * This used to carry its own two-branch map - qa => question, and
-		 * everything else => topic - which is a partial copy of
-		 * \Jetonomy\compose_post_type(). It therefore got `feed` and `ideas`
-		 * spaces wrong, writing `topic` for both, while the REST path wrote the
-		 * correct `status` and `idea`. An agent creating a post produced
-		 * different data than a person creating the same post, and a Q&A-adjacent
-		 * space lost the structured-data type Schema_Markup keys off.
-		 *
-		 * One map, in one place. Do not re-add a local branch here.
+		 * The type map lives in \Jetonomy\compose_post_type() so an agent creating a post
+		 * writes the same data as a person (including the structured-data type
+		 * Schema_Markup keys off). Do not re-add a local branch here.
 		 */
 		$type = sanitize_text_field( $input['type'] ?? '' );
 
@@ -1268,6 +1262,15 @@ class Abilities {
 
 		// Post::create() already counted a published post on the author's profile.
 		Subscription::subscribe( $user_id, 'post', $post_id );
+		/**
+		 * Fires after a post is created through the Abilities API.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int  $post_id  New post ID.
+		 * @param int  $space_id Space ID.
+		 * @param null $extra    Always null for Abilities API requests.
+		 */
 		do_action( 'jetonomy_after_create_post', $post_id, $space_id, null );
 		if ( $screened['flag'] ) {
 			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'post', (int) $post_id );
@@ -1382,6 +1385,15 @@ class Abilities {
 		// 3rd arg is null — Abilities API execute callbacks have no WP_REST_Request,
 		// mirroring the post-create hook's null request arg a few lines up in
 		// execute_create_post().
+		/**
+		 * Fires after a reply is created through the Abilities API.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int  $reply_id New reply ID.
+		 * @param int  $post_id  Parent post ID.
+		 * @param null $extra    Always null for Abilities API requests.
+		 */
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
 		if ( $screened['flag'] ) {
 			\Jetonomy\Moderation\Moderation_Service::auto_flag( 'reply', (int) $reply_id );
@@ -1449,6 +1461,16 @@ class Abilities {
 		$user_vote = Vote::get_user_vote( $user_id, $object_type, $object_id );
 
 		// 4th arg = the resulting vote value so the Notifier can skip downvotes.
+		/**
+		 * Fires after a vote is cast or changed.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $object_type Voted object type: 'post' or 'reply'.
+		 * @param int    $object_id   Voted object ID.
+		 * @param int    $user_id     Voting user ID.
+		 * @param int    $value       Vote value: 1, -1 or 0 when cleared.
+		 */
 		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id, (int) $user_vote );
 
 		return array(
@@ -1536,15 +1558,9 @@ class Abilities {
 		}
 
 		/*
-		 * Delegate to the one join authority rather than re-deciding here.
-		 *
-		 * This branch used to test only `visibility === 'private'` and call
-		 * SpaceMember::add() for everything else, which let a subscriber join a
-		 * HIDDEN or INVITE-ONLY space and read every post in it, while REST
-		 * refused the identical request. It also called
-		 * Models\JoinRequest::create(), which does not exist - the model method
-		 * is create_request() - so the one case it did try to gate fataled
-		 * instead of gating.
+		 * SpaceMember::join() is the one join authority, so the Abilities path
+		 * admits exactly what REST admits: open spaces join, approval spaces
+		 * file a request, invite-only and hidden spaces refuse.
 		 */
 		$result = SpaceMember::join( $space_id, $user_id );
 		if ( is_wp_error( $result ) ) {
@@ -1790,14 +1806,10 @@ class Abilities {
 	}
 
 	private function check_permission_or_public( string $action, int $space_id ): bool {
-		// One authority, no local restatement. This used to short-circuit true
-		// whenever the space's own `visibility` was `public`, which is the read
-		// rule written out a second time - and it was the OLD rule: a public
-		// space inside a `hidden` category passed the short-circuit and never
-		// reached the engine, so an agent calling list-spaces got a space the
-		// community listing withholds. Permission_Engine::can() already admits
-		// a guest (user 0) to a public space, so the guest branch was not
-		// buying anything either.
+		// One authority, no local restatement: the read rule lives in
+		// Permission_Engine::can(), which admits a guest (user 0) to a public space and
+		// honours a public space inside a `hidden` category, so list-spaces matches the
+		// community listing.
 		return Permission_Engine::can( get_current_user_id(), $action, $space_id );
 	}
 }

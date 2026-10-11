@@ -145,10 +145,9 @@ class Journey_Tests {
 	}
 
 	/**
-	 * Regression guard: Reply::delete (the direct/CLI/fixture delete path) must
-	 * reverse the reply_count increment that create() applied — mirroring the
-	 * REST path's update( status => trash ). Catches the counter-drift fixed in
-	 * the delete() method.
+	 * Guard: Reply::delete (the direct/CLI/fixture delete path) must reverse the
+	 * reply_count increment that create() applied, mirroring the REST path's
+	 * update( status => trash ).
 	 */
 	private function test_reply_count_consistency(): void {
 		$space_id = $this->discover_open_space();

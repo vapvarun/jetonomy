@@ -220,7 +220,7 @@ if ( '' !== $_extras_html ) {
 				<?php
 				// Two select dropdowns for the time — works consistently on every
 				// desktop browser (Firefox Desktop has no popup for <input type="time">,
-				// which previously blocked scheduling on Firefox). Mobile browsers
+				// which would block scheduling there). Mobile browsers
 				// render these as native scroll wheels. view.js combines them into
 				// the hidden published_at value before submit.
 				?>

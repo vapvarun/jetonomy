@@ -14,17 +14,13 @@ class Mentions {
 	/**
 	 * Regex matching an @mention, for BOTH linking and notifying.
 	 *
-	 * One pattern on purpose. There used to be two - a strict LINK_PATTERN and
-	 * a looser NOTIFY_PATTERN - and they disagreed, so a login containing a dot
-	 * was notified but rendered a link to the wrong user: `@john.smith`
-	 * notified `john.smith` while the link resolved `john` (Basecamp
-	 * 10212719567). Splitting them was meant to protect dotted logins, but only
-	 * half the pipeline learned about dots.
+	 * One pattern on purpose: separate link and notify patterns disagree, so a login
+	 * containing a dot is notified but links to the wrong user (`@john.smith` notifies
+	 * `john.smith` while the link resolves `john`).
 	 *
 	 * The lookbehind keeps an email address or a URL from reading as a mention -
-	 * `contact@example.com` and `tiktok.com/@someone` must match neither. The
-	 * old NOTIFY_PATTERN lacked it and fired a user lookup for every email in a
-	 * post.
+	 * `contact@example.com` and `tiktok.com/@someone` must match neither, and no user
+	 * lookup fires for every email in a post.
 	 *
 	 * Dots are allowed only BETWEEN segments, never trailing, so
 	 * "thanks @john.smith." captures `john.smith` rather than an unresolvable

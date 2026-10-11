@@ -2292,12 +2292,10 @@ const { state, actions } = store( 'jetonomy', {
             const postId = btnEl.dataset.postId;
             if ( ! postId ) return;
 
-            // One place that moves every part of the bookmarked state, because
-            // three separate blocks (optimistic apply, server reconcile, revert)
-            // each used to set the data attribute, the class and the title -
-            // and none of them set the accessible name or pressed state. The
-            // icon colour is the visual feedback; a screen-reader user got
-            // nothing, and the name stayed "Bookmark" after bookmarking.
+            // One place that moves every part of the bookmarked state (data attribute, class,
+            // title, accessible name and pressed state) for the optimistic apply, the server
+            // reconcile and the revert. The icon colour is the visual feedback; a screen-reader
+            // user needs the accessible name and pressed state to change too.
             const setBookmarked = ( on ) => {
                 on = !! on;
                 const label = on
@@ -3772,10 +3770,9 @@ const { state, actions } = store( 'jetonomy', {
                 // browser's timezone here — the scheduled time means "this time
                 // in the site's timezone", regardless of where the author is.
                 //
-                // Date AND time are both required. A missing time used to fall
-                // back to midnight, so "today, no time picked" was already in
-                // the past and went live at the next run. The server rejects
-                // a past or time-less schedule too; this only saves the trip.
+                // Date AND time are both required. A missing time would fall back to midnight, so
+                // "today, no time picked" would already be in the past and go live at the next run.
+                // The server rejects a past or time-less schedule too; this only saves the trip.
                 if ( dateVal && timeVal ) {
                     publishedAt = dateVal + 'T' + timeVal + ':00';
                 }
@@ -3839,7 +3836,7 @@ const { state, actions } = store( 'jetonomy', {
             // ── Request ───────────────────────────────────────────────────────
             // restFetch (1.4.3) wraps fetch, refreshes nonce on 403, and
             // normalises the response into { ok, status, data }. Using it here
-            // means a stale nonce no longer eats the post silently.
+            // means a stale nonce does not eat the post silently.
             if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
                 writeError( state.i18n?.failedSave || 'Failed to save.' );
                 setIdle();
@@ -4209,7 +4206,7 @@ const { state, actions } = store( 'jetonomy', {
                 requireTitle,
                 collectTags:     false,
                 collectPrefix:   false,
-                collectPrivate:  true, // regression #9886339472 — embed must respect private flag.
+                collectPrivate:  true, // embed must respect private flag.
                 collectSchedule: false,
                 collectCaptcha:  true, // posts endpoint verifies for low-trust users (#9977126420).
                 bodySource:      'textarea',
@@ -4219,9 +4216,7 @@ const { state, actions } = store( 'jetonomy', {
     },
 
     callbacks: {
-        // (Notification polling lives in header.js — the old
-        // startPolling/pollNotifications chain here had no data-wp-init
-        // consumer and was removed in 1.5.0; audit C.)
+        // (Notification polling lives in header.js.)
 
         // On mobile, the profile tabs row is horizontally scrollable to fit
         // all five tabs. When the viewer lands on a sub-page whose tab sits

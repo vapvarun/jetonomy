@@ -1,6 +1,6 @@
 <?php
 /**
- * One-time remediation for `content_plain` values derived by the old bare strip.
+ * One-time remediation for `content_plain` values produced by a bare tag strip.
  *
  * @package Jetonomy
  */

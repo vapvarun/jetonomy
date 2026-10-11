@@ -326,8 +326,8 @@ class Schema {
 ) ENGINE=InnoDB $charset_collate;";
 
 		// Tables 13-15 (jt_space_tags, jt_space_tag_map, jt_user_interests)
-		// were removed in 1.5.0 — they never gained a writer or any UX/REST
-		// surface (audit A5). Migration_1_5_0 drops them on upgrade.
+		// // are intentionally absent: they never gained a writer or any UX/REST surface.
+		// // Migration_1_5_0 drops them on upgrade.
 
 		// 13. jt_activity_log
 		$sqls[] = "CREATE TABLE {$p}jt_activity_log (

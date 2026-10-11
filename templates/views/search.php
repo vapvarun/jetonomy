@@ -74,13 +74,10 @@ $tags   = array();
 
 // Has the viewer asked for ANYTHING - a keyword, or a filter on its own?
 //
-// Everything below used to be gated on a keyword alone, so the filters were
-// unreachable until you had already searched, and a filter-only URL
-// (?author_name=aisha, the kind you bookmark or share) rendered the empty
-// state. The REST route has always answered an author-only search - it returns
-// results for author_id with no q - so this was the web UI refusing to do what
-// the API does, which is the three-entry-points rule failing on the surface
-// members actually use.
+// Filters are reachable before a search runs, and a filter-only URL
+// (?author_name=aisha, the kind you bookmark or share) renders results rather than the
+// empty state. The REST route answers an author-only search - it returns results for
+// author_id with no q - so the web UI does the same (the three-entry-points rule).
 $jt_has_filters = ( $date_from || $date_to || $author_id || '' !== $author_name || $tag_slug || 'relevance' !== $sort );
 $jt_has_query   = ( '' !== $q && strlen( $q ) >= 2 );
 $jt_searching   = ( $jt_has_query || $jt_has_filters );
@@ -168,12 +165,9 @@ $crumbs = array(
 			/*
 			 * Filters render whether or not a search has run.
 			 *
-			 * They used to live inside the results branch, so the only way to reach
-			 * them was to search for a keyword first - and a filter-only search
-			 * (every post by one author) was therefore impossible from the UI even
-			 * though the REST route has always supported it. Exposing them on the
-			 * landing page is what makes that capability reachable; the accordion
-			 * stays collapsed until used, so the empty page is not busier.
+			 * They live outside the results branch so a filter-only search (every post by one
+			 * author) is reachable from the UI, as it is from the REST route. The accordion stays
+			 * collapsed until used, so the empty page is not busier.
 			 */
 			?>
 				<!-- Advanced filters -->
@@ -249,6 +243,17 @@ $crumbs = array(
 				</div>
 
 
+				<?php
+				/**
+				 * Fires below the search filter bar, so extensions can add their own filters.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param string $q      Search query.
+				 * @param string $filter Active result-type filter.
+				 * @param array  $args   Active date, author, tag and sort filters.
+				 */
+				?>
 				<?php do_action( 'jetonomy_search_filters', $q, $filter, compact( 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' ) ); ?>
 
 				<?php if ( 0 === $total ) : ?>

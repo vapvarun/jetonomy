@@ -52,8 +52,7 @@ final class Jetonomy {
 		// boot — not in the API classes — because those only load on
 		// rest_api_init, and the writes being tracked (a wp-admin profile
 		// save, a role change) happen on requests where they never load.
-		// Before this, only the GDPR erase path busted the key, so a
-		// display-name change stayed stale in every REST-rendered author
+		// Without this, a display-name change stays stale in every REST-rendered author
 		// block for up to 300s.
 		$bust_user_row = static function ( $user_id ): void {
 			Cache::delete( 'user:' . (int) $user_id );
@@ -344,16 +343,10 @@ final class Jetonomy {
 	/**
 	 * One-time seed for Settings → General → front-end space creation.
 	 *
-	 * The front-end gate used to OR in `jetonomy_create_spaces`, a cap author
-	 * and up hold cumulatively, so the role allow-list was decorative — it
-	 * could only ever restrict subscribers and contributors (Basecamp
-	 * 10118734782). Now that the allow-list is authoritative, an install that
-	 * never touched the setting would silently LOSE front-end space creation
-	 * for its authors and editors on upgrade.
-	 *
-	 * So: seed the list with the roles that hold the cap today. Effective
-	 * permissions are unchanged, and for the first time the admin screen shows
-	 * the truth — with every box now actually unticking.
+	 * The front-end gate reads only the role allow-list, so an install that never
+	 * touched the setting would lose front-end space creation for its authors and
+	 * editors. Seed the list with the roles that hold the cap today: effective
+	 * permissions stay the same and the admin screen shows the truth.
 	 *
 	 * Only seeds when the key is ABSENT. An admin who already configured the
 	 * setting (including deliberately ticking nothing) keeps their choice.
@@ -471,13 +464,11 @@ final class Jetonomy {
 		$current = get_option( 'jetonomy_db_version', '0.0.0' );
 
 		if ( version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
-			// Concurrency guard: after an update, every
-			// in-flight request reads the old version and enters this block.
-			// MySQL serialises the ALTERs so the losers used to pile up on the
-			// table metadata lock instead of serving pages. First requester
-			// takes the lock and migrates; everyone else serves on the old
-			// (still valid) schema and re-checks next request. The transient
-			// self-expires so a fatal mid-migration can't wedge the site.
+			// Concurrency guard: in-flight requests after an update all enter this block, and
+			// MySQL serialises the ALTERs, so losers would block on the table metadata lock.
+			// First requester takes the lock and migrates; everyone else serves on the old
+			// (still valid) schema and re-checks next request. The transient self-expires so
+			// a fatal mid-migration can't wedge the site.
 			$lock = 'jetonomy_migration_lock';
 			if ( get_transient( $lock ) ) {
 				return;
@@ -517,12 +508,8 @@ final class Jetonomy {
 	 * actually absent — so the steady-state cost is a single option read.
 	 *
 	 * The sentinel is EVERY table the schema defines, compared in one SHOW TABLES
-	 * query. It used to be the single hard-coded name jt_attachments, which made
-	 * the repair blind to any table added afterwards — and that is exactly how
-	 * 2.0.0 shipped a jt_import_map that no upgraded site ever got: the version
-	 * constant was not bumped, so the migration block never ran, and this repair
-	 * was only ever looking at jt_attachments. Naming the tables individually is
-	 * how the next new table repeats it.
+	 * query, so a table added later is repaired too even when the version constant was
+	 * not bumped and the migration block never ran.
 	 *
 	 * jt_attachments keeps its special case: it is owned by a DATA migration (the
 	 * renamed jt_pro_attachments), so a plain create_tables() would make an empty

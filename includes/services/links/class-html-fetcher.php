@@ -33,6 +33,15 @@ final class HTML_Fetcher {
 	 * @return array{body:string,final_url:string,status:int,content_type:string}|\WP_Error
 	 */
 	public function fetch( string $url ) {
+		/**
+		 * Filters the User-Agent sent when fetching a page for a link preview.
+		 *
+		 * @since 1.3.6
+		 *
+		 * @param string $user_agent User-Agent string.
+		 * @param string $url        URL being fetched.
+		 * @return string User-Agent string.
+		 */
 		$ua = apply_filters( 'jetonomy_link_preview_user_agent', self::USER_AGENT, $url );
 
 		// Follow redirects MANUALLY (redirection => 0) so the SSRF guard runs on

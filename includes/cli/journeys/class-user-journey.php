@@ -214,11 +214,9 @@ final class User_Journey {
 		/*
 		 * display_name lives on wp_users, not on the profile row.
 		 *
-		 * It used to be written to jt_user_profiles.display_name, which no
-		 * byline had read since the identity consolidation - so
-		 * `wp jetonomy user update-profile 42 --display-name="Alice"` reported
-		 * success and changed nothing anyone could see. Routing it to
-		 * wp_update_user() makes the flag do what its name says.
+		 * It is routed to wp_update_user(), not jt_user_profiles.display_name, which no byline
+		 * reads - so `wp jetonomy user update-profile 42 --display-name="Alice"` changes what
+		 * everyone sees.
 		 */
 		$updated = array_keys( $patch );
 		if ( array_key_exists( 'display_name', $patch ) ) {
@@ -341,8 +339,7 @@ final class User_Journey {
 		foreach ( (array) $rows as $row ) {
 			$items[] = array(
 				'user_id'      => (int) $row->user_id,
-				// Resolved from wp_users, the single source, rather than the
-				// profile copy that used to sit unread beside it.
+				// Resolved from wp_users, the single source, not the profile copy.
 				'display_name' => \Jetonomy\user_display_name( get_userdata( (int) $row->user_id ) ),
 				'trust_level'  => (int) ( $row->trust_level ?? 0 ),
 				'last_seen_at' => (string) ( $row->last_seen_at ?? '' ),

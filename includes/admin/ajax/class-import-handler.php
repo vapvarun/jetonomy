@@ -14,11 +14,8 @@ use Jetonomy\Import\Import_Manager;
 class Import_Handler {
 
 	public function __construct() {
-		// Batched import is the only client flow; the legacy single-shot
-		// run_import and progress-poll actions had no JS caller anywhere
-		// (the "kept for CLI" claim was wrong — CLI calls
-		// Import_Manager::run() directly) and were removed in 1.5.0
-		// (audit C).
+		// Batched import is the only client flow; the CLI calls Import_Manager::run()
+		// directly.
 		add_action( 'wp_ajax_jetonomy_import_batch', array( $this, 'ajax_import_batch' ) );
 	}
 
@@ -164,13 +161,8 @@ class Import_Handler {
 				'rethreaded'   => $tally['rethreaded'],
 				'orphans'      => $tally['orphans'],
 				'skipped'      => $skipped_files,
-				// Carry the sample into the durable record, not just the count.
-				// It used to be accumulated across every batch and then thrown away
-				// by the delete_option() below, so the only trace a file was skipped
-				// was a number in a notice the page reloaded away three seconds
-				// later. "27 files skipped" with no way to learn WHICH is not a
-				// report; the owner cannot act on it, and after a re-import they
-				// cannot even tell whether it got better.
+				// Carry the sample into the durable record, not just the count, so the owner can
+				// learn WHICH files were skipped and tell after a re-import whether it got better.
 				'errors'       => array_slice( (array) ( $import_errors['sample'] ?? array() ), 0, 50 ),
 				'source'       => $source,
 				'source_name'  => $importers[ $source ]->get_source_name(),
@@ -178,8 +170,7 @@ class Import_Handler {
 			update_option( 'jetonomy_import_history', $history, false );
 
 			// Clear transient state. Safe now: the count AND the sample are both in
-			// the history record above — previously this line was where the evidence
-			// died.
+			// the history record above.
 			delete_option( 'jetonomy_import_resume' );
 			delete_option( 'jetonomy_import_total_processed' );
 			delete_option( 'jetonomy_import_errors' );

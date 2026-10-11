@@ -136,9 +136,8 @@ class Votes_Controller extends Base_Controller {
 		$trust   = (int) ( $profile->trust_level ?? 0 );
 		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'vote', $trust ) ) {
 			// Rate_Limiter::message() names the allowance and the real wait.
-			// The old string said "Rate limit exceeded. Please try again
-			// later." to a member who had never been told a limit existed and
-			// could not tell whether "later" meant a minute or a day.
+			// A bare "Rate limit exceeded. Please try again later." would not tell a member
+			// whether "later" means a minute or a day.
 			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'vote', $trust ) );
 		}
 

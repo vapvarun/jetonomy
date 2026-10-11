@@ -61,13 +61,10 @@ class WPForo_Importer extends Importer {
 	}
 
 	/**
-	 * NOTE on the table names below: these were `"{$p}posts"`, which resolves to
-	 * `wp_posts` — the WordPress core posts table, not `wp_wpforo_posts`. The
-	 * `wpforo_` prefix was missing, so the importer counted every WP post, page,
-	 * revision and media attachment on the site as if it were a forum post. The
-	 * progress bar divides by this number, so on a real site the percentage was
-	 * nonsense (and on a site with no forum content at all it still reported
-	 * thousands of rows to import).
+	 * NOTE on the table names below: they carry the `wpforo_` prefix. A bare
+	 * `"{$p}posts"` resolves to `wp_posts`, the WordPress core posts table, and would count
+	 * every WP post, page, revision and media attachment as a forum post - the progress bar
+	 * divides by this number, so the percentage would be nonsense.
 	 */
 	public function get_source_stats(): array {
 		global $wpdb;
@@ -117,9 +114,9 @@ class WPForo_Importer extends Importer {
 	/**
 	 * Import one batch of one phase.
 	 *
-	 * This used to call run() — the entire import, every board — inside a single
-	 * AJAX request, so any forum with real content hit max_execution_time and died
-	 * with no partial-progress recovery. Same defect the Asgaros importer carried.
+	 * Phases page through the source tables so a forum with real content never hits
+	 * max_execution_time in one request, with partial-progress recovery (as in the
+	 * Asgaros importer).
 	 *
 	 * wpForo is MULTI-BOARD: each board has its own table prefix (wpforo_,
 	 * wpforo1_, wpforo2_...). The phase machine therefore walks boards as an outer
@@ -527,9 +524,9 @@ class WPForo_Importer extends Importer {
 		$forums = $wpdb->get_results( "SELECT * FROM {$p}forums ORDER BY `order` ASC" );
 
 		// wpForo NESTS forums (its categories are just forums with children), and
-		// this loop used to ignore `parentid` entirely — every sub-forum landed as a
-		// top-level space and the whole board structure was flattened on import.
-		// Walk parents before children so a child can resolve its parent's new id.
+		// this loop honours `parentid` so a sub-forum is created under its parent space and
+		// the board structure survives import. Walk parents before children so a child can
+		// resolve its parent's new id.
 		$forums = $this->sort_rows_parents_first( (array) $forums, 'forumid', 'parentid' );
 
 		$fingerprints = array();
@@ -541,7 +538,7 @@ class WPForo_Importer extends Importer {
 
 		foreach ( $forums as $forum ) {
 			// Imported by an earlier run: map it so new topics under it import.
-			// Re-creating it used to fail on the slug and silently strand every
+			// Re-creating it would fail on the slug and silently strand every
 			// new topic in the forum.
 			$sid = $this->sid( $forum->forumid );
 			if ( isset( $existing[ $sid ] ) ) {
@@ -628,6 +625,14 @@ class WPForo_Importer extends Importer {
 		if ( ! empty( $forum->groups_can_view ) ) {
 			$groups = maybe_unserialize( $forum->groups_can_view );
 			if ( is_array( $groups ) ) {
+				/**
+				 * Filters the wpForo user group ID treated as guests when mapping forum access.
+				 *
+				 * @since 1.5.0
+				 *
+				 * @param int $group_id wpForo guest group ID. Default 4.
+				 * @return int Guest group ID.
+				 */
 				$guest_group = (int) apply_filters( 'jetonomy_import_wpforo_guest_group', 4 );
 				$restricted  = ! in_array( $guest_group, array_map( 'intval', $groups ), true );
 			}

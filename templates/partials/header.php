@@ -62,6 +62,13 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 					<span class="jt-nav-label"><?php esc_html_e( 'Moderation', 'jetonomy' ); ?></span>
 				</a>
 			<?php endif; ?>
+			<?php
+			/**
+			 * Fires at the end of the community header navigation, so extensions can add nav items.
+			 *
+			 * @since 1.0.0
+			 */
+			?>
 			<?php do_action( 'jetonomy_header_nav_items' ); ?>
 		</div>
 

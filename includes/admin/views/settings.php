@@ -22,6 +22,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	<hr class="wp-header-end">
 	<?php
 	ob_start();
+	/**
+	 * Fires while the settings tab bar renders, so extensions can print additional tab links.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $active_tab Slug of the active settings tab.
+	 */
 	do_action( 'jetonomy_admin_settings_tabs', $active_tab );
 	$advanced_tabs_html = ob_get_clean();
 
@@ -31,6 +38,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	$jt_ext_notices  = '';
 	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) && 'license' !== $active_tab ) {
 		ob_start();
+		/**
+		 * Fires to render the content of the active settings tab, for core tabs and extension tabs alike.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $active_tab Slug of the active settings tab.
+		 */
 		do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
 		$jt_ext_raw = ob_get_clean();
 		if ( $jt_ext_raw ) {
@@ -1511,6 +1525,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Jetonomy Pro License', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Activate or manage your license key to unlock Pro extensions.', 'jetonomy' ); ?></p>
 				</div>
+				<?php
+				/**
+				 * Fires inside the license card on the License settings tab, where Pro prints its license form.
+				 *
+				 * @since 1.0.0
+				 */
+				?>
 				<?php do_action( 'jetonomy_admin_license_tab_content' ); ?>
 			</div>
 

@@ -400,11 +400,9 @@ function now(): string {
 /**
  * The verb a space type uses for "create something here".
  *
- * Single source of truth for the compose label. The same four strings used to
- * be written out separately in the composer heading, the space CTA button, the
- * BuddyPress tab CTA and (type-blind, so wrong on three of the four types) the
- * browser tab title — a Q&A space offered "Ask a Question" on the page while
- * the tab said "Start a discussion".
+ * Single source of truth for the compose label, used by the composer heading,
+ * the space CTA button, the BuddyPress tab CTA and the browser tab title, so a
+ * Q&A space says "Ask a Question" everywhere.
  *
  * @param string $space_type Space type: qa, ideas, feed, or anything else (forum).
  * @return string
@@ -678,19 +676,17 @@ function user_handle( $user ): string {
  *
  * WordPress does not let a member author an arbitrary display name: wp-admin
  * offers a "Display name publicly as" select built from permutations of fields
- * they already own. Jetonomy's front-end editor used to be a free-text box that
- * wrote straight through to wp_users.display_name, which meant a member could
- * publish as "Administrator", could take another member's exact name, and could
- * silently overwrite a value the site owner had chosen in wp-admin - the stored
- * name then matched none of core's own options.
+ * they already own. The front-end editor offers the same set, so a member cannot
+ * publish as "Administrator", take another member's exact name, or store a name
+ * that matches none of core's own options.
  *
  * Shared by the form that renders the select and the endpoint that validates the
  * submission, so the two cannot disagree about what is allowed.
  *
  * The member's CURRENT display_name is always included, exactly as core does.
- * Sites upgrading from the free-text era have members whose stored name is not a
- * permutation of anything; excluding it would make simply saving the form fail,
- * or silently rename them. New arbitrary values still cannot be introduced.
+ * A stored name that is not a permutation of anything is kept; excluding it would
+ * make saving the form fail or silently rename the member. New arbitrary values
+ * still cannot be introduced.
  *
  * @param \WP_User $user User to build choices for.
  * @return string[] Unique, non-empty candidate names.
@@ -764,9 +760,9 @@ function name_display_mode(): string {
  * THE single source of truth for "what do we call this person on screen",
  * paired with get_profile_url() for "where does their name link to". Every
  * byline, member row, mention chip, moderation card AND the REST/CLI payloads
- * resolve through here (migration 1_9_4_1 routed the data surfaces in too), so
- * the site-wide member_name_display setting and the jetonomy_user_display_name
- * filter apply once, uniformly - web and app can no longer disagree.
+ * resolve through here, so the site-wide member_name_display setting and the
+ * jetonomy_user_display_name filter apply once, uniformly - web and app cannot
+ * disagree.
  *
  * Default chain is display_name -> user_nicename -> user_login. The fallbacks
  * matter: display_name can be empty on users created by an importer or a raw
@@ -971,9 +967,8 @@ function get_profile_url( int $user_id ): string {
  *
  * These live on Jetonomy's own community route, so they are built on the
  * UNFILTERED community_profile_url() and never break when a site routes member
- * profiles off-site via jetonomy_profile_url (Zoho #41491: the Notifications
- * Settings button used to land at <foreign-profile>/edit/#notification-preferences,
- * a page that does not exist).
+ * profiles off-site via jetonomy_profile_url (a foreign profile page has no
+ * /edit/ or notification-preferences screen).
  *
  * Each action is INDEPENDENTLY remappable via the jetonomy_profile_action_url
  * filter, so an integration (BuddyNext, BuddyPress, Ultimate Member) can later
@@ -1037,9 +1032,8 @@ function replies_per_page(): int {
  * THE single producer of reply deep links. Every surface that points at a
  * reply — notifications (web, REST, email), the profile's reply list, JSON-LD
  * accepted answers, the FluentCommunity profile block — routes through here.
- * They each used to concatenate their own '#reply-' . $id, which produced an
- * anchor for an element that (a) had no matching id in the DOM and (b) was
- * usually not on the rendered page at all, because the thread paginates.
+ * Callers must not build '#reply-' . $id themselves: that anchor targets an element
+ * that is usually not on the rendered page, because the thread paginates.
  *
  * Slugs are passed in rather than resolved here: most callers already hold
  * them from a JOIN, and re-querying Post + Space per link would put two
@@ -1169,9 +1163,8 @@ function notification_deep_link( string $object_type, int $object_id ): string {
  *
  * Single source of truth for the three surfaces that link a `join_request`
  * notification: the email (Notifier), the /notifications/ page, and the REST
- * bell dropdown. They used to build this URL independently — the first two
- * had copies of the same logic and the third had none at all, so the bell
- * resolved join requests to an empty URL and fell back to /notifications/
+ * bell dropdown. All three build the URL here, so the bell never resolves a join
+ * request to an empty URL.
  *
  * Recipient-dependent by necessity: wp-admin cap-holders get the Join
  * Requests tab, everyone else (space admins and moderators who own the space
@@ -1473,9 +1466,8 @@ function content_status_label( string $status ): string {
 /**
  * Human label for a space's stored `status` enum.
  *
- * The admin listing used to print ucfirst() of the raw enum, which is a
- * machine value — untranslatable, and wrong in any language that does not
- * capitalise the way English does.
+ * The raw enum is a machine value - untranslatable, and wrong in any language that
+ * does not capitalise like English - so the label is translated here.
  *
  * @param string $status Stored enum value.
  * @return string

@@ -665,8 +665,8 @@ class Model_Tests {
 
 		// MM3: a gate registered AFTER us still wins. This is the contract
 		// maintenance / membership / coming-soon plugins are written against,
-		// and the one the old render-and-exit broke. Priority 999999 is what
-		// the Maintenance plugin from the original report uses.
+		// and a render-and-exit router breaks it. Priority 999999 is what the Maintenance
+		// plugin uses.
 		$gate = static function () {
 			return '/dev/null/jetonomy-qa-gate.php';
 		};
@@ -697,8 +697,7 @@ class Model_Tests {
 		// SV1: a save from a tab that renders no template fields must not wipe
 		// the overrides. jetonomy_email_templates is registered in the same
 		// settings group as everything else, so options.php calls this
-		// sanitizer with nothing on EVERY tab's save - and it used to answer
-		// with an empty array.
+		// sanitizer with nothing on EVERY tab's save; answering with an empty array wipes them.
 		$templates_before = get_option( 'jetonomy_email_templates', array() );
 		update_option(
 			'jetonomy_email_templates',
@@ -722,9 +721,9 @@ class Model_Tests {
 		update_option( 'jetonomy_email_templates', $templates_before );
 
 		// SV3: the empty "no restriction" option must REMOVE who_can_post, not
-		// store a value. The admin JS used to coerce '' to 'members', which
-		// turned an open community into members-only whenever the owner touched
-		// any other field on that tab.
+		// store a value. The admin JS must not coerce '' to 'members', which would turn an
+		// open community into members-only whenever the owner touched any other field on
+		// that tab.
 		$spaces_t = table( 'spaces' );
 		$space_id = (int) $this->db_insert_probe_space( $spaces_t );
 		if ( $space_id > 0 ) {
@@ -859,14 +858,11 @@ class Model_Tests {
 	}
 
 	/**
-	 * 1.9.5 regression guards for the delete contract.
+	 * Guards for the delete contract.
 	 *
-	 * `jetonomy_after_delete_post` / `_reply` used to fire from the REST
-	 * controllers only. Two things were wrong with that. The controllers do not
-	 * hard-delete at all - they soft-trash via update( status => trash ) - so the
-	 * hook fired on a RESTORABLE post and Pro's attachments listener dropped its
-	 * link rows; and a genuine hard delete through the model fired nothing, so
-	 * those rows orphaned forever.
+	 * `jetonomy_after_delete_post` / `_reply` fire from the model, not the REST
+	 * controllers: they soft-trash via update( status => trash ), so a hook there would
+	 * fire on a RESTORABLE post, and a genuine hard delete would fire nothing.
 	 *
 	 * These assert the contract from the model's side, which is the side every
 	 * caller shares: CLI, journeys, abilities and REST alike.
@@ -1109,7 +1105,7 @@ class Model_Tests {
 			$a && (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_t} WHERE space_id = %d AND user_id = %d AND role = 'admin'", $sole, (int) $a->author_id ) ) > 0 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		);
 
-		// The regression guard.
+		// The guard assertion.
 		$this->check( 'ST4: space with a surviving admin is NOT archived', $b && 'archived' !== $b->status, $b->status ?? 'missing' );
 		$this->check( 'ST5: surviving admin inherits attribution', $b && (int) $b->author_id === (int) $co_admin, 'author_id=' . ( $b->author_id ?? '?' ) );
 
@@ -1353,15 +1349,12 @@ class Model_Tests {
 	/**
 	 * A child space is listed under the category it was assigned.
 	 *
-	 * The category listing used to carry `parent_id = 0`, so a space with a
-	 * parent had its `category_id` written, indexed and then ignored. Nothing
-	 * nested those children either, so an imported sub-forum was reachable
-	 * from nowhere in the directory - the shape two customers reported after
-	 * migrating.
+	 * The category listing must not filter on `parent_id = 0`: a space with a parent has
+	 * its `category_id` written and must still be listed, so an imported sub-forum is
+	 * reachable from the directory.
 	 *
-	 * The count is asserted alongside the list because they are separate
-	 * queries that carried the same clause: fixing one and not the other gives
-	 * pagination that disagrees with its own rows.
+	 * The count is asserted alongside the list because they are separate queries that
+	 * share one clause: the two must agree or pagination disagrees with its own rows.
 	 */
 	private function test_child_space_in_category_listing(): void {
 		global $wpdb;
@@ -1453,12 +1446,9 @@ class Model_Tests {
 	/**
 	 * The leaderboard ranks by reputation, and only real members hold a rank.
 	 *
-	 * Two defects sat in the same view. Rows were numbered by array index
-	 * while the "Your rank" badge used competition ranking, so tied members
-	 * were numbered 10 and 11 while both were told "#10". And a profile whose
-	 * WP user no longer existed was fetched, failed to render, and was dropped
-	 * AFTER spending its position - leaving a visible hole (... 17, 18, 20)
-	 * and shifting everyone below it.
+	 * Rows are numbered by competition ranking, as the "Your rank" badge is, so tied
+	 * members share a number. A profile whose WP user does not exist is excluded
+	 * BEFORE it spends a position, so there is no visible hole (... 17, 18, 20).
 	 */
 	private function test_leaderboard_ranking(): void {
 		$rows = UserProfile::list_for_leaderboard( 'all', 100, 0 );
@@ -1503,8 +1493,8 @@ class Model_Tests {
 		}
 		$this->check( 'LB3: competition rank agrees with reputation order (ties share)', $ok, $detail );
 
-		// LB4: ranks never skip except across a shared rank — the signature of
-		// the old hole. After N members share a rank, the next is rank+N.
+		// LB4: ranks never skip except across a shared rank. After N members share a rank,
+		// the next is rank+N.
 		$ranks    = array_map( static fn( $r ) => UserProfile::rank_for_user( (int) $r->user_id, 'all' ), array_values( $rows ) );
 		$holes    = 0;
 		$run_rank = null;
@@ -1573,12 +1563,10 @@ class Model_Tests {
 	/**
 	 * reply_count counts PUBLISHED replies, through every status path.
 	 *
-	 * Reply::create() used to increment unconditionally while the counter -
-	 * and Recount, which defines it - mean published only. update() already
-	 * applies its own +1/-1 when a reply crosses the publish boundary, so a
-	 * reply that did not start published was counted twice: held for approval
-	 * gave counter 1 against 0 published, and approving it gave 2 against 1.
-	 * Every moderated reply permanently inflated its thread by one.
+	 * Reply::create() increments only for a published reply, as Recount defines the
+	 * counter; update() applies its own +1/-1 when a reply crosses the publish boundary.
+	 * An unconditional increment would count a held reply twice (1 against 0 published,
+	 * then 2 against 1), inflating the thread by one per moderated reply.
 	 */
 	private function test_reply_count_moderation(): void {
 		global $wpdb;
@@ -1779,8 +1767,8 @@ class Model_Tests {
 
 		$ours_old   = $make( 'QA media ours old', array( \Jetonomy\Media_Library::META_ORIGIN => 'upload' ), 5 );
 		$ours_fresh = $make( 'QA media ours fresh', array( \Jetonomy\Media_Library::META_ORIGIN => 'upload' ), 0 );
-		// Flagged by the backfill but NOT recorded as ours - i.e. somebody
-		// else's file. The shape the old sweep destroyed.
+		// Flagged by the backfill but NOT recorded as ours - i.e. somebody else's file,
+		// which the sweep must leave alone.
 		$foreign = $make( 'QA media foreign', array( \Jetonomy\Media_Library::META_FLAG => '1' ), 30 );
 
 		/*
@@ -2056,9 +2044,9 @@ class Model_Tests {
 			$this->check( 'CH10: a public sub-category under a hidden parent is not resolvable by a guest', null === Category::find_by_slug( $child_slug ) );
 			wp_set_current_user( $previous );
 
-			// CH11: the migration keeps an orphan's child grouped under it. The
-			// child gets the LOWER id so it is processed before its parent - the
-			// order that used to flatten it to top level.
+			// CH11: the migration keeps an orphan's child grouped under it. The child gets the
+			// LOWER id so it is processed before its parent, which keeps it from being
+			// flattened to top level.
 			$wpdb->insert( $table, array( 'name' => 'QA CH Orphan kid', 'slug' => 'jt-qa-ch-orphankid-' . $suffix, 'parent_id' => 0, 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$orphan_kid = (int) $wpdb->insert_id;
 			$wpdb->insert( $table, array( 'name' => 'QA CH Orphan', 'slug' => 'jt-qa-ch-orphan-' . $suffix, 'parent_id' => PHP_INT_MAX, 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -2383,11 +2371,9 @@ class Model_Tests {
 	/**
 	 * jt_categories.space_count survives a space being moved or archived.
 	 *
-	 * Only create() incremented it and only purge decremented it, so a space
-	 * moved between categories left the old count too high and the new one too
-	 * low, and archiving never decremented at all - while Recount counts active
-	 * spaces only. `wp jetonomy recount` repaired it and the next move broke it
-	 * again, which is the signature of a missing write-path adjustment.
+	 * Create, purge, move and archive all adjust it, because Recount counts active
+	 * spaces only; a missing write-path adjustment shows as `wp jetonomy recount`
+	 * repairing the count and the next move breaking it again.
 	 *
 	 * Asserted as "stored equals actual" after each transition rather than by
 	 * expected numbers, so the test stays true whatever the fixture holds.
@@ -2454,15 +2440,13 @@ class Model_Tests {
 	/**
 	 * An importer can recognise its OWN rows, and only its own.
 	 *
-	 * This is the mechanism that replaced slug matching, and the reason matters
-	 * more than the mechanics: a bbPress forum called "general" matches an
-	 * owner's own existing "general" space, so a slug-based re-run adopted it
-	 * and poured the source forum's topics into the owner's space - skipping
-	 * the visibility mapping on the way, so private content could land in a
-	 * public space.
+	 * Importers recognise their own rows by identity, not by slug: a bbPress forum called
+	 * "general" matches an owner's own existing "general" space, so slug matching would
+	 * adopt it and pour the source forum's topics into it, skipping the visibility
+	 * mapping so private content could land in a public space.
 	 *
-	 * IM4 is the one that would catch a regression to slug matching: identity
-	 * must not be shared with a row this importer never created.
+	 * IM4 catches a fallback to slug matching: identity must not be shared with a
+	 * row this importer never created.
 	 */
 	private function test_import_map(): void {
 		global $wpdb;
@@ -2623,12 +2607,10 @@ class Model_Tests {
 	/**
 	 * Record a check that could NOT run.
 	 *
-	 * A skip used to be logged as `check( '... (skipped)', true )`, which made
-	 * it indistinguishable from a real assertion in the totals. On a box where
-	 * fixtures fail to build, dozens of those turn into "passes" and the suite
-	 * reports green while proving nothing - the failure mode this whole audit
-	 * exists to remove. Skips are counted separately and never inflate the
-	 * pass count.
+	 * Skips are counted separately and never inflate the pass count: logged as
+	 * `check( '... (skipped)', true )` they would be indistinguishable from real
+	 * assertions, and a box where fixtures fail to build would report green while
+	 * proving nothing.
 	 *
 	 * @param string $label  What did not run.
 	 * @param string $reason Why not.
@@ -2659,12 +2641,10 @@ class Model_Tests {
 	/**
 	 * The 2.0.0 counter backfill repairs a bounded slice, and no more than it.
 	 *
-	 * BF1 is the regression guard that matters. The range is half-open -
-	 * [from, until) - and the first slice therefore starts AT the cursor rather
-	 * than after it. An exclusive lower bound looks equivalent and is not: with
-	 * the cursor starting at 0 it skipped key 0 entirely, which on this schema
-	 * left a user_profiles row at user_id 0 carrying its drift forever. BF1
-	 * fails on that earlier bound.
+	 * BF1 is the guard that matters. The range is half-open - [from, until) - so the
+	 * first slice starts AT the cursor: an exclusive lower bound skips key 0 when the
+	 * cursor starts at 0, leaving a user_profiles row at user_id 0 carrying its drift
+	 * forever. BF1 fails on that bound.
 	 *
 	 * BF2 is the other half of the same contract: a slice must not reach past
 	 * its own span, or the cursor stops meaning anything and a resumed job

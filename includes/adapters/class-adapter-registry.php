@@ -70,12 +70,9 @@ class Adapter_Registry {
 	/**
 	 * Map every level id an active adapter exposes to that adapter's id.
 	 *
-	 * Asking the adapters which ids they own replaces the hardcoded prefix
-	 * table this used to rely on. That table silently went stale every time an
-	 * adapter shipped without someone remembering to add its prefix — WP Fusion
-	 * and SureMembers both landed after it was written, so their rules rendered
-	 * as raw `wpfusion_123` / `suremembers_5` on the Access Rules screen
-	 * A registry lookup cannot drift that way.
+	 * Asking the adapters which ids they own, instead of a hardcoded prefix table, means a
+	 * new adapter (WP Fusion, SureMembers, ...) never renders as a raw `wpfusion_123` /
+	 * `suremembers_5` on the Access Rules screen. A registry lookup cannot drift.
 	 *
 	 * `wp-roles` is skipped: its ids are bare role slugs with no prefix, it is
 	 * excluded from the membership picker, and a `membership` rule should never
@@ -225,9 +222,9 @@ class Adapter_Registry {
 	/**
 	 * The search adapter in use: the one the site names on
 	 * `jetonomy_search_adapter`, else any active adapter a plugin registered,
-	 * else the built-in 'fulltext' one. Registration order no longer decides:
-	 * the built-in adapter registers first, so a Meilisearch or Elasticsearch
-	 * adapter used to be shadowed by it.
+	 * else the built-in 'fulltext' one. Registration order does not decide: the built-in
+	 * adapter registers first, so a Meilisearch or Elasticsearch adapter would otherwise
+	 * be shadowed by it.
 	 */
 	public static function get_search(): ?Search_Adapter {
 		/**

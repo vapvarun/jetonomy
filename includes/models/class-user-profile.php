@@ -330,11 +330,10 @@ class UserProfile extends Model {
 		global $wpdb;
 
 		/*
-		 * A profile whose WP user is gone is not a member, and must not occupy
-		 * a rank. It used to: the row was fetched, the view could not render it
-		 * (no user to name or link), and `continue` dropped it AFTER its
-		 * position had been spent — so the board counted ... 17, 18, 20. Every
-		 * member below the hole was silently shifted by one.
+		 * A profile whose WP user is gone is not a member, and must not occupy a rank:
+		 * the view cannot render it (no user to name or link), so dropping it after its
+		 * position was spent would leave a hole (... 17, 18, 20) and shift every member
+		 * below it.
 		 *
 		 * Excluded here rather than in the view because this helper is the one
 		 * chokepoint the page query, the total and rank_for_user() all share.
@@ -373,11 +372,10 @@ class UserProfile extends Model {
 	/**
 	 * Count profiles eligible for the leaderboard in a given period.
 	 *
-	 * Single source of truth for the leaderboard total, used to compute
-	 * accurate pagination on both the server-rendered view and the REST
-	 * response. Replaces the per-surface `count( $rows ) >= $per_page`
-	 * heuristic that rendered a phantom "Load More" when the total was an
-	 * exact multiple of the page size.
+	 * Single source of truth for the leaderboard total, used to compute accurate
+	 * pagination on both the server-rendered view and the REST response; a
+	 * `count( $rows ) >= $per_page` heuristic shows a phantom "Load More" when the
+	 * total is an exact multiple of the page size.
 	 *
 	 * @param string $period One of 'week', 'month', or 'all'.
 	 * @return int Total profile count for the period.

@@ -190,10 +190,10 @@ class Subscription extends Model {
 	 * notified on for it: 'both' | 'web' | 'email' | 'none'.
 	 *
 	 * Single source for the My Subscriptions badge and GET /subscriptions.
-	 * It used to echo jt_subscriptions.notify_via, a value written once at
-	 * follow time (always 'both') that the notifier never reads - so a member
-	 * who had turned email off, or whose site defaults email off for new
-	 * posts in followed spaces, was told "Web + Email" while no mail was sent.
+	 * It does not echo jt_subscriptions.notify_via: that value is written once at follow
+	 * time (always 'both') and the notifier never reads it, so a member who turned email
+	 * off, or whose site defaults email off for followed spaces, would be told "Web +
+	 * Email" while no mail is sent.
 	 *
 	 * Batched: every item belongs to one user and there are only two
 	 * notification types, so the preference read happens once per type

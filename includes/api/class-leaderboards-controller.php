@@ -96,9 +96,8 @@ class Leaderboards_Controller extends Base_Controller {
 		// jetonomy_leaderboard_items enrichment filter below runs on every
 		// response, cached or not, so host-plugin rows never freeze.
 		$lb_cacheable = ! has_filter( 'jetonomy_users_query_args' );
-		// "v2" since the board dropped reputation <= 0 (2.0.1): TTL-only keys
-		// have no bust path, so a new key is how an upgraded site stops
-		// serving the old population's page and total.
+		// "v2" key: the board excludes reputation <= 0, and TTL-only keys have no bust path,
+		// so bumping the key is how an upgraded site stops serving a stale page and total.
 		$lb_cache_key = "lb:v2:{$period}:{$limit}:{$offset}";
 		if ( $lb_cacheable ) {
 			$cached = \Jetonomy\Cache::get( $lb_cache_key );
@@ -118,8 +117,7 @@ class Leaderboards_Controller extends Base_Controller {
 
 		// Total + page slice come from the shared model methods so this endpoint
 		// and the server-rendered leaderboard view stay in lockstep on both the
-		// population (period filter) and the ordering. The period filter was
-		// previously echoed back but never applied; the model now owns it.
+		// population (period filter) and the ordering. The model owns the period filter.
 		// Deliberately NOT block-filtered — a ranking, not a content feed. See
 		// UserProfile::list_for_leaderboard().
 		$total   = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
@@ -156,10 +154,7 @@ class Leaderboards_Controller extends Base_Controller {
 
 		// COMPETITION ranks, from the one place that defines them, so this
 		// endpoint cannot contradict the web board or the "Your rank #N" badge.
-		// It used to number rows positionally with its own counter, so two
-		// members tied on reputation were returned as 2 and 3 while the web
-		// showed 2 and 2 - the app disagreeing with the browser about the same
-		// member.
+		// Tied members share a rank (2 and 2, not 2 and 3), matching the web board.
 		$ranks = \Jetonomy\Models\UserProfile::competition_ranks( $leaders, $period, $offset );
 
 		$items = array();

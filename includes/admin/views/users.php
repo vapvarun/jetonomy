@@ -15,10 +15,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-// Read from Trust_Levels, never a local copy. This screen used to carry its own
-// list (New / Basic / Member / Regular / Leader / Elder) which sat a full level
-// off the names the promotion email and Permissions tab used, so a member
-// promoted to level 2 was emailed "Regular" and listed here as "Member"
+// Read from Trust_Levels, never a local copy, so the labels match the promotion
+// email and the Permissions tab.
 $trust_labels = array();
 for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 	$trust_labels[ $jt_tl ] = \Jetonomy\Trust\Trust_Levels::label( $jt_tl );
@@ -53,12 +51,8 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 				printf(
 					/* translators: 1: name of the highest trust level, 2: link to the full guide */
 					esc_html__( 'A Subscriber can be a Level 5 %1$s and a space admin: community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
-					// Read from $trust_labels for the same reason the rest of
-					// this screen does: the sentence used to hardcode "Elder",
-					// a name level 5 has not carried since the ladder was
-					// renamed, so the one surface that had just been fixed to
-					// stop keeping a local copy still shipped one in its own
-					// explainer.
+					// Read from $trust_labels for the same reason the rest of this screen does: the
+					// sentence must never hardcode a level name such as "Elder" that can be renamed.
 					$trust_labels[5],
 					// Directory, not the deep link to 08-users-roles-and-trust.md.
 					// `blob/HEAD` resolves against the DEFAULT branch, and that
@@ -110,9 +104,8 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 					'primary' => true,
 				),
 				'display-name' => array( 'label' => __( 'Display Name', 'jetonomy' ) ),
-				// Widths snap to the shared xs/s/m/l scale rather than the inline
-				// px this table used to carry; the scale drops to auto below
-				// 782px, which a hardcoded width does not.
+				// Widths snap to the shared xs/s/m/l scale rather than inline px; the scale
+				// drops to auto below 782px, which a hardcoded width does not.
 				'trust'        => array(
 					'label' => __( 'Trust Level', 'jetonomy' ),
 					'width' => 'm',

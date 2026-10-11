@@ -33,12 +33,11 @@ if ( ! $post ) {
 	return;
 }
 
-// 1.4.0 C.1 fix: every "can moderate" check below uses Permission_Engine::can()
-// so a space-role moderator (subscriber WP role with admin/moderator role on
-// jt_space_members) gets the same UI affordances as a WP-cap moderator. Before
-// this, a `current_user_can('jetonomy_moderate')` cap-only gate hid edit / pin /
-// delete / move / merge from every space mod whose WP role lacked the cap —
-// regression versus 1.3.8's promise that space mods are first-class.
+// Every "can moderate" check below uses Permission_Engine::can() so a space-role
+// moderator (subscriber WP role with admin/moderator role on jt_space_members) gets the
+// same UI affordances as a WP-cap moderator; a `current_user_can('jetonomy_moderate')`
+// cap-only gate would hide edit / pin / delete / move / merge from every space mod whose
+// WP role lacks the cap.
 $jt_viewer_id         = get_current_user_id();
 $jt_can_moderate_here = $jt_viewer_id
 	? \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'moderate', (int) $post->space_id )
@@ -51,11 +50,10 @@ $jt_can_moderate_here = $jt_viewer_id
 // Restore / Delete permanently for moderators on trash) still renders.
 $jt_is_live = 'publish' === $post->status;
 
-// The non-published (pending / trash / spam) gate that used to live here is
-// now inside Permission_Engine::can_read_post() below — the same author-or-
-// moderator rule, same 404 + "Post not found" outcome, but enforced for the
-// REST route, oEmbed, JSON-LD and the Pro extensions too, all of which read
-// posts through that method and none of which had it.
+// The non-published (pending / trash / spam) gate lives in
+// Permission_Engine::can_read_post() below - the author-or-moderator rule, same 404 +
+// "Post not found" outcome - so the REST route, oEmbed, JSON-LD and the Pro extensions
+// enforce it too, all of which read posts through that method.
 
 $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
@@ -96,10 +94,10 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_
 // already filters this author out. We do NOT 404 — the post genuinely
 // exists and moderators/deep-linkers need a real state, not "not found" —
 // we just refuse to ship the content to a viewer who blocked its author.
-// Routed through the shared seam (rather than the inline in_array() this used
-// to do) so this screen and the REST payload decide "is blocked" the same way;
-// it also empties the row's title/body, so the early return below is no longer
-// the only thing standing between a blocked author's words and the page.
+// Routed through the shared seam (rather than an inline in_array()) so this screen and
+// the REST payload decide "is blocked" the same way; it also empties the row's
+// title/body, so the early return below is not the only thing standing between a
+// blocked author's words and the page.
 \Jetonomy\Models\Post::apply_block_tombstone(
 	$post,
 	\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
@@ -570,6 +568,15 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// reply-card.php so the two after-content slots never drift.
 				$jt_post_content_after_tags = jetonomy_after_content_allowed_html();
 
+				/**
+				 * Filters markup printed after the post body. The result is passed through wp_kses() with the shared after-content allowlist.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param string $html Markup to print. Default empty.
+				 * @param object $post Post row.
+				 * @return string Markup to print.
+				 */
 				echo wp_kses(
 					apply_filters( 'jetonomy_after_post_content', '', $post ),
 					$jt_post_content_after_tags
@@ -780,6 +787,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<?php
 				// Pro hangs React, Pin to community and Add Poll here - all writes.
 				if ( $jt_is_live ) {
+					/**
+					 * Fires in the post action bar for live threads, so extensions can add write actions such as reactions or polls.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param object $post Post row.
+					 */
 					do_action( 'jetonomy_post_actions', $post );
 				}
 				?>

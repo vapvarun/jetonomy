@@ -505,6 +505,14 @@ final class Space_Purge {
 			// ran and their delete hooks never told the host community to drop
 			// its bell rows. Same signal, for the ids this slice removed.
 			foreach ( $reply_slice as $reply_id ) {
+				/**
+				 * Fires after a purged reply or post is removed in bulk, so the host community can drop its notification rows.
+				 *
+				 * @since 2.0.1
+				 *
+				 * @param string $object_type Object type: 'reply' or 'post'.
+				 * @param int    $object_id   Reply or post ID.
+				 */
 				do_action( 'jetonomy_community_notification_removed', 'reply', (int) $reply_id );
 			}
 			foreach ( $post_slice as $post_id ) {

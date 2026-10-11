@@ -479,12 +479,11 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 		}
 
 		// CONTAINMENT BY CONSTRUCTION: every table gets a scroll container.
-		// wrap=false call sites (tables living inside their own card) used to
-		// emit a bare <table>, and in the 783-960px squeeze band the desktop
-		// width classes pushed the document wide (QA 2026-07-30: Auto-Rules
-		// grew the page to 840px at exactly 783px). A width the layout cannot
-		// absorb now scrolls inside the container instead of widening the
-		// page - at ANY viewport, for every current and future call site.
+		// wrap=false call sites (tables living inside their own card) get the scroll
+		// container too: in the 783-960px squeeze band a bare <table> lets the desktop
+		// width classes push the document wide. A width the layout cannot absorb scrolls
+		// inside the container instead of widening the page - at ANY viewport, for every
+		// current and future call site.
 		echo $wrap ? '<div class="jt-content-table-wrap">' : '<div class="jt-table-scroll">';
 		$table_id = ! empty( $args['table_id'] ) ? ' id="' . esc_attr( (string) $args['table_id'] ) . '"' : '';
 		$tbody_id = ! empty( $args['tbody_id'] ) ? ' id="' . esc_attr( (string) $args['tbody_id'] ) . '"' : '';

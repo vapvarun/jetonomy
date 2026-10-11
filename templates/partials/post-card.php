@@ -81,7 +81,7 @@ if ( $prefix_name && $space ) {
 	<?php endif; ?>
 	<div class="jt-row-main">
 		<?php
-		// 1.4.0 C.4 fix: row is no longer one big <a>. The title link is the
+		// The row is not one big <a>. The title link is the
 		// stretched anchor (CSS positions ::before to cover the whole row),
 		// so child <a> elements (tags, mentions) remain clickable without
 		// nested-anchor invalid markup. The whole row stays clickable.

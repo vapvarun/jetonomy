@@ -3,7 +3,7 @@
  * Multisite-aware activation helpers.
  *
  * Two functions: one that WordPress calls when the plugin is activated
- * (replaces the old single-blog activation hook callback), and one that
+ * (the multisite-aware activation hook callback), and one that
  * creates tables on any blog provisioned after plugin activation. Together
  * they ensure every sub-site gets Jetonomy's database tables, whether the
  * site existed at activation time or was created later.

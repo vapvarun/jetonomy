@@ -45,6 +45,14 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 
 // Pagination. 25/page is readable on desktop, fits mobile, keeps the
 // COUNT(*) query trivial against the new space_role_joined index.
+/**
+ * Filters the number of members per page on a space's member list.
+ *
+ * @since 1.4.4
+ *
+ * @param int $per_page Members per page. Default 25.
+ * @return int Members per page.
+ */
 $jt_members_per_page = (int) apply_filters( 'jetonomy_space_members_per_page', 25 );
 $jt_members_paged    = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $jt_members_total    = \Jetonomy\Models\SpaceMember::count_by_space( (int) $space->id );
@@ -83,7 +91,15 @@ $viewer_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( 
 // COUNT cheap on approval-gated spaces with a large backlog; the wp-admin tab
 // remains the full-history surface.
 $jt_pending_requests = array();
-$jt_pending_cap      = (int) apply_filters( 'jetonomy_space_pending_requests_shown', 50 );
+/**
+ * Filters the maximum number of pending join requests listed on a space's member page.
+ *
+ * @since 1.5.0
+ *
+ * @param int $cap Maximum requests shown. Default 50.
+ * @return int Maximum requests shown.
+ */
+$jt_pending_cap = (int) apply_filters( 'jetonomy_space_pending_requests_shown', 50 );
 if ( $viewer_is_priv ) {
 	$jt_pending_all      = \Jetonomy\Models\JoinRequest::list_pending_for_space( (int) $space->id );
 	$jt_pending_total    = count( $jt_pending_all );

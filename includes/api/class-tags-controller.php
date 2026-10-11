@@ -115,9 +115,8 @@ class Tags_Controller extends Base_Controller {
 			)
 		);
 
-		// /space-tags was removed in 1.5.0: the jt_space_tags tables never
-		// gained a writer, so the endpoint could only ever return an empty
-		// list (audit A5).
+		// No /space-tags endpoint: the jt_space_tags tables never gained a writer, so it could
+		// only ever return an empty list.
 	}
 
 	/**

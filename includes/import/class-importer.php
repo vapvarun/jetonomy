@@ -223,9 +223,8 @@ abstract class Importer {
 	 * own source-specific resume options, calling parent::reset_run_state() first.
 	 */
 	public function reset_run_state(): void {
-		// Releases before 2.0.1 carried the whole id map between batches in
-		// this option. It is no longer written (see load_mapped()); deleted so
-		// a run aborted on an older version leaves nothing behind.
+		// Delete the legacy id-map option (see load_mapped()) so a run aborted on an
+		// older version leaves nothing behind.
 		delete_option( 'jetonomy_import_id_map' );
 		delete_option( 'jetonomy_import_total_processed' );
 		delete_option( 'jetonomy_import_errors' );
@@ -358,11 +357,10 @@ abstract class Importer {
 	/**
 	 * The category this source's spaces are filed under, created only when needed.
 	 *
-	 * A re-run used to create a fresh "Imported from ..." category every time,
-	 * so each re-import left another empty one behind. Resolution order: the
-	 * category this importer recorded, then the one a pre-map import used, then
-	 * a new one. Callers ask for it only when a forum actually has to be
-	 * created, so a re-run that finds nothing new creates nothing.
+	 * Resolution order: the category this importer recorded, then the one a pre-map
+	 * import used, then a new one. Callers ask for it only when a forum actually has to be
+	 * created, so a re-run that finds nothing new creates nothing (and no empty "Imported
+	 * from ..." category is left behind).
 	 *
 	 * @param string $key         Map key for the category ('default', or a board key).
 	 * @param string $slug_prefix Slug prefix, e.g. 'imported-bbpress'. A timestamp is appended.
@@ -454,11 +452,9 @@ abstract class Importer {
 	/**
 	 * Plain-language notes about what an import will actually do.
 	 *
-	 * The screen used to show raw counts and nothing else, so an owner could
-	 * not tell from it that closed topics and private forums are included now,
-	 * or that a private forum's members get imported, or that this source has
-	 * been imported before. All of that matters BEFORE committing to a one-way
-	 * migration.
+	 * These notes tell an owner that closed topics and private forums are included, that
+	 * a private forum's members get imported, or that this source has been imported
+	 * before - all of which matters BEFORE committing to a one-way migration.
 	 *
 	 * Importers override this; the default is silence.
 	 *
@@ -573,8 +569,7 @@ abstract class Importer {
 	 *
 	 * The run_batch() call logs these into the per-request instance; the AJAX handler
 	 * reads this AFTER each batch and accumulates them, so a skipped file is reported
-	 * to the customer instead of vanishing behind a green "Import complete!". That
-	 * silent success is what let the original missing-media bug ship.
+	 * to the customer instead of vanishing behind a green "Import complete!".
 	 *
 	 * @return array<int,array{type:string,id:mixed,message:string}>
 	 */
@@ -596,11 +591,7 @@ abstract class Importer {
 	 * Attachments are stored in FREE from 1.7.1 on, so an import always has
 	 * somewhere to put them.
 	 *
-	 * This used to ask Pro over a filter, and answer "no" on a free site — which
-	 * meant a free-tier migration wrote no attachment rows at all, and we papered
-	 * over it by leaving the old forum's raw markup in the post body. Two
-	 * presentations, one of which only existed on free, and a body we had to mutate
-	 * to switch between them. Kept only so a caller can still ask.
+	 * Always true; kept only so a caller can still ask.
 	 */
 	protected function attachments_available(): bool {
 		return true;
@@ -609,9 +600,8 @@ abstract class Importer {
 	/**
 	 * Resolve a URL from an old forum body to the file's path inside uploads/.
 	 *
-	 * The single place any importer turns a source URL into a path. There used to be
-	 * two implementations that disagreed, and the naive one — a `strpos()` against
-	 * `$uploads['baseurl']` — was wrong against real forum markup:
+	 * The single place any importer turns a source URL into a path. A naive `strpos()`
+	 * against `$uploads['baseurl']` is wrong against real forum markup:
 	 *
 	 *   - wpForo writes attachment hrefs PROTOCOL-RELATIVE (`//host/path`). Its
 	 *     folder map builds a `url//` key with `preg_replace('#^https?:#i','',$url)`
@@ -707,10 +697,9 @@ abstract class Importer {
 			return (int) $existing;
 		}
 
-		// Refuse anything WordPress would not accept as an upload. The old code fell
-		// back to application/octet-stream here, which turned "WP rejects this file
-		// type" into "register it anyway" — and that is what made a planted
-		// `../../../wp-config.php` reachable.
+		// Refuse anything WordPress would not accept as an upload. Falling back to
+		// application/octet-stream would turn "WP rejects this file type" into "register it
+		// anyway" and make a planted `../../../wp-config.php` reachable.
 		$filetype = wp_check_filetype( basename( $path ), null );
 		if ( empty( $filetype['type'] ) ) {
 			$this->log_error( 'attachment', $file_url, 'Disallowed file type' );

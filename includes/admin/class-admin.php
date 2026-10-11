@@ -92,14 +92,29 @@ class Admin {
 	// ── Menu ──
 
 	public function add_menu(): void {
+		/**
+		 * Filters the top-level admin menu label.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $label Menu label. Default "Jetonomy".
+		 * @return string Menu label.
+		 */
 		$menu_label = apply_filters( 'jetonomy_admin_menu_label', __( 'Jetonomy', 'jetonomy' ) );
 
 		// Brand mark (mono members glyph) as a data-URI so WordPress recolors it
 		// for default/hover/current menu states. Single solid color is required
 		// for the admin-menu filter to tint cleanly.
 		$menu_glyph = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><g fill="#a7aaad"><circle cx="324" cy="206" r="44"/><path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/><circle cx="206" cy="220" r="60"/><path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/></g></svg>';
-		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Encoding an inline SVG as a data-URI menu icon, not obfuscation.
-		$menu_icon = apply_filters( 'jetonomy_admin_menu_icon', 'data:image/svg+xml;base64,' . base64_encode( $menu_glyph ) );
+		/**
+		 * Filters the top-level admin menu icon.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $icon Dashicon class or base64 SVG data URI.
+		 * @return string Menu icon.
+		 */
+		$menu_icon = apply_filters( 'jetonomy_admin_menu_icon', 'data:image/svg+xml;base64,' . base64_encode( $menu_glyph ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Inline SVG as a data-URI menu icon.
 
 		add_menu_page(
 			$menu_label,
@@ -275,15 +290,11 @@ class Admin {
 	 *
 	 * The Settings page renders under `jetonomy_manage_settings` (see add_menu),
 	 * and free honours that capability on save via the
-	 * option_page_capability_jetonomy_settings filter below. Every Pro tab,
-	 * however, gated its own save on `manage_options` and returned silently - so
-	 * a manager the owner had deliberately delegated could open every Pro tab,
-	 * change things, and have the save discarded with nothing on screen to say
-	 * why. Nine handlers each answered this question in their own words, and all
-	 * nine answered it differently from free.
+	 * option_page_capability_jetonomy_settings filter below. Every Pro tab saves through
+	 * this same check, so a manager the owner delegated can save what they can open.
 	 *
 	 * Administrators hold `jetonomy_manage_settings` too (Capabilities grants
-	 * every cap to administrator), so this is never narrower than the old check.
+	 * every cap to administrator), so this is never narrower than `manage_options`.
 	 * It is NOT the right gate for role administration - editing which role holds
 	 * which capability stays on `manage_options`, or a delegated manager could
 	 * grant their own role anything.
@@ -389,10 +400,8 @@ class Admin {
 	/**
 	 * Attach a display title and an admin URL to each pending flag row.
 	 *
-	 * The Flags tab used to print `post #217` in a <code> tag - not a link, and
-	 * not the content. A moderator deciding Valid vs Dismiss had to go find the
-	 * item by id somewhere else before they could judge it, which is most of the
-	 * work the queue exists to save.
+	 * Each flag shows the item's title as a link, so a moderator can judge Valid vs
+	 * Dismiss without finding the item by id elsewhere.
 	 *
 	 * Batched deliberately: this view is the worked example of an N+1 in this
 	 * codebase, so titles are fetched with ONE query per object type for the
@@ -403,7 +412,7 @@ class Admin {
 	 *
 	 * Mutates the row objects in place, adding jt_object_title and
 	 * jt_object_url. Both are '' when the target has since been deleted, which
-	 * the view renders as the old id text rather than a dead link.
+	 * the view renders as plain id text rather than a dead link.
 	 *
 	 * @param object[] $flags Pending flag rows.
 	 */
@@ -575,12 +584,10 @@ class Admin {
 			'new_post_in_sub',
 			'badge_earned',
 			'vote_on_post',
-			// Settings -> Email renders a template row for this type
-			// (views/settings.php), and Notifier looks up an override for
-			// whatever type it is sending. It was missing from this allowlist,
-			// so an owner could write a custom subject/body for "Your idea
-			// roadmap status changed", save, and have it silently discarded
-			// every time. Keep this list in step with $tmpl_types in the view.
+			// Settings -> Email renders a template row for this type (views/settings.php), and
+			// Notifier looks up an override for whatever type it is sending. A type missing
+			// from this allowlist would have its custom subject/body silently discarded on
+			// save. Keep this list in step with $tmpl_types in the view.
 			'idea_status_changed',
 			'reaction',
 			'moderation',
@@ -866,8 +873,8 @@ class Admin {
 				'moderation',
 				'flag_resolved',
 				'join_request',
-				// Was missing, so unchecking its admin default silently reverted
-				// to the seeded true/true — the toggle looked dead.
+				// Listed so unchecking its admin default is saved instead of reverting to the
+				// seeded true/true.
 				'idea_status_changed',
 				// Pro private messages. Only rendered (and so only submitted)
 				// while that extension is live; otherwise keep what is stored.
@@ -1963,12 +1970,8 @@ class Admin {
 		 * "Scheduled" is a pseudo-status: a scheduled post is an ordinary row
 		 * with published_at in the future, not a value in the status column.
 		 *
-		 * Before this, scheduling was reachable from the composer and the REST
-		 * API and from cron, and from NOWHERE in wp-admin - the owner could not
-		 * see what was queued, reschedule it, or answer "why has my post not
-		 * appeared". That failed the three-entry-points rule, and the plugin's
-		 * own demo copy already admitted the gap ("the scheduled badge does not
-		 * yet show in the listing").
+		 * Scheduling is reachable from the composer, the REST API, cron and wp-admin, so
+		 * the owner can see what is queued and reschedule it.
 		 */
 		if ( 'scheduled' === $current_status ) {
 			// status='draft' is the load-bearing half. Without it this matched

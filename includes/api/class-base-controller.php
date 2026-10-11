@@ -184,18 +184,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 
 		// cursor_next is the NEXT OFFSET, never a row id.
 		//
-		// It used to be the last item's id, which is only meaningful if the query
-		// filters on `id > cursor`. None of our list queries can: they sort by
-		// is_sticky/vote_score/last_reply_at/created_at (and `hot` is computed at
-		// query time and has no column at all), so an id cursor cannot advance a
-		// keyset. Worse, the id filter ran as `id > %d` against a DESC sort — the
-		// filter direction contradicted the sort direction, so every "next page"
-		// returned the top of the list again and the client looped forever
-		//
-		// Offset is the only scheme that works uniformly here, so it lives in the
-		// shared helper rather than being re-derived per controller — that
-		// divergence is exactly how /feed ended up fixed while /users/{id}/posts
-		// and /spaces/{id}/posts stayed broken.
+		// An id cursor is only meaningful if the query filters on `id > cursor`, and none of
+		// our list queries can: they sort by is_sticky/vote_score/last_reply_at/created_at (and
+		// `hot` is computed at query time and has no column at all), and `id > %d` against a
+		// DESC sort contradicts the sort direction, so every "next page" would return the top
+		// of the list again. Offset is the only scheme that works uniformly here, so it lives
+		// in the shared helper rather than being re-derived per controller.
 		$offset   = (int) ( $meta['offset'] ?? 0 );
 		$has_more = isset( $meta['total'] ) ? ( $offset + count( $items ) ) < (int) $meta['total'] : false;
 
@@ -582,8 +576,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			// author_name routes through the SAME seam every other render
 			// surface uses (\Jetonomy\Author::for_display()) so a tombstoned
 			// (author_id = 0, deleted-account) row reads "[deleted]" here too,
-			// instead of drifting to "Anonymous" the way this list endpoint
-			// used to render it. Passing the already-batch-loaded $user avoids
+			// instead of drifting to "Anonymous". Passing the already-batch-loaded $user avoids
 			// a redundant get_userdata() per row (author_id > 0 case).
 			$item_obj    = is_object( $item ) ? $item : (object) $item;
 			$author_name = \Jetonomy\Author::for_display( $uid, $item_obj, $user )['name'];
@@ -651,13 +644,11 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Serialize a space row for API output.
 	 *
 	 * Lives here, not on Spaces_Controller, because more than one controller
-	 * emits spaces. /search used to return `(array) $row` straight from the DB,
-	 * which meant every numeric came out as a STRING ("id":"1","post_count":"1")
-	 * and internal columns (`settings` as a raw JSON string, `sort_order`,
-	 * `parent_id`) leaked to clients — a typed client doing `post_count > 0` or
-	 * sorting numerically got wrong answers. One
-	 * serializer means a space cannot have two different shapes depending on
-	 * which endpoint returned it.
+	 * emits spaces. A raw `(array) $row` would emit every numeric as a STRING
+	 * ("id":"1","post_count":"1") and leak internal columns (`settings` as a raw JSON
+	 * string, `sort_order`, `parent_id`), so a typed client doing `post_count > 0` or
+	 * sorting numerically would get wrong answers. One serializer means a space cannot
+	 * have two different shapes depending on which endpoint returned it.
 	 *
 	 * @param object $space Raw space row.
 	 * @return array

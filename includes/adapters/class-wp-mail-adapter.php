@@ -30,6 +30,16 @@ class WP_Mail_Adapter implements Email_Adapter {
 			$headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
 		}
 
+		/**
+		 * Filters the headers of a notification email.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string[] $headers Email headers.
+		 * @param string   $to      Recipient address.
+		 * @param string   $subject Email subject.
+		 * @return string[] Email headers.
+		 */
 		$headers = apply_filters( 'jetonomy_notification_email_headers', $headers, $to, $subject );
 
 		return $this->send_with_our_sender( $to, $subject, $html, $headers );

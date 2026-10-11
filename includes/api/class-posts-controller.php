@@ -441,9 +441,8 @@ class Posts_Controller extends Base_Controller {
 		$trust   = (int) ( $profile->trust_level ?? 0 );
 		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_posts', $trust ) ) {
 			// Rate_Limiter::message() names the allowance and the real wait.
-			// The old string said "Rate limit exceeded. Please try again
-			// later." to a member who had never been told a limit existed and
-			// could not tell whether "later" meant a minute or a day.
+			// A bare "Rate limit exceeded. Please try again later." would not tell a member
+			// whether "later" means a minute or a day.
 			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_posts', $trust ) );
 		}
 
@@ -485,10 +484,7 @@ class Posts_Controller extends Base_Controller {
 		// Derive post type from space type if not provided.
 		$type = sanitize_text_field( (string) $request->get_param( 'type' ) );
 		if ( empty( $type ) ) {
-			// One map, in \Jetonomy\compose_post_type(). This used to be an
-			// inline copy that happened to agree with the helper - the same
-			// shape of duplication that let the trust-level names drift a full
-			// level apart across three surfaces.
+			// One map, in \Jetonomy\compose_post_type(): an inline copy would drift from the helper.
 			$type = \Jetonomy\compose_post_type( (string) ( $space->type ?? 'forum' ) );
 		}
 
@@ -868,8 +864,8 @@ class Posts_Controller extends Base_Controller {
 	/**
 	 * Validate a schedule time for a draft.
 	 *
-	 * The raw value must carry a time of day: a date alone used to be read as
-	 * midnight, so "today, no time picked" went live at the next run. The
+	 * The raw value must carry a time of day: a date alone would be read as
+	 * midnight, so "today, no time picked" would go live at the next run. The
 	 * normalized UTC value must be in the future, compared against the UTC
 	 * clock it is stored in (sanitize_backdate() already read a naive value
 	 * in the site timezone).
@@ -958,6 +954,15 @@ class Posts_Controller extends Base_Controller {
 		// space/user counters atomically — no manual pre-decrement needed.
 		Post::update( $id, array( 'status' => 'trash' ) );
 
+		/**
+		 * Fires after a post is deleted through the REST API.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $post_id  Deleted post ID.
+		 * @param int $space_id Space ID.
+		 * @param int $user_id  Acting user ID.
+		 */
 		do_action( 'jetonomy_post_deleted', $id, $space_id, $user_id );
 
 		// jetonomy_after_delete_post now fires from the model, so every
@@ -1097,6 +1102,15 @@ class Posts_Controller extends Base_Controller {
 		// pinning (not when unpinning), and a post already counted toward the
 		// cap can always be unpinned.
 		if ( 1 === $new_value ) {
+			/**
+			 * Filters how many posts can be pinned in one space.
+			 *
+			 * @since 1.4.4
+			 *
+			 * @param int $max      Maximum pinned posts. Default 3.
+			 * @param int $space_id Space ID.
+			 * @return int Maximum pinned posts.
+			 */
 			$max = (int) apply_filters( 'jetonomy_max_space_pins', 3, (int) $post->space_id );
 			if ( $max > 0 && Post::count_sticky_in_space( (int) $post->space_id ) >= $max ) {
 				return new WP_Error(
@@ -1301,12 +1315,10 @@ class Posts_Controller extends Base_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			// Undeclared passthrough before this fix — Pro's File Attachments
-			// extension already reads this via $request->get_param() (see
+			// Pro's File Attachments extension reads this via $request->get_param() (see
 			// link_on_create_post() in jetonomy-pro/includes/extensions/attachments/
-			// class-extension.php). Declaring it here just makes it discoverable
-			// from the route schema; no behavior change on this route. Must stay a
-			// CSV STRING: Pro's link_pending() does explode(',', $csv).
+			// class-extension.php); declaring it makes it discoverable from the route schema.
+			// Must stay a CSV STRING: Pro's link_pending() does explode(',', $csv).
 			'attachment_ids' => array(
 				'type'              => 'string',
 				'required'          => false,

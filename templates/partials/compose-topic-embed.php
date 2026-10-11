@@ -175,8 +175,8 @@ $_partial_space = $_space ? $_space : (object) array(
 		// changes); body uses a plain textarea (the embed is meant to be
 		// lightweight and host-page compatible); tags, prefix, scheduler,
 		// and publish-menu are full-page-only. Private toggle stays so
-		// regression #9886339472 (private leak) is fixed by giving the
-		// embed the same privacy switch the full page has.
+		// Private toggle stays so the embed has the same privacy switch as the full page,
+		// which keeps a private topic from leaking.
 		\Jetonomy\Template_Loader::partial(
 			'compose-fields',
 			array(

@@ -88,13 +88,9 @@ class Revisions_List_Table extends \WP_List_Table {
 	/**
 	 * Collapse mobile rows around WHICH object was edited, not its type.
 	 *
-	 * Type used to be the first column and therefore WP's default primary, so a
-	 * phone showed a column of "Post" / "Reply" with no way to tell the rows
-	 * apart. The title is the identity.
-	 *
-	 * Title is now first, so this override restates WP's default rather than
-	 * changing it. Kept deliberately: it pins the intent, so reordering the
-	 * columns cannot silently move the primary back onto Type.
+	 * The title is the identity, so it is the primary column; a phone would otherwise
+	 * show a column of "Post" / "Reply". This override restates WP's default to pin
+	 * the intent, so reordering the columns cannot move the primary back onto Type.
 	 */
 	protected function get_default_primary_column_name(): string {
 		return 'object_title';

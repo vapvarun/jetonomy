@@ -59,12 +59,9 @@ class Rate_Limiter {
 	/**
 	 * Everything a caller needs to explain a refusal to the member.
 	 *
-	 * The old message was "Rate limit exceeded. Please try again later." -
-	 * three separate controllers saying the same unactionable thing. It named
-	 * no limit, so a member could not know they had one until they hit it, and
-	 * "later" concealed a wait that is measured in hours. Every number needed
-	 * to say something useful was already sitting in the transient; nothing
-	 * read it.
+	 * The refusal names the limit and the wait instead of a bare "Rate limit exceeded":
+	 * a member cannot know they have a limit until they hit it, and "later" can conceal a
+	 * wait measured in hours. Every number needed is already in the transient.
 	 *
 	 * Note on the window: increment() rewrites the TTL on every action, so the
 	 * 24 hours runs from the member's LAST action rather than their first.

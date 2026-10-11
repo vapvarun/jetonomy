@@ -22,16 +22,12 @@ class Blocks {
 
 	public static function register(): void {
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
-		// 1.4.0 A.2 commit 3 + A.3 commit 3: both legacy quick-login /
-		// quick-register AJAX handlers were removed once login-block.js
-		// fully switched to POST /jetonomy/v1/auth/login + /register.
 		// Register the login-block script once; the render callback enqueues
 		// it only on pages that actually contain the block.
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_block_assets' ) );
 		// Also register on the editor side so `editor_script` handles
 		// resolve inside /wp-admin/ (otherwise the inserter never learns
-		// about our blocks — the 1.3.7 compose-topic regression test surfaced
-		// this latent issue).
+		// about our blocks).
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'register_block_assets' ) );
 
 		// Auto-inject Login / User Panel at the top of the community sidebar
@@ -544,7 +540,7 @@ class Blocks {
 			if ( ! $category_id ) {
 				continue;
 			}
-			// Same per-category runaway cap the old list_visible carried.
+			// Per-category runaway cap.
 			$spaces = array_slice( $spaces_by_cat[ $category_id ] ?? array(), 0, 200 );
 			$subs   = $children[ $category_id ] ?? array();
 			if ( $hide_empty ) {
@@ -590,8 +586,7 @@ class Blocks {
 		// "Uncategorized" bucket — any spaces with category_id = 0 that the
 		// viewer can see. Renders last, un-headed, so site owners who
 		// don't use categories still get a flat tree. Group 0 of the same
-		// grouped fetch — the old shape ran ANOTHER full list_visible just
-		// to filter it down to category_id = 0 in PHP.
+		// grouped fetch, so no second full list_visible runs just to filter category_id = 0 in PHP.
 		$orphans = array_slice( $spaces_by_cat[0] ?? array(), 0, 200 );
 		if ( ! empty( $orphans ) ) {
 			$orphan_items = '';

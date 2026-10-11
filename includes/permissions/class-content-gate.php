@@ -3,34 +3,19 @@
  * The state checks that decide whether content may be written at all.
  *
  * These are the gates that depend only on WHO is replying and WHAT they are
- * replying to - not on how the request arrived. They were previously written
- * out inside REST_Replies_Controller::create_item() and nowhere else, so the
- * inbound-email writer, which reaches Reply::create() through
- * `jetonomy_reply_from_email` and Notifier::on_reply_from_email(), had none of
- * them.
- *
- * Reproduced before this existed, each request carrying
- * a VALID webhook signature so nothing was hiding behind the auth fix:
- *
- *   banned member replies          HTTP 200  reply created
- *   reply to a CLOSED post         HTTP 200  reply created
- *   reply into an ARCHIVED space   HTTP 200  reply created
- *
- * A banned member kept a working write path into the community for as long as
- * they held any notification email, and closing a thread or archiving a space
- * did not stop email replies landing in it.
+ * replying to - not on how the request arrived - so every writer shares them: REST,
+ * the WP Abilities create-post and create-reply paths, and the inbound-email writer
+ * (which reaches Reply::create() through `jetonomy_reply_from_email` and
+ * Notifier::on_reply_from_email()). Without them a banned member, a reply to a CLOSED
+ * post or a reply into an ARCHIVED space would succeed on the surfaces that skip them.
  *
  * Request-shaped concerns deliberately stay at the callers: rate limiting and
  * CAPTCHA are per-surface policy (the email path has its own rate limit keyed
  * differently, and a CAPTCHA is meaningless for a mail webhook). What lives
  * here is only what must be true on every surface.
  *
- * Named for CONTENT, not replies, deliberately. It started as a reply-only
- * helper and within the hour turned out to be needed for post creation too:
- * the WP Abilities create-post and create-reply paths could both write into an
- * ARCHIVED space that REST refuses. A
- * gate named for one caller is a gate the next caller does not think to look
- * for, which is the exact failure this whole batch of cards is made of.
+ * Named for CONTENT, not replies, deliberately: post creation needs the same gate, and
+ * a gate named for one caller is a gate the next caller does not think to look for.
  *
  * @package Jetonomy
  */
@@ -68,10 +53,9 @@ class Content_Gate {
 		}
 
 		/*
-		 * Only a published topic takes replies. A trashed one kept accepting
-		 * them on every surface - REST 201, the ability, emailed replies - so
-		 * its author could keep a thread nobody else can see alive
-		 * Drafts and scheduled topics (drafts with a
+		 * Only a published topic takes replies. A trashed one would otherwise keep accepting
+		 * them on every surface - REST, the ability, emailed replies - letting its author keep
+		 * a thread nobody else can see alive. Drafts and scheduled topics (drafts with a
 		 * published_at) are refused too: there is no thread yet.
 		 */
 		$live = self::status_error( $post );

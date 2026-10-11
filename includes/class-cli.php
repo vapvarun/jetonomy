@@ -54,6 +54,15 @@ class CLI {
 		// Reuse the cron's keyset-batch evaluator so the CLI and the scheduled
 		// sweep share ONE implementation — same replies-received join, same
 		// bounded slices (no OOM loading every profile at once), same hooks.
+		/**
+		 * Filters the number of rows a scheduled sweep processes per batch.
+		 *
+		 * @since 1.4.2
+		 *
+		 * @param int    $batch_size Rows per batch. Default 500.
+		 * @param string $job        Sweep identifier, e.g. evaluate_trust_levels.
+		 * @return int Rows per batch.
+		 */
 		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'evaluate_trust_levels' );
 		$after     = 0;
 		$processed = 0;
@@ -97,10 +106,9 @@ class CLI {
 			return;
 		}
 
-		// Check support BEFORE promising anything. This used to print "no data
-		// will be written" and then hand off to an importer that ignored the
-		// flag entirely, so wpforo and asgaros ran a real import under a dry-run
-		// banner. Never advertise what we cannot honour.
+		// Check support BEFORE promising anything: an importer that ignores the flag
+		// would run a real import under a dry-run banner. Never advertise what we
+		// cannot honour.
 		if ( $dry_run && ! Import_Manager::supports_dry_run( $source ) ) {
 			\WP_CLI::error(
 				sprintf(

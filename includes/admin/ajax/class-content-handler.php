@@ -100,6 +100,15 @@ class Content_Handler {
 		Post::update( $id, $data );
 		// Same signal as a REST edit, so webhooks, search indexes and other
 		// listeners see edits made in wp-admin too.
+		/**
+		 * Fires after an admin edits a post.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $post_id  Post ID.
+		 * @param int $space_id Space ID.
+		 * @param int $user_id  Editing user ID.
+		 */
 		do_action( 'jetonomy_post_updated', $id, (int) ( Post::find( $id )->space_id ?? 0 ), get_current_user_id() );
 		wp_send_json_success( array( 'message' => __( 'Post updated.', 'jetonomy' ) ) );
 	}
@@ -159,6 +168,15 @@ class Content_Handler {
 
 		Reply::update( $id, $data );
 		$jt_reply = Reply::find( $id );
+		/**
+		 * Fires after an admin edits a reply.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $reply_id Reply ID.
+		 * @param int $space_id Space ID of the parent post.
+		 * @param int $user_id  Editing user ID.
+		 */
 		do_action( 'jetonomy_reply_updated', $id, (int) ( $jt_reply ? ( Post::find( (int) $jt_reply->post_id )->space_id ?? 0 ) : 0 ), get_current_user_id() );
 		wp_send_json_success( array( 'message' => __( 'Reply updated.', 'jetonomy' ) ) );
 	}

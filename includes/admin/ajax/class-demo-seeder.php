@@ -816,9 +816,8 @@ class Demo_Seeder {
 		// --- Spaces and everything in them ---
 		// Space_Purge is the one complete delete: topics, replies, votes, flags,
 		// tag links, notifications, subscriptions, bookmarks, read state,
-		// activity and Pro relations, plus the host-bell removal signals. Raw
-		// deletes here used to leave notifications and bookmarks pointing at
-		// topics that no longer existed.
+		// activity and Pro relations, plus the host-bell removal signals. Raw deletes
+		// would leave notifications and bookmarks pointing at deleted topics.
 		$space_ids = array_filter( array_map( 'absint', $manifest['spaces'] ?? array() ) );
 		foreach ( $space_ids as $space_id ) {
 			\Jetonomy\Space_Purge::purge( $space_id );

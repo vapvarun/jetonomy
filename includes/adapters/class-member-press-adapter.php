@@ -117,6 +117,15 @@ class MemberPress_Adapter implements Membership_Adapter {
 		$user_id  = (int) $txn->user_id;
 		$level_id = 'mepr_' . $txn->product_id;
 
+		/**
+		 * Fires when a membership plugin reports that a user's membership became active.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int        $user_id  User ID.
+		 * @param string|int $level_id Membership level ID in the source plugin.
+		 * @param string     $source   Source adapter identifier.
+		 */
 		do_action( 'jetonomy_membership_activated', $user_id, $level_id, 'memberpress' );
 	}
 
@@ -136,6 +145,15 @@ class MemberPress_Adapter implements Membership_Adapter {
 		$active    = $mepr_user->active_product_subscriptions( 'ids' );
 
 		if ( ! in_array( $txn->product_id, $active, true ) ) {
+			/**
+			 * Fires when a membership plugin reports that a user's membership ended.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int        $user_id  User ID.
+			 * @param string|int $level_id Membership level ID in the source plugin.
+			 * @param string     $source   Source adapter identifier.
+			 */
 			do_action( 'jetonomy_membership_deactivated', $user_id, $level_id, 'memberpress' );
 		}
 	}

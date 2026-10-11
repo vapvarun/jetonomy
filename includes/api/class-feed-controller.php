@@ -70,9 +70,7 @@ class Feed_Controller extends Posts_Controller {
 		// advance a keyset. get_pagination() folds the `after` cursor into `offset`
 		// and paginated_response() derives `cursor_next` as the next offset — both
 		// now live in the base controller so every list endpoint shares one
-		// implementation. This controller used to carry its own private copy, which
-		// is exactly why /feed got fixed in 1.9.1 while /users/{id}/posts and
-		// /spaces/{id}/posts stayed broken.
+		// // implementation, so /feed, /users/{id}/posts and /spaces/{id}/posts cannot drift apart.
 		$offset = max( 0, (int) $pagination['offset'] );
 
 		$result = Post::list_global_feed(

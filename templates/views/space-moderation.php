@@ -68,10 +68,9 @@ if ( ! in_array( $jt_kind, array( 'post', 'reply' ), true ) ) {
 	$jt_kind = 'post';
 }
 
-// Pagination. The flags list previously took the model's unbounded default, so
-// a space past a few hundred flags rendered every one of them into a single
-// response - the rows past the fold were unreachable in practice and the page
-// grew without limit. Same PER_PAGE contract as the cross-space dashboard.
+// Pagination. An unbounded flags list would render every flag of a space past a few
+// hundred into a single response - the rows past the fold unreachable in practice and
+// the page growing without limit. Same PER_PAGE contract as the cross-space dashboard.
 $per_page     = (int) apply_filters( 'jetonomy_moderation_per_page', 25 );
 $jt_raw_paged = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 

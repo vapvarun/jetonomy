@@ -424,7 +424,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         }
 
         // restFetch handles nonce injection + the 403/invalid-nonce refresh
-        // path centrally so this upload no longer has to remember the
+        // path centrally so this upload does not have to remember the
         // X-WP-Nonce header (or fail silently when restNonce isn't around).
         var doUpload = function () {
             if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
@@ -585,16 +585,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
     // ── Keyboard shortcuts live in header.js ──
     //
-    // This file used to carry a second, competing implementation of the whole
-    // set (?, /, n, j/k, Enter) plus its own `.jt-shortcut-help` modal. Two
-    // handlers owned `?`, so the help surface toggled itself and QA could not
-    // get a stable panel (10150869012). The duplicate was also the worse copy:
-    // hardcoded English, no `l`/`r` rows, an inline onclick, and the broken
-    // `focused.href` Enter handler that started the "Enter does nothing" report
-    // in the first place - a .jt-row DIV has no href.
-    //
-    // header.js is the single owner: localized strings, the full shortcut list,
-    // and Enter resolving the row's real title link.
+    // header.js is the single owner: localized strings, the full shortcut list (?, /, n,
+    // j/k, Enter, l/r), its own `.jt-shortcut-help` modal, and Enter resolving the row's
+    // real title link (a .jt-row DIV has no href). A second handler here would fight it
+    // over `?` and the help surface would toggle itself.
 
     // ── G9: Emoji Picker (delegated — works for composers injected after DOMContentLoaded) ──
     //

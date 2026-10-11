@@ -727,11 +727,9 @@
 				var postsPerPage = $('#ss-posts-per-page').val();
 
 				// Send '' for the empty option so merge_settings() UNSETS the key.
-				// These used to coerce '' to 'members', which wrote a restriction
-				// the owner never chose: touching any field on this tab (posts per
-				// page, voting, prefixes) turned "no restriction" into Members Only
-				// and stopped an open community accepting posts from logged-in
-				// non-members, with nothing on screen to say why.
+				// '' is never coerced to 'members': that would write a restriction the owner never
+				// chose, turning "no restriction" into Members Only whenever any field on this tab
+				// (posts per page, voting, prefixes) is touched.
 				settings.who_can_post = whoCanPost || '';
 				settings.who_can_reply = whoCanReply || '';
 				settings.require_approval = requireApproval ? '1' : '0';
@@ -1087,8 +1085,8 @@
 						.replace('%2$s', grantTxt)
 						.replace('%3$s', roleTxt);
 
-					// No mismatch warning any more: the roster role is derived
-					// from the access level, so the two can no longer disagree.
+					// No mismatch warning: the roster role is derived
+					// from the access level, so the two cannot disagree.
 					var warn = '';
 
 					// The "who matches" half. Keyed off the raw type, so an
@@ -1870,13 +1868,11 @@
 							results.appendChild(buildCompleteNotice(d.imported, d.skipped, d.summary));
 
 							// Only auto-reload a CLEAN import. The reload exists to reveal the
-							// "Previously Imported" state, which is fine when there is nothing
-							// to read — but when files were skipped it used to pull the page out
-							// from under the one notice telling you so, three seconds in. The
-							// skipped count and the per-item reasons are now recorded durably in
-							// the import history and rendered on this page (see
-							// admin/views/import.php), so nothing is lost either way; this just
-							// stops us interrupting someone mid-sentence about their own data.
+							// "Previously Imported" state, which is fine when there is nothing to read - but when
+							// files were skipped a reload would pull the page out from under the one notice telling
+							// you so. The skipped count and the per-item reasons are recorded durably in the import
+							// history and rendered on this page (see admin/views/import.php), so nothing is lost
+							// either way; this just avoids interrupting someone mid-sentence about their own data.
 							if (!d.skipped) {
 								setTimeout(function() { window.location.reload(); }, 3000);
 							}

@@ -51,6 +51,14 @@ if ( ! $is_admin && ! Moderation_Permissions::can_view_any_queue( $user_id ) ) {
 // PER_PAGE picked at 25 — readable on one screen on desktop, fits
 // mobile after row stacking, and keeps the COUNT query irrelevant
 // to total once a queue grows past a thousand flags.
+/**
+ * Filters the number of flags per page on the moderation queue.
+ *
+ * @since 1.4.4
+ *
+ * @param int $per_page Flags per page. Default 25.
+ * @return int Flags per page.
+ */
 $per_page = (int) apply_filters( 'jetonomy_moderation_per_page', 25 );
 // Keep the raw ?paged= separate: $paged below is clamped to the FLAGS page
 // count, and the Banned panel has its own, different total. Clamping the banned
@@ -92,10 +100,10 @@ if ( 'banned' === $jt_view && ! $jt_can_manage_bans ) {
 // The queue's second source. A flag is a member REPORTING published content;
 // an approval-hold is the space refusing to publish at all
 // (Moderation_Service::screen_new_content() writes status = 'pending' and
-// creates no flag row). Because nothing lands in jt_flags, this page used to
-// say "No pending flags anywhere" while held submissions piled up invisibly -
-// approvable only from wp-admin, which a frontend-first community cannot ask
-// a space moderator to open.
+// creates no flag row). Nothing lands in jt_flags for a held submission, so this
+// queue lists them separately; otherwise the page would say "No pending flags
+// anywhere" while they pile up, approvable only from wp-admin, which a
+// frontend-first community cannot ask a space moderator to open.
 //
 // Both counts run on every render, not just when the tab is open, because the
 // badge has to be honest while the moderator is looking at the flags panel.
@@ -161,9 +169,9 @@ if ( $jt_held ) {
 
 // Active member restrictions - the SAME model the app's Banned-members screen
 // and GET /moderation/ban read, so every surface stays in lockstep.
-// Paginated: this used to take a flat limit=100, which silently truncated on any
-// site with more than 100 active restrictions - the 101st ban was unliftable
-// from the frontend because it never rendered.
+// Paginated: a flat limit=100 would silently truncate on any site with more than 100
+// active restrictions - the 101st ban would be unliftable from the frontend because it
+// would never render.
 $jt_ban_total = 'banned' === $jt_view ? \Jetonomy\Models\Restriction::count_active() : 0;
 $jt_ban_pages = max( 1, (int) ceil( $jt_ban_total / $per_page ) );
 $jt_ban_paged = min( $jt_raw_paged, $jt_ban_pages );

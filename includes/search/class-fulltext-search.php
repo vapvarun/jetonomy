@@ -45,9 +45,8 @@ class Fulltext_Search implements Search_Query_Adapter {
 
 	/**
 	 * The one MySQL search behind REST /search, the search page, the app and
-	 * Abilities. It used to exist three times - in the
-	 * REST controller, in the search template and here - and the copies had
-	 * drifted (different short-term handling, ordering and space rules).
+	 * Abilities, so short-term handling, ordering and space rules cannot drift
+	 * between copies.
 	 *
 	 * @param array $args See Search_Query_Adapter::query().
 	 * @return array{items: object[], total: int}
@@ -176,15 +175,12 @@ class Fulltext_Search implements Search_Query_Adapter {
 		// Build a BOOLEAN-MODE query string that treats each meaningful token
 		// as required with a prefix wildcard. Without the leading `+` each
 		// token is OR'd, which matches any post sharing a single word with the
-		// query ("test" bringing back every post with "test" anywhere). The
-		// user-visible symptom was the new-post similar-topics typeahead
-		// returning unrelated rows; fixing it here also fixes the general
-		// search page, where the old natural-mode fallback was equally loose.
+		// query ("test" bringing back every post with "test" anywhere), which makes the
+		// new-post similar-topics typeahead and the search page return unrelated rows.
 		//
 		// Tokens shorter than 4 chars are dropped: they are below typical
 		// innodb_ft_min_token_size AND dominated by stop words. If all tokens
-		// drop out the raw query is passed through, preserving the old
-		// behavior for short queries that would otherwise return nothing.
+		// drop out the raw query is passed through, so short queries still return rows.
 		// Scope-only listing (empty $q, e.g. a tag page): skip the full-text MATCH
 		// entirely and rank by recency — there is nothing to score against, and
 		// forcing a MATCH on an empty query would return zero rows.
@@ -244,9 +240,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 		}
 
 		// Order:
-		// - relevance: the MATCH score against the same boolean query (previously
-		// defaulted to created_at DESC, which meant relevance sort was never
-		// actually sorting by relevance).
+		// - relevance: the MATCH score against the same boolean query.
 		// - newest:    created_at DESC.
 		// - votes:     vote_score DESC.
 		switch ( $sort ) {

@@ -238,9 +238,8 @@ class Replies_Controller extends Base_Controller {
 		$trust   = (int) ( $profile->trust_level ?? 0 );
 		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_replies', $trust ) ) {
 			// Rate_Limiter::message() names the allowance and the real wait.
-			// The old string said "Rate limit exceeded. Please try again
-			// later." to a member who had never been told a limit existed and
-			// could not tell whether "later" meant a minute or a day.
+			// A bare "Rate limit exceeded. Please try again later." would not tell a member
+			// whether "later" means a minute or a day.
 			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_replies', $trust ) );
 		}
 
@@ -610,6 +609,15 @@ class Replies_Controller extends Base_Controller {
 		// post/user counters atomically — no manual pre-decrement needed.
 		Reply::update( $id, array( 'status' => 'trash' ) );
 
+		/**
+		 * Fires after a reply is deleted through the REST API.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $reply_id Deleted reply ID.
+		 * @param int $space_id Space ID.
+		 * @param int $user_id  Acting user ID.
+		 */
 		do_action( 'jetonomy_reply_deleted', $id, $space_id, $user_id );
 
 		// jetonomy_after_delete_reply now fires from the model, so every
@@ -952,10 +960,10 @@ class Replies_Controller extends Base_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			// Undeclared passthrough before this fix — Pro's File Attachments
-			// extension reads this via $request->get_param() (class-extension.php
-			// link_on_create_reply()). Must stay a CSV STRING: Pro's link_pending()
-			// does explode(',', $csv), not an array walk.
+			// Pro's File Attachments extension reads this via $request->get_param()
+			// (class-extension.php link_on_create_reply()); declaring it makes it discoverable
+			// from the route schema. Must stay a CSV STRING: Pro's link_pending() does
+			// explode(',', $csv), not an array walk.
 			'attachment_ids' => array(
 				'type'              => 'string',
 				'required'          => false,

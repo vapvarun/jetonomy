@@ -6,7 +6,6 @@
  * - $children      object[] Visible sub-categories, already ordered.
  * - $spaces_by_cat array    Space::visible_by_category() map, for the counts.
  *
- * A space filed in a sub-category used to be invisible on the directory
  * Each chip links to the sub-category page and counts
  * only the spaces this viewer can see, so a hidden space is never disclosed by
  * a number.

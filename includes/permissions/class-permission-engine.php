@@ -31,15 +31,13 @@ class Permission_Engine {
 	/**
 	 * Per-request verdict memo, keyed "{user}:{action}:{space}".
 	 *
-	 * Replaces the old 60s persistent perm:{} object cache, which was never
-	 * busted anywhere — a ban, silence, or role demotion kept granting for up
-	 * to a minute across every web node. What a verdict
-	 * costs to recompute is a handful of single-row indexed lookups, and the
-	 * shared Restriction primitives are themselves memoized per request — so
-	 * a request-scope memo is as fast on the pages that matter and is
-	 * instantly correct on the next request. Writers that change a verdict
-	 * mid-request (Restriction::ban/remove_ban, SpaceMember role changes,
-	 * Space::bust_cache, UserProfile::update_profile) call reset_memo().
+	 * A request-scope memo, not a persistent cache: a persistent verdict cache would keep
+	 * granting after a ban, silence or role demotion across every web node. What a verdict
+	 * costs to recompute is a handful of single-row indexed lookups, and the shared
+	 * Restriction primitives are themselves memoized per request, so a request-scope memo
+	 * is as fast on the pages that matter and is instantly correct on the next request.
+	 * Writers that change a verdict mid-request (Restriction::ban/remove_ban, SpaceMember
+	 * role changes, Space::bust_cache, UserProfile::update_profile) call reset_memo().
 	 *
 	 * @var array<string, bool>
 	 */

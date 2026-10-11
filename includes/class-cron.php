@@ -21,8 +21,8 @@ class Cron {
 	/**
 	 * Scheduled-topic publisher. Not recurring: one single action armed at the
 	 * earliest pending published_at and re-armed after every run (background
-	 * jobs standard, pattern 3). The old hourly poll published a topic up to 59
-	 * minutes late and ran on sites with nothing scheduled.
+	 * jobs standard, pattern 3). Publishes on time and costs nothing on sites with
+	 * nothing scheduled.
 	 */
 	public const PUBLISH_HOOK = 'jetonomy_publish_scheduled';
 
@@ -217,11 +217,9 @@ class Cron {
 	/**
 	 * Dispatcher for the trust sweep (runs every 12h).
 	 *
-	 * The old single-query version selected `WHERE trust_level < 4 LIMIT 500`
-	 * with no ORDER BY / cursor, so every run re-processed the same first 500
-	 * rows and anyone past that window was never evaluated. This now resets the
-	 * keyset cursor and kicks off the first async batch; evaluate_trust_batch()
-	 * walks the whole base in bounded slices via Action Scheduler.
+	 * Resets the keyset cursor and kicks off the first async batch;
+	 * evaluate_trust_batch() walks the whole base in bounded slices via Action
+	 * Scheduler, so no user past the first N rows is skipped.
 	 */
 	public function evaluate_trust_levels(): void {
 		update_option( self::TRUST_CURSOR_OPTION, 0, false );
@@ -367,6 +365,15 @@ class Cron {
 				// webhooks) re-read the promoted level instead of a cached
 				// stale row.
 				UserProfile::update_profile( (int) $profile->user_id, array( 'trust_level' => $new_level ) );
+				/**
+				 * Fires after the trust-level sweep changes a user's trust level.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param int $user_id   User ID.
+				 * @param int $old_level Previous trust level.
+				 * @param int $new_level New trust level.
+				 */
 				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
 				++$promoted;
 			}

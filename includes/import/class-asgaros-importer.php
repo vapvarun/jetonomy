@@ -75,11 +75,10 @@ class Asgaros_Importer extends Importer {
 	/**
 	 * Import one batch of one phase.
 	 *
-	 * This used to call run() — the entire import — inside a single AJAX request,
-	 * so any forum with real content hit max_execution_time and died with no
-	 * partial-progress recovery. Phases now page through the source tables the way
-	 * the bbPress importer does; each batch loads the parents it needs from
-	 * jt_import_map (load_mapped()) and the caller keeps a resume point.
+	 * Phases page through the source tables the way the bbPress importer does, so a
+	 * forum with real content never hits max_execution_time in one request; each batch
+	 * loads the parents it needs from jt_import_map (load_mapped()) and the caller keeps
+	 * a resume point.
 	 *
 	 * Phase order: forums -> topics -> replies -> profiles -> complete.
 	 *
@@ -253,8 +252,8 @@ class Asgaros_Importer extends Importer {
 
 		foreach ( $ordered as $forum ) {
 			// Imported by an earlier run: map it so new topics under it import,
-			// and do not create it again. Re-creating it is what used to hit the
-			// unique slug key and strand every new topic in the forum.
+			// and do not create it again: re-creating it would hit the unique slug key and
+			// strand every new topic in the forum.
 			if ( isset( $existing[ (int) $forum->id ] ) ) {
 				$this->map_id( 'forum', (int) $forum->id, $existing[ (int) $forum->id ] );
 				++$this->already;

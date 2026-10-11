@@ -481,6 +481,14 @@ class Moderation_Controller extends Base_Controller {
 			);
 		}
 
+		/**
+		 * Fires after a content flag is created.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $flag_id     Flag ID.
+		 * @param string $object_type Flagged object type: 'post' or 'reply'.
+		 */
 		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
 
 		// Award reputation impact to reported content author (skip self-reports).
@@ -545,8 +553,7 @@ class Moderation_Controller extends Base_Controller {
 			: Flag::list_by_status( $status, $limit, $offset );
 
 		// Shared with the per-space queue — see Base_Controller::enrich_flag_actors().
-		// This used to be written out inline here, which is precisely why the
-		// per-space screen still said "Reported by unknown" after this one was fixed.
+		// Both queues share it, so neither shows "Reported by unknown".
 		$flags = $this->enrich_flag_actors( $flags );
 
 		// Count for the SAME status we listed, or has_more lies on every filter
@@ -690,10 +697,9 @@ class Moderation_Controller extends Base_Controller {
 	 *
 	 * Delegates to Moderation_Service::resolve_flag — the single owner of the
 	 * resolution contract (content trash on valid, related-flag clearing,
-	 * reporter reputation award, jetonomy_flag_resolved hook). This route
-	 * previously called Flag::resolve() directly, so flags resolved through
-	 * the global REST surface skipped all of those side effects while the
-	 * admin-AJAX, CLI, and space-moderation surfaces applied them.
+	 * reporter reputation award, jetonomy_flag_resolved hook), so flags resolved through
+	 * the global REST surface get the same side effects as the admin-AJAX, CLI, and
+	 * space-moderation surfaces.
 	 */
 	public function resolve_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id     = absint( $request->get_param( 'id' ) );
@@ -754,12 +760,10 @@ class Moderation_Controller extends Base_Controller {
 			return $this->not_found( 'User' );
 		}
 
-		// Who may be TARGETED. The cap matrix above only ever checked the actor,
-		// so any user with jetonomy_moderate (the editor role, by default) could
-		// issue a global_ban against the site administrator — and a global ban makes
-		// REST_Auth reject that account's mutations, so a moderator could lock the
-		// owner out of their own community. Verified against a live site before this
-		// guard existed: an editor banned user 1 and the row was written.
+		// Who may be TARGETED. The cap matrix above only checks the actor, so without this
+		// any user with jetonomy_moderate (the editor role, by default) could issue a
+		// global_ban against the site administrator - and a global ban makes REST_Auth reject
+		// that account's mutations, locking the owner out of their own community.
 		//
 		// Rules, mirroring the ones user-blocking already enforces:
 		// - nobody restricts themselves,

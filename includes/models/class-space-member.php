@@ -81,12 +81,10 @@ class SpaceMember extends Model {
 			/*
 			 * A grant must never LOWER a role somebody was deliberately given.
 			 *
-			 * This used to be an unconditional REPLACE INTO, so any adapter
-			 * re-firing its enrolment sync - a renewal, a payment retry, a
-			 * subscription status change - put a hand-promoted moderator back
-			 * to 'member'. Silently: the row already existed, so the join
-			 * hooks did not fire and set_role()'s logging was never reached,
-			 * and the owner had nothing to look at.
+			 * An existing row keeps its role: an unconditional REPLACE INTO would let any adapter
+			 * re-firing its enrolment sync - a renewal, a payment retry, a subscription status
+			 * change - silently put a hand-promoted moderator back to 'member' (the row exists,
+			 * so no join hook fires and set_role()'s logging is never reached).
 			 *
 			 * This does not block a deliberate demotion. set_role() is the
 			 * intentional path and writes directly, with its own validation,
@@ -133,6 +131,15 @@ class SpaceMember extends Model {
 
 		if ( ! $exists ) {
 			Space::increment_member_count( $space_id );
+			/**
+			 * Fires after a user joins a space.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $space_id Space ID.
+			 * @param int    $user_id  User ID.
+			 * @param string $role     Membership role.
+			 */
 			do_action( 'jetonomy_user_joined_space', $space_id, $user_id, $role );
 
 			/**
@@ -222,13 +229,10 @@ class SpaceMember extends Model {
 	 * themselves — so it is the one place the join_policy and visibility rules
 	 * are applied.
 	 *
-	 * It exists because those rules were previously duplicated at the callers,
-	 * and one caller never got them: the WP Abilities `jetonomy/join-space`
-	 * ability branched only on `visibility === 'private'` and called
-	 * SpaceMember::add() for everything else, so a subscriber could join a
-	 * HIDDEN or INVITE-ONLY space and read every post in it (Basecamp
-	 * 10227908583). Reproduced before this fix: hidden+invite, public+invite and
-	 * public+approval all returned "joined" and wrote a roster row.
+	 * It exists so the join_policy and visibility rules are applied in one place instead
+	 * of being duplicated at the callers: a caller that branched only on
+	 * `visibility === 'private'` and called SpaceMember::add() would let a subscriber join
+	 * a HIDDEN or INVITE-ONLY space and read every post in it.
 	 *
 	 * Visibility is checked here even though Space::validate_visibility_join_policy()
 	 * already rejects hidden+open and hidden+approval, because that validator
@@ -297,6 +301,15 @@ class SpaceMember extends Model {
 
 			JoinRequest::create_request( $space_id, $user_id, $message );
 
+			/**
+			 * Fires after a user submits a request to join an approval-only space.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $space_id Space ID.
+			 * @param int    $user_id  Requesting user ID.
+			 * @param string $message  Optional message from the requester.
+			 */
 			do_action( 'jetonomy_join_request_created', $space_id, $user_id, $message );
 
 			return array(

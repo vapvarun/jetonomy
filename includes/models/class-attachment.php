@@ -3,17 +3,12 @@
  * Attachment link model — maps WP media items to posts/replies with ordering,
  * plus a batch primer so rendering N reply cards issues zero per-row queries.
  *
- * This lived in Pro until 1.7.1, and that was the wrong home for the DATA. A
- * customer who migrated a forum with Pro active and later dropped Pro (licence
- * lapsed, downgrade) watched their attachments disappear from the page: the
- * importer had taken the old forum's markup out of the post body, and the only
- * remaining record sat in a table free cannot read. The files were fine — the
- * site simply had no way to show them.
- *
- * So the LINK is free. "This post has files on it" is forum content, not a paid
- * feature. Pro keeps what is genuinely Pro: the upload composer, the size/type
- * limits, and the richer previews. Pro's Model now extends this one, so Pro's
- * existing call sites are unchanged and both plugins read the same table.
+ * The LINK lives in free: "this post has files on it" is forum content, not a paid
+ * feature, and a site that drops Pro (licence lapsed, downgrade) must still show its
+ * attachments - after an import the original markup is gone from the post body, so
+ * the link table is the only record. Pro keeps what is genuinely Pro: the upload
+ * composer, the size/type limits, and the richer previews. Pro's Model extends this
+ * one, so both plugins read the same table.
  *
  * @package Jetonomy
  */

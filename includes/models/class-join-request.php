@@ -201,8 +201,26 @@ class JoinRequest extends Model {
 	 */
 	private static function fire( string $status, int $space_id, int $user_id, int $reviewed_by ): void {
 		if ( 'approved' === $status ) {
+			/**
+			 * Fires after a join request is approved.
+			 *
+			 * @since 1.4.4
+			 *
+			 * @param int $space_id    Space ID.
+			 * @param int $user_id     Requesting user ID.
+			 * @param int $reviewed_by Reviewer user ID.
+			 */
 			do_action( 'jetonomy_join_request_approved', $space_id, $user_id, $reviewed_by );
 		} else {
+			/**
+			 * Fires after a join request is denied.
+			 *
+			 * @since 1.4.4
+			 *
+			 * @param int $space_id    Space ID.
+			 * @param int $user_id     Requesting user ID.
+			 * @param int $reviewed_by Reviewer user ID.
+			 */
 			do_action( 'jetonomy_join_request_denied', $space_id, $user_id, $reviewed_by );
 		}
 	}

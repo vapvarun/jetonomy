@@ -116,8 +116,8 @@ class Sitemap_Emitter {
 			: self::fetch_posts( $start_after );
 
 		// Prefetch the per-space SEO map ONCE for this page (exclude + priority +
-		// changefreq) so the Pro filters below never hit the DB per row (the N+1
-		// the old per-provider design had at scale). Space rows expose their own
+		// changefreq) so the Pro filters below never hit the DB per row (no N+1 at
+		// scale). Space rows expose their own
 		// id; post rows expose space_id.
 		$space_ids = array();
 		foreach ( $rows as $r ) {
@@ -163,8 +163,19 @@ class Sitemap_Emitter {
 			 * @param object $object   The row.
 			 * @param int    $space_id Owning space id.
 			 */
-			$priority   = (float) apply_filters( 'jetonomy_sitemap_priority', $def_pri, $type, $row, $space_id );
-			$priority   = max( 0.0, min( 1.0, $priority ) );
+			$priority = (float) apply_filters( 'jetonomy_sitemap_priority', $def_pri, $type, $row, $space_id );
+			$priority = max( 0.0, min( 1.0, $priority ) );
+			/**
+			 * Filters the sitemap change frequency of one URL.
+			 *
+			 * @since 1.6.0
+			 *
+			 * @param string $changefreq Default frequency derived from content age.
+			 * @param string $type       'spaces' or 'posts'.
+			 * @param object $row        The database row.
+			 * @param int    $space_id   Owning space ID.
+			 * @return string Change frequency.
+			 */
 			$changefreq = (string) apply_filters( 'jetonomy_sitemap_changefreq', $def_frq, $type, $row, $space_id );
 
 			$xml .= "\t<url>\n";
@@ -203,12 +214,10 @@ class Sitemap_Emitter {
 
 		// The sitemap is crawler-facing, so the viewer is always a guest - and
 		// the guest LISTING predicate is exactly what belongs in a sitemap.
-		// These queries used to spell `visibility = 'public'` themselves, which
-		// was the rule written out by hand and, once categories gained
-		// visibility, the wrong rule: every topic in a public space inside a
-		// `hidden` category was submitted to search engines. One predicate, and
-		// a site that filters jetonomy_space_listing_visibility_sql now moves
-		// its sitemap with its listings.
+		// These queries use the guest listing predicate rather than spelling `visibility =
+		// 'public'` by hand, which ignores category visibility: every topic in a public space
+		// inside a `hidden` category would be submitted to search engines. A site that filters
+		// jetonomy_space_listing_visibility_sql moves its sitemap with its listings.
 		[ $vis ]   = Space::listing_visibility_sql( 0 );
 		[ $vis_s ] = Space::listing_visibility_sql( 0, 's' );
 
@@ -250,12 +259,10 @@ class Sitemap_Emitter {
 		$sp = table( 'spaces' );
 		// The sitemap is crawler-facing, so the viewer is always a guest - and
 		// the guest LISTING predicate is exactly what belongs in a sitemap.
-		// These queries used to spell `visibility = 'public'` themselves, which
-		// was the rule written out by hand and, once categories gained
-		// visibility, the wrong rule: every topic in a public space inside a
-		// `hidden` category was submitted to search engines. One predicate, and
-		// a site that filters jetonomy_space_listing_visibility_sql now moves
-		// its sitemap with its listings.
+		// These queries use the guest listing predicate rather than spelling `visibility =
+		// 'public'` by hand, which ignores category visibility: every topic in a public space
+		// inside a `hidden` category would be submitted to search engines. A site that filters
+		// jetonomy_space_listing_visibility_sql moves its sitemap with its listings.
 		[ $vis ] = Space::listing_visibility_sql( 0 );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

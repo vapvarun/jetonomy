@@ -46,8 +46,7 @@ class Template_Loader {
 		// space's queue (one less click for the common case). A user who
 		// moderates two or more spaces falls through to the aggregate
 		// dashboard so they can see every queue they own with pending
-		// counts at a glance — previously they got auto-redirected to
-		// their first space and had no UI affordance to reach the others.
+		// counts at a glance.
 		if ( 'moderation' === $data['route'] && is_user_logged_in() ) {
 			$mod_user_id = get_current_user_id();
 			if (
@@ -185,16 +184,10 @@ class Template_Loader {
 		// 2. Read WP's $content_width global (classic themes set this in functions.php)
 		// 3. Fallback to 1200px
 		//
-		// The `container_width` SETTING is deliberately not read here. It stores
-		// the enum theme / full / custom (see Admin::sanitize_settings), never a
-		// length, so this used to print `--jt-container-width:theme` - invalid at
-		// computed-value time, which makes `max-width: var(--jt-container-width,
-		// 1200px)` resolve to `none` rather than the fallback, because a var()
-		// fallback does not apply to an invalid substituted value. The community
-		// container therefore had NO max-width on any theme that does not wrap it
-		// itself, while the owner saw "Theme" selected and nothing wrong. It also
-		// meant the theme.json / $content_width detection below never ran, since
-		// the enum is always non-empty.
+		// The `container_width` SETTING is deliberately not read here: it stores the enum
+		// theme / full / custom (see Admin::sanitize_settings), never a length, and a
+		// non-length value makes `max-width: var(--jt-container-width, 1200px)` resolve to
+		// `none` instead of the fallback.
 		//
 		// `theme` means exactly this detection chain. `full` and `custom` are
 		// applied by Integrations\Layout_CSS::build_rules(), whose
@@ -221,24 +214,9 @@ class Template_Loader {
 		// Color palette overrides (accent + text/background/subtle/border).
 		$dynamic_css .= self::palette_css( $settings );
 
-		// Theme adoption is unconditional and lives in jetonomy.css — see the
-		// --jt-accent / --jt-font chains there. Two settings used to gate it here
-		// and both are gone:
-		//
-		// `inherit_fonts` emitted `--jt-font:inherit`. Measured across 11 themes it
-		// changed nothing: the chain already ends in `inherit`, so the token
-		// resolves to empty either way and .jt-app inherits the theme's font from
-		// body regardless. It was a checkbox with no effect, over a font setting
-		// that does not exist.
-		//
-		// `inherit_colors` did have an effect, and it was the wrong one: it made
-		// palette_tokens() return nothing, so an owner who picked an accent had it
-		// silently discarded — the checkbox defaults to checked, which left the
-		// colour picker directly beneath it dead on arrival. The picker already
-		// encodes the same intent honestly (the #0073aa default means "not set,
-		// adopt the theme"), so the toggle was redundant as well as harmful.
-		// It also re-declared the whole accent chain from a stale copy, which had
-		// already drifted from the real one in jetonomy.css.
+		// Theme adoption is unconditional and lives in jetonomy.css - see the
+		// --jt-accent / --jt-font chains there. No setting gates it: an owner-picked accent
+		// always applies, and the #0073aa default means "not set, adopt the theme".
 
 		// Layout density. Comfortable is the baseline (theme defaults, no override);
 		// compact tightens spacing/type, spacious loosens it. Rules are keyed to the
@@ -517,10 +495,9 @@ class Template_Loader {
 		// Shared global for non-Interactivity JS on community pages (link preview
 		// cards, similar-topics typeahead). Keeps the REST nonce + base URL in
 		// one place so the same contract works for the future native app.
-		// Shared modal toolkit (1.4.0) — registers window.jetonomyConfirm /
-		// jetonomyAlert / jetonomyPrompt globally. Every JS callsite that
-		// previously used window.confirm / alert / prompt depends on this
-		// handle. Loaded BEFORE composer / space-members / etc.
+		// Shared modal toolkit - registers window.jetonomyConfirm / jetonomyAlert /
+		// jetonomyPrompt globally; every JS callsite that needs a confirm, alert or prompt
+		// depends on this handle. Loaded BEFORE composer / space-members / etc.
 		if ( ! wp_script_is( 'jetonomy-modals', 'registered' ) ) {
 			wp_register_script(
 				'jetonomy-modals',
@@ -572,7 +549,7 @@ class Template_Loader {
 					// Modal helpers in view.js (jetonomyConfirm / jetonomyPrompt /
 					// jetonomySpacePicker / jetonomyPostPicker). These live OUTSIDE the
 					// Interactivity store so they read window.jetonomyData.i18n, not
-					// state.i18n. Hard-coded English used to ship in the JS bundle.
+					// state.i18n, so the strings stay translatable.
 					'modalCancel'            => esc_html__( 'Cancel', 'jetonomy' ),
 					'modalConfirm'           => esc_html__( 'Confirm', 'jetonomy' ),
 					'modalSubmit'            => esc_html__( 'Submit', 'jetonomy' ),
@@ -1260,13 +1237,10 @@ class Template_Loader {
 		);
 
 		// Meta description + canonical + OG/Twitter + robots — emitted on EVERY
-		// public route. Phase D contract (1.4.0): the free plugin alone is
-		// SEO-complete. The Pro `seo-pro` extension layers per-space overrides
-		// at priority 0, but we no longer hand it the entire emission — it
-		// only owns the routes it explicitly handles (currently `space` +
-		// `post`). All other routes are owned by free, so a community on the
-		// free plugin doesn't go invisible to crawlers on home / profile /
-		// leaderboard / search / tag / etc. (incident: 2026-04-28 SEO audit).
+		// public route. The free plugin alone is SEO-complete. The Pro `seo-pro`
+		// extension layers per-space overrides at priority 0 but only owns the routes it
+		// explicitly handles (currently `space` + `post`); free owns all other routes, so
+		// home / profile / leaderboard / search / tag / etc. stay visible to crawlers.
 		add_action(
 			'wp_head',
 			function () use ( $data ) {
@@ -1771,16 +1745,12 @@ class Template_Loader {
 			case 'post':
 				if ( $slug ) {
 					$post = \Jetonomy\Models\Post::find_by_slug( $slug );
-					// can_read_post() is the authoritative read decision and
-					// already owns the status gate (hoisted there in 1.8.0), the
-					// per-post privacy gate and the space gate - including a
-					// space concealed by its category. This case used to re-state
-					// only the status half in its own words, so a published topic
-					// the viewer could not read rendered "Post not found" under
-					// HTTP 200: a soft 404 the REST route (404) and the space
-					// route (404) both disagreed with, and one search engines
-					// index. The in-template gates run after the theme has begun
-					// output, which is why the status has to be decided here.
+					// can_read_post() is the authoritative read decision: it owns the status gate, the
+					// per-post privacy gate and the space gate, including a space concealed by its
+					// category. Deciding the status here keeps an unreadable post from rendering
+					// "Post not found" under HTTP 200 (a soft 404 search engines index); the
+					// in-template gates run after the theme has begun output, which is why the
+					// status is decided here.
 					if ( ! $post || ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 						status_header( 404 );
 					}

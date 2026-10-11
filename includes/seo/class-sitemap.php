@@ -4,7 +4,7 @@
  *
  * Jetonomy content is served by a CUSTOM sitemap (Sitemap_Emitter, via the
  * router rewrite) rather than WP-core providers, so it can carry
- * <priority>/<changefreq>. This class no longer registers WP-core providers; it
+ * <priority>/<changefreq>. This class registers no WP-core providers; it
  * just advertises the custom sitemap in robots.txt.
  *
  * @package Jetonomy

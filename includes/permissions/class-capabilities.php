@@ -59,7 +59,7 @@ class Capabilities {
 
 	/**
 	 * Either cap lets a user upload (images in the composer, Pro attachments).
-	 * Posting caps no longer imply it, so unticking Upload media on the
+	 * Posting caps do not imply it, so unticking Upload media on the
 	 * Permissions tab really stops a role.
 	 */
 	public const UPLOAD_CAPS = array( 'upload_files', 'jetonomy_upload_media' );
@@ -237,15 +237,13 @@ class Capabilities {
 	 * Whether a user may create a space from the FRONT END.
 	 *
 	 * The single gate for the REST create route, the /new-space/ form, and the
-	 * user-panel "Create space" link. All three used to OR in
-	 * `current_user_can( 'jetonomy_create_spaces' )` before consulting the
-	 * admin's allow-list — and since that cap is granted cumulatively to
-	 * author and up, unticking Author or Editor under Settings → General did
-	 * nothing at all. The setting could only ever
-	 * restrict subscribers and contributors, which was not what it said.
+	 * user-panel "Create space" link. It consults only the admin's allow-list, not
+	 * `current_user_can( 'jetonomy_create_spaces' )`: that cap is granted cumulatively to
+	 * author and up, so OR-ing it in would make unticking Author or Editor under
+	 * Settings -> General do nothing.
 	 *
-	 * The cap still gates programmatic paths (CLI, Abilities). It no longer
-	 * overrides what the site owner configured for the front end.
+	 * The cap still gates programmatic paths (CLI, Abilities); it does not override
+	 * what the site owner configured for the front end.
 	 *
 	 * @param int $user_id WP user ID. 0 = current user.
 	 * @return bool

@@ -490,7 +490,7 @@ class Notification extends Model {
 		$params = array_merge( array( now() ), $read_p_params, $read_r_params );
 
 		// Carry the block fragment's own params: past INLINE_CAP it switches to
-		// a `blocker_id = %d` subquery, which the old per-method copies dropped.
+		// a `blocker_id = %d` subquery, whose params a per-method copy would drop.
 		[ $block_sql, $block_params ] = BlockedUser::exclusion_sql( $user_id, 'n', 'actor_id' );
 		if ( '' !== $block_sql ) {
 			$sql   .= ' AND ' . $block_sql;

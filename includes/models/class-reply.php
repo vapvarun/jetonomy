@@ -387,11 +387,10 @@ class Reply extends Model {
 
 		// $after is a forward cursor carrying an OFFSET, not a row id.
 		//
-		// The old `id > %d` keyset branch was wrong for every sort but 'oldest':
-		// under `created_at DESC` or `vote_score DESC` an id filter does not follow
-		// the sort, so each next page re-served the head of the thread
-		// Offset matches how has_more/cursor_next are
-		// computed in paginated_response(), so the two can no longer disagree.
+		// Offset is the only scheme every sort supports: a keyset `id > %d` filter does
+		// not follow `created_at DESC` or `vote_score DESC`, so each next page would
+		// re-serve the head of the thread. Offset matches how has_more/cursor_next are
+		// computed in paginated_response(), so the two cannot disagree.
 		$offset = $after > 0 ? $after : $offset;
 
 		$rows = static::db()->get_results(
@@ -495,8 +494,8 @@ class Reply extends Model {
 	 *
 	 * Writes both sides (reply is_accepted + post accepted_reply_id /
 	 * is_resolved), fires jetonomy_reply_accepted (Notifier, Pro badges) and
-	 * awards the reply author. REST and WP-CLI both call this; the CLI used to
-	 * run Post::accept_reply() alone, leaving the reply's own flag at 0.
+	 * awards the reply author. REST and WP-CLI both call this, so the reply's own
+	 * is_accepted flag is always set.
 	 *
 	 * Authorization is the caller's job (REST: post author or close_posts;
 	 * CLI: whoever runs it). Idempotent, also under concurrency: only the
@@ -547,6 +546,14 @@ class Reply extends Model {
 
 		Post::accept_reply( (int) $post->id, $id );
 
+		/**
+		 * Fires after a reply is marked as the accepted answer.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $reply_id Accepted reply ID.
+		 * @param int $post_id  Parent post ID.
+		 */
 		do_action( 'jetonomy_reply_accepted', $id, (int) $post->id );
 
 		$author_id = (int) $reply->author_id;
@@ -589,6 +596,14 @@ class Reply extends Model {
 
 		Post::clear_accepted_reply( (int) $post->id );
 
+		/**
+		 * Fires after a reply loses its accepted-answer mark.
+		 *
+		 * @since 1.4.4
+		 *
+		 * @param int $reply_id Reply ID.
+		 * @param int $post_id  Parent post ID.
+		 */
 		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
 
 		if ( $author_id && $author_id !== $actor_id ) {
@@ -1004,11 +1019,9 @@ class Reply extends Model {
 	 * @return array Threaded reply tree.
 	 */
 	private static function build_threaded( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = 0, int $offset = 0 ): array {
-		// SQL-side pagination. The old shape fetched the
-		// WHOLE thread — every reply row incl. longtext bodies — into PHP and
-		// array_slice()d the top level, so a 500-reply topic transferred all
-		// 500 bodies to render 30. Now: one bounded top-level page, then the
-		// page's descendants level by level. Behavior contracts preserved:
+		// SQL-side pagination: one bounded top-level page, then the page's descendants
+		// level by level, so a 500-reply topic does not transfer every longtext body to
+		// render 30. Behavior contracts:
 		// - DEFAULT_SORT ordering stays byte-identical to page_of()'s
 		// correlated COUNT (created_at ASC, id ASC) — the deep-link
 		// contract the journey test asserts, incl. tied created_at.
@@ -1017,16 +1030,12 @@ class Reply extends Model {
 		// classic paging bug). Note 'best' pages can shift
 		// as votes land mid-pagination, which a whole-thread snapshot
 		// would not do; this is accepted.
-		// - Children always render oldest-first regardless of top sort
-		// (the old flat query's order).
-		// - ORPHANS RENDER AS ROOTS. A published reply whose parent row is
-		// missing, pending, spammed or trashed would be unreachable: the
-		// level walk starts at parent_id 0 and never descends to it. It would be
-		// counted, so a topic would advertise "3 replies" and render
-		// none - and
-		// reproducible by any moderator who trashes a reply that has
-		// children. Resolved at READ time via the LEFT JOIN below rather
-		// than by reparenting rows on delete: restore the parent and the
+		// - Children always render oldest-first regardless of top sort.
+		// - ORPHANS RENDER AS ROOTS. A published reply whose parent row is missing,
+		// pending, spammed or trashed would be unreachable (the level walk starts at
+		// parent_id 0 and never descends to it) yet still counted, so a topic would
+		// advertise "3 replies" and render none. Resolved at READ time via the LEFT JOIN
+		// below rather than by reparenting rows on delete: restore the parent and the
 		// thread nests again, with nothing rewritten.
 		$order_by = 'created_at ASC, id ASC';
 		if ( 'newest' === $sort ) {
@@ -1076,8 +1085,8 @@ class Reply extends Model {
 
 		while ( ! empty( $level_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $level_ids ), '%d' ) );
-			// Children always oldest-first — matches the old flat query's
-			// created_at ASC, id ASC order that build_tree() consumed.
+			// Children always oldest-first (created_at ASC, id ASC), the order build_tree()
+			// consumes.
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$children = static::db()->get_results(
 				static::db()->prepare(
@@ -1116,10 +1125,9 @@ class Reply extends Model {
 		}
 
 		/*
-		 * NOTHING viewer-dependent happens here. Block tombstones and
-		 * private-reply tombstones used to be applied at this point, which
-		 * baked one viewer's permissions into a cache entry every other viewer
-		 * then read. Both now run in apply_viewer_state(), after the cache.
+		 * NOTHING viewer-dependent happens here. Block tombstones and private-reply
+		 * tombstones run in apply_viewer_state(), after the cache, so one viewer's
+		 * permissions are never baked into an entry every other viewer reads.
 		 *
 		 * If you are adding something that calls get_current_user_id(), it
 		 * does not belong in this method.
@@ -1753,6 +1761,15 @@ class Reply extends Model {
 			);
 		}
 
+		/**
+		 * Fires after a reply is split out into a new post.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $reply_id    ID of the reply that was split.
+		 * @param int $new_post_id ID of the new post.
+		 * @param int $old_post_id ID of the original parent post.
+		 */
 		do_action( 'jetonomy_reply_split', $reply_id, $new_post_id, (int) $reply->post_id );
 
 		return $new_post_id;

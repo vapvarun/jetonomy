@@ -15,11 +15,9 @@ defined( 'ABSPATH' ) || exit;
 /*
  * Show the first-run banner only when the site really has nothing yet.
  *
- * This used to test the wizard flag alone, so any site whose content arrived
- * by import, migration, CLI or REST - i.e. never ran the wizard - was told to
- * "create your first community space" forever, directly above stats reading
- * 51 spaces and 1,507 replies. The flag records whether the WIZARD ran; it was
- * never a proxy for whether the community exists.
+ * The wizard flag alone is not enough: a site whose content arrived by import,
+ * migration, CLI or REST never ran the wizard, and the flag records whether the
+ * WIZARD ran, not whether the community exists.
  */
 $jt_has_content = ( (int) ( $stats['active_spaces'] ?? 0 ) > 0 )
 	|| ( (int) ( $stats['total_posts'] ?? 0 ) > 0 );

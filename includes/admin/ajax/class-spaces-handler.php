@@ -574,10 +574,9 @@ class Spaces_Handler {
 		}
 
 		// The roster role comes from the STORED rule, capped by that rule's own
-		// grants - never from the request. Sync used to write whatever role the
-		// button carried, so a rule advertising "Read" could deposit space
-		// admins, who then get the moderation bypass that reads the roster role
-		// and never looks at grants. See AccessRule::cap_space_role().
+		// grants - never from the request, so a rule advertising "Read" cannot deposit
+		// space admins, who get the moderation bypass that reads the roster role and never
+		// looks at grants. See AccessRule::cap_space_role().
 		$rule = $rule_id ? AccessRule::find( $rule_id ) : null;
 		if ( $rule && (int) $rule->space_id === $space_id ) {
 			$space_role = AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type );

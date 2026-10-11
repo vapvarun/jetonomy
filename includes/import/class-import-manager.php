@@ -19,6 +19,14 @@ class Import_Manager {
 		self::register( 'asgaros', new Asgaros_Importer() );
 
 		// Allow third-party importers
+		/**
+		 * Filters the registered importers.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $importers Importer class names keyed by source slug.
+		 * @return array Importers.
+		 */
 		self::$importers = apply_filters( 'jetonomy_importers', self::$importers );
 	}
 

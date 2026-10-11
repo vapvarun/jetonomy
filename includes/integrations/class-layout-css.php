@@ -67,14 +67,11 @@ class Layout_CSS {
 		$css = '';
 
 		// Every theme selector below is limited to the community app's OWN
-		// ancestors via `:has(#jetonomy-app)`. A bare `body.jt-page .container`
-		// also matched the theme header's and footer's `.container`, so "Full
-		// Width" stretched the site header edge-to-edge on Reign / BuddyX /
-		// BuddyX Pro (logo pinned to the viewport edge, header no longer lined
-		// up with the rest of the site), and "Hide sidebar" hid Reign's footer
-		// widget row because it is a `.widget-area` too. Browsers without
-		// `:has()` skip the rule and keep the theme default width - never a
-		// broken header.
+		// ancestors via `:has(#jetonomy-app)`. A bare `body.jt-page .container` would also
+		// match the theme header's and footer's `.container`, so "Full Width" would stretch
+		// the site header edge-to-edge on Reign / BuddyX / BuddyX Pro, and "Hide sidebar"
+		// would hide Reign's footer widget row (also a `.widget-area`). Browsers without
+		// `:has()` skip the rule and keep the theme default width - never a broken header.
 		$app_wrappers = ':is(.site-content,.entry-content,.content-area,#primary,main#main,.container,.wrap):has(#jetonomy-app)';
 
 		// ── Container width ──

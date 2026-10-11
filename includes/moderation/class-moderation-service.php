@@ -228,13 +228,10 @@ class Moderation_Service {
 	 * Resolve everything a page of flag rows needs to render, in a fixed
 	 * number of queries.
 	 *
-	 * Both moderation surfaces used to do this per row. views/moderation.php
-	 * ran Post/Reply::find(), a second Post::find() for a reply's parent,
-	 * Space::find(), and get_userdata() - four queries a row, ~100 on a full
-	 * page of 25. partials/moderation/flag-card.php ran its own permalink join
-	 * plus a get_userdata() on top of that. Neither grew with the number of
-	 * flags a site had, so it stayed invisible until someone opened a busy
-	 * queue.
+	 * Both moderation surfaces use this instead of resolving per row (four queries a row,
+	 * ~100 on a full page of 25, plus a permalink join and get_userdata() in
+	 * partials/moderation/flag-card.php), a cost that stays invisible until someone opens
+	 * a busy queue.
 	 *
 	 * This resolves the whole page in four queries plus one user query,
 	 * whatever the row count: replies, then every parent post together with
@@ -486,6 +483,15 @@ class Moderation_Service {
 			}
 		}
 
+		/**
+		 * Fires after a flag is resolved.
+		 *
+		 * @since 1.3.8
+		 *
+		 * @param int    $flag_id Flag ID.
+		 * @param string $status  Resolution status.
+		 * @param int    $user_id Resolving user ID.
+		 */
 		do_action( 'jetonomy_flag_resolved', $flag_id, $status, $user_id );
 
 		/**
@@ -733,10 +739,9 @@ class Moderation_Service {
 
 		// Single place every moderation path resolves pending flags. REST,
 		// admin AJAX (single + bulk), abilities, space-mod, and resolve_flag all
-		// funnel through here, so directly actioning content can no longer leave
-		// orphan 'pending' flags in the queue pointing at already-removed content
-		// (Basecamp flag/moderation sync gap). resolve_siblings_for() is a single
-		// bulk UPDATE, so this stays one extra query per object.
+		// funnel through here, so directly actioning content cannot leave orphan 'pending'
+		// flags in the queue pointing at already-removed content. resolve_siblings_for() is a
+		// single bulk UPDATE, so this stays one extra query per object.
 		$flag_resolution = array(
 			'approve' => 'dismissed', // Content found acceptable — reports dismissed.
 			'spam'    => 'valid',     // Reports confirmed.
@@ -764,6 +769,16 @@ class Moderation_Service {
 			Reputation::award( (int) $row->author_id, 'post_removed' );
 		}
 
+		/**
+		 * Fires after a moderation action is applied to a post or reply.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $action  Moderation action: approve|spam|trash|hold.
+		 * @param string $type    'post' or 'reply'.
+		 * @param int    $id      Object row ID.
+		 * @param int    $user_id Acting user ID (0 = system).
+		 */
 		do_action( 'jetonomy_content_moderated', $action, $type, $id, $user_id );
 
 		return true;

@@ -164,15 +164,15 @@ class Space extends Model {
 		// Retype the posts inside when the space changes what it is. Post type
 		// drives real behaviour, not just a label: schema markup only emits
 		// QAPage with acceptedAnswer for `question`, so a forum space switched
-		// to Q&A used to keep every post as `topic` and silently lose the rich
-		// result. Ideas spaces had the same gap.
+		// to Q&A must not keep every post as `topic` and lose the rich result. Ideas
+		// spaces are the same.
 		if ( $type_changing && $old_type && $old_type !== $data['type'] ) {
 			self::retype_posts( $id, (string) $data['type'] );
 		}
 
 		/*
 		 * Settle the request queue when the space stops taking requests.
-		 * Pending rows used to linger after approval -> open/invite, looking
+		 * Pending rows would otherwise linger after approval -> open/invite, looking
 		 * unprocessed in the owner's queue forever.
 		 * Every writer - REST PATCH, admin AJAX, WP-CLI - funnels through
 		 * here, so this is the one place that sees all of them.
@@ -343,10 +343,9 @@ class Space extends Model {
 	 * The surviving space admin who inherits, if any (precedence step 1).
 	 *
 	 * Split out so a caller can tell "a space admin is still running this space"
-	 * from "nobody is, fall back to the site admin". Privacy used to infer that
-	 * by comparing the successor with the site admin, which misread a site
-	 * admin who is ALSO a space admin as a stranded space and archived it
-	 * Any role counts here, site administrator included:
+	 * from "nobody is, fall back to the site admin" - comparing the successor with the
+	 * site admin would misread a site admin who is ALSO a space admin as a stranded
+	 * space. Any role counts here, site administrator included:
 	 * the question is only whether a space admin row survives.
 	 *
 	 * @param int $space_id  Space to look in.
@@ -607,9 +606,8 @@ class Space extends Model {
 	 *   - Guest: public spaces only (no anonymous exposure of private names).
 	 *   - Logged-in: public + private spaces, plus any HIDDEN space they belong to.
 	 *
-	 * Replaces the old "public OR member" listing rule, under which `private`
-	 * spaces were as invisible as `hidden` ones — collapsing two distinct
-	 * visibility states into one ("Private+open spaces invisible").
+	 * Private and hidden are distinct visibility states: collapsing them would make
+	 * "Private+open" spaces invisible.
 	 *
 	 * Site owners can widen (e.g. show private to guests) or narrow (e.g. hide
 	 * invite-only) per site via the `jetonomy_space_listing_visibility_sql`
@@ -889,11 +887,10 @@ class Space extends Model {
 	 */
 	public static function readable_by_viewer( object $space, int $user_id ): bool {
 		// The parent category is asked FIRST and is not overridable by
-		// admission: a public space inside a `hidden` category used to answer
-		// GET /spaces/{id} with 200 to a stranger holding the id, which made
-		// the category's promise cosmetic on the API while the browser path
-		// (concealed_from_viewer) had already been taught to honour it. Same
-		// question, one answer.
+		// admission: a public space inside a `hidden` category must not answer
+		// GET /spaces/{id} with 200 to a stranger holding the id, or the category's promise
+		// would be cosmetic on the API while the browser path (concealed_from_viewer)
+		// honours it. Same question, one answer.
 		if ( self::concealed_by_category( $space, $user_id ) ) {
 			return false;
 		}
@@ -1008,12 +1005,9 @@ class Space extends Model {
 	 * which is fine at five and unusable at two thousand.
 	 *
 	 * A CHILD space is listed here too, under the category it was assigned.
-	 * This query used to carry `parent_id = 0`, which meant a space's
-	 * `category_id` was written, indexed and then ignored for any space that
-	 * had a parent. Nothing nested those children either - `list_children()`
-	 * has no callers anywhere in free, Pro or the templates - so an imported
-	 * sub-forum was reachable from nowhere in the directory at all. That is
-	 * the shape two customers reported after migrating.
+	 * The query does not filter on `parent_id`, so a child space is listed under its own
+	 * category and an imported sub-forum is reachable from the directory (nothing else
+	 * nests children: `list_children()` has no callers in free, Pro or the templates).
 	 *
 	 * A child therefore appears exactly ONCE, under its own category. It is
 	 * deliberately not also nested under its parent: the same space listed
@@ -1295,8 +1289,8 @@ class Space extends Model {
 
 		// Explicit visibility filter — NARROWS the result set within what the
 		// viewer is already allowed to see. It must never stand in for the
-		// viewer gate below: passing visibility=hidden|private previously
-		// skipped the gate entirely and exposed every such space to guests.
+		// viewer gate below: passing visibility=hidden|private must not skip the gate, or
+		// every such space is exposed to guests.
 		if ( $visibility ) {
 			$where[]  = 's.visibility = %s';
 			$values[] = $visibility;
@@ -1306,15 +1300,10 @@ class Space extends Model {
 		// visibility filter, so the filter can only ever return a subset of the
 		// caller's visible spaces (fail closed).
 		//
-		// This used to hand-roll the rule ("public OR member") while every other
-		// listing surface — the community home, search, fulltext — went through
-		// listing_visibility_sql(). The two drifted: `private` spaces are
-		// deliberately DISCOVERABLE (see that method's contract), so /community/
-		// showed them while REST /spaces did not. Same question, two answers,
-		// measured live: 32 spaces rendered vs 26 returned for the same viewer.
-		// One predicate now, so REST, the app, and the web cannot disagree again —
-		// and the jetonomy_space_listing_visibility_sql filter finally reaches REST
-		// too, instead of silently applying to only half the surfaces.
+		// One predicate, listing_visibility_sql(), serves every listing surface - the
+		// community home, search, fulltext, REST and the app - so they cannot disagree.
+		// `private` spaces are deliberately DISCOVERABLE (see that method's contract), and
+		// the jetonomy_space_listing_visibility_sql filter reaches REST too.
 		//
 		// Content stays gated by content_visibility_sql(): a private space's CARD
 		// is discoverable, its posts are not.
@@ -1350,10 +1339,9 @@ class Space extends Model {
 		$where_sql = ! empty( $where ) ? 'WHERE ' . implode( ' AND ', $where ) : '';
 
 		// No membership JOIN: listing_visibility_sql() expresses membership as a
-		// subquery, so the LEFT JOIN that used to back the inline gate is gone —
-		// and with it the DISTINCT that existed only to guard the join's fan-out.
-		// One fewer join and no de-duplication pass on the space listing, which
-		// matters on the installs that have thousands of spaces.
+		// subquery, so there is no LEFT JOIN and no DISTINCT to guard its fan-out: one
+		// fewer join and no de-duplication pass on the space listing, which matters on
+		// installs with thousands of spaces.
 
 		// Count query.
 		$count_sql = "SELECT COUNT(s.id) FROM {$spaces_table} s {$where_sql}";

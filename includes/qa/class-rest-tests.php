@@ -359,9 +359,7 @@ class REST_Tests {
 		$this->check( 'B9: response has id', isset( $data['id'] ), 'response missing id' );
 
 		// 14–16. Single-item detail reads on the fixtures Group A/B created.
-		// These endpoints previously had no direct test — they were marked
-		// covered only by a stem-match against Pro extension tests, which
-		// moved to the Pro repo.
+		// Direct tests for these endpoints, not a stem-match against Pro extension tests.
 		$r    = $this->rest( 'GET', "/posts/{$this->post_id}" );
 		$data = $r->get_data();
 		$this->check( 'B14: GET /posts/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
@@ -370,7 +368,7 @@ class REST_Tests {
 
 		// 14b. The view beacon is the only view counter: it answers with a
 		// `counted` flag, an immediate repeat is deduped, and a plain GET read
-		// no longer moves view_count.
+		// does not move view_count.
 		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/view" );
 		$data = $r->get_data();
 		$this->check( 'B14b: POST /posts/{id}/view → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
@@ -947,7 +945,7 @@ class REST_Tests {
 		// SM2. That XML must be ours because we claim the URL EARLY, not by luck
 		// of rewrite ordering. AIOSEO hooks parse_request at priority 10, so a
 		// handler at >= 10 loses to it. Asserting the priority catches a silent
-		// regression (someone "tidying" the hook to default 10) that E33 would
+		// change (someone "tidying" the hook to default 10) that E33 would
 		// not, because on a site with no SEO plugin installed E33 still passes.
 		$claim_priority = null;
 		if ( isset( $GLOBALS['wp_filter']['parse_request'] ) ) {
@@ -1411,12 +1409,10 @@ class REST_Tests {
 	/**
 	 * Record a check that could NOT run.
 	 *
-	 * A skip used to be logged as `check( '... (skipped)', true )`, which made
-	 * it indistinguishable from a real assertion in the totals. On a box where
-	 * fixtures fail to build, dozens of those turn into "passes" and the suite
-	 * reports green while proving nothing - the failure mode this whole audit
-	 * exists to remove. Skips are counted separately and never inflate the
-	 * pass count.
+	 * Skips are counted separately and never inflate the pass count: logged as
+	 * `check( '... (skipped)', true )` they would be indistinguishable from real
+	 * assertions, and a box where fixtures fail to build would report green while
+	 * proving nothing.
 	 *
 	 * @param string $label  What did not run.
 	 * @param string $reason Why not.
@@ -1472,11 +1468,9 @@ class REST_Tests {
 	 * rather than quietly returning 200.
 	 */
 	private function test_extension_only_update_XF1(): void {
-		// Own fixture, created through the MODEL. The shared $this->post_id has
-		// been trashed by earlier tests before this point, and creating through
-		// the REST collection depends on the fixture space still being valid -
-		// both produced a 404 that looked like a failure of the seam rather than
-		// of the fixture. Only the PATCH needs to go through REST here.
+		// Own fixture, created through the MODEL: the shared $this->post_id is trashed by
+		// earlier tests, and creating through the REST collection depends on the fixture
+		// space still being valid. Only the PATCH needs to go through REST here.
 		global $wpdb;
 		$spaces_t = $wpdb->prefix . 'jt_spaces';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

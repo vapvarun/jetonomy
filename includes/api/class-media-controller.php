@@ -242,6 +242,14 @@ class Media_Controller extends Base_Controller {
 	 * @return true|\WP_Error
 	 */
 	public static function validate_upload( array $file ) {
+		/**
+		 * Filters the maximum size of a media upload, in bytes.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param int $max Maximum size in bytes. Default is the smaller of the server limit and 10 MB.
+		 * @return int Maximum size in bytes.
+		 */
 		$max = (int) apply_filters( 'jetonomy_upload_max_size', min( (int) wp_max_upload_size(), 10 * MB_IN_BYTES ) );
 		if ( (int) ( $file['size'] ?? 0 ) > $max ) {
 			return new WP_Error(

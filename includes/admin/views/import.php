@@ -251,19 +251,17 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 
 	<?php
 	/**
-	 * Past imports — the per-import report this card asked for.
+	 * Past imports - the per-import report.
 	 *
 	 * Deliberately OUTSIDE the source-card loop, and outside the
 	 * detected/not-detected branch, because both would hide it exactly when it
 	 * matters. The cards only render when a forum plugin is still installed; the
-	 * whole point of migrating is that you then remove the old forum, and at that
-	 * moment the page fell through to "No Forum Data Detected" and the owner lost
-	 * every record of what their migration did.
+	 * whole point of migrating is that you then remove the old forum, and the page
+	 * would otherwise fall through to "No Forum Data Detected" and hide every record
+	 * of what the migration did.
 	 *
-	 * The data was always there and always discarded: the skipped COUNT flashed in
-	 * a notice that a 3s reload ate, and the per-item reasons were accumulated
-	 * across batches and then delete_option'd on completion. "27 files skipped" is
-	 * not something an owner can act on; WHICH files is.
+	 * The skipped count and the per-item reasons are kept in the history record: "27
+	 * files skipped" is not something an owner can act on; WHICH files is.
 	 */
 	if ( ! empty( $import_history ) ) :
 		?>

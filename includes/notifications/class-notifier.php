@@ -55,16 +55,11 @@ class Notifier {
 	/**
 	 * Verify an unsubscribe token.
 	 *
-	 * Every link must now carry a signed expiry. The old non-expiring token
-	 * (pre-1.5.0) is no longer accepted: it was a bearer credential with no
-	 * lifetime, so anyone who ever saw one of those emails — a shared inbox, a
-	 * forwarded message, a mail archive — could unsubscribe that member forever.
-	 * The deprecation window the 1.5.0 fallback existed for has passed (1.6.0 and
-	 * 1.7.0 have both shipped since), so the fallback is gone.
-	 *
-	 * A link from an email sent before 1.5.0 will now fail closed rather than
-	 * silently honour an unbounded token. Those members can still unsubscribe from
-	 * their notification settings, or from any newer email.
+	 * Every link must carry a signed expiry. A non-expiring token is not accepted: it was
+	 * a bearer credential with no lifetime, so anyone who ever saw one of those emails - a
+	 * shared inbox, a forwarded message, a mail archive - could unsubscribe that member
+	 * forever. Such a link fails closed; those members can still unsubscribe from their
+	 * notification settings, or from any newer email.
 	 *
 	 * @param int    $user_id User id from the URL.
 	 * @param string $type    Notification type from the URL.
@@ -74,7 +69,7 @@ class Notifier {
 	 */
 	public static function verify_unsubscribe( int $user_id, string $type, string $token, int $expires ): bool {
 		if ( $expires <= 0 ) {
-			return false; // Unsigned / pre-1.5.0 link — no longer honoured.
+			return false; // Unsigned link - not honoured.
 		}
 
 		if ( time() > $expires ) {
@@ -1018,9 +1013,8 @@ class Notifier {
 			return; // Only notify on promotion
 		}
 
-		// Single source of truth - see Trust_Levels::label(). This list used to be
-		// a copy, which is how the admin Users screen drifted a level away from
-		// what this email says.
+		// Single source of truth - see Trust_Levels::label(); a local copy drifts from the
+		// admin Users screen.
 		$level_names = array();
 		for ( $lvl = 1; $lvl <= 5; $lvl++ ) {
 			$level_names[ $lvl ] = \Jetonomy\Trust\Trust_Levels::label( $lvl );
@@ -1853,9 +1847,8 @@ class Notifier {
 	 *
 	 * Email parity: the link in the email and the link in the web/REST inbox
 	 * are the same paged, anchored deep link, because both resolve through
-	 * \Jetonomy\reply_permalink(). Previously every reply notification —
-	 * email included — carried get_post_url(), landing the reader on the top
-	 * of the thread with no way to find the reply that pinged them.
+	 * \Jetonomy\reply_permalink(), so the reader lands on the reply that pinged them,
+	 * not the top of the thread.
 	 *
 	 * get_post_url() is deliberately left alone: it still serves the
 	 * notifications that really are about the POST (votes, moderation,

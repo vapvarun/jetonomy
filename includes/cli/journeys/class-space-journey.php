@@ -177,10 +177,10 @@ final class Space_Journey {
 	/**
 	 * Delete a space by ID - transferring it by default.
 	 *
-	 * This used to call Space::delete(), which removes the space ROW and
-	 * nothing else: it lost the owner and orphaned every child row across the
-	 * 21 declared relations. Same defect the REST route had, and the CLI is the
-	 * path most likely to be pointed at a large space.
+	 * Space::delete() removes the space ROW and nothing else (it loses the owner and
+	 * orphans every child row across the 21 declared relations), so this goes through
+	 * transfer/purge instead; the CLI is the path most likely to be pointed at a large
+	 * space.
 	 *
 	 * `transfer` hands the space to its successor and archives it. `purge`
 	 * destroys it and everything in it, and runs SYNCHRONOUSLY here rather than

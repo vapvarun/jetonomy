@@ -4,9 +4,9 @@
  *
  * Returned by Router::maybe_render_route() from the `template_include` filter,
  * which is how WordPress asks a plugin "which file renders this request". The
- * router used to render inline and `exit` during `template_redirect` instead;
- * that fires BEFORE template_include, so anything gating on the later hook - a
- * maintenance-mode, membership or coming-soon plugin - never ran at all
+ * router renders through this file at `template_include`, not inline during
+ * `template_redirect` (which fires BEFORE it), so anything gating on the later
+ * hook - a maintenance-mode, membership or coming-soon plugin - still runs.
  * A file that WordPress loads normally, at the moment
  * it loads templates, leaves every one of those callbacks a turn to replace it.
  *

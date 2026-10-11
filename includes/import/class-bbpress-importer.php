@@ -48,15 +48,12 @@ class BBPress_Importer extends Importer {
 	/**
 	 * The bbPress post_statuses we import, per post type.
 	 *
-	 * Every query in this importer used to hard-filter `post_status =
-	 * 'publish'`, which silently dropped three things a real board is full of:
-	 * a **closed** topic (bbPress marks it `closed`, not `publish`), and
-	 * **private** and **hidden** forums. Two customers migrated with content
-	 * missing and no way to know.
+	 * Every query in this importer filters on this set, not `post_status = 'publish'`,
+	 * which would silently drop three things a real board is full of: a **closed** topic
+	 * (bbPress marks it `closed`, not `publish`), and **private** and **hidden** forums.
 	 *
-	 * The counts below use the same sets, which is the other half of the bug:
-	 * the pre-import estimate applied the identical filter, so it agreed with
-	 * the import exactly and the shortfall was invisible from both ends.
+	 * The counts use the same sets, so the pre-import estimate agrees with the import and
+	 * a shortfall cannot hide from both ends.
 	 *
 	 * THE single source of truth for "what we take" - the counts, the batch
 	 * queries and the full-run queries all read it, so they cannot drift apart
@@ -192,10 +189,9 @@ class BBPress_Importer extends Importer {
 	 *    the integration's role map (admin -> admin, mod -> moderator). Members
 	 *    who never posted are not participants, so the group is the only list.
 	 *
-	 * Both used to be added inline, one SpaceMember::add() per person, inside
-	 * the forums batch: fine at 13 members, a timeout at 10,000. They are now
-	 * one ordered query over every queued grant, paged by the batch driver
-	 * like any other phase. add() stays the writer so join hooks fire and an
+	 * Both are one ordered query over every queued grant, paged by the batch driver like
+	 * any other phase - adding inline, one SpaceMember::add() per person, is fine at 13
+	 * members and a timeout at 10,000. add() stays the writer so join hooks fire and an
 	 * existing role is never lowered; deleted users are dropped in SQL.
 	 *
 	 * @param array $grants Queued grants.
@@ -485,15 +481,10 @@ class BBPress_Importer extends Importer {
 	 * So this is purely a re-link: the file survives untouched either way, and all
 	 * that is missing is the row that makes Jetonomy render it.
 	 *
-	 * That link is FREE as of 1.7.1 — this comment used to say it was Pro, and that
-	 * "enabling Pro later reveals them". Both halves are now false, and the second
-	 * was false in a way that mattered: it promised a reveal that no code performed,
-	 * because link rows were only ever written during import.
-	 * Attachments moved to free (Attachments::register() is in the unconditional
-	 * bootstrap; the importer links via the free Attachment model regardless of
-	 * whether Pro is active), so the rows are written here on every site and free
-	 * renders them immediately. Turning Pro off costs previews and the PDF viewer,
-	 * not the attachments.
+	 * That link is FREE: Attachments::register() is in the unconditional bootstrap and the
+	 * importer links via the free Attachment model whether or not Pro is active, so the rows
+	 * are written here on every site and free renders them immediately. Turning Pro off
+	 * costs previews and the PDF viewer, not the attachments.
 	 *
 	 * @param string $object_type   'post' or 'reply'.
 	 * @param int    $source_post_id bbPress topic/reply post ID.
@@ -782,8 +773,8 @@ class BBPress_Importer extends Importer {
 		$access = $this->map_access( $forum );
 
 		// bbPress nests forums through the ordinary WP post_parent column. Both
-		// paths used to ignore it, so every sub-forum was created as a top-level
-		// space and the customer's whole board structure was flattened on import.
+		// paths honour it, so a sub-forum is created under its parent space and the board
+		// structure survives import.
 		$parent_space_id = (int) $this->get_mapped_id( 'forum', (int) $forum->post_parent );
 
 		return (int) Space::create(

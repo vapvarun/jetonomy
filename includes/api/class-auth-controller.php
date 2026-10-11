@@ -329,8 +329,7 @@ class Auth_Controller extends Base_Controller {
 			);
 		}
 
-		// CAPTCHA gate (1.5.0 — parity with register/lost-password, the one
-		// auth endpoint that was missing it). Anonymous user_id 0;
+		// CAPTCHA gate (parity with register/lost-password). Anonymous user_id 0;
 		// verify_or_skip returns null when no adapter is configured.
 		$token          = (string) $request->get_param( 'captcha_token' );
 		$remote_ip      = \Jetonomy\client_ip();
@@ -697,6 +696,13 @@ class Auth_Controller extends Base_Controller {
 			// the visitor confirms their email and read as if the account is
 			// already live. The verify-email handler fires the action once
 			// the account is actually usable.
+			/**
+			 * Fires after a registration that still needs email verification.
+			 *
+			 * @since 1.4.0
+			 *
+			 * @param int $user_id New user ID.
+			 */
 			do_action( 'jetonomy_user_pending_verification', (int) $user_id );
 
 			$masked = $this->mask_email( $email );
@@ -714,6 +720,13 @@ class Auth_Controller extends Base_Controller {
 		// Notifier owns branded welcome + admin emails via this hook; we
 		// intentionally do NOT call wp_send_new_user_notifications() to avoid
 		// duplicate sends (parity with the legacy handler comment).
+		/**
+		 * Fires once a new account is usable: right after registration, or after email verification when that is required.
+		 *
+		 * @since 1.3.5
+		 *
+		 * @param int $user_id New user ID.
+		 */
 		do_action( 'jetonomy_user_registered', (int) $user_id );
 
 		wp_set_current_user( (int) $user_id );
@@ -767,6 +780,13 @@ class Auth_Controller extends Base_Controller {
 		delete_user_meta( $user_id, '_jetonomy_verification_sent_at' );
 		update_user_meta( $user_id, '_jetonomy_verified_at', time() );
 
+		/**
+		 * Fires after a user confirms their email address.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param int $user_id User ID.
+		 */
 		do_action( 'jetonomy_email_verified', $user_id );
 
 		// Now that the account is actually usable, fire the standard

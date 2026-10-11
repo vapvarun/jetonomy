@@ -36,19 +36,16 @@ class Media_Library {
 	 * PROVENANCE. Set only when Jetonomy itself created the upload.
 	 *
 	 * META_FLAG cannot be used to decide whether we may DELETE a file, because the
-	 * backfill below also applies it to media we did not create: it infers "this is a
-	 * community upload" from the author lacking `upload_files`, which is true of every
-	 * subscriber-authored attachment on the site — including another forum plugin's.
-	 * wpForo, for instance, inserts its attachments into the media library authored by
-	 * the posting member. Pro's GC then force-deleted any flagged, unlinked attachment
-	 * over 24h old (wp_delete_attachment with $force_delete = true, so the FILE went
-	 * from disk as well) — which meant enabling attachments on a site mid-migration
-	 * could destroy the very files the import existed to rescue.
+	 * backfill also applies it to media we did not create: it infers "community upload"
+	 * from the author lacking `upload_files`, true of every subscriber-authored attachment
+	 * on the site, including another forum plugin's (wpForo inserts its attachments authored
+	 * by the posting member). Pro's GC would force-delete any flagged, unlinked attachment
+	 * over 24h old, file included, so enabling attachments mid-migration could destroy the
+	 * very files the import existed to rescue.
 	 *
-	 * Ownership is now RECORDED at write time rather than guessed after the fact.
-	 * Only uploads carrying this meta are ever GC-eligible. A capability check is a
-	 * fine heuristic for HIDING a file from the owner's media grid; it is not one for
-	 * deleting it.
+	 * Ownership is RECORDED at write time rather than guessed after the fact. Only uploads
+	 * carrying this meta are ever GC-eligible. A capability check is a fine heuristic for
+	 * HIDING a file from the owner's media grid; it is not one for deleting it.
 	 */
 	const META_ORIGIN = '_jetonomy_media_origin';
 
@@ -375,10 +372,9 @@ class Media_Library {
 		 * window; whether each one is actually unused is decided per row by
 		 * is_referenced() below.
 		 *
-		 * The LEFT JOIN on the link table that used to live here is gone. It
-		 * encoded "no link row = abandoned", and the only free caller of
-		 * Attachment::link() is the importer - so every ordinary composer
-		 * upload looked abandoned and in-use images were deleted.
+		 * There is no LEFT JOIN on the link table: it would encode "no link row = abandoned",
+		 * and the only free caller of Attachment::link() is the importer, so every ordinary
+		 * composer upload would look abandoned and in-use images would be deleted.
 		 */
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$candidates = $wpdb->get_col(

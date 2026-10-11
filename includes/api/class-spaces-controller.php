@@ -733,7 +733,7 @@ class Spaces_Controller extends Base_Controller {
 			// is the space-edit form submitting 0 because the current option
 			// was missing from a visibility-filtered dropdown, and accepting it
 			// unfiles the space - moving a public space out of a hidden
-			// category and onto the community home. The template now always
+			// category and onto the community home. The template always
 			// renders the option; this is the half a crafted request cannot
 			// get around.
 			$clearing = null === $new_category_id && $old_category_id > 0;
@@ -788,12 +788,9 @@ class Spaces_Controller extends Base_Controller {
 			}
 			if ( null !== $incoming ) {
 				// Merge + normalize through the model, same as the admin AJAX
-				// writer. This path used to array_merge() raw, so the front-end
-				// edit form's `posts_per_page: ""` (its "use the default"
-				// value) was stored verbatim and read back as a limit of 1 —
-				// the admin writer had guarded against exactly that for
-				// releases, and only this path had drifted (Basecamp
-				// 10118693115).
+				// writer: a raw array_merge() would store the front-end edit form's
+				// `posts_per_page: ""` (its "use the default" value) verbatim and read it back as a
+				// limit of 1.
 				$data['settings'] = wp_json_encode( Space::merge_settings( $id, $incoming ) );
 			} elseif ( '' === $settings_raw ) {
 				// Explicit empty string means reset; stored as empty JSON object.
@@ -1037,10 +1034,8 @@ class Spaces_Controller extends Base_Controller {
 		 * The policy itself lives in SpaceMember::join(). This method only maps
 		 * that decision onto HTTP.
 		 *
-		 * It used to own the rules outright, which is how the WP Abilities
-		 * join-space path came to disagree with it - same request, one refused
-		 * and one admitted. Two copies of a rule is one
-		 * copy too many; the facade is now the single answer for every caller.
+		 * The facade is the single answer for every caller, so the WP Abilities join-space
+		 * path cannot disagree with this one: two copies of a rule is one copy too many.
 		 */
 		$result = SpaceMember::join( $id, get_current_user_id(), $message );
 

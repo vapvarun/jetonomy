@@ -7,8 +7,8 @@
  * `\Jetonomy_Pro\QA\REST_Tests`) so Pro's manifest-driven coverage gate
  * (`bin/qa-coverage-check.php`) can credit them and Pro's stub generator
  * (`bin/qa-stub-gen.php`) has a file to append to.
- * They used to live here, but a free-repo test file can never satisfy the
- * Pro repo's coverage gate — the checker only greps the plugin's own tree.
+ * They live there because a free-repo test file can never satisfy the Pro repo's
+ * coverage gate - the checker only greps the plugin's own tree.
  *
  * This class keeps the `wp jetonomy qa-actions` Phase 3 contract stable:
  * the CLI still instantiates \Jetonomy\QA\Pro_Tests, and run() forwards to

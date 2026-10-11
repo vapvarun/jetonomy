@@ -495,15 +495,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<option value="full"><?php esc_html_e( 'Full', 'jetonomy' ); ?></option>
 					</select>
 					<?php
-					// Space Role is no longer a separate choice. It never affected
-					// access - Permission_Engine reads only `grants` - and its one
-					// consumer, "Sync Members", could deposit space admins from a
-					// rule labelled "Read", who then picked up the moderation
-					// bypass that reads the roster role. The role is derived from
-					// the access level now and submitted as a hidden field so the
-					// stored shape and every existing rule are untouched. To give
-					// one person a different role, use the Members tab, where
-					// roster roles belong and the change is visible per person.
+					// Space Role is derived from the access level and submitted as a hidden field. It
+					// never affects access (Permission_Engine reads only `grants`), and a free choice
+					// would let "Sync Members" deposit space admins from a rule labelled "Read". To
+					// give one person a different role, use the Members tab, where roster roles belong.
 					?>
 					<input type="hidden" id="rule-space-role" value="viewer">
 					<input type="hidden" id="rule-priority" value="0">

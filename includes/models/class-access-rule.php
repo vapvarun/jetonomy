@@ -332,16 +332,15 @@ class AccessRule extends Model {
 	 *
 	 * A rule stores BOTH what someone may do (`grants`) and what role they are
 	 * recorded as when "Sync Members" materialises them (`space_role`). Those
-	 * were independent, and the combination was not merely confusing - it was a
-	 * privilege escalation. A rule labelled "Read - view posts and replies,
-	 * cannot take part" with space_role=admin gave every matched person
-	 * `delete_others_posts` and `moderate` the moment an owner pressed Sync
-	 * Members, because Permission_Engine's space-moderator bypass reads the
-	 * ROSTER role and never looks at the rule's grants.
+	 * were independent, which allowed a privilege escalation: a rule labelled "Read -
+	 * view posts and replies, cannot take part" with space_role=admin would give every
+	 * matched person `delete_others_posts` and `moderate` when an owner presses Sync
+	 * Members, because Permission_Engine's space-moderator bypass reads the ROSTER role
+	 * and never looks at the rule's grants.
 	 *
-	 * Capping here closes that on every site, including the rules already
-	 * stored on installs that upgrade - the stored value is left alone, but it
-	 * can no longer buy more power than the rule advertises.
+	 * Capping here covers every site, including rules already stored on installs that
+	 * upgrade - the stored value is left alone, but it cannot buy more power than the
+	 * rule advertises.
 	 *
 	 * A `membership` rule is capped harder still: never above `member`, whatever
 	 * its grants say. A membership rule means "everyone holding this plan", and

@@ -179,6 +179,15 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 	<?php
 	// Reply after-content slot (Pro attachment strip renders here). Mirrors the
 	// post-level jetonomy_after_post_content filter; same shared kses set.
+	/**
+	 * Filters markup printed after a reply body. The result is passed through wp_kses() with the shared after-content allowlist.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param string $html  Markup to print. Default empty.
+	 * @param object $reply Reply row.
+	 * @return string Markup to print.
+	 */
 	$jt_reply_after = apply_filters( 'jetonomy_after_reply_content', '', $reply );
 	if ( '' !== $jt_reply_after ) {
 		echo wp_kses( $jt_reply_after, jetonomy_after_content_allowed_html() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kses'd above.
@@ -347,6 +356,13 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<?php endif; ?>
 		<?php
 		if ( $jt_thread_live ) {
+			/**
+			 * Fires in the reply action bar for live threads, so extensions can add write actions.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param object $reply Reply row.
+			 */
 			do_action( 'jetonomy_reply_actions', $reply );
 		}
 		?>

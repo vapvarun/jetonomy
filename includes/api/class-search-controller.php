@@ -150,7 +150,7 @@ class Search_Controller extends Base_Controller {
 		// clamp to 1..50). `per_page` is accepted as an alias for `limit`: the
 		// header search overlay (assets/js/header.js) already sends per_page,
 		// and the composer typeahead (assets/js/composer.js) already sends
-		// limit — both were previously silently dropped by the route schema.
+		// limit, so the route schema declares both.
 		//
 		// Big-site note: limit is capped at 50; a deep OFFSET on a FULLTEXT+JOIN
 		// query is O(offset), which is fine at ~2000 rows. A keyset cursor would
@@ -235,12 +235,9 @@ class Search_Controller extends Base_Controller {
 						),
 					),
 					'meta' => array(
-						// Back-compat: `total` previously meant "rows returned across
-						// all three groups combined." It now means the posts group's
-						// real total (matching every other search mode + the new
-						// X-WP-Total/X-WP-TotalPages headers). `totals` carries the
-						// real per-group counts so callers than need the old combined
-						// number can add them up themselves.
+						// `total` is the posts group's real total (matching every other search mode and the
+						// X-WP-Total/X-WP-TotalPages headers). `totals` carries the real per-group counts, so
+						// callers that need a combined number can add them up themselves.
 						'total'    => $posts_total,
 						'totals'   => array(
 							'posts'  => $posts_total,

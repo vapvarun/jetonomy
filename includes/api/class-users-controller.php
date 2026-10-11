@@ -257,12 +257,10 @@ class Users_Controller extends Base_Controller {
 		$users = array();
 		if ( $space_id > 0 ) {
 			// Membership scoping via a JOIN inside WP_User_Query.
-			// The old shape fetched EVERY member id unbounded (a 500-member
-			// space materialized 500 ids into PHP and fed them back as a
-			// 500-element IN) — and a LIMIT there would have made results
-			// depend on physical row order. WP_User_Query has no join param,
-			// so hook the GLOBAL pre_user_query filter and remove it in the
-			// same call so it cannot leak into any other user query.
+			// Fetching EVERY member id unbounded would materialize them all into PHP and feed them
+			// back as one large IN, and a LIMIT there would depend on physical row order.
+			// WP_User_Query has no join param, so hook the GLOBAL pre_user_query filter and remove it
+			// in the same call so it cannot leak into any other user query.
 			//
 			// search_columns must match the global branch below — without it
 			// WP_User_Query's default set includes user_email, which lets a
@@ -584,9 +582,8 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
-		// display_name must be one the member already owns. This used to accept
-		// any string and write it straight to wp_users, so a member could publish
-		// as "Administrator", take another member's exact name, and override the
+		// display_name must be one the member already owns: any string would let a member
+		// publish as "Administrator", take another member's exact name, and override the
 		// value the owner picked in wp-admin - site-wide, not just in the forum.
 		if ( null !== $request->get_param( 'display_name' ) ) {
 			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
@@ -999,7 +996,7 @@ class Users_Controller extends Base_Controller {
 
 		// Match the feed's batch author enrichment (base controller) so profile post
 		// cards render the author avatar/name instead of a blank "?" row — the same
-		// prepared shape /feed returns, not the minimal columns this route used to.
+		// prepared shape /feed returns.
 		$posts = $this->enrich_with_author( $posts, 'author_id' );
 		// Batch viewer state too — prepare_post() otherwise runs 2 point
 		// queries per row for the bookmark/vote flags.

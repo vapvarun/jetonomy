@@ -41,9 +41,8 @@ class Category extends Model {
 		}
 
 		// Every writer (wp-admin, REST, setup wizard, seeder, importers) gets a
-		// free slug here: a second "General" under another parent used to fail
-		// on the UNIQUE key with a bare "Failed to create category." (Basecamp
-		// 10375159877). Same rule as wp_insert_term(): suffix, never refuse.
+		// free slug here: a second "General" under another parent would otherwise fail on
+		// the UNIQUE key. Same rule as wp_insert_term(): suffix, never refuse.
 		$data['slug'] = self::unique_slug( (string) ( $data['slug'] ?? '' ) ?: (string) ( $data['name'] ?? '' ) );
 		$data         = self::normalize_color( $data, (int) ( $data['parent_id'] ?? 0 ) );
 
@@ -162,12 +161,11 @@ class Category extends Model {
 	/**
 	 * Delete a category only when nothing is filed under it.
 	 *
-	 * The one guard every caller routes through. REST used to delete a parent
-	 * outright, leaving its sub-categories pointing at a missing row (gone
-	 * from every listing and unrepairable in wp-admin) and its spaces filed
-	 * under nothing. Live spaces (anything not archived,
-	 * locked included) and sub-categories block the delete; archived spaces are
-	 * moved to uncategorised so a restore does not land in a deleted category.
+	 * The one guard every caller routes through, so REST cannot delete a parent and
+	 * leave its sub-categories pointing at a missing row or its spaces filed under
+	 * nothing. Live spaces (anything not archived, locked included) and sub-categories
+	 * block the delete; archived spaces are moved to uncategorised so a restore does
+	 * not land in a deleted category.
 	 *
 	 * @param int $id Category id.
 	 * @return bool|\WP_Error 409 WP_Error while spaces or sub-categories remain.

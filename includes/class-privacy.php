@@ -62,11 +62,10 @@ class Privacy {
 	/**
 	 * Hand every space owned by a departing user to the site admin.
 	 *
-	 * Deleting a member's WP account used to strand their space: `spaces` is
-	 * anonymized (author_id -> 0) while `space_members` is purged, and space
-	 * privilege comes from `space_members.role`, not `spaces.author_id`. If the
-	 * departing owner was the only space admin, the space kept running with its
-	 * members and content but nobody could manage it.
+	 * Without this, deleting a member's WP account strands their space: `spaces` is
+	 * anonymized (author_id -> 0) while `space_members` is purged, and space privilege
+	 * comes from `space_members.role`, not `spaces.author_id`. If the departing owner was
+	 * the only space admin, the space keeps running but nobody can manage it.
 	 *
 	 * The successor is deliberately simple (decision, Varun 2026-08-17): the
 	 * lowest-id site administrator. On the overwhelming majority of installs the
@@ -205,8 +204,8 @@ class Privacy {
 			'exporter_friendly_name' => __( 'Jetonomy Replies', 'jetonomy' ),
 			'callback'               => array( $this, 'export_replies' ),
 		);
-		// Personal data that is erased but was previously not exported (GDPR
-		// export completeness). All paginated via the shared export_table() helper.
+		// Personal data that is erased is exported too (GDPR export completeness).
+		// All paginated via the shared export_table() helper.
 		$exporters['jetonomy-bookmarks']     = array(
 			'exporter_friendly_name' => __( 'Jetonomy Bookmarks', 'jetonomy' ),
 			'callback'               => array( $this, 'export_bookmarks' ),
@@ -615,7 +614,15 @@ class Privacy {
 			);
 		}
 
-		$uid       = $user->ID;
+		$uid = $user->ID;
+		/**
+		 * Filters the number of rows the personal-data eraser removes per request.
+		 *
+		 * @since 1.6.0
+		 *
+		 * @param int $batch_size Rows per batch. Default 1000.
+		 * @return int Rows per batch.
+		 */
 		$batch     = max( 1, (int) apply_filters( 'jetonomy_erase_batch_size', 1000 ) );
 		$state_key = 'jetonomy_erase_' . $uid;
 		$work      = 0; // Rows touched (anonymized or deleted) this page.

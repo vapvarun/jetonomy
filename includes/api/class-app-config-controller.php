@@ -130,8 +130,7 @@ class App_Config_Controller extends Base_Controller {
 	 * Resolve branding from the free Appearance settings (accent + logo).
 	 *
 	 * Pro white-label carries only the community name, footer text and the
-	 * wp-admin menu label/icon; it never wrote the logo, accent or login
-	 * background keys this used to read from it.
+	 * wp-admin menu label/icon; it has no logo, accent or login background keys.
 	 * `login_bg_url` stays in the payload, empty, so the app contract holds.
 	 *
 	 * @param array $settings The `jetonomy_settings` option.
