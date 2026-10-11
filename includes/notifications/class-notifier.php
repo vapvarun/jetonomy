@@ -1814,7 +1814,7 @@ class Notifier {
 		$notify_message = sprintf(
 			/* translators: 1: user display name, 2: space name */
 			__( '%1$s requested to join %2$s', 'jetonomy' ),
-			$this->get_display_name( $user_id ),
+			\Jetonomy\user_display_name( $user_id ) ?: __( 'Someone', 'jetonomy' ),
 			$space_name
 		);
 
@@ -1827,7 +1827,7 @@ class Notifier {
 			// 403'd on click — they own the space but not wp-admin. Front-end
 			// space-mod queue at /community/s/:slug/mod/ now carries the same
 			// approve / decline UI for them.
-			$space_url = $this->build_join_request_url_for( $mod_id, $space );
+			$space_url = \Jetonomy\join_request_url_for( $mod_id, $space );
 			$this->create_and_maybe_email(
 				$mod_id,
 				$user_id,
@@ -1838,25 +1838,6 @@ class Notifier {
 				$space_url
 			);
 		}
-	}
-
-	/**
-	 * Per-recipient join-request action URL.
-	 *
-	 * Delegates to \Jetonomy\join_request_url_for() so the email, the
-	 * /notifications/ page, and the REST bell dropdown all land the reader on
-	 * the same surface.
-	 *
-	 * @param int         $recipient_id Recipient WP user id.
-	 * @param object|null $space        Space row (may be null).
-	 */
-	private function build_join_request_url_for( int $recipient_id, $space ): string {
-		return \Jetonomy\join_request_url_for( $recipient_id, $space );
-	}
-
-	private function get_display_name( int $user_id ): string {
-		$user = get_userdata( $user_id );
-		return $user ? $user->display_name : __( 'Someone', 'jetonomy' );
 	}
 
 	private function get_post_url( object $post ): string {
