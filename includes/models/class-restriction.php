@@ -222,6 +222,27 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * SQL that drops users banned site-wide or from one space.
+	 *
+	 * For candidate lists (who may inherit a space), so the check runs inside
+	 * the query instead of once per candidate.
+	 *
+	 * @param string $user_column Qualified user id column, e.g. 'user_id'.
+	 * @param int    $space_id    Space whose own bans also count.
+	 * @return string Prepared SQL starting with ' AND'.
+	 */
+	public static function not_banned_sql( string $user_column, int $space_id ): string {
+		return static::db()->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- column name from the caller, table from static::table().
+			" AND {$user_column} NOT IN ( SELECT user_id FROM " . static::table() . "
+				WHERE ( type = 'global_ban' OR ( type = 'space_ban' AND space_id = %d ) )
+				  AND ( expires_at IS NULL OR expires_at > %s ) )",
+			$space_id,
+			now()
+		);
+	}
+
+	/**
 	 * Answer is_space_banned() for several spaces with one query, so a list of
 	 * topics from many spaces (tag page, drafts, search) does not check the
 	 * viewer's ban once per space. Fills the same memo

@@ -5,15 +5,15 @@
         "version": "2.0.1"
     },
     "generated": {
-        "at": "2026-10-06T09:02:22+00:00",
+        "at": "2026-10-11T06:40:44+00:00",
         "manifest_at": "2026-09-22T22:58:00Z",
         "manifest_branch": "2.0.0"
     },
     "categories": {
         "rest": {
             "total": 112,
-            "covered": 47,
-            "uncovered": 65,
+            "covered": 48,
+            "uncovered": 64,
             "skipped": 0,
             "covered_items": [
                 {
@@ -39,6 +39,10 @@
                 {
                     "method": "POST",
                     "route": "/spaces/(?P<id>\\d+)/members"
+                },
+                {
+                    "method": "GET",
+                    "route": "/spaces/(?P<id>\\d+)/privileged-members"
                 },
                 {
                     "method": "GET",
@@ -220,11 +224,6 @@
                     "method": "GET",
                     "route": "/spaces/(?P<id>\\d+)/members",
                     "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/members\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/spaces/(?P<id>\\d+)/privileged-members",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/privileged-members\""
                 },
                 {
                     "method": "PATCH",
@@ -879,14 +878,14 @@
     "summary": {
         "categories_checked": 5,
         "items_total": 190,
-        "items_covered": 68,
-        "items_uncovered": 122,
+        "items_covered": 69,
+        "items_uncovered": 121,
         "items_skipped": 238,
-        "coverage_percent": 35.799999999999997
+        "coverage_percent": 36.299999999999997
     },
     "drift": {
-        "previous_uncovered": 120,
-        "current_uncovered": 122,
-        "delta": 2
+        "previous_uncovered": 122,
+        "current_uncovered": 121,
+        "delta": -1
     }
 }

@@ -424,7 +424,20 @@ $crumbs[] = array(
 		<?php if ( $is_restricted ) : ?>
 			<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">
 				<?php if ( 'archived' === $space_status ) : ?>
-					<?php /* translators: 1: singular space label (e.g. space, group); 2: plural reply label. */ ?>
+					<?php
+					// Right after a hand-over, name the new owner (read from the
+					// space, so the query flag only decides whether to say it).
+					$jt_owner_name = \Jetonomy\user_display_name( (int) $space->author_id );
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display flag only.
+					if ( ! empty( $_GET['jt_handed_over'] ) && '' !== $jt_owner_name ) :
+						?>
+						<strong role="status">
+							<?php
+							/* translators: %s: display name of the new owner. */
+							echo esc_html( sprintf( __( 'Archived and handed over to %s.', 'jetonomy' ), $jt_owner_name ) );
+							?>
+						</strong>
+					<?php endif; ?>
 					<?php echo esc_html( sprintf( /* translators: 1: singular space label; 2: plural topic label; 3: plural reply label. */ __( 'This %1$s is archived. New %2$s and %3$s are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				<?php else : ?>
 					<?php /* translators: 1: singular space label (e.g. space, group); 2: plural reply label. */ ?>

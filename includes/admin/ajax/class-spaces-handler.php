@@ -354,12 +354,10 @@ class Spaces_Handler {
 	 * @param int $id Space to archive and transfer.
 	 */
 	private function transfer_space( int $id ): void {
-		$successor = Space::resolve_successor( $id, get_current_user_id() );
-		if ( ! $successor ) {
-			wp_send_json_error( __( 'No one else can take over this space. Delete it permanently instead.', 'jetonomy' ) );
+		$successor = Space::archive_and_hand_over( $id );
+		if ( is_wp_error( $successor ) ) {
+			wp_send_json_error( $successor->get_error_message() );
 		}
-
-		Space::hand_over( $id, $successor, get_current_user_id(), true );
 
 		wp_send_json_success(
 			array(

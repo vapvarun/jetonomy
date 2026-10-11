@@ -3363,6 +3363,34 @@ const { state, actions } = store( 'jetonomy', {
             window.location.assign( btn.getAttribute( 'data-redirect' ) || '/' );
         },
 
+        // Brings an archived space back; the route allows only its owner or a site admin.
+        *unarchiveSpace() {
+            const btn     = getElement().ref;
+            const id      = parseInt( btn.getAttribute( 'data-space-id' ), 10 );
+            const section = btn.closest( '.jt-danger-zone' );
+            const errorEl = section && section.querySelector( '[data-jt-delete-error]' );
+            if ( ! id ) return;
+
+            if ( errorEl ) { errorEl.hidden = true; errorEl.textContent = ''; }
+            btn.disabled = true;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + id, {
+                method: 'PATCH',
+                body: { status: 'active' },
+            } );
+
+            if ( ! res.ok ) {
+                btn.disabled = false;
+                if ( errorEl ) {
+                    const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+                    errorEl.textContent = ( res.data && res.data.message ) || i18n.unarchiveFailed || 'Could not unarchive. Please try again.';
+                    errorEl.hidden = false;
+                }
+                return;
+            }
+            window.location.reload();
+        },
+
         // ── Awaiting-approval queue (1.9.4) ──
         // Posts to the SPACE-scoped route the card carries, not the site-wide
         // /moderation/{action}/... one. The site-wide route requires the

@@ -96,9 +96,6 @@ class Privacy {
 			return;
 		}
 
-		// Resolved once: it is the same for every space this user owned.
-		$site_admin = \Jetonomy\Models\Space::fallback_owner( $user_id );
-
 		foreach ( $space_ids as $space_id ) {
 			$space_id = (int) $space_id;
 
@@ -118,14 +115,14 @@ class Privacy {
 			if ( $heir ) {
 				// NOT archived: another admin is still running this space, so
 				// nothing is stranded and it keeps working.
-				\Jetonomy\Models\Space::hand_over( $space_id, $heir, $user_id, false );
+				\Jetonomy\Models\Space::hand_over( $space_id, $heir, false );
 				continue;
 			}
 
 			// Genuinely stranded: no admin remains. Fall back to the site admin
 			// and park the space, so an owner decides what happens to it rather
 			// than it quietly running with nobody able to manage it.
-			$successor = $site_admin;
+			$successor = \Jetonomy\Models\Space::fallback_owner( $user_id, $space_id );
 			if ( ! $successor ) {
 				// No other administrator exists at all. Leave author_id alone
 				// rather than point it at nobody - a wrong owner is worse than a
@@ -137,7 +134,7 @@ class Privacy {
 			// decide what happens to it rather than it quietly continuing with
 			// no one able to manage it. hand_over() writes BOTH author_id and
 			// the admin row; attribution without the row leaves it unmanageable.
-			\Jetonomy\Models\Space::hand_over( $space_id, $successor, $user_id, true );
+			\Jetonomy\Models\Space::hand_over( $space_id, $successor, true );
 		}
 	}
 
@@ -633,6 +630,10 @@ class Privacy {
 		// those tables over several pages, so "capture then recompute" can no
 		// longer happen in a single call).
 		if ( 1 === $page ) {
+			// Spaces go to their successor first, the same rule as account
+			// deletion, or the erase strands them with no admin.
+			$this->transfer_spaces_to_site_admin( $uid );
+
 			// Durable option (not a transient): a transient can be evicted by an
 			// object cache under memory pressure or expire during a long
 			// multi-page erase, which would silently skip the counter recompute
@@ -650,6 +651,9 @@ class Privacy {
 		// Anonymize authored content (kept — preserves community threads and the
 		// denormalized counters since the rows still exist), bounded per table.
 		foreach ( self::ANON_TABLES as $authored ) {
+			if ( 'spaces' === $authored ) {
+				continue; // Ownership is handed over above, never blanked.
+			}
 			$work += $this->batch_anonymize_author( $authored, $uid, $batch );
 		}
 
@@ -825,14 +829,16 @@ class Privacy {
 		// running with content and members intact and nobody except a
 		// manage_options admin able to change a setting.
 		//
-		// Running first also makes the `spaces` entry in ANON_TABLES a no-op
-		// on this path (no rows still match the departing user), while keeping
-		// it as a backstop for the GDPR erase path.
 		$this->transfer_spaces_to_site_admin( $user_id );
 
 		// Anonymize content (rows kept so threads + denormalized counters stay
-		// intact), using the same shared list as erase_data().
+		// intact), using the same shared list as erase_data(). Spaces are
+		// skipped: any still owned by this user found no successor, and their
+		// author_id is what lets the backfill hand them over later.
 		foreach ( self::ANON_TABLES as $t ) {
+			if ( 'spaces' === $t ) {
+				continue;
+			}
 			$wpdb->update( table( $t ), array( 'author_id' => 0 ), array( 'author_id' => $user_id ) );
 		}
 

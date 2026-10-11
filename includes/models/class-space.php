@@ -275,41 +275,60 @@ class Space extends Model {
 	/**
 	 * Move ownership of a space to another member.
 	 *
-	 * The MECHANICS of a hand-over, shared by the three paths that need it:
-	 * account deletion, an explicit "delete space" that chose transfer, and the
-	 * CLI. The policy differs between them - account deletion leaves a space
-	 * running when another admin survives, an explicit delete always parks it -
-	 * but the steps do not, and getting the steps half right is the failure this
-	 * whole area keeps producing.
+	 * The mechanics shared by every hand-over: an owner archiving their space,
+	 * a site admin doing it from wp-admin or WP-CLI, and account deletion or a
+	 * GDPR erase. `author_id` is attribution and the `space_members` admin row
+	 * is the actual power, so both are written and both are checked; the hook
+	 * fires only when the space really changed hands.
 	 *
-	 * Both writes matter and neither is sufficient alone: `author_id` is
-	 * attribution, the `space_members` admin row is the actual power. A space
-	 * given one without the other looks transferred and is unmanageable.
-	 *
-	 * @param int  $space_id     Space to hand over.
-	 * @param int  $to_user_id   New owner.
-	 * @param int  $from_user_id Previous owner, for the hook payload.
-	 * @param bool $archive      Park the space as well as reassigning it.
-	 * @return bool False when either id is unusable.
+	 * @param int  $space_id        Space to hand over.
+	 * @param int  $to_user_id      New owner.
+	 * @param bool $archive         Park the space as well as reassigning it.
+	 * @param bool $demote_previous Make the former owner a moderator (an
+	 *                              explicit hand-over; account deletion has no
+	 *                              former owner left to demote).
+	 * @return true|\WP_Error
 	 */
-	public static function hand_over( int $space_id, int $to_user_id, int $from_user_id = 0, bool $archive = false ): bool {
-		if ( $space_id <= 0 || $to_user_id <= 0 ) {
-			return false;
+	public static function hand_over( int $space_id, int $to_user_id, bool $archive = false, bool $demote_previous = false ) {
+		$space = $space_id > 0 ? self::find( $space_id ) : null;
+		if ( ! $space ) {
+			return new \WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+
+		$from_user_id = (int) $space->author_id;
+		if ( $to_user_id <= 0 || $to_user_id === $from_user_id ) {
+			return new \WP_Error( 'jetonomy_transfer_noop', __( 'This member already owns the space.', 'jetonomy' ), array( 'status' => 409 ) );
+		}
+
+		// Power first: if the new owner cannot be made an admin (a join filter
+		// can veto it), nothing else changes.
+		$added = SpaceMember::add( $space_id, $to_user_id, 'admin' );
+		if ( is_wp_error( $added ) ) {
+			return $added;
 		}
 
 		$data = array( 'author_id' => $to_user_id );
 		if ( $archive ) {
 			$data['status'] = 'archived';
 		}
-
 		self::update( $space_id, $data );
-		SpaceMember::add( $space_id, $to_user_id, 'admin' );
+
+		$after = self::find( $space_id );
+		if ( ! $after || (int) $after->author_id !== $to_user_id ) {
+			return new \WP_Error( 'jetonomy_transfer_failed', __( 'The space could not be handed over. Please try again.', 'jetonomy' ), array( 'status' => 500 ) );
+		}
+
+		if ( $demote_previous && $from_user_id > 0 && 'admin' === SpaceMember::get_role( $space_id, $from_user_id ) ) {
+			SpaceMember::set_role( $space_id, $from_user_id, 'moderator' );
+		}
 
 		/**
 		 * A space changed hands.
 		 *
+		 * @since 1.9.4
+		 *
 		 * @param int $space_id     The space.
-		 * @param int $from_user_id Previous owner (0 when unknown).
+		 * @param int $from_user_id Previous owner (0 when the space had none).
 		 * @param int $to_user_id   New owner.
 		 */
 		do_action( 'jetonomy_space_transferred', $space_id, $from_user_id, $to_user_id );
@@ -318,72 +337,128 @@ class Space extends Model {
 	}
 
 	/**
+	 * Archive a space and hand it to its successor (an explicit hand-over).
+	 *
+	 * The former owner stays on as a moderator. Callers check can_hand_over()
+	 * first; WP-CLI runs as a trusted operator.
+	 *
+	 * @param int $space_id Space to hand over.
+	 * @return int|\WP_Error New owner's user ID.
+	 */
+	public static function archive_and_hand_over( int $space_id ) {
+		$space = self::find( $space_id );
+		if ( ! $space ) {
+			return new \WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		if ( 'archived' === ( $space->status ?? '' ) ) {
+			return new \WP_Error( 'jetonomy_space_archived', __( 'This space is already archived.', 'jetonomy' ), array( 'status' => 409 ) );
+		}
+
+		$successor = self::resolve_successor( $space_id );
+		if ( ! $successor ) {
+			return new \WP_Error(
+				'jetonomy_no_successor',
+				__( 'No one else can take over this space, so it cannot be transferred. An administrator must delete it permanently instead.', 'jetonomy' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$result = self::hand_over( $space_id, $successor, true, true );
+		return is_wp_error( $result ) ? $result : $successor;
+	}
+
+	/**
+	 * Whether a user may archive and hand over a space: its owner or a site
+	 * admin. Other space admins may not, or ownership could bounce between them.
+	 *
+	 * @param object $space   Space row.
+	 * @param int    $user_id User.
+	 * @return bool
+	 */
+	public static function can_hand_over( object $space, int $user_id ): bool {
+		if ( $user_id <= 0 || 'archived' === ( $space->status ?? '' ) ) {
+			return false;
+		}
+		return (int) $space->author_id === $user_id || user_can( $user_id, 'manage_options' );
+	}
+
+	/**
 	 * Who should own this space if the current owner goes away.
 	 *
-	 * ONE definition, shared by the two paths that need it: account deletion
-	 * (Privacy) and an explicit "delete space" that chooses transfer over purge.
-	 * They were about to grow separate copies, and a successor rule that
-	 * disagrees with itself is how a space ends up owned by someone who cannot
-	 * manage it.
-	 *
-	 * Precedence:
+	 * One rule for every hand-over:
 	 *   1. A surviving space admin - earliest joined_at, user_id as tiebreak.
 	 *      They already hold the admin row, so the space keeps working as-is.
 	 *   2. The lowest-id site administrator.
+	 * The current owner, the user named in $excluding and anyone banned from
+	 * the site or this space never qualify.
 	 *
 	 * @param int $space_id  Space to find an heir for.
-	 * @param int $excluding User to exclude (the departing owner).
+	 * @param int $excluding Another user to exclude (a departing member).
 	 * @return int Successor user ID, or 0 when nobody qualifies.
 	 */
 	public static function resolve_successor( int $space_id, int $excluding = 0 ): int {
-		return static::surviving_admin( $space_id, $excluding ) ?: static::fallback_owner( $excluding );
+		return static::surviving_admin( $space_id, $excluding ) ?: static::fallback_owner( $excluding, $space_id );
 	}
 
 	/**
 	 * The surviving space admin who inherits, if any (precedence step 1).
 	 *
 	 * Split out so a caller can tell "a space admin is still running this space"
-	 * from "nobody is, fall back to the site admin" - comparing the successor with the
-	 * site admin would misread a site admin who is ALSO a space admin as a stranded
-	 * space. Any role counts here, site administrator included:
-	 * the question is only whether a space admin row survives.
+	 * from "nobody is, fall back to the site admin". Any role counts here, site
+	 * administrator included: the question is only whether a space admin row
+	 * survives.
 	 *
 	 * @param int $space_id  Space to look in.
-	 * @param int $excluding User to exclude (the departing owner).
+	 * @param int $excluding Another user to exclude (a departing member).
 	 * @return int Space admin user ID, or 0 when none survives.
 	 */
 	public static function surviving_admin( int $space_id, int $excluding = 0 ): int {
 		$members = \Jetonomy\table( 'space_members' );
+		$space   = self::find( $space_id );
+		$owner   = $space ? (int) $space->author_id : 0;
 
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
-				"SELECT user_id FROM {$members} WHERE space_id = %d AND user_id <> %d AND role = 'admin' ORDER BY joined_at ASC, user_id ASC LIMIT 1",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table(), ban clause prepared by Restriction.
+				"SELECT user_id FROM {$members} WHERE space_id = %d AND user_id NOT IN ( %d, %d ) AND role = 'admin'" . Restriction::not_banned_sql( 'user_id', $space_id ) . ' ORDER BY joined_at ASC, user_id ASC LIMIT 1',
 				$space_id,
-				$excluding
+				$excluding,
+				$owner
 			)
 		);
 	}
 
 	/**
-	 * Lowest-id site administrator, the owner of last resort (precedence step 2).
+	 * Lowest-id site administrator who is not banned, the owner of last
+	 * resort (precedence step 2).
 	 *
 	 * @param int $excluding User to exclude (the departing owner).
-	 * @return int User ID, or 0 when no other site administrator exists.
+	 * @param int $space_id  Space being handed over: its owner never qualifies
+	 *                       and its own bans count.
+	 * @return int User ID, or 0 when no other site administrator qualifies.
 	 */
-	public static function fallback_owner( int $excluding = 0 ): int {
+	public static function fallback_owner( int $excluding = 0, int $space_id = 0 ): int {
+		$space   = $space_id ? self::find( $space_id ) : null;
+		$exclude = array_filter( array( $excluding, $space ? (int) $space->author_id : 0 ) );
+
 		$admins = get_users(
 			array(
 				'capability' => 'manage_options',
-				'exclude'    => $excluding ? array( $excluding ) : array(),
+				'exclude'    => $exclude,
 				'orderby'    => 'ID',
 				'order'      => 'ASC',
-				'number'     => 1,
+				'number'     => 20,
 				'fields'     => 'ID',
 			)
 		);
 
-		return (int) ( $admins[0] ?? 0 );
+		foreach ( $admins as $admin_id ) {
+			$admin_id = (int) $admin_id;
+			if ( ! Restriction::is_banned( $admin_id ) && ( ! $space_id || ! Restriction::is_space_banned( $admin_id, $space_id ) ) ) {
+				return $admin_id;
+			}
+		}
+		return 0;
 	}
 
 	/**

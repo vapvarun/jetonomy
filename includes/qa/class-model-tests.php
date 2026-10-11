@@ -231,6 +231,7 @@ class Model_Tests {
 
 		$this->test_reorder();
 		$this->test_space_ownership_transfer();
+		$this->test_space_hand_over_rules();
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
 		$this->test_leaderboard_ranking();
@@ -1121,6 +1122,88 @@ class Model_Tests {
 			$wpdb->delete( $spaces_t, array( 'id' => $sid ) );
 		}
 		wp_delete_user( (int) $co_admin );
+	}
+
+	/**
+	 * HO: the explicit "Archive and hand over" and the GDPR erase.
+	 *
+	 * Only the owner (or a site admin) may hand over; a banned admin is never
+	 * the heir; the former owner stays on as a moderator; an archived space
+	 * cannot be handed over again; a failed or no-op hand-over changes nothing
+	 * and fires no hook; an erase hands spaces over like an account deletion.
+	 */
+	private function test_space_hand_over_rules(): void {
+		$suffix = wp_generate_password( 6, false, false );
+		$users  = array();
+		foreach ( array( 'owner', 'heir', 'banned', 'leaver' ) as $key ) {
+			$users[ $key ] = wp_insert_user(
+				array(
+					'user_login' => "qa_ho_{$key}_{$suffix}",
+					'user_email' => "qa_ho_{$key}_{$suffix}@example.test",
+					'user_pass'  => wp_generate_password(),
+					'role'       => 'subscriber',
+				)
+			);
+			if ( is_wp_error( $users[ $key ] ) ) {
+				$this->check( 'HO0: hand-over fixtures created', false, $users[ $key ]->get_error_message() );
+				return;
+			}
+		}
+
+		$make = static function ( string $slug, int $owner ): int {
+			return (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA HO ' . $slug, 'slug' => $slug, 'type' => 'forum', 'author_id' => $owner ), $owner );
+		};
+		$space = $make( 'qa-ho-' . $suffix, (int) $users['owner'] );
+		\Jetonomy\Models\SpaceMember::add( $space, (int) $users['banned'], 'admin' );
+		\Jetonomy\Models\SpaceMember::add( $space, (int) $users['heir'], 'admin' );
+		$ban = \Jetonomy\Models\Restriction::ban( (int) $users['banned'], 'global_ban', 1 );
+		\Jetonomy\Models\Restriction::reset_memo();
+
+		$row = \Jetonomy\Models\Space::find( $space );
+		$this->check( 'HO1: a non-owner space admin may not hand over', ! \Jetonomy\Models\Space::can_hand_over( $row, (int) $users['heir'] ) );
+		$this->check( 'HO2: the owner may hand over', \Jetonomy\Models\Space::can_hand_over( $row, (int) $users['owner'] ) );
+		$this->check( 'HO3: a banned admin is never the heir', (int) $users['heir'] === \Jetonomy\Models\Space::resolve_successor( $space ) );
+
+		$fired = array();
+		$spy   = static function ( $sid, $from, $to ) use ( &$fired ): void {
+			$fired[] = array( (int) $sid, (int) $from, (int) $to );
+		};
+		add_action( 'jetonomy_space_transferred', $spy, 10, 3 );
+
+		$heir  = \Jetonomy\Models\Space::archive_and_hand_over( $space );
+		$after = \Jetonomy\Models\Space::find( $space );
+		$this->check( 'HO4: hand-over archives and reassigns', (int) $users['heir'] === $heir && 'archived' === $after->status && (int) $after->author_id === (int) $users['heir'] );
+		$this->check( 'HO5: the former owner stays on as a moderator', 'moderator' === \Jetonomy\Models\SpaceMember::get_role( $space, (int) $users['owner'] ) );
+		$this->check( 'HO6: the hook names the real previous owner', array( array( $space, (int) $users['owner'], (int) $users['heir'] ) ) === $fired, wp_json_encode( $fired ) );
+
+		$again = \Jetonomy\Models\Space::archive_and_hand_over( $space );
+		$noop  = \Jetonomy\Models\Space::hand_over( $space, (int) $users['heir'] );
+		$ghost = \Jetonomy\Models\Space::hand_over( PHP_INT_MAX, (int) $users['heir'] );
+		$this->check( 'HO7: an archived space cannot be handed over again', is_wp_error( $again ) && 'jetonomy_space_archived' === $again->get_error_code() );
+		$this->check( 'HO8: no-op and missing-space hand-overs fail and fire nothing', is_wp_error( $noop ) && is_wp_error( $ghost ) && 1 === count( $fired ) );
+
+		// GDPR erase: a co-admin inherits, the space keeps running.
+		$erased = $make( 'qa-ho-erase-' . $suffix, (int) $users['leaver'] );
+		\Jetonomy\Models\SpaceMember::add( $erased, (int) $users['heir'], 'admin' );
+		$erasers = apply_filters( 'wp_privacy_personal_data_erasers', array() );
+		$email   = get_userdata( (int) $users['leaver'] )->user_email;
+		for ( $page = 1; $page < 20; $page++ ) {
+			$result = call_user_func( $erasers['jetonomy']['callback'], $email, $page );
+			if ( ! empty( $result['done'] ) ) {
+				break;
+			}
+		}
+		$e = \Jetonomy\Models\Space::find( $erased );
+		$this->check( 'HO9: GDPR erase hands an owned space to its co-admin', $e && (int) $e->author_id === (int) $users['heir'] && 'active' === $e->status, wp_json_encode( $e ) );
+
+		remove_action( 'jetonomy_space_transferred', $spy, 10 );
+
+		\Jetonomy\Models\Restriction::remove_ban( (int) $ban );
+		\Jetonomy\Space_Purge::purge( $space );
+		\Jetonomy\Space_Purge::purge( $erased );
+		foreach ( $users as $uid ) {
+			wp_delete_user( (int) $uid );
+		}
 	}
 
 	/**

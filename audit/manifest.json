@@ -70,7 +70,7 @@
         "auth": "public_with_handler",
         "capability": "space_admin",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: membership for private/hidden; PATCH/DELETE: space-admin check. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_member, viewer_role, is_subscribed."
+        "audit_notes": "GET: membership for private/hidden; PATCH/DELETE: space-admin check. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_member, viewer_role, is_subscribed. 2.0.2: DELETE mode=transfer is owner or site admin only (Space::can_hand_over), 409 on archived; PATCH status=active (unarchive) owner or site admin only; other status values 400."
       },
       {
         "route": "/spaces/(?P<id>\\d+)/members",
@@ -2794,7 +2794,8 @@
       "name": "jetonomy_space_transferred",
       "type": "action",
       "args": "space_id, from_user_id, to_user_id",
-      "where": "includes/class-privacy.php"
+      "where": "includes/models/class-space.php (Space::hand_over)",
+      "notes": "Fires only after a real change of owner: from_user_id is the stored owner, never the clicker; no-op, archived and failed hand-overs do not fire."
     },
     {
       "name": "jetonomy_trust_evaluation",

@@ -742,6 +742,18 @@ class Spaces_Controller extends Base_Controller {
 			$data['join_policy'] = sanitize_text_field( $request->get_param( 'join_policy' ) );
 		}
 
+		// Unarchive only: archiving goes through the hand-over (DELETE). The same
+		// people who may hand a space over may bring it back.
+		if ( null !== $request->get_param( 'status' ) ) {
+			if ( 'active' !== $request->get_param( 'status' ) ) {
+				return new WP_Error( 'jetonomy_invalid_status', __( 'A space can only be set back to active here.', 'jetonomy' ), array( 'status' => 400 ) );
+			}
+			if ( (int) $space->author_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+				return $this->permission_error();
+			}
+			$data['status'] = 'active';
+		}
+
 		// Cross-validate visibility + join_policy after overlaying the patch
 		// onto the existing space so partial PATCHes (just visibility, or
 		// just join_policy) still trip the rule. Hidden + non-invite is
@@ -885,20 +897,19 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		// Transfer: the space survives, parked, owned by its successor.
-		$successor = Space::resolve_successor( $id, $user_id );
-
-		if ( ! $successor ) {
-			return new WP_Error(
-				'jetonomy_no_successor',
-				__( 'No one else can take over this space, so it cannot be transferred. An administrator must delete it permanently instead.', 'jetonomy' ),
-				array( 'status' => 409 )
-			);
+		// Transfer: the space survives, parked, owned by its successor. Only its
+		// owner or a site admin may do this, or ownership could bounce between
+		// space admins.
+		if ( ! Space::can_hand_over( $space, $user_id ) ) {
+			return 'archived' === ( $space->status ?? '' )
+				? new WP_Error( 'jetonomy_space_archived', __( 'This space is already archived.', 'jetonomy' ), array( 'status' => 409 ) )
+				: $this->permission_error();
 		}
 
-		// Archive as well as reassign: the owner asked for this space to go, and
-		// parking it is the non-destructive reading of that request.
-		Space::hand_over( $id, $successor, $user_id, true );
+		$successor = Space::archive_and_hand_over( $id );
+		if ( is_wp_error( $successor ) ) {
+			return $successor;
+		}
 
 		return new WP_REST_Response(
 			array(

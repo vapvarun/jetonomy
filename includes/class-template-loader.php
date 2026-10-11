@@ -542,6 +542,7 @@ class Template_Loader {
 					// Space danger zone (actions.deleteSpace).
 					'purgeConfirmLabel'      => esc_html__( 'Delete permanently', 'jetonomy' ),
 					'deleteFailed'           => esc_html__( 'Could not delete. Please try again.', 'jetonomy' ),
+					'unarchiveFailed'        => esc_html__( 'Could not unarchive. Please try again.', 'jetonomy' ),
 					// Join-Space failure toast (composer.js); carries the owner's space noun.
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),

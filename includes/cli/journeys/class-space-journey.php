@@ -216,14 +216,14 @@ final class Space_Journey {
 			);
 		}
 
-		$successor = Space::resolve_successor( $id, get_current_user_id() );
-		if ( ! $successor ) {
+		$successor = Space::archive_and_hand_over( $id );
+		if ( is_wp_error( $successor ) ) {
 			return Journey_Result::fail(
-				sprintf( 'Space %d has no one to transfer to. Use --mode=purge to delete it permanently.', $id )
+				'jetonomy_no_successor' === $successor->get_error_code()
+					? sprintf( 'Space %d has no one to transfer to. Use --mode=purge to delete it permanently.', $id )
+					: $successor->get_error_message()
 			);
 		}
-
-		Space::hand_over( $id, $successor, get_current_user_id(), true );
 
 		return Journey_Result::ok(
 			array(
