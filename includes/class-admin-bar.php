@@ -54,7 +54,7 @@ class Admin_Bar {
 		$wp_admin_bar->add_menu(
 			array(
 				'id'    => 'jetonomy-community',
-				'title' => '<span class="ab-icon dashicons dashicons-groups" style="margin-top:2px;"></span><span class="ab-label">' . esc_html__( 'Community', 'jetonomy' ) . '</span>',
+				'title' => '<span class="ab-icon dashicons dashicons-groups" style="margin-top:2px;"></span><span class="ab-label">' . esc_html( \Jetonomy\community_title() ) . '</span>',
 				'href'  => esc_url( $base . '/' ),
 				'meta'  => array(
 					'title' => __( 'Open the community home', 'jetonomy' ),

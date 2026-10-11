@@ -163,18 +163,21 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 
 			<div class="jt-form-row">
 				<label for="jt-se-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
-				<select id="jt-se-visibility" name="visibility" class="jt-input">
+				<select id="jt-se-visibility" name="visibility" class="jt-input" data-wp-on--change="actions.syncJoinPolicy">
 					<?php \Jetonomy\space_visibility_options( (string) $space->visibility ); ?>
 				</select>
 			</div>
 
 			<div class="jt-form-row">
 				<label for="jt-se-join-policy"><?php esc_html_e( 'Join policy', 'jetonomy' ); ?></label>
-				<select id="jt-se-join-policy" name="join_policy" class="jt-input">
+				<select id="jt-se-join-policy" name="join_policy" class="jt-input" data-wp-on--change="actions.syncJoinPolicy">
 					<option value="open" <?php selected( $space->join_policy ?? 'open', 'open' ); ?>><?php esc_html_e( 'Open: anyone can join', 'jetonomy' ); ?></option>
 					<option value="approval" <?php selected( $space->join_policy ?? '', 'approval' ); ?>><?php esc_html_e( 'Approval required', 'jetonomy' ); ?></option>
 					<option value="invite" <?php selected( $space->join_policy ?? '', 'invite' ); ?>><?php esc_html_e( 'Invite only', 'jetonomy' ); ?></option>
 				</select>
+				<p class="jt-form-hint" data-jt-visibility-hint role="status" aria-live="polite" hidden
+					data-msg-forces="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Hidden %s are invite-only, so the join policy was switched to Invite only.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
+					data-msg-requires="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Only invite-only %s can be hidden, so visibility was switched to Private.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"></p>
 			</div>
 
 			<div class="jt-form-row">

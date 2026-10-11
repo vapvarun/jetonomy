@@ -742,6 +742,24 @@ class Template_Loader {
 			get_header();
 		}
 
+		/**
+		 * Filters the theme hooks fired around the community app, so a theme
+		 * that wraps its own page content wraps ours the same way. BuddyX and
+		 * BuddyX Pro open a full-height .site-wrapper there; without it a short
+		 * community page ends with the footer floating mid-screen.
+		 *
+		 * @since 2.0.2
+		 *
+		 * @param string[] $hooks Two hook names, before and after, or none.
+		 */
+		$theme_wrap = (array) apply_filters(
+			'jetonomy_theme_content_hooks',
+			has_action( 'buddyx_before_content' ) ? array( 'buddyx_before_content', 'buddyx_after_content' ) : array()
+		);
+		if ( 2 === count( $theme_wrap ) ) {
+			do_action( (string) $theme_wrap[0] ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- the theme's own hook.
+		}
+
 		// data-wp-on--click on the app wrapper delegates every internal link
 		// click to actions.navigate (Phase 2 client-side routing). The action
 		// route-guards which targets are safe to swap vs. full-load, and always
@@ -791,6 +809,10 @@ class Template_Loader {
 		do_action( 'jetonomy_after_content', $data );
 
 		echo '</div>'; // #jetonomy-app
+
+		if ( 2 === count( $theme_wrap ) ) {
+			do_action( (string) $theme_wrap[1] ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- the theme's own hook.
+		}
 
 		if ( wp_is_block_theme() ) {
 			block_footer_area();
@@ -1143,7 +1165,7 @@ class Template_Loader {
 					// built FROM the title and would hand back the same words
 					// (1.8.0).
 					if ( null === $patterned ) {
-						$parts['title'] = __( 'Community', 'jetonomy' );
+						$parts['title'] = community_title();
 						return $parts;
 					}
 					if ( '' !== $patterned ) {
@@ -1156,10 +1178,10 @@ class Template_Loader {
 
 				switch ( $data['route'] ) {
 					case 'home':
-						$parts['title'] = __( 'Community', 'jetonomy' );
+						$parts['title'] = community_title();
 						break;
 					case 'space':
-						$parts['title'] = self::seo_display_name( 'space', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Community', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'space', (string) $data['slug'], $slug_pretty ) . ' — ' . community_title();
 						break;
 					case 'space-members':
 						$parts['title'] = self::seo_display_name( 'space-members', (string) $data['slug'], $slug_pretty ) . ' — ' . \Jetonomy\jetonomy_label( 'member', true );
@@ -1184,7 +1206,7 @@ class Template_Loader {
 						$parts['title'] = '#' . (string) $data['slug'];
 						break;
 					case 'category':
-						$parts['title'] = self::seo_display_name( 'category', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Community', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'category', (string) $data['slug'], $slug_pretty ) . ' — ' . community_title();
 						break;
 					case 'leaderboard':
 						$parts['title'] = __( 'Top members', 'jetonomy' );
@@ -1285,7 +1307,8 @@ class Template_Loader {
 
 				switch ( $data['route'] ) {
 					case 'home':
-						$title     = $site_name . ' ' . __( 'Community', 'jetonomy' );
+						// The owner's own name for it when set; otherwise "{Site} Community".
+						$title     = __( 'Community', 'jetonomy' ) === community_title() ? $site_name . ' ' . community_title() : community_title();
 						$desc      = __( 'Join our community discussions, Q&A, and more.', 'jetonomy' );
 						$url       = $base . '/';
 						$image_alt = $site_name;

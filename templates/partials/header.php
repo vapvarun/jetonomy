@@ -38,9 +38,9 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 <nav class="jt-community-nav" aria-label="<?php esc_attr_e( 'Community navigation', 'jetonomy' ); ?>">
 	<div class="jt-community-nav-inner">
 		<div class="jt-community-nav-links">
-			<a href="<?php echo esc_url( $base . '/' ); ?>" class="jt-nav-dup<?php echo 'home' === $current_route ? ' active' : ''; ?>" title="<?php esc_attr_e( 'Community', 'jetonomy' ); ?>">
+			<a href="<?php echo esc_url( $base . '/' ); ?>" class="jt-nav-dup<?php echo 'home' === $current_route ? ' active' : ''; ?>" title="<?php echo esc_attr( \Jetonomy\community_title() ); ?>">
 				<?php jetonomy_echo_icon( 'home', 18 ); ?>
-				<span class="jt-nav-label"><?php esc_html_e( 'Community', 'jetonomy' ); ?></span>
+				<span class="jt-nav-label"><?php echo esc_html( \Jetonomy\community_title() ); ?></span>
 			</a>
 			<a href="<?php echo esc_url( \Jetonomy\route_url( 'search' ) ); ?>" class="jt-nav-dup<?php echo 'search' === $current_route ? ' active' : ''; ?>" title="<?php esc_attr_e( 'Search', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'search', 18 ); ?>

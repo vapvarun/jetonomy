@@ -15,6 +15,21 @@ function table( string $name ): string {
 }
 
 /**
+ * The community's display name: the Community Title setting, or "Community".
+ *
+ * Every member-facing label for the community as a whole reads it (nav,
+ * browser titles, breadcrumbs, admin bar), so renaming it in Settings renames
+ * it everywhere.
+ *
+ * @return string
+ */
+function community_title(): string {
+	$settings = get_option( 'jetonomy_settings', array() );
+	$title    = trim( (string) ( $settings['community_title'] ?? '' ) );
+	return '' !== $title ? $title : __( 'Community', 'jetonomy' );
+}
+
+/**
  * Get the community base URL (e.g. http://forums.local/discussion).
  *
  * Reads the `base_slug` from jetonomy_settings (default: 'community').

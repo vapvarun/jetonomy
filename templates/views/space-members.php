@@ -149,26 +149,7 @@ $role_labels = array(
 <div class="jt-two-col">
 		<main>
 			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
-			<div class="jt-cat-page-row">
-				<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
-				<div>
-					<?php
-					// Every space sub-page (Members / Moderation / Roadmap) uses the
-					// same header: the space title alone as the h1, the section's
-					// status line as the subtitle. The section name is already the
-					// last breadcrumb, so compositing it into the h1 only produced
-					// three different separators across the three pages.
-					?>
-					<h1 class="jt-page-title jt-page-title-sm">
-						<?php echo esc_html( $space->title ); ?>
-					</h1>
-					<p class="jt-page-subtitle">
-						<?php
-						echo esc_html( \Jetonomy\count_label( (int) $space->member_count, 'member' ) );
-						?>
-					</p>
-				</div>
-			</div>
+			<?php \Jetonomy\Template_Loader::partial( 'space-header', array( 'space' => $space ) ); ?>
 
 			<?php
 			\Jetonomy\Template_Loader::partial(

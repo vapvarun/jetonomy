@@ -437,7 +437,7 @@ class Schema_Markup {
 
 		$items = array(
 			array(
-				'name' => __( 'Community', 'jetonomy' ),
+				'name' => \Jetonomy\community_title(),
 				'url'  => $base,
 			),
 		);

@@ -115,15 +115,7 @@ $space_url = \Jetonomy\route_url( 'space', $space->slug );
 <main>
 	<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 
-	<div class="jt-cat-page-row">
-		<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
-		<div>
-			<h1 class="jt-page-title jt-page-title-sm">
-				<?php echo esc_html( $space->title ); ?>
-			</h1>
-			<p class="jt-page-subtitle"><?php esc_html_e( 'Roadmap', 'jetonomy' ); ?></p>
-		</div>
-	</div>
+	<?php \Jetonomy\Template_Loader::partial( 'space-header', array( 'space' => $space ) ); ?>
 
 	<?php
 	\Jetonomy\Template_Loader::partial(

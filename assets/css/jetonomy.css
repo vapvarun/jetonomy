@@ -275,6 +275,9 @@
   .jt-app button.jt-cat-chip-toggle:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-accent) !important; }
   .jt-app button.jt-cat-chip-toggle[aria-expanded="true"] { background-color: var(--jt-accent-light) !important; color: var(--jt-accent-strong) !important; border-color: var(--jt-accent) !important; }
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
+  /* A destructive filled button stays red: the reset above would paint it the accent blue. */
+  .jt-app button.jt-btn-fill.jt-btn-danger { background-color: var(--jt-danger-solid) !important; color: var(--jt-danger-fg) !important; }
+  .jt-app button.jt-btn-fill.jt-btn-danger:hover, .jt-app button.jt-btn-fill.jt-btn-danger:focus-visible { background-color: var(--jt-danger-strong) !important; color: var(--jt-danger-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
   /* Danger-ghost: an outlined pill (same shape as .jt-btn-ghost) that reads as
@@ -2634,9 +2637,14 @@
 	line-height: 1.4;
 }
 
+/* In forms the error follows the action buttons, so it needs space above. */
+.jt-form-actions + .jt-form-error { margin: var(--jt-space-3) 0 0; }
+
 @media (max-width: 640px) {
 	.jt-form-error { padding: 8px 12px; font-size: 0.875rem; }
 }
+.jt-form-hint { margin: var(--jt-space-2) 0 0; font-size: 0.875rem; color: var(--jt-text-secondary); }
+
 
 /* ── oEmbed wrappers ── */
 .jt-embed,

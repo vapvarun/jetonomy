@@ -24,7 +24,7 @@ $base                 = \Jetonomy\base_url();
 ?>
 <?php
 $settings        = get_option( 'jetonomy_settings', array() );
-$community_title = ! empty( $settings['community_title'] ) ? $settings['community_title'] : __( 'Community', 'jetonomy' );
+$community_title = \Jetonomy\community_title();
 ?>
 <h1 class="jt-page-title jt-home-title"><?php echo esc_html( $community_title ); ?></h1>
 <?php

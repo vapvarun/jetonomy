@@ -3376,6 +3376,34 @@ const { state, actions } = store( 'jetonomy', {
             window.location.assign( btn.getAttribute( 'data-redirect' ) || '/' );
         },
 
+        // Hidden spaces must be invite-only (the server refuses anything else).
+        // Keep the two selects consistent as they change and say why, the same
+        // coupling the wp-admin form has.
+        syncJoinPolicy() {
+            const changed = getElement().ref;
+            const form    = changed && changed.form;
+            if ( ! form ) return;
+            const vis  = form.querySelector( '[name="visibility"]' );
+            const join = form.querySelector( '[name="join_policy"]' );
+            const hint = form.querySelector( '[data-jt-visibility-hint]' );
+            if ( ! vis || ! join ) return;
+
+            let message = '';
+            if ( 'hidden' === vis.value && 'invite' !== join.value ) {
+                if ( changed === vis ) {
+                    join.value = 'invite';
+                    message = hint ? hint.dataset.msgForces : '';
+                } else {
+                    vis.value = 'private';
+                    message = hint ? hint.dataset.msgRequires : '';
+                }
+            }
+            if ( hint ) {
+                hint.textContent = message || '';
+                hint.hidden = ! message;
+            }
+        },
+
         // Brings an archived space back; the route allows only its owner or a site admin.
         *unarchiveSpace() {
             const btn     = getElement().ref;
