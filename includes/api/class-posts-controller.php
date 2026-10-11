@@ -240,7 +240,7 @@ class Posts_Controller extends Base_Controller {
 	public function link_preview( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$url = (string) $request->get_param( 'url' );
 		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
-			return new \WP_Error( 'invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'jetonomy_invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
 		// SSRF guard: wp_http_validate_url() misses 169.254/16 (cloud metadata),
 		// 100.64/10 and IPv6 loopback/ULA/link-local. This endpoint is reachable
@@ -327,7 +327,7 @@ class Posts_Controller extends Base_Controller {
 		// denormalized all-published counter — it ignores is_private and blocked
 		// authors, so a space with 3 topics of which 2 are invisible to the viewer
 		// reported total=3 against 1 returned row and pinned "Load More" on
-		// forever (Basecamp 10118693115). Mirrors templates/views/space.php.
+		// forever. Mirrors templates/views/space.php.
 		return $this->paginated_response(
 			$items,
 			array(
@@ -544,7 +544,7 @@ class Posts_Controller extends Base_Controller {
 
 		// Carry the client-requested flag into the create data. Free only
 		// plumbs it through — Pro validates/enforces it via the
-		// `jetonomy_before_create_post` filter (see Task 12).
+		// `jetonomy_before_create_post` filter.
 		$post_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
 
 		if ( ! empty( $prefix ) ) {
@@ -775,7 +775,7 @@ class Posts_Controller extends Base_Controller {
 		 * `custom_fields` being the case that surfaced it - was rejected with
 		 * "No fields provided for update." before `jetonomy_after_update_post`
 		 * could fire, so the value was never saved and the only workaround was
-		 * to send a title you did not want to change (Basecamp 10268069890).
+		 * to send a title you did not want to change.
 		 *
 		 * Free deliberately does not learn what `custom_fields` is: an extension
 		 * declares its own interest here, so this holds for any future

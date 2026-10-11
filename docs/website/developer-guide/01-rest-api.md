@@ -924,12 +924,15 @@ Common error codes:
 
 | Code | HTTP | Meaning |
 |------|------|---------|
-| `rest_forbidden` | 403 | Missing capability or nonce |
+| `rest_forbidden` | 401/403 | Not logged in, or a missing or expired nonce |
+| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this |
 | `jetonomy_user_banned` | 403 | The authenticated user is banned from the community (mutation routes) |
 | `jetonomy_pending_verification` | 403 | The authenticated user has not confirmed their email yet (mutation routes) |
-| `rest_not_found` | 404 | Resource does not exist |
-| `validation_error` | 422 | Invalid or missing parameters |
-| `rate_limited` | 429 | Too many requests from this user |
+| `jetonomy_not_found` | 404 | Resource does not exist (or is not visible to you) |
+| `jetonomy_validation` | 400 | Invalid or missing parameters |
+| `jetonomy_rate_limited` | 429 | Too many requests from this user |
+
+Every Jetonomy error code starts with `jetonomy_`, so a client can tell them apart from WordPress core's `rest_*` codes.
 
 **Account-status enforcement (1.6.0)**
 

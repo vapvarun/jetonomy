@@ -415,7 +415,7 @@ class Moderation_Controller extends Base_Controller {
 		$user_id = get_current_user_id();
 
 		if ( Restriction::is_silenced( $user_id ) ) {
-			return new WP_Error( 'silenced', __( 'You are currently silenced.', 'jetonomy' ), [ 'status' => 403 ] );
+			return new WP_Error( 'jetonomy_user_silenced', __( 'You are currently silenced.', 'jetonomy' ), [ 'status' => 403 ] );
 		}
 
 		$object_type = sanitize_text_field( (string) $request->get_param( 'object_type' ) );
@@ -426,7 +426,7 @@ class Moderation_Controller extends Base_Controller {
 		// The target must exist, and members cannot report their own content /
 		// themselves. Both were client-side-only before, so a raw API call
 		// could 201 a flag against a nonexistent id or self-report to farm the
-		// reporter-reputation path (Basecamp 10130360032 contract audit).
+		// reporter-reputation path.
 		$target_author = null;
 		if ( 'post' === $object_type ) {
 			$target        = \Jetonomy\Models\Post::find( $object_id );
