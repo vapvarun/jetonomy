@@ -3129,6 +3129,19 @@ const { state, actions } = store( 'jetonomy', {
 
                     indicator.appendChild( textNode );
                     indicator.appendChild( strong );
+
+                    // Quote the start of the reply being answered, so members
+                    // with several replies from one author know which one this is.
+                    const body    = document.querySelector( '#reply-' + replyId + ' .jt-reply-body' );
+                    const excerpt = body ? body.textContent.replace( /\s+/g, ' ' ).trim() : '';
+                    if ( excerpt ) {
+                        const quote = document.createElement( 'a' );
+                        quote.className = 'jt-replying-to-excerpt';
+                        quote.href = '#reply-' + replyId;
+                        quote.textContent = '\u201C' + ( excerpt.length > 80 ? excerpt.slice( 0, 80 ).trim() + '\u2026' : excerpt ) + '\u201D';
+                        indicator.appendChild( quote );
+                    }
+
                     indicator.appendChild( cancelBtn );
                     composer.prepend( indicator );
                 }

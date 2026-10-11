@@ -52,6 +52,15 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 				?>
 				<span class="jt-role-pill jt-role-pill--<?php echo esc_attr( $jt_role ); ?>"><?php echo esc_html( $jt_role_label ); ?></span>
 			<?php endif; ?>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'post-badges',
+				array(
+					'post'  => $post,
+					'space' => $space,
+				)
+			);
+			?>
 			<a class="jt-feed-card-time" href="<?php echo esc_url( $post_url ); ?>">
 				<?php
 				/* translators: %s: human-readable time difference. */

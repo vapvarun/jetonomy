@@ -306,7 +306,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					&minus; <?php printf( /* translators: %s: the plural label of the item (the configured noun). */ esc_html__( 'Hide %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				</button>
 				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
+					<?php
+					// Children say whom they answer (the masked name for an anonymous parent).
+					$jt_parent_name = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply )['name'];
+					?>
 					<?php foreach ( $reply->children as $child ) : ?>
+						<?php $child->jt_parent_name = '' !== $jt_parent_name ? $jt_parent_name : __( 'Anonymous', 'jetonomy' ); ?>
 						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space, $page ); ?>
 					<?php endforeach; ?>
 				</div>
@@ -443,8 +448,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							data-wp-context='<?php echo wp_json_encode( array( 'postId' => (int) $post->id ) ); ?>'
 							role="group"
 							aria-label="<?php esc_attr_e( 'Set roadmap status', 'jetonomy' ); ?>">
-							<span class="jt-idea-status-setter-label"><?php esc_html_e( 'Status:', 'jetonomy' ); ?></span>
+							<span class="jt-idea-status-setter-label"><?php esc_html_e( 'Roadmap status', 'jetonomy' ); ?></span>
 							<div class="jt-idea-status-options">
+								<?php if ( '' === $jt_current_status ) : ?>
+									<?php // The current state, not a choice: it hides once a stage is picked. ?>
+									<span class="jt-idea-pill jt-idea-status-btn jt-idea-status-unset is-active"><?php esc_html_e( 'Not set', 'jetonomy' ); ?></span>
+								<?php endif; ?>
 								<?php foreach ( \Jetonomy\Models\Post::valid_idea_statuses() as $jt_opt ) : ?>
 									<button type="button"
 										class="jt-idea-pill jt-idea-pill-<?php echo esc_attr( $jt_opt ); ?> jt-idea-status-btn<?php echo $jt_current_status === $jt_opt ? ' is-active' : ''; ?>"
@@ -490,6 +499,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 							?>
 						</span>
+						<?php \Jetonomy\Template_Loader::partial( 'edited-mark', array( 'item' => $post ) ); ?>
 						<?php if ( ! empty( $post->is_private ) ) : ?>
 							<span class="jt-badge-private">
 								<?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?>

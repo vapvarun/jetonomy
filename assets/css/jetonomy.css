@@ -302,6 +302,13 @@
      vote surfaces being the ones members actually use. Each of those classes
      sits on a <button>, which is what the reset matches; an <a> is untouched by
      it and needs nothing here. */
+  /* Roadmap status picker: the chosen stage and the hover preview wear the
+     stage colour, so the current choice is obvious at a glance. */
+  .jt-app button.jt-idea-status-btn { color: var(--jt-text-secondary) !important; background-color: var(--jt-bg) !important; }
+  .jt-app button.jt-idea-status-btn:hover,
+  .jt-app button.jt-idea-status-btn:focus-visible { background-color: color-mix(in srgb, var(--jt-ip) 12%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: color-mix(in srgb, var(--jt-ip) 40%, transparent) !important; }
+  .jt-app button.jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip) !important; }
+  .jt-app button.jt-idea-status-btn.is-active { background-color: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: var(--jt-ip) !important; box-shadow: inset 0 0 0 1px var(--jt-ip) !important; }
   .jt-app button.jt-bookmark-btn.bookmarked,
   .jt-app button.jt-bookmark-toggle.bookmarked,
   .jt-app button.jt-act.voted,
@@ -692,9 +699,17 @@
      load AND re-evaluates :target on hashchange, so the whole feature needs
      no script — nothing to re-init after a client-side navigation, nothing to
      break when JS is off (crawlers, email webviews). scroll-margin-top keeps
-     the card clear of the sticky header it would otherwise land under. */
-  .jt-reply:target { border-color: var(--jt-accent); border-width: 2px; scroll-margin-top: var(--jt-scroll-offset); }
-  .jt-reply:target > .jt-reply-head { background: var(--jt-accent-light); background: color-mix(in srgb, var(--jt-accent) 12%, transparent); }
+     the card clear of the sticky header it would otherwise land under.
+     The highlight fades after a few seconds: it marks where you landed, it is
+     not a selection. The keyframes have no end state, so each card settles
+     back to its own normal look (accepted, nested or plain). */
+  .jt-reply:target { scroll-margin-top: var(--jt-scroll-offset); animation: jt-target-flash 4s ease-out; }
+  .jt-reply:target > .jt-reply-head { animation: jt-target-head 4s ease-out; }
+  @keyframes jt-target-flash { from, 60% { border-color: var(--jt-accent); box-shadow: 0 0 0 1px var(--jt-accent); } }
+  @keyframes jt-target-head { from, 60% { background: var(--jt-accent-light); background: color-mix(in srgb, var(--jt-accent) 12%, transparent); } }
+  @media (prefers-reduced-motion: reduce) {
+    .jt-reply:target, .jt-reply:target > .jt-reply-head { animation-duration: 2.5s; animation-timing-function: steps(1, end); }
+  }
   /* Translucent green tint (derived from --jt-success) instead of an opaque
      light token, so the accepted-answer header reads correctly in light AND
      dark and never paints a light block on a dark card. Hex token first as the
@@ -750,8 +765,8 @@
   .jt-nested-3 { margin-left: 24px; }
   /* A nested reply sits on the thread rail, not in a card of its own; only
      the accepted answer and a linked (#reply) reply keep their highlight. */
-  .jt-nested > .jt-reply:not(.accepted):not(:target) { border-color: transparent; box-shadow: none; }
-  .jt-nested > .jt-reply:not(.accepted):not(:target) > .jt-reply-head { background: transparent; }
+  .jt-nested > .jt-reply:not(.accepted) { border-color: transparent; box-shadow: none; }
+  .jt-nested > .jt-reply:not(.accepted) > .jt-reply-head { background: transparent; }
 
   /* Gap loader — in-between divider */
   .jt-load-gap { text-align: center; padding: 16px 0; position: relative; }
@@ -759,8 +774,12 @@
   .jt-load-gap-btn { position: relative; z-index: 1; background: var(--jt-bg) !important; padding: 8px 20px; border-radius: var(--jt-radius-full); }
 
   /* Reply-to indicator */
-  .jt-replying-to { font-size: 0.9375rem; color: var(--jt-text-tertiary); padding: 8px 14px; border-left: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); margin-bottom: 8px; border-radius: 0 var(--jt-radius) var(--jt-radius) 0; display: flex; align-items: center; justify-content: space-between; }
-  .jt-replying-to-cancel { cursor: pointer; color: var(--jt-text-tertiary); border: none; background: none; padding: 4px; }
+  .jt-replying-to { font-size: 0.9375rem; color: var(--jt-text-tertiary); padding: 8px 14px; border-inline-start: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); margin-bottom: 8px; border-start-end-radius: var(--jt-radius); border-end-end-radius: var(--jt-radius); display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
+  .jt-replying-to-excerpt { color: var(--jt-text-secondary); font-style: italic; text-decoration: none; min-width: 0; overflow-wrap: anywhere; }
+  .jt-replying-to-excerpt:hover, .jt-replying-to-excerpt:focus-visible { color: var(--jt-accent); text-decoration: underline; }
+  .jt-replying-to-cancel { cursor: pointer; color: var(--jt-text-tertiary); border: none; background: none; padding: 4px; margin-inline-start: auto; }
+  .jt-in-reply-to { display: inline-flex; align-items: center; gap: 4px; margin: var(--jt-space-2) var(--jt-space-4) 0; font-size: 0.8125rem; color: var(--jt-text-tertiary); text-decoration: none; }
+  .jt-in-reply-to:hover, .jt-in-reply-to:focus-visible { color: var(--jt-accent); text-decoration: underline; }
 
   /* ── Composer ── */
   .jt-editor { border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius-lg); overflow: hidden; background: var(--jt-bg); transition: border-color 0.2s; }
@@ -1343,6 +1362,12 @@
   .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
   .jt-idea-status-btn.is-active { background: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)); color: var(--jt-ip-fg); border-color: var(--jt-ip); box-shadow: inset 0 0 0 1px var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
+  /* Every choice carries its stage colour as a dot, so the row reads as a set
+     of options on touch screens too, where there is no hover to hint at it. */
+  .jt-idea-status-btn::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--jt-ip); margin-inline-end: 6px; flex-shrink: 0; }
+  .jt-idea-status-unset { cursor: default; border-style: dashed; }
+  .jt-idea-status-unset::before { background: transparent; border: 1px solid var(--jt-text-tertiary); width: 6px; height: 6px; }
+  .jt-idea-status-unset:not(.is-active) { display: none; }
   @media (max-width: 640px) {
     .jt-idea-status-setter { gap: var(--jt-space-2); padding: var(--jt-space-3); align-items: flex-start; flex-direction: column; }
     .jt-idea-status-options { width: 100%; }
@@ -1967,6 +1992,7 @@
   .jt-reply-author { font-weight: 600; font-size: 0.9375rem; line-height: 1.4; color: var(--jt-text); text-decoration: none; }
   .jt-reply-author:hover { text-decoration: underline; color: var(--jt-text); }
   .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; line-height: 1.4; white-space: nowrap; }
+  .jt-edited { color: var(--jt-text-tertiary); font-size: 0.8125rem; font-style: italic; white-space: nowrap; }
   /* Timestamp doubles as the reply's permalink (Discourse/Reddit/GitHub
      convention) — the only way to share a link to a single reply. It must
      keep reading as METADATA, not a body link, so colour/underline are

@@ -157,6 +157,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				<time datetime="<?php echo esc_attr( $jt_time_iso ); ?>"><?php echo esc_html( $jt_time_text ); ?></time>
 			<?php endif; ?>
 		</span>
+		<?php \Jetonomy\Template_Loader::partial( 'edited-mark', array( 'item' => $reply ) ); ?>
 		<?php if ( $is_accepted ) : ?>
 			<span class="jt-accepted-tag"><?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Accepted', 'jetonomy' ); ?></span>
 		<?php endif; ?>
@@ -164,6 +165,15 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<span class="jt-private-tag" title="<?php printf( /* translators: 1: singular topic label; 2: singular reply label. */ esc_attr__( 'Only you, the %1$s author, and moderators can read this %2$s.', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
 		<?php endif; ?>
 	</div>
+	<?php if ( ! empty( $reply->parent_id ) && ! empty( $reply->jt_parent_name ) ) : ?>
+		<a class="jt-in-reply-to" href="#reply-<?php echo (int) $reply->parent_id; ?>">
+			<?php jetonomy_echo_icon( 'corner-up-left', 12 ); ?>
+			<?php
+			/* translators: %s: display name of the member whose reply this answers. */
+			echo esc_html( sprintf( __( 'in reply to %s', 'jetonomy' ), $reply->jt_parent_name ) );
+			?>
+		</a>
+	<?php endif; ?>
 	<div class="jt-reply-body">
 		<?php
 		// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
