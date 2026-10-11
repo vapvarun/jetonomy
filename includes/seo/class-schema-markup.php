@@ -353,7 +353,7 @@ class Schema_Markup {
 		$schema = array(
 			'@context' => 'https://schema.org',
 			'@type'    => 'Person',
-			'name'     => $user->display_name,
+			'name'     => \Jetonomy\user_display_name( $user ),
 			'url'      => $profile_url,
 			'image'    => $avatar_url,
 		);

@@ -355,7 +355,7 @@ class Notifications_Controller extends Base_Controller {
 			'created_at_gmt' => \Jetonomy\to_iso8601_z( $notification->created_at ?? null ),
 			// Enriched actor data (for app clients + JS rendering)
 			'message'        => $notification->message ?? '',
-			'actor_name'     => $is_actor_anonymous ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'System', 'jetonomy' ) ),
+			'actor_name'     => $is_actor_anonymous ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? \Jetonomy\user_display_name( $actor ) : __( 'System', 'jetonomy' ) ),
 			'actor_avatar'   => $actor ? \Jetonomy\Avatar::display_url( $actor_id, 64 ) : '',
 			'actor_login'    => $actor ? $actor->user_login : '',
 			'time_ago'       => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',

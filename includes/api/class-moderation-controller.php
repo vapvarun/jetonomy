@@ -927,7 +927,7 @@ class Moderation_Controller extends Base_Controller {
 				'space_title'    => $space ? $space->title : null,
 				'reason'         => null !== $row->reason ? (string) $row->reason : null,
 				'issued_by'      => (int) $row->issued_by,
-				'issuer_name'    => $issuer ? $issuer->display_name : ( (int) $row->issued_by ? __( '[deleted]', 'jetonomy' ) : __( 'System', 'jetonomy' ) ),
+				'issuer_name'    => $issuer ? \Jetonomy\user_display_name( $issuer ) : ( (int) $row->issued_by ? __( '[deleted]', 'jetonomy' ) : __( 'System', 'jetonomy' ) ),
 				'expires_at'     => $row->expires_at ?: null,
 				'expires_at_gmt' => \Jetonomy\to_iso8601_z( $row->expires_at ?? null ),
 				'created_at'     => $row->created_at,

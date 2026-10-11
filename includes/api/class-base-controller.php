@@ -398,7 +398,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 				)
 				: null;
 
-			$flag->resolved_by_name = $resolver->display_name ?? '';
+			$flag->resolved_by_name = $resolver ? \Jetonomy\user_display_name( $resolver ) : '';
 		}
 
 		return $flags;
