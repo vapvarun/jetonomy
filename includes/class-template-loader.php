@@ -725,7 +725,16 @@ class Template_Loader {
 		// Use WP's get_header/get_footer for theme integration.
 		// Block themes (FSE) have no header.php — use block_header_area() to avoid
 		// the "Theme without header.php is deprecated" notice introduced in WP 3.0.
+		$block_footer = '';
 		if ( wp_is_block_theme() ) {
+			// Render the header and footer parts BEFORE wp_head(), as core's
+			// template canvas does: blocks queue their layout and element styles
+			// while they render, and styles queued after the head is printed are
+			// never output (the header lost its layout on every community page).
+			// Same markup core gives a template part: a <header>/<footer> wrapper,
+			// all inside .wp-site-blocks, so global spacing matches other pages.
+			$block_header = do_blocks( '<!-- wp:template-part {"slug":"header","area":"header","tagName":"header"} /-->' );
+			$block_footer = do_blocks( '<!-- wp:template-part {"slug":"footer","area":"footer","tagName":"footer"} /-->' );
 			?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -735,7 +744,8 @@ class Template_Loader {
 <body <?php body_class(); ?>>
 			<?php
 			wp_body_open();
-			block_header_area();
+			echo '<div class="wp-site-blocks">';
+			echo $block_header; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered block markup, as core prints it.
 			?>
 			<?php
 		} else {
@@ -815,7 +825,8 @@ class Template_Loader {
 		}
 
 		if ( wp_is_block_theme() ) {
-			block_footer_area();
+			echo $block_footer; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered block markup, as core prints it.
+			echo '</div>'; // .wp-site-blocks
 			wp_footer();
 			?>
 			</body></html>
