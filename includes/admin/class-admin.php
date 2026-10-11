@@ -970,13 +970,17 @@ class Admin {
 		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {
 			return $text;
 		}
+		// Our screens name the product, so White Label's brand substitution
+		// has something to replace (Basecamp 10393009873).
+		/* translators: %s: plugin name. */
+		$text = sprintf( __( 'Thank you for building your community with %s.', 'jetonomy' ), 'Jetonomy' );
 		/**
 		 * Filter the admin footer text shown on Jetonomy admin pages.
 		 *
 		 * @since 1.4.1
 		 * @param string $text Current footer text.
 		 */
-		return (string) apply_filters( 'jetonomy_admin_footer_text', (string) $text );
+		return (string) apply_filters( 'jetonomy_admin_footer_text', $text );
 	}
 
 	public function hide_third_party_notices(): void {

@@ -34,7 +34,7 @@ A generic WordPress profile has a bio and a website URL. That is not enough for 
 | **Label** | Displayed on the profile and in the edit form |
 | **Field Key** | Unique slug used in the REST API (auto-generated, editable) |
 | **Type** | See field types below |
-| **Required** | If on, members cannot save their profile without filling this in |
+| **Required** | If on, the profile or topic cannot be saved without it. Topic fields are also checked on the server, so the app and API cannot skip them (drafts are not checked) |
 | **Visibility** | Who can see the field value |
 | **Description** | Optional helper text shown below the input |
 
@@ -135,3 +135,7 @@ If you are on Jetonomy 1.4.1 or newer, custom field values are returned automati
 Recognize and reward your most engaged members with custom badges.
 
 [Custom Badges →](05-custom-badges.md)
+
+## Turning a field off or removing it
+
+Each field in the list has **Edit** and **Disable** (or **Enable**). Disabling hides the field everywhere and keeps every value members already entered, so you can turn it back on later. To remove a field and all of its values for good, use WP-CLI: `wp jetonomy-pro fields delete <key>` (the field key shown in the list).
