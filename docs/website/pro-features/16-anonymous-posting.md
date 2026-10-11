@@ -42,13 +42,7 @@ The anonymity flag is never trusted from the client alone. Every post and reply 
 
 Only **site administrators** can reveal who is behind an anonymous post or reply - space moderators cannot. An admin uses the **Reveal author** button on the post or reply. On the community pages, the real name is shown only for that explicit action; ordinary browsing still shows "Anonymous."
 
-**Admin screens show the real account name without a reveal.** The anonymity mask applies to what other members see, not to your management screens. Administrators and moderators see the real account name in:
-
-- The **Author** column of **Jetonomy → Content**.
-- The **Author** column in the pending lists under **Jetonomy → Moderation**.
-- The "by [name]" line on **Awaiting approval** cards in the front-end moderation queue.
-
-Only the **Reveal author** button writes an entry to the activity log. Viewing these screens does not. Treat your moderators accordingly: anyone who can open them can see who wrote an anonymous item.
+**Admin screens stay anonymous too.** The **Author** column of **Jetonomy → Content**, the replies screen of a topic, the pending lists under **Jetonomy → Moderation** and the **Awaiting approval** cards in the front-end moderation queue all show "Anonymous". The only way to see who wrote an anonymous item is the **Reveal author** button, and every reveal is written to the activity log.
 
 Every reveal is written to the activity log, recording who revealed it, which item, and when - so reveals stay accountable. Use this sparingly, for abuse investigations rather than routine browsing.
 

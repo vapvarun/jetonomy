@@ -26,8 +26,8 @@ $back_url = admin_url( 'admin.php?page=jetonomy-content' );
 $page_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . absint( $post->id ) );
 
 // Post author & space.
-$post_author      = get_userdata( (int) $post->author_id );
-$post_author_name = $post_author ? $post_author->display_name : __( 'Unknown', 'jetonomy' );
+// Anonymous stays anonymous in wp-admin too (Basecamp 10380388683).
+$post_author_name = \Jetonomy\Author::for_display( (int) $post->author_id, $post )['name'];
 
 $space       = \Jetonomy\Models\Space::find( (int) $post->space_id );
 $space_title = $space ? $space->title : '';
@@ -192,8 +192,7 @@ if ( ! empty( $trash_count ) ) {
 				// One query for every author on the page, not one get_userdata() per row.
 				cache_users( array_map( 'intval', wp_list_pluck( $replies, 'author_id' ) ) );
 				foreach ( $replies as $r ) :
-					$author      = get_userdata( (int) $r->author_id );
-					$author_name = $author ? $author->display_name : __( 'Unknown', 'jetonomy' );
+					$author_name = \Jetonomy\Author::for_display( (int) $r->author_id, $r )['name'];
 					$row_id      = 'jt-reply-row-' . absint( $r->id );
 					$preview     = wp_trim_words( wp_strip_all_tags( $r->content ?? '' ), 40 );
 					?>

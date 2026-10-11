@@ -118,8 +118,8 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									}
 									break;
 								case 'author':
-									$author = get_userdata( $p->author_id );
-									echo esc_html( $author ? $author->display_name : __( 'Unknown', 'jetonomy' ) );
+									// Anonymous stays anonymous here too (Basecamp 10380388683).
+									echo esc_html( \Jetonomy\Author::for_display( (int) $p->author_id, $p )['name'] );
 									break;
 								case 'space':
 									echo esc_html( $p->space_title ?? '—' );
@@ -229,8 +229,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo '<p class="description jetonomy-content-preview">' . esc_html( wp_trim_words( wp_strip_all_tags( $r->content ?? '' ), 30 ) ) . '</p>';
 									break;
 								case 'author':
-									$author = get_userdata( $r->author_id );
-									echo esc_html( $author ? $author->display_name : __( 'Unknown', 'jetonomy' ) );
+									echo esc_html( \Jetonomy\Author::for_display( (int) $r->author_id, $r )['name'] );
 									break;
 								case 'parent':
 									echo esc_html( $r->post_title ?? '#' . $r->post_id );
