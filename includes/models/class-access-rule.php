@@ -28,9 +28,9 @@ class AccessRule extends Model {
 	 */
 	public static function create( array $data ): int {
 		$data = array_merge(
-			[
+			array(
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -103,7 +103,7 @@ class AccessRule extends Model {
 	 *
 	 * @var array<int, object[]>
 	 */
-	private static array $memo = [];
+	private static array $memo = array();
 
 	/**
 	 * Whether the memo reset is registered with Cache::flush().
@@ -117,7 +117,7 @@ class AccessRule extends Model {
 	 * Cache::flush().
 	 */
 	public static function reset_memo(): void {
-		self::$memo = [];
+		self::$memo = array();
 	}
 
 	/**
@@ -133,7 +133,7 @@ class AccessRule extends Model {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$memo = [];
+					self::$memo = array();
 				}
 			);
 		}
@@ -144,7 +144,7 @@ class AccessRule extends Model {
 					'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC',
 					$space_id
 				)
-			) ?: [];
+			) ?: array();
 		}
 
 		return self::$memo[ $space_id ];
@@ -189,7 +189,7 @@ class AccessRule extends Model {
 	 */
 	public static function rules_for_level( string $rule_value, string $rule_type = 'membership' ): array {
 		if ( '' === $rule_value ) {
-			return [];
+			return array();
 		}
 
 		return static::db()->get_results(
@@ -198,12 +198,12 @@ class AccessRule extends Model {
 				$rule_type,
 				$rule_value
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	public static function spaces_for_level( string $rule_value, string $rule_type = 'membership' ): array {
 		if ( '' === $rule_value ) {
-			return [];
+			return array();
 		}
 
 		$ids = static::db()->get_col(
@@ -214,7 +214,7 @@ class AccessRule extends Model {
 			)
 		);
 
-		return array_map( 'intval', $ids ?: [] );
+		return array_map( 'intval', $ids ?: array() );
 	}
 
 	/**
@@ -239,7 +239,7 @@ class AccessRule extends Model {
 	 */
 	public static function member_spaces_for_level_prefix( int $user_id, string $prefix, string $rule_type = 'membership' ): array {
 		if ( $user_id <= 0 || '' === $prefix ) {
-			return [];
+			return array();
 		}
 
 		$spaces  = table( 'spaces' );
@@ -264,7 +264,7 @@ class AccessRule extends Model {
 			)
 		);
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**
@@ -284,7 +284,7 @@ class AccessRule extends Model {
 	 */
 	public static function spaces_with_level_prefix( string $prefix, string $rule_type = 'membership' ): array {
 		if ( '' === $prefix ) {
-			return [];
+			return array();
 		}
 
 		$spaces = table( 'spaces' );
@@ -305,7 +305,7 @@ class AccessRule extends Model {
 			)
 		);
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**
@@ -464,12 +464,12 @@ class AccessRule extends Model {
 			}
 
 			if ( $matched ) {
-				return [
+				return array(
 					'grants'     => $rule->grants,     // 'read', 'participate', or 'full'
 					'space_role' => $rule->space_role,
 					'rule_id'    => (int) $rule->id,
 					'rule_type'  => $rule->rule_type,
-				];
+				);
 			}
 		}
 

@@ -27,26 +27,26 @@ class Updates_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/updates',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_updates' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				'args'                => [
-					'since' => [
+				'callback'            => array( $this, 'get_updates' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => array(
+					'since' => array(
 						'type'     => 'string',
 						'required' => true,
-					],
-					'scope' => [
+					),
+					'scope' => array(
 						'type'    => 'string',
 						'default' => 'global',
-						'enum'    => [ 'global', 'space', 'post' ],
-					],
-					'id'    => [
+						'enum'    => array( 'global', 'space', 'post' ),
+					),
+					'id'    => array(
 						'type'    => 'integer',
 						'minimum' => 1,
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 	}
 
@@ -90,7 +90,7 @@ class Updates_Controller extends Base_Controller {
 			);
 		}
 
-		if ( in_array( $scope, [ 'space', 'post' ], true ) && ! $id ) {
+		if ( in_array( $scope, array( 'space', 'post' ), true ) && ! $id ) {
 			return $this->validation_error(
 				__( 'The `id` parameter is required for space or post scope.', 'jetonomy' )
 			);
@@ -107,15 +107,15 @@ class Updates_Controller extends Base_Controller {
 		}
 
 		$response = new WP_REST_Response(
-			[
+			array(
 				'data'  => $data,
 				'since' => $since_dt,
 				'scope' => $scope,
-				'meta'  => [
+				'meta'  => array(
 					'count'    => count( $data ),
 					'has_more' => false,
-				],
-			],
+				),
+			),
 			200
 		);
 
@@ -140,16 +140,16 @@ class Updates_Controller extends Base_Controller {
 				"SELECT action, object_type, object_id, created_at FROM {$log_table} WHERE created_at > %s ORDER BY created_at DESC LIMIT 50",
 				$since
 			)
-		) ?: [];
+		) ?: array();
 
 		return array_map(
 			function ( $row ) {
-				return [
+				return array(
 					'action'      => $row->action,
 					'object_type' => $row->object_type,
 					'object_id'   => (int) $row->object_id,
 					'created_at'  => $row->created_at,
-				];
+				);
 			},
 			$rows
 		);
@@ -194,16 +194,16 @@ class Updates_Controller extends Base_Controller {
 				$space_id,
 				$space_id
 			)
-		) ?: [];
+		) ?: array();
 
 		return array_map(
 			function ( $row ) {
-				return [
+				return array(
 					'action'      => $row->action,
 					'object_type' => $row->object_type,
 					'object_id'   => (int) $row->object_id,
 					'created_at'  => $row->created_at,
-				];
+				);
 			},
 			$rows
 		);
@@ -229,7 +229,7 @@ class Updates_Controller extends Base_Controller {
 			)
 		);
 
-		return array_map( 'intval', $ids ?: [] );
+		return array_map( 'intval', $ids ?: array() );
 	}
 
 	/**

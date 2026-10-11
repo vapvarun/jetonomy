@@ -179,7 +179,7 @@ $_partial_space = $_space ? $_space : (object) array(
 		// embed the same privacy switch the full page has.
 		\Jetonomy\Template_Loader::partial(
 			'compose-fields',
-			[
+			array(
 				'space'                    => $_partial_space,
 				'show_title'               => $_show_title_initial,
 				'show_tags'                => false,
@@ -195,7 +195,7 @@ $_partial_space = $_space ? $_space : (object) array(
 				// Picker mode flips title visibility in response to space
 				// switches; fixed mode stays static (no binding emitted).
 				'title_visibility_binding' => ( 'picker' === $_mode ) ? '!context.composeShowTitle' : '',
-			]
+			)
 		);
 		?>
 

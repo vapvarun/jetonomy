@@ -16,11 +16,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$jt_children = $children ?? [];
+$jt_children = $children ?? array();
 if ( empty( $jt_children ) ) {
 	return;
 }
-$jt_spaces_by_cat = $spaces_by_cat ?? [];
+$jt_spaces_by_cat = $spaces_by_cat ?? array();
 ?>
 <?php
 // Each chip keeps its link to the sub-category page; the chevron beside it
@@ -33,7 +33,7 @@ $jt_spaces_by_cat = $spaces_by_cat ?? [];
 	<?php /* translators: %s: a plural label the site owner configured (e.g. spaces, categories). */ ?>
 	<ul class="jt-cat-chips" aria-label="<?php echo esc_attr( sprintf( __( 'Sub-%s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?>">
 		<?php foreach ( $jt_children as $jt_child ) : ?>
-			<?php $jt_count = count( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? [] ); ?>
+			<?php $jt_count = count( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? array() ); ?>
 			<li class="jt-cat-chip-group" data-wp-context='<?php echo wp_json_encode( array( 'subId' => (int) $jt_child->id ) ); ?>'>
 				<a class="jt-cat-chip" href="<?php echo esc_url( \Jetonomy\route_url( 'category', $jt_child->slug ) ); ?>">
 					<?php if ( ! empty( $jt_child->icon ) ) : ?>
@@ -59,7 +59,7 @@ $jt_spaces_by_cat = $spaces_by_cat ?? [];
 			data-wp-context='<?php echo wp_json_encode( array( 'subId' => (int) $jt_child->id ) ); ?>'
 			data-wp-bind--hidden="!state.isSubOpen">
 			<h3 class="jt-cat-sub-title"><?php echo esc_html( $jt_child->name ); ?></h3>
-			<?php jetonomy_render_space_grid( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? [], \Jetonomy\base_url() ); ?>
+			<?php jetonomy_render_space_grid( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? array(), \Jetonomy\base_url() ); ?>
 		</div>
 	<?php endforeach; ?>
 </div>

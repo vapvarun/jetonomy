@@ -26,7 +26,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	$advanced_tabs_html = ob_get_clean();
 
 	// Pre-buffer Pro/extension tab content so notices can be hoisted above the layout.
-	$jt_primary_tabs = [ 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam', 'free-vs-pro' ];
+	$jt_primary_tabs = array( 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam', 'free-vs-pro' );
 	$jt_ext_html     = '';
 	$jt_ext_notices  = '';
 	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) && 'license' !== $active_tab ) {
@@ -45,22 +45,22 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		}
 	}
 
-	$tab_icons  = [
+	$tab_icons  = array(
 		'general'     => 'dashicons-admin-settings',
 		'permissions' => 'dashicons-shield',
 		'email'       => 'dashicons-email-alt',
 		'appearance'  => 'dashicons-admin-appearance',
 		'seo'         => 'dashicons-search',
 		'antispam'    => 'dashicons-lock',
-	];
-	$tab_labels = [
+	);
+	$tab_labels = array(
 		'general'     => __( 'General', 'jetonomy' ),
 		'permissions' => __( 'Permissions', 'jetonomy' ),
 		'email'       => __( 'Email', 'jetonomy' ),
 		'appearance'  => __( 'Appearance', 'jetonomy' ),
 		'seo'         => __( 'SEO', 'jetonomy' ),
 		'antispam'    => __( 'Anti-Spam', 'jetonomy' ),
-	];
+	);
 
 	// Integrations tab appears only when BuddyPress Groups is active — the
 	// only context where the broadcast / comment-bridge toggles apply.
@@ -410,15 +410,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		<?php elseif ( 'permissions' === $active_tab ) : ?>
 
 			<?php
-			$thresholds  = $settings['trust_thresholds'] ?? [];
-			$rate_limits = $settings['rate_limits'] ?? [];
+			$thresholds  = $settings['trust_thresholds'] ?? array();
+			$rate_limits = $settings['rate_limits'] ?? array();
 			$tl_defaults = \Jetonomy\Trust\Trust_Levels::defaults();
 			$rl_defaults = \Jetonomy\Permissions\Rate_Limiter::defaults();
 			// Built from Trust_Levels::label() so renaming the ladder in one
 			// place updates this tab, the Users screen and the promotion email
 			// together.
-			$level_names = [];
-			foreach ( [ 1, 2, 3 ] as $jt_lvl ) {
+			$level_names = array();
+			foreach ( array( 1, 2, 3 ) as $jt_lvl ) {
 				$level_names[ $jt_lvl ] = sprintf(
 					/* translators: 1: trust level number, 2: trust level name. */
 					__( 'Level %1$d: %2$s', 'jetonomy' ),
@@ -721,8 +721,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Default on/off state for each notification type. Members can override these in their profile settings.', 'jetonomy' ); ?></p>
 				</div>
 				<?php
-				$notif_defaults = $settings['notification_defaults'] ?? [];
-				$notif_types    = [
+				$notif_defaults = $settings['notification_defaults'] ?? array();
+				$notif_types    = array(
 					'reply_to_post'       => __( 'Reply to your post', 'jetonomy' ),
 					'reply_to_reply'      => __( 'Reply to your reply', 'jetonomy' ),
 					'mention'             => __( 'Mention (@username)', 'jetonomy' ),
@@ -737,7 +737,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'flag_resolved'       => __( 'Your report was reviewed', 'jetonomy' ),
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
-				];
+				);
 				if ( \Jetonomy\messaging_active() ) {
 					$notif_types['message'] = __( 'Private message', 'jetonomy' );
 				}
@@ -1405,88 +1405,88 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Each extension is independent. Enable only what you need. Disabled extensions load zero code.', 'jetonomy' ); ?></p>
 				</div>
 				<?php
-				$jt_pro_exts = [
-					[
+				$jt_pro_exts = array(
+					array(
 						'name' => __( 'Emoji Reactions', 'jetonomy' ),
 						'icon' => 'dashicons-heart',
 						'desc' => __( 'Like, love, and celebrate with Slack-style reactions on posts and replies.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Private Messaging', 'jetonomy' ),
 						'icon' => 'dashicons-format-chat',
 						'desc' => __( 'One-on-one and group conversations between community members.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Polls', 'jetonomy' ),
 						'icon' => 'dashicons-chart-bar',
 						'desc' => __( 'Create polls within posts for community voting and decision-making.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Analytics Dashboard', 'jetonomy' ),
 						'icon' => 'dashicons-chart-area',
 						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						'desc' => sprintf( __( 'Engagement graphs, user growth, top %s, post trends, and CSV export.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Email Digests', 'jetonomy' ),
 						'icon' => 'dashicons-email',
 						'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Web Push', 'jetonomy' ),
 						'icon' => 'dashicons-bell',
 						'desc' => __( 'Browser push notifications for replies, mentions, and forum events.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Webhooks', 'jetonomy' ),
 						'icon' => 'dashicons-rest-api',
 						'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Reply by Email', 'jetonomy' ),
 						'icon' => 'dashicons-email-alt2',
 						'desc' => __( 'Members reply to notifications by email. No login required.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Custom Badges', 'jetonomy' ),
 						'icon' => 'dashicons-awards',
 						'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ),
 						'tier' => 'Growth',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Custom Fields', 'jetonomy' ),
 						'icon' => 'dashicons-forms',
 						'desc' => __( 'Add custom fields to posts and user profiles: text, select, checkbox, date, and more.', 'jetonomy' ),
 						'tier' => 'Growth',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Advanced Moderation', 'jetonomy' ),
 						'icon' => 'dashicons-shield',
 						'desc' => __( 'Auto-moderation rules engine: keyword filters, regex, link limits, and spam scoring.', 'jetonomy' ),
 						'tier' => 'Growth',
-					],
-					[
+					),
+					array(
 						'name' => __( 'SEO Pro', 'jetonomy' ),
 						'icon' => 'dashicons-search',
 						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 						'desc' => sprintf( __( 'Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						'tier' => 'Growth',
-					],
-					[
+					),
+					array(
 						'name' => __( 'White Label', 'jetonomy' ),
 						'icon' => 'dashicons-admin-appearance',
 						'desc' => __( 'Replace Jetonomy branding: community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ),
 						'tier' => 'Agency',
-					],
-				];
+					),
+				);
 				?>
 				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 16px;">
 					<?php foreach ( $jt_pro_exts as $ext ) : ?>

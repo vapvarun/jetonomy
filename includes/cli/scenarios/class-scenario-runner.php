@@ -30,7 +30,7 @@ final class Scenario_Runner {
 	 *
 	 * @var array<string,class-string<Scenario_Interface>>
 	 */
-	private array $registry = [];
+	private array $registry = array();
 
 	/**
 	 * Seed the registry with the built-in scenarios when no registry is injected.
@@ -77,13 +77,13 @@ final class Scenario_Runner {
 	 * @return array<int,array{name:string,description:string,class:string}>
 	 */
 	public function list(): array {
-		$items = [];
+		$items = array();
 		foreach ( $this->registry as $slug => $class ) {
-			$items[] = [
+			$items[] = array(
 				'name'        => $slug,
 				'description' => $class::description(),
 				'class'       => $class,
-			];
+			);
 		}
 		return $items;
 	}
@@ -110,17 +110,17 @@ final class Scenario_Runner {
 	 * @param string              $slug    Scenario slug to run.
 	 * @param array<string,mixed> $options Optional per-scenario options.
 	 */
-	public function run( string $slug, array $options = [] ): Scenario_Result {
+	public function run( string $slug, array $options = array() ): Scenario_Result {
 		$start = microtime( true );
 
 		if ( ! isset( $this->registry[ $slug ] ) ) {
 			return new Scenario_Result(
 				$slug,
 				false,
-				[],
-				[],
+				array(),
+				array(),
 				$this->duration_ms( $start ),
-				[ sprintf( 'Unknown scenario: %s', $slug ) ]
+				array( sprintf( 'Unknown scenario: %s', $slug ) )
 			);
 		}
 
@@ -132,10 +132,10 @@ final class Scenario_Runner {
 			return new Scenario_Result(
 				$slug,
 				false,
-				[],
-				[],
+				array(),
+				array(),
 				$this->duration_ms( $start ),
-				[ sprintf( 'Uncaught %s in %s::run(): %s', get_class( $e ), $class, $e->getMessage() ) ]
+				array( sprintf( 'Uncaught %s in %s::run(): %s', get_class( $e ), $class, $e->getMessage() ) )
 			);
 		}
 	}
@@ -153,10 +153,10 @@ final class Scenario_Runner {
 			return new Scenario_Result(
 				$slug,
 				false,
-				[],
+				array(),
 				$fixtures,
 				$this->duration_ms( $start ),
-				[ sprintf( 'Unknown scenario: %s', $slug ) ]
+				array( sprintf( 'Unknown scenario: %s', $slug ) )
 			);
 		}
 
@@ -168,10 +168,10 @@ final class Scenario_Runner {
 			return new Scenario_Result(
 				$slug,
 				false,
-				[],
+				array(),
 				$fixtures,
 				$this->duration_ms( $start ),
-				[ sprintf( 'Uncaught %s in %s::cleanup(): %s', get_class( $e ), $class, $e->getMessage() ) ]
+				array( sprintf( 'Uncaught %s in %s::cleanup(): %s', get_class( $e ), $class, $e->getMessage() ) )
 			);
 		}
 	}
@@ -180,13 +180,13 @@ final class Scenario_Runner {
 	 * Seed the registry with the five built-in scenarios. New scenarios go here.
 	 */
 	private function bootstrap_defaults(): void {
-		$defaults = [
+		$defaults = array(
 			Space_With_Pending_Join_Request::class,
 			Post_With_Flags_For_Moderation::class,
 			Multi_User_Voting_Thread::class,
 			Full_Membership_Approval_Flow::class,
 			Notification_Delivery_Sweep::class,
-		];
+		);
 		foreach ( $defaults as $class ) {
 			if ( ! class_exists( $class ) ) {
 				continue;

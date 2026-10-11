@@ -14,12 +14,12 @@ if ( ! $user ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			'message'   => __( 'User not found.', 'jetonomy' ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -138,42 +138,42 @@ $recent_posts = $wpdb->get_results(
 		(int) $user->ID,
 		...array_merge( $jt_gate_params, array( $per_page, $offset ) )
 	)
-) ?: [];
+) ?: array();
 
 // Current tab.
 $current_tab = $data['tab'] ?? '';
 $is_own      = is_user_logged_in() && get_current_user_id() === (int) $user->ID;
 
 // Bookmarks (only for own profile on bookmarks tab).
-$bookmarks = [];
+$bookmarks = array();
 if ( 'bookmarks' === $current_tab && $is_own ) {
 	$bookmarks = \Jetonomy\Models\Bookmark::list_by_user( (int) $user->ID, $per_page, $offset );
 }
 
 // Replies tab.
-$user_replies = [];
+$user_replies = array();
 if ( 'replies' === $current_tab ) {
 	$user_replies = \Jetonomy\Models\Reply::list_by_user( (int) $user->ID, $per_page, $offset );
 }
 
 // Votes tab.
-$user_votes = [];
+$user_votes = array();
 if ( 'votes' === $current_tab ) {
 	$user_votes = \Jetonomy\Models\Vote::list_by_user( (int) $user->ID, $per_page, $offset );
 }
 
 // Drafts tab — only for the profile owner.
-$user_drafts = [];
+$user_drafts = array();
 if ( 'drafts' === $current_tab && $is_own ) {
 	$user_drafts = \Jetonomy\Models\Post::list_drafts_by_user( (int) $user->ID, $per_page, $offset );
 }
 
-$crumbs = [
-	[
+$crumbs = array(
+	array(
 		'label' => \Jetonomy\user_display_name( $user ),
 		'url'   => '',
-	],
-];
+	),
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -188,11 +188,11 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'avatar',
-						[
+						array(
 							'user_id' => $profile_user_id,
 							'size'    => 64,
 							'class'   => 'jt-profile-av',
-						]
+						)
 					);
 					?>
 				</span>
@@ -387,12 +387,12 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'message' => $is_own
 								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not replied to anything yet. Jump into a discussion and your %s will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 								: sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -440,7 +440,7 @@ $crumbs = [
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_replies ) >= $per_page ] ); ?>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $user_replies ) >= $per_page ) ); ?>
 				<?php endif; ?>
 
 			<?php elseif ( 'votes' === $current_tab ) : ?>
@@ -448,12 +448,12 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'message' => $is_own
 								? sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'You have not voted yet. Upvote %1$s and %2$s you find helpful and they will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 								: __( 'No votes yet.', 'jetonomy' ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -491,7 +491,7 @@ $crumbs = [
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_votes ) >= $per_page ] ); ?>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $user_votes ) >= $per_page ) ); ?>
 				<?php endif; ?>
 
 			<?php elseif ( 'drafts' === $current_tab && $is_own ) : ?>
@@ -499,10 +499,10 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'message' => sprintf( /* translators: %s: singular topic label. */ __( 'No drafts yet. Save a %s as draft and it will appear here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 			<?php else : ?>
@@ -574,7 +574,7 @@ $crumbs = [
 						</div>
 					<?php endforeach; ?>
 				</div>
-				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_drafts ) >= $per_page ] ); ?>
+				<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $user_drafts ) >= $per_page ) ); ?>
 			<?php endif; ?>
 
 		<?php elseif ( 'bookmarks' === $current_tab && $is_own ) : ?>
@@ -582,10 +582,10 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'message' => sprintf( /* translators: %s: plural topic label. */ __( 'No bookmarks yet. Bookmark %s to find them here later.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -642,17 +642,17 @@ $crumbs = [
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $bookmarks ) >= $per_page ] ); ?>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $bookmarks ) >= $per_page ) ); ?>
 				<?php endif; ?>
 			<?php else : ?>
 				<?php if ( empty( $recent_posts ) ) : ?>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'message' => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -693,7 +693,7 @@ $crumbs = [
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $recent_posts ) >= $per_page ] ); ?>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $recent_posts ) >= $per_page ) ); ?>
 				<?php endif; ?>
 			<?php endif; ?>
 		</main>

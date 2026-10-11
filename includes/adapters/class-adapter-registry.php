@@ -11,10 +11,10 @@ defined( 'ABSPATH' ) || exit;
 
 class Adapter_Registry {
 
-	private static array $membership = [];
-	private static array $search     = [];
-	private static array $email      = [];
-	private static array $ai         = [];
+	private static array $membership = array();
+	private static array $search     = array();
+	private static array $email      = array();
+	private static array $ai         = array();
 
 	/**
 	 * Request-scoped cache for membership_level_owners().
@@ -88,7 +88,7 @@ class Adapter_Registry {
 			return self::$level_owners;
 		}
 
-		$owners = [];
+		$owners = array();
 		foreach ( self::$membership as $adapter_id => $adapter ) {
 			if ( 'wp-roles' === $adapter_id || ! $adapter->is_active() ) {
 				continue;
@@ -117,10 +117,10 @@ class Adapter_Registry {
 	 * @return array{type: string, value: string}
 	 */
 	public static function describe_membership_level( string $level_id ): array {
-		$fallback = [
+		$fallback = array(
 			'type'  => __( 'Membership', 'jetonomy' ),
 			'value' => $level_id,
-		];
+		);
 
 		if ( '' === $level_id ) {
 			return $fallback;
@@ -140,10 +140,10 @@ class Adapter_Registry {
 		$labels = self::membership_labels();
 		$label  = $adapter->get_level_label( $level_id );
 
-		return [
+		return array(
 			'type'  => $labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
 			'value' => '' !== $label ? $label : $level_id,
-		];
+		);
 	}
 
 	/**

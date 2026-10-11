@@ -11,8 +11,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$import_history   = get_option( 'jetonomy_import_history', [] );
-$resume_state     = get_option( 'jetonomy_import_resume', [] );
+$import_history   = get_option( 'jetonomy_import_history', array() );
+$resume_state     = get_option( 'jetonomy_import_resume', array() );
 $current_progress = \Jetonomy\Import\Importer::get_progress();
 $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 ?>
@@ -273,7 +273,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 			<?php foreach ( $import_history as $jt_hist_id => $jt_record ) : ?>
 				<?php
 				$jt_skipped = (int) ( $jt_record['skipped'] ?? 0 );
-				$jt_errors  = (array) ( $jt_record['errors'] ?? [] );
+				$jt_errors  = (array) ( $jt_record['errors'] ?? array() );
 				$jt_name    = (string) ( $jt_record['source_name'] ?? $jt_hist_id );
 				?>
 				<div class="jetonomy-import-past__item" data-source="<?php echo esc_attr( $jt_hist_id ); ?>">
@@ -340,7 +340,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 								</p>
 							<?php endif; ?>
 						</div>
-					<?php elseif ( empty( $jt_record['already'] ) && ! array_filter( (array) ( $jt_record['orphans'] ?? [] ) ) ) : ?>
+					<?php elseif ( empty( $jt_record['already'] ) && ! array_filter( (array) ( $jt_record['orphans'] ?? array() ) ) ) : ?>
 						<p class="description"><?php esc_html_e( 'Everything imported cleanly. Nothing was skipped.', 'jetonomy' ); ?></p>
 					<?php endif; ?>
 				</div>

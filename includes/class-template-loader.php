@@ -1055,8 +1055,8 @@ class Template_Loader {
 			}
 			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 			return str_replace(
-				[ '{post_title}', '{space_name}' ],
-				[ (string) $post->title, (string) ( $space->title ?? '' ) ],
+				array( '{post_title}', '{space_name}' ),
+				array( (string) $post->title, (string) ( $space->title ?? '' ) ),
 				$pattern
 			);
 		}

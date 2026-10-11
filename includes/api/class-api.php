@@ -11,16 +11,16 @@ defined( 'ABSPATH' ) || exit;
 
 class Api {
 
-	private array $controllers = [];
+	private array $controllers = array();
 
 	public function __construct() {
-		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 	}
 
 	public function register_routes(): void {
 		$dir = JETONOMY_DIR . 'includes/api/';
 
-		$classes = [
+		$classes = array(
 			'categories'       => 'Categories_Controller',
 			'spaces'           => 'Spaces_Controller',
 			'posts'            => 'Posts_Controller',
@@ -46,7 +46,7 @@ class Api {
 			// feed. Keys are kebab → class-<key>-controller.php.
 			'app-config'       => 'App_Config_Controller',
 			'feed'             => 'Feed_Controller',
-		];
+		);
 
 		require_once $dir . 'class-base-controller.php';
 

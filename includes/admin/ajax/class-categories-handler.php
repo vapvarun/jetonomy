@@ -14,10 +14,10 @@ use Jetonomy\Models\Category;
 class Categories_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_create_category', [ $this, 'ajax_create_category' ] );
-		add_action( 'wp_ajax_jetonomy_update_category', [ $this, 'ajax_update_category' ] );
-		add_action( 'wp_ajax_jetonomy_delete_category', [ $this, 'ajax_delete_category' ] );
-		add_action( 'wp_ajax_jetonomy_reorder_categories', [ $this, 'ajax_reorder_categories' ] );
+		add_action( 'wp_ajax_jetonomy_create_category', array( $this, 'ajax_create_category' ) );
+		add_action( 'wp_ajax_jetonomy_update_category', array( $this, 'ajax_update_category' ) );
+		add_action( 'wp_ajax_jetonomy_delete_category', array( $this, 'ajax_delete_category' ) );
+		add_action( 'wp_ajax_jetonomy_reorder_categories', array( $this, 'ajax_reorder_categories' ) );
 	}
 
 	public function ajax_create_category(): void {
@@ -38,7 +38,7 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Name is required.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $visibility, [ 'public', 'private', 'hidden' ], true ) ) {
+		if ( ! in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
 			$visibility = 'public';
 		}
 
@@ -48,7 +48,7 @@ class Categories_Handler {
 		}
 
 		$id = Category::create(
-			[
+			array(
 				'name'        => $name,
 				'slug'        => $slug,
 				'description' => $desc,
@@ -56,7 +56,7 @@ class Categories_Handler {
 				'icon'        => $icon ?: null,
 				'color'       => $color ?: null,
 				'visibility'  => $visibility,
-			]
+			)
 		);
 
 		if ( ! $id ) {
@@ -65,11 +65,11 @@ class Categories_Handler {
 
 		$category = Category::find( $id );
 		wp_send_json_success(
-			[
+			array(
 				'id'       => $id,
 				'category' => $category,
 				'message'  => __( 'Category created.', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -84,7 +84,7 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Invalid category ID.', 'jetonomy' ) );
 		}
 
-		$data = [];
+		$data = array();
 		if ( isset( $_POST['name'] ) ) {
 			$data['name'] = sanitize_text_field( wp_unslash( $_POST['name'] ) );
 		}
@@ -105,7 +105,7 @@ class Categories_Handler {
 		}
 		if ( isset( $_POST['visibility'] ) ) {
 			$visibility = sanitize_text_field( wp_unslash( $_POST['visibility'] ) );
-			if ( in_array( $visibility, [ 'public', 'private', 'hidden' ], true ) ) {
+			if ( in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
 				$data['visibility'] = $visibility;
 			}
 		}
@@ -124,10 +124,10 @@ class Categories_Handler {
 
 		$category = Category::find( $id );
 		wp_send_json_success(
-			[
+			array(
 				'category' => $category,
 				'message'  => __( 'Category updated.', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -151,7 +151,7 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Failed to delete category.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Category deleted.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Category deleted.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_reorder_categories(): void {
@@ -160,7 +160,7 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$order = array_map( 'absint', (array) wp_unslash( $_POST['order'] ?? [] ) );
+		$order = array_map( 'absint', (array) wp_unslash( $_POST['order'] ?? array() ) );
 		if ( ! $order ) {
 			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
 		}
@@ -197,10 +197,10 @@ class Categories_Handler {
 			$order,
 			$offset,
 			static function ( int $cat_id, int $position ): void {
-				Category::update( $cat_id, [ 'sort_order' => $position ] );
+				Category::update( $cat_id, array( 'sort_order' => $position ) );
 			}
 		);
 
-		wp_send_json_success( [ 'message' => __( 'Order saved.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Order saved.', 'jetonomy' ) ) );
 	}
 }

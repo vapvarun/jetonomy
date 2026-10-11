@@ -14,13 +14,13 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -63,7 +63,7 @@ $_jt_unmet_membership = $_jt_user_id
 	? \Jetonomy\Models\AccessRule::unmet_membership_requirements( $_jt_user_id, (int) $space->id )
 	: array();
 
-if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) {
+if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) {
 	if ( ! $_jt_user_id ) {
 		// Guest - prompt to log in. Only private spaces get here: a hidden
 		// space answers 404 to guests before this template runs
@@ -72,13 +72,13 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		$gate_message = sprintf( __( 'This %s is private. Please log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
-			[
+			array(
 				'icon'      => 'lock',
 				'message'   => $gate_message,
 				'cta_label' => __( 'Log In', 'jetonomy' ),
 				'cta_url'   => wp_login_url( \Jetonomy\current_url() ),
 				'tone'      => 'forbidden',
-			]
+			)
 		);
 		return;
 	} elseif ( ! empty( $_jt_unmet_membership ) ) {
@@ -128,11 +128,11 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			: sprintf( __( 'This %s is invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
-			[
+			array(
 				'icon'    => 'lock',
 				'message' => $invite_message,
 				'tone'    => 'forbidden',
-			]
+			)
 		);
 		return;
 	} elseif ( 'approval' === $_jt_join_policy ) {
@@ -141,23 +141,23 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		if ( $_jt_gate_pending ) {
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'    => 'check-circle',
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'message' => sprintf( __( 'Your request to join this %s is awaiting approval.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-				]
+				)
 			);
 			return;
 		}
 		$join_nonce = wp_create_nonce( 'wp_rest' );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
-			[
+			array(
 				'icon'    => 'lock',
 				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 				'message' => sprintf( __( 'This %s requires approval to join. Submit a request below.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'    => 'forbidden',
-			]
+			)
 		);
 		?>
 		<form class="jt-join-request-form jt-space-gate-form" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
@@ -173,12 +173,12 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		<?php
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
-			[
+			array(
 				'icon'    => 'lock',
 				/* translators: 1: the singular space label the site owner configured (e.g. space, group); 2: plural topic label. */
 				'message' => sprintf( __( 'This %1$s is private. Join to access its %2$s and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				'tone'    => 'forbidden',
-			]
+			)
 		);
 		?>
 		<div class="jt-space-gate-actions">
@@ -193,11 +193,11 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 }
 
 $space_status  = $space->status ?? 'active';
-$is_restricted = in_array( $space_status, [ 'archived', 'locked' ], true );
+$is_restricted = in_array( $space_status, array( 'archived', 'locked' ), true );
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'latest';
-if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
+if ( ! in_array( $sort, array( 'latest', 'popular', 'unanswered' ), true ) ) {
 	$sort = 'latest';
 }
 
@@ -263,30 +263,30 @@ if ( $jt_parent && \Jetonomy\Models\Space::concealed_from_viewer( $jt_parent, $_
 
 // Home > Parent category > Category > ... Each category crumb links to its
 // page; nothing on a space page led back to its category.
-$crumbs = [];
+$crumbs = array();
 if ( $category ) {
 	$jt_parent_cat = (int) $category->parent_id > 0 ? \Jetonomy\Models\Category::find_visible( (int) $category->parent_id ) : null;
 	if ( $jt_parent_cat ) {
-		$crumbs[] = [
+		$crumbs[] = array(
 			'label' => $jt_parent_cat->name,
 			'url'   => \Jetonomy\route_url( 'category', $jt_parent_cat->slug ),
-		];
+		);
 	}
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $category->name,
 		'url'   => \Jetonomy\route_url( 'category', $category->slug ),
-	];
+	);
 }
 if ( $jt_parent ) {
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $jt_parent->title,
 		'url'   => \Jetonomy\route_url( 'space', $jt_parent->slug ),
-	];
+	);
 }
-$crumbs[] = [
+$crumbs[] = array(
 	'label' => $space->title,
 	'url'   => '',
-];
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -471,22 +471,22 @@ $crumbs[] = [
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'space-tabs',
-				[
+				array(
 					'space'     => $space,
 					'space_url' => $space_url,
 					'active'    => 'primary',
-				]
+				)
 			);
 			?>
 
 			<div class="jt-bar">
 				<div class="jt-pills">
 					<?php
-					$sort_options = [
+					$sort_options = array(
 						'latest'     => __( 'Latest', 'jetonomy' ),
 						'popular'    => __( 'Popular', 'jetonomy' ),
 						'unanswered' => __( 'Unanswered', 'jetonomy' ),
-					];
+					);
 					foreach ( $sort_options as $key => $label ) :
 						$pill_url = add_query_arg( 'sort', $key, $space_url );
 						?>
@@ -563,11 +563,11 @@ $crumbs[] = [
 							$_jt_no_posts_msg = sprintf( __( 'No %s yet. Be the first to start a discussion!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 					}
 				}
-				$_jt_cta_by_type = [
+				$_jt_cta_by_type = array(
 					'qa'    => __( 'Ask a question', 'jetonomy' ),
 					'feed'  => __( 'Share an update', 'jetonomy' ),
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
-				];
+				);
 				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? \Jetonomy\compose_label( $_jt_space_type );
 				// Mirror the space-header New Topic gate (Permission_Engine::can,
 				// which folds in membership, admin, trust AND the access rule's
@@ -577,12 +577,12 @@ $crumbs[] = [
 				$_jt_can_post = is_user_logged_in() && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'      => 'empty-posts',
 						'message'   => $_jt_no_posts_msg,
 						'cta_label' => $_jt_can_post ? $_jt_post_cta : '',
 						'cta_url'   => $_jt_can_post ? ( \Jetonomy\route_url( 'new-post', $space->slug ) ) : '',
-					]
+					)
 				);
 				?>
 			<?php else : ?>
@@ -625,9 +625,9 @@ $crumbs[] = [
 					<?php endforeach; ?>
 				</div>
 
-				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => $_jt_has_more ] ); ?>
+				<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => $_jt_has_more ) ); ?>
 			<?php endif; ?>
 		</main>
 
-		<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => $space ] ); ?>
+		<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => $space ) ); ?>
 	</div>

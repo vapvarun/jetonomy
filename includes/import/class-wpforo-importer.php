@@ -72,11 +72,11 @@ class WPForo_Importer extends Importer {
 	public function get_source_stats(): array {
 		global $wpdb;
 		$p = $wpdb->prefix;
-		return [
+		return array(
 			'forums' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" ),
 			'topics' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" ),
 			'posts'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" ),
-		];
+		);
 	}
 
 	/**
@@ -235,7 +235,7 @@ class WPForo_Importer extends Importer {
 	 * @return array[] Boards, each with prefix + category naming.
 	 */
 	private function resolve_boards( string $phase, int $offset ): array {
-		$cached = get_option( self::BOARDS_OPTION, [] );
+		$cached = get_option( self::BOARDS_OPTION, array() );
 		$first  = ( 'forums' === $phase && 0 === $offset && ! get_option( self::BOARD_IDX_OPTION, 0 ) );
 
 		if ( ! empty( $cached ) && ! $first ) {
@@ -252,16 +252,16 @@ class WPForo_Importer extends Importer {
 		$rows = $wpdb->get_results( "SELECT boardid, title FROM {$boards_table} WHERE status = 1 ORDER BY boardid ASC" );
 
 		if ( empty( $rows ) ) {
-			$rows = [
-				(object) [
+			$rows = array(
+				(object) array(
 					'boardid' => 0,
 					'title'   => 'Forums',
-				],
-			];
+				),
+			);
 		}
 
 		$multi  = count( $rows ) > 1;
-		$boards = [];
+		$boards = array();
 
 		foreach ( $rows as $row ) {
 			$board_id = (int) $row->boardid;
@@ -272,7 +272,7 @@ class WPForo_Importer extends Importer {
 				continue;
 			}
 
-			$boards[] = [
+			$boards[] = array(
 				'board'    => $board_id,
 				'prefix'   => $prefix,
 				// Each board uploads to its OWN folder: wpforo, wpforo_2, wpforo_3...
@@ -286,7 +286,7 @@ class WPForo_Importer extends Importer {
 				'cat_slug' => $multi
 					? 'imported-wpforo-' . sanitize_title( $row->title )
 					: 'imported-wpforo',
-			];
+			);
 		}
 
 		update_option( self::BOARDS_OPTION, $boards, false );
@@ -304,12 +304,12 @@ class WPForo_Importer extends Importer {
 	 * @return array{phase:string, offset:int, done:bool, processed:int}
 	 */
 	private function next( string $phase, int $offset, int $processed ): array {
-		return [
+		return array(
 			'phase'     => $phase,
 			'offset'    => $offset,
 			'done'      => false,
 			'processed' => $processed,
-		];
+		);
 	}
 
 	/**
@@ -338,27 +338,27 @@ class WPForo_Importer extends Importer {
 		delete_option( self::BOARDS_OPTION );
 		delete_option( self::BOARD_IDX_OPTION );
 
-		return [
+		return array(
 			'phase'     => 'complete',
 			'offset'    => 0,
 			'done'      => true,
 			'processed' => $processed,
-		];
+		);
 	}
 
-	public function run( array $options = [] ): array {
+	public function run( array $options = array() ): array {
 		global $wpdb;
 
 		$boards_table = $wpdb->prefix . 'wpforo_boards';
 		$boards       = $wpdb->get_results( "SELECT boardid, title FROM {$boards_table} WHERE status = 1 ORDER BY boardid ASC" );
 
 		if ( empty( $boards ) ) {
-			$boards = [
-				(object) [
+			$boards = array(
+				(object) array(
 					'boardid' => 0,
 					'title'   => 'Forums',
-				],
-			];
+				),
+			);
 		}
 
 		foreach ( $boards as $board ) {
@@ -380,14 +380,14 @@ class WPForo_Importer extends Importer {
 
 			// Every board numbers its rows from 1, so board 1's forum 3 must not
 			// resolve as board 2's forum 3.
-			$this->id_map   = [];
+			$this->id_map   = array();
 			$this->board_id = $board_id;
 			$this->import_forums(
-				[
+				array(
 					'board'    => $board_id,
 					'cat_name' => $cat_name,
 					'cat_slug' => $cat_slug,
-				],
+				),
 				$prefix
 			);
 			$this->import_topics( $prefix );
@@ -425,10 +425,10 @@ class WPForo_Importer extends Importer {
 	 */
 	private function parse_wpforo_attachments( string $body ): array {
 		if ( false === strpos( $body, 'wpforo-attached-file' ) ) {
-			return [];
+			return array();
 		}
 
-		$found = [];
+		$found = array();
 
 		if ( ! preg_match_all(
 			'#<div[^>]*id=[\'"]wpfa-(\d+)[\'"][^>]*>(.*?)</div>#is',
@@ -436,7 +436,7 @@ class WPForo_Importer extends Importer {
 			$blocks,
 			PREG_SET_ORDER
 		) ) {
-			return [];
+			return array();
 		}
 
 		foreach ( $blocks as $block ) {
@@ -450,14 +450,14 @@ class WPForo_Importer extends Importer {
 				continue; // A tombstone, or markup we don't recognise — leave it be.
 			}
 
-			$found[] = [
+			$found[] = array(
 				'media_id' => $media_id,
 				'url'      => html_entity_decode( $url, ENT_QUOTES ),
 				'name'     => html_entity_decode( $name, ENT_QUOTES ),
 				// The exact markup this attachment came from. We only ever remove a
 				// block we have PROVEN we replaced.
 				'block'    => $block[0],
-			];
+			);
 		}
 
 		return $found;
@@ -507,10 +507,10 @@ class WPForo_Importer extends Importer {
 			++$sort;
 		}
 
-		return [
+		return array(
 			'linked' => $linked,
 			'body'   => $linked ? trim( $body ) : $body,
-		];
+		);
 	}
 
 	/**
@@ -532,9 +532,9 @@ class WPForo_Importer extends Importer {
 		// Walk parents before children so a child can resolve its parent's new id.
 		$forums = $this->sort_rows_parents_first( (array) $forums, 'forumid', 'parentid' );
 
-		$fingerprints = [];
+		$fingerprints = array();
 		foreach ( $forums as $forum ) {
-			$fingerprints[ $this->sid( $forum->forumid ) ] = [ 'slug' => self::forum_slug( $forum ) ];
+			$fingerprints[ $this->sid( $forum->forumid ) ] = array( 'slug' => self::forum_slug( $forum ) );
 		}
 		$existing = $this->find_imported( 'space', $fingerprints );
 		$cat_id   = 0;
@@ -561,14 +561,14 @@ class WPForo_Importer extends Importer {
 			$cat_id = $cat_id ?: $this->import_category(
 				$board['board'] ? 'board-' . $board['board'] : 'default',
 				(string) $board['cat_slug'],
-				[ 'name' => (string) $board['cat_name'] ]
+				array( 'name' => (string) $board['cat_name'] )
 			);
 
 			// Preserve source access level — a members-only wpForo board must
 			// NOT land as a public Jetonomy space. See self::map_access().
 			$access   = self::map_access( $forum );
 			$space_id = Space::create(
-				[
+				array(
 					'category_id' => $cat_id,
 					'parent_id'   => $parent_space_id,
 					'author_id'   => 1,
@@ -581,7 +581,7 @@ class WPForo_Importer extends Importer {
 					'visibility'  => $access['visibility'],
 					'join_policy' => $access['join_policy'],
 					'sort_order'  => (int) $forum->order,
-				]
+				)
 			);
 
 			if ( $space_id ) {
@@ -633,10 +633,10 @@ class WPForo_Importer extends Importer {
 			}
 		}
 
-		$access = [
+		$access = array(
 			'visibility'  => $restricted ? 'private' : 'public',
 			'join_policy' => $restricted ? 'approval' : 'open',
-		];
+		);
 
 		/**
 		 * Filter the visibility + join policy applied to an imported forum.
@@ -649,10 +649,10 @@ class WPForo_Importer extends Importer {
 
 		// Validate against the schema enums so a stray filter return can never
 		// persist an invalid visibility/join_policy.
-		return [
-			'visibility'  => in_array( $access['visibility'] ?? '', [ 'public', 'private', 'hidden' ], true ) ? $access['visibility'] : ( $restricted ? 'private' : 'public' ),
-			'join_policy' => in_array( $access['join_policy'] ?? '', [ 'open', 'approval', 'invite' ], true ) ? $access['join_policy'] : ( $restricted ? 'approval' : 'open' ),
-		];
+		return array(
+			'visibility'  => in_array( $access['visibility'] ?? '', array( 'public', 'private', 'hidden' ), true ) ? $access['visibility'] : ( $restricted ? 'private' : 'public' ),
+			'join_policy' => in_array( $access['join_policy'] ?? '', array( 'open', 'approval', 'invite' ), true ) ? $access['join_policy'] : ( $restricted ? 'approval' : 'open' ),
+		);
 	}
 
 	private function import_topics( string $p = '' ): void {
@@ -693,10 +693,10 @@ class WPForo_Importer extends Importer {
 		$fetched   = count( (array) $topics );
 		$processed = $this->import_topic_rows( (array) $topics, $p );
 
-		return [
+		return array(
 			'fetched'   => $fetched,
 			'processed' => $processed,
-		];
+		);
 	}
 
 	/**
@@ -730,7 +730,7 @@ class WPForo_Importer extends Importer {
 				...$topic_ids
 			)
 		);
-		$first_posts_map = [];
+		$first_posts_map = array();
 		foreach ( $first_posts_raw as $fp ) {
 			$first_posts_map[ (int) $fp->topicid ] = $fp;
 		}
@@ -740,15 +740,15 @@ class WPForo_Importer extends Importer {
 		$this->load_mapped( 'forum', 'space', array_combine( $forum_ids, array_map( fn( $id ) => $this->sid( $id ), $forum_ids ) ) );
 
 		// One "already imported?" lookup for the whole page (see find_imported()).
-		$fingerprints = [];
+		$fingerprints = array();
 		foreach ( $topics as $topic ) {
 			$space_id = $this->get_mapped_id( 'forum', $topic->forumid );
 			if ( $space_id ) {
-				$fingerprints[ $this->sid( $topic->topicid ) ] = [
+				$fingerprints[ $this->sid( $topic->topicid ) ] = array(
 					'parent'  => $space_id,
 					'author'  => (int) $topic->userid,
 					'created' => (string) ( $topic->created ?? '' ),
-				];
+				);
 			}
 		}
 		$existing = $this->find_imported( 'post', $fingerprints );
@@ -795,7 +795,7 @@ class WPForo_Importer extends Importer {
 			$attachments = $this->parse_wpforo_attachments( $content );
 
 			$post_id = JtPost::create(
-				[
+				array(
 					'space_id'      => $space_id,
 					'author_id'     => (int) $topic->userid,
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
@@ -807,7 +807,7 @@ class WPForo_Importer extends Importer {
 					'is_sticky'     => $is_sticky,
 					'is_closed'     => (int) ( $topic->closed ?? 0 ),
 					'created_at'    => $topic->created ?? now(),
-				]
+				)
 			);
 
 			if ( is_wp_error( $post_id ) ) {
@@ -827,10 +827,10 @@ class WPForo_Importer extends Importer {
 					if ( $result['linked'] > 0 ) {
 						JtPost::update(
 							(int) $post_id,
-							[
+							array(
 								'content'       => wp_kses_post( $result['body'] ),
 								'content_plain' => \jetonomy_content_to_plain( $result['body'] ),
-							]
+							)
 						);
 					}
 				}
@@ -902,10 +902,10 @@ class WPForo_Importer extends Importer {
 		$fetched   = count( (array) $posts );
 		$processed = $this->import_reply_rows( (array) $posts );
 
-		return [
+		return array(
 			'fetched'   => $fetched,
 			'processed' => $processed,
-		];
+		);
 	}
 
 	/**
@@ -1016,15 +1016,15 @@ class WPForo_Importer extends Importer {
 		$this->load_mapped( 'topic', 'post', array_combine( $topic_ids, array_map( fn( $id ) => $this->sid( $id ), $topic_ids ) ) );
 		$this->load_mapped( 'wpforo_reply', 'reply', array_combine( $parent_ids, array_map( fn( $id ) => $this->sid( $id ), $parent_ids ) ) );
 
-		$fingerprints = [];
+		$fingerprints = array();
 		foreach ( $posts as $wf_post ) {
 			$post_id = $this->get_mapped_id( 'topic', $wf_post->topicid );
 			if ( $post_id ) {
-				$fingerprints[ $this->sid( $wf_post->postid ) ] = [
+				$fingerprints[ $this->sid( $wf_post->postid ) ] = array(
 					'parent'  => $post_id,
 					'author'  => (int) $wf_post->userid,
 					'created' => (string) ( $wf_post->created ?? '' ),
-				];
+				);
 			}
 		}
 		$existing = $this->find_imported( 'reply', $fingerprints );
@@ -1060,7 +1060,7 @@ class WPForo_Importer extends Importer {
 			$attachments = $this->parse_wpforo_attachments( $body );
 
 			$reply_id = JtReply::create(
-				[
+				array(
 					'post_id'       => $post_id,
 					'parent_id'     => $parent_id,
 					'author_id'     => (int) $wf_post->userid,
@@ -1074,7 +1074,7 @@ class WPForo_Importer extends Importer {
 					// status 0 = approved, anything else = held.
 					'status'        => self::map_reply_status( $wf_post ),
 					'created_at'    => $wf_post->created ?? now(),
-				]
+				)
 			);
 
 			if ( is_wp_error( $reply_id ) ) {
@@ -1093,10 +1093,10 @@ class WPForo_Importer extends Importer {
 					if ( $result['linked'] > 0 ) {
 						JtReply::update(
 							(int) $reply_id,
-							[
+							array(
 								'content'       => wp_kses_post( $result['body'] ),
 								'content_plain' => \jetonomy_content_to_plain( $result['body'] ),
-							]
+							)
 						);
 					}
 				}
@@ -1130,18 +1130,18 @@ class WPForo_Importer extends Importer {
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'reactions' ) ) ) {
-			return [
+			return array(
 				'table' => $p . 'reactions',
 				'pk'    => 'reactionid',
 				'where' => 'AND reaction = 1',
-			];
+			);
 		}
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $p . 'likes' ) ) ) {
-			return [
+			return array(
 				'table' => $p . 'likes',
 				'pk'    => 'likeid',
 				'where' => '',
-			];
+			);
 		}
 		// phpcs:enable
 
@@ -1185,11 +1185,11 @@ class WPForo_Importer extends Importer {
 
 		$src = $this->likes_source( $p );
 		if ( ! $src ) {
-			return [
+			return array(
 				'fetched'   => 0,
 				'processed' => 0,
 				'cursor'    => $after,
-			];
+			);
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted board table/column names.
@@ -1240,11 +1240,11 @@ class WPForo_Importer extends Importer {
 			}
 		}
 
-		return [
+		return array(
 			'fetched'   => $total,
 			'processed' => $consumed,
 			'cursor'    => $cursor,
-		];
+		);
 	}
 
 	private function create_profiles( string $p = '' ): void {

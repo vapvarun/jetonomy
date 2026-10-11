@@ -19,7 +19,7 @@ class Import_Handler {
 		// (the "kept for CLI" claim was wrong — CLI calls
 		// Import_Manager::run() directly) and were removed in 1.5.0
 		// (audit C).
-		add_action( 'wp_ajax_jetonomy_import_batch', [ $this, 'ajax_import_batch' ] );
+		add_action( 'wp_ajax_jetonomy_import_batch', array( $this, 'ajax_import_batch' ) );
 	}
 
 	/**
@@ -61,16 +61,16 @@ class Import_Handler {
 		// jt_import_map (Importer::load_mapped()).
 
 		// Save resume point so the import can be resumed if interrupted.
-		$existing_resume = get_option( 'jetonomy_import_resume', [] );
+		$existing_resume = get_option( 'jetonomy_import_resume', array() );
 		update_option(
 			'jetonomy_import_resume',
-			[
+			array(
 				'source'     => $source,
 				'phase'      => $phase,
 				'offset'     => $offset,
 				'batch_size' => $batch_size,
 				'started_at' => $new_run ? current_time( 'mysql' ) : ( $existing_resume['started_at'] ?? current_time( 'mysql' ) ),
-			],
+			),
 			false
 		);
 
@@ -84,20 +84,20 @@ class Import_Handler {
 		// files were quietly skipped.
 		$import_errors = get_option(
 			'jetonomy_import_errors',
-			[
+			array(
 				'count'  => 0,
-				'sample' => [],
-			]
+				'sample' => array(),
+			)
 		);
 		$batch_errors  = $importer->get_errors();
 		if ( $batch_errors ) {
 			$import_errors['count'] = (int) ( $import_errors['count'] ?? 0 ) + count( $batch_errors );
 			// Keep only a bounded sample for the UI — a 50k-post forum with many
 			// unrecoverable files must not bloat wp_options.
-			$room = 50 - count( (array) ( $import_errors['sample'] ?? [] ) );
+			$room = 50 - count( (array) ( $import_errors['sample'] ?? array() ) );
 			if ( $room > 0 ) {
 				$import_errors['sample'] = array_merge(
-					(array) ( $import_errors['sample'] ?? [] ),
+					(array) ( $import_errors['sample'] ?? array() ),
 					array_slice( $batch_errors, 0, $room )
 				);
 			}
@@ -109,18 +109,18 @@ class Import_Handler {
 		// rows left out because their parent was not imported. Without the
 		// last two a re-run reads as "nothing happened", and a source count
 		// that does not add up reads as "nothing was skipped".
-		$tally       = (array) get_option( 'jetonomy_import_tally', [] );
+		$tally       = (array) get_option( 'jetonomy_import_tally', array() );
 		$batch_tally = $importer->get_tally();
-		$orphans     = (array) ( $tally['orphans'] ?? [] );
+		$orphans     = (array) ( $tally['orphans'] ?? array() );
 		foreach ( $batch_tally['orphans'] as $type => $count ) {
 			$orphans[ $type ] = (int) ( $orphans[ $type ] ?? 0 ) + (int) $count;
 		}
-		$tally = [
+		$tally = array(
 			'imported'   => (int) ( $tally['imported'] ?? 0 ) + $batch_tally['imported'],
 			'already'    => (int) ( $tally['already'] ?? 0 ) + $batch_tally['already'],
 			'rethreaded' => (int) ( $tally['rethreaded'] ?? 0 ) + $batch_tally['rethreaded'],
 			'orphans'    => $orphans,
-		];
+		);
 		update_option( 'jetonomy_import_tally', $tally, false );
 		$summary = implode( ' ', \Jetonomy\Import\Importer::describe_tally( $tally ) );
 
@@ -131,7 +131,7 @@ class Import_Handler {
 
 		$percent = $total > 0 ? min( 100, round( ( $total_processed / $total ) * 100, 1 ) ) : 0;
 
-		$phase_labels = [
+		$phase_labels = array(
 			'forums'   => __( 'Importing forums...', 'jetonomy' ),
 			'members'  => __( 'Adding members to private and group spaces...', 'jetonomy' ),
 			'topics'   => __( 'Importing topics...', 'jetonomy' ),
@@ -139,11 +139,11 @@ class Import_Handler {
 			'profiles' => __( 'Creating user profiles...', 'jetonomy' ),
 			'recount'  => __( 'Recounting statistics...', 'jetonomy' ),
 			'complete' => __( 'Import complete!', 'jetonomy' ),
-		];
+		);
 
 		// Save progress for polling endpoint.
 		$importer->save_progress(
-			[
+			array(
 				'status'    => $result['done'] ? 'complete' : 'running',
 				'phase'     => $result['phase'],
 				'processed' => $total_processed,
@@ -151,13 +151,13 @@ class Import_Handler {
 				'percent'   => $percent,
 				'message'   => $phase_labels[ $result['phase'] ] ?? '',
 				'skipped'   => $skipped_files,
-			]
+			)
 		);
 
 		if ( $result['done'] ) {
 			// Save completion record to import history.
-			$history            = get_option( 'jetonomy_import_history', [] );
-			$history[ $source ] = [
+			$history            = get_option( 'jetonomy_import_history', array() );
+			$history[ $source ] = array(
 				'completed_at' => current_time( 'mysql' ),
 				'imported'     => $tally['imported'],
 				'already'      => $tally['already'],
@@ -171,10 +171,10 @@ class Import_Handler {
 				// later. "27 files skipped" with no way to learn WHICH is not a
 				// report; the owner cannot act on it, and after a re-import they
 				// cannot even tell whether it got better.
-				'errors'       => array_slice( (array) ( $import_errors['sample'] ?? [] ), 0, 50 ),
+				'errors'       => array_slice( (array) ( $import_errors['sample'] ?? array() ), 0, 50 ),
 				'source'       => $source,
 				'source_name'  => $importers[ $source ]->get_source_name(),
-			];
+			);
 			update_option( 'jetonomy_import_history', $history, false );
 
 			// Clear transient state. Safe now: the count AND the sample are both in
@@ -188,7 +188,7 @@ class Import_Handler {
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'phase'     => $result['phase'],
 				'offset'    => $result['offset'],
 				'done'      => $result['done'],
@@ -199,7 +199,7 @@ class Import_Handler {
 				'skipped'   => $skipped_files,
 				'imported'  => $tally['imported'],
 				'summary'   => $summary,
-			]
+			)
 		);
 	}
 }

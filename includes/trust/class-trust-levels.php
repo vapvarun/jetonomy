@@ -30,63 +30,63 @@ class Trust_Levels {
 	 *                   Permissions tab prints these, so an entry nothing
 	 *                   enforces promises owners a power members never get
 	 */
-	private const LEVELS = [
-		0 => [
+	private const LEVELS = array(
+		0 => array(
 			'name'         => 'Newcomer',
-			'requirements' => [],
-			'rate_limits'  => [
+			'requirements' => array(),
+			'rate_limits'  => array(
 				'create_posts'   => 3,
 				'create_replies' => 10,
 				'vote'           => 5,
-			],
-			'abilities'    => [],
-		],
-		1 => [
+			),
+			'abilities'    => array(),
+		),
+		1 => array(
 			'name'         => 'Member',
-			'requirements' => [
+			'requirements' => array(
 				'posts'            => 5,
 				'days_active'      => 3,
 				'replies_received' => 10,
-			],
-			'rate_limits'  => [],
-			'abilities'    => [ 'no_rate_limits' ],
-		],
-		2 => [
+			),
+			'rate_limits'  => array(),
+			'abilities'    => array( 'no_rate_limits' ),
+		),
+		2 => array(
 			'name'         => 'Regular',
-			'requirements' => [
+			'requirements' => array(
 				'posts'       => 30,
 				'days_active' => 20,
 				'reputation'  => 50,
-			],
-			'rate_limits'  => [],
+			),
+			'rate_limits'  => array(),
 			// Not create_spaces: creating a space needs the jetonomy_create_spaces
 			// capability plus trust level 4 (Permission_Engine), so listing it here
 			// told owners Regular members could do it.
-			'abilities'    => [],
-		],
-		3 => [
+			'abilities'    => array(),
+		),
+		3 => array(
 			'name'         => 'Trusted',
-			'requirements' => [
+			'requirements' => array(
 				'posts'       => 100,
 				'days_active' => 60,
 				'reputation'  => 200,
-			],
-			'rate_limits'  => [],
-			'abilities'    => [ 'edit_others_posts', 'move_posts', 'close_posts', 'pin_posts' ],
-		],
-		4 => [
+			),
+			'rate_limits'  => array(),
+			'abilities'    => array( 'edit_others_posts', 'move_posts', 'close_posts', 'pin_posts' ),
+		),
+		4 => array(
 			'name'         => 'Leader',
-			'requirements' => [], // Manually granted.
-			'rate_limits'  => [],
-			'abilities'    => [ 'create_spaces' ],
-		],
-		5 => [
+			'requirements' => array(), // Manually granted.
+			'rate_limits'  => array(),
+			'abilities'    => array( 'create_spaces' ),
+		),
+		5 => array(
 			'name'         => 'Moderator',
-			'requirements' => [], // Manually granted.
-			'rate_limits'  => [],
-			'abilities'    => [],
-		],
-	];
+			'requirements' => array(), // Manually granted.
+			'rate_limits'  => array(),
+			'abilities'    => array(),
+		),
+	);
 
 	/**
 	 * Return the full configuration array for a trust level.
@@ -95,7 +95,7 @@ class Trust_Levels {
 	 * @return array Level config, or empty array if the level does not exist.
 	 */
 	public static function get( int $level ): array {
-		return self::LEVELS[ $level ] ?? [];
+		return self::LEVELS[ $level ] ?? array();
 	}
 
 	/**
@@ -107,26 +107,26 @@ class Trust_Levels {
 	 * @return array<int,array<string,int>>
 	 */
 	public static function defaults(): array {
-		return [
-			1 => [
+		return array(
+			1 => array(
 				'posts'            => 5,
 				'days_active'      => 3,
 				'reputation'       => 0,
 				'replies_received' => 10,
-			],
-			2 => [
+			),
+			2 => array(
 				'posts'            => 30,
 				'days_active'      => 20,
 				'reputation'       => 50,
 				'replies_received' => 0,
-			],
-			3 => [
+			),
+			3 => array(
 				'posts'            => 100,
 				'days_active'      => 60,
 				'reputation'       => 200,
 				'replies_received' => 0,
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -137,11 +137,11 @@ class Trust_Levels {
 	 * @return array Threshold key/value pairs, or empty array if not applicable.
 	 */
 	public static function get_requirements( int $level ): array {
-		$settings   = get_option( 'jetonomy_settings', [] );
-		$thresholds = $settings['trust_thresholds'] ?? [];
+		$settings   = get_option( 'jetonomy_settings', array() );
+		$thresholds = $settings['trust_thresholds'] ?? array();
 		$defaults   = self::defaults();
 
-		return $thresholds[ $level ] ?? $defaults[ $level ] ?? [];
+		return $thresholds[ $level ] ?? $defaults[ $level ] ?? array();
 	}
 
 	/**

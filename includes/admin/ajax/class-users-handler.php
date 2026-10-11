@@ -15,10 +15,10 @@ use Jetonomy\Models\UserProfile;
 class Users_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_ban_user', [ $this, 'ajax_ban_user' ] );
-		add_action( 'wp_ajax_jetonomy_unban_user', [ $this, 'ajax_unban_user' ] );
-		add_action( 'wp_ajax_jetonomy_change_trust_level', [ $this, 'ajax_change_trust_level' ] );
-		add_action( 'wp_ajax_jetonomy_search_users', [ $this, 'ajax_search_users' ] );
+		add_action( 'wp_ajax_jetonomy_ban_user', array( $this, 'ajax_ban_user' ) );
+		add_action( 'wp_ajax_jetonomy_unban_user', array( $this, 'ajax_unban_user' ) );
+		add_action( 'wp_ajax_jetonomy_change_trust_level', array( $this, 'ajax_change_trust_level' ) );
+		add_action( 'wp_ajax_jetonomy_search_users', array( $this, 'ajax_search_users' ) );
 	}
 
 	public function ajax_ban_user(): void {
@@ -37,7 +37,7 @@ class Users_Handler {
 			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $type, [ 'global_ban', 'space_ban', 'silence' ], true ) ) {
+		if ( ! in_array( $type, array( 'global_ban', 'space_ban', 'silence' ), true ) ) {
 			$type = 'global_ban';
 		}
 
@@ -98,10 +98,10 @@ class Users_Handler {
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'message'        => __( 'User banned.', 'jetonomy' ),
 				'restriction_id' => $restriction_id,
-			]
+			)
 		);
 	}
 
@@ -121,7 +121,7 @@ class Users_Handler {
 			wp_send_json_error( __( 'Failed to remove ban.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Ban removed.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Ban removed.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_change_trust_level(): void {
@@ -142,17 +142,17 @@ class Users_Handler {
 		}
 
 		UserProfile::find_or_create( $user_id );
-		$result = UserProfile::update_profile( $user_id, [ 'trust_level' => $trust_level ] );
+		$result = UserProfile::update_profile( $user_id, array( 'trust_level' => $trust_level ) );
 
 		if ( ! $result ) {
 			wp_send_json_error( __( 'Failed to update trust level.', 'jetonomy' ) );
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'message'     => __( 'Trust level updated.', 'jetonomy' ),
 				'trust_level' => $trust_level,
-			]
+			)
 		);
 	}
 
@@ -164,27 +164,27 @@ class Users_Handler {
 
 		$search = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
 		if ( strlen( $search ) < 2 ) {
-			wp_send_json_success( [ 'users' => [] ] );
+			wp_send_json_success( array( 'users' => array() ) );
 		}
 
 		$users = get_users(
-			[
+			array(
 				'search'         => '*' . $search . '*',
-				'search_columns' => [ 'user_login', 'display_name', 'user_email' ],
+				'search_columns' => array( 'user_login', 'display_name', 'user_email' ),
 				'number'         => 10,
-			]
+			)
 		);
 
-		$results = [];
+		$results = array();
 		foreach ( $users as $user ) {
-			$results[] = [
+			$results[] = array(
 				'id'           => $user->ID,
 				'display_name' => $user->display_name,
 				'user_login'   => $user->user_login,
-				'avatar'       => get_avatar_url( $user->ID, [ 'size' => 32 ] ),
-			];
+				'avatar'       => get_avatar_url( $user->ID, array( 'size' => 32 ) ),
+			);
 		}
 
-		wp_send_json_success( [ 'users' => $results ] );
+		wp_send_json_success( array( 'users' => $results ) );
 	}
 }

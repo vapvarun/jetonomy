@@ -89,7 +89,7 @@ $trending = \Jetonomy\Cache::remember(
 					 LIMIT 5',
 					$_jt_trend_scope
 				)
-			) ?: [];
+			) ?: array();
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -100,7 +100,7 @@ $trending = \Jetonomy\Cache::remember(
 			 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_space_clause . $_jt_trend_block_clause . '
 			 ORDER BY p.vote_score DESC, p.reply_count DESC
 			 LIMIT 5'
-		) ?: [];
+		) ?: array();
 	},
 	300
 );
@@ -193,12 +193,12 @@ $bn_active = did_action( 'buddynext_loaded' );
 				</div>
 			</div>
 			<?php
-			$space_type_labels = [
+			$space_type_labels = array(
 				'forum'  => __( 'Forum', 'jetonomy' ),
 				'qa'     => __( 'Q&A', 'jetonomy' ),
 				'ideas'  => __( 'Ideas', 'jetonomy' ),
 				'social' => __( 'Social', 'jetonomy' ),
-			];
+			);
 			$space_type        = $space->type ?? 'forum';
 			?>
 			<div class="jt-sidebar-meta">
@@ -389,11 +389,11 @@ $bn_active = did_action( 'buddynext_loaded' );
 						// partial, consistent with every other member surface.
 						\Jetonomy\Template_Loader::partial(
 							'avatar',
-							[
+							array(
 								'user_id' => (int) $leader->user_id,
 								'size'    => 30,
 								'class'   => 'jt-avatar-sm jt-flex-shrink-0',
-							]
+							)
 						);
 						?>
 					</span>

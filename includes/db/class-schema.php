@@ -45,11 +45,11 @@ class Schema {
 		// Legacy tables removed from the live schema in 1.5.0 (audit A5 —
 		// never wired to any feature). Listed here so uninstalling an
 		// install that never ran the 1.5.0 migration still cleans them up.
-		$legacy = [
+		$legacy = array(
 			'jt_user_interests',
 			'jt_space_tag_map',
 			'jt_space_tags',
-		];
+		);
 
 		$tables = array_merge( $legacy, array_reverse( self::get_table_names() ) );
 
@@ -65,7 +65,7 @@ class Schema {
 	 * @return string[]
 	 */
 	public static function get_table_names(): array {
-		return [
+		return array(
 			'jt_categories',
 			'jt_spaces',
 			'jt_posts',
@@ -89,7 +89,7 @@ class Schema {
 			'jt_blocked_users',
 			'jt_attachments',
 			'jt_import_map',
-		];
+		);
 	}
 
 	/**
@@ -100,7 +100,7 @@ class Schema {
 	 * @return string[]
 	 */
 	private static function get_table_definitions( string $p, string $charset_collate ): array {
-		$sqls = [];
+		$sqls = array();
 
 		// 1. jt_categories
 		$sqls[] = "CREATE TABLE {$p}jt_categories (

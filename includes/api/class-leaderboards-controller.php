@@ -26,31 +26,31 @@ class Leaderboards_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/leaderboards',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_items' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				'args'                => [
-					'limit'  => [
+				'callback'            => array( $this, 'list_items' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => array(
+					'limit'  => array(
 						'type'    => 'integer',
 						'default' => 20,
 						'minimum' => 1,
 						'maximum' => 100,
-					],
-					'offset' => [
+					),
+					'offset' => array(
 						'type'    => 'integer',
 						'default' => 0,
 						'minimum' => 0,
-					],
-					'period' => [
+					),
+					'period' => array(
 						'type'              => 'string',
 						'default'           => 'all',
-						'enum'              => [ 'all', 'month', 'week' ],
+						'enum'              => array( 'all', 'month', 'week' ),
 						'description'       => 'Time period: all, month, or week.',
 						'sanitize_callback' => 'sanitize_key',
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 	}
 
@@ -107,11 +107,11 @@ class Leaderboards_Controller extends Base_Controller {
 
 				return $this->paginated_response(
 					$items,
-					[
+					array(
 						'total'  => (int) $cached['total'],
 						'offset' => $offset,
 						'period' => $period,
-					]
+					)
 				);
 			}
 		}
@@ -137,13 +137,13 @@ class Leaderboards_Controller extends Base_Controller {
 		);
 		$users    = ! empty( $user_ids )
 			? get_users(
-				[
+				array(
 					'include' => $user_ids,
 					'orderby' => 'include',
-				]
+				)
 			)
-			: [];
-		$by_id    = [];
+			: array();
+		$by_id    = array();
 		foreach ( $users as $u ) {
 			$by_id[ (int) $u->ID ] = $u;
 		}
@@ -162,7 +162,7 @@ class Leaderboards_Controller extends Base_Controller {
 		// member.
 		$ranks = \Jetonomy\Models\UserProfile::competition_ranks( $leaders, $period, $offset );
 
-		$items = [];
+		$items = array();
 
 		foreach ( array_values( $leaders ) as $lb_index => $leader ) {
 			$user_id = (int) $leader->user_id;
@@ -182,7 +182,7 @@ class Leaderboards_Controller extends Base_Controller {
 			// online member as offline for a few minutes, never the reverse.
 			$lb_profile = \Jetonomy\Models\UserProfile::find_by_user( $user_id );
 
-			$items[] = [
+			$items[] = array(
 				'rank'             => $rank,
 				'user_id'          => $user_id,
 				'display_name'     => \Jetonomy\user_display_name( $user ),
@@ -195,7 +195,7 @@ class Leaderboards_Controller extends Base_Controller {
 				'trust_level'      => (int) $leader->trust_level,
 				'last_seen_at'     => $lb_profile ? $lb_profile->last_seen_at : null,
 				'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $lb_profile ? $lb_profile->last_seen_at : null ),
-			];
+			);
 		}
 
 		// Cache the UNFILTERED rows — the enrichment filter
@@ -203,10 +203,10 @@ class Leaderboards_Controller extends Base_Controller {
 		if ( $lb_cacheable ) {
 			\Jetonomy\Cache::set(
 				$lb_cache_key,
-				[
+				array(
 					'items' => $items,
 					'total' => $total,
-				],
+				),
 				300
 			);
 		}
@@ -226,11 +226,11 @@ class Leaderboards_Controller extends Base_Controller {
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
 				'period' => $period,
-			]
+			)
 		);
 	}
 }

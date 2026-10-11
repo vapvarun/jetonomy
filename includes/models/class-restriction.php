@@ -56,7 +56,7 @@ class Restriction extends Model {
 			return new \WP_Error(
 				'jetonomy_cannot_ban_self',
 				__( 'You cannot restrict your own account.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -69,7 +69,7 @@ class Restriction extends Model {
 			return new \WP_Error(
 				'jetonomy_cannot_ban_admin',
 				__( 'Administrators cannot be restricted.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -77,7 +77,7 @@ class Restriction extends Model {
 			return new \WP_Error(
 				'jetonomy_cannot_ban_peer_moderator',
 				__( 'Only an administrator can restrict another moderator.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -114,12 +114,12 @@ class Restriction extends Model {
 			return 0;
 		}
 
-		$data = [
+		$data = array(
 			'user_id'    => $user_id,
 			'type'       => $type,
 			'issued_by'  => $issued_by,
 			'created_at' => now(),
-		];
+		);
 
 		if ( null !== $space_id ) {
 			$data['space_id'] = $space_id;

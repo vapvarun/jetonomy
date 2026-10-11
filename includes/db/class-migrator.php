@@ -46,7 +46,7 @@ class Migrator {
 	 * @return array<string,string>
 	 */
 	private static function get_migrations(): array {
-		return [
+		return array(
 			'1.1.0'   => '1_1_0',
 			'1.2.0'   => '1_2_0',
 			'1.2.1'   => '1_2_1',
@@ -90,6 +90,6 @@ class Migrator {
 			'2.0.1'   => '2_0_1',
 			'2.0.1.1' => '2_0_1_1',
 			'2.0.2'   => '2_0_2',
-		];
+		);
 	}
 }

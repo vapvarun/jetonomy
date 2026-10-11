@@ -19,20 +19,20 @@ class Content_Handler {
 	 * Map a raw target status to the canonical moderation action vocabulary the
 	 * Moderation_Service choke-point expects.
 	 */
-	private const STATUS_TO_ACTION = [
+	private const STATUS_TO_ACTION = array(
 		'trash'   => 'trash',
 		'spam'    => 'spam',
 		'publish' => 'approve',
 		'pending' => 'hold',
-	];
+	);
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_update_post', [ $this, 'ajax_update_post' ] );
-		add_action( 'wp_ajax_jetonomy_delete_post', [ $this, 'ajax_delete_post' ] );
-		add_action( 'wp_ajax_jetonomy_update_reply', [ $this, 'ajax_update_reply' ] );
-		add_action( 'wp_ajax_jetonomy_delete_reply', [ $this, 'ajax_delete_reply' ] );
-		add_action( 'wp_ajax_jetonomy_bulk_content_action', [ $this, 'ajax_bulk_content_action' ] );
-		add_action( 'wp_ajax_jetonomy_delete_content_permanently', [ $this, 'ajax_delete_permanently' ] );
+		add_action( 'wp_ajax_jetonomy_update_post', array( $this, 'ajax_update_post' ) );
+		add_action( 'wp_ajax_jetonomy_delete_post', array( $this, 'ajax_delete_post' ) );
+		add_action( 'wp_ajax_jetonomy_update_reply', array( $this, 'ajax_update_reply' ) );
+		add_action( 'wp_ajax_jetonomy_delete_reply', array( $this, 'ajax_delete_reply' ) );
+		add_action( 'wp_ajax_jetonomy_bulk_content_action', array( $this, 'ajax_bulk_content_action' ) );
+		add_action( 'wp_ajax_jetonomy_delete_content_permanently', array( $this, 'ajax_delete_permanently' ) );
 	}
 
 	/**
@@ -51,7 +51,7 @@ class Content_Handler {
 		}
 
 		$type = 'reply' === sanitize_key( wp_unslash( $_POST['type'] ?? 'post' ) ) ? 'reply' : 'post';
-		$ids  = array_filter( array_map( 'absint', (array) wp_unslash( $_POST['ids'] ?? [] ) ) );
+		$ids  = array_filter( array_map( 'absint', (array) wp_unslash( $_POST['ids'] ?? array() ) ) );
 		if ( empty( $ids ) ) {
 			wp_send_json_error( __( 'Nothing selected.', 'jetonomy' ) );
 		}
@@ -64,7 +64,7 @@ class Content_Handler {
 			}
 		}
 
-		wp_send_json_success( [ 'deleted' => $deleted ] );
+		wp_send_json_success( array( 'deleted' => $deleted ) );
 	}
 
 	public function ajax_update_post(): void {
@@ -78,7 +78,7 @@ class Content_Handler {
 			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
 		}
 
-		$data = [];
+		$data = array();
 		if ( isset( $_POST['title'] ) ) {
 			$data['title'] = sanitize_text_field( wp_unslash( $_POST['title'] ) );
 		}
@@ -101,7 +101,7 @@ class Content_Handler {
 		// Same signal as a REST edit, so webhooks, search indexes and other
 		// listeners see edits made in wp-admin too.
 		do_action( 'jetonomy_post_updated', $id, (int) ( Post::find( $id )->space_id ?? 0 ), get_current_user_id() );
-		wp_send_json_success( [ 'message' => __( 'Post updated.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Post updated.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_delete_post(): void {
@@ -141,7 +141,7 @@ class Content_Handler {
 			wp_send_json_error( __( 'Invalid reply ID.', 'jetonomy' ) );
 		}
 
-		$data = [];
+		$data = array();
 		if ( isset( $_POST['content'] ) ) {
 			$data['content']       = wp_kses_post( wp_unslash( $_POST['content'] ) );
 			$data['content_plain'] = \jetonomy_content_to_plain( $data['content'] );
@@ -160,7 +160,7 @@ class Content_Handler {
 		Reply::update( $id, $data );
 		$jt_reply = Reply::find( $id );
 		do_action( 'jetonomy_reply_updated', $id, (int) ( $jt_reply ? ( Post::find( (int) $jt_reply->post_id )->space_id ?? 0 ) : 0 ), get_current_user_id() );
-		wp_send_json_success( [ 'message' => __( 'Reply updated.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Reply updated.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_delete_reply(): void {
@@ -193,10 +193,10 @@ class Content_Handler {
 		}
 
 		$action = sanitize_text_field( wp_unslash( $_POST['bulk_action'] ?? '' ) );
-		$ids    = array_map( 'absint', wp_unslash( $_POST['ids'] ?? [] ) );
+		$ids    = array_map( 'absint', wp_unslash( $_POST['ids'] ?? array() ) );
 		$type   = sanitize_text_field( wp_unslash( $_POST['type'] ?? 'post' ) );
 
-		if ( empty( $ids ) || ! in_array( $action, [ 'trash', 'spam', 'publish' ], true ) ) {
+		if ( empty( $ids ) || ! in_array( $action, array( 'trash', 'spam', 'publish' ), true ) ) {
 			wp_send_json_error( __( 'Invalid bulk action.', 'jetonomy' ) );
 		}
 
@@ -215,6 +215,6 @@ class Content_Handler {
 			}
 		}
 
-		wp_send_json_success( [ 'updated' => $updated ] );
+		wp_send_json_success( array( 'updated' => $updated ) );
 	}
 }

@@ -42,11 +42,11 @@ class Asgaros_Importer extends Importer {
 	public function get_source_stats(): array {
 		global $wpdb;
 		$p = $wpdb->prefix;
-		return [
+		return array(
 			'forums' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_forums" ),
 			'topics' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_topics" ),
 			'posts'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_posts" ),
-		];
+		);
 	}
 
 	/**
@@ -110,88 +110,88 @@ class Asgaros_Importer extends Importer {
 			case 'forums':
 				$this->import_forums();
 
-				return [
+				return array(
 					'phase'     => 'topics',
 					'offset'    => 0,
 					'done'      => false,
 					'processed' => $this->imported + $this->already,
-				];
+				);
 
 			case 'topics':
 				$r = $this->import_topics_batch( $offset, $batch_size );
 
 				// Ran out of time mid-page: resume at the exact row we stopped on.
 				if ( $r['processed'] < $r['fetched'] ) {
-					return [
+					return array(
 						'phase'     => 'topics',
 						'offset'    => $offset + $r['processed'],
 						'done'      => false,
 						'processed' => $r['processed'],
-					];
+					);
 				}
 
 				$has_more = $r['fetched'] >= $batch_size;
-				return [
+				return array(
 					'phase'     => $has_more ? 'topics' : 'replies',
 					'offset'    => $has_more ? $offset + $r['processed'] : 0,
 					'done'      => false,
 					'processed' => $r['processed'],
-				];
+				);
 
 			case 'replies':
 				$r = $this->import_replies_batch( $offset, $batch_size );
 
 				if ( $r['processed'] < $r['fetched'] ) {
-					return [
+					return array(
 						'phase'     => 'replies',
 						'offset'    => $offset + $r['processed'],
 						'done'      => false,
 						'processed' => $r['processed'],
-					];
+					);
 				}
 
 				$has_more = $r['fetched'] >= $batch_size;
-				return [
+				return array(
 					'phase'     => $has_more ? 'replies' : 'profiles',
 					'offset'    => $has_more ? $offset + $r['processed'] : 0,
 					'done'      => false,
 					'processed' => $r['processed'],
-				];
+				);
 
 			case 'profiles':
 				$processed = $this->create_profiles_batch( $offset, $batch_size );
 
 				if ( $processed >= $batch_size ) {
-					return [
+					return array(
 						'phase'     => 'profiles',
 						'offset'    => $offset + $batch_size,
 						'done'      => false,
 						'processed' => $processed,
-					];
+					);
 				}
 
 				// Last phase — the counters are denormalized, so recount once at the
 				// very end rather than after every batch.
 				$this->recount();
 
-				return [
+				return array(
 					'phase'     => 'complete',
 					'offset'    => 0,
 					'done'      => true,
 					'processed' => $processed,
-				];
+				);
 
 			default:
-				return [
+				return array(
 					'phase'     => 'complete',
 					'offset'    => 0,
 					'done'      => true,
 					'processed' => 0,
-				];
+				);
 		}
 	}
 
-	public function run( array $options = [] ): array {
+	public function run( array $options = array() ): array {
 		$this->import_forums();
 		$this->import_topics();
 		$this->import_replies();
@@ -218,20 +218,20 @@ class Asgaros_Importer extends Importer {
 	private static function map_access( object $forum ): array {
 		$access = apply_filters(
 			'jetonomy_import_space_visibility',
-			[
+			array(
 				'visibility'  => 'public',
 				'join_policy' => 'open',
-			],
+			),
 			'asgaros',
 			$forum
 		);
 
 		// Validate against the schema enums so a stray filter return can never
 		// persist an invalid visibility/join_policy.
-		return [
-			'visibility'  => in_array( $access['visibility'] ?? '', [ 'public', 'private', 'hidden' ], true ) ? $access['visibility'] : 'public',
-			'join_policy' => in_array( $access['join_policy'] ?? '', [ 'open', 'approval', 'invite' ], true ) ? $access['join_policy'] : 'open',
-		];
+		return array(
+			'visibility'  => in_array( $access['visibility'] ?? '', array( 'public', 'private', 'hidden' ), true ) ? $access['visibility'] : 'public',
+			'join_policy' => in_array( $access['join_policy'] ?? '', array( 'open', 'approval', 'invite' ), true ) ? $access['join_policy'] : 'open',
+		);
 	}
 
 	private function import_forums(): void {
@@ -244,9 +244,9 @@ class Asgaros_Importer extends Importer {
 
 		$ordered = $this->sort_rows_parents_first( (array) $forums, 'id', 'parent_forum' );
 
-		$fingerprints = [];
+		$fingerprints = array();
 		foreach ( $ordered as $forum ) {
-			$fingerprints[ (int) $forum->id ] = [ 'slug' => self::forum_slug( $forum ) ];
+			$fingerprints[ (int) $forum->id ] = array( 'slug' => self::forum_slug( $forum ) );
 		}
 		$existing = $this->find_imported( 'space', $fingerprints );
 		$cat_id   = 0;
@@ -269,10 +269,10 @@ class Asgaros_Importer extends Importer {
 				}
 			}
 
-			$cat_id   = $cat_id ?: $this->import_category( 'default', 'imported-asgaros', [ 'name' => __( 'Imported from Asgaros', 'jetonomy' ) ] );
+			$cat_id   = $cat_id ?: $this->import_category( 'default', 'imported-asgaros', array( 'name' => __( 'Imported from Asgaros', 'jetonomy' ) ) );
 			$access   = self::map_access( $forum );
 			$space_id = Space::create(
-				[
+				array(
 					'category_id' => $cat_id,
 					'parent_id'   => $parent_space_id,
 					'author_id'   => 1,
@@ -285,7 +285,7 @@ class Asgaros_Importer extends Importer {
 					'visibility'  => $access['visibility'],
 					'join_policy' => $access['join_policy'],
 					'sort_order'  => (int) ( $forum->sort ?? 0 ),
-				]
+				)
 			);
 
 			if ( $space_id ) {
@@ -340,10 +340,10 @@ class Asgaros_Importer extends Importer {
 		$fetched   = count( (array) $topics );
 		$processed = $this->import_topic_rows( (array) $topics );
 
-		return [
+		return array(
 			'fetched'   => $fetched,
 			'processed' => $processed,
-		];
+		);
 	}
 
 	/**
@@ -379,10 +379,10 @@ class Asgaros_Importer extends Importer {
 		$fetched   = count( (array) $posts );
 		$processed = $this->import_reply_rows( (array) $posts );
 
-		return [
+		return array(
 			'fetched'   => $fetched,
 			'processed' => $processed,
-		];
+		);
 	}
 
 	/**
@@ -543,7 +543,7 @@ class Asgaros_Importer extends Importer {
 				...$topic_ids
 			)
 		);
-		$first_posts_map = [];
+		$first_posts_map = array();
 		foreach ( $first_posts_raw as $fp ) {
 			$first_posts_map[ (int) $fp->parent_id ] = $fp;
 		}
@@ -553,15 +553,15 @@ class Asgaros_Importer extends Importer {
 		$this->load_mapped( 'forum', 'space', array_combine( $forum_ids, $forum_ids ) );
 
 		// One "already imported?" lookup for the whole page (see find_imported()).
-		$fingerprints = [];
+		$fingerprints = array();
 		foreach ( $topics as $topic ) {
 			$space_id = $this->get_mapped_id( 'forum', (int) $topic->parent_id );
 			if ( $space_id ) {
-				$fingerprints[ (int) $topic->id ] = [
+				$fingerprints[ (int) $topic->id ] = array(
 					'parent'  => $space_id,
 					'author'  => (int) ( $topic->author_id ?? 1 ),
 					'created' => (string) ( $first_posts_map[ (int) $topic->id ]->date ?? '' ),
-				];
+				);
 			}
 		}
 		$existing = $this->find_imported( 'post', $fingerprints );
@@ -596,7 +596,7 @@ class Asgaros_Importer extends Importer {
 			$status = ( isset( $topic->approved ) && 1 === (int) $topic->approved ) ? 'publish' : 'pending';
 
 			$post_id = JtPost::create(
-				[
+				array(
 					'space_id'      => $space_id,
 					'author_id'     => (int) ( $topic->author_id ?? 1 ),
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
@@ -608,7 +608,7 @@ class Asgaros_Importer extends Importer {
 					'is_sticky'     => (int) ( $topic->sticky ?? 0 ),
 					'is_closed'     => (int) ( $topic->closed ?? 0 ),
 					'created_at'    => $first_post->date ?? now(),
-				]
+				)
 			);
 
 			if ( is_wp_error( $post_id ) ) {
@@ -682,15 +682,15 @@ class Asgaros_Importer extends Importer {
 		$topic_ids = array_unique( array_map( 'intval', array_column( $posts, 'parent_id' ) ) );
 		$this->load_mapped( 'topic', 'post', array_combine( $topic_ids, $topic_ids ) );
 
-		$fingerprints = [];
+		$fingerprints = array();
 		foreach ( $posts as $asgaros_post ) {
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
 			if ( $post_id ) {
-				$fingerprints[ (int) $asgaros_post->id ] = [
+				$fingerprints[ (int) $asgaros_post->id ] = array(
 					'parent'  => $post_id,
 					'author'  => (int) ( $asgaros_post->author_id ?? 1 ),
 					'created' => (string) ( $asgaros_post->date ?? '' ),
-				];
+				);
 			}
 		}
 		$existing = $this->find_imported( 'reply', $fingerprints );
@@ -714,7 +714,7 @@ class Asgaros_Importer extends Importer {
 			$this->register_body_media( $text, $this->asgaros_upload_folder() );
 
 			$reply_id = JtReply::create(
-				[
+				array(
 					'post_id'       => $post_id,
 					'parent_id'     => null,
 					'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
@@ -729,7 +729,7 @@ class Asgaros_Importer extends Importer {
 					// approved rather than burying a whole forum in the queue.
 					'status'        => ( ! isset( $asgaros_post->approved ) || 1 === (int) $asgaros_post->approved ) ? 'publish' : 'pending',
 					'created_at'    => $asgaros_post->date ?? now(),
-				]
+				)
 			);
 
 			if ( is_wp_error( $reply_id ) ) {

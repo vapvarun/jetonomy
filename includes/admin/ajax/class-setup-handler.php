@@ -17,8 +17,8 @@ use Jetonomy\Models\UserProfile;
 class Setup_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_setup_save', [ $this, 'ajax_setup_save' ] );
-		add_action( 'wp_ajax_jetonomy_setup_create_sample', [ $this, 'ajax_setup_create_sample' ] );
+		add_action( 'wp_ajax_jetonomy_setup_save', array( $this, 'ajax_setup_save' ) );
+		add_action( 'wp_ajax_jetonomy_setup_create_sample', array( $this, 'ajax_setup_create_sample' ) );
 	}
 
 	public function ajax_setup_save(): void {
@@ -27,7 +27,7 @@ class Setup_Handler {
 			wp_send_json_error();
 		}
 
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 
 		// Preserve existing values if the field wasn't submitted. Previously
 		// we defaulted to 'community' on missing POST, which silently reverted
@@ -55,17 +55,17 @@ class Setup_Handler {
 		$space_desc = sanitize_textarea_field( wp_unslash( $_POST['space_description'] ?? '' ) );
 
 		$cat_id = Category::create(
-			[
+			array(
 				'name'       => $cat_name,
 				'visibility' => 'public',
-			]
+			)
 		);
 		if ( $cat_id <= 0 ) {
 			wp_send_json_error( __( 'Could not create the category. Please try again.', 'jetonomy' ) );
 		}
 
 		$space_id = Space::create(
-			[
+			array(
 				'category_id' => $cat_id,
 				'author_id'   => get_current_user_id(),
 				'type'        => $settings['default_space_type'],
@@ -74,7 +74,7 @@ class Setup_Handler {
 				'description' => $space_desc,
 				'visibility'  => 'public',
 				'join_policy' => 'open',
-			]
+			)
 		);
 
 		if ( is_wp_error( $space_id ) ) {
@@ -91,10 +91,10 @@ class Setup_Handler {
 		update_option( 'jetonomy_setup_complete', true );
 
 		wp_send_json_success(
-			[
+			array(
 				'category_id' => $cat_id,
 				'space_id'    => $space_id,
-			]
+			)
 		);
 	}
 
@@ -106,7 +106,7 @@ class Setup_Handler {
 
 		$uid = get_current_user_id();
 
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 
 		// Same preservation rule as ajax_setup_save — never default base_slug
 		// back to 'community' on missing POST.
@@ -132,7 +132,7 @@ class Setup_Handler {
 		flush_rewrite_rules();
 		update_option( 'jetonomy_setup_complete', true );
 
-		wp_send_json_success( [ 'message' => __( 'Sample community created with realistic multi-user content.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Sample community created with realistic multi-user content.', 'jetonomy' ) ) );
 	}
 
 	/**

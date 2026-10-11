@@ -74,10 +74,10 @@ class Settings_Handler {
 	}
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_test_email', [ $this, 'ajax_test_email' ] );
-		add_action( 'wp_ajax_jetonomy_flush_rules', [ $this, 'ajax_flush_rules' ] );
-		add_action( 'wp_ajax_jetonomy_email_preview', [ $this, 'ajax_email_preview' ] );
-		add_action( 'wp_ajax_jetonomy_email_reset', [ $this, 'ajax_email_reset' ] );
+		add_action( 'wp_ajax_jetonomy_test_email', array( $this, 'ajax_test_email' ) );
+		add_action( 'wp_ajax_jetonomy_flush_rules', array( $this, 'ajax_flush_rules' ) );
+		add_action( 'wp_ajax_jetonomy_email_preview', array( $this, 'ajax_email_preview' ) );
+		add_action( 'wp_ajax_jetonomy_email_reset', array( $this, 'ajax_email_reset' ) );
 	}
 
 	public function ajax_test_email(): void {
@@ -104,10 +104,10 @@ class Settings_Handler {
 
 			if ( $result ) {
 				wp_send_json_success(
-					[
+					array(
 						/* translators: %s: admin email */
 						'message' => sprintf( __( 'Test email sent to %s.', 'jetonomy' ), $admin_email ),
-					]
+					)
 				);
 			}
 			wp_send_json_error( __( 'Failed to send test email. Check your WordPress email configuration.', 'jetonomy' ) );
@@ -140,10 +140,10 @@ class Settings_Handler {
 		);
 
 		wp_send_json_success(
-			[
+			array(
 				/* translators: 1: type label, 2: recipient email */
 				'message' => sprintf( __( 'Preview (%1$s) sent to %2$s.', 'jetonomy' ), $type, $admin_user->user_email ),
-			]
+			)
 		);
 	}
 
@@ -252,6 +252,6 @@ class Settings_Handler {
 		}
 
 		flush_rewrite_rules();
-		wp_send_json_success( [ 'message' => __( 'Rewrite rules flushed.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Rewrite rules flushed.', 'jetonomy' ) ) );
 	}
 }

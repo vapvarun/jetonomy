@@ -17,14 +17,14 @@ $jt_not_found = static function (): void {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'        => 'empty-search',
 			'icon_size'   => 48,
 			'message'     => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'description' => sprintf( /* translators: %s: the singular topic label, lowercase. */ __( 'This %s may have been removed, or the link is wrong.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'cta_label'   => __( 'Back to the community', 'jetonomy' ),
 			'cta_url'     => \Jetonomy\base_url(),
-		]
+		)
 	);
 };
 
@@ -59,7 +59,7 @@ $jt_is_live = 'publish' === $post->status;
 
 $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
-if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
+if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
 	$user_id = get_current_user_id();
 	// Admission is membership OR an access rule, never membership alone -
 	// Space::admitted() is the one answer (its own docblock says so). This
@@ -71,10 +71,10 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'message' => __( 'This content is in a private space.', 'jetonomy' ),
 					'tone'    => 'forbidden',
-				]
+				)
 			);
 			return;
 		}
@@ -156,7 +156,7 @@ if ( $prefix_name && $space ) {
 // under Reply::DEFAULT_SORT is the page this view renders.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : \Jetonomy\Models\Reply::DEFAULT_SORT;
-if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
+if ( ! in_array( $reply_sort, array( 'oldest', 'newest', 'best' ), true ) ) {
 	$reply_sort = \Jetonomy\Models\Reply::DEFAULT_SORT;
 }
 // Top-level reply pagination, honouring the global `replies_per_page`
@@ -185,8 +185,8 @@ $replies_have_more = ( $reply_page * $replies_per_page ) < $top_level_count;
 // author (including nested children) so each role-pill lookup downstream
 // is O(1). Without this a 200-reply thread would issue 200 SpaceMember
 // queries during render. Single bulk query covers the whole tree.
-$jt_role_warm_ids = [ (int) $post->author_id ];
-$jt_reply_ids     = [];
+$jt_role_warm_ids = array( (int) $post->author_id );
+$jt_reply_ids     = array();
 $jt_role_walker   = function ( array $list ) use ( &$jt_role_warm_ids, &$jt_reply_ids, &$jt_role_walker ): void {
 	foreach ( $list as $reply ) {
 		$jt_role_warm_ids[] = (int) ( $reply->author_id ?? 0 );
@@ -239,37 +239,37 @@ $user_id        = get_current_user_id();
 $user_post_vote = $user_id ? \Jetonomy\Models\Vote::get_user_vote( $user_id, 'post', (int) $post->id ) : null;
 
 // Breadcrumb.
-$crumbs = [];
+$crumbs = array();
 if ( $category ) {
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $category->name,
 		'url'   => '',
-	];
+	);
 }
 if ( $space ) {
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $space->title,
 		'url'   => $base . '/s/' . $space->slug . '/',
-	];
+	);
 }
-$crumbs[] = [
+$crumbs[] = array(
 	'label' => (string) ( $post->title ?? '' ),
 	'url'   => '',
-];
+);
 
 // Server-side state for IA.
-$post_scores = [ (int) $post->id => (int) $post->vote_score ];
+$post_scores = array( (int) $post->id => (int) $post->vote_score );
 wp_interactivity_state(
 	'jetonomy',
-	[
+	array(
 		'currentPostId' => (int) $post->id,
 		'postScores'    => $post_scores,
-		'replyScores'   => [],
+		'replyScores'   => array(),
 		'activeReply'   => 0,
 		'submitting'    => false,
 		'replyToId'     => null,
 		'replyToAuthor' => '',
-	]
+	)
 );
 ?>
 <?php
@@ -288,7 +288,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 		<?php
 		\Jetonomy\Template_Loader::partial(
 			'reply-card',
-			[
+			array(
 				'reply'          => $reply,
 				'post'           => $post,
 				'space'          => $space,
@@ -297,7 +297,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// permalinks to it. Passing it keeps reply_permalink() from
 				// paying a COUNT per card.
 				'permalink_page' => (int) $page,
-			]
+			)
 		);
 		?>
 		<?php if ( $depth === 0 && ! empty( $reply->children ) ) : ?>
@@ -807,14 +807,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				data-wp-context='
 				<?php
 				echo wp_json_encode(
-					[
+					array(
 						'postId'        => (int) $post->id,
 						'totalReplies'  => $total_replies,
 						'topLevelCount' => $top_level_count,
 						'sort'          => $reply_sort,
 						'hasMore'       => false,
 						'loadingMore'   => false,
-					]
+					)
 				);
 				?>
 				'>
@@ -827,13 +827,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<div class="jt-replies-controls">
 						<div class="jt-pills">
 							<?php
-							$reply_sorts = [
+							$reply_sorts = array(
 								'oldest' => __( 'Oldest', 'jetonomy' ),
 								'newest' => __( 'Newest', 'jetonomy' ),
 								'best'   => __( 'Best', 'jetonomy' ),
-							];
+							);
 							foreach ( $reply_sorts as $key => $label ) :
-								$rsort_url = add_query_arg( [ 'rsort' => $key ], $post_url );
+								$rsort_url = add_query_arg( array( 'rsort' => $key ), $post_url );
 								?>
 								<a href="<?php echo esc_url( $rsort_url ); ?>#replies"
 									class="jt-pill <?php echo $reply_sort === $key ? esc_attr( 'on' ) : ''; ?>"
@@ -907,10 +907,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'icon'    => 'empty-replies',
 							'message' => sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet. Be the first to reply!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -985,10 +985,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'composer',
-						[
+						array(
 							'post_id'  => (int) $post->id,
 							'post_url' => $post_url,
-						]
+						)
 					);
 					?>
 				</div>
@@ -999,5 +999,5 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<?php endif; ?>
 		</main>
 
-		<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => $space ] ); ?>
+		<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => $space ) ); ?>
 	</div>

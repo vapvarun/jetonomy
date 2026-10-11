@@ -47,12 +47,12 @@ class Moderation_Service {
 	 */
 	public static function list_pending_flags( int $user_id, ?int $space_id = null, int $limit = 0, int $offset = 0 ): array {
 		if ( ! $user_id ) {
-			return [];
+			return array();
 		}
 
 		if ( null !== $space_id ) {
 			if ( ! Moderation_Permissions::can_view_space_queue( $user_id, $space_id ) ) {
-				return [];
+				return array();
 			}
 			return Flag::list_pending_in_space( $space_id, $limit, $offset );
 		}
@@ -63,7 +63,7 @@ class Moderation_Service {
 
 		$space_ids = SpaceMember::moderated_space_ids( $user_id );
 		if ( empty( $space_ids ) ) {
-			return [];
+			return array();
 		}
 		return Flag::list_pending_in_spaces( $space_ids, $limit, $offset );
 	}
@@ -349,10 +349,10 @@ class Moderation_Service {
 	public static function dashboard_summary( int $user_id ): array {
 		$flags = self::list_pending_flags( $user_id, null );
 		if ( empty( $flags ) ) {
-			return [];
+			return array();
 		}
 
-		$by_space = [];
+		$by_space = array();
 		foreach ( $flags as $flag ) {
 			$space_id = Flag_Scope::space_id( $flag );
 			if ( null === $space_id ) {
@@ -361,18 +361,18 @@ class Moderation_Service {
 			$by_space[ $space_id ] = ( $by_space[ $space_id ] ?? 0 ) + 1;
 		}
 
-		$summary = [];
+		$summary = array();
 		foreach ( $by_space as $space_id => $count ) {
 			$space = Space::find( $space_id );
 			if ( ! $space ) {
 				continue;
 			}
-			$summary[] = [
+			$summary[] = array(
 				'space_id' => (int) $space_id,
 				'title'    => (string) $space->title,
 				'slug'     => (string) $space->slug,
 				'pending'  => (int) $count,
-			];
+			);
 		}
 
 		usort(
@@ -394,11 +394,11 @@ class Moderation_Service {
 	 * @return true|WP_Error
 	 */
 	public static function resolve_flag( int $user_id, int $flag_id, string $status ) {
-		if ( ! in_array( $status, [ 'valid', 'dismissed' ], true ) ) {
+		if ( ! in_array( $status, array( 'valid', 'dismissed' ), true ) ) {
 			return new WP_Error(
 				'jetonomy_invalid_status',
 				__( 'Invalid flag resolution.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -407,7 +407,7 @@ class Moderation_Service {
 			return new WP_Error(
 				'jetonomy_not_found',
 				__( 'Flag not found.', 'jetonomy' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -415,7 +415,7 @@ class Moderation_Service {
 			return new WP_Error(
 				'jetonomy_forbidden',
 				__( 'You cannot resolve this flag.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -436,7 +436,7 @@ class Moderation_Service {
 			return new WP_Error(
 				'jetonomy_forbidden',
 				__( 'You cannot remove this content.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -445,7 +445,7 @@ class Moderation_Service {
 			return new WP_Error(
 				'jetonomy_resolve_failed',
 				__( 'Failed to resolve flag.', 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
@@ -527,10 +527,10 @@ class Moderation_Service {
 	public static function screen_new_content( string $type, array $data, int $space_id, int $author_id ) {
 		$status = (string) ( $data['status'] ?? 'publish' );
 		if ( 'draft' === $status ) {
-			return [
+			return array(
 				'status' => 'draft',
 				'flag'   => false,
-			]; // Screened when it is published.
+			); // Screened when it is published.
 		}
 
 		/**
@@ -546,7 +546,7 @@ class Moderation_Service {
 			return new WP_Error(
 				'jetonomy_validation',
 				'post' === $type ? __( 'Your post was blocked by our content policy.', 'jetonomy' ) : __( 'Your reply was blocked by our content policy.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 		if ( 'hold' === $action ) {
@@ -561,10 +561,10 @@ class Moderation_Service {
 			$status = 'pending';
 		}
 
-		return [
+		return array(
 			'status' => $status,
 			'flag'   => 'flag' === $action,
-		];
+		);
 	}
 
 	/**
@@ -577,13 +577,13 @@ class Moderation_Service {
 	 */
 	public static function auto_flag( string $type, int $id ): void {
 		$flag_id = Flag::create(
-			[
+			array(
 				'reporter_id' => 0,
 				'object_type' => $type,
 				'object_id'   => $id,
 				'reason'      => 'other',
 				'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
-			]
+			)
 		);
 		if ( $flag_id ) {
 			do_action( 'jetonomy_flag_created', (int) $flag_id, $type );
@@ -616,7 +616,7 @@ class Moderation_Service {
 			return new WP_Error(
 				'jetonomy_forbidden',
 				__( 'You cannot moderate this content.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -657,12 +657,12 @@ class Moderation_Service {
 	 * @return string Stored status ('publish'|'spam'|'pending'|'trash'), or '' if invalid.
 	 */
 	public static function status_for_action( string $action ): string {
-		$map = [
+		$map = array(
 			'approve' => 'publish',
 			'spam'    => 'spam',
 			'hold'    => 'pending',
 			'trash'   => 'trash',
-		];
+		);
 		return $map[ $action ] ?? '';
 	}
 
@@ -677,11 +677,11 @@ class Moderation_Service {
 	 * @return true|WP_Error
 	 */
 	private static function apply_object_status( int $user_id, string $type, int $id, string $action ) {
-		if ( ! in_array( $type, [ 'post', 'reply' ], true ) ) {
+		if ( ! in_array( $type, array( 'post', 'reply' ), true ) ) {
 			return new WP_Error(
 				'jetonomy_validation',
 				__( 'Invalid object type.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 		$new_status = self::status_for_action( $action );
@@ -689,14 +689,14 @@ class Moderation_Service {
 			return new WP_Error(
 				'jetonomy_validation',
 				__( 'Invalid action.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
 		if ( 'post' === $type ) {
 			$row = Post::find( $id );
 			if ( ! $row ) {
-				return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), [ 'status' => 404 ] );
+				return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), array( 'status' => 404 ) );
 			}
 			// Approving a SCHEDULED draft is a publish-now, not a status poke.
 			// Writing status=publish directly left published_at in the future,
@@ -711,18 +711,18 @@ class Moderation_Service {
 				&& ! empty( $row->published_at ) ) {
 				Post::publish_draft( $id, false );
 			} else {
-				Post::update( $id, [ 'status' => $new_status ] );
+				Post::update( $id, array( 'status' => $new_status ) );
 			}
 		} else {
 			$row = Reply::find( $id );
 			if ( ! $row ) {
-				return new WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), [ 'status' => 404 ] );
+				return new WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
 			}
-			Reply::update( $id, [ 'status' => $new_status ] );
+			Reply::update( $id, array( 'status' => $new_status ) );
 		}
 
 		// Announce on approval only content that never went live (no created_* activity row yet).
-		if ( 'publish' === $new_status && in_array( $row->status ?? '', [ 'pending', 'spam' ], true )
+		if ( 'publish' === $new_status && in_array( $row->status ?? '', array( 'pending', 'spam' ), true )
 			&& ! ActivityLog::exists_for( (int) $row->author_id, 'created_' . $type, $type, $id ) ) {
 			if ( 'post' === $type ) {
 				do_action( 'jetonomy_after_create_post', $id, (int) $row->space_id, null );
@@ -737,12 +737,12 @@ class Moderation_Service {
 		// orphan 'pending' flags in the queue pointing at already-removed content
 		// (Basecamp flag/moderation sync gap). resolve_siblings_for() is a single
 		// bulk UPDATE, so this stays one extra query per object.
-		$flag_resolution = [
+		$flag_resolution = array(
 			'approve' => 'dismissed', // Content found acceptable — reports dismissed.
 			'spam'    => 'valid',     // Reports confirmed.
 			'trash'   => 'valid',     // Reports confirmed.
 			// 'hold' intentionally absent: still under review, leave flags pending.
-		];
+		);
 		$flag_status = $flag_resolution[ $action ] ?? '';
 		/**
 		 * Filter the status applied to an object's pending flags when it is

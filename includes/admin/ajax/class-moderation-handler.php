@@ -14,10 +14,10 @@ use Jetonomy\Moderation\Moderation_Service;
 class Moderation_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_approve_content', [ $this, 'ajax_approve_content' ] );
-		add_action( 'wp_ajax_jetonomy_spam_content', [ $this, 'ajax_spam_content' ] );
-		add_action( 'wp_ajax_jetonomy_trash_content', [ $this, 'ajax_trash_content' ] );
-		add_action( 'wp_ajax_jetonomy_resolve_flag', [ $this, 'ajax_resolve_flag' ] );
+		add_action( 'wp_ajax_jetonomy_approve_content', array( $this, 'ajax_approve_content' ) );
+		add_action( 'wp_ajax_jetonomy_spam_content', array( $this, 'ajax_spam_content' ) );
+		add_action( 'wp_ajax_jetonomy_trash_content', array( $this, 'ajax_trash_content' ) );
+		add_action( 'wp_ajax_jetonomy_resolve_flag', array( $this, 'ajax_resolve_flag' ) );
 	}
 
 	public function ajax_approve_content(): void {
@@ -54,7 +54,7 @@ class Moderation_Handler {
 		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? $_POST['type'] ?? '' ) );
 		$object_id   = absint( $_POST['object_id'] ?? $_POST['id'] ?? 0 );
 
-		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
+		if ( ! $object_id || ! in_array( $object_type, array( 'post', 'reply' ), true ) ) {
 			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
 		}
 
@@ -63,7 +63,7 @@ class Moderation_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 
-		wp_send_json_success( [ 'message' => $message ] );
+		wp_send_json_success( array( 'message' => $message ) );
 	}
 
 	public function ajax_resolve_flag(): void {
@@ -75,7 +75,7 @@ class Moderation_Handler {
 		$flag_id    = absint( $_POST['flag_id'] ?? 0 );
 		$resolution = sanitize_text_field( wp_unslash( $_POST['resolution'] ?? '' ) );
 
-		if ( ! $flag_id || ! in_array( $resolution, [ 'valid', 'dismissed' ], true ) ) {
+		if ( ! $flag_id || ! in_array( $resolution, array( 'valid', 'dismissed' ), true ) ) {
 			wp_send_json_error( __( 'Invalid flag data.', 'jetonomy' ) );
 		}
 
@@ -97,6 +97,6 @@ class Moderation_Handler {
 			wp_send_json_error( $result->get_error_message(), $status > 0 ? $status : null );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Flag resolved.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Flag resolved.', 'jetonomy' ) ) );
 	}
 }

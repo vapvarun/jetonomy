@@ -56,12 +56,12 @@ final class Reply_Command extends Base_Command {
 	 *     wp jetonomy reply create --post=42 --author=3 --content="Nested" --parent=17
 	 */
 	public function create( $args, $assoc ): void {
-		$input = [
+		$input = array(
 			'post_id'   => (int) ( $assoc['post'] ?? 0 ),
 			'author_id' => (int) ( $assoc['author'] ?? 0 ),
 			'content'   => (string) ( $assoc['content'] ?? '' ),
 			'status'    => (string) ( $assoc['status'] ?? 'publish' ),
-		];
+		);
 		if ( ! empty( $assoc['parent'] ) ) {
 			$input['parent_id'] = (int) $assoc['parent'];
 		}

@@ -36,7 +36,7 @@ function base_url(): string {
  * @return string Base slug without slashes.
  */
 function base_slug(): string {
-	$settings = get_option( 'jetonomy_settings', [] );
+	$settings = get_option( 'jetonomy_settings', array() );
 	return (string) ( $settings['base_slug'] ?? 'community' );
 }
 

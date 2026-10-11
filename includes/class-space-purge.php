@@ -66,11 +66,11 @@ final class Space_Purge {
 	 * a parallel sweeper.
 	 */
 	public static function register(): void {
-		add_action( 'jetonomy_purge_orphan_space', [ self::class, 'on_purge_orphan_space' ] );
+		add_action( 'jetonomy_purge_orphan_space', array( self::class, 'on_purge_orphan_space' ) );
 
 		// Action Scheduler fires this like any other action, so a plain
 		// add_action is all the wiring the batch needs.
-		add_action( self::BATCH_HOOK, [ self::class, 'run_batch' ] );
+		add_action( self::BATCH_HOOK, array( self::class, 'run_batch' ) );
 	}
 
 	/**
@@ -109,7 +109,7 @@ final class Space_Purge {
 			return false;
 		}
 
-		$args = [ 'space_id' => $space_id ];
+		$args = array( 'space_id' => $space_id );
 
 		// Already handed off by an earlier request - let the runner have it
 		// rather than deleting the same slice from two directions.
@@ -196,7 +196,7 @@ final class Space_Purge {
 		// hand-off is what strands a half-deleted space - its topics gone, its
 		// row still listed, and nothing scheduled to finish the job.
 		if ( function_exists( 'as_enqueue_async_action' )
-			&& as_enqueue_async_action( self::BATCH_HOOK, [ 'space_id' => $space_id ], self::AS_GROUP ) ) {
+			&& as_enqueue_async_action( self::BATCH_HOOK, array( 'space_id' => $space_id ), self::AS_GROUP ) ) {
 			return;
 		}
 
@@ -231,7 +231,7 @@ final class Space_Purge {
 	 */
 	public static function clear_scheduled(): void {
 		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( self::BATCH_HOOK, [], self::AS_GROUP );
+			as_unschedule_all_actions( self::BATCH_HOOK, array(), self::AS_GROUP );
 		}
 		wp_clear_scheduled_hook( self::BATCH_HOOK );
 	}
@@ -263,108 +263,108 @@ final class Space_Purge {
 	 * @return array<int,array{table:string,column:string,ref:string,where:string,self:bool}>
 	 */
 	public static function relations(): array {
-		$rel = [
+		$rel = array(
 			// Direct space references.
-			[
+			array(
 				'table'  => table( 'posts' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'space_members' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'join_requests' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'access_rules' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'invite_links' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'restrictions' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
+			),
 
 			// Polymorphic rows pointing AT the space.
-			[
+			array(
 				'table'  => table( 'notifications' ),
 				'column' => 'object_id',
 				'ref'    => 'space',
 				'where'  => "object_type = 'space'",
-			],
-			[
+			),
+			array(
 				'table'  => table( 'subscriptions' ),
 				'column' => 'object_id',
 				'ref'    => 'space',
 				'where'  => "object_type = 'space'",
-			],
-			[
+			),
+			array(
 				'table'  => table( 'activity_log' ),
 				'column' => 'object_id',
 				'ref'    => 'space',
 				'where'  => "object_type = 'space'",
-			],
+			),
 
 			// One hop out: rows hanging off the space's topics.
-			[
+			array(
 				'table'  => table( 'replies' ),
 				'column' => 'post_id',
 				'ref'    => 'post',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'post_tags' ),
 				'column' => 'post_id',
 				'ref'    => 'post',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'read_status' ),
 				'column' => 'post_id',
 				'ref'    => 'post',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'bookmarks' ),
 				'column' => 'post_id',
 				'ref'    => 'post',
-			],
-		];
+			),
+		);
 
 		// Polymorphic rows pointing at those topics, and at their replies. Same
 		// tables, two id sets — declared as a loop so a table added to one type
 		// can never be forgotten for the other, which is the drift this whole
 		// class is built to avoid.
-		foreach ( [ 'post', 'reply' ] as $ref ) {
-			foreach ( [ 'notifications', 'subscriptions', 'activity_log', 'votes', 'flags', 'attachments', 'revisions' ] as $t ) {
+		foreach ( array( 'post', 'reply' ) as $ref ) {
+			foreach ( array( 'notifications', 'subscriptions', 'activity_log', 'votes', 'flags', 'attachments', 'revisions' ) as $t ) {
 				// subscriptions is ENUM('space','post') — it cannot hold a reply.
 				if ( 'reply' === $ref && 'subscriptions' === $t ) {
 					continue;
 				}
-				$rel[] = [
+				$rel[] = array(
 					'table'  => table( $t ),
 					'column' => 'object_id',
 					'ref'    => $ref,
 					'where'  => "object_type = '" . $ref . "'",
-				];
+				);
 			}
 		}
 
 		// The space row itself, deleted last.
-		$rel[] = [
+		$rel[] = array(
 			'table'  => table( 'spaces' ),
 			'column' => 'id',
 			'ref'    => 'space',
 			'self'   => true,
-		];
+		);
 
 		/**
 		 * Every table that holds a reference to a space, its topics, or their
@@ -378,21 +378,21 @@ final class Space_Purge {
 		 */
 		$rel = apply_filters( 'jetonomy_space_relations', $rel );
 
-		$clean = [];
+		$clean = array();
 		foreach ( (array) $rel as $r ) {
 			if ( empty( $r['table'] ) || empty( $r['column'] ) || empty( $r['ref'] ) ) {
 				continue;
 			}
-			if ( ! in_array( $r['ref'], [ 'space', 'post', 'reply' ], true ) ) {
+			if ( ! in_array( $r['ref'], array( 'space', 'post', 'reply' ), true ) ) {
 				continue; // Unknown id set — we have no way to resolve it.
 			}
-			$clean[] = [
+			$clean[] = array(
 				'table'  => (string) $r['table'],
 				'column' => sanitize_key( (string) $r['column'] ),
 				'ref'    => (string) $r['ref'],
 				'where'  => (string) ( $r['where'] ?? '' ),
 				'self'   => (bool) ( $r['self'] ?? false ),
-			];
+			);
 		}
 		return $clean;
 	}
@@ -431,14 +431,14 @@ final class Space_Purge {
 	public static function purge_step( int $space_id, int $limit = self::CHUNK ): array {
 		$space_id = (int) $space_id;
 		$limit    = max( 1, $limit );
-		$removed  = [];
+		$removed  = array();
 
 		if ( $space_id <= 0 ) {
-			return [
+			return array(
 				'done'    => true,
 				'removed' => $removed,
-				'authors' => [],
-			];
+				'authors' => array(),
+			);
 		}
 
 		// The unit of work is a slice of TOPICS, because that is what a space
@@ -486,13 +486,13 @@ final class Space_Purge {
 			// the slice is deleted through the same helper with an id-keyed
 			// relation rather than hand-rolled SQL.
 			$n = self::delete_where_in(
-				[
+				array(
 					'table'  => table( 'posts' ),
 					'column' => 'id',
 					'ref'    => 'post',
 					'where'  => '',
 					'self'   => false,
-				],
+				),
 				$post_slice
 			);
 			if ( $n > 0 ) {
@@ -511,11 +511,11 @@ final class Space_Purge {
 				do_action( 'jetonomy_community_notification_removed', 'post', (int) $post_id );
 			}
 
-			return [
+			return array(
 				'done'    => false,
 				'removed' => $removed,
 				'authors' => $authors,
-			];
+			);
 		}
 
 		// No topics left. Space-scoped rows, then the space row, then counters.
@@ -527,7 +527,7 @@ final class Space_Purge {
 			if ( 'space' !== $r['ref'] || $r['self'] ) {
 				continue;
 			}
-			$n = self::delete_where_in( $r, [ $space_id ] );
+			$n = self::delete_where_in( $r, array( $space_id ) );
 			if ( $n > 0 ) {
 				$removed[ $r['table'] . '.' . $r['column'] . ':space' ] = $n;
 			}
@@ -539,7 +539,7 @@ final class Space_Purge {
 			if ( ! $r['self'] ) {
 				continue;
 			}
-			$n = self::delete_where_in( $r, [ $space_id ] );
+			$n = self::delete_where_in( $r, array( $space_id ) );
 			if ( $n > 0 ) {
 				$removed[ $r['table'] . '.' . $r['column'] ] = $n;
 			}
@@ -556,25 +556,25 @@ final class Space_Purge {
 		// Space-level notifications (join requests and the like) go with it.
 		do_action( 'jetonomy_community_notification_removed', 'space', $space_id );
 
-		return [
+		return array(
 			'done'    => true,
 			'removed' => $removed,
-			'authors' => [],
-		];
+			'authors' => array(),
+		);
 	}
 
 	public static function purge( int $space_id ): array {
 		$space_id = (int) $space_id;
 		if ( $space_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		// Drains by repeatedly calling the SAME bounded step the batched path
 		// uses, rather than carrying a second full-sweep implementation that
 		// could drift from it. Callers who cannot afford a long request should
 		// use queue(); this one runs to completion.
-		$removed = [];
-		$authors = [];
+		$removed = array();
+		$authors = array();
 		do {
 			$step = self::purge_step( $space_id );
 			foreach ( $step['removed'] as $key => $n ) {
@@ -617,7 +617,7 @@ final class Space_Purge {
 	 */
 	public static function delete_dependents( string $ref, array $ids ): int {
 		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
-		if ( ! $ids || ! in_array( $ref, [ 'post', 'reply' ], true ) ) {
+		if ( ! $ids || ! in_array( $ref, array( 'post', 'reply' ), true ) ) {
 			return 0;
 		}
 
@@ -642,9 +642,9 @@ final class Space_Purge {
 	private static function author_ids( array $post_ids, array $reply_ids ): array {
 		global $wpdb;
 
-		$out = [];
+		$out = array();
 
-		foreach ( [ [ table( 'posts' ), $post_ids ], [ table( 'replies' ), $reply_ids ] ] as [ $tbl, $ids ] ) {
+		foreach ( array( array( table( 'posts' ), $post_ids ), array( table( 'replies' ), $reply_ids ) ) as [ $tbl, $ids ] ) {
 			if ( ! $ids || ! self::table_exists( $tbl ) ) {
 				continue;
 			}
@@ -671,7 +671,7 @@ final class Space_Purge {
 		global $wpdb;
 		$posts = table( 'posts' );
 		if ( ! self::table_exists( $posts ) ) {
-			return [];
+			return array();
 		}
 
 		// $limit > 0 is the batched path: take a slice instead of every id. A
@@ -694,10 +694,10 @@ final class Space_Purge {
 		global $wpdb;
 		$replies = table( 'replies' );
 		if ( ! $post_ids || ! self::table_exists( $replies ) ) {
-			return [];
+			return array();
 		}
 
-		$out = [];
+		$out = array();
 		foreach ( array_chunk( $post_ids, self::CHUNK ) as $chunk ) {
 			$in   = implode( ',', array_map( 'intval', $chunk ) );
 			$tail = $limit > 0 ? ' ORDER BY id ASC LIMIT ' . (int) ( $limit - count( $out ) ) : '';
@@ -747,7 +747,7 @@ final class Space_Purge {
 		// Only a positive answer is remembered: a table never disappears
 		// mid-request, but a Pro extension may create one. Without this every
 		// single-topic delete paid one SHOW TABLES per relation.
-		static $exists = [];
+		static $exists = array();
 		if ( isset( $exists[ $table ] ) ) {
 			return true;
 		}

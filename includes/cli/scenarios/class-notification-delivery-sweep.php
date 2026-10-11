@@ -31,44 +31,44 @@ final class Notification_Delivery_Sweep extends Abstract_Scenario {
 	 *
 	 * @var array<int,array{type:string,object_type:string}>
 	 */
-	private const TYPES = [
-		[
+	private const TYPES = array(
+		array(
 			'type'        => 'reply_to_post',
 			'object_type' => 'post',
-		],
-		[
+		),
+		array(
 			'type'        => 'reply_to_reply',
 			'object_type' => 'post',
-		],
-		[
+		),
+		array(
 			'type'        => 'mention',
 			'object_type' => 'post',
-		],
-		[
+		),
+		array(
 			'type'        => 'vote_on_post',
 			'object_type' => 'post',
-		],
-		[
+		),
+		array(
 			'type'        => 'accepted_answer',
 			'object_type' => 'post',
-		],
-		[
+		),
+		array(
 			'type'        => 'new_post_in_sub',
 			'object_type' => 'post',
-		],
-		[
+		),
+		array(
 			'type'        => 'badge_earned',
 			'object_type' => 'badge',
-		],
-		[
+		),
+		array(
 			'type'        => 'moderation',
 			'object_type' => 'post',
-		],
-		[
+		),
+		array(
 			'type'        => 'join_request',
 			'object_type' => 'space',
-		],
-	];
+		),
+	);
 
 	public static function name(): string {
 		return 'notification-delivery-sweep';
@@ -78,18 +78,18 @@ final class Notification_Delivery_Sweep extends Abstract_Scenario {
 		return 'Fires one notification of every supported type to user 1 and reports the unread-count delta.';
 	}
 
-	public function run( array $options = [] ): Scenario_Result {
+	public function run( array $options = array() ): Scenario_Result {
 		$this->reset();
 		$start = microtime( true );
 
 		$journey = new Notification_Journey();
 
-		$fixtures = [
-			'notification_ids' => [],
+		$fixtures = array(
+			'notification_ids' => array(),
 			'unread_before'    => 0,
 			'unread_after'     => 0,
 			'unread_delta'     => 0,
-		];
+		);
 
 		$before = $this->step(
 			'unread-count-before',
@@ -100,21 +100,21 @@ final class Notification_Delivery_Sweep extends Abstract_Scenario {
 		}
 		$fixtures['unread_before'] = (int) $before->data['unread'];
 
-		$ids = [];
+		$ids = array();
 		foreach ( self::TYPES as $idx => $entry ) {
 			$type        = $entry['type'];
 			$object_type = $entry['object_type'];
 			$result      = $this->step(
 				sprintf( 'trigger-%s', $type ),
 				static fn (): Journey_Result => $journey->trigger(
-					[
+					array(
 						'type'        => $type,
 						'user_id'     => 1,
 						'actor_id'    => 1,
 						'object_type' => $object_type,
 						'object_id'   => 1,
 						'message'     => sprintf( 'Scenario sweep: %s', $type ),
-					]
+					)
 				)
 			);
 			if ( null === $result ) {
@@ -143,7 +143,7 @@ final class Notification_Delivery_Sweep extends Abstract_Scenario {
 		$start = microtime( true );
 
 		$journey = new Notification_Journey();
-		$ids     = (array) ( $fixtures['notification_ids'] ?? [] );
+		$ids     = (array) ( $fixtures['notification_ids'] ?? array() );
 
 		foreach ( $ids as $idx => $nid ) {
 			$nid = (int) $nid;

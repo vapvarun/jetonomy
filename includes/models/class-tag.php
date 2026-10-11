@@ -33,10 +33,10 @@ class Tag extends Model {
 		}
 
 		return static::insert(
-			[
+			array(
 				'name' => $name,
 				'slug' => $slug,
-			]
+			)
 		);
 	}
 
@@ -98,10 +98,10 @@ class Tag extends Model {
 		$post_tags = table( 'post_tags' );
 		$affected  = static::db()->delete(
 			$post_tags,
-			[
+			array(
 				'post_id' => $post_id,
 				'tag_id'  => $tag_id,
-			]
+			)
 		);
 
 		if ( $affected ) {
@@ -147,7 +147,7 @@ class Tag extends Model {
 				$post_id,
 				$limit
 			)
-		) ?: [];
+		) ?: array();
 
 		if ( 200 === $limit ) {
 			self::register_memo_reset();
@@ -164,7 +164,7 @@ class Tag extends Model {
 	 *
 	 * @var array<int, object[]>
 	 */
-	private static array $post_memo = [];
+	private static array $post_memo = array();
 
 	/**
 	 * Whether the memo reset is registered with Cache::flush().
@@ -177,7 +177,7 @@ class Tag extends Model {
 	 * Empty the per-post tag memo. Called from attach/detach.
 	 */
 	public static function reset_memo(): void {
-		self::$post_memo = [];
+		self::$post_memo = array();
 	}
 
 	/**
@@ -188,7 +188,7 @@ class Tag extends Model {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$post_memo = [];
+					self::$post_memo = array();
 				}
 			);
 		}
@@ -221,9 +221,9 @@ class Tag extends Model {
 				"SELECT pt.post_id AS jt_post_id, t.* FROM {$tags} t INNER JOIN {$post_tags} pt ON pt.tag_id = t.id WHERE pt.post_id IN ({$placeholders}) ORDER BY t.name ASC",
 				...$post_ids
 			)
-		) ?: [];
+		) ?: array();
 
-		$grouped = array_fill_keys( $post_ids, [] );
+		$grouped = array_fill_keys( $post_ids, array() );
 		foreach ( $rows as $row ) {
 			$pid = (int) $row->jt_post_id;
 			unset( $row->jt_post_id );
@@ -250,7 +250,7 @@ class Tag extends Model {
 	public static function ids_for_posts( array $post_ids ): array {
 		$post_ids = array_values( array_unique( array_filter( array_map( 'intval', $post_ids ) ) ) );
 		if ( ! $post_ids ) {
-			return [];
+			return array();
 		}
 
 		$db = static::db();
@@ -297,7 +297,7 @@ class Tag extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -346,7 +346,7 @@ class Tag extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		return $results ?: [];
+		return $results ?: array();
 	}
 
 	/**
@@ -364,7 +364,7 @@ class Tag extends Model {
 				$like,
 				$limit
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -378,14 +378,14 @@ class Tag extends Model {
 	 * @return array{rows: object[], total: int}
 	 */
 	public static function list_paginated( string $search = '', string $orderby = 'name', string $order = 'ASC', int $per_page = 20, int $offset = 0 ): array {
-		$allowed_orderby = [ 'id', 'name', 'slug', 'post_count' ];
+		$allowed_orderby = array( 'id', 'name', 'slug', 'post_count' );
 		$orderby         = in_array( $orderby, $allowed_orderby, true ) ? $orderby : 'name';
 		$order           = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
 		$per_page        = max( 1, min( 100, $per_page ) );
 		$offset          = max( 0, $offset );
 
 		$where  = '';
-		$values = [];
+		$values = array();
 		if ( '' !== $search ) {
 			$where    = 'WHERE name LIKE %s';
 			$values[] = '%' . static::db()->esc_like( $search ) . '%';
@@ -401,14 +401,14 @@ class Tag extends Model {
 		// Data query. $orderby / $order / $per_page / $offset are sanitized above.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$data_sql = "SELECT * FROM {$table} {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-		$args     = array_merge( $values, [ $per_page, $offset ] );
+		$args     = array_merge( $values, array( $per_page, $offset ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: [];
+		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: array();
 
-		return [
+		return array(
 			'rows'  => $rows,
 			'total' => $total,
-		];
+		);
 	}
 
 	/**
@@ -422,7 +422,7 @@ class Tag extends Model {
 		$db        = static::db();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$db->delete( $post_tags, [ 'tag_id' => $id ] );
+		$db->delete( $post_tags, array( 'tag_id' => $id ) );
 
 		$deleted = (bool) parent::delete( $id );
 		return $deleted;

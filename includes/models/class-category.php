@@ -26,10 +26,10 @@ class Category extends Model {
 	 */
 	public static function create( array $data ): int {
 		$data = array_merge(
-			[
+			array(
 				'sort_order' => 0,
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -141,7 +141,7 @@ class Category extends Model {
 					'jetonomy_slug_taken',
 					/* translators: %s: the category slug the owner typed. */
 					sprintf( __( 'The slug "%s" is already used by another category.', 'jetonomy' ), $slug ),
-					[ 'status' => 409 ]
+					array( 'status' => 409 )
 				);
 			}
 			$data['slug'] = $slug;
@@ -175,18 +175,18 @@ class Category extends Model {
 	public static function delete( int $id ): bool|\WP_Error {
 		$spaces = \Jetonomy\table( 'spaces' );
 		if ( (int) static::db()->get_var( static::db()->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE category_id = %d AND status <> 'archived'", $id ) ) > 0 ) {
-			return new \WP_Error( 'jetonomy_category_has_spaces', __( 'Cannot delete a category that contains spaces. Move or delete the spaces first.', 'jetonomy' ), [ 'status' => 409 ] );
+			return new \WP_Error( 'jetonomy_category_has_spaces', __( 'Cannot delete a category that contains spaces. Move or delete the spaces first.', 'jetonomy' ), array( 'status' => 409 ) );
 		}
 
-		if ( static::count( [ 'parent_id' => $id ] ) > 0 ) {
-			return new \WP_Error( 'jetonomy_category_has_children', __( 'Cannot delete a category that has sub-categories. Delete them first.', 'jetonomy' ), [ 'status' => 409 ] );
+		if ( static::count( array( 'parent_id' => $id ) ) > 0 ) {
+			return new \WP_Error( 'jetonomy_category_has_children', __( 'Cannot delete a category that has sub-categories. Delete them first.', 'jetonomy' ), array( 'status' => 409 ) );
 		}
 
 		$parked = static::db()->get_col(
 			static::db()->prepare( "SELECT id FROM {$spaces} WHERE category_id = %d AND status = 'archived'", $id )
 		);
 		foreach ( $parked as $space_id ) {
-			Space::update( (int) $space_id, [ 'category_id' => 0 ] );
+			Space::update( (int) $space_id, array( 'category_id' => 0 ) );
 		}
 
 		$deleted = parent::delete( $id );
@@ -219,11 +219,11 @@ class Category extends Model {
 			$message = __( 'The parent category does not exist.', 'jetonomy' );
 		} elseif ( (int) $parent->parent_id > 0 ) {
 			$message = __( 'Categories nest two levels deep. Choose a top-level category as the parent.', 'jetonomy' );
-		} elseif ( $id > 0 && static::count( [ 'parent_id' => $id ] ) > 0 ) {
+		} elseif ( $id > 0 && static::count( array( 'parent_id' => $id ) ) > 0 ) {
 			$message = __( 'This category has sub-categories, so it cannot become a sub-category itself.', 'jetonomy' );
 		}
 
-		return $message ? new \WP_Error( 'jetonomy_invalid_parent', $message, [ 'status' => 400 ] ) : null;
+		return $message ? new \WP_Error( 'jetonomy_invalid_parent', $message, array( 'status' => 400 ) ) : null;
 	}
 
 	/**
@@ -237,7 +237,7 @@ class Category extends Model {
 	 * @return int
 	 */
 	public static function top_level_ancestor( int $id ): int {
-		$seen = [];
+		$seen = array();
 		$last = 0;
 		while ( $id > 0 && ! isset( $seen[ $id ] ) ) {
 			$seen[ $id ] = true;
@@ -283,16 +283,16 @@ class Category extends Model {
 		$col     = '' !== $alias ? $alias . '.' : '';
 
 		if ( $user_id > 0 && ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_manage_categories' ) ) ) {
-			$result = [ '1=1', [] ];
+			$result = array( '1=1', array() );
 		} else {
 			$allowed = $user_id <= 0 ? "'public'" : "'public','private'";
 			// A hidden parent hides its whole branch: a sub-category is visible
 			// only when its parent is too. Categories nest two levels deep, so
 			// one parent check covers the tree.
-			$result = [
+			$result = array(
 				"{$col}visibility IN ({$allowed}) AND ( {$col}parent_id IS NULL OR {$col}parent_id = 0 OR {$col}parent_id IN ( SELECT jt_vp.id FROM " . \Jetonomy\table( 'categories' ) . " jt_vp WHERE jt_vp.visibility IN ({$allowed}) ) )",
-				[],
-			];
+				array(),
+			);
 		}
 
 		/**
@@ -392,7 +392,7 @@ class Category extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		return static::db()->get_results(
 			empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values )
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -411,7 +411,7 @@ class Category extends Model {
 				$parent_id,
 				...$vis_values
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -425,7 +425,7 @@ class Category extends Model {
 	 * @param int[]    $parent_ids Limit to these parents (empty = every parent).
 	 * @return array<int, object[]> Parent id => children ordered like list_children().
 	 */
-	public static function children_by_parent( ?int $user_id = null, array $parent_ids = [] ): array {
+	public static function children_by_parent( ?int $user_id = null, array $parent_ids = array() ): array {
 		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
 
 		$parent_ids = array_values( array_filter( array_map( 'intval', $parent_ids ) ) );
@@ -439,9 +439,9 @@ class Category extends Model {
 		$sql = 'SELECT * FROM ' . static::table() . " WHERE parent_id > 0{$in} AND {$vis_where} ORDER BY sort_order ASC, name ASC";
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$rows = static::db()->get_results( empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values ) ) ?: [];
+		$rows = static::db()->get_results( empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values ) ) ?: array();
 
-		$grouped = [];
+		$grouped = array();
 		foreach ( $rows as $row ) {
 			$grouped[ (int) $row->parent_id ][] = $row;
 		}
@@ -462,11 +462,11 @@ class Category extends Model {
 	 */
 	public static function list_tree( ?int $user_id = null, int $keep_id = 0 ): array {
 		$children = self::children_by_parent( $user_id );
-		$tree     = [];
+		$tree     = array();
 		foreach ( self::list_top_level( $user_id ) as $top ) {
 			$top->depth = 0;
 			$tree[]     = $top;
-			foreach ( $children[ (int) $top->id ] ?? [] as $child ) {
+			foreach ( $children[ (int) $top->id ] ?? array() as $child ) {
 				$child->depth = 1;
 				$tree[]       = $child;
 			}
@@ -504,7 +504,7 @@ class Category extends Model {
 	 * @return array{rows: object[], total: int}
 	 */
 	public static function list_paginated( string $search = '', string $orderby = 'sort_order', string $order = 'ASC', int $per_page = 20, int $offset = 0 ): array {
-		$allowed  = [ 'id', 'name', 'slug', 'sort_order' ];
+		$allowed  = array( 'id', 'name', 'slug', 'sort_order' );
 		$orderby  = in_array( $orderby, $allowed, true ) ? $orderby : 'sort_order';
 		$order    = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
 		$per_page = max( 1, min( 100, $per_page ) );
@@ -533,21 +533,21 @@ class Category extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$data_sql = "SELECT * FROM {$table} {$where} ORDER BY {$orderby} {$order}{$secondary} LIMIT %d OFFSET %d";
-		$args     = array_merge( $values, [ $per_page, $offset ] );
+		$args     = array_merge( $values, array( $per_page, $offset ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: [];
+		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: array();
 
 		// Hydrate children inline (children share parent's page; usually a small
 		// number per parent, no need to paginate those) - one query for the page.
 		$children = self::children_by_parent( null, array_column( $rows, 'id' ) );
 		foreach ( $rows as $row ) {
-			$row->children = $children[ (int) $row->id ] ?? [];
+			$row->children = $children[ (int) $row->id ] ?? array();
 		}
 
-		return [
+		return array(
 			'rows'  => $rows,
 			'total' => $total,
-		];
+		);
 	}
 
 	/**

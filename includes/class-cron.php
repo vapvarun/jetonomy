@@ -43,7 +43,7 @@ class Cron {
 	 * (WP-Cron only fires on page views — bad for trust evaluation, ban expiry,
 	 * activity pruning, scheduled-post publishing at the scale targets).
 	 */
-	private const RECURRING = [
+	private const RECURRING = array(
 		'jetonomy_trust_evaluation'      => 12 * HOUR_IN_SECONDS,
 		'jetonomy_cleanup_expired'       => HOUR_IN_SECONDS,
 		'jetonomy_prune_activity'        => DAY_IN_SECONDS,
@@ -58,25 +58,25 @@ class Cron {
 		// free (Media_Controller -> Media_Library::tag_upload), so a free-only
 		// site accumulated them forever with nothing to clean up.
 		'jetonomy_cleanup_media'         => DAY_IN_SECONDS,
-	];
+	);
 
 	public function __construct() {
 		// Handler listeners — fire whether scheduled via AS or (legacy) WP-Cron.
-		add_action( 'jetonomy_trust_evaluation', [ $this, 'evaluate_trust_levels' ] );
-		add_action( 'jetonomy_trust_evaluation_batch', [ $this, 'evaluate_trust_batch' ] );
-		add_action( 'jetonomy_cleanup_expired', [ $this, 'cleanup_expired_restrictions' ] );
-		add_action( 'jetonomy_prune_activity', [ $this, 'prune_activity_log' ] );
-		add_action( 'jetonomy_cleanup_notifications', [ $this, 'cleanup_old_notifications' ] );
-		add_action( 'jetonomy_publish_scheduled', [ $this, 'publish_scheduled_posts' ] );
-		add_action( 'jetonomy_verification_reminder', [ Verification_Reminder::class, 'run' ] );
-		add_action( 'jetonomy_reconcile_rosters', [ Membership_Roster_Sync::class, 'reconcile' ] );
-		add_action( 'jetonomy_cleanup_media', [ \Jetonomy\Media_Library::class, 'run_scheduled_cleanup' ] );
+		add_action( 'jetonomy_trust_evaluation', array( $this, 'evaluate_trust_levels' ) );
+		add_action( 'jetonomy_trust_evaluation_batch', array( $this, 'evaluate_trust_batch' ) );
+		add_action( 'jetonomy_cleanup_expired', array( $this, 'cleanup_expired_restrictions' ) );
+		add_action( 'jetonomy_prune_activity', array( $this, 'prune_activity_log' ) );
+		add_action( 'jetonomy_cleanup_notifications', array( $this, 'cleanup_old_notifications' ) );
+		add_action( 'jetonomy_publish_scheduled', array( $this, 'publish_scheduled_posts' ) );
+		add_action( 'jetonomy_verification_reminder', array( Verification_Reminder::class, 'run' ) );
+		add_action( 'jetonomy_reconcile_rosters', array( Membership_Roster_Sync::class, 'reconcile' ) );
+		add_action( 'jetonomy_cleanup_media', array( \Jetonomy\Media_Library::class, 'run_scheduled_cleanup' ) );
 
 		// Self-heal: ensure every recurring action is registered. We hook the
 		// 'action_scheduler_init' action AS fires once its data store is ready
 		// (not 'init', which can run before AS's data store is wired up and
 		// would emit "called incorrectly" notices on every page load).
-		add_action( 'action_scheduler_init', [ self::class, 'ensure_scheduled' ] );
+		add_action( 'action_scheduler_init', array( self::class, 'ensure_scheduled' ) );
 	}
 
 	/**
@@ -99,14 +99,14 @@ class Cron {
 	public static function unschedule(): void {
 		if ( function_exists( 'as_unschedule_all_actions' ) ) {
 			foreach ( array_keys( self::RECURRING ) as $hook ) {
-				as_unschedule_all_actions( $hook, [], self::AS_GROUP );
+				as_unschedule_all_actions( $hook, array(), self::AS_GROUP );
 			}
 			// Also drop any in-flight trust-sweep batch actions (async, not in
 			// the RECURRING map).
-			as_unschedule_all_actions( 'jetonomy_trust_evaluation_batch', [], self::AS_GROUP );
+			as_unschedule_all_actions( 'jetonomy_trust_evaluation_batch', array(), self::AS_GROUP );
 			// …and any queued avatar Gravatar-existence checks (async, per-user).
-			as_unschedule_all_actions( 'jetonomy_gravatar_check', [], self::AS_GROUP );
-			as_unschedule_all_actions( self::PUBLISH_HOOK, [], self::AS_GROUP );
+			as_unschedule_all_actions( 'jetonomy_gravatar_check', array(), self::AS_GROUP );
+			as_unschedule_all_actions( self::PUBLISH_HOOK, array(), self::AS_GROUP );
 		}
 		foreach ( array_keys( self::RECURRING ) as $hook ) {
 			wp_clear_scheduled_hook( $hook );
@@ -157,12 +157,12 @@ class Cron {
 
 		$now = time();
 		foreach ( self::RECURRING as $hook => $interval ) {
-			if ( as_has_scheduled_action( $hook, [], self::AS_GROUP ) ) {
+			if ( as_has_scheduled_action( $hook, array(), self::AS_GROUP ) ) {
 				continue;
 			}
 			// Verification reminder starts +1h so it doesn't compete with everything else at time().
 			$start = ( 'jetonomy_verification_reminder' === $hook ) ? $now + HOUR_IN_SECONDS : $now;
-			as_schedule_recurring_action( $start, $interval, $hook, [], self::AS_GROUP );
+			as_schedule_recurring_action( $start, $interval, $hook, array(), self::AS_GROUP );
 		}
 
 		// One-time move off the hourly recurring publisher (2.0.1): drop it
@@ -186,8 +186,8 @@ class Cron {
 		// Action Scheduler's store is not ready before action_scheduler_init;
 		// an early call would silently no-op, so defer it.
 		if ( function_exists( 'as_schedule_single_action' ) && ! did_action( 'action_scheduler_init' ) ) {
-			if ( ! has_action( 'action_scheduler_init', [ self::class, 'arm_scheduled_publish' ] ) ) {
-				add_action( 'action_scheduler_init', [ self::class, 'arm_scheduled_publish' ], 20 );
+			if ( ! has_action( 'action_scheduler_init', array( self::class, 'arm_scheduled_publish' ) ) ) {
+				add_action( 'action_scheduler_init', array( self::class, 'arm_scheduled_publish' ), 20 );
 			}
 			return;
 		}
@@ -198,12 +198,12 @@ class Cron {
 		if ( function_exists( 'as_schedule_single_action' ) ) {
 			// Already armed for that instant (e.g. a later schedule was added):
 			// leave it, rather than cancel and re-queue an identical action.
-			if ( $when && as_next_scheduled_action( self::PUBLISH_HOOK, [], self::AS_GROUP ) === $when ) {
+			if ( $when && as_next_scheduled_action( self::PUBLISH_HOOK, array(), self::AS_GROUP ) === $when ) {
 				return;
 			}
-			as_unschedule_all_actions( self::PUBLISH_HOOK, [], self::AS_GROUP );
+			as_unschedule_all_actions( self::PUBLISH_HOOK, array(), self::AS_GROUP );
 			if ( $when ) {
-				as_schedule_single_action( $when, self::PUBLISH_HOOK, [], self::AS_GROUP );
+				as_schedule_single_action( $when, self::PUBLISH_HOOK, array(), self::AS_GROUP );
 			}
 			return;
 		}
@@ -258,7 +258,7 @@ class Cron {
 	 */
 	private static function enqueue_trust_batch(): void {
 		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( 'jetonomy_trust_evaluation_batch', [], self::AS_GROUP );
+			as_enqueue_async_action( 'jetonomy_trust_evaluation_batch', array(), self::AS_GROUP );
 		} else {
 			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, 'jetonomy_trust_evaluation_batch' );
 		}
@@ -296,11 +296,11 @@ class Cron {
 		);
 
 		if ( empty( $profiles ) ) {
-			return [
+			return array(
 				'last_id'  => $after,
 				'count'    => 0,
 				'promoted' => 0,
-			];
+			);
 		}
 
 		$user_ids        = wp_list_pluck( $profiles, 'user_id' );
@@ -322,7 +322,7 @@ class Cron {
 			)
 		);
 
-		$replies_received_map = [];
+		$replies_received_map = array();
 		foreach ( $replies_received_rows as $row ) {
 			$replies_received_map[ (int) $row->author_id ] = (int) $row->cnt;
 		}
@@ -336,12 +336,12 @@ class Cron {
 				? (int) ( ( time() - strtotime( $profile->created_at ) ) / DAY_IN_SECONDS )
 				: 0;
 
-			$stats = [
+			$stats = array(
 				'post_count'       => (int) $profile->post_count,
 				'days_active'      => $days_active,
 				'reputation'       => (int) $profile->reputation,
 				'replies_received' => $replies_received_map[ (int) $profile->user_id ] ?? 0,
-			];
+			);
 
 			$new_level = Trust_Evaluator::evaluate_level( $stats );
 
@@ -366,17 +366,17 @@ class Cron {
 				// listeners (activity tracker, notifier, Pro badges, Pro
 				// webhooks) re-read the promoted level instead of a cached
 				// stale row.
-				UserProfile::update_profile( (int) $profile->user_id, [ 'trust_level' => $new_level ] );
+				UserProfile::update_profile( (int) $profile->user_id, array( 'trust_level' => $new_level ) );
 				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
 				++$promoted;
 			}
 		}
 
-		return [
+		return array(
 			'last_id'  => $last_id,
 			'count'    => count( $profiles ),
 			'promoted' => $promoted,
-		];
+		);
 	}
 
 	/**
@@ -408,7 +408,7 @@ class Cron {
 	public function prune_activity_log(): void {
 		global $wpdb;
 		$table    = table( 'activity_log' );
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 		$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
 		if ( $days <= 0 ) {
 			return; // 0 = keep forever.

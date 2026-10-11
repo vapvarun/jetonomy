@@ -945,9 +945,9 @@ class Reply extends Model {
 		$rows = $db->get_results( $db->prepare( "SELECT id, post_id, parent_id FROM {$table} WHERE id IN ({$in})", ...$ids ), OBJECT_K );
 
 		$case    = '';
-		$args    = [];
-		$targets = [];
-		$posts   = [];
+		$args    = array();
+		$targets = array();
+		$posts   = array();
 		foreach ( $parents as $id => $parent ) {
 			$child = $rows[ $id ] ?? null;
 			if ( ! $child || null !== $child->parent_id || ! isset( $rows[ $parent ] ) || $rows[ $parent ]->post_id !== $child->post_id ) {
@@ -1446,7 +1446,7 @@ class Reply extends Model {
 		if ( isset( self::$page_cache[ $key ] ) ) {
 			return self::$page_cache[ $key ];
 		}
-		return self::pages_of( [ $reply_id ], $per_page )[ $reply_id ] ?? 1;
+		return self::pages_of( array( $reply_id ), $per_page )[ $reply_id ] ?? 1;
 	}
 
 	/**
@@ -1454,7 +1454,7 @@ class Reply extends Model {
 	 *
 	 * @var array<string,int>
 	 */
-	private static array $page_cache = [];
+	private static array $page_cache = array();
 
 	/**
 	 * Which page each of many replies appears on — in a fixed number of queries.
@@ -1485,7 +1485,7 @@ class Reply extends Model {
 		$per_page  = max( 1, $per_page );
 		$reply_ids = array_values( array_unique( array_filter( array_map( 'intval', $reply_ids ), static fn( $id ) => $id > 0 ) ) );
 		if ( ! $reply_ids ) {
-			return [];
+			return array();
 		}
 
 		$db    = static::db();
@@ -1502,8 +1502,8 @@ class Reply extends Model {
 		// Climb to each reply's top-level ancestor, one batched query per level.
 		// An orphaned child (parent deleted) roots at itself — the tree builder
 		// renders it top-level, so it must page as top-level too.
-		$anchor_of = [];
-		$pending   = [];
+		$anchor_of = array();
+		$pending   = array();
 		foreach ( $rows as $id => $row ) {
 			$parent = (int) ( $row->parent_id ?? 0 );
 			if ( $parent ) {
@@ -1520,7 +1520,7 @@ class Reply extends Model {
 				$known += self::rows_by_id( $need );
 			}
 
-			$next = [];
+			$next = array();
 			foreach ( $pending as $id => $parent_id ) {
 				$parent = $known[ $parent_id ] ?? null;
 				if ( ! $parent ) {
@@ -1541,7 +1541,7 @@ class Reply extends Model {
 			$anchor_of[ $id ] = $rows[ $id ];
 		}
 
-		$anchors = [];
+		$anchors = array();
 		foreach ( $anchor_of as $anchor ) {
 			$anchors[ (int) $anchor->id ] = $anchor;
 		}
@@ -1567,7 +1567,7 @@ class Reply extends Model {
 			 WHERE a.id IN ({$ids_sql})"
 		);
 
-		$pos_of = [];
+		$pos_of = array();
 		foreach ( (array) $positions as $row ) {
 			$pos_of[ (int) $row->anchor_id ] = (int) $row->pos;
 		}
@@ -1606,7 +1606,7 @@ class Reply extends Model {
 	 * @param int   $per_page  Top-level replies per page.
 	 */
 	public static function prime_pages( array $reply_ids, int $per_page ): void {
-		$uncached = [];
+		$uncached = array();
 		foreach ( $reply_ids as $id ) {
 			$id = (int) $id;
 			if ( $id > 0 && ! isset( self::$page_cache[ $per_page . ':' . $id ] ) ) {
@@ -1626,7 +1626,7 @@ class Reply extends Model {
 	 */
 	private static function rows_by_id( array $ids ): array {
 		if ( ! $ids ) {
-			return [];
+			return array();
 		}
 		$db      = static::db();
 		$table   = static::table();
@@ -1634,7 +1634,7 @@ class Reply extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is trusted; $ids_sql is intval-mapped.
 		$rows = $db->get_results( "SELECT id, parent_id, post_id, created_at, status FROM {$table} WHERE id IN ({$ids_sql})" );
 
-		$out = [];
+		$out = array();
 		foreach ( (array) $rows as $row ) {
 			$out[ (int) $row->id ] = $row;
 		}

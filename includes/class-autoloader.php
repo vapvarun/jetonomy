@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 class Autoloader {
 
-	private static array $map = [
+	private static array $map = array(
 		'Jetonomy\\Models\\'                     => 'includes/models/',
 		'Jetonomy\\Permissions\\'                => 'includes/permissions/',
 		'Jetonomy\\Trust\\'                      => 'includes/trust/',
@@ -38,10 +38,10 @@ class Autoloader {
 		'Jetonomy\\CLI\\Scenarios\\'             => 'includes/cli/scenarios/',
 		'Jetonomy\\CLI\\'                        => 'includes/cli/',
 		'Jetonomy\\'                             => 'includes/',
-	];
+	);
 
 	public static function register(): void {
-		spl_autoload_register( [ __CLASS__, 'autoload' ] );
+		spl_autoload_register( array( __CLASS__, 'autoload' ) );
 	}
 
 	public static function autoload( string $class ): void {

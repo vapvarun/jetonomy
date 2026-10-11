@@ -64,14 +64,14 @@ final class Post_Command extends Base_Command {
 	 */
 	public function create( $args, $assoc ): void {
 		$result = ( new Content_Journey() )->create_post(
-			[
+			array(
 				'space_id'  => (int) ( $assoc['space'] ?? 0 ),
 				'author_id' => (int) ( $assoc['author'] ?? 0 ),
 				'title'     => (string) ( $assoc['title'] ?? '' ),
 				'content'   => (string) ( $assoc['content'] ?? '' ),
 				'status'    => (string) ( $assoc['status'] ?? 'publish' ),
 				'slug'      => (string) ( $assoc['slug'] ?? '' ),
-			]
+			)
 		);
 		$this->render( $result, $assoc );
 	}
@@ -111,7 +111,7 @@ final class Post_Command extends Base_Command {
 	 */
 	public function update( $args, $assoc ): void {
 		$id      = (int) ( $args[0] ?? 0 );
-		$changes = array_intersect_key( $assoc, array_flip( [ 'title', 'content', 'status', 'slug' ] ) );
+		$changes = array_intersect_key( $assoc, array_flip( array( 'title', 'content', 'status', 'slug' ) ) );
 		$result  = ( new Content_Journey() )->update_post( $id, $changes );
 		$this->render( $result, $assoc );
 	}

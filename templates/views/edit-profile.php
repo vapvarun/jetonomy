@@ -28,18 +28,18 @@ if ( ! $cancel_url ) {
 
 \Jetonomy\Template_Loader::partial(
 	'breadcrumb',
-	[
-		'crumbs' => [
-			[
+	array(
+		'crumbs' => array(
+			array(
 				'label' => \Jetonomy\user_display_name( $current_user ),
 				'url'   => $profile_url,
-			],
-			[
+			),
+			array(
 				'label' => __( 'Edit Profile', 'jetonomy' ),
 				'url'   => '',
-			],
-		],
-	]
+			),
+		),
+	)
 );
 ?>
 
@@ -51,7 +51,7 @@ if ( ! $cancel_url ) {
 	<form id="jt-edit-profile" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="actions.saveProfile"
-			data-wp-context='<?php echo wp_json_encode( [ 'profileUrl' => $profile_url ] ); ?>'>
+			data-wp-context='<?php echo wp_json_encode( array( 'profileUrl' => $profile_url ) ); ?>'>
 		<div class="jt-form-group">
 			<label class="jt-label" for="jt-first-name"><?php esc_html_e( 'First Name', 'jetonomy' ); ?></label>
 			<input type="text" id="jt-first-name" name="first_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'first_name', true ) ); ?>">
@@ -101,14 +101,14 @@ if ( ! $cancel_url ) {
 				<?php
 				$jt_default_avatar = get_avatar_url(
 					$current_user->ID,
-					[
+					array(
 						'size'          => 64,
 						'force_default' => true,
-					]
+					)
 				);
 				?>
 				<img id="jt-avatar-preview"
-					src="<?php echo esc_url( get_avatar_url( $current_user->ID, [ 'size' => 64 ] ) ); ?>"
+					src="<?php echo esc_url( get_avatar_url( $current_user->ID, array( 'size' => 64 ) ) ); ?>"
 					data-default-src="<?php echo esc_url( $jt_default_avatar ); ?>"
 					width="64" height="64" class="jt-avatar-round" alt="">
 				<div class="jt-avatar-controls">
@@ -150,10 +150,10 @@ if ( ! $cancel_url ) {
 
 		<?php
 		// Notification preferences.
-		$user_settings = json_decode( $profile->settings ?? '{}', true ) ?: [];
-		$notif_prefs   = $user_settings['notifications'] ?? [];
-		$global_defs   = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
-		$notif_types   = [
+		$user_settings = json_decode( $profile->settings ?? '{}', true ) ?: array();
+		$notif_prefs   = $user_settings['notifications'] ?? array();
+		$global_defs   = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
+		$notif_types   = array(
 			/* translators: %s: singular topic label. */
 			'reply_to_post'       => sprintf( __( 'Reply to my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'reply_to_reply'      => __( 'Reply to my reply', 'jetonomy' ),
@@ -165,7 +165,7 @@ if ( ! $cancel_url ) {
 			/* translators: 1: singular topic label; 2: singular space label. */
 			'new_post_in_sub'     => sprintf( __( 'New %1$s in followed %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
 			'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
-		];
+		);
 		if ( \Jetonomy\messaging_active() ) {
 			$notif_types['message'] = __( 'Private message', 'jetonomy' );
 		}

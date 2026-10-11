@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 class Import_Manager {
 
-	private static array $importers = [];
+	private static array $importers = array();
 
 	public static function init(): void {
 		self::register( 'bbpress', new BBPress_Importer() );
@@ -36,17 +36,17 @@ class Import_Manager {
 	}
 
 	public static function get_available(): array {
-		$available = [];
+		$available = array();
 		foreach ( self::$importers as $id => $importer ) {
 			if ( $importer->is_source_available() ) {
-				$available[ $id ] = [
+				$available[ $id ] = array(
 					'name'   => $importer->get_source_name(),
 					'stats'  => $importer->get_source_stats(),
 					'notes'  => $importer->get_import_notes(),
 					// Data found but the plugin is off: still importable, and
 					// the screen says so (see Importer::is_source_active()).
 					'active' => $importer->is_source_active(),
-				];
+				);
 			}
 		}
 		return $available;
@@ -78,7 +78,7 @@ class Import_Manager {
 		return $ids;
 	}
 
-	public static function run( string $id, array $options = [] ): ?array {
+	public static function run( string $id, array $options = array() ): ?array {
 		if ( ! isset( self::$importers[ $id ] ) ) {
 			return null;
 		}

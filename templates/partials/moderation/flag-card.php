@@ -27,7 +27,7 @@ if ( empty( $flag ) || empty( $resolve_endpoint ) ) {
 	return;
 }
 
-$reason_labels = [
+$reason_labels = array(
 	'spam'           => __( 'Spam', 'jetonomy' ),
 	'offensive'      => __( 'Offensive', 'jetonomy' ),
 	'abuse'          => __( 'Abuse / Harassment', 'jetonomy' ),
@@ -36,7 +36,7 @@ $reason_labels = [
 	'off_topic'      => __( 'Off-topic', 'jetonomy' ),
 	'misinformation' => __( 'Misinformation', 'jetonomy' ),
 	'other'          => __( 'Other', 'jetonomy' ),
-];
+);
 
 $reporter    = get_userdata( (int) $flag->reporter_id );
 $time_ago    = human_time_diff( strtotime( $flag->created_at ), time() );

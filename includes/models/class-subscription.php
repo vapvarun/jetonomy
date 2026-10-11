@@ -77,7 +77,7 @@ class Subscription extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -120,8 +120,8 @@ class Subscription extends Model {
 	 * @return array<int,array<string,mixed>> Items with title, slug, exists added.
 	 */
 	public static function attach_targets( array $items ): array {
-		$post_ids  = [];
-		$space_ids = [];
+		$post_ids  = array();
+		$space_ids = array();
 		foreach ( $items as $item ) {
 			if ( 'post' === ( $item['object_type'] ?? '' ) ) {
 				$post_ids[] = (int) $item['object_id'];
@@ -131,20 +131,20 @@ class Subscription extends Model {
 		}
 
 		global $wpdb;
-		$titles = [];
+		$titles = array();
 
 		if ( $post_ids ) {
 			$posts_tbl = table( 'posts' );
 			$ph        = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$spaces_tbl_j = table( 'spaces' );
-			$rows         = $wpdb->get_results( $wpdb->prepare( "SELECT p.id, p.title, p.slug, s.slug AS space_slug FROM {$posts_tbl} p LEFT JOIN {$spaces_tbl_j} s ON s.id = p.space_id WHERE p.id IN ({$ph}) AND p.status NOT IN ('trash','spam')", ...$post_ids ) ) ?: [];
+			$rows         = $wpdb->get_results( $wpdb->prepare( "SELECT p.id, p.title, p.slug, s.slug AS space_slug FROM {$posts_tbl} p LEFT JOIN {$spaces_tbl_j} s ON s.id = p.space_id WHERE p.id IN ({$ph}) AND p.status NOT IN ('trash','spam')", ...$post_ids ) ) ?: array();
 			foreach ( $rows as $row ) {
-				$titles[ 'post:' . (int) $row->id ] = [
+				$titles[ 'post:' . (int) $row->id ] = array(
 					'title'      => $row->title ?? '',
 					'slug'       => $row->slug ?? '',
 					'space_slug' => $row->space_slug ?? '',
-				];
+				);
 			}
 		}
 
@@ -152,12 +152,12 @@ class Subscription extends Model {
 			$spaces_tbl = table( 'spaces' );
 			$ph         = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, slug FROM {$spaces_tbl} WHERE id IN ({$ph})", ...$space_ids ) ) ?: [];
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, slug FROM {$spaces_tbl} WHERE id IN ({$ph})", ...$space_ids ) ) ?: array();
 			foreach ( $rows as $row ) {
-				$titles[ 'space:' . (int) $row->id ] = [
+				$titles[ 'space:' . (int) $row->id ] = array(
 					'title' => $row->title ?? '',
 					'slug'  => $row->slug ?? '',
-				];
+				);
 			}
 		}
 
@@ -180,10 +180,10 @@ class Subscription extends Model {
 	 * Notification type a follow of each object type delivers
 	 * (see Notifier::fanout_post_subscribers / fanout_reply_subscribers).
 	 */
-	const NOTIFICATION_TYPES = [
+	const NOTIFICATION_TYPES = array(
 		'space' => 'new_post_in_sub',
 		'post'  => 'reply_to_post',
-	];
+	);
 
 	/**
 	 * Set each item's `via` to the channel(s) the member will ACTUALLY be
@@ -204,7 +204,7 @@ class Subscription extends Model {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function attach_delivery( array $items, int $user_id ): array {
-		$by_type = [];
+		$by_type = array();
 		foreach ( $items as &$item ) {
 			$type = self::NOTIFICATION_TYPES[ $item['object_type'] ?? '' ] ?? '';
 			if ( '' === $type ) {
@@ -223,11 +223,11 @@ class Subscription extends Model {
 	public static function unsubscribe( int $user_id, string $object_type, int $object_id ): bool {
 		$result = false !== static::db()->delete(
 			static::table(),
-			[
+			array(
 				'user_id'     => $user_id,
 				'object_type' => $object_type,
 				'object_id'   => $object_id,
-			]
+			)
 		);
 		self::reset_memo();
 		return $result;
@@ -240,7 +240,7 @@ class Subscription extends Model {
 	 *
 	 * @var array<string, bool>
 	 */
-	private static array $memo = [];
+	private static array $memo = array();
 
 	/**
 	 * Whether the memo reset is registered with Cache::flush().
@@ -253,7 +253,7 @@ class Subscription extends Model {
 	 * Empty the subscription memo. Called from subscribe()/unsubscribe().
 	 */
 	public static function reset_memo(): void {
-		self::$memo = [];
+		self::$memo = array();
 	}
 
 	/**
@@ -278,9 +278,9 @@ class Subscription extends Model {
 		$subscribed = static::db()->get_col(
 			static::db()->prepare(
 				'SELECT object_id FROM ' . static::table() . " WHERE user_id = %d AND object_type = %s AND object_id IN ({$placeholders})",
-				array_merge( [ $user_id, $object_type ], $object_ids )
+				array_merge( array( $user_id, $object_type ), $object_ids )
 			)
-		) ?: [];
+		) ?: array();
 
 		$hit = array_fill_keys( array_map( 'intval', $subscribed ), true );
 		foreach ( $object_ids as $oid ) {
@@ -296,7 +296,7 @@ class Subscription extends Model {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$memo = [];
+					self::$memo = array();
 				}
 			);
 		}

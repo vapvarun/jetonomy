@@ -25,33 +25,33 @@ class Bookmarks_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/bookmarks',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'list_items' ],
+					'callback'            => array( $this, 'list_items' ),
 					// A3 cleanup: handler enforces login via require_auth(); the
 					// callback now mirrors that so the manifest's `auth` field is
 					// accurate ("login_required" instead of "login_required_handler").
 					'permission_callback' => function () {
 						return is_user_logged_in(); },
 					'args'                => $this->get_collection_params(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'toggle_item' ],
+					'callback'            => array( $this, 'toggle_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-			]
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/bookmarks/(?P<post_id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'delete_item' ],
+				'callback'            => array( $this, 'delete_item' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-			]
+			)
 		);
 	}
 
@@ -73,7 +73,7 @@ class Bookmarks_Controller extends Base_Controller {
 
 		$items = array_map(
 			function ( $post ) {
-				return [
+				return array(
 					'id'            => (int) $post->id,
 					'title'         => $post->title ?? '',
 					'slug'          => $post->slug ?? '',
@@ -82,17 +82,17 @@ class Bookmarks_Controller extends Base_Controller {
 					'reply_count'   => (int) ( $post->reply_count ?? 0 ),
 					'bookmarked_at' => $post->bookmarked_at ?? null,
 					'created_at'    => $post->created_at ?? null,
-				];
+				);
 			},
 			$posts
 		);
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
-			]
+			)
 		);
 	}
 
@@ -133,10 +133,10 @@ class Bookmarks_Controller extends Base_Controller {
 		Bookmark::remove( $user_id, $post_id );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted' => true,
 				'post_id' => $post_id,
-			],
+			),
 			200
 		);
 	}

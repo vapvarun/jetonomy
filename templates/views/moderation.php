@@ -39,10 +39,10 @@ if ( ! $is_admin && ! Moderation_Permissions::can_view_any_queue( $user_id ) ) {
 	status_header( 403 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'message' => __( 'You do not have permission to view this page.', 'jetonomy' ),
 			'tone'    => 'forbidden',
-		]
+		)
 	);
 	return;
 }
@@ -66,7 +66,7 @@ if ( $paged > $total_pages ) {
 $offset = ( $paged - 1 ) * $per_page;
 $flags  = $total > 0
 	? Moderation_Service::list_pending_flags( $user_id, null, $per_page, $offset )
-	: [];
+	: array();
 
 // The Banned tab needs a STRICTER cap than the page itself. The page admits
 // anyone with can_view_any_queue() - which includes a space moderator who holds
@@ -81,7 +81,7 @@ $jt_can_manage_bans = user_can( $user_id, 'jetonomy_moderate' );
 // flags list is already scoped per-viewer by Moderation_Service; the banned
 // list is not, hence the extra gate above.
 $jt_view = sanitize_key( wp_unslash( $_GET['view'] ?? 'flags' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-if ( ! in_array( $jt_view, [ 'flags', 'approvals', 'trash', 'banned' ], true ) ) {
+if ( ! in_array( $jt_view, array( 'flags', 'approvals', 'trash', 'banned' ), true ) ) {
 	$jt_view = 'flags';
 }
 if ( 'banned' === $jt_view && ! $jt_can_manage_bans ) {
@@ -110,7 +110,7 @@ $jt_held_total   = $jt_held_posts + $jt_held_replies;
 // splits them, so this keeps one query per model and one mental model on both
 // surfaces.
 $jt_kind = sanitize_key( wp_unslash( $_GET['kind'] ?? 'post' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-if ( ! in_array( $jt_kind, [ 'post', 'reply' ], true ) ) {
+if ( ! in_array( $jt_kind, array( 'post', 'reply' ), true ) ) {
 	$jt_kind = 'post';
 }
 // The Trash panel reuses the approvals list, card and pagination - same
@@ -122,8 +122,8 @@ $jt_list_replies = $jt_is_trash ? Moderation_Service::count_trashed( $user_id, '
 $jt_held_count = 'reply' === $jt_kind ? $jt_list_replies : $jt_list_posts;
 $jt_held_pages = max( 1, (int) ceil( $jt_held_count / $per_page ) );
 $jt_held_paged = min( $jt_raw_paged, $jt_held_pages );
-$jt_held       = [];
-if ( in_array( $jt_view, [ 'approvals', 'trash' ], true ) && $jt_held_count > 0 ) {
+$jt_held       = array();
+if ( in_array( $jt_view, array( 'approvals', 'trash' ), true ) && $jt_held_count > 0 ) {
 	$jt_held = $jt_is_trash
 		? Moderation_Service::list_trashed( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page )
 		: Moderation_Service::list_pending_approvals( $user_id, $jt_kind, null, $per_page, ( $jt_held_paged - 1 ) * $per_page );
@@ -132,8 +132,8 @@ if ( in_array( $jt_view, [ 'approvals', 'trash' ], true ) && $jt_held_count > 0 
 // Batch-resolve everything the cards need: parent posts (replies only), spaces,
 // and the WP user cache. Done here rather than inside approval-card.php so a
 // full page of 25 costs three queries instead of seventy-five.
-$jt_held_parents = [];
-$jt_held_spaces  = [];
+$jt_held_parents = array();
+$jt_held_spaces  = array();
 if ( $jt_held ) {
 	if ( 'reply' === $jt_kind ) {
 		$jt_held_parents = Post::list_by_ids( array_map( static fn( $r ) => (int) $r->post_id, $jt_held ) );
@@ -149,12 +149,12 @@ if ( $jt_held ) {
 	if ( $jt_held_authors ) {
 		// Primes WP's user cache so each card's get_userdata() is served from memory.
 		get_users(
-			[
+			array(
 				'include'     => $jt_held_authors,
 				'fields'      => 'all_with_meta',
 				'number'      => count( $jt_held_authors ),
 				'count_total' => false,
-			]
+			)
 		);
 	}
 }
@@ -208,20 +208,20 @@ $jt_ban_types = array(
 
 // Reason → human label map. Source of truth for the badge text;
 // matches the enum at class-moderation-controller.php:106.
-$jt_reason_labels = [
+$jt_reason_labels = array(
 	'spam'       => __( 'Spam', 'jetonomy' ),
 	'offensive'  => __( 'Offensive', 'jetonomy' ),
 	'off_topic'  => __( 'Off-topic', 'jetonomy' ),
 	'harassment' => __( 'Harassment', 'jetonomy' ),
 	'other'      => __( 'Other', 'jetonomy' ),
-];
+);
 
-$crumbs = [
-	[
+$crumbs = array(
+	array(
 		'label' => __( 'Moderation', 'jetonomy' ),
 		'url'   => '',
-	],
-];
+	),
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -315,10 +315,10 @@ $crumbs = [
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'message' => sprintf( /* translators: %s: plural member label. */ __( 'No %s are currently banned or silenced.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 					'variant' => 'compact',
-				]
+				)
 			);
 			?>
 		<?php else : ?>
@@ -368,12 +368,12 @@ $crumbs = [
 			// more than one page of restrictions can reach every one of them.
 			\Jetonomy\Template_Loader::partial(
 				'pagination-nav',
-				[
+				array(
 					'paged' => $jt_ban_paged,
 					'pages' => $jt_ban_pages,
 					'base'  => add_query_arg( 'view', 'banned', \Jetonomy\route_url( 'moderation' ) ),
 					'label' => sprintf( /* translators: %s: plural member label. */ __( 'Banned %s pagination', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
-				]
+				)
 			);
 			?>
 		<?php endif; ?>
@@ -382,16 +382,16 @@ $crumbs = [
 		<?php // Sub-tabs: posts and replies are counted and paginated separately. ?>
 		<nav class="jt-subtabs" aria-label="<?php esc_attr_e( 'Content type', 'jetonomy' ); ?>">
 			<?php
-			$jt_kind_tabs = [
-				'post'  => [ \Jetonomy\jetonomy_label( 'topic', true ), $jt_list_posts ],
-				'reply' => [ \Jetonomy\jetonomy_label( 'reply', true ), $jt_list_replies ],
-			];
+			$jt_kind_tabs = array(
+				'post'  => array( \Jetonomy\jetonomy_label( 'topic', true ), $jt_list_posts ),
+				'reply' => array( \Jetonomy\jetonomy_label( 'reply', true ), $jt_list_replies ),
+			);
 			foreach ( $jt_kind_tabs as $jt_kind_key => $jt_kind_meta ) :
 				$jt_kind_url = add_query_arg(
-					[
+					array(
 						'view' => $jt_view,
 						'kind' => $jt_kind_key,
-					],
+					),
 					\Jetonomy\route_url( 'moderation' )
 				);
 				?>
@@ -415,7 +415,7 @@ $crumbs = [
 					? sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 					: sprintf( /* translators: %s: plural label of the items in this tab (topics or replies). */ __( 'No %s are waiting for approval.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 			}
-			\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_held_empty ] );
+			\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', array( 'message' => $jt_held_empty ) );
 			?>
 		<?php else : ?>
 			<div class="jt-card jt-card-flush" data-jt-mod-queue="approvals"<?php echo $jt_is_trash ? ' data-empty-text="' . esc_attr__( 'The trash is empty.', 'jetonomy' ) . '"' : ''; ?>>
@@ -437,14 +437,14 @@ $crumbs = [
 					}
 					\Jetonomy\Template_Loader::partial(
 						'moderation/approval-card',
-						[
+						array(
 							'item'        => $jt_item,
 							'kind'        => $jt_kind,
 							'space'       => $jt_item_space,
 							'parent_post' => $jt_parent,
 							'base'        => $base,
 							'mode'        => $jt_view,
-						]
+						)
 					);
 				endforeach;
 				?>
@@ -453,18 +453,18 @@ $crumbs = [
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'pagination-nav',
-				[
+				array(
 					'paged' => $jt_held_paged,
 					'pages' => $jt_held_pages,
 					'base'  => add_query_arg(
-						[
+						array(
 							'view' => $jt_view,
 							'kind' => $jt_kind,
-						],
+						),
 						\Jetonomy\route_url( 'moderation' )
 					),
 					'label' => $jt_is_trash ? __( 'Trash pagination', 'jetonomy' ) : __( 'Awaiting approval pagination', 'jetonomy' ),
-				]
+				)
 			);
 			?>
 		<?php endif; ?>
@@ -474,7 +474,7 @@ $crumbs = [
 		$jt_empty_message = $is_admin
 			? __( 'No pending flags anywhere. Your community is clean.', 'jetonomy' )
 			: __( 'No pending flags in the spaces you moderate.', 'jetonomy' );
-		\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => $jt_empty_message ] );
+		\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', array( 'message' => $jt_empty_message ) );
 		?>
 	<?php else : ?>
 		<?php
@@ -554,12 +554,12 @@ $crumbs = [
 		<?php
 		\Jetonomy\Template_Loader::partial(
 			'pagination-nav',
-			[
+			array(
 				'paged' => $paged,
 				'pages' => $total_pages,
 				'base'  => \Jetonomy\route_url( 'moderation' ),
 				'label' => __( 'Moderation queue pagination', 'jetonomy' ),
-			]
+			)
 		);
 		?>
 	<?php endif; ?>

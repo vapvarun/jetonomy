@@ -47,7 +47,7 @@ class REST_Tests {
 	 *
 	 * @var array<int, array<string,mixed>>
 	 */
-	private array $cleanup = [];
+	private array $cleanup = array();
 
 	/**
 	 * Post fixture created by H48, reused as H49's reply parent.
@@ -136,7 +136,7 @@ class REST_Tests {
 
 		if ( ! isset( $this->space ) ) {
 			\WP_CLI::warning( '  [REST] No active space found — skipping REST tests. Run demo-seed first.' );
-			return [ 'pass' => 0, 'fail' => 1, 'skipped' => 0 ];
+			return array( 'pass' => 0, 'fail' => 1, 'skipped' => 0 );
 		}
 
 		$this->run_group_a();
@@ -164,7 +164,7 @@ class REST_Tests {
 		// Restore admin as the current user.
 		wp_set_current_user( $this->admin_id );
 
-		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
+		return array( 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped );
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
@@ -178,7 +178,7 @@ class REST_Tests {
 		global $wpdb;
 
 		// Resolve admin.
-		$admin_ids      = get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] );
+		$admin_ids      = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
 		$this->admin_id = (int) ( $admin_ids[0] ?? 1 );
 		wp_set_current_user( $this->admin_id );
 
@@ -218,13 +218,13 @@ class REST_Tests {
 
 		// Create TL0 subscriber for permission tests.
 		$ts                 = time();
-		$uid                = wp_insert_user( [
+		$uid                = wp_insert_user( array(
 			'user_login'   => 'jt_qa_tl0_' . $ts,
 			'user_pass'    => wp_generate_password( 16 ),
 			'user_email'   => 'jt-qa-tl0-' . $ts . '@test.local',
 			'role'         => 'subscriber',
 			'display_name' => 'QA Test User',
-		] );
+		) );
 		$this->test_user_id = ( $uid && ! is_wp_error( $uid ) ) ? (int) $uid : 0;
 	}
 
@@ -242,11 +242,11 @@ class REST_Tests {
 		$title     = 'QA REST Post ' . time();
 
 		// 1. Create post.
-		$r = $this->rest( 'POST', "/spaces/{$space_id}/posts", [
+		$r = $this->rest( 'POST', "/spaces/{$space_id}/posts", array(
 			'title'   => $title,
 			'content' => '<p>REST QA test post content.</p>',
 			'type'    => 'discussion',
-		] );
+		) );
 		$data = $r->get_data();
 		$this->check( 'A1: POST /spaces/{id}/posts → 201', 201 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'A1: response has id', ! empty( $data['id'] ), 'missing id' );
@@ -260,12 +260,12 @@ class REST_Tests {
 		}
 
 		$this->post_id = (int) $data['id'];
-		$this->cleanup[] = [ 'type' => 'post_rest', 'id' => $this->post_id ];
+		$this->cleanup[] = array( 'type' => 'post_rest', 'id' => $this->post_id );
 
 		// 2. Edit post.
-		$r = $this->rest( 'PATCH', "/posts/{$this->post_id}", [
+		$r = $this->rest( 'PATCH', "/posts/{$this->post_id}", array(
 			'content' => '<p>REST QA edited content.</p>',
-		] );
+		) );
 		$data = $r->get_data();
 		$this->check( 'A2: PATCH /posts/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'A2: content was updated', isset( $data['id'] ), 'response missing id' );
@@ -292,24 +292,24 @@ class REST_Tests {
 		// This is necessary so Group B can create replies on the same post.
 		global $wpdb;
 		$posts_t = table( 'posts' );
-		$wpdb->update( $posts_t, [ 'is_closed' => 0 ], [ 'id' => $this->post_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->update( $posts_t, array( 'is_closed' => 0 ), array( 'id' => $this->post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// 6+7. Move post (requires a second space).
 		if ( $this->other_space ) {
 			$target_id = (int) $this->other_space->id;
 
 			// 6. Move to other space.
-			$r = $this->rest( 'POST', "/posts/{$this->post_id}/move", [
+			$r = $this->rest( 'POST', "/posts/{$this->post_id}/move", array(
 				'target_space_id' => $target_id,
-			] );
+			) );
 			$data = $r->get_data();
 			$this->check( 'A6: POST /posts/{id}/move → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'A6: space_id changed in response', isset( $data['space_id'] ) && (int) $data['space_id'] === $target_id, "space_id={$data['space_id']}" );
 
 			// 7. Move back.
-			$r = $this->rest( 'POST', "/posts/{$this->post_id}/move", [
+			$r = $this->rest( 'POST', "/posts/{$this->post_id}/move", array(
 				'target_space_id' => $space_id,
-			] );
+			) );
 			$data = $r->get_data();
 			$this->check( 'A7: POST /posts/{id}/move back → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'A7: space_id restored', isset( $data['space_id'] ) && (int) $data['space_id'] === $space_id, "space_id={$data['space_id']}" );
@@ -335,9 +335,9 @@ class REST_Tests {
 		}
 
 		// 8. Create reply.
-		$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", [
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", array(
 			'content' => '<p>REST QA reply content.</p>',
-		] );
+		) );
 		$data = $r->get_data();
 		$this->check( 'B8: POST /posts/{id}/replies → 201', 201 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'B8: response has id', ! empty( $data['id'] ), 'missing id' );
@@ -348,12 +348,12 @@ class REST_Tests {
 		}
 
 		$this->reply_id  = (int) $data['id'];
-		$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => $this->reply_id ];
+		$this->cleanup[] = array( 'type' => 'reply_rest', 'id' => $this->reply_id );
 
 		// 9. Edit reply.
-		$r = $this->rest( 'PATCH', "/replies/{$this->reply_id}", [
+		$r = $this->rest( 'PATCH', "/replies/{$this->reply_id}", array(
 			'content' => '<p>REST QA edited reply.</p>',
-		] );
+		) );
 		$data = $r->get_data();
 		$this->check( 'B9: PATCH /replies/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'B9: response has id', isset( $data['id'] ), 'response missing id' );
@@ -398,36 +398,36 @@ class REST_Tests {
 		// space + post + reply so this check exercises accept correctly, then
 		// register all three for cleanup (reply, post, space — reversed order).
 		$qa_suffix     = time();
-		$qa_space      = $this->rest( 'POST', '/spaces', [
+		$qa_space      = $this->rest( 'POST', '/spaces', array(
 			'title' => 'QA REST Accept Space ' . $qa_suffix,
 			'type'  => 'qa',
-		] );
+		) );
 		$qa_space_data = $qa_space->get_data();
 
 		if ( 201 !== $qa_space->get_status() || empty( $qa_space_data['id'] ) ) {
 			$this->check( 'B10: Q&A space created for accept test', false, wp_json_encode( $qa_space_data ) );
 		} else {
 			$qa_space_id     = (int) $qa_space_data['id'];
-			$this->cleanup[] = [ 'type' => 'space_rest', 'id' => $qa_space_id ];
+			$this->cleanup[] = array( 'type' => 'space_rest', 'id' => $qa_space_id );
 
-			$qa_post    = $this->rest( 'POST', "/spaces/{$qa_space_id}/posts", [
+			$qa_post    = $this->rest( 'POST', "/spaces/{$qa_space_id}/posts", array(
 				'title'   => 'QA REST Accept Post ' . $qa_suffix,
 				'content' => '<p>Question awaiting an accepted answer.</p>',
 				'type'    => 'discussion',
-			] );
+			) );
 			$qa_post_id = (int) ( $qa_post->get_data()['id'] ?? 0 );
 			if ( $qa_post_id ) {
-				$this->cleanup[] = [ 'type' => 'post_rest', 'id' => $qa_post_id ];
+				$this->cleanup[] = array( 'type' => 'post_rest', 'id' => $qa_post_id );
 			}
 
 			$qa_reply_id = 0;
 			if ( $qa_post_id ) {
-				$qa_reply    = $this->rest( 'POST', "/posts/{$qa_post_id}/replies", [
+				$qa_reply    = $this->rest( 'POST', "/posts/{$qa_post_id}/replies", array(
 					'content' => '<p>The accepted answer.</p>',
-				] );
+				) );
 				$qa_reply_id = (int) ( $qa_reply->get_data()['id'] ?? 0 );
 				if ( $qa_reply_id ) {
-					$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => $qa_reply_id ];
+					$this->cleanup[] = array( 'type' => 'reply_rest', 'id' => $qa_reply_id );
 				}
 			}
 
@@ -448,20 +448,20 @@ class REST_Tests {
 		}
 
 		// 11. Create second reply for the split test.
-		$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", [
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", array(
 			'content' => '<p>REST QA split-test reply.</p>',
-		] );
+		) );
 		$data = $r->get_data();
 		$this->check( 'B11: second reply created for split → 201', 201 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 		if ( ! empty( $data['id'] ) ) {
 			$this->reply2_id = (int) $data['id'];
-			$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => $this->reply2_id ];
+			$this->cleanup[] = array( 'type' => 'reply_rest', 'id' => $this->reply2_id );
 
 			// 12. Split second reply into a new topic.
-			$r = $this->rest( 'POST', "/replies/{$this->reply2_id}/split", [
+			$r = $this->rest( 'POST', "/replies/{$this->reply2_id}/split", array(
 				'title' => 'QA REST Split Topic ' . time(),
-			] );
+			) );
 			$data = $r->get_data();
 			$this->check( 'B12: POST /replies/{id}/split → 201', 201 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'B12: split response has id', ! empty( $data['id'] ), 'missing id in split response' );
@@ -471,7 +471,7 @@ class REST_Tests {
 				$this->split_post_id = (int) $data['id'];
 				// Split post cleaned up first (before reply2).
 				// We prepend to cleanup so it runs before the reply it was split from.
-				array_unshift( $this->cleanup, [ 'type' => 'post_rest', 'id' => $this->split_post_id ] );
+				array_unshift( $this->cleanup, array( 'type' => 'post_rest', 'id' => $this->split_post_id ) );
 			}
 		} else {
 			$this->skip( 'B12: split', 'second reply not created' );
@@ -496,7 +496,7 @@ class REST_Tests {
 		}
 
 		// 13. Upvote post.
-		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => 1 ] );
+		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ) );
 		$data = $r->get_data();
 		$this->check( 'C13: POST /posts/{id}/vote (up) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'C13: response has score', array_key_exists( 'score', $data ), 'missing score key' );
@@ -509,7 +509,7 @@ class REST_Tests {
 		if ( $this->test_user_id ) {
 			wp_set_current_user( $this->test_user_id );
 		}
-		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => -1 ] );
+		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => -1 ) );
 		$data = $r->get_data();
 		if ( $this->test_user_id ) {
 			wp_set_current_user( $this->admin_id );
@@ -523,7 +523,7 @@ class REST_Tests {
 
 		// 16. Upvote reply.
 		if ( $this->reply_id ) {
-			$r = $this->rest( 'POST', "/replies/{$this->reply_id}/vote", [ 'value' => 1 ] );
+			$r = $this->rest( 'POST', "/replies/{$this->reply_id}/vote", array( 'value' => 1 ) );
 			$data = $r->get_data();
 			$this->check( 'C16: POST /replies/{id}/vote (up) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'C16: response has score', array_key_exists( 'score', $data ), 'missing score key' );
@@ -553,22 +553,22 @@ class REST_Tests {
 		}
 
 		// 18. Subscribe to post.
-		$r = $this->rest( 'POST', '/subscriptions', [
+		$r = $this->rest( 'POST', '/subscriptions', array(
 			'object_type' => 'post',
 			'object_id'   => $this->post_id,
-		] );
+		) );
 		$data = $r->get_data();
-		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
+		$ok   = in_array( $r->get_status(), array( 200, 201 ), true );
 		$this->check( 'D18: POST /subscriptions (post) → 200/201', $ok, "HTTP {$r->get_status()}" );
 		$this->check( 'D18: response has id', ! empty( $data['id'] ), 'missing id' );
 
 		$post_sub_id = ! empty( $data['id'] ) ? (int) $data['id'] : 0;
 
 		// 19. List subscriptions — verify our sub appears.
-		$r = $this->rest( 'GET', '/subscriptions', [
+		$r = $this->rest( 'GET', '/subscriptions', array(
 			'object_type' => 'post',
 			'object_id'   => $this->post_id,
-		] );
+		) );
 		$data = $r->get_data();
 		$this->check( 'D19: GET /subscriptions → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'D19: response has data array', isset( $data['data'] ) && is_array( $data['data'] ), 'missing data array' );
@@ -594,12 +594,12 @@ class REST_Tests {
 
 		// 21. Subscribe to space.
 		$space_id = (int) $this->space->id;
-		$r = $this->rest( 'POST', '/subscriptions', [
+		$r = $this->rest( 'POST', '/subscriptions', array(
 			'object_type' => 'space',
 			'object_id'   => $space_id,
-		] );
+		) );
 		$data = $r->get_data();
-		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
+		$ok   = in_array( $r->get_status(), array( 200, 201 ), true );
 		$this->check( 'D21: POST /subscriptions (space) → 200/201', $ok, "HTTP {$r->get_status()}" );
 
 		$space_sub_id = ! empty( $data['id'] ) ? (int) $data['id'] : 0;
@@ -625,13 +625,13 @@ class REST_Tests {
 
 		if ( $this->post_id ) {
 			// 23. Bookmark post (toggle on).
-			$r = $this->rest( 'POST', '/bookmarks', [ 'post_id' => $this->post_id ] );
+			$r = $this->rest( 'POST', '/bookmarks', array( 'post_id' => $this->post_id ) );
 			$data = $r->get_data();
 			$this->check( 'E23: POST /bookmarks (on) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'E23: bookmarked = true', ! empty( $data['bookmarked'] ), 'bookmarked was not true' );
 
 			// 24. Bookmark toggle off.
-			$r = $this->rest( 'POST', '/bookmarks', [ 'post_id' => $this->post_id ] );
+			$r = $this->rest( 'POST', '/bookmarks', array( 'post_id' => $this->post_id ) );
 			$data = $r->get_data();
 			$this->check( 'E24: POST /bookmarks (off) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 			$this->check( 'E24: bookmarked = false', empty( $data['bookmarked'] ), 'bookmarked was not false' );
@@ -643,40 +643,40 @@ class REST_Tests {
 			if ( $this->test_user_id ) {
 				wp_set_current_user( $this->test_user_id );
 			}
-			$r = $this->rest( 'POST', '/flags', [
+			$r = $this->rest( 'POST', '/flags', array(
 				'object_type' => 'post',
 				'object_id'   => $this->post_id,
 				'reason'      => 'other',
 				'description' => 'REST QA test flag',
-			] );
+			) );
 			$data = $r->get_data();
-			$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
+			$ok   = in_array( $r->get_status(), array( 200, 201 ), true );
 			$this->check( 'E25: POST /flags → 200/201', $ok, "HTTP {$r->get_status()}" );
 			$this->check( 'E25: response has id', ! empty( $data['id'] ), 'missing id' );
 
 			$flag_id = ! empty( $data['id'] ) ? (int) $data['id'] : 0;
 			if ( $flag_id ) {
-				$this->cleanup[] = [ 'type' => 'flag_db', 'id' => $flag_id ];
+				$this->cleanup[] = array( 'type' => 'flag_db', 'id' => $flag_id );
 			}
 
 			// 25b. object_type=user - the third enum member had no coverage.
-			$r = $this->rest( 'POST', '/flags', [
+			$r = $this->rest( 'POST', '/flags', array(
 				'object_type' => 'user',
 				'object_id'   => $this->admin_id,
 				'reason'      => 'harassment',
-			] );
+			) );
 			$data = $r->get_data();
-			$this->check( 'E25b: POST /flags (user target) → 200/201', in_array( $r->get_status(), [ 200, 201 ], true ), "HTTP {$r->get_status()}" );
+			$this->check( 'E25b: POST /flags (user target) → 200/201', in_array( $r->get_status(), array( 200, 201 ), true ), "HTTP {$r->get_status()}" );
 			if ( ! empty( $data['id'] ) ) {
-				$this->cleanup[] = [ 'type' => 'flag_db', 'id' => (int) $data['id'] ];
+				$this->cleanup[] = array( 'type' => 'flag_db', 'id' => (int) $data['id'] );
 			}
 
 			// 25c. Nonexistent target must 404, never 201.
-			$r = $this->rest( 'POST', '/flags', [
+			$r = $this->rest( 'POST', '/flags', array(
 				'object_type' => 'post',
 				'object_id'   => 999999999,
 				'reason'      => 'spam',
-			] );
+			) );
 			$this->check( 'E25c: POST /flags (missing target) → 404', 404 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 			if ( $this->test_user_id ) {
@@ -684,16 +684,16 @@ class REST_Tests {
 			}
 
 			// 25d. Self-report is server-rejected, not just UI-hidden.
-			$r = $this->rest( 'POST', '/flags', [
+			$r = $this->rest( 'POST', '/flags', array(
 				'object_type' => 'post',
 				'object_id'   => $this->post_id,
 				'reason'      => 'spam',
-			] );
+			) );
 			$this->check( 'E25d: POST /flags (self-report) → 400', 400 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 			// 26. Resolve flag.
 			if ( $flag_id ) {
-				$r = $this->rest( 'POST', "/moderation/flags/{$flag_id}/resolve", [ 'status' => 'dismissed' ] );
+				$r = $this->rest( 'POST', "/moderation/flags/{$flag_id}/resolve", array( 'status' => 'dismissed' ) );
 				$data = $r->get_data();
 				$this->check( 'E26: POST /moderation/flags/{id}/resolve → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 				$this->check( 'E26: resolved = true', ! empty( $data['resolved'] ), 'resolved was not true' );
@@ -708,25 +708,25 @@ class REST_Tests {
 		}
 
 		// 27. Update user profile (display_name via bio field).
-		$r = $this->rest( 'PATCH', '/users/me', [
+		$r = $this->rest( 'PATCH', '/users/me', array(
 			'bio' => 'REST QA test bio ' . time(),
-		] );
+		) );
 		$data = $r->get_data();
 		$this->check( 'E27: PATCH /users/me → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'E27: response has user_id or id', isset( $data['id'] ) || isset( $data['user_id'] ), 'response missing id/user_id' );
 
 		// Queue cleanup: restore original bio.
-		$this->cleanup[] = [ 'type' => 'restore_bio', 'id' => $this->admin_id ];
+		$this->cleanup[] = array( 'type' => 'restore_bio', 'id' => $this->admin_id );
 
 		// 27b. Email opt-out round-trips through PATCH /users/me (1.5.0).
 		// The verification reminder honours jetonomy_email_opt_out user meta;
 		// this is the REST write path behind the profile master toggle.
-		$r = $this->rest( 'PATCH', '/users/me', [ 'email_opt_out' => true ] );
+		$r = $this->rest( 'PATCH', '/users/me', array( 'email_opt_out' => true ) );
 		$set = (bool) get_user_meta( $this->admin_id, 'jetonomy_email_opt_out', true );
 		$this->check( 'E27b: PATCH email_opt_out=true sets meta', 200 === $r->get_status() && $set, 'meta not set' );
 		$me = $this->rest( 'GET', '/users/me' )->get_data();
 		$this->check( 'E27b: GET /users/me reflects email_opt_out', ! empty( $me['email_opt_out'] ), 'GET did not echo opt-out' );
-		$r = $this->rest( 'PATCH', '/users/me', [ 'email_opt_out' => false ] );
+		$r = $this->rest( 'PATCH', '/users/me', array( 'email_opt_out' => false ) );
 		$cleared = '' === (string) get_user_meta( $this->admin_id, 'jetonomy_email_opt_out', true );
 		$this->check( 'E27b: PATCH email_opt_out=false clears meta', 200 === $r->get_status() && $cleared, 'meta not cleared' );
 
@@ -737,7 +737,7 @@ class REST_Tests {
 		$this->check( 'E28: success = true', ! empty( $data['success'] ), 'success was not true' );
 
 		// 29. List notifications.
-		$r = $this->rest( 'GET', '/notifications', [ 'limit' => 5 ] );
+		$r = $this->rest( 'GET', '/notifications', array( 'limit' => 5 ) );
 		$data = $r->get_data();
 		$this->check( 'E29: GET /notifications → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'E29: response has data array', isset( $data['data'] ) && is_array( $data['data'] ), 'missing data array' );
@@ -745,15 +745,15 @@ class REST_Tests {
 		// 30. Space join as test user.
 		if ( $this->test_user_id ) {
 			$space_id = (int) $this->space->id;
-			$r = $this->rest( 'POST', "/spaces/{$space_id}/members", [], $this->test_user_id );
+			$r = $this->rest( 'POST', "/spaces/{$space_id}/members", array(), $this->test_user_id );
 			$status = $r->get_status();
 			// 200 = already member (or open join), 201 = just joined, 202 = pending approval, 409 = already member.
-			$join_ok = in_array( $status, [ 200, 201, 202, 409 ], true );
+			$join_ok = in_array( $status, array( 200, 201, 202, 409 ), true );
 			$this->check( 'E30: POST /spaces/{id}/members (join) → 200/201/202/409', $join_ok, "HTTP {$status}" );
 
 			// Register cleanup only if actually joined (not approval/invite spaces).
-			if ( in_array( $status, [ 200, 201 ], true ) ) {
-				$this->cleanup[] = [ 'type' => 'space_member_db', 'space_id' => $space_id, 'user_id' => $this->test_user_id ];
+			if ( in_array( $status, array( 200, 201 ), true ) ) {
+				$this->cleanup[] = array( 'type' => 'space_member_db', 'space_id' => $space_id, 'user_id' => $this->test_user_id );
 			}
 		} else {
 			$this->skip( 'E30: space join', 'test user not created' );
@@ -786,7 +786,7 @@ class REST_Tests {
 			return is_array( $d ) ? (string) ( $d['code'] ?? '' ) : '';
 		};
 		$bn_owns_bridge = class_exists( '\\BuddyNext\\App\\AppConnectService' );
-		$r              = $this->rest( 'POST', '/auth/app-connect', [ 'scheme' => 'nope', 'bridge_token' => 'nope' ], $this->admin_id );
+		$r              = $this->rest( 'POST', '/auth/app-connect', array( 'scheme' => 'nope', 'bridge_token' => 'nope' ), $this->admin_id );
 		$code           = $err_code( $r );
 
 		if ( $bn_owns_bridge ) {
@@ -808,7 +808,7 @@ class REST_Tests {
 			// Correct scheme, bogus bridge token: the one-time token proves the
 			// request came from a freshly rendered approve screen, so a forged
 			// or replayed one must not mint.
-			$r2    = $this->rest( 'POST', '/auth/app-connect', [ 'scheme' => 'jetonomyapp', 'bridge_token' => 'not-a-real-token' ], $this->admin_id );
+			$r2    = $this->rest( 'POST', '/auth/app-connect', array( 'scheme' => 'jetonomyapp', 'bridge_token' => 'not-a-real-token' ), $this->admin_id );
 			$code2 = $err_code( $r2 );
 			$this->check(
 				'E31b: valid scheme + forged bridge token → 410, nothing minted',
@@ -824,7 +824,7 @@ class REST_Tests {
 		$public_slug  = $wpdb->get_var( "SELECT slug FROM {$wpdb->prefix}jt_spaces WHERE visibility = 'public' ORDER BY id LIMIT 1" );
 		$private_slug = $wpdb->get_var( "SELECT slug FROM {$wpdb->prefix}jt_spaces WHERE visibility IN ('private','hidden') ORDER BY id LIMIT 1" );
 		if ( $public_slug ) {
-			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $public_slug ) . '/feed/', [ 'timeout' => 10 ] );
+			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $public_slug ) . '/feed/', array( 'timeout' => 10 ) );
 			$code = (int) wp_remote_retrieve_response_code( $feed );
 			$body = (string) wp_remote_retrieve_body( $feed );
 			$type = (string) wp_remote_retrieve_header( $feed, 'content-type' );
@@ -848,7 +848,7 @@ class REST_Tests {
 		$sf_author = $wpdb->get_var( "SELECT author_id FROM {$wpdb->prefix}jt_posts WHERE status = 'publish' AND is_anonymous = 0 GROUP BY author_id ORDER BY COUNT(*) DESC LIMIT 1" );
 		if ( $sf_author ) {
 			$sf_url  = \Jetonomy\base_url() . '/search/?author_id=' . (int) $sf_author;
-			$sf_res  = wp_remote_get( $sf_url, [ 'timeout' => 10 ] );
+			$sf_res  = wp_remote_get( $sf_url, array( 'timeout' => 10 ) );
 			$sf_body = (string) wp_remote_retrieve_body( $sf_res );
 			$sf_hits = preg_match( '/(\d+)\s+results?/i', wp_strip_all_tags( $sf_body ), $sf_m ) ? (int) $sf_m[1] : 0;
 
@@ -858,7 +858,7 @@ class REST_Tests {
 				"author {$sf_author} → {$sf_hits} results"
 			);
 
-			$sf_bad  = wp_remote_get( \Jetonomy\base_url() . '/search/?author=zzz-no-such-member-zzz', [ 'timeout' => 10 ] );
+			$sf_bad  = wp_remote_get( \Jetonomy\base_url() . '/search/?author=zzz-no-such-member-zzz', array( 'timeout' => 10 ) );
 			$sf_btxt = wp_strip_all_tags( (string) wp_remote_retrieve_body( $sf_bad ) );
 			$sf_bhit = preg_match( '/(\d+)\s+results?/i', $sf_btxt, $sf_bm ) ? (int) $sf_bm[1] : 0;
 
@@ -882,7 +882,7 @@ class REST_Tests {
 		// broken state returned 200 with an HTML page: a status-only check
 		// passes it, which is exactly how this shipped unnoticed.
 		$sitemap_url = \Jetonomy\base_url() . '-sitemap.xml';
-		$sm   = wp_remote_get( $sitemap_url, [ 'timeout' => 10 ] );
+		$sm   = wp_remote_get( $sitemap_url, array( 'timeout' => 10 ) );
 		$code = (int) wp_remote_retrieve_response_code( $sm );
 		$body = (string) wp_remote_retrieve_body( $sm );
 		$type = (string) wp_remote_retrieve_header( $sm, 'content-type' );
@@ -917,7 +917,7 @@ class REST_Tests {
 			$titles = array();
 			$offset = 0;
 			do {
-				$resp = $this->rest( 'GET', '/spaces', [ 'movable_by_me' => 1, 'limit' => 100, 'offset' => $offset ] );
+				$resp = $this->rest( 'GET', '/spaces', array( 'movable_by_me' => 1, 'limit' => 100, 'offset' => $offset ) );
 				$body = $resp->get_data();
 				$page = is_array( $body ) && isset( $body['data'] ) && is_array( $body['data'] ) ? $body['data'] : array();
 				$total = (int) ( $body['meta']['total'] ?? 0 );
@@ -966,7 +966,7 @@ class REST_Tests {
 			null === $claim_priority ? 'handler not registered on parse_request at all' : "registered at priority {$claim_priority}"
 		);
 		if ( $private_slug ) {
-			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $private_slug ) . '/feed/', [ 'timeout' => 10 ] );
+			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $private_slug ) . '/feed/', array( 'timeout' => 10 ) );
 			$code = (int) wp_remote_retrieve_response_code( $feed );
 			$this->check( 'E32: private space feed → 404 (no leak)', 404 === $code, "HTTP {$code}" );
 		} else {
@@ -987,7 +987,7 @@ class REST_Tests {
 			\Jetonomy\Models\SpaceMember::remove( $space_id, $this->test_user_id );
 			$req_id = \Jetonomy\Models\JoinRequest::create_request( $space_id, $this->test_user_id, 'QA approve' );
 
-			$r    = $this->rest( 'GET', "/spaces/{$space_id}/join-requests", [], $this->admin_id );
+			$r    = $this->rest( 'GET', "/spaces/{$space_id}/join-requests", array(), $this->admin_id );
 			$data = $r->get_data();
 			$this->check(
 				'E33: GET /spaces/{id}/join-requests → 200 list',
@@ -995,17 +995,17 @@ class REST_Tests {
 				"HTTP {$r->get_status()}"
 			);
 
-			$r        = $this->rest( 'POST', "/spaces/{$space_id}/join-requests/{$req_id}/approve", [], $this->admin_id );
+			$r        = $this->rest( 'POST', "/spaces/{$space_id}/join-requests/{$req_id}/approve", array(), $this->admin_id );
 			$approved = 200 === $r->get_status() && \Jetonomy\Models\SpaceMember::is_member( $space_id, $this->test_user_id );
 			$this->check( 'E33: POST join-requests/{id}/approve → 200 + member added', $approved, "HTTP {$r->get_status()}" );
 			if ( $approved ) {
-				$this->cleanup[] = [ 'type' => 'space_member_db', 'space_id' => $space_id, 'user_id' => $this->test_user_id ];
+				$this->cleanup[] = array( 'type' => 'space_member_db', 'space_id' => $space_id, 'user_id' => $this->test_user_id );
 			}
 
 			// Deny path: seed a second request, deny it, assert no membership granted.
 			\Jetonomy\Models\SpaceMember::remove( $space_id, $this->test_user_id );
 			$req2_id = \Jetonomy\Models\JoinRequest::create_request( $space_id, $this->test_user_id, 'QA deny' );
-			$r       = $this->rest( 'POST', "/spaces/{$space_id}/join-requests/{$req2_id}/deny", [], $this->admin_id );
+			$r       = $this->rest( 'POST', "/spaces/{$space_id}/join-requests/{$req2_id}/deny", array(), $this->admin_id );
 			$this->check(
 				'E33: POST join-requests/{id}/deny → 200, no membership',
 				200 === $r->get_status() && ! \Jetonomy\Models\SpaceMember::is_member( $space_id, $this->test_user_id ),
@@ -1033,7 +1033,7 @@ class REST_Tests {
 
 		// 31. Vote as guest.
 		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => 1 ], $guest );
+			$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ), $guest );
 			$this->check( 'F31: POST /posts/{id}/vote as guest → 401', 401 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
 			$this->skip( 'F31: guest vote', 'no post_id' );
@@ -1041,14 +1041,14 @@ class REST_Tests {
 
 		// 32. Create reply as guest.
 		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", [ 'content' => '<p>guest reply</p>' ], $guest );
+			$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", array( 'content' => '<p>guest reply</p>' ), $guest );
 			$this->check( 'F32: POST /posts/{id}/replies as guest → 401', 401 === $r->get_status(), "HTTP {$r->get_status()}" );
 		} else {
 			$this->skip( 'F32: guest reply', 'no post_id' );
 		}
 
 		// 33. Update profile as guest.
-		$r = $this->rest( 'PATCH', '/users/me', [ 'bio' => 'guest bio' ], $guest );
+		$r = $this->rest( 'PATCH', '/users/me', array( 'bio' => 'guest bio' ), $guest );
 		$this->check( 'F33: PATCH /users/me as guest → 401', 401 === $r->get_status(), "HTTP {$r->get_status()}" );
 	}
 
@@ -1078,22 +1078,22 @@ class REST_Tests {
 			$r = $this->rest(
 				'POST',
 				'/flags',
-				[
+				array(
 					'object_type' => 'reply',
 					'object_id'   => $this->reply_id,
 					'reason'      => 'other',
 					'description' => 'Group G permission test flag',
-				],
+				),
 				$this->test_user_id
 			);
 			$data    = $r->get_data();
 			$flag_id = ! empty( $data['id'] ) ? (int) $data['id'] : 0;
 
 			if ( $flag_id ) {
-				$this->cleanup[] = [ 'type' => 'flag_db', 'id' => $flag_id ];
+				$this->cleanup[] = array( 'type' => 'flag_db', 'id' => $flag_id );
 
 				// Try to resolve as non-moderator.
-				$r = $this->rest( 'POST', "/moderation/flags/{$flag_id}/resolve", [ 'status' => 'dismissed' ], $this->test_user_id );
+				$r = $this->rest( 'POST', "/moderation/flags/{$flag_id}/resolve", array( 'status' => 'dismissed' ), $this->test_user_id );
 				$this->check( 'G34: POST /moderation/flags/{id}/resolve as non-mod → 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
 			} else {
 				$this->skip( 'G34: permission test flag', 'flag creation failed' );
@@ -1138,11 +1138,11 @@ class REST_Tests {
 		$this->check( 'I2: feed has data envelope', is_array( $data ) && array_key_exists( 'data', $data ), 'missing data envelope' );
 
 		// I3: GET /feed?sort=new — alternate sort is accepted.
-		$r = $this->rest( 'GET', '/feed', [ 'sort' => 'new' ] );
+		$r = $this->rest( 'GET', '/feed', array( 'sort' => 'new' ) );
 		$this->check( 'I3: GET /feed?sort=new â 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 		// I4: GET /feed?sort=top — windowed top sort is accepted.
-		$r = $this->rest( 'GET', '/feed', [ 'sort' => 'top' ] );
+		$r = $this->rest( 'GET', '/feed', array( 'sort' => 'top' ) );
 		$this->check( 'I4: GET /feed?sort=top â 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 	}
 
@@ -1162,16 +1162,16 @@ class REST_Tests {
 		}
 
 		// J1: Block the subscriber.
-		$r    = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => $this->test_user_id ] );
+		$r    = $this->rest( 'POST', '/users/me/blocks', array( 'user_id' => $this->test_user_id ) );
 		$data = $r->get_data();
-		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
+		$ok   = in_array( $r->get_status(), array( 200, 201 ), true );
 		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()} " . wp_json_encode( $data ) . " uid=" . get_current_user_id() . " tu={$this->test_user_id}" );
 		$this->check( 'J1: response confirms blocked user', ! empty( $data['user_id'] ) && (int) $data['user_id'] === $this->test_user_id, 'missing/incorrect user_id' );
 
 		// J2: The block shows up in the viewer's list.
 		$r    = $this->rest( 'GET', '/users/me/blocks' );
 		$data = $r->get_data();
-		$rows = is_array( $data ) && isset( $data['data'] ) ? $data['data'] : [];
+		$rows = is_array( $data ) && isset( $data['data'] ) ? $data['data'] : array();
 		$ids  = array_map(
 			static function ( $row ) {
 				return (int) ( is_array( $row ) ? ( $row['user_id'] ?? 0 ) : ( $row->user_id ?? 0 ) );
@@ -1182,11 +1182,11 @@ class REST_Tests {
 		$this->check( 'J2: list contains the blocked user', in_array( $this->test_user_id, $ids, true ), 'blocked user absent from list' );
 
 		// J3: Self-block is refused.
-		$r = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => get_current_user_id() ] );
+		$r = $this->rest( 'POST', '/users/me/blocks', array( 'user_id' => get_current_user_id() ) );
 		$this->check( 'J3: self-block -> 400', 400 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 		// J4: Blocking a moderator is refused (subscriber tries to block the admin).
-		$r = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => 1 ], $this->test_user_id );
+		$r = $this->rest( 'POST', '/users/me/blocks', array( 'user_id' => 1 ), $this->test_user_id );
 		$this->check( 'J4: blocking a moderator -> 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 		// J5: Unblock (also restores state - no cleanup entry needed).
@@ -1218,76 +1218,76 @@ class REST_Tests {
 		wp_set_current_user( $this->test_user_id );
 
 		// H35: Subscriber can create a post.
-		$r = $this->rest( 'POST', '/spaces/' . $this->space->id . '/posts', [
+		$r = $this->rest( 'POST', '/spaces/' . $this->space->id . '/posts', array(
 			'title'   => 'Subscriber QA Post',
 			'content' => '<p>Post by subscriber.</p>',
 			'type'    => 'discussion',
-		], $this->test_user_id );
+		), $this->test_user_id );
 		$sub_post_id = $r->get_data()['id'] ?? 0;
 		$this->check( 'H35: Subscriber creates post → 201', $r->get_status() === 201 );
 		if ( $sub_post_id ) {
-			$this->cleanup[] = [ 'type' => 'post_rest', 'id' => $sub_post_id ];
+			$this->cleanup[] = array( 'type' => 'post_rest', 'id' => $sub_post_id );
 		}
 
 		// H36: Subscriber can create a reply on their own post.
 		if ( $sub_post_id ) {
-			$r = $this->rest( 'POST', '/posts/' . $sub_post_id . '/replies', [
+			$r = $this->rest( 'POST', '/posts/' . $sub_post_id . '/replies', array(
 				'content' => '<p>Reply by subscriber.</p>',
-			], $this->test_user_id );
+			), $this->test_user_id );
 			$sub_reply_id = $r->get_data()['id'] ?? 0;
 			$this->check( 'H36: Subscriber creates reply → 201', $r->get_status() === 201 );
 			if ( $sub_reply_id ) {
-				$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => $sub_reply_id ];
+				$this->cleanup[] = array( 'type' => 'reply_rest', 'id' => $sub_reply_id );
 			}
 		}
 
 		// H37: Subscriber can vote on a post (the admin-created test post).
 		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/vote', [
+			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/vote', array(
 				'value' => 1,
-			], $this->test_user_id );
+			), $this->test_user_id );
 			$this->check( 'H37: Subscriber votes on post → 200', $r->get_status() === 200 );
 			// Undo.
-			$this->rest( 'DELETE', '/posts/' . $this->post_id . '/vote', [], $this->test_user_id );
+			$this->rest( 'DELETE', '/posts/' . $this->post_id . '/vote', array(), $this->test_user_id );
 		}
 
 		// H38: Subscriber can bookmark.
 		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', '/bookmarks', [
+			$r = $this->rest( 'POST', '/bookmarks', array(
 				'post_id' => $this->post_id,
-			], $this->test_user_id );
+			), $this->test_user_id );
 			$this->check( 'H38: Subscriber bookmarks → 200', $r->get_status() === 200 );
 			// Undo.
-			$this->rest( 'POST', '/bookmarks', [ 'post_id' => $this->post_id ], $this->test_user_id );
+			$this->rest( 'POST', '/bookmarks', array( 'post_id' => $this->post_id ), $this->test_user_id );
 		}
 
 		// H39: Subscriber can subscribe to a post.
 		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', '/subscriptions', [
+			$r = $this->rest( 'POST', '/subscriptions', array(
 				'object_type' => 'post',
 				'object_id'   => $this->post_id,
-			], $this->test_user_id );
+			), $this->test_user_id );
 			$sub_sub_id = $r->get_data()['id'] ?? 0;
-			$this->check( 'H39: Subscriber follows post → 200/201', in_array( $r->get_status(), [ 200, 201 ], true ) );
+			$this->check( 'H39: Subscriber follows post → 200/201', in_array( $r->get_status(), array( 200, 201 ), true ) );
 			// Undo.
 			if ( $sub_sub_id ) {
-				$this->rest( 'DELETE', '/subscriptions/' . $sub_sub_id, [], $this->test_user_id );
+				$this->rest( 'DELETE', '/subscriptions/' . $sub_sub_id, array(), $this->test_user_id );
 			}
 		}
 
 		// H40: Subscriber can view notifications.
-		$r = $this->rest( 'GET', '/notifications', [ 'limit' => 5 ], $this->test_user_id );
+		$r = $this->rest( 'GET', '/notifications', array( 'limit' => 5 ), $this->test_user_id );
 		$this->check( 'H40: Subscriber views notifications → 200', $r->get_status() === 200 );
 
 		// H41: Subscriber can update own profile.
-		$r = $this->rest( 'PATCH', '/users/me', [
+		$r = $this->rest( 'PATCH', '/users/me', array(
 			'bio' => 'Subscriber bio test',
-		], $this->test_user_id );
+		), $this->test_user_id );
 		$this->check( 'H41: Subscriber updates profile → 200', $r->get_status() === 200 );
 
 		// H42: Subscriber CANNOT pin a post (admin-only action).
 		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/pin', [], $this->test_user_id );
+			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/pin', array(), $this->test_user_id );
 			$this->check( 'H42: Subscriber cannot pin → 403', $r->get_status() === 403 );
 		}
 
@@ -1299,35 +1299,35 @@ class REST_Tests {
 			$other = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$spaces_t} WHERE status = 'active' AND id != %d LIMIT 1", (int) $this->space->id ) );
 			// phpcs:enable
 			$target = $other ? (int) $other->id : (int) $this->space->id;
-			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/move', [
+			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/move', array(
 				'target_space_id' => $target,
-			], $this->test_user_id );
+			), $this->test_user_id );
 			$this->check( 'H43: Subscriber cannot move → 403', $r->get_status() === 403 );
 		}
 
 		// H44: Subscriber CANNOT close a post.
 		if ( $this->post_id ) {
-			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/close', [], $this->test_user_id );
+			$r = $this->rest( 'POST', '/posts/' . $this->post_id . '/close', array(), $this->test_user_id );
 			$this->check( 'H44: Subscriber cannot close → 403', $r->get_status() === 403 );
 		}
 
 		// H45: Subscriber CANNOT delete another user's post.
 		if ( $this->post_id ) {
-			$r = $this->rest( 'DELETE', '/posts/' . $this->post_id, [], $this->test_user_id );
+			$r = $this->rest( 'DELETE', '/posts/' . $this->post_id, array(), $this->test_user_id );
 			$this->check( 'H45: Subscriber cannot delete others post → 403', $r->get_status() === 403 );
 		}
 
 		// H46: Subscriber CAN edit their own post.
 		if ( $sub_post_id ) {
-			$r = $this->rest( 'PATCH', '/posts/' . $sub_post_id, [
+			$r = $this->rest( 'PATCH', '/posts/' . $sub_post_id, array(
 				'content' => '<p>Edited by subscriber.</p>',
-			], $this->test_user_id );
+			), $this->test_user_id );
 			$this->check( 'H46: Subscriber edits own post → 200', $r->get_status() === 200 );
 		}
 
 		// H47: Subscriber CAN delete their own post.
 		if ( $sub_post_id ) {
-			$r = $this->rest( 'DELETE', '/posts/' . $sub_post_id, [], $this->test_user_id );
+			$r = $this->rest( 'DELETE', '/posts/' . $sub_post_id, array(), $this->test_user_id );
 			$this->check( 'H47: Subscriber deletes own post → 200', $r->get_status() === 200 );
 			// A member's delete only trashes; it stays in cleanup for the forced delete.
 		}
@@ -1354,11 +1354,11 @@ class REST_Tests {
 				// force: a plain DELETE only trashes, and teardown must leave
 				// nothing behind (the run asserts the site is unchanged).
 				case 'post_rest':
-					$this->rest( 'DELETE', "/posts/{$item['id']}", [ 'force' => true ] );
+					$this->rest( 'DELETE', "/posts/{$item['id']}", array( 'force' => true ) );
 					break;
 
 				case 'reply_rest':
-					$this->rest( 'DELETE', "/replies/{$item['id']}", [ 'force' => true ] );
+					$this->rest( 'DELETE', "/replies/{$item['id']}", array( 'force' => true ) );
 					break;
 
 				case 'space_rest':
@@ -1367,14 +1367,14 @@ class REST_Tests {
 					// for a customer, wrong for teardown. Without this every
 					// qa-actions run left an archived "QA REST Accept Space"
 					// behind and they accumulated one per run.
-					$this->rest( 'DELETE', "/spaces/{$item['id']}", [ 'mode' => 'purge' ] );
+					$this->rest( 'DELETE', "/spaces/{$item['id']}", array( 'mode' => 'purge' ) );
 					break;
 
 				case 'flag_db':
 					// No DELETE endpoint for flags — remove directly.
 					global $wpdb;
 					$flags_t = table( 'flags' );
-					$wpdb->delete( $flags_t, [ 'id' => (int) $item['id'] ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+					$wpdb->delete( $flags_t, array( 'id' => (int) $item['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 					break;
 
 				case 'space_member_db':
@@ -1384,7 +1384,7 @@ class REST_Tests {
 
 				case 'restore_bio':
 					// Restore admin bio via REST PATCH.
-					$this->rest( 'PATCH', '/users/me', [ 'bio' => $this->original_bio ] );
+					$this->rest( 'PATCH', '/users/me', array( 'bio' => $this->original_bio ) );
 					break;
 			}
 		}
@@ -1487,13 +1487,13 @@ class REST_Tests {
 		}
 
 		$created = \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'  => $space_id,
 				'author_id' => $this->admin_id,
 				'title'     => 'XF1 seam fixture ' . wp_generate_password( 6, false ),
 				'content'   => 'seam fixture body',
 				'status'    => 'publish',
-			]
+			)
 		);
 		$post_id = is_wp_error( $created ) ? 0 : (int) $created;
 		if ( $post_id <= 0 ) {
@@ -1502,14 +1502,14 @@ class REST_Tests {
 		}
 
 		// A genuinely empty update stays rejected, with no claimant.
-		$empty = $this->rest( 'PATCH', "/posts/{$post_id}", [], $this->admin_id );
+		$empty = $this->rest( 'PATCH', "/posts/{$post_id}", array(), $this->admin_id );
 		$this->check( 'XF1a: empty update is still rejected', 400 === $empty->get_status(), "HTTP {$empty->get_status()}" );
 
 		// With a claimant, the same empty-of-core-columns request goes through so
 		// the after-update hooks can fire.
 		$claim = static fn() => true;
 		add_filter( 'jetonomy_post_update_has_extension_data', $claim, 10, 1 );
-		$claimed = $this->rest( 'PATCH', "/posts/{$post_id}", [], $this->admin_id );
+		$claimed = $this->rest( 'PATCH', "/posts/{$post_id}", array(), $this->admin_id );
 		remove_filter( 'jetonomy_post_update_has_extension_data', $claim, 10 );
 
 		$this->check( 'XF1b: a claiming extension lets the update through', 200 === $claimed->get_status(), "HTTP {$claimed->get_status()}" );
@@ -1517,7 +1517,7 @@ class REST_Tests {
 		\Jetonomy\Models\Post::delete( $post_id );
 	}
 
-	private function rest( string $method, string $route, array $params = [], ?int $as_user = null ): \WP_REST_Response {
+	private function rest( string $method, string $route, array $params = array(), ?int $as_user = null ): \WP_REST_Response {
 		$request = new \WP_REST_Request( $method, '/jetonomy/v1' . $route );
 
 		if ( 'GET' === $method ) {
@@ -1537,10 +1537,10 @@ class REST_Tests {
 		if ( is_wp_error( $response ) ) {
 			$error_data = $response->get_error_data();
 			$status     = is_array( $error_data ) && isset( $error_data['status'] ) ? (int) $error_data['status'] : 500;
-			return new \WP_REST_Response( [
+			return new \WP_REST_Response( array(
 				'code'    => $response->get_error_code(),
 				'message' => $response->get_error_message(),
-			], $status );
+			), $status );
 		}
 
 		return $response;
@@ -1565,16 +1565,16 @@ class REST_Tests {
 		}
 
 		wp_set_current_user( $this->admin_id );
-		$space = $this->rest( 'POST', '/spaces', [
+		$space = $this->rest( 'POST', '/spaces', array(
 			'title'    => 'QA-N approval space ' . wp_rand(),
-			'settings' => [ 'require_approval' => '1' ],
-		] );
+			'settings' => array( 'require_approval' => '1' ),
+		) );
 		$space_id = (int) ( $space->get_data()['id'] ?? 0 );
 		if ( 201 !== $space->get_status() || ! $space_id ) {
 			$this->check( 'AP: approval space created', false, wp_json_encode( $space->get_data() ) );
 			return;
 		}
-		$this->cleanup[] = [ 'type' => 'space_rest', 'id' => $space_id ];
+		$this->cleanup[] = array( 'type' => 'space_rest', 'id' => $space_id );
 
 		$handle  = (string) get_userdata( $this->admin_id )->user_nicename;
 		$notif_t = table( 'notifications' );
@@ -1593,11 +1593,11 @@ class REST_Tests {
 
 		// Approve through the real wp-admin AJAX handler (Approve / Not Spam buttons).
 		$via_admin = static function ( string $type, int $id ): void {
-			$_POST    = [
+			$_POST    = array(
 				'nonce'       => wp_create_nonce( 'jetonomy_admin' ),
 				'object_type' => $type,
 				'object_id'   => $id,
-			];
+			);
 			$_REQUEST = $_POST;
 			$stop     = static function () {
 				return static function () {
@@ -1615,8 +1615,8 @@ class REST_Tests {
 			ob_end_clean();
 			remove_filter( 'wp_doing_ajax', '__return_true' );
 			remove_filter( 'wp_die_ajax_handler', $stop );
-			$_POST    = [];
-			$_REQUEST = [];
+			$_POST    = array();
+			$_REQUEST = array();
 		};
 		$count_fires = static function ( string $type, callable $act ): int {
 			$hook  = 'jetonomy_after_create_' . $type;
@@ -1631,19 +1631,19 @@ class REST_Tests {
 		};
 
 		$held_post = 0;
-		foreach ( [ 'post', 'reply' ] as $type ) {
+		foreach ( array( 'post', 'reply' ) as $type ) {
 			if ( 'post' === $type ) {
-				$r = $this->rest( 'POST', "/spaces/{$space_id}/posts", [
+				$r = $this->rest( 'POST', "/spaces/{$space_id}/posts", array(
 					'title'   => 'QA-N held post',
 					'content' => "<p>Hello @{$handle}</p>",
 					'type'    => 'discussion',
-				], $this->test_user_id );
+				), $this->test_user_id );
 			} else {
 				// Admin's own post publishes (staff bypass), the member's reply is held.
 				wp_set_current_user( $this->admin_id );
-				$parent    = $this->rest( 'POST', "/spaces/{$space_id}/posts", [ 'title' => 'QA-N parent', 'content' => '<p>parent</p>', 'type' => 'discussion' ] );
+				$parent    = $this->rest( 'POST', "/spaces/{$space_id}/posts", array( 'title' => 'QA-N parent', 'content' => '<p>parent</p>', 'type' => 'discussion' ) );
 				$parent_id = (int) ( $parent->get_data()['id'] ?? 0 );
-				$r         = $this->rest( 'POST', "/posts/{$parent_id}/replies", [ 'content' => "<p>Hi @{$handle}</p>" ], $this->test_user_id );
+				$r         = $this->rest( 'POST', "/posts/{$parent_id}/replies", array( 'content' => "<p>Hi @{$handle}</p>" ), $this->test_user_id );
 			}
 			$id = (int) ( $r->get_data()['id'] ?? 0 );
 			if ( 201 !== $r->get_status() || ! $id ) {
@@ -1654,7 +1654,7 @@ class REST_Tests {
 			$this->check( "AP: member {$type} is held as pending", 'pending' === ( $r->get_data()['status'] ?? '' ), (string) ( $r->get_data()['status'] ?? '' ) );
 			$this->check( "AP: pending {$type} sends no mention", 0 === $mentions( $type, $id ) );
 			$this->check( "AP: pending {$type} has zero notification rows", 0 === $rows( $type, $id ), (string) $rows( $type, $id ) );
-			$this->check( "AP: pending {$type} logs no activity / reputation", [] === $created( $type, $id ) );
+			$this->check( "AP: pending {$type} logs no activity / reputation", array() === $created( $type, $id ) );
 
 			// Approve as the admin: the activity must still be the author's. The
 			// post goes through the moderation queue (REST service entry), the
@@ -1679,7 +1679,7 @@ class REST_Tests {
 			$this->check( "AP: approved {$type} mentions exactly once", 1 === $mentions( $type, $id ), (string) $mentions( $type, $id ) );
 			$this->check(
 				"AP: approved {$type} activity logged once, for the author",
-				[ $this->test_user_id ] === $created( $type, $id ),
+				array( $this->test_user_id ) === $created( $type, $id ),
 				wp_json_encode( $created( $type, $id ) )
 			);
 		}
@@ -1693,31 +1693,31 @@ class REST_Tests {
 
 		// Not Spam on content caught as spam at creation (Akismet false positive) announces it once.
 		$spam_id = (int) \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'  => $space_id,
 				'author_id' => $this->test_user_id,
 				'title'     => 'QA-N2 spam false positive',
 				'content'   => "<p>Hey @{$handle}</p>",
 				'status'    => 'spam',
-			]
+			)
 		);
 		$fired   = $count_fires( 'post', fn() => $via_admin( 'post', $spam_id ) );
 		$this->check( 'AP: approving spam content announces it once', 1 === $fired && 1 === $mentions( 'post', $spam_id ), "fired={$fired} mentions=" . $mentions( 'post', $spam_id ) );
 		\Jetonomy\Models\Post::delete( $spam_id );
 
 		// Draft then Publish now honours require_approval: held, silent until approved.
-		$draft    = $this->rest( 'POST', "/spaces/{$space_id}/posts", [
+		$draft    = $this->rest( 'POST', "/spaces/{$space_id}/posts", array(
 			'title'   => 'QA-N2 draft publish-now',
 			'content' => "<p>Draft @{$handle}</p>",
 			'type'    => 'discussion',
 			'status'  => 'draft',
-		], $this->test_user_id );
+		), $this->test_user_id );
 		$draft_id = (int) ( $draft->get_data()['id'] ?? 0 );
-		$now      = $draft_id ? $this->rest( 'PATCH', "/posts/{$draft_id}", [ 'status' => 'publish' ], $this->test_user_id ) : null;
+		$now      = $draft_id ? $this->rest( 'PATCH', "/posts/{$draft_id}", array( 'status' => 'publish' ), $this->test_user_id ) : null;
 		$this->check(
 			'AP: publish-now of a member draft under require_approval is held',
 			$now && 'pending' === ( $now->get_data()['status'] ?? '' ) && 0 === $rows( 'post', $draft_id ),
-			$now ? wp_json_encode( [ $now->get_status(), $now->get_data()['status'] ?? '', $rows( 'post', $draft_id ) ] ) : 'no draft'
+			$now ? wp_json_encode( array( $now->get_status(), $now->get_data()['status'] ?? '', $rows( 'post', $draft_id ) ) ) : 'no draft'
 		);
 		wp_set_current_user( $this->admin_id );
 		if ( $draft_id ) {
@@ -1739,15 +1739,15 @@ class REST_Tests {
 	 * with status='publish' query paths; audit A3).
 	 */
 	private function test_hook_jetonomy_post_publish_transition_H48(): void {
-		$events   = [];
+		$events   = array();
 		$listener = function ( $id, $delta, $created_at ) use ( &$events ) {
-			$events[] = [ (int) $id, (int) $delta, (string) $created_at ];
+			$events[] = array( (int) $id, (int) $delta, (string) $created_at );
 		};
 		add_action( 'jetonomy_post_publish_transition', $listener, 10, 3 );
 
 		// Publish create → +1 carrying created_at.
 		$post_id = \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'      => (int) $this->space->id,
 				'author_id'     => $this->admin_id,
 				'title'         => 'QA H48 publish transition',
@@ -1755,11 +1755,11 @@ class REST_Tests {
 				'content'       => 'transition fixture',
 				'content_plain' => 'transition fixture',
 				'type'          => 'topic',
-			]
+			)
 		);
 		$created_ok = ! is_wp_error( $post_id ) && (int) $post_id > 0;
 		if ( $created_ok ) {
-			$this->cleanup[]   = [ 'type' => 'post_rest', 'id' => (int) $post_id ];
+			$this->cleanup[]   = array( 'type' => 'post_rest', 'id' => (int) $post_id );
 			$this->h48_post_id = (int) $post_id;
 		}
 		$this->check(
@@ -1769,13 +1769,13 @@ class REST_Tests {
 		);
 
 		// Publish → trash → -1; trash → pending stays silent; approval → +1.
-		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'trash' ] );
+		\Jetonomy\Models\Post::update( (int) $post_id, array( 'status' => 'trash' ) );
 		$this->check( 'H48: trash fires -1', 2 === count( $events ) && -1 === $events[1][1] );
 
-		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'pending' ] );
+		\Jetonomy\Models\Post::update( (int) $post_id, array( 'status' => 'pending' ) );
 		$this->check( 'H48: trash→pending stays silent (no publish edge)', 2 === count( $events ) );
 
-		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'publish' ] );
+		\Jetonomy\Models\Post::update( (int) $post_id, array( 'status' => 'publish' ) );
 		$this->check( 'H48: pending→publish approval fires +1', 3 === count( $events ) && 1 === $events[2][1] );
 
 		remove_action( 'jetonomy_post_publish_transition', $listener, 10 );
@@ -1795,23 +1795,23 @@ class REST_Tests {
 			return;
 		}
 
-		$events   = [];
+		$events   = array();
 		$listener = function ( $id, $delta, $created_at ) use ( &$events ) {
-			$events[] = [ (int) $id, (int) $delta, (string) $created_at ];
+			$events[] = array( (int) $id, (int) $delta, (string) $created_at );
 		};
 		add_action( 'jetonomy_reply_publish_transition', $listener, 10, 3 );
 
 		$reply_id = \Jetonomy\Models\Reply::create(
-			[
+			array(
 				'post_id'       => $this->h48_post_id,
 				'author_id'     => $this->admin_id,
 				'content'       => 'transition reply fixture',
 				'content_plain' => 'transition reply fixture',
-			]
+			)
 		);
 		$created_ok = ! is_wp_error( $reply_id ) && (int) $reply_id > 0;
 		if ( $created_ok ) {
-			$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => (int) $reply_id ];
+			$this->cleanup[] = array( 'type' => 'reply_rest', 'id' => (int) $reply_id );
 		}
 		$this->check(
 			'H49: reply publish create fires +1 with created_at',
@@ -1819,7 +1819,7 @@ class REST_Tests {
 			'expected one +1 event with a created_at payload'
 		);
 
-		\Jetonomy\Models\Reply::update( (int) $reply_id, [ 'status' => 'trash' ] );
+		\Jetonomy\Models\Reply::update( (int) $reply_id, array( 'status' => 'trash' ) );
 		$this->check( 'H49: reply trash fires -1', 2 === count( $events ) && -1 === $events[1][1] );
 
 		remove_action( 'jetonomy_reply_publish_transition', $listener, 10 );
@@ -1952,13 +1952,13 @@ class REST_Tests {
 		$ts       = time();
 		$password = wp_generate_password( 20 );
 		$uid      = wp_insert_user(
-			[
+			array(
 				'user_login'   => 'jt_qa_del_' . $ts,
 				'user_pass'    => $password,
 				'user_email'   => 'jt-qa-del-' . $ts . '@test.local',
 				'role'         => 'subscriber',
 				'display_name' => 'QA Delete Test User',
-			]
+			)
 		);
 		if ( is_wp_error( $uid ) || ! $uid ) {
 			$this->check( 'K: fixture user created', false, is_wp_error( $uid ) ? $uid->get_error_message() : 'wp_insert_user failed' );
@@ -1968,7 +1968,7 @@ class REST_Tests {
 
 		// Self-authored fixture post (asserts the tombstone survives).
 		$post_id = \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'      => (int) $this->space->id,
 				'author_id'     => $uid,
 				'title'         => 'QA K delete-account fixture post',
@@ -1976,7 +1976,7 @@ class REST_Tests {
 				'content'       => 'fixture',
 				'content_plain' => 'fixture',
 				'type'          => 'topic',
-			]
+			)
 		);
 		$post_id = ! is_wp_error( $post_id ) ? (int) $post_id : 0;
 
@@ -1985,13 +1985,13 @@ class REST_Tests {
 		$r        = $this->rest(
 			'POST',
 			"/posts/{$this->post_id}/replies",
-			[ 'content' => '<p>Reply by the soon-to-be-deleted user.</p>' ],
+			array( 'content' => '<p>Reply by the soon-to-be-deleted user.</p>' ),
 			$uid
 		);
 		$reply_id = (int) ( $r->get_data()['id'] ?? 0 );
 
 		// A vote by the throwaway user.
-		$this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => 1 ], $uid );
+		$this->rest( 'POST', "/posts/{$this->post_id}/vote", array( 'value' => 1 ), $uid );
 
 		global $wpdb;
 		$notifications_t = table( 'notifications' );
@@ -2002,33 +2002,33 @@ class REST_Tests {
 		$this->check( 'K0: fixture notification exists with actor_id = throwaway user', $notif_before > 0, "notif_before={$notif_before}" );
 
 		// K1: missing confirm → 400 (schema-required arg).
-		$r = $this->rest( 'DELETE', '/users/me', [ 'password' => $password ], $uid );
+		$r = $this->rest( 'DELETE', '/users/me', array( 'password' => $password ), $uid );
 		$this->check( 'K1: DELETE /users/me without confirm → 400', 400 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 		// K2: wrong password → 403.
 		$r = $this->rest(
 			'DELETE',
 			'/users/me',
-			[
+			array(
 				'password' => 'definitely-the-wrong-password',
 				'confirm'  => 'DELETE',
-			],
+			),
 			$uid
 		);
 		$this->check( 'K2: DELETE /users/me with wrong password → 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 		// K3: admins are refused — they use wp-admin instead.
-		$r = $this->rest( 'DELETE', '/users/me', [ 'confirm' => 'DELETE' ], $this->admin_id );
+		$r = $this->rest( 'DELETE', '/users/me', array( 'confirm' => 'DELETE' ), $this->admin_id );
 		$this->check( 'K3: admin DELETE /users/me → 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
 
 		// K4: correct password + confirm → 200, default anonymize policy.
 		$r    = $this->rest(
 			'DELETE',
 			'/users/me',
-			[
+			array(
 				'password' => $password,
 				'confirm'  => 'DELETE',
-			],
+			),
 			$uid
 		);
 		$data = $r->get_data();
@@ -2119,7 +2119,7 @@ class REST_Tests {
 	 * manifest entry honest instead of relying on it being remembered.
 	 */
 	private function test_media_B13(): void {
-		$r    = $this->rest( 'GET', '/media', [ 'per_page' => 5 ], $this->admin_id );
+		$r    = $this->rest( 'GET', '/media', array( 'per_page' => 5 ), $this->admin_id );
 		$data = $r->get_data();
 		$this->check( 'B13: GET /media as admin → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 
@@ -2127,7 +2127,7 @@ class REST_Tests {
 		$this->check( 'B13: GET /media returns a list payload', is_array( $items ), 'no array payload' );
 
 		// Gated on jetonomy_manage_settings, not merely on being logged in.
-		$r = $this->rest( 'GET', '/media', [], 0 );
+		$r = $this->rest( 'GET', '/media', array(), 0 );
 		$this->check(
 			'B13: GET /media as guest → 401/403',
 			in_array( $r->get_status(), array( 401, 403 ), true ),

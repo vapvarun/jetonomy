@@ -30,14 +30,14 @@ abstract class Abstract_Scenario implements Scenario_Interface {
 	 *
 	 * @var array<int,array{name:string,duration_ms:int,result:Journey_Result}>
 	 */
-	protected array $steps = [];
+	protected array $steps = array();
 
 	/**
 	 * Aggregated error messages captured during the current run or cleanup.
 	 *
 	 * @var array<int,string>
 	 */
-	protected array $errors = [];
+	protected array $errors = array();
 
 	/**
 	 * Whether a prior step has already failed — subsequent calls to
@@ -52,8 +52,8 @@ abstract class Abstract_Scenario implements Scenario_Interface {
 	 * cleanup immediately after run() (or for a second run).
 	 */
 	protected function reset(): void {
-		$this->steps  = [];
-		$this->errors = [];
+		$this->steps  = array();
+		$this->errors = array();
 		$this->failed = false;
 	}
 
@@ -81,20 +81,20 @@ abstract class Abstract_Scenario implements Scenario_Interface {
 			$fake           = Journey_Result::fail(
 				sprintf( 'Step "%s" did not return a Journey_Result.', $name )
 			);
-			$this->steps[]  = [
+			$this->steps[]  = array(
 				'name'        => $name,
 				'duration_ms' => $ms,
 				'result'      => $fake,
-			];
+			);
 			$this->errors[] = $fake->first_error() ?? 'unknown error';
 			return null;
 		}
 
-		$this->steps[] = [
+		$this->steps[] = array(
 			'name'        => $name,
 			'duration_ms' => $ms,
 			'result'      => $result,
-		];
+		);
 
 		if ( ! $result->is_success() ) {
 			$this->failed = true;

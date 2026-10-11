@@ -35,7 +35,7 @@ final class Moderation_Journey {
 	/**
 	 * Valid flag status enum values (matches jt_flags.status).
 	 */
-	private const FLAG_STATUSES = [ 'pending', 'valid', 'dismissed' ];
+	private const FLAG_STATUSES = array( 'pending', 'valid', 'dismissed' );
 
 	/**
 	 * Valid flag resolution decision values.
@@ -43,12 +43,12 @@ final class Moderation_Journey {
 	 * Mirrors the subset of {@see self::FLAG_STATUSES} that a moderator can
 	 * transition a pending flag into.
 	 */
-	private const FLAG_DECISIONS = [ 'valid', 'dismissed' ];
+	private const FLAG_DECISIONS = array( 'valid', 'dismissed' );
 
 	/**
 	 * Valid restriction type enum values (matches jt_restrictions.type).
 	 */
-	private const BAN_TYPES = [ 'global_ban', 'space_ban', 'silence', 'ip_ban' ];
+	private const BAN_TYPES = array( 'global_ban', 'space_ban', 'silence', 'ip_ban' );
 
 	/**
 	 * List every pending flag, shaped for render_list().
@@ -59,11 +59,11 @@ final class Moderation_Journey {
 		$rows = Flag::list_pending();
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $this->shape_flag_rows( $rows ),
-				'columns' => [ 'id', 'object_type', 'object_id', 'reporter_id', 'reason', 'status', 'created_at' ],
-			],
-			[],
+				'columns' => array( 'id', 'object_type', 'object_id', 'reporter_id', 'reason', 'status', 'created_at' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -88,12 +88,12 @@ final class Moderation_Journey {
 		$rows = Flag::list_by_status( $status );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $this->shape_flag_rows( $rows ),
-				'columns' => [ 'id', 'object_type', 'object_id', 'reporter_id', 'reason', 'status', 'created_at' ],
+				'columns' => array( 'id', 'object_type', 'object_id', 'reporter_id', 'reason', 'status', 'created_at' ),
 				'status'  => $status,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -149,24 +149,24 @@ final class Moderation_Journey {
 			$id   = (int) ( $flag->object_id ?? 0 );
 			if ( $id > 0 ) {
 				if ( 'post' === $type ) {
-					Post::update( $id, [ 'status' => 'trash' ] );
+					Post::update( $id, array( 'status' => 'trash' ) );
 				} elseif ( 'reply' === $type ) {
-					Reply::update( $id, [ 'status' => 'trash' ] );
+					Reply::update( $id, array( 'status' => 'trash' ) );
 				}
 				$cascaded = Flag::resolve_siblings_for( $type, $id, $resolver_id, 'valid', $flag_id );
 			}
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'                => $flag_id,
 				'status'            => $decision,
 				'resolved_by'       => $resolver_id,
 				'object_type'       => (string) ( $flag->object_type ?? '' ),
 				'object_id'         => (int) ( $flag->object_id ?? 0 ),
 				'cascaded_resolved' => $cascaded,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -218,7 +218,7 @@ final class Moderation_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'         => (int) $id,
 				'user_id'    => $user_id,
 				'type'       => $type,
@@ -226,8 +226,8 @@ final class Moderation_Journey {
 				'space_id'   => $space_id,
 				'reason'     => $reason,
 				'expires_at' => $expires_at,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -252,8 +252,8 @@ final class Moderation_Journey {
 		}
 
 		return Journey_Result::ok(
-			[ 'id' => $restriction_id ],
-			[],
+			array( 'id' => $restriction_id ),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -282,12 +282,12 @@ final class Moderation_Journey {
 			: Restriction::is_space_banned( $user_id, $space_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id'  => $user_id,
 				'space_id' => $space_id,
 				'banned'   => $banned,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -299,9 +299,9 @@ final class Moderation_Journey {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function shape_flag_rows( array $rows ): array {
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'id'          => (int) $row->id,
 				'object_type' => (string) ( $row->object_type ?? '' ),
 				'object_id'   => (int) ( $row->object_id ?? 0 ),
@@ -309,7 +309,7 @@ final class Moderation_Journey {
 				'reason'      => (string) ( $row->reason ?? '' ),
 				'status'      => (string) ( $row->status ?? '' ),
 				'created_at'  => (string) ( $row->created_at ?? '' ),
-			];
+			);
 		}
 		return $items;
 	}

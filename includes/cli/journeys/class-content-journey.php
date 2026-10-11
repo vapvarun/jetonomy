@@ -45,24 +45,24 @@ final class Content_Journey {
 	public function create_post( array $input ): Journey_Result {
 		$start = microtime( true );
 
-		$missing = $this->require_keys( $input, [ 'space_id', 'author_id', 'title', 'content' ] );
+		$missing = $this->require_keys( $input, array( 'space_id', 'author_id', 'title', 'content' ) );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
-		$unknown = Journey_Input::error( $input, [ 'space_id', 'author_id', 'title', 'content', 'status', 'slug', 'created_at' ] );
+		$unknown = Journey_Input::error( $input, array( 'space_id', 'author_id', 'title', 'content', 'status', 'slug', 'created_at' ) );
 		if ( '' !== $unknown ) {
 			return Journey_Result::fail( $unknown );
 		}
 
-		$data = [
+		$data = array(
 			'space_id'  => (int) $input['space_id'],
 			'author_id' => (int) $input['author_id'],
 			'title'     => (string) $input['title'],
 			'content'   => jetonomy_sanitize_editor_content( (string) $input['content'] ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
 			'slug'      => isset( $input['slug'] ) ? (string) $input['slug'] : '',
-		];
+		);
 
 		$backdate = Journey_Backdate::resolve( $input );
 		if ( null !== $backdate ) {
@@ -83,14 +83,14 @@ final class Content_Journey {
 		$post = Post::find( (int) $result );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'       => (int) $result,
 				'slug'     => $post->slug ?? null,
 				'space_id' => (int) $input['space_id'],
 				'author'   => (int) $input['author_id'],
 				'status'   => $post->status ?? 'publish',
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -111,7 +111,7 @@ final class Content_Journey {
 			return Journey_Result::fail( 'Post id must be positive.' );
 		}
 
-		$allowed = [ 'title', 'content', 'status', 'slug' ];
+		$allowed = array( 'title', 'content', 'status', 'slug' );
 		$patch   = array_intersect_key( $changes, array_flip( $allowed ) );
 
 		if ( empty( $patch ) ) {
@@ -130,11 +130,11 @@ final class Content_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'      => $id,
 				'updated' => array_keys( $patch ),
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -159,7 +159,7 @@ final class Content_Journey {
 			return Journey_Result::fail( sprintf( 'Post::delete(%d) returned false.', $id ) );
 		}
 
-		return Journey_Result::ok( [ 'id' => $id ], [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( array( 'id' => $id ), array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -175,7 +175,7 @@ final class Content_Journey {
 			return Journey_Result::fail( sprintf( 'Post %d not found.', $id ) );
 		}
 
-		return Journey_Result::ok( (array) $post, [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( (array) $post, array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -189,22 +189,22 @@ final class Content_Journey {
 	public function create_reply( array $input ): Journey_Result {
 		$start = microtime( true );
 
-		$missing = $this->require_keys( $input, [ 'post_id', 'author_id', 'content' ] );
+		$missing = $this->require_keys( $input, array( 'post_id', 'author_id', 'content' ) );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
-		$unknown = Journey_Input::error( $input, [ 'post_id', 'author_id', 'content', 'status', 'parent_id', 'created_at' ] );
+		$unknown = Journey_Input::error( $input, array( 'post_id', 'author_id', 'content', 'status', 'parent_id', 'created_at' ) );
 		if ( '' !== $unknown ) {
 			return Journey_Result::fail( $unknown );
 		}
 
-		$data = [
+		$data = array(
 			'post_id'   => (int) $input['post_id'],
 			'author_id' => (int) $input['author_id'],
 			'content'   => jetonomy_sanitize_editor_content( (string) $input['content'] ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
-		];
+		);
 		if ( ! empty( $input['parent_id'] ) ) {
 			$data['parent_id'] = (int) $input['parent_id'];
 		}
@@ -226,13 +226,13 @@ final class Content_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'      => (int) $result,
 				'post_id' => (int) $input['post_id'],
 				'author'  => (int) $input['author_id'],
 				'status'  => $data['status'],
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -257,7 +257,7 @@ final class Content_Journey {
 			return Journey_Result::fail( sprintf( 'Reply::delete(%d) returned false.', $id ) );
 		}
 
-		return Journey_Result::ok( [ 'id' => $id ], [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( array( 'id' => $id ), array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -315,14 +315,14 @@ final class Content_Journey {
 		$post  = Post::find( $post_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'post_id'           => $post_id,
 				'reply_id'          => $reply_id,
 				'is_accepted'       => (int) ( $reply->is_accepted ?? 0 ),
 				'accepted_reply_id' => (int) ( $post->accepted_reply_id ?? 0 ),
 				'is_resolved'       => (int) ( $post->is_resolved ?? 0 ),
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -345,10 +345,10 @@ final class Content_Journey {
 		if ( $user_id <= 0 || $object_id <= 0 ) {
 			return Journey_Result::fail( 'user_id and object_id must both be positive.' );
 		}
-		if ( ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
+		if ( ! in_array( $object_type, array( 'post', 'reply' ), true ) ) {
 			return Journey_Result::fail( "object_type must be 'post' or 'reply'." );
 		}
-		if ( ! in_array( $value, [ 1, -1 ], true ) ) {
+		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
 			return Journey_Result::fail( 'value must be 1 or -1.' );
 		}
 
@@ -358,15 +358,15 @@ final class Content_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id'     => $user_id,
 				'object_type' => $object_type,
 				'object_id'   => $object_id,
 				'value'       => $value,
 				'action'      => $result['action'],
 				'old_value'   => $result['old_value'],
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -383,34 +383,34 @@ final class Content_Journey {
 	public function flag( array $input ): Journey_Result {
 		$start = microtime( true );
 
-		$missing = $this->require_keys( $input, [ 'object_type', 'object_id', 'reporter_id', 'reason' ] );
+		$missing = $this->require_keys( $input, array( 'object_type', 'object_id', 'reporter_id', 'reason' ) );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
-		$unknown = Journey_Input::error( $input, [ 'object_type', 'object_id', 'reporter_id', 'reason', 'description' ] );
+		$unknown = Journey_Input::error( $input, array( 'object_type', 'object_id', 'reporter_id', 'reason', 'description' ) );
 		if ( '' !== $unknown ) {
 			return Journey_Result::fail( $unknown );
 		}
 
 		$object_type = (string) $input['object_type'];
-		if ( ! in_array( $object_type, [ 'post', 'reply', 'user' ], true ) ) {
+		if ( ! in_array( $object_type, array( 'post', 'reply', 'user' ), true ) ) {
 			return Journey_Result::fail( "object_type must be 'post', 'reply', or 'user'." );
 		}
 
 		$reason = (string) $input['reason'];
-		if ( ! in_array( $reason, [ 'spam', 'offensive', 'off_topic', 'harassment', 'other' ], true ) ) {
+		if ( ! in_array( $reason, array( 'spam', 'offensive', 'off_topic', 'harassment', 'other' ), true ) ) {
 			return Journey_Result::fail( 'reason must be one of: spam, offensive, off_topic, harassment, other.' );
 		}
 
 		$id = Flag::create(
-			[
+			array(
 				'object_type' => $object_type,
 				'object_id'   => (int) $input['object_id'],
 				'reporter_id' => (int) $input['reporter_id'],
 				'reason'      => $reason,
 				'description' => isset( $input['description'] ) ? (string) $input['description'] : '',
-			]
+			)
 		);
 
 		if ( ! $id ) {
@@ -418,14 +418,14 @@ final class Content_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'          => (int) $id,
 				'object_type' => $object_type,
 				'object_id'   => (int) $input['object_id'],
 				'reporter_id' => (int) $input['reporter_id'],
 				'status'      => 'pending',
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -438,7 +438,7 @@ final class Content_Journey {
 	 * @return array<int,string> Missing key names; empty if all present.
 	 */
 	private function require_keys( array $input, array $keys ): array {
-		$missing = [];
+		$missing = array();
 		foreach ( $keys as $key ) {
 			if ( ! isset( $input[ $key ] ) || '' === $input[ $key ] ) {
 				$missing[] = $key;

@@ -66,14 +66,14 @@ class BBPress_Importer extends Importer {
 	 * @return string[] bbPress post_status values to import.
 	 */
 	private function source_statuses( string $type ): array {
-		$map = [
+		$map = array(
 			// `private`/`hidden` carry real meaning and now have somewhere to
 			// land: Jetonomy space visibility. See status_to_visibility().
-			'forum' => [ 'publish', 'private', 'hidden' ],
+			'forum' => array( 'publish', 'private', 'hidden' ),
 			// A closed topic is still a topic - it imports and lands closed.
-			'topic' => [ 'publish', 'closed' ],
-			'reply' => [ 'publish' ],
-		];
+			'topic' => array( 'publish', 'closed' ),
+			'reply' => array( 'publish' ),
+		);
 
 		/**
 		 * Filter the bbPress post_statuses imported for a given type.
@@ -83,7 +83,7 @@ class BBPress_Importer extends Importer {
 		 * @param string[] $statuses bbPress post_status values.
 		 * @param string   $type     forum|topic|reply.
 		 */
-		return (array) apply_filters( 'jetonomy_bbpress_import_statuses', $map[ $type ] ?? [ 'publish' ], $type );
+		return (array) apply_filters( 'jetonomy_bbpress_import_statuses', $map[ $type ] ?? array( 'publish' ), $type );
 	}
 
 	/**
@@ -177,7 +177,7 @@ class BBPress_Importer extends Importer {
 	 *
 	 * @var array<int,array<string,int>>
 	 */
-	private array $grants = [];
+	private array $grants = array();
 
 	/**
 	 * Grant one page of queued memberships.
@@ -206,7 +206,7 @@ class BBPress_Importer extends Importer {
 	private function grant_members( array $grants, int $offset, int $limit ): array {
 		global $wpdb;
 
-		$parts = [];
+		$parts = array();
 		foreach ( array_values( $grants ) as $job => $grant ) {
 			if ( ! empty( $grant['group'] ) ) {
 				if ( ! function_exists( 'bp_is_active' ) || ! bp_is_active( 'groups' ) ) {
@@ -234,10 +234,10 @@ class BBPress_Importer extends Importer {
 		}
 
 		if ( ! $parts ) {
-			return [
+			return array(
 				'fetched'   => 0,
 				'processed' => 0,
-			];
+			);
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- every part is prepared above; limit/offset are absint.
@@ -256,21 +256,21 @@ class BBPress_Importer extends Importer {
 			}
 		}
 
-		return [
+		return array(
 			'fetched'   => count( $rows ),
 			'processed' => $processed,
-		];
+		);
 	}
 
 	public function get_source_stats(): array {
 		global $wpdb;
-		return [
+		return array(
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- status_sql() emits sanitize_key()'d literals.
 			'forums'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status IN (" . $this->status_sql( 'forum' ) . ')' ),
 			'topics'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status IN (" . $this->status_sql( 'topic' ) . ')' ),
 			'replies' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status IN (" . $this->status_sql( 'reply' ) . ')' ),
 			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		];
+		);
 	}
 
 	/**
@@ -442,7 +442,7 @@ class BBPress_Importer extends Importer {
 
 		$ids = array_map( 'intval', array_column( $forums, 'ID' ) );
 		if ( ! $ids ) {
-			return [];
+			return array();
 		}
 		$in = implode( ',', $ids );
 
@@ -452,7 +452,7 @@ class BBPress_Importer extends Importer {
 		// phpcs:enable
 		$group_root = (int) get_option( '_bbp_group_forums_root_id', 0 );
 
-		$containers = [];
+		$containers = array();
 		foreach ( $forums as $forum ) {
 			$id     = (int) $forum->ID;
 			$parent = (int) $forum->post_parent;
@@ -506,7 +506,7 @@ class BBPress_Importer extends Importer {
 		}
 
 		$attachments = get_posts(
-			[
+			array(
 				'post_type'        => 'attachment',
 				'post_parent'      => $source_post_id,
 				'posts_per_page'   => -1,
@@ -515,7 +515,7 @@ class BBPress_Importer extends Importer {
 				'order'            => 'ASC',
 				'fields'           => 'ids',
 				'suppress_filters' => false,
-			]
+			)
 		);
 
 		$linked = 0;
@@ -558,10 +558,10 @@ class BBPress_Importer extends Importer {
 		$this->remember( 'space', (int) $forum->ID, $space_id );
 
 		if ( 'public' !== $this->map_access( $forum )['visibility'] ) {
-			$this->grants[] = [
+			$this->grants[] = array(
 				'space' => $space_id,
 				'forum' => (int) $forum->ID,
-			];
+			);
 		}
 
 		$this->link_buddypress_group( $space_id, (int) $forum->ID );
@@ -597,10 +597,10 @@ class BBPress_Importer extends Importer {
 				continue;
 			}
 			\Jetonomy\Integrations\BuddyPress::link_group_to_space( $group_id, $space_id );
-			$this->grants[] = [
+			$this->grants[] = array(
 				'space' => $space_id,
 				'group' => $group_id,
-			];
+			);
 		}
 	}
 
@@ -624,9 +624,9 @@ class BBPress_Importer extends Importer {
 	 * @return array<int,int> forum ID => space id.
 	 */
 	private function find_imported_forums( array $forums ): array {
-		$rows = [];
+		$rows = array();
 		foreach ( $forums as $forum ) {
-			$rows[ (int) $forum->ID ] = [ 'slug' => $forum->post_name ?: sanitize_title( $forum->post_title ) ];
+			$rows[ (int) $forum->ID ] = array( 'slug' => $forum->post_name ?: sanitize_title( $forum->post_title ) );
 		}
 
 		return $this->find_imported( 'space', $rows );
@@ -645,15 +645,15 @@ class BBPress_Importer extends Importer {
 	 * @return array<int,int> source ID => Jetonomy id.
 	 */
 	private function find_imported_children( string $type, array $rows, string $parent_type ): array {
-		$fingerprints = [];
+		$fingerprints = array();
 		foreach ( $rows as $row ) {
 			$parent = $this->get_mapped_id( $parent_type, (int) $row->post_parent );
 			if ( $parent ) {
-				$fingerprints[ (int) $row->ID ] = [
+				$fingerprints[ (int) $row->ID ] = array(
 					'parent'  => $parent,
 					'author'  => (int) $row->post_author,
 					'created' => (string) $row->post_date_gmt,
-				];
+				);
 			}
 		}
 
@@ -675,7 +675,7 @@ class BBPress_Importer extends Importer {
 	 * @return array<int,true>
 	 */
 	private function sticky_topic_ids( array $topics ): array {
-		$ids = (array) get_option( '_bbp_super_sticky_topics', [] );
+		$ids = (array) get_option( '_bbp_super_sticky_topics', array() );
 		foreach ( array_unique( array_map( 'intval', array_column( $topics, 'post_parent' ) ) ) as $forum_id ) {
 			$ids = array_merge( $ids, (array) get_post_meta( $forum_id, '_bbp_sticky_topics', true ) );
 		}
@@ -702,7 +702,7 @@ class BBPress_Importer extends Importer {
 	private function reply_parent_resolver( array $replies ): callable {
 		global $wpdb;
 
-		$reply_to = [];
+		$reply_to = array();
 		$ids      = array_map( 'intval', array_column( $replies, 'ID' ) );
 		if ( $ids ) {
 			$in = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
@@ -734,11 +734,11 @@ class BBPress_Importer extends Importer {
 		return $this->import_category(
 			'default',
 			'imported-bbpress',
-			[
+			array(
 				'name'        => __( 'Imported from bbPress', 'jetonomy' ),
 				'description' => __( 'Forums imported from bbPress', 'jetonomy' ),
 				'visibility'  => 'public',
-			]
+			)
 		);
 	}
 
@@ -757,13 +757,13 @@ class BBPress_Importer extends Importer {
 		return $this->import_category(
 			'forum-' . (int) $forum->ID,
 			'imported-bbpress-' . $slug . '-' . (int) $forum->ID,
-			[
+			array(
 				'name'        => $forum->post_title,
 				'description' => wp_strip_all_tags( $forum->post_content ),
 				'parent_id'   => max( 0, (int) $this->get_mapped_id( 'forum_category', (int) $forum->post_parent ) ),
 				'visibility'  => $this->map_access( $forum )['visibility'],
 				'sort_order'  => (int) $forum->menu_order,
-			]
+			)
 		);
 	}
 
@@ -787,7 +787,7 @@ class BBPress_Importer extends Importer {
 		$parent_space_id = (int) $this->get_mapped_id( 'forum', (int) $forum->post_parent );
 
 		return (int) Space::create(
-			[
+			array(
 				'category_id' => $cat_id,
 				'parent_id'   => $parent_space_id,
 				'author_id'   => (int) $forum->post_author ?: 1,
@@ -808,7 +808,7 @@ class BBPress_Importer extends Importer {
 				// the model accepts. See map_access().
 				'visibility'  => $access['visibility'],
 				'join_policy' => $access['join_policy'],
-			]
+			)
 		);
 	}
 
@@ -828,7 +828,7 @@ class BBPress_Importer extends Importer {
 		// Parents an earlier batch created, and categories an earlier batch or
 		// run made for a parent or for a container in this slice.
 		$parents  = array_filter( array_unique( array_map( 'intval', array_column( $forums, 'post_parent' ) ) ) );
-		$cat_keys = [];
+		$cat_keys = array();
 		foreach ( array_merge( $parents, array_intersect( array_map( 'intval', array_column( $forums, 'ID' ) ), array_keys( $containers ) ) ) as $forum_id ) {
 			$cat_keys[ $forum_id ] = 'forum-' . $forum_id;
 		}
@@ -925,7 +925,7 @@ class BBPress_Importer extends Importer {
 			}
 
 			$post_id = $this->dry_run ? self::DRY_RUN_ID : JtPost::create(
-				[
+				array(
 					'space_id'      => $space_id,
 					'author_id'     => (int) $topic->post_author,
 					'type'          => \Jetonomy\compose_post_type( 'forum' ),
@@ -940,7 +940,7 @@ class BBPress_Importer extends Importer {
 					// readable but takes no new replies.
 					'is_closed'     => 'closed' === $topic->post_status ? 1 : 0,
 					'created_at'    => $topic->post_date_gmt ?: now(),
-				]
+				)
 			);
 
 			if ( is_wp_error( $post_id ) || ! $post_id ) {
@@ -970,7 +970,7 @@ class BBPress_Importer extends Importer {
 
 		$existing  = $this->find_imported_children( 'reply', $replies, 'topic' );
 		$parent_of = $this->reply_parent_resolver( $replies );
-		$rethread  = [];
+		$rethread  = array();
 
 		foreach ( $replies as $reply ) {
 			// bbPress reply's post_parent is the topic ID.
@@ -990,7 +990,7 @@ class BBPress_Importer extends Importer {
 			}
 
 			$reply_id = $this->dry_run ? self::DRY_RUN_ID : JtReply::create(
-				[
+				array(
 					'post_id'       => $post_id,
 					'parent_id'     => $parent_of( (int) $reply->ID ),
 					'author_id'     => (int) $reply->post_author,
@@ -998,7 +998,7 @@ class BBPress_Importer extends Importer {
 					'content_plain' => \jetonomy_content_to_plain( $reply->post_content ),
 					'status'        => 'publish',
 					'created_at'    => $reply->post_date_gmt ?: now(),
-				]
+				)
 			);
 
 			if ( is_wp_error( $reply_id ) || ! $reply_id ) {
@@ -1026,8 +1026,8 @@ class BBPress_Importer extends Importer {
 	 */
 	private function queue_grants(): void {
 		if ( $this->grants ) {
-			update_option( self::GRANTS_OPTION, array_merge( (array) get_option( self::GRANTS_OPTION, [] ), $this->grants ), false );
-			$this->grants = [];
+			update_option( self::GRANTS_OPTION, array_merge( (array) get_option( self::GRANTS_OPTION, array() ), $this->grants ), false );
+			$this->grants = array();
 		}
 	}
 
@@ -1041,12 +1041,12 @@ class BBPress_Importer extends Importer {
 	 * @return array{phase:string, offset:int, done:bool, processed:int}
 	 */
 	private function step( string $phase, int $offset, int $processed, bool $done = false ): array {
-		return [
+		return array(
 			'phase'     => $phase,
 			'offset'    => $offset,
 			'done'      => $done,
 			'processed' => $processed,
-		];
+		);
 	}
 
 	/**
@@ -1084,7 +1084,7 @@ class BBPress_Importer extends Importer {
 				// Not counted toward progress: how many people a forum's
 				// participants or a group add up to is only known once the
 				// forums phase has linked them, after the total was fixed.
-				$r    = $this->grant_members( (array) get_option( self::GRANTS_OPTION, [] ), $offset, $batch_size );
+				$r    = $this->grant_members( (array) get_option( self::GRANTS_OPTION, array() ), $offset, $batch_size );
 				$more = $r['processed'] < $r['fetched'] || $r['fetched'] >= $batch_size;
 				if ( ! $more ) {
 					delete_option( self::GRANTS_OPTION );
@@ -1131,7 +1131,7 @@ class BBPress_Importer extends Importer {
 		}
 	}
 
-	public function run( array $options = [] ): array {
+	public function run( array $options = array() ): array {
 		$forums = $this->forum_rows();
 		$this->import_forum_rows( $forums, $this->container_forums( $forums ) );
 
@@ -1142,7 +1142,7 @@ class BBPress_Importer extends Importer {
 			$r       = $this->grant_members( $this->grants, $offset, 500 );
 			$offset += $r['processed'];
 			if ( $r['fetched'] < 500 ) {
-				$this->grants = [];
+				$this->grants = array();
 			}
 		}
 

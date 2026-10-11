@@ -18,7 +18,7 @@ class SpaceMember extends Model {
 	 * Canonical space-role set. Single source of truth for role validation
 	 * across the REST controller, admin AJAX, and set_role().
 	 */
-	public const VALID_ROLES = [ 'viewer', 'member', 'moderator', 'admin' ];
+	public const VALID_ROLES = array( 'viewer', 'member', 'moderator', 'admin' );
 
 	protected static function table_name(): string {
 		return 'space_members';
@@ -179,10 +179,10 @@ class SpaceMember extends Model {
 
 		$deleted = static::db()->delete(
 			static::table(),
-			[
+			array(
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
-			]
+			)
 		);
 
 		if ( $deleted ) {
@@ -248,7 +248,7 @@ class SpaceMember extends Model {
 			return new \WP_Error(
 				'jetonomy_not_logged_in',
 				__( 'You must be logged in to join.', 'jetonomy' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 
@@ -258,7 +258,7 @@ class SpaceMember extends Model {
 				'jetonomy_not_found',
 				/* translators: %s: the singular label of the item (the configured noun). */
 				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -266,7 +266,7 @@ class SpaceMember extends Model {
 			return new \WP_Error(
 				'jetonomy_already_member',
 				__( 'You are already a member of this space.', 'jetonomy' ),
-				[ 'status' => 409 ]
+				array( 'status' => 409 )
 			);
 		}
 
@@ -283,26 +283,26 @@ class SpaceMember extends Model {
 			return new \WP_Error(
 				'jetonomy_invite_only',
 				__( 'This space is invite-only.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
 		if ( 'request' === $mode ) {
 			if ( JoinRequest::find_pending( $space_id, $user_id ) ) {
-				return [
+				return array(
 					'status'          => 'pending',
 					'already_pending' => true,
-				];
+				);
 			}
 
 			JoinRequest::create_request( $space_id, $user_id, $message );
 
 			do_action( 'jetonomy_join_request_created', $space_id, $user_id, $message );
 
-			return [
+			return array(
 				'status'          => 'pending',
 				'already_pending' => false,
-			];
+			);
 		}
 
 		$added = self::add( $space_id, $user_id, 'member' );
@@ -310,7 +310,7 @@ class SpaceMember extends Model {
 			return $added;
 		}
 
-		return [ 'status' => 'joined' ];
+		return array( 'status' => 'joined' );
 	}
 
 	/**
@@ -334,7 +334,7 @@ class SpaceMember extends Model {
 				'invalid_role',
 				/* translators: %s: comma-separated list of valid space roles. */
 				sprintf( __( 'Invalid role. Allowed: %s.', 'jetonomy' ), implode( ', ', self::VALID_ROLES ) ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -343,7 +343,7 @@ class SpaceMember extends Model {
 			return new \WP_Error(
 				'not_a_member',
 				__( 'User is not a member of this space.', 'jetonomy' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -375,11 +375,11 @@ class SpaceMember extends Model {
 
 		static::db()->update(
 			static::table(),
-			[ 'role' => $role ],
-			[
+			array( 'role' => $role ),
+			array(
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
-			]
+			)
 		);
 
 		self::bust_privileged_cache( $space_id );
@@ -417,7 +417,7 @@ class SpaceMember extends Model {
 	 *
 	 * @var array<string, ?string>
 	 */
-	private static array $role_cache = [];
+	private static array $role_cache = array();
 
 	/**
 	 * Whether the memo reset is registered with Cache::flush().
@@ -447,11 +447,11 @@ class SpaceMember extends Model {
 		$rows = static::db()->get_results(
 			static::db()->prepare(
 				'SELECT space_id, role FROM ' . static::table() . " WHERE user_id = %d AND space_id IN ({$placeholders})",
-				array_merge( [ $user_id ], $space_ids )
+				array_merge( array( $user_id ), $space_ids )
 			)
-		) ?: [];
+		) ?: array();
 
-		$found = [];
+		$found = array();
 		foreach ( $rows as $row ) {
 			$found[ (int) $row->space_id ] = (string) $row->role;
 		}
@@ -474,8 +474,8 @@ class SpaceMember extends Model {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$role_cache       = [];
-					self::$role_label_cache = [];
+					self::$role_cache       = array();
+					self::$role_label_cache = array();
 				}
 			);
 		}
@@ -522,11 +522,11 @@ class SpaceMember extends Model {
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
 				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $space_id, $limit, max( 0, $offset ) )
-			) ?: [];
+			) ?: array();
 		}
 		return static::db()->get_results(
 			static::db()->prepare( $base, $space_id )
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -595,11 +595,11 @@ class SpaceMember extends Model {
 				$space_id,
 				$limit
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		foreach ( $rows as $row ) {
-			$row->avatar_url = (string) get_avatar_url( (int) $row->user_id, [ 'size' => 48 ] );
+			$row->avatar_url = (string) get_avatar_url( (int) $row->user_id, array( 'size' => 48 ) );
 		}
 
 		\Jetonomy\Cache::set( $cache_key, $rows, MINUTE_IN_SECONDS );
@@ -619,8 +619,8 @@ class SpaceMember extends Model {
 		// Full-map reset, not per-key: add() reads is_member() BEFORE its
 		// write, and the callers of this method don't all know which user
 		// changed.
-		self::$role_cache       = [];
-		self::$role_label_cache = [];
+		self::$role_cache       = array();
+		self::$role_label_cache = array();
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 
@@ -633,7 +633,7 @@ class SpaceMember extends Model {
 	 *
 	 * @var array<string, ?string>
 	 */
-	private static array $role_label_cache = [];
+	private static array $role_label_cache = array();
 
 	/**
 	 * Bulk-fetch privileged roles for a set of users in a space.
@@ -654,7 +654,7 @@ class SpaceMember extends Model {
 	public static function roles_for_users( int $space_id, array $user_ids ): array {
 		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
 		if ( $space_id <= 0 || empty( $user_ids ) ) {
-			return [];
+			return array();
 		}
 
 		$db           = static::db();
@@ -668,12 +668,12 @@ class SpaceMember extends Model {
 				WHERE space_id = %d
 					AND user_id IN ({$placeholders})
 					AND role IN ('admin','moderator')",
-				array_merge( [ $space_id ], $user_ids )
+				array_merge( array( $space_id ), $user_ids )
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		$out = [];
+		$out = array();
 		foreach ( $rows as $row ) {
 			$out[ (int) $row->user_id ] = (string) $row->role;
 		}
@@ -695,7 +695,7 @@ class SpaceMember extends Model {
 	public static function members_among( int $space_id, array $user_ids ): array {
 		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
 		if ( $space_id <= 0 || empty( $user_ids ) ) {
-			return [];
+			return array();
 		}
 
 		$db           = static::db();
@@ -706,9 +706,9 @@ class SpaceMember extends Model {
 		$rows = $db->get_col(
 			$db->prepare(
 				"SELECT user_id FROM {$table} WHERE space_id = %d AND user_id IN ({$placeholders})",
-				array_merge( [ $space_id ], $user_ids )
+				array_merge( array( $space_id ), $user_ids )
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		return array_map( 'intval', $rows );
@@ -771,7 +771,7 @@ class SpaceMember extends Model {
 					AND role IN ('admin','moderator')",
 				array_merge( $space_ids, $user_ids )
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$found = array();
@@ -858,7 +858,7 @@ class SpaceMember extends Model {
 				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d ORDER BY joined_at ASC',
 				$user_id
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -894,7 +894,7 @@ class SpaceMember extends Model {
 	 */
 	public static function moderated_space_ids( int $user_id ): array {
 		if ( $user_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		$rows = static::db()->get_col(
@@ -904,7 +904,7 @@ class SpaceMember extends Model {
 			)
 		);
 
-		return array_map( 'intval', $rows ?: [] );
+		return array_map( 'intval', $rows ?: array() );
 	}
 
 	/**

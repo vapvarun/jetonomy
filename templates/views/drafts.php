@@ -60,7 +60,7 @@ $crumbs = array(
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'        => 'edit',
 					'message'     => __( 'No drafts yet.', 'jetonomy' ),
 					/* translators: %s: singular topic label. */
@@ -68,7 +68,7 @@ $crumbs = array(
 					/* translators: %s: singular topic label. */
 					'cta_label'   => sprintf( __( 'Start a %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					'cta_url'     => $base . '/',
-				]
+				)
 			);
 			?>
 		<?php else : ?>

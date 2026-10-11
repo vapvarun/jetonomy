@@ -186,11 +186,11 @@ class Rate_Limiter {
 	 * @return array<string,int>
 	 */
 	public static function defaults(): array {
-		return [
+		return array(
 			'posts'   => 3,
 			'replies' => 10,
 			'votes'   => 5,
-		];
+		);
 	}
 
 	/**
@@ -204,17 +204,17 @@ class Rate_Limiter {
 	 */
 	private static function get_limits( int $trust_level ): array {
 		if ( $trust_level >= 1 ) {
-			return []; // No rate limits for Level 1+.
+			return array(); // No rate limits for Level 1+.
 		}
 
-		$settings = get_option( 'jetonomy_settings', [] );
-		$limits   = $settings['rate_limits'] ?? [];
+		$settings = get_option( 'jetonomy_settings', array() );
+		$limits   = $settings['rate_limits'] ?? array();
 		$defaults = self::defaults();
 
-		return [
+		return array(
 			'create_posts'   => (int) ( $limits['posts'] ?? $defaults['posts'] ),
 			'create_replies' => (int) ( $limits['replies'] ?? $defaults['replies'] ),
 			'vote'           => (int) ( $limits['votes'] ?? $defaults['votes'] ),
-		];
+		);
 	}
 }

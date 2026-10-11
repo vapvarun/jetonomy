@@ -83,18 +83,18 @@ abstract class Model {
 	 * @return bool False only on a database error.
 	 */
 	public static function update( int $id, array $data ): bool|\WP_Error {
-		return false !== static::db()->update( static::table(), $data, [ 'id' => $id ] );
+		return false !== static::db()->update( static::table(), $data, array( 'id' => $id ) );
 	}
 
 	public static function delete( int $id ): bool|\WP_Error {
-		return false !== static::db()->delete( static::table(), [ 'id' => $id ] );
+		return false !== static::db()->delete( static::table(), array( 'id' => $id ) );
 	}
 
-	public static function count( array $where = [] ): int {
+	public static function count( array $where = array() ): int {
 		$sql = 'SELECT COUNT(*) FROM ' . static::table();
 		if ( ! empty( $where ) ) {
-			$clauses = [];
-			$values  = [];
+			$clauses = array();
+			$values  = array();
 			foreach ( $where as $col => $val ) {
 				$clauses[] = "`{$col}` = %s";
 				$values[]  = $val;

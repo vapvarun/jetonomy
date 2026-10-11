@@ -37,7 +37,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		return new WP_Error(
 			'jetonomy_forbidden',
 			__( 'You do not have permission to perform this action.', 'jetonomy' ),
-			[ 'status' => 403 ]
+			array( 'status' => 403 )
 		);
 	}
 
@@ -49,7 +49,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'jetonomy_not_found',
 			/* translators: %s: the singular label of the item (the configured noun). */
 			sprintf( __( '%s not found.', 'jetonomy' ), $what ),
-			[ 'status' => 404 ]
+			array( 'status' => 404 )
 		);
 	}
 
@@ -60,7 +60,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		return new WP_Error(
 			'jetonomy_validation',
 			$message,
-			[ 'status' => 400 ]
+			array( 'status' => 400 )
 		);
 	}
 
@@ -159,7 +159,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	/**
 	 * Build a paginated response with cursor support.
 	 */
-	protected function paginated_response( array $items, array $meta = [] ): WP_REST_Response {
+	protected function paginated_response( array $items, array $meta = array() ): WP_REST_Response {
 		// has_more is (offset + count) < total. If a paginating caller passes total
 		// but forgets offset, offset silently reads 0 and every page compares
 		// against page 1 — has_more is stuck true, a "Load more" that never ends.
@@ -200,17 +200,17 @@ abstract class Base_Controller extends WP_REST_Controller {
 		$has_more = isset( $meta['total'] ) ? ( $offset + count( $items ) ) < (int) $meta['total'] : false;
 
 		$response = new WP_REST_Response(
-			[
+			array(
 				'data' => $items,
 				'meta' => array_merge(
-					[
+					array(
 						'count'       => count( $items ),
 						'has_more'    => $has_more,
 						'cursor_next' => $has_more ? $offset + count( $items ) : null,
-					],
+					),
 					$meta
 				),
-			]
+			)
 		);
 
 		if ( isset( $meta['total'] ) ) {
@@ -232,13 +232,13 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// controller gets cursor support for free by reading `offset` alone — several
 		// (e.g. /users/{id}/posts) only ever read `offset`, so a client paginating
 		// with `after` was pinned to page 1 forever. `after` wins when both are sent.
-		return [
+		return array(
 			'limit'  => (int) ( $request->get_param( 'limit' ) ?? 20 ),
 			'offset' => $after > 0 ? $after : $offset,
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
 			'after'  => $after,
 			'before' => (int) ( $request->get_param( 'before' ) ?? 0 ),
-		];
+		);
 	}
 
 	/**
@@ -250,7 +250,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			return new WP_Error(
 				'jetonomy_unauthorized',
 				__( 'You must be logged in.', 'jetonomy' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 		return $user_id;
@@ -316,34 +316,34 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Standard pagination args for route registration — supports cursor and legacy offset.
 	 */
 	public function get_collection_params(): array {
-		return [
-			'limit'  => [
+		return array(
+			'limit'  => array(
 				'type'    => 'integer',
 				'minimum' => 1,
 				'maximum' => 100,
-			],
-			'after'  => [
+			),
+			'after'  => array(
 				'type'        => 'integer',
 				'default'     => 0,
 				'description' => 'Forward cursor: send back the `meta.cursor_next` from the previous page. Opaque to clients — treat it as a token, not a row ID.',
-			],
-			'before' => [
+			),
+			'before' => array(
 				'type'        => 'integer',
 				'default'     => 0,
 				'description' => 'Return items before this ID',
-			],
-			'offset' => [
+			),
+			'offset' => array(
 				'type'        => 'integer',
 				'default'     => 0,
 				'minimum'     => 0,
 				'description' => 'Legacy offset-based pagination (use after/before instead)',
-			],
-			'sort'   => [
+			),
+			'sort'   => array(
 				'type'    => 'string',
 				'default' => 'latest',
-				'enum'    => [ 'latest', 'popular', 'oldest', 'newest' ],
-			],
-		];
+				'enum'    => array( 'latest', 'popular', 'oldest', 'newest' ),
+			),
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -378,7 +378,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * @return object[] The same rows, enriched.
 	 */
 	protected function enrich_flag_actors( array $flags ): array {
-		$user_ids = [];
+		$user_ids = array();
 		foreach ( $flags as $flag ) {
 			if ( ! empty( $flag->reporter_id ) ) {
 				$user_ids[] = (int) $flag->reporter_id;
@@ -396,12 +396,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 			$resolver    = $users[ (int) ( $flag->resolved_by ?? 0 ) ] ?? null;
 
 			$flag->reporter = $reporter
-				? [
+				? array(
 					'id'           => $reporter_id,
 					'display_name' => $reporter->display_name ?? '',
 					'user_login'   => $reporter->user_login ?? '',
-					'avatar_url'   => get_avatar_url( $reporter_id, [ 'size' => 48 ] ),
-				]
+					'avatar_url'   => get_avatar_url( $reporter_id, array( 'size' => 48 ) ),
+				)
 				: null;
 
 			$flag->resolved_by_name = $resolver->display_name ?? '';
@@ -412,12 +412,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 
 	protected function batch_load_users( array $ids ): array {
 		if ( empty( $ids ) ) {
-			return [];
+			return array();
 		}
 		$ids = array_unique( array_map( 'intval', $ids ) );
 
-		$cached  = [];
-		$missing = [];
+		$cached  = array();
+		$missing = array();
 
 		foreach ( $ids as $id ) {
 			$user = Cache::get( "user:{$id}" );
@@ -475,7 +475,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 */
 	protected function batch_load_profiles( array $ids ): array {
 		if ( empty( $ids ) ) {
-			return [];
+			return array();
 		}
 		$ids = array_unique( array_map( 'intval', $ids ) );
 
@@ -484,7 +484,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . \Jetonomy\table( 'user_profiles' ) . " WHERE user_id IN ({$placeholders})", ...$ids ) );
 
-		$map = [];
+		$map = array();
 		foreach ( $rows as $row ) {
 			$map[ (int) $row->user_id ] = $row;
 		}
@@ -588,7 +588,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			$item_obj    = is_object( $item ) ? $item : (object) $item;
 			$author_name = \Jetonomy\Author::for_display( $uid, $item_obj, $user )['name'];
 
-			$enrichment = [
+			$enrichment = array(
 				'author_name'         => $author_name ?: __( 'Anonymous', 'jetonomy' ),
 				// display_url() returns '' when the member has no real avatar, so
 				// API clients (mobile app) render initials from author_name — the
@@ -601,7 +601,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 				// Presence source for API clients: the app derives an "online" dot
 				// from this (last_seen_at within 5 min), matching the web's badge.
 				'author_last_seen_at' => $profile ? $profile->last_seen_at : null,
-			];
+			);
 
 			if ( is_object( $item ) ) {
 				foreach ( $enrichment as $k => $v ) {
@@ -663,7 +663,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * @return array
 	 */
 	protected function prepare_space( object $space ): array {
-		$data = [
+		$data = array(
 			'id'               => (int) $space->id,
 			'category_id'      => $space->category_id ? (int) $space->category_id : null,
 			'title'            => $space->title,
@@ -674,7 +674,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'join_policy'      => $space->join_policy ?? 'open',
 			'icon'             => $space->icon ?? '',
 			'cover_image'      => $space->cover_image ?? '',
-			'settings'         => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : [],
+			'settings'         => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : array(),
 			'member_count'     => (int) ( $space->member_count ?? 0 ),
 			'post_count'       => (int) ( $space->post_count ?? 0 ),
 			'sort_order'       => (int) ( $space->sort_order ?? 0 ),
@@ -683,7 +683,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'created_at_gmt'   => \Jetonomy\to_iso8601_z( $space->created_at ?? null ),
 			'updated_at'       => $space->updated_at ?? null,
 			'last_activity_at' => $space->last_activity_at ?? null,
-		];
+		);
 
 		// Viewer-relative membership context (additive, 1.6.0). All three are
 		// null-safe for logged-out callers and resolve to indexed point

@@ -100,11 +100,11 @@ final class Scenario_Command extends Base_Command {
 			return;
 		}
 
-		$payload = [
+		$payload = array(
 			'name'        => $class::name(),
 			'description' => $class::description(),
 			'class'       => $class,
-		];
+		);
 
 		if ( 'json' === ( $assoc['format'] ?? 'table' ) ) {
 			\WP_CLI::log( (string) wp_json_encode( $payload ) );
@@ -185,15 +185,15 @@ final class Scenario_Command extends Base_Command {
 			return;
 		}
 
-		$rows = [];
+		$rows = array();
 		foreach ( $result->steps as $step ) {
 			$journey = $step['result'];
-			$rows[]  = [
+			$rows[]  = array(
 				'step'        => $step['name'],
 				'success'     => $journey->is_success() ? 'yes' : 'no',
 				'duration_ms' => $step['duration_ms'],
 				'error'       => $journey->is_success() ? '' : (string) ( $journey->first_error() ?? '' ),
-			];
+			);
 		}
 
 		if ( ! empty( $rows ) ) {

@@ -17,9 +17,9 @@ $message = isset( $message ) ? (string) $message : __( 'No pending flags. The co
 
 \Jetonomy\Template_Loader::partial(
 	'empty-state',
-	[
+	array(
 		'icon'      => 'check-circle',
 		'icon_size' => 48,
 		'message'   => $message,
-	]
+	)
 );

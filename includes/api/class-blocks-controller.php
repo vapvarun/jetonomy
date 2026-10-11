@@ -33,31 +33,31 @@ class Blocks_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/users/me/blocks',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'list_items' ],
+					'callback'            => array( $this, 'list_items' ),
 					'permission_callback' => function () {
 						return is_user_logged_in();
 					},
 					'args'                => $this->get_collection_params(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
+					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-			]
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/users/me/blocks/(?P<user_id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'delete_item' ],
+				'callback'            => array( $this, 'delete_item' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-			]
+			)
 		);
 	}
 
@@ -90,23 +90,23 @@ class Blocks_Controller extends Base_Controller {
 				$blocked_id = (int) $row->blocked_id;
 				$wp_user    = $users[ $blocked_id ] ?? null;
 
-				return [
+				return array(
 					'user_id'      => $blocked_id,
 					'user_login'   => $wp_user->user_login ?? '',
 					'display_name' => $wp_user ? \Jetonomy\user_display_name( $wp_user ) : '',
 					'avatar_url'   => \Jetonomy\Avatar::display_url( $blocked_id, 64 ),
 					'created_at'   => $row->created_at ?? null,
-				];
+				);
 			},
 			$rows
 		);
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
-			]
+			)
 		);
 	}
 
@@ -130,10 +130,10 @@ class Blocks_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'blocked' => true,
 				'user_id' => $blocked_id,
-			],
+			),
 			200
 		);
 	}
@@ -151,10 +151,10 @@ class Blocks_Controller extends Base_Controller {
 		BlockedUser::unblock( $user_id, $blocked_id );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted' => true,
 				'user_id' => $blocked_id,
-			],
+			),
 			200
 		);
 	}

@@ -32,37 +32,37 @@ class Votes_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/posts/(?P<id>\d+)/vote',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'vote_post' ],
+					'callback'            => array( $this, 'vote_post' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_vote_args(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'unvote_post' ],
+					'callback'            => array( $this, 'unvote_post' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-			]
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/replies/(?P<id>\d+)/vote',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'vote_reply' ],
+					'callback'            => array( $this, 'vote_reply' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_vote_args(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'unvote_reply' ],
+					'callback'            => array( $this, 'unvote_reply' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -143,7 +143,7 @@ class Votes_Controller extends Base_Controller {
 		}
 
 		$value = (int) $request->get_param( 'value' );
-		if ( ! in_array( $value, [ 1, -1 ], true ) ) {
+		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
 			return $this->validation_error( __( 'Vote value must be 1 or -1.', 'jetonomy' ) );
 		}
 
@@ -175,10 +175,10 @@ class Votes_Controller extends Base_Controller {
 		$result = Vote::cast( $user_id, $type, $id, $value );
 		if ( is_wp_error( $result ) ) {
 			return new WP_REST_Response(
-				[
+				array(
 					'code'    => $result->get_error_code(),
 					'message' => $result->get_error_message(),
-				],
+				),
 				403
 			);
 		}
@@ -199,7 +199,7 @@ class Votes_Controller extends Base_Controller {
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );
 
 		return new WP_REST_Response(
-			array_merge( $result, [ 'score' => $score ] ),
+			array_merge( $result, array( 'score' => $score ) ),
 			200
 		);
 	}
@@ -236,10 +236,10 @@ class Votes_Controller extends Base_Controller {
 		$existing = Vote::get_user_vote( $user_id, $type, $id );
 		if ( null === $existing ) {
 			return new WP_REST_Response(
-				[
+				array(
 					'action' => 'none',
 					'score'  => (int) ( $object->vote_score ?? 0 ),
-				],
+				),
 				200
 			);
 		}
@@ -248,10 +248,10 @@ class Votes_Controller extends Base_Controller {
 		$result = Vote::cast( $user_id, $type, $id, $existing );
 		if ( is_wp_error( $result ) ) {
 			return new WP_REST_Response(
-				[
+				array(
 					'code'    => $result->get_error_code(),
 					'message' => $result->get_error_message(),
-				],
+				),
 				403
 			);
 		}
@@ -260,7 +260,7 @@ class Votes_Controller extends Base_Controller {
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );
 
 		return new WP_REST_Response(
-			array_merge( $result, [ 'score' => $score ] ),
+			array_merge( $result, array( 'score' => $score ) ),
 			200
 		);
 	}
@@ -349,12 +349,12 @@ class Votes_Controller extends Base_Controller {
 	 * Shared args for vote endpoints.
 	 */
 	private function get_vote_args(): array {
-		return [
-			'value' => [
+		return array(
+			'value' => array(
 				'type'     => 'integer',
 				'required' => true,
-				'enum'     => [ 1, -1 ],
-			],
-		];
+				'enum'     => array( 1, -1 ),
+			),
+		);
 	}
 }

@@ -107,10 +107,10 @@ if ( ! is_user_logged_in() ) :
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'    => 'empty-posts',
 						'message' => sprintf( /* translators: %s: plural category label. */ __( 'No %s yet. Check back soon!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
-					]
+					)
 				);
 				?>
 			<?php else : ?>
@@ -122,7 +122,7 @@ if ( ! is_user_logged_in() ) :
 				?>
 				<?php foreach ( $categories as $category ) : ?>
 					<?php
-					$spaces    = $jt_spaces_by_cat[ (int) $category->id ] ?? [];
+					$spaces    = $jt_spaces_by_cat[ (int) $category->id ] ?? array();
 					$jt_accent = sanitize_hex_color( (string) ( $category->color ?? '' ) );
 					?>
 					<section class="jt-cat-section<?php echo $jt_accent ? ' jt-cat-section--accent' : ''; ?>"<?php echo $jt_accent ? ' style="--jt-cat-accent:' . esc_attr( $jt_accent ) . '"' : ''; ?>>
@@ -149,10 +149,10 @@ if ( ! is_user_logged_in() ) :
 						<?php
 						\Jetonomy\Template_Loader::partial(
 							'category-chips',
-							[
-								'children'      => $jt_children[ (int) $category->id ] ?? [],
+							array(
+								'children'      => $jt_children[ (int) $category->id ] ?? array(),
 								'spaces_by_cat' => $jt_spaces_by_cat,
-							]
+							)
 						);
 						?>
 						<?php if ( ! empty( $spaces ) || empty( $jt_children[ (int) $category->id ] ) ) : ?>

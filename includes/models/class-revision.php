@@ -27,9 +27,9 @@ class Revision extends Model {
 	 */
 	public static function create( array $data ): int {
 		$data = array_merge(
-			[
+			array(
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -52,11 +52,11 @@ class Revision extends Model {
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
 				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $type, $id, $limit, max( 0, $offset ) )
-			) ?: [];
+			) ?: array();
 		}
 		return static::db()->get_results(
 			static::db()->prepare( $base, $type, $id )
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Revision extends Model {
 	 * @param int                                                               $offset
 	 * @return object[]
 	 */
-	public static function list_objects_with_revisions( array $filters = [], int $limit = 20, int $offset = 0 ): array {
+	public static function list_objects_with_revisions( array $filters = array(), int $limit = 20, int $offset = 0 ): array {
 		$wpdb       = static::db();
 		$table      = static::table();
 		$where_sql  = self::build_aggregate_where( $filters );
@@ -108,9 +108,9 @@ class Revision extends Model {
 		        ORDER BY last_edited DESC
 		        LIMIT %d OFFSET %d";
 
-		$args = array_merge( $where_args, [ $limit, $offset ] );
+		$args = array_merge( $where_args, array( $limit, $offset ) );
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$args ) );
-		return is_array( $rows ) ? $rows : [];
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**
@@ -120,7 +120,7 @@ class Revision extends Model {
 	 *
 	 * @param array{object_type?: string, date_from?: string, date_to?: string} $filters
 	 */
-	public static function count_objects_with_revisions( array $filters = [] ): int {
+	public static function count_objects_with_revisions( array $filters = array() ): int {
 		$wpdb       = static::db();
 		$table      = static::table();
 		$where_sql  = self::build_aggregate_where( $filters );
@@ -147,11 +147,11 @@ class Revision extends Model {
 	 * @return array{sql: string, args: array<int, mixed>}
 	 */
 	private static function build_aggregate_where( array $filters ): array {
-		$clauses = [ '1=1' ];
-		$args    = [];
+		$clauses = array( '1=1' );
+		$args    = array();
 
 		$type = isset( $filters['object_type'] ) ? (string) $filters['object_type'] : '';
-		if ( in_array( $type, [ 'post', 'reply' ], true ) ) {
+		if ( in_array( $type, array( 'post', 'reply' ), true ) ) {
 			$clauses[] = 'object_type = %s';
 			$args[]    = $type;
 		}
@@ -168,9 +168,9 @@ class Revision extends Model {
 			$args[]    = $to . ' 23:59:59';
 		}
 
-		return [
+		return array(
 			'sql'  => implode( ' AND ', $clauses ),
 			'args' => $args,
-		];
+		);
 	}
 }

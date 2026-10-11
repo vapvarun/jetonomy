@@ -36,7 +36,7 @@ $jt_es_message     = isset( $message ) ? (string) $message : '';
 $jt_es_description = isset( $description ) ? (string) $description : '';
 $jt_es_cta_label   = isset( $cta_label ) ? (string) $cta_label : '';
 $jt_es_cta_url     = isset( $cta_url ) ? (string) $cta_url : '';
-$jt_es_tone        = isset( $tone ) && in_array( $tone, [ 'info', 'warn', 'forbidden' ], true )
+$jt_es_tone        = isset( $tone ) && in_array( $tone, array( 'info', 'warn', 'forbidden' ), true )
 	? $tone
 	: 'info';
 $jt_es_variant     = isset( $variant ) && 'compact' === $variant ? 'compact' : 'default';

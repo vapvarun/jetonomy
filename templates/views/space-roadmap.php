@@ -21,13 +21,13 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -40,12 +40,12 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 	status_header( 403 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'    => 'lock',
 			/* translators: 1: singular member label; 2: singular space label (e.g. space, group). */
 			'message' => sprintf( __( 'You need to be a %1$s of this %2$s to see its roadmap.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
-		]
+		)
 	);
 	return;
 }
@@ -96,8 +96,8 @@ $jt_status_count_rows = $wpdb->get_results(
 		 GROUP BY idea_status",
 		...$jt_private_params
 	)
-) ?: [];
-$jt_status_counts = [];
+) ?: array();
+$jt_status_counts = array();
 foreach ( $jt_status_count_rows as $jt_count_row ) {
 	$jt_status_counts[ (string) $jt_count_row->idea_status ] = (int) $jt_count_row->n;
 }
@@ -144,7 +144,7 @@ foreach ( array_keys( $columns ) as $jt_col_status ) {
 				array( $jt_roadmap_col_cap )
 			)
 		)
-	) ?: [];
+	) ?: array();
 
 	$columns[ $jt_col_status ]['total'] = $jt_status_counts[ $jt_col_status ] ?? count( $columns[ $jt_col_status ]['posts'] );
 }
@@ -185,11 +185,11 @@ $space_url = \Jetonomy\route_url( 'space', $space->slug );
 	<?php
 	\Jetonomy\Template_Loader::partial(
 		'space-tabs',
-		[
+		array(
 			'space'     => $space,
 			'space_url' => $space_url,
 			'active'    => 'roadmap',
-		]
+		)
 	);
 	?>
 

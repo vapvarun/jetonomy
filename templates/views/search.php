@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 $q = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $filter = isset( $_GET['filter'] ) ? sanitize_key( $_GET['filter'] ) : 'all';
-if ( ! in_array( $filter, [ 'all', 'posts', 'spaces', 'tags' ], true ) ) {
+if ( ! in_array( $filter, array( 'all', 'posts', 'spaces', 'tags' ), true ) ) {
 	$filter = 'all';
 }
 
@@ -64,13 +64,13 @@ if ( ! $author_id && '' !== $author_name ) {
 $tag_slug = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'relevance';
-if ( ! in_array( $sort, [ 'relevance', 'newest', 'votes' ], true ) ) {
+if ( ! in_array( $sort, array( 'relevance', 'newest', 'votes' ), true ) ) {
 	$sort = 'relevance';
 }
 
-$posts  = [];
-$spaces = [];
-$tags   = [];
+$posts  = array();
+$spaces = array();
+$tags   = array();
 
 // Has the viewer asked for ANYTHING - a keyword, or a filter on its own?
 //
@@ -92,9 +92,9 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 	// already carry space_title / space_slug.
 	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search_query();
 
-	if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
+	if ( in_array( $filter, array( 'all', 'posts' ), true ) ) {
 		$jt_found       = $search_adapter->query(
-			[
+			array(
 				'type'      => 'post',
 				'q'         => $jt_has_query ? $q : '',
 				'date_from' => $date_from ?: null,
@@ -104,7 +104,7 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 				'sort'      => $sort,
 				'limit'     => $per_page,
 				'offset'    => $offset,
-			]
+			)
 		);
 		$posts          = $jt_found['items'];
 		$jt_posts_total = $jt_found['total'];
@@ -114,37 +114,37 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 	// tag) describe topics, not either of these. Without this guard a
 	// filter-only request searched them for '', which matched every tag on the
 	// site, so "this author's topics" came back decorated with arbitrary tags.
-	if ( $jt_has_query && in_array( $filter, [ 'all', 'spaces' ], true ) ) {
+	if ( $jt_has_query && in_array( $filter, array( 'all', 'spaces' ), true ) ) {
 		$spaces = $search_adapter->query(
-			[
+			array(
 				'type'       => 'space',
 				'q'          => $q,
 				'limit'      => 10,
 				'with_total' => false,
-			]
+			)
 		)['items'];
 	}
 
-	if ( $jt_has_query && in_array( $filter, [ 'all', 'tags' ], true ) ) {
+	if ( $jt_has_query && in_array( $filter, array( 'all', 'tags' ), true ) ) {
 		$tags = $search_adapter->query(
-			[
+			array(
 				'type'       => 'tag',
 				'q'          => $q,
 				'limit'      => 15,
 				'with_total' => false,
-			]
+			)
 		)['items'];
 	}
 }
 
 $total = count( $posts ) + count( $spaces ) + count( $tags );
 
-$crumbs = [
-	[
+$crumbs = array(
+	array(
 		'label' => __( 'Search', 'jetonomy' ),
 		'url'   => '',
-	],
-];
+	),
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -218,18 +218,18 @@ $crumbs = [
 				<div class="jt-bar jt-mb-20">
 					<div class="jt-pills">
 						<?php
-						$filters = [
+						$filters = array(
 							'all'    => __( 'All', 'jetonomy' ),
 							'posts'  => \Jetonomy\jetonomy_label( 'topic', true ),
 							'spaces' => \Jetonomy\space_label( true ),
 							'tags'   => __( 'Tags', 'jetonomy' ),
-						];
+						);
 						foreach ( $filters as $key => $label ) :
 							$f_url = add_query_arg(
-								[
+								array(
 									'q'      => $q,
 									'filter' => $key,
-								],
+								),
 								\Jetonomy\route_url( 'search' )
 							);
 							?>
@@ -255,7 +255,7 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'icon'        => 'empty-search',
 							/* translators: %s: search query */
 							'message'     => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
@@ -264,7 +264,7 @@ $crumbs = [
 							'cta_label'   => sprintf( __( 'Browse all %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 							'cta_url'     => \Jetonomy\base_url() . '/',
 							'tone'        => 'warn',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -312,7 +312,7 @@ $crumbs = [
 							<?php endforeach; ?>
 						</div>
 
-						<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => ( $offset + count( $posts ) ) < $jt_posts_total ] ); ?>
+						<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => ( $offset + count( $posts ) ) < $jt_posts_total ) ); ?>
 					<?php endif; ?>
 
 					<?php if ( ! empty( $spaces ) ) : ?>
@@ -360,11 +360,11 @@ $crumbs = [
 				// No query yet — invite the user to search.
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'    => 'empty-search',
 						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						'message' => sprintf( __( 'Enter a search term above to find discussions, %s, and tags.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
-					]
+					)
 				);
 				?>
 			<?php endif; ?>

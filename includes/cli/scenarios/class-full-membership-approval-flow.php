@@ -35,7 +35,7 @@ final class Full_Membership_Approval_Flow extends Abstract_Scenario {
 		return 'End-to-end approval: create space + request + approval + first post from the approved user.';
 	}
 
-	public function run( array $options = [] ): Scenario_Result {
+	public function run( array $options = array() ): Scenario_Result {
 		$this->reset();
 		$start = microtime( true );
 
@@ -45,21 +45,21 @@ final class Full_Membership_Approval_Flow extends Abstract_Scenario {
 		$member_srv = new Member_Journey();
 		$content    = new Content_Journey();
 
-		$fixtures = [
+		$fixtures = array(
 			'category_id' => 0,
 			'space_id'    => 0,
 			'user_id'     => 0,
 			'request_id'  => 0,
 			'post_id'     => 0,
-		];
+		);
 
 		$cat = $this->step(
 			'create-category',
 			static fn (): Journey_Result => $taxonomy->create_category(
-				[
+				array(
 					'name' => 'Approval flow cat',
 					'slug' => 'fmaf-cat-' . $suffix,
-				]
+				)
 			)
 		);
 		if ( null === $cat ) {
@@ -70,14 +70,14 @@ final class Full_Membership_Approval_Flow extends Abstract_Scenario {
 		$space = $this->step(
 			'create-space',
 			static fn (): Journey_Result => $space_srv->create(
-				[
+				array(
 					'title'       => 'Approval flow space',
 					'slug'        => 'fmaf-space-' . $suffix,
 					'category_id' => (int) $cat->data['id'],
 					'type'        => 'forum',
 					'visibility'  => 'public',
 					'join_policy' => 'approval',
-				]
+				)
 			)
 		);
 		if ( null === $space ) {
@@ -90,17 +90,17 @@ final class Full_Membership_Approval_Flow extends Abstract_Scenario {
 			static function () use ( $suffix ): Journey_Result {
 				$login = 'fmaf_user_' . $suffix;
 				$uid   = wp_insert_user(
-					[
+					array(
 						'user_login' => $login,
 						'user_email' => $login . '@example.test',
 						'user_pass'  => wp_generate_password( 16, false ),
 						'role'       => 'subscriber',
-					]
+					)
 				);
 				if ( is_wp_error( $uid ) ) {
 					return Journey_Result::from_wp_error( $uid );
 				}
-				return Journey_Result::ok( [ 'id' => (int) $uid ] );
+				return Journey_Result::ok( array( 'id' => (int) $uid ) );
 			}
 		);
 		if ( null === $user ) {
@@ -135,12 +135,12 @@ final class Full_Membership_Approval_Flow extends Abstract_Scenario {
 		$post = $this->step(
 			'create-first-post',
 			static fn (): Journey_Result => $content->create_post(
-				[
+				array(
 					'space_id'  => (int) $space->data['id'],
 					'author_id' => (int) $user->data['id'],
 					'title'     => 'Hello from approval flow',
 					'content'   => 'This post was created after the approval flow completed.',
-				]
+				)
 			)
 		);
 		if ( null === $post ) {
@@ -190,7 +190,7 @@ final class Full_Membership_Approval_Flow extends Abstract_Scenario {
 					}
 					$ok = wp_delete_user( $user_id );
 					return $ok
-						? Journey_Result::ok( [ 'id' => $user_id ] )
+						? Journey_Result::ok( array( 'id' => $user_id ) )
 						: Journey_Result::fail( sprintf( 'wp_delete_user(%d) returned false.', $user_id ) );
 				}
 			);

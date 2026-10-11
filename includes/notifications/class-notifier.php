@@ -194,7 +194,7 @@ class Notifier {
 	 * @return string Hex colour.
 	 */
 	private static function accent_color( string $type = '' ): string {
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 
 		/**
 		 * Filter the accent color used in the email header accent-bar and CTA.
@@ -314,63 +314,63 @@ class Notifier {
 
 	private function register_hooks(): void {
 		// Post created — notify space subscribers
-		add_action( 'jetonomy_after_create_post', [ $this, 'on_post_created' ], 10, 2 );
+		add_action( 'jetonomy_after_create_post', array( $this, 'on_post_created' ), 10, 2 );
 
 		// Reply created — notify post author + subscribers
-		add_action( 'jetonomy_after_create_reply', [ $this, 'on_reply_created' ], 10, 2 );
+		add_action( 'jetonomy_after_create_reply', array( $this, 'on_reply_created' ), 10, 2 );
 
 		// Background fan-out handlers — fired from Action Scheduler (or the
 		// WP-Cron fallback) when a subscriber set is too large to notify inline
 		// in the create request. Same callbacks the inline path uses.
-		add_action( 'jetonomy_fanout_post_subscribers', [ $this, 'fanout_post_subscribers' ], 10, 3 );
-		add_action( 'jetonomy_fanout_reply_subscribers', [ $this, 'fanout_reply_subscribers' ], 10, 3 );
+		add_action( 'jetonomy_fanout_post_subscribers', array( $this, 'fanout_post_subscribers' ), 10, 3 );
+		add_action( 'jetonomy_fanout_reply_subscribers', array( $this, 'fanout_reply_subscribers' ), 10, 3 );
 
 		// Reply submitted by email (Reply-by-Email Pro extension fires this).
 		// Nothing in free listened before, so emailed replies were silently lost.
-		add_action( 'jetonomy_create_reply_from_email', [ $this, 'on_reply_from_email' ], 10, 4 );
+		add_action( 'jetonomy_create_reply_from_email', array( $this, 'on_reply_from_email' ), 10, 4 );
 
 		// Vote received — notify content author
-		add_action( 'jetonomy_after_vote', [ $this, 'on_vote' ], 10, 4 );
+		add_action( 'jetonomy_after_vote', array( $this, 'on_vote' ), 10, 4 );
 
 		// Reply accepted — notify reply author
-		add_action( 'jetonomy_reply_accepted', [ $this, 'on_reply_accepted' ], 10, 2 );
+		add_action( 'jetonomy_reply_accepted', array( $this, 'on_reply_accepted' ), 10, 2 );
 
 		// Idea roadmap status changed — notify idea author
-		add_action( 'jetonomy_idea_status_changed', [ $this, 'on_idea_status_changed' ], 10, 4 );
+		add_action( 'jetonomy_idea_status_changed', array( $this, 'on_idea_status_changed' ), 10, 4 );
 
 		// Trust level changed
-		add_action( 'jetonomy_trust_level_changed', [ $this, 'on_trust_change' ], 10, 3 );
+		add_action( 'jetonomy_trust_level_changed', array( $this, 'on_trust_change' ), 10, 3 );
 
 		// Moderator action on content
-		add_action( 'jetonomy_content_moderated', [ $this, 'on_content_moderated' ], 10, 4 );
+		add_action( 'jetonomy_content_moderated', array( $this, 'on_content_moderated' ), 10, 4 );
 
 		// Flag created — notify moderators
-		add_action( 'jetonomy_flag_created', [ $this, 'on_flag_created' ], 10, 2 );
+		add_action( 'jetonomy_flag_created', array( $this, 'on_flag_created' ), 10, 2 );
 
 		// Report closure — tell the reporter (neutrally) their flag was reviewed.
-		add_action( 'jetonomy_after_resolve_flag', [ $this, 'on_flag_resolved' ], 10, 2 );
+		add_action( 'jetonomy_after_resolve_flag', array( $this, 'on_flag_resolved' ), 10, 2 );
 
 		// First reaction on a post/reply — notify the author once (fired by Pro
 		// reactions only on the 0->1 transition, so no per-reaction spam).
-		add_action( 'jetonomy_pro_first_reaction', [ $this, 'on_first_reaction' ], 10, 3 );
+		add_action( 'jetonomy_pro_first_reaction', array( $this, 'on_first_reaction' ), 10, 3 );
 
 		// Custom badge earned (fired by Pro) - same door as a trust-level promotion,
 		// so it gets the preference gate, the email and the community payload.
-		add_action( 'jetonomy_pro_badge_earned', [ $this, 'on_badge_earned' ], 10, 3 );
+		add_action( 'jetonomy_pro_badge_earned', array( $this, 'on_badge_earned' ), 10, 3 );
 
 		// The door for a notification raised by Jetonomy Pro (private messages):
 		// preferences, block gate, push + host contract, email.
-		add_action( 'jetonomy_deliver_notification', [ $this, 'deliver' ], 10, 6 );
+		add_action( 'jetonomy_deliver_notification', array( $this, 'deliver' ), 10, 6 );
 
 		// Join request — notify space admins
-		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
-		add_action( 'jetonomy_join_request_approved', [ $this, 'on_join_request_approved' ], 10, 3 );
-		add_action( 'jetonomy_join_request_denied', [ $this, 'on_join_request_denied' ], 10, 3 );
+		add_action( 'jetonomy_join_request_created', array( $this, 'on_join_request' ), 10, 3 );
+		add_action( 'jetonomy_join_request_approved', array( $this, 'on_join_request_approved' ), 10, 3 );
+		add_action( 'jetonomy_join_request_denied', array( $this, 'on_join_request_denied' ), 10, 3 );
 
 		// New user registered through the Login block — branded welcome email.
 		// Intentionally registered at priority 20 so integrators can short-
 		// circuit earlier and swap in their own welcome without double-sending.
-		add_action( 'jetonomy_user_registered', [ $this, 'on_user_registered' ], 20, 1 );
+		add_action( 'jetonomy_user_registered', array( $this, 'on_user_registered' ), 20, 1 );
 	}
 
 	/**
@@ -416,12 +416,12 @@ class Notifier {
 		}
 
 		// Same content rules + require_approval as the REST reply path.
-		$data     = [
+		$data     = array(
 			'post_id'       => $post_id,
 			'author_id'     => $user_id,
 			'content'       => $content,
 			'content_plain' => \jetonomy_content_to_plain( $content ),
-		];
+		);
 		$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content( 'reply', $data, (int) $post->space_id, $user_id );
 		if ( is_wp_error( $screened ) ) {
 			return;
@@ -833,11 +833,11 @@ class Notifier {
 
 			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				$table,
-				[
+				array(
 					'message'    => $message,
 					'created_at' => now(),
-				],
-				[ 'id' => (int) $existing->id ]
+				),
+				array( 'id' => (int) $existing->id )
 			);
 		} else {
 			// Create new notification via email-aware path.
@@ -1021,7 +1021,7 @@ class Notifier {
 		// Single source of truth - see Trust_Levels::label(). This list used to be
 		// a copy, which is how the admin Users screen drifted a level away from
 		// what this email says.
-		$level_names = [];
+		$level_names = array();
 		for ( $lvl = 1; $lvl <= 5; $lvl++ ) {
 			$level_names[ $lvl ] = \Jetonomy\Trust\Trust_Levels::label( $lvl );
 		}
@@ -1086,12 +1086,12 @@ class Notifier {
 		// Keyed on the canonical moderation action vocabulary fired by
 		// Moderation_Service ('approve'|'spam'|'trash'|'hold') — every fire site
 		// now funnels through that choke-point, so these keys always match.
-		$action_labels = [
+		$action_labels = array(
 			'approve' => __( 'approved', 'jetonomy' ),
 			'spam'    => __( 'marked as spam', 'jetonomy' ),
 			'trash'   => __( 'removed', 'jetonomy' ),
 			'hold'    => __( 'held for review', 'jetonomy' ),
-		];
+		);
 
 		$this->create_and_maybe_email(
 			$author_id,
@@ -1117,10 +1117,10 @@ class Notifier {
 		$object_id = $flag ? (int) $flag->object_id : $flag_id;
 
 		$moderators = get_users(
-			[
-				'capability__in' => [ 'jetonomy_moderate', 'manage_options' ],
+			array(
+				'capability__in' => array( 'jetonomy_moderate', 'manage_options' ),
 				'fields'         => 'ID',
-			]
+			)
 		);
 
 		foreach ( $moderators as $mod_id ) {
@@ -1159,14 +1159,14 @@ class Notifier {
 	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', array $extra = array(), bool $actor_anonymous = false ): void {
 		// Load user preferences and global defaults.
 		$profile         = UserProfile::find_by_user( $user_id );
-		$settings        = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
-		$user_prefs      = $settings['notifications'] ?? [];
-		$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+		$settings        = $profile ? json_decode( $profile->settings ?? '{}', true ) : array();
+		$user_prefs      = $settings['notifications'] ?? array();
+		$global_defaults = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
 
 		// Check web preference before creating notification.
 		if ( self::should_web( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$notification_id = Notification::create(
-				[
+				array(
 					'user_id'         => $user_id,
 					'actor_id'        => $actor_id,
 					'actor_anonymous' => $actor_anonymous ? 1 : 0,
@@ -1175,7 +1175,7 @@ class Notifier {
 					'object_id'       => $object_id,
 					'message'         => $message,
 					'created_at'      => now(),
-				]
+				)
 			);
 
 			self::emit_notification_created( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url, $actor_anonymous );
@@ -1363,7 +1363,7 @@ class Notifier {
 		}
 
 		if ( null === $global_defaults ) {
-			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+			$global_defaults = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
 		}
 		return self::default_email( $type, (array) $global_defaults );
 	}
@@ -1387,7 +1387,7 @@ class Notifier {
 			$user_prefs = self::user_prefs( $user_id );
 		}
 		if ( null === $global_defaults ) {
-			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+			$global_defaults = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
 		}
 		return (bool) ( $user_prefs[ $type ]['web'] ?? $global_defaults[ $type ]['web'] ?? true );
 	}
@@ -1413,7 +1413,7 @@ class Notifier {
 			$user_prefs = self::user_prefs( $user_id );
 		}
 		if ( null === $global_defaults ) {
-			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+			$global_defaults = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
 		}
 		$web   = self::should_web( $user_id, $type, $user_prefs, $global_defaults );
 		$email = self::should_email( $user_id, $type, $user_prefs, $global_defaults );
@@ -1435,8 +1435,8 @@ class Notifier {
 	 */
 	private static function user_prefs( int $user_id ): array {
 		$profile  = UserProfile::find_by_user( $user_id );
-		$settings = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
-		return is_array( $settings ) && is_array( $settings['notifications'] ?? null ) ? $settings['notifications'] : [];
+		$settings = $profile ? json_decode( $profile->settings ?? '{}', true ) : array();
+		return is_array( $settings ) && is_array( $settings['notifications'] ?? null ) ? $settings['notifications'] : array();
 	}
 
 	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {
@@ -1454,12 +1454,12 @@ class Notifier {
 		$unsub_exp   = self::unsubscribe_expiry();
 		$unsub_token = self::unsubscribe_token( $user_id, $type, $unsub_exp );
 		$unsub_url   = add_query_arg(
-			[
+			array(
 				'jetonomy_unsubscribe' => $unsub_token,
 				'jetonomy_unsub_exp'   => $unsub_exp,
 				'uid'                  => $user_id,
 				'type'                 => $type,
-			],
+			),
 			home_url( '/' )
 		);
 
@@ -1470,9 +1470,9 @@ class Notifier {
 		// five are still supported; 1.3.6 adds richer per-notification
 		// context so admin templates can reference post titles, excerpts,
 		// etc. without needing a code override.
-		$templates    = get_option( 'jetonomy_email_templates', [] );
-		$tpl          = isset( $templates[ $type ] ) && is_array( $templates[ $type ] ) ? $templates[ $type ] : [];
-		$placeholders = [
+		$templates    = get_option( 'jetonomy_email_templates', array() );
+		$tpl          = isset( $templates[ $type ] ) && is_array( $templates[ $type ] ) ? $templates[ $type ] : array();
+		$placeholders = array(
 			'{site}'               => $site_name,
 			'{user}'               => $user->display_name,
 			'{message}'            => wp_strip_all_tags( $message ),
@@ -1485,7 +1485,7 @@ class Notifier {
 			'{actor_display_name}' => (string) ( $extra['actor_display_name'] ?? '' ),
 			'{reply_excerpt}'      => (string) ( $extra['reply_excerpt'] ?? '' ),
 			'{space_title}'        => (string) ( $extra['space_title'] ?? '' ),
-		];
+		);
 
 		$subject_tpl = isset( $tpl['subject'] ) && '' !== $tpl['subject'] ? (string) $tpl['subject'] : '[{site}] {message}';
 		$subject     = strtr( $subject_tpl, $placeholders );
@@ -1517,10 +1517,10 @@ class Notifier {
 		$plain = wp_strip_all_tags( $body );
 
 		// Add List-Unsubscribe headers (RFC 8058).
-		$headers = [
+		$headers = array(
 			'List-Unsubscribe: <' . $unsub_url . '>',
 			'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
-		];
+		);
 
 		/**
 		 * Filter the headers before sending. Integrators can append
@@ -1621,7 +1621,7 @@ class Notifier {
 		$unsub_link    = $unsub_url ? esc_url( $unsub_url ) : '';
 		$home_url      = esc_url( home_url( '/' ) );
 
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 
 		$accent      = self::accent_color( $type );
 		$accent_safe = esc_attr( $accent );
@@ -1640,7 +1640,7 @@ class Notifier {
 		// shared `jetonomy_header_logo` contract.
 		$logo_url = \Jetonomy\header_logo( $logo_url );
 
-		$type_labels = [
+		$type_labels = array(
 			/* translators: %s: the singular label of the item (the configured noun). */
 			'reply_to_post'       => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 			/* translators: %s: the singular label of the item (the configured noun). */
@@ -1658,12 +1658,12 @@ class Notifier {
 			'join_request'        => __( 'Join Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
 			'message'             => __( 'Private Message', 'jetonomy' ),
-		];
+		);
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
 		/* translators: %s: the topic or reply label, singular or plural. */
 		$view_topic = sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) );
-		$cta_labels = [
+		$cta_labels = array(
 			'reply_to_post'       => $view_topic,
 			/* translators: %s: the topic or reply label, singular or plural. */
 			'reply_to_reply'      => sprintf( __( 'View %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
@@ -1679,7 +1679,7 @@ class Notifier {
 			'join_request'        => __( 'Review Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
 			'message'             => __( 'Read Message', 'jetonomy' ),
-		];
+		);
 		$cta_text   = $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' );
 
 		// Build the $ctx array passed into the template file. Each template
@@ -1784,7 +1784,7 @@ class Notifier {
 		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 
 		// Collect recipients: space-level admins/moderators + WP-level admins.
-		$recipient_ids = [];
+		$recipient_ids = array();
 
 		// 1. Space-level admins and moderators from jt_space_members.
 		global $wpdb;
@@ -1802,10 +1802,10 @@ class Notifier {
 
 		// 2. WP-level admins who can manage spaces globally.
 		$wp_admins = get_users(
-			[
-				'capability__in' => [ 'jetonomy_manage_spaces', 'manage_options' ],
+			array(
+				'capability__in' => array( 'jetonomy_manage_spaces', 'manage_options' ),
 				'fields'         => 'ID',
-			]
+			)
 		);
 		foreach ( $wp_admins as $admin_id ) {
 			$recipient_ids[ (int) $admin_id ] = true;

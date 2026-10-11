@@ -142,10 +142,10 @@ class Flag extends Model {
 	 */
 	public static function create( array $data ): int {
 		$data = array_merge(
-			[
+			array(
 				'status'     => 'pending',
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -177,9 +177,9 @@ class Flag extends Model {
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
 				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $limit, max( 0, $offset ) )
-			) ?: [];
+			) ?: array();
 		}
-		return static::db()->get_results( $base ) ?: [];
+		return static::db()->get_results( $base ) ?: array();
 	}
 
 	/**
@@ -230,15 +230,15 @@ class Flag extends Model {
 		 */
 		$rows = static::db()->update(
 			static::table(),
-			[
+			array(
 				'status'      => $status,
 				'resolved_by' => $resolved_by,
 				'resolved_at' => now(),
-			],
-			[
+			),
+			array(
 				'id'     => $id,
 				'status' => $flag->status,
-			]
+			)
 		);
 
 		if ( false === $rows ) {
@@ -303,7 +303,7 @@ class Flag extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -320,7 +320,7 @@ class Flag extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -376,7 +376,7 @@ class Flag extends Model {
 	 */
 	public static function find_for_post( int $post_id ): array {
 		if ( $post_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		return static::db()->get_results(
@@ -384,7 +384,7 @@ class Flag extends Model {
 				'SELECT * FROM ' . static::table() . " WHERE object_type = 'post' AND object_id = %d ORDER BY created_at DESC",
 				$post_id
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -411,7 +411,7 @@ class Flag extends Model {
 		string $status,
 		int $exclude_flag_id
 	): int {
-		if ( $object_id <= 0 || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
+		if ( $object_id <= 0 || ! in_array( $object_type, array( 'post', 'reply' ), true ) ) {
 			return 0;
 		}
 
@@ -466,7 +466,7 @@ class Flag extends Model {
 	 */
 	public static function list_by_status_in_space( string $status, int $space_id, int $limit = 0, int $offset = 0 ): array {
 		if ( $space_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		global $wpdb;
@@ -474,8 +474,8 @@ class Flag extends Model {
 		$posts_t   = \Jetonomy\table( 'posts' );
 		$replies_t = \Jetonomy\table( 'replies' );
 
-		$where  = [];
-		$params = [];
+		$where  = array();
+		$params = array();
 
 		if ( 'all' !== $status ) {
 			$where[]  = 'f.status = %s';
@@ -506,7 +506,7 @@ class Flag extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		$rows = $wpdb->get_results( $wpdb->prepare( $base, ...$params ) );
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**
@@ -531,8 +531,8 @@ class Flag extends Model {
 		$posts_t   = \Jetonomy\table( 'posts' );
 		$replies_t = \Jetonomy\table( 'replies' );
 
-		$where  = [];
-		$params = [];
+		$where  = array();
+		$params = array();
 
 		if ( 'all' !== $status ) {
 			$where[]  = 'f.status = %s';
@@ -602,7 +602,7 @@ class Flag extends Model {
 	public static function list_pending_in_spaces( array $space_ids, int $limit = 0, int $offset = 0 ): array {
 		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
 		if ( empty( $space_ids ) ) {
-			return [];
+			return array();
 		}
 
 		global $wpdb;
@@ -632,7 +632,7 @@ class Flag extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$params ) );
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**

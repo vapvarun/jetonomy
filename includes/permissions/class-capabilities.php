@@ -11,8 +11,8 @@ defined( 'ABSPATH' ) || exit;
 
 class Capabilities {
 
-	private const ROLE_MAP = [
-		'subscriber'    => [
+	private const ROLE_MAP = array(
+		'subscriber'    => array(
 			'jetonomy_read',
 			'jetonomy_upload_media',
 			'jetonomy_create_posts',
@@ -22,10 +22,10 @@ class Capabilities {
 			'jetonomy_vote',
 			'jetonomy_flag',
 			'jetonomy_join_spaces',
-		],
-		'contributor'   => [],
-		'author'        => [ 'jetonomy_create_spaces' ],
-		'editor'        => [
+		),
+		'contributor'   => array(),
+		'author'        => array( 'jetonomy_create_spaces' ),
+		'editor'        => array(
 			'jetonomy_edit_others_posts',
 			'jetonomy_delete_others_posts',
 			'jetonomy_moderate',
@@ -33,16 +33,16 @@ class Capabilities {
 			'jetonomy_move_posts',
 			'jetonomy_close_posts',
 			'jetonomy_pin_posts',
-		],
-		'administrator' => [
+		),
+		'administrator' => array(
 			'jetonomy_manage_settings',
 			'jetonomy_manage_categories',
 			'jetonomy_manage_spaces',
 			'jetonomy_manage_badges',
 			'jetonomy_view_analytics',
 			'jetonomy_manage_extensions',
-		],
-	];
+		),
+	);
 
 	/**
 	 * Option holding the site owner's role => caps overrides.
@@ -62,7 +62,7 @@ class Capabilities {
 	 * Posting caps no longer imply it, so unticking Upload media on the
 	 * Permissions tab really stops a role.
 	 */
-	public const UPLOAD_CAPS = [ 'upload_files', 'jetonomy_upload_media' ];
+	public const UPLOAD_CAPS = array( 'upload_files', 'jetonomy_upload_media' );
 
 	/**
 	 * The default cumulative cap set per core role, from ROLE_MAP.
@@ -70,8 +70,8 @@ class Capabilities {
 	 * @return array<string, string[]> role => caps.
 	 */
 	public static function default_map(): array {
-		$out        = [];
-		$cumulative = [];
+		$out        = array();
+		$cumulative = array();
 		foreach ( self::ROLE_MAP as $role_name => $caps ) {
 			$cumulative        = array_merge( $cumulative, $caps );
 			$out[ $role_name ] = array_values( $cumulative );
@@ -87,7 +87,7 @@ class Capabilities {
 	 */
 	public static function effective_map(): array {
 		$map       = self::default_map();
-		$overrides = get_option( self::ROLE_CAPS_OPTION, [] );
+		$overrides = get_option( self::ROLE_CAPS_OPTION, array() );
 		if ( is_array( $overrides ) ) {
 			foreach ( $overrides as $role => $caps ) {
 				if ( 'administrator' === $role ) {
@@ -118,7 +118,7 @@ class Capabilities {
 	 * @return bool True when at least one of the user's roles is explicitly stored.
 	 */
 	public static function has_explicit_role_mapping( int $user_id ): bool {
-		$stored = get_option( self::ROLE_CAPS_OPTION, [] );
+		$stored = get_option( self::ROLE_CAPS_OPTION, array() );
 		if ( ! is_array( $stored ) || ! $stored ) {
 			return false;
 		}
@@ -170,7 +170,7 @@ class Capabilities {
 		// permission set worth protecting from the sync.
 		if ( false === get_option( self::ROLE_CAPS_OPTION, false ) ) {
 			$defaults = self::default_map();
-			$seed     = [];
+			$seed     = array();
 			foreach ( wp_roles()->role_objects as $slug => $role ) {
 				if ( 'administrator' === $slug ) {
 					continue;
@@ -179,7 +179,7 @@ class Capabilities {
 				if ( empty( $live ) ) {
 					continue;
 				}
-				$def = $defaults[ $slug ] ?? [];
+				$def = $defaults[ $slug ] ?? array();
 				sort( $live );
 				$def_sorted = $def;
 				sort( $def_sorted );
@@ -196,7 +196,7 @@ class Capabilities {
 		foreach ( wp_roles()->role_objects as $slug => $role ) {
 			// Roles outside the map (custom roles) default to no Jetonomy caps
 			// unless the owner saved a set for them.
-			$want = isset( $targets[ $slug ] ) ? $targets[ $slug ] : [];
+			$want = isset( $targets[ $slug ] ) ? $targets[ $slug ] : array();
 			foreach ( $all as $cap ) {
 				$should = in_array( $cap, $want, true );
 				$has    = $role->has_cap( $cap );
@@ -220,10 +220,10 @@ class Capabilities {
 	 */
 	public static function roles_with_create_spaces(): array {
 		if ( ! function_exists( 'wp_roles' ) ) {
-			return [];
+			return array();
 		}
 
-		$out = [];
+		$out = array();
 		foreach ( wp_roles()->role_objects as $slug => $role ) {
 			if ( $role->has_cap( 'jetonomy_create_spaces' ) || $role->has_cap( 'manage_options' ) ) {
 				$out[] = (string) $slug;
@@ -259,10 +259,10 @@ class Capabilities {
 				// Site admins always qualify; the setting describes who ELSE does.
 				$can = true;
 			} else {
-				$settings = get_option( 'jetonomy_settings', [] );
+				$settings = get_option( 'jetonomy_settings', array() );
 				$allowed  = isset( $settings['frontend_space_creation_roles'] )
 					? array_filter( array_map( 'sanitize_key', (array) $settings['frontend_space_creation_roles'] ) )
-					: [];
+					: array();
 
 				$user = $allowed ? get_userdata( $user_id ) : null;
 				$can  = $user && ! empty( $user->roles )
@@ -289,7 +289,7 @@ class Capabilities {
 	 * @return array<string, string> cap => label.
 	 */
 	public static function labels(): array {
-		return [
+		return array(
 			'jetonomy_read'                => __( 'Read the community', 'jetonomy' ),
 			'jetonomy_create_posts'        => __( 'Create posts', 'jetonomy' ),
 			'jetonomy_create_replies'      => __( 'Create replies', 'jetonomy' ),
@@ -313,7 +313,7 @@ class Capabilities {
 			'jetonomy_manage_badges'       => __( 'Manage badges', 'jetonomy' ),
 			'jetonomy_view_analytics'      => __( 'View analytics', 'jetonomy' ),
 			'jetonomy_manage_extensions'   => __( 'Manage extensions', 'jetonomy' ),
-		];
+		);
 	}
 
 	/**
@@ -366,8 +366,8 @@ class Capabilities {
 			return $cached;
 		}
 
-		$out = [];
-		foreach ( array_merge( self::all(), [ 'manage_options' ] ) as $cap ) {
+		$out = array();
+		foreach ( array_merge( self::all(), array( 'manage_options' ) ) as $cap ) {
 			$out[ $cap ] = user_can( $user_id, $cap );
 		}
 

@@ -45,7 +45,7 @@ class Revisions_List_Table extends \WP_List_Table {
 	 *
 	 * @var array<string, string>
 	 */
-	private array $title_cache = [];
+	private array $title_cache = array();
 
 	public function __construct() {
 		parent::__construct(

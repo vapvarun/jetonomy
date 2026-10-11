@@ -12,7 +12,6 @@
 
 	<rule ref="WordPress">
 		<!-- PHP 8.1+ syntax allowances. -->
-		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
 		<exclude name="Universal.Operators.DisallowShortTernary"/>
 
 		<!-- Namespaced plugin — template variables are not true globals. -->

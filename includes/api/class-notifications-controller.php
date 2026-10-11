@@ -32,57 +32,57 @@ class Notifications_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/notifications',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_items' ],
+				'callback'            => array( $this, 'list_items' ),
 				'permission_callback' => '__return_true',
 				'args'                => $this->get_collection_params(),
-			]
+			)
 		);
 
 		// Unread count — registered before the (?P<id>\d+) route so it wins.
 		register_rest_route(
 			$ns,
 			'/notifications/unread-count',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'unread_count' ],
+				'callback'            => array( $this, 'unread_count' ),
 				'permission_callback' => '__return_true',
-			]
+			)
 		);
 
 		// Mark all read.
 		register_rest_route(
 			$ns,
 			'/notifications/mark-all-read',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'mark_all_read' ],
+				'callback'            => array( $this, 'mark_all_read' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-			]
+			)
 		);
 
 		// Bulk action — mark read / delete a set of notifications in one round-trip.
 		register_rest_route(
 			$ns,
 			'/notifications/bulk',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'bulk_action' ],
+				'callback'            => array( $this, 'bulk_action' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				'args'                => [
-					'action' => [
+				'args'                => array(
+					'action' => array(
 						'required' => true,
 						'type'     => 'string',
-						'enum'     => [ 'mark_read', 'delete' ],
-					],
-					'ids'    => [
+						'enum'     => array( 'mark_read', 'delete' ),
+					),
+					'ids'    => array(
 						'required' => true,
 						'type'     => 'array',
-						'items'    => [ 'type' => 'integer' ],
-					],
-				],
-			]
+						'items'    => array( 'type' => 'integer' ),
+					),
+				),
+			)
 		);
 
 		// Single notification PATCH (mark read) + DELETE (dismiss).
@@ -91,18 +91,18 @@ class Notifications_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/notifications/(?P<id>\d+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => 'PATCH',
-					'callback'            => [ $this, 'mark_read' ],
+					'callback'            => array( $this, 'mark_read' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_notification' ],
+					'callback'            => array( $this, 'delete_notification' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -153,15 +153,15 @@ class Notifications_Controller extends Base_Controller {
 			)
 		);
 
-		$items = array_map( [ $this, 'prepare_notification' ], $notifications );
+		$items = array_map( array( $this, 'prepare_notification' ), $notifications );
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
 				'filter' => $filter,
-			]
+			)
 		);
 	}
 
@@ -180,13 +180,13 @@ class Notifications_Controller extends Base_Controller {
 		}
 
 		$id      = absint( $request->get_param( 'id' ) );
-		$deleted = Notification::delete_for_user( $user_id, [ $id ] );
+		$deleted = Notification::delete_for_user( $user_id, array( $id ) );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'success' => true,
 				'deleted' => $deleted,
-			],
+			),
 			200
 		);
 	}
@@ -211,7 +211,7 @@ class Notifications_Controller extends Base_Controller {
 		$ids    = (array) $request->get_param( 'ids' );
 
 		if ( empty( $ids ) ) {
-			return new WP_Error( 'jetonomy_invalid_ids', __( 'No notifications selected.', 'jetonomy' ), [ 'status' => 400 ] );
+			return new WP_Error( 'jetonomy_invalid_ids', __( 'No notifications selected.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
 
 		if ( 'delete' === $action ) {
@@ -221,11 +221,11 @@ class Notifications_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'success'  => true,
 				'action'   => $action,
 				'affected' => $affected,
-			],
+			),
 			200
 		);
 	}
@@ -240,7 +240,7 @@ class Notifications_Controller extends Base_Controller {
 	 * @return string A known filter slug, or `all` for unknown input.
 	 */
 	private static function sanitize_filter( string $filter ): string {
-		$allowed = [ 'all', 'unread', 'mentions', 'replies', 'votes', 'badges' ];
+		$allowed = array( 'all', 'unread', 'mentions', 'replies', 'votes', 'badges' );
 		return in_array( $filter, $allowed, true ) ? $filter : 'all';
 	}
 
@@ -283,7 +283,7 @@ class Notifications_Controller extends Base_Controller {
 
 		Notification::mark_all_read( $user_id );
 
-		return new WP_REST_Response( [ 'success' => true ], 200 );
+		return new WP_REST_Response( array( 'success' => true ), 200 );
 	}
 
 	/**
@@ -298,7 +298,7 @@ class Notifications_Controller extends Base_Controller {
 		}
 
 		$count    = Notification::unread_count( $user_id );
-		$response = new WP_REST_Response( [ 'count' => $count ], 200 );
+		$response = new WP_REST_Response( array( 'count' => $count ), 200 );
 		$response->header( 'Cache-Control', 'max-age=15' );
 
 		return $response;
@@ -313,7 +313,7 @@ class Notifications_Controller extends Base_Controller {
 	 * @param object[] $notifications Rows from list_for_user_with_targets().
 	 */
 	private function prime_reply_pages( array $notifications ): void {
-		$reply_ids = [];
+		$reply_ids = array();
 		foreach ( $notifications as $notification ) {
 			if ( 'reply' === ( $notification->object_type ?? '' ) && ! empty( $notification->object_id ) ) {
 				$reply_ids[] = (int) $notification->object_id;
@@ -326,7 +326,7 @@ class Notifications_Controller extends Base_Controller {
 
 	private function prepare_notification( ?object $notification ): array {
 		if ( ! $notification ) {
-			return [];
+			return array();
 		}
 
 		// actor_anonymous is the source of truth for masking — persisted on the
@@ -342,7 +342,7 @@ class Notifications_Controller extends Base_Controller {
 		$object_type = $notification->object_type ?? '';
 		$object_id   = $notification->object_id ? (int) $notification->object_id : 0;
 
-		$data = [
+		$data = array(
 			'id'             => (int) $notification->id,
 			'user_id'        => (int) $notification->user_id,
 			'type'           => $notification->type ?? '',
@@ -361,7 +361,7 @@ class Notifications_Controller extends Base_Controller {
 			'time_ago'       => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 			'profile_url'    => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
 			'object_url'     => $this->resolve_notification_url( $notification, $object_type, $object_id ),
-		];
+		);
 
 		/**
 		 * Filter the REST response data for a single notification.

@@ -49,7 +49,7 @@ $crumbs = array(
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'      => 'lock',
 					'icon_size' => 64,
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
@@ -57,7 +57,7 @@ $crumbs = array(
 					'cta_label' => __( 'Back to community', 'jetonomy' ),
 					'cta_url'   => $base . '/',
 					'tone'      => 'forbidden',
-				]
+				)
 			);
 			?>
 		<?php else : ?>

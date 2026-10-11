@@ -40,7 +40,7 @@ class Journey_Tests {
 	private int $fail = 0;
 
 	/** @var array<int,array<string,mixed>> LIFO stack of fixtures to reverse. */
-	private array $cleanup = [];
+	private array $cleanup = array();
 
 	/**
 	 * Execute every journey smoke test in order and return pass/fail counts.
@@ -82,11 +82,11 @@ class Journey_Tests {
 			$this->cleanup();
 		}
 
-		return [
+		return array(
 			'pass'    => $this->pass,
 			'fail'    => $this->fail,
 			'skipped' => 0,
-		];
+		);
 	}
 
 	private function test_content_journey(): void {
@@ -100,12 +100,12 @@ class Journey_Tests {
 		$author = $this->discover_user();
 
 		$post_result = $journey->create_post(
-			[
+			array(
 				'space_id'  => $space_id,
 				'author_id' => $author,
 				'title'     => 'QA journey probe ' . uniqid(),
 				'content'   => 'QA journey probe body.',
-			]
+			)
 		);
 		$this->record_result( 'content: create_post', $post_result );
 
@@ -113,34 +113,34 @@ class Journey_Tests {
 			return;
 		}
 		$post_id           = (int) $post_result->data['id'];
-		$this->cleanup[]   = [ 'type' => 'post', 'id' => $post_id ];
+		$this->cleanup[]   = array( 'type' => 'post', 'id' => $post_id );
 
 		$reply_result = $journey->create_reply(
-			[
+			array(
 				'post_id'   => $post_id,
 				'author_id' => $author,
 				'content'   => 'QA reply body.',
-			]
+			)
 		);
 		$this->record_result( 'content: create_reply', $reply_result );
 		if ( $reply_result->is_success() ) {
-			$this->cleanup[] = [ 'type' => 'reply', 'id' => (int) $reply_result->data['id'] ];
+			$this->cleanup[] = array( 'type' => 'reply', 'id' => (int) $reply_result->data['id'] );
 		}
 
 		$vote_result = $journey->vote( $author, 'post', $post_id, 1 );
 		$this->record_result( 'content: vote', $vote_result );
 
 		$flag_result = $journey->flag(
-			[
+			array(
 				'object_type' => 'post',
 				'object_id'   => $post_id,
 				'reporter_id' => $author,
 				'reason'      => 'spam',
-			]
+			)
 		);
 		$this->record_result( 'content: flag', $flag_result );
 		if ( $flag_result->is_success() ) {
-			$this->cleanup[] = [ 'type' => 'flag', 'id' => (int) $flag_result->data['id'] ];
+			$this->cleanup[] = array( 'type' => 'flag', 'id' => (int) $flag_result->data['id'] );
 		}
 	}
 
@@ -158,28 +158,28 @@ class Journey_Tests {
 		}
 		$author  = $this->discover_user();
 		$post_id = \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'  => $space_id,
 				'author_id' => $author,
 				'title'     => 'QA reply-count probe ' . uniqid(),
 				'content'   => 'probe',
 				'status'    => 'publish',
-			]
+			)
 		);
 		if ( ! is_int( $post_id ) || $post_id <= 0 ) {
 			$this->record( 'content: reply_count consistency', false, 'post create failed' );
 			return;
 		}
-		$this->cleanup[] = [ 'type' => 'post', 'id' => $post_id ];
+		$this->cleanup[] = array( 'type' => 'post', 'id' => $post_id );
 
 		$baseline = (int) ( \Jetonomy\Models\Post::find( $post_id )?->reply_count ?? 0 );
 		$reply_id = \Jetonomy\Models\Reply::create(
-			[
+			array(
 				'post_id'   => $post_id,
 				'author_id' => $author,
 				'content'   => 'probe reply',
 				'status'    => 'publish',
-			]
+			)
 		);
 		if ( ! is_int( $reply_id ) || $reply_id <= 0 ) {
 			$this->record( 'content: reply_count consistency', false, 'reply create failed' );
@@ -219,28 +219,28 @@ class Journey_Tests {
 		}
 		$author  = $this->discover_user();
 		$post_id = \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'  => $space_id,
 				'author_id' => $author,
 				'title'     => 'QA reply deep-link probe ' . uniqid(),
 				'content'   => 'probe',
 				'status'    => 'publish',
-			]
+			)
 		);
 		if ( ! is_int( $post_id ) || $post_id <= 0 ) {
 			$this->record( $label, false, 'post create failed' );
 			return;
 		}
-		$this->cleanup[] = [ 'type' => 'post', 'id' => $post_id ];
+		$this->cleanup[] = array( 'type' => 'post', 'id' => $post_id );
 
 		// per_page is passed in rather than read from settings, so the probe
 		// stays cheap (5 replies, not replies_per_page + 1) and independent of
 		// the site's configured value.
 		$per_page = 2;
-		$top      = [];
+		$top      = array();
 		for ( $i = 0; $i < 5; $i++ ) {
 			$rid = \Jetonomy\Models\Reply::create(
-				[
+				array(
 					'post_id'   => $post_id,
 					'author_id' => $author,
 					'content'   => 'probe top-level ' . $i,
@@ -251,7 +251,7 @@ class Journey_Tests {
 					// without the id tiebreak repeats/skips tied rows between
 					// pages.
 					'created_at' => gmdate( 'Y-m-d H:i:s', time() + min( $i, 3 ) ),
-				]
+				)
 			);
 			if ( ! is_int( $rid ) || $rid <= 0 ) {
 				$this->record( $label, false, 'reply create failed' );
@@ -263,14 +263,14 @@ class Journey_Tests {
 		// Child of the 4th top-level reply — that ancestor sits on page 2
 		// under per_page=2, so the child must resolve to page 2 as well.
 		$child = \Jetonomy\Models\Reply::create(
-			[
+			array(
 				'post_id'    => $post_id,
 				'author_id'  => $author,
 				'parent_id'  => $top[3],
 				'content'    => 'probe nested child',
 				'status'     => 'publish',
 				'created_at' => gmdate( 'Y-m-d H:i:s', time() + 99 ),
-			]
+			)
 		);
 		if ( ! is_int( $child ) || $child <= 0 ) {
 			$this->record( $label, false, 'nested reply create failed' );
@@ -283,22 +283,22 @@ class Journey_Tests {
 		// row from the rendered thread. It must render on its
 		// top-level ancestor's page like every other descendant.
 		$grandchild = \Jetonomy\Models\Reply::create(
-			[
+			array(
 				'post_id'    => $post_id,
 				'author_id'  => $author,
 				'parent_id'  => $child,
 				'content'    => 'probe nested grandchild',
 				'status'     => 'publish',
 				'created_at' => gmdate( 'Y-m-d H:i:s', time() + 100 ),
-			]
+			)
 		);
 		if ( ! is_int( $grandchild ) || $grandchild <= 0 ) {
 			$this->record( $label, false, 'grandchild reply create failed' );
 			return;
 		}
 
-		$mismatch = [];
-		foreach ( array_merge( $top, [ $child, $grandchild ] ) as $rid ) {
+		$mismatch = array();
+		foreach ( array_merge( $top, array( $child, $grandchild ) ) as $rid ) {
 			$claimed = \Jetonomy\Models\Reply::page_of( $rid, $per_page );
 
 			// Where does the reply ACTUALLY render? Walk the pages the view
@@ -342,21 +342,21 @@ class Journey_Tests {
 		$suffix  = uniqid( 'qa_space_', false );
 
 		$result = $journey->create(
-			[
+			array(
 				'title'       => 'QA journey space',
 				'slug'        => 'qa-journey-' . $suffix,
 				'category_id' => $this->discover_category(),
 				'type'        => 'forum',
 				'visibility'  => 'public',
 				'join_policy' => 'open',
-			]
+			)
 		);
 		$this->record_result( 'space: create', $result );
 		if ( ! $result->is_success() ) {
 			return;
 		}
 		$space_id        = (int) $result->data['id'];
-		$this->cleanup[] = [ 'type' => 'space', 'id' => $space_id ];
+		$this->cleanup[] = array( 'type' => 'space', 'id' => $space_id );
 
 		$this->record_result( 'space: set_join_policy', $journey->set_join_policy( $space_id, 'approval' ) );
 		$this->record_result( 'space: set_visibility', $journey->set_visibility( $space_id, 'private' ) );
@@ -376,7 +376,7 @@ class Journey_Tests {
 		$join_result = $journey->join( $space_id, $user_id );
 		$this->record_result( 'member: join', $join_result );
 		if ( $join_result->is_success() ) {
-			$this->cleanup[] = [ 'type' => 'space_member', 'space_id' => $space_id, 'user_id' => $user_id ];
+			$this->cleanup[] = array( 'type' => 'space_member', 'space_id' => $space_id, 'user_id' => $user_id );
 		}
 
 		$this->record_result( 'member: is_member', $journey->is_member( $space_id, $user_id ) );
@@ -396,18 +396,18 @@ class Journey_Tests {
 		$this->record_result( 'notification: unread_count', $journey->unread_count( $user_id ) );
 
 		$trigger_result = $journey->trigger(
-			[
+			array(
 				'type'        => 'moderation',
 				'user_id'     => $user_id,
 				'actor_id'    => $user_id,
 				'object_type' => 'post',
 				'object_id'   => 1,
 				'message'     => 'QA smoke notification.',
-			]
+			)
 		);
 		$this->record_result( 'notification: trigger', $trigger_result );
 		if ( $trigger_result->is_success() ) {
-			$this->cleanup[] = [ 'type' => 'notification', 'id' => (int) $trigger_result->data['id'] ];
+			$this->cleanup[] = array( 'type' => 'notification', 'id' => (int) $trigger_result->data['id'] );
 		}
 	}
 
@@ -424,20 +424,20 @@ class Journey_Tests {
 
 		$suffix      = uniqid( 'qa_cat_', false );
 		$cat_result  = $journey->create_category(
-			[
+			array(
 				'name' => 'QA journey cat',
 				'slug' => 'qa-journey-' . $suffix,
-			]
+			)
 		);
 		$this->record_result( 'taxonomy: create_category', $cat_result );
 		if ( $cat_result->is_success() ) {
-			$this->cleanup[] = [ 'type' => 'category', 'id' => (int) $cat_result->data['id'] ];
+			$this->cleanup[] = array( 'type' => 'category', 'id' => (int) $cat_result->data['id'] );
 		}
 
 		$tag_result = $journey->create_or_get_tag( 'qa-journey-tag-' . uniqid( '', false ) );
 		$this->record_result( 'taxonomy: create_or_get_tag', $tag_result );
 		if ( $tag_result->is_success() ) {
-			$this->cleanup[] = [ 'type' => 'tag', 'id' => (int) $tag_result->data['id'] ];
+			$this->cleanup[] = array( 'type' => 'tag', 'id' => (int) $tag_result->data['id'] );
 		}
 	}
 
@@ -446,19 +446,19 @@ class Journey_Tests {
 		$suffix  = uniqid( '', false );
 
 		$create_result = $journey->create_with_trust_level(
-			[
+			array(
 				'login'        => 'qa_journey_' . $suffix,
 				'email'        => 'qa_journey_' . $suffix . '@example.test',
 				'display_name' => 'QA Journey User',
 				'trust_level'  => 1,
-			]
+			)
 		);
 		$this->record_result( 'user: create_with_trust_level', $create_result );
 		if ( ! $create_result->is_success() ) {
 			return;
 		}
 		$user_id         = (int) $create_result->data['user_id'];
-		$this->cleanup[] = [ 'type' => 'user', 'id' => $user_id ];
+		$this->cleanup[] = array( 'type' => 'user', 'id' => $user_id );
 
 		$this->record_result( 'user: set_trust_level', $journey->set_trust_level( $user_id, 2 ) );
 		$this->record_result( 'user: get_trust_level', $journey->get_trust_level( $user_id ) );
@@ -701,11 +701,11 @@ class Journey_Tests {
 				break;
 			case 'flag':
 				global $wpdb;
-				$wpdb->delete( \Jetonomy\table( 'flags' ), [ 'id' => (int) $fixture['id'] ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				$wpdb->delete( \Jetonomy\table( 'flags' ), array( 'id' => (int) $fixture['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				break;
 			case 'notification':
 				global $wpdb;
-				$wpdb->delete( \Jetonomy\table( 'notifications' ), [ 'id' => (int) $fixture['id'] ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				$wpdb->delete( \Jetonomy\table( 'notifications' ), array( 'id' => (int) $fixture['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				break;
 			case 'category':
 				\Jetonomy\Models\Category::delete( (int) $fixture['id'] );
@@ -748,13 +748,13 @@ class Journey_Tests {
 
 	private function discover_secondary_user(): int {
 		$users = get_users(
-			[
+			array(
 				'number'  => 1,
-				'exclude' => [ 1 ],
+				'exclude' => array( 1 ),
 				'orderby' => 'ID',
 				'order'   => 'ASC',
 				'fields'  => 'ID',
-			]
+			)
 		);
 		return $users ? (int) $users[0] : 0;
 	}

@@ -30,7 +30,7 @@ class InviteLink extends Model {
 		$token = wp_generate_password( 32, false );
 
 		self::insert(
-			[
+			array(
 				'space_id'   => $space_id,
 				'token'      => $token,
 				'created_by' => $created_by,
@@ -38,7 +38,7 @@ class InviteLink extends Model {
 				'use_count'  => 0,
 				'expires_at' => $expires_at,
 				'created_at' => now(),
-			]
+			)
 		);
 
 		return $token;
@@ -94,10 +94,10 @@ class InviteLink extends Model {
 	public static function revoke( int $id, int $space_id ): bool {
 		return (bool) self::db()->delete(
 			self::table(),
-			[
+			array(
 				'id'       => $id,
 				'space_id' => $space_id,
-			]
+			)
 		);
 	}
 
@@ -110,7 +110,7 @@ class InviteLink extends Model {
 				'SELECT * FROM ' . self::table() . ' WHERE space_id = %d ORDER BY created_at DESC',
 				$space_id
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -132,39 +132,39 @@ class InviteLink extends Model {
 	public static function accept( string $token, int $user_id ) {
 		$invite = self::find_by_token( $token );
 		if ( ! $invite ) {
-			return new \WP_Error( 'jetonomy_invalid_invite', __( 'Invalid invite link.', 'jetonomy' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'jetonomy_invalid_invite', __( 'Invalid invite link.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
 		if ( ! self::is_valid( $invite ) ) {
-			return new \WP_Error( 'jetonomy_invite_expired', __( 'This invite link has expired or reached its usage limit.', 'jetonomy' ), [ 'status' => 410 ] );
+			return new \WP_Error( 'jetonomy_invite_expired', __( 'This invite link has expired or reached its usage limit.', 'jetonomy' ), array( 'status' => 410 ) );
 		}
 
 		$space = Space::find( (int) $invite->space_id );
 		if ( ! $space ) {
-			return new \WP_Error( 'jetonomy_space_not_found', __( 'The space for this invite no longer exists.', 'jetonomy' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'jetonomy_space_not_found', __( 'The space for this invite no longer exists.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
 		if ( $user_id <= 0 ) {
 			return new \WP_Error(
 				'jetonomy_login_required',
 				__( 'Please log in to use this invite.', 'jetonomy' ),
-				[
+				array(
 					// Minimal space context only — a valid token entitles the
 					// holder to the invite panel, not the full space row.
 					'status'            => 401,
 					'space_title'       => (string) $space->title,
 					'space_description' => (string) ( $space->description ?? '' ),
 					'space_slug'        => (string) $space->slug,
-				]
+				)
 			);
 		}
 
 		if ( SpaceMember::is_member( (int) $invite->space_id, $user_id ) ) {
-			return [
+			return array(
 				'status' => 'already_member',
 				'invite' => $invite,
 				'space'  => $space,
-			];
+			);
 		}
 
 		$add_result = SpaceMember::add( (int) $invite->space_id, $user_id, 'member' );
@@ -174,10 +174,10 @@ class InviteLink extends Model {
 
 		self::use_invite( (int) $invite->id );
 
-		return [
+		return array(
 			'status' => 'joined',
 			'invite' => $invite,
 			'space'  => $space,
-		];
+		);
 	}
 }

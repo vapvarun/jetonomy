@@ -39,7 +39,7 @@ final class Config_Journey {
 	 *
 	 * @var array<int,string>
 	 */
-	private const RESETTABLE_BLOCKS = [ 'trust_thresholds', 'rate_limits', 'notification_defaults' ];
+	private const RESETTABLE_BLOCKS = array( 'trust_thresholds', 'rate_limits', 'notification_defaults' );
 
 	/**
 	 * Return the full settings array or the leaf value at the given dotted path.
@@ -65,11 +65,11 @@ final class Config_Journey {
 
 		if ( null === $path || '' === $path ) {
 			return Journey_Result::ok(
-				[
+				array(
 					'path'  => null,
 					'value' => $settings,
-				],
-				[],
+				),
+				array(),
 				$this->duration_ms( $start )
 			);
 		}
@@ -81,11 +81,11 @@ final class Config_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'path'  => $path,
 				'value' => $value,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -126,12 +126,12 @@ final class Config_Journey {
 		update_option( self::OPTION_KEY, $settings );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'path'      => $path,
 				'old_value' => $old_value,
 				'new_value' => $new_value,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -164,12 +164,12 @@ final class Config_Journey {
 			update_option( self::OPTION_KEY, $settings );
 
 			return Journey_Result::ok(
-				[
+				array(
 					'path'             => $path,
 					'reset_to_default' => true,
 					'value'            => $settings[ $path ],
-				],
-				[],
+				),
+				array(),
 				$this->duration_ms( $start )
 			);
 		}
@@ -178,12 +178,12 @@ final class Config_Journey {
 		update_option( self::OPTION_KEY, $settings );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'path'             => $path,
 				'reset_to_default' => false,
 				'value'            => null,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -198,7 +198,7 @@ final class Config_Journey {
 		$start = microtime( true );
 
 		$settings = $this->read_settings();
-		$reset    = [];
+		$reset    = array();
 
 		foreach ( self::RESETTABLE_BLOCKS as $block ) {
 			$settings[ $block ] = $this->default_for_block( $block );
@@ -208,11 +208,11 @@ final class Config_Journey {
 		update_option( self::OPTION_KEY, $settings );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'reset'  => $reset,
 				'values' => array_intersect_key( $settings, array_flip( $reset ) ),
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -251,21 +251,21 @@ final class Config_Journey {
 			return Journey_Result::fail( sprintf( 'Path %s is not an array.', $path ?? '' ) );
 		}
 
-		$items = [];
+		$items = array();
 		foreach ( $target as $key => $value ) {
-			$items[] = [
+			$items[] = array(
 				'key'  => (string) $key,
 				'type' => $this->describe_type( $value ),
-			];
+			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'path'    => $path,
 				'items'   => $items,
-				'columns' => [ 'key', 'type' ],
-			],
-			[],
+				'columns' => array( 'key', 'type' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -280,14 +280,14 @@ final class Config_Journey {
 	 * @return array<string,mixed>
 	 */
 	private function read_settings(): array {
-		$raw      = get_option( self::OPTION_KEY, [] );
-		$settings = is_array( $raw ) ? $raw : [];
+		$raw      = get_option( self::OPTION_KEY, array() );
+		$settings = is_array( $raw ) ? $raw : array();
 		foreach ( self::RESETTABLE_BLOCKS as $block ) {
 			$defaults = $this->default_for_block( $block );
 			if ( empty( $defaults ) ) {
 				continue;
 			}
-			$existing           = isset( $settings[ $block ] ) && is_array( $settings[ $block ] ) ? $settings[ $block ] : [];
+			$existing           = isset( $settings[ $block ] ) && is_array( $settings[ $block ] ) ? $settings[ $block ] : array();
 			$settings[ $block ] = $existing + $defaults;
 		}
 		return $settings;
@@ -347,7 +347,7 @@ final class Config_Journey {
 				return;
 			}
 			if ( ! isset( $cursor[ $segment ] ) || ! is_array( $cursor[ $segment ] ) ) {
-				$cursor[ $segment ] = [];
+				$cursor[ $segment ] = array();
 			}
 			$cursor = &$cursor[ $segment ];
 		}
@@ -415,7 +415,7 @@ final class Config_Journey {
 			case 'notification_defaults':
 				return self::notification_defaults();
 			default:
-				return [];
+				return array();
 		}
 	}
 
@@ -427,44 +427,44 @@ final class Config_Journey {
 	 * @return array<string,array<string,bool>>
 	 */
 	public static function notification_defaults(): array {
-		return [
-			'reply_to_post'   => [
+		return array(
+			'reply_to_post'   => array(
 				'web'   => true,
 				'email' => true,
-			],
-			'reply_to_reply'  => [
+			),
+			'reply_to_reply'  => array(
 				'web'   => true,
 				'email' => false,
-			],
-			'mention'         => [
+			),
+			'mention'         => array(
 				'web'   => true,
 				'email' => true,
-			],
-			'accepted_answer' => [
+			),
+			'accepted_answer' => array(
 				'web'   => true,
 				'email' => true,
-			],
-			'new_post_in_sub' => [
+			),
+			'new_post_in_sub' => array(
 				'web'   => true,
 				'email' => false,
-			],
-			'badge_earned'    => [
+			),
+			'badge_earned'    => array(
 				'web'   => true,
 				'email' => false,
-			],
-			'vote_on_post'    => [
+			),
+			'vote_on_post'    => array(
 				'web'   => true,
 				'email' => false,
-			],
-			'moderation'      => [
+			),
+			'moderation'      => array(
 				'web'   => true,
 				'email' => true,
-			],
-			'join_request'    => [
+			),
+			'join_request'    => array(
 				'web'   => true,
 				'email' => true,
-			],
-		];
+			),
+		);
 	}
 
 	/**

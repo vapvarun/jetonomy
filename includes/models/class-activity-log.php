@@ -21,16 +21,16 @@ class ActivityLog extends Model {
 	/**
 	 * Log an activity event.
 	 */
-	public static function log( int $user_id, string $action, string $object_type, int $object_id, array $metadata = [] ): int {
+	public static function log( int $user_id, string $action, string $object_type, int $object_id, array $metadata = array() ): int {
 		return self::insert(
-			[
+			array(
 				'user_id'     => $user_id,
 				'action'      => $action,
 				'object_type' => $object_type,
 				'object_id'   => $object_id,
 				'metadata'    => ! empty( $metadata ) ? wp_json_encode( $metadata ) : null,
 				'created_at'  => now(),
-			]
+			)
 		);
 	}
 

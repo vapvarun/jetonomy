@@ -57,7 +57,7 @@ final class Privacy_Command extends Base_Command {
 			return;
 		}
 
-		$columns = (array) ( $result->data['columns'] ?? [] );
+		$columns = (array) ( $result->data['columns'] ?? array() );
 		if ( ! $columns ) {
 			\WP_CLI::success( 'No orphaned user data. Nothing to remediate.' );
 			return;

@@ -49,13 +49,13 @@ class Ollama_AI_Adapter implements AI_Adapter {
 		return 'Ollama (Self-hosted)';
 	}
 
-	public function chat( array $messages, array $options = [] ): array {
+	public function chat( array $messages, array $options = array() ): array {
 		$model = $options['model'] ?? $this->model;
-		$body  = [
+		$body  = array(
 			'model'    => $model,
 			'messages' => $messages,
 			'stream'   => false,
-		];
+		);
 
 		if ( ! empty( $options['json_mode'] ) ) {
 			$body['format'] = 'json';
@@ -71,62 +71,62 @@ class Ollama_AI_Adapter implements AI_Adapter {
 		$prompt_tokens     = $response['prompt_eval_count'] ?? 0;
 		$completion_tokens = $response['eval_count'] ?? 0;
 
-		return [
+		return array(
 			'content' => $content,
-			'usage'   => [
+			'usage'   => array(
 				'prompt_tokens'     => (int) $prompt_tokens,
 				'completion_tokens' => (int) $completion_tokens,
 				'total_tokens'      => (int) $prompt_tokens + (int) $completion_tokens,
-			],
+			),
 			'model'   => $response['model'] ?? $model,
-		];
+		);
 	}
 
-	public function embed( string $text, array $options = [] ): array {
+	public function embed( string $text, array $options = array() ): array {
 		$model    = $options['model'] ?? $this->model;
 		$response = $this->request(
 			'/api/embeddings',
-			[
+			array(
 				'model'  => $model,
 				'prompt' => $text,
-			]
+			)
 		);
 
 		if ( empty( $response['embedding'] ) ) {
 			throw new \RuntimeException( 'Ollama returned no embedding data.' );
 		}
 
-		return [
+		return array(
 			'embedding' => $response['embedding'],
 			'model'     => $model,
-			'usage'     => [
+			'usage'     => array(
 				'total_tokens' => 0,
-			],
-		];
+			),
+		);
 	}
 
 	public function get_models(): array {
 		try {
 			$response = wp_remote_get(
 				rtrim( $this->base_url, '/' ) . '/api/tags',
-				[ 'timeout' => 10 ]
+				array( 'timeout' => 10 )
 			);
 
 			if ( is_wp_error( $response ) ) {
-				return [];
+				return array();
 			}
 
 			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
-			$models = [];
+			$models = array();
 
-			foreach ( $body['models'] ?? [] as $m ) {
+			foreach ( $body['models'] ?? array() as $m ) {
 				$name            = $m['name'] ?? '';
 				$models[ $name ] = $name;
 			}
 
 			return $models;
 		} catch ( \Throwable $e ) {
-			return [];
+			return array();
 		}
 	}
 
@@ -134,21 +134,21 @@ class Ollama_AI_Adapter implements AI_Adapter {
 		try {
 			$models = $this->get_models();
 			if ( empty( $models ) ) {
-				return [
+				return array(
 					'ok'    => false,
 					'error' => 'Could not connect to Ollama or no models found.',
-				];
+				);
 			}
 
-			return [
+			return array(
 				'ok'    => true,
 				'model' => array_key_first( $models ),
-			];
+			);
 		} catch ( \Throwable $e ) {
-			return [
+			return array(
 				'ok'    => false,
 				'error' => $e->getMessage(),
-			];
+			);
 		}
 	}
 
@@ -164,11 +164,11 @@ class Ollama_AI_Adapter implements AI_Adapter {
 		$url      = rtrim( $this->base_url, '/' ) . $endpoint;
 		$response = wp_remote_post(
 			$url,
-			[
+			array(
 				'timeout' => 60,
-				'headers' => [ 'Content-Type' => 'application/json' ],
+				'headers' => array( 'Content-Type' => 'application/json' ),
 				'body'    => wp_json_encode( $body ),
-			]
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {

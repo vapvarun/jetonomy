@@ -67,14 +67,14 @@ final class Notification_Command extends Base_Command {
 	 */
 	public function trigger( $args, $assoc ): void {
 		$result = ( new Notification_Journey() )->trigger(
-			[
+			array(
 				'type'        => (string) ( $assoc['type'] ?? '' ),
 				'user_id'     => (int) ( $assoc['to'] ?? 0 ),
 				'actor_id'    => (int) ( $assoc['actor'] ?? 0 ),
 				'object_type' => (string) ( $assoc['object-type'] ?? '' ),
 				'object_id'   => (int) ( $assoc['object-id'] ?? 0 ),
 				'message'     => (string) ( $assoc['message'] ?? '' ),
-			]
+			)
 		);
 		$this->render( $result, $assoc );
 	}

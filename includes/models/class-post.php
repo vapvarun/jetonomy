@@ -533,7 +533,7 @@ class Post extends Model {
 	 *
 	 * @var array<string, object>
 	 */
-	private static array $slug_memo = [];
+	private static array $slug_memo = array();
 
 	/**
 	 * Whether the memo reset is registered with Cache::flush().
@@ -547,7 +547,7 @@ class Post extends Model {
 	 * status change or slug rename must be visible to the next lookup.
 	 */
 	public static function reset_slug_memo(): void {
-		self::$slug_memo = [];
+		self::$slug_memo = array();
 	}
 
 	/**
@@ -561,7 +561,7 @@ class Post extends Model {
 			self::$slug_memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$slug_memo = [];
+					self::$slug_memo = array();
 				}
 			);
 		}
@@ -1666,17 +1666,17 @@ class Post extends Model {
 			return false;
 		}
 
-		$screened = [
+		$screened = array(
 			'status' => 'publish',
 			'flag'   => false,
-		];
+		);
 		if ( $screen ) {
 			$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content(
 				'post',
-				[
+				array(
 					'title'   => (string) $post->title,
 					'content' => (string) $post->content,
-				],
+				),
 				(int) $post->space_id,
 				(int) $post->author_id
 			);

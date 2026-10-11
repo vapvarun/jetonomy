@@ -34,7 +34,7 @@ abstract class Base_Command {
 	 * @param Journey_Result      $result The journey outcome.
 	 * @param array<string,mixed> $assoc Associative args from the command invocation.
 	 */
-	protected function render( Journey_Result $result, array $assoc = [] ): void {
+	protected function render( Journey_Result $result, array $assoc = array() ): void {
 		$format = (string) ( $assoc['format'] ?? 'table' );
 
 		foreach ( $result->logs as $line ) {
@@ -74,14 +74,14 @@ abstract class Base_Command {
 	 * @param Journey_Result      $result Journey outcome carrying items + columns.
 	 * @param array<string,mixed> $assoc  Associative args (read format/fields).
 	 */
-	protected function render_list( Journey_Result $result, array $assoc = [] ): void {
+	protected function render_list( Journey_Result $result, array $assoc = array() ): void {
 		if ( ! $result->is_success() ) {
 			\WP_CLI::error( $result->first_error() ?? 'Journey failed.' );
 			return;
 		}
 
-		$items   = $result->data['items'] ?? [];
-		$columns = $result->data['columns'] ?? [];
+		$items   = $result->data['items'] ?? array();
+		$columns = $result->data['columns'] ?? array();
 
 		if ( ! is_array( $items ) || empty( $items ) ) {
 			\WP_CLI::log( 'No rows.' );

@@ -41,11 +41,11 @@ final class User_Journey {
 	 *
 	 * @var array<int,string>
 	 */
-	private const PROFILE_WHITELIST = [
+	private const PROFILE_WHITELIST = array(
 		'display_name',
 		'bio',
 		'avatar_url',
-	];
+	);
 
 	/**
 	 * Create a WordPress user, ensure a Jetonomy profile row exists, and stamp
@@ -60,12 +60,12 @@ final class User_Journey {
 	public function create_with_trust_level( array $input ): Journey_Result {
 		$start = microtime( true );
 
-		$missing = $this->require_keys( $input, [ 'login', 'email' ] );
+		$missing = $this->require_keys( $input, array( 'login', 'email' ) );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
-		$unknown = Journey_Input::error( $input, [ 'login', 'email', 'role', 'trust_level', 'password', 'display_name' ] );
+		$unknown = Journey_Input::error( $input, array( 'login', 'email', 'role', 'trust_level', 'password', 'display_name' ) );
 		if ( '' !== $unknown ) {
 			return Journey_Result::fail( $unknown );
 		}
@@ -84,13 +84,13 @@ final class User_Journey {
 			: wp_generate_password( 20, true, true );
 
 		$user_id = wp_insert_user(
-			[
+			array(
 				'user_login'   => $login,
 				'user_email'   => $email,
 				'user_pass'    => $password,
 				'role'         => $role,
 				'display_name' => isset( $input['display_name'] ) ? (string) $input['display_name'] : $login,
-			]
+			)
 		);
 
 		if ( is_wp_error( $user_id ) ) {
@@ -103,20 +103,20 @@ final class User_Journey {
 		// already wrote it to wp_users, which is the single source every byline
 		// reads through \Jetonomy\user_display_name(). The profile copy was a
 		// second write to a column nothing read.
-		$ok = UserProfile::update_profile( (int) $user_id, [ 'trust_level' => $level ] );
+		$ok = UserProfile::update_profile( (int) $user_id, array( 'trust_level' => $level ) );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'UserProfile::update_profile(%d) returned false.', (int) $user_id ) );
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id'     => (int) $user_id,
 				'login'       => $login,
 				'email'       => $email,
 				'trust_level' => $level,
 				'role'        => $role,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -141,18 +141,18 @@ final class User_Journey {
 		// Make sure a profile row exists — direct update silently no-ops on a missing row.
 		UserProfile::find_or_create( $user_id );
 
-		$ok = UserProfile::update_profile( $user_id, [ 'trust_level' => $level ] );
+		$ok = UserProfile::update_profile( $user_id, array( 'trust_level' => $level ) );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'UserProfile::update_profile(%d) returned false.', $user_id ) );
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id'     => $user_id,
 				'trust_level' => $level,
 				'level_name'  => Trust_Levels::name( $level ),
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -178,13 +178,13 @@ final class User_Journey {
 		$level = (int) ( $profile->trust_level ?? 0 );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id'      => $user_id,
 				'trust_level'  => $level,
 				'level_name'   => Trust_Levels::name( $level ),
 				'requirements' => Trust_Levels::get_requirements( $level + 1 ),
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -244,11 +244,11 @@ final class User_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id' => $user_id,
 				'updated' => $updated,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -274,12 +274,12 @@ final class User_Journey {
 		$new_reputation = $profile ? (int) ( $profile->reputation ?? 0 ) : 0;
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id'        => $user_id,
 				'delta'          => $delta,
 				'new_reputation' => $new_reputation,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -301,7 +301,7 @@ final class User_Journey {
 			return Journey_Result::fail( 'User profile not found.' );
 		}
 
-		return Journey_Result::ok( (array) $profile, [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( (array) $profile, array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -337,24 +337,24 @@ final class User_Journey {
 			)
 		);
 
-		$items = [];
+		$items = array();
 		foreach ( (array) $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'user_id'      => (int) $row->user_id,
 				// Resolved from wp_users, the single source, rather than the
 				// profile copy that used to sit unread beside it.
 				'display_name' => \Jetonomy\user_display_name( get_userdata( (int) $row->user_id ) ),
 				'trust_level'  => (int) ( $row->trust_level ?? 0 ),
 				'last_seen_at' => (string) ( $row->last_seen_at ?? '' ),
-			];
+			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'user_id', 'display_name', 'trust_level', 'last_seen_at' ],
-			],
-			[],
+				'columns' => array( 'user_id', 'display_name', 'trust_level', 'last_seen_at' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -381,7 +381,7 @@ final class User_Journey {
 	 * @return array<int,string> Missing key names; empty if all present.
 	 */
 	private function require_keys( array $input, array $keys ): array {
-		$missing = [];
+		$missing = array();
 		foreach ( $keys as $key ) {
 			if ( ! isset( $input[ $key ] ) || '' === $input[ $key ] ) {
 				$missing[] = $key;

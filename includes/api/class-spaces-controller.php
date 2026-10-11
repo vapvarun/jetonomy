@@ -35,7 +35,7 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * Valid join policies.
 	 */
-	private const VALID_JOIN_POLICIES = [ 'open', 'approval', 'invite' ];
+	private const VALID_JOIN_POLICIES = array( 'open', 'approval', 'invite' );
 
 	/**
 	 * Register all REST routes.
@@ -47,16 +47,16 @@ class Spaces_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/spaces',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'list_items' ],
-					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
+					'callback'            => array( $this, 'list_items' ),
+					'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
 					'args'                => $this->get_list_args(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
+					'callback'            => array( $this, 'create_item' ),
 					// REST_Auth handles login + nonce. The detailed cap matrix
 					// (manage_options OR jetonomy_create_spaces OR admin-allowed
 					// role) stays in create_permission_check because it consults
@@ -64,61 +64,61 @@ class Spaces_Controller extends Base_Controller {
 					// the user's WP roles — neither belongs in REST_Auth.
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_create_args(),
-				],
-			]
+				),
+			)
 		);
 
 		// Single space routes.
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				],
-				[
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				),
+				array(
 					'methods'             => 'PATCH',
-					'callback'            => [ $this, 'update_item' ],
+					'callback'            => array( $this, 'update_item' ),
 					// Space-admin check happens inside the handler because it
 					// resolves the route's `id` against per-space role rows.
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_update_args(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_item' ],
+					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-					'args'                => [
-						'mode' => [
+					'args'                => array(
+						'mode' => array(
 							'type'     => 'string',
 							'required' => false,
-							'enum'     => [ 'transfer', 'purge' ],
+							'enum'     => array( 'transfer', 'purge' ),
 							'default'  => 'transfer',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Member collection routes.
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/members',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_members' ],
-					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
+					'callback'            => array( $this, 'get_members' ),
+					'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
 					'args'                => $this->get_collection_params(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'join_space' ],
+					'callback'            => array( $this, 'join_space' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-			]
+				),
+			)
 		);
 
 		// Privileged members read route — powers the "Managed by" sidebar
@@ -130,19 +130,19 @@ class Spaces_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/privileged-members',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_privileged_members' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				'args'                => [
-					'limit' => [
+				'callback'            => array( $this, 'get_privileged_members' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => array(
+					'limit' => array(
 						'type'    => 'integer',
 						'default' => 20,
 						'minimum' => 1,
 						'maximum' => 100,
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		// Join-request moderation — list pending (privileged read) plus
@@ -155,51 +155,51 @@ class Spaces_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/join-requests',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_join_requests' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-			]
+				'callback'            => array( $this, 'get_join_requests' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+			)
 		);
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/approve',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'approve_join_request' ],
+				'callback'            => array( $this, 'approve_join_request' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-			]
+			)
 		);
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/deny',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'deny_join_request' ],
+				'callback'            => array( $this, 'deny_join_request' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-			]
+			)
 		);
 
 		// Invite link routes.
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/invite',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'generate_invite' ],
+				'callback'            => array( $this, 'generate_invite' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				'args'                => [
-					'max_uses'   => [
+				'args'                => array(
+					'max_uses'   => array(
 						'type'     => 'integer',
 						'required' => false,
 						'default'  => 0,
-					],
-					'expires_at' => [
+					),
+					'expires_at' => array(
 						'type'     => 'string',
 						'required' => false,
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		// List + revoke. Until 1.8.0 these existed ONLY as admin-ajax handlers
@@ -211,56 +211,56 @@ class Spaces_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/invites',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_invites' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-			]
+				'callback'            => array( $this, 'get_invites' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/invites/(?P<invite_id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'revoke_invite' ],
+				'callback'            => array( $this, 'revoke_invite' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-			]
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/invite/(?P<token>[a-zA-Z0-9]+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'use_invite' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-			]
+				'callback'            => array( $this, 'use_invite' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+			)
 		);
 
 		// Individual member routes.
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/members/(?P<user_id>\d+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'leave_space' ],
+					'callback'            => array( $this, 'leave_space' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-				[
+				),
+				array(
 					'methods'             => 'PATCH',
-					'callback'            => [ $this, 'update_member_role' ],
+					'callback'            => array( $this, 'update_member_role' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-					'args'                => [
-						'role' => [
+					'args'                => array(
+						'role' => array(
 							'type'     => 'string',
 							'required' => true,
 							'enum'     => self::VALID_ROLES,
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		/*
@@ -272,50 +272,50 @@ class Spaces_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/access-rules',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'list_access_rules' ],
+					'callback'            => array( $this, 'list_access_rules' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_access_rule' ],
+					'callback'            => array( $this, 'create_access_rule' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
-					'args'                => [
-						'rule_type'  => [
+					'args'                => array(
+						'rule_type'  => array(
 							'type'     => 'string',
 							'required' => true,
-							'enum'     => [ 'membership', 'role', 'capability', 'trust_level', 'logged_in', 'everyone' ],
-						],
-						'rule_value' => [ 'type' => 'string' ],
-						'grants'     => [
+							'enum'     => array( 'membership', 'role', 'capability', 'trust_level', 'logged_in', 'everyone' ),
+						),
+						'rule_value' => array( 'type' => 'string' ),
+						'grants'     => array(
 							'type'    => 'string',
 							'default' => 'read',
-							'enum'    => [ 'read', 'participate', 'full' ],
-						],
-						'space_role' => [
+							'enum'    => array( 'read', 'participate', 'full' ),
+						),
+						'space_role' => array(
 							'type'    => 'string',
 							'default' => 'viewer',
-							'enum'    => [ 'viewer', 'member', 'moderator', 'admin' ],
-						],
-						'priority'   => [
+							'enum'    => array( 'viewer', 'member', 'moderator', 'admin' ),
+						),
+						'priority'   => array(
 							'type'    => 'integer',
 							'default' => 0,
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/access-rules/(?P<rule_id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'delete_access_rule' ],
+				'callback'            => array( $this, 'delete_access_rule' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_spaces' ),
-			]
+			)
 		);
 	}
 
@@ -325,10 +325,10 @@ class Spaces_Controller extends Base_Controller {
 	public function list_access_rules( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$space_id = (int) $request->get_param( 'id' );
 		if ( ! Space::find( $space_id ) ) {
-			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), [ 'status' => 404 ] );
+			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
-		return new WP_REST_Response( [ 'data' => AccessRule::list_for_space( $space_id ) ], 200 );
+		return new WP_REST_Response( array( 'data' => AccessRule::list_for_space( $space_id ) ), 200 );
 	}
 
 	/**
@@ -344,37 +344,37 @@ class Spaces_Controller extends Base_Controller {
 	public function create_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$space_id = (int) $request->get_param( 'id' );
 		if ( ! Space::find( $space_id ) ) {
-			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), [ 'status' => 404 ] );
+			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
 		$rule_type  = (string) $request->get_param( 'rule_type' );
 		$rule_value = sanitize_text_field( (string) $request->get_param( 'rule_value' ) );
 
 		$id = AccessRule::create(
-			[
+			array(
 				'space_id'   => $space_id,
 				'rule_type'  => $rule_type,
 				'rule_value' => '' !== $rule_value ? $rule_value : null,
 				'grants'     => (string) $request->get_param( 'grants' ),
 				'space_role' => (string) $request->get_param( 'space_role' ),
 				'priority'   => (int) $request->get_param( 'priority' ),
-			]
+			)
 		);
 
 		if ( ! $id ) {
-			return new WP_Error( 'jetonomy_rule_create_failed', __( 'Failed to create access rule.', 'jetonomy' ), [ 'status' => 500 ] );
+			return new WP_Error( 'jetonomy_rule_create_failed', __( 'Failed to create access rule.', 'jetonomy' ), array( 'status' => 500 ) );
 		}
 
 		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'data'         => AccessRule::find( (int) $id ),
 				'made_private' => $made_private,
 				'message'      => $made_private
 					? __( 'Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.', 'jetonomy' )
 					: __( 'Access rule added.', 'jetonomy' ),
-			],
+			),
 			201
 		);
 	}
@@ -386,19 +386,19 @@ class Spaces_Controller extends Base_Controller {
 		$rule_id = (int) $request->get_param( 'rule_id' );
 
 		if ( ! AccessRule::find( $rule_id ) ) {
-			return new WP_Error( 'jetonomy_rule_not_found', __( 'Access rule not found.', 'jetonomy' ), [ 'status' => 404 ] );
+			return new WP_Error( 'jetonomy_rule_not_found', __( 'Access rule not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
 		$deleted = AccessRule::delete( $rule_id );
 		if ( is_wp_error( $deleted ) || ! $deleted ) {
-			return new WP_Error( 'jetonomy_rule_delete_failed', __( 'Failed to delete access rule.', 'jetonomy' ), [ 'status' => 500 ] );
+			return new WP_Error( 'jetonomy_rule_delete_failed', __( 'Failed to delete access rule.', 'jetonomy' ), array( 'status' => 500 ) );
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted' => true,
 				'id'      => $rule_id,
-			],
+			),
 			200
 		);
 	}
@@ -418,7 +418,7 @@ class Spaces_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_unauthorized',
 				__( 'You must be logged in.', 'jetonomy' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 		if ( ! \Jetonomy\Permissions\Capabilities::can_create_space_frontend() ) {
@@ -526,15 +526,15 @@ class Spaces_Controller extends Base_Controller {
 			\Jetonomy\Models\Subscription::warm_viewer_subscriptions( $user_id, 'space', $space_ids );
 		}
 
-		$items       = array_map( [ $this, 'prepare_space' ], $spaces );
+		$items       = array_map( array( $this, 'prepare_space' ), $spaces );
 		$total_pages = (int) ceil( $total / max( 1, $pagination['limit'] ) );
 
 		$response = $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $pagination['offset'],
-			]
+			)
 		);
 
 		$response->header( 'X-WP-TotalPages', (string) $total_pages );
@@ -633,7 +633,7 @@ class Spaces_Controller extends Base_Controller {
 			return $combo;
 		}
 
-		$data = [
+		$data = array(
 			'category_id' => absint( $request->get_param( 'category_id' ) ) ?: null,
 			'title'       => $title,
 			'slug'        => $slug,
@@ -655,7 +655,7 @@ class Spaces_Controller extends Base_Controller {
 			'sort_order'  => null !== $request->get_param( 'sort_order' )
 				? absint( $request->get_param( 'sort_order' ) )
 				: null,
-		];
+		);
 
 		// Remove empty optional fields so DB defaults apply. absint() of an
 		// explicit 0 survives this - the callback rejects only null and ''.
@@ -670,7 +670,7 @@ class Spaces_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_create_failed',
 				__( 'Failed to create space.', 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
@@ -713,7 +713,7 @@ class Spaces_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		$data = [];
+		$data = array();
 
 		if ( null !== $request->get_param( 'title' ) ) {
 			$data['title'] = sanitize_text_field( $request->get_param( 'title' ) );
@@ -863,7 +863,7 @@ class Spaces_Controller extends Base_Controller {
 			// purge only when the owner has allowed it; manage_options always
 			// can. Enforced here rather than in the UI - the route accepts the
 			// param whatever the form renders.
-			$settings      = get_option( 'jetonomy_settings', [] );
+			$settings      = get_option( 'jetonomy_settings', array() );
 			$admins_may    = ! empty( $settings['allow_space_admin_purge'] );
 			$is_site_admin = current_user_can( 'manage_options' );
 
@@ -871,7 +871,7 @@ class Spaces_Controller extends Base_Controller {
 				return new WP_Error(
 					'jetonomy_purge_not_allowed',
 					__( 'Permanently deleting a space is restricted to site administrators on this community.', 'jetonomy' ),
-					[ 'status' => 403 ]
+					array( 'status' => 403 )
 				);
 			}
 
@@ -889,12 +889,12 @@ class Spaces_Controller extends Base_Controller {
 			// reaches the space row, so it is NOT adjusted here - doing both
 			// would double-count.
 			return new WP_REST_Response(
-				[
+				array(
 					'deleted' => true,
 					'mode'    => 'purge',
 					'id'      => $id,
 					'queued'  => $queued,
-				],
+				),
 				202
 			);
 		}
@@ -906,7 +906,7 @@ class Spaces_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_no_successor',
 				__( 'No one else can take over this space, so it cannot be transferred. An administrator must delete it permanently instead.', 'jetonomy' ),
-				[ 'status' => 409 ]
+				array( 'status' => 409 )
 			);
 		}
 
@@ -915,12 +915,12 @@ class Spaces_Controller extends Base_Controller {
 		Space::hand_over( $id, $successor, $user_id, true );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted'   => false,
 				'mode'      => 'transfer',
 				'id'        => $id,
 				'successor' => $successor,
-			],
+			),
 			200
 		);
 	}
@@ -949,12 +949,12 @@ class Spaces_Controller extends Base_Controller {
 
 		$items = array_map(
 			static function ( $row ) {
-				return [
+				return array(
 					'user_id'      => (int) $row->user_id,
 					'role'         => (string) $row->role,
 					'display_name' => (string) $row->display_name,
 					'avatar_url'   => (string) ( $row->avatar_url ?? '' ),
-				];
+				);
 			},
 			$members
 		);
@@ -1007,14 +1007,14 @@ class Spaces_Controller extends Base_Controller {
 		// primes the WP user cache + UserProfile::prime.
 		$this->batch_load_users( array_map( static fn( $m ) => (int) $m->user_id, $members ) );
 
-		$items = array_map( [ $this, 'prepare_member' ], $members );
+		$items = array_map( array( $this, 'prepare_member' ), $members );
 
 		$response = $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $pagination['offset'],
-			]
+			)
 		);
 
 		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / max( 1, $pagination['limit'] ) ) );
@@ -1050,23 +1050,23 @@ class Spaces_Controller extends Base_Controller {
 
 		if ( 'pending' === $result['status'] ) {
 			return new WP_REST_Response(
-				[
+				array(
 					'status'  => 'pending',
 					'message' => empty( $result['already_pending'] )
 						? __( 'Join request submitted. Awaiting approval.', 'jetonomy' )
 						: __( 'You already have a pending join request for this space.', 'jetonomy' ),
-				],
+				),
 				202
 			);
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'status'   => 'joined',
 				'space_id' => $id,
 				'user_id'  => get_current_user_id(),
 				'role'     => 'member',
-			],
+			),
 			201
 		);
 	}
@@ -1099,7 +1099,7 @@ class Spaces_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_not_member',
 				__( 'User is not a member of this space.', 'jetonomy' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -1109,11 +1109,11 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'removed'  => true,
 				'space_id' => $id,
 				'user_id'  => $user_id,
-			],
+			),
 			200
 		);
 	}
@@ -1135,11 +1135,11 @@ class Spaces_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		$items = [];
+		$items = array();
 		foreach ( JoinRequest::list_pending_for_space( $id ) as $row ) {
 			$uid     = (int) $row->user_id;
 			$user    = get_userdata( $uid );
-			$items[] = [
+			$items[] = array(
 				'id'           => (int) $row->id,
 				'user_id'      => $uid,
 				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : __( 'Unknown member', 'jetonomy' ),
@@ -1147,14 +1147,14 @@ class Spaces_Controller extends Base_Controller {
 				'profile_url'  => \Jetonomy\get_profile_url( $uid ),
 				'message'      => (string) ( $row->message ?? '' ),
 				'created_at'   => (string) $row->created_at,
-			];
+			);
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'data' => $items,
-				'meta' => [ 'total' => count( $items ) ],
-			],
+				'meta' => array( 'total' => count( $items ) ),
+			),
 			200
 		);
 	}
@@ -1178,12 +1178,12 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'status'     => 'approved',
 				'request_id' => (int) $jr->id,
 				'space_id'   => (int) $space->id,
 				'user_id'    => (int) $jr->user_id,
-			],
+			),
 			200
 		);
 	}
@@ -1200,12 +1200,12 @@ class Spaces_Controller extends Base_Controller {
 		JoinRequest::deny( (int) $jr->id, get_current_user_id() );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'status'     => 'denied',
 				'request_id' => (int) $jr->id,
 				'space_id'   => (int) $space->id,
 				'user_id'    => (int) $jr->user_id,
-			],
+			),
 			200
 		);
 	}
@@ -1221,24 +1221,24 @@ class Spaces_Controller extends Base_Controller {
 		$request_id = absint( $request->get_param( 'request_id' ) );
 		$space      = Space::find( $id );
 		if ( ! $space ) {
-			return [ null, null, $this->not_found( 'Space' ) ];
+			return array( null, null, $this->not_found( 'Space' ) );
 		}
 		if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( get_current_user_id(), $id ) ) {
-			return [ null, null, $this->permission_error() ];
+			return array( null, null, $this->permission_error() );
 		}
 		$jr = JoinRequest::find( $request_id );
 		if ( ! $jr || (int) $jr->space_id !== $id || 'pending' !== $jr->status ) {
-			return [
+			return array(
 				null,
 				null,
 				new WP_Error(
 					'jetonomy_join_request_not_found',
 					__( 'Join request not found or already processed.', 'jetonomy' ),
-					[ 'status' => 404 ]
+					array( 'status' => 404 )
 				),
-			];
+			);
 		}
-		return [ $space, $jr, null ];
+		return array( $space, $jr, null );
 	}
 
 	/**
@@ -1273,7 +1273,7 @@ class Spaces_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_not_member',
 				__( 'User is not a member of this space.', 'jetonomy' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -1289,7 +1289,7 @@ class Spaces_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_cannot_self_demote',
 				__( 'You cannot remove your own admin role. Ask another admin to do it.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -1302,12 +1302,12 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'updated'  => true,
 				'space_id' => $id,
 				'user_id'  => $user_id,
 				'role'     => $role,
-			],
+			),
 			200
 		);
 	}
@@ -1346,13 +1346,13 @@ class Spaces_Controller extends Base_Controller {
 
 		return new WP_REST_Response(
 			array_merge(
-				$invite ? $this->prepare_invite( $invite ) : [],
-				[
+				$invite ? $this->prepare_invite( $invite ) : array(),
+				array(
 					'token'      => $token,
 					'invite_url' => $this->invite_url( $token ),
 					'max_uses'   => $max_uses,
 					'expires_at' => $expires_at ?: null,
-				]
+				)
 			),
 			201
 		);
@@ -1376,14 +1376,14 @@ class Spaces_Controller extends Base_Controller {
 	 * consumer wants a link, not a secret to concatenate itself.
 	 */
 	private function prepare_invite( object $invite ): array {
-		return [
+		return array(
 			'id'         => (int) $invite->id,
 			'invite_url' => $this->invite_url( (string) $invite->token ),
 			'max_uses'   => (int) $invite->max_uses,
 			'use_count'  => (int) $invite->use_count,
 			'expires_at' => $invite->expires_at,
 			'is_valid'   => InviteLink::is_valid( $invite ),
-		];
+		);
 	}
 
 	/**
@@ -1406,13 +1406,13 @@ class Spaces_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		$items = array_map( [ $this, 'prepare_invite' ], InviteLink::list_by_space( $id ) );
+		$items = array_map( array( $this, 'prepare_invite' ), InviteLink::list_by_space( $id ) );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'data' => $items,
-				'meta' => [ 'total' => count( $items ) ],
-			],
+				'meta' => array( 'total' => count( $items ) ),
+			),
 			200
 		);
 	}
@@ -1442,11 +1442,11 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'revoked'  => true,
 				'id'       => $invite_id,
 				'space_id' => $id,
-			],
+			),
 			200
 		);
 	}
@@ -1465,17 +1465,17 @@ class Spaces_Controller extends Base_Controller {
 			if ( 'jetonomy_login_required' === $result->get_error_code() ) {
 				// The landing template uses the error's space context; the
 				// API contract is just the 401.
-				return new WP_Error( 'jetonomy_login_required', $result->get_error_message(), [ 'status' => 401 ] );
+				return new WP_Error( 'jetonomy_login_required', $result->get_error_message(), array( 'status' => 401 ) );
 			}
 			return $result;
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'status'     => $result['status'],
 				'space_id'   => (int) $result['space']->id,
 				'space_slug' => $result['space']->slug,
-			],
+			),
 			200
 		);
 	}
@@ -1489,7 +1489,7 @@ class Spaces_Controller extends Base_Controller {
 		$user    = get_userdata( $user_id );
 		$profile = UserProfile::find_by_user( $user_id );
 
-		return [
+		return array(
 			'space_id'         => (int) $member->space_id,
 			'user_id'          => $user_id,
 			'role'             => $member->role,
@@ -1504,7 +1504,7 @@ class Spaces_Controller extends Base_Controller {
 			'last_seen_at'     => $profile ? $profile->last_seen_at : null,
 			'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $profile ? $profile->last_seen_at : null ),
 			'profile_url'      => \Jetonomy\get_profile_url( (int) $user_id ),
-		];
+		);
 	}
 
 	/**
@@ -1532,27 +1532,27 @@ class Spaces_Controller extends Base_Controller {
 	private function get_list_args(): array {
 		return array_merge(
 			$this->get_collection_params(),
-			[
-				'category_id'    => [
+			array(
+				'category_id'    => array(
 					'type'    => 'integer',
 					'minimum' => 1,
-				],
-				'type'           => [ 'type' => 'string' ],
-				'visibility'     => [
+				),
+				'type'           => array( 'type' => 'string' ),
+				'visibility'     => array(
 					'type' => 'string',
-					'enum' => [ 'public', 'private', 'hidden' ],
-				],
-				'movable_by_me'  => [
+					'enum' => array( 'public', 'private', 'hidden' ),
+				),
+				'movable_by_me'  => array(
 					'type'        => 'boolean',
 					'description' => 'Only spaces the current user may move posts into (move_posts).',
-				],
-				'postable_by_me' => [
+				),
+				'postable_by_me' => array(
 					'type'              => 'boolean',
 					'default'           => false,
 					'description'       => __( 'Return only spaces the current user is a member of AND can create posts in. Logged-out callers receive an empty array.', 'jetonomy' ),
 					'sanitize_callback' => 'rest_sanitize_boolean',
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -1560,55 +1560,55 @@ class Spaces_Controller extends Base_Controller {
 	 * Args for create_item.
 	 */
 	private function get_create_args(): array {
-		return [
-			'category_id' => [
+		return array(
+			'category_id' => array(
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 0,
-			],
-			'type'        => [
+			),
+			'type'        => array(
 				'type'     => 'string',
 				'required' => false,
 				'enum'     => Space::valid_types(),
-			],
-			'title'       => [
+			),
+			'title'       => array(
 				'type'     => 'string',
 				'required' => true,
-			],
-			'slug'        => [
+			),
+			'slug'        => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'description' => [
+			),
+			'description' => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'visibility'  => [
+			),
+			'visibility'  => array(
 				'type'     => 'string',
 				'required' => false,
-				'enum'     => [ 'public', 'private', 'hidden' ],
-			],
-			'join_policy' => [
+				'enum'     => array( 'public', 'private', 'hidden' ),
+			),
+			'join_policy' => array(
 				'type'     => 'string',
 				'required' => false,
 				'enum'     => self::VALID_JOIN_POLICIES,
-			],
-			'icon'        => [
+			),
+			'icon'        => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'cover_image' => [
+			),
+			'cover_image' => array(
 				'type'     => 'string',
 				'required' => false,
 				'format'   => 'uri',
-			],
-			'sort_order'  => [
+			),
+			'sort_order'  => array(
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 0,
-			],
-			'settings'    => [ 'required' => false ],
-		];
+			),
+			'settings'    => array( 'required' => false ),
+		);
 	}
 
 	/**

@@ -34,7 +34,7 @@ interface AI_Adapter {
 	 * @return array{content: string, usage: array{prompt_tokens: int, completion_tokens: int, total_tokens: int}, model: string}
 	 * @throws \RuntimeException On API failure.
 	 */
-	public function chat( array $messages, array $options = [] ): array;
+	public function chat( array $messages, array $options = array() ): array;
 
 	/**
 	 * Generate embeddings for text.
@@ -44,7 +44,7 @@ interface AI_Adapter {
 	 * @return array{embedding: float[], model: string, usage: array{total_tokens: int}}
 	 * @throws \RuntimeException On API failure or if provider does not support embeddings.
 	 */
-	public function embed( string $text, array $options = [] ): array;
+	public function embed( string $text, array $options = array() ): array;
 
 	/**
 	 * Return supported models as id => display_name.

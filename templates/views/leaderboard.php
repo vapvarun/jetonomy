@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $period = isset( $_GET['period'] ) ? sanitize_key( $_GET['period'] ) : 'all';
-if ( ! in_array( $period, [ 'all', 'month', 'week' ], true ) ) {
+if ( ! in_array( $period, array( 'all', 'month', 'week' ), true ) ) {
 	$period = 'all';
 }
 
@@ -41,13 +41,13 @@ $leader_ids        = array_map(
 );
 $leader_users      = ! empty( $leader_ids )
 	? get_users(
-		[
+		array(
 			'include' => $leader_ids,
 			'orderby' => 'include',
-		]
+		)
 	)
-	: [];
-$leader_user_by_id = [];
+	: array();
+$leader_user_by_id = array();
 foreach ( $leader_users as $lu_obj ) {
 	$leader_user_by_id[ (int) $lu_obj->ID ] = $lu_obj;
 }
@@ -59,12 +59,12 @@ if ( ! empty( $leader_ids ) ) {
 	\Jetonomy\Models\UserProfile::prime( $leader_ids );
 }
 
-$crumbs = [
-	[
+$crumbs = array(
+	array(
 		'label' => __( 'Leaderboard', 'jetonomy' ),
 		'url'   => '',
-	],
-];
+	),
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -132,14 +132,14 @@ $crumbs = [
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'        => 'award',
 					'icon_size'   => 48,
 					'message'     => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 					'description' => sprintf( /* translators: %s: plural reply label. */ __( 'Reputation is earned by posting, getting %s, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					'cta_label'   => __( 'Browse the community', 'jetonomy' ),
 					'cta_url'     => \Jetonomy\base_url() . '/',
-				]
+				)
 			);
 			?>
 		<?php else : ?>
@@ -232,11 +232,11 @@ $crumbs = [
 						// profile cache was primed above so this stays O(1) per row.
 						\Jetonomy\Template_Loader::partial(
 							'avatar',
-							[
+							array(
 								'user_id' => (int) $leader->user_id,
 								'size'    => 36,
 								'class'   => 'jt-avatar-md',
-							]
+							)
 						);
 						?>
 						<span class="jt-leader-name">
@@ -267,14 +267,14 @@ $crumbs = [
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'pagination',
-				[
+				array(
 					'has_more' => $_jt_has_more,
 					'target'   => '.jt-leaderboard-list',
-				]
+				)
 			);
 			?>
 		<?php endif; ?>
 </main>
 
-<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => null ] ); ?>
+<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => null ) ); ?>
 </div>

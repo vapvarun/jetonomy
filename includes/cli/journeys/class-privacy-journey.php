@@ -40,12 +40,12 @@ final class Privacy_Journey {
 		$total  = array_sum( array_column( $report, 'orphan_rows' ) );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'orphan_rows'  => $total,
 				'orphan_users' => count( Privacy_Backfill::find_orphans() ),
 				'columns'      => $report,
-			],
-			[ sprintf( '%d orphaned row(s) across %d column(s).', $total, count( $report ) ) ],
+			),
+			array( sprintf( '%d orphaned row(s) across %d column(s).', $total, count( $report ) ) ),
 			(int) round( ( microtime( true ) - $start ) * 1000 )
 		);
 	}
@@ -68,17 +68,17 @@ final class Privacy_Journey {
 
 		if ( 0 === $rows ) {
 			return Journey_Result::ok(
-				[
+				array(
 					'users_purged' => 0,
 					'rows_removed' => 0,
-				],
-				[ 'No orphaned user data found — nothing to purge.' ],
+				),
+				array( 'No orphaned user data found — nothing to purge.' ),
 				(int) round( ( microtime( true ) - $start ) * 1000 )
 			);
 		}
 
 		$purged = 0;
-		$logs   = [ sprintf( 'Found %d orphaned row(s). Purging…', $rows ) ];
+		$logs   = array( sprintf( 'Found %d orphaned row(s). Purging…', $rows ) );
 
 		for ( $pass = 0; $pass < $max_passes; $pass++ ) {
 			$result  = Privacy_Backfill::run_batch();
@@ -103,23 +103,23 @@ final class Privacy_Journey {
 		if ( $remaining > 0 ) {
 			return Journey_Result::fail(
 				sprintf( '%d orphaned row(s) still present after %d passes.', $remaining, $max_passes ),
-				[
-					'users_purged'     => $purged,
-					'rows_removed'     => $rows - $remaining,
-					'rows_remaining'   => $remaining,
+				array(
+					'users_purged'      => $purged,
+					'rows_removed'      => $rows - $remaining,
+					'rows_remaining'    => $remaining,
 					'columns_remaining' => $after,
-				],
+				),
 				$logs,
 				(int) round( ( microtime( true ) - $start ) * 1000 )
 			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'users_purged' => $purged,
 				'rows_removed' => $rows,
-			],
-			array_merge( $logs, [ sprintf( 'Removed %d row(s) belonging to %d deleted account(s).', $rows, $purged ) ] ),
+			),
+			array_merge( $logs, array( sprintf( 'Removed %d row(s) belonging to %d deleted account(s).', $rows, $purged ) ) ),
 			(int) round( ( microtime( true ) - $start ) * 1000 )
 		);
 	}

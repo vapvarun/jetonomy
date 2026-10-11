@@ -27,12 +27,12 @@ class Search_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/search',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'search' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				'args'                => [
-					'q'         => [
+				'callback'            => array( $this, 'search' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => array(
+					'q'         => array(
 						// Optional: a tag/space/author scope is a valid listing on its
 						// own (e.g. a tag page). The 2-char minimum is enforced in the
 						// handler only when there is no scope to narrow by.
@@ -40,62 +40,62 @@ class Search_Controller extends Base_Controller {
 						'required'          => false,
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'type'      => [
+					),
+					'type'      => array(
 						'type'    => 'string',
 						'default' => 'post',
-						'enum'    => [ 'post', 'reply', 'space', 'tag', 'all' ],
-					],
-					'space_id'  => [
+						'enum'    => array( 'post', 'reply', 'space', 'tag', 'all' ),
+					),
+					'space_id'  => array(
 						'type'    => 'integer',
 						'minimum' => 1,
-					],
-					'date_from' => [
+					),
+					'date_from' => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'date_to'   => [
+					),
+					'date_to'   => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'author_id' => [
+					),
+					'author_id' => array(
 						'type'    => 'integer',
 						'minimum' => 1,
-					],
-					'author'    => [
+					),
+					'author'    => array(
 						'type'              => 'string',
 						'description'       => 'Author name or username; resolved to author_id server-side (headless parity with the search UI).',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'tag'       => [
+					),
+					'tag'       => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'sort'      => [
+					),
+					'sort'      => array(
 						'type'    => 'string',
 						'default' => 'relevance',
-						'enum'    => [ 'relevance', 'newest', 'votes' ],
-					],
-					'limit'     => [
+						'enum'    => array( 'relevance', 'newest', 'votes' ),
+					),
+					'limit'     => array(
 						'type'        => 'integer',
 						'minimum'     => 1,
 						'maximum'     => 50,
 						'description' => 'Page size (1-50, default 20). No default is declared here so an unsent value can fall back to the per_page alias.',
-					],
-					'offset'    => [
+					),
+					'offset'    => array(
 						'type'        => 'integer',
 						'default'     => 0,
 						'minimum'     => 0,
 						'description' => 'Row offset for pagination.',
-					],
-					'per_page'  => [
+					),
+					'per_page'  => array(
 						'type'        => 'integer',
 						'minimum'     => 1,
 						'maximum'     => 50,
 						'description' => 'Alias for limit — kept for existing web callers (assets/js/header.js) that already send per_page.',
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 	}
 
@@ -179,26 +179,26 @@ class Search_Controller extends Base_Controller {
 			$found_posts  = $adapter->query(
 				array_merge(
 					$scope,
-					[
+					array(
 						'type'   => 'post',
 						'limit'  => $limit,
 						'offset' => $offset,
-					]
+					)
 				)
 			);
 			$found_spaces = $adapter->query(
-				[
+				array(
 					'type'  => 'space',
 					'q'     => $q,
 					'limit' => 20,
-				]
+				)
 			);
 			$found_tags   = $adapter->query(
-				[
+				array(
 					'type'  => 'tag',
 					'q'     => $q,
 					'limit' => 10,
-				]
+				)
 			);
 			$posts        = $found_posts['items'];
 			$posts_total  = $found_posts['total'];
@@ -208,8 +208,8 @@ class Search_Controller extends Base_Controller {
 			$tags_total   = $found_tags['total'];
 
 			$response = new WP_REST_Response(
-				[
-					'data' => [
+				array(
+					'data' => array(
 						'posts'  => array_map(
 							function ( $row ) {
 								$item         = $this->prepare_post( $row );
@@ -233,8 +233,8 @@ class Search_Controller extends Base_Controller {
 								return (array) $row; },
 							$tags
 						),
-					],
-					'meta' => [
+					),
+					'meta' => array(
 						// Back-compat: `total` previously meant "rows returned across
 						// all three groups combined." It now means the posts group's
 						// real total (matching every other search mode + the new
@@ -242,15 +242,15 @@ class Search_Controller extends Base_Controller {
 						// real per-group counts so callers than need the old combined
 						// number can add them up themselves.
 						'total'    => $posts_total,
-						'totals'   => [
+						'totals'   => array(
 							'posts'  => $posts_total,
 							'spaces' => $spaces_total,
 							'tags'   => $tags_total,
-						],
+						),
 						'offset'   => $offset,
 						'has_more' => ( $offset + count( $posts ) ) < $posts_total,
-					],
-				],
+					),
+				),
 				200
 			);
 
@@ -260,18 +260,18 @@ class Search_Controller extends Base_Controller {
 			return $response;
 		}
 
-		$results = [];
+		$results = array();
 		$total   = 0;
 
-		if ( in_array( $type, [ 'post', 'reply', 'space', 'tag' ], true ) ) {
+		if ( in_array( $type, array( 'post', 'reply', 'space', 'tag' ), true ) ) {
 			$found   = $adapter->query(
 				array_merge(
 					$scope,
-					[
+					array(
 						'type'   => $type,
 						'limit'  => $limit,
 						'offset' => $offset,
-					]
+					)
 				)
 			);
 			$results = $found['items'];
@@ -323,10 +323,10 @@ class Search_Controller extends Base_Controller {
 		// total (base-controller.php), which is correct on every page.
 		$response = $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
-			]
+			)
 		);
 
 		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / max( 1, $limit ) ) );

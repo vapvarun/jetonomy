@@ -74,7 +74,7 @@ class Space extends Model {
 	 * @param string|null $slug Slug whose mapping to also drop (rename/delete only).
 	 */
 	public static function bust_cache( int $id, ?string $slug = null ): void {
-		$keys = [ "space:{$id}" ];
+		$keys = array( "space:{$id}" );
 		if ( ! empty( $slug ) ) {
 			$keys[] = "space:slug:{$slug}";
 		}
@@ -190,7 +190,7 @@ class Space extends Model {
 
 		self::bust_cache( $id );
 		if ( $slug_changing && $data['slug'] !== $old_slug ) {
-			$keys = [ "space:slug:{$data['slug']}" ];
+			$keys = array( "space:slug:{$data['slug']}" );
 			if ( $old_slug ) {
 				$keys[] = "space:slug:{$old_slug}";
 			}
@@ -297,7 +297,7 @@ class Space extends Model {
 			return false;
 		}
 
-		$data = [ 'author_id' => $to_user_id ];
+		$data = array( 'author_id' => $to_user_id );
 		if ( $archive ) {
 			$data['status'] = 'archived';
 		}
@@ -374,14 +374,14 @@ class Space extends Model {
 	 */
 	public static function fallback_owner( int $excluding = 0 ): int {
 		$admins = get_users(
-			[
+			array(
 				'capability' => 'manage_options',
-				'exclude'    => $excluding ? [ $excluding ] : [],
+				'exclude'    => $excluding ? array( $excluding ) : array(),
 				'orderby'    => 'ID',
 				'order'      => 'ASC',
 				'number'     => 1,
 				'fields'     => 'ID',
-			]
+			)
 		);
 
 		return (int) ( $admins[0] ?? 0 );
@@ -441,10 +441,10 @@ class Space extends Model {
 
 		$now  = now();
 		$data = array_merge(
-			[
+			array(
 				'created_at' => $now,
 				'updated_at' => $now,
-			],
+			),
 			$data
 		);
 
@@ -576,11 +576,11 @@ class Space extends Model {
 		$col     = '' !== $alias ? $alias . '.' : '';
 
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
-			return [ '1=1', [] ];
+			return array( '1=1', array() );
 		}
 
 		if ( $user_id <= 0 ) {
-			return [ "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), [] ];
+			return array( "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), array() );
 		}
 
 		$members_table = \Jetonomy\table( 'space_members' );
@@ -591,7 +591,7 @@ class Space extends Model {
 		}
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
 		$fragment = "({$readable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-		return [ $fragment, [ $user_id ] ];
+		return array( $fragment, array( $user_id ) );
 	}
 
 	/**
@@ -624,9 +624,9 @@ class Space extends Model {
 		$col     = '' !== $alias ? $alias . '.' : '';
 
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
-			$result = [ '1=1', [] ];
+			$result = array( '1=1', array() );
 		} elseif ( $user_id <= 0 ) {
-			$result = [ "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), [] ];
+			$result = array( "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), array() );
 		} else {
 			$members_table = \Jetonomy\table( 'space_members' );
 			$parent        = self::parent_category_clause( $user_id, $col );
@@ -636,7 +636,7 @@ class Space extends Model {
 			}
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
 			$fragment = "({$discoverable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-			$result   = [ $fragment, [ $user_id ] ];
+			$result   = array( $fragment, array( $user_id ) );
 		}
 
 		/**
@@ -820,7 +820,7 @@ class Space extends Model {
 
 		$categories_table = \Jetonomy\table( 'categories' );
 		$sql              = "SELECT id FROM {$categories_table} WHERE id = %d AND {$cat_where}";
-		$values           = array_merge( [ $category_id ], $cat_values );
+		$values           = array_merge( array( $category_id ), $cat_values );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- $categories_table is a trusted prefixed name; $cat_where is literal SQL from Category::listing_visibility_sql().
 		$visible = (bool) static::db()->get_var( static::db()->prepare( $sql, ...$values ) );
@@ -839,7 +839,7 @@ class Space extends Model {
 	 *
 	 * @var array<string, bool>
 	 */
-	private static array $category_conceal_memo = [];
+	private static array $category_conceal_memo = array();
 
 	/**
 	 * Is this viewer admitted to this space?
@@ -1030,7 +1030,7 @@ class Space extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
 		$sql    = 'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND {$vis_where} ORDER BY sort_order ASC, title ASC";
-		$values = array_merge( [ $category_id ], $vis_values );
+		$values = array_merge( array( $category_id ), $vis_values );
 
 		if ( $limit > 0 ) {
 			$sql     .= ' LIMIT %d OFFSET %d';
@@ -1039,7 +1039,7 @@ class Space extends Model {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above with bound %d values.
-		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: [];
+		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: array();
 	}
 
 	/**
@@ -1054,7 +1054,7 @@ class Space extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for().
 		$sql    = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE category_id = %d AND {$vis_where}";
-		$values = array_merge( [ $category_id ], $vis_values );
+		$values = array_merge( array( $category_id ), $vis_values );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above.
 		return (int) static::db()->get_var( static::db()->prepare( $sql, ...$values ) );
@@ -1080,11 +1080,11 @@ class Space extends Model {
 		}
 
 		if ( empty( $values ) ) {
-			return static::db()->get_results( $sql ) ?: [];
+			return static::db()->get_results( $sql ) ?: array();
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared with bound %d values.
-		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: [];
+		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: array();
 	}
 
 	/**
@@ -1115,7 +1115,7 @@ class Space extends Model {
 	 */
 	public static function list_children( int $parent_id, ?int $user_id = null ): array {
 		if ( $parent_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		// Visibility-filtered, like every other listing. This method had no
@@ -1125,7 +1125,7 @@ class Space extends Model {
 		// appeared under a public parent.
 		[ $vis_sql, $vis_params ] = self::listing_visibility_sql( $user_id );
 
-		$params = array_merge( [ $parent_id ], $vis_params );
+		$params = array_merge( array( $parent_id ), $vis_params );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_sql is literal SQL from listing_visibility_sql().
 		return static::db()->get_results(
@@ -1135,7 +1135,7 @@ class Space extends Model {
 					. ' ORDER BY sort_order ASC, title ASC',
 				$params
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -1196,11 +1196,11 @@ class Space extends Model {
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
 				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $status, $limit, max( 0, $offset ) )
-			) ?: [];
+			) ?: array();
 		}
 		return static::db()->get_results(
 			static::db()->prepare( $base, $status )
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -1278,8 +1278,8 @@ class Space extends Model {
 		// hand-rolled gate: listing_visibility_sql() resolves the admin case ("1=1")
 		// and the membership subquery itself.
 
-		$where  = [];
-		$values = [];
+		$where  = array();
+		$values = array();
 
 		// Category filter.
 		if ( $category_id ) {
@@ -1375,12 +1375,12 @@ class Space extends Model {
 		$all_values[] = $offset;
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$spaces = $db->get_results( $db->prepare( $data_sql, ...$all_values ) ) ?: [];
+		$spaces = $db->get_results( $db->prepare( $data_sql, ...$all_values ) ) ?: array();
 
-		return [
+		return array(
 			'spaces' => $spaces,
 			'total'  => $total,
-		];
+		);
 	}
 
 	/**
@@ -1394,7 +1394,7 @@ class Space extends Model {
 	 *
 	 * @var array<int, array>
 	 */
-	private static array $settings_memo = [];
+	private static array $settings_memo = array();
 
 	/**
 	 * Whether the memo reset is registered with Cache::flush().
@@ -1414,7 +1414,7 @@ class Space extends Model {
 			self::$settings_memo_registered = true;
 			Cache::register_memo_reset(
 				static function (): void {
-					self::$settings_memo = [];
+					self::$settings_memo = array();
 				}
 			);
 		}
@@ -1425,10 +1425,10 @@ class Space extends Model {
 
 		$row = static::find( $id );
 		if ( ! $row || empty( $row->settings ) ) {
-			$decoded = [];
+			$decoded = array();
 		} else {
 			$decoded = json_decode( $row->settings, true );
-			$decoded = is_array( $decoded ) ? $decoded : [];
+			$decoded = is_array( $decoded ) ? $decoded : array();
 		}
 
 		self::$settings_memo[ $id ] = $decoded;
@@ -1447,7 +1447,7 @@ class Space extends Model {
 			return (int) $space_settings['posts_per_page'];
 		}
 
-		$global = get_option( 'jetonomy_settings', [] );
+		$global = get_option( 'jetonomy_settings', array() );
 		return (int) ( $global['posts_per_page'] ?? 20 );
 	}
 
@@ -1472,15 +1472,15 @@ class Space extends Model {
 	 */
 	public static function merge_settings( int $space_id, array $incoming ): array {
 		if ( isset( $incoming['prefixes'] ) && is_array( $incoming['prefixes'] ) ) {
-			$clean_prefixes = [];
+			$clean_prefixes = array();
 			foreach ( $incoming['prefixes'] as $prefix ) {
 				$name  = sanitize_text_field( $prefix['name'] ?? '' );
 				$color = sanitize_hex_color( $prefix['color'] ?? '' );
 				if ( $name && $color ) {
-					$clean_prefixes[] = [
+					$clean_prefixes[] = array(
 						'name'  => $name,
 						'color' => $color,
-					];
+					);
 				}
 			}
 			$incoming['prefixes'] = $clean_prefixes;
@@ -1558,20 +1558,20 @@ class Space extends Model {
 	 *         `visibility` enum in jt_spaces (schema: public|private|hidden).
 	 */
 	public static function visibility_levels(): array {
-		return [
-			'public'  => [
+		return array(
+			'public'  => array(
 				'label'       => __( 'Public', 'jetonomy' ),
 				'description' => __( 'Anyone can find this space and read it.', 'jetonomy' ),
-			],
-			'private' => [
+			),
+			'private' => array(
 				'label'       => __( 'Private', 'jetonomy' ),
 				'description' => __( 'Anyone can find this space, but only members can read it.', 'jetonomy' ),
-			],
-			'hidden'  => [
+			),
+			'hidden'  => array(
 				'label'       => __( 'Hidden', 'jetonomy' ),
 				'description' => __( 'Only members can find this space. It is invite-only.', 'jetonomy' ),
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -1660,7 +1660,7 @@ class Space extends Model {
 			return new \WP_Error(
 				'jetonomy_invalid_combo',
 				__( 'Hidden spaces must use the invite-only join policy.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 		return true;

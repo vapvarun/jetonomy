@@ -21,8 +21,8 @@ use function Jetonomy\table;
 
 abstract class Importer {
 
-	public array $id_map    = [];
-	protected array $errors = [];
+	public array $id_map    = array();
+	protected array $errors = array();
 	protected int $imported = 0;
 	protected int $skipped  = 0;
 
@@ -54,7 +54,7 @@ abstract class Importer {
 	 *
 	 * @var array<string,int> 'topic' | 'reply' => count.
 	 */
-	protected array $orphans = [];
+	protected array $orphans = array();
 
 	/**
 	 * Placeholder id recorded in the id map during a dry run.
@@ -101,7 +101,7 @@ abstract class Importer {
 	abstract public function get_source_name(): string;
 	abstract public function is_source_available(): bool;
 	abstract public function get_source_stats(): array;
-	abstract public function run( array $options = [] ): array;
+	abstract public function run( array $options = array() ): array;
 
 	/**
 	 * Get the total count of records to import.
@@ -192,14 +192,14 @@ abstract class Importer {
 	public static function get_progress(): array {
 		return get_option(
 			'jetonomy_import_progress',
-			[
+			array(
 				'status'    => 'idle',
 				'phase'     => '',
 				'processed' => 0,
 				'total'     => 0,
 				'percent'   => 0,
 				'message'   => '',
-			]
+			)
 		);
 	}
 
@@ -230,7 +230,7 @@ abstract class Importer {
 		delete_option( 'jetonomy_import_total_processed' );
 		delete_option( 'jetonomy_import_errors' );
 		delete_option( 'jetonomy_import_tally' );
-		$this->id_map = [];
+		$this->id_map = array();
 	}
 
 	/**
@@ -263,7 +263,7 @@ abstract class Importer {
 	protected function find_imported( string $type, array $rows ): array {
 		$source = $this->map_source();
 		if ( '' === $source || ! $rows ) {
-			return [];
+			return array();
 		}
 
 		$found  = Import_Map::find_many( $source, $type, array_keys( $rows ) );
@@ -295,7 +295,7 @@ abstract class Importer {
 	 * @return void
 	 */
 	protected function load_mapped( string $key, string $type, array $ids ): void {
-		$ids = array_diff_key( $ids, $this->id_map[ $key ] ?? [] );
+		$ids = array_diff_key( $ids, $this->id_map[ $key ] ?? array() );
 		if ( ! $ids || '' === $this->map_source() ) {
 			return;
 		}
@@ -382,7 +382,7 @@ abstract class Importer {
 
 		$cat_id = Import_Map::legacy_category( $slug_prefix );
 		if ( ! $cat_id ) {
-			$cat_id = (int) Category::create( array_merge( $args, [ 'slug' => $slug_prefix . '-' . time() ] ) );
+			$cat_id = (int) Category::create( array_merge( $args, array( 'slug' => $slug_prefix . '-' . time() ) ) );
 		}
 
 		$this->remember( 'category', $key, $cat_id );
@@ -396,12 +396,12 @@ abstract class Importer {
 	 * @return array{imported:int, already:int, rethreaded:int, orphans:array<string,int>}
 	 */
 	public function get_tally(): array {
-		return [
+		return array(
 			'imported'   => $this->imported,
 			'already'    => $this->already,
 			'rethreaded' => $this->rethreaded,
 			'orphans'    => $this->orphans,
-		];
+		);
 	}
 
 	/**
@@ -416,10 +416,10 @@ abstract class Importer {
 	 * @return string[] Translated sentences; empty when there is nothing to say.
 	 */
 	public static function describe_tally( array $tally ): array {
-		$lines   = [];
+		$lines   = array();
 		$already = (int) ( $tally['already'] ?? 0 );
 		$thread  = (int) ( $tally['rethreaded'] ?? 0 );
-		$orphans = (array) ( $tally['orphans'] ?? [] );
+		$orphans = (array) ( $tally['orphans'] ?? array() );
 
 		if ( $already > 0 ) {
 			/* translators: %s: number of items a previous import already brought over. */
@@ -499,8 +499,8 @@ abstract class Importer {
 	 * @return object[] Same rows, parents first.
 	 */
 	protected function sort_rows_parents_first( array $rows, string $id_key, string $parent_key ): array {
-		$indexed  = [];
-		$children = [];
+		$indexed  = array();
+		$children = array();
 
 		foreach ( $rows as $row ) {
 			$id                    = (int) $row->$id_key;
@@ -509,8 +509,8 @@ abstract class Importer {
 			$children[ $parent ][] = $id;
 		}
 
-		$ordered = [];
-		$queue   = $children[0] ?? [];
+		$ordered = array();
+		$queue   = $children[0] ?? array();
 
 		while ( ! empty( $queue ) ) {
 			$id = array_shift( $queue );
@@ -544,18 +544,18 @@ abstract class Importer {
 	 * Log an error.
 	 */
 	protected function log_error( string $type, $id, string $message ): void {
-		$this->errors[] = [
+		$this->errors[] = array(
 			'type'    => $type,
 			'id'      => $id,
 			'message' => $message,
-		];
+		);
 	}
 
 	/**
 	 * Get import results.
 	 */
 	protected function results(): array {
-		return [
+		return array(
 			'source'     => $this->get_source_name(),
 			'imported'   => $this->imported,
 			'skipped'    => $this->skipped,
@@ -564,7 +564,7 @@ abstract class Importer {
 			'orphans'    => $this->orphans,
 			'errors'     => $this->errors,
 			'dry_run'    => $this->dry_run,
-		];
+		);
 	}
 
 	/**
@@ -726,13 +726,13 @@ abstract class Importer {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
 		$attach_id = wp_insert_attachment(
-			[
+			array(
 				'guid'           => $canonical_url,
 				'post_mime_type' => $filetype['type'],
 				'post_title'     => $file_name ?: basename( $path ),
 				'post_content'   => '',
 				'post_status'    => 'inherit',
-			],
+			),
 			$path
 		);
 
@@ -832,7 +832,7 @@ abstract class Importer {
 		}
 
 		$registered = 0;
-		$seen       = [];
+		$seen       = array();
 
 		foreach ( array_unique( $matches[1] ) as $found ) {
 			$raw_url = html_entity_decode( $found, ENT_QUOTES, 'UTF-8' );

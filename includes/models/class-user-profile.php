@@ -40,11 +40,11 @@ class UserProfile extends Model {
 		$now = now();
 		static::db()->insert(
 			static::table(),
-			[
+			array(
 				'user_id'    => $user_id,
 				'created_at' => $now,
 				'updated_at' => $now,
-			]
+			)
 		);
 
 		// Bust the cache so find_by_user() hits the DB and returns the newly-inserted row.
@@ -101,7 +101,7 @@ class UserProfile extends Model {
 		}
 
 		// Only fetch what is not already cached — priming twice must not re-query.
-		$missing = [];
+		$missing = array();
 		foreach ( $ids as $id ) {
 			if ( false === Cache::get( "profile:{$id}" ) ) {
 				$missing[] = $id;
@@ -115,9 +115,9 @@ class UserProfile extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		$rows = static::db()->get_results(
 			static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE user_id IN ({$ph})", ...$missing )
-		) ?: [];
+		) ?: array();
 
-		$found = [];
+		$found = array();
 		foreach ( $rows as $row ) {
 			$found[ (int) $row->user_id ] = $row;
 			Cache::set( "profile:{$row->user_id}", $row, 120 );
@@ -142,7 +142,7 @@ class UserProfile extends Model {
 		$result = false !== static::db()->update(
 			static::table(),
 			$data,
-			[ 'user_id' => $user_id ]
+			array( 'user_id' => $user_id )
 		);
 		Cache::delete( "profile:{$user_id}" );
 		// trust_level feeds the permission trust gates — clear the verdict
@@ -309,11 +309,11 @@ class UserProfile extends Model {
 		);
 
 		if ( ! $row || empty( $row->settings ) ) {
-			return [];
+			return array();
 		}
 
 		$decoded = json_decode( $row->settings, true );
-		return is_array( $decoded ) ? $decoded : [];
+		return is_array( $decoded ) ? $decoded : array();
 	}
 
 	/**
@@ -423,7 +423,7 @@ class UserProfile extends Model {
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $rows ? $rows : [];
+		return $rows ? $rows : array();
 	}
 
 	/**

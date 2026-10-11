@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 class Schema_Markup {
 
 	public function __construct() {
-		add_action( 'wp_head', [ $this, 'output_schema' ] );
+		add_action( 'wp_head', array( $this, 'output_schema' ) );
 		// Title patterns are owned by Template_Loader::set_seo_meta — the comment
 		// here has said so since 1.4.0, but the filter stayed registered right
 		// below it and the two fought. Template_Loader registers on
@@ -135,36 +135,36 @@ class Schema_Markup {
 			$accepted    = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
 			$answer_name = $accepted ? \Jetonomy\Author::for_display( (int) $accepted->author_id, $accepted )['name'] : '';
 
-			return [
+			return array(
 				'@context'   => 'https://schema.org',
 				'@type'      => 'QAPage',
-				'mainEntity' => [
+				'mainEntity' => array(
 					'@type'          => 'Question',
 					'name'           => $post->title,
 					'text'           => wp_strip_all_tags( $post->content ),
 					'dateCreated'    => $this->to_iso8601( $post->created_at ),
 					'answerCount'    => (int) $post->reply_count,
 					'upvoteCount'    => max( 0, (int) $post->vote_score ),
-					'author'         => [
+					'author'         => array(
 						'@type' => 'Person',
 						'name'  => $author_name,
-					],
-					'acceptedAnswer' => $accepted ? [
+					),
+					'acceptedAnswer' => $accepted ? array(
 						'@type'       => 'Answer',
 						'text'        => wp_strip_all_tags( $accepted->content ),
 						'dateCreated' => $this->to_iso8601( $accepted->created_at ),
 						'upvoteCount' => max( 0, (int) $accepted->vote_score ),
-						'author'      => [
+						'author'      => array(
 							'@type' => 'Person',
 							'name'  => $answer_name,
-						],
+						),
 						'url'         => \Jetonomy\reply_permalink( $space_slug, $slug, (int) $accepted->id ),
-					] : null,
-				],
-			];
+					) : null,
+				),
+			);
 		}
 
-		return [
+		return array(
 			'@context'             => 'https://schema.org',
 			'@type'                => 'DiscussionForumPosting',
 			'headline'             => $post->title,
@@ -172,23 +172,23 @@ class Schema_Markup {
 			'url'                  => $base,
 			'datePublished'        => $this->to_iso8601( $post->created_at ),
 			'dateModified'         => $this->to_iso8601( $post->updated_at ?: $post->created_at ),
-			'author'               => [
+			'author'               => array(
 				'@type' => 'Person',
 				'name'  => $author_name,
-			],
-			'interactionStatistic' => [
-				[
+			),
+			'interactionStatistic' => array(
+				array(
 					'@type'                => 'InteractionCounter',
 					'interactionType'      => 'https://schema.org/CommentAction',
 					'userInteractionCount' => (int) $post->reply_count,
-				],
-				[
+				),
+				array(
 					'@type'                => 'InteractionCounter',
 					'interactionType'      => 'https://schema.org/LikeAction',
 					'userInteractionCount' => max( 0, (int) $post->vote_score ),
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	/**
@@ -437,12 +437,12 @@ class Schema_Markup {
 		$space_slug = get_query_var( 'jetonomy_space_slug' );
 		$base       = \Jetonomy\base_url() . '/';
 
-		$items = [
-			[
+		$items = array(
+			array(
 				'name' => __( 'Community', 'jetonomy' ),
 				'url'  => $base,
-			],
-		];
+			),
+		);
 
 		if ( 'space' === $route && $slug ) {
 			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
@@ -451,10 +451,10 @@ class Schema_Markup {
 			// JSON-LD (the post-route branch below was already gated; this one was
 			// missed). Same read check.
 			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
-				$items[] = [
+				$items[] = array(
 					'name' => $space->title,
 					'url'  => \Jetonomy\route_url( 'space', $slug ),
-				];
+				);
 			}
 		}
 
@@ -467,20 +467,20 @@ class Schema_Markup {
 			// topic's title into BreadcrumbList JSON-LD even though the HTML
 			// view 403s. Mirror the get_post_schema() read gate.
 			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
-				$items[] = [
+				$items[] = array(
 					'name' => $space->title,
 					'url'  => \Jetonomy\route_url( 'space', $space_slug ),
-				];
+				);
 			}
 			// can_render_post_text(): the crumb's `name` IS the post title, so a
 			// blocked author's title rode into BreadcrumbList even though the
 			// page body beside it was tombstoned (1.8.0). Dropping the crumb
 			// leaves a valid shorter chain (Community → Space).
 			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
-				$items[] = [
+				$items[] = array(
 					'name' => $post->title,
 					'url'  => \Jetonomy\route_url( 'post', $space_slug, $slug ),
-				];
+				);
 			}
 		}
 
@@ -530,28 +530,28 @@ class Schema_Markup {
 			return null;
 		}
 
-		$list = [];
+		$list = array();
 		foreach ( $items as $i => $item ) {
-			$list[] = [
+			$list[] = array(
 				'@type'    => 'ListItem',
 				'position' => $i + 1,
 				'name'     => $item['name'],
 				'item'     => $item['url'],
-			];
+			);
 		}
 
-		return [
+		return array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'BreadcrumbList',
 			'itemListElement' => $list,
-		];
+		);
 	}
 
 	private function print_jsonld( array $data ): void {
 		$data = $this->array_filter_recursive( $data );
 		wp_print_inline_script_tag(
 			wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
-			[ 'type' => 'application/ld+json' ]
+			array( 'type' => 'application/ld+json' )
 		);
 	}
 

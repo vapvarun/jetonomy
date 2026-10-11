@@ -106,22 +106,22 @@ final class Scenario_Result {
 	 * @return array<string,mixed>
 	 */
 	public function to_array(): array {
-		$steps = [];
+		$steps = array();
 		foreach ( $this->steps as $step ) {
-			$steps[] = [
+			$steps[] = array(
 				'name'        => $step['name'],
 				'duration_ms' => $step['duration_ms'],
 				'result'      => $step['result']->to_array(),
-			];
+			);
 		}
 
-		return [
+		return array(
 			'scenario'    => $this->scenario,
 			'success'     => $this->success,
 			'steps'       => $steps,
 			'fixtures'    => $this->fixtures,
 			'duration_ms' => $this->duration_ms,
 			'errors'      => $this->errors,
-		];
+		);
 	}
 }

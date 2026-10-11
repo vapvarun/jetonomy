@@ -27,13 +27,13 @@ class JoinRequest extends Model {
 	 */
 	public static function create_request( int $space_id, int $user_id, string $message = '' ): int {
 		return self::insert(
-			[
+			array(
 				'space_id'   => $space_id,
 				'user_id'    => $user_id,
 				'message'    => $message,
 				'status'     => 'pending',
 				'created_at' => now(),
-			]
+			)
 		);
 	}
 
@@ -66,7 +66,7 @@ class JoinRequest extends Model {
 				'SELECT * FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending' ORDER BY created_at DESC",
 				$space_id
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -179,11 +179,11 @@ class JoinRequest extends Model {
 
 		$ok = self::update(
 			$id,
-			[
+			array(
 				'status'      => $status,
 				'reviewed_by' => $reviewed_by,
 				'reviewed_at' => now(),
-			]
+			)
 		);
 		if ( $ok ) {
 			self::fire( $status, (int) $request->space_id, (int) $request->user_id, $reviewed_by );

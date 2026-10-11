@@ -14,13 +14,13 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -33,12 +33,12 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 	status_header( 403 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'    => 'lock',
 			/* translators: 1: singular member label; 2: plural member label. */
 			'message' => sprintf( __( 'You need to be a %1$s of this space to see its %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			'tone'    => 'forbidden',
-		]
+		)
 	);
 	return;
 }
@@ -55,7 +55,7 @@ if ( $jt_members_paged > $jt_members_pages ) {
 $jt_members_offset = ( $jt_members_paged - 1 ) * $jt_members_per_page;
 $members           = $jt_members_total > 0
 	? \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id, $jt_members_per_page, $jt_members_offset )
-	: [];
+	: array();
 
 // Batch-fetch WP_User + UserProfile for the page's members up front
 // so the render loop reads from in-memory maps instead of firing two
@@ -82,7 +82,7 @@ $viewer_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( 
 // (mirrors the wp-admin Join Requests tab). Capped to keep the panel and its
 // COUNT cheap on approval-gated spaces with a large backlog; the wp-admin tab
 // remains the full-history surface.
-$jt_pending_requests = [];
+$jt_pending_requests = array();
 $jt_pending_cap      = (int) apply_filters( 'jetonomy_space_pending_requests_shown', 50 );
 if ( $viewer_is_priv ) {
 	$jt_pending_all      = \Jetonomy\Models\JoinRequest::list_pending_for_space( (int) $space->id );
@@ -100,33 +100,33 @@ if ( $viewer_is_priv ) {
 // forms, and a hidden space is forced onto the `invite` join policy
 // (Space::save). Without this panel an owner could create a hidden space from
 // the front-end and have no way to invite anyone into it without wp-admin.
-$jt_invites = [];
+$jt_invites = array();
 if ( $viewer_is_sadm ) {
 	$jt_invites = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id );
 }
 
-$crumbs = [];
+$crumbs = array();
 if ( $category ) {
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $category->name,
 		'url'   => '',
-	];
+	);
 }
-$crumbs[] = [
+$crumbs[] = array(
 	'label' => $space->title,
 	'url'   => \Jetonomy\route_url( 'space', $space->slug ),
-];
-$crumbs[] = [
+);
+$crumbs[] = array(
 	'label' => \Jetonomy\jetonomy_label( 'member', true ),
 	'url'   => '',
-];
+);
 
-$role_labels = [
+$role_labels = array(
 	'viewer'    => __( 'Viewer', 'jetonomy' ),
 	'member'    => __( 'Member', 'jetonomy' ),
 	'moderator' => __( 'Moderator', 'jetonomy' ),
 	'admin'     => __( 'Admin', 'jetonomy' ),
-];
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -157,11 +157,11 @@ $role_labels = [
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'space-tabs',
-				[
+				array(
 					'space'     => $space,
 					'space_url' => \Jetonomy\route_url( 'space', $space->slug ),
 					'active'    => 'members',
-				]
+				)
 			);
 			?>
 
@@ -341,10 +341,10 @@ $role_labels = [
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'    => 'empty-members',
 						'message' => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
-					]
+					)
 				);
 				?>
 			<?php else : ?>
@@ -494,5 +494,5 @@ $role_labels = [
 			<?php endif; ?>
 		</main>
 
-		<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => $space ] ); ?>
+		<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => $space ) ); ?>
 	</div>

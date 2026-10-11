@@ -27,45 +27,45 @@ class Media_Controller extends Base_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'upload_image' ],
+					'callback'            => array( $this, 'upload_image' ),
 					// Login + nonce + the upload caps in one call. Posting caps are
 					// deliberately not enough: the Permissions tab's Upload media
 					// box has to be able to stop a role.
 					// upload_image() adds the restriction (ban/silence) re-check
 					// that capabilities alone don't express.
 					'permission_callback' => REST_Auth::auth_mutation( \Jetonomy\Permissions\Capabilities::UPLOAD_CAPS ),
-				],
-				[
+				),
+				array(
 					// GET /jetonomy/v1/media — list community uploads (owner view).
 					// Read-only listing scoped to Jetonomy member uploads.
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'list_media' ],
+					'callback'            => array( $this, 'list_media' ),
 					'permission_callback' => static function () {
 						return current_user_can( 'jetonomy_manage_settings' );
 					},
-					'args'                => [
-						'page'     => [
+					'args'                => array(
+						'page'     => array(
 							'type'    => 'integer',
 							'default' => 1,
-						],
-						'per_page' => [
+						),
+						'per_page' => array(
 							'type'    => 'integer',
 							'default' => 24,
-						],
-						'author'   => [ 'type' => 'integer' ],
-						'space_id' => [ 'type' => 'integer' ],
-						'search'   => [ 'type' => 'string' ],
-						'order'    => [
+						),
+						'author'   => array( 'type' => 'integer' ),
+						'space_id' => array( 'type' => 'integer' ),
+						'search'   => array( 'type' => 'string' ),
+						'order'    => array(
 							'type'    => 'string',
-							'enum'    => [ 'asc', 'desc' ],
+							'enum'    => array( 'asc', 'desc' ),
 							'default' => 'desc',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 	}
 
@@ -78,20 +78,20 @@ class Media_Controller extends Base_Controller {
 	 */
 	public function list_media( WP_REST_Request $request ) {
 		$result = \Jetonomy\Media_Library::query(
-			[
+			array(
 				'page'     => (int) $request->get_param( 'page' ),
 				'per_page' => (int) $request->get_param( 'per_page' ),
 				'author'   => (int) $request->get_param( 'author' ),
 				'space_id' => (int) $request->get_param( 'space_id' ),
 				'search'   => (string) $request->get_param( 'search' ),
 				'order'    => (string) $request->get_param( 'order' ),
-			]
+			)
 		);
 
 		$items = array_map(
 			static function ( $att ) {
 				$id = (int) $att->ID;
-				return [
+				return array(
 					'id'       => $id,
 					'url'      => (string) wp_get_attachment_url( $id ),
 					'thumb'    => (string) wp_get_attachment_image_url( $id, 'medium' ),
@@ -100,18 +100,18 @@ class Media_Controller extends Base_Controller {
 					'author'   => (int) $att->post_author,
 					'space_id' => (int) get_post_meta( $id, '_jetonomy_space_id', true ),
 					'date'     => mysql_to_rfc3339( $att->post_date_gmt ),
-				];
+				);
 			},
 			$result['items']
 		);
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => (int) $result['total'],
 				'page'   => (int) $result['page'],
 				'offset' => ( (int) $result['page'] - 1 ) * (int) $result['per_page'],
-			]
+			)
 		);
 	}
 
@@ -136,7 +136,7 @@ class Media_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_upload_forbidden',
 				__( 'You are not allowed to upload media.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -144,7 +144,7 @@ class Media_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_no_file',
 				__( 'No file provided.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -187,7 +187,7 @@ class Media_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_upload_failed',
 				$attachment_id->get_error_message(),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -216,14 +216,14 @@ class Media_Controller extends Base_Controller {
 		$meta = wp_get_attachment_metadata( $attachment_id );
 
 		return rest_ensure_response(
-			[
+			array(
 				'id'     => (int) $attachment_id,
 				'url'    => (string) wp_get_attachment_url( $attachment_id ),
 				'alt'    => (string) ( get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ?: '' ),
 				'mime'   => (string) get_post_mime_type( $attachment_id ),
 				'width'  => isset( $meta['width'] ) ? (int) $meta['width'] : 0,
 				'height' => isset( $meta['height'] ) ? (int) $meta['height'] : 0,
-			]
+			)
 		);
 	}
 

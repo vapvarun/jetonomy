@@ -14,12 +14,12 @@ if ( ! $category ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			'message'   => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -42,18 +42,18 @@ $base        = \Jetonomy\base_url();
 // Categories nest two levels deep, so the only ancestor is the parent. It is
 // fetched visibility-filtered: a hidden parent is left out of the trail
 // rather than named to a viewer who cannot open it.
-$crumbs    = [];
+$crumbs    = array();
 $jt_parent = (int) $category->parent_id > 0 ? \Jetonomy\Models\Category::find_visible( (int) $category->parent_id ) : null;
 if ( $jt_parent ) {
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $jt_parent->name,
 		'url'   => \Jetonomy\route_url( 'category', $jt_parent->slug ),
-	];
+	);
 }
-$crumbs[] = [
+$crumbs[] = array(
 	'label' => $category->name,
 	'url'   => '',
-];
+);
 
 $jt_children = \Jetonomy\Models\Category::list_children( (int) $category->id );
 ?>
@@ -77,10 +77,10 @@ $jt_children = \Jetonomy\Models\Category::list_children( (int) $category->id );
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'category-chips',
-				[
+				array(
 					'children'      => $jt_children,
-					'spaces_by_cat' => $jt_children ? \Jetonomy\Models\Space::visible_by_category() : [],
-				]
+					'spaces_by_cat' => $jt_children ? \Jetonomy\Models\Space::visible_by_category() : array(),
+				)
 			);
 			?>
 
@@ -88,12 +88,12 @@ $jt_children = \Jetonomy\Models\Category::list_children( (int) $category->id );
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'      => 'empty-search',
 						'icon_size' => 48,
 						/* translators: 1: plural space label (e.g. spaces, groups); 2: singular category label. */
 						'message'   => sprintf( __( 'No %1$s in this %2$s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
-					]
+					)
 				);
 				?>
 			<?php elseif ( ! empty( $spaces ) ) : ?>

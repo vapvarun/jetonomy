@@ -18,28 +18,28 @@ class Activity_Tracker {
 
 	public function __construct() {
 		// Post events.
-		add_action( 'jetonomy_after_create_post', [ $this, 'on_post_created' ], 5, 2 );
+		add_action( 'jetonomy_after_create_post', array( $this, 'on_post_created' ), 5, 2 );
 
 		// Reply events.
-		add_action( 'jetonomy_after_create_reply', [ $this, 'on_reply_created' ], 5, 2 );
+		add_action( 'jetonomy_after_create_reply', array( $this, 'on_reply_created' ), 5, 2 );
 
 		// Vote events.
-		add_action( 'jetonomy_after_vote', [ $this, 'on_vote' ], 5, 3 );
+		add_action( 'jetonomy_after_vote', array( $this, 'on_vote' ), 5, 3 );
 
 		// Trust level changes.
-		add_action( 'jetonomy_trust_level_changed', [ $this, 'on_trust_change' ], 5, 3 );
+		add_action( 'jetonomy_trust_level_changed', array( $this, 'on_trust_change' ), 5, 3 );
 
 		// Moderation actions.
-		add_action( 'jetonomy_content_moderated', [ $this, 'on_moderation' ], 5, 4 );
+		add_action( 'jetonomy_content_moderated', array( $this, 'on_moderation' ), 5, 4 );
 
 		// Reputation changes.
-		add_action( 'jetonomy_reputation_changed', [ $this, 'on_reputation' ], 5, 3 );
+		add_action( 'jetonomy_reputation_changed', array( $this, 'on_reputation' ), 5, 3 );
 
 		// Space membership.
-		add_action( 'jetonomy_user_joined_space', [ $this, 'on_space_join' ], 5, 3 );
+		add_action( 'jetonomy_user_joined_space', array( $this, 'on_space_join' ), 5, 3 );
 
 		// Idea roadmap status changes (Ideas spaces only).
-		add_action( 'jetonomy_idea_status_changed', [ $this, 'on_idea_status_changed' ], 5, 4 );
+		add_action( 'jetonomy_idea_status_changed', array( $this, 'on_idea_status_changed' ), 5, 4 );
 	}
 
 	/**
@@ -56,7 +56,7 @@ class Activity_Tracker {
 			return;
 		}
 
-		ActivityLog::log( $author, 'created_post', 'post', $post_id, [ 'space_id' => $space_id ] );
+		ActivityLog::log( $author, 'created_post', 'post', $post_id, array( 'space_id' => $space_id ) );
 		\Jetonomy\Trust\Reputation::award( $author, 'post_created' );
 	}
 
@@ -70,7 +70,7 @@ class Activity_Tracker {
 			return;
 		}
 
-		ActivityLog::log( $author, 'created_reply', 'reply', $reply_id, [ 'post_id' => $post_id ] );
+		ActivityLog::log( $author, 'created_reply', 'reply', $reply_id, array( 'post_id' => $post_id ) );
 		\Jetonomy\Trust\Reputation::award( $author, 'reply_created' );
 	}
 
@@ -84,10 +84,10 @@ class Activity_Tracker {
 			'trust_level_changed',
 			'user',
 			$user_id,
-			[
+			array(
 				'old' => $old_level,
 				'new' => $new_level,
-			]
+			)
 		);
 	}
 
@@ -101,10 +101,10 @@ class Activity_Tracker {
 			'reputation_changed',
 			'user',
 			$user_id,
-			[
+			array(
 				'delta'  => $delta,
 				'reason' => $reason,
-			]
+			)
 		);
 	}
 
@@ -114,9 +114,9 @@ class Activity_Tracker {
 			'joined_space',
 			'space',
 			$space_id,
-			[
+			array(
 				'role' => $role,
-			]
+			)
 		);
 	}
 

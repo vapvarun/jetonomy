@@ -14,12 +14,12 @@ if ( ! $tag ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			'message'   => __( 'Tag not found.', 'jetonomy' ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -31,7 +31,7 @@ $post_tags_tbl = \Jetonomy\table( 'post_tags' );
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'latest';
-if ( ! in_array( $sort, [ 'latest', 'popular' ], true ) ) {
+if ( ! in_array( $sort, array( 'latest', 'popular' ), true ) ) {
 	$sort = 'latest';
 }
 
@@ -83,16 +83,16 @@ $posts = $wpdb->get_results(
 		(int) $tag->id,
 		...array_merge( $jt_gate_params, array( $per_page, $offset ) )
 	)
-) ?: [];
+) ?: array();
 
 $tag_url = \Jetonomy\route_url( 'tag', $tag->slug );
 
-$crumbs = [
-	[
+$crumbs = array(
+	array(
 		'label' => $tag->name,
 		'url'   => '',
-	],
-];
+	),
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -138,10 +138,10 @@ $crumbs = [
 			<div class="jt-bar">
 				<div class="jt-pills">
 					<?php
-					$sorts = [
+					$sorts = array(
 						'latest'  => __( 'Latest', 'jetonomy' ),
 						'popular' => __( 'Popular', 'jetonomy' ),
-					];
+					);
 					foreach ( $sorts as $key => $label ) :
 						$pill_url = add_query_arg( 'sort', $key, $tag_url );
 						?>
@@ -158,18 +158,18 @@ $crumbs = [
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'      => 'message-circle',
 						'icon_size' => 48,
 						'message'   => sprintf( /* translators: %s: plural topic label. */ __( 'No %s with this tag yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-					]
+					)
 				);
 				?>
 			<?php else : ?>
 				<div class="jt-topics">
 					<?php \Jetonomy\prime_post_cards( $posts ); ?>
 					<?php foreach ( $posts as $post ) : ?>
-						<?php \Jetonomy\Template_Loader::partial( 'post-card', [ 'post' => $post ] ); ?>
+						<?php \Jetonomy\Template_Loader::partial( 'post-card', array( 'post' => $post ) ); ?>
 					<?php endforeach; ?>
 				</div>
 

@@ -29,42 +29,42 @@ class Categories_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/categories',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'list_items' ],
-					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				],
-				[
+					'callback'            => array( $this, 'list_items' ),
+					'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				),
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
+					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_categories' ),
 					'args'                => $this->get_create_args(),
-				],
-			]
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/categories/(?P<id>\d+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				],
-				[
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				),
+				array(
 					'methods'             => 'PATCH',
-					'callback'            => [ $this, 'update_item' ],
+					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_categories' ),
 					'args'                => $this->get_update_args(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_item' ],
+					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_categories' ),
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -83,19 +83,19 @@ class Categories_Controller extends Base_Controller {
 
 		$node = function ( object $category ) use ( $spaces_by_cat ): array {
 			$item             = $this->prepare_category( $category );
-			$item['spaces']   = $spaces_by_cat[ (int) $category->id ] ?? [];
-			$item['children'] = [];
+			$item['spaces']   = $spaces_by_cat[ (int) $category->id ] ?? array();
+			$item['children'] = array();
 			return $item;
 		};
 
-		$items = [];
+		$items = array();
 		foreach ( Category::list_top_level() as $category ) {
 			$item             = $node( $category );
-			$item['children'] = array_map( $node, $children[ (int) $category->id ] ?? [] );
+			$item['children'] = array_map( $node, $children[ (int) $category->id ] ?? array() );
 			$items[]          = $item;
 		}
 
-		return $this->paginated_response( $items, [ 'total' => count( $items ) ] );
+		return $this->paginated_response( $items, array( 'total' => count( $items ) ) );
 	}
 
 	/**
@@ -132,7 +132,7 @@ class Categories_Controller extends Base_Controller {
 		// Category::create() turns this into a free slug (name when empty).
 		$slug = sanitize_title( (string) $request->get_param( 'slug' ) );
 
-		$data = [
+		$data = array(
 			'name'        => $name,
 			'slug'        => $slug,
 			'description' => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
@@ -141,7 +141,7 @@ class Categories_Controller extends Base_Controller {
 			'color'       => (string) $request->get_param( 'color' ),
 			'visibility'  => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
 			'sort_order'  => absint( $request->get_param( 'sort_order' ) ),
-		];
+		);
 
 		$parent_error = Category::parent_error( 0, (int) $data['parent_id'] );
 		if ( $parent_error ) {
@@ -154,7 +154,7 @@ class Categories_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_create_failed',
 				__( 'Failed to create category.', 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
@@ -174,7 +174,7 @@ class Categories_Controller extends Base_Controller {
 			return $this->not_found( 'Category' );
 		}
 
-		$data = [];
+		$data = array();
 
 		if ( null !== $request->get_param( 'name' ) ) {
 			$data['name'] = sanitize_text_field( $request->get_param( 'name' ) );
@@ -235,15 +235,15 @@ class Categories_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_delete_failed',
 				__( 'Failed to delete category.', 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted' => true,
 				'id'      => $id,
-			],
+			),
 			200
 		);
 	}
@@ -252,7 +252,7 @@ class Categories_Controller extends Base_Controller {
 	 * Format a category object for API output.
 	 */
 	private function prepare_category( object $category ): array {
-		return [
+		return array(
 			'id'          => (int) $category->id,
 			'name'        => $category->name,
 			'slug'        => $category->slug,
@@ -264,51 +264,51 @@ class Categories_Controller extends Base_Controller {
 			'sort_order'  => (int) ( $category->sort_order ?? 0 ),
 			'space_count' => (int) ( $category->space_count ?? 0 ),
 			'created_at'  => $category->created_at ?? null,
-		];
+		);
 	}
 
 	/**
 	 * Args for create_item.
 	 */
 	private function get_create_args(): array {
-		return [
-			'name'        => [
+		return array(
+			'name'        => array(
 				'type'              => 'string',
 				'required'          => true,
 				'sanitize_callback' => 'sanitize_text_field',
-			],
-			'slug'        => [
+			),
+			'slug'        => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'description' => [
+			),
+			'description' => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'parent_id'   => [
+			),
+			'parent_id'   => array(
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 0,
-			],
-			'icon'        => [
+			),
+			'icon'        => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'color'       => [
+			),
+			'color'       => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'visibility'  => [
+			),
+			'visibility'  => array(
 				'type'     => 'string',
 				'required' => false,
-				'enum'     => [ 'public', 'private', 'hidden' ],
-			],
-			'sort_order'  => [
+				'enum'     => array( 'public', 'private', 'hidden' ),
+			),
+			'sort_order'  => array(
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 0,
-			],
-		];
+			),
+		);
 	}
 
 	/**

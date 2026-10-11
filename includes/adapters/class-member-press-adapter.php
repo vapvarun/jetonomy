@@ -18,7 +18,7 @@ class MemberPress_Adapter implements Membership_Adapter {
 
 	public function get_user_levels( int $user_id ): array {
 		if ( ! $this->is_active() ) {
-			return [];
+			return array();
 		}
 
 		$mepr_user = new \MeprUser( $user_id );
@@ -39,16 +39,16 @@ class MemberPress_Adapter implements Membership_Adapter {
 
 	public function get_all_levels(): array {
 		if ( ! $this->is_active() ) {
-			return [];
+			return array();
 		}
 
 		$products = \MeprCptModel::all( 'MeprProduct' );
-		$levels   = [];
+		$levels   = array();
 		foreach ( $products as $product ) {
-			$levels[] = [
+			$levels[] = array(
 				'id'    => 'mepr_' . $product->ID,
 				'label' => $product->post_title,
-			];
+			);
 		}
 		return $levels;
 	}
@@ -98,12 +98,12 @@ class MemberPress_Adapter implements Membership_Adapter {
 		}
 
 		// When a MemberPress transaction is completed
-		add_action( 'mepr-txn-status-complete', [ $this, 'on_membership_activated' ] );
+		add_action( 'mepr-txn-status-complete', array( $this, 'on_membership_activated' ) );
 
 		// When a subscription is paused/cancelled/expired
-		add_action( 'mepr-txn-status-refunded', [ $this, 'on_membership_deactivated' ] );
-		add_action( 'mepr-txn-expired', [ $this, 'on_membership_deactivated' ] );
-		add_action( 'mepr_subscription_transition_status', [ $this, 'on_subscription_status_change' ], 10, 3 );
+		add_action( 'mepr-txn-status-refunded', array( $this, 'on_membership_deactivated' ) );
+		add_action( 'mepr-txn-expired', array( $this, 'on_membership_deactivated' ) );
+		add_action( 'mepr_subscription_transition_status', array( $this, 'on_subscription_status_change' ), 10, 3 );
 	}
 
 	/**
@@ -141,7 +141,7 @@ class MemberPress_Adapter implements Membership_Adapter {
 	}
 
 	public function on_subscription_status_change( $old_status, $new_status, $subscription ): void {
-		if ( in_array( $new_status, [ 'suspended', 'cancelled' ], true ) ) {
+		if ( in_array( $new_status, array( 'suspended', 'cancelled' ), true ) ) {
 			$txn = $subscription->latest_txn();
 			if ( $txn ) {
 				$this->on_membership_deactivated( $txn );

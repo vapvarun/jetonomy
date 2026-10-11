@@ -406,10 +406,10 @@ class Media_Library {
 			// First ever sweep on this site: look, record, delete nothing.
 			update_option(
 				self::OPT_CLEANUP_REPORT,
-				[
+				array(
 					'first_seen_at' => gmdate( 'Y-m-d H:i:s' ),
 					'would_delete'  => count( $stale ),
-				],
+				),
 				false
 			);
 
@@ -423,10 +423,10 @@ class Media_Library {
 			 */
 			do_action( 'jetonomy_media_cleanup_reported', count( $stale ), $stale );
 
-			return [
+			return array(
 				'reported' => count( $stale ),
 				'deleted'  => 0,
-			];
+			);
 		}
 
 		$deleted = 0;
@@ -452,10 +452,10 @@ class Media_Library {
 		 */
 		do_action( 'jetonomy_media_cleanup_ran', $deleted );
 
-		return [
+		return array(
 			'reported' => 0,
 			'deleted'  => $deleted,
-		];
+		);
 	}
 
 	/**

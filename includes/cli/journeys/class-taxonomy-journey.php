@@ -37,20 +37,20 @@ final class Taxonomy_Journey {
 	public function create_category( array $input ): Journey_Result {
 		$start = microtime( true );
 
-		$missing = $this->require_keys( $input, [ 'name', 'slug' ] );
+		$missing = $this->require_keys( $input, array( 'name', 'slug' ) );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
-		$unknown = Journey_Input::error( $input, [ 'name', 'slug', 'description', 'parent_id' ] );
+		$unknown = Journey_Input::error( $input, array( 'name', 'slug', 'description', 'parent_id' ) );
 		if ( '' !== $unknown ) {
 			return Journey_Result::fail( $unknown );
 		}
 
-		$data = [
+		$data = array(
 			'name' => (string) $input['name'],
 			'slug' => (string) $input['slug'],
-		];
+		);
 		if ( isset( $input['description'] ) ) {
 			$data['description'] = (string) $input['description'];
 		}
@@ -71,13 +71,13 @@ final class Taxonomy_Journey {
 		$row = Category::find( (int) $id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'        => (int) $id,
 				'name'      => $data['name'],
 				'slug'      => $row->slug ?? $data['slug'],
 				'parent_id' => (int) ( $row->parent_id ?? 0 ),
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -98,7 +98,7 @@ final class Taxonomy_Journey {
 			return Journey_Result::fail( 'Category id must be positive.' );
 		}
 
-		$allowed = [ 'name', 'slug', 'description', 'parent_id', 'sort_order' ];
+		$allowed = array( 'name', 'slug', 'description', 'parent_id', 'sort_order' );
 		$patch   = array_intersect_key( $changes, array_flip( $allowed ) );
 
 		if ( empty( $patch ) ) {
@@ -114,11 +114,11 @@ final class Taxonomy_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'      => $id,
 				'updated' => array_keys( $patch ),
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -145,7 +145,7 @@ final class Taxonomy_Journey {
 			return Journey_Result::fail( sprintf( 'Category::delete(%d) returned false.', $id ) );
 		}
 
-		return Journey_Result::ok( [ 'id' => $id ], [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( array( 'id' => $id ), array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -165,7 +165,7 @@ final class Taxonomy_Journey {
 			return Journey_Result::fail( sprintf( 'Category %d not found.', $id ) );
 		}
 
-		return Journey_Result::ok( (array) $row, [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( (array) $row, array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -185,7 +185,7 @@ final class Taxonomy_Journey {
 			return Journey_Result::fail( sprintf( 'Category with slug "%s" not found.', $slug ) );
 		}
 
-		return Journey_Result::ok( (array) $row, [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( (array) $row, array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -198,11 +198,11 @@ final class Taxonomy_Journey {
 		$items = $this->shape_category_rows( $rows );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'id', 'name', 'slug', 'parent_id', 'space_count', 'sort_order' ],
-			],
-			[],
+				'columns' => array( 'id', 'name', 'slug', 'parent_id', 'space_count', 'sort_order' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -223,11 +223,11 @@ final class Taxonomy_Journey {
 		$items = $this->shape_category_rows( $rows );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'id', 'name', 'slug', 'parent_id', 'space_count', 'sort_order' ],
-			],
-			[],
+				'columns' => array( 'id', 'name', 'slug', 'parent_id', 'space_count', 'sort_order' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -261,13 +261,13 @@ final class Taxonomy_Journey {
 		$row = Tag::find( (int) $id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'      => (int) $id,
 				'name'    => $row->name ?? $name,
 				'slug'    => $row->slug ?? $slug,
 				'created' => $created,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -292,7 +292,7 @@ final class Taxonomy_Journey {
 			return Journey_Result::fail( sprintf( 'Tag::delete(%d) returned false.', $id ) );
 		}
 
-		return Journey_Result::ok( [ 'id' => $id ], [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( array( 'id' => $id ), array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -312,7 +312,7 @@ final class Taxonomy_Journey {
 			return Journey_Result::fail( sprintf( 'Tag with slug "%s" not found.', $slug ) );
 		}
 
-		return Journey_Result::ok( (array) $row, [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( (array) $row, array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -331,11 +331,11 @@ final class Taxonomy_Journey {
 		Tag::attach_to_post( $post_id, $tag_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'post_id' => $post_id,
 				'tag_id'  => $tag_id,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -356,11 +356,11 @@ final class Taxonomy_Journey {
 		Tag::detach_from_post( $post_id, $tag_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'post_id' => $post_id,
 				'tag_id'  => $tag_id,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -381,11 +381,11 @@ final class Taxonomy_Journey {
 		$items = $this->shape_tag_rows( $rows );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'id', 'name', 'slug', 'post_count' ],
-			],
-			[],
+				'columns' => array( 'id', 'name', 'slug', 'post_count' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -406,11 +406,11 @@ final class Taxonomy_Journey {
 		$items = $this->shape_tag_rows( $rows );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'id', 'name', 'slug', 'post_count' ],
-			],
-			[],
+				'columns' => array( 'id', 'name', 'slug', 'post_count' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -435,11 +435,11 @@ final class Taxonomy_Journey {
 		$items = $this->shape_tag_rows( $rows );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'id', 'name', 'slug', 'post_count' ],
-			],
-			[],
+				'columns' => array( 'id', 'name', 'slug', 'post_count' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -451,16 +451,16 @@ final class Taxonomy_Journey {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function shape_category_rows( array $rows ): array {
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'id'          => (int) $row->id,
 				'name'        => (string) ( $row->name ?? '' ),
 				'slug'        => (string) ( $row->slug ?? '' ),
 				'parent_id'   => (int) ( $row->parent_id ?? 0 ),
 				'space_count' => (int) ( $row->space_count ?? 0 ),
 				'sort_order'  => (int) ( $row->sort_order ?? 0 ),
-			];
+			);
 		}
 		return $items;
 	}
@@ -472,14 +472,14 @@ final class Taxonomy_Journey {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function shape_tag_rows( array $rows ): array {
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'id'         => (int) $row->id,
 				'name'       => (string) ( $row->name ?? '' ),
 				'slug'       => (string) ( $row->slug ?? '' ),
 				'post_count' => (int) ( $row->post_count ?? 0 ),
-			];
+			);
 		}
 		return $items;
 	}
@@ -492,7 +492,7 @@ final class Taxonomy_Journey {
 	 * @return array<int,string> Missing key names; empty if all present.
 	 */
 	private function require_keys( array $input, array $keys ): array {
-		$missing = [];
+		$missing = array();
 		foreach ( $keys as $key ) {
 			if ( ! isset( $input[ $key ] ) || '' === $input[ $key ] ) {
 				$missing[] = $key;

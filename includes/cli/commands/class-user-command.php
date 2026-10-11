@@ -63,14 +63,14 @@ final class User_Command extends Base_Command {
 	 */
 	public function create( $args, $assoc ): void {
 		$result = ( new User_Journey() )->create_with_trust_level(
-			[
+			array(
 				'login'        => (string) ( $assoc['login'] ?? '' ),
 				'email'        => (string) ( $assoc['email'] ?? '' ),
 				'password'     => (string) ( $assoc['password'] ?? '' ),
 				'role'         => (string) ( $assoc['role'] ?? 'subscriber' ),
 				'trust_level'  => (int) ( $assoc['trust-level'] ?? 0 ),
 				'display_name' => (string) ( $assoc['display-name'] ?? '' ),
-			]
+			)
 		);
 		$this->render( $result, $assoc );
 	}
@@ -168,7 +168,7 @@ final class User_Command extends Base_Command {
 	 * @subcommand update-profile
 	 */
 	public function update_profile( $args, $assoc ): void {
-		$changes = [];
+		$changes = array();
 		if ( isset( $assoc['display-name'] ) ) {
 			$changes['display_name'] = (string) $assoc['display-name'];
 		}

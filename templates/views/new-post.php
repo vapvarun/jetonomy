@@ -13,13 +13,13 @@ if ( ! $space ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			/* translators: %s: the singular label of the item (the configured noun). */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -39,19 +39,19 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 
 	\Jetonomy\Template_Loader::partial(
 		'breadcrumb',
-		[
-			'crumbs' => [
-				[
+		array(
+			'crumbs' => array(
+				array(
 					'label' => $space->title,
 					'url'   => $space_url,
-				],
-			],
-		]
+				),
+			),
+		)
 	);
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		$jt_can_join
-			? [
+			? array(
 				'icon'      => 'users',
 				'icon_size' => 48,
 				/* translators: %s: space title */
@@ -60,8 +60,8 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 				'cta_label' => sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ),
 				'cta_url'   => $space_url,
 				'tone'      => 'info',
-			]
-			: [
+			)
+			: array(
 				'icon'      => 'lock',
 				'icon_size' => 48,
 				/* translators: %s: space label (e.g. space, forum) */
@@ -70,7 +70,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 				'cta_label' => sprintf( __( 'Back to %s', 'jetonomy' ), \Jetonomy\space_label() ),
 				'cta_url'   => $space_url,
 				'tone'      => 'forbidden',
-			]
+			)
 	);
 	return;
 }
@@ -100,18 +100,18 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 
 \Jetonomy\Template_Loader::partial(
 	'breadcrumb',
-	[
-		'crumbs' => [
-			[
+	array(
+		'crumbs' => array(
+			array(
 				'label' => $space->title,
 				'url'   => $space_url,
-			],
-			[
+			),
+			array(
 				'label' => $type_label,
 				'url'   => '',
-			],
-		],
-	]
+			),
+		),
+	)
 );
 ?>
 
@@ -135,14 +135,14 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 			data-wp-context='
 			<?php
 			echo wp_json_encode(
-				[
+				array(
 					'spaceId'       => (int) $space->id,
 					'spaceSlug'     => $space->slug,
 					'spaceType'     => (string) ( $space->type ?? '' ),
 					'postType'      => $post_type,
 					'postStatus'    => 'publish',
 					'showScheduler' => false,
-				]
+				)
 			);
 			?>
 			'>
@@ -157,7 +157,7 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 		// added in compose-fields.php — both surfaces inherit it for free.
 		\Jetonomy\Template_Loader::partial(
 			'compose-fields',
-			[
+			array(
 				'space'             => $space,
 				// Feed spaces are short-form: hide the title field (matching the
 				// inline composer) so members post a status without a headline.
@@ -181,7 +181,7 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 				'body_mode'         => 'editor',
 				'submit_label'      => $jt_submit_label,
 				'cancel_url'        => $space_url,
-			]
+			)
 		);
 		?>
 	</form>

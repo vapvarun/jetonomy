@@ -35,18 +35,18 @@ class Pro_Tests {
 	public function run(): array {
 		if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) {
 			\WP_CLI::log( '  Pro not active — skipping' );
-			return [ 'pass' => 0, 'fail' => 0, 'skipped' => 0 ];
+			return array( 'pass' => 0, 'fail' => 0, 'skipped' => 0 );
 		}
 
 		// Unlicensed Pro boots no extensions, so every Pro route would 404.
 		if ( class_exists( '\Jetonomy_Pro\License\License' ) && ! \Jetonomy_Pro\License\License::features_enabled() ) {
 			\WP_CLI::log( '  Pro features are off (no active license or grace) — skipping' );
-			return [ 'pass' => 0, 'fail' => 0, 'skipped' => 1 ];
+			return array( 'pass' => 0, 'fail' => 0, 'skipped' => 1 );
 		}
 
 		if ( ! class_exists( '\Jetonomy_Pro\QA\REST_Tests' ) ) {
 			\WP_CLI::log( '  Pro active but its QA module is missing (pre-1.9.1 Pro build?) — skipping' );
-			return [ 'pass' => 0, 'fail' => 0, 'skipped' => 0 ];
+			return array( 'pass' => 0, 'fail' => 0, 'skipped' => 0 );
 		}
 
 		return ( new \Jetonomy_Pro\QA\REST_Tests() )->run();

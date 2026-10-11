@@ -15,11 +15,11 @@ class WP_Mail_Adapter implements Email_Adapter {
 		return true;
 	}
 
-	public function send( string $to, string $subject, string $html, string $plain, array $extra_headers = [] ): bool {
-		$headers = [
+	public function send( string $to, string $subject, string $html, string $plain, array $extra_headers = array() ): bool {
+		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . $this->get_from_name() . ' <' . $this->get_from_email() . '>',
-		];
+		);
 
 		// Merge per-email headers (e.g. List-Unsubscribe with specific unsubscribe URL).
 		if ( ! empty( $extra_headers ) ) {
@@ -88,7 +88,7 @@ class WP_Mail_Adapter implements Email_Adapter {
 	}
 
 	private function get_from_name(): string {
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 		$name     = $settings['email_from_name'] ?? '';
 		$name     = '' !== $name ? $name : get_bloginfo( 'name' );
 
@@ -109,7 +109,7 @@ class WP_Mail_Adapter implements Email_Adapter {
 	}
 
 	private function get_from_email(): string {
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 		$email    = $settings['email_from_email'] ?? '';
 		$email    = '' !== $email ? $email : get_option( 'admin_email' );
 

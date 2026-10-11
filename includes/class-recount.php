@@ -38,7 +38,7 @@ class Recount {
 
 		$user_ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
 		if ( ! $user_ids ) {
-			return [];
+			return array();
 		}
 
 		$profiles_t = table( 'user_profiles' );
@@ -46,7 +46,7 @@ class Recount {
 		$replies_t  = table( 'replies' );
 		$in         = implode( ',', $user_ids );
 
-		$stats = [];
+		$stats = array();
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$stats['user_post_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.author_id = u.user_id AND p.status = 'publish') WHERE u.user_id IN ({$in})" );
