@@ -113,11 +113,14 @@ class Space extends Model {
 		}
 
 		// The hand-over marker lets an owner undo the archive their hand-over
-		// made. Any other status change (wp-admin, unarchive) clears it, so it
-		// can never unlock an archive or lock a site admin imposed.
-		if ( array_key_exists( 'status', $data ) && ! array_key_exists( 'settings', $data ) ) {
-			$settings = self::get_settings( $id );
-			if ( isset( $settings[ self::HANDOVER_ARCHIVE ] ) ) {
+		// made. Every status change clears it, whatever else the write carries
+		// (the wp-admin form saves settings alongside status); hand_over() sets
+		// it afterwards in a settings-only write.
+		if ( array_key_exists( 'status', $data ) ) {
+			$settings = array_key_exists( 'settings', $data )
+				? (array) ( json_decode( (string) $data['settings'], true ) ?: array() )
+				: self::get_settings( $id );
+			if ( isset( $settings[ self::HANDOVER_ARCHIVE ] ) || array_key_exists( 'settings', $data ) ) {
 				unset( $settings[ self::HANDOVER_ARCHIVE ] );
 				$data['settings'] = $settings ? wp_json_encode( $settings ) : '';
 			}
@@ -324,10 +327,12 @@ class Space extends Model {
 
 		$data = array( 'author_id' => $to_user_id );
 		if ( $archive ) {
-			$data['status']   = 'archived';
-			$data['settings'] = wp_json_encode( array_merge( self::get_settings( $space_id ), array( self::HANDOVER_ARCHIVE => 1 ) ) );
+			$data['status'] = 'archived';
 		}
 		self::update( $space_id, $data );
+		if ( $archive ) {
+			self::update( $space_id, array( 'settings' => wp_json_encode( array_merge( self::get_settings( $space_id ), array( self::HANDOVER_ARCHIVE => 1 ) ) ) ) );
+		}
 
 		$after = self::find( $space_id );
 		if ( ! $after || (int) $after->author_id !== $to_user_id ) {
@@ -395,7 +400,23 @@ class Space extends Model {
 		if ( $user_id <= 0 || 'archived' === ( $space->status ?? '' ) ) {
 			return false;
 		}
-		return (int) $space->author_id === $user_id || user_can( $user_id, 'manage_options' );
+		return user_can( $user_id, 'manage_options' ) || self::is_acting_owner( $space, $user_id );
+	}
+
+	/**
+	 * Whether a user owns a space AND still holds its power: an admin row and
+	 * no ban from it. author_id alone is attribution, so an owner who was
+	 * removed or banned from their space cannot act on it as owner.
+	 *
+	 * @param object $space   Space row.
+	 * @param int    $user_id User.
+	 * @return bool
+	 */
+	private static function is_acting_owner( object $space, int $user_id ): bool {
+		return (int) $space->author_id === $user_id
+			&& 'admin' === SpaceMember::get_role( (int) $space->id, $user_id )
+			&& ! Restriction::is_banned( $user_id )
+			&& ! Restriction::is_space_banned( $user_id, (int) $space->id );
 	}
 
 	/**
@@ -414,7 +435,7 @@ class Space extends Model {
 		if ( user_can( $user_id, 'manage_options' ) ) {
 			return true;
 		}
-		return (int) $space->author_id === $user_id && ! empty( self::get_settings( (int) $space->id )[ self::HANDOVER_ARCHIVE ] );
+		return self::is_acting_owner( $space, $user_id ) && ! empty( self::get_settings( (int) $space->id )[ self::HANDOVER_ARCHIVE ] );
 	}
 
 	/**

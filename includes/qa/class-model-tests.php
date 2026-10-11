@@ -1177,6 +1177,10 @@ class Model_Tests {
 		$this->check( 'HO6: the hook names the real previous owner', array( array( $space, (int) $users['owner'], (int) $users['heir'] ) ) === $fired, wp_json_encode( $fired ) );
 
 		$this->check( 'HO10: the new owner may undo their hand-over archive', \Jetonomy\Models\Space::can_unarchive( $after, (int) $users['heir'] ) );
+		$demote = \Jetonomy\Models\SpaceMember::set_role( $space, (int) $users['heir'], 'member' );
+		$this->check( 'HO13: an owner who lost the admin row cannot act as owner', ! is_wp_error( $demote ) && ! \Jetonomy\Models\Space::can_unarchive( \Jetonomy\Models\Space::find( $space ), (int) $users['heir'] ) );
+		\Jetonomy\Models\SpaceMember::set_role( $space, (int) $users['heir'], 'admin' );
+
 		$this->check( 'HO11: editors cannot write reserved settings keys', ! array_key_exists( '_qa_forged', \Jetonomy\Models\Space::merge_settings( $space, array( '_qa_forged' => 1 ) ) ) );
 
 		$again = \Jetonomy\Models\Space::archive_and_hand_over( $space );
@@ -1185,10 +1189,17 @@ class Model_Tests {
 		$this->check( 'HO7: an archived space cannot be handed over again', is_wp_error( $again ) && 'jetonomy_space_archived' === $again->get_error_code() );
 		$this->check( 'HO8: no-op and missing-space hand-overs fail and fire nothing', is_wp_error( $noop ) && is_wp_error( $ghost ) && 1 === count( $fired ) );
 
-		// A site admin re-archiving (wp-admin) clears the marker: the owner may
-		// not undo an archive a site admin imposed, nor lift a lock.
+		// A site admin re-archiving clears the marker, including through the
+		// wp-admin form, which saves the stored settings alongside status.
 		\Jetonomy\Models\Space::update( $space, array( 'status' => 'active' ) );
-		\Jetonomy\Models\Space::update( $space, array( 'status' => 'archived' ) );
+		\Jetonomy\Models\Space::update( $space, array( 'settings' => wp_json_encode( array( \Jetonomy\Models\Space::HANDOVER_ARCHIVE => 1 ) ) ) );
+		\Jetonomy\Models\Space::update(
+			$space,
+			array(
+				'status'   => 'archived',
+				'settings' => wp_json_encode( \Jetonomy\Models\Space::get_settings( $space ) ),
+			)
+		);
 		$this->check( 'HO12: an archive a site admin imposed stays out of the owner\'s reach', ! \Jetonomy\Models\Space::can_unarchive( \Jetonomy\Models\Space::find( $space ), (int) $users['heir'] ) );
 
 		// GDPR erase: a co-admin inherits, the space keeps running.
