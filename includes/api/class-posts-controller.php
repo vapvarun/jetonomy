@@ -1058,7 +1058,14 @@ class Posts_Controller extends Base_Controller {
 		if ( 'planned' === $status && 'planned' !== $previous_status && ! empty( $post->author_id ) ) {
 			$author_id = (int) $post->author_id;
 			if ( $author_id !== (int) $user_id ) {
-				\Jetonomy\Trust\Reputation::award( $author_id, 'idea_planned' );
+				\Jetonomy\Trust\Reputation::award(
+					$author_id,
+					'idea_planned',
+					array(
+						'object_type' => 'post',
+						'object_id'   => $id,
+					)
+				);
 			}
 		}
 

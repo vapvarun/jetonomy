@@ -60,6 +60,11 @@ class SpaceMember extends Model {
 	}
 
 	public static function add( int $space_id, int $user_id, string $role = 'member', string $source = 'manual' ): \WP_Error|bool {
+		// A membership plugin, automation or access rule can still name a space the
+		// owner deleted; joining it would store an orphan row on every enrolment.
+		if ( $space_id <= 0 || ! Space::find( $space_id ) ) {
+			return new \WP_Error( 'jetonomy_space_not_found', __( 'That space no longer exists.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
 		 *

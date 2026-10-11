@@ -570,7 +570,14 @@ class Reply extends Model {
 		$author_id = (int) $reply->author_id;
 		if ( $author_id && $author_id !== $actor_id ) {
 			UserProfile::find_or_create( $author_id );
-			\Jetonomy\Trust\Reputation::award( $author_id, 'reply_accepted' );
+			\Jetonomy\Trust\Reputation::award(
+				$author_id,
+				'reply_accepted',
+				array(
+					'object_type' => 'reply',
+					'object_id'   => $id,
+				)
+			);
 		}
 
 		return true;
@@ -618,7 +625,14 @@ class Reply extends Model {
 		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
 
 		if ( $author_id && $author_id !== $actor_id ) {
-			\Jetonomy\Trust\Reputation::revoke( $author_id, 'reply_accepted' );
+			\Jetonomy\Trust\Reputation::revoke(
+				$author_id,
+				'reply_accepted',
+				array(
+					'object_type' => 'reply',
+					'object_id'   => $id,
+				)
+			);
 		}
 
 		return true;

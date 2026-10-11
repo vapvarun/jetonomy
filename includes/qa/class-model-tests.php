@@ -127,6 +127,11 @@ class Model_Tests {
 			$this->skip( 'SM6: get_role', 'no space' );
 		}
 
+		// SM7: joining a space that does not exist (deleted, or id 0) is refused and stores nothing.
+		$gone    = SpaceMember::add( 0, $this->qa_admin );
+		$missing = SpaceMember::add( 2147483000, $this->qa_admin );
+		$this->check( 'SM7: joining a deleted or missing space is refused and stores no row', is_wp_error( $gone ) && is_wp_error( $missing ) && null === SpaceMember::get_role( 0, $this->qa_admin ) && null === SpaceMember::get_role( 2147483000, $this->qa_admin ) );
+
 		// ── Restriction ───────────────────────────────────────────────────────
 		\WP_CLI::log( '  Restriction' );
 
@@ -2147,8 +2152,7 @@ class Model_Tests {
 	private function test_subscriber_fanout_batches(): void {
 		global $wpdb;
 		$hook   = 'jetonomy_fanout_post_subscribers';
-		$admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
-		$author = (int) ( $admins[0] ?? 1 );
+		$author = $this->qa_admin; // Never a real member: posting earns reputation that the topic's deletion does not take back.
 		$fake   = range( 990000001, 990000250 );
 		$space  = Space::create( array( 'title' => 'QA FO', 'slug' => 'jt-qa-fo-' . wp_generate_password( 6, false, false ), 'author_id' => $author ) );
 		$post   = 0;
@@ -2650,6 +2654,14 @@ class Model_Tests {
 			$objects = \Jetonomy\Author::objects_of( array( (object) array( 'object_type' => 'post', 'object_id' => (int) $id ) ) );
 			$this->check( 'AX5: admin activity and revision rows show the anonymous author as Anonymous', \Jetonomy\Author::hides_actor( (int) $author, $objects[ 'post:' . (int) $id ] ?? null ) && ! \Jetonomy\Author::hides_actor( (int) $author + 1, $objects[ 'post:' . (int) $id ] ?? null ) );
 
+			// AX6: the reputation row the anonymous topic earns points at the topic, so it is masked too.
+			\Jetonomy\Trust\Reputation::award( (int) $author, 'post_created', array( 'object_type' => 'post', 'object_id' => (int) $id ) );
+			$rep_row  = $wpdb->get_row( $wpdb->prepare( 'SELECT object_type, object_id FROM ' . table( 'activity_log' ) . " WHERE user_id = %d AND action = 'reputation_changed' ORDER BY id DESC LIMIT 1", (int) $author ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$activity = ( new \Jetonomy\Abilities() )->execute_get_activity( array( 'limit' => 5 ) );
+			$named    = array_filter( $activity, static fn( $a ) => 'post' === $a['object_type'] && (int) $a['object_id'] === (int) $id && (int) $a['user_id'] === (int) $author );
+			$this->check( 'AX6: an anonymous topic\'s reputation row points at the topic and the activity tool does not name its author', $rep_row && 'post' === $rep_row->object_type && (int) $rep_row->object_id === (int) $id && ! $named );
+			$wpdb->delete( table( 'activity_log' ), array( 'user_id' => (int) $author ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
 			// PV2: a private accepted answer stays out of the public page source.
 			$token  = 'pvtwozq' . strtolower( wp_generate_password( 6, false, false ) );
 			Post::update( (int) $id, array( 'type' => 'question', 'is_anonymous' => 0 ) );
@@ -2682,7 +2694,6 @@ class Model_Tests {
 			)
 		);
 		$prev_user = get_current_user_id();
-		$admins    = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
 		$p         = $make( 'P' );
 		$a         = $make( 'A', $p );
 		$b         = $make( 'B', $p );
@@ -2712,7 +2723,7 @@ class Model_Tests {
 		};
 
 		try {
-			wp_set_current_user( (int) ( $admins[0] ?? 0 ) );
+			wp_set_current_user( $this->qa_admin );
 
 			$run( array( 'order' => array( $c, $a, $b ), 'parent_id' => $p ) );
 			$this->check( 'CR1: sub-categories reorder among their siblings', array( 0, 1, 2 ) === array( $pos( $c ), $pos( $a ), $pos( $b ) ) );

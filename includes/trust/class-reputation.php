@@ -116,16 +116,19 @@ class Reputation {
 	 *
 	 * @param int    $user_id WP user ID.
 	 * @param string $action  Action key from POINTS_MAP.
+	 * @param array  $context The post or reply that earned it: object_type, object_id.
+	 *                        Logs point at that content, so an anonymous author stays
+	 *                        masked wherever the activity is shown.
 	 * @return int The point delta that was applied (0 if action is unknown).
 	 */
-	public static function award( int $user_id, string $action ): int {
+	public static function award( int $user_id, string $action, array $context = array() ): int {
 		$delta = self::points_for( $action );
 
 		if ( 0 === $delta ) {
 			return 0;
 		}
 
-		return self::dispatch( $user_id, $delta, $action, array() );
+		return self::dispatch( $user_id, $delta, $action, $context );
 	}
 
 	/**
@@ -137,9 +140,10 @@ class Reputation {
 	 *
 	 * @param int    $user_id WP user ID.
 	 * @param string $action  The original action key that was awarded.
+	 * @param array  $context The post or reply concerned, as for award().
 	 * @return int The (negative or zero) delta that was applied.
 	 */
-	public static function revoke( int $user_id, string $action ): int {
+	public static function revoke( int $user_id, string $action, array $context = array() ): int {
 		$original = self::points_for( $action );
 
 		if ( 0 === $original ) {
@@ -148,7 +152,7 @@ class Reputation {
 
 		$delta = -$original;
 
-		return self::dispatch( $user_id, $delta, $action . '_revoked', array() );
+		return self::dispatch( $user_id, $delta, $action . '_revoked', $context );
 	}
 
 	/**

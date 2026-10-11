@@ -508,7 +508,14 @@ class Moderation_Controller extends Base_Controller {
 		}
 
 		if ( $author_id > 0 && $author_id !== (int) $user_id ) {
-			Reputation::award( $author_id, 'post_reported' );
+			Reputation::award(
+				$author_id,
+				'post_reported',
+				array(
+					'object_type' => $object_type,
+					'object_id'   => (int) $object_id,
+				)
+			);
 		}
 
 		/**

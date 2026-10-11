@@ -279,7 +279,14 @@ class Flag extends Model {
 				$author_id   = (int) $post->author_id;
 				$reporter_id = (int) ( $flag->reporter_id ?? 0 );
 				if ( $author_id > 0 && $author_id !== $reporter_id ) {
-					\Jetonomy\Trust\Reputation::revoke( $author_id, 'post_reported' );
+					\Jetonomy\Trust\Reputation::revoke(
+						$author_id,
+						'post_reported',
+						array(
+							'object_type' => 'post',
+							'object_id'   => (int) $post->id,
+						)
+					);
 				}
 			}
 		}

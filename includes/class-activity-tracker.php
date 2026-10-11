@@ -33,7 +33,7 @@ class Activity_Tracker {
 		add_action( 'jetonomy_content_moderated', array( $this, 'on_moderation' ), 5, 4 );
 
 		// Reputation changes.
-		add_action( 'jetonomy_reputation_changed', array( $this, 'on_reputation' ), 5, 3 );
+		add_action( 'jetonomy_reputation_changed', array( $this, 'on_reputation' ), 5, 4 );
 
 		// Space membership.
 		add_action( 'jetonomy_user_joined_space', array( $this, 'on_space_join' ), 5, 3 );
@@ -57,7 +57,14 @@ class Activity_Tracker {
 		}
 
 		ActivityLog::log( $author, 'created_post', 'post', $post_id, array( 'space_id' => $space_id ) );
-		\Jetonomy\Trust\Reputation::award( $author, 'post_created' );
+		\Jetonomy\Trust\Reputation::award(
+			$author,
+			'post_created',
+			array(
+				'object_type' => 'post',
+				'object_id'   => $post_id,
+			)
+		);
 	}
 
 	/**
@@ -71,7 +78,14 @@ class Activity_Tracker {
 		}
 
 		ActivityLog::log( $author, 'created_reply', 'reply', $reply_id, array( 'post_id' => $post_id ) );
-		\Jetonomy\Trust\Reputation::award( $author, 'reply_created' );
+		\Jetonomy\Trust\Reputation::award(
+			$author,
+			'reply_created',
+			array(
+				'object_type' => 'reply',
+				'object_id'   => $reply_id,
+			)
+		);
 	}
 
 	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {
@@ -95,12 +109,23 @@ class Activity_Tracker {
 		ActivityLog::log( $moderator_id, 'moderated_' . $action, $object_type, $object_id );
 	}
 
-	public function on_reputation( int $user_id, string $reason, int $delta ): void {
+	/**
+	 * Log a reputation change against the content that caused it when there is
+	 * one, so the Activity Log, Dashboard and exports mask an anonymous author's
+	 * reputation row the same way as the content row beside it.
+	 *
+	 * @param int    $user_id Member whose reputation changed.
+	 * @param string $reason  Action key.
+	 * @param int    $delta   Points applied.
+	 * @param array  $context Source: object_type ('post' or 'reply') and object_id.
+	 */
+	public function on_reputation( int $user_id, string $reason, int $delta, array $context = array() ): void {
+		$source = in_array( $context['object_type'] ?? '', array( 'post', 'reply' ), true ) && ! empty( $context['object_id'] );
 		ActivityLog::log(
 			$user_id,
 			'reputation_changed',
-			'user',
-			$user_id,
+			$source ? (string) $context['object_type'] : 'user',
+			$source ? (int) $context['object_id'] : $user_id,
 			array(
 				'delta'  => $delta,
 				'reason' => $reason,

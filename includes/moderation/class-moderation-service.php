@@ -766,7 +766,14 @@ class Moderation_Service {
 		}
 
 		if ( 'spam' === $action && ! empty( $row->author_id ) ) {
-			Reputation::award( (int) $row->author_id, 'post_removed' );
+			Reputation::award(
+				(int) $row->author_id,
+				'post_removed',
+				array(
+					'object_type' => $type,
+					'object_id'   => $id,
+				)
+			);
 		}
 
 		/**

@@ -191,7 +191,7 @@ class Votes_Controller extends Base_Controller {
 		do_action( 'jetonomy_after_vote', $type, $id, $user_id, $value );
 
 		// Award or adjust reputation on the object author.
-		$this->maybe_adjust_reputation( $type, $value, $result, (int) $object->author_id );
+		$this->maybe_adjust_reputation( $type, $value, $result, (int) $object->author_id, $id );
 
 		// Re-fetch current score.
 		$updated = $this->load_object( $type, $id );
@@ -297,12 +297,17 @@ class Votes_Controller extends Base_Controller {
 	 * @param int    $value     The vote value (1 or -1).
 	 * @param array  $result    The result from Vote::cast().
 	 * @param int    $author_id The object author's user ID.
+	 * @param int    $object_id The voted post or reply, logged as the source of the change.
 	 */
-	private function maybe_adjust_reputation( string $type, int $value, array $result, int $author_id ): void {
+	private function maybe_adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id = 0 ): void {
 		if ( ! $author_id ) {
 			return;
 		}
 
+		$source    = array(
+			'object_type' => $type,
+			'object_id'   => $object_id,
+		);
 		$action    = $result['action'];
 		$old_value = $result['old_value'] ?? null;
 
@@ -313,20 +318,20 @@ class Votes_Controller extends Base_Controller {
 
 		if ( 'created' === $action ) {
 			// New vote: award via Reputation class.
-			Reputation::award( $author_id, self::reputation_action_for( $type, $value ) );
+			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
 			return;
 		}
 
 		if ( 'removed' === $action ) {
 			// Undo vote: revoke the original award.
-			Reputation::revoke( $author_id, self::reputation_action_for( $type, $value ) );
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $value ), $source );
 			return;
 		}
 
 		if ( 'updated' === $action && null !== $old_value ) {
 			// Changed vote direction: revoke old award and apply new one.
-			Reputation::revoke( $author_id, self::reputation_action_for( $type, $old_value ) );
-			Reputation::award( $author_id, self::reputation_action_for( $type, $value ) );
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $old_value ), $source );
+			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
 		}
 	}
 

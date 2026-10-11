@@ -1572,9 +1572,15 @@ class Admin {
 			exit;
 		}
 		fputcsv( $out, array( 'id', 'user_id', 'user_login', 'action', 'object_type', 'object_id', 'metadata', 'created_at' ) );
+		$objects = \Jetonomy\Author::objects_of( array_map( static fn( $r ) => (object) $r, $rows ) );
 		foreach ( $rows as $row ) {
+			// Anonymous authors stay anonymous in the export too; only a logged Reveal names them.
+			$hidden = \Jetonomy\Author::hides_actor( (int) $row['user_id'], $objects[ $row['object_type'] . ':' . (int) $row['object_id'] ] ?? null );
+			if ( $hidden ) {
+				$row['user_id'] = 0;
+			}
 			$user       = $row['user_id'] ? get_userdata( (int) $row['user_id'] ) : null;
-			$user_login = $user ? $user->user_login : '';
+			$user_login = $hidden ? __( 'Anonymous', 'jetonomy' ) : ( $user ? $user->user_login : '' );
 			fputcsv(
 				$out,
 				array(

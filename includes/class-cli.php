@@ -1037,11 +1037,15 @@ class CLI {
 		foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ) as $tbl ) {
 			$row[ 'rows:' . substr( $tbl, strlen( $wpdb->prefix ) ) ] = $wpdb->get_var( "SELECT COUNT(*) FROM `{$tbl}`" );
 		}
-		$row['admin_reputation'] = $wpdb->get_var( $wpdb->prepare( 'SELECT reputation FROM ' . \Jetonomy\table( 'user_profiles' ) . ' WHERE user_id = %d', 1 ) );
-		// WB Gamification listens to our hooks: the real admin must not earn events, points or queued toasts from a QA run.
+		// Every real member, not one assumed admin id: which admin a site lists first
+		// differs, and a check pinned to user 1 passed on one site and leaked on another.
+		// Throwaway QA users are deleted before the second snapshot, so joining wp_users
+		// counts only people who existed before the run.
+		$row['member_reputation'] = $wpdb->get_var( 'SELECT COALESCE( SUM( p.reputation ), 0 ) FROM ' . \Jetonomy\table( 'user_profiles' ) . " p INNER JOIN {$wpdb->users} u ON u.ID = p.user_id" );
+		// WB Gamification listens to our hooks: no real member may earn events, points or queued toasts from a QA run.
 		foreach ( array( 'wb_gam_events', 'wb_gam_points', 'wb_gam_notifications_queue' ) as $gam ) {
 			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . $gam ) ) ) {
-				$row[ 'admin:' . $gam ] = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$wpdb->prefix}{$gam}` WHERE user_id = %d", 1 ) );
+				$row[ 'members:' . $gam ] = $wpdb->get_var( "SELECT COUNT(*) FROM `{$wpdb->prefix}{$gam}` g INNER JOIN {$wpdb->users} u ON u.ID = g.user_id" );
 			}
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

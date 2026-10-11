@@ -1684,12 +1684,15 @@ class Abilities {
 	}
 
 	public function execute_get_activity( $input ) {
-		$limit = (int) ( $input['limit'] ?? 20 );
-		$rows  = ActivityLog::list_recent( $limit );
-		$items = array();
+		$limit   = (int) ( $input['limit'] ?? 20 );
+		$rows    = ActivityLog::list_recent( $limit );
+		$objects = \Jetonomy\Author::objects_of( $rows );
+		$items   = array();
 		foreach ( $rows as $r ) {
+			// An anonymous author's own rows are reported without who they are, as on the Activity Log screen.
+			$hidden  = \Jetonomy\Author::hides_actor( (int) $r->user_id, $objects[ $r->object_type . ':' . (int) $r->object_id ] ?? null );
 			$items[] = array(
-				'user_id'     => (int) $r->user_id,
+				'user_id'     => $hidden ? 0 : (int) $r->user_id,
 				'action'      => $r->action ?? '',
 				'object_type' => $r->object_type ?? '',
 				'object_id'   => (int) ( $r->object_id ?? 0 ),
