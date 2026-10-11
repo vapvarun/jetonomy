@@ -230,7 +230,7 @@ class Abilities {
 				'permission_callback' => function ( $input ) {
 					$post = Post::find( (int) $input['post_id'] );
 					if ( ! $post ) {
-						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
+						return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
 					}
 					return Permission_Engine::can_read_post( get_current_user_id(), $post );
 				},
@@ -350,7 +350,7 @@ class Abilities {
 				'permission_callback' => function ( $input ) {
 					$post = Post::find( (int) $input['post_id'] );
 					if ( ! $post ) {
-						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
+						return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
 					}
 
 					/*
@@ -432,7 +432,7 @@ class Abilities {
 				'permission_callback' => function ( $input ) {
 					$post = Post::find( (int) $input['post_id'] );
 					if ( ! $post ) {
-						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
+						return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
 					}
 					return Permission_Engine::can_read_post( get_current_user_id(), $post );
 				},
@@ -495,7 +495,7 @@ class Abilities {
 				'permission_callback' => function ( $input ) {
 					$user_id = get_current_user_id();
 					if ( ! $user_id ) {
-						return new WP_Error( 'auth', __( 'Authentication required.', 'jetonomy' ) );
+						return new WP_Error( 'jetonomy_auth_required', __( 'Authentication required.', 'jetonomy' ) );
 					}
 					return Permission_Engine::can( $user_id, 'vote' );
 				},
@@ -1253,7 +1253,7 @@ class Abilities {
 		}
 
 		if ( ! $post_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create post.', 'jetonomy' ) );
+			return new WP_Error( 'jetonomy_create_failed', __( 'Failed to create post.', 'jetonomy' ) );
 		}
 
 		// Tags.
@@ -1287,7 +1287,7 @@ class Abilities {
 	public function execute_get_post( $input ) {
 		$post = Post::find( (int) $input['post_id'] );
 		if ( ! $post ) {
-			return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
+			return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ) );
 		}
 		// Same tombstone the REST post shape applies — this route returns the
 		// raw row's title/content, so without it a blocker reading through the
@@ -1371,7 +1371,7 @@ class Abilities {
 			return $reply_id;
 		}
 		if ( ! $reply_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create reply.', 'jetonomy' ) );
+			return new WP_Error( 'jetonomy_create_failed', __( 'Failed to create reply.', 'jetonomy' ) );
 		}
 
 		// NO UserProfile::increment_reply_count() here. Reply::create() already
@@ -1496,7 +1496,7 @@ class Abilities {
 		$space = Space::find( (int) $input['space_id'] );
 		if ( ! $space ) {
 			/* translators: %s: the singular label of the item (the configured noun). */
-			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
+			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		// This had NO read gate: it answered with any space's title,
@@ -1507,7 +1507,7 @@ class Abilities {
 		// id probe cannot tell "no such space" from "not for you".
 		if ( ! $this->check_permission_or_public( 'read', (int) $space->id ) ) {
 			/* translators: %s: the singular label of the item (the configured noun). */
-			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
+			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		return [
@@ -1528,7 +1528,7 @@ class Abilities {
 
 		if ( ! $space ) {
 			/* translators: %s: the singular label of the item (the configured noun). */
-			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
+			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
@@ -1603,7 +1603,7 @@ class Abilities {
 			return $space_id;
 		}
 		if ( ! $space_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create space.', 'jetonomy' ) );
+			return new WP_Error( 'jetonomy_create_failed', __( 'Failed to create space.', 'jetonomy' ) );
 		}
 
 		return [
@@ -1617,7 +1617,7 @@ class Abilities {
 		$user_id = (int) $input['user_id'];
 		$user    = get_userdata( $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'not_found', __( 'User not found.', 'jetonomy' ) );
+			return new WP_Error( 'jetonomy_not_found', __( 'User not found.', 'jetonomy' ) );
 		}
 		$profile = UserProfile::find_by_user( $user_id );
 		return [
@@ -1691,7 +1691,7 @@ class Abilities {
 			]
 		);
 		if ( ! $flag_id ) {
-			return new WP_Error( 'flag_failed', __( 'Failed to create flag.', 'jetonomy' ) );
+			return new WP_Error( 'jetonomy_flag_failed', __( 'Failed to create flag.', 'jetonomy' ) );
 		}
 		return [ 'flag_id' => $flag_id ];
 	}
