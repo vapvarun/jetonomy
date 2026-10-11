@@ -49,15 +49,12 @@ files and none in templates; Pro 629 in 29 files, the largest the extension clas
 
 A second implementation of any of these is a defect, even if it works.
 
-## 4. Size and layout
+## 4. Layout
 
-- New PHP/JS files stay under about 800 lines; a function under about 80.
-- Files over 1,500 lines are split by responsibility when next touched.
-- Every Pro extension uses one layout: `class-extension.php` (wiring only),
+- Large files are normal for a plugin this size; split a file only when a
+  change needs it, never as a standalone refactor before a release.
+- A new Pro extension uses one layout: `class-extension.php` (wiring),
   `class-rest.php`, model class(es), `class-admin.php`, `views/`.
-
-Baseline: free has 5 files over 2,000 lines (largest `assets/js/view.js` 4,719);
-Pro has 16 files over 1,000 lines (largest `private-messaging/class-extension.php`).
 
 ## 5. Consistency
 
