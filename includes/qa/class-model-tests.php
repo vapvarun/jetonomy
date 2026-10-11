@@ -267,6 +267,7 @@ class Model_Tests {
 		$this->test_edited_marker();
 		$this->test_upload_box_rules();
 		$this->test_queue_cancel();
+		$this->test_ability_mark_read_scope();
 		$this->test_app_strings_defined();
 		$this->test_import_map();
 		$this->test_recount_backfill();
@@ -1296,6 +1297,23 @@ class Model_Tests {
 
 		\Jetonomy\Space_Purge::purge( $space );
 		$this->check( 'PG2: the purge then completes once the database answers', null === \Jetonomy\Models\Space::find( $space ) && null === \Jetonomy\Models\Reply::find( (int) $reply ) );
+
+		// PG5: purging a space that no longer counts in its category (locked for a
+		// large purge, or archived) leaves the category's count alone.
+		$pg_cat   = Category::create( array( 'name' => 'QA PG cat ' . $slug, 'slug' => 'qa-pg-cat-' . $slug ) );
+		$cat_n    = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT space_count FROM ' . \Jetonomy\table( 'categories' ) . ' WHERE id = %d', $pg_cat ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$pg_space = fn( string $k ): int => (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA PG ' . $k, 'slug' => $slug . '-' . $k, 'type' => 'forum', 'category_id' => $pg_cat, 'author_id' => $this->qa_admin ), $this->qa_admin );
+		$pg_keep  = $pg_space( 'keep' );
+		$pg_lock  = $pg_space( 'lock' );
+		$pg_arch  = $pg_space( 'arch' );
+		\Jetonomy\Models\Space::update( $pg_lock, array( 'status' => 'locked' ) );
+		\Jetonomy\Models\Space::update( $pg_arch, array( 'status' => 'archived' ) );
+		\Jetonomy\Space_Purge::purge( $pg_lock );
+		\Jetonomy\Space_Purge::purge( $pg_arch );
+		$pg_mid = $cat_n();
+		\Jetonomy\Space_Purge::purge( $pg_keep );
+		$this->check( 'PG5: purging a locked or archived space does not lower its category count again', 1 === $pg_mid && 0 === $cat_n(), "after locked/archived purges {$pg_mid}, expected 1" );
+		$wpdb->delete( \Jetonomy\table( 'categories' ), array( 'id' => $pg_cat ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -1351,7 +1369,7 @@ class Model_Tests {
 		$child  = $by( $sq, $root );
 		$grand  = $by( $sq, $child );
 		$before = $rep();
-		\Jetonomy\Models\Reply::accept_as_answer( $grand, 1 );
+		\Jetonomy\Models\Reply::accept_as_answer( $grand, $this->qa_admin );
 		$moved = \Jetonomy\Models\Reply::split_to_topic( $root, 'DI split tree new ' . $suffix );
 		$g = \Jetonomy\Models\Reply::find( $grand );
 		$this->check(
@@ -1380,9 +1398,33 @@ class Model_Tests {
 		\Jetonomy\Models\Reply::accept_as_answer( (int) $reply( $mt ), $member );
 		$loser  = $by( $ms );
 		$before = $rep();
-		\Jetonomy\Models\Reply::accept_as_answer( $loser, 1 );
+		\Jetonomy\Models\Reply::accept_as_answer( $loser, $this->qa_admin );
 		\Jetonomy\Models\Post::merge_into( $ms, $mt );
 		$this->check( 'DI8: merging un-accepts the source answer properly and clears the source', $rep() === $before && empty( \Jetonomy\Models\Post::find( $ms )->accepted_reply_id ) && empty( \Jetonomy\Models\Post::find( $ms )->is_resolved ) );
+
+		// DI10: a merge carries the opening post over without joining its author to the target space.
+		$m1     = $space( 'qa-di-m1' );
+		$m2     = $space( 'qa-di-m2' );
+		$di_src = (int) \Jetonomy\Models\Post::create( array( 'space_id' => $m1, 'author_id' => $member, 'title' => 'DI merge src ' . $suffix, 'slug' => 'di-merge-src-' . $suffix, 'content' => 'x', 'status' => 'publish' ) );
+		$di_dst = $topic( $m2, 'DI merge dst' );
+		SpaceMember::remove( $m2, $member );
+		\Jetonomy\Models\Post::merge_into( $di_src, $di_dst );
+		$this->check( 'DI10: merging does not make the source author a member of the target space', ! SpaceMember::is_member( $m2, $member ) );
+
+		// TC1: a tag page counts only topics the viewer may read, like its list.
+		$tc_tag     = \Jetonomy\Models\Tag::find_or_create( 'qa-tc-' . $suffix );
+		$tc_open    = $topic( $m1, 'TC open' );
+		$tc_private = $topic( $m1, 'TC private' );
+		\Jetonomy\Models\Post::update( $tc_private, array( 'is_private' => 1 ) );
+		\Jetonomy\Models\Tag::attach_to_post( $tc_open, $tc_tag );
+		\Jetonomy\Models\Tag::attach_to_post( $tc_private, $tc_tag );
+		$tc_prev = get_current_user_id();
+		wp_set_current_user( 0 );
+		$tc_count = \Jetonomy\Models\Post::count_by_tag_visible( $tc_tag );
+		$tc_list  = count( \Jetonomy\Models\Post::list_by_tag_visible( $tc_tag, 'latest', 50, 0 ) );
+		wp_set_current_user( $tc_prev );
+		$this->check( 'TC1: a guest\'s tag count matches the topics they can see (private excluded)', 1 === $tc_count && $tc_count === $tc_list, "count {$tc_count}, list {$tc_list}" );
+		\Jetonomy\Models\Tag::delete( $tc_tag );
 		require_once ABSPATH . 'wp-admin/includes/user.php';
 
 		$draft = $topic( $a, 'DI draft', 'draft' );
@@ -1402,7 +1444,7 @@ class Model_Tests {
 		$list = \Jetonomy\Models\Post::list_by_space_visible( $p, 0, false, 'popular', 5 );
 		$this->check( 'DI6: Popular breaks vote ties by replies', $list && (int) $list[0]->id === $older );
 
-		foreach ( array( $a, $b, $q, $p ) as $sid ) {
+		foreach ( array( $a, $b, $q, $p, $m1, $m2 ) as $sid ) {
 			\Jetonomy\Space_Purge::purge( $sid );
 		}
 		wp_delete_user( $member );
@@ -2249,6 +2291,26 @@ class Model_Tests {
 		preg_match_all( '/state\.i18n\??\.([a-zA-Z0-9_]+)/', $js, $m );
 		$missing = array_diff( array_unique( $m[1] ), array_keys( \Jetonomy\Template_Loader::app_i18n() ) );
 		$this->check( 'IT1: every state.i18n key view.js reads is defined for community pages and embeds', ! $missing, implode( ', ', $missing ) );
+	}
+
+	/**
+	 * AB: the mark-notifications-read ability only marks the caller's own
+	 * notifications; an id alone used to mark anyone's.
+	 */
+	private function test_ability_mark_read_scope(): void {
+		global $wpdb;
+		$suffix = wp_generate_password( 6, false, false );
+		$owner  = (int) wp_insert_user( array( 'user_login' => 'jt_qa_ab_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'ab-' . $suffix . '@example.test', 'role' => 'subscriber' ) );
+		$id     = Notification::create( array( 'user_id' => $owner, 'actor_id' => 0, 'type' => 'mention', 'object_type' => 'post', 'object_id' => 0, 'message' => 'QA AB' ) );
+		$prev   = get_current_user_id();
+		wp_set_current_user( $this->qa_admin );
+		$result = ( new \Jetonomy\Abilities() )->execute_mark_notifications_read( array( 'notification_id' => $id ) );
+		wp_set_current_user( $prev );
+		$read = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT is_read FROM ' . table( 'notifications' ) . ' WHERE id = %d', $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$this->check( 'AB1: another member cannot mark someone else\'s notification read', 0 === (int) $result['marked'] && 0 === $read );
+		$wpdb->delete( table( 'notifications' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $owner );
 	}
 
 	/**

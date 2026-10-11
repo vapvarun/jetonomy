@@ -51,11 +51,6 @@ parameters:
 			path: includes/api/class-replies-controller.php
 
 		-
-			message: "#^Result of static method Jetonomy\\\\Models\\\\Notification\\:\\:mark_all_read\\(\\) \\(void\\) is used\\.$#"
-			count: 1
-			path: includes/class-abilities.php
-
-		-
 			message: "#^Parameter \\#3 \\$deps of function wp_register_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
 			count: 1
 			path: includes/class-blocks.php

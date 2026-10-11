@@ -30,12 +30,12 @@ if ( ! in_array( $sort, array( 'latest', 'popular' ), true ) ) {
 	$sort = 'latest';
 }
 
-// 30 a page; the total comes from the tag's denormalised post_count.
+// 30 a page; the total counts only what this viewer may read, like the list.
 $per_page = 30;
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $paged       = max( 1, (int) ( $_GET['paged'] ?? 1 ) );
 $offset      = ( $paged - 1 ) * $per_page;
-$total_posts = (int) $tag->post_count;
+$total_posts = \Jetonomy\Models\Post::count_by_tag_visible( (int) $tag->id );
 $total_pages = (int) ceil( max( 1, $total_posts ) / $per_page );
 
 $posts = \Jetonomy\Models\Post::list_by_tag_visible( (int) $tag->id, $sort, $per_page, $offset );
@@ -58,7 +58,7 @@ $crumbs = array(
 				<h1 class="jt-page-title"><?php echo esc_html( $tag->name ); ?></h1>
 				<span class="jt-tag-count-label">
 					<?php
-					echo esc_html( \Jetonomy\count_label( (int) $tag->post_count, 'topic' ) );
+					echo esc_html( \Jetonomy\count_label( $total_posts, 'topic' ) );
 					?>
 				</span>
 				<?php

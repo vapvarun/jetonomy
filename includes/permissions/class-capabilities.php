@@ -316,15 +316,6 @@ class Capabilities {
 	}
 
 	/**
-	 * Every Jetonomy capability, flattened from ROLE_MAP.
-	 *
-	 * ROLE_MAP stays the single source of truth. Headless clients (the mobile
-	 * app) have to know what the signed-in member may actually do, and
-	 * re-listing the caps anywhere else would guarantee the two lists drift.
-	 *
-	 * @return string[]
-	 */
-	/**
 	 * Whether the user may upload media. Same rule the REST routes enforce,
 	 * so templates hide controls a refused request would sit behind.
 	 *
@@ -340,6 +331,15 @@ class Capabilities {
 		return false;
 	}
 
+	/**
+	 * Every Jetonomy capability, flattened from ROLE_MAP.
+	 *
+	 * ROLE_MAP stays the single source of truth. Headless clients (the mobile
+	 * app) have to know what the signed-in member may actually do, and
+	 * re-listing the caps anywhere else would guarantee the two lists drift.
+	 *
+	 * @return string[]
+	 */
 	public static function all(): array {
 		return array_values( array_unique( array_merge( ...array_values( self::ROLE_MAP ) ) ) );
 	}

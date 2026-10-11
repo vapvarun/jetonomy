@@ -15,7 +15,6 @@ use Jetonomy\Trust\Trust_Evaluator;
 
 class Cron {
 
-
 	/**
 	 * Scheduled-topic publisher. Not recurring: one single action armed at the
 	 * earliest pending published_at and re-armed after every run (background

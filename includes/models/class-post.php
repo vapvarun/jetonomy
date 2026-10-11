@@ -1032,6 +1032,33 @@ class Post extends Model {
 	}
 
 	/**
+	 * Who wrote each row, and whether anonymously - just those columns, in
+	 * chunks, for screens that only need to mask an anonymous author (the
+	 * Activity Log export can hold tens of thousands of ids).
+	 *
+	 * @param int[] $ids Row IDs.
+	 * @return array<int, object> id => object with id, author_id, is_anonymous.
+	 */
+	public static function authorship_by_ids( array $ids ): array {
+		$ids   = array_values( array_unique( array_filter( array_map( 'intval', $ids ), static fn ( int $id ): bool => $id > 0 ) ) );
+		$by_id = array();
+		foreach ( array_chunk( $ids, 500 ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$rows         = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+					'SELECT id, author_id, is_anonymous FROM ' . static::table() . " WHERE id IN ({$placeholders})",
+					...$chunk
+				)
+			) ?: array();
+			foreach ( $rows as $row ) {
+				$by_id[ (int) $row->id ] = $row;
+			}
+		}
+		return $by_id;
+	}
+
+	/**
 	 * Hydrate post rows for a given set of IDs, in the order asked for.
 	 *
 	 * Mirrors Space::list_by_ids(). Exists so callers that start from
@@ -1224,6 +1251,36 @@ class Post extends Model {
 			)
 		);
 		return $results ? $results : array();
+	}
+
+	/**
+	 * Count of what list_by_tag_visible() pages through, for the label and pager.
+	 *
+	 * The tag's stored post_count includes topics this viewer may not read, so a
+	 * guest saw "40 topics" over an empty second page, and the number disclosed
+	 * that private topics carry the tag.
+	 *
+	 * @param int $tag_id Tag ID.
+	 * @return int
+	 */
+	public static function count_by_tag_visible( int $tag_id ): int {
+		$table         = static::table();
+		$spaces_tbl    = \Jetonomy\table( 'spaces' );
+		$post_tags_tbl = \Jetonomy\table( 'post_tags' );
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
+
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$table} p
+				 INNER JOIN {$post_tags_tbl} pt ON pt.post_id = p.id
+				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+				 WHERE pt.tag_id = %d AND p.status = 'publish'{$gate_sql}",
+				$tag_id,
+				...$gate_params
+			)
+		);
 	}
 
 	/**
@@ -2138,12 +2195,13 @@ class Post extends Model {
 		if ( in_array( $source->status, array( 'publish', 'pending' ), true ) ) {
 			$donor_reply = Reply::create(
 				array(
-					'post_id'      => $target_id,
-					'author_id'    => (int) $source->author_id,
-					'is_anonymous' => (int) ( $source->is_anonymous ?? 0 ),
-					'status'       => (string) $source->status,
-					'created_at'   => (string) $source->created_at,
-					'content'      => sprintf(
+					'post_id'        => $target_id,
+					'author_id'      => (int) $source->author_id,
+					'skip_auto_join' => true,
+					'is_anonymous'   => (int) ( $source->is_anonymous ?? 0 ),
+					'status'         => (string) $source->status,
+					'created_at'     => (string) $source->created_at,
+					'content'        => sprintf(
 						/* translators: %s: title of the topic that was merged in. */
 						'<p><em>' . esc_html__( 'Merged from "%s":', 'jetonomy' ) . '</em></p>',
 						esc_html( (string) $source->title )

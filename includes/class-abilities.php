@@ -1676,11 +1676,12 @@ class Abilities {
 	public function execute_mark_notifications_read( $input ) {
 		$user_id = get_current_user_id();
 		if ( ! empty( $input['notification_id'] ) ) {
-			Notification::mark_read( (int) $input['notification_id'] );
-			return array( 'marked' => 1 );
+			// Only the caller's own notification: an id alone must not mark someone else's read.
+			return array( 'marked' => Notification::mark_read_for_user( $user_id, array( (int) $input['notification_id'] ) ) );
 		}
-		$count = Notification::mark_all_read( $user_id );
-		return array( 'marked' => (int) $count );
+		$count = Notification::unread_count( $user_id );
+		Notification::mark_all_read( $user_id );
+		return array( 'marked' => $count );
 	}
 
 	public function execute_get_activity( $input ) {

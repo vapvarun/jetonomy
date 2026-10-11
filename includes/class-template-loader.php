@@ -565,8 +565,13 @@ class Template_Loader {
 			'body_class',
 			static function ( array $classes ): array {
 				$classes[] = 'jt-page';
-				return $classes;
-			}
+				// Community pages never render the theme's sidebar, but a theme that
+				// sees widgets in its sidebar area still marks the body as having one
+				// (BuddyX: has-sidebar-right), and its content wrapper then reserves an
+				// empty sidebar column beside the community.
+				return array_values( preg_grep( '/^has-([a-z]+-)?sidebar-(left|right|both)$/', $classes, PREG_GREP_INVERT ) );
+			},
+			99
 		);
 
 		// Use WP's get_header/get_footer for theme integration.

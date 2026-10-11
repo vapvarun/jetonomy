@@ -99,6 +99,11 @@ class Reply extends Model {
 			}
 		}
 
+		// Not a column: a reply written on someone's behalf (the opening post a
+		// merge carries over) must not join its author to the space.
+		$auto_join = empty( $data['skip_auto_join'] );
+		unset( $data['skip_auto_join'] );
+
 		$id = static::insert( $data );
 
 		if ( $id > 0 ) {
@@ -131,7 +136,7 @@ class Reply extends Model {
 			// Auto-join the replier to the space on their first reply — same rules
 			// as Post::create (open spaces only, no demotion of existing members).
 			$parent_post = ! empty( $data['post_id'] ) ? Post::find( (int) $data['post_id'] ) : null;
-			if ( $parent_post && ! empty( $data['author_id'] ) ) {
+			if ( $auto_join && $parent_post && ! empty( $data['author_id'] ) ) {
 				self::maybe_auto_join_space( (int) $parent_post->space_id, (int) $data['author_id'] );
 			}
 
@@ -779,6 +784,33 @@ class Reply extends Model {
 				...array_merge( $statuses, $scope['params'] )
 			)
 		);
+	}
+
+	/**
+	 * Who wrote each row, and whether anonymously - just those columns, in
+	 * chunks, for screens that only need to mask an anonymous author (the
+	 * Activity Log export can hold tens of thousands of ids).
+	 *
+	 * @param int[] $ids Row IDs.
+	 * @return array<int, object> id => object with id, author_id, is_anonymous.
+	 */
+	public static function authorship_by_ids( array $ids ): array {
+		$ids   = array_values( array_unique( array_filter( array_map( 'intval', $ids ), static fn ( int $id ): bool => $id > 0 ) ) );
+		$by_id = array();
+		foreach ( array_chunk( $ids, 500 ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$rows         = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+					'SELECT id, author_id, is_anonymous FROM ' . static::table() . " WHERE id IN ({$placeholders})",
+					...$chunk
+				)
+			) ?: array();
+			foreach ( $rows as $row ) {
+				$by_id[ (int) $row->id ] = $row;
+			}
+		}
+		return $by_id;
 	}
 
 	/**

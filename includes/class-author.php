@@ -111,8 +111,9 @@ class Author {
 	}
 
 	/**
-	 * Batch-load the posts and replies a page of log rows points at
+	 * Batch-load who wrote the posts and replies a set of log rows points at
 	 * (rows carry object_type + object_id), keyed "post:12" / "reply:34".
+	 * Only id, author_id and is_anonymous: enough for hides_actor().
 	 *
 	 * @param object[] $rows Activity or revision rows.
 	 * @return array<string, object>
@@ -129,10 +130,10 @@ class Author {
 			}
 		}
 		$out = array();
-		foreach ( Models\Post::list_by_ids( $ids['post'] ) as $id => $row ) {
+		foreach ( Models\Post::authorship_by_ids( $ids['post'] ) as $id => $row ) {
 			$out[ 'post:' . $id ] = $row;
 		}
-		foreach ( Models\Reply::list_by_ids( $ids['reply'] ) as $id => $row ) {
+		foreach ( Models\Reply::authorship_by_ids( $ids['reply'] ) as $id => $row ) {
 			$out[ 'reply:' . $id ] = $row;
 		}
 		return $out;

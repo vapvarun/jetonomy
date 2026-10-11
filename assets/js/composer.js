@@ -330,6 +330,23 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
     // ── G1: Drag-Drop & Paste-to-Upload Image Handling ──
 
+    // The toolbar renders its image button only for members who may upload, so
+    // paste and drop follow it: no button, no upload request that can only fail.
+    function canUploadHere( editor ) {
+        for ( var el = editor.parentElement; el; el = el.parentElement ) {
+            if ( el.querySelector( '[data-cmd]' ) ) {
+                return !! el.querySelector( '[data-cmd="image"]' );
+            }
+        }
+        return false;
+    }
+
+    function refuseUpload() {
+        if ( window.bnToast ) {
+            window.bnToast( wp.i18n.__( 'You do not have permission to upload images.', 'jetonomy' ) );
+        }
+    }
+
     document.querySelectorAll( '.jt-editor-body' ).forEach( function( editor ) {
         // Paste handler — paste screenshots from clipboard
         editor.addEventListener( 'paste', function( e ) {
@@ -337,6 +354,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
             for ( var i = 0; i < items.length; i++ ) {
                 if ( items[ i ].type.indexOf( 'image' ) !== -1 ) {
                     e.preventDefault();
+                    if ( ! canUploadHere( editor ) ) {
+                        refuseUpload();
+                        return;
+                    }
                     var file = items[ i ].getAsFile();
                     uploadImage( file, editor );
                     return;
@@ -362,6 +383,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
             editor.classList.remove( 'jt-editor-dragover' );
 
             var files = e.dataTransfer.files;
+            if ( files.length && ! canUploadHere( editor ) ) {
+                refuseUpload();
+                return;
+            }
             for ( var i = 0; i < files.length; i++ ) {
                 if ( files[ i ].type.indexOf( 'image' ) !== -1 ) {
                     uploadImage( files[ i ], editor );

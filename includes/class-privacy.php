@@ -115,7 +115,7 @@ class Privacy {
 			if ( $heir ) {
 				// NOT archived: another admin is still running this space, so
 				// nothing is stranded and it keeps working.
-				\Jetonomy\Models\Space::hand_over( $space_id, $heir, false );
+				self::hand_over_or_assign( $space_id, $heir, false );
 				continue;
 			}
 
@@ -134,7 +134,32 @@ class Privacy {
 			// decide what happens to it rather than it quietly continuing with
 			// no one able to manage it. hand_over() writes BOTH author_id and
 			// the admin row; attribution without the row leaves it unmanageable.
-			\Jetonomy\Models\Space::hand_over( $space_id, $successor, true );
+			self::hand_over_or_assign( $space_id, $successor, true );
+		}
+	}
+
+	/**
+	 * Hand a leaver's space over; if the hand-over is refused, still record the
+	 * new owner.
+	 *
+	 * The hand-over adds the successor as a space admin first, and a join veto (a
+	 * seat limit, a membership rule) makes it give up before changing the
+	 * owner. The leaver's id is about to be cleared, so giving up would leave
+	 * the space with no owner at all; the successor is a surviving space admin
+	 * or a site administrator, who can manage it either way.
+	 *
+	 * @param int  $space_id  Space ID.
+	 * @param int  $successor New owner.
+	 * @param bool $archive   Archive the space (nobody is left running it).
+	 */
+	private static function hand_over_or_assign( int $space_id, int $successor, bool $archive ): void {
+		$handed = \Jetonomy\Models\Space::hand_over( $space_id, $successor, $archive );
+		if ( is_wp_error( $handed ) && 'jetonomy_transfer_noop' !== $handed->get_error_code() ) {
+			$fields = array( 'author_id' => $successor );
+			if ( $archive ) {
+				$fields['status'] = 'archived';
+			}
+			\Jetonomy\Models\Space::update( $space_id, $fields );
 		}
 	}
 

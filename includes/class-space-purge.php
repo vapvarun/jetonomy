@@ -51,8 +51,6 @@ final class Space_Purge {
 	/** Chunk size for `IN (...)` deletes, so a 50k-topic space never builds one enormous statement. */
 	private const CHUNK = 500;
 
-	/** One group per plugin, so every Jetonomy job is observable together. */
-
 	/** Continuation hook. Carries the space id; re-enqueued until the space drains. */
 	public const BATCH_HOOK = 'jetonomy_space_purge_batch';
 
@@ -606,9 +604,10 @@ final class Space_Purge {
 			}
 		}
 
-		// Only when the space row was actually still there — an orphan sweep
-		// must not decrement a counter the original delete already adjusted.
-		if ( $category_id > 0 && $space ) {
+		// Only a space that still counted in its category: an orphan sweep has no
+		// row, and a locked (large purge) or archived space was already taken off
+		// the count by Space::update(), which counts active spaces only.
+		if ( $category_id > 0 && $space && 'active' === ( $space->status ?? '' ) ) {
 			Models\Category::increment_space_count( $category_id, -1 );
 		}
 
@@ -636,8 +635,11 @@ final class Space_Purge {
 		// uses, rather than carrying a second full-sweep implementation that
 		// could drift from it. Callers who cannot afford a long request should
 		// use queue(); this one runs to completion.
-		$removed = array();
-		$authors = array();
+		// A batched purge that falls back to finishing here brings the batches it
+		// already ran along, so their authors are recounted and the purged hook
+		// reports the whole purge.
+		$removed = array_filter( (array) get_transient( 'jetonomy_purge_tally_' . $space_id ) );
+		$authors = array_filter( (array) get_transient( 'jetonomy_purge_authors_' . $space_id ) );
 		do {
 			$step = self::purge_step( $space_id );
 			foreach ( $step['removed'] as $key => $n ) {
@@ -653,6 +655,9 @@ final class Space_Purge {
 			self::$last_error = (string) $step['error'];
 			return $removed;
 		}
+
+		delete_transient( 'jetonomy_purge_tally_' . $space_id );
+		delete_transient( 'jetonomy_purge_authors_' . $space_id );
 
 		/**
 		 * A space and everything it owned has been removed.

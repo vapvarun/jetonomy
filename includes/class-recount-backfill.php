@@ -49,8 +49,6 @@ final class Recount_Backfill {
 	/** Progress + completion record. Survives across requests; this is not a cache. */
 	private const OPTION = 'jetonomy_recount_backfill';
 
-	/** One group per plugin, so every Jetonomy job is observable together. */
-
 	/** Continuation hook. Re-enqueued until every stage drains. */
 	public const BATCH_HOOK = 'jetonomy_recount_backfill_batch';
 

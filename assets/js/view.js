@@ -870,9 +870,13 @@ function jetonomySetVoted( el, on ) {
  * @param {string} domain Text domain.
  * @return {string} The form for n, number not yet substituted.
  */
-const _n = ( single, plural, n, domain ) => (
-    window.wp?.i18n?._n ? window.wp.i18n._n( single, plural, n, domain ) : ( 1 === n ? single : plural )
-);
+const _n = ( single, plural, n, domain ) => {
+    const translated = window.wp?.i18n?._n ? window.wp.i18n._n( single, plural, n, domain ) : single;
+    // Still untranslated: wp.i18n then picks the language's first form for every
+    // count (one-form languages such as Japanese read "3 reply"), so use English's
+    // rule on the English source, as PHP's _n() does.
+    return ( translated === single || translated === plural ) ? ( 1 === n ? single : plural ) : translated;
+};
 
 const { state, actions } = store( 'jetonomy', {
     state: {
