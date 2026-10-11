@@ -24,19 +24,19 @@ A social media layer with photo and video feeds alongside your community discuss
 Community engine that adds profiles, activity feeds, and member spaces. Pairs with Jetonomy to give members a social home next to their discussion spaces.
 
 **Learnomy**
-Sell and deliver online courses, then gate community spaces on course enrollment. Uses Jetonomy's built-in Learnomy access adapter so course completion unlocks spaces automatically.
+Sell and deliver online courses. With Jetonomy Pro installed, community spaces can be gated on course enrollment so enrolled students get in automatically; the free plugin alone does not gate spaces by course.
 
 **WP Career Board**
-Job listings and applicant management with employer profiles. Job posts can surface as discussion topics in your community.
+Job listings and applicant management with employer profiles. It runs alongside your community; Jetonomy does not turn job posts into topics.
 
 **Listora**
-Member-submitted directory listings. Member listings are shared into community content alongside discussions.
+Member-submitted directory listings. It runs alongside your community; listings are not shared into discussions.
 
 ## How Install and Activate Works
 
 Each companion card shows one of three states:
 
-- **Connected** - the companion is installed and active. Jetonomy detects it automatically via a capability probe, and the "what this unlocks" line appears on the card. No action is needed.
+- **Connected** - the companion is installed and active. Jetonomy detects it automatically via a capability probe. Where the pair does something together, a "what this unlocks" line appears on the card. No action is needed.
 - **Installed, activate** - the plugin files are on disk but the plugin is not active. A single "Activate" button activates it without leaving the settings screen.
 - **Not installed** - the plugin is not on disk. An "Install free" button triggers the one-click install.
 

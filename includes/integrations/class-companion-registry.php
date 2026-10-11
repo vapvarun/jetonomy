@@ -83,7 +83,7 @@ final class Companion_Registry {
 				),
 				'learnomy'        => array(
 					'label'     => __( 'Learnomy', 'jetonomy' ),
-					'why'       => __( 'Sell and deliver online courses, then gate community spaces on course enrollment.', 'jetonomy' ),
+					'why'       => __( 'Sell and deliver online courses. With Jetonomy Pro, community spaces can be gated on course enrollment.', 'jetonomy' ),
 					'detect'    => static fn() => defined( 'LEARNOMY_VERSION' ) || class_exists( '\\Learnomy\\Learnomy' ),
 					'free'      => array(
 						'item_id'  => 1662698,
@@ -91,7 +91,8 @@ final class Companion_Registry {
 						'basename' => 'learnomy/learnomy.php',
 					),
 					'store_url' => 'https://wbcomdesigns.com',
-					'unlocks'   => __( 'Course-gated spaces via the built-in Learnomy access adapter.', 'jetonomy' ),
+					// The access adapter ships in Pro; never claim it on a free-only site.
+					'unlocks'   => defined( 'JETONOMY_PRO_VERSION' ) ? __( 'Course-gated spaces: enrolled students get in automatically.', 'jetonomy' ) : '',
 				),
 				'wp-career-board' => array(
 					'label'     => __( 'WP Career Board', 'jetonomy' ),
@@ -103,7 +104,6 @@ final class Companion_Registry {
 						'basename' => 'wp-career-board/wp-career-board.php',
 					),
 					'store_url' => 'https://wbcomdesigns.com/downloads/wp-career-board/',
-					'unlocks'   => __( 'Job posts surfaced as discussion topics.', 'jetonomy' ),
 				),
 				'wb-listora'      => array(
 					'label'     => __( 'Listora', 'jetonomy' ),
@@ -115,7 +115,6 @@ final class Companion_Registry {
 						'basename' => 'wb-listora/wb-listora.php',
 					),
 					'store_url' => 'https://wbcomdesigns.com/downloads/listora/',
-					'unlocks'   => __( 'Member listings shared into your community.', 'jetonomy' ),
 				),
 			)
 		);
