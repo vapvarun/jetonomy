@@ -88,8 +88,9 @@ Custom Fields adds field-aware parameters to the existing profile and post endpo
 | `PATCH` | `/users/{id}` | Pass `custom_fields: { field_key: value }` to update |
 | `GET` | `/posts/{id}` | Post response includes `custom_fields` if any post-level fields are configured |
 | `GET` | `/posts` | List response includes `custom_fields` on each post |
-| `GET` | `/custom-fields` | List all defined fields and their settings |
-| `POST` | `/custom-field-values` | Set a single field value on a target object (user or post) |
+| `GET` | `/fields` | List all defined fields and their settings |
+| `PATCH` | `/posts/{id}/fields` | Set field values on a topic (`{ "field_key": "value" }`) |
+| `PATCH` | `/users/me/fields` | Set the signed-in member's own field values |
 
 **Example - read a profile with custom fields:**
 

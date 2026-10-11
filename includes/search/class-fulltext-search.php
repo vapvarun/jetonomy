@@ -155,6 +155,27 @@ class Fulltext_Search implements Search_Query_Adapter {
 	}
 
 	/**
+	 * Private-reply guard for reply search, the SQL twin of
+	 * Permission_Engine::can_read_reply(): a private reply is found only by its
+	 * author, the topic author, space staff and site admins. Expects aliases
+	 * r (replies) and p (posts).
+	 *
+	 * @param int|null $space_id Space context, or null for a global search.
+	 * @return array{0:string,1:array} Empty fragment when the viewer may read every private reply.
+	 */
+	public static function reply_visibility_clause( ?int $space_id ): array {
+		$viewer_id = get_current_user_id();
+		if ( user_can( $viewer_id, 'manage_options' )
+			|| ( $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id ) ) ) {
+			return array( '', array() );
+		}
+		if ( $viewer_id > 0 ) {
+			return array( '(r.is_private = 0 OR r.author_id = %d OR p.author_id = %d)', array( $viewer_id, $viewer_id ) );
+		}
+		return array( 'r.is_private = 0', array() );
+	}
+
+	/**
 	 * Full-text search on jt_posts with optional date, author, tag, and sort filters.
 	 *
 	 * @param string      $q
@@ -335,6 +356,11 @@ class Fulltext_Search implements Search_Query_Adapter {
 		if ( '' !== $r_vis_sql ) {
 			$r_where[] = $r_vis_sql;
 			$r_params  = array_merge( $r_params, $r_vis_params );
+		}
+		[ $r_priv_sql, $r_priv_params ] = self::reply_visibility_clause( $space_id );
+		if ( '' !== $r_priv_sql ) {
+			$r_where[] = $r_priv_sql;
+			$r_params  = array_merge( $r_params, $r_priv_params );
 		}
 
 		// Space-level content gate (parent post's space). See search_posts().
@@ -550,6 +576,11 @@ class Fulltext_Search implements Search_Query_Adapter {
 		if ( '' !== $r_vis_sql ) {
 			$r_where[] = $r_vis_sql;
 			$r_params  = array_merge( $r_params, $r_vis_params );
+		}
+		[ $r_priv_sql, $r_priv_params ] = self::reply_visibility_clause( $space_id );
+		if ( '' !== $r_priv_sql ) {
+			$r_where[] = $r_priv_sql;
+			$r_params  = array_merge( $r_params, $r_priv_params );
 		}
 
 		// Space-level content gate — mirror search_replies() so the total never

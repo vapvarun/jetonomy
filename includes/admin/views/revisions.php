@@ -78,8 +78,9 @@ if ( 'detail' === $mode ) :
 			// last entry has no predecessor and shows "Original" instead of a
 			// toggle. Precomputed here so the cell and after_row callbacks agree
 			// on which rows have a diff without recomputing the lookup twice.
-			$jt_total = count( $revisions );
-			$jt_prev  = static function ( $rev ) use ( $revisions, $jt_total ) {
+			$jt_objects = \Jetonomy\Author::objects_of( $revisions );
+			$jt_total   = count( $revisions );
+			$jt_prev    = static function ( $rev ) use ( $revisions, $jt_total ) {
 				$idx = array_search( $rev, $revisions, true );
 				return ( false !== $idx && $idx < ( $jt_total - 1 ) ) ? $revisions[ $idx + 1 ] : null;
 			};
@@ -108,7 +109,7 @@ if ( 'detail' === $mode ) :
 						'icon'  => 'backup',
 						'title' => __( 'No revisions have been recorded for this object yet.', 'jetonomy' ),
 					),
-					'cell'      => function ( $rev, $col ) use ( $jt_prev ) {
+					'cell'      => function ( $rev, $col ) use ( $jt_prev, $jt_objects ) {
 						switch ( $col ) {
 							case 'date':
 								$created = (string) ( $rev->created_at ?? '' );
@@ -137,7 +138,9 @@ if ( 'detail' === $mode ) :
 							case 'author':
 								$author_id = (int) ( $rev->author_id ?? 0 );
 								$author    = $author_id > 0 ? get_userdata( $author_id ) : null;
-								if ( $author ) {
+								if ( \Jetonomy\Author::hides_actor( $author_id, $jt_objects[ $rev->object_type . ':' . (int) $rev->object_id ] ?? null ) ) {
+									echo '<em>' . esc_html__( 'Anonymous', 'jetonomy' ) . '</em>';
+								} elseif ( $author ) {
 									echo esc_html( $author->display_name ?: $author->user_login );
 								} elseif ( $author_id > 0 ) {
 									printf(

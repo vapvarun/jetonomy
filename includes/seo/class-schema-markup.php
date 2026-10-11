@@ -130,7 +130,11 @@ class Schema_Markup {
 		$base        = \Jetonomy\route_url( 'post', $space_slug, $slug );
 
 		if ( 'question' === $post->type && $post->accepted_reply_id ) {
-			$accepted    = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+			$accepted = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+			// A private accepted answer is for the asker and staff only, never public structured data.
+			if ( $accepted && ! empty( $accepted->is_private ) ) {
+				$accepted = null;
+			}
 			$answer_name = $accepted ? \Jetonomy\Author::for_display( (int) $accepted->author_id, $accepted )['name'] : '';
 
 			return array(
@@ -293,13 +297,12 @@ class Schema_Markup {
 	 * Searchbox can surface our search directly in the SERP.
 	 */
 	private function get_home_schema(): array {
-		$base      = \Jetonomy\base_url();
-		$site_name = get_bloginfo( 'name' );
+		$base = \Jetonomy\base_url();
 
 		return array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'WebSite',
-			'name'            => $site_name . ' Community',
+			'name'            => \Jetonomy\community_home_name(),
 			'description'     => __( 'Community discussion forum', 'jetonomy' ),
 			'url'             => $base . '/',
 			'inLanguage'      => str_replace( '_', '-', get_locale() ),

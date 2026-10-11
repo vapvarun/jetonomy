@@ -801,6 +801,7 @@ final class Space_Purge {
 	 * @param array{table:string,column:string,where:string} $rel Relation.
 	 * @param int[]                                          $ids Id set.
 	 * @return int Rows removed.
+	 * @throws \RuntimeException When a delete fails.
 	 */
 	private static function delete_where_in( array $rel, array $ids ): int {
 		global $wpdb;
@@ -818,6 +819,8 @@ final class Space_Purge {
 			$in = implode( ',', array_map( 'intval', $chunk ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$n += (int) $wpdb->query( "DELETE FROM {$tbl} WHERE {$col} IN ({$in}){$extra}" );
+			// A refused delete must stop the purge, or the parent rows go and these become orphans.
+			self::fail_on_db_error();
 		}
 		return $n;
 	}

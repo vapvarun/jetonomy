@@ -56,14 +56,16 @@ Jetonomy logs in to a mailbox that receives mail for your Email Domain and check
 
 ### Method 2: Inbound Webhook
 
-Your email provider (SendGrid Inbound Parse or Mailgun Inbound Routes) receives the mail and forwards it to your site.
+Your mail provider receives the mail and forwards it to your site. See **Provider support** below before choosing this method.
 
 1. Choose **Inbound Webhook (SendGrid / Mailgun)** and save.
 2. Copy the **Inbound Webhook URL**. It looks like `https://yoursite.com/wp-json/jetonomy/v1/reply-by-email/inbound`.
 3. In your provider's account, point inbound parsing for your Email Domain at that URL.
 4. Copy the **Webhook Secret** shown on the settings screen into your provider's signing setup.
 
-Jetonomy rejects any webhook request that is not signed with the Webhook Secret, so the secret is required even though the screen calls it optional. Jetonomy creates the secret for you and never changes it when you save.
+The Webhook Secret is required: Jetonomy rejects any webhook request that is not signed with it. Jetonomy creates the secret for you and never changes it when you save.
+
+> **Provider support.** Webhook mode accepts only requests signed with the Webhook Secret shown on the screen. Mailgun signs inbound mail with its own signing key, which you cannot replace, and SendGrid Inbound Parse does not sign inbound mail at all, so neither can pass this check yet. If your mail goes through Mailgun or SendGrid, use **Method 1: IMAP Polling** for now.
 
 ## Email Parsing
 

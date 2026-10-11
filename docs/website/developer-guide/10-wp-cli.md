@@ -498,25 +498,32 @@ wp jetonomy-pro extension status webhooks
 
 ---
 
-### custom-fields
+### fields
 
-Manage custom fields that extend post or user objects.
+Manage Custom Fields definitions and values.
 
 | Subcommand | Description |
 |------------|-------------|
-| `list` | List all defined custom fields |
+| `list` | List custom field definitions (`[--applies-to=post\|user]`) |
+| `get <key>` | Show one field definition |
 | `create` | Define a new custom field |
-| `delete <id>` | Remove a custom field definition |
+| `update <key>` | Change an existing field definition |
+| `delete <key>` | Delete a field and every value stored for it (hard delete; the wp-admin Disable keeps them) |
+| `get-post-fields --post=<id>` | Read a topic's field values |
+| `set-post-field --post=<id>` | Write a topic's field value |
+| `get-user-fields --for=<user-id>` | Read a member's field values |
+| `set-user-field --for=<user-id>` | Write a member's field value |
+| `backfill` | Rebuild the search index for existing topics' searchable field values |
 
 **Flags - create:** `--key=<slug>` `--label=<text>` `--type=<type>` `--applies-to=<target>` `[--description=<text>]` `[--options=<csv>]` `[--required]` `[--default=<value>]` `[--format=<format>]`
 
-Types: `text`, `textarea`, `select`, `checkbox`, `number`, `url`. Applies-to: `post` or `user`.
+Types: `text`, `textarea`, `number`, `email`, `url`, `select`, `checkbox`, `radio`, `date`. Applies-to: `post` or `user`.
 
 ```bash
-wp jetonomy-pro custom-fields create --key=company --label=Company --type=text --applies-to=user
-wp jetonomy-pro custom-fields create --key=priority --label=Priority --type=select --applies-to=post --options="low,medium,high"
-wp jetonomy-pro custom-fields list --format=json
-wp jetonomy-pro custom-fields delete 4
+wp jetonomy-pro fields create --key=company --label=Company --type=text --applies-to=user
+wp jetonomy-pro fields create --key=priority --label=Priority --type=select --applies-to=post --options="low,medium,high"
+wp jetonomy-pro fields list --format=json
+wp jetonomy-pro fields delete company
 ```
 
 ---

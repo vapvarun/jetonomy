@@ -2,8 +2,8 @@
 /**
  * 2.0.2: role capability mapping repairs.
  *
- * - Uploads are now gated on jetonomy_upload_media / upload_files alone
- * Until now anyone who could post could upload,
+ * - Uploads are now gated on jetonomy_upload_media alone (site admins always keep it).
+ *   Until now anyone who could post could upload,
  *   so roles that can post are granted jetonomy_upload_media here and no
  *   site loses uploads on update. Contributor, Author and Editor shipped
  *   with the cap ticked, so a stored row without it is the owner's own

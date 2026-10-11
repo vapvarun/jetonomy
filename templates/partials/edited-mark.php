@@ -13,8 +13,12 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$jt_edited = strtotime( (string) ( $item->edited_at ?? '' ) . ' UTC' );
-$jt_posted = strtotime( (string) ( $item->created_at ?? '' ) . ' UTC' );
+// Never-edited rows have a NULL edited_at; strtotime( ' UTC' ) would read that as "now".
+if ( empty( $item->edited_at ) || empty( $item->created_at ) || 0 === strpos( (string) $item->edited_at, '0000' ) ) {
+	return;
+}
+$jt_edited = strtotime( $item->edited_at . ' UTC' );
+$jt_posted = strtotime( $item->created_at . ' UTC' );
 if ( ! $jt_edited || ! $jt_posted || $jt_edited - $jt_posted <= MINUTE_IN_SECONDS ) {
 	return;
 }

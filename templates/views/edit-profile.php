@@ -113,16 +113,25 @@ if ( ! $cancel_url ) {
 					width="64" height="64" class="jt-avatar-round" alt="">
 				<div class="jt-avatar-controls">
 					<input type="hidden" name="avatar_url" value="<?php echo esc_url( $profile->avatar_url ?? '' ); ?>">
+					<?php $jt_can_upload = \Jetonomy\Permissions\Capabilities::can_upload(); ?>
+					<?php if ( $jt_can_upload ) : ?>
 					<input type="file" id="jt-avatar-file" accept="image/png,image/jpeg,image/gif,image/webp" hidden
 						data-wp-on--change="actions.avatarFileSelected">
+					<?php endif; ?>
 					<div class="jt-avatar-buttons">
+						<?php if ( $jt_can_upload ) : ?>
 						<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm"
 							data-wp-on--click="actions.chooseAvatar"><?php esc_html_e( 'Upload photo', 'jetonomy' ); ?></button>
+						<?php endif; ?>
 						<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm" id="jt-avatar-remove"
 							data-wp-on--click="actions.removeAvatar"
 							<?php echo empty( $profile->avatar_url ) ? 'hidden' : ''; ?>><?php esc_html_e( 'Remove photo', 'jetonomy' ); ?></button>
 					</div>
+					<?php if ( $jt_can_upload ) : ?>
 					<span class="jt-avatar-hint"><?php esc_html_e( 'JPG, PNG, GIF or WebP. Square images look best - you can crop after choosing a photo. Without a photo, your Gravatar is used.', 'jetonomy' ); ?></span>
+					<?php else : ?>
+					<span class="jt-avatar-hint"><?php esc_html_e( 'Your Gravatar is used as your photo.', 'jetonomy' ); ?></span>
+					<?php endif; ?>
 				</div>
 			</div>
 

@@ -54,7 +54,9 @@ class Attachments {
 	public function inject_reply_payload( array $data, $reply ): array {
 		// get_for() is cache-transparent, and the reply list is primed in one query
 		// by prime_for_post(), so a page of N replies costs no extra queries.
-		$data['attachments'] = Attachment::payload_for( 'reply', (int) ( $reply->id ?? 0 ) );
+		// A tombstoned reply (private, or by a blocked author) withholds its files with its text.
+		$hidden              = ! empty( $reply->is_private_hidden ) || ! empty( $reply->is_blocked_author );
+		$data['attachments'] = $hidden ? array() : Attachment::payload_for( 'reply', (int) ( $reply->id ?? 0 ) );
 
 		return $data;
 	}

@@ -1708,6 +1708,8 @@ class Reply extends Model {
 				'content_plain' => $reply->content_plain ?? \jetonomy_content_to_plain( $reply->content ?? '' ),
 				'type'          => $source_post->type ?? 'topic',
 				'status'        => 'publish',
+				// A private reply stays private as its own topic.
+				'is_private'    => empty( $reply->is_private ) ? 0 : 1,
 				'created_at'    => $reply->created_at ?? now(),
 			)
 		);
@@ -1716,29 +1718,39 @@ class Reply extends Model {
 			return 0;
 		}
 
-		// Move child replies (where parent_id = reply_id) to new post. Both
-		// counters mean published replies, so count those before the move: the
-		// UPDATE's row count includes trashed, pending and spam children.
-		$table = static::table();
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$moved_count = (int) static::db()->get_var(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$table} WHERE post_id = %d AND parent_id = %d AND status = 'publish'",
-				(int) $reply->post_id,
-				$reply_id
-			)
-		);
-		static::db()->query(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"UPDATE {$table} SET post_id = %d, parent_id = 0 WHERE post_id = %d AND parent_id = %d",
-				$new_post_id,
-				(int) $reply->post_id,
-				$reply_id
-			)
-		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Move the split reply's whole subtree, not only its direct children, so
+		// no reply is left in the source answering a parent in another topic.
+		// Direct children become top-level (NULL, like every root reply); deeper
+		// replies keep their parent, which moves with them.
+		$table   = static::table();
+		$db      = static::db();
+		$subtree = array();
+		$level   = array( $reply_id );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		while ( $level ) {
+			$in      = implode( ',', array_map( 'intval', $level ) );
+			$level   = array_map( 'intval', (array) $db->get_col( $db->prepare( "SELECT id FROM {$table} WHERE post_id = %d AND parent_id IN ({$in})", (int) $reply->post_id ) ) );
+			$level   = array_diff( $level, $subtree );
+			$subtree = array_merge( $subtree, $level );
+		}
+
+		// An accepted answer that is leaving (the split reply or one under it)
+		// stops being the source's answer. Un-accepted while it still sits in the
+		// source, so the normal path runs (hook, reputation taken back).
+		$accepted = (int) ( $source_post->accepted_reply_id ?? 0 );
+		if ( $accepted && ( $accepted === $reply_id || in_array( $accepted, $subtree, true ) ) ) {
+			self::unaccept_as_answer( $accepted, 0 );
+		}
+
+		$moved_count = 0;
+		if ( $subtree ) {
+			$in = implode( ',', $subtree );
+			// Both counters mean published replies; the move itself includes trashed, pending and spam rows.
+			$moved_count = (int) $db->get_var( "SELECT COUNT(*) FROM {$table} WHERE id IN ({$in}) AND status = 'publish'" );
+			$db->query( $db->prepare( "UPDATE {$table} SET post_id = %d WHERE id IN ({$in})", $new_post_id ) );
+			$db->query( $db->prepare( "UPDATE {$table} SET parent_id = NULL WHERE post_id = %d AND parent_id = %d", $new_post_id, $reply_id ) );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		// Update reply count on new post.
 		if ( $moved_count > 0 ) {

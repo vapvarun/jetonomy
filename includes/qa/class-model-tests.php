@@ -252,6 +252,8 @@ class Model_Tests {
 		$this->test_notification_space_read_gate();
 		$this->test_subscriber_fanout_batches();
 		$this->test_count_label_plurals();
+		$this->test_edited_marker();
+		$this->test_upload_box_rules();
 		$this->test_import_map();
 		$this->test_recount_backfill();
 
@@ -1258,6 +1260,23 @@ class Model_Tests {
 			null !== \Jetonomy\Models\Space::find( $space ) && null !== \Jetonomy\Models\Post::find( $topic ) && null !== \Jetonomy\Models\Reply::find( (int) $reply )
 		);
 
+		$fired   = did_action( 'jetonomy_space_purged' );
+		$refuse  = static function ( string $table ) use ( $wpdb, $space ) {
+			$break = static fn( $sql ) => 0 === strpos( (string) $sql, "DELETE FROM {$table} " ) ? 'DELETE FROM qa_pg_missing_table' : $sql;
+			add_filter( 'query', $break );
+			$suppress = $wpdb->suppress_errors( true );
+			\Jetonomy\Space_Purge::purge( $space );
+			$wpdb->suppress_errors( $suppress );
+			remove_filter( 'query', $break );
+		};
+		$refuse( \Jetonomy\table( 'replies' ) );
+		$this->check(
+			'PG3: a failed reply delete keeps the space, its topic and its reply',
+			null !== \Jetonomy\Models\Space::find( $space ) && null !== \Jetonomy\Models\Post::find( $topic ) && null !== \Jetonomy\Models\Reply::find( (int) $reply ) && did_action( 'jetonomy_space_purged' ) === $fired
+		);
+		$refuse( \Jetonomy\table( 'spaces' ) );
+		$this->check( 'PG4: a failed space-row delete keeps the space and fires no purged hook', null !== \Jetonomy\Models\Space::find( $space ) && did_action( 'jetonomy_space_purged' ) === $fired );
+
 		\Jetonomy\Space_Purge::purge( $space );
 		$this->check( 'PG2: the purge then completes once the database answers', null === \Jetonomy\Models\Space::find( $space ) && null === \Jetonomy\Models\Reply::find( (int) $reply ) );
 	}
@@ -1306,6 +1325,35 @@ class Model_Tests {
 				&& (int) \Jetonomy\Models\Post::find( $st )->reply_count === \Jetonomy\Models\Reply::count_by_post( $st )
 		);
 
+		// DI7: split moves the whole subtree, and a leaving accepted answer is un-accepted.
+		$member = (int) wp_insert_user( array( 'user_login' => 'jt_qa_di_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'di-' . $suffix . '@example.test', 'role' => 'subscriber' ) );
+		$rep    = static fn(): int => (int) \Jetonomy\Models\UserProfile::find_or_create( $member )->reputation;
+		$by     = static fn( int $pid, int $parent = 0 ) => (int) \Jetonomy\Models\Reply::create( array( 'post_id' => $pid, 'author_id' => $member, 'content' => 'r', 'status' => 'publish', 'parent_id' => $parent ) );
+		$sq     = $topic( $q, 'DI split tree' );
+		$root   = $by( $sq );
+		$child  = $by( $sq, $root );
+		$grand  = $by( $sq, $child );
+		$before = $rep();
+		\Jetonomy\Models\Reply::accept_as_answer( $grand, 1 );
+		$moved = \Jetonomy\Models\Reply::split_to_topic( $root, 'DI split tree new ' . $suffix );
+		$g = \Jetonomy\Models\Reply::find( $grand );
+		$this->check(
+			'DI7: split takes grandchildren along, and the source drops the answer that left',
+			$moved && (int) $g->post_id === $moved && (int) $g->parent_id === $child && null === \Jetonomy\Models\Reply::find( $child )->parent_id
+				&& empty( \Jetonomy\Models\Post::find( $sq )->accepted_reply_id ) && empty( $g->is_accepted ) && $rep() === $before
+		);
+
+		// DI8: merge takes back the losing answer's reputation and clears the source's pointer.
+		$mt = $topic( $q, 'DI merge target' );
+		$ms = $topic( $q, 'DI merge source' );
+		\Jetonomy\Models\Reply::accept_as_answer( (int) $reply( $mt ), $member );
+		$loser  = $by( $ms );
+		$before = $rep();
+		\Jetonomy\Models\Reply::accept_as_answer( $loser, 1 );
+		\Jetonomy\Models\Post::merge_into( $ms, $mt );
+		$this->check( 'DI8: merging un-accepts the source answer properly and clears the source', $rep() === $before && empty( \Jetonomy\Models\Post::find( $ms )->accepted_reply_id ) && empty( \Jetonomy\Models\Post::find( $ms )->is_resolved ) );
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+
 		$draft = $topic( $a, 'DI draft', 'draft' );
 		$pub   = $topic( $a, 'DI pub' );
 		$a0    = (int) \Jetonomy\Models\Space::find( $a )->post_count;
@@ -1326,6 +1374,7 @@ class Model_Tests {
 		foreach ( array( $a, $b, $q, $p ) as $sid ) {
 			\Jetonomy\Space_Purge::purge( $sid );
 		}
+		wp_delete_user( $member );
 	}
 
 	/**
@@ -2146,7 +2195,48 @@ class Model_Tests {
 		$saved = get_option( 'jetonomy_settings', array() );
 		update_option( 'jetonomy_settings', array_merge( (array) $saved, array( 'topic_label_singular' => 'Thread', 'topic_label_plural' => 'Threads' ) ) );
 		$this->check( 'PL2: a renamed noun uses the owner\'s singular and plural', '1 thread|5 threads' === \Jetonomy\count_label( 1, 'topic' ) . '|' . \Jetonomy\count_label( 5, 'topic' ) );
+		update_option( 'jetonomy_settings', array_merge( (array) $saved, array( 'community_title' => 'Acme Forum' ) ) );
+		$this->check( 'CT1: the community home name (page title, JSON-LD) is the owner\'s Community Title', 'Acme Forum' === \Jetonomy\community_home_name() );
 		update_option( 'jetonomy_settings', $saved );
+	}
+
+	/**
+	 * UL: the Upload media box alone decides community uploads, even for a role
+	 * that holds WordPress's own upload_files.
+	 */
+	private function test_upload_box_rules(): void {
+		$suffix = wp_generate_password( 6, false, false );
+		$user   = (int) wp_insert_user( array( 'user_login' => 'jt_qa_up_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'up-' . $suffix . '@example.test', 'role' => 'author' ) );
+		if ( $user <= 0 ) {
+			$this->skip( 'UL1: upload box', 'could not create a test author' );
+			return;
+		}
+		$previous = get_current_user_id();
+		$wp_user  = new \WP_User( $user );
+		$wp_user->add_cap( 'jetonomy_upload_media', false ); // As if the Author box were unticked.
+		wp_set_current_user( $user );
+		$status = rest_do_request( new \WP_REST_Request( 'POST', '/jetonomy/v1/media' ) )->get_status();
+		$this->check( 'UL1: an Author with Upload media unticked cannot upload, despite upload_files', user_can( $user, 'upload_files' ) && ! \Jetonomy\Permissions\Capabilities::can_upload( $user ) && 403 === $status, "HTTP {$status}" );
+		$wp_user->remove_cap( 'jetonomy_upload_media' );
+		$wp_user->add_cap( 'jetonomy_upload_media' );
+		$this->check( 'UL2: ticking Upload media gives it back', \Jetonomy\Permissions\Capabilities::can_upload( $user ) );
+		wp_set_current_user( $previous );
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $user );
+	}
+
+	/**
+	 * EM: the "edited" marker shows only for a real edit made a minute or more after posting.
+	 */
+	private function test_edited_marker(): void {
+		$render = static function ( $edited_at ): string {
+			ob_start();
+			\Jetonomy\Template_Loader::partial( 'edited-mark', array( 'item' => (object) array( 'created_at' => '2026-01-01 10:00:00', 'edited_at' => $edited_at ) ) );
+			return trim( (string) ob_get_clean() );
+		};
+		$this->check( 'EM1: a never-edited post shows no edited marker', '' === $render( null ) && '' === $render( '' ) );
+		$this->check( 'EM2: an edit within the first minute shows no marker', '' === $render( '2026-01-01 10:00:30' ) );
+		$this->check( 'EM3: a later edit shows the marker', false !== strpos( $render( '2026-01-01 12:00:00' ), 'jt-edited' ) );
 	}
 
 	/**
@@ -2500,6 +2590,23 @@ class Model_Tests {
 
 			$ability = ( new \Jetonomy\Abilities() )->execute_get_post( array( 'post_id' => (int) $id ) );
 			$this->check( 'AX3: the get-post ability masks the anonymous author', is_array( $ability ) && $real !== ( $ability['author_name'] ?? $real ) );
+
+			$req   = new \WP_REST_Request( 'GET', '/jetonomy/v1/oembed' );
+			$req->set_param( 'url', \Jetonomy\route_url( 'post', $space->slug, $post->slug ) );
+			$embed = (string) wp_json_encode( rest_do_request( $req )->get_data() );
+			$this->check( 'AX4: the public oEmbed of an anonymous topic names no author', false !== strpos( $embed, 'Anonymous' ) && false === strpos( $embed, $real ) && false === strpos( $embed, '/u/' ) );
+
+			wp_set_current_user( $previous );
+			$objects = \Jetonomy\Author::objects_of( array( (object) array( 'object_type' => 'post', 'object_id' => (int) $id ) ) );
+			$this->check( 'AX5: admin activity and revision rows show the anonymous author as Anonymous', \Jetonomy\Author::hides_actor( (int) $author, $objects[ 'post:' . (int) $id ] ?? null ) && ! \Jetonomy\Author::hides_actor( (int) $author + 1, $objects[ 'post:' . (int) $id ] ?? null ) );
+
+			// PV2: a private accepted answer stays out of the public page source.
+			$token  = 'pvtwozq' . strtolower( wp_generate_password( 6, false, false ) );
+			Post::update( (int) $id, array( 'type' => 'question', 'is_anonymous' => 0 ) );
+			$answer = (int) Reply::create( array( 'post_id' => (int) $id, 'author_id' => (int) $author, 'content' => "<p>{$token}</p>", 'is_private' => 1 ) );
+			Post::update( (int) $id, array( 'accepted_reply_id' => $answer ) );
+			$html = wp_remote_retrieve_body( wp_remote_get( \Jetonomy\route_url( 'post', $space->slug, $post->slug ), array( 'timeout' => 20 ) ) );
+			$this->check( 'PV2: a private accepted answer is not in the guest page or its JSON-LD', '' !== $html && false !== strpos( $html, 'QAPage' ) && false === strpos( $html, $token ) );
 		} finally {
 			wp_set_current_user( $previous );
 			Post::delete( (int) $id );

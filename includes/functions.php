@@ -30,6 +30,23 @@ function community_title(): string {
 }
 
 /**
+ * The community's full name for search engines and the home page title: the
+ * owner's Community Title when set, otherwise "{Site} Community" (just the
+ * site name when it already ends in that word).
+ */
+function community_home_name(): string {
+	$title = community_title();
+	if ( __( 'Community', 'jetonomy' ) !== $title ) {
+		return $title;
+	}
+	$site = trim( (string) get_bloginfo( 'name' ) );
+	if ( '' === $site || 0 === strcasecmp( substr( $site, -strlen( $title ) ), $title ) ) {
+		return '' !== $site ? $site : $title;
+	}
+	return $site . ' ' . $title;
+}
+
+/**
  * Print one link in the Settings screen's sidebar.
  *
  * Free's own tabs, integrations and Pro extensions all render their entry

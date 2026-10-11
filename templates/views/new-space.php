@@ -118,6 +118,7 @@ $crumbs = array(
 					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %1$s under a top-level %2$s on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></p>
 				</div>
 
+				<?php if ( \Jetonomy\Permissions\Capabilities::can_upload() ) : ?>
 				<div class="jt-form-row">
 					<label><?php esc_html_e( 'Cover image', 'jetonomy' ); ?></label>
 					<div class="jt-cover-uploader" data-jt-cover>
@@ -137,6 +138,7 @@ $crumbs = array(
 					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Wide banner shown at the top of the %s page. Optional.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
+				<?php endif; ?>
 
 				<div class="jt-form-row">
 					<?php

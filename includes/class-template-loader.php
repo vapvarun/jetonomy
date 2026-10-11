@@ -1307,8 +1307,7 @@ class Template_Loader {
 
 				switch ( $data['route'] ) {
 					case 'home':
-						// The owner's own name for it when set; otherwise "{Site} Community".
-						$title     = __( 'Community', 'jetonomy' ) === community_title() ? $site_name . ' ' . community_title() : community_title();
+						$title     = community_home_name();
 						$desc      = __( 'Join our community discussions, Q&A, and more.', 'jetonomy' );
 						$url       = $base . '/';
 						$image_alt = $site_name;

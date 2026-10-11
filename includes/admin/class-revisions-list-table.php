@@ -48,6 +48,13 @@ class Revisions_List_Table extends \WP_List_Table {
 	 */
 	private array $title_cache = array();
 
+	/**
+	 * Posts and replies this page's rows point at, for anonymous-actor masking.
+	 *
+	 * @var array<string, object>
+	 */
+	private array $objects = array();
+
 	public function __construct() {
 		parent::__construct(
 			array(
@@ -174,6 +181,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		// into N+1: collect every (type, id) on the page, then batch the
 		// post + reply lookups in two single IN() queries.
 		$this->prime_title_cache( $rows );
+		$this->objects = \Jetonomy\Author::objects_of( $rows );
 
 		$this->set_pagination_args(
 			array(
@@ -314,6 +322,9 @@ class Revisions_List_Table extends \WP_List_Table {
 		$user_id = (int) ( $item->last_edited_by ?? 0 );
 		if ( $user_id <= 0 ) {
 			return '<em>' . esc_html__( 'Unknown', 'jetonomy' ) . '</em>';
+		}
+		if ( \Jetonomy\Author::hides_actor( $user_id, $this->objects[ $item->object_type . ':' . (int) $item->object_id ] ?? null ) ) {
+			return '<em>' . esc_html__( 'Anonymous', 'jetonomy' ) . '</em>';
 		}
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {

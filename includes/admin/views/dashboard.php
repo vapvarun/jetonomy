@@ -129,8 +129,10 @@ $stat_cards = array(
 					</thead>
 					<tbody>
 						<?php
+						$jt_objects = \Jetonomy\Author::objects_of( $recent_activity );
 						foreach ( $recent_activity as $activity ) :
 							$actor       = get_userdata( $activity->user_id );
+							$jt_masked   = \Jetonomy\Author::hides_actor( (int) $activity->user_id, $jt_objects[ $activity->object_type . ':' . (int) $activity->object_id ] ?? null );
 							$action_code = $activity->action;
 							$object_type = $activity->object_type;
 							$object_id   = (int) $activity->object_id;
@@ -224,7 +226,7 @@ $stat_cards = array(
 							?>
 							<tr>
 								<td class="column-primary" data-colname="<?php esc_attr_e( 'User', 'jetonomy' ); ?>">
-									<strong><?php echo esc_html( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ); ?></strong>
+									<strong><?php echo esc_html( $jt_masked ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ) ); ?></strong>
 									<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 								</td>
 								<td data-colname="<?php esc_attr_e( 'Action', 'jetonomy' ); ?>">

@@ -40,6 +40,13 @@ class Activity_List_Table extends \WP_List_Table {
 	 */
 	private int $total_items = 0;
 
+	/**
+	 * Posts and replies this page's rows point at, for anonymous-actor masking.
+	 *
+	 * @var array<string, object>
+	 */
+	private array $objects = array();
+
 	public function __construct() {
 		parent::__construct(
 			array(
@@ -176,7 +183,8 @@ class Activity_List_Table extends \WP_List_Table {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only sort UI.
 		$order = isset( $_GET['order'] ) && 'asc' === strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) ? 'ASC' : 'DESC';
 
-		$this->items = ActivityLog::list_filtered( $filters, $order, $per_page, $offset );
+		$this->items   = ActivityLog::list_filtered( $filters, $order, $per_page, $offset );
+		$this->objects = \Jetonomy\Author::objects_of( $this->items );
 
 		$this->set_pagination_args(
 			array(
@@ -238,6 +246,10 @@ class Activity_List_Table extends \WP_List_Table {
 		$user_id = (int) ( $item->user_id ?? 0 );
 		if ( $user_id <= 0 ) {
 			return '<em>' . esc_html__( 'System', 'jetonomy' ) . '</em>';
+		}
+		$object = $this->objects[ ( $item->object_type ?? '' ) . ':' . (int) ( $item->object_id ?? 0 ) ] ?? null;
+		if ( \Jetonomy\Author::hides_actor( $user_id, $object ) ) {
+			return '<em>' . esc_html__( 'Anonymous', 'jetonomy' ) . '</em>';
 		}
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {

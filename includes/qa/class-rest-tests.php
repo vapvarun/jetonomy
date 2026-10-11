@@ -2127,7 +2127,8 @@ class REST_Tests {
 			return;
 		}
 
-		$r        = $this->rest( 'POST', "/posts/{$this->post_id}/replies", array( 'content' => '<p>PV1 private body</p>', 'is_private' => true ), $this->test_user_id );
+		$token    = 'pvonezq' . strtolower( wp_generate_password( 6, false, false ) );
+		$r        = $this->rest( 'POST', "/posts/{$this->post_id}/replies", array( 'content' => "<p>PV1 private body {$token}</p>", 'is_private' => true ), $this->test_user_id );
 		$reply_id = (int) ( $r->get_data()['id'] ?? 0 );
 		$this->check( 'PV1: private reply created', $reply_id > 0, "HTTP {$r->get_status()}" );
 		if ( ! $reply_id ) {
@@ -2144,6 +2145,11 @@ class REST_Tests {
 
 		$author = $this->rest( 'GET', "/replies/{$reply_id}", array(), $this->test_user_id )->get_data();
 		$this->check( 'PV1: GET /replies/{id} shows the author their own private reply', empty( $author['is_private_hidden'] ), 'author was refused' );
+
+		$found = static fn( $res ): bool => false !== strpos( (string) wp_json_encode( $res->get_data() ), $token );
+		$guest = $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), 0 );
+		$this->check( 'PV1: reply search never returns a private reply to a guest', ! $found( $guest ) && 0 === (int) ( $guest->get_headers()['X-WP-Total'] ?? $guest->get_data()['meta']['total'] ?? 0 ), 'row or count leaked' );
+		$this->check( 'PV1: reply search still finds it for its author', $found( $this->rest( 'GET', '/search', array( 'q' => $token, 'type' => 'reply' ), $this->test_user_id ) ), 'author search empty' );
 
 		wp_set_current_user( 0 );
 		$rows = array_filter( \Jetonomy\Models\Reply::list_by_user( $this->test_user_id, 50 ), static fn( $row ) => (int) $row->id === $reply_id );

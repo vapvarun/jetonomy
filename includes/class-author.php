@@ -93,4 +93,48 @@ class Author {
 			'url'    => get_profile_url( $author_id ),
 		);
 	}
+
+	/**
+	 * Whether a log row's actor must show as "Anonymous": they are the
+	 * anonymous author of the post/reply the row is about and the viewer has
+	 * no reveal. Admin logs (activity, revisions) name actors, so they need
+	 * this on top of for_display(), which only masks bylines.
+	 *
+	 * @param int         $user_id Actor user ID.
+	 * @param object|null $object  The post/reply row the log entry is about.
+	 */
+	public static function hides_actor( int $user_id, ?object $object ): bool {
+		return $object
+			&& ! empty( $object->is_anonymous )
+			&& (int) ( $object->author_id ?? 0 ) === $user_id
+			&& 0 === self::for_display( $user_id, $object )['id'];
+	}
+
+	/**
+	 * Batch-load the posts and replies a page of log rows points at
+	 * (rows carry object_type + object_id), keyed "post:12" / "reply:34".
+	 *
+	 * @param object[] $rows Activity or revision rows.
+	 * @return array<string, object>
+	 */
+	public static function objects_of( array $rows ): array {
+		$ids = array(
+			'post'  => array(),
+			'reply' => array(),
+		);
+		foreach ( $rows as $row ) {
+			$type = (string) ( $row->object_type ?? '' );
+			if ( isset( $ids[ $type ] ) ) {
+				$ids[ $type ][] = (int) $row->object_id;
+			}
+		}
+		$out = array();
+		foreach ( Models\Post::list_by_ids( $ids['post'] ) as $id => $row ) {
+			$out[ 'post:' . $id ] = $row;
+		}
+		foreach ( Models\Reply::list_by_ids( $ids['reply'] ) as $id => $row ) {
+			$out[ 'reply:' . $id ] = $row;
+		}
+		return $out;
+	}
 }

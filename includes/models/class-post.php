@@ -2080,6 +2080,14 @@ class Post extends Model {
 
 		$replies_table = \Jetonomy\table( 'replies' );
 
+		// One accepted answer per topic and the target's wins: a losing source
+		// answer goes through the normal un-accept (hook, reputation taken back)
+		// while it still sits in its own topic.
+		$source_answer = (int) ( $source->accepted_reply_id ?? 0 );
+		if ( $source_answer && (int) ( $target->accepted_reply_id ?? 0 ) ) {
+			Reply::unaccept_as_answer( $source_answer, 0 );
+		}
+
 		// Move all replies from source to target.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		static::db()->query(
@@ -2100,6 +2108,8 @@ class Post extends Model {
 		if ( $winner > 0 && $winner !== (int) ( $target->accepted_reply_id ?? 0 ) ) {
 			static::accept_reply( $target_id, $winner );
 		}
+		// The source's answer now lives in the target; a restored source must not claim it.
+		static::clear_accepted_reply( $source_id );
 
 		// The rest of the source moves with it: votes,
 		// subscribers and bookmarks. UPDATE IGNORE skips a member who already

@@ -68,7 +68,7 @@ Your space is created as Public with an Open join policy, and it is visible imme
 
 ### Path B: Load Sample Data
 
-Choose this if you want to try Jetonomy's features before committing to a structure. Click the **Create sample data instead** button under the form instead of **Create Space**.
+Choose this if you want to try Jetonomy's features before committing to a structure. Click **Import the demo community instead**, under the form, rather than **Create Space**.
 
 Jetonomy imports a demo community into your site:
 

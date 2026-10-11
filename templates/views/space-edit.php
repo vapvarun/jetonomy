@@ -121,10 +121,12 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 						<?php endif; ?>
 					</div>
 					<div class="jt-cover-actions">
+						<?php if ( \Jetonomy\Permissions\Capabilities::can_upload() ) : ?>
 						<label class="jt-btn jt-btn-ghost jt-cover-pick">
 							<?php esc_html_e( 'Choose image', 'jetonomy' ); ?>
 							<input type="file" accept="image/*" data-jt-cover-input data-wp-on--change="actions.uploadCover" hidden>
 						</label>
+						<?php endif; ?>
 						<button type="button" class="jt-btn jt-btn-ghost jt-cover-remove" data-jt-cover-remove data-wp-on--click="actions.removeCover" <?php echo empty( $space->cover_image ) ? 'hidden' : ''; ?>>
 							<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
 						</button>

@@ -296,6 +296,11 @@ class Mentions {
 			}
 		}
 
+		// A private reply: only the people who may read it hear about it (a handful of names, so per-user checks are fine).
+		if ( 'reply' === $object_type && ! empty( $object->is_private ) && $post ) {
+			$user_ids = array_values( array_filter( $user_ids, static fn( $uid ) => \Jetonomy\Permissions\Permission_Engine::can_read_reply( (int) $uid, $object, $post ) ) );
+		}
+
 		foreach ( $user_ids as $uid ) {
 			if ( $uid === $actor_id ) {
 				continue; // Don't notify yourself

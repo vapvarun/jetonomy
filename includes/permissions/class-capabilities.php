@@ -58,11 +58,12 @@ class Capabilities {
 	public const ROLE_CAPS_OPTION = 'jetonomy_role_caps';
 
 	/**
-	 * Either cap lets a user upload (images in the composer, Pro attachments).
-	 * Posting caps do not imply it, so unticking Upload media on the
-	 * Permissions tab really stops a role.
+	 * Community uploads (composer images, avatars, covers, Pro attachments)
+	 * follow the Upload media box alone, so unticking it stops every role,
+	 * Authors and Editors included, whatever their wp-admin Media rights.
+	 * Site admins always keep it.
 	 */
-	public const UPLOAD_CAPS = array( 'upload_files', 'jetonomy_upload_media' );
+	public const UPLOAD_CAPS = array( 'jetonomy_upload_media', 'manage_options' );
 
 	/**
 	 * The default cumulative cap set per core role, from ROLE_MAP.

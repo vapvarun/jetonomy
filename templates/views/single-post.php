@@ -298,6 +298,15 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			)
 		);
 		?>
+		<?php
+		// Every child says whom it answers (the masked name for an anonymous parent), at any depth.
+		if ( ! empty( $reply->children ) ) {
+			$jt_parent_name = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply )['name'];
+			foreach ( $reply->children as $child ) {
+				$child->jt_parent_name = '' !== $jt_parent_name ? $jt_parent_name : __( 'Anonymous', 'jetonomy' );
+			}
+		}
+		?>
 		<?php if ( $depth === 0 && ! empty( $reply->children ) ) : ?>
 			<div class="jt-thread-toggle" data-wp-interactive="jetonomy"
 				data-wp-context='{"collapsed": false, "childCount": <?php echo (int) count( $reply->children ); ?>}'>
@@ -306,12 +315,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					&minus; <?php printf( /* translators: %s: the plural label of the item (the configured noun). */ esc_html__( 'Hide %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 				</button>
 				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
-					<?php
-					// Children say whom they answer (the masked name for an anonymous parent).
-					$jt_parent_name = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply )['name'];
-					?>
 					<?php foreach ( $reply->children as $child ) : ?>
-						<?php $child->jt_parent_name = '' !== $jt_parent_name ? $jt_parent_name : __( 'Anonymous', 'jetonomy' ); ?>
 						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space, $page ); ?>
 					<?php endforeach; ?>
 				</div>
@@ -897,12 +901,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					$jt_accepted_reply = \Jetonomy\Models\Reply::find( $jt_accepted_reply_id );
 					if ( $jt_accepted_reply ) {
 						// Off-page fetch bypasses get_threaded()'s tree builder —
-						// apply the same block tombstone here so a blocked user's
-						// accepted answer doesn't leak its content into the callout.
+						// apply the same block and private tombstones here so the
+						// callout never shows text the inline card would withhold.
 						\Jetonomy\Models\Reply::apply_block_tombstone(
 							$jt_accepted_reply,
 							\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
 						);
+						\Jetonomy\Models\Reply::apply_private_tombstone( $jt_accepted_reply, $post, get_current_user_id() );
 					}
 				}
 				if ( $jt_accepted_reply ) :

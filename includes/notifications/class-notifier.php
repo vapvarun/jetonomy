@@ -700,7 +700,8 @@ class Notifier {
 	public function fanout_reply_subscribers( int $reply_id, int $post_id, int $after = 0 ): void {
 		$reply = Reply::find( $reply_id );
 		$post  = Post::find( $post_id );
-		if ( ! $reply || ! $post || 'publish' !== ( $reply->status ?? '' ) ) {
+		// Re-checked here: the reply may have been made private after the job was queued.
+		if ( ! $reply || ! $post || 'publish' !== ( $reply->status ?? '' ) || ! empty( $reply->is_private ) ) {
 			return;
 		}
 
