@@ -32,8 +32,13 @@ extension classes.
 
 ## 3. One place per concept
 
-- Author display: `Author::for_display()` (anonymity, deleted accounts).
-- Permission callbacks on REST routes: `REST_Auth` helpers only.
+- Member-facing names: `Author::for_display()` for content authors (anonymity,
+  deleted accounts) and `user_display_name()` for any other member name, so
+  the owner's name-display setting applies everywhere. Admin screens that
+  identify an account (name plus login) may read the account fields directly.
+- Permission callbacks on mutation routes: `REST_Auth` helpers only (nonce,
+  ban and verification checks). Read routes may use a one-line closure on
+  `is_user_logged_in()` / `current_user_can()`.
 - Capability groups: constants on `Permissions\Capabilities` (e.g. `UPLOAD_CAPS`).
 - Background jobs: `Queue` (`recurring`, `next`, `cancel`) in Pro, never
   `wp_*_scheduled_*` directly.
