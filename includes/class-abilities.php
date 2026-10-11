@@ -1622,6 +1622,9 @@ class Abilities {
 			return new WP_Error( 'jetonomy_create_failed', __( 'Failed to create space.', 'jetonomy' ) );
 		}
 
+		// Same as the REST route: the creator follows their new space.
+		Subscription::subscribe( get_current_user_id(), 'space', (int) $space_id );
+
 		return array(
 			'id'    => $space_id,
 			'title' => $title,

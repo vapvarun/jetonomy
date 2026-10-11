@@ -1178,12 +1178,8 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Move the post.
+		// Move the post. Post::update() moves the published-topic count with it.
 		Post::update( $id, array( 'space_id' => $target_space_id ) );
-
-		// Update post counts on both spaces.
-		Space::increment_post_count( $source_space_id, -1 );
-		Space::increment_post_count( $target_space_id, 1 );
 
 		$updated = Post::find( $id );
 

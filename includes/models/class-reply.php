@@ -40,15 +40,6 @@ class Reply extends Model {
 	}
 
 	/**
-	 * Create a new reply.
-	 *
-	 * Sets created_at and status defaults if absent. After a successful insert,
-	 * increments the parent post's reply_count.
-	 *
-	 * @param array $data Column data.
-	 * @return int Inserted row ID.
-	 */
-	/**
 	 * Insert override: the LAST write barrier for the content pipeline.
 	 * See Post::insert() - closes the post-filter and raw-insert bypasses
 	 * (QA 2026-07-30, card 10138808747).
@@ -66,6 +57,16 @@ class Reply extends Model {
 		return $id;
 	}
 
+	/**
+	 * Create a new reply.
+	 *
+	 * Sets created_at and status defaults if absent, refuses a parent that is
+	 * missing, in another topic, trashed or spam, and after a successful insert
+	 * increments the parent post's reply_count.
+	 *
+	 * @param array $data Column data.
+	 * @return int|\WP_Error Inserted row ID, or the reason it was refused.
+	 */
 	public static function create( array $data ): int|\WP_Error {
 		/**
 		 * Filter reply data before creation. Return WP_Error to abort.
@@ -87,6 +88,16 @@ class Reply extends Model {
 			),
 			$data
 		);
+
+		// A reply can only answer a live reply in the same topic. A parent from
+		// another topic rendered as a stray root and notified a stranger.
+		$parent_id = (int) ( $data['parent_id'] ?? 0 );
+		if ( $parent_id > 0 ) {
+			$parent = self::find( $parent_id );
+			if ( ! $parent || (int) $parent->post_id !== (int) ( $data['post_id'] ?? 0 ) || in_array( $parent->status, array( 'trash', 'spam' ), true ) ) {
+				return new \WP_Error( 'jetonomy_invalid_parent', __( 'The reply you are answering is no longer available.', 'jetonomy' ), array( 'status' => 400 ) );
+			}
+		}
 
 		$id = static::insert( $data );
 
@@ -1705,10 +1716,20 @@ class Reply extends Model {
 			return 0;
 		}
 
-		// Move child replies (where parent_id = reply_id) to new post.
+		// Move child replies (where parent_id = reply_id) to new post. Both
+		// counters mean published replies, so count those before the move: the
+		// UPDATE's row count includes trashed, pending and spam children.
 		$table = static::table();
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$moved_count = (int) static::db()->query(
+		$moved_count = (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$table} WHERE post_id = %d AND parent_id = %d AND status = 'publish'",
+				(int) $reply->post_id,
+				$reply_id
+			)
+		);
+		static::db()->query(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"UPDATE {$table} SET post_id = %d, parent_id = 0 WHERE post_id = %d AND parent_id = %d",

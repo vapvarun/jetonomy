@@ -242,10 +242,10 @@ class Fulltext_Search implements Search_Query_Adapter {
 		// Order:
 		// - relevance: the MATCH score against the same boolean query.
 		// - newest:    created_at DESC.
-		// - votes:     vote_score DESC.
+		// - votes:     votes, then replies (Post::popular_order()).
 		switch ( $sort ) {
 			case 'votes':
-				$order_by = 'p.vote_score DESC, p.id DESC';
+				$order_by = \Jetonomy\Models\Post::popular_order( 'p' );
 				break;
 			case 'newest':
 				$order_by = 'p.created_at DESC, p.id DESC';

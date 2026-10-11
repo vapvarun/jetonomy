@@ -15,6 +15,7 @@ use WP_Error;
 use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
+use Jetonomy\Models\Subscription;
 use Jetonomy\Models\JoinRequest;
 use Jetonomy\Models\InviteLink;
 use Jetonomy\Models\UserProfile;
@@ -668,6 +669,10 @@ class Spaces_Controller extends Base_Controller {
 		if ( is_wp_error( $add_result ) ) {
 			return $add_result;
 		}
+
+		// The creator follows their space, so they hear about new topics; they
+		// can unfollow like anyone else.
+		Subscription::subscribe( get_current_user_id(), 'space', (int) $id );
 
 		$space = Space::find( $id );
 

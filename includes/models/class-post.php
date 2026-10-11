@@ -253,14 +253,16 @@ class Post extends Model {
 	public static function update( int $id, array $data ): bool {
 		$data = self::sanitize_content_fields( $data );
 
-		$delta = 0;
-		$post  = null;
+		$delta       = 0;
+		$post        = null;
+		$was_publish = false;
+		$is_publish  = false;
 
-		if ( array_key_exists( 'status', $data ) ) {
+		if ( array_key_exists( 'status', $data ) || array_key_exists( 'space_id', $data ) ) {
 			$post = self::find( $id );
 			if ( $post ) {
 				$was_publish = 'publish' === ( $post->status ?? '' );
-				$is_publish  = 'publish' === (string) $data['status'];
+				$is_publish  = array_key_exists( 'status', $data ) ? 'publish' === (string) $data['status'] : $was_publish;
 				if ( $was_publish && ! $is_publish ) {
 					$delta = -1;
 				} elseif ( ! $was_publish && $is_publish ) {
@@ -283,10 +285,23 @@ class Post extends Model {
 		 */
 		self::bust_cache( $id );
 
-		if ( 0 !== $delta && $post ) {
-			if ( ! empty( $post->space_id ) ) {
-				Space::increment_post_count( (int) $post->space_id, $delta );
+		// A space counts its published topics: the old space loses one it had,
+		// the new one gains one it now has. Covers a publish change, a move to
+		// another space, and both at once, for every caller.
+		if ( $post ) {
+			$old_space = (int) ( $post->space_id ?? 0 );
+			$new_space = array_key_exists( 'space_id', $data ) ? (int) $data['space_id'] : $old_space;
+			if ( $old_space !== $new_space || $was_publish !== $is_publish ) {
+				if ( $was_publish && $old_space > 0 ) {
+					Space::increment_post_count( $old_space, -1 );
+				}
+				if ( $is_publish && $new_space > 0 ) {
+					Space::increment_post_count( $new_space, 1 );
+				}
 			}
+		}
+
+		if ( 0 !== $delta && $post ) {
 			if ( ! empty( $post->author_id ) ) {
 				UserProfile::increment_post_count( (int) $post->author_id, $delta );
 			}
@@ -584,7 +599,7 @@ class Post extends Model {
 	 *
 	 * Sort options:
 	 *   'latest'      — sticky posts first, then last_reply_at DESC
-	 *   'popular'     — vote_score DESC
+	 *   'popular'     — votes, then replies (popular_order())
 	 *   'oldest'      — created_at ASC
 	 *   'newest'      — created_at DESC
 	 *   'unanswered'  — reply_count = 0, created_at DESC
@@ -614,7 +629,7 @@ class Post extends Model {
 		// Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
+				$order_by = 'is_sticky DESC, ' . self::popular_order();
 				break;
 
 			case 'oldest':
@@ -716,7 +731,7 @@ class Post extends Model {
 		// Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
+				$order_by = 'is_sticky DESC, ' . self::popular_order();
 				break;
 
 			case 'oldest':
@@ -814,7 +829,7 @@ class Post extends Model {
 		$extra_where = '';
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
+				$order_by = 'is_sticky DESC, ' . self::popular_order();
 				break;
 			case 'oldest':
 				$order_by = 'is_sticky DESC, created_at ASC, id ASC';
@@ -1191,7 +1206,7 @@ class Post extends Model {
 		$table         = static::table();
 		$spaces_tbl    = \Jetonomy\table( 'spaces' );
 		$post_tags_tbl = \Jetonomy\table( 'post_tags' );
-		$order_by      = 'popular' === $sort ? 'p.vote_score DESC, p.id DESC' : 'p.created_at DESC, p.id DESC';
+		$order_by      = 'popular' === $sort ? self::popular_order( 'p' ) : 'p.created_at DESC, p.id DESC';
 
 		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
 
@@ -1321,6 +1336,19 @@ class Post extends Model {
 			},
 			300
 		);
+	}
+
+	/**
+	 * ORDER BY for every "Popular" topic list: votes, then replies, then
+	 * newest. Most topics on a young community have no votes, so without the
+	 * reply tiebreak Popular read exactly like Newest.
+	 *
+	 * @param string $alias Posts table alias, or '' for none.
+	 * @return string
+	 */
+	public static function popular_order( string $alias = '' ): string {
+		$col = '' !== $alias ? $alias . '.' : '';
+		return "{$col}vote_score DESC, {$col}reply_count DESC, {$col}id DESC";
 	}
 
 	/**
@@ -1508,7 +1536,7 @@ class Post extends Model {
 				$order = 'COALESCE(p.published_at, p.created_at) DESC, p.id DESC';
 				break;
 			case 'top':
-				$order = 'p.vote_score DESC, p.id DESC';
+				$order = self::popular_order( 'p' );
 				break;
 			default:
 				$order = 'hot_score DESC, p.id DESC';
@@ -2064,6 +2092,15 @@ class Post extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
+		// One accepted answer per topic: the target's own answer wins; if it
+		// had none, the source's answer becomes the target's.
+		$winner = (int) ( $target->accepted_reply_id ?? 0 ) ?: (int) ( $source->accepted_reply_id ?? 0 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		static::db()->query( static::db()->prepare( "UPDATE {$replies_table} SET is_accepted = 0 WHERE post_id = %d AND is_accepted = 1 AND id <> %d", $target_id, $winner ) );
+		if ( $winner > 0 && $winner !== (int) ( $target->accepted_reply_id ?? 0 ) ) {
+			static::accept_reply( $target_id, $winner );
+		}
+
 		// The rest of the source moves with it: votes,
 		// subscribers and bookmarks. UPDATE IGNORE skips a member who already
 		// has a row on the target (unique keys), and those leftovers are then
@@ -2129,6 +2166,11 @@ class Post extends Model {
 		);
 		Vote::reset_memo();
 		Subscription::reset_memo();
+
+		// Both threads changed under raw UPDATEs; the donor reply only busts the
+		// target's cache when one was created.
+		Reply::bust_thread( $target_id );
+		Reply::bust_thread( $source_id );
 
 		// Trash the source post. The publish→trash transition inside update()
 		// already decrements the space's post_count and the author's post_count

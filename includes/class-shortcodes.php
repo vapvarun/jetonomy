@@ -238,7 +238,7 @@ class Shortcodes {
 			$where .= ' AND ' . $block_sql;
 		}
 
-		$order = ( 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC' ) . ', p.id DESC'; // id breaks same-second / equal-score ties.
+		$order = 'latest' === $atts['sort'] ? 'p.created_at DESC, p.id DESC' : \Jetonomy\Models\Post::popular_order( 'p' );
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$query  = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title

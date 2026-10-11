@@ -233,6 +233,7 @@ class Model_Tests {
 		$this->test_space_ownership_transfer();
 		$this->test_space_hand_over_rules();
 		$this->test_space_purge_stops_on_db_error();
+		$this->test_topic_data_integrity();
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
 		$this->test_leaderboard_ranking();
@@ -1259,6 +1260,72 @@ class Model_Tests {
 
 		\Jetonomy\Space_Purge::purge( $space );
 		$this->check( 'PG2: the purge then completes once the database answers', null === \Jetonomy\Models\Space::find( $space ) && null === \Jetonomy\Models\Reply::find( (int) $reply ) );
+	}
+
+	/**
+	 * DI: counters and threading stay true through reply, merge, split, move.
+	 */
+	private function test_topic_data_integrity(): void {
+		$suffix = wp_generate_password( 6, false, false );
+		$space  = static fn( string $slug, string $type = 'forum' ): int => (int) \Jetonomy\Models\Space::create( array( 'title' => $slug, 'slug' => $slug . '-' . $suffix, 'type' => $type, 'author_id' => 1 ), 1 );
+		$topic  = static fn( int $sid, string $t, string $status = 'publish' ): int => (int) \Jetonomy\Models\Post::create( array( 'space_id' => $sid, 'author_id' => 1, 'title' => $t, 'slug' => sanitize_title( $t . ' ' . $suffix ), 'content' => 'x', 'status' => $status ) );
+		$reply  = static fn( int $pid, int $parent = 0 ) => \Jetonomy\Models\Reply::create( array( 'post_id' => $pid, 'author_id' => 1, 'content' => 'r', 'status' => 'publish', 'parent_id' => $parent ) );
+		$a      = $space( 'qa-di-a' );
+		$b      = $space( 'qa-di-b' );
+		$q      = $space( 'qa-di-q', 'qa' );
+
+		$t1      = $topic( $a, 'DI one' );
+		$t2      = $topic( $a, 'DI two' );
+		$foreign = (int) $reply( $t2 );
+		$cross   = $reply( $t1, $foreign );
+		$this->check( 'DI1: a reply cannot answer a reply in another topic', is_wp_error( $cross ) && 'jetonomy_invalid_parent' === $cross->get_error_code() );
+
+		$qt = $topic( $q, 'DI target' );
+		$qs = $topic( $q, 'DI source' );
+		$at = (int) $reply( $qt );
+		$as = (int) $reply( $qs );
+		foreach ( array( array( $qt, $at ), array( $qs, $as ) ) as [ $pid, $rid ] ) {
+			\Jetonomy\Models\Reply::mark_accepted( $rid );
+			\Jetonomy\Models\Post::accept_reply( $pid, $rid );
+		}
+		\Jetonomy\Models\Post::merge_into( $qs, $qt );
+		global $wpdb;
+		$accepted = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'replies' ) . ' WHERE post_id = %d AND is_accepted = 1', $qt ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$this->check( 'DI2: a merged Q&A topic keeps one accepted answer, its own', array( (string) $at ) === array_map( 'strval', $accepted ), wp_json_encode( $accepted ) );
+
+		$st     = $topic( $a, 'DI split' );
+		$parent = (int) $reply( $st );
+		$reply( $st, $parent );
+		$reply( $st, $parent );
+		$gone = (int) $reply( $st, $parent );
+		\Jetonomy\Models\Reply::update( $gone, array( 'status' => 'trash' ) );
+		$new = \Jetonomy\Models\Reply::split_to_topic( $parent, 'DI split new ' . $suffix );
+		$this->check(
+			'DI3: split counts only published replies, on both topics',
+			$new && (int) \Jetonomy\Models\Post::find( $new )->reply_count === \Jetonomy\Models\Reply::count_by_post( $new )
+				&& (int) \Jetonomy\Models\Post::find( $st )->reply_count === \Jetonomy\Models\Reply::count_by_post( $st )
+		);
+
+		$draft = $topic( $a, 'DI draft', 'draft' );
+		$pub   = $topic( $a, 'DI pub' );
+		$a0    = (int) \Jetonomy\Models\Space::find( $a )->post_count;
+		\Jetonomy\Models\Post::update( $draft, array( 'space_id' => $b ) );
+		$this->check( 'DI4: moving a draft leaves both space counts alone', (int) \Jetonomy\Models\Space::find( $a )->post_count === $a0 && 0 === (int) \Jetonomy\Models\Space::find( $b )->post_count );
+		\Jetonomy\Models\Post::update( $pub, array( 'space_id' => $b ) );
+		$this->check( 'DI5: moving a published topic moves its count', (int) \Jetonomy\Models\Space::find( $a )->post_count === $a0 - 1 && 1 === (int) \Jetonomy\Models\Space::find( $b )->post_count );
+
+		$p     = $space( 'qa-di-p' );
+		$older = $topic( $p, 'DI older busy' );
+		for ( $i = 0; $i < 3; $i++ ) {
+			$reply( $older );
+		}
+		$topic( $p, 'DI newer quiet' );
+		$list = \Jetonomy\Models\Post::list_by_space_visible( $p, 0, false, 'popular', 5 );
+		$this->check( 'DI6: Popular breaks vote ties by replies', $list && (int) $list[0]->id === $older );
+
+		foreach ( array( $a, $b, $q, $p ) as $sid ) {
+			\Jetonomy\Space_Purge::purge( $sid );
+		}
 	}
 
 	/**
