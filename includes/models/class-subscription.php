@@ -378,4 +378,32 @@ class Subscription extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from literals and the trusted table name.
 		return array_map( 'intval', static::db()->get_col( static::db()->prepare( $sql, ...$args ) ) ?: array() );
 	}
+
+
+	/**
+	 * Published topics a member follows, most recently followed first.
+	 *
+	 * @param int $user_id Member.
+	 * @param int $limit   Max rows (1 to 20).
+	 * @return object[] Rows with id, title, slug, space_id.
+	 */
+	public static function list_followed_posts( int $user_id, int $limit = 5 ): array {
+		if ( $user_id <= 0 ) {
+			return array();
+		}
+		$posts = \Jetonomy\table( 'posts' );
+		$rows  = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.id, p.title, p.slug, p.space_id FROM ' . static::table() . " s
+				 INNER JOIN {$posts} p ON s.object_id = p.id
+				 WHERE s.user_id = %d AND s.object_type = 'post' AND p.status = 'publish'
+				 ORDER BY s.created_at DESC
+				 LIMIT %d",
+				$user_id,
+				max( 1, min( 20, $limit ) )
+			)
+		);
+		return is_array( $rows ) ? $rows : array();
+	}
 }

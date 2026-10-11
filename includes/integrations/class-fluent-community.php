@@ -579,13 +579,7 @@ class Fluent_Community {
 					$cap + 1
 				)
 			);
-			$jt_members = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT user_id FROM {$wpdb->prefix}jt_space_members WHERE space_id = %d LIMIT %d",
-					$jt_id,
-					$cap + 1
-				)
-			);
+			$jt_members = \Jetonomy\Models\SpaceMember::user_ids_for_space( (int) $jt_id, $cap + 1 );
 			// phpcs:enable
 
 			if ( count( $fc_members ) > $cap || count( $jt_members ) > $cap ) {
@@ -871,7 +865,7 @@ class Fluent_Community {
 		}
 
 		$started   = Post::list_by_author( $user_id, 5, 0 );
-		$followed  = $this->list_followed_posts( $user_id, 5 );
+		$followed  = \Jetonomy\Models\Subscription::list_followed_posts( $user_id, 5 );
 		$replies   = Reply::list_by_user( $user_id, 5, 0 );
 		$is_own    = (int) get_current_user_id() === $user_id;
 		$bookmarks = $is_own ? Bookmark::list_by_user( $user_id, 5, 0 ) : array();
@@ -980,40 +974,6 @@ class Fluent_Community {
 		</div>
 		<?php
 		return $html . (string) ob_get_clean();
-	}
-
-	/**
-	 * List the most-recently-followed Jetonomy posts for a user.
-	 *
-	 * Uses a direct JOIN between subscriptions and posts — crosses two
-	 * models so it lives here rather than behind a single-model helper.
-	 *
-	 * @param int $user_id Target user.
-	 * @param int $limit   Max rows (clamped to 20).
-	 * @return object[]
-	 */
-	private function list_followed_posts( int $user_id, int $limit = 5 ): array {
-		if ( $user_id <= 0 ) {
-			return array();
-		}
-		$limit = max( 1, min( 20, $limit ) );
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT p.id, p.title, p.slug, p.space_id
-				 FROM {$wpdb->prefix}jt_subscriptions s
-				 INNER JOIN {$wpdb->prefix}jt_posts p ON s.object_id = p.id
-				 WHERE s.user_id = %d
-				   AND s.object_type = 'post'
-				   AND p.status = 'publish'
-				 ORDER BY s.created_at DESC
-				 LIMIT %d",
-				$user_id,
-				$limit
-			)
-		);
-		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**

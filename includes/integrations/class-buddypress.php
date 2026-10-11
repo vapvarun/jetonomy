@@ -1024,58 +1024,18 @@ class BuddyPress {
 		$user_id = bp_displayed_user_id();
 		$this->render_profile_stats( $user_id );
 
-		global $wpdb;
-		$p = $wpdb->prefix;
-
-		// Space-visibility + per-post is_private gate on the PARENT post so a
-		// member's replies in private/hidden spaces (or under private posts)
-		// don't leak to non-member / non-author profile visitors. is_anonymous
-		// = 0 is an own-profile leak guard: listing the author's own anonymous
-		// replies here would deanonymize them by correlating to this profile.
-		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
-		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-		$gate_sql                             = '';
-		$gate_params                          = array();
-		if ( '1=1' !== $space_vis_sql ) {
-			$gate_sql   .= ' AND ' . $space_vis_sql;
-			$gate_params = array_merge( $gate_params, $space_vis_params );
-		}
-		if ( '' !== $priv_sql ) {
-			$gate_sql   .= ' AND ' . $priv_sql;
-			$gate_params = array_merge( $gate_params, $priv_params );
-		}
-
-		// Hide this profile's replies entirely when the VIEWER has blocked
-		// $user_id. no-op for guests/no-blocks.
-		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'r', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$gate_sql .= ' AND ' . $block_sql;
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$replies = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT r.id, r.content_plain, r.created_at, r.post_id,
-				        p.title AS post_title, p.slug AS post_slug, p.space_id,
-				        s.slug AS space_slug, s.title AS space_title
-				 FROM {$p}jt_replies r
-				 INNER JOIN {$p}jt_posts p ON p.id = r.post_id
-				 INNER JOIN {$p}jt_spaces s ON s.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
-				 ORDER BY r.created_at DESC
-				 LIMIT 10",
-				$user_id,
-				...$gate_params
-			)
-		);
+		// Same gate as the community profile: space access, private topics,
+		// blocked authors, no anonymous replies, private replies as a label.
+		$replies = \Jetonomy\Models\Reply::list_by_user( (int) $user_id, 10 );
 
 		if ( ! empty( $replies ) ) {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $replies as $reply ) {
 				$post_url = \Jetonomy\route_url( 'post', $reply->space_slug, $reply->post_slug );
 				$time_ago = human_time_diff( strtotime( $reply->created_at ), time() );
-				$snippet  = wp_trim_words( $reply->content_plain, 15, '...' );
+				$snippet  = ! empty( $reply->is_private_hidden )
+					? sprintf( /* translators: %s: singular reply label. */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) )
+					: wp_trim_words( $reply->content_plain, 15, '...' );
 				echo '<li>';
 				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $snippet ) . '</a>';
 				echo ' <span class="jt-bp-space-tag">' . esc_html( $reply->post_title ) . '</span>';
@@ -1165,42 +1125,18 @@ class BuddyPress {
 
 		// Get unlinked spaces that the current user owns or moderates.
 		global $wpdb;
-		$p       = $wpdb->prefix;
 		$bp      = buddypress();
 		$user_id = get_current_user_id();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$linked_ids           = $wpdb->get_col(
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- BuddyPress's own group meta table.
+		$linked_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT meta_value FROM {$bp->groups->table_name_groupmeta} WHERE meta_key = %s AND meta_value != ''",
 				self::META_KEY
 			)
 		);
-		$exclude              = ! empty( $linked_ids ) ? array_map( 'absint', $linked_ids ) : array( 0 );
-		$exclude_placeholders = implode( ',', array_fill( 0, count( $exclude ), '%d' ) );
-
-		// Only show spaces the user is admin/moderator of, or site admins see all.
-		if ( current_user_can( 'manage_options' ) ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$available_spaces = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT id, title, slug FROM {$p}jt_spaces WHERE id NOT IN ({$exclude_placeholders}) ORDER BY title ASC",
-					...$exclude
-				)
-			);
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$available_spaces = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT s.id, s.title, s.slug FROM {$p}jt_spaces s
-					INNER JOIN {$p}jt_space_members sm ON sm.space_id = s.id AND sm.user_id = %d AND sm.role IN ('admin', 'moderator')
-					WHERE s.id NOT IN ({$exclude_placeholders})
-					ORDER BY s.title ASC",
-					$user_id,
-					...$exclude
-				)
-			);
-		}
+		// Site admins may link any space; anyone else, the spaces they run.
+		$available_spaces = \Jetonomy\Models\Space::list_linkable( (array) $linked_ids, current_user_can( 'manage_options' ) ? 0 : (int) $user_id );
 
 		// Re-include the currently linked space so it shows as selected.
 		if ( $existing_space && ! in_array( (int) $existing_space->id, array_column( $available_spaces, 'id' ), true ) ) {

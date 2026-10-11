@@ -978,4 +978,22 @@ class SpaceMember extends Model {
 			)
 		);
 	}
+
+
+	/**
+	 * User ids on a space's roster, up to a limit (callers pass limit + 1 to
+	 * tell "exactly at the cap" from "over it").
+	 *
+	 * @param int $space_id Space.
+	 * @param int $limit    Max ids.
+	 * @return int[]
+	 */
+	public static function user_ids_for_space( int $space_id, int $limit ): array {
+		return array_map(
+			'intval',
+			(array) static::db()->get_col(
+				static::db()->prepare( 'SELECT user_id FROM ' . static::table() . ' WHERE space_id = %d LIMIT %d', $space_id, $limit )
+			)
+		);
+	}
 }

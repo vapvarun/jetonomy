@@ -13,8 +13,8 @@ includes/class-nav-menus.php 1
 includes/class-shortcodes.php 5
 includes/functions.php 3
 includes/helpers.php 4
-includes/integrations/class-buddypress.php 12
-includes/integrations/class-fluent-community.php 21
+includes/integrations/class-buddypress.php 4
+includes/integrations/class-fluent-community.php 14
 includes/notifications/class-notifier.php 7
 includes/notifications/class-verification-reminder.php 3
 includes/search/class-fulltext-search.php 24

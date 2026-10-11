@@ -1860,4 +1860,32 @@ class Space extends Model {
 		}
 		return array( implode( ' AND ', $where ), $args );
 	}
+
+
+	/**
+	 * Spaces a user may link to something else (a BuddyPress group): every
+	 * space for a site admin, otherwise the spaces they run. A to Z.
+	 *
+	 * @param int[] $exclude    Space ids to leave out (already linked).
+	 * @param int   $manager_id User who must be a space admin or moderator, or 0 for all spaces.
+	 * @return object[] Rows with id, title, slug.
+	 */
+	public static function list_linkable( array $exclude, int $manager_id = 0 ): array {
+		$exclude = $exclude ? array_map( 'absint', $exclude ) : array( 0 );
+		$in      = implode( ',', $exclude );
+		if ( $manager_id <= 0 ) {
+			return static::db()->get_results( 'SELECT id, title, slug FROM ' . static::table() . " WHERE id NOT IN ({$in}) ORDER BY title ASC" ) ?: array(); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integer list.
+		}
+		$members = \Jetonomy\table( 'space_members' );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integer list and table names.
+				'SELECT s.id, s.title, s.slug FROM ' . static::table() . " s
+				 INNER JOIN {$members} sm ON sm.space_id = s.id AND sm.user_id = %d AND sm.role IN ('admin', 'moderator')
+				 WHERE s.id NOT IN ({$in})
+				 ORDER BY s.title ASC",
+				$manager_id
+			)
+		) ?: array();
+	}
 }
