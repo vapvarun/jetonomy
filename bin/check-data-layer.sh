@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Fails when $wpdb use outside the data layer grows in any file
+# (docs/standards/developer-quality.md, rule 2). The baseline only shrinks:
+# after moving queries into models, run with --update and commit the file.
+#
+# Usage: bin/check-data-layer.sh [--update]
+set -u
+cd "$(dirname "$0")/.." || exit 2
+BASELINE=audit/wpdb-baseline.txt
+ALLOWED='^(includes/models/|includes/db/|includes/cli/|includes/qa/|includes/class-cli\.php)'
+
+current=$(grep -rnF '$wpdb' includes templates --include='*.php' 2>/dev/null \
+	| grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*|/\*|#)' \
+	| grep -vE '^[^:]+:[0-9]+:[[:space:]]*global \$wpdb;' \
+	| cut -d: -f1 | grep -vE "$ALLOWED" | sort | uniq -c | awk '{print $2" "$1}')
+
+if [ "${1:-}" = "--update" ]; then
+	printf '%s\n' "$current" | sed '/^$/d' > "$BASELINE"
+	echo "Baseline written: $(awk '{s+=$2} END {print s+0}' "$BASELINE") uses in $(wc -l < "$BASELINE" | tr -d ' ') files."
+	exit 0
+fi
+
+fail=0
+while read -r file count; do
+	[ -z "$file" ] && continue
+	allowed=$(awk -v f="$file" '$1==f {print $2}' "$BASELINE" 2>/dev/null)
+	if [ "${count}" -gt "${allowed:-0}" ]; then
+		echo "$file: $count \$wpdb uses (baseline ${allowed:-0}). Move the query into a model."
+		fail=1
+	fi
+done <<< "$current"
+exit $fail

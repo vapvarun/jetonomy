@@ -50,64 +50,23 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 	return;
 }
 
-global $wpdb;
-$posts_tbl = \Jetonomy\table( 'posts' );
-
-// Private ideas (is_private = 1) surface only to privileged viewers (admins /
-// space moderators) and their own author — mirror the predicate
-// Post::list_by_space_visible() uses so the roadmap never leaks private ideas,
-// even on a public space.
+// Private ideas show only to admins, space staff and their author, the same
+// rule as the space's topic list. Each column loads at most 50 ideas; its
+// badge shows the true count.
 $jt_viewer_id = get_current_user_id();
 $jt_is_priv   = $jt_viewer_id
 	&& ( current_user_can( 'manage_options' )
 		|| \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $jt_viewer_id, (int) $space->id ) );
 
-$jt_private_sql    = '';
-$jt_private_params = array( (int) $space->id );
-if ( ! $jt_is_priv ) {
-	if ( $jt_viewer_id > 0 ) {
-		$jt_private_sql      = ' AND (is_private = 0 OR author_id = %d)';
-		$jt_private_params[] = $jt_viewer_id;
-	} else {
-		$jt_private_sql = ' AND is_private = 0';
-	}
-}
-
-// Hide ideas authored by users the viewer has blocked. no-op for guests/no-blocks.
-[ $jt_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( $jt_viewer_id, '', 'author_id' );
-if ( '' !== $jt_block_sql ) {
-	$jt_private_sql .= ' AND ' . $jt_block_sql;
-}
-
-// Bounded per-column fetch. The old single query had
-// no LIMIT — every idea in the space, longtext bodies included, loaded to
-// bucket into 4 columns in PHP; fatal on a 10k-post space. Now: one
-// GROUP BY for the TRUE column counts (the jt-col-n badges must not lie
-// about the page size), then one bounded query per column. Columns past
-// the cap render a "+N more" note.
 $jt_roadmap_col_cap = 50;
-
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$jt_status_count_rows = $wpdb->get_results(
-	$wpdb->prepare(
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		"SELECT idea_status, COUNT(*) AS n FROM {$posts_tbl}
-		 WHERE space_id = %d AND status = 'publish' AND idea_status IS NOT NULL{$jt_private_sql}
-		 GROUP BY idea_status",
-		...$jt_private_params
-	)
-) ?: array();
-$jt_status_counts = array();
-foreach ( $jt_status_count_rows as $jt_count_row ) {
-	$jt_status_counts[ (string) $jt_count_row->idea_status ] = (int) $jt_count_row->n;
-}
+$jt_status_counts   = \Jetonomy\Models\Post::count_ideas_by_status( (int) $space->id, $jt_viewer_id, $jt_is_priv );
 
 // Canonical column order (mirrors Post::valid_idea_statuses()). Owners
 // move ideas left to right; "declined" sits at the end as the off-ramp.
 // One colour per stage, set in jetonomy.css from the column's data-jt-status
-// (accent = committed/queued, warn = in flight, success = shipped). It used to
-// be an inline style here, which painted the raw status hue as title text
-// (2.4-2.9:1) and boxed the header on themes that style div borders.
+// (accent = committed/queued, warn = in flight, success = shipped). It is not an
+// inline style here: that paints the raw status hue as title text (2.4-2.9:1) and
+// boxes the header on themes that style div borders.
 $columns = array(
 	'planned'     => array(
 		'label' => __( 'Planned', 'jetonomy' ),
@@ -128,23 +87,7 @@ $columns = array(
 );
 
 foreach ( array_keys( $columns ) as $jt_col_status ) {
-	// One bounded query per column. The id tiebreak keeps the cap window
-	// deterministic across ties (the same rule as every paged list).
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$columns[ $jt_col_status ]['posts'] = $wpdb->get_results(
-		$wpdb->prepare(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT * FROM {$posts_tbl}
-			 WHERE space_id = %d AND status = 'publish' AND idea_status = %s{$jt_private_sql}
-			 ORDER BY vote_score DESC, created_at DESC, id DESC
-			 LIMIT %d",
-			array_merge(
-				array( (int) $space->id, $jt_col_status ),
-				array_slice( $jt_private_params, 1 ),
-				array( $jt_roadmap_col_cap )
-			)
-		)
-	) ?: array();
+	$columns[ $jt_col_status ]['posts'] = \Jetonomy\Models\Post::list_ideas_by_status( (int) $space->id, $jt_col_status, $jt_viewer_id, $jt_is_priv, $jt_roadmap_col_cap );
 
 	$columns[ $jt_col_status ]['total'] = $jt_status_counts[ $jt_col_status ] ?? count( $columns[ $jt_col_status ]['posts'] );
 }

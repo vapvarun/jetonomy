@@ -115,6 +115,12 @@ if [ -n "$STAGED_SRC" ] && ! bin/check-comment-refs.sh $STAGED_SRC; then
     exit 1
 fi
 
+# $wpdb outside the data layer may only shrink (rule 2).
+echo "  -> data layer"
+if ! bin/check-data-layer.sh; then
+    exit 1
+fi
+
 # ── Gate: manifest-driven QA coverage drift (Phase C) ──
 # Reason: every new REST endpoint / AJAX handler / cron / hook with a
 # consumer should carry a corresponding test stub. The qa-coverage-check

@@ -118,12 +118,9 @@ class Tag extends Model {
 	/**
 	 * List all tags attached to a post.
 	 *
-	 * The default $limit is deliberately high (200) — every real-world
-	 * post stays well under it, so existing callers see the same row set
-	 * they got pre-1.4.3 — but it is no longer truly unbounded. A
-	 * runaway migration or hostile mass-tag import that wires thousands
-	 * of tags onto a single post can no longer balloon the per-post
-	 * render budget without an explicit, larger $limit.
+	 * The default $limit is deliberately high (200) - every real-world post stays well
+	 * under it - but it is not unbounded: a runaway migration or hostile mass-tag
+	 * import cannot balloon the per-post render budget without an explicit, larger $limit.
 	 *
 	 * @param int $post_id
 	 * @param int $limit   Defensive cap. Defaults to 200.
@@ -311,42 +308,44 @@ class Tag extends Model {
 	}
 
 	/**
-	 * List posts (discussions) that have a given tag, ordered by recency.
+	 * List the newest posts with a given tag that the current viewer may read.
 	 *
-	 * Returns rows from jt_posts joined through jt_post_tags.
-	 * Each row includes: id, title, slug, space_id, author_id, reply_count,
-	 * vote_score, created_at, plus the author's display_name.
+	 * Each row carries id, title, post_slug, space_id, author_id, author_name,
+	 * reply_count, vote_score and created_at. Anonymous posts carry author_id 0
+	 * and the masked name, as everywhere else.
 	 *
 	 * @param string $slug  Tag slug.
 	 * @param int    $limit Maximum number of posts to return.
 	 * @return object[]
 	 */
 	public static function list_by_tag( string $slug, int $limit = 5 ): array {
-		$tags      = static::table();
-		$post_tags = table( 'post_tags' );
-		$posts     = table( 'posts' );
+		$tag = static::find_by_slug( $slug );
+		if ( ! $tag ) {
+			return array();
+		}
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$results = static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.id, p.title, p.slug AS post_slug, p.space_id, p.author_id,
-				        p.reply_count, p.vote_score, p.created_at,
-				        u.display_name AS author_name
-				 FROM {$posts} p
-				 INNER JOIN {$post_tags} pt ON pt.post_id = p.id
-				 INNER JOIN {$tags} t ON t.id = pt.tag_id
-				 INNER JOIN {$GLOBALS['wpdb']->users} u ON u.ID = p.author_id
-				 WHERE t.slug = %s
-				 ORDER BY p.created_at DESC
-				 LIMIT %d",
-				$slug,
-				$limit
-			)
+		$posts = Post::list_by_tag_visible( (int) $tag->id, 'latest', $limit );
+		if ( $posts ) {
+			cache_users( array_map( static fn( $p ) => (int) $p->author_id, $posts ) );
+		}
+
+		return array_map(
+			static function ( $post ) {
+				$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+				return (object) array(
+					'id'          => (int) $post->id,
+					'title'       => $post->title,
+					'post_slug'   => $post->slug,
+					'space_id'    => (int) $post->space_id,
+					'author_id'   => $author['id'],
+					'author_name' => $author['name'],
+					'reply_count' => (int) $post->reply_count,
+					'vote_score'  => (int) $post->vote_score,
+					'created_at'  => $post->created_at,
+				);
+			},
+			$posts
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-
-		return $results ?: array();
 	}
 
 	/**

@@ -24,22 +24,13 @@ if ( ! $tag ) {
 	return;
 }
 
-global $wpdb;
-$posts_tbl     = \Jetonomy\table( 'posts' );
-$spaces_tbl    = \Jetonomy\table( 'spaces' );
-$post_tags_tbl = \Jetonomy\table( 'post_tags' );
-
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'latest';
 if ( ! in_array( $sort, array( 'latest', 'popular' ), true ) ) {
 	$sort = 'latest';
 }
 
-// 1.4.0 C.4 fix: classic offset pagination so popular tags don't silently
-// drop post 31+. 30/page balances density with viewport — page param via
-// `?paged=2`. Total post count comes from $tag->post_count which is kept
-// in sync by the tag denormaliser.
-$order_by = 'popular' === $sort ? 'p.vote_score DESC' : 'p.created_at DESC';
+// 30 a page; the total comes from the tag's denormalised post_count.
 $per_page = 30;
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $paged       = max( 1, (int) ( $_GET['paged'] ?? 1 ) );
@@ -47,43 +38,7 @@ $offset      = ( $paged - 1 ) * $per_page;
 $total_posts = (int) $tag->post_count;
 $total_pages = (int) ceil( max( 1, $total_posts ) / $per_page );
 
-// Space-visibility + per-post is_private gate so a tag page never leaks posts
-// from private/hidden spaces (or private posts in public spaces) to viewers
-// who aren't members / authors.
-[ $jt_space_vis_sql, $jt_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
-[ $jt_priv_sql, $jt_priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-
-$jt_gate_sql    = '';
-$jt_gate_params = array();
-if ( '1=1' !== $jt_space_vis_sql ) {
-	$jt_gate_sql   .= ' AND ' . $jt_space_vis_sql;
-	$jt_gate_params = array_merge( $jt_gate_params, $jt_space_vis_params );
-}
-if ( '' !== $jt_priv_sql ) {
-	$jt_gate_sql   .= ' AND ' . $jt_priv_sql;
-	$jt_gate_params = array_merge( $jt_gate_params, $jt_priv_params );
-}
-
-// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-[ $jt_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-if ( '' !== $jt_block_sql ) {
-	$jt_gate_sql .= ' AND ' . $jt_block_sql;
-}
-
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$posts = $wpdb->get_results(
-	$wpdb->prepare(
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
-		 INNER JOIN {$post_tags_tbl} pt ON pt.post_id = p.id
-		 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE pt.tag_id = %d AND p.status = 'publish'{$jt_gate_sql}
-		 ORDER BY {$order_by}
-		 LIMIT %d OFFSET %d",
-		(int) $tag->id,
-		...array_merge( $jt_gate_params, array( $per_page, $offset ) )
-	)
-) ?: array();
+$posts = \Jetonomy\Models\Post::list_by_tag_visible( (int) $tag->id, $sort, $per_page, $offset );
 
 $tag_url = \Jetonomy\route_url( 'tag', $tag->slug );
 

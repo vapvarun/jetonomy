@@ -26,9 +26,10 @@ Check: `grep -rnE 'Basecamp [0-9]|WP[0-9]\.[0-9]|Task [0-9]+' includes templates
 - Templates receive data. A template that runs a query is a defect.
 - Migrations, the DB schema and CLI are the documented exceptions.
 
-Check: count `$wpdb` outside the allowed folders; shrink-only baseline.
-Baseline: free 616 in 34 files (5 templates), Pro about 840 across the
-extension classes.
+Check: `bin/check-data-layer.sh` (pre-commit and local CI) fails when any
+file's `$wpdb` use outside the data layer grows past `audit/wpdb-baseline.txt`;
+run it with `--update` after moving queries out. Baseline: free 448 uses in 33
+files and none in templates; Pro 629 in 29 files, the largest the extension classes.
 
 ## 3. One place per concept
 

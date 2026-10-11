@@ -187,6 +187,14 @@ else
     FAILED_GATES+=("comment-refs")
 fi
 
+step "Data layer (free)"
+if bin/check-data-layer.sh; then
+    ok "no new \$wpdb use outside models"
+else
+    fail "\$wpdb use outside models grew"
+    FAILED_GATES+=("data-layer")
+fi
+
 step "Cross-plugin guards (free)"
 if php bin/check-cross-plugin-guards.php; then
     ok "cross-plugin guards free clean"

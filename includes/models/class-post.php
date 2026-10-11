@@ -352,9 +352,8 @@ class Post extends Model {
 		$post = self::find( $id );
 
 		// Replies first, while the topic row still exists for any listener
-		// that looks it up. A hard delete used to remove the topic and leave
-		// every reply behind pointing at a post_id that no longer resolved -
-		// still counted on their authors, still in search and activity
+		// that looks it up. Deleting the replies with the topic keeps them from pointing at
+		// a missing post_id - still counted on their authors, still in search and activity.
 		if ( $post ) {
 			self::delete_replies( $id );
 		}
@@ -396,17 +395,10 @@ class Post extends Model {
 			/**
 			 * Fires after a post row is deleted, whatever deleted it.
 			 *
-			 * Moved here from Posts_Controller::delete_item() in 1.9.5. Firing it
-			 * from the REST controller meant the contract only held on ONE path:
-			 * `wp jetonomy content delete`, the QA/journey harness and any
-			 * internal Post::delete() call left Pro's wp_jt_attachments rows
-			 * pointing at posts that no longer existed. Attachment GC did not
-			 * catch them either, because it checks whether the media FILE still
-			 * exists, not the post - so an orphan with a live file was never
-			 * collected.
-			 *
-			 * The model is where every caller converges, so this is the only
-			 * place the hook can be guaranteed.
+			 * The hook fires from the model, where every caller converges (REST, `wp jetonomy
+			 * content delete`, the QA/journey harness, any internal Post::delete()), so Pro's
+			 * wp_jt_attachments rows never point at deleted posts. Attachment GC cannot catch
+			 * such orphans: it checks whether the media FILE still exists, not the post.
 			 *
 			 * @since 1.4.1
 			 * @param int $id Deleted post ID.
@@ -677,12 +669,9 @@ class Post extends Model {
 
 		// $after is a forward cursor carrying an OFFSET, not a row id.
 		//
-		// This used to run `... AND id > %d ORDER BY {$order_by}` as a keyset. That
-		// could never work here: $order_by leads with is_sticky/vote_score/
-		// last_reply_at/created_at, so an id filter does not follow the sort at all,
-		// and `id >` against a DESC sort actively contradicts it — every "next page"
-		// returned the top of the list again and clients looped forever
-		// Offset is the only scheme these sorts support.
+		// Offset is the only scheme these sorts support: $order_by leads with is_sticky/
+		// vote_score/last_reply_at/created_at, so a keyset `id > %d` filter does not follow
+		// the sort and would return the top of the list for every "next page".
 		$offset = $after > 0 ? $after : $offset;
 
 		$results = static::db()->get_results(
@@ -756,20 +745,7 @@ class Post extends Model {
 				break;
 		}
 
-		// Visibility filter: privileged users see everything, others see public + own private.
-		if ( ! $is_privileged ) {
-			if ( $user_id > 0 ) {
-				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
-			} else {
-				$extra_where .= ' AND is_private = 0';
-			}
-		}
-
-		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$extra_where .= ' AND ' . $block_sql;
-		}
+		$extra_where .= self::space_reader_sql( $user_id, $is_privileged );
 
 		// $after carries an OFFSET, not a row id — see list_by_space() for why the
 		// old `id > %d` keyset could not work against these sorts.
@@ -859,18 +835,7 @@ class Post extends Model {
 				break;
 		}
 
-		if ( ! $is_privileged ) {
-			if ( $user_id > 0 ) {
-				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
-			} else {
-				$extra_where .= ' AND is_private = 0';
-			}
-		}
-
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$extra_where .= ' AND ' . $block_sql;
-		}
+		$extra_where .= self::space_reader_sql( $user_id, $is_privileged );
 
 		$offset = $after > 0 ? $after : $offset;
 
@@ -941,19 +906,8 @@ class Post extends Model {
 				: ' AND reply_count = 0';
 		}
 
-		if ( ! $is_privileged ) {
-			if ( $user_id > 0 ) {
-				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
-			} else {
-				$extra_where .= ' AND is_private = 0';
-			}
-		}
-
-		// Match list_by_space_visible()'s block exclusion exactly or pagination breaks.
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$extra_where .= ' AND ' . $block_sql;
-		}
+		// The same filter as list_by_space_visible(), or the pager disagrees with the list.
+		$extra_where .= self::space_reader_sql( $user_id, $is_privileged );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$count = (int) static::db()->get_var(
@@ -1195,47 +1149,25 @@ class Post extends Model {
 	 * List published posts by a specific author.
 	 *
 	 * Anonymous posts (is_anonymous = 1) are always excluded, including from
-	 * the author's own profile: surfacing them here — even to the author
-	 * themselves — would deanonymize the post by correlating it to this
+	 * the author's own profile: surfacing them here, even to the author
+	 * themselves, would deanonymize the post by correlating it to this
 	 * identity, defeating the anonymity the space/activity views already mask.
 	 *
 	 * @param int $user_id Author user ID.
 	 * @param int $limit   Max rows.
 	 * @param int $offset  Pagination offset.
-	 * @return object[]
+	 * @return object[] Post rows with space_slug and space_title joined.
 	 */
 	public static function list_by_author( int $user_id, int $limit = 20, int $offset = 0 ): array {
 		$table      = static::table();
 		$spaces_tbl = \Jetonomy\table( 'spaces' );
 
-		// Public method surfaced to other viewers (BP/FluentCommunity profile
-		// tabs, etc.): gate by space visibility + per-post is_private so an
-		// author's posts in private/hidden spaces (or their private posts in
-		// public spaces) stay hidden from non-member / non-author viewers.
-		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
-		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-
-		$gate_sql    = '';
-		$gate_params = array();
-		if ( '1=1' !== $space_vis_sql ) {
-			$gate_sql   .= ' AND ' . $space_vis_sql;
-			$gate_params = array_merge( $gate_params, $space_vis_params );
-		}
-		if ( '' !== $priv_sql ) {
-			$gate_sql   .= ' AND ' . $priv_sql;
-			$gate_params = array_merge( $gate_params, $priv_params );
-		}
-
-		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-		[ $block_sql ] = BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$gate_sql .= ' AND ' . $block_sql;
-		}
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 's' );
 
 		$results = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.* FROM {$table} p
+				"SELECT p.*, s.slug AS space_slug, s.title AS space_title FROM {$table} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
 				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
 				 ORDER BY p.created_at DESC, p.id DESC LIMIT %d OFFSET %d",
@@ -1244,6 +1176,207 @@ class Post extends Model {
 			)
 		);
 		return $results ? $results : array();
+	}
+
+	/**
+	 * List published posts carrying a tag that the current viewer may read.
+	 *
+	 * @param int    $tag_id Tag ID.
+	 * @param string $sort   'latest' or 'popular'.
+	 * @param int    $limit  Max rows.
+	 * @param int    $offset Pagination offset.
+	 * @return object[] Post rows with space_slug joined.
+	 */
+	public static function list_by_tag_visible( int $tag_id, string $sort = 'latest', int $limit = 30, int $offset = 0 ): array {
+		$table         = static::table();
+		$spaces_tbl    = \Jetonomy\table( 'spaces' );
+		$post_tags_tbl = \Jetonomy\table( 'post_tags' );
+		$order_by      = 'popular' === $sort ? 'p.vote_score DESC, p.id DESC' : 'p.created_at DESC, p.id DESC';
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
+
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT p.*, sp.slug AS space_slug FROM {$table} p
+				 INNER JOIN {$post_tags_tbl} pt ON pt.post_id = p.id
+				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+				 WHERE pt.tag_id = %d AND p.status = 'publish'{$gate_sql}
+				 ORDER BY {$order_by}
+				 LIMIT %d OFFSET %d",
+				$tag_id,
+				...array_merge( $gate_params, array( $limit, $offset ) )
+			)
+		);
+		return $results ? $results : array();
+	}
+
+	/**
+	 * Count a space's published ideas per roadmap status, as the viewer sees them.
+	 *
+	 * @param int  $space_id      Space ID.
+	 * @param int  $user_id       Viewer (0 for guest).
+	 * @param bool $is_privileged True for admins and space staff.
+	 * @return array<string,int> Status => count.
+	 */
+	public static function count_ideas_by_status( int $space_id, int $user_id, bool $is_privileged ): array {
+		$table  = static::table();
+		$reader = self::space_reader_sql( $user_id, $is_privileged );
+
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT idea_status, COUNT(*) AS n FROM {$table}
+				 WHERE space_id = %d AND status = 'publish' AND idea_status IS NOT NULL{$reader}
+				 GROUP BY idea_status",
+				$space_id
+			)
+		);
+
+		$counts = array();
+		foreach ( $rows ? $rows : array() as $row ) {
+			$counts[ (string) $row->idea_status ] = (int) $row->n;
+		}
+		return $counts;
+	}
+
+	/**
+	 * List a space's top-voted published ideas in one roadmap status.
+	 *
+	 * @param int    $space_id      Space ID.
+	 * @param string $idea_status   Roadmap status.
+	 * @param int    $user_id       Viewer (0 for guest).
+	 * @param bool   $is_privileged True for admins and space staff.
+	 * @param int    $limit         Max rows.
+	 * @return object[]
+	 */
+	public static function list_ideas_by_status( int $space_id, string $idea_status, int $user_id, bool $is_privileged, int $limit = 50 ): array {
+		$table  = static::table();
+		$reader = self::space_reader_sql( $user_id, $is_privileged );
+
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$table}
+				 WHERE space_id = %d AND status = 'publish' AND idea_status = %s{$reader}
+				 ORDER BY vote_score DESC, created_at DESC, id DESC
+				 LIMIT %d",
+				$space_id,
+				$idea_status,
+				$limit
+			)
+		);
+		return $results ? $results : array();
+	}
+
+	/**
+	 * Top five published posts by votes, for the sidebar widget.
+	 *
+	 * All-time ranking, unlike list_trending()'s seven-day hot score; the
+	 * widget has always shown it. Cached for five minutes per viewer class,
+	 * because it filesorts on every page view.
+	 *
+	 * @param int $space_id Limit to one space, or 0 for every space the viewer can read.
+	 * @return object[] Post rows with space_slug joined.
+	 */
+	public static function list_top_voted( int $space_id = 0 ): array {
+		$user_id       = get_current_user_id();
+		$is_privileged = $user_id && user_can( $user_id, 'manage_options' );
+		if ( ! $is_privileged && $user_id && $space_id > 0 ) {
+			$is_privileged = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
+		}
+
+		// Every viewer-dependent clause is in the key: privileged viewers see
+		// the same list, guests have no blocks, anyone else binds their own id.
+		$bucket = $is_privileged ? 'priv' : ( $user_id ? "u{$user_id}" : 'guest' );
+
+		return Cache::remember(
+			"sidebar:trending:{$space_id}:{$bucket}",
+			static function () use ( $space_id, $user_id, $is_privileged ) {
+				$table      = static::table();
+				$spaces_tbl = \Jetonomy\table( 'spaces' );
+				$where      = static::db()->prepare( "p.status = 'publish'" . ( $space_id > 0 ? ' AND p.space_id = %d' : '' ), ...( $space_id > 0 ? array( $space_id ) : array() ) );
+				$where     .= self::space_reader_sql( $user_id, $is_privileged, 'p' );
+
+				// One space is already gated by the page that shows it; every
+				// other page needs the viewer's space access as well.
+				if ( 0 === $space_id ) {
+					[ $space_sql, $space_params ] = Space::content_visibility_sql( $user_id, 'sp' );
+					if ( '1=1' !== $space_sql ) {
+						$where .= $space_params
+							? static::db()->prepare( ' AND ' . $space_sql, ...$space_params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							: ' AND ' . $space_sql;
+					}
+				}
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$rows = static::db()->get_results(
+					"SELECT p.*, sp.slug AS space_slug FROM {$table} p
+					 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+					 WHERE {$where}
+					 ORDER BY p.vote_score DESC, p.reply_count DESC
+					 LIMIT 5"
+				);
+				return $rows ? $rows : array();
+			},
+			300
+		);
+	}
+
+	/**
+	 * Filter for a space's post lists: private topics only for their author
+	 * and space staff, and nothing from authors the viewer blocked.
+	 *
+	 * @param int    $user_id       Viewer (0 for guest).
+	 * @param bool   $is_privileged True for admins and space staff.
+	 * @param string $alias         Posts table alias, or '' for none.
+	 * @return string Prepared SQL starting with ' AND', or ''.
+	 */
+	private static function space_reader_sql( int $user_id, bool $is_privileged, string $alias = '' ): string {
+		$col = '' !== $alias ? $alias . '.' : '';
+		$sql = '';
+
+		if ( ! $is_privileged ) {
+			$sql .= $user_id > 0
+				? static::db()->prepare( " AND ({$col}is_private = 0 OR {$col}author_id = %d)", $user_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				: " AND {$col}is_private = 0";
+		}
+
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, $alias, 'author_id' );
+		if ( '' !== $block_sql ) {
+			$sql .= ' AND ' . $block_sql;
+		}
+		return $sql;
+	}
+
+	/**
+	 * Filter for post lists that span spaces (author, tag): the viewer's
+	 * space access, private topics, and authors the viewer blocked.
+	 *
+	 * @param string $space_alias Alias of the joined spaces table.
+	 * @return array{0:string,1:array} SQL starting with ' AND' (or ''), and its params.
+	 */
+	private static function viewer_gate_sql( string $space_alias ): array {
+		$viewer_id = get_current_user_id();
+
+		[ $space_sql, $space_params ] = Space::content_visibility_sql( $viewer_id, $space_alias );
+		[ $priv_sql, $priv_params ]   = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+		[ $block_sql ]                = BlockedUser::exclusion_sql( $viewer_id, 'p', 'author_id' );
+
+		$sql    = '';
+		$params = array();
+		if ( '1=1' !== $space_sql ) {
+			$sql   .= ' AND ' . $space_sql;
+			$params = $space_params;
+		}
+		if ( '' !== $priv_sql ) {
+			$sql   .= ' AND ' . $priv_sql;
+			$params = array_merge( $params, $priv_params );
+		}
+		if ( '' !== $block_sql ) {
+			$sql .= ' AND ' . $block_sql;
+		}
+		return array( $sql, $params );
 	}
 
 	/**
@@ -1743,6 +1876,14 @@ class Post extends Model {
 
 		// Keep the scheduled-specific extension point so an integration can still
 		// distinguish "published on schedule" from "published immediately".
+		/**
+		 * Fires after a scheduled post is published by the scheduler.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $post_id  Post ID.
+		 * @param int $space_id Space ID.
+		 */
 		do_action( 'jetonomy_scheduled_post_published', $id, (int) $post->space_id );
 
 		return true;
@@ -1995,6 +2136,14 @@ class Post extends Model {
 		// bug class as Reply::split_to_post.
 		static::update( $source_id, array( 'status' => 'trash' ) );
 
+		/**
+		 * Fires after one post is merged into another.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $source_id ID of the post that was merged away.
+		 * @param int $target_id ID of the post that received the content.
+		 */
 		do_action( 'jetonomy_post_merged', $source_id, $target_id );
 
 		return true;
