@@ -1361,10 +1361,19 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td>
 							<input type="text" id="captcha_site_key" name="jetonomy_settings[captcha_site_key]" value="<?php echo esc_attr( $settings['captcha_site_key'] ?? '' ); ?>" class="regular-text">
 							<p class="description">
-								<?php esc_html_e( 'reCAPTCHA: get keys at', 'jetonomy' ); ?>
-								<a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer">google.com/recaptcha/admin</a>.
-								<?php esc_html_e( 'Turnstile: get keys at', 'jetonomy' ); ?>
-								<a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener noreferrer">dash.cloudflare.com</a>.
+								<?php
+								printf(
+									/* translators: %s: link to the Google reCAPTCHA admin console. */
+									esc_html__( 'reCAPTCHA: get keys at %s.', 'jetonomy' ),
+									'<a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer">google.com/recaptcha/admin</a>'
+								);
+								echo ' ';
+								printf(
+									/* translators: %s: link to the Cloudflare Turnstile dashboard. */
+									esc_html__( 'Turnstile: get keys at %s.', 'jetonomy' ),
+									'<a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener noreferrer">dash.cloudflare.com</a>'
+								);
+								?>
 							</p>
 						</td>
 					</tr>
@@ -1503,7 +1512,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<span class="dashicons <?php echo esc_attr( $ext['icon'] ); ?>" style="color: var(--jt-admin-pro, #7C3AED); font-size: 18px; width: 18px; height: 18px;"></span>
 							<strong style="font-size: 13px;"><?php echo esc_html( $ext['name'] ); ?></strong>
 							<span class="jt-tier-badge jt-tier-badge--<?php echo esc_attr( sanitize_html_class( strtolower( (string) $ext['tier'] ) ) ); ?>">
-								<?php echo esc_html( $ext['tier'] ); ?>
+								<?php
+								$jt_tier_names = array(
+									'Starter' => __( 'Starter', 'jetonomy' ),
+									'Growth'  => __( 'Growth', 'jetonomy' ),
+									'Agency'  => __( 'Agency', 'jetonomy' ),
+								);
+								echo esc_html( $jt_tier_names[ $ext['tier'] ] );
+								?>
 							</span>
 						</div>
 						<p style="margin: 0; font-size: 12.5px; color: var(--jt-admin-text-3, #6B7280); line-height: 1.5;"><?php echo esc_html( $ext['desc'] ); ?></p>

@@ -1,0 +1,66 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/composer.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ko",
+                "plural-forms": "nplurals=1; plural=0;"
+            },
+            "Upload failed.": [
+                "\uc5c5\ub85c\ub4dc\uc5d0 \uc2e4\ud328\ud588\uc5b4\uc694."
+            ],
+            "Insert emoji": [
+                ""
+            ],
+            "Quote": [
+                "\uc778\uc6a9"
+            ],
+            "Awaiting Approval": [
+                "\uc2b9\uc778 \ub300\uae30 \uc911"
+            ],
+            "Something went wrong. Please try again.": [
+                "\uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc5b4\uc694. \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694."
+            ],
+            "No matches": [
+                "\uc77c\uce58\ud558\ub294 \ud56d\ubaa9\uc774 \uc5c6\uc5b4\uc694"
+            ],
+            "Close menu": [
+                "\uba54\ub274 \ub2eb\uae30"
+            ],
+            "Enter URL:": [
+                "URL \uc785\ub825:"
+            ],
+            "https:\/\/example.com": [
+                "https:\/\/example.com"
+            ],
+            "Uploading\u2026": [
+                ""
+            ],
+            "Joining\u2026": [
+                ""
+            ],
+            "Requesting\u2026": [
+                ""
+            ],
+            "Request submitted. Awaiting approval.": [
+                "\uc694\uccad\uc774 \uc81c\ucd9c\ub410\uc5b4\uc694. \uc2b9\uc778\uc744 \uae30\ub2e4\ub9ac\ub294 \uc911\uc774\uc5d0\uc694."
+            ],
+            "Request to Join": [
+                "\ucc38\uc5ec \uc694\uccad"
+            ],
+            "Could not submit request.": [
+                "\uc694\uccad\uc744 \uc81c\ucd9c\ud560 \uc218 \uc5c6\uc5b4\uc694."
+            ],
+            "Submitting\u2026": [
+                ""
+            ],
+            "Request Sent": [
+                "\uc694\uccad\uc774 \uc804\uc1a1\ub410\uc5b4\uc694"
+            ]
+        }
+    }
+}

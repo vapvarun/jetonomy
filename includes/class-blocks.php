@@ -671,7 +671,10 @@ class Blocks {
 						<span class="jt-userpanel-username">@<?php echo esc_html( $user->user_login ); ?></span>
 						<?php if ( $trust_level > 0 ) : ?>
 							<span class="jt-userpanel-tl" data-jt-tl="<?php echo (int) $trust_level; ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: trust level number (0-5). */ __( 'Trust Level %d', 'jetonomy' ), $trust_level ) ); ?>">
-								TL<?php echo (int) $trust_level; ?>
+								<?php
+								/* translators: %d: trust level number, shown as a short badge such as "TL2". */
+								echo esc_html( sprintf( _x( 'TL%d', 'trust level badge', 'jetonomy' ), (int) $trust_level ) );
+								?>
 							</span>
 						<?php endif; ?>
 					</div>

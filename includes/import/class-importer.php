@@ -702,7 +702,7 @@ abstract class Importer {
 		// anyway" and make a planted `../../../wp-config.php` reachable.
 		$filetype = wp_check_filetype( basename( $path ), null );
 		if ( empty( $filetype['type'] ) ) {
-			$this->log_error( 'attachment', $file_url, 'Disallowed file type' );
+			$this->log_error( 'attachment', $file_url, __( 'Disallowed file type', 'jetonomy' ) );
 			return 0;
 		}
 

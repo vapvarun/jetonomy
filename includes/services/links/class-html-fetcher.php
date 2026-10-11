@@ -101,7 +101,7 @@ final class HTML_Fetcher {
 				}
 				$next = \WP_Http::make_absolute_url( $location, $current );
 				if ( '' === $next || isset( $seen[ $next ] ) ) {
-					return new \WP_Error( 'jetonomy_link_preview_redirect', 'Redirect loop or invalid redirect.', array( 'status' => 400 ) );
+					return new \WP_Error( 'jetonomy_link_preview_redirect', __( 'Redirect loop or invalid redirect.', 'jetonomy' ), array( 'status' => 400 ) );
 				}
 				$seen[ $current ] = true;
 				$current          = $next;
@@ -111,7 +111,8 @@ final class HTML_Fetcher {
 			if ( $status < 200 || $status >= 400 ) {
 				return new \WP_Error(
 					'jetonomy_link_preview_http',
-					sprintf( 'Upstream returned HTTP %d', $status ),
+					/* translators: %d: HTTP status code. */
+					sprintf( __( 'Upstream returned HTTP %d', 'jetonomy' ), $status ),
 					array( 'status' => $status )
 				);
 			}
@@ -124,6 +125,6 @@ final class HTML_Fetcher {
 			);
 		}
 
-		return new \WP_Error( 'jetonomy_link_preview_redirect', 'Too many redirects.', array( 'status' => 400 ) );
+		return new \WP_Error( 'jetonomy_link_preview_redirect', __( 'Too many redirects.', 'jetonomy' ), array( 'status' => 400 ) );
 	}
 }

@@ -43,12 +43,36 @@ abstract class Base_Controller extends WP_REST_Controller {
 
 	/**
 	 * Standard not found error.
+	 *
+	 * Callers name the kind of item with a fixed English key ('Post', 'Space',
+	 * ...); it is translated here, once, using the owner's renamed nouns where
+	 * the community lets them rename it, so the message reads in the site's
+	 * language and words.
+	 *
+	 * @param string $what Item key: Post, Reply, Space, Category, User, Flag, Restriction,
+	 *                     Subscription, Notification, Invite link, Target post, Target space.
 	 */
 	protected function not_found( string $what = 'Resource' ): WP_Error {
+		$labels = array(
+			'Post'         => \Jetonomy\jetonomy_label( 'topic' ),
+			'Reply'        => \Jetonomy\jetonomy_label( 'reply' ),
+			'Space'        => \Jetonomy\space_label(),
+			'Category'     => \Jetonomy\jetonomy_label( 'category' ),
+			'User'         => __( 'Member', 'jetonomy' ),
+			'Flag'         => __( 'Report', 'jetonomy' ),
+			'Restriction'  => __( 'Restriction', 'jetonomy' ),
+			'Subscription' => __( 'Subscription', 'jetonomy' ),
+			'Notification' => __( 'Notification', 'jetonomy' ),
+			'Invite link'  => __( 'Invite link', 'jetonomy' ),
+			/* translators: %s: singular topic or space label, lowercase. */
+			'Target post'  => sprintf( __( 'Target %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: %s: singular topic or space label, lowercase. */
+			'Target space' => sprintf( __( 'Target %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+		);
 		return new WP_Error(
 			'jetonomy_not_found',
 			/* translators: %s: the singular label of the item (the configured noun). */
-			sprintf( __( '%s not found.', 'jetonomy' ), $what ),
+			sprintf( __( '%s not found.', 'jetonomy' ), $labels[ $what ] ?? __( 'Item', 'jetonomy' ) ),
 			array( 'status' => 404 )
 		);
 	}

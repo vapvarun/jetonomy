@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/setup-wizard.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ko",
+                "plural-forms": "nplurals=1; plural=0;"
+            },
+            "General": [
+                "\uc77c\ubc18"
+            ],
+            "Community Discussion": [
+                ""
+            ],
+            "Network error. Please try again.": [
+                "\ub124\ud2b8\uc6cc\ud06c \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc5b4\uc694. \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694."
+            ],
+            "Something went wrong. Please try again.": [
+                "\uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc5b4\uc694. \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694."
+            ],
+            "Please enter a community URL slug.": [
+                "\ucee4\ubba4\ub2c8\ud2f0 URL \uc2ac\ub7ec\uadf8\ub97c \uc785\ub825\ud574 \uc8fc\uc138\uc694."
+            ]
+        }
+    }
+}

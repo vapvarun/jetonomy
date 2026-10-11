@@ -252,7 +252,7 @@ class WPForo_Importer extends Importer {
 			$rows = array(
 				(object) array(
 					'boardid' => 0,
-					'title'   => 'Forums',
+					'title'   => __( 'Forums', 'jetonomy' ),
 				),
 			);
 		}
@@ -353,7 +353,7 @@ class WPForo_Importer extends Importer {
 			$boards = array(
 				(object) array(
 					'boardid' => 0,
-					'title'   => 'Forums',
+					'title'   => __( 'Forums', 'jetonomy' ),
 				),
 			);
 		}
@@ -487,12 +487,12 @@ class WPForo_Importer extends Importer {
 		foreach ( $attachments as $att ) {
 			$media_id = $this->ensure_media_id( (int) $att['media_id'], (string) $att['url'], (string) $att['name'] );
 			if ( ! $media_id ) {
-				$this->log_error( 'attachment', (string) $att['url'], 'Could not recover the file — left the link in the post' );
+				$this->log_error( 'attachment', (string) $att['url'], __( 'Could not recover the file - left the link in the post', 'jetonomy' ) );
 				continue;
 			}
 
 			if ( ! $this->link_attachment( $object_type, $object_id, $media_id, $sort ) ) {
-				$this->log_error( 'attachment', (string) $att['url'], 'Could not attach the file — left the link in the post' );
+				$this->log_error( 'attachment', (string) $att['url'], __( 'Could not attach the file - left the link in the post', 'jetonomy' ) );
 				continue;
 			}
 
@@ -586,7 +586,7 @@ class WPForo_Importer extends Importer {
 				$this->remember( 'space', $sid, (int) $space_id );
 				++$this->imported;
 			} else {
-				$this->log_error( 'forum', $sid, 'Failed to create space' );
+				$this->log_error( 'forum', $sid, __( 'Failed to create space', 'jetonomy' ) );
 				++$this->skipped;
 			}
 		}

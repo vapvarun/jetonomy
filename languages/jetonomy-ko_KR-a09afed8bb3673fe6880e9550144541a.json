@@ -1,0 +1,66 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/header.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ko",
+                "plural-forms": "nplurals=1; plural=0;"
+            },
+            "Search": [
+                "\uac80\uc0c9"
+            ],
+            "Close": [
+                "\ub2eb\uae30"
+            ],
+            "Home": [
+                "\ud648"
+            ],
+            "Failed to load": [
+                "\ubd88\ub7ec\uc624\uae30 \uc2e4\ud328"
+            ],
+            "No notifications yet.": [
+                "\uc544\uc9c1 \uc54c\ub9bc\uc774 \uc5c6\uc5b4\uc694."
+            ],
+            "Search discussions\u2026": [
+                ""
+            ],
+            "keyboard key label shown next to the search overlay\u0004ESC": [
+                "ESC"
+            ],
+            "No results found.": [
+                "\uac80\uc0c9 \uacb0\uacfc\uac00 \uc5c6\uc5b4\uc694."
+            ],
+            "Keyboard Shortcuts": [
+                "\ud0a4\ubcf4\ub4dc \ub2e8\ucd95\ud0a4"
+            ],
+            "\/ or Ctrl+K": [
+                ""
+            ],
+            "Navigate up\/down": [
+                "\uc704\/\uc544\ub798\ub85c \uc774\ub3d9"
+            ],
+            "keyboard key\u0004Enter": [
+                ""
+            ],
+            "Open selected": [
+                "\uc120\ud0dd \ud56d\ubaa9 \uc5f4\uae30"
+            ],
+            "Upvote selected": [
+                ""
+            ],
+            "Reply to selected": [
+                ""
+            ],
+            "This help": [
+                "\uc774 \ub3c4\uc6c0\ub9d0"
+            ],
+            "Level %1$d \u00b7 %2$d rep": [
+                "\ub808\ubca8 %1$d \u00b7 \ud3c9\ud310 %2$d"
+            ]
+        }
+    }
+}

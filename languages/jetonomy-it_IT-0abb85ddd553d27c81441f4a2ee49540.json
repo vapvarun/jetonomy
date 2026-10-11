@@ -1,0 +1,66 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/composer.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "it",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Upload failed.": [
+                "Caricamento non riuscito."
+            ],
+            "Insert emoji": [
+                ""
+            ],
+            "Quote": [
+                "Cita"
+            ],
+            "Awaiting Approval": [
+                "In attesa di approvazione"
+            ],
+            "Something went wrong. Please try again.": [
+                "Qualcosa \u00e8 andato storto. Riprova."
+            ],
+            "No matches": [
+                "Nessun risultato"
+            ],
+            "Close menu": [
+                "Chiudi menu"
+            ],
+            "Enter URL:": [
+                "Inserisci URL:"
+            ],
+            "https:\/\/example.com": [
+                "https:\/\/example.com"
+            ],
+            "Uploading\u2026": [
+                ""
+            ],
+            "Joining\u2026": [
+                ""
+            ],
+            "Requesting\u2026": [
+                ""
+            ],
+            "Request submitted. Awaiting approval.": [
+                "Richiesta inviata. In attesa di approvazione."
+            ],
+            "Request to Join": [
+                "Richiesta di accesso"
+            ],
+            "Could not submit request.": [
+                "Non \u00e8 stato possibile inviare la richiesta."
+            ],
+            "Submitting\u2026": [
+                ""
+            ],
+            "Request Sent": [
+                "Richiesta inviata"
+            ]
+        }
+    }
+}

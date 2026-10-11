@@ -379,14 +379,10 @@ function prime_post_cards( array $posts ): array {
  * @return string Format containing one %s.
  */
 function count_label_format( int $count, string $noun ): string {
-	$noun     = strtolower( $noun );
-	$noun     = isset( label_defaults()[ $noun ] ) ? $noun : 'space';
-	$settings = get_option( 'jetonomy_settings', array() );
-	$renamed  = '' !== trim( (string) ( $settings[ $noun . '_label_singular' ] ?? '' ) . (string) ( $settings[ $noun . '_label_plural' ] ?? '' ) )
-		|| has_filter( 'jetonomy_label' )
-		|| ( 'space' === $noun && has_filter( 'jetonomy_space_label' ) );
+	$noun = strtolower( $noun );
+	$noun = isset( label_defaults()[ $noun ] ) ? $noun : 'space';
 
-	if ( $renamed ) {
+	if ( noun_is_renamed( $noun ) ) {
 		return '%s ' . str_replace( '%', '%%', jetonomy_label( $noun, 1 !== $count, true ) );
 	}
 
@@ -419,6 +415,20 @@ function count_label_format( int $count, string $noun ): string {
  */
 function count_label( int $count, string $noun ): string {
 	return sprintf( count_label_format( $count, $noun ), number_format_i18n( $count ) );
+}
+
+/**
+ * Whether the owner (or a filter) renamed a built-in noun. A renamed noun has
+ * only the two forms the owner typed, so counts fall back to "number + label";
+ * built-in nouns get every plural form of the site's language.
+ *
+ * @param string $noun space, topic, reply, member or category.
+ */
+function noun_is_renamed( string $noun ): bool {
+	$settings = get_option( 'jetonomy_settings', array() );
+	return '' !== trim( (string) ( $settings[ $noun . '_label_singular' ] ?? '' ) . (string) ( $settings[ $noun . '_label_plural' ] ?? '' ) )
+		|| has_filter( 'jetonomy_label' )
+		|| ( 'space' === $noun && has_filter( 'jetonomy_space_label' ) );
 }
 
 /**

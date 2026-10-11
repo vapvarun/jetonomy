@@ -1233,7 +1233,7 @@ class BuddyPress {
 			$bp_status      = $group->status ?? 'public';
 			$space_id       = Space::create(
 				array(
-					'title'       => $group->name ?? 'Group Forum',
+					'title'       => $group->name ?? __( 'Group Forum', 'jetonomy' ),
 					'slug'        => sanitize_title( ( $group->name ?? 'group' ) . '-forum' ),
 					'description' => $group->description,
 					'visibility'  => $visibility_map[ $bp_status ] ?? 'public',

@@ -49,8 +49,8 @@ class Setup_Handler {
 		}
 		update_option( 'jetonomy_settings', $settings );
 
-		$cat_name   = sanitize_text_field( wp_unslash( $_POST['category_name'] ?? 'General' ) );
-		$space_name = sanitize_text_field( wp_unslash( $_POST['space_name'] ?? 'Community Discussion' ) );
+		$cat_name   = sanitize_text_field( wp_unslash( $_POST['category_name'] ?? __( 'General', 'jetonomy' ) ) );
+		$space_name = sanitize_text_field( wp_unslash( $_POST['space_name'] ?? __( 'Community Discussion', 'jetonomy' ) ) );
 		$space_desc = sanitize_textarea_field( wp_unslash( $_POST['space_description'] ?? '' ) );
 
 		$cat_id = Category::create(

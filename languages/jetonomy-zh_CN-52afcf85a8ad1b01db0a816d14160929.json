@@ -1,0 +1,216 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-common.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "zh_CN",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Import complete!": [
+                "\u5bfc\u5165\u5b8c\u6210\uff01"
+            ],
+            "Show more details": [
+                ""
+            ],
+            "Actions": [
+                "\u64cd\u4f5c"
+            ],
+            "Expires": [
+                "\u5230\u671f\u65f6\u95f4"
+            ],
+            "Unban": [
+                "\u89e3\u5c01"
+            ],
+            "Member": [
+                "\u6210\u5458"
+            ],
+            "Moderator": [
+                "\u7248\u4e3b"
+            ],
+            "Admin": [
+                "\u7ba1\u7406\u5458"
+            ],
+            "Viewer": [
+                "\u8bbf\u5ba2"
+            ],
+            "Invite Link": [
+                "\u9080\u8bf7\u94fe\u63a5"
+            ],
+            "Uses": [
+                "\u4f7f\u7528\u6b21\u6570"
+            ],
+            "Label": [
+                "\u6807\u7b7e"
+            ],
+            "Delete permanently": [
+                ""
+            ],
+            "Ban": [
+                "\u5c01\u7981"
+            ],
+            "Never": [
+                "\u4ece\u4e0d"
+            ],
+            "Remove prefix": [
+                "\u79fb\u9664\u524d\u7f00"
+            ],
+            "Copy": [
+                "\u590d\u5236"
+            ],
+            "Revoke": [
+                "\u64a4\u9500"
+            ],
+            "Are you sure? This cannot be undone.": [
+                "\u786e\u5b9a\u5417\uff1f\u6b64\u64cd\u4f5c\u65e0\u6cd5\u64a4\u9500\u3002"
+            ],
+            "Lift this restriction? The member can post again right away.": [
+                ""
+            ],
+            "Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.": [
+                ""
+            ],
+            "Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.": [
+                ""
+            ],
+            "This destroys every topic, reply and attachment in %s, including content written by other members. It cannot be undone. Type the space name to confirm.": [
+                ""
+            ],
+            "That name did not match, so nothing was deleted.": [
+                ""
+            ],
+            "Mark this as spam? It will be hidden from the community.": [
+                "\u5c06\u6b64\u5185\u5bb9\u6807\u8bb0\u4e3a\u5783\u573e\uff1f\u5b83\u5c06\u4ece\u793e\u533a\u4e2d\u9690\u85cf\u3002"
+            ],
+            "Move this to trash? This removes it from the community.": [
+                "\u5c06\u6b64\u5185\u5bb9\u79fb\u81f3\u56de\u6536\u7ad9\uff1f\u8fd9\u5c06\u4ece\u793e\u533a\u4e2d\u5220\u9664\u5b83\u3002"
+            ],
+            "Saving\u2026": [
+                ""
+            ],
+            "Saved!": [
+                "\u5df2\u4fdd\u5b58\uff01"
+            ],
+            "Something went wrong.": [
+                "\u51fa\u9519\u4e86\u3002"
+            ],
+            "Error: %s": [
+                "\u9519\u8bef\uff1a%s"
+            ],
+            "Unknown error": [
+                "\u672a\u77e5\u9519\u8bef"
+            ],
+            "Select Image": [
+                "\u9009\u62e9\u56fe\u7247"
+            ],
+            "Use this image": [
+                "\u4f7f\u7528\u6b64\u56fe\u7247"
+            ],
+            "Hidden spaces must use Invite Only. Join policy switched.": [
+                "\u9690\u85cf\u7a7a\u95f4\u5fc5\u987b\u4f7f\u7528\u4ec5\u9650\u9080\u8bf7\u3002\u52a0\u5165\u7b56\u7565\u5df2\u5207\u6362\u3002"
+            ],
+            "Switched visibility to Private because Hidden requires Invite Only.": [
+                "\u53ef\u89c1\u6027\u5df2\u5207\u6362\u4e3a\u79c1\u5bc6\uff0c\u56e0\u4e3a\u9690\u85cf\u6a21\u5f0f\u8981\u6c42\u4ec5\u9650\u9080\u8bf7\u3002"
+            ],
+            "Reload page": [
+                "\u91cd\u65b0\u52a0\u8f7d\u9875\u9762"
+            ],
+            "Connection lost. You can resume this import later.": [
+                "\u8fde\u63a5\u5df2\u65ad\u5f00\u3002\u60a8\u53ef\u4ee5\u7a0d\u540e\u7ee7\u7eed\u6b64\u5bfc\u5165\u3002"
+            ],
+            "Invite link copied to clipboard.": [
+                "\u9080\u8bf7\u94fe\u63a5\u5df2\u590d\u5236\u5230\u526a\u8d34\u677f\u3002"
+            ],
+            "Revoke this invite link? Anyone holding it will no longer be able to join.": [
+                "\u64a4\u9500\u6b64\u9080\u8bf7\u94fe\u63a5\uff1f\u6301\u6709\u8be5\u94fe\u63a5\u7684\u4efb\u4f55\u4eba\u5c06\u65e0\u6cd5\u518d\u52a0\u5165\u3002"
+            ],
+            "Unlimited": [
+                "\u65e0\u9650\u5236"
+            ],
+            "Expired": [
+                "\u5df2\u8fc7\u671f"
+            ],
+            "Sync": [
+                ""
+            ],
+            "Syncing\u2026": [
+                ""
+            ],
+            "Synced (%d)": [
+                ""
+            ],
+            "This will discard the interrupted import progress. Continue?": [
+                ""
+            ],
+            "Restart import": [
+                ""
+            ],
+            "People who match this rule": [
+                ""
+            ],
+            "%1$s can %2$s. They are recorded as %3$s.": [
+                ""
+            ],
+            "read posts and replies": [
+                ""
+            ],
+            "read, post, reply, vote and report": [
+                ""
+            ],
+            "read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people's topics": [
+                ""
+            ],
+            "Matches every visitor, signed in or not. Nobody is asked to log in first.": [
+                ""
+            ],
+            "Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.": [
+                ""
+            ],
+            "Matches anyone holding this WordPress role. Most members hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means \"everyone who signed up\".": [
+                ""
+            ],
+            "Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.": [
+                ""
+            ],
+            "Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.": [
+                ""
+            ],
+            "Matches members who hold the %s level you pick below.": [
+                ""
+            ],
+            "subscriber": [
+                ""
+            ],
+            "edit_posts": [
+                ""
+            ],
+            "2": [
+                ""
+            ],
+            "No matches": [
+                "\u65e0\u5339\u914d\u7ed3\u679c"
+            ],
+            "%d more. Refine your search to see it.": [
+                ""
+            ],
+            "Banning: %s": [
+                ""
+            ],
+            "Silencing: %s": [
+                ""
+            ],
+            "%d record imported successfully.": [
+                ""
+            ],
+            "%d file could not be recovered and was left linked in the original post text.": [
+                ""
+            ],
+            "%s to see updated status.": [
+                ""
+            ]
+        }
+    }
+}

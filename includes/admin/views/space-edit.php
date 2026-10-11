@@ -219,7 +219,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<?php
 					printf(
 						/* translators: 1: number of member rows shown, 2: total member count. */
-						esc_html__( 'Showing the first %1$d of %2$d members. Manage the rest from the front-end members page, which is paginated.', 'jetonomy' ),
+						esc_html( _n( 'Showing the first %1$d of %2$d member. Manage the rest from the front-end members page, which is paginated.', 'Showing the first %1$d of %2$d members. Manage the rest from the front-end members page, which is paginated.', (int) ( $space->member_count ?? 0 ), 'jetonomy' ) ),
 						(int) count( $members ),
 						(int) ( $space->member_count ?? 0 )
 					);

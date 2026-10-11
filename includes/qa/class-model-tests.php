@@ -267,6 +267,7 @@ class Model_Tests {
 		$this->test_edited_marker();
 		$this->test_upload_box_rules();
 		$this->test_queue_cancel();
+		$this->test_app_strings_defined();
 		$this->test_import_map();
 		$this->test_recount_backfill();
 
@@ -2236,6 +2237,18 @@ class Model_Tests {
 		update_option( 'jetonomy_settings', array_merge( (array) $saved, array( 'community_title' => 'Acme Forum' ) ) );
 		$this->check( 'CT1: the community home name (page title, JSON-LD) is the owner\'s Community Title', 'Acme Forum' === \Jetonomy\community_home_name() );
 		update_option( 'jetonomy_settings', $saved );
+	}
+
+	/**
+	 * IT: every state.i18n key the community app reads is defined in the one
+	 * shared list (Template_Loader::app_i18n), which community pages and the
+	 * compose embed both use, so no screen falls back to English.
+	 */
+	private function test_app_strings_defined(): void {
+		$js = (string) file_get_contents( JETONOMY_DIR . 'assets/js/view.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		preg_match_all( '/state\.i18n\??\.([a-zA-Z0-9_]+)/', $js, $m );
+		$missing = array_diff( array_unique( $m[1] ), array_keys( \Jetonomy\Template_Loader::app_i18n() ) );
+		$this->check( 'IT1: every state.i18n key view.js reads is defined for community pages and embeds', ! $missing, implode( ', ', $missing ) );
 	}
 
 	/**

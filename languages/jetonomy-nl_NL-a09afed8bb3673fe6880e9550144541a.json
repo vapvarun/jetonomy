@@ -1,0 +1,66 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/header.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Search": [
+                "Zoeken"
+            ],
+            "Close": [
+                "Sluiten"
+            ],
+            "Home": [
+                "Start"
+            ],
+            "Failed to load": [
+                "Kon niet laden"
+            ],
+            "No notifications yet.": [
+                "Nog geen meldingen."
+            ],
+            "Search discussions\u2026": [
+                ""
+            ],
+            "keyboard key label shown next to the search overlay\u0004ESC": [
+                "ESC"
+            ],
+            "No results found.": [
+                "Geen resultaten gevonden."
+            ],
+            "Keyboard Shortcuts": [
+                "Toetsenbordsnelkoppelingen"
+            ],
+            "\/ or Ctrl+K": [
+                ""
+            ],
+            "Navigate up\/down": [
+                "Omhoog\/omlaag navigeren"
+            ],
+            "keyboard key\u0004Enter": [
+                ""
+            ],
+            "Open selected": [
+                "Geselecteerde openen"
+            ],
+            "Upvote selected": [
+                ""
+            ],
+            "Reply to selected": [
+                ""
+            ],
+            "This help": [
+                "Deze hulp"
+            ],
+            "Level %1$d \u00b7 %2$d rep": [
+                "Niveau %1$d \u00b7 %2$d rep"
+            ]
+        }
+    }
+}

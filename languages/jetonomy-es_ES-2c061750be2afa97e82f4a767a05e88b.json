@@ -1,0 +1,36 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-settings.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "es",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Email Preview": [
+                "Vista previa del correo electr\u00f3nico"
+            ],
+            "Preview failed.": [
+                "La vista previa fall\u00f3."
+            ],
+            "Sending\u2026": [
+                ""
+            ],
+            "Sent.": [
+                "Enviado."
+            ],
+            "Failed to send.": [
+                "Error al enviar."
+            ],
+            "Reset %s to default? Your custom copy will be lost.": [
+                "\u00bfRestablecer %s a predeterminado? Se perder\u00e1 tu copia personalizada."
+            ],
+            "Reset failed.": [
+                "Error al restablecer."
+            ]
+        }
+    }
+}

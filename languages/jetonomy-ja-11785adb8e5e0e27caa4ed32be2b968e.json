@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-tags.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ja",
+                "plural-forms": "nplurals=1; plural=0;"
+            },
+            "Name is required.": [
+                "\u540d\u524d\u306f\u5fc5\u9808\u3067\u3059\u3002"
+            ],
+            "Delete this tag?": [
+                "\u3053\u306e\u30bf\u30b0\u3092\u524a\u9664\u3057\u307e\u3059\u304b\uff1f"
+            ],
+            "Select at least one tag.": [
+                "\u30bf\u30b0\u3092\u5c11\u306a\u304f\u3068\u30821\u3064\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002"
+            ],
+            "Delete the selected tags?": [
+                "\u9078\u629e\u3057\u305f\u30bf\u30b0\u3092\u524a\u9664\u3057\u307e\u3059\u304b\uff1f"
+            ],
+            "This tag is attached to %d post. Delete it and detach from all posts?": [
+                ""
+            ]
+        }
+    }
+}

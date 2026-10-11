@@ -327,23 +327,23 @@ $stat_cards = array(
 					<div class="jt-pulse-grid">
 						<div class="jt-pulse-stat">
 							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['posts'] ) ); ?></span>
-							<span class="jt-pulse-l"><?php esc_html_e( 'new topics', 'jetonomy' ); ?></span>
+							<span class="jt-pulse-l"><?php echo esc_html( _n( 'new topic', 'new topics', (int) $pulse['posts'], 'jetonomy' ) ); ?></span>
 						</div>
 						<div class="jt-pulse-stat">
 							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['replies'] ) ); ?></span>
-							<span class="jt-pulse-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
+							<span class="jt-pulse-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $pulse['replies'], 'reply' ) ); ?></span>
 						</div>
 						<div class="jt-pulse-stat">
 							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['contributors'] ) ); ?></span>
-							<span class="jt-pulse-l"><?php esc_html_e( 'active members', 'jetonomy' ); ?></span>
+							<span class="jt-pulse-l"><?php echo esc_html( _n( 'active member', 'active members', (int) $pulse['contributors'], 'jetonomy' ) ); ?></span>
 						</div>
 					</div>
 					<?php if ( ! empty( $pulse['top_space'] ) ) : ?>
 						<p class="jt-pulse-top">
 							<?php
 							printf(
-								/* translators: 1: space title, 2: post count */
-								esc_html__( 'Most active: %1$s (%2$s new topics)', 'jetonomy' ),
+								/* translators: 1: space title, 2: number of new topics. */
+								esc_html( _n( 'Most active: %1$s (%2$s new topic)', 'Most active: %1$s (%2$s new topics)', (int) $pulse['top_space_posts'], 'jetonomy' ) ),
 								'<strong>' . esc_html( $pulse['top_space'] ) . '</strong>',
 								esc_html( number_format_i18n( $pulse['top_space_posts'] ) )
 							);

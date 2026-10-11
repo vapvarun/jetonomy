@@ -634,7 +634,7 @@ class Spaces_Handler {
 		wp_send_json_success(
 			array(
 				/* translators: %d: number of members synced */
-				'message' => sprintf( __( 'Synced %d existing members.', 'jetonomy' ), $synced ),
+				'message' => sprintf( _n( 'Synced %d existing member.', 'Synced %d existing members.', $synced, 'jetonomy' ), $synced ),
 				'synced'  => $synced,
 			)
 		);

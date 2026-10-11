@@ -856,6 +856,24 @@ function jetonomySetVoted( el, on ) {
     el.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
 }
 
+/**
+ * Plural-aware translation for counts shown by the app.
+ *
+ * view.js is a script module, so it cannot take wp_set_script_translations();
+ * the page passes the app's translations as state.localeData and they are
+ * loaded into wp.i18n just below the store, which knows every plural form of
+ * the site's language. Without wp.i18n it falls back to English's two forms.
+ *
+ * @param {string} single Singular form (contains %s for the number).
+ * @param {string} plural Plural form.
+ * @param {number} n      Count.
+ * @param {string} domain Text domain.
+ * @return {string} The form for n, number not yet substituted.
+ */
+const _n = ( single, plural, n, domain ) => (
+    window.wp?.i18n?._n ? window.wp.i18n._n( single, plural, n, domain ) : ( 1 === n ? single : plural )
+);
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -897,9 +915,10 @@ const { state, actions } = store( 'jetonomy', {
             const i18n = state.i18n || {};
             const n    = Number( ctx.childCount ) || 0;
             if ( ctx.collapsed ) {
-                const label = 1 === n
-                    ? ( i18n.showRepliesOne || 'Show 1 reply' )
-                    : ( i18n.showRepliesMany || 'Show %d replies' ).replace( '%d', n );
+                const noun  = state.replyNoun;
+                const label = ( noun
+                    ? ( i18n.showCount || 'Show %s' ).replace( '%s', n + ' ' + ( 1 === n ? noun[ 0 ] : noun[ 1 ] ) )
+                    : /* translators: %s: number of replies. */ _n( 'Show %s reply', 'Show %s replies', n, 'jetonomy' ).replace( '%s', String( n ) ) );
                 return '+ ' + label;
             }
             return '\u2212 ' + ( i18n.hideReplies || 'Hide replies' );
@@ -1042,7 +1061,7 @@ const { state, actions } = store( 'jetonomy', {
             const name   = nameEl ? nameEl.textContent.trim() : '';
 
             const confirmBody = ( i18n.confirmRoleChange || 'Change %name% from %from% to %to%?' )
-                .replace( '%name%', name || 'this member' )
+                .replace( '%name%', name || i18n.thisMember || 'this member' )
                 .replace( '%from%', labels[ prev ] || prev )
                 .replace( '%to%', labels[ role ] || role );
             const confirmed = 'function' === typeof window.jetonomyConfirm
@@ -3113,9 +3132,13 @@ const { state, actions } = store( 'jetonomy', {
                     const indicator = document.createElement( 'div' );
                     indicator.className = 'jt-replying-to';
 
-                    const textNode = document.createTextNode( ( state.i18n?.replyingTo || 'Replying to' ) + ' ' );
+                    // The sentence is translated whole ("Replying to %s") so languages can
+                    // put the name where their grammar needs it.
+                    const [ before, after = '' ] = ( state.i18n?.replyingTo || 'Replying to %s' ).split( '%s' );
+                    const textNode = document.createTextNode( before );
+                    const afterNode = document.createTextNode( after );
                     const strong = document.createElement( 'strong' );
-                    strong.textContent = authorName || 'reply';
+                    strong.textContent = authorName || ( state.i18n?.thisMember || 'this member' );
                     const cancelBtn = document.createElement( 'button' );
                     cancelBtn.className = 'jt-replying-to-cancel';
                     cancelBtn.setAttribute( 'aria-label', state.i18n?.cancelReply || 'Cancel reply' );
@@ -3129,6 +3152,7 @@ const { state, actions } = store( 'jetonomy', {
 
                     indicator.appendChild( textNode );
                     indicator.appendChild( strong );
+                    indicator.appendChild( afterNode );
 
                     // Quote the start of the reply being answered, so members
                     // with several replies from one author know which one this is.
@@ -4342,7 +4366,9 @@ const { state, actions } = store( 'jetonomy', {
                                 } );
                                 repliesSection.parentElement.appendChild( banner );
                             }
-                            banner.textContent = `${ newReplies } new ${ newReplies === 1 ? 'reply' : 'replies' } — click to refresh`;
+                            banner.textContent = state.replyNoun
+                                ? ( state.i18n?.newRepliesRenamed || 'New replies. Click to refresh.' )
+                                : /* translators: %s: number of new replies. */ _n( '%s new reply. Click to refresh.', '%s new replies. Click to refresh.', newReplies, 'jetonomy' ).replace( '%s', String( newReplies ) );
                             interval = MIN_INTERVAL;                      // activity -> fast again
                         } else {
                             interval = Math.min( interval * 2, MAX_INTERVAL ); // idle -> back off
@@ -4369,6 +4395,11 @@ const { state, actions } = store( 'jetonomy', {
         },
     },
 } );
+
+// Load the app's translations before the page hydrates, so _n() above has them.
+if ( window.wp?.i18n?.setLocaleData && state.localeData ) {
+    window.wp.i18n.setLocaleData( state.localeData, 'jetonomy' );
+}
 
 /* ── Link Preview Cards ──
    Renders a LinkedIn / Twitter / Facebook style rich card beneath any standalone

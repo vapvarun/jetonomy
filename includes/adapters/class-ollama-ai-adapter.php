@@ -136,7 +136,7 @@ class Ollama_AI_Adapter implements AI_Adapter {
 			if ( empty( $models ) ) {
 				return array(
 					'ok'    => false,
-					'error' => 'Could not connect to Ollama or no models found.',
+					'error' => __( 'Could not connect to Ollama or no models found.', 'jetonomy' ),
 				);
 			}
 

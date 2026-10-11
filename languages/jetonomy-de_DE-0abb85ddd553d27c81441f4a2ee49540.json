@@ -1,0 +1,66 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/composer.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "de",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Upload failed.": [
+                "Upload fehlgeschlagen."
+            ],
+            "Insert emoji": [
+                ""
+            ],
+            "Quote": [
+                "Zitieren"
+            ],
+            "Awaiting Approval": [
+                "Genehmigung ausstehend"
+            ],
+            "Something went wrong. Please try again.": [
+                "Netzwerkfehler. Bitte versuche es erneut."
+            ],
+            "No matches": [
+                "Keine Treffer"
+            ],
+            "Close menu": [
+                "Men\u00fc schlie\u00dfen"
+            ],
+            "Enter URL:": [
+                "URL eingeben:"
+            ],
+            "https:\/\/example.com": [
+                "https:\/\/example.com"
+            ],
+            "Uploading\u2026": [
+                ""
+            ],
+            "Joining\u2026": [
+                ""
+            ],
+            "Requesting\u2026": [
+                ""
+            ],
+            "Request submitted. Awaiting approval.": [
+                "Anfrage eingereicht. Genehmigung ausstehend."
+            ],
+            "Request to Join": [
+                "Beitrittanfrage"
+            ],
+            "Could not submit request.": [
+                "Die Anfrage konnte nicht eingereicht werden."
+            ],
+            "Submitting\u2026": [
+                ""
+            ],
+            "Request Sent": [
+                "Anfrage gesendet"
+            ]
+        }
+    }
+}

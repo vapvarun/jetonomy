@@ -230,8 +230,9 @@ class Shortcodes {
 			$out .= ' · ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time ) );
 			$out .= '</div>';
 			$out .= '<div class="jt-shortcode-post-stats">';
-			$out .= '<span>' . (int) $post->vote_score . ' ' . esc_html( _n( 'vote', 'votes', (int) $post->vote_score, 'jetonomy' ) ) . '</span>';
-			$out .= '<span>' . (int) $post->reply_count . ' ' . esc_html( _n( 'reply', 'replies', (int) $post->reply_count, 'jetonomy' ) ) . '</span>';
+			/* translators: %s: number of votes. */
+			$out .= '<span>' . esc_html( sprintf( _n( '%s vote', '%s votes', (int) $post->vote_score, 'jetonomy' ), number_format_i18n( (int) $post->vote_score ) ) ) . '</span>';
+			$out .= '<span>' . esc_html( count_label( (int) $post->reply_count, 'reply' ) ) . '</span>';
 			$out .= '</div></div>';
 		}
 		$out .= '</div>';
@@ -296,8 +297,9 @@ class Shortcodes {
 			}
 			$out .= '</div>';
 			$out .= '<div class="jt-shortcode-post-stats">';
-			$out .= '<span>' . (int) $post->vote_score . ' ' . esc_html( _n( 'vote', 'votes', (int) $post->vote_score, 'jetonomy' ) ) . '</span>';
-			$out .= '<span>' . (int) $post->reply_count . ' ' . esc_html( _n( 'reply', 'replies', (int) $post->reply_count, 'jetonomy' ) ) . '</span>';
+			/* translators: %s: number of votes. */
+			$out .= '<span>' . esc_html( sprintf( _n( '%s vote', '%s votes', (int) $post->vote_score, 'jetonomy' ), number_format_i18n( (int) $post->vote_score ) ) ) . '</span>';
+			$out .= '<span>' . esc_html( count_label( (int) $post->reply_count, 'reply' ) ) . '</span>';
 			$out .= '</div></div></div>';
 		}
 		$out .= '</div>';
@@ -387,7 +389,7 @@ class Shortcodes {
 			}
 			$url  = get_profile_url( (int) $leader->user_id );
 			$out .= '<li><a href="' . esc_url( $url ) . '">' . esc_html( user_display_name( $user ) ) . '</a>';
-			$out .= ' <span class="jt-shortcode-rep">' . (int) $leader->reputation . ' rep</span></li>';
+			$out .= ' <span class="jt-shortcode-rep">' . esc_html( sprintf( /* translators: %s: reputation points. */ _n( '%s rep', '%s rep', (int) $leader->reputation, 'jetonomy' ), number_format_i18n( (int) $leader->reputation ) ) ) . '</span></li>';
 		}
 		$out .= '</ol></div>';
 
@@ -512,7 +514,7 @@ class Shortcodes {
 			$url  = get_profile_url( (int) $m->user_id );
 			$out .= '<div class="jt-shortcode-member">';
 			$out .= '<a href="' . esc_url( $url ) . '">' . esc_html( user_display_name( $user ) ) . '</a>';
-			$out .= ' <span class="jt-shortcode-rep">' . (int) $m->reputation . ' rep</span>';
+			$out .= ' <span class="jt-shortcode-rep">' . esc_html( sprintf( /* translators: %s: reputation points. */ _n( '%s rep', '%s rep', (int) $m->reputation, 'jetonomy' ), number_format_i18n( (int) $m->reputation ) ) ) . '</span>';
 			$out .= '</div>';
 		}
 		$out .= '</div>';
@@ -599,15 +601,20 @@ class Shortcodes {
 					'_nonce'        => wp_create_nonce( 'wp_rest' ),
 					'nonce'         => wp_create_nonce( 'wp_rest' ),
 					'communityBase' => home_url( '/' . ( isset( $settings['base_slug'] ) ? (string) $settings['base_slug'] : 'community' ) ),
-					'i18n'          => array(
-						'chooseSpace'    => __( 'Choose a space first.', 'jetonomy' ),
-						'titleRequired'  => __( 'Title is required.', 'jetonomy' ),
-						/* translators: %s: singular topic label. */
-						'couldNotCreate' => sprintf( __( 'Could not create the %s.', 'jetonomy' ), jetonomy_label( 'topic', false, true ) ),
-						'networkError'   => __( 'Network error. Please try again.', 'jetonomy' ),
+					// The same strings as community pages, so the composer never shows English fallbacks here.
+					'i18n'          => array_merge(
+						Template_Loader::app_i18n(),
+						array(
+							'chooseSpace'   => __( 'Choose a space first.', 'jetonomy' ),
+							'titleRequired' => __( 'Title is required.', 'jetonomy' ),
+						)
 					),
+					'localeData'    => Template_Loader::app_locale_data(),
+					/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
+					'publishLabel'  => sprintf( __( 'Post %s', 'jetonomy' ), jetonomy_label( 'topic' ) ),
 				)
 			);
+			wp_enqueue_script( 'wp-i18n' );
 		}
 
 		ob_start();

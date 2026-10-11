@@ -292,7 +292,7 @@ class Asgaros_Importer extends Importer {
 				$this->remember( 'space', (int) $forum->id, (int) $space_id );
 				++$this->imported;
 			} else {
-				$this->log_error( 'forum', $forum->id, 'Failed to create space' );
+				$this->log_error( 'forum', $forum->id, __( 'Failed to create space', 'jetonomy' ) );
 				++$this->skipped;
 			}
 		}
@@ -489,7 +489,7 @@ class Asgaros_Importer extends Importer {
 
 			$media_id = $this->ensure_media_id( 0, $base . rawurlencode( $name ), $name );
 			if ( ! $media_id ) {
-				$this->log_error( 'attachment', $base . $name, 'Could not recover the file' );
+				$this->log_error( 'attachment', $base . $name, __( 'Could not recover the file', 'jetonomy' ) );
 				continue;
 			}
 
@@ -632,7 +632,7 @@ class Asgaros_Importer extends Importer {
 
 				++$this->imported;
 			} else {
-				$this->log_error( 'topic', $topic->id, 'Failed to create post' );
+				$this->log_error( 'topic', $topic->id, __( 'Failed to create post', 'jetonomy' ) );
 				++$this->skipped;
 			}
 
@@ -749,7 +749,7 @@ class Asgaros_Importer extends Importer {
 
 				++$this->imported;
 			} else {
-				$this->log_error( 'reply', $asgaros_post->id, 'Failed to create reply' );
+				$this->log_error( 'reply', $asgaros_post->id, __( 'Failed to create reply', 'jetonomy' ) );
 				++$this->skipped;
 			}
 

@@ -1,0 +1,66 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/composer.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ja",
+                "plural-forms": "nplurals=1; plural=0;"
+            },
+            "Upload failed.": [
+                "\u30a2\u30c3\u30d7\u30ed\u30fc\u30c9\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002"
+            ],
+            "Insert emoji": [
+                ""
+            ],
+            "Quote": [
+                "\u5f15\u7528"
+            ],
+            "Awaiting Approval": [
+                "\u627f\u8a8d\u5f85\u3061"
+            ],
+            "Something went wrong. Please try again.": [
+                "\u30a8\u30e9\u30fc\u304c\u767a\u751f\u3057\u307e\u3057\u305f\u3002\u3082\u3046\u4e00\u5ea6\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002"
+            ],
+            "No matches": [
+                "\u4e00\u81f4\u3059\u308b\u7d50\u679c\u304c\u3042\u308a\u307e\u305b\u3093"
+            ],
+            "Close menu": [
+                "\u30e1\u30cb\u30e5\u30fc\u3092\u9589\u3058\u308b"
+            ],
+            "Enter URL:": [
+                "URL \u3092\u5165\u529b:"
+            ],
+            "https:\/\/example.com": [
+                "https:\/\/example.com"
+            ],
+            "Uploading\u2026": [
+                ""
+            ],
+            "Joining\u2026": [
+                ""
+            ],
+            "Requesting\u2026": [
+                ""
+            ],
+            "Request submitted. Awaiting approval.": [
+                "\u30ea\u30af\u30a8\u30b9\u30c8\u3092\u9001\u4fe1\u3057\u307e\u3057\u305f\u3002\u627f\u8a8d\u3092\u304a\u5f85\u3061\u304f\u3060\u3055\u3044\u3002"
+            ],
+            "Request to Join": [
+                "\u53c2\u52a0\u3092\u30ea\u30af\u30a8\u30b9\u30c8"
+            ],
+            "Could not submit request.": [
+                "\u30ea\u30af\u30a8\u30b9\u30c8\u3092\u9001\u4fe1\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002"
+            ],
+            "Submitting\u2026": [
+                ""
+            ],
+            "Request Sent": [
+                "\u30ea\u30af\u30a8\u30b9\u30c8\u3092\u9001\u4fe1\u3057\u307e\u3057\u305f"
+            ]
+        }
+    }
+}

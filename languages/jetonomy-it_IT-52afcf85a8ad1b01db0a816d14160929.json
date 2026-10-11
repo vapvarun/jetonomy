@@ -1,0 +1,216 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-common.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "it",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Import complete!": [
+                "Importazione completata!"
+            ],
+            "Show more details": [
+                ""
+            ],
+            "Actions": [
+                "Azioni"
+            ],
+            "Expires": [
+                "Scade"
+            ],
+            "Unban": [
+                "Rimuovi ban"
+            ],
+            "Member": [
+                "Membro"
+            ],
+            "Moderator": [
+                "Moderatore"
+            ],
+            "Admin": [
+                "Amministratore"
+            ],
+            "Viewer": [
+                "Visualizzatore"
+            ],
+            "Invite Link": [
+                "Link di invito"
+            ],
+            "Uses": [
+                "Usi"
+            ],
+            "Label": [
+                "Etichetta"
+            ],
+            "Delete permanently": [
+                ""
+            ],
+            "Ban": [
+                "Banna"
+            ],
+            "Never": [
+                "Mai"
+            ],
+            "Remove prefix": [
+                "Rimuovi prefisso"
+            ],
+            "Copy": [
+                "Copia"
+            ],
+            "Revoke": [
+                "Revoca"
+            ],
+            "Are you sure? This cannot be undone.": [
+                "Sei sicuro? Non puoi annullare questa azione."
+            ],
+            "Lift this restriction? The member can post again right away.": [
+                ""
+            ],
+            "Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.": [
+                ""
+            ],
+            "Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.": [
+                ""
+            ],
+            "This destroys every topic, reply and attachment in %s, including content written by other members. It cannot be undone. Type the space name to confirm.": [
+                ""
+            ],
+            "That name did not match, so nothing was deleted.": [
+                ""
+            ],
+            "Mark this as spam? It will be hidden from the community.": [
+                "Contrassegna come spam? Sar\u00e0 nascosto dalla comunit\u00e0."
+            ],
+            "Move this to trash? This removes it from the community.": [
+                "Sposta nel cestino? Questo lo rimuove dalla comunit\u00e0."
+            ],
+            "Saving\u2026": [
+                ""
+            ],
+            "Saved!": [
+                "Salvato!"
+            ],
+            "Something went wrong.": [
+                "Qualcosa \u00e8 andato storto."
+            ],
+            "Error: %s": [
+                "Errore: %s"
+            ],
+            "Unknown error": [
+                "Errore sconosciuto"
+            ],
+            "Select Image": [
+                "Seleziona immagine"
+            ],
+            "Use this image": [
+                "Usa questa immagine"
+            ],
+            "Hidden spaces must use Invite Only. Join policy switched.": [
+                "spaces nascoste devono usare Solo su invito. Politica di adesione modificata."
+            ],
+            "Switched visibility to Private because Hidden requires Invite Only.": [
+                "Visibilit\u00e0 cambiata a Privata perch\u00e9 Nascosta richiede Solo su invito."
+            ],
+            "Reload page": [
+                "Ricarica la pagina"
+            ],
+            "Connection lost. You can resume this import later.": [
+                "Connessione persa. Puoi riprendere questo import pi\u00f9 tardi."
+            ],
+            "Invite link copied to clipboard.": [
+                "Link di invito copiato negli appunti."
+            ],
+            "Revoke this invite link? Anyone holding it will no longer be able to join.": [
+                "Revoca questo link di invito? Chiunque lo possieda non potr\u00e0 pi\u00f9 unirsi."
+            ],
+            "Unlimited": [
+                "Illimitato"
+            ],
+            "Expired": [
+                "Scaduto"
+            ],
+            "Sync": [
+                ""
+            ],
+            "Syncing\u2026": [
+                ""
+            ],
+            "Synced (%d)": [
+                ""
+            ],
+            "This will discard the interrupted import progress. Continue?": [
+                ""
+            ],
+            "Restart import": [
+                ""
+            ],
+            "People who match this rule": [
+                ""
+            ],
+            "%1$s can %2$s. They are recorded as %3$s.": [
+                ""
+            ],
+            "read posts and replies": [
+                ""
+            ],
+            "read, post, reply, vote and report": [
+                ""
+            ],
+            "read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people's topics": [
+                ""
+            ],
+            "Matches every visitor, signed in or not. Nobody is asked to log in first.": [
+                ""
+            ],
+            "Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.": [
+                ""
+            ],
+            "Matches anyone holding this WordPress role. Most members hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means \"everyone who signed up\".": [
+                ""
+            ],
+            "Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.": [
+                ""
+            ],
+            "Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.": [
+                ""
+            ],
+            "Matches members who hold the %s level you pick below.": [
+                ""
+            ],
+            "subscriber": [
+                ""
+            ],
+            "edit_posts": [
+                ""
+            ],
+            "2": [
+                ""
+            ],
+            "No matches": [
+                "Nessun risultato"
+            ],
+            "%d more. Refine your search to see it.": [
+                ""
+            ],
+            "Banning: %s": [
+                ""
+            ],
+            "Silencing: %s": [
+                ""
+            ],
+            "%d record imported successfully.": [
+                ""
+            ],
+            "%d file could not be recovered and was left linked in the original post text.": [
+                ""
+            ],
+            "%s to see updated status.": [
+                ""
+            ]
+        }
+    }
+}

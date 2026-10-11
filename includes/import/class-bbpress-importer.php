@@ -303,7 +303,7 @@ class BBPress_Importer extends Importer {
 		if ( $private > 0 || $hidden > 0 ) {
 			$notes[] = sprintf(
 				/* translators: 1: number of private forums, 2: number of hidden forums. */
-				__( '%1$s private and %2$s hidden forums will keep their privacy. Everyone who posted in them is added as a member so they keep access; new members need approving.', 'jetonomy' ),
+				_n( '%1$s private and %2$s hidden forum will keep their privacy. Everyone who posted in them is added as a member so they keep access; new members need approving.', '%1$s private and %2$s hidden forums will keep their privacy. Everyone who posted in them is added as a member so they keep access; new members need approving.', $private + $hidden, 'jetonomy' ),
 				number_format_i18n( $private ),
 				number_format_i18n( $hidden )
 			);
@@ -330,7 +330,7 @@ class BBPress_Importer extends Importer {
 		if ( $already > 0 ) {
 			$notes[] = sprintf(
 				/* translators: %s: number of previously imported items. */
-				__( 'This source has been imported before (%s items). Running it again adds only what is missing and does not duplicate anything.', 'jetonomy' ),
+				_n( 'This source has been imported before (%s item). Running it again adds only what is missing and does not duplicate anything.', 'This source has been imported before (%s items). Running it again adds only what is missing and does not duplicate anything.', $already, 'jetonomy' ),
 				number_format_i18n( $already )
 			);
 		}
@@ -874,7 +874,7 @@ class BBPress_Importer extends Importer {
 			}
 
 			if ( ! $space_id ) {
-				$this->log_error( 'forum', $id, 'Failed to create space' );
+				$this->log_error( 'forum', $id, __( 'Failed to create space', 'jetonomy' ) );
 				++$this->skipped;
 				continue;
 			}
@@ -935,7 +935,7 @@ class BBPress_Importer extends Importer {
 			);
 
 			if ( is_wp_error( $post_id ) || ! $post_id ) {
-				$this->log_error( 'topic', $topic->ID, is_wp_error( $post_id ) ? $post_id->get_error_message() : 'Failed to create post' );
+				$this->log_error( 'topic', $topic->ID, is_wp_error( $post_id ) ? $post_id->get_error_message() : __( 'Failed to create post', 'jetonomy' ) );
 				++$this->skipped;
 				continue;
 			}
@@ -993,7 +993,7 @@ class BBPress_Importer extends Importer {
 			);
 
 			if ( is_wp_error( $reply_id ) || ! $reply_id ) {
-				$this->log_error( 'reply', $reply->ID, is_wp_error( $reply_id ) ? $reply_id->get_error_message() : 'Failed to create reply' );
+				$this->log_error( 'reply', $reply->ID, is_wp_error( $reply_id ) ? $reply_id->get_error_message() : __( 'Failed to create reply', 'jetonomy' ) );
 				++$this->skipped;
 				continue;
 			}
