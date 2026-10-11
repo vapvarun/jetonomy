@@ -1048,11 +1048,26 @@ class Demo_Seeder {
 					'icon'             => $b[3],
 					'tier'             => $b[4],
 					'category'         => $b[5],
+					// Pro's criteria shape (threshold conditions); a {type, value}
+					// pair is not read by Pro, so those badges were never awarded.
 					'criteria'         => wp_json_encode(
-						array(
-							'type'  => $b[6],
-							'value' => $b[7],
-						)
+						'manual' === $b[6]
+							? array(
+								'type'       => 'manual',
+								'conditions' => array(),
+								'match'      => 'all',
+							)
+							: array(
+								'type'       => 'threshold',
+								'conditions' => array(
+									array(
+										'metric'   => $b[6],
+										'operator' => '>=',
+										'value'    => $b[7],
+									),
+								),
+								'match'      => 'all',
+							)
 					),
 					'reputation_bonus' => $b[8],
 					'is_repeatable'    => 0,
