@@ -216,8 +216,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 		);
 
 		// Rendered through the shared responsive primitive: this table's 8
-		// fixed-width columns clipped unreadably on mobile (Basecamp
-		// 10146405861, root cause 10146443346).
+		// fixed-width columns clipped unreadably on mobile.
 		jetonomy_admin_table(
 			array(
 				'tbody_id'  => 'jetonomy-spaces-list',

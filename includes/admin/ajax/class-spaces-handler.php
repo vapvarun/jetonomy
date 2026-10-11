@@ -515,7 +515,7 @@ class Spaces_Handler {
 		// spaces are always readable, and the Permission_Engine blocks non-members
 		// on private/hidden spaces *before* rules run — so a membership/role/
 		// capability/trust-level rule on a public space silently does nothing (the
-		// "configured but content still accessible" report, #10000074550). When
+		// "configured but content still accessible" report). When
 		// such a rule is attached to a public space, switch the space to Private
 		// so the rule actually restricts access, and tell the admin what happened.
 		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );

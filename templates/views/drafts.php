@@ -31,7 +31,7 @@ $drafts = \Jetonomy\Models\Post::list_drafts_by_user( $user_id, $per_page, $offs
 
 // has_more compares the real total against what is shown — never count( $drafts ),
 // which showed a phantom "Load More" when the draft count was an exact multiple
-// of $per_page (Basecamp).
+// of $per_page.
 $total    = \Jetonomy\Models\Post::count_drafts_by_user( $user_id );
 $has_more = ( $page * $per_page ) < $total;
 

@@ -178,8 +178,9 @@ class REST_Tests {
 		global $wpdb;
 
 		// Resolve admin.
-		$admin_ids      = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
-		$this->admin_id = (int) ( $admin_ids[0] ?? 1 );
+		// A throwaway administrator, so fixtures never author as, or award reputation / gamification points to, the real admin.
+		$suffix         = uniqid( '', false );
+		$this->admin_id = (int) wp_insert_user( array( 'user_login' => 'jt_qa_rt_admin_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'rt-admin-' . $suffix . '@example.test', 'role' => 'administrator' ) );
 		wp_set_current_user( $this->admin_id );
 
 		// Find an active space. Prefer a PUBLIC + open-join space so the
@@ -1373,6 +1374,11 @@ class REST_Tests {
 					// No DELETE endpoint for flags — remove directly.
 					global $wpdb;
 					$flags_t = table( 'flags' );
+					// Filing a flag notifies every real moderator; take those rows with it.
+					$flag = \Jetonomy\Models\Flag::find( (int) $item['id'] );
+					if ( $flag ) {
+						$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . table( 'notifications' ) . " WHERE type = 'moderation' AND object_id = %d AND created_at >= %s", (int) $flag->object_id, $flag->created_at ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+					}
 					$wpdb->delete( $flags_t, array( 'id' => (int) $item['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 					break;
 
@@ -1392,6 +1398,8 @@ class REST_Tests {
 		if ( $this->test_user_id ) {
 			wp_delete_user( $this->test_user_id );
 		}
+		wp_set_current_user( 0 );
+		wp_delete_user( $this->admin_id );
 
 		\WP_CLI::log( sprintf( '  Cleaned up %d fixture object(s).', count( $this->cleanup ) ) );
 	}

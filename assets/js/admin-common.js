@@ -1925,7 +1925,7 @@
 
 	// Small-screen row expander: core's common.js toggles tr.is-expanded but
 	// never manages aria-expanded, so screen readers heard a stateless
-	// button (QA 2026-07-30, card 10146443346). Delegated so it covers every
+	// button. Delegated so it covers every
 	// jetonomy_admin_table() on the page, including AJAX-refreshed rows.
 	// requestAnimationFrame lets core's own toggle land first, then the
 	// button mirrors the row's real state.
@@ -1955,7 +1955,7 @@
 })(jQuery);
 
 /**
- * Accessible-dialog enhancer (QA card 10150582851).
+ * Accessible-dialog enhancer.
  *
  * The admin's hand-rolled overlays (Edit Category, Ban, Pro Badge Award)
  * showed/hid a positioned div with none of the dialog contract. Rather

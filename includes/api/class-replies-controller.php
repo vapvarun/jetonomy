@@ -217,8 +217,7 @@ class Replies_Controller extends Base_Controller {
 		 * Banned/silenced, archived or locked space, closed post, and the
 		 * space-level right to reply - now shared with the inbound-email writer
 		 * through Content_Gate. These were spelled out here and only here, which
-		 * is exactly why the email path had none of them (Basecamp
-		 * 10228771444). Error codes and statuses are unchanged.
+		 * is exactly why the email path had none of them. Error codes and statuses are unchanged.
 		 *
 		 * Rate limiting and CAPTCHA stay below: they are per-surface policy
 		 * rather than facts about the post, and a CAPTCHA is meaningless for a
@@ -770,6 +769,9 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$new_post_id = \Jetonomy\Models\Reply::split_to_topic( $reply_id, $title, $target_space_id );
+		if ( is_wp_error( $new_post_id ) ) {
+			return $new_post_id;
+		}
 
 		if ( ! $new_post_id ) {
 			return new \WP_Error(

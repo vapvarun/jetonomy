@@ -1757,8 +1757,7 @@ class Template_Loader {
 				if ( $slug ) {
 					$space = \Jetonomy\Models\Space::find_by_slug( $slug );
 					// A hidden space answers 404 to non-members — its existence
-					// is concealed, same as the view templates render (Basecamp
-					// 10105630168). Missing and concealed are indistinguishable.
+					// is concealed, same as the view templates render. Missing and concealed are indistinguishable.
 					if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 						status_header( 404 );
 					}

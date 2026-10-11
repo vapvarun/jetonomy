@@ -50,7 +50,6 @@ final class Recount_Backfill {
 	private const OPTION = 'jetonomy_recount_backfill';
 
 	/** One group per plugin, so every Jetonomy job is observable together. */
-	private const AS_GROUP = 'jetonomy';
 
 	/** Continuation hook. Re-enqueued until every stage drains. */
 	public const BATCH_HOOK = 'jetonomy_recount_backfill_batch';
@@ -149,8 +148,7 @@ final class Recount_Backfill {
 			return;
 		}
 
-		if ( function_exists( 'as_has_scheduled_action' )
-			&& as_has_scheduled_action( self::BATCH_HOOK, array(), self::AS_GROUP ) ) {
+		if ( Queue::is_queued( self::BATCH_HOOK ) ) {
 			return;
 		}
 
@@ -160,22 +158,13 @@ final class Recount_Backfill {
 	/**
 	 * Queue one continuation.
 	 *
-	 * AS-first; WP-Cron carries it if the store refuses the job. The return
-	 * value is load-bearing - as_enqueue_async_action() answers 0 when it
-	 * declines, and treating that as a successful hand-off is what strands a
-	 * half-finished backfill with nothing scheduled to finish it.
+	 * AS-first; WP-Cron carries it if the store refuses the job, so a
+	 * half-finished backfill always has something scheduled to finish it.
 	 *
 	 * @return void
 	 */
 	private static function enqueue(): void {
-		if ( function_exists( 'as_enqueue_async_action' )
-			&& as_enqueue_async_action( self::BATCH_HOOK, array(), self::AS_GROUP ) ) {
-			return;
-		}
-
-		if ( ! wp_next_scheduled( self::BATCH_HOOK ) ) {
-			wp_schedule_single_event( time() + 60, self::BATCH_HOOK );
-		}
+		Queue::async( self::BATCH_HOOK, array(), true, MINUTE_IN_SECONDS );
 	}
 
 	/**
@@ -322,10 +311,6 @@ final class Recount_Backfill {
 	 * @return void
 	 */
 	public static function clear_scheduled(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( self::BATCH_HOOK, array(), self::AS_GROUP );
-		}
-
-		wp_clear_scheduled_hook( self::BATCH_HOOK );
+		Queue::cancel( self::BATCH_HOOK );
 	}
 }

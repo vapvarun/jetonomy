@@ -241,8 +241,7 @@ class UserProfile extends Model {
 		// A bare UPDATE hits nothing for a member who has only ever READ the
 		// community, so lurkers never got a profile row: is_online() stayed
 		// false forever and the "profile is created on first visit" promise
-		// in the Users-screen copy was a lie (QA 2026-07-30, card
-		// 9725751235). Throttled by the transient above, so this costs one
+		// in the Users-screen copy was a lie. Throttled by the transient above, so this costs one
 		// SELECT per user per minute at most.
 		static::find_or_create( $user_id );
 

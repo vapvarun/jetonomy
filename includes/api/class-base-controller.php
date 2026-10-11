@@ -846,8 +846,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// rejects a self-downvote with a 400, and the web templates already hide
 		// the control on own content (templates/partials/post-card.php). Clients
 		// that only see the API had no way to mirror that rule — the app rendered
-		// the chevron on the viewer's own posts and the tap 400'd (Basecamp
-		// 10199587514). Server-owned rule, server-published flag: no client
+		// the chevron on the viewer's own posts and the tap 400'd. Server-owned rule, server-published flag: no client
 		// re-derives it, and the anonymous case stays correct.
 		$data['can_downvote'] = $uid > 0 && $real_author_id !== $uid;
 
@@ -886,8 +885,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// report is answered 409 jetonomy_already_flagged, but the API published
 		// nothing to read that state from, so the app kept "reported" in local
 		// component state - lost on every refresh, after which the control drew
-		// itself un-reported and the re-tap silently 409'd (Basecamp
-		// 10202766654). Batched by enrich_viewer_state() on list paths.
+		// itself un-reported and the re-tap silently 409'd. Batched by enrich_viewer_state() on list paths.
 		$data['viewer_flagged'] = isset( $post->viewer_flagged )
 			? (bool) $post->viewer_flagged
 			: \Jetonomy\Models\Flag::has_reported( $uid, 'post', (int) $post->id );

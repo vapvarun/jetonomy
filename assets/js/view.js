@@ -1843,7 +1843,7 @@ const { state, actions } = store( 'jetonomy', {
                 },
                 revert: ( snap ) => {
                     // Restore DOM + state from snapshot — this was the
-                    // missing revert that caused #9886066727 (stale UI on
+                    // missing revert that caused a bug (stale UI on
                     // failed downvote until refresh).
                     state.replyScores[ replyId ] = snap.prevScore;
                     if ( scoreEl ) scoreEl.textContent = String( snap.prevScore );
@@ -4001,7 +4001,7 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Profile save ──
-        // ── Local avatar (#9966775705) ──
+        // ── Local avatar ──
         // Upload goes through the existing POST /media pipeline (uploads
         // gate + auto-alt); the resulting URL is staged in the hidden
         // avatar_url input and persisted by saveProfile's PATCH /users/me.
@@ -4157,7 +4157,7 @@ const { state, actions } = store( 'jetonomy', {
                     payload[ key ] = field.value;
                 }
             } );
-            // Local avatar (#9966775705): the hidden input carries the URL of
+            // Local avatar: the hidden input carries the URL of
             // the uploaded attachment ('' = removed → Gravatar fallback).
             const avatarInput = form.querySelector( '[name="avatar_url"]' );
             if ( avatarInput ) {
@@ -4277,7 +4277,7 @@ const { state, actions } = store( 'jetonomy', {
                 collectPrefix:   false,
                 collectPrivate:  true, // embed must respect private flag.
                 collectSchedule: false,
-                collectCaptcha:  true, // posts endpoint verifies for low-trust users (#9977126420).
+                collectCaptcha:  true, // posts endpoint verifies for low-trust users.
                 bodySource:      'textarea',
                 errorSink:       'context',
             } );
@@ -4678,7 +4678,7 @@ const { state, actions } = store( 'jetonomy', {
 } )();
 
 /**
- * Prism re-highlight on client-side navigation (QA card 10149499675).
+ * Prism re-highlight on client-side navigation.
  *
  * Prism auto-runs only on DOMContentLoaded, so a topic reached through the
  * iAPI router would render un-highlighted even with the library present.
@@ -4707,7 +4707,7 @@ const { state, actions } = store( 'jetonomy', {
 /**
  * #reply intent: the r keyboard shortcut (and any deep link) lands on a
  * topic with location.hash === '#reply' - focus the composer so "opens a
- * reply" is literally true (QA 10150869012). Re-checked after client-side
+ * reply" is literally true. Re-checked after client-side
  * navigation per the re-init contract.
  */
 ( function () {

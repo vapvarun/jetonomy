@@ -956,7 +956,7 @@ class Spaces_Controller extends Base_Controller {
 				return array(
 					'user_id'      => (int) $row->user_id,
 					'role'         => (string) $row->role,
-					'display_name' => (string) $row->display_name,
+					'display_name' => \Jetonomy\user_display_name( $row ),
 					'avatar_url'   => (string) ( $row->avatar_url ?? '' ),
 				);
 			},
@@ -1503,7 +1503,7 @@ class Spaces_Controller extends Base_Controller {
 			'user_id'          => $user_id,
 			'role'             => $member->role,
 			'joined_at'        => $member->joined_at ?? null,
-			'display_name'     => $user ? $user->display_name : '',
+			'display_name'     => $user ? \Jetonomy\user_display_name( $user ) : '',
 			'avatar_url'       => \Jetonomy\Avatar::display_url( $user_id, 48 ),
 			'trust_level'      => $profile ? (int) $profile->trust_level : 0,
 			'reputation'       => $profile ? (int) $profile->reputation : 0,

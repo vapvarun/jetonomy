@@ -15,7 +15,7 @@ use Jetonomy\CLI\Journeys\Taxonomy_Journey;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Reproduces Basecamp bug 9725048839 in one command — seeds a fresh category,
+ * Reproduces the pending-join-request bug in one command — seeds a fresh category,
  * an approval-gated space under it, a subscriber user, and a pending join
  * request from that user against the space, so QA can click through the
  * admin join-request UI without hand-building the fixtures.

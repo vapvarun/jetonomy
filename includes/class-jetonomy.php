@@ -426,7 +426,7 @@ final class Jetonomy {
 		// certain this request is a real browser admin pageview that will be
 		// redirected. Deleting it up-front meant the first ajax/cron/network-admin
 		// request after activation silently ate the transient and the admin never
-		// reached the wizard (Basecamp F15). Each early-return below therefore
+		// reached the wizard (F15). Each early-return below therefore
 		// leaves the transient intact for the next qualifying pageview.
 
 		// Safety net — never bounce into the wizard if setup already completed.

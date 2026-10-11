@@ -14,7 +14,7 @@ $profile_url  = \Jetonomy\get_profile_url( (int) $current_user->ID );
 
 // Cancel returns the member to wherever they opened the editor from — a member
 // who arrived from a topic or notification was being force-navigated to their
-// profile instead (support ticket 233992000086415470). wp_get_referer() only
+// profile instead (support ticket 2339920). wp_get_referer() only
 // yields a SAME-ORIGIN referer and already excludes the current request, so a
 // refresh can't loop Cancel back onto the form and a crafted cross-site referer
 // can't bounce the member off-site. When there is no safe place to return to

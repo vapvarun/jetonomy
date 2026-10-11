@@ -988,7 +988,15 @@ class CLI {
 		$footprint_after = self::qa_footprint();
 		if ( $footprint_after !== $footprint_before ) {
 			++$total_fail;
-			\WP_CLI::warning( 'Fixtures left data behind. Before: ' . wp_json_encode( $footprint_before ) . ' After: ' . wp_json_encode( $footprint_after ) );
+			$drift = array();
+			foreach ( $footprint_after + $footprint_before as $key => $unused ) {
+				$was = $footprint_before[ $key ] ?? null;
+				$now = $footprint_after[ $key ] ?? null;
+				if ( $was !== $now ) {
+					$drift[] = sprintf( '%s %s -> %s', $key, $was ?? 'absent', $now ?? 'absent' );
+				}
+			}
+			\WP_CLI::warning( 'Fixtures left data behind: ' . implode( '; ', $drift ) );
 		}
 
 		\WP_CLI::log( '' );
@@ -1024,6 +1032,18 @@ class CLI {
 		$row['posts']          = $wpdb->get_var( 'SELECT COUNT(*) FROM ' . \Jetonomy\table( 'posts' ) );
 		$row['replies']        = $wpdb->get_var( 'SELECT COUNT(*) FROM ' . \Jetonomy\table( 'replies' ) );
 		$row['orphan_members'] = $wpdb->get_var( "SELECT COUNT(*) FROM {$members} m LEFT JOIN {$spaces} s ON s.id = m.space_id WHERE s.id IS NULL" );
+		// Every plugin table (core jt_ and Pro jt_pro_): a row left behind anywhere is a leak.
+		$like = $wpdb->esc_like( $wpdb->prefix . 'jt_' ) . '%';
+		foreach ( (array) $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ) as $tbl ) {
+			$row[ 'rows:' . substr( $tbl, strlen( $wpdb->prefix ) ) ] = $wpdb->get_var( "SELECT COUNT(*) FROM `{$tbl}`" );
+		}
+		$row['admin_reputation'] = $wpdb->get_var( $wpdb->prepare( 'SELECT reputation FROM ' . \Jetonomy\table( 'user_profiles' ) . ' WHERE user_id = %d', 1 ) );
+		// WB Gamification listens to our hooks: the real admin must not earn events, points or queued toasts from a QA run.
+		foreach ( array( 'wb_gam_events', 'wb_gam_points', 'wb_gam_notifications_queue' ) as $gam ) {
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . $gam ) ) ) {
+				$row[ 'admin:' . $gam ] = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$wpdb->prefix}{$gam}` WHERE user_id = %d", 1 ) );
+			}
+		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return array_map( 'intval', (array) $row );
 	}

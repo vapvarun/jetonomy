@@ -2,8 +2,7 @@
 /**
  * My Subscriptions view — every space + topic the viewer follows, with
  * one-click unfollow. Closes the three-entry-points gap: the subscriptions
- * store had REST + per-object toggles but no manage surface (Basecamp
- * 9891710479).
+ * store had REST + per-object toggles but no manage surface.
  *
  * Auth is enforced by Template_Loader ($auth_required_routes).
  *

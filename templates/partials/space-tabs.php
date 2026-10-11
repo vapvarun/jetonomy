@@ -53,7 +53,7 @@ if ( 'ideas' === ( $space->type ?? '' ) ) {
 }
 
 // Space moderators can reach the members page (and its pending join-request
-// approval panel) without knowing the direct URL. (#10013900410)
+// approval panel) without knowing the direct URL.
 $jt_show_members = is_user_logged_in();
 
 if ( $jt_show_members ) {

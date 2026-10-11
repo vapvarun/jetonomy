@@ -52,6 +52,9 @@ class Model_Tests {
 	 */
 	private int $skipped = 0;
 
+	/** Throwaway administrator used wherever a fixture needs an author or moderator. */
+	private int $qa_admin = 0;
+
 	// ──────────────────────────────────────────────────────────────────────────
 	// Public API
 	// ──────────────────────────────────────────────────────────────────────────
@@ -64,8 +67,10 @@ class Model_Tests {
 	public function run(): array {
 		global $wpdb;
 
-		$admin_ids = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
-		$admin_id  = (int) ( $admin_ids[0] ?? 1 );
+		// A throwaway administrator, so fixtures never author as, or award reputation / gamification points to, the real admin.
+		$suffix         = uniqid( '', false );
+		$this->qa_admin = (int) wp_insert_user( array( 'user_login' => 'jt_qa_mt_admin_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'mt-admin-' . $suffix . '@example.test', 'role' => 'administrator' ) );
+		$admin_id       = $this->qa_admin;
 
 		// Find a test space for membership checks.
 		$spaces_t = table( 'spaces' );
@@ -108,13 +113,15 @@ class Model_Tests {
 		if ( $space ) {
 			$space_id = (int) $space->id;
 
-			// 5. Admin is member of test space.
+			// 5. Admin is member of test space (a throwaway admin joined for the check, removed after).
+			SpaceMember::add( $space_id, $admin_id, 'admin' );
 			$is_member = SpaceMember::is_member( $space_id, $admin_id );
 			$this->check( 'SM5: admin is_member of test space', $is_member );
 
 			// 6. get_role returns a valid role string.
 			$role = SpaceMember::get_role( $space_id, $admin_id );
 			$this->check( 'SM6: get_role returns non-empty string', ! empty( $role ) );
+			SpaceMember::remove( $space_id, $admin_id );
 		} else {
 			$this->skip( 'SM5: is_member', 'no space' );
 			$this->skip( 'SM6: get_role', 'no space' );
@@ -254,6 +261,7 @@ class Model_Tests {
 		$this->test_count_label_plurals();
 		$this->test_edited_marker();
 		$this->test_upload_box_rules();
+		$this->test_queue_cancel();
 		$this->test_import_map();
 		$this->test_recount_backfill();
 
@@ -266,6 +274,9 @@ class Model_Tests {
 		$this->check_robots_single_emitter();
 		$this->check_subspace_listing();
 		$this->check_split_leaves_a_trace();
+
+		wp_set_current_user( 0 );
+		wp_delete_user( $this->qa_admin );
 
 		return array( 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped );
 	}
@@ -312,7 +323,7 @@ class Model_Tests {
 		$post_id = Post::create(
 			array(
 				'space_id'  => $space_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'title'     => 'QA split source',
 				'content'   => 'probe',
 				'type'      => 'discussion',
@@ -322,7 +333,7 @@ class Model_Tests {
 		$post_id = is_wp_error( $post_id ) ? 0 : (int) $post_id;
 
 		$reply_id = $post_id > 0
-			? Reply::create( array( 'post_id' => $post_id, 'author_id' => 1, 'content' => 'QA reply to split' ) )
+			? Reply::create( array( 'post_id' => $post_id, 'author_id' => $this->qa_admin, 'content' => 'QA reply to split' ) )
 			: 0;
 		$reply_id = is_wp_error( $reply_id ) ? 0 : (int) $reply_id;
 
@@ -378,13 +389,14 @@ class Model_Tests {
 		global $wpdb;
 
 		$spaces_t = table( 'spaces' );
-		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_t ): int {
+		$author   = $this->qa_admin;
+		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_t, $author ): int {
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$spaces_t,
 				array(
 					'category_id' => 0,
 					'parent_id'   => $parent,
-					'author_id'   => 1,
+					'author_id'   => $author,
 					'type'        => 'forum',
 					'title'       => $title,
 					'slug'        => sanitize_title( $title ) . '-' . wp_generate_password( 6, false, false ),
@@ -567,7 +579,7 @@ class Model_Tests {
 		$post_id = Post::create(
 			array(
 				'space_id'  => $space_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'title'     => 'QA scheduled probe',
 				'content'   => 'probe',
 				'type'      => 'discussion',
@@ -590,7 +602,7 @@ class Model_Tests {
 		};
 		add_action( 'jetonomy_after_create_post', $probe, 1 );
 
-		\Jetonomy\Moderation\Moderation_Service::system_set_object_status( 'post', $post_id, 'approve', 1 );
+		\Jetonomy\Moderation\Moderation_Service::system_set_object_status( 'post', $post_id, 'approve', $this->qa_admin );
 
 		remove_action( 'jetonomy_after_create_post', $probe, 1 );
 
@@ -613,7 +625,7 @@ class Model_Tests {
 		$overdue_id = Post::create(
 			array(
 				'space_id'  => $space_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'title'     => 'QA overdue probe',
 				'content'   => 'probe',
 				'type'      => 'discussion',
@@ -787,7 +799,7 @@ class Model_Tests {
 			array(
 				'category_id' => 0,
 				'parent_id'   => 0,
-				'author_id'   => 1,
+				'author_id'   => $this->qa_admin,
 				'type'        => 'forum',
 				'title'       => 'QA Settings Probe',
 				'slug'        => 'qa-settings-probe-' . wp_generate_password( 6, false ),
@@ -1122,8 +1134,7 @@ class Model_Tests {
 
 		// Cleanup.
 		foreach ( array( $sole, $shared, $by_admin ) as $sid ) {
-			$wpdb->delete( $members_t, array( 'space_id' => $sid ) );
-			$wpdb->delete( $spaces_t, array( 'id' => $sid ) );
+			\Jetonomy\Space_Purge::purge( $sid ); // Members and their activity rows too, not just the space row.
 		}
 		wp_delete_user( (int) $co_admin );
 	}
@@ -1160,7 +1171,7 @@ class Model_Tests {
 		$space = $make( 'qa-ho-' . $suffix, (int) $users['owner'] );
 		\Jetonomy\Models\SpaceMember::add( $space, (int) $users['banned'], 'admin' );
 		\Jetonomy\Models\SpaceMember::add( $space, (int) $users['heir'], 'admin' );
-		$ban = \Jetonomy\Models\Restriction::ban( (int) $users['banned'], 'global_ban', 1 );
+		$ban = \Jetonomy\Models\Restriction::ban( (int) $users['banned'], 'global_ban', $this->qa_admin );
 		\Jetonomy\Models\Restriction::reset_memo();
 
 		$row = \Jetonomy\Models\Space::find( $space );
@@ -1239,12 +1250,12 @@ class Model_Tests {
 	private function test_space_purge_stops_on_db_error(): void {
 		global $wpdb;
 		$slug  = 'qa-pg-' . wp_generate_password( 6, false, false );
-		$space = (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA PG', 'slug' => $slug, 'type' => 'forum', 'author_id' => 1 ), 1 );
+		$space = (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA PG', 'slug' => $slug, 'type' => 'forum', 'author_id' => $this->qa_admin ), $this->qa_admin );
 		$posts = \Jetonomy\table( 'posts' );
 		$now   = current_time( 'mysql', true );
-		$wpdb->insert( $posts, array( 'space_id' => $space, 'author_id' => 1, 'title' => 'PG', 'slug' => $slug . '-t', 'content' => 'x', 'content_plain' => 'x', 'status' => 'publish', 'created_at' => $now, 'last_reply_at' => $now ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->insert( $posts, array( 'space_id' => $space, 'author_id' => $this->qa_admin, 'title' => 'PG', 'slug' => $slug . '-t', 'content' => 'x', 'content_plain' => 'x', 'status' => 'publish', 'created_at' => $now, 'last_reply_at' => $now ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$topic = (int) $wpdb->insert_id;
-		$reply = \Jetonomy\Models\Reply::create( array( 'post_id' => $topic, 'author_id' => 1, 'content' => 'PG reply', 'status' => 'publish' ) );
+		$reply = \Jetonomy\Models\Reply::create( array( 'post_id' => $topic, 'author_id' => $this->qa_admin, 'content' => 'PG reply', 'status' => 'publish' ) );
 
 		$break = static function ( $sql ) use ( $posts, $space ) {
 			return false !== strpos( (string) $sql, "SELECT id FROM {$posts} WHERE space_id = {$space}" ) ? 'SELECT qa_pg_missing_column FROM qa_pg_missing_table' : $sql;
@@ -1286,9 +1297,9 @@ class Model_Tests {
 	 */
 	private function test_topic_data_integrity(): void {
 		$suffix = wp_generate_password( 6, false, false );
-		$space  = static fn( string $slug, string $type = 'forum' ): int => (int) \Jetonomy\Models\Space::create( array( 'title' => $slug, 'slug' => $slug . '-' . $suffix, 'type' => $type, 'author_id' => 1 ), 1 );
-		$topic  = static fn( int $sid, string $t, string $status = 'publish' ): int => (int) \Jetonomy\Models\Post::create( array( 'space_id' => $sid, 'author_id' => 1, 'title' => $t, 'slug' => sanitize_title( $t . ' ' . $suffix ), 'content' => 'x', 'status' => $status ) );
-		$reply  = static fn( int $pid, int $parent = 0 ) => \Jetonomy\Models\Reply::create( array( 'post_id' => $pid, 'author_id' => 1, 'content' => 'r', 'status' => 'publish', 'parent_id' => $parent ) );
+		$space  = fn( string $slug, string $type = 'forum' ): int => (int) \Jetonomy\Models\Space::create( array( 'title' => $slug, 'slug' => $slug . '-' . $suffix, 'type' => $type, 'author_id' => $this->qa_admin ), $this->qa_admin );
+		$topic  = fn( int $sid, string $t, string $status = 'publish' ): int => (int) \Jetonomy\Models\Post::create( array( 'space_id' => $sid, 'author_id' => $this->qa_admin, 'title' => $t, 'slug' => sanitize_title( $t . ' ' . $suffix ), 'content' => 'x', 'status' => $status ) );
+		$reply  = fn( int $pid, int $parent = 0 ) => \Jetonomy\Models\Reply::create( array( 'post_id' => $pid, 'author_id' => $this->qa_admin, 'content' => 'r', 'status' => 'publish', 'parent_id' => $parent ) );
 		$a      = $space( 'qa-di-a' );
 		$b      = $space( 'qa-di-b' );
 		$q      = $space( 'qa-di-q', 'qa' );
@@ -1341,6 +1352,20 @@ class Model_Tests {
 			'DI7: split takes grandchildren along, and the source drops the answer that left',
 			$moved && (int) $g->post_id === $moved && (int) $g->parent_id === $child && null === \Jetonomy\Models\Reply::find( $child )->parent_id
 				&& empty( \Jetonomy\Models\Post::find( $sq )->accepted_reply_id ) && empty( $g->is_accepted ) && $rep() === $before
+		);
+
+		// DI9: a split never moves a private reply to a new audience, and never unmasks an anonymous one.
+		$pt    = $topic( $a, 'DI split private' );
+		$proot = $by( $pt );
+		\Jetonomy\Models\Reply::set_private( $by( $pt, $proot ), true );
+		$refused = \Jetonomy\Models\Reply::split_to_topic( $proot, 'DI split private new ' . $suffix );
+		$anon    = (int) \Jetonomy\Models\Reply::create( array( 'post_id' => $pt, 'author_id' => $member, 'content' => 'anon', 'status' => 'publish', 'is_anonymous' => 1 ) );
+		\Jetonomy\Models\Reply::update( $anon, array( 'is_anonymous' => 1 ) );
+		$anon_topic = \Jetonomy\Models\Reply::split_to_topic( $anon, 'DI split anon new ' . $suffix );
+		$this->check(
+			'DI9: split refuses a thread with private replies and keeps an anonymous reply anonymous',
+			is_wp_error( $refused ) && 'jetonomy_split_private' === $refused->get_error_code()
+				&& is_int( $anon_topic ) && $anon_topic > 0 && ! empty( \Jetonomy\Models\Post::find( $anon_topic )->is_anonymous )
 		);
 
 		// DI8: merge takes back the losing answer's reputation and clears the source's pointer.
@@ -1432,7 +1457,7 @@ class Model_Tests {
 
 		// CV4: the owner keeps full sight - a filter that blinds the admin
 		// screen would "pass" CV1-CV3 while breaking management.
-		wp_set_current_user( 1 );
+		wp_set_current_user( $this->qa_admin );
 		$admin_slugs = array_column( Category::list_top_level(), 'slug' );
 		$this->check( 'CV4: a category manager still sees a hidden category', in_array( $slug, $admin_slugs, true ) );
 
@@ -1444,7 +1469,7 @@ class Model_Tests {
 			array(
 				'category_id' => $cat_id,
 				'parent_id'   => 0,
-				'author_id'   => 1,
+				'author_id'   => $this->qa_admin,
 				'type'        => 'forum',
 				'title'       => 'QA Visibility Probe Space',
 				'slug'        => $slug . '-space',
@@ -1479,7 +1504,7 @@ class Model_Tests {
 			$posts_table,
 			array(
 				'space_id'   => $space_id,
-				'author_id'  => 1,
+				'author_id'  => $this->qa_admin,
 				'title'      => 'QA Visibility Probe Topic',
 				'slug'       => $slug . '-topic',
 				'content'    => 'probe',
@@ -1491,7 +1516,7 @@ class Model_Tests {
 		$probe_post = (object) array(
 			'id'         => $post_id,
 			'space_id'   => $space_id,
-			'author_id'  => 1,
+			'author_id'  => $this->qa_admin,
 			'status'     => 'publish',
 			'is_private' => 0,
 		);
@@ -1545,7 +1570,7 @@ class Model_Tests {
 				array(
 					'category_id' => $cat_id,
 					'parent_id'   => 0,
-					'author_id'   => 1,
+					'author_id'   => $this->qa_admin,
 					'type'        => 'forum',
 					'title'       => 'QA Visibility Probe Private Space',
 					'slug'        => $slug . '-private',
@@ -1584,7 +1609,7 @@ class Model_Tests {
 
 		// The widen-check that stops all of CV7-CV11 being satisfied by simply
 		// denying everyone.
-		wp_set_current_user( 1 );
+		wp_set_current_user( $this->qa_admin );
 		$this->check(
 			'CV12: the owner still reads the space and its topics',
 			Permission_Engine::can( 1, 'read', $space_id )
@@ -1630,13 +1655,13 @@ class Model_Tests {
 		);
 		$cat_id = (int) $wpdb->insert_id;
 
-		$make_space = static function ( int $parent_id, int $category_id, string $slug ) use ( $wpdb, $spaces ): int {
+		$make_space = function ( int $parent_id, int $category_id, string $slug ) use ( $wpdb, $spaces ): int {
 			$wpdb->insert(
 				$spaces,
 				array(
 					'category_id' => $category_id,
 					'parent_id'   => $parent_id,
-					'author_id'   => 1,
+					'author_id'   => $this->qa_admin,
 					'type'        => 'forum',
 					'title'       => 'QA Child Listing ' . $slug,
 					'slug'        => $slug,
@@ -1843,7 +1868,7 @@ class Model_Tests {
 		$held = Reply::create(
 			array(
 				'post_id'   => $post_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => 'QA moderation probe',
 				'status'    => 'pending',
 			)
@@ -1866,7 +1891,7 @@ class Model_Tests {
 		$normal = Reply::create(
 			array(
 				'post_id'   => $post_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => 'QA direct probe',
 			)
 		);
@@ -1884,14 +1909,14 @@ class Model_Tests {
 		$parent_id = Reply::create(
 			array(
 				'post_id'   => $post_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => 'QA orphan parent',
 			)
 		);
 		$child_id = Reply::create(
 			array(
 				'post_id'   => $post_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => 'QA orphan child',
 				'parent_id' => $parent_id,
 			)
@@ -2047,7 +2072,7 @@ class Model_Tests {
 		$reply_id                    = Reply::create(
 			array(
 				'post_id'   => (int) $wpdb->get_var( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" ),
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => '<img src="' . esc_url( content_url( '/uploads/' . $inline_file ) ) . '" />',
 			)
 		);
@@ -2150,9 +2175,18 @@ class Model_Tests {
 			do_action( $hook, $post, $space );
 			$this->check( 'FO3: one run notifies one batch and queues the rest from its cursor', 100 === $count() && as_has_scheduled_action( $hook, array( $post, $space, 990000100 ), 'jetonomy' ) );
 
+			// Run each continuation by hand, first taking it off the queue so a
+			// background Action Scheduler runner cannot run the same batch too.
+			$own = static function ( array $args ) use ( $hook ): void {
+				if ( function_exists( 'as_unschedule_all_actions' ) ) {
+					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
+				}
+			};
+			$own( array( $post, $space, 990000100 ) );
 			do_action( $hook, $post, $space, 990000100 );
+			$own( array( $post, $space, 990000200 ) );
 			do_action( $hook, $post, $space, 990000200 );
-			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 250 === $count() );
+			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 250 === $count(), 'notified ' . $count() );
 		} finally {
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
 				as_unschedule_all_actions( $hook, array(), 'jetonomy' );
@@ -2198,6 +2232,19 @@ class Model_Tests {
 		update_option( 'jetonomy_settings', array_merge( (array) $saved, array( 'community_title' => 'Acme Forum' ) ) );
 		$this->check( 'CT1: the community home name (page title, JSON-LD) is the owner\'s Community Title', 'Acme Forum' === \Jetonomy\community_home_name() );
 		update_option( 'jetonomy_settings', $saved );
+	}
+
+	/**
+	 * QU: cancelling a job removes every queued copy, per-member ones with
+	 * arguments included (per-member Gravatar checks used to survive deactivation).
+	 */
+	private function test_queue_cancel(): void {
+		$hook = 'jetonomy_qa_queue_probe'; // Test-only hook: real queued jobs are never touched.
+		\Jetonomy\Queue::async( $hook, array( 999981 ) );
+		\Jetonomy\Queue::async( $hook, array( 999982 ) );
+		$queued = \Jetonomy\Queue::is_queued( $hook, array( 999981 ) );
+		\Jetonomy\Queue::cancel( $hook );
+		$this->check( 'QU1: Queue::cancel() removes per-member jobs whatever their arguments', $queued && ! \Jetonomy\Queue::is_queued( $hook, array( 999981 ) ) && ! \Jetonomy\Queue::is_queued( $hook, array( 999982 ) ) );
 	}
 
 	/**
@@ -2249,13 +2296,13 @@ class Model_Tests {
 		$suffix  = wp_generate_password( 6, false, false );
 		$stay    = (int) wp_insert_user( array( 'user_login' => 'jt_qa_nv_stay_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'nv-stay-' . $suffix . '@example.test', 'role' => 'subscriber' ) );
 		$leave   = (int) wp_insert_user( array( 'user_login' => 'jt_qa_nv_leave_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'nv-leave-' . $suffix . '@example.test', 'role' => 'subscriber' ) );
-		$space   = Space::create( array( 'title' => 'QA NV Private', 'slug' => 'jt-qa-nv-' . $suffix, 'author_id' => 1, 'type' => 'forum', 'visibility' => 'private' ) );
+		$space   = Space::create( array( 'title' => 'QA NV Private', 'slug' => 'jt-qa-nv-' . $suffix, 'author_id' => $this->qa_admin, 'type' => 'forum', 'visibility' => 'private' ) );
 		$post    = 0;
 
 		try {
 			SpaceMember::add( (int) $space, $stay, 'member' );
 			SpaceMember::add( (int) $space, $leave, 'member' );
-			$post = (int) Post::create( array( 'space_id' => (int) $space, 'author_id' => 1, 'title' => 'QA NV topic', 'slug' => 'jt-qa-nv-topic-' . $suffix, 'content' => '<p>x</p>', 'status' => 'publish' ) );
+			$post = (int) Post::create( array( 'space_id' => (int) $space, 'author_id' => $this->qa_admin, 'title' => 'QA NV topic', 'slug' => 'jt-qa-nv-topic-' . $suffix, 'content' => '<p>x</p>', 'status' => 'publish' ) );
 			foreach ( array( $stay, $leave ) as $uid ) {
 				Notification::create( array( 'user_id' => $uid, 'actor_id' => 1, 'type' => 'new_post_in_sub', 'object_type' => 'post', 'object_id' => $post, 'message' => 'QA NV' ) );
 			}
@@ -2319,7 +2366,7 @@ class Model_Tests {
 					'title'       => 'QA CH Space',
 					'slug'        => 'jt-qa-ch-space-' . $suffix,
 					'category_id' => $deep,
-					'author_id'   => 1,
+					'author_id'   => $this->qa_admin,
 					'type'        => 'forum',
 				)
 			);
@@ -2480,7 +2527,9 @@ class Model_Tests {
 
 		// SA4/SA5: a plugin adapter is fed - index() on create, delete() on delete.
 		global $wpdb;
-		$post_id = (int) $wpdb->get_var( "SELECT id FROM " . table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		// A throwaway topic: firing the create hook for a real one would credit its real author.
+		$sa_space = (int) $wpdb->get_var( "SELECT id FROM " . table( 'spaces' ) . " WHERE status = 'active' ORDER BY id LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$post_id  = (int) Post::create( array( 'space_id' => $sa_space, 'author_id' => $this->qa_admin, 'title' => 'QA SA topic', 'slug' => 'jt-qa-sa-' . wp_generate_password( 6, false, false ), 'content' => 'x', 'status' => 'publish' ) );
 		$spy     = new class() extends \Jetonomy\Search\Fulltext_Search {
 			public static bool $on = true;
 			public static array $calls = array();
@@ -2494,6 +2543,7 @@ class Model_Tests {
 		$spy::$on = false;
 		$this->check( 'SA4: a plugin adapter is sent a published topic when it is created', $post_id > 0 && in_array( "index:post:{$post_id}", $spy::$calls, true ) );
 		$this->check( 'SA5: a plugin adapter is told when a topic is deleted', in_array( 'delete:post:987655', $spy::$calls, true ) );
+		Post::delete( $post_id );
 	}
 
 	/**
@@ -2719,7 +2769,7 @@ class Model_Tests {
 			array(
 				'category_id' => $cat_a,
 				'parent_id'   => 0,
-				'author_id'   => 1,
+				'author_id'   => $this->qa_admin,
 				'type'        => 'forum',
 				'title'       => 'QA Count Space ' . $suffix,
 				'slug'        => 'qa-count-space-' . $suffix,
@@ -2798,7 +2848,7 @@ class Model_Tests {
 			array(
 				'category_id' => 0,
 				'parent_id'   => 0,
-				'author_id'   => 1,
+				'author_id'   => $this->qa_admin,
 				'type'        => 'forum',
 				'title'       => 'QA import-map probe',
 				'slug'        => 'qa-import-map-probe-' . wp_generate_password( 6, false, false ),
@@ -2969,12 +3019,12 @@ class Model_Tests {
 		$replies_t = \Jetonomy\table( 'replies' );
 		$suffix    = wp_generate_password( 6, false, false );
 
-		$mk_post = static function ( string $title ) use ( $wpdb, $posts_t ) {
+		$mk_post = function ( string $title ) use ( $wpdb, $posts_t ) {
 			$wpdb->insert(
 				$posts_t,
 				array(
 					'space_id'     => 1,
-					'author_id'    => 1,
+					'author_id'    => $this->qa_admin,
 					'type'         => 'forum',
 					'title'        => $title,
 					'slug'         => sanitize_title( $title ),
@@ -2997,7 +3047,7 @@ class Model_Tests {
 				$replies_t,
 				array(
 					'post_id'    => $pid,
-					'author_id'  => 1,
+					'author_id'  => $this->qa_admin,
 					'content'    => 'qa',
 					'status'     => 'publish',
 					'created_at' => \Jetonomy\now(),

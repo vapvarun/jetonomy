@@ -776,7 +776,7 @@ class Blocks {
 		// only exposes the REST endpoint base; no nonce — the auth endpoints
 		// are public (REST_Auth::auth_public_write) and sending X-WP-Nonce
 		// from cached pages made core's rest_cookie_check_errors() fail with
-		// "Cookie check failed" for logged-out visitors (#9977381553).
+		// "Cookie check failed" for logged-out visitors.
 		$rest_url = esc_url_raw( rest_url( 'jetonomy/v1' ) );
 
 		// One widget per form — Turnstile auto-renders every container and

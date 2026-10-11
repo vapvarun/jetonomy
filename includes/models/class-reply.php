@@ -42,7 +42,7 @@ class Reply extends Model {
 	/**
 	 * Insert override: the LAST write barrier for the content pipeline.
 	 * See Post::insert() - closes the post-filter and raw-insert bypasses
-	 * (QA 2026-07-30, card 10138808747).
+	 * (QA 2026-07-30).
 	 *
 	 * @param array $data Column data.
 	 * @return int New row id.
@@ -1680,9 +1680,9 @@ class Reply extends Model {
 	 * @param int    $reply_id       The reply to split.
 	 * @param string $new_title      Title for the new post.
 	 * @param int    $target_space_id Space for the new post (0 = same space as source post).
-	 * @return int New post ID, or 0 on failure.
+	 * @return int|\WP_Error New post ID, 0 on failure, or WP_Error when the thread holds a private reply.
 	 */
-	public static function split_to_topic( int $reply_id, string $new_title, int $target_space_id = 0 ): int {
+	public static function split_to_topic( int $reply_id, string $new_title, int $target_space_id = 0 ): int|\WP_Error {
 		$reply = static::find( $reply_id );
 		if ( ! $reply ) {
 			return 0;
@@ -1697,6 +1697,36 @@ class Reply extends Model {
 			$target_space_id = (int) $source_post->space_id;
 		}
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Move the split reply's whole subtree, not only its direct children, so
+		// no reply is left in the source answering a parent in another topic.
+		// Direct children become top-level (NULL, like every root reply); deeper
+		// replies keep their parent, which moves with them.
+		$table   = static::table();
+		$db      = static::db();
+		$subtree = array();
+		$level   = array( $reply_id );
+		while ( $level ) {
+			$in      = implode( ',', array_map( 'intval', $level ) );
+			$level   = array_map( 'intval', (array) $db->get_col( $db->prepare( "SELECT id FROM {$table} WHERE post_id = %d AND parent_id IN ({$in})", (int) $reply->post_id ) ) );
+			$level   = array_diff( $level, $subtree );
+			$subtree = array_merge( $subtree, $level );
+		}
+
+		// A private reply is for its author, the topic author and staff. Moved
+		// into a new topic it would be readable by that topic's author instead,
+		// and the trace below would name it publicly. Same rule as merge: the
+		// moderator makes them public first, on purpose.
+		$private = ! empty( $reply->is_private )
+			|| ( $subtree && (int) $db->get_var( "SELECT COUNT(*) FROM {$table} WHERE is_private = 1 AND id IN (" . implode( ',', $subtree ) . ')' ) > 0 );
+		if ( $private ) {
+			return new \WP_Error(
+				'jetonomy_split_private',
+				__( 'This thread has private replies. Make them public before splitting it.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		// Create new post from reply content.
 		$new_post_id = Post::create(
 			array(
@@ -1708,8 +1738,8 @@ class Reply extends Model {
 				'content_plain' => $reply->content_plain ?? \jetonomy_content_to_plain( $reply->content ?? '' ),
 				'type'          => $source_post->type ?? 'topic',
 				'status'        => 'publish',
-				// A private reply stays private as its own topic.
-				'is_private'    => empty( $reply->is_private ) ? 0 : 1,
+				// An anonymous reply stays anonymous as its own topic.
+				'is_anonymous'  => empty( $reply->is_anonymous ) ? 0 : 1,
 				'created_at'    => $reply->created_at ?? now(),
 			)
 		);
@@ -1717,21 +1747,10 @@ class Reply extends Model {
 		if ( is_wp_error( $new_post_id ) || ! $new_post_id ) {
 			return 0;
 		}
-
-		// Move the split reply's whole subtree, not only its direct children, so
-		// no reply is left in the source answering a parent in another topic.
-		// Direct children become top-level (NULL, like every root reply); deeper
-		// replies keep their parent, which moves with them.
-		$table   = static::table();
-		$db      = static::db();
-		$subtree = array();
-		$level   = array( $reply_id );
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		while ( $level ) {
-			$in      = implode( ',', array_map( 'intval', $level ) );
-			$level   = array_map( 'intval', (array) $db->get_col( $db->prepare( "SELECT id FROM {$table} WHERE post_id = %d AND parent_id IN ({$in})", (int) $reply->post_id ) ) );
-			$level   = array_diff( $level, $subtree );
-			$subtree = array_merge( $subtree, $level );
+		// Pro drops the anonymous flag on create in spaces that have not opted
+		// in; a reply that was already anonymous must never be unmasked by a split.
+		if ( ! empty( $reply->is_anonymous ) && empty( Post::find( $new_post_id )->is_anonymous ) ) {
+			Post::update( $new_post_id, array( 'is_anonymous' => 1 ) );
 		}
 
 		// An accepted answer that is leaving (the split reply or one under it)
@@ -1788,19 +1807,29 @@ class Reply extends Model {
 			// no shared permalink helper to call.
 			$new_url = \Jetonomy\route_url( 'post', $new_space->slug, $new_post->slug );
 
-			static::create(
+			// Name and link the new topic only where every reader of this thread
+			// may follow it; a private or hidden space keeps its topics to itself.
+			$where = 'public' === ( $new_space->visibility ?? '' )
+				? '<a href="' . esc_url( $new_url ) . '">' . esc_html( (string) $new_post->title ) . '</a>'
+				: esc_html__( 'another discussion', 'jetonomy' );
+
+			$trace = static::create(
 				array(
-					'post_id'   => (int) $reply->post_id,
-					'author_id' => (int) $reply->author_id,
-					'content'   => sprintf(
-						/* translators: 1: singular reply label, 2: link to the new topic. */
+					'post_id'      => (int) $reply->post_id,
+					'author_id'    => (int) $reply->author_id,
+					'is_anonymous' => empty( $reply->is_anonymous ) ? 0 : 1,
+					'content'      => sprintf(
+						/* translators: 1: singular reply label, 2: link to the new topic, or "another discussion". */
 						'<p><em>' . esc_html__( 'A %1$s was split into a new discussion: %2$s', 'jetonomy' ) . '</em></p>',
 						esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-						'<a href="' . esc_url( $new_url ) . '">' . esc_html( (string) $new_post->title ) . '</a>'
+						$where
 					),
-					'status'    => 'publish',
+					'status'       => 'publish',
 				)
 			);
+			if ( ! empty( $reply->is_anonymous ) && is_int( $trace ) && $trace > 0 ) {
+				static::update( $trace, array( 'is_anonymous' => 1 ) ); // Same reason as the topic above.
+			}
 		}
 
 		/**

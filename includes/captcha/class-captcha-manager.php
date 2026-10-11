@@ -138,7 +138,7 @@ class Captcha_Manager {
 	 * Every form whose endpoint runs verify_or_skip() must echo this:
 	 * login block (login/register/lost-password), the post composers, and
 	 * the reply composer. Without it Turnstile never renders and tokens
-	 * are never produced (#9977126420).
+	 * are never produced.
 	 *
 	 * @since 1.5.0
 	 * @return string Escaped HTML, safe to echo.

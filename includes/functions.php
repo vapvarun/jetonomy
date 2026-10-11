@@ -98,8 +98,7 @@ function base_slug(): string {
  * URL of a community route, e.g. route_url( 'post', $space_slug, $post_slug ).
  *
  * THE map of the segments after the base slug. They are fixed English and not
- * translatable or filterable by design - labels are display-only (Basecamp
- * 10344391975). Keys are the router's jetonomy_route values; Router::add_rewrite_rules()
+ * translatable or filterable by design - labels are display-only. Keys are the router's jetonomy_route values; Router::add_rewrite_rules()
  * holds the matching regexes, so a segment changed here must change there.
  *
  * Arguments are substituted verbatim - encode them at the call site where the
@@ -373,8 +372,7 @@ function prime_post_cards( array $posts ): array {
  * forms (Polish, Russian, Arabic) get every form from their translation. A
  * label the owner renamed (or one a filter changes) only has the singular and
  * plural the owner typed, so it falls back to "number + label" in the
- * owner's words - the best that is possible with two forms (Basecamp
- * 10369320225).
+ * owner's words - the best that is possible with two forms.
  *
  * @param int    $count Number being counted.
  * @param string $noun  One of: space, topic, reply, member, category.
@@ -990,7 +988,7 @@ function community_profile_url( int $user_id ): string {
  * BuddyPress, BuddyBoss, Ultimate Member or any other profile system. Use this
  * to LINK TO a member (byline, avatar, "view profile"). For Jetonomy's OWN
  * edit/settings/badges/digest screens use get_profile_action_url() - those must
- * not follow this filter off-site (Zoho #41491).
+ * not follow this filter off-site.
  *
  * @param int $user_id The user ID.
  * @return string The profile URL.
@@ -1239,8 +1237,7 @@ function join_request_url_for( int $recipient_id, $space ): string {
 	// included. The capability branch that sent jetonomy_manage_spaces /
 	// manage_options holders to the wp-admin Join Requests tab meant the same
 	// notification promised one destination and delivered two, and QA kept
-	// reproducing "empty moderation screen" for the admin audience (Basecamp
-	// 10118686521). The frontend members page approves/rejects for both
+	// reproducing "empty moderation screen" for the admin audience. The frontend members page approves/rejects for both
 	// audiences, and the wp-admin tab remains reachable through Spaces > Edit
 	// for owners who prefer it. $recipient_id stays in the signature: the
 	// notifier passes it per-recipient and a filter may re-branch on it.
@@ -1284,8 +1281,7 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 
 	// The hidden .jt-avatar-fallback sibling is the initials the reader sees
 	// if the image URL is dead - view.js swaps the pair on the img's error
-	// event. Same contract as templates/partials/avatar.php (Basecamp
-	// 10110833991): an <img> with no fallback renders as broken-image alt
+	// event. Same contract as templates/partials/avatar.php: an <img> with no fallback renders as broken-image alt
 	// text in Firefox when the upload behind it has been deleted.
 	$avatar_html = $avatar_url
 		? '<img src="' . esc_url( $avatar_url ) . '" alt="' . esc_attr( $name ) . '" class="jt-avatar ' . esc_attr( $avatar_class ) . '" width="' . (int) $avatar_size . '" height="' . (int) $avatar_size . '" loading="lazy">'

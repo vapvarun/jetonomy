@@ -40,7 +40,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 		<?php if ( \Jetonomy\Permissions\Capabilities::can_upload() ) : ?>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="image" title="<?php esc_attr_e( 'Upload Image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
 		<?php endif; ?>
-		<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it (QA card 10149499573). ?>
+		<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it. ?>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>
 		<?php
 		/**
@@ -63,7 +63,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 	<?php
 	// The replies endpoint verifies CAPTCHA for low-trust users; Turnstile
 	// needs this container to render and produce its token. Empty string
-	// when CAPTCHA is off or the provider is invisible. #9977126420.
+	// when CAPTCHA is off or the provider is invisible.
 	echo \Jetonomy\Captcha\Captcha_Manager::render_widget(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- adapter builds the HTML with esc_attr.
 	?>
 	<div class="jt-editor-foot">

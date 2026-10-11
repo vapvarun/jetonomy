@@ -196,7 +196,7 @@
 			searchTimer = setTimeout(function () {
 				window.jetonomyRest.restFetch('/search?q=' + encodeURIComponent(q) + '&per_page=6').then(function (res) {
 					// restFetch wraps the REST body as {ok, status, data} - the
-					// results array lives one level deeper (QA 10150864518; the
+					// results array lives one level deeper (the
 					// single-unwrap here showed 'No results' for every query).
 					var data = ( res.data && res.data.data ) || [];
 					results.textContent = '';
@@ -211,7 +211,7 @@
 						// The search payload carries slugs, not a permalink -
 						// there is no `url` field, so `a.href = r.url` produced
 						// "undefined" and every result led nowhere once results
-						// started rendering (QA 10150864518, second pass).
+						// started rendering.
 						// Build the destination from the slugs the API does
 						// return, and fall back to the full search page rather
 						// than emit a dead link.
@@ -253,7 +253,7 @@
 	var shortcutOpener = null;
 	document.addEventListener('keydown', function (e) {
 		// The help dialog is modal: Escape (or ?) closes it, Tab stays on its
-		// only control, and no page shortcut fires behind it (QA 10344422080).
+		// only control, and no page shortcut fires behind it.
 		if (shortcutOpen) {
 			var helpClose = document.querySelector('.jt-shortcut-modal button');
 			if (e.key === 'Escape' || e.key === '?') { e.preventDefault(); window.jtCloseShortcutHelp(); }
@@ -282,7 +282,7 @@
 			var focused = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
 			if (focused) {
 				// The row is a DIV whose navigation anchor lives inside it -
-				// clicking the div fires nothing (QA 10150866326). Click the
+				// clicking the div fires nothing. Click the
 				// real link so the client-side router intercepts it like any
 				// pointer click; fall back to a hard navigation.
 				var link = focused.matches('a[href]') ? focused : focused.querySelector('.jt-row-title-link, a[href]');
@@ -292,7 +292,7 @@
 		}
 		if (e.key === 'l' && !e.metaKey && !e.ctrlKey) {
 			// Documented shortcut (readme FAQ): upvote the focused post
-			// (QA 10150869012 - promised but never implemented).
+			// (promised but never implemented).
 			var lRow = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
 			var up = lRow && lRow.querySelector('[data-wp-on--click="actions.voteUp"], .jt-vote-up');
 			if (up) { e.preventDefault(); up.click(); }

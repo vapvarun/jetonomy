@@ -496,18 +496,7 @@ class Notifier {
 	 * @return bool True when the batch is queued.
 	 */
 	private function enqueue_fanout( string $hook, array $args ): bool {
-		if ( function_exists( 'as_enqueue_async_action' ) && did_action( 'action_scheduler_init' ) ) {
-			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, $args, 'jetonomy' ) ) {
-				return true;
-			}
-			if ( as_enqueue_async_action( $hook, $args, 'jetonomy' ) ) {
-				return true;
-			}
-		}
-		if ( wp_next_scheduled( $hook, $args ) ) {
-			return true;
-		}
-		return false !== wp_schedule_single_event( time(), $hook, $args );
+		return \Jetonomy\Queue::async_once( $hook, $args );
 	}
 
 	/**

@@ -15,7 +15,6 @@ use Jetonomy\Trust\Trust_Evaluator;
 
 class Cron {
 
-	private const AS_GROUP = 'jetonomy';
 
 	/**
 	 * Scheduled-topic publisher. Not recurring: one single action armed at the
@@ -96,23 +95,12 @@ class Cron {
 	 * (idempotent — safe to call regardless of which scheduler the install was on).
 	 */
 	public static function unschedule(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			foreach ( array_keys( self::RECURRING ) as $hook ) {
-				as_unschedule_all_actions( $hook, array(), self::AS_GROUP );
-			}
-			// Also drop any in-flight trust-sweep batch actions (async, not in
-			// the RECURRING map).
-			as_unschedule_all_actions( 'jetonomy_trust_evaluation_batch', array(), self::AS_GROUP );
-			// …and any queued avatar Gravatar-existence checks (async, per-user).
-			as_unschedule_all_actions( 'jetonomy_gravatar_check', array(), self::AS_GROUP );
-			as_unschedule_all_actions( self::PUBLISH_HOOK, array(), self::AS_GROUP );
+		// The recurring jobs plus the one-off ones: trust-sweep batches, per-member
+		// Gravatar checks and the scheduled-topic publisher.
+		$hooks = array_merge( array_keys( self::RECURRING ), array( 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK ) );
+		foreach ( $hooks as $hook ) {
+			Queue::cancel( $hook );
 		}
-		foreach ( array_keys( self::RECURRING ) as $hook ) {
-			wp_clear_scheduled_hook( $hook );
-		}
-		wp_clear_scheduled_hook( 'jetonomy_trust_evaluation_batch' );
-		wp_clear_scheduled_hook( 'jetonomy_gravatar_check' );
-		wp_clear_scheduled_hook( self::PUBLISH_HOOK );
 		delete_option( self::TRUST_CURSOR_OPTION );
 	}
 
@@ -156,12 +144,12 @@ class Cron {
 
 		$now = time();
 		foreach ( self::RECURRING as $hook => $interval ) {
-			if ( as_has_scheduled_action( $hook, array(), self::AS_GROUP ) ) {
+			if ( as_has_scheduled_action( $hook, array(), Queue::GROUP ) ) {
 				continue;
 			}
 			// Verification reminder starts +1h so it doesn't compete with everything else at time().
 			$start = ( 'jetonomy_verification_reminder' === $hook ) ? $now + HOUR_IN_SECONDS : $now;
-			as_schedule_recurring_action( $start, $interval, $hook, array(), self::AS_GROUP );
+			as_schedule_recurring_action( $start, $interval, $hook, array(), Queue::GROUP );
 		}
 
 		// One-time move off the hourly recurring publisher (2.0.1): drop it
@@ -194,22 +182,14 @@ class Cron {
 		$next = \Jetonomy\Models\Post::next_scheduled_at();
 		$when = null === $next ? 0 : max( (int) strtotime( $next . ' UTC' ), time() );
 
-		if ( function_exists( 'as_schedule_single_action' ) ) {
-			// Already armed for that instant (e.g. a later schedule was added):
-			// leave it, rather than cancel and re-queue an identical action.
-			if ( $when && as_next_scheduled_action( self::PUBLISH_HOOK, array(), self::AS_GROUP ) === $when ) {
-				return;
-			}
-			as_unschedule_all_actions( self::PUBLISH_HOOK, array(), self::AS_GROUP );
-			if ( $when ) {
-				as_schedule_single_action( $when, self::PUBLISH_HOOK, array(), self::AS_GROUP );
-			}
+		// Already armed for that instant (e.g. a later schedule was added):
+		// leave it, rather than cancel and re-queue an identical action.
+		if ( $when && Queue::next( self::PUBLISH_HOOK ) === $when ) {
 			return;
 		}
-
-		wp_clear_scheduled_hook( self::PUBLISH_HOOK );
+		Queue::cancel( self::PUBLISH_HOOK );
 		if ( $when ) {
-			wp_schedule_single_event( $when, self::PUBLISH_HOOK );
+			Queue::at( $when, self::PUBLISH_HOOK );
 		}
 	}
 
@@ -254,11 +234,7 @@ class Cron {
 	 * fallback). Reuses the plugin's AS group — no new scheduling surface.
 	 */
 	private static function enqueue_trust_batch(): void {
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( 'jetonomy_trust_evaluation_batch', array(), self::AS_GROUP );
-		} else {
-			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, 'jetonomy_trust_evaluation_batch' );
-		}
+		Queue::async( 'jetonomy_trust_evaluation_batch', array(), true, MINUTE_IN_SECONDS );
 	}
 
 	/**

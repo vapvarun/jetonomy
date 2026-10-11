@@ -700,6 +700,11 @@ class Journey_Tests {
 				break;
 			case 'flag':
 				global $wpdb;
+				// Filing a flag notifies every real moderator; take those rows with it.
+				$flag = \Jetonomy\Models\Flag::find( (int) $fixture['id'] );
+				if ( $flag ) {
+					$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . \Jetonomy\table( 'notifications' ) . " WHERE type = 'moderation' AND object_id = %d AND created_at >= %s", (int) $flag->object_id, $flag->created_at ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+				}
 				$wpdb->delete( \Jetonomy\table( 'flags' ), array( 'id' => (int) $fixture['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				break;
 			case 'notification':
@@ -740,22 +745,38 @@ class Journey_Tests {
 		return (int) $id;
 	}
 
+	/** @var array<string,int> Throwaway users by slot, so a run never acts as or awards to a real account. */
+	private array $actors = array();
+
 	private function discover_user(): int {
-		$admin = get_user_by( 'id', 1 );
-		return $admin ? 1 : (int) get_current_user_id();
+		return $this->throwaway_user( 'actor' );
 	}
 
 	private function discover_secondary_user(): int {
-		$users = get_users(
-			array(
-				'number'  => 1,
-				'exclude' => array( 1 ),
-				'orderby' => 'ID',
-				'order'   => 'ASC',
-				'fields'  => 'ID',
-			)
-		);
-		return $users ? (int) $users[0] : 0;
+		return $this->throwaway_user( 'member' );
+	}
+
+	/**
+	 * Create (once per run) a throwaway subscriber and queue it for deletion.
+	 * Created before any content that references it, so LIFO cleanup removes it last.
+	 */
+	private function throwaway_user( string $slot ): int {
+		if ( ! isset( $this->actors[ $slot ] ) ) {
+			$suffix = uniqid( '', false );
+			$uid    = wp_insert_user(
+				array(
+					'user_login' => 'jt_qa_jr_' . $slot . '_' . $suffix,
+					'user_pass'  => wp_generate_password(),
+					'user_email' => 'jr-' . $slot . '-' . $suffix . '@example.test',
+					'role'       => 'subscriber',
+				)
+			);
+			$this->actors[ $slot ] = is_wp_error( $uid ) ? 0 : (int) $uid;
+			if ( $this->actors[ $slot ] ) {
+				$this->cleanup[] = array( 'type' => 'user', 'id' => $this->actors[ $slot ] );
+			}
+		}
+		return $this->actors[ $slot ];
 	}
 
 	private function record_result( string $label, Journey_Result $result ): void {

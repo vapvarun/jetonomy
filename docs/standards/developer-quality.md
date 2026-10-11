@@ -50,8 +50,12 @@ files and none in templates; Pro 629 in 29 files, the largest the extension clas
   ban and verification checks). Read routes may use a one-line closure on
   `is_user_logged_in()` / `current_user_can()`.
 - Capability groups: constants on `Permissions\Capabilities` (e.g. `UPLOAD_CAPS`).
-- Background jobs: `Queue` (`recurring`, `next`, `cancel`) in Pro, never
-  `wp_*_scheduled_*` directly.
+- Background jobs: one queue class per plugin, never Action Scheduler or
+  `wp_*_scheduled_*` called directly. Free: `\Jetonomy\Queue` (`async`,
+  `async_once`, `at`, `is_queued`, `next`, `cancel`); recurring jobs are armed
+  only in `Cron::ensure_scheduled()`. Pro: `\Jetonomy_Pro\Queue`, and each
+  extension lists its job hooks in `jobs()` so switching it off cancels them
+  all. Pro keeps its own class because it must run on older free versions.
 - Pro settings: one save path in the `Extension` base class (save on
   `admin_init` or via REST, then redirect with `?jetonomy_notice=`), never a
   save inside a render method.
@@ -70,6 +74,9 @@ A second implementation of any of these is a defect, even if it works.
 - Array syntax: `array()` (WPCS default), enforced by PHPCBF.
 - `WP_Error` codes: always `jetonomy_<noun>_<reason>`; the same condition
   uses the same code everywhere.
+  One documented exception: `community_private` (401 when the whole community
+  is members-only) predates the rule and is a public REST contract that
+  headless clients match on, so it keeps its name.
 - Admin colours come from `var(--jt-admin-*)` tokens; no raw hex in `style=""`
   (email HTML and oEmbed markup are the exceptions).
 - Every public hook (`jetonomy_*`) has a docblock with `@since` and `@param`.

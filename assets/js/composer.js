@@ -51,7 +51,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         // Code block and Quote are toggles over one block element each. The
         // bare formatBlock call had no way back out: clicking again nested a
         // second block, and Enter only ever added lines inside it, so text
-        // typed after a code block stayed in the <pre> (QA 10320778207).
+        // typed after a code block stayed in the <pre>.
         const BLOCK_TAGS = { codeblock: 'pre', quote: 'blockquote' };
         const MEDIA = 'img, video, iframe, audio, hr, table';
 
@@ -634,7 +634,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
     }
 
     // Shared singleton picker — repositioned beside the active emoji button.
-    // Popup semantics (QA 10149499573): the picker is a named menu, the
+    // Popup semantics: the picker is a named menu, the
     // trigger carries aria-haspopup/expanded/controls, focus moves into the
     // menu on open, arrows/Tab move between options, Escape closes and
     // returns focus to the trigger.
@@ -709,7 +709,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 pickerTrigger = emojiBtn;
                 // aria-haspopup / aria-controls are stamped in the template so
                 // the contract is complete on first paint rather than only
-                // after the first click (QA 10149499573, second pass). Kept
+                // after the first click. Kept
                 // here as a belt-and-braces for any theme override that
                 // renders its own toolbar without them.
                 emojiBtn.setAttribute('aria-haspopup', 'menu');

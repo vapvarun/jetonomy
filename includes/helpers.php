@@ -349,8 +349,7 @@ if ( ! function_exists( 'jetonomy_reorder_offset' ) ) {
 	 * Drag-reorder handlers must persist ABSOLUTE positions. Writing the row's
 	 * index within the submitted batch looks right on page 1 and silently
 	 * corrupts every later page: the batch index restarts at 0, so page 2 is
-	 * renumbered over the top of page 1 and the two collide (Basecamp
-	 * 10210539659 - reproduced with 28 categories, where a drop-in-place on
+	 * renumbered over the top of page 1 and the two collide (reproduced with 28 categories, where a drop-in-place on
 	 * page 2 rewrote sort_order 20-27 to 0-7).
 	 *
 	 * @param int $paged    1-based page number from the request.

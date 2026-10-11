@@ -76,7 +76,7 @@
 		modal.style.display = '';
 		// Focus the Close button, not the first focusable: DOM order put the
 		// preview IFRAME first, which swallowed the dialog's key handling and
-		// read poorly to screen readers (QA 2026-07-30, card 10146440810).
+		// read poorly to screen readers.
 		var close = modal.querySelector('.jetonomy-modal-close');
 		var f = focusables();
 		if (close) { close.focus(); } else if (f.length) { f[0].focus(); }

@@ -27,7 +27,7 @@ $offset   = ( $page - 1 ) * $per_page;
 // and the REST endpoint share one query and one pagination rule. has_more
 // compares the real total against what is shown — never count( $leaders ),
 // which rendered a phantom "Load More" when the total was an exact multiple
-// of $per_page (Basecamp).
+// of $per_page.
 $leaders      = \Jetonomy\Models\UserProfile::list_for_leaderboard( $period, $per_page, $offset );
 $_jt_total    = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
 $_jt_has_more = ( $page * $per_page ) < $_jt_total;

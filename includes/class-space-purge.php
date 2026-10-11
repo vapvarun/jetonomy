@@ -52,7 +52,6 @@ final class Space_Purge {
 	private const CHUNK = 500;
 
 	/** One group per plugin, so every Jetonomy job is observable together. */
-	private const AS_GROUP = 'jetonomy';
 
 	/** Continuation hook. Carries the space id; re-enqueued until the space drains. */
 	public const BATCH_HOOK = 'jetonomy_space_purge_batch';
@@ -113,8 +112,7 @@ final class Space_Purge {
 
 		// Already handed off by an earlier request - let the runner have it
 		// rather than deleting the same slice from two directions.
-		if ( function_exists( 'as_has_scheduled_action' )
-			&& as_has_scheduled_action( self::BATCH_HOOK, $args, self::AS_GROUP ) ) {
+		if ( Queue::is_queued( self::BATCH_HOOK, $args ) ) {
 			return true;
 		}
 
@@ -155,8 +153,7 @@ final class Space_Purge {
 		set_transient( 'jetonomy_purge_authors_' . $space_id, $first['authors'], DAY_IN_SECONDS );
 
 		// Only trust the hand-off if the store accepted the job.
-		if ( function_exists( 'as_enqueue_async_action' )
-			&& as_enqueue_async_action( self::BATCH_HOOK, $args, self::AS_GROUP ) ) {
+		if ( Queue::async( self::BATCH_HOOK, $args, false ) ) {
 			return true;
 		}
 
@@ -220,8 +217,7 @@ final class Space_Purge {
 		// when the store refuses the job, and treating that as a successful
 		// hand-off is what strands a half-deleted space - its topics gone, its
 		// row still listed, and nothing scheduled to finish the job.
-		if ( function_exists( 'as_enqueue_async_action' )
-			&& as_enqueue_async_action( self::BATCH_HOOK, array( 'space_id' => $space_id ), self::AS_GROUP ) ) {
+		if ( Queue::async( self::BATCH_HOOK, array( 'space_id' => $space_id ), false ) ) {
 			return;
 		}
 
@@ -232,15 +228,13 @@ final class Space_Purge {
 
 	/**
 	 * Schedule another attempt after a database error, a minute out so a
-	 * struggling database is not hammered. Without Action Scheduler the next
-	 * delete request or orphan sweep resumes it, because the space row stays.
+	 * struggling database is not hammered. If even that fails, the next delete
+	 * request or orphan sweep resumes it, because the space row stays.
 	 *
 	 * @param int $space_id Space being purged.
 	 */
 	private static function retry_later( int $space_id ): void {
-		if ( function_exists( 'as_schedule_single_action' ) ) {
-			as_schedule_single_action( time() + MINUTE_IN_SECONDS, self::BATCH_HOOK, array( 'space_id' => $space_id ), self::AS_GROUP );
-		}
+		Queue::at( time() + MINUTE_IN_SECONDS, self::BATCH_HOOK, array( 'space_id' => $space_id ) );
 	}
 
 	/**
@@ -268,10 +262,7 @@ final class Space_Purge {
 	 * Clear any queued purge work. Called on deactivation.
 	 */
 	public static function clear_scheduled(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( self::BATCH_HOOK, array(), self::AS_GROUP );
-		}
-		wp_clear_scheduled_hook( self::BATCH_HOOK );
+		Queue::cancel( self::BATCH_HOOK );
 	}
 
 	/**

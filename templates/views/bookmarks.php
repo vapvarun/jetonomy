@@ -34,7 +34,7 @@ $bookmarks = \Jetonomy\Models\Bookmark::list_by_user( $user_id, $per_page, $offs
 
 // has_more compares the real total against what is shown — never count( $bookmarks ),
 // which showed a phantom "Load More" when the bookmark count was an exact multiple
-// of $per_page (Basecamp).
+// of $per_page.
 $total    = \Jetonomy\Models\Bookmark::count_by_user( $user_id );
 $has_more = ( $page * $per_page ) < $total;
 

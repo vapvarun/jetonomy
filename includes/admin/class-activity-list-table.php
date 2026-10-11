@@ -75,7 +75,7 @@ class Activity_List_Table extends \WP_List_Table {
 		// squeezed it to 0 width, and at 390px it spilled a character per line.
 		//
 		// Same defect the Revisions screen had: both
-		// overrode the primary in the 10146443346 batch without reordering.
+		// overrode the primary without reordering.
 		// Do not reorder these two without re-checking 390px - the browser gate
 		// in tests/browser/admin-tables.spec.js asserts it.
 		return array(

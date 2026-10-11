@@ -400,8 +400,7 @@ class Notifications_Controller extends Base_Controller {
 		// where the recipient can approve or reject it, which differs by who
 		// they are. Same resolver the email and the /notifications/ page use;
 		// this path had no case for the type at all, so it fell through to an
-		// empty URL and header.js defaulted to /notifications/ (Basecamp
-		// 10118686521).
+		// empty URL and header.js defaulted to /notifications/.
 		if ( 'space' === $object_type && 'join_request' === ( $notification->type ?? '' ) ) {
 			return \Jetonomy\join_request_url_for(
 				(int) $notification->user_id,

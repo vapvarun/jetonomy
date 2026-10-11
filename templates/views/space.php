@@ -232,7 +232,7 @@ $posts       = \Jetonomy\Models\Post::$_jt_list_fn(
 );
 // "Load More" must reflect whether more posts actually exist, not whether this
 // page happened to fill up. count($posts) >= $limit showed the button on a space
-// with EXACTLY $limit posts and then loaded an empty page (Basecamp). Compare the
+// with EXACTLY $limit posts and then loaded an empty page. Compare the
 // real total (same visibility population as the listing) against what's shown.
 $_jt_total    = \Jetonomy\Models\Post::count_by_space_visible( (int) $space->id, (int) $_jt_user_id, (bool) $_jt_is_priv, $sort );
 $_jt_has_more = ( $paged * $limit ) < $_jt_total;

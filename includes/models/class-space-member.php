@@ -344,7 +344,7 @@ class SpaceMember extends Model {
 	public static function set_role( int $space_id, int $user_id, string $role, bool $keep_last_admin = false ): \WP_Error|bool {
 		if ( ! in_array( $role, self::VALID_ROLES, true ) ) {
 			return new \WP_Error(
-				'invalid_role',
+				'jetonomy_invalid_role',
 				/* translators: %s: comma-separated list of valid space roles. */
 				sprintf( __( 'Invalid role. Allowed: %s.', 'jetonomy' ), implode( ', ', self::VALID_ROLES ) ),
 				array( 'status' => 400 )
@@ -354,7 +354,7 @@ class SpaceMember extends Model {
 		$old_role = self::get_role( $space_id, $user_id );
 		if ( null === $old_role ) {
 			return new \WP_Error(
-				'not_a_member',
+				'jetonomy_not_a_member',
 				__( 'User is not a member of this space.', 'jetonomy' ),
 				array( 'status' => 404 )
 			);

@@ -107,8 +107,7 @@ class Flag extends Model {
 	 * controller answers a second report with 409 jetonomy_already_flagged),
 	 * but the API published nothing a client could read it from - so the app
 	 * tracked "reported" in local component state, lost it on refresh, drew an
-	 * un-reported flag icon, and the re-tap silently 409'd (Basecamp
-	 * 10202766654). Server-owned rule, server-published state.
+	 * un-reported flag icon, and the re-tap silently 409'd. Server-owned rule, server-published state.
 	 *
 	 * @since 1.9.3
 	 * @param int    $reporter_id Reporting user.
