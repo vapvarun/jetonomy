@@ -1804,4 +1804,123 @@ class Reply extends Model {
 
 		return $new_post_id;
 	}
+
+
+	// ── wp-admin listings ──
+
+	/**
+	 * Parent topic id and title for a set of reply ids, keyed by reply id.
+	 *
+	 * @param int[] $ids Reply ids.
+	 * @return array<int,array{post_id:int,title:string}>
+	 */
+	public static function parents_by_ids( array $ids ): array {
+		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$in    = implode( ',', $ids );
+		$posts = \Jetonomy\table( 'posts' );
+		$rows  = static::db()->get_results( 'SELECT r.id, r.post_id, p.title FROM ' . static::table() . " r LEFT JOIN {$posts} p ON p.id = r.post_id WHERE r.id IN ({$in})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integer list.
+		$out   = array();
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row->id ] = array(
+				'post_id' => (int) $row->post_id,
+				'title'   => (string) $row->title,
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * Published replies created since a moment.
+	 *
+	 * @param string $since UTC MySQL datetime.
+	 * @return int
+	 */
+	public static function count_published_since( string $since ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'publish' AND created_at >= %s", $since )
+		);
+	}
+
+	/**
+	 * Replies awaiting approval, newest first, with their topic title.
+	 *
+	 * @param int $limit  Max rows.
+	 * @param int $offset Offset.
+	 * @return object[]
+	 */
+	public static function list_pending_with_post( int $limit, int $offset ): array {
+		$posts = \Jetonomy\table( 'posts' );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT r.*, p.title as post_title FROM ' . static::table() . " r
+				 LEFT JOIN {$posts} p ON p.id = r.post_id
+				 WHERE r.status = 'pending'
+				 ORDER BY r.created_at DESC
+				 LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		) ?: array();
+	}
+
+	/**
+	 * One topic's replies for the wp-admin replies screen, oldest first.
+	 *
+	 * @param int    $post_id Topic.
+	 * @param string $status  'all' (everything but trash) or a status.
+	 * @param string $search  Text to match in the reply.
+	 * @param int    $limit   Max rows.
+	 * @param int    $offset  Offset.
+	 * @return object[]
+	 */
+	public static function list_for_admin_post( int $post_id, string $status, string $search, int $limit, int $offset ): array {
+		[ $where, $args ] = self::admin_where( $post_id, $status, $search );
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT r.* FROM ' . static::table() . " r WHERE {$where} ORDER BY r.created_at ASC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				...array_merge( $args, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many replies list_for_admin_post() pages through.
+	 *
+	 * @param int    $post_id Topic.
+	 * @param string $status  'all' or a status.
+	 * @param string $search  Text to match.
+	 * @return int
+	 */
+	public static function count_for_admin_post( int $post_id, string $status, string $search ): int {
+		[ $where, $args ] = self::admin_where( $post_id, $status, $search );
+		return (int) static::db()->get_var( static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " r WHERE {$where}", ...$args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	/**
+	 * WHERE for the wp-admin replies screen; "all" leaves out the trash.
+	 *
+	 * @param int    $post_id Topic.
+	 * @param string $status  'all' or a status.
+	 * @param string $search  Text to match.
+	 * @return array{0:string,1:array}
+	 */
+	private static function admin_where( int $post_id, string $status, string $search ): array {
+		$where = 'r.post_id = %d';
+		$args  = array( $post_id );
+		if ( 'all' !== $status ) {
+			$where .= ' AND r.status = %s';
+			$args[] = $status;
+		} else {
+			$where .= " AND r.status <> 'trash'";
+		}
+		if ( '' !== $search ) {
+			$where .= ' AND r.content_plain LIKE %s';
+			$args[] = '%' . static::db()->esc_like( $search ) . '%';
+		}
+		return array( $where, $args );
+	}
 }

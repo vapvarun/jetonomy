@@ -75,4 +75,48 @@ class ActivityLog extends Model {
 			)
 		);
 	}
+
+
+	/**
+	 * Distinct members with any logged activity since a moment.
+	 *
+	 * @param string $since UTC MySQL datetime.
+	 * @return int
+	 */
+	public static function count_contributors_since( string $since ): int {
+		return (int) self::db()->get_var(
+			self::db()->prepare( 'SELECT COUNT(DISTINCT user_id) FROM ' . self::table() . ' WHERE created_at >= %s', $since )
+		);
+	}
+
+	/**
+	 * Rows for the Activity Log CSV export, newest first, capped at 50,000 so
+	 * a loose filter cannot produce a huge download.
+	 *
+	 * @param array{user_id:int,action:string,date_from:string,date_to:string} $filters Same filters as the list table.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function export_rows( array $filters ): array {
+		$clauses = array( '1=1' );
+		$args    = array();
+		if ( (int) $filters['user_id'] > 0 ) {
+			$clauses[] = 'user_id = %d';
+			$args[]    = (int) $filters['user_id'];
+		}
+		if ( '' !== (string) $filters['action'] ) {
+			$clauses[] = 'action = %s';
+			$args[]    = (string) $filters['action'];
+		}
+		if ( '' !== (string) $filters['date_from'] ) {
+			$clauses[] = 'created_at >= %s';
+			$args[]    = $filters['date_from'] . ' 00:00:00';
+		}
+		if ( '' !== (string) $filters['date_to'] ) {
+			$clauses[] = 'created_at <= %s';
+			$args[]    = $filters['date_to'] . ' 23:59:59';
+		}
+		$sql  = 'SELECT id, user_id, action, object_type, object_id, metadata, created_at FROM ' . self::table() . ' WHERE ' . implode( ' AND ', $clauses ) . ' ORDER BY created_at DESC LIMIT 50000';
+		$rows = $args ? self::db()->get_results( self::db()->prepare( $sql, ...$args ), ARRAY_A ) : self::db()->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+		return is_array( $rows ) ? $rows : array();
+	}
 }

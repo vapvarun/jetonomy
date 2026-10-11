@@ -13,6 +13,10 @@ use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
+use Jetonomy\Models\UserProfile;
+use Jetonomy\Models\Flag;
+use Jetonomy\Models\ActivityLog;
+use Jetonomy\Models\Restriction;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\AccessRule;
 use Jetonomy\Models\JoinRequest;
@@ -421,8 +425,6 @@ class Admin {
 			return;
 		}
 
-		global $wpdb;
-
 		$post_ids  = array();
 		$reply_ids = array();
 		$user_ids  = array();
@@ -444,33 +446,8 @@ class Admin {
 			}
 		}
 
-		$posts_t   = \Jetonomy\table( 'posts' );
-		$replies_t = \Jetonomy\table( 'replies' );
-
-		$post_titles = array();
-		if ( $post_ids ) {
-			$ids = implode( ',', array_map( 'intval', array_keys( $post_ids ) ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			foreach ( (array) $wpdb->get_results( "SELECT id, title FROM {$posts_t} WHERE id IN ({$ids})" ) as $row ) {
-				$post_titles[ (int) $row->id ] = (string) $row->title;
-			}
-		}
-
-		$reply_parents = array();
-		if ( $reply_ids ) {
-			$ids = implode( ',', array_map( 'intval', array_keys( $reply_ids ) ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			foreach ( (array) $wpdb->get_results(
-				"SELECT r.id, r.post_id, p.title FROM {$replies_t} r
-				 LEFT JOIN {$posts_t} p ON p.id = r.post_id
-				 WHERE r.id IN ({$ids})"
-			) as $row ) {
-				$reply_parents[ (int) $row->id ] = array(
-					'post_id' => (int) $row->post_id,
-					'title'   => (string) $row->title,
-				);
-			}
-		}
+		$post_titles   = Post::titles_by_ids( array_keys( $post_ids ) );
+		$reply_parents = Reply::parents_by_ids( array_keys( $reply_ids ) );
 
 		$users = array();
 		if ( $user_ids ) {
@@ -1303,34 +1280,18 @@ class Admin {
 	// ── Page Renderers ──
 
 	public function render_dashboard(): void {
-		global $wpdb;
-
-		$posts_t    = table( 'posts' );
-		$replies_t  = table( 'replies' );
-		$spaces_t   = table( 'spaces' );
-		$users_t    = table( 'user_profiles' );
-		$flags_t    = table( 'flags' );
-		$activity_t = table( 'activity_log' );
-
 		$today = current_time( 'Y-m-d' );
 
 		$stats = array(
-			'total_posts'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish'" ),
-			'total_replies' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'publish'" ),
-			'active_spaces' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE status = 'active'" ),
-			'users'         => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$users_t}" ),
-			'pending_flags' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" ),
-			'posts_today'   => (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish' AND created_at >= %s",
-					$today . ' 00:00:00'
-				)
-			),
+			'total_posts'   => Post::count( array( 'status' => 'publish' ) ),
+			'total_replies' => Reply::count( array( 'status' => 'publish' ) ),
+			'active_spaces' => Space::count( array( 'status' => 'active' ) ),
+			'users'         => UserProfile::count(),
+			'pending_flags' => Flag::count_pending(),
+			'posts_today'   => Post::count_published_since( $today . ' 00:00:00' ),
 		);
 
-		$recent_activity = $wpdb->get_results(
-			"SELECT * FROM {$activity_t} ORDER BY created_at DESC LIMIT 10"
-		) ?: array();
+		$recent_activity = ActivityLog::list_recent( 10 ) ?: array();
 
 		$base_slug = \Jetonomy\base_slug();
 
@@ -1363,27 +1324,13 @@ class Admin {
 			return $cached;
 		}
 
-		global $wpdb;
-		$posts_t    = table( 'posts' );
-		$replies_t  = table( 'replies' );
-		$spaces_t   = table( 'spaces' );
-		$activity_t = table( 'activity_log' );
-		$since      = gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS );
-
-		$top = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT s.title, COUNT(*) AS n FROM {$posts_t} p
-				 INNER JOIN {$spaces_t} s ON s.id = p.space_id
-				 WHERE p.status = 'publish' AND p.created_at >= %s
-				 GROUP BY p.space_id, s.title ORDER BY n DESC LIMIT 1",
-				$since
-			)
-		);
+		$since = gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS );
+		$top   = Post::busiest_space_since( $since );
 
 		$pulse = array(
-			'posts'           => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish' AND created_at >= %s", $since ) ),
-			'replies'         => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'publish' AND created_at >= %s", $since ) ),
-			'contributors'    => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT user_id) FROM {$activity_t} WHERE created_at >= %s", $since ) ),
+			'posts'           => Post::count_published_since( $since ),
+			'replies'         => Reply::count_published_since( $since ),
+			'contributors'    => ActivityLog::count_contributors_since( $since ),
 			'top_space'       => $top->title ?? null,
 			'top_space_posts' => (int) ( $top->n ?? 0 ),
 		);
@@ -1445,8 +1392,6 @@ class Admin {
 	}
 
 	public function render_spaces(): void {
-		global $wpdb;
-
 		$action   = sanitize_text_field( $_GET['action'] ?? 'list' );
 		$space_id = absint( $_GET['space_id'] ?? 0 );
 
@@ -1477,58 +1422,32 @@ class Admin {
 		$filter_type     = sanitize_text_field( $_GET['type'] ?? '' );
 		$filter_status   = sanitize_text_field( $_GET['status'] ?? '' );
 
-		$where = array( '1=1' );
-		if ( $filter_category ) {
-			$where[] = $wpdb->prepare( 'category_id = %d', $filter_category );
-		}
-		if ( $filter_type && in_array( $filter_type, Space::valid_types(), true ) ) {
-			$where[] = $wpdb->prepare( 'type = %s', $filter_type );
-		}
-		if ( $filter_status && in_array( $filter_status, array( 'active', 'archived', 'locked' ), true ) ) {
-			$where[] = $wpdb->prepare( 'status = %s', $filter_status );
-		}
-
-		$where_sql = implode( ' AND ', $where );
-		$spaces_t  = table( 'spaces' );
-		$paged     = max( 1, absint( $_GET['paged'] ?? 1 ) );
-		$per_page  = absint( $_GET['per_page'] ?? 20 );
+		$filters  = array(
+			'category_id' => $filter_category,
+			'type'        => $filter_type,
+			'status'      => $filter_status,
+		);
+		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page = absint( $_GET['per_page'] ?? 20 );
 		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
 			$per_page = 20;
 		}
 		$offset = ( $paged - 1 ) * $per_page;
 
-		// Manual ordering is only meaningful inside one category - that is the
-		// unit the front end renders (Space::list_by_category). With a single
-		// category filtered we sort the way members see it, so the admin is a
-		// preview and drag-reorder has somewhere coherent to write. Otherwise
-		// the list stays alphabetical, which is what you want when browsing
-		// every space across categories.
+		// Inside one category (and nothing else filtered) the list follows the
+		// manual order members see, so drag-reorder has a coherent target.
 		$can_reorder = $filter_category > 0 && ! $filter_type && ! $filter_status;
-		$order_sql   = $can_reorder ? 'sort_order ASC, title ASC' : 'title ASC';
 
-		$total       = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE {$where_sql}" );
+		$total       = Space::count_for_admin( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
-		$spaces      = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_sql is one of two literals above.
-				"SELECT * FROM {$spaces_t} WHERE {$where_sql} ORDER BY {$order_sql} LIMIT %d OFFSET %d",
-				$per_page,
-				$offset
-			)
-		) ?: array();
-		$categories = Category::list_tree();
+		$spaces      = Space::list_for_admin( $filters, $per_page, $offset );
+		$categories  = Category::list_tree();
 
 		include JETONOMY_DIR . 'includes/admin/views/spaces.php';
 	}
 
 	public function render_moderation(): void {
-		global $wpdb;
-
-		$posts_t        = table( 'posts' );
-		$replies_t      = table( 'replies' );
-		$flags_t        = table( 'flags' );
-		$restrictions_t = table( 'restrictions' );
-		$per_page       = 20;
+		$per_page = 20;
 
 		// Per-tab paged params.
 		$paged_posts   = max( 1, absint( $_GET['paged_posts'] ?? 1 ) );
@@ -1536,75 +1455,32 @@ class Admin {
 		$paged_flags   = max( 1, absint( $_GET['paged_flags'] ?? 1 ) );
 		$paged_banned  = max( 1, absint( $_GET['paged_banned'] ?? 1 ) );
 
-		// Real totals for tab badge counts. Posts/replies reuse the shared
-		// count-by-status model methods (same COUNT(*) the REST queue uses);
-		// the paginated list queries below keep their display JOINs (space/post
-		// title) and stay here since the API path doesn't need those columns.
 		$total_posts   = Post::count_by_status( array( 'pending' ) );
 		$total_replies = Reply::count_by_status( array( 'pending' ) );
-		$total_flags   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" );
-		$total_banned  = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$restrictions_t}
-				 WHERE type IN ('global_ban','space_ban','silence')
-				 AND (expires_at IS NULL OR expires_at > %s)",
-				now()
-			)
-		);
+		$total_flags   = Flag::count_pending();
+		$total_banned  = Restriction::count_active();
 
-		$pending_posts = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT p.*, s.title as space_title
-				 FROM {$posts_t} p
-				 LEFT JOIN " . table( 'spaces' ) . " s ON s.id = p.space_id
-				 WHERE p.status = 'pending'
-				 ORDER BY p.created_at DESC
-				 LIMIT %d OFFSET %d",
-				$per_page,
-				( $paged_posts - 1 ) * $per_page
-			)
-		) ?: array();
-
-		$pending_replies = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT r.*, p.title as post_title
-				 FROM {$replies_t} r
-				 LEFT JOIN {$posts_t} p ON p.id = r.post_id
-				 WHERE r.status = 'pending'
-				 ORDER BY r.created_at DESC
-				 LIMIT %d OFFSET %d",
-				$per_page,
-				( $paged_replies - 1 ) * $per_page
-			)
-		) ?: array();
-
-		$pending_flags = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$flags_t}
-				 WHERE status = 'pending'
-				 ORDER BY created_at DESC
-				 LIMIT %d OFFSET %d",
-				$per_page,
-				( $paged_flags - 1 ) * $per_page
-			)
-		) ?: array();
+		$pending_posts   = Post::list_pending_with_space( $per_page, ( $paged_posts - 1 ) * $per_page );
+		$pending_replies = Reply::list_pending_with_post( $per_page, ( $paged_replies - 1 ) * $per_page );
+		$pending_flags   = Flag::list_pending( $per_page, ( $paged_flags - 1 ) * $per_page );
 
 		$this->prime_flag_objects( $pending_flags );
 
-		$banned_users = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT r.*, u.display_name, u.user_login
-				 FROM {$restrictions_t} r
-				 LEFT JOIN {$wpdb->users} u ON u.ID = r.user_id
-				 WHERE r.type IN ('global_ban','space_ban','silence')
-				 AND (r.expires_at IS NULL OR r.expires_at > %s)
-				 ORDER BY r.created_at DESC
-				 LIMIT %d OFFSET %d",
-				now(),
-				$per_page,
-				( $paged_banned - 1 ) * $per_page
+		// Bans, silences and space bans, with the account name the list shows.
+		$banned_users = Restriction::list_active(
+			array(
+				'limit'  => $per_page,
+				'offset' => ( $paged_banned - 1 ) * $per_page,
 			)
-		) ?: array();
+		);
+		if ( $banned_users ) {
+			cache_users( array_map( static fn( $r ) => (int) $r->user_id, $banned_users ) );
+			foreach ( $banned_users as $ban ) {
+				$account           = get_userdata( (int) $ban->user_id );
+				$ban->display_name = $account ? $account->display_name : null;
+				$ban->user_login   = $account ? $account->user_login : null;
+			}
+		}
 
 		include JETONOMY_DIR . 'includes/admin/views/moderation.php';
 	}
@@ -1681,39 +1557,7 @@ class Admin {
 		}
 		check_admin_referer( 'jetonomy_activity_export' );
 
-		global $wpdb;
-		$activity_t = table( 'activity_log' );
-		$filters    = Activity_List_Table::read_filters();
-
-		$clauses = array( '1=1' );
-		$args    = array();
-		if ( $filters['user_id'] > 0 ) {
-			$clauses[] = 'user_id = %d';
-			$args[]    = $filters['user_id'];
-		}
-		if ( '' !== $filters['action'] ) {
-			$clauses[] = 'action = %s';
-			$args[]    = $filters['action'];
-		}
-		if ( '' !== $filters['date_from'] ) {
-			$clauses[] = 'created_at >= %s';
-			$args[]    = $filters['date_from'] . ' 00:00:00';
-		}
-		if ( '' !== $filters['date_to'] ) {
-			$clauses[] = 'created_at <= %s';
-			$args[]    = $filters['date_to'] . ' 23:59:59';
-		}
-		$where = implode( ' AND ', $clauses );
-
-		// Hard cap at 50k rows so a sloppy filter set can't generate a
-		// gigabyte download. Admins who need bigger exports should
-		// narrow the date range or use WP-CLI directly against the table.
-		$sql       = "SELECT id, user_id, action, object_type, object_id, metadata, created_at FROM {$activity_t} WHERE {$where} ORDER BY created_at DESC LIMIT 50000";
-		$full_args = $args;
-		$rows      = $full_args
-			? $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ), ARRAY_A )
-			: $wpdb->get_results( $sql, ARRAY_A );
-		$rows      = is_array( $rows ) ? $rows : array();
+		$rows = ActivityLog::export_rows( Activity_List_Table::read_filters() );
 
 		$filename = sprintf( 'jetonomy-activity-%s.csv', gmdate( 'Y-m-d-His' ) );
 
@@ -1806,84 +1650,33 @@ class Admin {
 	 * no batching needed here.
 	 */
 	private function resolve_revision_object_title( string $type, int $id ): string {
-		global $wpdb;
-
 		if ( 'post' === $type ) {
-			$posts_t = table( 'posts' );
-			$title   = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT title FROM {$posts_t} WHERE id = %d",
-					$id
-				)
-			);
-			return is_string( $title ) ? $title : '';
+			return Post::titles_by_ids( array( $id ) )[ $id ] ?? '';
 		}
 
 		if ( 'reply' === $type ) {
-			$replies_t = table( 'replies' );
-			$posts_t   = table( 'posts' );
-			$parent    = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT p.title FROM {$replies_t} r LEFT JOIN {$posts_t} p ON p.id = r.post_id WHERE r.id = %d",
-					$id
-				)
-			);
-			if ( is_string( $parent ) && '' !== $parent ) {
+			$parent = Reply::parents_by_ids( array( $id ) )[ $id ]['title'] ?? '';
+			if ( '' !== $parent ) {
 				return sprintf(
 					/* translators: %s: parent post title */
 					__( 'Reply to: %s', 'jetonomy' ),
 					$parent
 				);
 			}
-			return '';
 		}
 
 		return '';
 	}
 
 	public function render_users(): void {
-		global $wpdb;
-
 		$search       = sanitize_text_field( $_GET['s'] ?? '' );
 		$filter_trust = sanitize_text_field( $_GET['trust_level'] ?? '' );
 		$paged        = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page     = 20;
 		$offset       = ( $paged - 1 ) * $per_page;
 
-		$profiles_t = table( 'user_profiles' );
-
-		$where      = array( '1=1' );
-		$join_where = '';
-
-		if ( '' !== $filter_trust && is_numeric( $filter_trust ) ) {
-			$where[] = $wpdb->prepare( 'p.trust_level = %d', absint( $filter_trust ) );
-		}
-		if ( $search ) {
-			$like    = '%' . $wpdb->esc_like( $search ) . '%';
-			$where[] = $wpdb->prepare( '(u.user_login LIKE %s OR u.display_name LIKE %s OR u.user_email LIKE %s)', $like, $like, $like );
-		}
-
-		$where_sql = implode( ' AND ', $where );
-
-		$total = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$profiles_t} p
-			 INNER JOIN {$wpdb->users} u ON u.ID = p.user_id
-			 WHERE {$where_sql}"
-		);
-
-		$users = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT p.*, u.user_login, u.display_name as wp_display_name, u.user_email, u.user_registered
-				 FROM {$profiles_t} p
-				 INNER JOIN {$wpdb->users} u ON u.ID = p.user_id
-				 WHERE {$where_sql}
-				 ORDER BY p.reputation DESC
-				 LIMIT %d OFFSET %d",
-				$per_page,
-				$offset
-			)
-		) ?: array();
-
+		$total       = UserProfile::count_for_admin( $filter_trust, $search );
+		$users       = UserProfile::list_for_admin( $filter_trust, $search, $per_page, $offset );
 		$total_pages = ceil( $total / $per_page );
 
 		include JETONOMY_DIR . 'includes/admin/views/users.php';
@@ -1949,90 +1742,32 @@ class Admin {
 			return;
 		}
 
-		global $wpdb;
-		$posts_t  = table( 'posts' );
-		$spaces_t = table( 'spaces' );
-
 		$current_space  = absint( $_GET['space_id'] ?? 0 );
 		$current_status = sanitize_text_field( $_GET['status'] ?? 'all' );
 		$search_query   = sanitize_text_field( $_GET['s'] ?? '' );
 
-		$spaces = $wpdb->get_results( "SELECT id, title FROM {$spaces_t} ORDER BY title ASC" ) ?: array();
+		$spaces = Space::list_titles();
 
-		$where = '1=1';
-		$args  = array();
-		if ( $current_space ) {
-			$where .= ' AND p.space_id = %d';
-			$args[] = $current_space;
-		}
-
-		/*
-		 * "Scheduled" is a pseudo-status: a scheduled post is an ordinary row
-		 * with published_at in the future, not a value in the status column.
-		 *
-		 * Scheduling is reachable from the composer, the REST API, cron and wp-admin, so
-		 * the owner can see what is queued and reschedule it.
-		 */
-		if ( 'scheduled' === $current_status ) {
-			// status='draft' is the load-bearing half. Without it this matched
-			// ANY row with a future published_at, so a published post that an
-			// admin had forward-dated listed as Scheduled (carrying both a
-			// "Published" and a "Scheduled" badge), as did a scheduled post that
-			// had since been trashed or marked spam.
-			//
-			// No `published_at > NOW()` either: a post whose time has passed but
-			// which the hourly cron has not published yet would drop out of the
-			// filter entirely - and "why has my post not gone live" is the exact
-			// question this screen exists to answer. Those rows stay, badged
-			// Overdue by the view.
-			//
-			// status is indexed (status_created), so this uses an index where
-			// the published_at-only predicate full-scanned.
-			$where .= " AND p.status = 'draft' AND p.published_at IS NOT NULL";
-		} elseif ( 'all' !== $current_status ) {
-			$where .= ' AND p.status = %s';
-			$args[] = $current_status;
-		} else {
-			// WordPress convention: "All" is everything EXCEPT the trash, which
-			// has its own filter. Listing trashed topics under All is how a
-			// deleted topic stayed on screen with a Trash badge and looked
-			// undeletable.
-			$where .= " AND p.status <> 'trash'";
-		}
-		if ( $search_query ) {
-			$where .= ' AND p.title LIKE %s';
-			$args[] = '%' . $wpdb->esc_like( $search_query ) . '%';
-		}
+		// "Scheduled" is a pseudo-status (a draft with a published_at) and "All"
+		// leaves out the trash; Post::list_for_admin() owns both rules.
+		$filters = array(
+			'space_id' => $current_space,
+			'status'   => $current_status,
+			'search'   => $search_query,
+		);
 
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = 20;
 		$offset   = ( $paged - 1 ) * $per_page;
 
-		// Total count with same filters (no LIMIT).
-		$count_sql   = "SELECT COUNT(*) FROM {$posts_t} p WHERE {$where}";
-		$total       = (int) ( $args ? $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) ) : $wpdb->get_var( $count_sql ) );
+		$total       = Post::count_for_admin( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
+		$posts       = Post::list_for_admin( $filters, $per_page, $offset );
 
-		$sql = "SELECT p.*, s.title AS space_title, s.slug AS space_slug
-		        FROM {$posts_t} p
-		        LEFT JOIN {$spaces_t} s ON s.id = p.space_id
-		        WHERE {$where}
-		        ORDER BY p.created_at DESC
-		        LIMIT %d OFFSET %d";
-
-		$full_args = array_merge( $args, array( $per_page, $offset ) );
-		$posts     = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: array();
-
-		// Count for the Scheduled filter label. The card asked for one and the
-		// only number on screen was "1-N of N", which appears AFTER you pick the
-		// filter - no use for deciding whether to look.
-		$scheduled_count = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'draft' AND p.published_at IS NOT NULL"
-		);
-
-		// Same idea for Trash: now that All leaves it out, the filter label is
-		// the only place an owner learns there is anything in there.
-		$trash_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'trash'" );
+		// Counts for the Scheduled and Trash filter labels, the only place an
+		// owner learns there is anything in either.
+		$scheduled_count = Post::count_scheduled();
+		$trash_count     = Post::count( array( 'status' => 'trash' ) );
 
 		// Site-timezone "now", for the view's Overdue split. Computed once here
 		// rather than per row.
@@ -2046,14 +1781,10 @@ class Admin {
 	 * Handles pagination for posts with hundreds/thousands of replies.
 	 */
 	private function render_post_replies( int $post_id ): void {
-		global $wpdb;
-
 		$post = Post::find( $post_id );
 		if ( ! $post ) {
 			wp_die( esc_html__( 'Post not found.', 'jetonomy' ) );
 		}
-
-		$replies_t = table( 'replies' );
 
 		// Status filter.
 		$current_status = sanitize_text_field( $_GET['status'] ?? 'all' );
@@ -2065,34 +1796,20 @@ class Admin {
 		// Search.
 		$search_query = sanitize_text_field( $_GET['s'] ?? '' );
 
-		// Build WHERE clause.
-		$where = 'r.post_id = %d';
-		$args  = array( $post_id );
-		if ( 'all' !== $current_status ) {
-			$where .= ' AND r.status = %s';
-			$args[] = $current_status;
-		} else {
-			// All excludes the trash, as on the topics screen.
-			$where .= " AND r.status <> 'trash'";
-		}
-		if ( $search_query ) {
-			$where .= ' AND r.content_plain LIKE %s';
-			$args[] = '%' . $wpdb->esc_like( $search_query ) . '%';
-		}
-
 		// Pagination — 50 per page for large reply sets.
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = 50;
 		$offset   = ( $paged - 1 ) * $per_page;
 
-		$count_sql   = "SELECT COUNT(*) FROM {$replies_t} r WHERE {$where}";
-		$total       = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) );
+		$total       = Reply::count_for_admin_post( $post_id, $current_status, $search_query );
 		$total_pages = (int) ceil( $total / $per_page );
-
-		$sql     = "SELECT r.* FROM {$replies_t} r WHERE {$where} ORDER BY r.created_at ASC LIMIT %d OFFSET %d";
-		$replies = $wpdb->get_results( $wpdb->prepare( $sql, ...array_merge( $args, array( $per_page, $offset ) ) ) ) ?: array();
-
-		$trash_count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = %d AND r.status = 'trash'", $post_id ) );
+		$replies     = Reply::list_for_admin_post( $post_id, $current_status, $search_query, $per_page, $offset );
+		$trash_count = Reply::count(
+			array(
+				'post_id' => $post_id,
+				'status'  => 'trash',
+			)
+		);
 
 		$nonce_value = wp_create_nonce( 'jetonomy_admin' );
 

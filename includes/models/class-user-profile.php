@@ -505,4 +505,67 @@ class UserProfile extends Model {
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $ahead + 1;
 	}
+
+
+	/**
+	 * The wp-admin Users screen: profiles joined to their account, by
+	 * reputation, filtered by trust level and a login/name/email search.
+	 *
+	 * @param string $trust  Trust level, or '' for any.
+	 * @param string $search Text to match.
+	 * @param int    $limit  Max rows.
+	 * @param int    $offset Offset.
+	 * @return object[] Profile rows plus user_login, wp_display_name, user_email, user_registered.
+	 */
+	public static function list_for_admin( string $trust, string $search, int $limit, int $offset ): array {
+		global $wpdb;
+		[ $where, $args ] = self::admin_where( $trust, $search );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.*, u.user_login, u.display_name as wp_display_name, u.user_email, u.user_registered FROM ' . static::table() . " p
+				 INNER JOIN {$wpdb->users} u ON u.ID = p.user_id
+				 WHERE {$where}
+				 ORDER BY p.reputation DESC
+				 LIMIT %d OFFSET %d",
+				...array_merge( $args, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many profiles list_for_admin() pages through.
+	 *
+	 * @param string $trust  Trust level, or ''.
+	 * @param string $search Text to match.
+	 * @return int
+	 */
+	public static function count_for_admin( string $trust, string $search ): int {
+		global $wpdb;
+		[ $where, $args ] = self::admin_where( $trust, $search );
+		$sql              = 'SELECT COUNT(*) FROM ' . static::table() . " p INNER JOIN {$wpdb->users} u ON u.ID = p.user_id WHERE {$where}";
+		return (int) ( $args ? static::db()->get_var( static::db()->prepare( $sql, ...$args ) ) : static::db()->get_var( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+	}
+
+	/**
+	 * WHERE for the wp-admin Users screen.
+	 *
+	 * @param string $trust  Trust level, or ''.
+	 * @param string $search Text to match.
+	 * @return array{0:string,1:array}
+	 */
+	private static function admin_where( string $trust, string $search ): array {
+		$where = array( '1=1' );
+		$args  = array();
+		if ( '' !== $trust && is_numeric( $trust ) ) {
+			$where[] = 'p.trust_level = %d';
+			$args[]  = absint( $trust );
+		}
+		if ( '' !== $search ) {
+			$like    = '%' . static::db()->esc_like( $search ) . '%';
+			$where[] = '(u.user_login LIKE %s OR u.display_name LIKE %s OR u.user_email LIKE %s)';
+			array_push( $args, $like, $like, $like );
+		}
+		return array( implode( ' AND ', $where ), $args );
+	}
 }

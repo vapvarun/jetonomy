@@ -1791,4 +1791,73 @@ class Space extends Model {
 		}
 		return true;
 	}
+
+
+	// ── wp-admin listings ──
+
+	/**
+	 * The wp-admin Spaces screen. Inside one category (no other filter) the
+	 * order is the manual one members see; otherwise alphabetical.
+	 *
+	 * @param array{category_id?:int,type?:string,status?:string} $filters Filters.
+	 * @param int                                                 $limit   Max rows.
+	 * @param int                                                 $offset  Offset.
+	 * @return object[]
+	 */
+	public static function list_for_admin( array $filters, int $limit, int $offset ): array {
+		[ $where, $args ] = self::admin_where( $filters );
+		$manual           = ! empty( $filters['category_id'] ) && empty( $filters['type'] ) && empty( $filters['status'] );
+		$order            = $manual ? 'sort_order ASC, title ASC' : 'title ASC';
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order is one of two literals.
+				...array_merge( $args, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many spaces list_for_admin() pages through.
+	 *
+	 * @param array{category_id?:int,type?:string,status?:string} $filters Filters.
+	 * @return int
+	 */
+	public static function count_for_admin( array $filters ): int {
+		[ $where, $args ] = self::admin_where( $filters );
+		$sql              = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE {$where}";
+		return (int) ( $args ? static::db()->get_var( static::db()->prepare( $sql, ...$args ) ) : static::db()->get_var( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+	}
+
+	/**
+	 * Every space's id and title, A to Z, for filter dropdowns.
+	 *
+	 * @return object[]
+	 */
+	public static function list_titles(): array {
+		return static::db()->get_results( 'SELECT id, title FROM ' . static::table() . ' ORDER BY title ASC' ) ?: array();
+	}
+
+	/**
+	 * WHERE for the wp-admin Spaces screen. Unknown types or statuses are ignored.
+	 *
+	 * @param array{category_id?:int,type?:string,status?:string} $f Filters.
+	 * @return array{0:string,1:array}
+	 */
+	private static function admin_where( array $f ): array {
+		$where = array( '1=1' );
+		$args  = array();
+		if ( ! empty( $f['category_id'] ) ) {
+			$where[] = 'category_id = %d';
+			$args[]  = (int) $f['category_id'];
+		}
+		if ( ! empty( $f['type'] ) && in_array( $f['type'], self::valid_types(), true ) ) {
+			$where[] = 'type = %s';
+			$args[]  = (string) $f['type'];
+		}
+		if ( ! empty( $f['status'] ) && in_array( $f['status'], array( 'active', 'archived', 'locked' ), true ) ) {
+			$where[] = 'status = %s';
+			$args[]  = (string) $f['status'];
+		}
+		return array( implode( ' AND ', $where ), $args );
+	}
 }

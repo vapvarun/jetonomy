@@ -1,5 +1,4 @@
 includes/admin/class-activity-list-table.php 3
-includes/admin/class-admin.php 57
 includes/admin/class-revisions-list-table.php 4
 includes/api/class-base-controller.php 2
 includes/api/class-subscriptions-controller.php 8

@@ -2190,4 +2190,162 @@ class Post extends Model {
 
 		return true;
 	}
+
+
+	// ── wp-admin listings ──
+
+	/**
+	 * Titles for a set of post ids, keyed by id.
+	 *
+	 * @param int[] $ids Post ids.
+	 * @return array<int,string>
+	 */
+	public static function titles_by_ids( array $ids ): array {
+		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$in   = implode( ',', $ids );
+		$rows = static::db()->get_results( 'SELECT id, title FROM ' . static::table() . " WHERE id IN ({$in})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integer list.
+		$out  = array();
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row->id ] = (string) $row->title;
+		}
+		return $out;
+	}
+
+	/**
+	 * Published topics created since a moment.
+	 *
+	 * @param string $since UTC MySQL datetime.
+	 * @return int
+	 */
+	public static function count_published_since( string $since ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'publish' AND created_at >= %s", $since )
+		);
+	}
+
+	/**
+	 * The space with the most new published topics since a moment.
+	 *
+	 * @param string $since UTC MySQL datetime.
+	 * @return object|null {title, n}
+	 */
+	public static function busiest_space_since( string $since ): ?object {
+		$spaces = \Jetonomy\table( 'spaces' );
+		$row    = static::db()->get_row(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT s.title, COUNT(*) AS n FROM ' . static::table() . " p
+				 INNER JOIN {$spaces} s ON s.id = p.space_id
+				 WHERE p.status = 'publish' AND p.created_at >= %s
+				 GROUP BY p.space_id, s.title ORDER BY n DESC LIMIT 1",
+				$since
+			)
+		);
+		return $row ? $row : null;
+	}
+
+	/**
+	 * Topics awaiting approval, newest first, with their space title.
+	 *
+	 * @param int $limit  Max rows.
+	 * @param int $offset Offset.
+	 * @return object[]
+	 */
+	public static function list_pending_with_space( int $limit, int $offset ): array {
+		$spaces = \Jetonomy\table( 'spaces' );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.*, s.title as space_title FROM ' . static::table() . " p
+				 LEFT JOIN {$spaces} s ON s.id = p.space_id
+				 WHERE p.status = 'pending'
+				 ORDER BY p.created_at DESC
+				 LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		) ?: array();
+	}
+
+	/**
+	 * The wp-admin Content screen's topics, newest first, with space title and slug.
+	 *
+	 * @param array{space_id?:int,status?:string,search?:string} $filters Filters.
+	 * @param int                                                $limit   Max rows.
+	 * @param int                                                $offset  Offset.
+	 * @return object[]
+	 */
+	public static function list_for_admin( array $filters, int $limit, int $offset ): array {
+		[ $where, $args ] = self::admin_where( $filters );
+		$spaces           = \Jetonomy\table( 'spaces' );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM ' . static::table() . " p
+				 LEFT JOIN {$spaces} s ON s.id = p.space_id
+				 WHERE {$where}
+				 ORDER BY p.created_at DESC
+				 LIMIT %d OFFSET %d",
+				...array_merge( $args, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many topics list_for_admin() pages through.
+	 *
+	 * @param array{space_id?:int,status?:string,search?:string} $filters Filters.
+	 * @return int
+	 */
+	public static function count_for_admin( array $filters ): int {
+		[ $where, $args ] = self::admin_where( $filters );
+		$sql              = 'SELECT COUNT(*) FROM ' . static::table() . " p WHERE {$where}";
+		return (int) ( $args ? static::db()->get_var( static::db()->prepare( $sql, ...$args ) ) : static::db()->get_var( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+	}
+
+	/**
+	 * Drafts waiting for their scheduled time (including overdue ones the
+	 * hourly job has not published yet).
+	 *
+	 * @return int
+	 */
+	public static function count_scheduled(): int {
+		return (int) static::db()->get_var( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'draft' AND published_at IS NOT NULL" );
+	}
+
+	/**
+	 * WHERE for the wp-admin Content screen.
+	 *
+	 * "All" leaves out the trash (WordPress convention); "scheduled" is a
+	 * draft with a published_at, overdue ones included so an owner can see
+	 * what the hourly job has not published yet.
+	 *
+	 * @param array{space_id?:int,status?:string,search?:string} $f Filters.
+	 * @return array{0:string,1:array}
+	 */
+	private static function admin_where( array $f ): array {
+		$where  = '1=1';
+		$args   = array();
+		$status = (string) ( $f['status'] ?? 'all' );
+		if ( ! empty( $f['space_id'] ) ) {
+			$where .= ' AND p.space_id = %d';
+			$args[] = (int) $f['space_id'];
+		}
+		if ( 'scheduled' === $status ) {
+			$where .= " AND p.status = 'draft' AND p.published_at IS NOT NULL";
+		} elseif ( 'all' !== $status ) {
+			$where .= ' AND p.status = %s';
+			$args[] = $status;
+		} else {
+			$where .= " AND p.status <> 'trash'";
+		}
+		if ( ! empty( $f['search'] ) ) {
+			$where .= ' AND p.title LIKE %s';
+			$args[] = '%' . static::db()->esc_like( (string) $f['search'] ) . '%';
+		}
+		return array( $where, $args );
+	}
 }
