@@ -3908,6 +3908,13 @@
       "args": "name",
       "where": "includes/adapters/class-wp-mail-adapter.php",
       "consumed_by": null
+    },
+    {
+      "name": "jetonomy_theme_content_hooks",
+      "type": "filter",
+      "args": "hooks",
+      "where": "includes/class-template-loader.php",
+      "notes": "Two theme hook names fired around the community app (before, after); defaults to BuddyX/BuddyX Pro content-wrapper hooks when present."
     }
   ],
   "buddypress_integration": {
