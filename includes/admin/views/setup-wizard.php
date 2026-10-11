@@ -191,7 +191,7 @@ wp_head();
 		<button type="button" class="jt-btn jt-btn--ghost" id="jt-create-sample">
 			<?php jetonomy_echo_icon( 'plus', 16 ); ?>
 			<?php esc_html_e( 'Import the demo community instead', 'jetonomy' ); ?>
-			<span class="jt-spinner" style="border-color:rgba(100,116,139,.4);border-top-color:#64748b;"></span>
+			<span class="jt-spinner" style="border-color:rgba(100,116,139,.4);border-top-color:var(--jt-admin-text-3, #64748b);"></span>
 		</button>
 
 		<div class="jt-btn-row">

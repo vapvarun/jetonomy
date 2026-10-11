@@ -6,7 +6,7 @@
  * (`jetonomy-pro/includes/qa/class-rest-tests.php`, class
  * `\Jetonomy_Pro\QA\REST_Tests`) so Pro's manifest-driven coverage gate
  * (`bin/qa-coverage-check.php`) can credit them and Pro's stub generator
- * (`bin/qa-stub-gen.php`) has a file to append to (Basecamp 10161768864).
+ * (`bin/qa-stub-gen.php`) has a file to append to.
  * They used to live here, but a free-repo test file can never satisfy the
  * Pro repo's coverage gate — the checker only greps the plugin's own tree.
  *
@@ -36,6 +36,12 @@ class Pro_Tests {
 		if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) {
 			\WP_CLI::log( '  Pro not active — skipping' );
 			return [ 'pass' => 0, 'fail' => 0, 'skipped' => 0 ];
+		}
+
+		// Unlicensed Pro boots no extensions, so every Pro route would 404.
+		if ( class_exists( '\Jetonomy_Pro\License\License' ) && ! \Jetonomy_Pro\License\License::features_enabled() ) {
+			\WP_CLI::log( '  Pro features are off (no active license or grace) — skipping' );
+			return [ 'pass' => 0, 'fail' => 0, 'skipped' => 1 ];
 		}
 
 		if ( ! class_exists( '\Jetonomy_Pro\QA\REST_Tests' ) ) {
