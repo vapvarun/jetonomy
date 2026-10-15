@@ -1941,9 +1941,12 @@ class Space extends Model {
 	 * @return int[]
 	 */
 	public static function sitemap_ids(): array {
+		// visibility = 'public' stays explicit in all three sitemap queries: the
+		// guest listing predicate also admits private spaces when guest teasers
+		// are on, and a teaser card is not an invitation for crawlers.
 		[ $vis ] = self::listing_visibility_sql( 0 );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return array_map( 'intval', (array) static::db()->get_col( 'SELECT id FROM ' . static::table() . " WHERE {$vis} AND status = 'active' ORDER BY id ASC" ) );
+		return array_map( 'intval', (array) static::db()->get_col( 'SELECT id FROM ' . static::table() . " WHERE {$vis} AND visibility = 'public' AND status = 'active' ORDER BY id ASC" ) );
 	}
 
 	/**
@@ -1954,7 +1957,7 @@ class Space extends Model {
 	public static function sitemap_lastmod(): string {
 		[ $vis ] = self::listing_visibility_sql( 0 );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (string) static::db()->get_var( "SELECT MAX(GREATEST(COALESCE(last_activity_at,'1970-01-01'), COALESCE(updated_at,'1970-01-01'))) FROM " . static::table() . " WHERE {$vis} AND status = 'active'" );
+		return (string) static::db()->get_var( "SELECT MAX(GREATEST(COALESCE(last_activity_at,'1970-01-01'), COALESCE(updated_at,'1970-01-01'))) FROM " . static::table() . " WHERE {$vis} AND visibility = 'public' AND status = 'active'" );
 	}
 
 	/**
@@ -1969,7 +1972,7 @@ class Space extends Model {
 		return (array) static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT id, slug, last_activity_at, updated_at FROM ' . static::table() . " WHERE {$vis} AND status = 'active' AND id > %d ORDER BY id ASC LIMIT %d",
+				'SELECT id, slug, last_activity_at, updated_at FROM ' . static::table() . " WHERE {$vis} AND visibility = 'public' AND status = 'active' AND id > %d ORDER BY id ASC LIMIT %d",
 				$start_after,
 				$limit
 			)

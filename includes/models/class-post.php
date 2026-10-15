@@ -2512,8 +2512,11 @@ class Post extends Model {
 	private static function sitemap_from_where(): string {
 		// The sitemap is crawler-facing, so the viewer is always a guest, and the
 		// guest LISTING predicate (category visibility included) is what belongs in it.
+		// s.visibility = 'public' stays explicit: the guest listing predicate also
+		// admits private spaces when the owner turns on guest teasers, and their
+		// topics must never reach a sitemap.
 		[ $vis_s ] = Space::listing_visibility_sql( 0, 's' );
-		return 'FROM ' . static::table() . ' p INNER JOIN ' . \Jetonomy\table( 'spaces' ) . " s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND {$vis_s} AND s.status = 'active'";
+		return 'FROM ' . static::table() . ' p INNER JOIN ' . \Jetonomy\table( 'spaces' ) . " s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND {$vis_s} AND s.visibility = 'public' AND s.status = 'active'";
 	}
 
 	/**
