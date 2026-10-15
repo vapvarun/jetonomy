@@ -1063,7 +1063,7 @@
         "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Update user trust level",
         "auth": "login_required",
-        "capability": "manage_options",
+        "capability": "jetonomy_manage_users",
         "ownership_check": "handler_enforces",
         "audit_notes": "Update trust level"
       },
@@ -2802,7 +2802,7 @@
       "name": "jetonomy_trust_level_changed",
       "type": "action",
       "args": "user_id, old_level, new_level",
-      "where": "includes/class-cron.php",
+      "where": "includes/class-cron.php, includes/trust/class-trust-levels.php (Trust_Levels::set_manually - wp-admin Users + REST /admin/users/trust-level; 2.0.2: the wp-admin path now fires it too)",
       "consumed_by": "jetonomy-pro"
     },
     {

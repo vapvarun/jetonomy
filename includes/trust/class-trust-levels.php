@@ -190,4 +190,42 @@ class Trust_Levels {
 		 */
 		return (string) apply_filters( 'jetonomy_trust_level_label', $labels[ $level ] ?? '', $level );
 	}
+
+	/**
+	 * Set a member's trust level by hand - the one write path for wp-admin and REST.
+	 *
+	 * Trust unlocks capabilities held behind the trust floor, so a delegated
+	 * "Manage community users" holder must not raise themselves or reach above
+	 * their rank: only an administrator may change their own level, another
+	 * administrator's, or a moderator's. Same rules as Restriction::actor_may_restrict().
+	 *
+	 * @param int $user_id  Member whose level changes.
+	 * @param int $level    New level, clamped to 0-5.
+	 * @param int $actor_id User making the change.
+	 * @return int|\WP_Error The level now stored, or why the change was refused.
+	 */
+	public static function set_manually( int $user_id, int $level, int $actor_id ): int|\WP_Error {
+		$level = max( 0, min( 5, $level ) );
+
+		if ( ! user_can( $actor_id, 'manage_options' ) ) {
+			if ( $user_id === $actor_id ) {
+				return new \WP_Error( 'jetonomy_trust_self', __( 'You cannot change your own trust level.', 'jetonomy' ), array( 'status' => 403 ) );
+			}
+			if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_moderate' ) ) {
+				return new \WP_Error( 'jetonomy_trust_peer', __( 'Only an administrator can change the trust level of an administrator or moderator.', 'jetonomy' ), array( 'status' => 403 ) );
+			}
+		}
+
+		\Jetonomy\Models\UserProfile::find_or_create( $user_id );
+		$old = (int) ( \Jetonomy\Models\UserProfile::find_by_user( $user_id )->trust_level ?? 0 );
+		if ( $old === $level ) {
+			return $level;
+		}
+		if ( ! \Jetonomy\Models\UserProfile::update_profile( $user_id, array( 'trust_level' => $level ) ) ) {
+			return new \WP_Error( 'jetonomy_trust_failed', __( 'Failed to update trust level.', 'jetonomy' ), array( 'status' => 500 ) );
+		}
+		do_action( 'jetonomy_trust_level_changed', $user_id, $old, $level );
+
+		return $level;
+	}
 }

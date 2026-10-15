@@ -559,7 +559,7 @@ These endpoints require the `manage_options` capability (administrators only).
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | POST | `/admin/recount` | Admin (`manage_options`) | Rebuild all denormalized counters (reply counts, vote scores, post counts) |
-| POST | `/admin/users/trust-level` | Admin (`manage_options`) | Manually set a user's trust level |
+| POST | `/admin/users/trust-level` | `jetonomy_manage_users` | Manually set a user's trust level. Non-admins cannot change their own level, an administrator's or a moderator's (skipped as `forbidden`). |
 | GET | `/admin/demo-data` | Admin (`manage_options`) | Whether demo data is loaded: `{ active, counts: { users, categories, spaces, posts, replies } }` |
 | POST | `/admin/demo-data` | Admin (`manage_options`) | Import the demo community (replaces an earlier demo set). Returns `201` with the same shape plus `message` |
 | DELETE | `/admin/demo-data` | Admin (`manage_options`) | Remove the demo data; your own content is untouched. `404` when there is none |

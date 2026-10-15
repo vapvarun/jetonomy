@@ -217,12 +217,16 @@ class Permission_Engine {
 				return true;
 			}
 			// A role holding jetonomy_moderate (Editor by default) is site-wide
-			// staff: it may use, in every space, each moderation action its role
-			// carries, with no membership and no trust floor. The moderation
-			// queue already treats it this way (Moderation_Permissions); without
-			// this a new moderator could clear flags but pin or edit nothing.
+			// staff: in every space it can READ, it may use each moderation
+			// action its role carries, with no membership and no trust floor.
+			// The moderation queue already treats it this way
+			// (Moderation_Permissions); without this a new moderator could clear
+			// flags but pin or edit nothing. The read check keeps a private or
+			// hidden space the moderator is not in out of reach: the write
+			// endpoints return the post, so acting there would also leak it.
 			if ( user_can( $user_id, 'jetonomy_moderate' )
-				&& ( 'moderate' === $action || user_can( $user_id, 'jetonomy_' . $action ) ) ) {
+				&& ( 'moderate' === $action || user_can( $user_id, 'jetonomy_' . $action ) )
+				&& self::can( $user_id, 'read', $space_id ) ) {
 				return true;
 			}
 		}

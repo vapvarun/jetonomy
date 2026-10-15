@@ -43,7 +43,7 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_edit_others_posts` | Edit anyone's post |
 | `jetonomy_delete_others_posts` | Delete anyone's post |
 | `jetonomy_moderate` | Work the moderation queue, resolve reports, ban members |
-| `jetonomy_manage_users` | Open **Jetonomy → Users** and change members' trust levels |
+| `jetonomy_manage_users` | Open **Jetonomy → Users** and change members' trust levels (not their own, an administrator's or a moderator's) |
 | `jetonomy_move_posts` | Move topics between spaces |
 | `jetonomy_close_posts` | Close topics |
 | `jetonomy_pin_posts` | Pin topics |

@@ -10,7 +10,6 @@ namespace Jetonomy\Admin\Ajax;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Restriction;
-use Jetonomy\Models\UserProfile;
 
 class Users_Handler {
 
@@ -137,15 +136,9 @@ class Users_Handler {
 			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
 		}
 
-		if ( $trust_level > 5 ) {
-			$trust_level = 5;
-		}
-
-		UserProfile::find_or_create( $user_id );
-		$result = UserProfile::update_profile( $user_id, array( 'trust_level' => $trust_level ) );
-
-		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to update trust level.', 'jetonomy' ) );
+		$trust_level = \Jetonomy\Trust\Trust_Levels::set_manually( $user_id, $trust_level, get_current_user_id() );
+		if ( is_wp_error( $trust_level ) ) {
+			wp_send_json_error( $trust_level->get_error_message() );
 		}
 
 		wp_send_json_success(

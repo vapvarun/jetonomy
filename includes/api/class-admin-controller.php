@@ -15,7 +15,6 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
 use Jetonomy\Recount;
-use Jetonomy\Models\UserProfile;
 
 class Admin_Controller extends Base_Controller {
 
@@ -52,7 +51,7 @@ class Admin_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'bulk_set_trust_level' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_users' ),
 				'args'                => array(
 					'user_ids' => array(
 						'type'     => 'array',
@@ -171,26 +170,15 @@ class Admin_Controller extends Base_Controller {
 				);
 				continue;
 			}
-			UserProfile::find_or_create( $uid );
-			$profile   = UserProfile::find_by_user( $uid );
-			$old_level = $profile ? (int) ( $profile->trust_level ?? 0 ) : 0;
-
-			// Nothing to do when the level already matches — keeps the activity log clean.
-			if ( $old_level === $level ) {
-				$results['updated'][] = $uid;
-				continue;
-			}
-
-			$ok = UserProfile::update_profile( $uid, array( 'trust_level' => $level ) );
-			if ( $ok ) {
-				$results['updated'][] = $uid;
-				do_action( 'jetonomy_trust_level_changed', $uid, $old_level, $level );
-			} else {
+			$set = \Jetonomy\Trust\Trust_Levels::set_manually( $uid, $level, get_current_user_id() );
+			if ( is_wp_error( $set ) ) {
 				$results['skipped'][] = array(
 					'user_id' => $uid,
-					'reason'  => 'update_failed',
+					'reason'  => 'jetonomy_trust_failed' === $set->get_error_code() ? 'update_failed' : 'forbidden',
 				);
+				continue;
 			}
+			$results['updated'][] = $uid;
 		}
 
 		return new WP_REST_Response(

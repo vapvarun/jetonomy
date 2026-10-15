@@ -296,7 +296,7 @@
         ],
         "summary": "Bulk-set trust level",
         "operationId": "adminSetTrustLevel",
-        "description": "Bulk-set trust level for users. Requires manage_options.",
+        "description": "Bulk-set trust level for users. Requires jetonomy_manage_users. Non-admins cannot change their own level, an administrator's or a moderator's; those users are returned in skipped with reason forbidden.",
         "responses": {
           "200": {
             "description": "Success",
