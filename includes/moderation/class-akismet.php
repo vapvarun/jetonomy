@@ -34,7 +34,7 @@ class Akismet {
 			return false;
 		}
 
-		$data = [
+		$data = array(
 			'blog'                 => home_url(),
 			'user_ip'              => $ip,
 			'user_agent'           => $_SERVER['HTTP_USER_AGENT'] ?? '',
@@ -42,7 +42,7 @@ class Akismet {
 			'comment_author'       => $author,
 			'comment_author_email' => $email,
 			'comment_content'      => $content,
-		];
+		);
 
 		$response = \Akismet::http_post( http_build_query( $data ), 'comment-check' );
 

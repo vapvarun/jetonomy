@@ -166,10 +166,19 @@ class AttachmentsRestTest extends WP_UnitTestCase {
 	}
 
 	public function test_render_composer_attach_button_has_data_attribute(): void {
+		// The button follows the upload permission (Subscribers hold it by default).
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
 		ob_start();
 		( new \Jetonomy_Pro\Extensions\Attachments\Extension() )->render_composer_attach_button( 1, 0 );
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'data-jt-attach="1"', $html );
+	}
+
+	public function test_render_composer_attach_button_hidden_without_upload_permission(): void {
+		wp_set_current_user( 0 );
+		ob_start();
+		( new \Jetonomy_Pro\Extensions\Attachments\Extension() )->render_composer_attach_button( 1, 0 );
+		$this->assertSame( '', trim( (string) ob_get_clean() ) );
 	}
 
 	/**

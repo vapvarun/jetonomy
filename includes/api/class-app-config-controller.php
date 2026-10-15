@@ -117,7 +117,7 @@ class App_Config_Controller extends Base_Controller {
 		$data = apply_filters( 'jetonomy_app_config', $data, $request );
 
 		$response = new WP_REST_Response( $data, 200 );
-		// Client-tier caching only (plan WP4.15): the payload is public,
+		// Client-tier caching only: the payload is public,
 		// shared, and read once per app launch PRE-LOGIN — a client cache
 		// hit removes a full WP bootstrap, where a server-side cache would
 		// save three autoloaded option reads. No server cache on top
@@ -130,8 +130,7 @@ class App_Config_Controller extends Base_Controller {
 	 * Resolve branding from the free Appearance settings (accent + logo).
 	 *
 	 * Pro white-label carries only the community name, footer text and the
-	 * wp-admin menu label/icon; it never wrote the logo, accent or login
-	 * background keys this used to read from it (Basecamp 10368526675).
+	 * wp-admin menu label/icon; it has no logo, accent or login background keys.
 	 * `login_bg_url` stays in the payload, empty, so the app contract holds.
 	 *
 	 * @param array $settings The `jetonomy_settings` option.

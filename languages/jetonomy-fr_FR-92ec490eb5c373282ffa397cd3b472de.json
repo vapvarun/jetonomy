@@ -1,0 +1,42 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-replies.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "fr",
+                "plural-forms": "nplurals=2; plural=(n > 1);"
+            },
+            "Saved!": [
+                "Enregistr\u00e9!"
+            ],
+            "Move this to trash?": [
+                "Mettre ceci \u00e0 la corbeille ?"
+            ],
+            "Mark this as spam?": [
+                "Marquer ceci comme ind\u00e9sirable ?"
+            ],
+            "Save failed. Please try again.": [
+                "L'enregistrement a \u00e9chou\u00e9. Essaie \u00e0 nouveau."
+            ],
+            "Please choose a bulk action.": [
+                "Choisis une action group\u00e9e."
+            ],
+            "Delete this reply permanently? This cannot be undone.": [
+                ""
+            ],
+            "Delete the selected replies permanently? This cannot be undone.": [
+                ""
+            ],
+            "Apply this action to all selected replies?": [
+                "Applique cette action \u00e0 toutes les r\u00e9ponses s\u00e9lectionn\u00e9es ?"
+            ],
+            "Please select at least one reply.": [
+                "S\u00e9lectionne au moins une r\u00e9ponse."
+            ]
+        }
+    }
+}

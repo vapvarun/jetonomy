@@ -80,8 +80,8 @@ $mutations = [
 		'guard' => 'SM2',
 		'what'  => 'sitemap claim demoted to priority 10, losing to AIOSEO',
 		'file'  => $plugin_dir . '/includes/class-router.php',
-		'find'  => "add_action( 'parse_request', [ \$this, 'claim_sitemap_request' ], 0 );",
-		'to'    => "add_action( 'parse_request', [ \$this, 'claim_sitemap_request' ], 10 );",
+		'find'  => "add_action( 'parse_request', array( \$this, 'claim_sitemap_request' ), 0 );",
+		'to'    => "add_action( 'parse_request', array( \$this, 'claim_sitemap_request' ), 10 );",
 	],
 	[
 		'guard' => 'MV1',

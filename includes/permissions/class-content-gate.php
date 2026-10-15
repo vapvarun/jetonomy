@@ -3,34 +3,19 @@
  * The state checks that decide whether content may be written at all.
  *
  * These are the gates that depend only on WHO is replying and WHAT they are
- * replying to - not on how the request arrived. They were previously written
- * out inside REST_Replies_Controller::create_item() and nowhere else, so the
- * inbound-email writer, which reaches Reply::create() through
- * `jetonomy_reply_from_email` and Notifier::on_reply_from_email(), had none of
- * them.
- *
- * Reproduced before this existed (Basecamp 10228771444), each request carrying
- * a VALID webhook signature so nothing was hiding behind the auth fix:
- *
- *   banned member replies          HTTP 200  reply created
- *   reply to a CLOSED post         HTTP 200  reply created
- *   reply into an ARCHIVED space   HTTP 200  reply created
- *
- * A banned member kept a working write path into the community for as long as
- * they held any notification email, and closing a thread or archiving a space
- * did not stop email replies landing in it.
+ * replying to - not on how the request arrived - so every writer shares them: REST,
+ * the WP Abilities create-post and create-reply paths, and the inbound-email writer
+ * (which reaches Reply::create() through `jetonomy_reply_from_email` and
+ * Notifier::on_reply_from_email()). Without them a banned member, a reply to a CLOSED
+ * post or a reply into an ARCHIVED space would succeed on the surfaces that skip them.
  *
  * Request-shaped concerns deliberately stay at the callers: rate limiting and
  * CAPTCHA are per-surface policy (the email path has its own rate limit keyed
  * differently, and a CAPTCHA is meaningless for a mail webhook). What lives
  * here is only what must be true on every surface.
  *
- * Named for CONTENT, not replies, deliberately. It started as a reply-only
- * helper and within the hour turned out to be needed for post creation too:
- * the WP Abilities create-post and create-reply paths could both write into an
- * ARCHIVED space that REST refuses (Basecamp 10228771444, follow-up audit). A
- * gate named for one caller is a gate the next caller does not think to look
- * for, which is the exact failure this whole batch of cards is made of.
+ * Named for CONTENT, not replies, deliberately: post creation needs the same gate, and
+ * a gate named for one caller is a gate the next caller does not think to look for.
  *
  * @package Jetonomy
  */
@@ -62,16 +47,16 @@ class Content_Gate {
 		if ( $user_id <= 0 ) {
 			return new \WP_Error(
 				'jetonomy_not_logged_in',
+				// jt-terms-ok: "reply" is the verb here, not the noun.
 				__( 'You must be logged in to reply.', 'jetonomy' ),
 				array( 'status' => 401 )
 			);
 		}
 
 		/*
-		 * Only a published topic takes replies. A trashed one kept accepting
-		 * them on every surface - REST 201, the ability, emailed replies - so
-		 * its author could keep a thread nobody else can see alive
-		 * (Basecamp 10335997408). Drafts and scheduled topics (drafts with a
+		 * Only a published topic takes replies. A trashed one would otherwise keep accepting
+		 * them on every surface - REST, the ability, emailed replies - letting its author keep
+		 * a thread nobody else can see alive. Drafts and scheduled topics (drafts with a
 		 * published_at) are refused too: there is no thread yet.
 		 */
 		$live = self::status_error( $post );
@@ -115,7 +100,7 @@ class Content_Gate {
 		 * single-post.php has always promised exactly that - it renders the
 		 * composer plus a "As a moderator, you can still add a reply" notice -
 		 * while this gate rejected everyone, so the UI offered a reply the
-		 * server refused with a 403 (Basecamp 10272481541).
+		 * server refused with a 403.
 		 *
 		 * The permission slug must stay `moderate`, the same one the template
 		 * tests, or the display/enforce split just moves rather than closes.
@@ -137,7 +122,7 @@ class Content_Gate {
 		if ( $space_id && ! Permission_Engine::can( $user_id, 'create_replies', $space_id ) ) {
 			return new \WP_Error(
 				'jetonomy_forbidden',
-				__( 'You cannot post in this space.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You cannot post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 403 )
 			);
 		}
@@ -164,7 +149,7 @@ class Content_Gate {
 		if ( $space && in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
 			return new \WP_Error(
 				'jetonomy_space_restricted',
-				__( 'This space is archived or locked and no longer accepts new content.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is archived or locked and no longer accepts new content.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 403 )
 			);
 		}

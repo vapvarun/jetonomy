@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 class Schema_Markup {
 
 	public function __construct() {
-		add_action( 'wp_head', [ $this, 'output_schema' ] );
+		add_action( 'wp_head', array( $this, 'output_schema' ) );
 		// Title patterns are owned by Template_Loader::set_seo_meta — the comment
 		// here has said so since 1.4.0, but the filter stayed registered right
 		// below it and the two fought. Template_Loader registers on
@@ -33,7 +33,7 @@ class Schema_Markup {
 		}
 
 		// Shared defaults union so the admin checkboxes (Default: On) and these
-		// consumers agree — previously an absent seo_noindex_* / seo_sitemap key
+		// consumers agree - an absent seo_noindex_* / seo_sitemap key reads as the UI default.
 		// read as OFF despite the UI. See Jetonomy\seo_settings().
 		$settings = \Jetonomy\seo_settings();
 
@@ -80,11 +80,9 @@ class Schema_Markup {
 		 * Filter the primary schema entity for a Jetonomy route.
 		 *
 		 * A page gets ONE primary entity. This filter exists so an extension can
-		 * adjust that entity rather than emit a competing one: SEO Pro used to
-		 * print its own DiscussionForumPosting from wp_head, so a Q&A topic
-		 * carried both QAPage and DiscussionForumPosting and told Google two
-		 * different things about the same page (Basecamp 10212231937). There was
-		 * no seam here, which is precisely why it re-implemented instead.
+		 * adjust that entity rather than emit a competing one (a Q&A topic carrying both
+		 * QAPage and DiscussionForumPosting tells Google two different things about the
+		 * same page).
 		 *
 		 * Return null to suppress emission entirely.
 		 *
@@ -116,7 +114,6 @@ class Schema_Markup {
 		// applies to og:* / meta description / article:* metadata. Without
 		// this, JSON-LD leaks the full content of a private post to
 		// logged-out crawlers even though the HTML view returns 403/404
-		// (Basecamp 9803998504 regression).
 		//
 		// 1.8.0: that shared check is now can_render_post_text(), so this
 		// emit inherits the blocked-author gate too — `headline` and `text`
@@ -133,39 +130,43 @@ class Schema_Markup {
 		$base        = \Jetonomy\route_url( 'post', $space_slug, $slug );
 
 		if ( 'question' === $post->type && $post->accepted_reply_id ) {
-			$accepted    = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+			$accepted = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+			// A private accepted answer is for the asker and staff only, never public structured data.
+			if ( $accepted && ! empty( $accepted->is_private ) ) {
+				$accepted = null;
+			}
 			$answer_name = $accepted ? \Jetonomy\Author::for_display( (int) $accepted->author_id, $accepted )['name'] : '';
 
-			return [
+			return array(
 				'@context'   => 'https://schema.org',
 				'@type'      => 'QAPage',
-				'mainEntity' => [
+				'mainEntity' => array(
 					'@type'          => 'Question',
 					'name'           => $post->title,
 					'text'           => wp_strip_all_tags( $post->content ),
 					'dateCreated'    => $this->to_iso8601( $post->created_at ),
 					'answerCount'    => (int) $post->reply_count,
 					'upvoteCount'    => max( 0, (int) $post->vote_score ),
-					'author'         => [
+					'author'         => array(
 						'@type' => 'Person',
 						'name'  => $author_name,
-					],
-					'acceptedAnswer' => $accepted ? [
+					),
+					'acceptedAnswer' => $accepted ? array(
 						'@type'       => 'Answer',
 						'text'        => wp_strip_all_tags( $accepted->content ),
 						'dateCreated' => $this->to_iso8601( $accepted->created_at ),
 						'upvoteCount' => max( 0, (int) $accepted->vote_score ),
-						'author'      => [
+						'author'      => array(
 							'@type' => 'Person',
 							'name'  => $answer_name,
-						],
+						),
 						'url'         => \Jetonomy\reply_permalink( $space_slug, $slug, (int) $accepted->id ),
-					] : null,
-				],
-			];
+					) : null,
+				),
+			);
 		}
 
-		return [
+		return array(
 			'@context'             => 'https://schema.org',
 			'@type'                => 'DiscussionForumPosting',
 			'headline'             => $post->title,
@@ -173,23 +174,23 @@ class Schema_Markup {
 			'url'                  => $base,
 			'datePublished'        => $this->to_iso8601( $post->created_at ),
 			'dateModified'         => $this->to_iso8601( $post->updated_at ?: $post->created_at ),
-			'author'               => [
+			'author'               => array(
 				'@type' => 'Person',
 				'name'  => $author_name,
-			],
-			'interactionStatistic' => [
-				[
+			),
+			'interactionStatistic' => array(
+				array(
 					'@type'                => 'InteractionCounter',
 					'interactionType'      => 'https://schema.org/CommentAction',
 					'userInteractionCount' => (int) $post->reply_count,
-				],
-				[
+				),
+				array(
 					'@type'                => 'InteractionCounter',
 					'interactionType'      => 'https://schema.org/LikeAction',
 					'userInteractionCount' => max( 0, (int) $post->vote_score ),
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 
 	/**
@@ -231,7 +232,7 @@ class Schema_Markup {
 
 		$space_url = \Jetonomy\route_url( 'space', $space->slug );
 
-		// Cached 900s per space (plan WP4.9). The viewer is hard-coded to the
+		// Cached 900s per space. The viewer is hard-coded to the
 		// guest path below (crawler-facing payload), so the whole schema is
 		// globally shareable — yet it re-ran a full post listing on every
 		// space view purely for JSON-LD humans never see. Busted from
@@ -296,13 +297,12 @@ class Schema_Markup {
 	 * Searchbox can surface our search directly in the SERP.
 	 */
 	private function get_home_schema(): array {
-		$base      = \Jetonomy\base_url();
-		$site_name = get_bloginfo( 'name' );
+		$base = \Jetonomy\base_url();
 
 		return array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'WebSite',
-			'name'            => $site_name . ' Community',
+			'name'            => \Jetonomy\community_home_name(),
 			'description'     => __( 'Community discussion forum', 'jetonomy' ),
 			'url'             => $base . '/',
 			'inLanguage'      => str_replace( '_', '-', get_locale() ),
@@ -356,7 +356,7 @@ class Schema_Markup {
 		$schema = array(
 			'@context' => 'https://schema.org',
 			'@type'    => 'Person',
-			'name'     => $user->display_name,
+			'name'     => \Jetonomy\user_display_name( $user ),
 			'url'      => $profile_url,
 			'image'    => $avatar_url,
 		);
@@ -438,12 +438,12 @@ class Schema_Markup {
 		$space_slug = get_query_var( 'jetonomy_space_slug' );
 		$base       = \Jetonomy\base_url() . '/';
 
-		$items = [
-			[
-				'name' => __( 'Community', 'jetonomy' ),
+		$items = array(
+			array(
+				'name' => \Jetonomy\community_title(),
 				'url'  => $base,
-			],
-		];
+			),
+		);
 
 		if ( 'space' === $route && $slug ) {
 			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
@@ -452,10 +452,10 @@ class Schema_Markup {
 			// JSON-LD (the post-route branch below was already gated; this one was
 			// missed). Same read check.
 			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
-				$items[] = [
+				$items[] = array(
 					'name' => $space->title,
 					'url'  => \Jetonomy\route_url( 'space', $slug ),
-				];
+				);
 			}
 		}
 
@@ -468,20 +468,20 @@ class Schema_Markup {
 			// topic's title into BreadcrumbList JSON-LD even though the HTML
 			// view 403s. Mirror the get_post_schema() read gate.
 			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
-				$items[] = [
+				$items[] = array(
 					'name' => $space->title,
 					'url'  => \Jetonomy\route_url( 'space', $space_slug ),
-				];
+				);
 			}
 			// can_render_post_text(): the crumb's `name` IS the post title, so a
 			// blocked author's title rode into BreadcrumbList even though the
 			// page body beside it was tombstoned (1.8.0). Dropping the crumb
 			// leaves a valid shorter chain (Community → Space).
 			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
-				$items[] = [
+				$items[] = array(
 					'name' => $post->title,
 					'url'  => \Jetonomy\route_url( 'post', $space_slug, $slug ),
-				];
+				);
 			}
 		}
 
@@ -531,28 +531,28 @@ class Schema_Markup {
 			return null;
 		}
 
-		$list = [];
+		$list = array();
 		foreach ( $items as $i => $item ) {
-			$list[] = [
+			$list[] = array(
 				'@type'    => 'ListItem',
 				'position' => $i + 1,
 				'name'     => $item['name'],
 				'item'     => $item['url'],
-			];
+			);
 		}
 
-		return [
+		return array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'BreadcrumbList',
 			'itemListElement' => $list,
-		];
+		);
 	}
 
 	private function print_jsonld( array $data ): void {
 		$data = $this->array_filter_recursive( $data );
 		wp_print_inline_script_tag(
 			wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
-			[ 'type' => 'application/ld+json' ]
+			array( 'type' => 'application/ld+json' )
 		);
 	}
 

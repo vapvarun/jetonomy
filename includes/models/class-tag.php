@@ -33,10 +33,10 @@ class Tag extends Model {
 		}
 
 		return static::insert(
-			[
+			array(
 				'name' => $name,
 				'slug' => $slug,
-			]
+			)
 		);
 	}
 
@@ -98,10 +98,10 @@ class Tag extends Model {
 		$post_tags = table( 'post_tags' );
 		$affected  = static::db()->delete(
 			$post_tags,
-			[
+			array(
 				'post_id' => $post_id,
 				'tag_id'  => $tag_id,
-			]
+			)
 		);
 
 		if ( $affected ) {
@@ -118,12 +118,9 @@ class Tag extends Model {
 	/**
 	 * List all tags attached to a post.
 	 *
-	 * The default $limit is deliberately high (200) — every real-world
-	 * post stays well under it, so existing callers see the same row set
-	 * they got pre-1.4.3 — but it is no longer truly unbounded. A
-	 * runaway migration or hostile mass-tag import that wires thousands
-	 * of tags onto a single post can no longer balloon the per-post
-	 * render budget without an explicit, larger $limit.
+	 * The default $limit is deliberately high (200) - every real-world post stays well
+	 * under it - but it is not unbounded: a runaway migration or hostile mass-tag
+	 * import cannot balloon the per-post render budget without an explicit, larger $limit.
 	 *
 	 * @param int $post_id
 	 * @param int $limit   Defensive cap. Defaults to 200.
@@ -147,7 +144,7 @@ class Tag extends Model {
 				$post_id,
 				$limit
 			)
-		) ?: [];
+		) ?: array();
 
 		if ( 200 === $limit ) {
 			self::register_memo_reset();
@@ -160,14 +157,14 @@ class Tag extends Model {
 	/**
 	 * Per-request memo of per-post tag lists (default cap only), filled
 	 * per-row on miss and in bulk by for_posts(). Cleared on attach/detach
-	 * and via Cache::flush() (plan U1).
+	 * and via Cache::flush().
 	 *
 	 * @var array<int, object[]>
 	 */
-	private static array $post_memo = [];
+	private static array $post_memo = array();
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -177,25 +174,25 @@ class Tag extends Model {
 	 * Empty the per-post tag memo. Called from attach/detach.
 	 */
 	public static function reset_memo(): void {
-		self::$post_memo = [];
+		self::$post_memo = array();
 	}
 
 	/**
-	 * Register the memo reset with the shared registry once (plan U1).
+	 * Register the memo reset with the shared registry once.
 	 */
 	private static function register_memo_reset(): void {
 		if ( ! self::$memo_registered ) {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$post_memo = [];
+					self::$post_memo = array();
 				}
 			);
 		}
 	}
 
 	/**
-	 * Batch-fill the list_for_post() memo for a page of posts (plan WP3.7).
+	 * Batch-fill the list_for_post() memo for a page of posts.
 	 *
 	 * One IN-query for the whole page — the space listing called
 	 * list_for_post() per card (20 JOINs per page). Empties are seeded so
@@ -221,9 +218,9 @@ class Tag extends Model {
 				"SELECT pt.post_id AS jt_post_id, t.* FROM {$tags} t INNER JOIN {$post_tags} pt ON pt.tag_id = t.id WHERE pt.post_id IN ({$placeholders}) ORDER BY t.name ASC",
 				...$post_ids
 			)
-		) ?: [];
+		) ?: array();
 
-		$grouped = array_fill_keys( $post_ids, [] );
+		$grouped = array_fill_keys( $post_ids, array() );
 		foreach ( $rows as $row ) {
 			$pid = (int) $row->jt_post_id;
 			unset( $row->jt_post_id );
@@ -250,7 +247,7 @@ class Tag extends Model {
 	public static function ids_for_posts( array $post_ids ): array {
 		$post_ids = array_values( array_unique( array_filter( array_map( 'intval', $post_ids ) ) ) );
 		if ( ! $post_ids ) {
-			return [];
+			return array();
 		}
 
 		$db = static::db();
@@ -297,7 +294,7 @@ class Tag extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -311,42 +308,44 @@ class Tag extends Model {
 	}
 
 	/**
-	 * List posts (discussions) that have a given tag, ordered by recency.
+	 * List the newest posts with a given tag that the current viewer may read.
 	 *
-	 * Returns rows from jt_posts joined through jt_post_tags.
-	 * Each row includes: id, title, slug, space_id, author_id, reply_count,
-	 * vote_score, created_at, plus the author's display_name.
+	 * Each row carries id, title, post_slug, space_id, author_id, author_name,
+	 * reply_count, vote_score and created_at. Anonymous posts carry author_id 0
+	 * and the masked name, as everywhere else.
 	 *
 	 * @param string $slug  Tag slug.
 	 * @param int    $limit Maximum number of posts to return.
 	 * @return object[]
 	 */
 	public static function list_by_tag( string $slug, int $limit = 5 ): array {
-		$tags      = static::table();
-		$post_tags = table( 'post_tags' );
-		$posts     = table( 'posts' );
+		$tag = static::find_by_slug( $slug );
+		if ( ! $tag ) {
+			return array();
+		}
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$results = static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.id, p.title, p.slug AS post_slug, p.space_id, p.author_id,
-				        p.reply_count, p.vote_score, p.created_at,
-				        u.display_name AS author_name
-				 FROM {$posts} p
-				 INNER JOIN {$post_tags} pt ON pt.post_id = p.id
-				 INNER JOIN {$tags} t ON t.id = pt.tag_id
-				 INNER JOIN {$GLOBALS['wpdb']->users} u ON u.ID = p.author_id
-				 WHERE t.slug = %s
-				 ORDER BY p.created_at DESC
-				 LIMIT %d",
-				$slug,
-				$limit
-			)
+		$posts = Post::list_by_tag_visible( (int) $tag->id, 'latest', $limit );
+		if ( $posts ) {
+			cache_users( array_map( static fn( $p ) => (int) $p->author_id, $posts ) );
+		}
+
+		return array_map(
+			static function ( $post ) {
+				$author = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+				return (object) array(
+					'id'          => (int) $post->id,
+					'title'       => $post->title,
+					'post_slug'   => $post->slug,
+					'space_id'    => (int) $post->space_id,
+					'author_id'   => $author['id'],
+					'author_name' => $author['name'],
+					'reply_count' => (int) $post->reply_count,
+					'vote_score'  => (int) $post->vote_score,
+					'created_at'  => $post->created_at,
+				);
+			},
+			$posts
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-
-		return $results ?: [];
 	}
 
 	/**
@@ -364,7 +363,7 @@ class Tag extends Model {
 				$like,
 				$limit
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -378,14 +377,14 @@ class Tag extends Model {
 	 * @return array{rows: object[], total: int}
 	 */
 	public static function list_paginated( string $search = '', string $orderby = 'name', string $order = 'ASC', int $per_page = 20, int $offset = 0 ): array {
-		$allowed_orderby = [ 'id', 'name', 'slug', 'post_count' ];
+		$allowed_orderby = array( 'id', 'name', 'slug', 'post_count' );
 		$orderby         = in_array( $orderby, $allowed_orderby, true ) ? $orderby : 'name';
 		$order           = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
 		$per_page        = max( 1, min( 100, $per_page ) );
 		$offset          = max( 0, $offset );
 
 		$where  = '';
-		$values = [];
+		$values = array();
 		if ( '' !== $search ) {
 			$where    = 'WHERE name LIKE %s';
 			$values[] = '%' . static::db()->esc_like( $search ) . '%';
@@ -401,14 +400,14 @@ class Tag extends Model {
 		// Data query. $orderby / $order / $per_page / $offset are sanitized above.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$data_sql = "SELECT * FROM {$table} {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-		$args     = array_merge( $values, [ $per_page, $offset ] );
+		$args     = array_merge( $values, array( $per_page, $offset ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: [];
+		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: array();
 
-		return [
+		return array(
 			'rows'  => $rows,
 			'total' => $total,
-		];
+		);
 	}
 
 	/**
@@ -422,9 +421,22 @@ class Tag extends Model {
 		$db        = static::db();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$db->delete( $post_tags, [ 'tag_id' => $id ] );
+		$db->delete( $post_tags, array( 'tag_id' => $id ) );
 
 		$deleted = (bool) parent::delete( $id );
 		return $deleted;
+	}
+
+	/**
+	 * Tags A to Z, paginated.
+	 *
+	 * @param int $limit  Page size.
+	 * @param int $offset Offset.
+	 * @return object[]
+	 */
+	public static function list_alphabetical( int $limit, int $offset = 0 ): array {
+		return static::db()->get_results(
+			static::db()->prepare( 'SELECT * FROM ' . static::table() . ' ORDER BY name ASC LIMIT %d OFFSET %d', $limit, $offset )
+		) ?: array();
 	}
 }

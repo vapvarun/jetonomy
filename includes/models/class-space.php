@@ -14,6 +14,10 @@ use Jetonomy\Cache;
 
 class Space extends Model {
 
+	/** Settings key set by hand_over() when it archives; reserved, never editable. */
+	public const HANDOVER_ARCHIVE = '_handover_archive';
+
+
 	protected static function table_name(): string {
 		return 'spaces';
 	}
@@ -35,7 +39,7 @@ class Space extends Model {
 	/**
 	 * Load several spaces into the find() cache with one query, so a list of
 	 * topics from many spaces (tag page, drafts, search) does not run one
-	 * find() query per space (Basecamp 10369564133). Already cached ids are
+	 * find() query per space. Already cached ids are
 	 * skipped, so priming twice never re-queries.
 	 *
 	 * @param int[] $ids Space ids.
@@ -74,19 +78,19 @@ class Space extends Model {
 	 * @param string|null $slug Slug whose mapping to also drop (rename/delete only).
 	 */
 	public static function bust_cache( int $id, ?string $slug = null ): void {
-		$keys = [ "space:{$id}" ];
+		$keys = array( "space:{$id}" );
 		if ( ! empty( $slug ) ) {
 			$keys[] = "space:slug:{$slug}";
 		}
 		Cache::delete_many( $keys );
 		// The decoded-settings memo sits above the row cache — clear it with
-		// the row or merge_settings()'s read-modify-write reads stale (WP2.6).
+		// the row or merge_settings()'s read-modify-write reads stale.
 		unset( self::$settings_memo[ $id ] );
 		// The category tree holds row COPIES (title, visibility, counts) —
-		// a rename/visibility change must go cold with the row (WP4.4).
+		// a rename/visibility change must go cold with the row.
 		self::bump_tree_generation();
 		// Visibility / join-policy / settings changes alter permission
-		// verdicts — clear the request-scope verdict memo (WP0.1).
+		// verdicts — clear the request-scope verdict memo.
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 
@@ -108,6 +112,20 @@ class Space extends Model {
 			return $invalid;
 		}
 
+		// The hand-over marker lets an owner undo the archive their hand-over
+		// made. Every status change clears it, whatever else the write carries
+		// (the wp-admin form saves settings alongside status); hand_over() sets
+		// it afterwards in a settings-only write.
+		if ( array_key_exists( 'status', $data ) ) {
+			$settings = array_key_exists( 'settings', $data )
+				? (array) ( json_decode( (string) $data['settings'], true ) ?: array() )
+				: self::get_settings( $id );
+			if ( isset( $settings[ self::HANDOVER_ARCHIVE ] ) || array_key_exists( 'settings', $data ) ) {
+				unset( $settings[ self::HANDOVER_ARCHIVE ] );
+				$data['settings'] = $settings ? wp_json_encode( $settings ) : '';
+			}
+		}
+
 		$slug_changing = ! empty( $data['slug'] );
 		$type_changing = ! empty( $data['type'] );
 		// A space counts toward a category only while it is active and in one,
@@ -121,6 +139,15 @@ class Space extends Model {
 		$existing = ( $slug_changing || $type_changing || $count_changing || $access_changing ) ? parent::find( $id ) : null;
 		$old_slug = $slug_changing ? ( $existing->slug ?? null ) : null;
 		$old_type = $type_changing ? ( $existing->type ?? null ) : null;
+
+		// Private always means request or invite (owner decision, 2.0.2): an
+		// "open" join policy on a private space is stored as approval, so the
+		// saved value, the gate and the admin form all say the same thing.
+		if ( $access_changing && $existing
+			&& 'private' === ( $data['visibility'] ?? $existing->visibility ?? 'public' )
+			&& 'open' === ( $data['join_policy'] ?? $existing->join_policy ?? 'open' ) ) {
+			$data['join_policy'] = 'approval';
+		}
 
 		$result = parent::update( $id, $data );
 
@@ -164,16 +191,16 @@ class Space extends Model {
 		// Retype the posts inside when the space changes what it is. Post type
 		// drives real behaviour, not just a label: schema markup only emits
 		// QAPage with acceptedAnswer for `question`, so a forum space switched
-		// to Q&A used to keep every post as `topic` and silently lose the rich
-		// result (Basecamp 10210058401). Ideas spaces had the same gap.
+		// to Q&A must not keep every post as `topic` and lose the rich result. Ideas
+		// spaces are the same.
 		if ( $type_changing && $old_type && $old_type !== $data['type'] ) {
 			self::retype_posts( $id, (string) $data['type'] );
 		}
 
 		/*
 		 * Settle the request queue when the space stops taking requests.
-		 * Pending rows used to linger after approval -> open/invite, looking
-		 * unprocessed in the owner's queue forever (Basecamp 10148432976).
+		 * Pending rows would otherwise linger after approval -> open/invite, looking
+		 * unprocessed in the owner's queue forever.
 		 * Every writer - REST PATCH, admin AJAX, WP-CLI - funnels through
 		 * here, so this is the one place that sees all of them.
 		 */
@@ -190,7 +217,7 @@ class Space extends Model {
 
 		self::bust_cache( $id );
 		if ( $slug_changing && $data['slug'] !== $old_slug ) {
-			$keys = [ "space:slug:{$data['slug']}" ];
+			$keys = array( "space:slug:{$data['slug']}" );
 			if ( $old_slug ) {
 				$keys[] = "space:slug:{$old_slug}";
 			}
@@ -275,41 +302,63 @@ class Space extends Model {
 	/**
 	 * Move ownership of a space to another member.
 	 *
-	 * The MECHANICS of a hand-over, shared by the three paths that need it:
-	 * account deletion, an explicit "delete space" that chose transfer, and the
-	 * CLI. The policy differs between them - account deletion leaves a space
-	 * running when another admin survives, an explicit delete always parks it -
-	 * but the steps do not, and getting the steps half right is the failure this
-	 * whole area keeps producing.
+	 * The mechanics shared by every hand-over: an owner archiving their space,
+	 * a site admin doing it from wp-admin or WP-CLI, and account deletion or a
+	 * GDPR erase. `author_id` is attribution and the `space_members` admin row
+	 * is the actual power, so both are written and both are checked; the hook
+	 * fires only when the space really changed hands.
 	 *
-	 * Both writes matter and neither is sufficient alone: `author_id` is
-	 * attribution, the `space_members` admin row is the actual power. A space
-	 * given one without the other looks transferred and is unmanageable.
-	 *
-	 * @param int  $space_id     Space to hand over.
-	 * @param int  $to_user_id   New owner.
-	 * @param int  $from_user_id Previous owner, for the hook payload.
-	 * @param bool $archive      Park the space as well as reassigning it.
-	 * @return bool False when either id is unusable.
+	 * @param int  $space_id        Space to hand over.
+	 * @param int  $to_user_id      New owner.
+	 * @param bool $archive         Park the space as well as reassigning it.
+	 * @param bool $demote_previous Make the former owner a moderator (an
+	 *                              explicit hand-over; account deletion has no
+	 *                              former owner left to demote).
+	 * @return true|\WP_Error
 	 */
-	public static function hand_over( int $space_id, int $to_user_id, int $from_user_id = 0, bool $archive = false ): bool {
-		if ( $space_id <= 0 || $to_user_id <= 0 ) {
-			return false;
+	public static function hand_over( int $space_id, int $to_user_id, bool $archive = false, bool $demote_previous = false ) {
+		$space = $space_id > 0 ? self::find( $space_id ) : null;
+		if ( ! $space ) {
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 
-		$data = [ 'author_id' => $to_user_id ];
+		$from_user_id = (int) $space->author_id;
+		if ( $to_user_id <= 0 || $to_user_id === $from_user_id ) {
+			return new \WP_Error( 'jetonomy_transfer_noop', sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'This %1$s already owns the %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ), array( 'status' => 409 ) );
+		}
+
+		// Power first: if the new owner cannot be made an admin (a join filter
+		// can veto it), nothing else changes.
+		$added = SpaceMember::add( $space_id, $to_user_id, 'admin' );
+		if ( is_wp_error( $added ) ) {
+			return $added;
+		}
+
+		$data = array( 'author_id' => $to_user_id );
 		if ( $archive ) {
 			$data['status'] = 'archived';
 		}
-
 		self::update( $space_id, $data );
-		SpaceMember::add( $space_id, $to_user_id, 'admin' );
+		if ( $archive ) {
+			self::update( $space_id, array( 'settings' => wp_json_encode( array_merge( self::get_settings( $space_id ), array( self::HANDOVER_ARCHIVE => 1 ) ) ) ) );
+		}
+
+		$after = self::find( $space_id );
+		if ( ! $after || (int) $after->author_id !== $to_user_id ) {
+			return new \WP_Error( 'jetonomy_transfer_failed', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'The %s could not be handed over. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 500 ) );
+		}
+
+		if ( $demote_previous && $from_user_id > 0 && 'admin' === SpaceMember::get_role( $space_id, $from_user_id ) ) {
+			SpaceMember::set_role( $space_id, $from_user_id, 'moderator' );
+		}
 
 		/**
 		 * A space changed hands.
 		 *
+		 * @since 1.9.4
+		 *
 		 * @param int $space_id     The space.
-		 * @param int $from_user_id Previous owner (0 when unknown).
+		 * @param int $from_user_id Previous owner (0 when the space had none).
 		 * @param int $to_user_id   New owner.
 		 */
 		do_action( 'jetonomy_space_transferred', $space_id, $from_user_id, $to_user_id );
@@ -318,73 +367,163 @@ class Space extends Model {
 	}
 
 	/**
+	 * Archive a space and hand it to its successor (an explicit hand-over).
+	 *
+	 * The former owner stays on as a moderator. Callers check can_hand_over()
+	 * first; WP-CLI runs as a trusted operator.
+	 *
+	 * @param int $space_id Space to hand over.
+	 * @return int|\WP_Error New owner's user ID.
+	 */
+	public static function archive_and_hand_over( int $space_id ) {
+		$space = self::find( $space_id );
+		if ( ! $space ) {
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
+		}
+		if ( 'archived' === ( $space->status ?? '' ) ) {
+			return new \WP_Error( 'jetonomy_space_archived', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is already archived.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 409 ) );
+		}
+
+		$successor = self::resolve_successor( $space_id );
+		if ( ! $successor ) {
+			return new \WP_Error(
+				'jetonomy_no_successor',
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'No one else can take over this %s, so it cannot be transferred. An administrator must delete it permanently instead.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$result = self::hand_over( $space_id, $successor, true, true );
+		return is_wp_error( $result ) ? $result : $successor;
+	}
+
+	/**
+	 * Whether a user may archive and hand over a space: its owner or a site
+	 * admin. Other space admins may not, or ownership could bounce between them.
+	 *
+	 * @param object $space   Space row.
+	 * @param int    $user_id User.
+	 * @return bool
+	 */
+	public static function can_hand_over( object $space, int $user_id ): bool {
+		if ( $user_id <= 0 || 'archived' === ( $space->status ?? '' ) ) {
+			return false;
+		}
+		return user_can( $user_id, 'manage_options' ) || self::is_acting_owner( $space, $user_id );
+	}
+
+	/**
+	 * Whether a user owns a space AND still holds its power: an admin row and
+	 * no ban from it. author_id alone is attribution, so an owner who was
+	 * removed or banned from their space cannot act on it as owner.
+	 *
+	 * @param object $space   Space row.
+	 * @param int    $user_id User.
+	 * @return bool
+	 */
+	private static function is_acting_owner( object $space, int $user_id ): bool {
+		return (int) $space->author_id === $user_id
+			&& 'admin' === SpaceMember::get_role( (int) $space->id, $user_id )
+			&& ! Restriction::is_banned( $user_id )
+			&& ! Restriction::is_space_banned( $user_id, (int) $space->id );
+	}
+
+	/**
+	 * Whether a user may bring an archived space back: a site admin, or the
+	 * owner when the archive came from a hand-over (never one a site admin
+	 * imposed).
+	 *
+	 * @param object $space   Space row.
+	 * @param int    $user_id User.
+	 * @return bool
+	 */
+	public static function can_unarchive( object $space, int $user_id ): bool {
+		if ( $user_id <= 0 || 'archived' !== ( $space->status ?? '' ) ) {
+			return false;
+		}
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+		return self::is_acting_owner( $space, $user_id ) && ! empty( self::get_settings( (int) $space->id )[ self::HANDOVER_ARCHIVE ] );
+	}
+
+	/**
 	 * Who should own this space if the current owner goes away.
 	 *
-	 * ONE definition, shared by the two paths that need it: account deletion
-	 * (Privacy) and an explicit "delete space" that chooses transfer over purge.
-	 * They were about to grow separate copies, and a successor rule that
-	 * disagrees with itself is how a space ends up owned by someone who cannot
-	 * manage it.
-	 *
-	 * Precedence:
+	 * One rule for every hand-over:
 	 *   1. A surviving space admin - earliest joined_at, user_id as tiebreak.
 	 *      They already hold the admin row, so the space keeps working as-is.
 	 *   2. The lowest-id site administrator.
+	 * The current owner, the user named in $excluding and anyone banned from
+	 * the site or this space never qualify.
 	 *
 	 * @param int $space_id  Space to find an heir for.
-	 * @param int $excluding User to exclude (the departing owner).
+	 * @param int $excluding Another user to exclude (a departing member).
 	 * @return int Successor user ID, or 0 when nobody qualifies.
 	 */
 	public static function resolve_successor( int $space_id, int $excluding = 0 ): int {
-		return static::surviving_admin( $space_id, $excluding ) ?: static::fallback_owner( $excluding );
+		return static::surviving_admin( $space_id, $excluding ) ?: static::fallback_owner( $excluding, $space_id );
 	}
 
 	/**
 	 * The surviving space admin who inherits, if any (precedence step 1).
 	 *
 	 * Split out so a caller can tell "a space admin is still running this space"
-	 * from "nobody is, fall back to the site admin". Privacy used to infer that
-	 * by comparing the successor with the site admin, which misread a site
-	 * admin who is ALSO a space admin as a stranded space and archived it
-	 * (Basecamp 10344393613). Any role counts here, site administrator included:
-	 * the question is only whether a space admin row survives.
+	 * from "nobody is, fall back to the site admin". Any role counts here, site
+	 * administrator included: the question is only whether a space admin row
+	 * survives.
 	 *
 	 * @param int $space_id  Space to look in.
-	 * @param int $excluding User to exclude (the departing owner).
+	 * @param int $excluding Another user to exclude (a departing member).
 	 * @return int Space admin user ID, or 0 when none survives.
 	 */
 	public static function surviving_admin( int $space_id, int $excluding = 0 ): int {
 		$members = \Jetonomy\table( 'space_members' );
+		$space   = self::find( $space_id );
+		$owner   = $space ? (int) $space->author_id : 0;
 
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
-				"SELECT user_id FROM {$members} WHERE space_id = %d AND user_id <> %d AND role = 'admin' ORDER BY joined_at ASC, user_id ASC LIMIT 1",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table(), ban clause prepared by Restriction.
+				"SELECT user_id FROM {$members} WHERE space_id = %d AND user_id NOT IN ( %d, %d ) AND role = 'admin'" . Restriction::not_banned_sql( 'user_id', $space_id ) . ' ORDER BY joined_at ASC, user_id ASC LIMIT 1',
 				$space_id,
-				$excluding
+				$excluding,
+				$owner
 			)
 		);
 	}
 
 	/**
-	 * Lowest-id site administrator, the owner of last resort (precedence step 2).
+	 * Lowest-id site administrator who is not banned, the owner of last
+	 * resort (precedence step 2).
 	 *
 	 * @param int $excluding User to exclude (the departing owner).
-	 * @return int User ID, or 0 when no other site administrator exists.
+	 * @param int $space_id  Space being handed over: its owner never qualifies
+	 *                       and its own bans count.
+	 * @return int User ID, or 0 when no other site administrator qualifies.
 	 */
-	public static function fallback_owner( int $excluding = 0 ): int {
+	public static function fallback_owner( int $excluding = 0, int $space_id = 0 ): int {
+		$space   = $space_id ? self::find( $space_id ) : null;
+		$exclude = array_filter( array( $excluding, $space ? (int) $space->author_id : 0 ) );
+
 		$admins = get_users(
-			[
+			array(
 				'capability' => 'manage_options',
-				'exclude'    => $excluding ? [ $excluding ] : [],
+				'exclude'    => $exclude,
 				'orderby'    => 'ID',
 				'order'      => 'ASC',
-				'number'     => 1,
+				'number'     => 20,
 				'fields'     => 'ID',
-			]
+			)
 		);
 
-		return (int) ( $admins[0] ?? 0 );
+		foreach ( $admins as $admin_id ) {
+			$admin_id = (int) $admin_id;
+			if ( ! Restriction::is_banned( $admin_id ) && ( ! $space_id || ! Restriction::is_space_banned( $admin_id, $space_id ) ) ) {
+				return $admin_id;
+			}
+		}
+		return 0;
 	}
 
 	/**
@@ -441,10 +580,10 @@ class Space extends Model {
 
 		$now  = now();
 		$data = array_merge(
-			[
+			array(
 				'created_at' => $now,
 				'updated_at' => $now,
-			],
+			),
 			$data
 		);
 
@@ -458,6 +597,11 @@ class Space extends Model {
 			$data['sort_order'] = static::next_sort_order( (int) ( $data['category_id'] ?? 0 ) );
 		}
 
+		// Private always means request or invite; see update().
+		if ( 'private' === ( $data['visibility'] ?? 'public' ) && 'open' === ( $data['join_policy'] ?? 'open' ) ) {
+			$data['join_policy'] = 'approval';
+		}
+
 		$id = static::insert( $data );
 
 		if ( $id <= 0 ) {
@@ -468,12 +612,12 @@ class Space extends Model {
 		// Without this bust, a probe for a slug that didn't exist yet (the
 		// REST unique_slug() duplicate guard does exactly that) left a cached
 		// "no such slug" for 300s — so a second create in that window minted a
-		// duplicate slug on persistent-cache installs (caching plan WP0.9).
+		// duplicate slug on persistent-cache installs.
 		if ( ! empty( $data['slug'] ) ) {
 			Cache::delete( 'space:slug:' . (string) $data['slug'] );
 		}
 
-		// A new space must appear in the cached category tree (WP4.4).
+		// A new space must appear in the cached category tree.
 		self::bump_tree_generation();
 
 		if ( ! empty( $data['category_id'] ) ) {
@@ -576,11 +720,11 @@ class Space extends Model {
 		$col     = '' !== $alias ? $alias . '.' : '';
 
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
-			return [ '1=1', [] ];
+			return array( '1=1', array() );
 		}
 
 		if ( $user_id <= 0 ) {
-			return [ "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), [] ];
+			return array( "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), array() );
 		}
 
 		$members_table = \Jetonomy\table( 'space_members' );
@@ -591,7 +735,7 @@ class Space extends Model {
 		}
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
 		$fragment = "({$readable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-		return [ $fragment, [ $user_id ] ];
+		return array( $fragment, array( $user_id ) );
 	}
 
 	/**
@@ -607,9 +751,8 @@ class Space extends Model {
 	 *   - Guest: public spaces only (no anonymous exposure of private names).
 	 *   - Logged-in: public + private spaces, plus any HIDDEN space they belong to.
 	 *
-	 * Replaces the old "public OR member" listing rule, under which `private`
-	 * spaces were as invisible as `hidden` ones — collapsing two distinct
-	 * visibility states into one (Basecamp: "Private+open spaces invisible").
+	 * Private and hidden are distinct visibility states: collapsing them would make
+	 * "Private+open" spaces invisible.
 	 *
 	 * Site owners can widen (e.g. show private to guests) or narrow (e.g. hide
 	 * invite-only) per site via the `jetonomy_space_listing_visibility_sql`
@@ -624,9 +767,12 @@ class Space extends Model {
 		$col     = '' !== $alias ? $alias . '.' : '';
 
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
-			$result = [ '1=1', [] ];
+			$result = array( '1=1', array() );
 		} elseif ( $user_id <= 0 ) {
-			$result = [ "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), [] ];
+			// Settings -> Access Control can list private spaces to guests as
+			// locked teasers; their topics stay behind can( 'read' ).
+			$guest_vis = ! empty( get_option( 'jetonomy_settings', array() )['guest_private_teasers'] ) ? "IN ('public','private')" : "= 'public'";
+			$result    = array( "{$col}visibility {$guest_vis}" . self::parent_category_and( $user_id, $col ), array() );
 		} else {
 			$members_table = \Jetonomy\table( 'space_members' );
 			$parent        = self::parent_category_clause( $user_id, $col );
@@ -636,7 +782,7 @@ class Space extends Model {
 			}
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
 			$fragment = "({$discoverable} OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
-			$result   = [ $fragment, [ $user_id ] ];
+			$result   = array( $fragment, array( $user_id ) );
 		}
 
 		/**
@@ -729,9 +875,9 @@ class Space extends Model {
 	 * Should this space's EXISTENCE be concealed from the viewer?
 	 *
 	 * A `hidden` space promises "only members can find this space". Listings
-	 * already honour that (listing_visibility_sql), but a direct URL used to
+	 * already honour that (listing_visibility_sql), but a direct URL would
 	 * answer HTTP 200 with the space's title — disclosing that the space
-	 * exists and what it is called (Basecamp 10105630168; product decision:
+	 * exists and what it is called (product decision:
 	 * a non-member gets a 404, the stronger reading of "hidden").
 	 *
 	 * Semantics deliberately mirror the single-post space gate
@@ -752,9 +898,9 @@ class Space extends Model {
 		// the space's OWN visibility says. A public space in a `hidden`
 		// category answered HTTP 200 with its title to anyone holding the URL,
 		// which made a hidden category cosmetic - the owner staged content in
-		// it and it was publicly reachable the whole time. Membership does not
-		// exempt: hiding the category is a decision about the whole branch, and
-		// the owner can undo it by changing one field.
+		// it and it was publicly reachable the whole time. Members of the space
+		// itself are exempt (concealed_by_category() checks admitted() first);
+		// everyone else gets the hidden category's answer.
 		if ( self::concealed_by_category( $space, $user_id ) ) {
 			return true;
 		}
@@ -820,7 +966,7 @@ class Space extends Model {
 
 		$categories_table = \Jetonomy\table( 'categories' );
 		$sql              = "SELECT id FROM {$categories_table} WHERE id = %d AND {$cat_where}";
-		$values           = array_merge( [ $category_id ], $cat_values );
+		$values           = array_merge( array( $category_id ), $cat_values );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- $categories_table is a trusted prefixed name; $cat_where is literal SQL from Category::listing_visibility_sql().
 		$visible = (bool) static::db()->get_var( static::db()->prepare( $sql, ...$values ) );
@@ -839,7 +985,7 @@ class Space extends Model {
 	 *
 	 * @var array<string, bool>
 	 */
-	private static array $category_conceal_memo = [];
+	private static array $category_conceal_memo = array();
 
 	/**
 	 * Is this viewer admitted to this space?
@@ -889,11 +1035,10 @@ class Space extends Model {
 	 */
 	public static function readable_by_viewer( object $space, int $user_id ): bool {
 		// The parent category is asked FIRST and is not overridable by
-		// admission: a public space inside a `hidden` category used to answer
-		// GET /spaces/{id} with 200 to a stranger holding the id, which made
-		// the category's promise cosmetic on the API while the browser path
-		// (concealed_from_viewer) had already been taught to honour it. Same
-		// question, one answer.
+		// admission: a public space inside a `hidden` category must not answer
+		// GET /spaces/{id} with 200 to a stranger holding the id, or the category's promise
+		// would be cosmetic on the API while the browser path (concealed_from_viewer)
+		// honours it. Same question, one answer.
 		if ( self::concealed_by_category( $space, $user_id ) ) {
 			return false;
 		}
@@ -927,12 +1072,12 @@ class Space extends Model {
 	 */
 	/**
 	 * ALL top-level spaces visible to the viewer, grouped by category_id in
-	 * ONE query (plan WP3.9). Key 0 collects uncategorized spaces. Replaces
+	 * ONE query. Key 0 collects uncategorized spaces. Replaces
 	 * the per-category list_by_category()/list_visible() loops on the home
 	 * page, the navigation block (which also ran a discarded COUNT per
 	 * category) and GET /categories.
 	 *
-	 * Cached 600s per viewer bucket via a generation key (plan WP4.4):
+	 * Cached 600s per viewer bucket via a generation key:
 	 * guest and admin are shared classes, every other viewer gets a
 	 * per-user key (the membership subquery binds their id). The key
 	 * embeds cat_tree_gen, bumped by bump_tree_generation() from
@@ -941,7 +1086,7 @@ class Space extends Model {
 	 * the bump it would keep serving the old name. Caching is SKIPPED
 	 * entirely when a third party filters
 	 * jetonomy_space_listing_visibility_sql — the bucket cannot model an
-	 * arbitrary predicate (safety review, WP4.4).
+	 * arbitrary predicate.
 	 *
 	 * @param int|null $user_id Viewer ID; null = current user.
 	 * @return array<int, object[]> category_id => space rows (sort_order, title).
@@ -989,7 +1134,7 @@ class Space extends Model {
 
 	/**
 	 * Bump the tree generation so every cat_tree:{gen}:{bucket} key goes
-	 * cold (plan WP4.4) — the per-user bucket set is unenumerable, so a
+	 * cold — the per-user bucket set is unenumerable, so a
 	 * generation bump is the sanctioned versioned-key invalidation. A
 	 * missing/evicted gen re-seeds at 1; a lingering old key under a reused
 	 * gen is bounded by the 600s data TTL (documented, same worst case as
@@ -1008,12 +1153,9 @@ class Space extends Model {
 	 * which is fine at five and unusable at two thousand.
 	 *
 	 * A CHILD space is listed here too, under the category it was assigned.
-	 * This query used to carry `parent_id = 0`, which meant a space's
-	 * `category_id` was written, indexed and then ignored for any space that
-	 * had a parent. Nothing nested those children either - `list_children()`
-	 * has no callers anywhere in free, Pro or the templates - so an imported
-	 * sub-forum was reachable from nowhere in the directory at all. That is
-	 * the shape two customers reported after migrating.
+	 * The query does not filter on `parent_id`, so a child space is listed under its own
+	 * category and an imported sub-forum is reachable from the directory (nothing else
+	 * nests children: `list_children()` has no callers in free, Pro or the templates).
 	 *
 	 * A child therefore appears exactly ONCE, under its own category. It is
 	 * deliberately not also nested under its parent: the same space listed
@@ -1030,7 +1172,7 @@ class Space extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
 		$sql    = 'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND {$vis_where} ORDER BY sort_order ASC, title ASC";
-		$values = array_merge( [ $category_id ], $vis_values );
+		$values = array_merge( array( $category_id ), $vis_values );
 
 		if ( $limit > 0 ) {
 			$sql     .= ' LIMIT %d OFFSET %d';
@@ -1039,7 +1181,7 @@ class Space extends Model {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above with bound %d values.
-		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: [];
+		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: array();
 	}
 
 	/**
@@ -1054,7 +1196,7 @@ class Space extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for().
 		$sql    = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE category_id = %d AND {$vis_where}";
-		$values = array_merge( [ $category_id ], $vis_values );
+		$values = array_merge( array( $category_id ), $vis_values );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above.
 		return (int) static::db()->get_var( static::db()->prepare( $sql, ...$values ) );
@@ -1080,11 +1222,11 @@ class Space extends Model {
 		}
 
 		if ( empty( $values ) ) {
-			return static::db()->get_results( $sql ) ?: [];
+			return static::db()->get_results( $sql ) ?: array();
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared with bound %d values.
-		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: [];
+		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: array();
 	}
 
 	/**
@@ -1115,7 +1257,7 @@ class Space extends Model {
 	 */
 	public static function list_children( int $parent_id, ?int $user_id = null ): array {
 		if ( $parent_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		// Visibility-filtered, like every other listing. This method had no
@@ -1125,7 +1267,7 @@ class Space extends Model {
 		// appeared under a public parent.
 		[ $vis_sql, $vis_params ] = self::listing_visibility_sql( $user_id );
 
-		$params = array_merge( [ $parent_id ], $vis_params );
+		$params = array_merge( array( $parent_id ), $vis_params );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_sql is literal SQL from listing_visibility_sql().
 		return static::db()->get_results(
@@ -1135,7 +1277,7 @@ class Space extends Model {
 					. ' ORDER BY sort_order ASC, title ASC',
 				$params
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -1158,7 +1300,7 @@ class Space extends Model {
 		self::bust_cache( $id );
 		// The space's cached JSON-LD lists its recent posts + post_count —
 		// every publish transition and move lands here with the space id in
-		// hand, making this the single bust point for it (plan WP4.9).
+		// hand, making this the single bust point for it.
 		Cache::delete( "schema:space:{$id}" );
 	}
 
@@ -1196,11 +1338,11 @@ class Space extends Model {
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
 				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $status, $limit, max( 0, $offset ) )
-			) ?: [];
+			) ?: array();
 		}
 		return static::db()->get_results(
 			static::db()->prepare( $base, $status )
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -1278,8 +1420,8 @@ class Space extends Model {
 		// hand-rolled gate: listing_visibility_sql() resolves the admin case ("1=1")
 		// and the membership subquery itself.
 
-		$where  = [];
-		$values = [];
+		$where  = array();
+		$values = array();
 
 		// Category filter.
 		if ( $category_id ) {
@@ -1295,8 +1437,8 @@ class Space extends Model {
 
 		// Explicit visibility filter — NARROWS the result set within what the
 		// viewer is already allowed to see. It must never stand in for the
-		// viewer gate below: passing visibility=hidden|private previously
-		// skipped the gate entirely and exposed every such space to guests.
+		// viewer gate below: passing visibility=hidden|private must not skip the gate, or
+		// every such space is exposed to guests.
 		if ( $visibility ) {
 			$where[]  = 's.visibility = %s';
 			$values[] = $visibility;
@@ -1306,15 +1448,10 @@ class Space extends Model {
 		// visibility filter, so the filter can only ever return a subset of the
 		// caller's visible spaces (fail closed).
 		//
-		// This used to hand-roll the rule ("public OR member") while every other
-		// listing surface — the community home, search, fulltext — went through
-		// listing_visibility_sql(). The two drifted: `private` spaces are
-		// deliberately DISCOVERABLE (see that method's contract), so /community/
-		// showed them while REST /spaces did not. Same question, two answers,
-		// measured live: 32 spaces rendered vs 26 returned for the same viewer.
-		// One predicate now, so REST, the app, and the web cannot disagree again —
-		// and the jetonomy_space_listing_visibility_sql filter finally reaches REST
-		// too, instead of silently applying to only half the surfaces.
+		// One predicate, listing_visibility_sql(), serves every listing surface - the
+		// community home, search, fulltext, REST and the app - so they cannot disagree.
+		// `private` spaces are deliberately DISCOVERABLE (see that method's contract), and
+		// the jetonomy_space_listing_visibility_sql filter reaches REST too.
 		//
 		// Content stays gated by content_visibility_sql(): a private space's CARD
 		// is discoverable, its posts are not.
@@ -1350,10 +1487,9 @@ class Space extends Model {
 		$where_sql = ! empty( $where ) ? 'WHERE ' . implode( ' AND ', $where ) : '';
 
 		// No membership JOIN: listing_visibility_sql() expresses membership as a
-		// subquery, so the LEFT JOIN that used to back the inline gate is gone —
-		// and with it the DISTINCT that existed only to guard the join's fan-out.
-		// One fewer join and no de-duplication pass on the space listing, which
-		// matters on the installs that have thousands of spaces.
+		// subquery, so there is no LEFT JOIN and no DISTINCT to guard its fan-out: one
+		// fewer join and no de-duplication pass on the space listing, which matters on
+		// installs with thousands of spaces.
 
 		// Count query.
 		$count_sql = "SELECT COUNT(s.id) FROM {$spaces_table} s {$where_sql}";
@@ -1375,12 +1511,12 @@ class Space extends Model {
 		$all_values[] = $offset;
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$spaces = $db->get_results( $db->prepare( $data_sql, ...$all_values ) ) ?: [];
+		$spaces = $db->get_results( $db->prepare( $data_sql, ...$all_values ) ) ?: array();
 
-		return [
+		return array(
 			'spaces' => $spaces,
 			'total'  => $total,
-		];
+		);
 	}
 
 	/**
@@ -1390,14 +1526,14 @@ class Space extends Model {
 	 * re-json_decode-ing the same blob 20x per space page (one per card).
 	 * Reset inside bust_cache() — merge_settings() is read-modify-write, so
 	 * a memo the existing bust cannot reach would silently revert the first
-	 * of two settings writes in one process (caching plan WP2.6).
+	 * of two settings writes in one process.
 	 *
 	 * @var array<int, array>
 	 */
-	private static array $settings_memo = [];
+	private static array $settings_memo = array();
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -1414,7 +1550,7 @@ class Space extends Model {
 			self::$settings_memo_registered = true;
 			Cache::register_memo_reset(
 				static function (): void {
-					self::$settings_memo = [];
+					self::$settings_memo = array();
 				}
 			);
 		}
@@ -1425,10 +1561,10 @@ class Space extends Model {
 
 		$row = static::find( $id );
 		if ( ! $row || empty( $row->settings ) ) {
-			$decoded = [];
+			$decoded = array();
 		} else {
 			$decoded = json_decode( $row->settings, true );
-			$decoded = is_array( $decoded ) ? $decoded : [];
+			$decoded = is_array( $decoded ) ? $decoded : array();
 		}
 
 		self::$settings_memo[ $id ] = $decoded;
@@ -1447,7 +1583,7 @@ class Space extends Model {
 			return (int) $space_settings['posts_per_page'];
 		}
 
-		$global = get_option( 'jetonomy_settings', [] );
+		$global = get_option( 'jetonomy_settings', array() );
 		return (int) ( $global['posts_per_page'] ?? 20 );
 	}
 
@@ -1463,7 +1599,7 @@ class Space extends Model {
 	 * - A cleared `posts_per_page` DROPS the key instead of storing `""` or 0.
 	 *   The front-end edit form sends `""` for "use the default"; storing that
 	 *   left a phantom per-space value that read back as a limit of 1 on any
-	 *   surface resolving it with `??` (Basecamp 10118693115). Absent means
+	 *   surface resolving it with `??`. Absent means
 	 *   "fall through to global", and only absent says it unambiguously.
 	 *
 	 * @param int   $space_id Space ID.
@@ -1471,16 +1607,23 @@ class Space extends Model {
 	 * @return array Merged, normalized settings ready to encode.
 	 */
 	public static function merge_settings( int $space_id, array $incoming ): array {
+		// Keys starting with '_' are written by the plugin itself, never by an editor.
+		foreach ( array_keys( $incoming ) as $key ) {
+			if ( str_starts_with( (string) $key, '_' ) ) {
+				unset( $incoming[ $key ] );
+			}
+		}
+
 		if ( isset( $incoming['prefixes'] ) && is_array( $incoming['prefixes'] ) ) {
-			$clean_prefixes = [];
+			$clean_prefixes = array();
 			foreach ( $incoming['prefixes'] as $prefix ) {
 				$name  = sanitize_text_field( $prefix['name'] ?? '' );
 				$color = sanitize_hex_color( $prefix['color'] ?? '' );
 				if ( $name && $color ) {
-					$clean_prefixes[] = [
+					$clean_prefixes[] = array(
 						'name'  => $name,
 						'color' => $color,
-					];
+					);
 				}
 			}
 			$incoming['prefixes'] = $clean_prefixes;
@@ -1558,20 +1701,20 @@ class Space extends Model {
 	 *         `visibility` enum in jt_spaces (schema: public|private|hidden).
 	 */
 	public static function visibility_levels(): array {
-		return [
-			'public'  => [
+		return array(
+			'public'  => array(
 				'label'       => __( 'Public', 'jetonomy' ),
-				'description' => __( 'Anyone can find this space and read it.', 'jetonomy' ),
-			],
-			'private' => [
+				'description' => sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Anyone can find this %s and read it.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			),
+			'private' => array(
 				'label'       => __( 'Private', 'jetonomy' ),
-				'description' => __( 'Anyone can find this space, but only members can read it.', 'jetonomy' ),
-			],
-			'hidden'  => [
+				'description' => sprintf( /* translators: 1: the singular Space label, lowercase, 2: the plural Member label, lowercase. */ __( 'Anyone can find this %1$s, but only %2$s can read it.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+			),
+			'hidden'  => array(
 				'label'       => __( 'Hidden', 'jetonomy' ),
-				'description' => __( 'Only members can find this space. It is invite-only.', 'jetonomy' ),
-			],
-		];
+				'description' => sprintf( /* translators: 1: the plural Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'Only %1$s can find this %2$s. It is invite-only.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\space_label( false, true ) ),
+			),
+		);
 	}
 
 	/**
@@ -1602,8 +1745,9 @@ class Space extends Model {
 		return new \WP_Error(
 			'jetonomy_invalid_space_type',
 			sprintf(
-				/* translators: 1: rejected space type, 2: comma-separated list of valid space types. */
-				__( 'Invalid space type "%1$s". Use one of: %2$s.', 'jetonomy' ),
+				/* translators: 1: the singular Space label, lowercase, 2: rejected type, 3: comma-separated list of valid types. */
+				__( 'Invalid %1$s type "%2$s". Use one of: %3$s.', 'jetonomy' ),
+				\Jetonomy\space_label( false, true ),
 				is_scalar( $data['type'] ) ? (string) $data['type'] : gettype( $data['type'] ),
 				implode( ', ', self::valid_types() )
 			),
@@ -1627,6 +1771,8 @@ class Space extends Model {
 	 * @return string 'invite' | 'request' | 'open'
 	 */
 	public static function join_mode( string $visibility, string $join_policy ): string {
+		// shortcut: 'private' => request also covers rows saved before 2.0.2
+		// normalised private+open to approval; drop it once no such rows can exist.
 		if ( 'invite' === $join_policy || 'hidden' === $visibility ) {
 			return 'invite';
 		}
@@ -1634,6 +1780,20 @@ class Space extends Model {
 			return 'request';
 		}
 		return 'open';
+	}
+
+	/**
+	 * The join policy a viewer actually meets on this space: 'invite' |
+	 * 'approval' | 'open', derived from join_mode() so templates, badges and the
+	 * join endpoint can never disagree (a hidden space is invite-only, a private
+	 * one never open).
+	 *
+	 * @param object $space Space row.
+	 * @return string
+	 */
+	public static function effective_join_policy( object $space ): string {
+		$mode = self::join_mode( (string) ( $space->visibility ?? 'public' ), (string) ( $space->join_policy ?? 'open' ) );
+		return 'request' === $mode ? 'approval' : $mode;
 	}
 
 	/**
@@ -1659,10 +1819,232 @@ class Space extends Model {
 		if ( 'hidden' === $visibility && 'invite' !== $join_policy ) {
 			return new \WP_Error(
 				'jetonomy_invalid_combo',
-				__( 'Hidden spaces must use the invite-only join policy.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Hidden %s must use the invite-only join policy.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+				array( 'status' => 400 )
 			);
 		}
 		return true;
+	}
+
+
+	// ── wp-admin listings ──
+
+	/**
+	 * The wp-admin Spaces screen. Inside one category (no other filter) the
+	 * order is the manual one members see; otherwise alphabetical.
+	 *
+	 * @param array{category_id?:int,type?:string,status?:string} $filters Filters.
+	 * @param int                                                 $limit   Max rows.
+	 * @param int                                                 $offset  Offset.
+	 * @return object[]
+	 */
+	public static function list_for_admin( array $filters, int $limit, int $offset ): array {
+		[ $where, $args ] = self::admin_where( $filters );
+		$manual           = ! empty( $filters['category_id'] ) && empty( $filters['type'] ) && empty( $filters['status'] );
+		$order            = $manual ? 'sort_order ASC, title ASC' : 'title ASC';
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order is one of two literals.
+				...array_merge( $args, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many spaces list_for_admin() pages through.
+	 *
+	 * @param array{category_id?:int,type?:string,status?:string} $filters Filters.
+	 * @return int
+	 */
+	public static function count_for_admin( array $filters ): int {
+		[ $where, $args ] = self::admin_where( $filters );
+		$sql              = 'SELECT COUNT(*) FROM ' . static::table() . " WHERE {$where}";
+		return (int) ( $args ? static::db()->get_var( static::db()->prepare( $sql, ...$args ) ) : static::db()->get_var( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+	}
+
+	/**
+	 * Every space's id and title, A to Z, for filter dropdowns.
+	 *
+	 * @return object[]
+	 */
+	public static function list_titles(): array {
+		return static::db()->get_results( 'SELECT id, title FROM ' . static::table() . ' ORDER BY title ASC' ) ?: array();
+	}
+
+	/**
+	 * WHERE for the wp-admin Spaces screen. Unknown types or statuses are ignored.
+	 *
+	 * @param array{category_id?:int,type?:string,status?:string} $f Filters.
+	 * @return array{0:string,1:array}
+	 */
+	private static function admin_where( array $f ): array {
+		$where = array( '1=1' );
+		$args  = array();
+		if ( ! empty( $f['category_id'] ) ) {
+			$where[] = 'category_id = %d';
+			$args[]  = (int) $f['category_id'];
+		}
+		if ( ! empty( $f['type'] ) && in_array( $f['type'], self::valid_types(), true ) ) {
+			$where[] = 'type = %s';
+			$args[]  = (string) $f['type'];
+		}
+		if ( ! empty( $f['status'] ) && in_array( $f['status'], array( 'active', 'archived', 'locked' ), true ) ) {
+			$where[] = 'status = %s';
+			$args[]  = (string) $f['status'];
+		}
+		return array( implode( ' AND ', $where ), $args );
+	}
+
+
+	/**
+	 * Spaces a user may link to something else (a BuddyPress group): every
+	 * space for a site admin, otherwise the spaces they run. A to Z.
+	 *
+	 * @param int[] $exclude    Space ids to leave out (already linked).
+	 * @param int   $manager_id User who must be a space admin or moderator, or 0 for all spaces.
+	 * @return object[] Rows with id, title, slug.
+	 */
+	public static function list_linkable( array $exclude, int $manager_id = 0 ): array {
+		$exclude = $exclude ? array_map( 'absint', $exclude ) : array( 0 );
+		$in      = implode( ',', $exclude );
+		if ( $manager_id <= 0 ) {
+			return static::db()->get_results( 'SELECT id, title, slug FROM ' . static::table() . " WHERE id NOT IN ({$in}) ORDER BY title ASC" ) ?: array(); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integer list.
+		}
+		$members = \Jetonomy\table( 'space_members' );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integer list and table names.
+				'SELECT s.id, s.title, s.slug FROM ' . static::table() . " s
+				 INNER JOIN {$members} sm ON sm.space_id = s.id AND sm.user_id = %d AND sm.role IN ('admin', 'moderator')
+				 WHERE s.id NOT IN ({$in})
+				 ORDER BY s.title ASC",
+				$manager_id
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Spaces whose cover or icon contains a text fragment (e.g. an upload's file path).
+	 *
+	 * @param string $fragment Literal text, LIKE-escaped here.
+	 * @return int
+	 */
+	public static function count_images_containing( string $fragment ): int {
+		$like = '%' . static::db()->esc_like( $fragment ) . '%';
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE cover_image LIKE %s OR icon LIKE %s', $like, $like )
+		);
+	}
+
+	/**
+	 * Ids of every space a guest cannot read, any status.
+	 *
+	 * Private and hidden spaces, plus public spaces concealed by a private or
+	 * hidden category - the same guest predicate content_visibility_sql()
+	 * applies. These are the candidates for "a site moderator may not be able
+	 * to read this" (Moderation_Permissions::unreadable_space_ids()); every
+	 * other space is readable by any signed-in member, so the list stays short.
+	 *
+	 * @param bool $all Return every space id instead (a globally banned viewer).
+	 * @return int[]
+	 */
+	public static function guest_unreadable_ids( bool $all = false ): array {
+		[ $guest_sql ] = self::content_visibility_sql( 0 );
+		$where         = $all ? '1=1' : "NOT ({$guest_sql})";
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the guest predicate has no bind values.
+		return array_map( 'intval', (array) static::db()->get_col( 'SELECT id FROM ' . static::table() . " WHERE {$where}" ) );
+	}
+
+	/**
+	 * Every sitemap space id (active spaces a guest can list), ascending.
+	 *
+	 * @return int[]
+	 */
+	public static function sitemap_ids(): array {
+		// visibility = 'public' stays explicit in all three sitemap queries: the
+		// guest listing predicate also admits private spaces when guest teasers
+		// are on, and a teaser card is not an invitation for crawlers.
+		[ $vis ] = self::listing_visibility_sql( 0 );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', (array) static::db()->get_col( 'SELECT id FROM ' . static::table() . " WHERE {$vis} AND visibility = 'public' AND status = 'active' ORDER BY id ASC" ) );
+	}
+
+	/**
+	 * Newest activity or edit across sitemap spaces.
+	 *
+	 * @return string UTC MySQL datetime, or '' when there are none.
+	 */
+	public static function sitemap_lastmod(): string {
+		[ $vis ] = self::listing_visibility_sql( 0 );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (string) static::db()->get_var( "SELECT MAX(GREATEST(COALESCE(last_activity_at,'1970-01-01'), COALESCE(updated_at,'1970-01-01'))) FROM " . static::table() . " WHERE {$vis} AND visibility = 'public' AND status = 'active'" );
+	}
+
+	/**
+	 * One keyset page of sitemap spaces after an id.
+	 *
+	 * @param int $start_after Last id of the previous page.
+	 * @param int $limit       Page size.
+	 * @return object[] Rows with id, slug, last_activity_at, updated_at.
+	 */
+	public static function list_sitemap_page( int $start_after, int $limit ): array {
+		[ $vis ] = self::listing_visibility_sql( 0 );
+		return (array) static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT id, slug, last_activity_at, updated_at FROM ' . static::table() . " WHERE {$vis} AND visibility = 'public' AND status = 'active' AND id > %d ORDER BY id ASC LIMIT %d",
+				$start_after,
+				$limit
+			)
+		);
+	}
+
+	/**
+	 * Active public spaces with the most topics first, optionally in one category.
+	 *
+	 * @param int $limit       Max rows.
+	 * @param int $category_id Category, or 0 for all.
+	 * @return object[]
+	 */
+	public static function list_public_by_post_count( int $limit, int $category_id = 0 ): array {
+		$where = "status = 'active' AND visibility = 'public'";
+		$args  = array();
+		if ( $category_id > 0 ) {
+			$where .= ' AND category_id = %d';
+			$args[] = $category_id;
+		}
+		$args[] = $limit;
+
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT * FROM ' . static::table() . " WHERE {$where} ORDER BY post_count DESC, id ASC LIMIT %d",
+				...$args
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Title and slug of active public spaces, A to Z, for the nav-menu picker.
+	 *
+	 * @param int $limit Max rows.
+	 * @return object[]
+	 */
+	public static function list_public_titles( int $limit = 50 ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT title, slug FROM ' . static::table() . " WHERE visibility = 'public' AND status = 'active' ORDER BY title ASC LIMIT %d",
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Sum of every space's denormalised topic counter (cheaper than counting topics).
+	 *
+	 * @return int
+	 */
+	public static function sum_post_counts(): int {
+		return (int) static::db()->get_var( 'SELECT COALESCE(SUM(post_count),0) FROM ' . static::table() );
 	}
 }

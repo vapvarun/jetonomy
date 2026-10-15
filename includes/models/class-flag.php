@@ -107,8 +107,7 @@ class Flag extends Model {
 	 * controller answers a second report with 409 jetonomy_already_flagged),
 	 * but the API published nothing a client could read it from - so the app
 	 * tracked "reported" in local component state, lost it on refresh, drew an
-	 * un-reported flag icon, and the re-tap silently 409'd (Basecamp
-	 * 10202766654). Server-owned rule, server-published state.
+	 * un-reported flag icon, and the re-tap silently 409'd. Server-owned rule, server-published state.
 	 *
 	 * @since 1.9.3
 	 * @param int    $reporter_id Reporting user.
@@ -142,10 +141,10 @@ class Flag extends Model {
 	 */
 	public static function create( array $data ): int {
 		$data = array_merge(
-			[
+			array(
 				'status'     => 'pending',
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -167,19 +166,23 @@ class Flag extends Model {
 	/**
 	 * List all flags with status 'pending', newest first.
 	 *
-	 * @param int $limit  Max rows to return. 0 = unbounded (default,
-	 *                    preserves pre-1.4.3 behaviour).
-	 * @param int $offset Row offset for pagination. Ignored when $limit = 0.
+	 * @param int   $limit  Max rows to return. 0 = unbounded (default,
+	 *                      preserves pre-1.4.3 behaviour).
+	 * @param int   $offset Row offset for pagination. Ignored when $limit = 0.
+	 * @param int[] $exclude_space_ids Spaces to leave out (Moderation_Permissions::unreadable_space_ids()).
 	 * @return object[]
 	 */
-	public static function list_pending( int $limit = 0, int $offset = 0 ): array {
-		$base = 'SELECT * FROM ' . static::table() . " WHERE status = 'pending' ORDER BY created_at DESC";
+	public static function list_pending( int $limit = 0, int $offset = 0, array $exclude_space_ids = array() ): array {
+		$x    = self::exclude_spaces_sql( $exclude_space_ids );
+		$base = 'SELECT f.* FROM ' . static::table() . " f{$x['join']} WHERE f.status = 'pending'{$x['sql']} ORDER BY f.created_at DESC";
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
-				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $limit, max( 0, $offset ) )
-			) ?: [];
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $base holds only %d placeholders built by exclude_spaces_sql().
+				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', ...array_merge( $x['params'], array( $limit, max( 0, $offset ) ) ) )
+			) ?: array();
 		}
-		return static::db()->get_results( $base ) ?: [];
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- as above.
+		return static::db()->get_results( $x['params'] ? static::db()->prepare( $base, ...$x['params'] ) : $base ) ?: array();
 	}
 
 	/**
@@ -187,11 +190,45 @@ class Flag extends Model {
 	 * on the full row set — adopted by callers that only need the
 	 * number (pagination totals, badges).
 	 *
+	 * @param int[] $exclude_space_ids Spaces to leave out (Moderation_Permissions::unreadable_space_ids()).
 	 * @return int
 	 */
-	public static function count_pending(): int {
-		return (int) static::db()->get_var(
-			'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'pending'"
+	public static function count_pending( array $exclude_space_ids = array() ): int {
+		$x   = self::exclude_spaces_sql( $exclude_space_ids );
+		$sql = 'SELECT COUNT(*) FROM ' . static::table() . " f{$x['join']} WHERE f.status = 'pending'{$x['sql']}";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- only %d placeholders from exclude_spaces_sql().
+		return (int) static::db()->get_var( $x['params'] ? static::db()->prepare( $sql, ...$x['params'] ) : $sql );
+	}
+
+	/**
+	 * SQL that leaves out flags on content in the given spaces.
+	 *
+	 * Site moderators list flags across the site minus the private or hidden
+	 * spaces they cannot read (Moderation_Permissions::unreadable_space_ids()).
+	 * Flags on members have no space and are always kept. Empty input adds
+	 * nothing, so the unfiltered queries stay exactly as before.
+	 *
+	 * @param int[] $space_ids Spaces to leave out.
+	 * @return array{join:string,sql:string,params:int[]}
+	 */
+	private static function exclude_spaces_sql( array $space_ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'absint', $space_ids ) ) ) );
+		if ( empty( $ids ) ) {
+			return array(
+				'join'   => '',
+				'sql'    => '',
+				'params' => array(),
+			);
+		}
+		$posts   = \Jetonomy\table( 'posts' );
+		$replies = \Jetonomy\table( 'replies' );
+		$in      = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		return array(
+			'join'   => " LEFT JOIN {$posts} xp ON f.object_type = 'post' AND f.object_id = xp.id"
+				. " LEFT JOIN {$replies} xr ON f.object_type = 'reply' AND f.object_id = xr.id"
+				. " LEFT JOIN {$posts} xrp ON xr.post_id = xrp.id",
+			'sql'    => " AND COALESCE( xp.space_id, xrp.space_id, 0 ) NOT IN ({$in})",
+			'params' => $ids,
 		);
 	}
 
@@ -230,15 +267,15 @@ class Flag extends Model {
 		 */
 		$rows = static::db()->update(
 			static::table(),
-			[
+			array(
 				'status'      => $status,
 				'resolved_by' => $resolved_by,
 				'resolved_at' => now(),
-			],
-			[
+			),
+			array(
 				'id'     => $id,
 				'status' => $flag->status,
-			]
+			)
 		);
 
 		if ( false === $rows ) {
@@ -271,16 +308,25 @@ class Flag extends Model {
 		// already-dismissed flag doesn't double-restore. Self-flags (reporter
 		// equals author) are excluded because the original report awarded no
 		// deduction either — symmetry with the report-create path.
+		// Posts and replies alike: the report deducted from either.
 		if ( 'pending' === $flag->status
 			&& 'dismissed' === $status
-			&& 'post' === $flag->object_type
+			&& in_array( $flag->object_type, array( 'post', 'reply' ), true )
 		) {
-			$post = Post::find( (int) $flag->object_id );
-			if ( $post ) {
-				$author_id   = (int) $post->author_id;
+			$object = 'reply' === $flag->object_type ? Reply::find( (int) $flag->object_id ) : Post::find( (int) $flag->object_id );
+			if ( $object ) {
+				$author_id   = (int) $object->author_id;
 				$reporter_id = (int) ( $flag->reporter_id ?? 0 );
 				if ( $author_id > 0 && $author_id !== $reporter_id ) {
-					\Jetonomy\Trust\Reputation::revoke( $author_id, 'post_reported' );
+					// Ledger-guarded: only returns a deduction the report really made.
+					\Jetonomy\Trust\Reputation::revoke_awarded(
+						$author_id,
+						'post_reported',
+						array(
+							'object_type' => $flag->object_type,
+							'object_id'   => (int) $object->id,
+						)
+					);
 				}
 			}
 		}
@@ -293,34 +339,38 @@ class Flag extends Model {
 	 *
 	 * @param string $status Row status value to filter by (e.g. 'pending', 'approved', 'dismissed').
 	 * @param int    $limit  Maximum number of rows to return.
+	 * @param int    $offset Pagination offset.
+	 * @param int[]  $exclude_space_ids Spaces to leave out (Moderation_Permissions::unreadable_space_ids()).
 	 * @return object[]
 	 */
-	public static function list_by_status( string $status = 'pending', int $limit = 50, int $offset = 0 ): array {
+	public static function list_by_status( string $status = 'pending', int $limit = 50, int $offset = 0, array $exclude_space_ids = array() ): array {
+		$x = self::exclude_spaces_sql( $exclude_space_ids );
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
-				$status,
-				$limit,
-				$offset
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- join/where hold only %d placeholders.
+				'SELECT f.* FROM ' . static::table() . " f{$x['join']} WHERE f.status = %s{$x['sql']} ORDER BY f.created_at DESC, f.id DESC LIMIT %d OFFSET %d",
+				...array_merge( array( $status ), $x['params'], array( $limit, $offset ) )
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
 	 * List every flag regardless of status, newest first.
 	 *
-	 * @param int $limit  Maximum rows.
-	 * @param int $offset Pagination offset.
+	 * @param int   $limit  Maximum rows.
+	 * @param int   $offset Pagination offset.
+	 * @param int[] $exclude_space_ids Spaces to leave out (Moderation_Permissions::unreadable_space_ids()).
 	 * @return object[]
 	 */
-	public static function list_all( int $limit = 50, int $offset = 0 ): array {
+	public static function list_all( int $limit = 50, int $offset = 0, array $exclude_space_ids = array() ): array {
+		$x = self::exclude_spaces_sql( $exclude_space_ids );
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
-				$limit,
-				$offset
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- join/where hold only %d placeholders.
+				'SELECT f.* FROM ' . static::table() . " f{$x['join']} WHERE 1=1{$x['sql']} ORDER BY f.created_at DESC, f.id DESC LIMIT %d OFFSET %d",
+				...array_merge( $x['params'], array( $limit, $offset ) )
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -330,18 +380,15 @@ class Flag extends Model {
 	 * only ever answers for 'pending'.
 	 *
 	 * @param string $status Status to count, or '' / 'all' for every flag.
+	 * @param int[]  $exclude_space_ids Spaces to leave out (Moderation_Permissions::unreadable_space_ids()).
 	 */
-	public static function count_by_status( string $status = 'pending' ): int {
-		if ( '' === $status || 'all' === $status ) {
-			return (int) static::db()->get_var( 'SELECT COUNT(*) FROM ' . static::table() );
-		}
-
-		return (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE status = %s',
-				$status
-			)
-		);
+	public static function count_by_status( string $status = 'pending', array $exclude_space_ids = array() ): int {
+		$x      = self::exclude_spaces_sql( $exclude_space_ids );
+		$all    = '' === $status || 'all' === $status;
+		$sql    = 'SELECT COUNT(*) FROM ' . static::table() . " f{$x['join']} WHERE " . ( $all ? '1=1' : 'f.status = %s' ) . $x['sql'];
+		$params = $all ? $x['params'] : array_merge( array( $status ), $x['params'] );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only.
+		return (int) static::db()->get_var( $params ? static::db()->prepare( $sql, ...$params ) : $sql );
 	}
 
 	/**
@@ -376,7 +423,7 @@ class Flag extends Model {
 	 */
 	public static function find_for_post( int $post_id ): array {
 		if ( $post_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		return static::db()->get_results(
@@ -384,7 +431,7 @@ class Flag extends Model {
 				'SELECT * FROM ' . static::table() . " WHERE object_type = 'post' AND object_id = %d ORDER BY created_at DESC",
 				$post_id
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -411,7 +458,7 @@ class Flag extends Model {
 		string $status,
 		int $exclude_flag_id
 	): int {
-		if ( $object_id <= 0 || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
+		if ( $object_id <= 0 || ! in_array( $object_type, array( 'post', 'reply' ), true ) ) {
 			return 0;
 		}
 
@@ -457,7 +504,6 @@ class Flag extends Model {
 	 * filtered against a query that could never return them and always came back
 	 * empty. Same dead UI the global screen had, for the same moderator — the
 	 * global route got fixed and this one was never migrated
-	 * (Basecamp 10092724637, 10092652706).
 	 *
 	 * @param string $status   'pending'|'valid'|'dismissed'|'all'.
 	 * @param int    $space_id Space to scope to.
@@ -467,7 +513,7 @@ class Flag extends Model {
 	 */
 	public static function list_by_status_in_space( string $status, int $space_id, int $limit = 0, int $offset = 0 ): array {
 		if ( $space_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		global $wpdb;
@@ -475,8 +521,8 @@ class Flag extends Model {
 		$posts_t   = \Jetonomy\table( 'posts' );
 		$replies_t = \Jetonomy\table( 'replies' );
 
-		$where  = [];
-		$params = [];
+		$where  = array();
+		$params = array();
 
 		if ( 'all' !== $status ) {
 			$where[]  = 'f.status = %s';
@@ -507,7 +553,7 @@ class Flag extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		$rows = $wpdb->get_results( $wpdb->prepare( $base, ...$params ) );
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**
@@ -532,8 +578,8 @@ class Flag extends Model {
 		$posts_t   = \Jetonomy\table( 'posts' );
 		$replies_t = \Jetonomy\table( 'replies' );
 
-		$where  = [];
-		$params = [];
+		$where  = array();
+		$params = array();
 
 		if ( 'all' !== $status ) {
 			$where[]  = 'f.status = %s';
@@ -603,7 +649,7 @@ class Flag extends Model {
 	public static function list_pending_in_spaces( array $space_ids, int $limit = 0, int $offset = 0 ): array {
 		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
 		if ( empty( $space_ids ) ) {
-			return [];
+			return array();
 		}
 
 		global $wpdb;
@@ -633,7 +679,7 @@ class Flag extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$params ) );
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**

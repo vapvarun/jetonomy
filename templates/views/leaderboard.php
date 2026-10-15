@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $period = isset( $_GET['period'] ) ? sanitize_key( $_GET['period'] ) : 'all';
-if ( ! in_array( $period, [ 'all', 'month', 'week' ], true ) ) {
+if ( ! in_array( $period, array( 'all', 'month', 'week' ), true ) ) {
 	$period = 'all';
 }
 
@@ -27,7 +27,7 @@ $offset   = ( $page - 1 ) * $per_page;
 // and the REST endpoint share one query and one pagination rule. has_more
 // compares the real total against what is shown — never count( $leaders ),
 // which rendered a phantom "Load More" when the total was an exact multiple
-// of $per_page (Basecamp).
+// of $per_page.
 $leaders      = \Jetonomy\Models\UserProfile::list_for_leaderboard( $period, $per_page, $offset );
 $_jt_total    = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
 $_jt_has_more = ( $page * $per_page ) < $_jt_total;
@@ -41,13 +41,13 @@ $leader_ids        = array_map(
 );
 $leader_users      = ! empty( $leader_ids )
 	? get_users(
-		[
+		array(
 			'include' => $leader_ids,
 			'orderby' => 'include',
-		]
+		)
 	)
-	: [];
-$leader_user_by_id = [];
+	: array();
+$leader_user_by_id = array();
 foreach ( $leader_users as $lu_obj ) {
 	$leader_user_by_id[ (int) $lu_obj->ID ] = $lu_obj;
 }
@@ -59,12 +59,12 @@ if ( ! empty( $leader_ids ) ) {
 	\Jetonomy\Models\UserProfile::prime( $leader_ids );
 }
 
-$crumbs = [
-	[
+$crumbs = array(
+	array(
 		'label' => __( 'Leaderboard', 'jetonomy' ),
 		'url'   => '',
-	],
-];
+	),
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -132,14 +132,14 @@ $crumbs = [
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'        => 'award',
 					'icon_size'   => 48,
-					'message'     => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+					'message'     => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 					'description' => sprintf( /* translators: %s: plural reply label. */ __( 'Reputation is earned by posting, getting %s, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					'cta_label'   => __( 'Browse the community', 'jetonomy' ),
 					'cta_url'     => \Jetonomy\base_url() . '/',
-				]
+				)
 			);
 			?>
 		<?php else : ?>
@@ -160,15 +160,10 @@ $crumbs = [
 				/*
 				 * Numbering is COMPETITION rank, not position in the array.
 				 *
-				 * The row number used to be the loop index, while the "Your
-				 * rank #N" badge above used UserProfile::rank_for_user() —
-				 * standard 1224 ranking, where ties share a rank. So two
-				 * members tied on reputation were both correctly told "#10"
-				 * by the badge and then listed as 10 and 11, and the second
-				 * one saw a badge contradicting the row they were standing on.
-				 *
-				 * The badge was right; the list was wrong. Ranks are derived
-				 * here from reputation so both agree by construction.
+				 * The row number is the competition rank, like the "Your rank #N" badge above
+				 * (UserProfile::rank_for_user(), standard 1224 ranking, where ties share a rank), so
+				 * two members tied on reputation are both "#10" and the badge never contradicts the
+				 * row. Ranks are derived here from reputation so both agree by construction.
 				 *
 				 * The first row is seeded from rank_for_user() rather than the
 				 * offset, because a tie can straddle a page boundary: the top
@@ -181,10 +176,9 @@ $crumbs = [
 					<?php
 					$lu = $leader_user_by_id[ (int) $leader->user_id ] ?? null;
 					if ( ! $lu ) {
-						// Should no longer happen: profiles without a WP user are
-						// excluded by the leaderboard query itself, because a
-						// skipped row here used to consume its number and leave a
-						// visible hole in the sequence (… 17, 18, 20).
+						// Should not happen: profiles without a WP user are excluded by the leaderboard
+						// query itself, because a skipped row here would consume its number and leave a
+						// visible hole in the sequence (... 17, 18, 20).
 						continue;
 					}
 					$jt_comp_rank = $jt_comp_ranks[ (int) $rank ] ?? ( $offset + (int) $rank + 1 );
@@ -232,11 +226,11 @@ $crumbs = [
 						// profile cache was primed above so this stays O(1) per row.
 						\Jetonomy\Template_Loader::partial(
 							'avatar',
-							[
+							array(
 								'user_id' => (int) $leader->user_id,
 								'size'    => 36,
 								'class'   => 'jt-avatar-md',
-							]
+							)
 						);
 						?>
 						<span class="jt-leader-name">
@@ -267,14 +261,14 @@ $crumbs = [
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'pagination',
-				[
+				array(
 					'has_more' => $_jt_has_more,
 					'target'   => '.jt-leaderboard-list',
-				]
+				)
 			);
 			?>
 		<?php endif; ?>
 </main>
 
-<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => null ] ); ?>
+<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => null ) ); ?>
 </div>

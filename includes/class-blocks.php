@@ -22,16 +22,12 @@ class Blocks {
 
 	public static function register(): void {
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
-		// 1.4.0 A.2 commit 3 + A.3 commit 3: both legacy quick-login /
-		// quick-register AJAX handlers were removed once login-block.js
-		// fully switched to POST /jetonomy/v1/auth/login + /register.
 		// Register the login-block script once; the render callback enqueues
 		// it only on pages that actually contain the block.
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_block_assets' ) );
 		// Also register on the editor side so `editor_script` handles
 		// resolve inside /wp-admin/ (otherwise the inserter never learns
-		// about our blocks — the 1.3.7 compose-topic regression test surfaced
-		// this latent issue).
+		// about our blocks).
 		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'register_block_assets' ) );
 
 		// Auto-inject Login / User Panel at the top of the community sidebar
@@ -160,7 +156,7 @@ class Blocks {
 				'render_callback' => array( __CLASS__, 'render_forum_feed' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Forum Feed', 'jetonomy' ),
-				'description'     => __( 'Display recent forum discussions. Optionally scope to a single space with a header.', 'jetonomy' ),
+				'description'     => __( 'Display recent forum discussions. Optionally scope to a single space with a header.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'format-chat',
 				'keywords'        => array( 'forum', 'posts', 'discussions', 'space', 'topics', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -196,8 +192,8 @@ class Blocks {
 				),
 				'render_callback' => array( __CLASS__, 'render_trending' ),
 				'category'        => 'widgets',
-				'title'           => __( 'Trending Topics', 'jetonomy' ),
-				'description'     => __( 'Display trending forum topics ranked by recent engagement (votes + replies over the last 7 days).', 'jetonomy' ),
+				'title'           => __( 'Trending Topics', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
+				'description'     => __( 'Display trending forum topics ranked by recent engagement (votes + replies over the last 7 days).', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'chart-line',
 				'keywords'        => array( 'trending', 'hot', 'popular', 'topics', 'posts', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -221,8 +217,8 @@ class Blocks {
 				),
 				'render_callback' => array( __CLASS__, 'render_space_list' ),
 				'category'        => 'widgets',
-				'title'           => __( 'Space List', 'jetonomy' ),
-				'description'     => __( 'Display forum spaces as a grid.', 'jetonomy' ),
+				'title'           => __( 'Space List', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
+				'description'     => __( 'Display forum spaces as a grid.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'groups',
 				'keywords'        => array( 'spaces', 'categories', 'forum', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -235,15 +231,20 @@ class Blocks {
 			array(
 				'api_version'     => '3',
 				'attributes'      => array(
-					'count' => array(
+					'count'  => array(
 						'type'    => 'number',
 						'default' => 10,
+					),
+					'period' => array(
+						'type'    => 'string',
+						'default' => 'all',
+						'enum'    => array( 'all', 'month', 'week' ),
 					),
 				),
 				'render_callback' => array( __CLASS__, 'render_leaderboard' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Leaderboard', 'jetonomy' ),
-				'description'     => __( 'Display top community members by reputation.', 'jetonomy' ),
+				'description'     => __( 'Display top community members by reputation.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'awards',
 				'keywords'        => array( 'leaderboard', 'ranking', 'reputation', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -280,7 +281,7 @@ class Blocks {
 				'render_callback' => array( __CLASS__, 'render_navigation' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Jetonomy Navigation', 'jetonomy' ),
-				'description'     => __( 'Sidebar navigation for categories and spaces, permission-aware.', 'jetonomy' ),
+				'description'     => __( 'Sidebar navigation for categories and spaces, permission-aware.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'menu-alt3',
 				'keywords'        => array( 'navigation', 'sidebar', 'spaces', 'categories', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -355,8 +356,8 @@ class Blocks {
 				),
 				'render_callback' => array( __CLASS__, 'render_compose_topic' ),
 				'category'        => 'widgets',
-				'title'           => __( 'Jetonomy Compose Topic', 'jetonomy' ),
-				'description'     => __( 'Let signed-in members start a new topic from any page. Fixed-space mode or member-only picker.', 'jetonomy' ),
+				'title'           => __( 'Jetonomy Compose Topic', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
+				'description'     => __( 'Let signed-in members start a new topic from any page. Fixed-space mode or member-only picker.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'edit-page',
 				'keywords'        => array( 'compose', 'topic', 'post', 'form', 'new', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-compose-topic-block',
@@ -378,7 +379,7 @@ class Blocks {
 		}
 		$atts .= ' sort="' . esc_attr( $attributes['sort'] ?? 'latest' ) . '"';
 
-		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, sprintf( /* translators: %s: plural topic label the site owner configured. */ __( 'Recent %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) : '';
+		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Recent %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) : '';
 
 		return '<div class="wp-block-jetonomy-forum-feed jt-feed-block jt-app">'
 			. $header
@@ -457,7 +458,7 @@ class Blocks {
 	public static function render_leaderboard( array $attributes ): string {
 		wp_enqueue_style( 'jetonomy-blocks' );
 
-		return '<div class="wp-block-jetonomy-leaderboard">' . do_shortcode( '[jetonomy_leaderboard count="' . absint( $attributes['count'] ) . '"]' ) . '</div>';
+		return '<div class="wp-block-jetonomy-leaderboard">' . do_shortcode( '[jetonomy_leaderboard count="' . absint( $attributes['count'] ?? 10 ) . '" period="' . esc_attr( (string) ( $attributes['period'] ?? 'all' ) ) . '"]' ) . '</div>';
 	}
 
 	/**
@@ -527,13 +528,13 @@ class Blocks {
 
 		$categories = Category::list_top_level();
 
-		// One grouped, tree-cached query for the whole block (plan
-		// WP3.9/4.4) — this ran a list_visible() PER CATEGORY, each of
-		// which also ran a COUNT this block never read (2N+2 queries).
-		// Same visibility predicate as before (both paths resolve to
+		// One grouped, tree-cached query for the whole block.
+		// A per-category list_visible() would run one query PER CATEGORY, each of
+		// which also runs a COUNT this block never reads (2N+2 queries).
+		// Same visibility predicate as list_visible() (both paths resolve to
 		// listing_visibility_sql). The active-space highlight is applied
 		// per render below, AFTER the cache — the cache holds space DATA,
-		// never per-page HTML (safety review, WP4.4).
+		// never per-page HTML.
 		$spaces_by_cat = Space::visible_by_category( $user_id );
 		$children      = Category::children_by_parent( $user_id );
 
@@ -544,7 +545,7 @@ class Blocks {
 			if ( ! $category_id ) {
 				continue;
 			}
-			// Same per-category runaway cap the old list_visible carried.
+			// Per-category runaway cap.
 			$spaces = array_slice( $spaces_by_cat[ $category_id ] ?? array(), 0, 200 );
 			$subs   = $children[ $category_id ] ?? array();
 			if ( $hide_empty ) {
@@ -559,7 +560,7 @@ class Blocks {
 				$items_html .= self::render_space_item( $space, $active_slug, $show_count );
 			}
 			// Sub-categories link to their own page, as on the community home;
-			// their spaces were missing from this block entirely (Basecamp 10355160441).
+			// their spaces were missing from this block entirely.
 			foreach ( $subs as $sub ) {
 				$items_html .= sprintf(
 					'<li class="jt-nav-space jt-nav-subcategory"><a href="%1$s">%2$s</a></li>',
@@ -590,8 +591,7 @@ class Blocks {
 		// "Uncategorized" bucket — any spaces with category_id = 0 that the
 		// viewer can see. Renders last, un-headed, so site owners who
 		// don't use categories still get a flat tree. Group 0 of the same
-		// grouped fetch — the old shape ran ANOTHER full list_visible just
-		// to filter it down to category_id = 0 in PHP.
+		// grouped fetch, so no second full list_visible runs just to filter category_id = 0 in PHP.
 		$orphans = array_slice( $spaces_by_cat[0] ?? array(), 0, 200 );
 		if ( ! empty( $orphans ) ) {
 			$orphan_items = '';
@@ -629,7 +629,7 @@ class Blocks {
 
 		$user_id = get_current_user_id();
 		$user    = wp_get_current_user();
-		$avatar  = get_avatar( $user_id, 48, '', $user->display_name, array( 'class' => 'jt-userpanel-avatar' ) );
+		$avatar  = get_avatar( $user_id, 48, '', user_display_name( $user ), array( 'class' => 'jt-userpanel-avatar' ) );
 
 		// Trust level (cheap read from user_profiles).
 		$profile     = class_exists( \Jetonomy\Models\UserProfile::class ) ? \Jetonomy\Models\UserProfile::find_by_user( $user_id ) : null;
@@ -638,7 +638,7 @@ class Blocks {
 		// Unread notifications count — through the model, not raw SQL. The
 		// hand-rolled query here skipped the blocked-actor exclusion the model
 		// applies, so this badge and the header badge could disagree for any
-		// viewer with blocks (caching plan WP0.11). One implementation, one
+		// viewer with blocks. One implementation, one
 		// future cache/bust point.
 		$unread = class_exists( \Jetonomy\Models\Notification::class )
 			? \Jetonomy\Models\Notification::unread_count( $user_id )
@@ -663,7 +663,7 @@ class Blocks {
 		$logout_url    = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
 		$title         = isset( $attributes['title'] ) && '' !== $attributes['title']
 			? (string) $attributes['title']
-			: sprintf( /* translators: %s: user display name */ __( 'Hi, %s', 'jetonomy' ), $user->display_name );
+			: sprintf( /* translators: %s: user display name */ __( 'Hi, %s', 'jetonomy' ), user_display_name( $user ) );
 
 		ob_start();
 		?>
@@ -676,7 +676,9 @@ class Blocks {
 						<span class="jt-userpanel-username">@<?php echo esc_html( $user->user_login ); ?></span>
 						<?php if ( $trust_level > 0 ) : ?>
 							<span class="jt-userpanel-tl" data-jt-tl="<?php echo (int) $trust_level; ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: trust level number (0-5). */ __( 'Trust Level %d', 'jetonomy' ), $trust_level ) ); ?>">
-								TL<?php echo (int) $trust_level; ?>
+								<?php
+								echo esc_html( \Jetonomy\Trust\Trust_Levels::label( (int) $trust_level ) );
+								?>
 							</span>
 						<?php endif; ?>
 					</div>
@@ -707,7 +709,7 @@ class Blocks {
 				</a>
 				<?php if ( $can_create_space ) : ?>
 					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">
-						<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
+						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 						<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 					</a>
 				<?php endif; ?>
@@ -742,7 +744,7 @@ class Blocks {
 		if ( is_user_logged_in() ) {
 			echo self::render_user_panel( array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — method returns escaped HTML.
 		} else {
-			echo self::render_login( array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — method returns escaped HTML.
+			echo self::render_login( array( 'context' => 'sidebar' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — method returns escaped HTML.
 		}
 	}
 
@@ -753,7 +755,21 @@ class Blocks {
 	 */
 	public static function render_login( array $attributes ): string {
 		if ( is_user_logged_in() ) {
-			return '';
+			// In the sidebar the user panel replaces this card. Placed on its own
+			// (a "Sign in" page), a blank block looked broken: say who is signed in.
+			if ( 'sidebar' === ( $attributes['context'] ?? '' ) ) {
+				return '';
+			}
+			wp_enqueue_style( 'jetonomy-blocks' );
+			$jt_user = wp_get_current_user();
+			return '<div class="jt-block jt-login-signed-in"><p>'
+				/* translators: %s: the signed-in member's display name. */
+				. esc_html( sprintf( __( 'You are signed in as %s.', 'jetonomy' ), \Jetonomy\user_display_name( $jt_user ) ) )
+				. '</p><p class="jt-login-signed-in-links">'
+				. '<a class="jt-login-submit" href="' . esc_url( \Jetonomy\base_url() ) . '">' . esc_html__( 'Go to the community', 'jetonomy' ) . '</a> '
+				. '<a class="jt-login-secondary" href="' . esc_url( \Jetonomy\get_profile_url( (int) $jt_user->ID ) ) . '">' . esc_html__( 'My profile', 'jetonomy' ) . '</a> '
+				. '<a class="jt-login-secondary" href="' . esc_url( wp_logout_url( \Jetonomy\current_url() ) ) . '">' . esc_html__( 'Log out', 'jetonomy' ) . '</a>'
+				. '</p></div>';
 		}
 
 		// Enqueue only when this block is actually rendered. Safe from duplicate
@@ -781,7 +797,7 @@ class Blocks {
 		// only exposes the REST endpoint base; no nonce — the auth endpoints
 		// are public (REST_Auth::auth_public_write) and sending X-WP-Nonce
 		// from cached pages made core's rest_cookie_check_errors() fail with
-		// "Cookie check failed" for logged-out visitors (#9977381553).
+		// "Cookie check failed" for logged-out visitors.
 		$rest_url = esc_url_raw( rest_url( 'jetonomy/v1' ) );
 
 		// One widget per form — Turnstile auto-renders every container and

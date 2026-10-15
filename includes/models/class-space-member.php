@@ -18,7 +18,7 @@ class SpaceMember extends Model {
 	 * Canonical space-role set. Single source of truth for role validation
 	 * across the REST controller, admin AJAX, and set_role().
 	 */
-	public const VALID_ROLES = [ 'viewer', 'member', 'moderator', 'admin' ];
+	public const VALID_ROLES = array( 'viewer', 'member', 'moderator', 'admin' );
 
 	protected static function table_name(): string {
 		return 'space_members';
@@ -60,6 +60,11 @@ class SpaceMember extends Model {
 	}
 
 	public static function add( int $space_id, int $user_id, string $role = 'member', string $source = 'manual' ): \WP_Error|bool {
+		// A membership plugin, automation or access rule can still name a space the
+		// owner deleted; joining it would store an orphan row on every enrolment.
+		if ( $space_id <= 0 || ! Space::find( $space_id ) ) {
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'That %s no longer exists.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 404 ) );
+		}
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
 		 *
@@ -81,12 +86,10 @@ class SpaceMember extends Model {
 			/*
 			 * A grant must never LOWER a role somebody was deliberately given.
 			 *
-			 * This used to be an unconditional REPLACE INTO, so any adapter
-			 * re-firing its enrolment sync - a renewal, a payment retry, a
-			 * subscription status change - put a hand-promoted moderator back
-			 * to 'member'. Silently: the row already existed, so the join
-			 * hooks did not fire and set_role()'s logging was never reached,
-			 * and the owner had nothing to look at.
+			 * An existing row keeps its role: an unconditional REPLACE INTO would let any adapter
+			 * re-firing its enrolment sync - a renewal, a payment retry, a subscription status
+			 * change - silently put a hand-promoted moderator back to 'member' (the row exists,
+			 * so no join hook fires and set_role()'s logging is never reached).
 			 *
 			 * This does not block a deliberate demotion. set_role() is the
 			 * intentional path and writes directly, with its own validation,
@@ -133,6 +136,15 @@ class SpaceMember extends Model {
 
 		if ( ! $exists ) {
 			Space::increment_member_count( $space_id );
+			/**
+			 * Fires after a user joins a space.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $space_id Space ID.
+			 * @param int    $user_id  User ID.
+			 * @param string $role     Membership role.
+			 */
 			do_action( 'jetonomy_user_joined_space', $space_id, $user_id, $role );
 
 			/**
@@ -159,16 +171,31 @@ class SpaceMember extends Model {
 	/**
 	 * Remove a user from a space and decrement the space's member_count.
 	 *
-	 * @param int $space_id
-	 * @param int $user_id
+	 * @param int  $space_id        Space ID.
+	 * @param int  $user_id         User ID.
+	 * @param bool $keep_last_admin Refuse when this would remove the space's
+	 *                              last admin. Pass true from manual
+	 *                              management (wp-admin, REST leave/remove).
+	 * @return \WP_Error|bool WP_Error when refused, else whether a row went.
 	 */
-	public static function remove( int $space_id, int $user_id ): void {
+	public static function remove( int $space_id, int $user_id, bool $keep_last_admin = false ): \WP_Error|bool {
+		// Only a person managing the space opts into the last-admin rule.
+		// Revocations (membership expiry, group leave, automations) must
+		// always remove, or a lapsed last admin keeps access.
+		if ( $keep_last_admin ) {
+			$last_admin = self::last_admin_error( $space_id, self::get_role( $space_id, $user_id ), null )
+				?? self::owner_change_error( $space_id, $user_id );
+			if ( $last_admin ) {
+				return $last_admin;
+			}
+		}
+
 		$deleted = static::db()->delete(
 			static::table(),
-			[
+			array(
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
-			]
+			)
 		);
 
 		if ( $deleted ) {
@@ -195,6 +222,7 @@ class SpaceMember extends Model {
 
 		// G1 cache invalidation — see add() comment.
 		self::bust_privileged_cache( $space_id );
+		return (bool) $deleted;
 	}
 
 	/**
@@ -207,13 +235,10 @@ class SpaceMember extends Model {
 	 * themselves — so it is the one place the join_policy and visibility rules
 	 * are applied.
 	 *
-	 * It exists because those rules were previously duplicated at the callers,
-	 * and one caller never got them: the WP Abilities `jetonomy/join-space`
-	 * ability branched only on `visibility === 'private'` and called
-	 * SpaceMember::add() for everything else, so a subscriber could join a
-	 * HIDDEN or INVITE-ONLY space and read every post in it (Basecamp
-	 * 10227908583). Reproduced before this fix: hidden+invite, public+invite and
-	 * public+approval all returned "joined" and wrote a roster row.
+	 * It exists so the join_policy and visibility rules are applied in one place instead
+	 * of being duplicated at the callers: a caller that branched only on
+	 * `visibility === 'private'` and called SpaceMember::add() would let a subscriber join
+	 * a HIDDEN or INVITE-ONLY space and read every post in it.
 	 *
 	 * Visibility is checked here even though Space::validate_visibility_join_policy()
 	 * already rejects hidden+open and hidden+approval, because that validator
@@ -233,7 +258,7 @@ class SpaceMember extends Model {
 			return new \WP_Error(
 				'jetonomy_not_logged_in',
 				__( 'You must be logged in to join.', 'jetonomy' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 
@@ -241,17 +266,17 @@ class SpaceMember extends Model {
 		if ( ! $space ) {
 			return new \WP_Error(
 				'jetonomy_not_found',
-				/* translators: %s: the singular label of the item (the configured noun). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
 		if ( self::is_member( $space_id, $user_id ) ) {
 			return new \WP_Error(
 				'jetonomy_already_member',
-				__( 'You are already a member of this space.', 'jetonomy' ),
-				[ 'status' => 409 ]
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You are already in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				array( 'status' => 409 )
 			);
 		}
 
@@ -267,27 +292,36 @@ class SpaceMember extends Model {
 		if ( 'invite' === $mode ) {
 			return new \WP_Error(
 				'jetonomy_invite_only',
-				__( 'This space is invite-only.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is invite-only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				array( 'status' => 403 )
 			);
 		}
 
 		if ( 'request' === $mode ) {
 			if ( JoinRequest::find_pending( $space_id, $user_id ) ) {
-				return [
+				return array(
 					'status'          => 'pending',
 					'already_pending' => true,
-				];
+				);
 			}
 
 			JoinRequest::create_request( $space_id, $user_id, $message );
 
+			/**
+			 * Fires after a user submits a request to join an approval-only space.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $space_id Space ID.
+			 * @param int    $user_id  Requesting user ID.
+			 * @param string $message  Optional message from the requester.
+			 */
 			do_action( 'jetonomy_join_request_created', $space_id, $user_id, $message );
 
-			return [
+			return array(
 				'status'          => 'pending',
 				'already_pending' => false,
-			];
+			);
 		}
 
 		$added = self::add( $space_id, $user_id, 'member' );
@@ -295,7 +329,7 @@ class SpaceMember extends Model {
 			return $added;
 		}
 
-		return [ 'status' => 'joined' ];
+		return array( 'status' => 'joined' );
 	}
 
 	/**
@@ -309,29 +343,40 @@ class SpaceMember extends Model {
 	 * @param int    $space_id Space ID.
 	 * @param int    $user_id  User ID.
 	 * @param string $role     Target role (one of self::VALID_ROLES).
+	 * @param bool   $keep_last_admin Refuse demoting the space's last admin.
+	 *                                Pass true from manual management only.
 	 * @return \WP_Error|bool True on success (incl. no-op), WP_Error otherwise.
 	 */
-	public static function set_role( int $space_id, int $user_id, string $role ): \WP_Error|bool {
+	public static function set_role( int $space_id, int $user_id, string $role, bool $keep_last_admin = false ): \WP_Error|bool {
 		if ( ! in_array( $role, self::VALID_ROLES, true ) ) {
 			return new \WP_Error(
-				'invalid_role',
+				'jetonomy_invalid_role',
 				/* translators: %s: comma-separated list of valid space roles. */
 				sprintf( __( 'Invalid role. Allowed: %s.', 'jetonomy' ), implode( ', ', self::VALID_ROLES ) ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
 		$old_role = self::get_role( $space_id, $user_id );
 		if ( null === $old_role ) {
 			return new \WP_Error(
-				'not_a_member',
-				__( 'User is not a member of this space.', 'jetonomy' ),
-				[ 'status' => 404 ]
+				'jetonomy_not_a_member',
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'User does not belong to this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				array( 'status' => 404 )
 			);
 		}
 
 		if ( $old_role === $role ) {
 			return true; // Idempotent — nothing to change.
+		}
+
+		// Opt-in, as in remove(): automations that demote on a plan change
+		// must not leave someone holding admin rights they lost.
+		$last_admin = $keep_last_admin
+			? ( self::last_admin_error( $space_id, $old_role, $role ) ?? ( 'admin' === $old_role ? self::owner_change_error( $space_id, $user_id ) : null ) )
+			: null;
+		if ( $last_admin ) {
+			return $last_admin;
 		}
 
 		/**
@@ -351,11 +396,11 @@ class SpaceMember extends Model {
 
 		static::db()->update(
 			static::table(),
-			[ 'role' => $role ],
-			[
+			array( 'role' => $role ),
+			array(
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
-			]
+			)
 		);
 
 		self::bust_privileged_cache( $space_id );
@@ -382,7 +427,7 @@ class SpaceMember extends Model {
 	 * Distinct from $role_label_cache on purpose: that map collapses
 	 * member/viewer to null for the role-pill template, so sharing it here
 	 * would make is_member() deny real members of private spaces after a
-	 * warm_role_cache() pass seeded the viewer's own id (caching plan WP2.1).
+	 * warm_role_cache() pass seeded the viewer's own id.
 	 * This map stores the exact role ('admin'/'moderator'/'member'/'viewer')
 	 * and null only for genuine non-members. get_role() is called 5-10x per
 	 * space-scoped page with identical args (is_member, Permission_Engine
@@ -393,10 +438,10 @@ class SpaceMember extends Model {
 	 *
 	 * @var array<string, ?string>
 	 */
-	private static array $role_cache = [];
+	private static array $role_cache = array();
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -404,7 +449,7 @@ class SpaceMember extends Model {
 
 	/**
 	 * Bulk-fill the get_role() memo for ONE viewer across many spaces
-	 * (plan WP3.8) — the inverse axis of warm_role_cache(), which warms
+	 * — the inverse axis of warm_role_cache(), which warms
 	 * many users in one space. One IN-query, negatives included, so the
 	 * spaces-list serializer's per-row is_member()/get_role() pair costs
 	 * zero further queries.
@@ -423,11 +468,11 @@ class SpaceMember extends Model {
 		$rows = static::db()->get_results(
 			static::db()->prepare(
 				'SELECT space_id, role FROM ' . static::table() . " WHERE user_id = %d AND space_id IN ({$placeholders})",
-				array_merge( [ $user_id ], $space_ids )
+				array_merge( array( $user_id ), $space_ids )
 			)
-		) ?: [];
+		) ?: array();
 
-		$found = [];
+		$found = array();
 		foreach ( $rows as $row ) {
 			$found[ (int) $row->space_id ] = (string) $row->role;
 		}
@@ -450,8 +495,8 @@ class SpaceMember extends Model {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$role_cache       = [];
-					self::$role_label_cache = [];
+					self::$role_cache       = array();
+					self::$role_label_cache = array();
 				}
 			);
 		}
@@ -498,11 +543,11 @@ class SpaceMember extends Model {
 		if ( $limit > 0 ) {
 			return static::db()->get_results(
 				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $space_id, $limit, max( 0, $offset ) )
-			) ?: [];
+			) ?: array();
 		}
 		return static::db()->get_results(
 			static::db()->prepare( $base, $space_id )
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -571,11 +616,11 @@ class SpaceMember extends Model {
 				$space_id,
 				$limit
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		foreach ( $rows as $row ) {
-			$row->avatar_url = (string) get_avatar_url( (int) $row->user_id, [ 'size' => 48 ] );
+			$row->avatar_url = (string) get_avatar_url( (int) $row->user_id, array( 'size' => 48 ) );
 		}
 
 		\Jetonomy\Cache::set( $cache_key, $rows, MINUTE_IN_SECONDS );
@@ -590,13 +635,13 @@ class SpaceMember extends Model {
 		\Jetonomy\Cache::delete( 'priv_members_' . $space_id );
 		// A role change also changes permission verdicts (Layer 0d mod bypass
 		// + Layer 2 space-role perms) — clear the request-scope verdict memo
-		// so a promotion/demotion applies within the same request (WP0.1),
-		// and both role memos so get_role()/role_label() re-read (WP2.1).
+		// so a promotion/demotion applies within the same request,
+		// and both role memos so get_role()/role_label() re-read.
 		// Full-map reset, not per-key: add() reads is_member() BEFORE its
 		// write, and the callers of this method don't all know which user
 		// changed.
-		self::$role_cache       = [];
-		self::$role_label_cache = [];
+		self::$role_cache       = array();
+		self::$role_label_cache = array();
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 	}
 
@@ -609,7 +654,7 @@ class SpaceMember extends Model {
 	 *
 	 * @var array<string, ?string>
 	 */
-	private static array $role_label_cache = [];
+	private static array $role_label_cache = array();
 
 	/**
 	 * Bulk-fetch privileged roles for a set of users in a space.
@@ -630,7 +675,7 @@ class SpaceMember extends Model {
 	public static function roles_for_users( int $space_id, array $user_ids ): array {
 		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
 		if ( $space_id <= 0 || empty( $user_ids ) ) {
-			return [];
+			return array();
 		}
 
 		$db           = static::db();
@@ -644,12 +689,12 @@ class SpaceMember extends Model {
 				WHERE space_id = %d
 					AND user_id IN ({$placeholders})
 					AND role IN ('admin','moderator')",
-				array_merge( [ $space_id ], $user_ids )
+				array_merge( array( $space_id ), $user_ids )
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		$out = [];
+		$out = array();
 		foreach ( $rows as $row ) {
 			$out[ (int) $row->user_id ] = (string) $row->role;
 		}
@@ -671,7 +716,7 @@ class SpaceMember extends Model {
 	public static function members_among( int $space_id, array $user_ids ): array {
 		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
 		if ( $space_id <= 0 || empty( $user_ids ) ) {
-			return [];
+			return array();
 		}
 
 		$db           = static::db();
@@ -682,9 +727,9 @@ class SpaceMember extends Model {
 		$rows = $db->get_col(
 			$db->prepare(
 				"SELECT user_id FROM {$table} WHERE space_id = %d AND user_id IN ({$placeholders})",
-				array_merge( [ $space_id ], $user_ids )
+				array_merge( array( $space_id ), $user_ids )
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		return array_map( 'intval', $rows );
@@ -711,7 +756,7 @@ class SpaceMember extends Model {
 	 * warm_role_cache() for several spaces in ONE query.
 	 *
 	 * A tag page, drafts or search lists topics from many spaces; warming one
-	 * space at a time cost a query per distinct space (Basecamp 10369564133).
+	 * space at a time cost a query per distinct space.
 	 * Pairs the query does not return are cached as null (no role), exactly as
 	 * the single-space path does.
 	 *
@@ -747,7 +792,7 @@ class SpaceMember extends Model {
 					AND role IN ('admin','moderator')",
 				array_merge( $space_ids, $user_ids )
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$found = array();
@@ -788,6 +833,57 @@ class SpaceMember extends Model {
 	 * @param int $space_id
 	 * @return int
 	 */
+	/**
+	 * The one last-admin rule every entry point shares (front end, wp-admin,
+	 * REST, integrations): a space never loses its final admin by demotion
+	 * or removal.
+	 *
+	 * @param int         $space_id Space ID.
+	 * @param string|null $old_role The member's current role.
+	 * @param string|null $new_role Target role, or null when removing.
+	 * @return \WP_Error|null Error when the change would leave no admin.
+	 */
+	private static function last_admin_error( int $space_id, ?string $old_role, ?string $new_role ): ?\WP_Error {
+		if ( 'admin' !== $old_role || 'admin' === $new_role || self::count_admins( $space_id ) > 1 ) {
+			return null;
+		}
+		return new \WP_Error(
+			'jetonomy_last_admin_required',
+			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s must keep at least one admin. Promote someone else first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			array( 'status' => 400 )
+		);
+	}
+
+	/**
+	 * Refuse a manual demotion or removal of the space owner by someone else.
+	 *
+	 * The owner (spaces.author_id) needs their admin row to hand the space over
+	 * or undo their own archive, so a co-admin removing it would lock them out
+	 * of their own space (owner decision 2026-10-15). The owner may step down
+	 * themselves, and a site administrator - or WP-CLI, which runs as no user -
+	 * can always change it. Same opt-in as the last-admin rule: automations
+	 * (membership expiry, group sync) still revoke.
+	 *
+	 * @param int $space_id Space ID.
+	 * @param int $user_id  Member being demoted or removed.
+	 * @return \WP_Error|null
+	 */
+	private static function owner_change_error( int $space_id, int $user_id ): ?\WP_Error {
+		$actor = get_current_user_id();
+		if ( 0 === $actor || $actor === $user_id || user_can( $actor, 'manage_options' ) ) {
+			return null;
+		}
+		$space = Space::find( $space_id );
+		if ( ! $space || (int) $space->author_id !== $user_id ) {
+			return null;
+		}
+		return new \WP_Error(
+			'jetonomy_owner_protected',
+			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Only the owner of this %s or a site administrator can change the owner\'s role.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			array( 'status' => 403 )
+		);
+	}
+
 	public static function count_admins( int $space_id ): int {
 		$db    = static::db();
 		$table = static::table();
@@ -813,7 +909,7 @@ class SpaceMember extends Model {
 				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d ORDER BY joined_at ASC',
 				$user_id
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -849,7 +945,7 @@ class SpaceMember extends Model {
 	 */
 	public static function moderated_space_ids( int $user_id ): array {
 		if ( $user_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		$rows = static::db()->get_col(
@@ -859,7 +955,7 @@ class SpaceMember extends Model {
 			)
 		);
 
-		return array_map( 'intval', $rows ?: [] );
+		return array_map( 'intval', $rows ?: array() );
 	}
 
 	/**
@@ -919,5 +1015,102 @@ class SpaceMember extends Model {
 				$user_id
 			)
 		);
+	}
+
+
+	/**
+	 * User ids on a space's roster, up to a limit (callers pass limit + 1 to
+	 * tell "exactly at the cap" from "over it").
+	 *
+	 * @param int $space_id Space.
+	 * @param int $limit    Max ids.
+	 * @return int[]
+	 */
+	public static function user_ids_for_space( int $space_id, int $limit ): array {
+		return array_map(
+			'intval',
+			(array) static::db()->get_col(
+				static::db()->prepare( 'SELECT user_id FROM ' . static::table() . ' WHERE space_id = %d LIMIT %d', $space_id, $limit )
+			)
+		);
+	}
+
+	/**
+	 * User ids of a space's admins and moderators (uncached, unbounded).
+	 *
+	 * @param int $space_id Space.
+	 * @return int[]
+	 */
+	public static function staff_user_ids( int $space_id ): array {
+		return array_map(
+			'intval',
+			(array) static::db()->get_col(
+				static::db()->prepare( 'SELECT user_id FROM ' . static::table() . " WHERE space_id = %d AND role IN ('admin', 'moderator')", $space_id )
+			)
+		);
+	}
+
+	/**
+	 * A space's members ranked by reputation (highest first), with role and
+	 * trust level. Not block-filtered: it is a roster, not a content feed.
+	 *
+	 * @param int $space_id Space.
+	 * @param int $limit    Max rows.
+	 * @return object[] Rows with user_id, role, reputation, trust_level.
+	 */
+	public static function list_top_by_reputation( int $space_id, int $limit ): array {
+		$profiles_tbl = \Jetonomy\table( 'user_profiles' );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT sm.user_id, sm.role, up.reputation, up.trust_level
+				 FROM ' . static::table() . " sm
+				 LEFT JOIN {$profiles_tbl} up ON up.user_id = sm.user_id
+				 WHERE sm.space_id = %d
+				 ORDER BY up.reputation DESC, sm.user_id ASC
+				 LIMIT %d",
+				$space_id,
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * One keyset page of roster rows granted by a membership tier, in
+	 * (space_id, user_id) order after the given position.
+	 *
+	 * @param int $last_space Space id of the previous page's last row.
+	 * @param int $last_user  User id of the previous page's last row.
+	 * @param int $limit      Page size.
+	 * @return object[] Rows with space_id, user_id.
+	 */
+	public static function list_tier_rows_after( int $last_space, int $last_user, int $limit ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT space_id, user_id FROM ' . static::table() . "
+				 WHERE source = 'tier'
+				   AND ( space_id > %d OR ( space_id = %d AND user_id > %d ) )
+				 ORDER BY space_id ASC, user_id ASC
+				 LIMIT %d",
+				$last_space,
+				$last_space,
+				$last_user,
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How a member came to be on a space's roster (the source column).
+	 *
+	 * @param int $space_id Space.
+	 * @param int $user_id  Member.
+	 * @return string|null Null when there is no roster row.
+	 */
+	public static function find_source( int $space_id, int $user_id ): ?string {
+		$source = static::db()->get_var(
+			static::db()->prepare( 'SELECT source FROM ' . static::table() . ' WHERE space_id = %d AND user_id = %d', $space_id, $user_id )
+		);
+		return null === $source ? null : (string) $source;
 	}
 }

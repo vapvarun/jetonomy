@@ -40,18 +40,9 @@ class Reply extends Model {
 	}
 
 	/**
-	 * Create a new reply.
-	 *
-	 * Sets created_at and status defaults if absent. After a successful insert,
-	 * increments the parent post's reply_count.
-	 *
-	 * @param array $data Column data.
-	 * @return int Inserted row ID.
-	 */
-	/**
 	 * Insert override: the LAST write barrier for the content pipeline.
 	 * See Post::insert() - closes the post-filter and raw-insert bypasses
-	 * (QA 2026-07-30, card 10138808747).
+	 * (QA 2026-07-30).
 	 *
 	 * @param array $data Column data.
 	 * @return int New row id.
@@ -66,6 +57,16 @@ class Reply extends Model {
 		return $id;
 	}
 
+	/**
+	 * Create a new reply.
+	 *
+	 * Sets created_at and status defaults if absent, refuses a parent that is
+	 * missing, in another topic, trashed or spam, and after a successful insert
+	 * increments the parent post's reply_count.
+	 *
+	 * @param array $data Column data.
+	 * @return int|\WP_Error Inserted row ID, or the reason it was refused.
+	 */
 	public static function create( array $data ): int|\WP_Error {
 		/**
 		 * Filter reply data before creation. Return WP_Error to abort.
@@ -87,6 +88,21 @@ class Reply extends Model {
 			),
 			$data
 		);
+
+		// A reply can only answer a live reply in the same topic. A parent from
+		// another topic rendered as a stray root and notified a stranger.
+		$parent_id = (int) ( $data['parent_id'] ?? 0 );
+		if ( $parent_id > 0 ) {
+			$parent = self::find( $parent_id );
+			if ( ! $parent || (int) $parent->post_id !== (int) ( $data['post_id'] ?? 0 ) || in_array( $parent->status, array( 'trash', 'spam' ), true ) ) {
+				return new \WP_Error( 'jetonomy_invalid_parent', sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'The %s you are answering is no longer available.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), array( 'status' => 400 ) );
+			}
+		}
+
+		// Not a column: a reply written on someone's behalf (the opening post a
+		// merge carries over) must not join its author to the space.
+		$auto_join = empty( $data['skip_auto_join'] );
+		unset( $data['skip_auto_join'] );
 
 		$id = static::insert( $data );
 
@@ -120,7 +136,7 @@ class Reply extends Model {
 			// Auto-join the replier to the space on their first reply — same rules
 			// as Post::create (open spaces only, no demotion of existing members).
 			$parent_post = ! empty( $data['post_id'] ) ? Post::find( (int) $data['post_id'] ) : null;
-			if ( $parent_post && ! empty( $data['author_id'] ) ) {
+			if ( $auto_join && $parent_post && ! empty( $data['author_id'] ) ) {
 				self::maybe_auto_join_space( (int) $parent_post->space_id, (int) $data['author_id'] );
 			}
 
@@ -300,7 +316,7 @@ class Reply extends Model {
 			 * Moved here from Replies_Controller::delete_item() in 1.9.5 - see
 			 * the matching note in Post::delete(). Firing from the controller
 			 * only held the contract on the REST path and orphaned Pro's
-			 * attachment rows on every other one (Basecamp 10268067864).
+			 * attachment rows on every other one.
 			 *
 			 * @since 1.4.1
 			 * @param int $id Deleted reply ID.
@@ -387,11 +403,10 @@ class Reply extends Model {
 
 		// $after is a forward cursor carrying an OFFSET, not a row id.
 		//
-		// The old `id > %d` keyset branch was wrong for every sort but 'oldest':
-		// under `created_at DESC` or `vote_score DESC` an id filter does not follow
-		// the sort, so each next page re-served the head of the thread
-		// (Basecamp 10161324235). Offset matches how has_more/cursor_next are
-		// computed in paginated_response(), so the two can no longer disagree.
+		// Offset is the only scheme every sort supports: a keyset `id > %d` filter does
+		// not follow `created_at DESC` or `vote_score DESC`, so each next page would
+		// re-serve the head of the thread. Offset matches how has_more/cursor_next are
+		// computed in paginated_response(), so the two cannot disagree.
 		$offset = $after > 0 ? $after : $offset;
 
 		$rows = static::db()->get_results(
@@ -495,8 +510,8 @@ class Reply extends Model {
 	 *
 	 * Writes both sides (reply is_accepted + post accepted_reply_id /
 	 * is_resolved), fires jetonomy_reply_accepted (Notifier, Pro badges) and
-	 * awards the reply author. REST and WP-CLI both call this; the CLI used to
-	 * run Post::accept_reply() alone, leaving the reply's own flag at 0.
+	 * awards the reply author. REST and WP-CLI both call this, so the reply's own
+	 * is_accepted flag is always set.
 	 *
 	 * Authorization is the caller's job (REST: post author or close_posts;
 	 * CLI: whoever runs it). Idempotent, also under concurrency: only the
@@ -511,11 +526,11 @@ class Reply extends Model {
 	public static function accept_as_answer( int $id, int $actor_id ) {
 		$reply = static::find( $id );
 		if ( ! $reply ) {
-			return new \WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
 		}
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
-			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
 		}
 
 		// A trashed or unpublished reply, or one inside such a topic, cannot
@@ -531,7 +546,7 @@ class Reply extends Model {
 		if ( ! $space || 'qa' !== ( $space->type ?? '' ) ) {
 			return new \WP_Error(
 				'jetonomy_not_qa_space',
-				__( 'Accepted answers only apply to Q&A spaces.', 'jetonomy' ),
+				sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Accepted answers only apply to Q&A %s.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -547,12 +562,27 @@ class Reply extends Model {
 
 		Post::accept_reply( (int) $post->id, $id );
 
+		/**
+		 * Fires after a reply is marked as the accepted answer.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $reply_id Accepted reply ID.
+		 * @param int $post_id  Parent post ID.
+		 */
 		do_action( 'jetonomy_reply_accepted', $id, (int) $post->id );
 
 		$author_id = (int) $reply->author_id;
 		if ( $author_id && $author_id !== $actor_id ) {
 			UserProfile::find_or_create( $author_id );
-			\Jetonomy\Trust\Reputation::award( $author_id, 'reply_accepted' );
+			\Jetonomy\Trust\Reputation::award(
+				$author_id,
+				'reply_accepted',
+				array(
+					'object_type' => 'reply',
+					'object_id'   => $id,
+				)
+			);
 		}
 
 		return true;
@@ -569,11 +599,11 @@ class Reply extends Model {
 	public static function unaccept_as_answer( int $id, int $actor_id ) {
 		$reply = static::find( $id );
 		if ( ! $reply ) {
-			return new \WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
 		}
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
-			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
 		}
 
 		$author_id = (int) $reply->author_id;
@@ -582,17 +612,32 @@ class Reply extends Model {
 		if ( ! self::unmark_accepted( $id ) ) {
 			return new \WP_Error(
 				'jetonomy_not_accepted',
-				__( 'This reply is not the accepted answer.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'This %s is not the accepted answer.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				array( 'status' => 400 )
 			);
 		}
 
 		Post::clear_accepted_reply( (int) $post->id );
 
+		/**
+		 * Fires after a reply loses its accepted-answer mark.
+		 *
+		 * @since 1.4.4
+		 *
+		 * @param int $reply_id Reply ID.
+		 * @param int $post_id  Parent post ID.
+		 */
 		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
 
 		if ( $author_id && $author_id !== $actor_id ) {
-			\Jetonomy\Trust\Reputation::revoke( $author_id, 'reply_accepted' );
+			\Jetonomy\Trust\Reputation::revoke(
+				$author_id,
+				'reply_accepted',
+				array(
+					'object_type' => 'reply',
+					'object_id'   => $id,
+				)
+			);
 		}
 
 		return true;
@@ -646,10 +691,10 @@ class Reply extends Model {
 	 * wp-admin Moderation screen share one implementation. Served by the
 	 * status_created (status, created_at) index.
 	 *
-	 * @param string[]   $statuses  One or more of publish|pending|draft|spam|trash.
-	 * @param int        $limit     Max rows.
-	 * @param int        $offset    Pagination offset.
-	 * @param int[]|null $space_ids Limit to replies whose POST lives in these
+	 * @param string[]                            $statuses  One or more of publish|pending|draft|spam|trash.
+	 * @param int                                 $limit     Max rows.
+	 * @param int                                 $offset    Pagination offset.
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids Limit to replies whose POST lives in these
 	 *                              spaces, or null for every space.
 	 * @return object[]
 	 */
@@ -688,7 +733,7 @@ class Reply extends Model {
 	 * means "no filter", an EMPTY array means "no spaces in scope" and must
 	 * return nothing.
 	 *
-	 * @param int[]|null $space_ids
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids
 	 * @return array{join:string,sql:string,params:array<int,int>}|null Null = match nothing.
 	 */
 	protected static function space_scope_sql( ?array $space_ids ): ?array {
@@ -699,11 +744,26 @@ class Reply extends Model {
 				'params' => array(),
 			);
 		}
+		$posts = \Jetonomy\table( 'posts' );
+		// array( 'skip_spaces' => ids ): every space but these, as Post::space_scope_sql().
+		if ( isset( $space_ids['skip_spaces'] ) ) {
+			$skip = array_values( array_unique( array_filter( array_map( 'absint', (array) $space_ids['skip_spaces'] ) ) ) );
+			return array(
+				'join'   => $skip ? " INNER JOIN {$posts} p ON p.id = r.post_id" : '',
+				'sql'    => $skip ? ' AND p.space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '',
+				'params' => $skip,
+			);
+		}
+		// Any other keyed array is a malformed scope: match nothing rather than
+		// coerce it into space ids (fail closed - a moderator filter must never
+		// silently widen).
+		if ( array_filter( array_keys( $space_ids ), 'is_string' ) ) {
+			return null;
+		}
 		$ids = array_values( array_unique( array_filter( array_map( 'absint', $space_ids ) ) ) );
 		if ( empty( $ids ) ) {
 			return null;
 		}
-		$posts = \Jetonomy\table( 'posts' );
 
 		return array(
 			'join'   => " INNER JOIN {$posts} p ON p.id = r.post_id",
@@ -715,8 +775,8 @@ class Reply extends Model {
 	/**
 	 * Count replies in the given moderation statuses via COUNT(*).
 	 *
-	 * @param string[]   $statuses
-	 * @param int[]|null $space_ids Limit to replies whose POST lives in these
+	 * @param string[]                            $statuses
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids Limit to replies whose POST lives in these
 	 *                              spaces, or null for every space.
 	 * @return int
 	 */
@@ -739,6 +799,33 @@ class Reply extends Model {
 				...array_merge( $statuses, $scope['params'] )
 			)
 		);
+	}
+
+	/**
+	 * Who wrote each row, and whether anonymously - just those columns, in
+	 * chunks, for screens that only need to mask an anonymous author (the
+	 * Activity Log export can hold tens of thousands of ids).
+	 *
+	 * @param int[] $ids Row IDs.
+	 * @return array<int, object> id => object with id, author_id, is_anonymous.
+	 */
+	public static function authorship_by_ids( array $ids ): array {
+		$ids   = array_values( array_unique( array_filter( array_map( 'intval', $ids ), static fn ( int $id ): bool => $id > 0 ) ) );
+		$by_id = array();
+		foreach ( array_chunk( $ids, 500 ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$rows         = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+					'SELECT id, author_id, is_anonymous FROM ' . static::table() . " WHERE id IN ({$placeholders})",
+					...$chunk
+				)
+			) ?: array();
+			foreach ( $rows as $row ) {
+				$by_id[ (int) $row->id ] = $row;
+			}
+		}
+		return $by_id;
 	}
 
 	/**
@@ -945,9 +1032,9 @@ class Reply extends Model {
 		$rows = $db->get_results( $db->prepare( "SELECT id, post_id, parent_id FROM {$table} WHERE id IN ({$in})", ...$ids ), OBJECT_K );
 
 		$case    = '';
-		$args    = [];
-		$targets = [];
-		$posts   = [];
+		$args    = array();
+		$targets = array();
+		$posts   = array();
 		foreach ( $parents as $id => $parent ) {
 			$child = $rows[ $id ] ?? null;
 			if ( ! $child || null !== $child->parent_id || ! isset( $rows[ $parent ] ) || $rows[ $parent ]->post_id !== $child->post_id ) {
@@ -1004,29 +1091,23 @@ class Reply extends Model {
 	 * @return array Threaded reply tree.
 	 */
 	private static function build_threaded( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = 0, int $offset = 0 ): array {
-		// SQL-side pagination (caching plan WP1.1). The old shape fetched the
-		// WHOLE thread — every reply row incl. longtext bodies — into PHP and
-		// array_slice()d the top level, so a 500-reply topic transferred all
-		// 500 bodies to render 30. Now: one bounded top-level page, then the
-		// page's descendants level by level. Behavior contracts preserved:
+		// SQL-side pagination: one bounded top-level page, then the page's descendants
+		// level by level, so a 500-reply topic does not transfer every longtext body to
+		// render 30. Behavior contracts:
 		// - DEFAULT_SORT ordering stays byte-identical to page_of()'s
 		// correlated COUNT (created_at ASC, id ASC) — the deep-link
 		// contract the journey test asserts, incl. tied created_at.
 		// - 'newest'/'best' carry explicit id tiebreaks; without them a
 		// LIMIT/OFFSET repeats or skips tied rows between pages (the
-		// Basecamp 10161324235 bug class). Note 'best' pages can shift
-		// as votes land mid-pagination — the old whole-thread snapshot
-		// couldn't; accepted and documented in the plan.
-		// - Children always render oldest-first regardless of top sort
-		// (the old flat query's order).
-		// - ORPHANS RENDER AS ROOTS. A published reply whose parent row is
-		// missing, pending, spammed or trashed used to be unreachable: the
-		// level walk starts at parent_id 0 and never descends to it. It was
-		// still counted, so a topic advertised "3 replies" and rendered
-		// none - the customer report behind Basecamp 10295178703, and
-		// reproducible by any moderator who trashes a reply that has
-		// children. Resolved at READ time via the LEFT JOIN below rather
-		// than by reparenting rows on delete: restore the parent and the
+		// classic paging bug). Note 'best' pages can shift
+		// as votes land mid-pagination, which a whole-thread snapshot
+		// would not do; this is accepted.
+		// - Children always render oldest-first regardless of top sort.
+		// - ORPHANS RENDER AS ROOTS. A published reply whose parent row is missing,
+		// pending, spammed or trashed would be unreachable (the level walk starts at
+		// parent_id 0 and never descends to it) yet still counted, so a topic would
+		// advertise "3 replies" and render none. Resolved at READ time via the LEFT JOIN
+		// below rather than by reparenting rows on delete: restore the parent and the
 		// thread nests again, with nothing rewritten.
 		$order_by = 'created_at ASC, id ASC';
 		if ( 'newest' === $sort ) {
@@ -1076,8 +1157,8 @@ class Reply extends Model {
 
 		while ( ! empty( $level_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $level_ids ), '%d' ) );
-			// Children always oldest-first — matches the old flat query's
-			// created_at ASC, id ASC order that build_tree() consumed.
+			// Children always oldest-first (created_at ASC, id ASC), the order build_tree()
+			// consumes.
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$children = static::db()->get_results(
 				static::db()->prepare(
@@ -1116,10 +1197,9 @@ class Reply extends Model {
 		}
 
 		/*
-		 * NOTHING viewer-dependent happens here. Block tombstones and
-		 * private-reply tombstones used to be applied at this point, which
-		 * baked one viewer's permissions into a cache entry every other viewer
-		 * then read. Both now run in apply_viewer_state(), after the cache.
+		 * NOTHING viewer-dependent happens here. Block tombstones and private-reply
+		 * tombstones run in apply_viewer_state(), after the cache, so one viewer's
+		 * permissions are never baked into an entry every other viewer reads.
 		 *
 		 * If you are adding something that calls get_current_user_id(), it
 		 * does not belong in this method.
@@ -1132,8 +1212,8 @@ class Reply extends Model {
 	/**
 	 * Reply ids the single-post view is rendering this request, per post
 	 * (paged tree + off-page accepted answer). Published by the view so
-	 * hook-driven batch primes (Pro reactions on jetonomy_before_replies,
-	 * plan WP3.1) can scope to the rendered set without a new public hook
+	 * hook-driven batch primes (Pro reactions on jetonomy_before_replies)
+	 * can scope to the rendered set without a new public hook
 	 * carrying ids. Request-scope by nature; empty on non-view requests,
 	 * in which case consumers keep their per-row fallback.
 	 *
@@ -1322,26 +1402,35 @@ class Reply extends Model {
 			$gate_sql .= ' AND ' . $block_sql;
 		}
 
+		// post_content_plain gives feed-space topics (stored without a title) a
+		// readable "on <excerpt>" line in the profile Replies tab.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return static::db()->get_results(
+		$rows = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				// post_content_plain is selected so feed-space parent posts
-				// (which store an empty title by design — 1.4.3 WS1) can
-				// still render a human-readable "on <excerpt>" string in
-				// the user-profile Replies tab.
-				"SELECT r.*, p.title AS post_title, p.slug AS post_slug, p.content_plain AS post_content_plain, sp.slug AS space_slug, sp.title AS space_title
+				"SELECT r.*, p.title AS post_title, p.slug AS post_slug, p.content_plain AS post_content_plain,
+				        p.author_id AS post_author_id, p.space_id AS post_space_id, sp.slug AS space_slug, sp.title AS space_title
 				 FROM {$replies_tbl} r
 				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
 				 WHERE r.author_id = %d AND r.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
-				 ORDER BY r.created_at DESC
+				 ORDER BY r.created_at DESC, r.id DESC
 				 LIMIT %d OFFSET %d",
 				$user_id,
 				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
 		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Private replies stay in the list (pagination stays even) but lose their body.
+		foreach ( $rows as $row ) {
+			$post = (object) array(
+				'author_id' => (int) $row->post_author_id,
+				'space_id'  => (int) $row->post_space_id,
+			);
+			self::apply_private_tombstone( $row, $post, get_current_user_id() );
+		}
+		return $rows;
 	}
 
 	/**
@@ -1446,7 +1535,7 @@ class Reply extends Model {
 		if ( isset( self::$page_cache[ $key ] ) ) {
 			return self::$page_cache[ $key ];
 		}
-		return self::pages_of( [ $reply_id ], $per_page )[ $reply_id ] ?? 1;
+		return self::pages_of( array( $reply_id ), $per_page )[ $reply_id ] ?? 1;
 	}
 
 	/**
@@ -1454,7 +1543,7 @@ class Reply extends Model {
 	 *
 	 * @var array<string,int>
 	 */
-	private static array $page_cache = [];
+	private static array $page_cache = array();
 
 	/**
 	 * Which page each of many replies appears on — in a fixed number of queries.
@@ -1485,7 +1574,7 @@ class Reply extends Model {
 		$per_page  = max( 1, $per_page );
 		$reply_ids = array_values( array_unique( array_filter( array_map( 'intval', $reply_ids ), static fn( $id ) => $id > 0 ) ) );
 		if ( ! $reply_ids ) {
-			return [];
+			return array();
 		}
 
 		$db    = static::db();
@@ -1502,8 +1591,8 @@ class Reply extends Model {
 		// Climb to each reply's top-level ancestor, one batched query per level.
 		// An orphaned child (parent deleted) roots at itself — the tree builder
 		// renders it top-level, so it must page as top-level too.
-		$anchor_of = [];
-		$pending   = [];
+		$anchor_of = array();
+		$pending   = array();
 		foreach ( $rows as $id => $row ) {
 			$parent = (int) ( $row->parent_id ?? 0 );
 			if ( $parent ) {
@@ -1520,7 +1609,7 @@ class Reply extends Model {
 				$known += self::rows_by_id( $need );
 			}
 
-			$next = [];
+			$next = array();
 			foreach ( $pending as $id => $parent_id ) {
 				$parent = $known[ $parent_id ] ?? null;
 				if ( ! $parent ) {
@@ -1541,7 +1630,7 @@ class Reply extends Model {
 			$anchor_of[ $id ] = $rows[ $id ];
 		}
 
-		$anchors = [];
+		$anchors = array();
 		foreach ( $anchor_of as $anchor ) {
 			$anchors[ (int) $anchor->id ] = $anchor;
 		}
@@ -1567,7 +1656,7 @@ class Reply extends Model {
 			 WHERE a.id IN ({$ids_sql})"
 		);
 
-		$pos_of = [];
+		$pos_of = array();
 		foreach ( (array) $positions as $row ) {
 			$pos_of[ (int) $row->anchor_id ] = (int) $row->pos;
 		}
@@ -1606,7 +1695,7 @@ class Reply extends Model {
 	 * @param int   $per_page  Top-level replies per page.
 	 */
 	public static function prime_pages( array $reply_ids, int $per_page ): void {
-		$uncached = [];
+		$uncached = array();
 		foreach ( $reply_ids as $id ) {
 			$id = (int) $id;
 			if ( $id > 0 && ! isset( self::$page_cache[ $per_page . ':' . $id ] ) ) {
@@ -1626,7 +1715,7 @@ class Reply extends Model {
 	 */
 	private static function rows_by_id( array $ids ): array {
 		if ( ! $ids ) {
-			return [];
+			return array();
 		}
 		$db      = static::db();
 		$table   = static::table();
@@ -1634,7 +1723,7 @@ class Reply extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is trusted; $ids_sql is intval-mapped.
 		$rows = $db->get_results( "SELECT id, parent_id, post_id, created_at, status FROM {$table} WHERE id IN ({$ids_sql})" );
 
-		$out = [];
+		$out = array();
 		foreach ( (array) $rows as $row ) {
 			$out[ (int) $row->id ] = $row;
 		}
@@ -1652,9 +1741,9 @@ class Reply extends Model {
 	 * @param int    $reply_id       The reply to split.
 	 * @param string $new_title      Title for the new post.
 	 * @param int    $target_space_id Space for the new post (0 = same space as source post).
-	 * @return int New post ID, or 0 on failure.
+	 * @return int|\WP_Error New post ID, 0 on failure, or WP_Error when the thread holds a private reply.
 	 */
-	public static function split_to_topic( int $reply_id, string $new_title, int $target_space_id = 0 ): int {
+	public static function split_to_topic( int $reply_id, string $new_title, int $target_space_id = 0 ): int|\WP_Error {
 		$reply = static::find( $reply_id );
 		if ( ! $reply ) {
 			return 0;
@@ -1669,6 +1758,36 @@ class Reply extends Model {
 			$target_space_id = (int) $source_post->space_id;
 		}
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Move the split reply's whole subtree, not only its direct children, so
+		// no reply is left in the source answering a parent in another topic.
+		// Direct children become top-level (NULL, like every root reply); deeper
+		// replies keep their parent, which moves with them.
+		$table   = static::table();
+		$db      = static::db();
+		$subtree = array();
+		$level   = array( $reply_id );
+		while ( $level ) {
+			$in      = implode( ',', array_map( 'intval', $level ) );
+			$level   = array_map( 'intval', (array) $db->get_col( $db->prepare( "SELECT id FROM {$table} WHERE post_id = %d AND parent_id IN ({$in})", (int) $reply->post_id ) ) );
+			$level   = array_diff( $level, $subtree );
+			$subtree = array_merge( $subtree, $level );
+		}
+
+		// A private reply is for its author, the topic author and staff. Moved
+		// into a new topic it would be readable by that topic's author instead,
+		// and the trace below would name it publicly. Same rule as merge: the
+		// moderator makes them public first, on purpose.
+		$private = ! empty( $reply->is_private )
+			|| ( $subtree && (int) $db->get_var( "SELECT COUNT(*) FROM {$table} WHERE is_private = 1 AND id IN (" . implode( ',', $subtree ) . ')' ) > 0 );
+		if ( $private ) {
+			return new \WP_Error(
+				'jetonomy_split_private',
+				sprintf( /* translators: 1: the singular Topic label, lowercase, 2: the plural Reply label, lowercase. */ __( 'This %1$s has private %2$s. Make them public before splitting it.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+				array( 'status' => 400 )
+			);
+		}
+
 		// Create new post from reply content.
 		$new_post_id = Post::create(
 			array(
@@ -1680,6 +1799,8 @@ class Reply extends Model {
 				'content_plain' => $reply->content_plain ?? \jetonomy_content_to_plain( $reply->content ?? '' ),
 				'type'          => $source_post->type ?? 'topic',
 				'status'        => 'publish',
+				// An anonymous reply stays anonymous as its own topic.
+				'is_anonymous'  => empty( $reply->is_anonymous ) ? 0 : 1,
 				'created_at'    => $reply->created_at ?? now(),
 			)
 		);
@@ -1687,20 +1808,29 @@ class Reply extends Model {
 		if ( is_wp_error( $new_post_id ) || ! $new_post_id ) {
 			return 0;
 		}
+		// Pro drops the anonymous flag on create in spaces that have not opted
+		// in; a reply that was already anonymous must never be unmasked by a split.
+		if ( ! empty( $reply->is_anonymous ) && empty( Post::find( $new_post_id )->is_anonymous ) ) {
+			Post::update( $new_post_id, array( 'is_anonymous' => 1 ) );
+		}
 
-		// Move child replies (where parent_id = reply_id) to new post.
-		$table = static::table();
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$moved_count = (int) static::db()->query(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"UPDATE {$table} SET post_id = %d, parent_id = 0 WHERE post_id = %d AND parent_id = %d",
-				$new_post_id,
-				(int) $reply->post_id,
-				$reply_id
-			)
-		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// An accepted answer that is leaving (the split reply or one under it)
+		// stops being the source's answer. Un-accepted while it still sits in the
+		// source, so the normal path runs (hook, reputation taken back).
+		$accepted = (int) ( $source_post->accepted_reply_id ?? 0 );
+		if ( $accepted && ( $accepted === $reply_id || in_array( $accepted, $subtree, true ) ) ) {
+			self::unaccept_as_answer( $accepted, 0 );
+		}
+
+		$moved_count = 0;
+		if ( $subtree ) {
+			$in = implode( ',', $subtree );
+			// Both counters mean published replies; the move itself includes trashed, pending and spam rows.
+			$moved_count = (int) $db->get_var( "SELECT COUNT(*) FROM {$table} WHERE id IN ({$in}) AND status = 'publish'" );
+			$db->query( $db->prepare( "UPDATE {$table} SET post_id = %d WHERE id IN ({$in})", $new_post_id ) );
+			$db->query( $db->prepare( "UPDATE {$table} SET parent_id = NULL WHERE post_id = %d AND parent_id = %d", $new_post_id, $reply_id ) );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		// Update reply count on new post.
 		if ( $moved_count > 0 ) {
@@ -1738,23 +1868,238 @@ class Reply extends Model {
 			// no shared permalink helper to call.
 			$new_url = \Jetonomy\route_url( 'post', $new_space->slug, $new_post->slug );
 
-			static::create(
+			// Name and link the new topic only where every reader of this thread
+			// may follow it; a private or hidden space keeps its topics to itself.
+			$where = 'public' === ( $new_space->visibility ?? '' )
+				? '<a href="' . esc_url( $new_url ) . '">' . esc_html( (string) $new_post->title ) . '</a>'
+				: esc_html__( 'another discussion', 'jetonomy' );
+
+			$trace = static::create(
 				array(
-					'post_id'   => (int) $reply->post_id,
-					'author_id' => (int) $reply->author_id,
-					'content'   => sprintf(
-						/* translators: 1: singular reply label, 2: link to the new topic. */
-						'<p><em>' . esc_html__( 'A %1$s was split into a new discussion: %2$s', 'jetonomy' ) . '</em></p>',
+					'post_id'      => (int) $reply->post_id,
+					'author_id'    => (int) $reply->author_id,
+					'is_anonymous' => empty( $reply->is_anonymous ) ? 0 : 1,
+					'content'      => sprintf(
+						/* translators: 1: singular reply label, 2: link to the new topic, or "another discussion". */
+						'<p><em>' . esc_html__( 'This %1$s was split into a new discussion: %2$s', 'jetonomy' ) . '</em></p>',
 						esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-						'<a href="' . esc_url( $new_url ) . '">' . esc_html( (string) $new_post->title ) . '</a>'
+						$where
 					),
-					'status'    => 'publish',
+					'status'       => 'publish',
 				)
 			);
+			if ( ! empty( $reply->is_anonymous ) && is_int( $trace ) && $trace > 0 ) {
+				static::update( $trace, array( 'is_anonymous' => 1 ) ); // Same reason as the topic above.
+			}
 		}
 
+		/**
+		 * Fires after a reply is split out into a new post.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $reply_id    ID of the reply that was split.
+		 * @param int $new_post_id ID of the new post.
+		 * @param int $old_post_id ID of the original parent post.
+		 */
 		do_action( 'jetonomy_reply_split', $reply_id, $new_post_id, (int) $reply->post_id );
 
 		return $new_post_id;
+	}
+
+
+	// ── wp-admin listings ──
+
+	/**
+	 * Parent topic id and title for a set of reply ids, keyed by reply id.
+	 *
+	 * @param int[] $ids Reply ids.
+	 * @return array<int,array{post_id:int,title:string}>
+	 */
+	public static function parents_by_ids( array $ids ): array {
+		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$in    = implode( ',', $ids );
+		$posts = \Jetonomy\table( 'posts' );
+		$rows  = static::db()->get_results( 'SELECT r.id, r.post_id, p.title FROM ' . static::table() . " r LEFT JOIN {$posts} p ON p.id = r.post_id WHERE r.id IN ({$in})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integer list.
+		$out   = array();
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row->id ] = array(
+				'post_id' => (int) $row->post_id,
+				'title'   => (string) $row->title,
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * Published replies created since a moment.
+	 *
+	 * @param string $since UTC MySQL datetime.
+	 * @return int
+	 */
+	public static function count_published_since( string $since ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'publish' AND created_at >= %s", $since )
+		);
+	}
+
+	/**
+	 * Replies awaiting approval, newest first, with their topic title.
+	 *
+	 * @param int   $limit  Max rows.
+	 * @param int   $offset Offset.
+	 * @param int[] $exclude_space_ids Spaces to leave out (site moderator scope).
+	 * @return object[]
+	 */
+	public static function list_pending_with_post( int $limit, int $offset, array $exclude_space_ids = array() ): array {
+		$posts  = \Jetonomy\table( 'posts' );
+		$skip   = array_values( array_unique( array_filter( array_map( 'absint', $exclude_space_ids ) ) ) );
+		$not_in = $skip ? ' AND p.space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '';
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $not_in holds only %d placeholders.
+				'SELECT r.*, p.title as post_title FROM ' . static::table() . " r
+				 LEFT JOIN {$posts} p ON p.id = r.post_id
+				 WHERE r.status = 'pending'{$not_in}
+				 ORDER BY r.created_at DESC
+				 LIMIT %d OFFSET %d",
+				...array_merge( $skip, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * One topic's replies for the wp-admin replies screen, oldest first.
+	 *
+	 * @param int    $post_id Topic.
+	 * @param string $status  'all' (everything but trash) or a status.
+	 * @param string $search  Text to match in the reply.
+	 * @param int    $limit   Max rows.
+	 * @param int    $offset  Offset.
+	 * @return object[]
+	 */
+	public static function list_for_admin_post( int $post_id, string $status, string $search, int $limit, int $offset ): array {
+		[ $where, $args ] = self::admin_where( $post_id, $status, $search );
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT r.* FROM ' . static::table() . " r WHERE {$where} ORDER BY r.created_at ASC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				...array_merge( $args, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many replies list_for_admin_post() pages through.
+	 *
+	 * @param int    $post_id Topic.
+	 * @param string $status  'all' or a status.
+	 * @param string $search  Text to match.
+	 * @return int
+	 */
+	public static function count_for_admin_post( int $post_id, string $status, string $search ): int {
+		[ $where, $args ] = self::admin_where( $post_id, $status, $search );
+		return (int) static::db()->get_var( static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " r WHERE {$where}", ...$args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	/**
+	 * WHERE for the wp-admin replies screen; "all" leaves out the trash.
+	 *
+	 * @param int    $post_id Topic.
+	 * @param string $status  'all' or a status.
+	 * @param string $search  Text to match.
+	 * @return array{0:string,1:array}
+	 */
+	private static function admin_where( int $post_id, string $status, string $search ): array {
+		$where = 'r.post_id = %d';
+		$args  = array( $post_id );
+		if ( 'all' !== $status ) {
+			$where .= ' AND r.status = %s';
+			$args[] = $status;
+		} else {
+			$where .= " AND r.status <> 'trash'";
+		}
+		if ( '' !== $search ) {
+			$where .= ' AND r.content_plain LIKE %s';
+			$args[] = '%' . static::db()->esc_like( $search ) . '%';
+		}
+		return array( $where, $args );
+	}
+
+	/**
+	 * Ids of a topic's replies created after a moment, oldest first, for
+	 * live-update polling.
+	 *
+	 * @param int    $post_id Topic.
+	 * @param string $since   UTC MySQL datetime (exclusive).
+	 * @return int[]
+	 */
+	public static function ids_since( int $post_id, string $since ): array {
+		$ids = static::db()->get_col(
+			static::db()->prepare(
+				'SELECT id FROM ' . static::table() . ' WHERE post_id = %d AND created_at > %s ORDER BY created_at ASC',
+				$post_id,
+				$since
+			)
+		);
+		return array_map( 'intval', $ids ?: array() );
+	}
+
+	/**
+	 * Published replies each author received on their topics from other
+	 * members, for a batch of authors in one query.
+	 *
+	 * @param int[] $user_ids Topic authors (non-empty).
+	 * @return object[] Rows with author_id and cnt; authors with none are absent.
+	 */
+	public static function count_received_by_authors( array $user_ids ): array {
+		if ( ! $user_ids ) {
+			return array();
+		}
+		$posts_t         = \Jetonomy\table( 'posts' );
+		$id_placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.author_id, COUNT(*) AS cnt
+				 FROM ' . static::table() . " r
+				 INNER JOIN {$posts_t} p ON r.post_id = p.id
+				 WHERE p.author_id IN ({$id_placeholders})
+				   AND r.author_id != p.author_id
+				   AND r.status = 'publish'
+				 GROUP BY p.author_id",
+				...$user_ids
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Ids of every reply an author wrote that is not in the trash.
+	 *
+	 * @param int $user_id Author user ID.
+	 * @return int[]
+	 */
+	public static function ids_by_author( int $user_id ): array {
+		return array_map(
+			'intval',
+			(array) static::db()->get_col(
+				static::db()->prepare( 'SELECT id FROM ' . static::table() . " WHERE author_id = %d AND status != 'trash'", $user_id )
+			)
+		);
+	}
+
+	/**
+	 * Replies whose body contains a text fragment (e.g. an upload's file path).
+	 *
+	 * @param string $fragment Literal text, LIKE-escaped here.
+	 * @return int
+	 */
+	public static function count_content_containing( string $fragment ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE content LIKE %s', '%' . static::db()->esc_like( $fragment ) . '%' )
+		);
 	}
 }

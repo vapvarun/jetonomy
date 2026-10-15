@@ -5,7 +5,7 @@
  * Adds is_private TINYINT(1) DEFAULT 0 to jt_replies plus a covering index on
  * (post_id, is_private). Topics have carried is_private since 1.3.6; replies
  * could not, so sensitive information shared IN a reply on a public topic
- * stayed public (Basecamp 9804279999).
+ * stayed public.
  *
  * Read-side follows the blocked-author precedent: private replies are
  * TOMBSTONED for unauthorized viewers (author, topic author, admins, and

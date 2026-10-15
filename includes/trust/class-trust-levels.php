@@ -24,72 +24,84 @@ class Trust_Levels {
 	 *   name          - Human-readable label.
 	 *   requirements  - Stats thresholds that must ALL be met for auto-promotion.
 	 *   rate_limits   - Override limits applied at this level (empty = no limits).
-	 *   abilities     - Additional actions unlocked at this level.
-	 *   restrictions  - Constraints still in place at this level.
+	 *   abilities     - What reaching this level changes, and ONLY what the
+	 *                   engine enforces: the rate-limit lift (Rate_Limiter),
+	 *                   the CAPTCHA skip (Captcha_Manager, via unlocked()) and
+	 *                   the trust floors in Permission_Engine::can(). The
+	 *                   Permissions tab prints these, so an entry nothing
+	 *                   enforces promises owners a power members never get
 	 */
-	private const LEVELS = [
-		0 => [
+	private const LEVELS = array(
+		0 => array(
 			'name'         => 'Newcomer',
-			'requirements' => [],
-			'rate_limits'  => [
+			'requirements' => array(),
+			'rate_limits'  => array(
 				'create_posts'   => 3,
 				'create_replies' => 10,
 				'vote'           => 5,
-			],
-			'abilities'    => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ],
-			'restrictions' => [ 'rate_limited', 'no_upload_media', 'no_create_spaces' ],
-		],
-		1 => [
+			),
+			'abilities'    => array(),
+		),
+		1 => array(
 			'name'         => 'Member',
-			'requirements' => [
+			'requirements' => array(
 				'posts'            => 5,
 				'days_active'      => 3,
 				'replies_received' => 10,
-			],
-			'rate_limits'  => [],
-			'abilities'    => [ 'upload_media', 'edit_own_posts', 'delete_own_posts' ],
-			'restrictions' => [ 'no_create_spaces' ],
-		],
-		2 => [
+			),
+			'rate_limits'  => array(),
+			'abilities'    => array( 'no_rate_limits' ),
+		),
+		2 => array(
 			'name'         => 'Regular',
-			'requirements' => [
+			'requirements' => array(
 				'posts'       => 30,
 				'days_active' => 20,
 				'reputation'  => 50,
-			],
-			'rate_limits'  => [],
-			// Not create_spaces: creating a space needs the jetonomy_create_spaces
-			// capability plus trust level 4 (Permission_Engine), so listing it here
-			// told owners Regular members could do it (Basecamp 10368526692).
-			'abilities'    => [ 'join_spaces' ],
-			'restrictions' => [],
-		],
-		3 => [
+			),
+			'rate_limits'  => array(),
+			'abilities'    => array( 'skip_captcha' ),
+		),
+		3 => array(
 			'name'         => 'Trusted',
-			'requirements' => [
+			'requirements' => array(
 				'posts'       => 100,
 				'days_active' => 60,
 				'reputation'  => 200,
-			],
-			'rate_limits'  => [],
-			'abilities'    => [ 'recategorize_posts', 'rename_topics' ],
-			'restrictions' => [],
-		],
-		4 => [
+			),
+			'rate_limits'  => array(),
+			'abilities'    => array( 'edit_others_posts', 'delete_others_posts', 'move_posts', 'close_posts', 'pin_posts' ),
+		),
+		4 => array(
 			'name'         => 'Leader',
-			'requirements' => [], // Manually granted.
-			'rate_limits'  => [],
-			'abilities'    => [ 'moderate', 'manage_users' ],
-			'restrictions' => [],
-		],
-		5 => [
-			'name'         => 'Moderator',
-			'requirements' => [], // Manually granted.
-			'rate_limits'  => [],
-			'abilities'    => [ 'manage_settings', 'manage_categories', 'view_analytics' ],
-			'restrictions' => [],
-		],
-	];
+			'requirements' => array(), // Manually granted.
+			'rate_limits'  => array(),
+			'abilities'    => array(),
+		),
+		5 => array(
+			'name'         => 'Veteran',
+			'requirements' => array(), // Manually granted.
+			'rate_limits'  => array(),
+			'abilities'    => array(),
+		),
+	);
+
+	/**
+	 * Whether reaching $level (or any level below it) unlocks $ability.
+	 *
+	 * @param int    $level   Trust level.
+	 * @param string $ability Ability key from LEVELS.
+	 * @return bool
+	 */
+	public static function unlocked( int $level, string $ability ): bool {
+		$top = min( 5, $level );
+		for ( $l = 0; $l <= $top; $l++ ) {
+			if ( in_array( $ability, self::LEVELS[ $l ]['abilities'], true ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Return the full configuration array for a trust level.
@@ -98,7 +110,7 @@ class Trust_Levels {
 	 * @return array Level config, or empty array if the level does not exist.
 	 */
 	public static function get( int $level ): array {
-		return self::LEVELS[ $level ] ?? [];
+		return self::LEVELS[ $level ] ?? array();
 	}
 
 	/**
@@ -110,26 +122,26 @@ class Trust_Levels {
 	 * @return array<int,array<string,int>>
 	 */
 	public static function defaults(): array {
-		return [
-			1 => [
+		return array(
+			1 => array(
 				'posts'            => 5,
 				'days_active'      => 3,
 				'reputation'       => 0,
 				'replies_received' => 10,
-			],
-			2 => [
+			),
+			2 => array(
 				'posts'            => 30,
 				'days_active'      => 20,
 				'reputation'       => 50,
 				'replies_received' => 0,
-			],
-			3 => [
+			),
+			3 => array(
 				'posts'            => 100,
 				'days_active'      => 60,
 				'reputation'       => 200,
 				'replies_received' => 0,
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -140,11 +152,11 @@ class Trust_Levels {
 	 * @return array Threshold key/value pairs, or empty array if not applicable.
 	 */
 	public static function get_requirements( int $level ): array {
-		$settings   = get_option( 'jetonomy_settings', [] );
-		$thresholds = $settings['trust_thresholds'] ?? [];
+		$settings   = get_option( 'jetonomy_settings', array() );
+		$thresholds = $settings['trust_thresholds'] ?? array();
 		$defaults   = self::defaults();
 
-		return $thresholds[ $level ] ?? $defaults[ $level ] ?? [];
+		return $thresholds[ $level ] ?? $defaults[ $level ] ?? array();
 	}
 
 	/**
@@ -160,12 +172,9 @@ class Trust_Levels {
 	/**
 	 * Translated display name for a trust level.
 	 *
-	 * THE single source of truth for what a member sees. Three surfaces used to
-	 * carry their own hardcoded list and had drifted a full level apart
-	 * (Basecamp 10210059424): the admin Users screen called level 1 "Basic",
-	 * level 2 "Member" and level 5 "Elder", while the promotion email and the
-	 * Permissions tab used the LEVELS names. A member promoted to level 2 got
-	 * an email saying "Regular" and appeared on the Users screen as "Member".
+	 * THE single source of truth for what a member sees. The admin Users
+	 * screen, the promotion email and the Permissions tab all read it, so a
+	 * member promoted to a level sees the same name everywhere.
 	 *
 	 * Separate from name() on purpose. name() returns the canonical untranslated
 	 * string and is what `trust_level_name` carries in REST payloads and CLI
@@ -176,27 +185,72 @@ class Trust_Levels {
 	 * @return string Translated name, or empty string for an unknown level.
 	 */
 	public static function label( int $level ): string {
+		// Owner-chosen names (Settings -> Permissions -> Trust level names) win.
+		$custom = trim( (string) ( get_option( 'jetonomy_settings', array() )['trust_level_names'][ $level ] ?? '' ) );
+
+		return (string) apply_filters( 'jetonomy_trust_level_label', '' !== $custom ? $custom : self::default_label( $level ), $level );
+	}
+
+	/**
+	 * Built-in translated name for a level (used when the owner set none).
+	 *
+	 * @param int $level Trust level (0-5).
+	 * @return string
+	 */
+	public static function default_label( int $level ): string {
 		$labels = array(
 			0 => __( 'Newcomer', 'jetonomy' ),
+			// jt-terms-ok: trust level name (rank vocabulary), not the member noun.
 			1 => __( 'Member', 'jetonomy' ),
 			2 => __( 'Regular', 'jetonomy' ),
 			3 => __( 'Trusted', 'jetonomy' ),
 			4 => __( 'Leader', 'jetonomy' ),
-			5 => __( 'Moderator', 'jetonomy' ),
+			// Earned rank, not a staff role: "Moderator" made long-standing members
+			// look like staff once names were shown on profiles.
+			5 => __( 'Veteran', 'jetonomy' ),
 		);
 
-		/**
-		 * Filter the display name of a trust level.
-		 *
-		 * Lets a site rename the ladder (e.g. back to New/Basic/.../Elder)
-		 * without forking a template, and keeps every surface in step because
-		 * they all read through here.
-		 *
-		 * @since 1.9.3
-		 *
-		 * @param string $label The translated level name.
-		 * @param int    $level Trust level (0-5).
-		 */
-		return (string) apply_filters( 'jetonomy_trust_level_label', $labels[ $level ] ?? '', $level );
+		return $labels[ $level ] ?? '';
+	}
+
+	/**
+	 * Set a member's trust level by hand - the one write path for wp-admin and REST.
+	 *
+	 * Trust unlocks capabilities held behind the trust floor, so a delegated
+	 * "Manage community users" holder must not raise themselves or reach above
+	 * their rank: only an administrator may change their own level, another
+	 * administrator's, a moderator's, or another user manager's. Same rules as
+	 * Restriction::actor_may_restrict().
+	 *
+	 * @param int $user_id  Member whose level changes.
+	 * @param int $level    New level, clamped to 0-5.
+	 * @param int $actor_id User making the change.
+	 * @return int|\WP_Error The level now stored, or why the change was refused.
+	 */
+	public static function set_manually( int $user_id, int $level, int $actor_id ): int|\WP_Error {
+		$level = max( 0, min( 5, $level ) );
+
+		if ( ! user_can( $actor_id, 'manage_options' ) ) {
+			if ( $user_id === $actor_id ) {
+				return new \WP_Error( 'jetonomy_trust_self', __( 'You cannot change your own trust level.', 'jetonomy' ), array( 'status' => 403 ) );
+			}
+			// Fellow user managers count as peers too: two delegates could
+			// otherwise raise each other past the trust floor.
+			if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_moderate' ) || user_can( $user_id, 'jetonomy_manage_users' ) ) {
+				return new \WP_Error( 'jetonomy_trust_peer', __( 'Only an administrator can change the trust level of an administrator, moderator or user manager.', 'jetonomy' ), array( 'status' => 403 ) );
+			}
+		}
+
+		\Jetonomy\Models\UserProfile::find_or_create( $user_id );
+		$old = (int) ( \Jetonomy\Models\UserProfile::find_by_user( $user_id )->trust_level ?? 0 );
+		if ( $old === $level ) {
+			return $level;
+		}
+		if ( ! \Jetonomy\Models\UserProfile::update_profile( $user_id, array( 'trust_level' => $level ) ) ) {
+			return new \WP_Error( 'jetonomy_trust_failed', __( 'Failed to update trust level.', 'jetonomy' ), array( 'status' => 500 ) );
+		}
+		do_action( 'jetonomy_trust_level_changed', $user_id, $old, $level );
+
+		return $level;
 	}
 }

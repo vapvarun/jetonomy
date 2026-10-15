@@ -135,11 +135,26 @@ final class Preview_Service {
 		}
 
 		/**
-		 * Final mutation point — extensions (e.g. custom private-wiki rewriter)
-		 * get the last word on the shape that's cached + returned.
+		 * Filters the link preview data before it is cached and returned, so
+		 * extensions get the last word on its shape.
+		 *
+		 * @since 1.3.6
+		 *
+		 * @param object $preview Preview value object.
+		 * @param string $url     Previewed URL.
+		 * @return object Preview value object.
 		 */
 		$out = apply_filters( 'jetonomy_link_preview_data', $out, $url );
 
+		/**
+		 * Filters how long a link preview is cached, in seconds.
+		 *
+		 * @since 1.3.6
+		 *
+		 * @param int    $ttl Cache lifetime in seconds.
+		 * @param string $url Previewed URL.
+		 * @return int Cache lifetime in seconds (minimum 60 is enforced).
+		 */
 		$ttl = (int) apply_filters( 'jetonomy_link_preview_cache_ttl', self::DEFAULT_CACHE_S, $url );
 		set_transient( $cache_key, $out->to_array(), max( 60, $ttl ) );
 
@@ -153,10 +168,19 @@ final class Preview_Service {
 		if ( null === $this->providers ) {
 			// Order matters — first match wins. Host-specific rewrites (X)
 			// run before the generic oEmbed provider.
-			$defaults        = array(
+			$defaults = array(
 				new X_Provider(),
 				new OEmbed_Provider(),
 			);
+			/**
+			 * Filters the link preview providers. The first provider that
+			 * matches a URL wins, so host-specific providers go first. Entries
+			 * that are not providers are dropped.
+			 *
+			 * @since 1.3.6
+			 *
+			 * @param mixed $providers Provider_Interface instances in priority order.
+			 */
 			$filtered        = apply_filters( 'jetonomy_link_preview_providers', $defaults );
 			$this->providers = array_values(
 				array_filter(

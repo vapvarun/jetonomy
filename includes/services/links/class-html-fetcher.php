@@ -33,6 +33,15 @@ final class HTML_Fetcher {
 	 * @return array{body:string,final_url:string,status:int,content_type:string}|\WP_Error
 	 */
 	public function fetch( string $url ) {
+		/**
+		 * Filters the User-Agent sent when fetching a page for a link preview.
+		 *
+		 * @since 1.3.6
+		 *
+		 * @param string $user_agent User-Agent string.
+		 * @param string $url        URL being fetched.
+		 * @return string User-Agent string.
+		 */
 		$ua = apply_filters( 'jetonomy_link_preview_user_agent', self::USER_AGENT, $url );
 
 		// Follow redirects MANUALLY (redirection => 0) so the SSRF guard runs on
@@ -92,7 +101,7 @@ final class HTML_Fetcher {
 				}
 				$next = \WP_Http::make_absolute_url( $location, $current );
 				if ( '' === $next || isset( $seen[ $next ] ) ) {
-					return new \WP_Error( 'jetonomy_link_preview_redirect', 'Redirect loop or invalid redirect.', array( 'status' => 400 ) );
+					return new \WP_Error( 'jetonomy_link_preview_redirect', __( 'Redirect loop or invalid redirect.', 'jetonomy' ), array( 'status' => 400 ) );
 				}
 				$seen[ $current ] = true;
 				$current          = $next;
@@ -102,7 +111,8 @@ final class HTML_Fetcher {
 			if ( $status < 200 || $status >= 400 ) {
 				return new \WP_Error(
 					'jetonomy_link_preview_http',
-					sprintf( 'Upstream returned HTTP %d', $status ),
+					/* translators: %d: HTTP status code. */
+					sprintf( __( 'Upstream returned HTTP %d', 'jetonomy' ), $status ),
 					array( 'status' => $status )
 				);
 			}
@@ -115,6 +125,6 @@ final class HTML_Fetcher {
 			);
 		}
 
-		return new \WP_Error( 'jetonomy_link_preview_redirect', 'Too many redirects.', array( 'status' => 400 ) );
+		return new \WP_Error( 'jetonomy_link_preview_redirect', __( 'Too many redirects.', 'jetonomy' ), array( 'status' => 400 ) );
 	}
 }

@@ -34,7 +34,7 @@ class Migration_2_0_1 {
 
 		$table = $wpdb->prefix . 'jt_categories';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- one-off migration over a small table.
-		$rows = $wpdb->get_results( "SELECT id, parent_id FROM {$table} WHERE parent_id > 0" ) ?: [];
+		$rows = $wpdb->get_results( "SELECT id, parent_id FROM {$table} WHERE parent_id > 0" ) ?: array();
 
 		$changed = false;
 		foreach ( $rows as $row ) {
@@ -43,7 +43,7 @@ class Migration_2_0_1 {
 			$target = $root === (int) $row->id ? 0 : $root;
 			if ( $target !== $parent ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->update( $table, [ 'parent_id' => $target ], [ 'id' => (int) $row->id ] );
+				$wpdb->update( $table, array( 'parent_id' => $target ), array( 'id' => (int) $row->id ) );
 				$changed = true;
 			}
 		}

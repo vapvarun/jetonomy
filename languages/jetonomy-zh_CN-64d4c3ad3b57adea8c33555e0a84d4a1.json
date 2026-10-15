@@ -1,0 +1,42 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-content.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "zh_CN",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Saved!": [
+                "\u5df2\u4fdd\u5b58\uff01"
+            ],
+            "Move this to trash?": [
+                "\u5c06\u6b64\u79fb\u81f3\u56de\u6536\u7ad9\uff1f"
+            ],
+            "Mark this as spam?": [
+                "\u5c06\u6b64\u6807\u8bb0\u4e3a\u5783\u573e\uff1f"
+            ],
+            "Delete permanently? The topic and all of its replies are removed and cannot be restored.": [
+                ""
+            ],
+            "Delete the selected topics permanently, with all of their replies? This cannot be undone.": [
+                ""
+            ],
+            "Apply this action to all selected posts?": [
+                "\u5c06\u6b64\u64cd\u4f5c\u5e94\u7528\u4e8e\u6240\u6709\u9009\u4e2d\u7684\u5e16\u5b50\uff1f"
+            ],
+            "Save failed. Please try again.": [
+                "\u4fdd\u5b58\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5\u3002"
+            ],
+            "Please select at least one post.": [
+                "\u8bf7\u81f3\u5c11\u9009\u62e9\u4e00\u7bc7\u5e16\u5b50\u3002"
+            ],
+            "Please choose a bulk action.": [
+                "\u8bf7\u9009\u62e9\u4e00\u4e2a\u6279\u91cf\u64cd\u4f5c\u3002"
+            ]
+        }
+    }
+}

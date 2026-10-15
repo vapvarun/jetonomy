@@ -20,7 +20,8 @@ namespace Jetonomy\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Revision;
-use function Jetonomy\table;
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 
 if ( ! class_exists( '\WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -45,7 +46,14 @@ class Revisions_List_Table extends \WP_List_Table {
 	 *
 	 * @var array<string, string>
 	 */
-	private array $title_cache = [];
+	private array $title_cache = array();
+
+	/**
+	 * Posts and replies this page's rows point at, for anonymous-actor masking.
+	 *
+	 * @var array<string, object>
+	 */
+	private array $objects = array();
 
 	public function __construct() {
 		parent::__construct(
@@ -72,7 +80,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		// overridden to Title, Type sat ahead of the rule's reach: it stayed
 		// display:table-cell, table-layout:fixed squeezed it to 0 width, and at
 		// 390px the header rendered as T Y P E down the page with every row
-		// spelling P o s t beneath it (Basecamp 10212987797).
+		// spelling P o s t beneath it.
 		//
 		// Every core list table puts its primary first for this reason. Do not
 		// reorder these two without re-checking 390px.
@@ -88,13 +96,9 @@ class Revisions_List_Table extends \WP_List_Table {
 	/**
 	 * Collapse mobile rows around WHICH object was edited, not its type.
 	 *
-	 * Type used to be the first column and therefore WP's default primary, so a
-	 * phone showed a column of "Post" / "Reply" with no way to tell the rows
-	 * apart (Basecamp 10146443346). The title is the identity.
-	 *
-	 * Title is now first, so this override restates WP's default rather than
-	 * changing it. Kept deliberately: it pins the intent, so reordering the
-	 * columns cannot silently move the primary back onto Type.
+	 * The title is the identity, so it is the primary column; a phone would otherwise
+	 * show a column of "Post" / "Reply". This override restates WP's default to pin
+	 * the intent, so reordering the columns cannot move the primary back onto Type.
 	 */
 	protected function get_default_primary_column_name(): string {
 		return 'object_title';
@@ -177,6 +181,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		// into N+1: collect every (type, id) on the page, then batch the
 		// post + reply lookups in two single IN() queries.
 		$this->prime_title_cache( $rows );
+		$this->objects = \Jetonomy\Author::objects_of( $rows );
 
 		$this->set_pagination_args(
 			array(
@@ -196,8 +201,6 @@ class Revisions_List_Table extends \WP_List_Table {
 	 * @param array<int, object> $rows
 	 */
 	private function prime_title_cache( array $rows ): void {
-		global $wpdb;
-
 		$post_ids  = array();
 		$reply_ids = array();
 		foreach ( $rows as $row ) {
@@ -213,39 +216,12 @@ class Revisions_List_Table extends \WP_List_Table {
 			}
 		}
 
-		if ( ! empty( $post_ids ) ) {
-			$post_ids  = array_values( array_unique( $post_ids ) );
-			$posts_t   = table( 'posts' );
-			$placehold = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
-			$post_rows = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT id, title FROM {$posts_t} WHERE id IN ({$placehold})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					...$post_ids
-				)
-			) ?: array();
-			foreach ( $post_rows as $pr ) {
-				$this->title_cache[ 'post:' . (int) $pr->id ] = (string) $pr->title;
-			}
+		foreach ( Post::titles_by_ids( array_unique( $post_ids ) ) as $id => $title ) {
+			$this->title_cache[ 'post:' . $id ] = $title;
 		}
 
-		if ( ! empty( $reply_ids ) ) {
-			$reply_ids  = array_values( array_unique( $reply_ids ) );
-			$replies_t  = table( 'replies' );
-			$posts_t    = table( 'posts' );
-			$placehold  = implode( ',', array_fill( 0, count( $reply_ids ), '%d' ) );
-			$reply_rows = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT r.id, p.title AS post_title
-					 FROM {$replies_t} r
-					 LEFT JOIN {$posts_t} p ON p.id = r.post_id
-					 WHERE r.id IN ({$placehold})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					...$reply_ids
-				)
-			) ?: array();
-			foreach ( $reply_rows as $rr ) {
-				$post_title                                    = (string) ( $rr->post_title ?? '' );
-				$this->title_cache[ 'reply:' . (int) $rr->id ] = $post_title;
-			}
+		foreach ( Reply::parents_by_ids( array_unique( $reply_ids ) ) as $id => $parent ) {
+			$this->title_cache[ 'reply:' . $id ] = $parent['title'];
 		}
 	}
 
@@ -267,7 +243,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		}
 		return sprintf(
 			'<code>%s</code>',
-			esc_html( ucfirst( $type ) )
+			esc_html( Admin::object_type_label( $type ) )
 		);
 	}
 
@@ -285,15 +261,16 @@ class Revisions_List_Table extends \WP_List_Table {
 		// post's title, prefixed so the row is still scannable.
 		if ( '' === $title ) {
 			$label = sprintf(
-				/* translators: %1$s: object type, %2$d: object id */
+				/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
 				__( '%1$s #%2$d', 'jetonomy' ),
-				ucfirst( $type ),
+				Admin::object_type_label( $type ),
 				$id
 			);
 		} elseif ( 'reply' === $type ) {
 			$label = sprintf(
-				/* translators: %s: parent post title */
-				__( 'Reply to: %s', 'jetonomy' ),
+				/* translators: 1: reply label (e.g. "Reply"). 2: parent post title. */
+				__( '%1$s to: %2$s', 'jetonomy' ),
+				\Jetonomy\jetonomy_label( 'reply' ),
 				$title
 			);
 		} else {
@@ -347,6 +324,9 @@ class Revisions_List_Table extends \WP_List_Table {
 		if ( $user_id <= 0 ) {
 			return '<em>' . esc_html__( 'Unknown', 'jetonomy' ) . '</em>';
 		}
+		if ( \Jetonomy\Author::hides_actor( $user_id, $this->objects[ $item->object_type . ':' . (int) $item->object_id ] ?? null ) ) {
+			return '<em>' . esc_html__( 'Anonymous', 'jetonomy' ) . '</em>';
+		}
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {
 			return sprintf(
@@ -362,7 +342,8 @@ class Revisions_List_Table extends \WP_List_Table {
 	 * Empty-state copy when no rows match the active filters.
 	 */
 	public function no_items(): void {
-		esc_html_e( 'No revisions have been recorded yet. Revisions are created automatically when a post or reply is edited.', 'jetonomy' );
+		/* translators: %s: reply label, lowercase (e.g. "reply"). */
+		echo esc_html( sprintf( __( 'No revisions have been recorded yet. Revisions are created automatically when a post or %s is edited.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 	}
 
 	/**
@@ -379,7 +360,7 @@ class Revisions_List_Table extends \WP_List_Table {
 				<select id="jt-revisions-type" name="object_type">
 					<option value=""><?php esc_html_e( 'All types', 'jetonomy' ); ?></option>
 					<option value="post" <?php selected( $filters['object_type'], 'post' ); ?>><?php esc_html_e( 'Posts', 'jetonomy' ); ?></option>
-					<option value="reply" <?php selected( $filters['object_type'], 'reply' ); ?>><?php esc_html_e( 'Replies', 'jetonomy' ); ?></option>
+					<option value="reply" <?php selected( $filters['object_type'], 'reply' ); ?>><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></option>
 				</select>
 
 				<label class="screen-reader-text" for="jt-revisions-from"><?php esc_html_e( 'From date', 'jetonomy' ); ?></label>

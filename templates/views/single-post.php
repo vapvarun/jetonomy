@@ -17,14 +17,14 @@ $jt_not_found = static function (): void {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'        => 'empty-search',
 			'icon_size'   => 48,
-			'message'     => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			'message'     => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'description' => sprintf( /* translators: %s: the singular topic label, lowercase. */ __( 'This %s may have been removed, or the link is wrong.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'cta_label'   => __( 'Back to the community', 'jetonomy' ),
 			'cta_url'     => \Jetonomy\base_url(),
-		]
+		)
 	);
 };
 
@@ -33,12 +33,11 @@ if ( ! $post ) {
 	return;
 }
 
-// 1.4.0 C.1 fix: every "can moderate" check below uses Permission_Engine::can()
-// so a space-role moderator (subscriber WP role with admin/moderator role on
-// jt_space_members) gets the same UI affordances as a WP-cap moderator. Before
-// this, a `current_user_can('jetonomy_moderate')` cap-only gate hid edit / pin /
-// delete / move / merge from every space mod whose WP role lacked the cap —
-// regression versus 1.3.8's promise that space mods are first-class.
+// Every "can moderate" check below uses Permission_Engine::can() so a space-role
+// moderator (subscriber WP role with admin/moderator role on jt_space_members) gets the
+// same UI affordances as a WP-cap moderator; a `current_user_can('jetonomy_moderate')`
+// cap-only gate would hide edit / pin / delete / move / merge from every space mod whose
+// WP role lacks the cap.
 $jt_viewer_id         = get_current_user_id();
 $jt_can_moderate_here = $jt_viewer_id
 	? \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'moderate', (int) $post->space_id )
@@ -46,20 +45,19 @@ $jt_can_moderate_here = $jt_viewer_id
 
 // Only a published topic takes member writes: Content_Gate refuses replies,
 // votes, reactions, bookmarks, follows and pins on anything else with a 409
-// (Basecamp 10335997408). Every write control below keys off this one flag
+// Every write control below keys off this one flag
 // so the page never offers what the server refuses. The status notice (with
 // Restore / Delete permanently for moderators on trash) still renders.
 $jt_is_live = 'publish' === $post->status;
 
-// The non-published (pending / trash / spam) gate that used to live here is
-// now inside Permission_Engine::can_read_post() below — the same author-or-
-// moderator rule, same 404 + "Post not found" outcome, but enforced for the
-// REST route, oEmbed, JSON-LD and the Pro extensions too, all of which read
-// posts through that method and none of which had it (Basecamp 10105628594).
+// The non-published (pending / trash / spam) gate lives in
+// Permission_Engine::can_read_post() below - the author-or-moderator rule, same 404 +
+// "Post not found" outcome - so the REST route, oEmbed, JSON-LD and the Pro extensions
+// enforce it too, all of which read posts through that method.
 
 $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
-if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
+if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
 	$user_id = get_current_user_id();
 	// Admission is membership OR an access rule, never membership alone -
 	// Space::admitted() is the one answer (its own docblock says so). This
@@ -71,10 +69,11 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
-					'message' => __( 'This content is in a private space.', 'jetonomy' ),
+				array(
+					/* translators: %s: singular space label. */
+					'message' => sprintf( __( 'This content is in a private %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'tone'    => 'forbidden',
-				]
+				)
 			);
 			return;
 		}
@@ -84,7 +83,7 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 // Per-post privacy gate. Before 1.3.6 a subscriber with space access could
 // reach a private topic via direct URL because neither the template nor the
 // status/visibility checks above looked at is_private on the post itself
-// (Basecamp 9803998504). Permission_Engine::can_read_post() is the single
+// Permission_Engine::can_read_post() is the single
 // source of truth — author + manage_options + space mod/admin only.
 if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 	$jt_not_found();
@@ -96,10 +95,10 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_
 // already filters this author out. We do NOT 404 — the post genuinely
 // exists and moderators/deep-linkers need a real state, not "not found" —
 // we just refuse to ship the content to a viewer who blocked its author.
-// Routed through the shared seam (rather than the inline in_array() this used
-// to do) so this screen and the REST payload decide "is blocked" the same way;
-// it also empties the row's title/body, so the early return below is no longer
-// the only thing standing between a blocked author's words and the page.
+// Routed through the shared seam (rather than an inline in_array()) so this screen and
+// the REST payload decide "is blocked" the same way; it also empties the row's
+// title/body, so the early return below is not the only thing standing between a
+// blocked author's words and the page.
 \Jetonomy\Models\Post::apply_block_tombstone(
 	$post,
 	\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
@@ -156,7 +155,7 @@ if ( $prefix_name && $space ) {
 // under Reply::DEFAULT_SORT is the page this view renders.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : \Jetonomy\Models\Reply::DEFAULT_SORT;
-if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
+if ( ! in_array( $reply_sort, array( 'oldest', 'newest', 'best' ), true ) ) {
 	$reply_sort = \Jetonomy\Models\Reply::DEFAULT_SORT;
 }
 // Top-level reply pagination, honouring the global `replies_per_page`
@@ -185,8 +184,8 @@ $replies_have_more = ( $reply_page * $replies_per_page ) < $top_level_count;
 // author (including nested children) so each role-pill lookup downstream
 // is O(1). Without this a 200-reply thread would issue 200 SpaceMember
 // queries during render. Single bulk query covers the whole tree.
-$jt_role_warm_ids = [ (int) $post->author_id ];
-$jt_reply_ids     = [];
+$jt_role_warm_ids = array( (int) $post->author_id );
+$jt_reply_ids     = array();
 $jt_role_walker   = function ( array $list ) use ( &$jt_role_warm_ids, &$jt_reply_ids, &$jt_role_walker ): void {
 	foreach ( $list as $reply ) {
 		$jt_role_warm_ids[] = (int) ( $reply->author_id ?? 0 );
@@ -213,7 +212,7 @@ $jt_accepted_on_page  = $jt_accepted_reply_id
 
 // Prime attachments for exactly what this page renders: the paged tree
 // (walked above) plus the off-page accepted-answer card, which is by
-// construction NOT in $reply_batch when the callout shows (plan WP1.3).
+// construction NOT in $reply_batch when the callout shows.
 // The hook-driven whole-thread primes then no-op for this post.
 $jt_prime_ids = $jt_reply_ids;
 if ( $jt_accepted_reply_id && ! $jt_accepted_on_page ) {
@@ -221,10 +220,10 @@ if ( $jt_accepted_reply_id && ! $jt_accepted_on_page ) {
 }
 \Jetonomy\Models\Attachment::prime_rendered_replies( (int) $post->id, $jt_prime_ids );
 // Publish the rendered set for hook-driven primes (Pro reactions reads it
-// on jetonomy_before_replies — plan WP3.1).
+// on jetonomy_before_replies).
 \Jetonomy\Models\Reply::set_rendered_ids( (int) $post->id, $jt_prime_ids );
 
-// WP3.7: batch the per-reply-card lookups over the SAME rendered set —
+// Batch the per-reply-card lookups over the SAME rendered set —
 // author profiles and the viewer's reply votes. The walker covers nested
 // children, so reply-card.php's per-row Vote::get_user_vote (30+ point
 // queries on a full page) reads the memo instead.
@@ -239,37 +238,37 @@ $user_id        = get_current_user_id();
 $user_post_vote = $user_id ? \Jetonomy\Models\Vote::get_user_vote( $user_id, 'post', (int) $post->id ) : null;
 
 // Breadcrumb.
-$crumbs = [];
+$crumbs = array();
 if ( $category ) {
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $category->name,
 		'url'   => '',
-	];
+	);
 }
 if ( $space ) {
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $space->title,
 		'url'   => $base . '/s/' . $space->slug . '/',
-	];
+	);
 }
-$crumbs[] = [
+$crumbs[] = array(
 	'label' => (string) ( $post->title ?? '' ),
 	'url'   => '',
-];
+);
 
 // Server-side state for IA.
-$post_scores = [ (int) $post->id => (int) $post->vote_score ];
+$post_scores = array( (int) $post->id => (int) $post->vote_score );
 wp_interactivity_state(
 	'jetonomy',
-	[
+	array(
 		'currentPostId' => (int) $post->id,
 		'postScores'    => $post_scores,
-		'replyScores'   => [],
+		'replyScores'   => array(),
 		'activeReply'   => 0,
 		'submitting'    => false,
 		'replyToId'     => null,
 		'replyToAuthor' => '',
-	]
+	)
 );
 ?>
 <?php
@@ -288,7 +287,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 		<?php
 		\Jetonomy\Template_Loader::partial(
 			'reply-card',
-			[
+			array(
 				'reply'          => $reply,
 				'post'           => $post,
 				'space'          => $space,
@@ -297,8 +296,17 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// permalinks to it. Passing it keeps reply_permalink() from
 				// paying a COUNT per card.
 				'permalink_page' => (int) $page,
-			]
+			)
 		);
+		?>
+		<?php
+		// Every child says whom it answers (the masked name for an anonymous parent), at any depth.
+		if ( ! empty( $reply->children ) ) {
+			$jt_parent_name = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply )['name'];
+			foreach ( $reply->children as $child ) {
+				$child->jt_parent_name = '' !== $jt_parent_name ? $jt_parent_name : __( 'Anonymous', 'jetonomy' );
+			}
+		}
 		?>
 		<?php if ( $depth === 0 && ! empty( $reply->children ) ) : ?>
 			<div class="jt-thread-toggle" data-wp-interactive="jetonomy"
@@ -445,8 +453,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							data-wp-context='<?php echo wp_json_encode( array( 'postId' => (int) $post->id ) ); ?>'
 							role="group"
 							aria-label="<?php esc_attr_e( 'Set roadmap status', 'jetonomy' ); ?>">
-							<span class="jt-idea-status-setter-label"><?php esc_html_e( 'Status:', 'jetonomy' ); ?></span>
+							<span class="jt-idea-status-setter-label"><?php esc_html_e( 'Roadmap status', 'jetonomy' ); ?></span>
 							<div class="jt-idea-status-options">
+								<?php if ( '' === $jt_current_status ) : ?>
+									<?php // The current state, not a choice: it hides once a stage is picked. ?>
+									<span class="jt-idea-pill jt-idea-status-btn jt-idea-status-unset is-active"><?php esc_html_e( 'Not set', 'jetonomy' ); ?></span>
+								<?php endif; ?>
 								<?php foreach ( \Jetonomy\Models\Post::valid_idea_statuses() as $jt_opt ) : ?>
 									<button type="button"
 										class="jt-idea-pill jt-idea-pill-<?php echo esc_attr( $jt_opt ); ?> jt-idea-status-btn<?php echo $jt_current_status === $jt_opt ? ' is-active' : ''; ?>"
@@ -492,6 +504,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 							?>
 						</span>
+						<?php \Jetonomy\Template_Loader::partial( 'edited-mark', array( 'item' => $post ) ); ?>
 						<?php if ( ! empty( $post->is_private ) ) : ?>
 							<span class="jt-badge-private">
 								<?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?>
@@ -570,6 +583,15 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// reply-card.php so the two after-content slots never drift.
 				$jt_post_content_after_tags = jetonomy_after_content_allowed_html();
 
+				/**
+				 * Filters markup printed after the post body. The result is passed through wp_kses() with the shared after-content allowlist.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param string $html Markup to print. Default empty.
+				 * @param object $post Post row.
+				 * @return string Markup to print.
+				 */
 				echo wp_kses(
 					apply_filters( 'jetonomy_after_post_content', '', $post ),
 					$jt_post_content_after_tags
@@ -595,22 +617,20 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								aria-pressed="<?php echo 1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteUp"
 								data-post-id="<?php echo absint( $post->id ); ?>"
-								title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-								aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+								<?php echo jetonomy_vote_attrs( 'up', 1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 								<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</button>
 								<?php
 								// Hide downvote on own content — self-downvote was
-								// landing at -1 (Basecamp 9803889865).
+								// landing at -1.
 								if ( (int) $post->author_id !== get_current_user_id() ) :
 									?>
 							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 								aria-pressed="<?php echo -1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteDown"
 								data-post-id="<?php echo absint( $post->id ); ?>"
-								title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-								aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
+									<?php echo jetonomy_vote_attrs( 'down', -1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 									<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 							</button>
 								<?php endif; ?>
@@ -628,11 +648,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</a>
 							<?php else : ?>
-								<?php // Logged in but not allowed to vote here (Read-grant). Inert score, no clickable control the server would refuse. ?>
-							<span class="jt-act" aria-hidden="true">
-								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-							</span>
+								<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16 ); ?>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
@@ -713,16 +729,26 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// useful (DELETE on a trashed post is a 409), so its author has
 				// no menu at all and moderators keep only the moderation tools.
 				$jt_is_trashed = 'trash' === $post->status;
-				$jt_is_author  = (int) $post->author_id === get_current_user_id();
+				$jt_is_author  = (int) $post->author_id === $jt_viewer_id;
+				// One flag per action, asked exactly as the REST endpoint asks it,
+				// so the menu offers what the owner's Permissions screen grants and
+				// nothing the server would refuse.
+				$jt_pe        = \Jetonomy\Permissions\Permission_Engine::class;
+				$jt_sid       = (int) $post->space_id;
+				$jt_can_edit  = $jt_viewer_id && ! $jt_is_trashed && ( ( $jt_is_author && $jt_pe::can( $jt_viewer_id, 'edit_own_posts', $jt_sid ) ) || $jt_pe::can( $jt_viewer_id, 'edit_others_posts', $jt_sid ) );
+				$jt_can_del   = $jt_viewer_id && ! $jt_is_trashed && ( ( $jt_is_author && $jt_pe::can( $jt_viewer_id, 'delete_own_posts', $jt_sid ) ) || $jt_pe::can( $jt_viewer_id, 'delete_others_posts', $jt_sid ) );
+				$jt_can_pin   = $jt_viewer_id && $jt_is_live && $jt_pe::can( $jt_viewer_id, 'pin_posts', $jt_sid );
+				$jt_can_close = $jt_viewer_id && $jt_is_live && $jt_pe::can( $jt_viewer_id, 'close_posts', $jt_sid );
+				$jt_can_move  = $jt_viewer_id && $jt_pe::can( $jt_viewer_id, 'move_posts', $jt_sid );
 				?>
-				<?php if ( $jt_can_moderate_here || ( $jt_is_author && ! $jt_is_trashed ) ) : ?>
+				<?php if ( $jt_can_edit || $jt_can_del || $jt_can_pin || $jt_can_close || $jt_can_move || current_user_can( 'jetonomy_manage_settings' ) ) : ?>
 					<div class="jt-more-menu">
 						<button class="jt-act jt-more-trigger" type="button"
 							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
 						<div class="jt-more-dropdown" hidden>
-							<?php if ( ! $jt_is_trashed && ( $jt_is_author || $jt_can_moderate_here ) ) : ?>
+							<?php if ( $jt_can_edit ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
@@ -731,7 +757,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( $jt_can_moderate_here && $jt_is_live ) : ?>
+							<?php if ( $jt_can_pin ) : ?>
 								<?php
 								/*
 								 * "Pin to space", not bare "Pin". Pro's
@@ -744,33 +770,38 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								 * scope makes them a matched pair, not a guess.
 								 */
 								$jt_pin_label = $post->is_sticky
-									? __( 'Unpin from space', 'jetonomy' )
-									: __( 'Pin to space', 'jetonomy' );
+									/* translators: %s: singular space label. */
+									? sprintf( __( 'Unpin from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+									/* translators: %s: singular space label. */
+									: sprintf( __( 'Pin to %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 								?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo esc_html( $jt_pin_label ); ?></button>
+							<?php endif; ?>
+							<?php if ( $jt_can_close ) : ?>
 									<button class="jt-more-item"
 										data-wp-on--click="actions.toggleClose"
-										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Reopen %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) : esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></button>
+										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Reopen %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) : esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></button>
 							<?php endif; ?>
-							<?php if ( $jt_can_moderate_here ) : ?>
+							<?php if ( $jt_can_move ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.movePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'move', 14 ); ?> <?php esc_html_e( 'Move', 'jetonomy' ); ?></button>
+								<?php // Merge moves replies across topics, so REST gates it on move_posts too. ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.mergePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( ! $jt_is_trashed && ( $jt_is_author || $jt_can_moderate_here ) ) : ?>
+							<?php if ( $jt_can_del ) : ?>
 								<button class="jt-more-item jt-more-item--danger"
 									data-wp-on--click="actions.deletePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php // Gate matches the TARGET: the jetonomy-spaces admin page requires jetonomy_manage_settings, so a space-level moderator (subscriber WP role) must not see a link that lands on Access Denied (Basecamp 10115337948). The moderation actions above correctly stay on the space-role gate. ?>
+							<?php // Gate matches the TARGET: the jetonomy-spaces admin page requires jetonomy_manage_settings, so a space-level moderator (subscriber WP role) must not see a link that lands on Access Denied. The moderation actions above correctly stay on the space-role gate. ?>
 							<?php if ( current_user_can( 'jetonomy_manage_settings' ) ) : ?>
 								<a class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>"><?php jetonomy_echo_icon( 'settings', 14 ); ?> <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
 							<?php endif; ?>
@@ -780,6 +811,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<?php
 				// Pro hangs React, Pin to community and Add Poll here - all writes.
 				if ( $jt_is_live ) {
+					/**
+					 * Fires in the post action bar for live threads, so extensions can add write actions such as reactions or polls.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param object $post Post row.
+					 */
 					do_action( 'jetonomy_post_actions', $post );
 				}
 				?>
@@ -807,14 +845,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				data-wp-context='
 				<?php
 				echo wp_json_encode(
-					[
+					array(
 						'postId'        => (int) $post->id,
 						'totalReplies'  => $total_replies,
 						'topLevelCount' => $top_level_count,
 						'sort'          => $reply_sort,
 						'hasMore'       => false,
 						'loadingMore'   => false,
-					]
+					)
 				);
 				?>
 				'>
@@ -827,13 +865,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<div class="jt-replies-controls">
 						<div class="jt-pills">
 							<?php
-							$reply_sorts = [
+							$reply_sorts = array(
 								'oldest' => __( 'Oldest', 'jetonomy' ),
 								'newest' => __( 'Newest', 'jetonomy' ),
 								'best'   => __( 'Best', 'jetonomy' ),
-							];
+							);
 							foreach ( $reply_sorts as $key => $label ) :
-								$rsort_url = add_query_arg( [ 'rsort' => $key ], $post_url );
+								$rsort_url = add_query_arg( array( 'rsort' => $key ), $post_url );
 								?>
 								<a href="<?php echo esc_url( $rsort_url ); ?>#replies"
 									class="jt-pill <?php echo $reply_sort === $key ? esc_attr( 'on' ) : ''; ?>"
@@ -873,12 +911,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					$jt_accepted_reply = \Jetonomy\Models\Reply::find( $jt_accepted_reply_id );
 					if ( $jt_accepted_reply ) {
 						// Off-page fetch bypasses get_threaded()'s tree builder —
-						// apply the same block tombstone here so a blocked user's
-						// accepted answer doesn't leak its content into the callout.
+						// apply the same block and private tombstones here so the
+						// callout never shows text the inline card would withhold.
 						\Jetonomy\Models\Reply::apply_block_tombstone(
 							$jt_accepted_reply,
 							\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
 						);
+						\Jetonomy\Models\Reply::apply_private_tombstone( $jt_accepted_reply, $post, get_current_user_id() );
 					}
 				}
 				if ( $jt_accepted_reply ) :
@@ -907,10 +946,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'icon'    => 'empty-replies',
+							// jt-terms-ok: 'reply' at the end is the verb; the noun comes from the label.
 							'message' => sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet. Be the first to reply!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -975,7 +1015,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>
 					<div class="jt-closed-notice jt-closed-notice--staff">
-						<?php printf( /* translators: 1: singular topic label; 2: singular reply label. */ esc_html__( 'This %1$s is closed. As a moderator, you can still add a %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
+						<?php printf( /* translators: %s: singular topic label. */ esc_html__( 'This %s is closed. As a moderator, you can still take part.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 					</div>
 				<?php endif; ?>
 				<div class="jt-reply-composer" id="jt-composer">
@@ -985,19 +1025,19 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'composer',
-						[
+						array(
 							'post_id'  => (int) $post->id,
 							'post_url' => $post_url,
-						]
+						)
 					);
 					?>
 				</div>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<div class="jt-login-prompt">
-					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?></a>
+					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); /* jt-terms-ok: verb */ ?></a>
 				</div>
 			<?php endif; ?>
 		</main>
 
-		<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => $space ] ); ?>
+		<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => $space ) ); ?>
 	</div>

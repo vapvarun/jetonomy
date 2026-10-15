@@ -49,13 +49,11 @@ class Theme_Integration {
 	 * Every frontend style handle that marks "a Jetonomy surface is on this
 	 * page", in the order the inline bridge should attach to them.
 	 *
-	 * The colour bridge and the dark-mode mirror both used to key off
-	 * STYLE_HANDLE alone, which is only enqueued on Jetonomy's own pages. The
-	 * BuddyPress integration renders Jetonomy markup inside BuddyPress
-	 * templates and enqueues its own stylesheet instead, so on a member's
-	 * "Forum" profile tab neither the bridge nor the mirror ran: `.jt-dark`
-	 * was never applied and the tab stayed light inside a dark theme, with
-	 * body text at 1.12:1 against the background.
+	 * The colour bridge and the dark-mode mirror must attach to every surface, not just
+	 * STYLE_HANDLE, which is only enqueued on Jetonomy's own pages. The BuddyPress
+	 * integration renders Jetonomy markup inside BuddyPress templates and enqueues its own
+	 * stylesheet, so without its handle `.jt-dark` is never applied there and the tab
+	 * stays light inside a dark theme.
 	 *
 	 * Add a handle here when a new surface renders Jetonomy markup outside
 	 * Jetonomy's own templates, or it will have the same problem.
@@ -120,7 +118,7 @@ class Theme_Integration {
 		// Applied in BOTH modes: dropping the palette-controlled tokens from
 		// the dark bridge too lets the owner's :root value win under
 		// `.jt-dark`, instead of the theme's dark primary silently replacing
-		// it (Basecamp: custom accent discarded in dark mode). The runtime
+		// it (custom accent discarded in dark mode). The runtime
 		// contrast guard derives a readable --jt-accent-fg from whatever the
 		// accent resolves to, so a palette accent stays legible on dark.
 		$jt_settings = get_option( 'jetonomy_settings', array() );
@@ -163,14 +161,11 @@ class Theme_Integration {
 		// light, the host theme's dark class on <body> for dark — because this
 		// bridge overrides that file and the two must agree.
 		//
-		// The `.jt-app` these selectors used to carry was not merely redundant
-		// (`:root` is an ancestor of every .jt-app): it was load-bearing in the
-		// wrong direction. A declaration made directly on .jt-app beats an
-		// inherited one regardless of specificity, and $dark is legitimately
-		// EMPTY on BuddyX Free (no dark mode) or for any mod the owner left
-		// unset — so a light `.jt-app` block with no dark counterpart would pin
-		// the app light on a dark page. That asymmetry is exactly the bug this
-		// bridge is supposed to prevent.
+		// These selectors carry no `.jt-app`: `:root` is already an ancestor of every .jt-app,
+		// and a declaration made directly on .jt-app beats an inherited one regardless of
+		// specificity. $dark is legitimately EMPTY on BuddyX Free (no dark mode) or for any mod
+		// the owner left unset, so a light `.jt-app` block with no dark counterpart would pin
+		// the app light on a dark page - the bug this bridge exists to prevent.
 		$css = '';
 		if ( ! empty( $light ) ) {
 			$css .= ':root{' . $this->build_token_css( $light ) . '}';
@@ -231,9 +226,8 @@ class Theme_Integration {
 		// --reign-* token system in BOTH light and dark, so Jetonomy's base
 		// --jt-accent chain (var(--bx-color-accent, var(--brand,
 		// var(--wp--preset--color--primary)))) already adopts the correct Reign
-		// brand per mode. The legacy reign_dark-* color mod this bridge used to
-		// read produced a stale, off-brand dark accent (e.g. #10b981) that
-		// overrode the chain - defer to the chain instead.
+		// brand per mode. The legacy reign_dark-* color mod is not read: it produced a stale,
+		// off-brand dark accent (e.g. #10b981) that overrode the chain - defer to the chain.
 		if ( in_array( $template, array( 'buddyx', 'buddyx-pro' ), true ) ) {
 			return $this->buddyx_token_map( (bool) $dark );
 		}

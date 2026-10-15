@@ -39,7 +39,7 @@ interface Scenario_Interface {
 	 *
 	 * @param array<string,mixed> $options Optional per-scenario options (reserved; ignored for now).
 	 */
-	public function run( array $options = [] ): Scenario_Result;
+	public function run( array $options = array() ): Scenario_Result;
 
 	/**
 	 * Tear down fixtures previously produced by {@see self::run()}.

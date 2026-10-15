@@ -27,12 +27,12 @@ Nothing else to configure. If your membership plugin gates registration, that ga
 | Layer | Set by | Controls | Where to manage |
 |---|---|---|---|
 | **WordPress role** (Subscriber, Editor, Administrator…) | You / WordPress | wp-admin access and Jetonomy **capabilities** (`jetonomy_moderate`, `jetonomy_manage_settings`…) per the editable role mapping | Assign roles on the WordPress **Users** screen; edit the role → capability mapping under **Jetonomy → Settings → Permissions** |
-| **Trust level** (0–5: Newcomer → Moderator) | **Earned automatically** by participation (posts, replies, likes received, days visited) — or pinned manually | Community privileges that should be earned, not assigned: posting links/images, editing wikis, flag weight, rate limits | **Jetonomy → Users** (filter by level, override per user) |
+| **Trust level** (0–5: Newcomer → Veteran) | **Earned automatically** by participation (posts, replies, likes received, days visited) — or pinned manually | Community privileges that should be earned, not assigned: posting links/images, editing wikis, flag weight, rate limits | **Jetonomy → Users** (filter by level, override per user) |
 | **Space role** (member, moderator, admin) | Space owners/admins | Powers *inside one space only*: moderating its topics, managing its members | Each space's **Members** screen |
 
 The three are deliberately independent:
 
-- A **Subscriber** (WP role) can be a **Trust Level 5 Moderator** and a **space admin** — a star community member with zero wp-admin access.
+- A **Subscriber** (WP role) can be a **Trust Level 5 Veteran** and a **space admin** — a star community member with zero wp-admin access.
 - An **Administrator** always bypasses trust gates and holds every capability.
 - Making someone a **space moderator** gives them power in that space only — it never grants wp-admin or site-wide moderation.
 
@@ -55,7 +55,6 @@ Defaults are seeded per role and fully editable in the **Jetonomy → Settings �
 | `jetonomy_moderate` | Site-wide moderation: flag queue, member restrictions, content actions |
 | `jetonomy_manage_settings` | Jetonomy settings + the Spaces admin screen |
 | `jetonomy_manage_spaces` | Space administration in wp-admin |
-| `jetonomy_create_spaces` | Creating spaces from the frontend |
 
 Tick the capabilities for any role - custom roles included - in the **Jetonomy → Settings → Permissions** matrix; every check falls back safely to `manage_options`, so Administrators are never locked out.
 

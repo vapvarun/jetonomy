@@ -2,8 +2,7 @@
 /**
  * My Subscriptions view — every space + topic the viewer follows, with
  * one-click unfollow. Closes the three-entry-points gap: the subscriptions
- * store had REST + per-object toggles but no manage surface (Basecamp
- * 9891710479).
+ * store had REST + per-object toggles but no manage surface.
  *
  * Auth is enforced by Template_Loader ($auth_required_routes).
  *
@@ -110,8 +109,8 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 					array(
 						'icon'      => 'bell',
 						'icon_size' => 48,
-						/* translators: %s: singular topic label. */
-						'message'   => sprintf( __( 'You are not following anything yet. Follow a %s or a space and it will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+						/* translators: 1: singular topic label; 2: singular space label. */
+						'message'   => sprintf( __( 'You are not following anything yet. Follow any %1$s or %2$s and it will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
 					)
 				);
 				?>

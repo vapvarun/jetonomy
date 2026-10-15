@@ -52,7 +52,7 @@ Group threads keep a complete record. When a member leaves a group, their past m
 Each of these is a per-member setting - your choice never changes the conversation for the other participants.
 
 - **Mute** - silences notifications for a conversation while keeping it in your inbox. New messages still arrive; you just are not pinged. Unmute from the same menu.
-- **Archive** - hides a conversation from your main inbox to keep it tidy. Archived conversations stay fully intact and reappear (or can be reopened) when there is new activity; nothing is deleted.
+- **Archive** - hides a conversation from your main inbox to keep it tidy. Switch the inbox from **Active** to **Archived** to find it again, and unarchive it from the conversation menu. A new message from someone else brings it back to your Active inbox; nothing is deleted.
 - **Leave** - removes you from a group conversation. You stop receiving its messages, but the thread and your past messages remain for everyone still in it. Leaving applies to group conversations.
 
 ## Unread Counts and Notifications

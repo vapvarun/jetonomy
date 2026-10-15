@@ -26,127 +26,127 @@ class Auth_Controller extends Base_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/login',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'login' ],
-					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'login' ] ),
-					'args'                => [
-						'user_login'         => [
+					'callback'            => array( $this, 'login' ),
+					'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'login' ) ),
+					'args'                => array(
+						'user_login'         => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-						'user_password'      => [
+						),
+						'user_password'      => array(
 							'required' => true,
 							'type'     => 'string',
-						],
-						'remember'           => [
+						),
+						'remember'           => array(
 							'type'    => 'boolean',
 							'default' => false,
-						],
-						'captcha_token'      => [
+						),
+						'captcha_token'      => array(
 							'required' => false,
 							'type'     => 'string',
 							'default'  => '',
-						],
+						),
 						// Native-app credential mint (App Auth standard J2):
 						// when true, a successful sign-in also returns a WP
 						// core Application Password for the app to keep.
-						'issue_app_password' => [
+						'issue_app_password' => array(
 							'required' => false,
 							'type'     => 'boolean',
 							'default'  => false,
-						],
-						'device_name'        => [
+						),
+						'device_name'        => array(
 							'required'          => false,
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-						'app_id'             => [
+						),
+						'app_id'             => array(
 							'required'          => false,
 							'type'              => 'string',
 							'default'           => '',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/register',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'register_user' ],
-					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'register' ] ),
-					'args'                => [
-						'username'      => [
+					'callback'            => array( $this, 'register_user' ),
+					'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'register' ) ),
+					'args'                => array(
+						'username'      => array(
 							'required' => true,
 							'type'     => 'string',
-						],
-						'email'         => [
+						),
+						'email'         => array(
 							'required'          => true,
 							'type'              => 'string',
 							'format'            => 'email',
 							'sanitize_callback' => 'sanitize_email',
-						],
-						'password'      => [
+						),
+						'password'      => array(
 							'required' => true,
 							'type'     => 'string',
-						],
-						'captcha_token' => [
+						),
+						'captcha_token' => array(
 							'required' => false,
 							'type'     => 'string',
 							'default'  => '',
-						],
+						),
 						// Honeypot — must be empty. Bots that auto-fill every
 						// field will populate this; real users never see it
 						// (rendered with display:none + autocomplete=off in
 						// the Login block markup).
-						'website'       => [
+						'website'       => array(
 							'required' => false,
 							'type'     => 'string',
 							'default'  => '',
-						],
+						),
 						// Page-loaded timestamp (Unix seconds). Real users
 						// take seconds to fill the form; bots submit instantly.
 						// Reject anything < 2s or > 1h since the page rendered.
-						'loaded_at'     => [
+						'loaded_at'     => array(
 							'required' => false,
 							'type'     => 'integer',
 							'default'  => 0,
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/lost-password',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'lost_password' ],
-					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'lost_password' ] ),
-					'args'                => [
-						'user_login'    => [
+					'callback'            => array( $this, 'lost_password' ),
+					'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'lost_password' ) ),
+					'args'                => array(
+						'user_login'    => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-						'captcha_token' => [
+						),
+						'captcha_token' => array(
 							'required' => false,
 							'type'     => 'string',
 							'default'  => '',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Verify email — visitor clicks the link in the welcome email
@@ -157,24 +157,24 @@ class Auth_Controller extends Base_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/verify-email',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'verify_email' ],
+					'callback'            => array( $this, 'verify_email' ),
 					'permission_callback' => '__return_true',
-					'args'                => [
-						'user_id' => [
+					'args'                => array(
+						'user_id' => array(
 							'required' => true,
 							'type'     => 'integer',
-						],
-						'token'   => [
+						),
+						'token'   => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Resend verification — visitor lost the email, asks for another.
@@ -183,20 +183,20 @@ class Auth_Controller extends Base_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/resend-verification',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'resend_verification' ],
-					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'resend_verification' ] ),
-					'args'                => [
-						'user_login' => [
+					'callback'            => array( $this, 'resend_verification' ),
+					'permission_callback' => REST_Auth::auth_public_write( array( 'rate_limit' => 'resend_verification' ) ),
+					'args'                => array(
+						'user_login' => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Connect-app bridge mint (Wbcom App Auth standard, phase J3). Only
@@ -208,43 +208,43 @@ class Auth_Controller extends Base_Controller {
 			register_rest_route(
 				$this->namespace,
 				'/' . $this->rest_base . '/app-connect',
-				[
-					[
+				array(
+					array(
 						'methods'             => \WP_REST_Server::CREATABLE,
-						'callback'            => [ $this, 'app_connect' ],
+						'callback'            => array( $this, 'app_connect' ),
 						'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-						'args'                => [
-							'scheme'       => [
+						'args'                => array(
+							'scheme'       => array(
 								'required'          => true,
 								'type'              => 'string',
 								'sanitize_callback' => 'sanitize_text_field',
-							],
-							'bridge_token' => [
+							),
+							'bridge_token' => array(
 								'required'          => true,
 								'type'              => 'string',
 								'sanitize_callback' => 'sanitize_text_field',
-							],
-							'app_name'     => [
+							),
+							'app_name'     => array(
 								'required'          => false,
 								'type'              => 'string',
 								'default'           => '',
 								'sanitize_callback' => 'sanitize_text_field',
-							],
-							'app_id'       => [
+							),
+							'app_id'       => array(
 								'required'          => false,
 								'type'              => 'string',
 								'default'           => '',
 								'sanitize_callback' => 'sanitize_text_field',
-							],
-							'state'        => [
+							),
+							'state'        => array(
 								'required'          => false,
 								'type'              => 'string',
 								'default'           => '',
 								'sanitize_callback' => 'sanitize_text_field',
-							],
-						],
-					],
-				]
+							),
+						),
+					),
+				)
 			);
 		}
 
@@ -259,13 +259,13 @@ class Auth_Controller extends Base_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/nonce',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_nonce' ],
+					'callback'            => array( $this, 'get_nonce' ),
 					'permission_callback' => '__return_true',
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -291,7 +291,7 @@ class Auth_Controller extends Base_Controller {
 			}
 		}
 
-		$response = rest_ensure_response( [ 'nonce' => wp_create_nonce( 'wp_rest' ) ] );
+		$response = rest_ensure_response( array( 'nonce' => wp_create_nonce( 'wp_rest' ) ) );
 		// A nonce response must never come from a page/CDN cache.
 		$response->header( 'Cache-Control', 'no-cache, no-store, must-revalidate' );
 		return $response;
@@ -313,7 +313,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_rate_limited',
 				__( 'Too many attempts. Please wait a minute and try again.', 'jetonomy' ),
-				[ 'status' => 429 ]
+				array( 'status' => 429 )
 			);
 		}
 
@@ -325,12 +325,11 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_missing_credentials',
 				__( 'Enter your username and password.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
-		// CAPTCHA gate (1.5.0 — parity with register/lost-password, the one
-		// auth endpoint that was missing it). Anonymous user_id 0;
+		// CAPTCHA gate (parity with register/lost-password). Anonymous user_id 0;
 		// verify_or_skip returns null when no adapter is configured.
 		$token          = (string) $request->get_param( 'captcha_token' );
 		$remote_ip      = \Jetonomy\client_ip();
@@ -339,16 +338,16 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_captcha_failed',
 				__( 'CAPTCHA verification failed. Please try again.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
 		$user = wp_signon(
-			[
+			array(
 				'user_login'    => $user_login,
 				'user_password' => $user_password,
 				'remember'      => $remember,
-			],
+			),
 			is_ssl()
 		);
 
@@ -362,20 +361,20 @@ class Auth_Controller extends Base_Controller {
 				return new WP_Error(
 					$err_code,
 					$user->get_error_message(),
-					[ 'status' => 403 ]
+					array( 'status' => 403 )
 				);
 			}
 			return new WP_Error(
 				'jetonomy_invalid_credentials',
 				__( 'Incorrect username or password.', 'jetonomy' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 
-		$payload = [
+		$payload = array(
 			'success' => true,
 			'message' => __( 'Signed in. Reloading…', 'jetonomy' ),
-		];
+		);
 
 		// Native-app path (Wbcom App Auth standard, docs/standards/app-auth.md):
 		// the app sends the member's WordPress password ONCE, receives a WP
@@ -424,7 +423,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_app_bad_scheme',
 				__( 'This connection request came from an app this site does not recognise.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -432,7 +431,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_app_bridge_expired',
 				__( 'This connection screen has expired. Go back to the app and try connecting again.', 'jetonomy' ),
-				[ 'status' => 410 ]
+				array( 'status' => 410 )
 			);
 		}
 
@@ -445,7 +444,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_rate_limited',
 				__( 'Too many connection attempts. Please wait a while and try again.', 'jetonomy' ),
-				[ 'status' => 429 ]
+				array( 'status' => 429 )
 			);
 		}
 		set_transient( $cap_key, $hits + 1, HOUR_IN_SECONDS );
@@ -462,7 +461,7 @@ class Auth_Controller extends Base_Controller {
 		// The state nonce is the APP's, echoed verbatim: it proves to the app
 		// that this redirect answers a flow the app itself started.
 		$response = rest_ensure_response(
-			[
+			array(
 				'site_url'   => home_url(),
 				'user_login' => $minted['username'],
 				'uuid'       => $minted['uuid'],
@@ -472,7 +471,7 @@ class Auth_Controller extends Base_Controller {
 					$minted['password'],
 					(string) $request->get_param( 'state' )
 				),
-			]
+			)
 		);
 		// A response carrying a live credential must never be cached anywhere.
 		$response->header( 'Cache-Control', 'no-store' );
@@ -504,14 +503,14 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_app_passwords_unavailable',
 				__( 'Application passwords are not available on this site.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
 		$name  = sanitize_text_field( $name );
 		$label = '' !== $name ? $name : __( 'Jetonomy app', 'jetonomy' );
 
-		$args   = [ 'name' => $label ];
+		$args   = array( 'name' => $label );
 		$app_id = sanitize_text_field( $app_id );
 		if ( '' !== $app_id && wp_is_uuid( $app_id ) ) {
 			$args['app_id'] = $app_id;
@@ -535,12 +534,12 @@ class Auth_Controller extends Base_Controller {
 
 		$account = get_userdata( $user_id );
 
-		return [
+		return array(
 			'password' => (string) $created[0],
 			'uuid'     => (string) $created[1]['uuid'],
 			'name'     => (string) $created[1]['name'],
 			'username' => $account ? $account->user_login : '',
-		];
+		);
 	}
 
 	/**
@@ -565,7 +564,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_registration_disabled',
 				__( 'Registration is disabled on this site.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -573,7 +572,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_rate_limited',
 				__( 'Too many attempts. Please wait a minute and try again.', 'jetonomy' ),
-				[ 'status' => 429 ]
+				array( 'status' => 429 )
 			);
 		}
 
@@ -627,28 +626,28 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_missing_fields',
 				__( 'All fields are required.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 		if ( ! validate_username( $username ) || username_exists( $username ) ) {
 			return new WP_Error(
 				'jetonomy_username_unavailable',
 				__( 'That username is unavailable.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 		if ( ! is_email( $email ) || email_exists( $email ) ) {
 			return new WP_Error(
 				'jetonomy_email_unavailable',
 				__( 'That email is unavailable.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 		if ( strlen( $password ) < 8 ) {
 			return new WP_Error(
 				'jetonomy_password_too_short',
 				__( 'Password must be at least 8 characters.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -661,7 +660,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_captcha_failed',
 				__( 'CAPTCHA verification failed. Please try again.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -670,7 +669,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_create_user_failed',
 				$user_id->get_error_message(),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -697,16 +696,23 @@ class Auth_Controller extends Base_Controller {
 			// the visitor confirms their email and read as if the account is
 			// already live. The verify-email handler fires the action once
 			// the account is actually usable.
+			/**
+			 * Fires after a registration that still needs email verification.
+			 *
+			 * @since 1.4.0
+			 *
+			 * @param int $user_id New user ID.
+			 */
 			do_action( 'jetonomy_user_pending_verification', (int) $user_id );
 
 			$masked = $this->mask_email( $email );
 			return rest_ensure_response(
-				[
+				array(
 					'success'               => true,
 					'requires_verification' => true,
 					/* translators: %s: masked email address (e.g. j***@example.com) */
 					'message'               => sprintf( __( 'Account created. Check %s for a confirmation link to finish signing up.', 'jetonomy' ), $masked ),
-				]
+				)
 			);
 		}
 
@@ -714,16 +720,23 @@ class Auth_Controller extends Base_Controller {
 		// Notifier owns branded welcome + admin emails via this hook; we
 		// intentionally do NOT call wp_send_new_user_notifications() to avoid
 		// duplicate sends (parity with the legacy handler comment).
+		/**
+		 * Fires once a new account is usable: right after registration, or after email verification when that is required.
+		 *
+		 * @since 1.3.5
+		 *
+		 * @param int $user_id New user ID.
+		 */
 		do_action( 'jetonomy_user_registered', (int) $user_id );
 
 		wp_set_current_user( (int) $user_id );
 		wp_set_auth_cookie( (int) $user_id, false, is_ssl() );
 
 		return rest_ensure_response(
-			[
+			array(
 				'success' => true,
 				'message' => __( 'Account created. Reloading…', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -767,6 +780,13 @@ class Auth_Controller extends Base_Controller {
 		delete_user_meta( $user_id, '_jetonomy_verification_sent_at' );
 		update_user_meta( $user_id, '_jetonomy_verified_at', time() );
 
+		/**
+		 * Fires after a user confirms their email address.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param int $user_id User ID.
+		 */
 		do_action( 'jetonomy_email_verified', $user_id );
 
 		// Now that the account is actually usable, fire the standard
@@ -796,15 +816,15 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_rate_limited',
 				__( 'Too many attempts. Please wait a few minutes and try again.', 'jetonomy' ),
-				[ 'status' => 429 ]
+				array( 'status' => 429 )
 			);
 		}
 
 		$generic = rest_ensure_response(
-			[
+			array(
 				'success' => true,
 				'message' => __( 'If an account is waiting on confirmation for that email, a new link is on its way.', 'jetonomy' ),
-			]
+			)
 		);
 
 		$login = (string) $request->get_param( 'user_login' );
@@ -849,7 +869,7 @@ class Auth_Controller extends Base_Controller {
 		return new WP_Error(
 			'jetonomy_verification_failed',
 			$message,
-			[ 'status' => 400 ]
+			array( 'status' => 400 )
 		);
 	}
 
@@ -969,7 +989,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_rate_limited',
 				__( 'Too many attempts. Please wait a few minutes and try again.', 'jetonomy' ),
-				[ 'status' => 429 ]
+				array( 'status' => 429 )
 			);
 		}
 
@@ -982,7 +1002,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_missing_user_login',
 				__( 'Enter your username or email.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -994,7 +1014,7 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_captcha_failed',
 				__( 'CAPTCHA verification failed. Please try again.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -1010,10 +1030,10 @@ class Auth_Controller extends Base_Controller {
 		retrieve_password( $user_login );
 
 		return rest_ensure_response(
-			[
+			array(
 				'success' => true,
 				'message' => __( "If an account matches, a reset link is on its way to that account's email.", 'jetonomy' ),
-			]
+			)
 		);
 	}
 

@@ -14,17 +14,13 @@ class Mentions {
 	/**
 	 * Regex matching an @mention, for BOTH linking and notifying.
 	 *
-	 * One pattern on purpose. There used to be two - a strict LINK_PATTERN and
-	 * a looser NOTIFY_PATTERN - and they disagreed, so a login containing a dot
-	 * was notified but rendered a link to the wrong user: `@john.smith`
-	 * notified `john.smith` while the link resolved `john` (Basecamp
-	 * 10212719567). Splitting them was meant to protect dotted logins, but only
-	 * half the pipeline learned about dots.
+	 * One pattern on purpose: separate link and notify patterns disagree, so a login
+	 * containing a dot is notified but links to the wrong user (`@john.smith` notifies
+	 * `john.smith` while the link resolves `john`).
 	 *
 	 * The lookbehind keeps an email address or a URL from reading as a mention -
-	 * `contact@example.com` and `tiktok.com/@someone` must match neither. The
-	 * old NOTIFY_PATTERN lacked it and fired a user lookup for every email in a
-	 * post.
+	 * `contact@example.com` and `tiktok.com/@someone` must match neither, and no user
+	 * lookup fires for every email in a post.
 	 *
 	 * Dots are allowed only BETWEEN segments, never trailing, so
 	 * "thanks @john.smith." captures `john.smith` rather than an unresolvable
@@ -72,10 +68,10 @@ class Mentions {
 	private static function resolve_handles( array $handles ): array {
 		$handles = array_values( array_unique( array_filter( $handles ) ) );
 		if ( empty( $handles ) ) {
-			return [];
+			return array();
 		}
 
-		$map = [];
+		$map = array();
 
 		/**
 		 * Resolve @handles to user IDs before Jetonomy's own lookup.
@@ -141,7 +137,7 @@ class Mentions {
 	 * @return array<string,int> The map, with any new resolutions merged in.
 	 */
 	private static function resolve_by_field( array $handles, array $map, string $query_arg, string $field ): array {
-		$pending = [];
+		$pending = array();
 		foreach ( $handles as $handle ) {
 			if ( ! isset( $map[ strtolower( $handle ) ] ) ) {
 				$pending[] = $handle;
@@ -154,12 +150,12 @@ class Mentions {
 
 		// Explicit branches rather than a dynamic key: WP_User_Query's arg shape
 		// is typed, and a variable key defeats static analysis of it.
-		$args = [
+		$args = array(
 			'fields'      => 'all_with_meta',
 			'number'      => count( $pending ),
 			'blog_id'     => 0,
 			'count_total' => false,
-		];
+		);
 		if ( 'login__in' === $query_arg ) {
 			$args['login__in'] = $pending;
 		} else {
@@ -191,10 +187,10 @@ class Mentions {
 	 */
 	public static function link_map( string $content ): array {
 		if ( ! preg_match_all( self::MENTION_PATTERN, $content, $matches ) || empty( $matches[1] ) ) {
-			return [];
+			return array();
 		}
 
-		$urls = [];
+		$urls = array();
 		foreach ( self::resolve_handles( $matches[1] ) as $handle => $user_id ) {
 			$urls[ $handle ] = get_profile_url( $user_id );
 		}
@@ -237,7 +233,7 @@ class Mentions {
 	public static function extract_user_ids( string $content ): array {
 		preg_match_all( self::MENTION_PATTERN, $content, $matches );
 		if ( empty( $matches[1] ) ) {
-			return [];
+			return array();
 		}
 
 		return array_values( self::resolve_handles( $matches[1] ) );
@@ -274,7 +270,7 @@ class Mentions {
 
 		$post          = 'reply' === $object_type ? Models\Post::find( (int) $object->post_id ) : $object;
 		$actor_id      = (int) $object->author_id;
-		$context_title = 'reply' === $object_type ? ( $post->title ?? __( 'your reply', 'jetonomy' ) ) : (string) $object->title;
+		$context_title = 'reply' === $object_type ? ( $post->title ?? sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ) : (string) $object->title;
 		$space_id      = (int) ( $post->space_id ?? 0 );
 		$is_private    = (bool) ( $post->is_private ?? false );
 
@@ -288,16 +284,21 @@ class Mentions {
 		// its members; an is_private post is gated to author + space staff.
 		if ( $space_id ) {
 			$space = Models\Space::find( $space_id );
-			if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
+			if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
 				$members  = Models\SpaceMember::members_among( $space_id, $user_ids );
 				$user_ids = array_values( array_intersect( $user_ids, $members ) );
 			}
 			if ( $is_private && ! empty( $user_ids ) ) {
 				// is_private post: only the author + space admins/moderators.
 				$staff    = array_keys( Models\SpaceMember::roles_for_users( $space_id, $user_ids ) );
-				$allowed  = array_merge( $staff, [ $actor_id ] ); // actor filtered out below anyway.
+				$allowed  = array_merge( $staff, array( $actor_id ) ); // actor filtered out below anyway.
 				$user_ids = array_values( array_intersect( $user_ids, $allowed ) );
 			}
+		}
+
+		// A private reply: only the people who may read it hear about it (a handful of names, so per-user checks are fine).
+		if ( 'reply' === $object_type && ! empty( $object->is_private ) && $post ) {
+			$user_ids = array_values( array_filter( $user_ids, static fn( $uid ) => \Jetonomy\Permissions\Permission_Engine::can_read_reply( (int) $uid, $object, $post ) ) );
 		}
 
 		foreach ( $user_ids as $uid ) {
@@ -316,7 +317,7 @@ class Mentions {
 			$content_url = notification_deep_link( $object_type, $object_id );
 
 			$notification_id = Models\Notification::create(
-				[
+				array(
 					'user_id'         => $uid,
 					'actor_id'        => $actor_id,
 					'actor_anonymous' => $actor_anonymous ? 1 : 0,
@@ -325,7 +326,7 @@ class Mentions {
 					'object_id'       => $object_id,
 					'message'         => $message,
 					'created_at'      => now(),
-				]
+				)
 			);
 
 			// Routed through the shared emitter so the push gate applies here too
@@ -336,8 +337,8 @@ class Mentions {
 			// Check email preference via the shared gate (master kill-switch +
 			// per-user per-type + admin default). $user_prefs already loaded.
 			$profile    = Models\UserProfile::find_by_user( $uid );
-			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
-			$user_prefs = $settings['notifications'] ?? [];
+			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : array();
+			$user_prefs = $settings['notifications'] ?? array();
 
 			// Block gate — Notifier::create_and_maybe_email() has had one since
 			// 1.7.1, but this second, parallel email path never got it, so a
@@ -357,18 +358,18 @@ class Mentions {
 						$unsub_exp   = \Jetonomy\Notifications\Notifier::unsubscribe_expiry();
 						$unsub_token = \Jetonomy\Notifications\Notifier::unsubscribe_token( $uid, 'mention', $unsub_exp );
 						$unsub_url   = add_query_arg(
-							[
+							array(
 								'jetonomy_unsubscribe' => $unsub_token,
 								'jetonomy_unsub_exp'   => $unsub_exp,
 								'uid'                  => $uid,
 								'type'                 => 'mention',
-							],
+							),
 							home_url( '/' )
 						);
-						$headers     = [
+						$headers     = array(
 							'List-Unsubscribe: <' . $unsub_url . '>',
 							'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
-						];
+						);
 
 						// $content_url already resolved above via notification_deep_link().
 						$html = Notifications\Notifier::render_email_template( 'mention', $message, $user, $unsub_url, $content_url );

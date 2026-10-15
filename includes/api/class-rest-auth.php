@@ -212,7 +212,7 @@ class REST_Auth {
 	 */
 	public static function auth_public_write( array $opts = array() ): Closure {
 		// TODO rate-limit: enforce `$opts['rate_limit']` once Rate_Limiter
-		// gains a per-route bucket API. Tracked as part of WS2-B.
+		// gains a per-route bucket API.
 		$_rate_limit = $opts['rate_limit'] ?? null; // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 
 		return static function ( WP_REST_Request $request ) {

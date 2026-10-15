@@ -3,17 +3,33 @@
 
 	const { __, _n, sprintf } = wp.i18n;
 
+	// Owner's terminology (Settings > General > Terminology), localized as
+	// window.jetonomyLabels; the English default covers a missing localize.
+	const L = window.jetonomyLabels || {};
+	const lbl = ( noun, form, fallback ) => ( L[ noun ] && L[ noun ][ form ] ) || fallback;
+	const SPACE = lbl( 'space', 'one_lower', 'space' );
+	const TOPIC = lbl( 'topic', 'one_lower', 'topic' );
+	const TOPICS = lbl( 'topic', 'many_lower', 'topics' );
+	const REPLY = lbl( 'reply', 'one_lower', 'reply' );
+	const REPLIES = lbl( 'reply', 'many_lower', 'replies' );
+	const MEMBER = lbl( 'member', 'one_lower', 'member' );
+	const MEMBERS = lbl( 'member', 'many_lower', 'members' );
+	const MEMBERS_CAP = lbl( 'member', 'many', 'Members' );
+
 	var Jetonomy = {
 		nonce: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.nonce : '',
 		ajaxUrl: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.ajaxUrl : '',
 		// UI copy, translated in the browser by wp.i18n (JSON files in languages/).
 		i18n: {
 			confirmDelete:        __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
-			confirmUnban:         __( 'Lift this restriction? The member can post again right away.', 'jetonomy' ),
-			confirmArchiveSpace:  __( 'Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.', 'jetonomy' ),
-			confirmPurgeSpace:    __( 'Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.', 'jetonomy' ),
-			/* translators: %s: the space name the operator must retype. */
-			purgeTypeToConfirm:   __( 'This destroys every topic, reply and attachment in %s, including content written by other members. It cannot be undone. Type the space name to confirm.', 'jetonomy' ),
+			/* translators: %s: the member label, lowercase (e.g. "member"). */
+			confirmUnban:         sprintf( __( 'Lift this restriction? The %s can post again right away.', 'jetonomy' ), MEMBER ),
+			/* translators: 1: space label, lowercase. 2: topic label, plural lowercase. 3: reply label, plural lowercase. 4: member label, plural (e.g. "Members"). */
+			confirmArchiveSpace:  sprintf( __( 'Archive this %1$s and hand it to an administrator? Its %2$s and %3$s are kept and nothing is deleted. %4$s will no longer be able to post in it.', 'jetonomy' ), SPACE, TOPICS, REPLIES, MEMBERS_CAP ),
+			/* translators: 1: space label, lowercase. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. */
+			confirmPurgeSpace:    sprintf( __( 'Permanently delete this %1$s and EVERY %2$s, %3$s and attachment in it, including content written by other %4$s? This cannot be undone.', 'jetonomy' ), SPACE, TOPIC, REPLY, MEMBERS ),
+			// %1$s stays a literal %s, filled with the space name at click time.
+			purgeTypeToConfirm:   sprintf( /* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */ __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
 			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
 			purgeNameMismatch:    __( 'That name did not match, so nothing was deleted.', 'jetonomy' ),
 			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
@@ -27,10 +43,15 @@
 			importErrorUnknown:   __( 'Unknown error', 'jetonomy' ),
 			selectImage:          __( 'Select Image', 'jetonomy' ),
 			useImage:             __( 'Use this image', 'jetonomy' ),
-			unban:                __( 'Unban', 'jetonomy' ),
+			unban:                __( 'Lift restriction', 'jetonomy' ),
 			ban:                  __( 'Ban', 'jetonomy' ),
-			hiddenForcesInvite:   __( 'Hidden spaces must use Invite Only. Join policy switched.', 'jetonomy' ),
+			/* translators: %s: space label, plural lowercase (e.g. "spaces"). */
+			hiddenForcesInvite:   sprintf( __( 'Hidden %s must use Invite Only. Join policy switched.', 'jetonomy' ), lbl( 'space', 'many_lower', 'spaces' ) ),
 			hiddenRequiresInvite: __( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
+			/* translators: %s: space label, plural lowercase (e.g. "spaces"). */
+			privateForcesApproval: sprintf( __( 'Private %s need approval or an invite. Join policy switched to Approval Required.', 'jetonomy' ), lbl( 'space', 'many_lower', 'spaces' ) ),
+			/* translators: %s: space label, lowercase (e.g. "space"). */
+			openRequiresPublic:   sprintf( __( 'Switched visibility to Public because anyone-can-join needs a public %s.', 'jetonomy' ), SPACE ),
 			reloadPage:           __( 'Reload page', 'jetonomy' ),
 			importConnectionLost: __( 'Connection lost. You can resume this import later.', 'jetonomy' ),
 			inviteCopied:         __( 'Invite link copied to clipboard.', 'jetonomy' ),
@@ -63,20 +84,23 @@
 				sentence: __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
 				// A rule admits; it does not restrict, so no "but not take part".
 				grants: {
-					read:        __( 'read posts and replies', 'jetonomy' ),
-					participate: __( 'read, post, reply, vote and report', 'jetonomy' ),
-					full:        __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s topics', 'jetonomy' ),
+					/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
+					read:        sprintf( __( 'read posts and %s', 'jetonomy' ), REPLIES ),
+					participate: __( 'read, post, reply, vote and report', 'jetonomy' ), // jt-terms-ok: "reply" is the verb here, not the noun.
+					full:        sprintf( /* translators: %s: topic label, plural lowercase (e.g. "topics"). */ __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
 				},
 				// The consequence of each rule type, not its definition.
 				typeNotes: {
 					everyone:    __( 'Matches every visitor, signed in or not. Nobody is asked to log in first.', 'jetonomy' ),
 					logged_in:   __( 'Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.', 'jetonomy' ),
-					role:        __( 'Matches anyone holding this WordPress role. Most members hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ),
+					/* translators: %s: member label, plural lowercase (e.g. "members"). */
+					role:        sprintf( __( 'Matches anyone holding this WordPress role. Most %s hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ), MEMBERS ),
 					capability:  __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
-					trust_level: __( 'Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ),
+					/* translators: %s: member label, plural lowercase (e.g. "members"). */
+					trust_level: sprintf( __( 'Matches %s at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ), MEMBERS ),
 				},
-				/* translators: %s: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. */
-				membershipNote: __( 'Matches members who hold the %s level you pick below.', 'jetonomy' ),
+				// %1$s stays a literal %s, filled with the adapter name at runtime.
+				membershipNote: sprintf( /* translators: 1: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. 2: member label, plural lowercase. */ __( 'Matches %2$s who hold the %1$s level you pick below.', 'jetonomy' ), '%s', MEMBERS ),
 				// One generic example cannot serve a role slug, a capability and a number.
 				typePlaceholders: {
 					role:        __( 'subscriber', 'jetonomy' ),
@@ -86,7 +110,7 @@
 				// Roster-role labels for the derived value in the preview.
 				roles: {
 					viewer:    __( 'Viewer', 'jetonomy' ),
-					member:    __( 'Member', 'jetonomy' ),
+					member:    __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
 					moderator: __( 'Moderator', 'jetonomy' ),
 					admin:     __( 'Admin', 'jetonomy' ),
 				},
@@ -244,7 +268,7 @@
 					if ($preview.find('img').length) {
 						$preview.find('img').attr('src', attachment.url);
 					} else {
-						$preview.prepend('<img src="' + attachment.url + '" alt="">');
+						$preview.prepend($('<img alt="">').attr('src', attachment.url));
 					}
 					$preview.show();
 				});
@@ -441,7 +465,7 @@
 						});
 						// Top-level rows are one page of a paginated list, so the
 						// handler needs the page context to turn them into absolute
-						// positions (Basecamp 10210539659). A sibling group always
+						// positions. A sibling group always
 						// renders whole under its parent.
 						var ctx = self.listPageContext();
 						self.ajax('jetonomy_reorder_categories', {
@@ -523,6 +547,9 @@
 					if ($(this).val() === 'hidden' && $join.val() !== 'invite') {
 						$join.val('invite').trigger('change.jtCoupleSilent');
 						ensureNote(self.i18n.hiddenForcesInvite);
+					} else if ($(this).val() === 'private' && $join.val() === 'open') {
+						$join.val('approval').trigger('change.jtCoupleSilent');
+						ensureNote(self.i18n.privateForcesApproval);
 					}
 				});
 				$join.off('change.jtCouple').on('change.jtCouple', function(e) {
@@ -532,6 +559,9 @@
 					if ($vis.val() === 'hidden' && $(this).val() !== 'invite') {
 						$vis.val('private');
 						ensureNote(self.i18n.hiddenRequiresInvite);
+					} else if ($vis.val() === 'private' && $(this).val() === 'open') {
+						$vis.val('public');
+						ensureNote(self.i18n.openRequiresPublic);
 					}
 				});
 			};
@@ -727,11 +757,9 @@
 				var postsPerPage = $('#ss-posts-per-page').val();
 
 				// Send '' for the empty option so merge_settings() UNSETS the key.
-				// These used to coerce '' to 'members', which wrote a restriction
-				// the owner never chose: touching any field on this tab (posts per
-				// page, voting, prefixes) turned "no restriction" into Members Only
-				// and stopped an open community accepting posts from logged-in
-				// non-members, with nothing on screen to say why.
+				// '' is never coerced to 'members': that would write a restriction the owner never
+				// chose, turning "no restriction" into Members Only whenever any field on this tab
+				// (posts per page, voting, prefixes) is touched.
 				settings.who_can_post = whoCanPost || '';
 				settings.who_can_reply = whoCanReply || '';
 				settings.require_approval = requireApproval ? '1' : '0';
@@ -802,14 +830,18 @@
 				searchTimeout = setTimeout(function() {
 					self.ajax('jetonomy_search_users', { search: query }).done(function(res) {
 						if (res.success && res.data.users.length) {
-							var html = '';
+							// Built with attr()/text(), never string concatenation: a
+							// member's display name is free text and may contain quotes,
+							// which .text().html() does not escape inside an attribute.
+							var $results = $('#member-search-results').empty();
 							$.each(res.data.users, function(i, user) {
-								html += '<div class="jetonomy-search-item" data-user-id="' + user.id + '" data-name="' + $('<span>').text(user.display_name).html() + '">';
-								html += '<img src="' + user.avatar + '" alt="">';
-								html += '<span>' + $('<span>').text(user.display_name).html() + ' (' + $('<span>').text(user.user_login).html() + ')</span>';
-								html += '</div>';
+								$('<div class="jetonomy-search-item"></div>')
+									.attr({ 'data-user-id': user.id, 'data-name': user.display_name })
+									.append($('<img alt="">').attr('src', user.avatar))
+									.append($('<span></span>').text(user.display_name + ' (' + user.user_login + ')'))
+									.appendTo($results);
 							});
-							$('#member-search-results').html(html).show();
+							$results.show();
 						} else {
 							$('#member-search-results').hide();
 						}
@@ -865,7 +897,11 @@
 				});
 			});
 
-			// Change member role
+			// Change member role. Remember the saved value so a refused change
+			// (last admin) snaps back instead of showing a role that did not save.
+			$(document).on('focus', '.jetonomy-change-member-role', function() {
+				$(this).data('saved', $(this).val());
+			});
 			$(document).on('change', '.jetonomy-change-member-role', function() {
 				var $select = $(this);
 				var spaceId = $select.data('space-id');
@@ -878,8 +914,12 @@
 					role: role
 				}).done(function(res) {
 					if (res.success) {
+						$select.data('saved', role);
 						self.toast(res.data.message);
 					} else {
+						if (undefined !== $select.data('saved')) {
+							$select.val($select.data('saved'));
+						}
 						self.toast(res.data || self.i18n.error, 'error');
 					}
 				});
@@ -1010,6 +1050,9 @@
 					$input.val($(this).text());
 					$hidden.val($(this).data('id'));
 					$results.hide();
+					// Setting .val() fires no input event, so refresh the hint
+					// or it keeps the typed search text instead of the pick.
+					renderRulePreview();
 				});
 
 				$(document).on('click', function(e) {
@@ -1079,8 +1122,8 @@
 						.replace('%2$s', grantTxt)
 						.replace('%3$s', roleTxt);
 
-					// No mismatch warning any more: the roster role is derived
-					// from the access level, so the two can no longer disagree.
+					// No mismatch warning: the roster role is derived
+					// from the access level, so the two cannot disagree.
 					var warn = '';
 
 					// The "who matches" half. Keyed off the raw type, so an
@@ -1521,10 +1564,11 @@
 				var $row = $btn.closest('tr');
 				var restrictionId = $btn.data('restriction-id');
 
-				// Pass the danger tone so the OK button renders red. Unbanning
-				// is destructive (the user immediately regains site access) and
-				// should look like every other destructive admin confirm.
-				self.confirmAsync(self.i18n.confirmUnban).then(function(ok) {
+				// Neutral on purpose (owner decision 2026-10-15): lifting gives
+				// access back and destroys nothing, and red stays reserved for
+				// destructive actions like Ban and Delete. Same verb as the
+				// community-side Lift control.
+				self.confirmAsync(self.i18n.confirmUnban, { title: self.i18n.unban, confirmLabel: self.i18n.unban }).then(function(ok) {
 					if (!ok) return;
 					$btn.prop('disabled', true);
 
@@ -1535,12 +1579,12 @@
 							self.toast(res.data.message);
 							// On Users page: restore Ban link. On Moderation page: remove row.
 							if ($row.find('.ban').length) {
-								$row.find('.ban').html(
-									'<a href="#" class="jetonomy-ban-trigger" data-user-id="' +
-									$row.data('user-id') + '" data-username="' +
-									$row.find('strong').first().text() + '">' +
-									self.i18n.ban +
-									'</a> | '
+								// The name is member-chosen text: set it as an attribute, never splice it into HTML.
+								$row.find('.ban').empty().append(
+									$('<a href="#" class="jetonomy-ban-trigger"></a>')
+										.attr({ 'data-user-id': $row.data('user-id'), 'data-username': $row.find('strong').first().text() })
+										.text(self.i18n.ban),
+									document.createTextNode(' | ')
 								);
 							} else {
 								$row.fadeOut(300, function() { $(this).remove(); });
@@ -1862,13 +1906,11 @@
 							results.appendChild(buildCompleteNotice(d.imported, d.skipped, d.summary));
 
 							// Only auto-reload a CLEAN import. The reload exists to reveal the
-							// "Previously Imported" state, which is fine when there is nothing
-							// to read — but when files were skipped it used to pull the page out
-							// from under the one notice telling you so, three seconds in. The
-							// skipped count and the per-item reasons are now recorded durably in
-							// the import history and rendered on this page (see
-							// admin/views/import.php), so nothing is lost either way; this just
-							// stops us interrupting someone mid-sentence about their own data.
+							// "Previously Imported" state, which is fine when there is nothing to read - but when
+							// files were skipped a reload would pull the page out from under the one notice telling
+							// you so. The skipped count and the per-item reasons are recorded durably in the import
+							// history and rendered on this page (see admin/views/import.php), so nothing is lost
+							// either way; this just avoids interrupting someone mid-sentence about their own data.
 							if (!d.skipped) {
 								setTimeout(function() { window.location.reload(); }, 3000);
 							}
@@ -1921,7 +1963,7 @@
 
 	// Small-screen row expander: core's common.js toggles tr.is-expanded but
 	// never manages aria-expanded, so screen readers heard a stateless
-	// button (QA 2026-07-30, card 10146443346). Delegated so it covers every
+	// button. Delegated so it covers every
 	// jetonomy_admin_table() on the page, including AJAX-refreshed rows.
 	// requestAnimationFrame lets core's own toggle land first, then the
 	// button mirrors the row's real state.
@@ -1951,7 +1993,7 @@
 })(jQuery);
 
 /**
- * Accessible-dialog enhancer (QA card 10150582851).
+ * Accessible-dialog enhancer.
  *
  * The admin's hand-rolled overlays (Edit Category, Ban, Pro Badge Award)
  * showed/hid a positioned div with none of the dialog contract. Rather
@@ -2005,8 +2047,8 @@
 		// Opener: prefer whatever the user actually activated. A dialog opened
 		// from an async callback (the email preview waits on its AJAX) enhances
 		// long after the click, by which point document.activeElement is <body>
-		// - so Escape restored focus to nothing (Basecamp 10146440810, a11y
-		// addendum). lastActivated is the control the user pressed, tracked
+		// - so Escape would restore focus to nothing.
+		// lastActivated is the control the user pressed, tracked
 		// below, and is only fallen back on when activeElement is not useful.
 		var opener = document.activeElement;
 		if ( ! opener || opener === document.body || opener === document.documentElement ) {

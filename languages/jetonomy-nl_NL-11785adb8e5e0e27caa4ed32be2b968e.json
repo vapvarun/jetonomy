@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-tags.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Name is required.": [
+                "Naam is verplicht."
+            ],
+            "Delete this tag?": [
+                "Deze tag verwijderen?"
+            ],
+            "Select at least one tag.": [
+                "Selecteer minstens \u00e9\u00e9n tag."
+            ],
+            "Delete the selected tags?": [
+                "De geselecteerde tags verwijderen?"
+            ],
+            "This tag is attached to %d post. Delete it and detach from all posts?": [
+                ""
+            ]
+        }
+    }
+}

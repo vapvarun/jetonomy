@@ -52,12 +52,11 @@ final class Jetonomy {
 		// boot — not in the API classes — because those only load on
 		// rest_api_init, and the writes being tracked (a wp-admin profile
 		// save, a role change) happen on requests where they never load.
-		// Before this, only the GDPR erase path busted the key, so a
-		// display-name change stayed stale in every REST-rendered author
-		// block for up to 300s (caching plan WP0.3).
+		// Without this, a display-name change stays stale in every REST-rendered author
+		// block for up to 300s.
 		$bust_user_row = static function ( $user_id ): void {
 			Cache::delete( 'user:' . (int) $user_id );
-			// The REST capabilities map (caps:{id}, plan WP4.13) derives from
+			// The REST capabilities map (caps:{id}) derives from
 			// the user's roles — bust it alongside the row.
 			Cache::delete( 'caps:' . (int) $user_id );
 			// Registering, renaming or removing a user can create or clear a
@@ -168,7 +167,7 @@ final class Jetonomy {
 		// Activating both plugins in one command therefore dropped every Pro
 		// extension route: /community/messages/ went 200 -> 301 with the rule
 		// simply absent and nothing logged, until someone flushed permalinks by
-		// hand (Basecamp 10268070986).
+		// hand.
 		//
 		// Leaving the option unset costs one extra flush on the next request and
 		// lets the existing deferred mechanism do its job, which fixes this for
@@ -344,16 +343,10 @@ final class Jetonomy {
 	/**
 	 * One-time seed for Settings → General → front-end space creation.
 	 *
-	 * The front-end gate used to OR in `jetonomy_create_spaces`, a cap author
-	 * and up hold cumulatively, so the role allow-list was decorative — it
-	 * could only ever restrict subscribers and contributors (Basecamp
-	 * 10118734782). Now that the allow-list is authoritative, an install that
-	 * never touched the setting would silently LOSE front-end space creation
-	 * for its authors and editors on upgrade.
-	 *
-	 * So: seed the list with the roles that hold the cap today. Effective
-	 * permissions are unchanged, and for the first time the admin screen shows
-	 * the truth — with every box now actually unticking.
+	 * The front-end gate reads only the role allow-list. A fresh install starts
+	 * with Administrator, Editor and Author, the long-standing default; sites
+	 * upgrading to 2.0.2 are seeded by Migration_2_0_2 from the roles that held
+	 * the retired create-spaces capability, before it was removed.
 	 *
 	 * Only seeds when the key is ABSENT. An admin who already configured the
 	 * setting (including deliberately ticking nothing) keeps their choice.
@@ -370,7 +363,9 @@ final class Jetonomy {
 		}
 
 		if ( ! array_key_exists( 'frontend_space_creation_roles', $settings ) ) {
-			$settings['frontend_space_creation_roles'] = Permissions\Capabilities::roles_with_create_spaces();
+			$settings['frontend_space_creation_roles'] = function_exists( 'wp_roles' )
+				? array_values( array_intersect( array( 'administrator', 'editor', 'author' ), array_keys( wp_roles()->roles ) ) )
+				: array();
 			update_option( 'jetonomy_settings', $settings );
 		}
 
@@ -433,7 +428,7 @@ final class Jetonomy {
 		// certain this request is a real browser admin pageview that will be
 		// redirected. Deleting it up-front meant the first ajax/cron/network-admin
 		// request after activation silently ate the transient and the admin never
-		// reached the wizard (Basecamp F15). Each early-return below therefore
+		// reached the wizard (F15). Each early-return below therefore
 		// leaves the transient intact for the next qualifying pageview.
 
 		// Safety net — never bounce into the wizard if setup already completed.
@@ -471,13 +466,11 @@ final class Jetonomy {
 		$current = get_option( 'jetonomy_db_version', '0.0.0' );
 
 		if ( version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
-			// Concurrency guard (caching plan WP5.0): after an update, every
-			// in-flight request reads the old version and enters this block.
-			// MySQL serialises the ALTERs so the losers used to pile up on the
-			// table metadata lock instead of serving pages. First requester
-			// takes the lock and migrates; everyone else serves on the old
-			// (still valid) schema and re-checks next request. The transient
-			// self-expires so a fatal mid-migration can't wedge the site.
+			// Concurrency guard: in-flight requests after an update all enter this block, and
+			// MySQL serialises the ALTERs, so losers would block on the table metadata lock.
+			// First requester takes the lock and migrates; everyone else serves on the old
+			// (still valid) schema and re-checks next request. The transient self-expires so
+			// a fatal mid-migration can't wedge the site.
 			$lock = 'jetonomy_migration_lock';
 			if ( get_transient( $lock ) ) {
 				return;
@@ -517,12 +510,8 @@ final class Jetonomy {
 	 * actually absent — so the steady-state cost is a single option read.
 	 *
 	 * The sentinel is EVERY table the schema defines, compared in one SHOW TABLES
-	 * query. It used to be the single hard-coded name jt_attachments, which made
-	 * the repair blind to any table added afterwards — and that is exactly how
-	 * 2.0.0 shipped a jt_import_map that no upgraded site ever got: the version
-	 * constant was not bumped, so the migration block never ran, and this repair
-	 * was only ever looking at jt_attachments. Naming the tables individually is
-	 * how the next new table repeats it.
+	 * query, so a table added later is repaired too even when the version constant was
+	 * not bumped and the migration block never ran.
 	 *
 	 * jt_attachments keeps its special case: it is owned by a DATA migration (the
 	 * renamed jt_pro_attachments), so a plain create_tables() would make an empty
@@ -630,8 +619,9 @@ final class Jetonomy {
 		Adapters\Adapter_Registry::register_search( 'fulltext', new Search\Fulltext_Search() );
 		Search\Search_Indexer::init();
 
-		// Community media library hygiene: tag member uploads and hide them from
-		// the admin Media Library by default. register() self-gates to wp-admin.
+		// Community media: tag member uploads, keep them out of /wp/v2/media for
+		// non-uploaders, and hide them from the admin Media Library by default.
+		// The admin-only parts of register() self-gate to wp-admin.
 		( new Media_Library() )->register();
 		( new Attachments() )->register();
 
@@ -645,8 +635,8 @@ final class Jetonomy {
 		// AI is a Pro feature. The AI_Adapter registry slot and the Ollama
 		// adapter class stay in free because Pro's AI extension registers and
 		// consumes them; free registers no AI provider and runs no AI check.
-		// (2.0.1 removed a free Ollama spam detector that no screen could
-		// enable - Basecamp 10368526756.)
+		// (Free ships no Ollama spam detector, because no screen could
+		// enable one.)
 
 		// PMPro adapter (conditional)
 		if ( defined( 'PMPRO_VERSION' ) ) {

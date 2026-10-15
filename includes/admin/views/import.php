@@ -11,8 +11,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$import_history   = get_option( 'jetonomy_import_history', [] );
-$resume_state     = get_option( 'jetonomy_import_resume', [] );
+$import_history   = get_option( 'jetonomy_import_history', array() );
+$resume_state     = get_option( 'jetonomy_import_resume', array() );
 $current_progress = \Jetonomy\Import\Importer::get_progress();
 $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 ?>
@@ -225,9 +225,9 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						<div class="jetonomy-import-steps">
 							<span class="jetonomy-step" data-step="forums"><?php esc_html_e( 'Forums', 'jetonomy' ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
-							<span class="jetonomy-step" data-step="topics"><?php esc_html_e( 'Topics', 'jetonomy' ); ?></span>
+							<span class="jetonomy-step" data-step="topics"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
-							<span class="jetonomy-step" data-step="replies"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></span>
+							<span class="jetonomy-step" data-step="replies"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
 							<span class="jetonomy-step" data-step="profiles"><?php esc_html_e( 'Profiles', 'jetonomy' ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
@@ -251,21 +251,17 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 
 	<?php
 	/**
-	 * Past imports — the per-import report this card asked for.
+	 * Past imports - the per-import report.
 	 *
 	 * Deliberately OUTSIDE the source-card loop, and outside the
 	 * detected/not-detected branch, because both would hide it exactly when it
 	 * matters. The cards only render when a forum plugin is still installed; the
-	 * whole point of migrating is that you then remove the old forum, and at that
-	 * moment the page fell through to "No Forum Data Detected" and the owner lost
-	 * every record of what their migration did.
+	 * whole point of migrating is that you then remove the old forum, and the page
+	 * would otherwise fall through to "No Forum Data Detected" and hide every record
+	 * of what the migration did.
 	 *
-	 * The data was always there and always discarded: the skipped COUNT flashed in
-	 * a notice that a 3s reload ate, and the per-item reasons were accumulated
-	 * across batches and then delete_option'd on completion. "27 files skipped" is
-	 * not something an owner can act on; WHICH files is.
-	 *
-	 * Basecamp 10093054077 (gap 2).
+	 * The skipped count and the per-item reasons are kept in the history record: "27
+	 * files skipped" is not something an owner can act on; WHICH files is.
 	 */
 	if ( ! empty( $import_history ) ) :
 		?>
@@ -275,7 +271,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 			<?php foreach ( $import_history as $jt_hist_id => $jt_record ) : ?>
 				<?php
 				$jt_skipped = (int) ( $jt_record['skipped'] ?? 0 );
-				$jt_errors  = (array) ( $jt_record['errors'] ?? [] );
+				$jt_errors  = (array) ( $jt_record['errors'] ?? array() );
 				$jt_name    = (string) ( $jt_record['source_name'] ?? $jt_hist_id );
 				?>
 				<div class="jetonomy-import-past__item" data-source="<?php echo esc_attr( $jt_hist_id ); ?>">
@@ -342,7 +338,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 								</p>
 							<?php endif; ?>
 						</div>
-					<?php elseif ( empty( $jt_record['already'] ) && ! array_filter( (array) ( $jt_record['orphans'] ?? [] ) ) ) : ?>
+					<?php elseif ( empty( $jt_record['already'] ) && ! array_filter( (array) ( $jt_record['orphans'] ?? array() ) ) ) : ?>
 						<p class="description"><?php esc_html_e( 'Everything imported cleanly. Nothing was skipped.', 'jetonomy' ); ?></p>
 					<?php endif; ?>
 				</div>
@@ -354,7 +350,8 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 <div class="jt-pro-upsell">
 	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 	<h4><?php esc_html_e( 'Private Messaging & Email Digests', 'jetonomy' ); ?></h4>
-	<p><?php esc_html_e( 'Keep members engaged after migration with private messaging, daily/weekly email digests, and web push notifications.', 'jetonomy' ); ?></p>
+	<p><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Keep %s engaged after migration with private messaging, daily/weekly email digests, and web push notifications.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
+
 	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 	&nbsp;
 	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>

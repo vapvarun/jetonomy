@@ -46,12 +46,10 @@ class Shortcodes {
 	/**
 	 * Explain a misconfigured shortcode to whoever can fix it.
 	 *
-	 * These paths used to `return ''`, so a site owner who mistyped an
-	 * attribute got a blank region and no way to tell a broken shortcode from
-	 * an empty one - while the very same file renders a `jt-shortcode-empty`
-	 * message for genuinely-empty data. Only users who can edit see this:
-	 * visitors keep the silent output, so a misconfiguration never surfaces
-	 * editor guidance on a public page.
+	 * A blank region would hide a mistyped attribute from the owner, so these paths
+	 * explain it (genuinely empty data renders `jt-shortcode-empty`). Only users who
+	 * can edit see this: visitors keep the silent output, so editor guidance never
+	 * surfaces on a public page.
 	 *
 	 * @param string $message What the author needs to change.
 	 * @return string
@@ -59,12 +57,9 @@ class Shortcodes {
 	/**
 	 * Resolve a space reference (numeric id or slug) to a row, or null.
 	 *
-	 * Shared so every shortcode answers the same question. The first pass of
-	 * this work verified only the slug branch: a numeric ref was cast and
-	 * trusted, so a non-existent id kept a truthy value, the query matched
-	 * nothing, and the owner was shown an EMPTY state for a space that does not
-	 * exist. That is indistinguishable from a real empty space, which is the
-	 * confusion the notices were added to end (Basecamp 10266123693).
+	 * Shared so every shortcode answers the same question. A numeric ref is looked up
+	 * like a slug, so a non-existent id yields null (a notice) rather than an EMPTY
+	 * state that looks like a real empty space.
 	 *
 	 * @param string $ref Numeric id or slug. '' and '0' mean "not supplied".
 	 * @return object|null
@@ -169,6 +164,27 @@ class Shortcodes {
 	 * register defensively in case we beat Blocks::register_block_assets(),
 	 * then enqueue. WordPress dedupes by handle.
 	 */
+	/**
+	 * The member avatar partial (real avatar or initials), captured for the
+	 * string-built shortcodes so they match the profile page.
+	 *
+	 * @param int $user_id User ID.
+	 * @param int $size    Pixel size.
+	 * @return string
+	 */
+	private static function avatar_html( int $user_id, int $size ): string {
+		ob_start();
+		Template_Loader::partial(
+			'avatar',
+			array(
+				'user_id' => $user_id,
+				'size'    => $size,
+				'class'   => 'jt-sc-avatar',
+			)
+		);
+		return (string) ob_get_clean();
+	}
+
 	private static function enqueue_styles(): void {
 		if ( ! wp_style_is( 'jetonomy-blocks', 'registered' ) ) {
 			// blocks.css declares no tokens of its own, so this fallback has to
@@ -195,7 +211,7 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 5;
+		$limit = min( 50, absint( $atts['count'] ) ?: 5 ); // Capped: a huge count would render every row per page view.
 
 		// A supplied space reference must name something. Without this the query
 		// matches nothing and the owner sees "No posts yet." for a space that
@@ -212,54 +228,13 @@ class Shortcodes {
 			$space_id = absint( $space->id );
 		}
 
-		global $wpdb;
-		$posts_tbl  = table( 'posts' );
-		$spaces_tbl = table( 'spaces' );
-
-		$where = "p.status = 'publish'";
-		$args  = array();
-		if ( $space_id > 0 ) {
-			$where .= ' AND p.space_id = %d';
-			$args[] = $space_id;
-		}
-
-		// Space-visibility + per-post is_private gate so the recent-posts
-		// shortcode (and the forum-feed / trending blocks + recent-posts widget
-		// that delegate to it) never leak private/hidden-space posts.
-		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
-		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-		if ( '1=1' !== $space_vis_sql ) {
-			$where .= ' AND ' . $space_vis_sql;
-			$args   = array_merge( $args, $space_vis_params );
-		}
-		if ( '' !== $priv_sql ) {
-			$where .= ' AND ' . $priv_sql;
-			$args   = array_merge( $args, $priv_params );
-		}
-
-		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$where .= ' AND ' . $block_sql;
-		}
-
-		$order = ( 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC' ) . ', p.id DESC'; // id breaks same-second / equal-score ties.
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$query  = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
-		          FROM {$posts_tbl} p
-		          LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		          WHERE {$where}
-		          ORDER BY {$order}
-		          LIMIT %d";
-		$args[] = $limit;
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$posts = $wpdb->get_results( $wpdb->prepare( $query, ...$args ) ) ?: array();
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Viewer-gated (space access, private topics, blocked authors) so the
+		// shortcode, and the forum-feed / trending blocks and recent-posts
+		// widget that delegate to it, never leak private or hidden-space posts.
+		$posts = Models\Post::list_recent_visible( $limit, $space_id, (string) $atts['sort'] );
 
 		if ( empty( $posts ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
@@ -276,8 +251,9 @@ class Shortcodes {
 			$out .= ' · ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time ) );
 			$out .= '</div>';
 			$out .= '<div class="jt-shortcode-post-stats">';
-			$out .= '<span>' . (int) $post->vote_score . ' ' . esc_html( _n( 'vote', 'votes', (int) $post->vote_score, 'jetonomy' ) ) . '</span>';
-			$out .= '<span>' . (int) $post->reply_count . ' ' . esc_html( _n( 'reply', 'replies', (int) $post->reply_count, 'jetonomy' ) ) . '</span>';
+			/* translators: %s: number of votes. */
+			$out .= '<span>' . esc_html( sprintf( _n( '%s vote', '%s votes', (int) $post->vote_score, 'jetonomy' ), number_format_i18n( (int) $post->vote_score ) ) ) . '</span>';
+			$out .= '<span>' . esc_html( count_label( (int) $post->reply_count, 'reply' ) ) . '</span>';
 			$out .= '</div></div>';
 		}
 		$out .= '</div>';
@@ -304,7 +280,7 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 5;
+		$limit = min( 50, absint( $atts['count'] ) ?: 5 ); // Capped: a huge count would render every row per page view.
 
 		// See jetonomy_recent_posts: a reference that names nothing must say so
 		// rather than render the empty state.
@@ -342,8 +318,9 @@ class Shortcodes {
 			}
 			$out .= '</div>';
 			$out .= '<div class="jt-shortcode-post-stats">';
-			$out .= '<span>' . (int) $post->vote_score . ' ' . esc_html( _n( 'vote', 'votes', (int) $post->vote_score, 'jetonomy' ) ) . '</span>';
-			$out .= '<span>' . (int) $post->reply_count . ' ' . esc_html( _n( 'reply', 'replies', (int) $post->reply_count, 'jetonomy' ) ) . '</span>';
+			/* translators: %s: number of votes. */
+			$out .= '<span>' . esc_html( sprintf( _n( '%s vote', '%s votes', (int) $post->vote_score, 'jetonomy' ), number_format_i18n( (int) $post->vote_score ) ) ) . '</span>';
+			$out .= '<span>' . esc_html( count_label( (int) $post->reply_count, 'reply' ) ) . '</span>';
 			$out .= '</div></div></div>';
 		}
 		$out .= '</div>';
@@ -366,7 +343,7 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 6;
+		$limit = min( 50, absint( $atts['count'] ) ?: 6 ); // Capped: a huge count would render every row per page view.
 
 		// Same contract for the category reference.
 		$category_ref = trim( (string) $atts['category_id'] );
@@ -384,29 +361,11 @@ class Shortcodes {
 			$category_id = absint( $category->id );
 		}
 
-		global $wpdb;
-		$spaces_tbl = table( 'spaces' );
-
-		$where = "status = 'active' AND visibility = 'public'";
-		$args  = array();
-		if ( $category_id > 0 ) {
-			$where .= ' AND category_id = %d';
-			$args[] = $category_id;
-		}
-		$args[] = $limit;
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$spaces = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$spaces_tbl} WHERE {$where} ORDER BY post_count DESC, id ASC LIMIT %d",
-				...$args
-			)
-		) ?: array();
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$spaces = Models\Space::list_public_by_post_count( $limit, $category_id );
 
 		if ( empty( $spaces ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No spaces yet.', 'jetonomy' ) . '</div>';
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-spaces">';
@@ -429,20 +388,39 @@ class Shortcodes {
 	 * [jetonomy_leaderboard count="10"]
 	 */
 	public static function leaderboard( $atts ): string {
-		$atts = shortcode_atts( array( 'count' => 10 ), $atts, 'jetonomy_leaderboard' );
+		$atts = shortcode_atts(
+			array(
+				'count'  => 10,
+				'period' => 'all',
+			),
+			$atts,
+			'jetonomy_leaderboard'
+		);
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 10;
+		$limit = min( 50, absint( $atts['count'] ) ?: 10 ); // Capped: a huge count would render every row per page view.
+		// Same periods as the Leaderboard page: all time, this month, this week.
+		$period = in_array( $atts['period'], array( 'all', 'month', 'week' ), true ) ? $atts['period'] : 'all';
 
 		// The Leaderboard page's own model query (same eligible population:
 		// real members with reputation > 0, same tie order). Also backs the
 		// leaderboard block and the classic widget, which render this shortcode.
-		$leaders = Models\UserProfile::list_for_leaderboard( 'all', $limit, 0 );
+		// Same 5-minute TTL as GET /leaderboards: the ranking is shared by every
+		// viewer, and a sidebar widget would otherwise sort on every page view.
+		$leaders = (array) \Jetonomy\Cache::remember(
+			"lb:sc:{$period}:{$limit}",
+			static fn() => Models\UserProfile::list_for_leaderboard( $period, $limit, 0 ),
+			300
+		);
 
 		if ( empty( $leaders ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No members yet.', 'jetonomy' ) . '</div>';
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
 		}
+
+		cache_users( array_map( static fn( $l ) => (int) $l->user_id, $leaders ) ); // Users + meta for names and avatars in one go.
+		Models\UserProfile::prime( array_map( static fn( $l ) => (int) $l->user_id, $leaders ) );
 
 		$out = '<div class="jt-shortcode jt-shortcode-leaderboard"><ol>';
 		foreach ( $leaders as $leader ) {
@@ -451,8 +429,8 @@ class Shortcodes {
 				continue;
 			}
 			$url  = get_profile_url( (int) $leader->user_id );
-			$out .= '<li><a href="' . esc_url( $url ) . '">' . esc_html( $user->display_name ) . '</a>';
-			$out .= ' <span class="jt-shortcode-rep">' . (int) $leader->reputation . ' rep</span></li>';
+			$out .= '<li><a href="' . esc_url( $url ) . '">' . self::avatar_html( (int) $leader->user_id, 28 ) . '<span>' . esc_html( user_display_name( $user ) ) . '</span></a>';
+			$out .= ' <span class="jt-shortcode-rep">' . esc_html( sprintf( /* translators: %s: reputation points. */ _n( '%s rep', '%s rep', (int) $leader->reputation, 'jetonomy' ), number_format_i18n( (int) $leader->reputation ) ) ) . '</span></li>';
 		}
 		$out .= '</ol></div>';
 
@@ -491,8 +469,10 @@ class Shortcodes {
 
 		$out  = '<div class="jt-shortcode jt-shortcode-profile-card">';
 		$out .= '<a href="' . esc_url( $url ) . '">';
-		$out .= '<strong>' . esc_html( $user->display_name ) . '</strong>';
-		$out .= '<span class="jt-tl" data-jt-tl="' . $trust . '">' . $trust . '</span>';
+		$out .= self::avatar_html( $user_id, 48 );
+		$out .= '<strong>' . esc_html( user_display_name( $user ) ) . '</strong>';
+		/* translators: %d: trust level number (0-5). */
+		$out .= '<span class="jt-tl jt-tl-named" data-jt-tl="' . $trust . '" title="' . esc_attr( sprintf( __( 'Trust level %d', 'jetonomy' ), $trust ) ) . '">' . esc_html( Trust\Trust_Levels::label( $trust ) ) . '</span>';
 		$out .= '</a>';
 		if ( ! empty( $profile->bio ) ) {
 			$out .= '<p>' . esc_html( wp_trim_words( $profile->bio, 20 ) ) . '</p>';
@@ -541,7 +521,7 @@ class Shortcodes {
 				return self::config_notice(
 					sprintf(
 						/* translators: %s: the space slug or id that was passed. */
-						__( 'jetonomy_space_members: no space matching "%s".', 'jetonomy' ),
+						__( 'jetonomy_space_members: no space matching "%s".', 'jetonomy' ), // jt-terms-ok: shortcode config notice for the site builder; names the attribute.
 						$space_ref
 					)
 				);
@@ -551,39 +531,22 @@ class Shortcodes {
 		$space_id = $space ? absint( $space->id ) : 0;
 		if ( ! $space_id ) {
 			return self::config_notice(
-				__( 'jetonomy_space_members needs a space_id attribute - the space slug or its numeric id, e.g. [jetonomy_space_members space_id="announcements"].', 'jetonomy' )
+				__( 'jetonomy_space_members needs a space_id attribute - the space slug or its numeric id, e.g. [jetonomy_space_members space_id="announcements"].', 'jetonomy' ) // jt-terms-ok: shortcode attribute docs.
 			);
 		}
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 10;
-
-		global $wpdb;
-		$members_tbl  = table( 'space_members' );
-		$profiles_tbl = table( 'user_profiles' );
+		$limit = min( 50, absint( $atts['count'] ) ?: 10 ); // Capped: a huge count would render every row per page view.
 
 		// Deliberately NOT block-filtered — a member roster/ranking, not a
 		// content feed. Per-viewer filtering would re-rank the list and leak
 		// "you blocked someone" via a missing row.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$members = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT sm.user_id, sm.role, up.reputation, up.trust_level
-			 FROM {$members_tbl} sm
-			 LEFT JOIN {$profiles_tbl} up ON up.user_id = sm.user_id
-			 WHERE sm.space_id = %d
-			 ORDER BY up.reputation DESC, sm.user_id ASC
-			 LIMIT %d",
-				$space_id,
-				$limit
-			)
-		) ?: array();
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$members = Models\SpaceMember::list_top_by_reputation( $space_id, $limit );
 
 		if ( empty( $members ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No members yet.', 'jetonomy' ) . '</div>';
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-members">';
@@ -594,8 +557,8 @@ class Shortcodes {
 			}
 			$url  = get_profile_url( (int) $m->user_id );
 			$out .= '<div class="jt-shortcode-member">';
-			$out .= '<a href="' . esc_url( $url ) . '">' . esc_html( $user->display_name ) . '</a>';
-			$out .= ' <span class="jt-shortcode-rep">' . (int) $m->reputation . ' rep</span>';
+			$out .= '<a href="' . esc_url( $url ) . '">' . esc_html( user_display_name( $user ) ) . '</a>';
+			$out .= ' <span class="jt-shortcode-rep">' . esc_html( sprintf( /* translators: %s: reputation points. */ _n( '%s rep', '%s rep', (int) $m->reputation, 'jetonomy' ), number_format_i18n( (int) $m->reputation ) ) ) . '</span>';
 			$out .= '</div>';
 		}
 		$out .= '</div>';
@@ -637,13 +600,9 @@ class Shortcodes {
 		$space    = null;
 		$postable = array();
 
-		// A supplied space that does not exist is an authoring mistake in EVERY
-		// mode, not just 'fixed'. The check used to live inside the fixed branch
-		// while the default mode is 'picker', so `space_id="99999"` rendered a
-		// complete, working compose form and a member could write a topic aimed
-		// at a space that does not exist. In fixed mode it silently degraded to
-		// a picker instead, giving the owner no clue their id was wrong
-		// (Basecamp 10266123693).
+		// A supplied space that does not exist is an authoring mistake in EVERY mode, so
+		// the owner gets a notice instead of a working compose form aimed at nothing
+		// (fixed mode would otherwise degrade silently to a picker).
 		$space_ref = trim( (string) $atts['space_id'] );
 		if ( '' !== $space_ref && '0' !== $space_ref ) {
 			$space = self::resolve_space_ref( $space_ref );
@@ -669,7 +628,7 @@ class Shortcodes {
 		// composePost submits through window.jetonomyRest.restFetch, which is
 		// only enqueued on community routes by Template_Loader::render(). The
 		// embed can land on any WP page, so pull in the client (plus the
-		// minimal jetonomyData payload) here too. Basecamp #9967059857.
+		// minimal jetonomyData payload) here too.
 		Template_Loader::enqueue_rest_client();
 
 		// Seed the Interactivity API state with the REST base + nonce.
@@ -686,15 +645,21 @@ class Shortcodes {
 					'_nonce'        => wp_create_nonce( 'wp_rest' ),
 					'nonce'         => wp_create_nonce( 'wp_rest' ),
 					'communityBase' => home_url( '/' . ( isset( $settings['base_slug'] ) ? (string) $settings['base_slug'] : 'community' ) ),
-					'i18n'          => array(
-						'chooseSpace'    => __( 'Choose a space first.', 'jetonomy' ),
-						'titleRequired'  => __( 'Title is required.', 'jetonomy' ),
-						/* translators: %s: singular topic label. */
-						'couldNotCreate' => sprintf( __( 'Could not create the %s.', 'jetonomy' ), jetonomy_label( 'topic', false, true ) ),
-						'networkError'   => __( 'Network error. Please try again.', 'jetonomy' ),
+					// The same strings as community pages, so the composer never shows English fallbacks here.
+					'i18n'          => array_merge(
+						Template_Loader::app_i18n(),
+						array(
+							/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+							'chooseSpace'   => sprintf( __( 'Choose the %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+							'titleRequired' => __( 'Title is required.', 'jetonomy' ),
+						)
 					),
+					'localeData'    => Template_Loader::app_locale_data(),
+					/* translators: %s: the label of the item (the configured noun); "Post" is the verb. */
+					'publishLabel'  => sprintf( __( 'Post %s', 'jetonomy' ), jetonomy_label( 'topic' ) ),
 				)
 			);
+			wp_enqueue_script( 'wp-i18n' );
 		}
 
 		ob_start();

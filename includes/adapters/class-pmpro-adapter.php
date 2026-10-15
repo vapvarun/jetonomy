@@ -18,7 +18,7 @@ class PMPro_Adapter implements Membership_Adapter {
 
 	public function get_user_levels( int $user_id ): array {
 		if ( ! $this->is_active() ) {
-			return [];
+			return array();
 		}
 
 		// PMPro 3.0+ supports multiple levels
@@ -28,13 +28,13 @@ class PMPro_Adapter implements Membership_Adapter {
 				function ( $level ) {
 					return 'pmpro_' . $level->id;
 				},
-				$levels ?: []
+				$levels ?: array()
 			);
 		}
 
 		// PMPro 2.x — single level
 		$level = pmpro_getMembershipLevelForUser( $user_id );
-		return $level ? [ 'pmpro_' . $level->id ] : [];
+		return $level ? array( 'pmpro_' . $level->id ) : array();
 	}
 
 	public function user_has_level( int $user_id, string $level_id ): bool {
@@ -43,20 +43,20 @@ class PMPro_Adapter implements Membership_Adapter {
 
 	public function get_all_levels(): array {
 		if ( ! $this->is_active() ) {
-			return [];
+			return array();
 		}
 
 		if ( ! function_exists( 'pmpro_getAllLevels' ) ) {
-			return [];
+			return array();
 		}
 
 		$all    = pmpro_getAllLevels( false, true );
-		$levels = [];
+		$levels = array();
 		foreach ( $all as $level ) {
-			$levels[] = [
+			$levels[] = array(
 				'id'    => 'pmpro_' . $level->id,
 				'label' => $level->name,
-			];
+			);
 		}
 		return $levels;
 	}
@@ -106,7 +106,7 @@ class PMPro_Adapter implements Membership_Adapter {
 		}
 
 		// Level changed (added, changed, or removed)
-		add_action( 'pmpro_after_change_membership_level', [ $this, 'on_level_change' ], 10, 3 );
+		add_action( 'pmpro_after_change_membership_level', array( $this, 'on_level_change' ), 10, 3 );
 	}
 
 	/**

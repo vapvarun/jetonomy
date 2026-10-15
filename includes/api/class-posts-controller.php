@@ -105,6 +105,7 @@ class Posts_Controller extends Base_Controller {
 						'force' => array(
 							'type'        => 'boolean',
 							'default'     => false,
+							// jt-terms-ok: REST schema description for API developers.
 							'description' => __( 'Delete permanently instead of moving to trash. Space moderators and admins only.', 'jetonomy' ),
 						),
 					),
@@ -240,7 +241,7 @@ class Posts_Controller extends Base_Controller {
 	public function link_preview( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$url = (string) $request->get_param( 'url' );
 		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
-			return new \WP_Error( 'invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'jetonomy_invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
 		// SSRF guard: wp_http_validate_url() misses 169.254/16 (cloud metadata),
 		// 100.64/10 and IPv6 loopback/ULA/link-local. This endpoint is reachable
@@ -327,7 +328,7 @@ class Posts_Controller extends Base_Controller {
 		// denormalized all-published counter — it ignores is_private and blocked
 		// authors, so a space with 3 topics of which 2 are invisible to the viewer
 		// reported total=3 against 1 returned row and pinned "Load More" on
-		// forever (Basecamp 10118693115). Mirrors templates/views/space.php.
+		// forever. Mirrors templates/views/space.php.
 		return $this->paginated_response(
 			$items,
 			array(
@@ -431,7 +432,7 @@ class Posts_Controller extends Base_Controller {
 		if ( in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
 			return new WP_Error(
 				'jetonomy_space_restricted',
-				__( 'This space is archived or locked and no longer accepts new posts.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Space label, lowercase, 2: the plural Topic label, lowercase. */ __( 'This %1$s is archived or locked and no longer accepts new %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				array( 'status' => 403 )
 			);
 		}
@@ -441,9 +442,8 @@ class Posts_Controller extends Base_Controller {
 		$trust   = (int) ( $profile->trust_level ?? 0 );
 		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_posts', $trust ) ) {
 			// Rate_Limiter::message() names the allowance and the real wait.
-			// The old string said "Rate limit exceeded. Please try again
-			// later." to a member who had never been told a limit existed and
-			// could not tell whether "later" meant a minute or a day.
+			// A bare "Rate limit exceeded. Please try again later." would not tell a member
+			// whether "later" means a minute or a day.
 			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_posts', $trust ) );
 		}
 
@@ -485,10 +485,7 @@ class Posts_Controller extends Base_Controller {
 		// Derive post type from space type if not provided.
 		$type = sanitize_text_field( (string) $request->get_param( 'type' ) );
 		if ( empty( $type ) ) {
-			// One map, in \Jetonomy\compose_post_type(). This used to be an
-			// inline copy that happened to agree with the helper - the same
-			// shape of duplication that let the trust-level names drift a full
-			// level apart across three surfaces.
+			// One map, in \Jetonomy\compose_post_type(): an inline copy would drift from the helper.
 			$type = \Jetonomy\compose_post_type( (string) ( $space->type ?? 'forum' ) );
 		}
 
@@ -544,7 +541,7 @@ class Posts_Controller extends Base_Controller {
 
 		// Carry the client-requested flag into the create data. Free only
 		// plumbs it through — Pro validates/enforces it via the
-		// `jetonomy_before_create_post` filter (see Task 12).
+		// `jetonomy_before_create_post` filter.
 		$post_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
 
 		if ( ! empty( $prefix ) ) {
@@ -688,7 +685,7 @@ class Posts_Controller extends Base_Controller {
 		$is_author = (int) $post->author_id === $user_id;
 
 		// Must be author with edit_own_posts or moderator/admin with edit_others_posts.
-		$can_edit = ( $is_author && $this->check_permission( 'create_posts', $space_id ) )
+		$can_edit = ( $is_author && $this->check_permission( 'edit_own_posts', $space_id ) )
 			|| $this->check_permission( 'edit_others_posts', $space_id );
 
 		if ( ! $can_edit ) {
@@ -775,7 +772,7 @@ class Posts_Controller extends Base_Controller {
 		 * `custom_fields` being the case that surfaced it - was rejected with
 		 * "No fields provided for update." before `jetonomy_after_update_post`
 		 * could fire, so the value was never saved and the only workaround was
-		 * to send a title you did not want to change (Basecamp 10268069890).
+		 * to send a title you did not want to change.
 		 *
 		 * Free deliberately does not learn what `custom_fields` is: an extension
 		 * declares its own interest here, so this holds for any future
@@ -868,8 +865,8 @@ class Posts_Controller extends Base_Controller {
 	/**
 	 * Validate a schedule time for a draft.
 	 *
-	 * The raw value must carry a time of day: a date alone used to be read as
-	 * midnight, so "today, no time picked" went live at the next run. The
+	 * The raw value must carry a time of day: a date alone would be read as
+	 * midnight, so "today, no time picked" would go live at the next run. The
 	 * normalized UTC value must be in the future, compared against the UTC
 	 * clock it is stored in (sanitize_backdate() already read a naive value
 	 * in the site timezone).
@@ -922,7 +919,7 @@ class Posts_Controller extends Base_Controller {
 		$space_id  = (int) $post->space_id;
 		$is_author = (int) $post->author_id === $user_id;
 
-		$can_delete = ( $is_author && $this->check_permission( 'create_posts', $space_id ) )
+		$can_delete = ( $is_author && $this->check_permission( 'delete_own_posts', $space_id ) )
 			|| $this->check_permission( 'delete_others_posts', $space_id );
 
 		if ( ! $can_delete ) {
@@ -956,8 +953,24 @@ class Posts_Controller extends Base_Controller {
 
 		// Post::update() detects the publish→trash transition and decrements
 		// space/user counters atomically — no manual pre-decrement needed.
-		Post::update( $id, array( 'status' => 'trash' ) );
+		// Someone else's post is a moderator removal: run it through the
+		// moderation choke point (already authorised above) so its open reports
+		// resolve and the author's "post removed" reputation applies.
+		if ( $is_author ) {
+			Post::update( $id, array( 'status' => 'trash' ) );
+		} else {
+			Moderation_Service::system_set_object_status( 'post', $id, 'trash', $user_id );
+		}
 
+		/**
+		 * Fires after a post is deleted through the REST API.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $post_id  Deleted post ID.
+		 * @param int $space_id Space ID.
+		 * @param int $user_id  Acting user ID.
+		 */
 		do_action( 'jetonomy_post_deleted', $id, $space_id, $user_id );
 
 		// jetonomy_after_delete_post now fires from the model, so every
@@ -1027,7 +1040,7 @@ class Posts_Controller extends Base_Controller {
 		if ( ! $space || 'ideas' !== ( $space->type ?? '' ) ) {
 			return new \WP_Error(
 				'jetonomy_not_ideas_space',
-				__( 'Roadmap status only applies to Ideas spaces.', 'jetonomy' ),
+				sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Roadmap status only applies to Ideas %s.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1046,16 +1059,9 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Invalid roadmap status.', 'jetonomy' ) );
 		}
 
-		// Reward author when status transitions TO 'planned'. Idempotent on
-		// no-op changes (planned → planned awards nothing) and skips
-		// self-curated ideas (author == actor) so a moderator can't farm
-		// reputation by re-planning their own idea.
-		if ( 'planned' === $status && 'planned' !== $previous_status && ! empty( $post->author_id ) ) {
-			$author_id = (int) $post->author_id;
-			if ( $author_id !== (int) $user_id ) {
-				\Jetonomy\Trust\Reputation::award( $author_id, 'idea_planned' );
-			}
-		}
+		// The author's roadmap reputation is awarded / revoked by
+		// Activity_Tracker on jetonomy_idea_status_changed, so the CLI, the
+		// Abilities API and the seeder follow the same rule as REST.
 
 		$updated = Post::find( $id );
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );
@@ -1097,19 +1103,25 @@ class Posts_Controller extends Base_Controller {
 		// pinning (not when unpinning), and a post already counted toward the
 		// cap can always be unpinned.
 		if ( 1 === $new_value ) {
+			/**
+			 * Filters how many posts can be pinned in one space.
+			 *
+			 * @since 1.4.4
+			 *
+			 * @param int $max      Maximum pinned posts. Default 3.
+			 * @param int $space_id Space ID.
+			 * @return int Maximum pinned posts.
+			 */
 			$max = (int) apply_filters( 'jetonomy_max_space_pins', 3, (int) $post->space_id );
 			if ( $max > 0 && Post::count_sticky_in_space( (int) $post->space_id ) >= $max ) {
 				return new WP_Error(
 					'jetonomy_pin_limit',
 					sprintf(
-						/* translators: %d: maximum number of pinned topics allowed per space */
-						_n(
-							'You can pin up to %d topic in a space. Unpin one first.',
-							'You can pin up to %d topics in a space. Unpin one first.',
-							$max,
-							'jetonomy'
-						),
-						$max
+						/* translators: 1: maximum number of pinned topics allowed per space, 2: the topic label (singular or plural to match the number), lowercase, 3: the singular space label, lowercase. */
+						__( 'You can pin up to %1$d %2$s per %3$s. Unpin one first.', 'jetonomy' ),
+						$max,
+						\Jetonomy\jetonomy_label( 'topic', $max > 1, true ),
+						\Jetonomy\space_label( false, true )
 					),
 					array( 'status' => 400 )
 				);
@@ -1147,7 +1159,7 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		if ( $source_space_id === $target_space_id ) {
-			return $this->validation_error( __( 'Post is already in the target space.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: 1: the singular Topic label, 2: the singular Space label, lowercase. */ __( '%1$s is already in the target %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ), \Jetonomy\space_label( false, true ) ) );
 		}
 
 		$target_space = Space::find( $target_space_id );
@@ -1164,12 +1176,8 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Move the post.
+		// Move the post. Post::update() moves the published-topic count with it.
 		Post::update( $id, array( 'space_id' => $target_space_id ) );
-
-		// Update post counts on both spaces.
-		Space::increment_post_count( $source_space_id, -1 );
-		Space::increment_post_count( $target_space_id, 1 );
 
 		$updated = Post::find( $id );
 
@@ -1213,11 +1221,14 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$success = Post::merge_into( $source_id, $target_id );
+		if ( is_wp_error( $success ) ) {
+			return $success;
+		}
 
 		if ( ! $success ) {
 			return new WP_Error(
 				'jetonomy_merge_failed',
-				__( 'Failed to merge topics.', 'jetonomy' ),
+				sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1298,12 +1309,10 @@ class Posts_Controller extends Base_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			// Undeclared passthrough before this fix — Pro's File Attachments
-			// extension already reads this via $request->get_param() (see
+			// Pro's File Attachments extension reads this via $request->get_param() (see
 			// link_on_create_post() in jetonomy-pro/includes/extensions/attachments/
-			// class-extension.php). Declaring it here just makes it discoverable
-			// from the route schema; no behavior change on this route. Must stay a
-			// CSV STRING: Pro's link_pending() does explode(',', $csv).
+			// class-extension.php); declaring it makes it discoverable from the route schema.
+			// Must stay a CSV STRING: Pro's link_pending() does explode(',', $csv).
 			'attachment_ids' => array(
 				'type'              => 'string',
 				'required'          => false,

@@ -13,6 +13,10 @@ use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
+use Jetonomy\Models\UserProfile;
+use Jetonomy\Models\Flag;
+use Jetonomy\Models\ActivityLog;
+use Jetonomy\Models\Restriction;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\AccessRule;
 use Jetonomy\Models\JoinRequest;
@@ -25,6 +29,7 @@ class Admin {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_notices', array( $this, 'render_permalink_notice' ) );
 		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
 		// A6: intercepts the CSV export request before any output is sent so
 		// the download streams cleanly without admin-header HTML interleaving.
@@ -91,14 +96,29 @@ class Admin {
 	// ── Menu ──
 
 	public function add_menu(): void {
+		/**
+		 * Filters the top-level admin menu label.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $label Menu label. Default "Jetonomy".
+		 * @return string Menu label.
+		 */
 		$menu_label = apply_filters( 'jetonomy_admin_menu_label', __( 'Jetonomy', 'jetonomy' ) );
 
 		// Brand mark (mono members glyph) as a data-URI so WordPress recolors it
 		// for default/hover/current menu states. Single solid color is required
 		// for the admin-menu filter to tint cleanly.
 		$menu_glyph = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><g fill="#a7aaad"><circle cx="324" cy="206" r="44"/><path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/><circle cx="206" cy="220" r="60"/><path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/></g></svg>';
-		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Encoding an inline SVG as a data-URI menu icon, not obfuscation.
-		$menu_icon = apply_filters( 'jetonomy_admin_menu_icon', 'data:image/svg+xml;base64,' . base64_encode( $menu_glyph ) );
+		/**
+		 * Filters the top-level admin menu icon.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $icon Dashicon class or base64 SVG data URI.
+		 * @return string Menu icon.
+		 */
+		$menu_icon = apply_filters( 'jetonomy_admin_menu_icon', 'data:image/svg+xml;base64,' . base64_encode( $menu_glyph ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Inline SVG as a data-URI menu icon.
 
 		add_menu_page(
 			$menu_label,
@@ -210,7 +230,7 @@ class Admin {
 			'jetonomy',
 			__( 'Users', 'jetonomy' ),
 			__( 'Users', 'jetonomy' ),
-			'jetonomy_manage_settings',
+			'jetonomy_manage_users',
 			'jetonomy-users',
 			array( $this, 'render_users' )
 		);
@@ -239,7 +259,7 @@ class Admin {
 				'jetonomy',
 				__( 'Extensions', 'jetonomy' ),
 				__( 'Extensions', 'jetonomy' ),
-				'jetonomy_manage_settings',
+				'jetonomy_manage_extensions',
 				'jetonomy-extensions',
 				array( $this, 'render_extensions' )
 			);
@@ -274,15 +294,11 @@ class Admin {
 	 *
 	 * The Settings page renders under `jetonomy_manage_settings` (see add_menu),
 	 * and free honours that capability on save via the
-	 * option_page_capability_jetonomy_settings filter below. Every Pro tab,
-	 * however, gated its own save on `manage_options` and returned silently - so
-	 * a manager the owner had deliberately delegated could open every Pro tab,
-	 * change things, and have the save discarded with nothing on screen to say
-	 * why. Nine handlers each answered this question in their own words, and all
-	 * nine answered it differently from free.
+	 * option_page_capability_jetonomy_settings filter below. Every Pro tab saves through
+	 * this same check, so a manager the owner delegated can save what they can open.
 	 *
 	 * Administrators hold `jetonomy_manage_settings` too (Capabilities grants
-	 * every cap to administrator), so this is never narrower than the old check.
+	 * every cap to administrator), so this is never narrower than `manage_options`.
 	 * It is NOT the right gate for role administration - editing which role holds
 	 * which capability stays on `manage_options`, or a delegated manager could
 	 * grant their own role anything.
@@ -293,7 +309,79 @@ class Admin {
 		return current_user_can( 'jetonomy_manage_settings' );
 	}
 
+	/**
+	 * Display name for a stored object type (space, reply, category, ...).
+	 *
+	 * Terminology nouns use the owner's label; other types (post, user) are
+	 * humanized from the key as before.
+	 *
+	 * @param string $type Object type key.
+	 * @return string Unescaped.
+	 */
+	public static function object_type_label( string $type ): string {
+		return isset( \Jetonomy\label_defaults()[ $type ] ) ? \Jetonomy\jetonomy_label( $type ) : ucfirst( str_replace( '_', ' ', $type ) );
+	}
+
+	/**
+	 * Human label for an activity-log action code (e.g. joined_space).
+	 *
+	 * Shared by the Dashboard feed and the Activity screen so both read the
+	 * same and follow the owner's terminology. Unknown codes are humanized.
+	 *
+	 * @param string $code Action code.
+	 * @return string Unescaped.
+	 */
+	public static function action_label( string $code ): string {
+		switch ( $code ) {
+			case 'created_post':
+				return __( 'Created a post', 'jetonomy' );
+			case 'created_reply':
+				return __( 'Replied', 'jetonomy' );
+			case 'voted':
+				return __( 'Voted', 'jetonomy' );
+			case 'trust_level_changed':
+				return __( 'Trust level changed', 'jetonomy' );
+			case 'moderated_approve':
+				return __( 'Approved content', 'jetonomy' );
+			case 'moderated_trash':
+				return __( 'Trashed content', 'jetonomy' );
+			case 'moderated_spam':
+				return __( 'Marked as spam', 'jetonomy' );
+			case 'reputation_changed':
+				return __( 'Reputation changed', 'jetonomy' );
+			case 'joined_space':
+				/* translators: %s: space label, lowercase (e.g. "space"). */
+				return sprintf( __( 'Joined the %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) );
+			case 'idea_status_changed':
+				return __( 'Updated idea roadmap status', 'jetonomy' );
+		}
+		return ucwords( str_replace( '_', ' ', $code ) );
+	}
+
 	// ── Settings API ──
+
+	/**
+	 * Tell the owner when Plain permalinks make the community unreachable.
+	 *
+	 * Every route is a rewrite rule, and Plain permalinks have none, so
+	 * /community/ silently served the homepage.
+	 */
+	public function render_permalink_notice(): void {
+		if ( '' !== (string) get_option( 'permalink_structure' ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$screen = get_current_screen();
+		if ( $screen && 'options-permalink' === $screen->id ) {
+			return;
+		}
+		printf(
+			'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
+			esc_html__( 'Jetonomy:', 'jetonomy' ),
+			esc_html__( 'your community cannot be reached while permalinks are set to Plain. Visitors see the homepage instead.', 'jetonomy' ),
+			esc_url( admin_url( 'options-permalink.php' ) ),
+			esc_html__( 'Choose a permalink structure', 'jetonomy' )
+		);
+	}
 
 	public function register_settings(): void {
 		// The Settings page renders under jetonomy_manage_settings, but the form
@@ -365,10 +453,8 @@ class Admin {
 	/**
 	 * Attach a display title and an admin URL to each pending flag row.
 	 *
-	 * The Flags tab used to print `post #217` in a <code> tag - not a link, and
-	 * not the content. A moderator deciding Valid vs Dismiss had to go find the
-	 * item by id somewhere else before they could judge it, which is most of the
-	 * work the queue exists to save.
+	 * Each flag shows the item's title as a link, so a moderator can judge Valid vs
+	 * Dismiss without finding the item by id elsewhere.
 	 *
 	 * Batched deliberately: this view is the worked example of an N+1 in this
 	 * codebase, so titles are fetched with ONE query per object type for the
@@ -379,7 +465,7 @@ class Admin {
 	 *
 	 * Mutates the row objects in place, adding jt_object_title and
 	 * jt_object_url. Both are '' when the target has since been deleted, which
-	 * the view renders as the old id text rather than a dead link.
+	 * the view renders as plain id text rather than a dead link.
 	 *
 	 * @param object[] $flags Pending flag rows.
 	 */
@@ -387,8 +473,6 @@ class Admin {
 		if ( empty( $flags ) ) {
 			return;
 		}
-
-		global $wpdb;
 
 		$post_ids  = array();
 		$reply_ids = array();
@@ -411,33 +495,8 @@ class Admin {
 			}
 		}
 
-		$posts_t   = \Jetonomy\table( 'posts' );
-		$replies_t = \Jetonomy\table( 'replies' );
-
-		$post_titles = array();
-		if ( $post_ids ) {
-			$ids = implode( ',', array_map( 'intval', array_keys( $post_ids ) ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			foreach ( (array) $wpdb->get_results( "SELECT id, title FROM {$posts_t} WHERE id IN ({$ids})" ) as $row ) {
-				$post_titles[ (int) $row->id ] = (string) $row->title;
-			}
-		}
-
-		$reply_parents = array();
-		if ( $reply_ids ) {
-			$ids = implode( ',', array_map( 'intval', array_keys( $reply_ids ) ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			foreach ( (array) $wpdb->get_results(
-				"SELECT r.id, r.post_id, p.title FROM {$replies_t} r
-				 LEFT JOIN {$posts_t} p ON p.id = r.post_id
-				 WHERE r.id IN ({$ids})"
-			) as $row ) {
-				$reply_parents[ (int) $row->id ] = array(
-					'post_id' => (int) $row->post_id,
-					'title'   => (string) $row->title,
-				);
-			}
-		}
+		$post_titles   = Post::titles_by_ids( array_keys( $post_ids ) );
+		$reply_parents = Reply::parents_by_ids( array_keys( $reply_ids ) );
 
 		$users = array();
 		if ( $user_ids ) {
@@ -467,8 +526,8 @@ class Admin {
 				case 'reply':
 					if ( isset( $reply_parents[ $id ] ) ) {
 						$parent = $reply_parents[ $id ];
-						/* translators: %s: title of the topic the flagged reply belongs to. */
-						$f->jt_object_title = sprintf( __( 'Reply on "%s"', 'jetonomy' ), $parent['title'] );
+						/* translators: 1: reply label (e.g. "Reply"). 2: title of the topic the flagged reply belongs to. */
+						$f->jt_object_title = sprintf( __( '%1$s on "%2$s"', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $parent['title'] );
 						$f->jt_object_url   = $parent['post_id']
 							? admin_url( 'admin.php?page=jetonomy-content&post_id=' . $parent['post_id'] )
 							: '';
@@ -551,12 +610,10 @@ class Admin {
 			'new_post_in_sub',
 			'badge_earned',
 			'vote_on_post',
-			// Settings -> Email renders a template row for this type
-			// (views/settings.php), and Notifier looks up an override for
-			// whatever type it is sending. It was missing from this allowlist,
-			// so an owner could write a custom subject/body for "Your idea
-			// roadmap status changed", save, and have it silently discarded
-			// every time. Keep this list in step with $tmpl_types in the view.
+			// Settings -> Email renders a template row for this type (views/settings.php), and
+			// Notifier looks up an override for whatever type it is sending. A type missing
+			// from this allowlist would have its custom subject/body silently discarded on
+			// save. Keep this list in step with $tmpl_types in the view.
 			'idea_status_changed',
 			'reaction',
 			'moderation',
@@ -588,12 +645,30 @@ class Admin {
 		return $clean;
 	}
 
+	/**
+	 * Whether a role currently holds any Jetonomy capability.
+	 *
+	 * @param string $role_slug Role slug.
+	 */
+	private static function role_holds_jetonomy_cap( string $role_slug ): bool {
+		$role = get_role( $role_slug );
+		if ( ! $role ) {
+			return false;
+		}
+		foreach ( \Jetonomy\Permissions\Capabilities::all() as $cap ) {
+			if ( $role->has_cap( $cap ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public function sanitize_settings( $input ): array {
 		// Merge with existing settings so saving one tab doesn't wipe another.
 		$existing = get_option( 'jetonomy_settings', array() );
 		$clean    = is_array( $existing ) ? $existing : array();
 
-		// ── Permissions tab: role -> capability mapping (Basecamp 9725751235) ──
+		// ── Permissions tab: role -> capability mapping ──
 		// Lives in its own option (not jetonomy_settings) and resyncs the live
 		// WP roles immediately, so unticking a box revokes on save. The hidden
 		// role_caps_submitted marker distinguishes "tab posted with everything
@@ -606,7 +681,7 @@ class Admin {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				// Drop only the mapping - the rest of the Permissions tab
 				// (trust thresholds, rate limits) is still theirs to save.
-				unset( $input['role_caps'], $input['role_caps_submitted'] );
+				unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'] );
 				add_settings_error(
 					'jetonomy_settings',
 					'jetonomy_role_caps_forbidden',
@@ -617,18 +692,35 @@ class Admin {
 		if ( ! empty( $input['role_caps_submitted'] ) ) {
 			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
 			$roles      = array_keys( get_editable_roles() );
+			$stored     = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+			$stored     = is_array( $stored ) ? $stored : array();
 			$overrides  = array();
 			$posted     = isset( $input['role_caps'] ) && is_array( $input['role_caps'] ) ? $input['role_caps'] : array();
 			foreach ( $roles as $role_slug ) {
 				if ( 'administrator' === $role_slug ) {
 					continue; // Admins always hold every cap - never stored.
 				}
-				$caps                    = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
-				$overrides[ $role_slug ] = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
+				$caps = isset( $posted[ $role_slug ] ) ? (array) $posted[ $role_slug ] : array();
+				$caps = array_values( array_intersect( $valid_caps, array_map( 'sanitize_key', $caps ) ) );
+				// A row the owner never touched (never stored, holds no Jetonomy
+				// cap, still empty) stays unmapped so the role keeps the space
+				// membership fallback. Storing it cut Customer/Student members off
+				// on the first save of this tab. A row that
+				// was stored or held caps and is now empty is a deliberate "none".
+				if ( ! $caps && ! array_key_exists( $role_slug, $stored ) && ! self::role_holds_jetonomy_cap( $role_slug ) ) {
+					continue;
+				}
+				$overrides[ $role_slug ] = $caps;
+			}
+			// "Give members access" on a locked third-party role: unmap it so the
+			// space-membership fallback applies again.
+			$reset = sanitize_key( $input['role_caps_reset'] ?? '' );
+			if ( $reset && ! isset( \Jetonomy\Permissions\Capabilities::default_map()[ $reset ] ) ) {
+				unset( $overrides[ $reset ] );
 			}
 			update_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, $overrides, false );
 			\Jetonomy\Permissions\Capabilities::register();
-			unset( $input['role_caps'], $input['role_caps_submitted'] );
+			unset( $input['role_caps'], $input['role_caps_submitted'], $input['role_caps_reset'] );
 		}
 
 		// ── General tab ──
@@ -675,6 +767,11 @@ class Admin {
 			// Community as homepage — unchecked checkboxes don't submit, so
 			// absence inside a General-tab save means OFF (default).
 			$clean['front_page'] = ! empty( $input['front_page'] );
+			// Private spaces as locked teasers for logged-out visitors (default off).
+			$clean['guest_private_teasers'] = ! empty( $input['guest_private_teasers'] );
+			if ( $clean['guest_private_teasers'] !== ! empty( $existing['guest_private_teasers'] ) ) {
+				Space::bump_tree_generation(); // Cached guest listings must re-read.
+			}
 
 			// Front-end space creation role allowlist (G6). Validate each
 			// posted role against the live wp_roles() registry so a stale or
@@ -701,7 +798,7 @@ class Admin {
 			// showing it unticked, and the feature behind it stayed off. That is
 			// what made "let space admins delete a space" impossible to turn on:
 			// the AJAX guard reads allow_space_admin_purge, which could never
-			// become true (Basecamp 10217204334).
+			// become true.
 			//
 			// An unchecked checkbox submits nothing, so absence inside a
 			// General-tab save means OFF - the same rule front_page above uses.
@@ -722,6 +819,13 @@ class Admin {
 					'reputation'       => absint( $lv['reputation'] ?? $td['reputation'] ),
 					'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
 				);
+			}
+			// Display names per level; blank keeps the built-in name.
+			$raw_names                  = is_array( $input['trust_level_names'] ?? null ) ? $input['trust_level_names'] : array();
+			$clean['trust_level_names'] = array();
+			// No wp_unslash(): options.php has already unslashed the posted value.
+			foreach ( range( 0, 5 ) as $level ) {
+				$clean['trust_level_names'][ $level ] = sanitize_text_field( (string) ( $raw_names[ $level ] ?? '' ) );
 			}
 		}
 
@@ -807,8 +911,8 @@ class Admin {
 				'moderation',
 				'flag_resolved',
 				'join_request',
-				// Was missing, so unchecking its admin default silently reverted
-				// to the seeded true/true — the toggle looked dead.
+				// Listed so unchecking its admin default is saved instead of reverting to the
+				// seeded true/true.
 				'idea_status_changed',
 				// Pro private messages. Only rendered (and so only submitted)
 				// while that extension is live; otherwise keep what is stored.
@@ -911,13 +1015,17 @@ class Admin {
 		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {
 			return $text;
 		}
+		// Our screens name the product, so White Label's brand substitution
+		// has something to replace.
+		/* translators: %s: plugin name. */
+		$text = sprintf( __( 'Thank you for building your community with %s.', 'jetonomy' ), 'Jetonomy' );
 		/**
 		 * Filter the admin footer text shown on Jetonomy admin pages.
 		 *
 		 * @since 1.4.1
 		 * @param string $text Current footer text.
 		 */
-		return (string) apply_filters( 'jetonomy_admin_footer_text', (string) $text );
+		return (string) apply_filters( 'jetonomy_admin_footer_text', $text );
 	}
 
 	public function hide_third_party_notices(): void {
@@ -1184,6 +1292,7 @@ class Admin {
 				'membershipAdapters' => $membership_adapters,
 			)
 		);
+		wp_localize_script( 'jetonomy-admin', 'jetonomyLabels', \Jetonomy\label_map() );
 
 		// Per-page admin scripts. WP builds sub-page hooks as
 		// '{sanitize_title(menu_label)}_page_{slug}', and White Label filters the
@@ -1233,34 +1342,18 @@ class Admin {
 	// ── Page Renderers ──
 
 	public function render_dashboard(): void {
-		global $wpdb;
-
-		$posts_t    = table( 'posts' );
-		$replies_t  = table( 'replies' );
-		$spaces_t   = table( 'spaces' );
-		$users_t    = table( 'user_profiles' );
-		$flags_t    = table( 'flags' );
-		$activity_t = table( 'activity_log' );
-
 		$today = current_time( 'Y-m-d' );
 
 		$stats = array(
-			'total_posts'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish'" ),
-			'total_replies' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'publish'" ),
-			'active_spaces' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE status = 'active'" ),
-			'users'         => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$users_t}" ),
-			'pending_flags' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" ),
-			'posts_today'   => (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish' AND created_at >= %s",
-					$today . ' 00:00:00'
-				)
-			),
+			'total_posts'   => Post::count( array( 'status' => 'publish' ) ),
+			'total_replies' => Reply::count( array( 'status' => 'publish' ) ),
+			'active_spaces' => Space::count( array( 'status' => 'active' ) ),
+			'users'         => UserProfile::count(),
+			'pending_flags' => Flag::count_pending( \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ) ),
+			'posts_today'   => Post::count_published_since( $today . ' 00:00:00' ),
 		);
 
-		$recent_activity = $wpdb->get_results(
-			"SELECT * FROM {$activity_t} ORDER BY created_at DESC LIMIT 10"
-		) ?: array();
+		$recent_activity = ActivityLog::list_recent( 10 ) ?: array();
 
 		$base_slug = \Jetonomy\base_slug();
 
@@ -1293,27 +1386,13 @@ class Admin {
 			return $cached;
 		}
 
-		global $wpdb;
-		$posts_t    = table( 'posts' );
-		$replies_t  = table( 'replies' );
-		$spaces_t   = table( 'spaces' );
-		$activity_t = table( 'activity_log' );
-		$since      = gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS );
-
-		$top = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT s.title, COUNT(*) AS n FROM {$posts_t} p
-				 INNER JOIN {$spaces_t} s ON s.id = p.space_id
-				 WHERE p.status = 'publish' AND p.created_at >= %s
-				 GROUP BY p.space_id, s.title ORDER BY n DESC LIMIT 1",
-				$since
-			)
-		);
+		$since = gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS );
+		$top   = Post::busiest_space_since( $since );
 
 		$pulse = array(
-			'posts'           => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish' AND created_at >= %s", $since ) ),
-			'replies'         => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'publish' AND created_at >= %s", $since ) ),
-			'contributors'    => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT user_id) FROM {$activity_t} WHERE created_at >= %s", $since ) ),
+			'posts'           => Post::count_published_since( $since ),
+			'replies'         => Reply::count_published_since( $since ),
+			'contributors'    => ActivityLog::count_contributors_since( $since ),
 			'top_space'       => $top->title ?? null,
 			'top_space_posts' => (int) ( $top->n ?? 0 ),
 		);
@@ -1375,19 +1454,17 @@ class Admin {
 	}
 
 	public function render_spaces(): void {
-		global $wpdb;
-
 		$action   = sanitize_text_field( $_GET['action'] ?? 'list' );
 		$space_id = absint( $_GET['space_id'] ?? 0 );
 
 		if ( 'edit' === $action && $space_id > 0 ) {
 			$space = Space::find( $space_id );
 			if ( ! $space ) {
-				/* translators: %s: the singular label of the item (the configured noun). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
 			$categories = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );
-			// Explicit cap (plan WP1.5): the unbounded default rendered every
+			// Explicit cap: the unbounded default rendered every
 			// member row on one screen. 1000 keeps this management surface
 			// functional; when the space is larger the view shows a notice so
 			// members past the cap are never SILENTLY hidden from the only
@@ -1407,58 +1484,32 @@ class Admin {
 		$filter_type     = sanitize_text_field( $_GET['type'] ?? '' );
 		$filter_status   = sanitize_text_field( $_GET['status'] ?? '' );
 
-		$where = array( '1=1' );
-		if ( $filter_category ) {
-			$where[] = $wpdb->prepare( 'category_id = %d', $filter_category );
-		}
-		if ( $filter_type && in_array( $filter_type, Space::valid_types(), true ) ) {
-			$where[] = $wpdb->prepare( 'type = %s', $filter_type );
-		}
-		if ( $filter_status && in_array( $filter_status, array( 'active', 'archived', 'locked' ), true ) ) {
-			$where[] = $wpdb->prepare( 'status = %s', $filter_status );
-		}
-
-		$where_sql = implode( ' AND ', $where );
-		$spaces_t  = table( 'spaces' );
-		$paged     = max( 1, absint( $_GET['paged'] ?? 1 ) );
-		$per_page  = absint( $_GET['per_page'] ?? 20 );
+		$filters  = array(
+			'category_id' => $filter_category,
+			'type'        => $filter_type,
+			'status'      => $filter_status,
+		);
+		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page = absint( $_GET['per_page'] ?? 20 );
 		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
 			$per_page = 20;
 		}
 		$offset = ( $paged - 1 ) * $per_page;
 
-		// Manual ordering is only meaningful inside one category - that is the
-		// unit the front end renders (Space::list_by_category). With a single
-		// category filtered we sort the way members see it, so the admin is a
-		// preview and drag-reorder has somewhere coherent to write. Otherwise
-		// the list stays alphabetical, which is what you want when browsing
-		// every space across categories.
+		// Inside one category (and nothing else filtered) the list follows the
+		// manual order members see, so drag-reorder has a coherent target.
 		$can_reorder = $filter_category > 0 && ! $filter_type && ! $filter_status;
-		$order_sql   = $can_reorder ? 'sort_order ASC, title ASC' : 'title ASC';
 
-		$total       = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE {$where_sql}" );
+		$total       = Space::count_for_admin( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
-		$spaces      = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_sql is one of two literals above.
-				"SELECT * FROM {$spaces_t} WHERE {$where_sql} ORDER BY {$order_sql} LIMIT %d OFFSET %d",
-				$per_page,
-				$offset
-			)
-		) ?: array();
-		$categories = Category::list_tree();
+		$spaces      = Space::list_for_admin( $filters, $per_page, $offset );
+		$categories  = Category::list_tree();
 
 		include JETONOMY_DIR . 'includes/admin/views/spaces.php';
 	}
 
 	public function render_moderation(): void {
-		global $wpdb;
-
-		$posts_t        = table( 'posts' );
-		$replies_t      = table( 'replies' );
-		$flags_t        = table( 'flags' );
-		$restrictions_t = table( 'restrictions' );
-		$per_page       = 20;
+		$per_page = 20;
 
 		// Per-tab paged params.
 		$paged_posts   = max( 1, absint( $_GET['paged_posts'] ?? 1 ) );
@@ -1466,75 +1517,36 @@ class Admin {
 		$paged_flags   = max( 1, absint( $_GET['paged_flags'] ?? 1 ) );
 		$paged_banned  = max( 1, absint( $_GET['paged_banned'] ?? 1 ) );
 
-		// Real totals for tab badge counts. Posts/replies reuse the shared
-		// count-by-status model methods (same COUNT(*) the REST queue uses);
-		// the paginated list queries below keep their display JOINs (space/post
-		// title) and stay here since the API path doesn't need those columns.
-		$total_posts   = Post::count_by_status( array( 'pending' ) );
-		$total_replies = Reply::count_by_status( array( 'pending' ) );
-		$total_flags   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" );
-		$total_banned  = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$restrictions_t}
-				 WHERE type IN ('global_ban','space_ban','silence')
-				 AND (expires_at IS NULL OR expires_at > %s)",
-				now()
-			)
-		);
+		// Site moderators (not administrators) never see the queue of a private
+		// or hidden space they cannot read - rows and totals alike.
+		$skip          = \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() );
+		$scope         = $skip ? array( 'skip_spaces' => $skip ) : null;
+		$total_posts   = Post::count_by_status( array( 'pending' ), $scope );
+		$total_replies = Reply::count_by_status( array( 'pending' ), $scope );
+		$total_flags   = Flag::count_pending( $skip );
+		$total_banned  = Restriction::count_active();
 
-		$pending_posts = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT p.*, s.title as space_title
-				 FROM {$posts_t} p
-				 LEFT JOIN " . table( 'spaces' ) . " s ON s.id = p.space_id
-				 WHERE p.status = 'pending'
-				 ORDER BY p.created_at DESC
-				 LIMIT %d OFFSET %d",
-				$per_page,
-				( $paged_posts - 1 ) * $per_page
-			)
-		) ?: array();
-
-		$pending_replies = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT r.*, p.title as post_title
-				 FROM {$replies_t} r
-				 LEFT JOIN {$posts_t} p ON p.id = r.post_id
-				 WHERE r.status = 'pending'
-				 ORDER BY r.created_at DESC
-				 LIMIT %d OFFSET %d",
-				$per_page,
-				( $paged_replies - 1 ) * $per_page
-			)
-		) ?: array();
-
-		$pending_flags = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$flags_t}
-				 WHERE status = 'pending'
-				 ORDER BY created_at DESC
-				 LIMIT %d OFFSET %d",
-				$per_page,
-				( $paged_flags - 1 ) * $per_page
-			)
-		) ?: array();
+		$pending_posts   = Post::list_pending_with_space( $per_page, ( $paged_posts - 1 ) * $per_page, $skip );
+		$pending_replies = Reply::list_pending_with_post( $per_page, ( $paged_replies - 1 ) * $per_page, $skip );
+		$pending_flags   = Flag::list_pending( $per_page, ( $paged_flags - 1 ) * $per_page, $skip );
 
 		$this->prime_flag_objects( $pending_flags );
 
-		$banned_users = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT r.*, u.display_name, u.user_login
-				 FROM {$restrictions_t} r
-				 LEFT JOIN {$wpdb->users} u ON u.ID = r.user_id
-				 WHERE r.type IN ('global_ban','space_ban','silence')
-				 AND (r.expires_at IS NULL OR r.expires_at > %s)
-				 ORDER BY r.created_at DESC
-				 LIMIT %d OFFSET %d",
-				now(),
-				$per_page,
-				( $paged_banned - 1 ) * $per_page
+		// Bans, silences and space bans, with the account name the list shows.
+		$banned_users = Restriction::list_active(
+			array(
+				'limit'  => $per_page,
+				'offset' => ( $paged_banned - 1 ) * $per_page,
 			)
-		) ?: array();
+		);
+		if ( $banned_users ) {
+			cache_users( array_map( static fn( $r ) => (int) $r->user_id, $banned_users ) );
+			foreach ( $banned_users as $ban ) {
+				$account           = get_userdata( (int) $ban->user_id );
+				$ban->display_name = $account ? $account->display_name : null;
+				$ban->user_login   = $account ? $account->user_login : null;
+			}
+		}
 
 		include JETONOMY_DIR . 'includes/admin/views/moderation.php';
 	}
@@ -1611,39 +1623,7 @@ class Admin {
 		}
 		check_admin_referer( 'jetonomy_activity_export' );
 
-		global $wpdb;
-		$activity_t = table( 'activity_log' );
-		$filters    = Activity_List_Table::read_filters();
-
-		$clauses = array( '1=1' );
-		$args    = array();
-		if ( $filters['user_id'] > 0 ) {
-			$clauses[] = 'user_id = %d';
-			$args[]    = $filters['user_id'];
-		}
-		if ( '' !== $filters['action'] ) {
-			$clauses[] = 'action = %s';
-			$args[]    = $filters['action'];
-		}
-		if ( '' !== $filters['date_from'] ) {
-			$clauses[] = 'created_at >= %s';
-			$args[]    = $filters['date_from'] . ' 00:00:00';
-		}
-		if ( '' !== $filters['date_to'] ) {
-			$clauses[] = 'created_at <= %s';
-			$args[]    = $filters['date_to'] . ' 23:59:59';
-		}
-		$where = implode( ' AND ', $clauses );
-
-		// Hard cap at 50k rows so a sloppy filter set can't generate a
-		// gigabyte download. Admins who need bigger exports should
-		// narrow the date range or use WP-CLI directly against the table.
-		$sql       = "SELECT id, user_id, action, object_type, object_id, metadata, created_at FROM {$activity_t} WHERE {$where} ORDER BY created_at DESC LIMIT 50000";
-		$full_args = $args;
-		$rows      = $full_args
-			? $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ), ARRAY_A )
-			: $wpdb->get_results( $sql, ARRAY_A );
-		$rows      = is_array( $rows ) ? $rows : array();
+		$rows = ActivityLog::export_rows( Activity_List_Table::read_filters() );
 
 		$filename = sprintf( 'jetonomy-activity-%s.csv', gmdate( 'Y-m-d-His' ) );
 
@@ -1658,9 +1638,15 @@ class Admin {
 			exit;
 		}
 		fputcsv( $out, array( 'id', 'user_id', 'user_login', 'action', 'object_type', 'object_id', 'metadata', 'created_at' ) );
+		$objects = \Jetonomy\Author::objects_of( array_map( static fn( $r ) => (object) $r, $rows ) );
 		foreach ( $rows as $row ) {
+			// Anonymous authors stay anonymous in the export too; only a logged Reveal names them.
+			$hidden = \Jetonomy\Author::hides_actor( (int) $row['user_id'], $objects[ $row['object_type'] . ':' . (int) $row['object_id'] ] ?? null );
+			if ( $hidden ) {
+				$row['user_id'] = 0;
+			}
 			$user       = $row['user_id'] ? get_userdata( (int) $row['user_id'] ) : null;
-			$user_login = $user ? $user->user_login : '';
+			$user_login = $hidden ? __( 'Anonymous', 'jetonomy' ) : ( $user ? $user->user_login : '' );
 			fputcsv(
 				$out,
 				array(
@@ -1736,84 +1722,34 @@ class Admin {
 	 * no batching needed here.
 	 */
 	private function resolve_revision_object_title( string $type, int $id ): string {
-		global $wpdb;
-
 		if ( 'post' === $type ) {
-			$posts_t = table( 'posts' );
-			$title   = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT title FROM {$posts_t} WHERE id = %d",
-					$id
-				)
-			);
-			return is_string( $title ) ? $title : '';
+			return Post::titles_by_ids( array( $id ) )[ $id ] ?? '';
 		}
 
 		if ( 'reply' === $type ) {
-			$replies_t = table( 'replies' );
-			$posts_t   = table( 'posts' );
-			$parent    = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT p.title FROM {$replies_t} r LEFT JOIN {$posts_t} p ON p.id = r.post_id WHERE r.id = %d",
-					$id
-				)
-			);
-			if ( is_string( $parent ) && '' !== $parent ) {
+			$parent = Reply::parents_by_ids( array( $id ) )[ $id ]['title'] ?? '';
+			if ( '' !== $parent ) {
 				return sprintf(
-					/* translators: %s: parent post title */
-					__( 'Reply to: %s', 'jetonomy' ),
+					/* translators: 1: reply label (e.g. "Reply"). 2: parent post title. */
+					__( '%1$s to: %2$s', 'jetonomy' ),
+					\Jetonomy\jetonomy_label( 'reply' ),
 					$parent
 				);
 			}
-			return '';
 		}
 
 		return '';
 	}
 
 	public function render_users(): void {
-		global $wpdb;
-
 		$search       = sanitize_text_field( $_GET['s'] ?? '' );
 		$filter_trust = sanitize_text_field( $_GET['trust_level'] ?? '' );
 		$paged        = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page     = 20;
 		$offset       = ( $paged - 1 ) * $per_page;
 
-		$profiles_t = table( 'user_profiles' );
-
-		$where      = array( '1=1' );
-		$join_where = '';
-
-		if ( '' !== $filter_trust && is_numeric( $filter_trust ) ) {
-			$where[] = $wpdb->prepare( 'p.trust_level = %d', absint( $filter_trust ) );
-		}
-		if ( $search ) {
-			$like    = '%' . $wpdb->esc_like( $search ) . '%';
-			$where[] = $wpdb->prepare( '(u.user_login LIKE %s OR u.display_name LIKE %s OR u.user_email LIKE %s)', $like, $like, $like );
-		}
-
-		$where_sql = implode( ' AND ', $where );
-
-		$total = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$profiles_t} p
-			 INNER JOIN {$wpdb->users} u ON u.ID = p.user_id
-			 WHERE {$where_sql}"
-		);
-
-		$users = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT p.*, u.user_login, u.display_name as wp_display_name, u.user_email, u.user_registered
-				 FROM {$profiles_t} p
-				 INNER JOIN {$wpdb->users} u ON u.ID = p.user_id
-				 WHERE {$where_sql}
-				 ORDER BY p.reputation DESC
-				 LIMIT %d OFFSET %d",
-				$per_page,
-				$offset
-			)
-		) ?: array();
-
+		$total       = UserProfile::count_for_admin( $filter_trust, $search );
+		$users       = UserProfile::list_for_admin( $filter_trust, $search, $per_page, $offset );
 		$total_pages = ceil( $total / $per_page );
 
 		include JETONOMY_DIR . 'includes/admin/views/users.php';
@@ -1879,94 +1815,32 @@ class Admin {
 			return;
 		}
 
-		global $wpdb;
-		$posts_t  = table( 'posts' );
-		$spaces_t = table( 'spaces' );
-
 		$current_space  = absint( $_GET['space_id'] ?? 0 );
 		$current_status = sanitize_text_field( $_GET['status'] ?? 'all' );
 		$search_query   = sanitize_text_field( $_GET['s'] ?? '' );
 
-		$spaces = $wpdb->get_results( "SELECT id, title FROM {$spaces_t} ORDER BY title ASC" ) ?: array();
+		$spaces = Space::list_titles();
 
-		$where = '1=1';
-		$args  = array();
-		if ( $current_space ) {
-			$where .= ' AND p.space_id = %d';
-			$args[] = $current_space;
-		}
-
-		/*
-		 * "Scheduled" is a pseudo-status: a scheduled post is an ordinary row
-		 * with published_at in the future, not a value in the status column.
-		 *
-		 * Before this, scheduling was reachable from the composer and the REST
-		 * API and from cron, and from NOWHERE in wp-admin - the owner could not
-		 * see what was queued, reschedule it, or answer "why has my post not
-		 * appeared". That failed the three-entry-points rule, and the plugin's
-		 * own demo copy already admitted the gap ("the scheduled badge does not
-		 * yet show in the listing").
-		 */
-		if ( 'scheduled' === $current_status ) {
-			// status='draft' is the load-bearing half. Without it this matched
-			// ANY row with a future published_at, so a published post that an
-			// admin had forward-dated listed as Scheduled (carrying both a
-			// "Published" and a "Scheduled" badge), as did a scheduled post that
-			// had since been trashed or marked spam.
-			//
-			// No `published_at > NOW()` either: a post whose time has passed but
-			// which the hourly cron has not published yet would drop out of the
-			// filter entirely - and "why has my post not gone live" is the exact
-			// question this screen exists to answer. Those rows stay, badged
-			// Overdue by the view.
-			//
-			// status is indexed (status_created), so this uses an index where
-			// the published_at-only predicate full-scanned.
-			$where .= " AND p.status = 'draft' AND p.published_at IS NOT NULL";
-		} elseif ( 'all' !== $current_status ) {
-			$where .= ' AND p.status = %s';
-			$args[] = $current_status;
-		} else {
-			// WordPress convention: "All" is everything EXCEPT the trash, which
-			// has its own filter. Listing trashed topics under All is how a
-			// deleted topic stayed on screen with a Trash badge and looked
-			// undeletable (Basecamp 10335997408).
-			$where .= " AND p.status <> 'trash'";
-		}
-		if ( $search_query ) {
-			$where .= ' AND p.title LIKE %s';
-			$args[] = '%' . $wpdb->esc_like( $search_query ) . '%';
-		}
+		// "Scheduled" is a pseudo-status (a draft with a published_at) and "All"
+		// leaves out the trash; Post::list_for_admin() owns both rules.
+		$filters = array(
+			'space_id' => $current_space,
+			'status'   => $current_status,
+			'search'   => $search_query,
+		);
 
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = 20;
 		$offset   = ( $paged - 1 ) * $per_page;
 
-		// Total count with same filters (no LIMIT).
-		$count_sql   = "SELECT COUNT(*) FROM {$posts_t} p WHERE {$where}";
-		$total       = (int) ( $args ? $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) ) : $wpdb->get_var( $count_sql ) );
+		$total       = Post::count_for_admin( $filters );
 		$total_pages = (int) ceil( $total / $per_page );
+		$posts       = Post::list_for_admin( $filters, $per_page, $offset );
 
-		$sql = "SELECT p.*, s.title AS space_title, s.slug AS space_slug
-		        FROM {$posts_t} p
-		        LEFT JOIN {$spaces_t} s ON s.id = p.space_id
-		        WHERE {$where}
-		        ORDER BY p.created_at DESC
-		        LIMIT %d OFFSET %d";
-
-		$full_args = array_merge( $args, array( $per_page, $offset ) );
-		$posts     = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: array();
-
-		// Count for the Scheduled filter label. The card asked for one and the
-		// only number on screen was "1-N of N", which appears AFTER you pick the
-		// filter - no use for deciding whether to look.
-		$scheduled_count = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'draft' AND p.published_at IS NOT NULL"
-		);
-
-		// Same idea for Trash: now that All leaves it out, the filter label is
-		// the only place an owner learns there is anything in there.
-		$trash_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} p WHERE p.status = 'trash'" );
+		// Counts for the Scheduled and Trash filter labels, the only place an
+		// owner learns there is anything in either.
+		$scheduled_count = Post::count_scheduled();
+		$trash_count     = Post::count( array( 'status' => 'trash' ) );
 
 		// Site-timezone "now", for the view's Overdue split. Computed once here
 		// rather than per row.
@@ -1980,14 +1854,10 @@ class Admin {
 	 * Handles pagination for posts with hundreds/thousands of replies.
 	 */
 	private function render_post_replies( int $post_id ): void {
-		global $wpdb;
-
 		$post = Post::find( $post_id );
 		if ( ! $post ) {
 			wp_die( esc_html__( 'Post not found.', 'jetonomy' ) );
 		}
-
-		$replies_t = table( 'replies' );
 
 		// Status filter.
 		$current_status = sanitize_text_field( $_GET['status'] ?? 'all' );
@@ -1999,34 +1869,20 @@ class Admin {
 		// Search.
 		$search_query = sanitize_text_field( $_GET['s'] ?? '' );
 
-		// Build WHERE clause.
-		$where = 'r.post_id = %d';
-		$args  = array( $post_id );
-		if ( 'all' !== $current_status ) {
-			$where .= ' AND r.status = %s';
-			$args[] = $current_status;
-		} else {
-			// All excludes the trash, as on the topics screen.
-			$where .= " AND r.status <> 'trash'";
-		}
-		if ( $search_query ) {
-			$where .= ' AND r.content_plain LIKE %s';
-			$args[] = '%' . $wpdb->esc_like( $search_query ) . '%';
-		}
-
 		// Pagination — 50 per page for large reply sets.
 		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
 		$per_page = 50;
 		$offset   = ( $paged - 1 ) * $per_page;
 
-		$count_sql   = "SELECT COUNT(*) FROM {$replies_t} r WHERE {$where}";
-		$total       = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) );
+		$total       = Reply::count_for_admin_post( $post_id, $current_status, $search_query );
 		$total_pages = (int) ceil( $total / $per_page );
-
-		$sql     = "SELECT r.* FROM {$replies_t} r WHERE {$where} ORDER BY r.created_at ASC LIMIT %d OFFSET %d";
-		$replies = $wpdb->get_results( $wpdb->prepare( $sql, ...array_merge( $args, array( $per_page, $offset ) ) ) ) ?: array();
-
-		$trash_count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = %d AND r.status = 'trash'", $post_id ) );
+		$replies     = Reply::list_for_admin_post( $post_id, $current_status, $search_query, $per_page, $offset );
+		$trash_count = Reply::count(
+			array(
+				'post_id' => $post_id,
+				'status'  => 'trash',
+			)
+		);
 
 		$nonce_value = wp_create_nonce( 'jetonomy_admin' );
 

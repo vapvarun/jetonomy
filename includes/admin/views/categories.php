@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 	<!-- Add New Category Form -->
 	<div class="jt-settings-card" id="jetonomy-add-category-form">
 		<div class="jt-settings-card__head">
-			<h2 class="jt-settings-card__title"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Add New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></h2>
+			<h2 class="jt-settings-card__title"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Add New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></h2>
 		</div>
 		<div class="jetonomy-form-grid">
 			<div class="jetonomy-form-field">
@@ -51,7 +51,7 @@ defined( 'ABSPATH' ) || exit;
 					<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
 				</select>
 				<p class="description" id="cat-visibility-help">
-					<?php esc_html_e( 'Public: anyone can see it. Private: signed-in members can see it. Hidden: only you and other category managers can see it - and the spaces inside it are hidden too, whatever their own visibility says.', 'jetonomy' ); ?>
+					<?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: category label, lowercase (e.g. "category"). 3: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'Public: anyone can see it. Private: signed-in %1$s can see it. Hidden: only you and other %2$s managers can see it - and the %3$s inside it are hidden too, whatever their own visibility says.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>
 				</p>
 			</div>
 			<div class="jetonomy-form-field jetonomy-form-field--wide">
@@ -76,7 +76,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		</div>
 		<p>
-			<button type="button" class="button button-primary" id="jetonomy-save-category"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Add %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></button>
+			<button type="button" class="button button-primary" id="jetonomy-save-category"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Add %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></button>
 			<span class="spinner"></span>
 		</p>
 	</div>
@@ -103,8 +103,8 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 
 			<p class="search-box">
-				<label class="screen-reader-text" for="cats-search"><?php esc_html_e( 'Search categories', 'jetonomy' ); ?></label>
-				<input type="search" id="cats-search" name="s" value="<?php echo esc_attr( isset( $search ) ? $search : '' ); ?>" placeholder="<?php esc_attr_e( 'Search categories…', 'jetonomy' ); ?>">
+				<label class="screen-reader-text" for="cats-search"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?></label>
+				<input type="search" id="cats-search" name="s" value="<?php echo esc_attr( isset( $search ) ? $search : '' ); ?>" placeholder="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?>">
 				<button type="submit" class="button"><?php esc_html_e( 'Search', 'jetonomy' ); ?></button>
 			</p>
 		</form>
@@ -114,7 +114,6 @@ defined( 'ABSPATH' ) || exit;
 		// its child flag so the cell renderer can indent. The renderer emits
 		// the responsive contract (column-primary / data-colname / toggle-row)
 		// this hand-rolled table omitted - which is why it clipped on mobile
-		// (Basecamp 10146440768, root cause 10146443346).
 		$jt_cat_rows = array();
 		foreach ( (array) ( $categories ?? array() ) as $jt_cat ) {
 			$jt_cat->jt_is_child = false;
@@ -163,7 +162,7 @@ defined( 'ABSPATH' ) || exit;
 					)
 					: array(
 						'icon'  => 'category',
-						/* translators: %s: the plural label of the item (the configured noun). */
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 						'title' => sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
 						/* translators: 1: plural category label; 2: plural space label (lowercase). */
 						'body'  => sprintf( __( '%1$s let you group related %2$s. Create your first one using the form above.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\space_label( true, true ) ),
@@ -295,7 +294,7 @@ defined( 'ABSPATH' ) || exit;
 						<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
 					</select>
 					<p class="description" id="edit-cat-visibility-help">
-						<?php esc_html_e( 'Public: anyone can see it. Private: signed-in members can see it. Hidden: only you and other category managers can see it - and the spaces inside it are hidden too, whatever their own visibility says.', 'jetonomy' ); ?>
+						<?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: category label, lowercase (e.g. "category"). 3: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'Public: anyone can see it. Private: signed-in %1$s can see it. Hidden: only you and other %2$s managers can see it - and the %3$s inside it are hidden too, whatever their own visibility says.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>
 					</p>
 				</div>
 				<div class="jetonomy-form-field jetonomy-form-field--wide">
@@ -321,6 +320,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<p class="jetonomy-modal__actions">
 				<button type="button" class="button button-primary" id="jetonomy-update-category"><?php /* translators: %s: the label of the item being saved (the configured noun). */ echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></button>
+
 				<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></button>
 				<span class="spinner"></span>
 			</p>

@@ -40,7 +40,7 @@
 							var parsed = parseInt( next, 10 );
 							setAttributes( { spaceId: isNaN( parsed ) ? 0 : parsed } );
 						},
-						help: __( 'Numeric ID of the space to post into. Invalid IDs fall back to picker at render time.', 'jetonomy' ),
+						help: __( 'Numeric ID of the space to post into. Leave empty to let the member choose. An ID that matches no space shows a notice.', 'jetonomy' ),
 					} ) : null,
 					createElement( TextControl, {
 						label: __( 'Allowed types', 'jetonomy' ),

@@ -161,7 +161,6 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		// This asked for /spaces with no params, so it got the default 20 and
 		// silently dropped the rest - on a bbPress import, where each forum
 		// becomes a space, most targets were simply absent from the dialog
-		// (Basecamp 10268682629).
 		//
 		// The endpoint caps `limit` at 100, so pages are followed until the
 		// reported total is reached. No search box: a native <select> already
@@ -189,13 +188,12 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 					opt.textContent = s.title;
 					select.appendChild( opt );
 				} );
+				// The placeholder stayed on "Loading…" after the list arrived and
+				// read as stuck; it now says what to do.
 				if ( select.options.length <= 1 ) {
-					// Only the placeholder — no other spaces available.
-					const noneOpt = document.createElement( 'option' );
-					noneOpt.textContent = t.noOtherSpaces || 'No other spaces available';
-					noneOpt.disabled = true;
-					select.appendChild( noneOpt );
+					loadingOpt.textContent = t.noOtherSpaces || 'No other spaces available';
 				} else {
+					loadingOpt.textContent = t.chooseSpaceOption || 'Select space…';
 					select.addEventListener( 'change', () => { okBtn.disabled = ! select.value; } );
 				}
 			} )
@@ -254,8 +252,8 @@ function jetonomyPostPicker( title, excludePostId, spaceId, sourceTitle ) {
 		const searchInput = document.createElement( 'input' );
 		searchInput.type = 'search';
 		searchInput.className = 'jt-modal-picker-input';
-		searchInput.placeholder = t.searchTopicPlaceholder || 'Search for a topic...';
-		searchInput.setAttribute( 'aria-label', t.searchTopicPlaceholder || 'Search for a topic' );
+		searchInput.placeholder = t.searchTopicPlaceholder || 'Search topics...';
+		searchInput.setAttribute( 'aria-label', t.searchTopicPlaceholder || 'Search topics' );
 		searchWrap.appendChild( searchInput );
 		box.appendChild( searchWrap );
 
@@ -852,11 +850,62 @@ function jtSetCoverPreview( form, url ) {
  * @param {Element|null|undefined} el Vote button.
  * @param {boolean}                on Whether the viewer's vote is on this button.
  */
+/**
+ * One confirmation toast per vote, for topics and replies alike, saying what
+ * happened: added or taken back. A repeat of the same message within 2s is dropped.
+ *
+ * @param {Object} data REST vote response ({ action: 'created'|'updated'|'removed' }).
+ */
+function jetonomyVoteToast( data ) {
+    if ( ! window.bnToast ) return;
+    const i18n = state.i18n || {}; // Module-level store state; only read on click, after init.
+    const msg  = data && data.action === 'removed'
+        ? ( i18n.voteRemoved || 'Vote removed' )
+        : ( i18n.voteRecorded || 'Vote added' );
+    // Drop only a repeat of the same message; "added" then "removed" both show.
+    if ( window._jetonomyVoteToasted === msg ) return;
+    window.bnToast( msg );
+    window._jetonomyVoteToasted = msg;
+    setTimeout( () => { if ( window._jetonomyVoteToasted === msg ) window._jetonomyVoteToasted = false; }, 2000 );
+}
+
 function jetonomySetVoted( el, on ) {
     if ( ! el ) return;
     el.classList.toggle( 'voted', !! on );
     el.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+    // "Remove your upvote" while active, so a second press reads as taking the
+    // vote back (jetonomy_vote_attrs() renders both labels).
+    const label = on ? el.dataset.jtLabelOn : el.dataset.jtLabelOff;
+    if ( label ) {
+        el.setAttribute( 'title', label );
+        el.setAttribute( 'aria-label', label );
+    }
 }
+
+/**
+ * Plural-aware translation for counts shown by the app.
+ *
+ * view.js is a script module, so it cannot take wp_set_script_translations();
+ * the page passes the app's translations as state.localeData and they are
+ * loaded into wp.i18n just below the store, which knows every plural form of
+ * the site's language. Without wp.i18n it falls back to English's two forms.
+ *
+ * @param {string} single Singular form (contains %s for the number).
+ * @param {string} plural Plural form.
+ * @param {number} n      Count.
+ * @param {string} domain Text domain.
+ * @return {string} The form for n, number not yet substituted.
+ */
+const _n = ( single, plural, n, domain ) => {
+    // Pass-through wrapper: every caller hands it literal strings and the
+    // 'jetonomy' domain, which is what the string extractors read.
+    // eslint-disable-next-line @wordpress/i18n-text-domain, @wordpress/i18n-no-variables
+    const translated = window.wp?.i18n?._n ? window.wp.i18n._n( single, plural, n, domain ) : single;
+    // Still untranslated: wp.i18n then picks the language's first form for every
+    // count (one-form languages such as Japanese read "3 reply"), so use English's
+    // rule on the English source, as PHP's _n() does.
+    return ( translated === single || translated === plural ) ? ( 1 === n ? single : plural ) : translated;
+};
 
 const { state, actions } = store( 'jetonomy', {
     state: {
@@ -899,9 +948,11 @@ const { state, actions } = store( 'jetonomy', {
             const i18n = state.i18n || {};
             const n    = Number( ctx.childCount ) || 0;
             if ( ctx.collapsed ) {
-                const label = 1 === n
-                    ? ( i18n.showRepliesOne || 'Show 1 reply' )
-                    : ( i18n.showRepliesMany || 'Show %d replies' ).replace( '%d', n );
+                const noun  = state.replyNoun;
+                const label = ( noun
+                    ? ( i18n.showCount || 'Show %s' ).replace( '%s', n + ' ' + ( 1 === n ? noun[ 0 ] : noun[ 1 ] ) )
+                    // jt-terms-ok: only reached when the reply noun is not renamed (full plural forms).
+                    : /* translators: %s: number of replies. */ _n( 'Show %s reply', 'Show %s replies', n, 'jetonomy' ).replace( '%s', String( n ) ) );
                 return '+ ' + label;
             }
             return '\u2212 ' + ( i18n.hideReplies || 'Hide replies' );
@@ -998,7 +1049,7 @@ const { state, actions } = store( 'jetonomy', {
                 // #jt-badges, #digest-preferences, …) on soft navigation. A full
                 // page load scrolls to the hash automatically; a region swap does
                 // NOT, so without this EVERY in-app deep-link with a fragment
-                // landed at the top of the new page (Basecamp 10244152181 - the
+                // lands at the top of the new page (e.g. the
                 // Notifications "Settings" button). scroll-margin-top on the
                 // target clears the sticky header. Falls back to top when there
                 // is no fragment or nothing matches.
@@ -1044,7 +1095,7 @@ const { state, actions } = store( 'jetonomy', {
             const name   = nameEl ? nameEl.textContent.trim() : '';
 
             const confirmBody = ( i18n.confirmRoleChange || 'Change %name% from %from% to %to%?' )
-                .replace( '%name%', name || 'this member' )
+                .replace( '%name%', name || i18n.thisMember || 'this member' )
                 .replace( '%from%', labels[ prev ] || prev )
                 .replace( '%to%', labels[ role ] || role );
             const confirmed = 'function' === typeof window.jetonomyConfirm
@@ -1142,7 +1193,7 @@ const { state, actions } = store( 'jetonomy', {
             const i18n      = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const isSilence = 'silence' === type;
             const bodyTpl   = isSilence
-                ? ( i18n.silenceConfirmFormat || 'Silence %s? They stay a member but cannot post, reply, or file reports until you lift it.' )
+                ? ( i18n.silenceConfirmFormat || 'Silence %s? They stay in the community but cannot post, reply, or file reports until you lift it.' )
                 : ( i18n.banSiteConfirmFormat || 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.' );
             const ok = yield window.jetonomyConfirm( bodyTpl.replace( '%s', name || '' ), {
                 title: isSilence ? ( i18n.silenceTitle || 'Silence member' ) : ( i18n.banSiteTitle || 'Ban member' ),
@@ -1169,7 +1220,7 @@ const { state, actions } = store( 'jetonomy', {
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const ok = yield window.jetonomyConfirm(
                 ( i18n.liftConfirmFormat || 'Lift the restriction on %s? They regain full access right away.' ).replace( '%s', name || '' ),
-                { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift' }
+                { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift restriction' }
             );
             if ( ! ok ) return;
 
@@ -1670,11 +1721,7 @@ const { state, actions } = store( 'jetonomy', {
                         jetonomySetVoted( btnEl, true );
                         jetonomySetVoted( downSibling, false );
                     }
-                    if ( window.bnToast && ! window._jetonomyVoteToasted ) {
-                        window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
-                        window._jetonomyVoteToasted = true;
-                        setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 );
-                    }
+                    jetonomyVoteToast( data );
                 },
                 revert: ( snap ) => {
                     state.postScores[ postId ] = snap.prevScore;
@@ -1727,11 +1774,7 @@ const { state, actions } = store( 'jetonomy', {
                         jetonomySetVoted( btnEl, true );
                         jetonomySetVoted( upSibling, false );
                     }
-                    if ( window.bnToast && ! window._jetonomyVoteToasted ) {
-                        window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
-                        window._jetonomyVoteToasted = true;
-                        setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 );
-                    }
+                    jetonomyVoteToast( data );
                 },
                 revert: ( snap ) => {
                     state.postScores[ postId ] = snap.prevScore;
@@ -1785,6 +1828,7 @@ const { state, actions } = store( 'jetonomy', {
                         jetonomySetVoted( btnEl, true );
                         jetonomySetVoted( downSibling, false );
                     }
+                    jetonomyVoteToast( data );
                 },
                 revert: ( snap ) => {
                     state.replyScores[ replyId ] = snap.prevScore;
@@ -1842,10 +1886,11 @@ const { state, actions } = store( 'jetonomy', {
                         jetonomySetVoted( btnEl, true );
                         jetonomySetVoted( upSibling, false );
                     }
+                    jetonomyVoteToast( data );
                 },
                 revert: ( snap ) => {
                     // Restore DOM + state from snapshot — this was the
-                    // missing revert that caused #9886066727 (stale UI on
+                    // missing revert that caused a bug (stale UI on
                     // failed downvote until refresh).
                     state.replyScores[ replyId ] = snap.prevScore;
                     if ( scoreEl ) scoreEl.textContent = String( snap.prevScore );
@@ -1871,11 +1916,9 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = replyCard.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
-            // [Basecamp 9808714691 analog — same root cause as editPost]
-            // Old implementation used bodyEl.innerText into a <textarea>, so
-            // images, links, and inline formatting were stripped every time
-            // a user edited a reply. Now we use a contenteditable div seeded
-            // with bodyEl.innerHTML, and submit innerHTML on save. Server-
+            // The editor is a contenteditable div seeded with bodyEl.innerHTML (not a
+            // <textarea> seeded with innerText, which strips images, links and inline
+            // formatting on every edit); innerHTML is submitted on save. Server-
             // side wp_kses_post (Replies_Controller::update_item) still
             // polices which tags survive.
             bodyEl.style.display = 'none';
@@ -2129,22 +2172,16 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Share post ──
         //
-        // [Basecamp 9808920407] — Previously the dropdown was inserted as a
-        // SIBLING of the share button via `el.ref.after()` and positioned with
-        // CSS `bottom: 100%; left: 0`. Two compounding problems:
-        //   1. `position: absolute` anchors to the nearest positioned ancestor,
-        //      not a sibling — so the dropdown anchored to `.jt-post-foot` (the
-        //      shared parent), which is wider than the button and at the bottom
-        //      of the post card. With `bottom: 100%` the dropdown rendered
-        //      ~180px ABOVE that container, which for posts near the viewport
-        //      top put it off-screen at `top: -184.57px`. User saw "nothing".
-        //   2. The `.jt-more-dropdown` sibling pattern was fixed the same way
-        //      in 1.3.6 (Basecamp 9803818273 — see jetonomy.css `.jt-more-
-        //      dropdown` comment). Share was a missed sibling.
-        // Fix: append the dropdown to document.body with `position: fixed` and
-        // viewport-computed coordinates. Layout of `.jt-post-foot` can no
-        // longer affect anchoring. Right-aligned to the button's right edge,
-        // clamped to the viewport left edge so it never overflows horizontally.
+        // The dropdown is appended to document.body with `position: fixed` and
+        // viewport-computed coordinates, not inserted as a sibling of the share
+        // button. A sibling with `position: absolute; bottom: 100%` anchors to the
+        // nearest positioned ancestor (`.jt-post-foot`, the shared parent), which is
+        // wider than the button and at the bottom of the post card, so for posts
+        // near the viewport top the dropdown lands off-screen. Same approach as
+        // `.jt-more-dropdown` (see the jetonomy.css `.jt-more-dropdown` comment).
+        // Layout of `.jt-post-foot` cannot affect anchoring. Right-aligned to the
+        // button's right edge, clamped to the viewport left edge so it never
+        // overflows horizontally.
         sharePost() {
             const el = getElement();
             const url = el.ref.dataset.postUrl;
@@ -2302,12 +2339,10 @@ const { state, actions } = store( 'jetonomy', {
             const postId = btnEl.dataset.postId;
             if ( ! postId ) return;
 
-            // One place that moves every part of the bookmarked state, because
-            // three separate blocks (optimistic apply, server reconcile, revert)
-            // each used to set the data attribute, the class and the title -
-            // and none of them set the accessible name or pressed state. The
-            // icon colour is the visual feedback; a screen-reader user got
-            // nothing, and the name stayed "Bookmark" after bookmarking.
+            // One place that moves every part of the bookmarked state (data attribute, class,
+            // title, accessible name and pressed state) for the optimistic apply, the server
+            // reconcile and the revert. The icon colour is the visual feedback; a screen-reader
+            // user needs the accessible name and pressed state to change too.
             const setBookmarked = ( on ) => {
                 on = !! on;
                 const label = on
@@ -2453,10 +2488,9 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Toggle "more" dropdown menu ──
         //
-        // [1.4.3 WS3-B] Migrated to jetonomySmartDropdown — fixes
-        // Basecamp 9886004438: the last-reply More menu was clipped by
-        // overflow because the panel was absolutely positioned inside the
-        // reply card. The shared primitive uses `position: fixed`, flips up
+        // Uses jetonomySmartDropdown: a panel absolutely positioned inside the
+        // reply card gets clipped by overflow (the last-reply More menu). The
+        // shared primitive uses `position: fixed`, flips up
         // when there is no room below, and shifts to stay inside the
         // viewport. `group: 'jt-more'` ensures opening one closes the prior.
         toggleMoreMenu( event ) {
@@ -2499,19 +2533,13 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = article.querySelector( '.jt-post-body' );
             if ( ! bodyEl ) return;
 
-            // [Basecamp 9808714691 part 2] Previously this editor used a
-            // <textarea> seeded with bodyEl.innerText.trim() — which strips
-            // <img> tags and all HTML. On save the plain text was PATCHed
-            // back and the server's wp_kses_post pass had no image markup to
-            // preserve, so uploaded images were silently dropped from every
-            // edited post.
-            //
-            // Fix: render the editor as a contenteditable <div> seeded with
-            // bodyEl.innerHTML. The server already kses'd this markup before
-            // we rendered it, so re-using it as editor source is safe. On
-            // save we send editor.innerHTML so images, links, and inline
-            // formatting round-trip intact. Text-only edits still work —
-            // the user just types and the image stays visible in place.
+            // The editor is a contenteditable <div> seeded with bodyEl.innerHTML, not a
+            // <textarea> seeded with innerText, which strips <img> tags and all HTML and
+            // would silently drop uploaded images from every edited post. The server
+            // already kses'd this markup before we rendered it, so re-using it as
+            // editor source is safe. On save we send editor.innerHTML so images,
+            // links, and inline formatting round-trip intact. Text-only edits still
+            // work - the user just types and the image stays visible in place.
             bodyEl.style.display = 'none';
 
             // Pro custom-fields renders a hidden, pre-filled editable block
@@ -2781,7 +2809,7 @@ const { state, actions } = store( 'jetonomy', {
             const targetId = yield jetonomyPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId, sourceTitle );
             if ( ! targetId ) return;
 
-            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', { danger: true } ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? Its post, replies, votes and followers move there and this topic goes to the trash.', { danger: true } ) ) ) return;
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }/merge`, {
@@ -3132,9 +3160,13 @@ const { state, actions } = store( 'jetonomy', {
                     const indicator = document.createElement( 'div' );
                     indicator.className = 'jt-replying-to';
 
-                    const textNode = document.createTextNode( ( state.i18n?.replyingTo || 'Replying to' ) + ' ' );
+                    // The sentence is translated whole ("Replying to %s") so languages can
+                    // put the name where their grammar needs it.
+                    const [ before, after = '' ] = ( state.i18n?.replyingTo || 'Replying to %s' ).split( '%s' );
+                    const textNode = document.createTextNode( before );
+                    const afterNode = document.createTextNode( after );
                     const strong = document.createElement( 'strong' );
-                    strong.textContent = authorName || 'reply';
+                    strong.textContent = authorName || ( state.i18n?.thisMember || 'this member' );
                     const cancelBtn = document.createElement( 'button' );
                     cancelBtn.className = 'jt-replying-to-cancel';
                     cancelBtn.setAttribute( 'aria-label', state.i18n?.cancelReply || 'Cancel reply' );
@@ -3148,6 +3180,20 @@ const { state, actions } = store( 'jetonomy', {
 
                     indicator.appendChild( textNode );
                     indicator.appendChild( strong );
+                    indicator.appendChild( afterNode );
+
+                    // Quote the start of the reply being answered, so members
+                    // with several replies from one author know which one this is.
+                    const body    = document.querySelector( '#reply-' + replyId + ' .jt-reply-body' );
+                    const excerpt = body ? body.textContent.replace( /\s+/g, ' ' ).trim() : '';
+                    if ( excerpt ) {
+                        const quote = document.createElement( 'a' );
+                        quote.className = 'jt-replying-to-excerpt';
+                        quote.href = '#reply-' + replyId;
+                        quote.textContent = '\u201C' + ( excerpt.length > 80 ? excerpt.slice( 0, 80 ).trim() + '\u2026' : excerpt ) + '\u201D';
+                        indicator.appendChild( quote );
+                    }
+
                     indicator.appendChild( cancelBtn );
                     composer.prepend( indicator );
                 }
@@ -3382,6 +3428,71 @@ const { state, actions } = store( 'jetonomy', {
             window.location.assign( btn.getAttribute( 'data-redirect' ) || '/' );
         },
 
+        // Hidden spaces must be invite-only (the server refuses anything else).
+        // Keep the two selects consistent as they change and say why, the same
+        // coupling the wp-admin form has.
+        syncJoinPolicy() {
+            const changed = getElement().ref;
+            const form    = changed && changed.form;
+            if ( ! form ) return;
+            const vis  = form.querySelector( '[name="visibility"]' );
+            const join = form.querySelector( '[name="join_policy"]' );
+            const hint = form.querySelector( '[data-jt-visibility-hint]' );
+            if ( ! vis || ! join ) return;
+
+            let message = '';
+            if ( 'hidden' === vis.value && 'invite' !== join.value ) {
+                if ( changed === vis ) {
+                    join.value = 'invite';
+                    message = hint ? hint.dataset.msgForces : '';
+                } else {
+                    vis.value = 'private';
+                    message = hint ? hint.dataset.msgRequires : '';
+                }
+            } else if ( 'private' === vis.value && 'open' === join.value ) {
+                // Private always means request or invite.
+                if ( changed === vis ) {
+                    join.value = 'approval';
+                    message = hint ? hint.dataset.msgPrivateForces : '';
+                } else {
+                    vis.value = 'public';
+                    message = hint ? hint.dataset.msgOpenRequires : '';
+                }
+            }
+            if ( hint ) {
+                hint.textContent = message || '';
+                hint.hidden = ! message;
+            }
+        },
+
+        // Brings an archived space back; the route allows only its owner or a site admin.
+        *unarchiveSpace() {
+            const btn     = getElement().ref;
+            const id      = parseInt( btn.getAttribute( 'data-space-id' ), 10 );
+            const section = btn.closest( '.jt-danger-zone' );
+            const errorEl = section && section.querySelector( '[data-jt-delete-error]' );
+            if ( ! id ) return;
+
+            if ( errorEl ) { errorEl.hidden = true; errorEl.textContent = ''; }
+            btn.disabled = true;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + id, {
+                method: 'PATCH',
+                body: { status: 'active' },
+            } );
+
+            if ( ! res.ok ) {
+                btn.disabled = false;
+                if ( errorEl ) {
+                    const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+                    errorEl.textContent = ( res.data && res.data.message ) || i18n.unarchiveFailed || 'Could not unarchive. Please try again.';
+                    errorEl.hidden = false;
+                }
+                return;
+            }
+            window.location.reload();
+        },
+
         // ── Awaiting-approval queue (1.9.4) ──
         // Posts to the SPACE-scoped route the card carries, not the site-wide
         // /moderation/{action}/... one. The site-wide route requires the
@@ -3560,7 +3671,7 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Publish mode menu ──
         //
-        // [1.4.3 WS3-B] Migrated to jetonomySmartDropdown. Previous
+        // Migrated to jetonomySmartDropdown. Previous
         // implementation used state.publishMenuOpen + data-wp-bind--hidden,
         // which couldn't flip placement when the trigger sat near the
         // viewport bottom. The shared primitive handles flip/outside-click/
@@ -3743,8 +3854,8 @@ const { state, actions } = store( 'jetonomy', {
             // `editor` mode reads innerHTML so we preserve formatting; we
             // additionally validate against textContent because an
             // "interacted-then-cleared" contenteditable holds <br>/&nbsp; in
-            // innerHTML which is truthy and was the root cause of
-            // Basecamp #9808714691 (silent submit-fail when body was empty).
+            // innerHTML which is truthy and would otherwise cause a
+            // silent submit-fail when the body is empty.
             // `textarea` mode reads .value directly.
             let content      = '';
             let contentPlain = '';
@@ -3774,7 +3885,7 @@ const { state, actions } = store( 'jetonomy', {
             // ── Schedule ──────────────────────────────────────────────────────
             // Two native inputs (date + hour + minute) get merged into an
             // ISO-like local datetime so Firefox's missing time-picker
-            // popup doesn't block scheduling. See Basecamp #9788118420.
+            // popup doesn't block scheduling.
             const postStatus = ctx.postStatus || 'publish';
             let publishedAt  = '';
             if ( o.collectSchedule && ctx.showScheduler ) {
@@ -3789,10 +3900,9 @@ const { state, actions } = store( 'jetonomy', {
                 // browser's timezone here — the scheduled time means "this time
                 // in the site's timezone", regardless of where the author is.
                 //
-                // Date AND time are both required. A missing time used to fall
-                // back to midnight, so "today, no time picked" was already in
-                // the past and went live at the next run. The server rejects
-                // a past or time-less schedule too; this only saves the trip.
+                // Date AND time are both required. A missing time would fall back to midnight, so
+                // "today, no time picked" would already be in the past and go live at the next run.
+                // The server rejects a past or time-less schedule too; this only saves the trip.
                 if ( dateVal && timeVal ) {
                     publishedAt = dateVal + 'T' + timeVal + ':00';
                 }
@@ -3856,7 +3966,7 @@ const { state, actions } = store( 'jetonomy', {
             // ── Request ───────────────────────────────────────────────────────
             // restFetch (1.4.3) wraps fetch, refreshes nonce on 403, and
             // normalises the response into { ok, status, data }. Using it here
-            // means a stale nonce no longer eats the post silently.
+            // means a stale nonce does not eat the post silently.
             if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
                 writeError( state.i18n?.failedSave || 'Failed to save.' );
                 setIdle();
@@ -3952,7 +4062,7 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Profile save ──
-        // ── Local avatar (#9966775705) ──
+        // ── Local avatar ──
         // Upload goes through the existing POST /media pipeline (uploads
         // gate + auto-alt); the resulting URL is staged in the hidden
         // avatar_url input and persisted by saveProfile's PATCH /users/me.
@@ -4108,7 +4218,7 @@ const { state, actions } = store( 'jetonomy', {
                     payload[ key ] = field.value;
                 }
             } );
-            // Local avatar (#9966775705): the hidden input carries the URL of
+            // Local avatar: the hidden input carries the URL of
             // the uploaded attachment ('' = removed → Gravatar fallback).
             const avatarInput = form.querySelector( '[name="avatar_url"]' );
             if ( avatarInput ) {
@@ -4212,7 +4322,7 @@ const { state, actions } = store( 'jetonomy', {
 
             // Picker mode demands a chosen space before anything else.
             if ( ! ctx.spaceId ) {
-                ctx.error = state.i18n?.chooseSpace || 'Choose a space first.';
+                ctx.error = state.i18n?.chooseSpace || 'Choose the space first.';
                 return;
             }
 
@@ -4226,9 +4336,9 @@ const { state, actions } = store( 'jetonomy', {
                 requireTitle,
                 collectTags:     false,
                 collectPrefix:   false,
-                collectPrivate:  true, // regression #9886339472 — embed must respect private flag.
+                collectPrivate:  true, // embed must respect private flag.
                 collectSchedule: false,
-                collectCaptcha:  true, // posts endpoint verifies for low-trust users (#9977126420).
+                collectCaptcha:  true, // posts endpoint verifies for low-trust users.
                 bodySource:      'textarea',
                 errorSink:       'context',
             } );
@@ -4236,9 +4346,7 @@ const { state, actions } = store( 'jetonomy', {
     },
 
     callbacks: {
-        // (Notification polling lives in header.js — the old
-        // startPolling/pollNotifications chain here had no data-wp-init
-        // consumer and was removed in 1.5.0; audit C.)
+        // (Notification polling lives in header.js.)
 
         // On mobile, the profile tabs row is horizontally scrollable to fit
         // all five tabs. When the viewer lands on a sub-page whose tab sits
@@ -4295,7 +4403,10 @@ const { state, actions } = store( 'jetonomy', {
                                 } );
                                 repliesSection.parentElement.appendChild( banner );
                             }
-                            banner.textContent = `${ newReplies } new ${ newReplies === 1 ? 'reply' : 'replies' } — click to refresh`;
+                            banner.textContent = state.replyNoun
+                                ? ( state.i18n?.newRepliesRenamed || 'New replies. Click to refresh.' )
+                                // jt-terms-ok: only reached when the reply noun is not renamed (full plural forms).
+                                : /* translators: %s: number of new replies. */ _n( '%s new reply. Click to refresh.', '%s new replies. Click to refresh.', newReplies, 'jetonomy' ).replace( '%s', String( newReplies ) );
                             interval = MIN_INTERVAL;                      // activity -> fast again
                         } else {
                             interval = Math.min( interval * 2, MAX_INTERVAL ); // idle -> back off
@@ -4322,6 +4433,11 @@ const { state, actions } = store( 'jetonomy', {
         },
     },
 } );
+
+// Load the app's translations before the page hydrates, so _n() above has them.
+if ( window.wp?.i18n?.setLocaleData && state.localeData ) {
+    window.wp.i18n.setLocaleData( state.localeData, 'jetonomy' );
+}
 
 /* ── Link Preview Cards ──
    Renders a LinkedIn / Twitter / Facebook style rich card beneath any standalone
@@ -4587,7 +4703,7 @@ const { state, actions } = store( 'jetonomy', {
 } )();
 
 /**
- * Avatar image-error fallback (Basecamp 10110833991).
+ * Avatar image-error fallback.
  *
  * templates/partials/avatar.php renders every avatar <img> with a hidden
  * sibling `.jt-avatar-fallback` initials span. When the image URL is dead
@@ -4631,7 +4747,7 @@ const { state, actions } = store( 'jetonomy', {
 } )();
 
 /**
- * Prism re-highlight on client-side navigation (QA card 10149499675).
+ * Prism re-highlight on client-side navigation.
  *
  * Prism auto-runs only on DOMContentLoaded, so a topic reached through the
  * iAPI router would render un-highlighted even with the library present.
@@ -4660,7 +4776,7 @@ const { state, actions } = store( 'jetonomy', {
 /**
  * #reply intent: the r keyboard shortcut (and any deep link) lands on a
  * topic with location.hash === '#reply' - focus the composer so "opens a
- * reply" is literally true (QA 10150869012). Re-checked after client-side
+ * reply" is literally true. Re-checked after client-side
  * navigation per the re-init contract.
  */
 ( function () {

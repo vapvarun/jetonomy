@@ -14,7 +14,6 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\Models\Tag;
 use Jetonomy\API\REST_Auth;
-use function Jetonomy\table;
 
 class Tags_Controller extends Base_Controller {
 
@@ -30,17 +29,17 @@ class Tags_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/tags',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_tags' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				'args'                => [
-					'limit'  => [
+				'callback'            => array( $this, 'list_tags' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => array(
+					'limit'  => array(
 						'type'    => 'integer',
 						'default' => 30,
 						'minimum' => 1,
 						'maximum' => 100,
-					],
+					),
 
 					/*
 					 * Without this the response reported a total the caller
@@ -49,20 +48,20 @@ class Tags_Controller extends Base_Controller {
 					 * at any parameter combination. A site that imports a large
 					 * forum passes 100 tags easily, and the truncation is
 					 * silent - the app showed one alphabetical page and no
-					 * indication the rest existed (Basecamp 10252924147).
+					 * indication the rest existed.
 					 */
-					'offset' => [
+					'offset' => array(
 						'type'    => 'integer',
 						'default' => 0,
 						'minimum' => 0,
-					],
-					'sort'   => [
+					),
+					'sort'   => array(
 						'type'    => 'string',
 						'default' => 'popular',
-						'enum'    => [ 'popular', 'alphabetical' ],
-					],
-				],
-			]
+						'enum'    => array( 'popular', 'alphabetical' ),
+					),
+				),
+			)
 		);
 
 		/*
@@ -78,46 +77,45 @@ class Tags_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/tags',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'create_tag' ],
+				'callback'            => array( $this, 'create_tag' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_settings' ),
-				'args'                => [
-					'name' => [
+				'args'                => array(
+					'name' => array(
 						'type'     => 'string',
 						'required' => true,
-					],
-					'slug' => [
+					),
+					'slug' => array(
 						'type' => 'string',
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/tags/(?P<id>\d+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => 'PATCH',
-					'callback'            => [ $this, 'update_tag' ],
+					'callback'            => array( $this, 'update_tag' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_settings' ),
-					'args'                => [
-						'name' => [ 'type' => 'string' ],
-						'slug' => [ 'type' => 'string' ],
-					],
-				],
-				[
+					'args'                => array(
+						'name' => array( 'type' => 'string' ),
+						'slug' => array( 'type' => 'string' ),
+					),
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_tag' ],
+					'callback'            => array( $this, 'delete_tag' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_settings' ),
-				],
-			]
+				),
+			)
 		);
 
-		// /space-tags was removed in 1.5.0: the jt_space_tags tables never
-		// gained a writer, so the endpoint could only ever return an empty
-		// list (audit A5).
+		// No /space-tags endpoint: the jt_space_tags tables never gained a writer, so it could
+		// only ever return an empty list.
 	}
 
 	/**
@@ -132,27 +130,27 @@ class Tags_Controller extends Base_Controller {
 		$slug = sanitize_title( (string) ( $request->get_param( 'slug' ) ?: $name ) );
 
 		if ( '' === $name ) {
-			return new WP_Error( 'jetonomy_tag_name_required', __( 'Name is required.', 'jetonomy' ), [ 'status' => 400 ] );
+			return new WP_Error( 'jetonomy_tag_name_required', __( 'Name is required.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
 		if ( '' === $slug ) {
 			$slug = sanitize_title( $name );
 		}
 		if ( Tag::exists( $slug ) ) {
-			return new WP_Error( 'jetonomy_tag_slug_taken', __( 'A tag with that slug already exists.', 'jetonomy' ), [ 'status' => 409 ] );
+			return new WP_Error( 'jetonomy_tag_slug_taken', __( 'A tag with that slug already exists.', 'jetonomy' ), array( 'status' => 409 ) );
 		}
 
 		$id = Tag::insert(
-			[
+			array(
 				'name' => $name,
 				'slug' => $slug,
-			]
+			)
 		);
 
 		if ( ! $id ) {
-			return new WP_Error( 'jetonomy_tag_create_failed', __( 'Failed to create tag.', 'jetonomy' ), [ 'status' => 500 ] );
+			return new WP_Error( 'jetonomy_tag_create_failed', __( 'Failed to create tag.', 'jetonomy' ), array( 'status' => 500 ) );
 		}
 
-		return new WP_REST_Response( [ 'data' => Tag::find( (int) $id ) ], 201 );
+		return new WP_REST_Response( array( 'data' => Tag::find( (int) $id ) ), 201 );
 	}
 
 	/**
@@ -162,15 +160,15 @@ class Tags_Controller extends Base_Controller {
 		$id = (int) $request->get_param( 'id' );
 
 		if ( ! Tag::find( $id ) ) {
-			return new WP_Error( 'jetonomy_tag_not_found', __( 'Tag not found.', 'jetonomy' ), [ 'status' => 404 ] );
+			return new WP_Error( 'jetonomy_tag_not_found', __( 'Tag not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
-		$data = [];
+		$data = array();
 
 		if ( null !== $request->get_param( 'name' ) ) {
 			$name = sanitize_text_field( (string) $request->get_param( 'name' ) );
 			if ( '' === $name ) {
-				return new WP_Error( 'jetonomy_tag_name_empty', __( 'Name cannot be empty.', 'jetonomy' ), [ 'status' => 400 ] );
+				return new WP_Error( 'jetonomy_tag_name_empty', __( 'Name cannot be empty.', 'jetonomy' ), array( 'status' => 400 ) );
 			}
 			$data['name'] = $name;
 		}
@@ -178,24 +176,24 @@ class Tags_Controller extends Base_Controller {
 		if ( null !== $request->get_param( 'slug' ) ) {
 			$slug = sanitize_title( (string) $request->get_param( 'slug' ) );
 			if ( '' === $slug ) {
-				return new WP_Error( 'jetonomy_tag_slug_empty', __( 'Slug cannot be empty.', 'jetonomy' ), [ 'status' => 400 ] );
+				return new WP_Error( 'jetonomy_tag_slug_empty', __( 'Slug cannot be empty.', 'jetonomy' ), array( 'status' => 400 ) );
 			}
 			$existing = Tag::find_by_slug( $slug );
 			if ( $existing && (int) $existing->id !== $id ) {
-				return new WP_Error( 'jetonomy_tag_slug_taken', __( 'Another tag already uses that slug.', 'jetonomy' ), [ 'status' => 409 ] );
+				return new WP_Error( 'jetonomy_tag_slug_taken', __( 'Another tag already uses that slug.', 'jetonomy' ), array( 'status' => 409 ) );
 			}
 			$data['slug'] = $slug;
 		}
 
 		if ( ! $data ) {
-			return new WP_Error( 'jetonomy_tag_no_changes', __( 'No data to update.', 'jetonomy' ), [ 'status' => 400 ] );
+			return new WP_Error( 'jetonomy_tag_no_changes', __( 'No data to update.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! Tag::update( $id, $data ) ) {
-			return new WP_Error( 'jetonomy_tag_update_failed', __( 'Failed to update tag.', 'jetonomy' ), [ 'status' => 500 ] );
+			return new WP_Error( 'jetonomy_tag_update_failed', __( 'Failed to update tag.', 'jetonomy' ), array( 'status' => 500 ) );
 		}
 
-		return new WP_REST_Response( [ 'data' => Tag::find( $id ) ], 200 );
+		return new WP_REST_Response( array( 'data' => Tag::find( $id ) ), 200 );
 	}
 
 	/**
@@ -205,18 +203,18 @@ class Tags_Controller extends Base_Controller {
 		$id = (int) $request->get_param( 'id' );
 
 		if ( ! Tag::find( $id ) ) {
-			return new WP_Error( 'jetonomy_tag_not_found', __( 'Tag not found.', 'jetonomy' ), [ 'status' => 404 ] );
+			return new WP_Error( 'jetonomy_tag_not_found', __( 'Tag not found.', 'jetonomy' ), array( 'status' => 404 ) );
 		}
 
 		if ( ! Tag::delete_with_relations( $id ) ) {
-			return new WP_Error( 'jetonomy_tag_delete_failed', __( 'Failed to delete tag.', 'jetonomy' ), [ 'status' => 500 ] );
+			return new WP_Error( 'jetonomy_tag_delete_failed', __( 'Failed to delete tag.', 'jetonomy' ), array( 'status' => 500 ) );
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted' => true,
 				'id'      => $id,
-			],
+			),
 			200
 		);
 	}
@@ -229,31 +227,22 @@ class Tags_Controller extends Base_Controller {
 		$offset = absint( $request->get_param( 'offset' ) ?? 0 );
 		$sort   = $request->get_param( 'sort' ) ?? 'popular';
 
-		global $wpdb;
-		$tags_table = table( 'tags' );
+		$tags  = 'alphabetical' === $sort ? Tag::list_alphabetical( $limit, $offset ) : Tag::list_popular( $limit, $offset );
+		$total = Tag::count();
 
-		if ( 'alphabetical' === $sort ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$tags = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT * FROM {$tags_table} ORDER BY name ASC LIMIT %d OFFSET %d",
-					$limit,
-					$offset
-				)
-			) ?: [];
-		} else {
-			$tags = Tag::list_popular( $limit, $offset );
+		// Report what this viewer can read, not the stored all-spaces count
+		// (same rule as the sidebar and tag search).
+		$counts = \Jetonomy\Models\Post::count_by_tags_visible( wp_list_pluck( $tags, 'id' ) );
+		foreach ( $tags as $tag ) {
+			$tag->post_count = $counts[ (int) $tag->id ] ?? 0;
 		}
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tags_table}" );
 
 		return $this->paginated_response(
 			$tags,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
-			]
+			)
 		);
 	}
 }

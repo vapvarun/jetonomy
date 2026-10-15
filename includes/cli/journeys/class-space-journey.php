@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Space_Journey {
 
-	private const ALLOWED_JOIN_POLICIES = [ 'open', 'approval', 'invite' ];
+	private const ALLOWED_JOIN_POLICIES = array( 'open', 'approval', 'invite' );
 
 	/**
 	 * Create a space under a category.
@@ -40,12 +40,12 @@ final class Space_Journey {
 	public function create( array $input ): Journey_Result {
 		$start = microtime( true );
 
-		$missing = $this->require_keys( $input, [ 'title', 'slug', 'category_id' ] );
+		$missing = $this->require_keys( $input, array( 'title', 'slug', 'category_id' ) );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
-		$unknown = Journey_Input::error( $input, [ 'title', 'slug', 'category_id', 'type', 'visibility', 'join_policy', 'description', 'created_at' ] );
+		$unknown = Journey_Input::error( $input, array( 'title', 'slug', 'category_id', 'type', 'visibility', 'join_policy', 'description', 'created_at' ) );
 		if ( '' !== $unknown ) {
 			return Journey_Result::fail( $unknown );
 		}
@@ -69,7 +69,7 @@ final class Space_Journey {
 			return Journey_Result::fail( $combo->get_error_message() );
 		}
 
-		$data = [
+		$data = array(
 			'category_id' => (int) $input['category_id'],
 			'title'       => (string) $input['title'],
 			'slug'        => (string) $input['slug'],
@@ -77,7 +77,7 @@ final class Space_Journey {
 			'type'        => $type,
 			'visibility'  => $visibility,
 			'join_policy' => $join_policy,
-		];
+		);
 
 		// Importer seam: forward a validated backdate; the model default (now)
 		// applies otherwise (see Journey_Backdate).
@@ -97,15 +97,15 @@ final class Space_Journey {
 		$row = Space::find( (int) $id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'          => (int) $id,
 				'slug'        => $row->slug ?? $data['slug'],
 				'category_id' => (int) $data['category_id'],
 				'type'        => $type,
 				'visibility'  => $visibility,
 				'join_policy' => $join_policy,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -126,7 +126,7 @@ final class Space_Journey {
 			return Journey_Result::fail( 'Space id must be positive.' );
 		}
 
-		$allowed = [ 'title', 'description', 'type', 'visibility', 'join_policy', 'status', 'sort_order' ];
+		$allowed = array( 'title', 'description', 'type', 'visibility', 'join_policy', 'status', 'sort_order' );
 		$patch   = array_intersect_key( $changes, array_flip( $allowed ) );
 
 		if ( empty( $patch ) ) {
@@ -165,11 +165,11 @@ final class Space_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'      => $id,
 				'updated' => array_keys( $patch ),
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -177,10 +177,10 @@ final class Space_Journey {
 	/**
 	 * Delete a space by ID - transferring it by default.
 	 *
-	 * This used to call Space::delete(), which removes the space ROW and
-	 * nothing else: it lost the owner and orphaned every child row across the
-	 * 21 declared relations. Same defect the REST route had, and the CLI is the
-	 * path most likely to be pointed at a large space (Basecamp 10119343634).
+	 * Space::delete() removes the space ROW and nothing else (it loses the owner and
+	 * orphans every child row across the 21 declared relations), so this goes through
+	 * transfer/purge instead; the CLI is the path most likely to be pointed at a large
+	 * space.
 	 *
 	 * `transfer` hands the space to its successor and archives it. `purge`
 	 * destroys it and everything in it, and runs SYNCHRONOUSLY here rather than
@@ -196,7 +196,7 @@ final class Space_Journey {
 		if ( $id <= 0 ) {
 			return Journey_Result::fail( 'Space id must be positive.' );
 		}
-		if ( ! in_array( $mode, [ 'transfer', 'purge' ], true ) ) {
+		if ( ! in_array( $mode, array( 'transfer', 'purge' ), true ) ) {
 			return Journey_Result::fail( sprintf( 'Unknown mode "%s". Use transfer or purge.', $mode ) );
 		}
 		if ( ! Space::find( $id ) ) {
@@ -206,32 +206,32 @@ final class Space_Journey {
 		if ( 'purge' === $mode ) {
 			$removed = \Jetonomy\Space_Purge::purge( $id );
 			return Journey_Result::ok(
-				[
+				array(
 					'id'      => $id,
 					'mode'    => 'purge',
 					'removed' => $removed,
-				],
-				[],
+				),
+				array(),
 				$this->duration_ms( $start )
 			);
 		}
 
-		$successor = Space::resolve_successor( $id, get_current_user_id() );
-		if ( ! $successor ) {
+		$successor = Space::archive_and_hand_over( $id );
+		if ( is_wp_error( $successor ) ) {
 			return Journey_Result::fail(
-				sprintf( 'Space %d has no one to transfer to. Use --mode=purge to delete it permanently.', $id )
+				'jetonomy_no_successor' === $successor->get_error_code()
+					? sprintf( 'Space %d has no one to transfer to. Use --mode=purge to delete it permanently.', $id )
+					: $successor->get_error_message()
 			);
 		}
 
-		Space::hand_over( $id, $successor, get_current_user_id(), true );
-
 		return Journey_Result::ok(
-			[
+			array(
 				'id'        => $id,
 				'mode'      => 'transfer',
 				'successor' => $successor,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -249,7 +249,7 @@ final class Space_Journey {
 			return Journey_Result::fail( sprintf( 'Space %d not found.', $id ) );
 		}
 
-		return Journey_Result::ok( (array) $row, [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( (array) $row, array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -269,7 +269,7 @@ final class Space_Journey {
 			return Journey_Result::fail( sprintf( 'Space with slug "%s" not found.', $slug ) );
 		}
 
-		return Journey_Result::ok( (array) $row, [], $this->duration_ms( $start ) );
+		return Journey_Result::ok( (array) $row, array(), $this->duration_ms( $start ) );
 	}
 
 	/**
@@ -297,17 +297,17 @@ final class Space_Journey {
 			return Journey_Result::fail( $combo->get_error_message() );
 		}
 
-		$ok = Space::update( $id, [ 'join_policy' => $policy ] );
+		$ok = Space::update( $id, array( 'join_policy' => $policy ) );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'          => $id,
 				'join_policy' => $policy,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -337,17 +337,17 @@ final class Space_Journey {
 			return Journey_Result::fail( $combo->get_error_message() );
 		}
 
-		$ok = Space::update( $id, [ 'visibility' => $visibility ] );
+		$ok = Space::update( $id, array( 'visibility' => $visibility ) );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'         => $id,
 				'visibility' => $visibility,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -374,17 +374,17 @@ final class Space_Journey {
 
 		$merged = Space::merge_settings( $id, $settings );
 
-		$ok = Space::update( $id, [ 'settings' => wp_json_encode( $merged ) ] );
+		$ok = Space::update( $id, array( 'settings' => wp_json_encode( $merged ) ) );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'       => $id,
 				'settings' => $merged,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -403,9 +403,9 @@ final class Space_Journey {
 
 		$rows = Space::list_by_category( $category_id );
 
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'id'          => (int) $row->id,
 				'title'       => (string) $row->title,
 				'slug'        => (string) $row->slug,
@@ -413,15 +413,15 @@ final class Space_Journey {
 				'visibility'  => (string) ( $row->visibility ?? '' ),
 				'join_policy' => (string) ( $row->join_policy ?? '' ),
 				'post_count'  => (int) ( $row->post_count ?? 0 ),
-			];
+			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'id', 'title', 'slug', 'type', 'visibility', 'join_policy', 'post_count' ],
-			],
-			[],
+				'columns' => array( 'id', 'title', 'slug', 'type', 'visibility', 'join_policy', 'post_count' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -434,7 +434,7 @@ final class Space_Journey {
 	 * @return array<int,string> Missing key names; empty if all present.
 	 */
 	private function require_keys( array $input, array $keys ): array {
-		$missing = [];
+		$missing = array();
 		foreach ( $keys as $key ) {
 			if ( ! isset( $input[ $key ] ) || '' === $input[ $key ] ) {
 				$missing[] = $key;

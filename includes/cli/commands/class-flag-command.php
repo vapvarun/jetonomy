@@ -70,13 +70,13 @@ final class Flag_Command extends Base_Command {
 	 */
 	public function create( $args, $assoc ): void {
 		$result = ( new Content_Journey() )->flag(
-			[
+			array(
 				'object_type' => (string) ( $assoc['type'] ?? '' ),
 				'object_id'   => (int) ( $assoc['id'] ?? 0 ),
 				'reporter_id' => (int) ( $assoc['reporter'] ?? 0 ),
 				'reason'      => (string) ( $assoc['reason'] ?? '' ),
 				'description' => (string) ( $assoc['description'] ?? '' ),
-			]
+			)
 		);
 		$this->render( $result, $assoc );
 	}

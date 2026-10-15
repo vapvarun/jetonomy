@@ -26,31 +26,31 @@ class Leaderboards_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/leaderboards',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_items' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				'args'                => [
-					'limit'  => [
+				'callback'            => array( $this, 'list_items' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => array(
+					'limit'  => array(
 						'type'    => 'integer',
 						'default' => 20,
 						'minimum' => 1,
 						'maximum' => 100,
-					],
-					'offset' => [
+					),
+					'offset' => array(
 						'type'    => 'integer',
 						'default' => 0,
 						'minimum' => 0,
-					],
-					'period' => [
+					),
+					'period' => array(
 						'type'              => 'string',
 						'default'           => 'all',
-						'enum'              => [ 'all', 'month', 'week' ],
+						'enum'              => array( 'all', 'month', 'week' ),
 						'description'       => 'Time period: all, month, or week.',
 						'sanitize_callback' => 'sanitize_key',
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 	}
 
@@ -87,7 +87,7 @@ class Leaderboards_Controller extends Base_Controller {
 		$limit        = (int) $args['limit'];
 		$offset       = (int) $args['offset'];
 
-		// Cached 300s per page (plan WP4.6) — the board is fully shared by
+		// Cached 300s per page — the board is fully shared by
 		// design (deliberately not per-viewer filtered) and changes only on
 		// reputation events; a 5-minute-stale ranking is invisible (TTL-only).
 		// Skipped entirely when a third party filters the QUERY SHAPE via
@@ -96,9 +96,8 @@ class Leaderboards_Controller extends Base_Controller {
 		// jetonomy_leaderboard_items enrichment filter below runs on every
 		// response, cached or not, so host-plugin rows never freeze.
 		$lb_cacheable = ! has_filter( 'jetonomy_users_query_args' );
-		// "v2" since the board dropped reputation <= 0 (2.0.1): TTL-only keys
-		// have no bust path, so a new key is how an upgraded site stops
-		// serving the old population's page and total.
+		// "v2" key: the board excludes reputation <= 0, and TTL-only keys have no bust path,
+		// so bumping the key is how an upgraded site stops serving a stale page and total.
 		$lb_cache_key = "lb:v2:{$period}:{$limit}:{$offset}";
 		if ( $lb_cacheable ) {
 			$cached = \Jetonomy\Cache::get( $lb_cache_key );
@@ -107,19 +106,18 @@ class Leaderboards_Controller extends Base_Controller {
 
 				return $this->paginated_response(
 					$items,
-					[
+					array(
 						'total'  => (int) $cached['total'],
 						'offset' => $offset,
 						'period' => $period,
-					]
+					)
 				);
 			}
 		}
 
 		// Total + page slice come from the shared model methods so this endpoint
 		// and the server-rendered leaderboard view stay in lockstep on both the
-		// population (period filter) and the ordering. The period filter was
-		// previously echoed back but never applied; the model now owns it.
+		// population (period filter) and the ordering. The model owns the period filter.
 		// Deliberately NOT block-filtered — a ranking, not a content feed. See
 		// UserProfile::list_for_leaderboard().
 		$total   = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
@@ -137,13 +135,13 @@ class Leaderboards_Controller extends Base_Controller {
 		);
 		$users    = ! empty( $user_ids )
 			? get_users(
-				[
+				array(
 					'include' => $user_ids,
 					'orderby' => 'include',
-				]
+				)
 			)
-			: [];
-		$by_id    = [];
+			: array();
+		$by_id    = array();
 		foreach ( $users as $u ) {
 			$by_id[ (int) $u->ID ] = $u;
 		}
@@ -156,13 +154,10 @@ class Leaderboards_Controller extends Base_Controller {
 
 		// COMPETITION ranks, from the one place that defines them, so this
 		// endpoint cannot contradict the web board or the "Your rank #N" badge.
-		// It used to number rows positionally with its own counter, so two
-		// members tied on reputation were returned as 2 and 3 while the web
-		// showed 2 and 2 - the app disagreeing with the browser about the same
-		// member.
+		// Tied members share a rank (2 and 2, not 2 and 3), matching the web board.
 		$ranks = \Jetonomy\Models\UserProfile::competition_ranks( $leaders, $period, $offset );
 
-		$items = [];
+		$items = array();
 
 		foreach ( array_values( $leaders ) as $lb_index => $leader ) {
 			$user_id = (int) $leader->user_id;
@@ -182,7 +177,7 @@ class Leaderboards_Controller extends Base_Controller {
 			// online member as offline for a few minutes, never the reverse.
 			$lb_profile = \Jetonomy\Models\UserProfile::find_by_user( $user_id );
 
-			$items[] = [
+			$items[] = array(
 				'rank'             => $rank,
 				'user_id'          => $user_id,
 				'display_name'     => \Jetonomy\user_display_name( $user ),
@@ -195,18 +190,18 @@ class Leaderboards_Controller extends Base_Controller {
 				'trust_level'      => (int) $leader->trust_level,
 				'last_seen_at'     => $lb_profile ? $lb_profile->last_seen_at : null,
 				'last_seen_at_gmt' => \Jetonomy\to_iso8601_z( $lb_profile ? $lb_profile->last_seen_at : null ),
-			];
+			);
 		}
 
-		// Cache the UNFILTERED rows (plan WP4.6) — the enrichment filter
+		// Cache the UNFILTERED rows — the enrichment filter
 		// below is per-request by contract and must never be frozen.
 		if ( $lb_cacheable ) {
 			\Jetonomy\Cache::set(
 				$lb_cache_key,
-				[
+				array(
 					'items' => $items,
 					'total' => $total,
-				],
+				),
 				300
 			);
 		}
@@ -226,11 +221,11 @@ class Leaderboards_Controller extends Base_Controller {
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
 				'period' => $period,
-			]
+			)
 		);
 	}
 }

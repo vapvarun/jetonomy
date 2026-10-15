@@ -17,7 +17,7 @@ class WP_Roles_Adapter implements Membership_Adapter {
 
 	public function get_user_levels( int $user_id ): array {
 		$user = get_userdata( $user_id );
-		return $user ? $user->roles : [];
+		return $user ? $user->roles : array();
 	}
 
 	public function user_has_level( int $user_id, string $level_id ): bool {
@@ -27,12 +27,12 @@ class WP_Roles_Adapter implements Membership_Adapter {
 
 	public function get_all_levels(): array {
 		$roles  = wp_roles()->roles;
-		$levels = [];
+		$levels = array();
 		foreach ( $roles as $slug => $role ) {
-			$levels[] = [
+			$levels[] = array(
 				'id'    => $slug,
 				'label' => $role['name'],
-			];
+			);
 		}
 		return $levels;
 	}

@@ -62,7 +62,7 @@ Members must be signed in. Both switches are checked again on the server, so a m
 |---|---|---|
 | Regular member | "Anonymous" | Hidden |
 | Space moderator or space admin | "Anonymous" | Hidden. They cannot reveal it |
-| WordPress administrator | "Anonymous" | Click **Reveal author** on the post or reply |
+| WordPress administrator | "Anonymous", also in wp-admin lists and approval cards | Click **Reveal author** on the post or reply |
 
 Each reveal is written to the activity log: who revealed it, which item and when. See [Activity Log](../admin-settings/08-activity-log.md). Use it for abuse cases only.
 

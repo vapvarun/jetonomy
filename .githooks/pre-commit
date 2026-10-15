@@ -107,6 +107,26 @@ if [ -n "$STAGED_JS" ]; then
     fi
 fi
 
+# Tracker/plan references belong in commit messages, not source
+# (docs/standards/developer-quality.md, rule 1).
+echo "  -> comment refs"
+STAGED_SRC=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^((includes|templates|assets/js)/.*\.(php|js)|jetonomy\.php)$' | grep -v '\.min\.js$' || true)
+if [ -n "$STAGED_SRC" ] && ! bin/check-comment-refs.sh $STAGED_SRC; then
+    exit 1
+fi
+
+# Terminology nouns must come from the owner's labels (Settings -> Terminology).
+echo "  -> terminology"
+if [ -n "$STAGED_SRC" ] && ! php bin/check-terminology.php $STAGED_SRC; then
+    exit 1
+fi
+
+# $wpdb outside the data layer may only shrink (rule 2).
+echo "  -> data layer"
+if ! bin/check-data-layer.sh; then
+    exit 1
+fi
+
 # ── Gate: manifest-driven QA coverage drift (Phase C) ──
 # Reason: every new REST endpoint / AJAX handler / cron / hook with a
 # consumer should carry a corresponding test stub. The qa-coverage-check

@@ -52,6 +52,9 @@ class Model_Tests {
 	 */
 	private int $skipped = 0;
 
+	/** Throwaway administrator used wherever a fixture needs an author or moderator. */
+	private int $qa_admin = 0;
+
 	// ──────────────────────────────────────────────────────────────────────────
 	// Public API
 	// ──────────────────────────────────────────────────────────────────────────
@@ -64,8 +67,10 @@ class Model_Tests {
 	public function run(): array {
 		global $wpdb;
 
-		$admin_ids = get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] );
-		$admin_id  = (int) ( $admin_ids[0] ?? 1 );
+		// A throwaway administrator, so fixtures never author as, or award reputation / gamification points to, the real admin.
+		$suffix         = uniqid( '', false );
+		$this->qa_admin = (int) wp_insert_user( array( 'user_login' => 'jt_qa_mt_admin_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'mt-admin-' . $suffix . '@example.test', 'role' => 'administrator' ) );
+		$admin_id       = $this->qa_admin;
 
 		// Find a test space for membership checks.
 		$spaces_t = table( 'spaces' );
@@ -76,7 +81,7 @@ class Model_Tests {
 		\WP_CLI::log( '  Permission_Engine' );
 
 		// 1. Admin can create_posts, create_replies, vote, flag, edit_others_posts, move_posts.
-		$admin_actions = [ 'create_posts', 'create_replies', 'vote', 'flag', 'edit_others_posts', 'move_posts' ];
+		$admin_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_others_posts', 'move_posts' );
 		foreach ( $admin_actions as $action ) {
 			$space_ctx = $space ? (int) $space->id : null;
 			$can       = Permission_Engine::can( $admin_id, $action, $space_ctx );
@@ -108,29 +113,36 @@ class Model_Tests {
 		if ( $space ) {
 			$space_id = (int) $space->id;
 
-			// 5. Admin is member of test space.
+			// 5. Admin is member of test space (a throwaway admin joined for the check, removed after).
+			SpaceMember::add( $space_id, $admin_id, 'admin' );
 			$is_member = SpaceMember::is_member( $space_id, $admin_id );
 			$this->check( 'SM5: admin is_member of test space', $is_member );
 
 			// 6. get_role returns a valid role string.
 			$role = SpaceMember::get_role( $space_id, $admin_id );
 			$this->check( 'SM6: get_role returns non-empty string', ! empty( $role ) );
+			SpaceMember::remove( $space_id, $admin_id );
 		} else {
 			$this->skip( 'SM5: is_member', 'no space' );
 			$this->skip( 'SM6: get_role', 'no space' );
 		}
+
+		// SM7: joining a space that does not exist (deleted, or id 0) is refused and stores nothing.
+		$gone    = SpaceMember::add( 0, $this->qa_admin );
+		$missing = SpaceMember::add( 2147483000, $this->qa_admin );
+		$this->check( 'SM7: joining a deleted or missing space is refused and stores no row', is_wp_error( $gone ) && is_wp_error( $missing ) && null === SpaceMember::get_role( 0, $this->qa_admin ) && null === SpaceMember::get_role( 2147483000, $this->qa_admin ) );
 
 		// ── Restriction ───────────────────────────────────────────────────────
 		\WP_CLI::log( '  Restriction' );
 
 		// Create a temporary test user for ban/silence tests.
 		$ts       = time();
-		$test_uid = wp_insert_user( [
+		$test_uid = wp_insert_user( array(
 			'user_login' => 'jt_qa_model_' . $ts,
 			'user_pass'  => wp_generate_password( 16 ),
 			'user_email' => 'jt-qa-model-' . $ts . '@test.local',
 			'role'       => 'subscriber',
-		] );
+		) );
 		$test_uid = ( $test_uid && ! is_wp_error( $test_uid ) ) ? (int) $test_uid : 0;
 
 		if ( $test_uid ) {
@@ -197,7 +209,7 @@ class Model_Tests {
 
 		// Cleanup tag directly.
 		$tags_t = table( 'tags' );
-		$wpdb->delete( $tags_t, [ 'id' => $tag_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $tags_t, array( 'id' => $tag_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		// ── Notification ──────────────────────────────────────────────────────
 		\WP_CLI::log( '  Notification' );
@@ -210,27 +222,30 @@ class Model_Tests {
 		\WP_CLI::log( '  Trust_Evaluator' );
 
 		// 13. Known stats below L1 threshold → level 0.
-		$level_0 = Trust_Evaluator::evaluate_level( [
+		$level_0 = Trust_Evaluator::evaluate_level( array(
 			'post_count'       => 0,
 			'days_active'      => 0,
 			'reputation'       => 0,
 			'replies_received' => 0,
-		] );
+		) );
 		$this->check( 'TE13: evaluate_level with zero stats → 0', 0 === $level_0, "got {$level_0}" );
 
 		// 14. Known stats meeting L1 threshold → level >= 1.
 		// Use values that comfortably exceed the default L1 requirements
 		// (posts >= 5, days_active >= 3, replies_received >= 10).
-		$level_1 = Trust_Evaluator::evaluate_level( [
+		$level_1 = Trust_Evaluator::evaluate_level( array(
 			'post_count'       => 10,
 			'days_active'      => 7,
 			'reputation'       => 0,
 			'replies_received' => 15,
-		] );
+		) );
 		$this->check( 'TE14: evaluate_level with L1 stats → >= 1', $level_1 >= 1, "got {$level_1}" );
 
 		$this->test_reorder();
 		$this->test_space_ownership_transfer();
+		$this->test_space_hand_over_rules();
+		$this->test_space_purge_stops_on_db_error();
+		$this->test_topic_data_integrity();
 		$this->test_category_visibility();
 		$this->test_child_space_in_category_listing();
 		$this->test_leaderboard_ranking();
@@ -249,6 +264,11 @@ class Model_Tests {
 		$this->test_notification_space_read_gate();
 		$this->test_subscriber_fanout_batches();
 		$this->test_count_label_plurals();
+		$this->test_edited_marker();
+		$this->test_upload_box_rules();
+		$this->test_queue_cancel();
+		$this->test_ability_mark_read_scope();
+		$this->test_app_strings_defined();
 		$this->test_import_map();
 		$this->test_recount_backfill();
 
@@ -262,7 +282,10 @@ class Model_Tests {
 		$this->check_subspace_listing();
 		$this->check_split_leaves_a_trace();
 
-		return [ 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped ];
+		wp_set_current_user( 0 );
+		wp_delete_user( $this->qa_admin );
+
+		return array( 'pass' => $this->pass, 'fail' => $this->fail, 'skipped' => $this->skipped );
 	}
 
 	/**
@@ -276,7 +299,6 @@ class Model_Tests {
 	 * the confusion the notices exist to end. jetonomy_compose_topic was worse:
 	 * its check sat inside the 'fixed' branch while the default mode is
 	 * 'picker', so a bogus id rendered a complete working compose form
-	 * (Basecamp 10266123693).
 	 *
 	 * Also pins that a slug and the matching numeric id produce the SAME output,
 	 * because accepting a slug and then absint()-ing it to 0 silently queried
@@ -308,7 +330,7 @@ class Model_Tests {
 		$post_id = Post::create(
 			array(
 				'space_id'  => $space_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'title'     => 'QA split source',
 				'content'   => 'probe',
 				'type'      => 'discussion',
@@ -318,7 +340,7 @@ class Model_Tests {
 		$post_id = is_wp_error( $post_id ) ? 0 : (int) $post_id;
 
 		$reply_id = $post_id > 0
-			? Reply::create( array( 'post_id' => $post_id, 'author_id' => 1, 'content' => 'QA reply to split' ) )
+			? Reply::create( array( 'post_id' => $post_id, 'author_id' => $this->qa_admin, 'content' => 'QA reply to split' ) )
 			: 0;
 		$reply_id = is_wp_error( $reply_id ) ? 0 : (int) $reply_id;
 
@@ -350,11 +372,10 @@ class Model_Tests {
 		$this->check( 'SP2: the split reply still leaves the source thread', $moved );
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery
-		$wpdb->delete( $replies_t, array( 'post_id' => $post_id ) );
-		$wpdb->delete( table( 'posts' ), array( 'id' => $post_id ) );
+		// Through the model so the counters create() bumped are reversed.
+		Post::delete( $post_id );
 		if ( $new_post_id > 0 ) {
-			$wpdb->delete( $replies_t, array( 'post_id' => $new_post_id ) );
-			$wpdb->delete( table( 'posts' ), array( 'id' => $new_post_id ) );
+			Post::delete( $new_post_id );
 		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery
 	}
@@ -375,13 +396,14 @@ class Model_Tests {
 		global $wpdb;
 
 		$spaces_t = table( 'spaces' );
-		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_t ): int {
+		$author   = $this->qa_admin;
+		$make     = static function ( string $title, int $parent, string $visibility ) use ( $wpdb, $spaces_t, $author ): int {
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$spaces_t,
 				array(
 					'category_id' => 0,
 					'parent_id'   => $parent,
-					'author_id'   => 1,
+					'author_id'   => $author,
 					'type'        => 'forum',
 					'title'       => $title,
 					'slug'        => sanitize_title( $title ) . '-' . wp_generate_password( 6, false, false ),
@@ -564,7 +586,7 @@ class Model_Tests {
 		$post_id = Post::create(
 			array(
 				'space_id'  => $space_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'title'     => 'QA scheduled probe',
 				'content'   => 'probe',
 				'type'      => 'discussion',
@@ -587,7 +609,7 @@ class Model_Tests {
 		};
 		add_action( 'jetonomy_after_create_post', $probe, 1 );
 
-		\Jetonomy\Moderation\Moderation_Service::system_set_object_status( 'post', $post_id, 'approve', 1 );
+		\Jetonomy\Moderation\Moderation_Service::system_set_object_status( 'post', $post_id, 'approve', $this->qa_admin );
 
 		remove_action( 'jetonomy_after_create_post', $probe, 1 );
 
@@ -610,7 +632,7 @@ class Model_Tests {
 		$overdue_id = Post::create(
 			array(
 				'space_id'  => $space_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'title'     => 'QA overdue probe',
 				'content'   => 'probe',
 				'type'      => 'discussion',
@@ -632,8 +654,8 @@ class Model_Tests {
 			! in_array( (int) $post_id, $queued, true )
 		);
 
-		$wpdb->delete( $posts_t, array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->delete( $posts_t, array( 'id' => $overdue_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		Post::delete( $post_id );
+		Post::delete( $overdue_id );
 	}
 
 	/**
@@ -667,8 +689,8 @@ class Model_Tests {
 
 		// MM3: a gate registered AFTER us still wins. This is the contract
 		// maintenance / membership / coming-soon plugins are written against,
-		// and the one the old render-and-exit broke. Priority 999999 is what
-		// the Maintenance plugin from the original report uses.
+		// and a render-and-exit router breaks it. Priority 999999 is what the Maintenance
+		// plugin uses.
 		$gate = static function () {
 			return '/dev/null/jetonomy-qa-gate.php';
 		};
@@ -699,8 +721,7 @@ class Model_Tests {
 		// SV1: a save from a tab that renders no template fields must not wipe
 		// the overrides. jetonomy_email_templates is registered in the same
 		// settings group as everything else, so options.php calls this
-		// sanitizer with nothing on EVERY tab's save - and it used to answer
-		// with an empty array.
+		// sanitizer with nothing on EVERY tab's save; answering with an empty array wipes them.
 		$templates_before = get_option( 'jetonomy_email_templates', array() );
 		update_option(
 			'jetonomy_email_templates',
@@ -724,9 +745,9 @@ class Model_Tests {
 		update_option( 'jetonomy_email_templates', $templates_before );
 
 		// SV3: the empty "no restriction" option must REMOVE who_can_post, not
-		// store a value. The admin JS used to coerce '' to 'members', which
-		// turned an open community into members-only whenever the owner touched
-		// any other field on that tab.
+		// store a value. The admin JS must not coerce '' to 'members', which would turn an
+		// open community into members-only whenever the owner touched any other field on
+		// that tab.
 		$spaces_t = table( 'spaces' );
 		$space_id = (int) $this->db_insert_probe_space( $spaces_t );
 		if ( $space_id > 0 ) {
@@ -785,7 +806,7 @@ class Model_Tests {
 			array(
 				'category_id' => 0,
 				'parent_id'   => 0,
-				'author_id'   => 1,
+				'author_id'   => $this->qa_admin,
 				'type'        => 'forum',
 				'title'       => 'QA Settings Probe',
 				'slug'        => 'qa-settings-probe-' . wp_generate_password( 6, false ),
@@ -802,15 +823,15 @@ class Model_Tests {
 	private function check_shortcode_ref_contract(): void {
 		global $wpdb;
 
-		$missing = [
+		$missing = array(
 			'jetonomy_recent_posts'   => 'space_id',
 			'jetonomy_trending_posts' => 'space_id',
 			'jetonomy_spaces'         => 'category_id',
 			'jetonomy_compose_topic'  => 'space_id',
 			'jetonomy_space_members'  => 'space_id',
-		];
+		);
 
-		$bad = [];
+		$bad = array();
 		foreach ( $missing as $tag => $att ) {
 			$out = do_shortcode( "[{$tag} {$att}=\"99999\"]" );
 			if ( false === strpos( $out, 'jt-shortcode-notice' ) ) {
@@ -826,7 +847,7 @@ class Model_Tests {
 		// SR2: visitors never see the editor guidance.
 		$current = get_current_user_id();
 		wp_set_current_user( 0 );
-		$leaked = [];
+		$leaked = array();
 		foreach ( $missing as $tag => $att ) {
 			if ( '' !== trim( do_shortcode( "[{$tag} {$att}=\"99999\"]" ) ) ) {
 				$leaked[] = $tag;
@@ -861,14 +882,11 @@ class Model_Tests {
 	}
 
 	/**
-	 * 1.9.5 regression guards for the delete contract.
+	 * Guards for the delete contract.
 	 *
-	 * `jetonomy_after_delete_post` / `_reply` used to fire from the REST
-	 * controllers only. Two things were wrong with that. The controllers do not
-	 * hard-delete at all - they soft-trash via update( status => trash ) - so the
-	 * hook fired on a RESTORABLE post and Pro's attachments listener dropped its
-	 * link rows; and a genuine hard delete through the model fired nothing, so
-	 * those rows orphaned forever (Basecamp 10268067864).
+	 * `jetonomy_after_delete_post` / `_reply` fire from the model, not the REST
+	 * controllers: they soft-trash via update( status => trash ), so a hook there would
+	 * fire on a RESTORABLE post, and a genuine hard delete would fire nothing.
 	 *
 	 * These assert the contract from the model's side, which is the side every
 	 * caller shares: CLI, journeys, abilities and REST alike.
@@ -900,13 +918,13 @@ class Model_Tests {
 		// DC1: a hard delete through the model fires the hook exactly once.
 		add_action( 'jetonomy_after_delete_post', $spy, 1 );
 		$post = \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'  => $space_id,
 				'author_id' => $admin_id,
 				'title'     => 'QA delete-contract ' . wp_generate_password( 6, false ),
 				'content'   => 'x',
 				'status'    => 'publish',
-			]
+			)
 		);
 		$post_id  = is_wp_error( $post ) ? 0 : (int) $post;
 
@@ -924,17 +942,17 @@ class Model_Tests {
 		$this->hook_fires = 0;
 		add_action( 'jetonomy_after_delete_post', $spy, 1 );
 		$post2 = \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'  => $space_id,
 				'author_id' => $admin_id,
 				'title'     => 'QA trash-contract ' . wp_generate_password( 6, false ),
 				'content'   => 'x',
 				'status'    => 'publish',
-			]
+			)
 		);
 		$post2_id = is_wp_error( $post2 ) ? 0 : (int) $post2;
 		if ( $post2_id > 0 ) {
-			\Jetonomy\Models\Post::update( $post2_id, [ 'status' => 'trash' ] );
+			\Jetonomy\Models\Post::update( $post2_id, array( 'status' => 'trash' ) );
 			$this->check( 'DC2: trashing does NOT fire jetonomy_after_delete_post', 0 === $this->hook_fire_count(), sprintf( 'fired %d time(s)', $this->hook_fire_count() ) );
 			remove_action( 'jetonomy_after_delete_post', $spy, 1 );
 			\Jetonomy\Models\Post::delete( $post2_id );
@@ -947,22 +965,22 @@ class Model_Tests {
 		$this->hook_fires = 0;
 		add_action( 'jetonomy_after_delete_reply', $spy, 1 );
 		$host = \Jetonomy\Models\Post::create(
-			[
+			array(
 				'space_id'  => $space_id,
 				'author_id' => $admin_id,
 				'title'     => 'QA reply-contract ' . wp_generate_password( 6, false ),
 				'content'   => 'x',
 				'status'    => 'publish',
-			]
+			)
 		);
 		$host_id = is_wp_error( $host ) ? 0 : (int) $host;
 		$reply   = $host_id > 0 ? \Jetonomy\Models\Reply::create(
-			[
+			array(
 				'post_id'   => $host_id,
 				'author_id' => $admin_id,
 				'content'   => 'y',
 				'status'    => 'publish',
-			]
+			)
 		) : 0;
 		$reply_id = is_wp_error( $reply ) ? 0 : (int) $reply;
 		if ( $reply_id > 0 ) {
@@ -981,15 +999,15 @@ class Model_Tests {
 		// and reply it removed, plus the space itself.
 		wp_set_current_user( $admin_id );
 		$req = new \WP_REST_Request( 'POST', '/jetonomy/v1/spaces' );
-		$req->set_body_params( [ 'title' => 'QA purge-contract ' . wp_generate_password( 6, false ) ] );
+		$req->set_body_params( array( 'title' => 'QA purge-contract ' . wp_generate_password( 6, false ) ) );
 		$purge_space = (int) ( rest_do_request( $req )->get_data()['id'] ?? 0 );
 		if ( $purge_space <= 0 ) {
 			$this->skip( 'DC4: space purge emits removal signals', 'could not create fixture space' );
 			return;
 		}
-		$topic    = (int) \Jetonomy\Models\Post::create( [ 'space_id' => $purge_space, 'author_id' => $admin_id, 'title' => 'QA purge topic', 'content' => 'x', 'status' => 'publish' ] );
-		$answer   = (int) \Jetonomy\Models\Reply::create( [ 'post_id' => $topic, 'author_id' => $admin_id, 'content' => 'y', 'status' => 'publish' ] );
-		$signals  = [];
+		$topic    = (int) \Jetonomy\Models\Post::create( array( 'space_id' => $purge_space, 'author_id' => $admin_id, 'title' => 'QA purge topic', 'content' => 'x', 'status' => 'publish' ) );
+		$answer   = (int) \Jetonomy\Models\Reply::create( array( 'post_id' => $topic, 'author_id' => $admin_id, 'content' => 'y', 'status' => 'publish' ) );
+		$signals  = array();
 		$listener = static function ( $type, $id ) use ( &$signals ) {
 			$signals[] = $type . ':' . $id;
 		};
@@ -999,7 +1017,7 @@ class Model_Tests {
 		sort( $signals );
 		$this->check(
 			'DC4: space purge emits a removal signal per topic, reply and the space',
-			[ 'post:' . $topic, 'reply:' . $answer, 'space:' . $purge_space ] === $signals,
+			array( 'post:' . $topic, 'reply:' . $answer, 'space:' . $purge_space ) === $signals,
 			implode( ',', $signals )
 		);
 	}
@@ -1011,7 +1029,7 @@ class Model_Tests {
 	 * STRANDED if the leaver was its last admin; one with another admin is still
 	 * fully manageable and must keep running. The first version of this fix
 	 * archived both, so one member closing their account took healthy spaces
-	 * read-only for their entire membership (Basecamp 10119343043, QA case B).
+	 * read-only for their entire membership.
 	 *
 	 * Drives real wp_delete_user() rather than calling the private transfer
 	 * directly, because the hook wiring is half of what is being asserted.
@@ -1028,20 +1046,20 @@ class Model_Tests {
 		$suffix    = (string) time();
 
 		$owner  = wp_insert_user(
-			[
+			array(
 				'user_login' => 'qa_owner_' . $suffix,
 				'user_email' => 'qa_owner_' . $suffix . '@example.com',
 				'user_pass'  => wp_generate_password(),
 				'role'       => 'subscriber',
-			]
+			)
 		);
 		$co_admin = wp_insert_user(
-			[
+			array(
 				'user_login' => 'qa_coadmin_' . $suffix,
 				'user_email' => 'qa_coadmin_' . $suffix . '@example.com',
 				'user_pass'  => wp_generate_password(),
 				'role'       => 'subscriber',
-			]
+			)
 		);
 
 		if ( is_wp_error( $owner ) || is_wp_error( $co_admin ) ) {
@@ -1055,12 +1073,12 @@ class Model_Tests {
 		// admin and made the stranded case look survivable.
 		$make_space = static function ( string $slug, int $author ): int {
 			return (int) \Jetonomy\Models\Space::create(
-				[
+				array(
 					'title'     => 'QA Transfer ' . $slug,
 					'slug'      => $slug,
 					'type'      => 'forum',
 					'author_id' => $author,
-				],
+				),
 				$author
 			);
 		};
@@ -1072,23 +1090,23 @@ class Model_Tests {
 		$shared = $make_space( 'qa-transfer-shared-' . $suffix, (int) $owner );
 		$wpdb->insert(
 			$members_t,
-			[
+			array(
 				'space_id'  => $shared,
 				'user_id'   => (int) $co_admin,
 				'role'      => 'admin',
 				'joined_at' => current_time( 'mysql', true ),
-			]
+			)
 		);
 
 		// C: the surviving co-admin IS the site administrator. Still a survivor,
-		// so the space must stay running (Basecamp 10344393613).
+		// so the space must stay running.
 		$site_admin = \Jetonomy\Models\Space::fallback_owner( (int) $owner );
 		$by_admin   = $make_space( 'qa-transfer-siteadmin-' . $suffix, (int) $owner );
 		\Jetonomy\Models\SpaceMember::add( $by_admin, $site_admin, 'admin' );
 
-		$fired = [];
+		$fired = array();
 		$spy   = static function ( $space_id, $from, $to ) use ( &$fired ): void {
-			$fired[ (int) $space_id ] = [ (int) $from, (int) $to ];
+			$fired[ (int) $space_id ] = array( (int) $from, (int) $to );
 		};
 		add_action( 'jetonomy_space_transferred', $spy, 10, 3 );
 
@@ -1111,7 +1129,7 @@ class Model_Tests {
 			$a && (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members_t} WHERE space_id = %d AND user_id = %d AND role = 'admin'", $sole, (int) $a->author_id ) ) > 0 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
 		);
 
-		// The regression guard.
+		// The guard assertion.
 		$this->check( 'ST4: space with a surviving admin is NOT archived', $b && 'archived' !== $b->status, $b->status ?? 'missing' );
 		$this->check( 'ST5: surviving admin inherits attribution', $b && (int) $b->author_id === (int) $co_admin, 'author_id=' . ( $b->author_id ?? '?' ) );
 
@@ -1122,18 +1140,321 @@ class Model_Tests {
 		$this->check( 'ST8: site admin as surviving space admin inherits attribution', $c && (int) $c->author_id === $site_admin, 'author_id=' . ( $c->author_id ?? '?' ) );
 
 		// Cleanup.
-		foreach ( [ $sole, $shared, $by_admin ] as $sid ) {
-			$wpdb->delete( $members_t, [ 'space_id' => $sid ] );
-			$wpdb->delete( $spaces_t, [ 'id' => $sid ] );
+		foreach ( array( $sole, $shared, $by_admin ) as $sid ) {
+			\Jetonomy\Space_Purge::purge( $sid ); // Members and their activity rows too, not just the space row.
 		}
 		wp_delete_user( (int) $co_admin );
+	}
+
+	/**
+	 * HO: the explicit "Archive and hand over" and the GDPR erase.
+	 *
+	 * Only the owner (or a site admin) may hand over; a banned admin is never
+	 * the heir; the former owner stays on as a moderator; an archived space
+	 * cannot be handed over again; a failed or no-op hand-over changes nothing
+	 * and fires no hook; an erase hands spaces over like an account deletion.
+	 */
+	private function test_space_hand_over_rules(): void {
+		$suffix = wp_generate_password( 6, false, false );
+		$users  = array();
+		foreach ( array( 'owner', 'heir', 'banned', 'leaver' ) as $key ) {
+			$users[ $key ] = wp_insert_user(
+				array(
+					'user_login' => "qa_ho_{$key}_{$suffix}",
+					'user_email' => "qa_ho_{$key}_{$suffix}@example.test",
+					'user_pass'  => wp_generate_password(),
+					'role'       => 'subscriber',
+				)
+			);
+			if ( is_wp_error( $users[ $key ] ) ) {
+				$this->check( 'HO0: hand-over fixtures created', false, $users[ $key ]->get_error_message() );
+				return;
+			}
+		}
+
+		$make = static function ( string $slug, int $owner ): int {
+			return (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA HO ' . $slug, 'slug' => $slug, 'type' => 'forum', 'author_id' => $owner ), $owner );
+		};
+		$space = $make( 'qa-ho-' . $suffix, (int) $users['owner'] );
+		\Jetonomy\Models\SpaceMember::add( $space, (int) $users['banned'], 'admin' );
+		\Jetonomy\Models\SpaceMember::add( $space, (int) $users['heir'], 'admin' );
+		$ban = \Jetonomy\Models\Restriction::ban( (int) $users['banned'], 'global_ban', $this->qa_admin );
+		\Jetonomy\Models\Restriction::reset_memo();
+
+		$row = \Jetonomy\Models\Space::find( $space );
+		$this->check( 'HO1: a non-owner space admin may not hand over', ! \Jetonomy\Models\Space::can_hand_over( $row, (int) $users['heir'] ) );
+		$this->check( 'HO2: the owner may hand over', \Jetonomy\Models\Space::can_hand_over( $row, (int) $users['owner'] ) );
+		$this->check( 'HO3: a banned admin is never the heir', (int) $users['heir'] === \Jetonomy\Models\Space::resolve_successor( $space ) );
+
+		$fired = array();
+		$spy   = static function ( $sid, $from, $to ) use ( &$fired ): void {
+			$fired[] = array( (int) $sid, (int) $from, (int) $to );
+		};
+		add_action( 'jetonomy_space_transferred', $spy, 10, 3 );
+
+		$heir  = \Jetonomy\Models\Space::archive_and_hand_over( $space );
+		$after = \Jetonomy\Models\Space::find( $space );
+		$this->check( 'HO4: hand-over archives and reassigns', (int) $users['heir'] === $heir && 'archived' === $after->status && (int) $after->author_id === (int) $users['heir'] );
+		$this->check( 'HO5: the former owner stays on as a moderator', 'moderator' === \Jetonomy\Models\SpaceMember::get_role( $space, (int) $users['owner'] ) );
+		$this->check( 'HO6: the hook names the real previous owner', array( array( $space, (int) $users['owner'], (int) $users['heir'] ) ) === $fired, wp_json_encode( $fired ) );
+
+		$this->check( 'HO10: the new owner may undo their hand-over archive', \Jetonomy\Models\Space::can_unarchive( $after, (int) $users['heir'] ) );
+		$demote = \Jetonomy\Models\SpaceMember::set_role( $space, (int) $users['heir'], 'member' );
+		$this->check( 'HO13: an owner who lost the admin row cannot act as owner', ! is_wp_error( $demote ) && ! \Jetonomy\Models\Space::can_unarchive( \Jetonomy\Models\Space::find( $space ), (int) $users['heir'] ) );
+		\Jetonomy\Models\SpaceMember::set_role( $space, (int) $users['heir'], 'admin' );
+
+		$this->check( 'HO11: editors cannot write reserved settings keys', ! array_key_exists( '_qa_forged', \Jetonomy\Models\Space::merge_settings( $space, array( '_qa_forged' => 1 ) ) ) );
+
+		$again = \Jetonomy\Models\Space::archive_and_hand_over( $space );
+		$noop  = \Jetonomy\Models\Space::hand_over( $space, (int) $users['heir'] );
+		$ghost = \Jetonomy\Models\Space::hand_over( PHP_INT_MAX, (int) $users['heir'] );
+		$this->check( 'HO7: an archived space cannot be handed over again', is_wp_error( $again ) && 'jetonomy_space_archived' === $again->get_error_code() );
+		$this->check( 'HO8: no-op and missing-space hand-overs fail and fire nothing', is_wp_error( $noop ) && is_wp_error( $ghost ) && 1 === count( $fired ) );
+
+		// A site admin re-archiving clears the marker, including through the
+		// wp-admin form, which saves the stored settings alongside status.
+		\Jetonomy\Models\Space::update( $space, array( 'status' => 'active' ) );
+		\Jetonomy\Models\Space::update( $space, array( 'settings' => wp_json_encode( array( \Jetonomy\Models\Space::HANDOVER_ARCHIVE => 1 ) ) ) );
+		\Jetonomy\Models\Space::update(
+			$space,
+			array(
+				'status'   => 'archived',
+				'settings' => wp_json_encode( \Jetonomy\Models\Space::get_settings( $space ) ),
+			)
+		);
+		$this->check( 'HO12: an archive a site admin imposed stays out of the owner\'s reach', ! \Jetonomy\Models\Space::can_unarchive( \Jetonomy\Models\Space::find( $space ), (int) $users['heir'] ) );
+
+		// GDPR erase: a co-admin inherits, the space keeps running.
+		$erased = $make( 'qa-ho-erase-' . $suffix, (int) $users['leaver'] );
+		\Jetonomy\Models\SpaceMember::add( $erased, (int) $users['heir'], 'admin' );
+		$erasers = apply_filters( 'wp_privacy_personal_data_erasers', array() );
+		$email   = get_userdata( (int) $users['leaver'] )->user_email;
+		for ( $page = 1; $page < 20; $page++ ) {
+			$result = call_user_func( $erasers['jetonomy']['callback'], $email, $page );
+			if ( ! empty( $result['done'] ) ) {
+				break;
+			}
+		}
+		$e = \Jetonomy\Models\Space::find( $erased );
+		$this->check( 'HO9: GDPR erase hands an owned space to its co-admin', $e && (int) $e->author_id === (int) $users['heir'] && 'active' === $e->status, wp_json_encode( $e ) );
+
+		remove_action( 'jetonomy_space_transferred', $spy, 10 );
+
+		\Jetonomy\Models\Restriction::remove_ban( (int) $ban );
+		\Jetonomy\Space_Purge::purge( $space );
+		\Jetonomy\Space_Purge::purge( $erased );
+		foreach ( $users as $uid ) {
+			wp_delete_user( (int) $uid );
+		}
+	}
+
+	/**
+	 * PG: a database error during a purge stops it with the space intact.
+	 *
+	 * A failed topic-id read used to look like "no topics left", so the purge
+	 * deleted the space row and orphaned every reply.
+	 */
+	private function test_space_purge_stops_on_db_error(): void {
+		global $wpdb;
+		$slug  = 'qa-pg-' . wp_generate_password( 6, false, false );
+		$space = (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA PG', 'slug' => $slug, 'type' => 'forum', 'author_id' => $this->qa_admin ), $this->qa_admin );
+		$posts = \Jetonomy\table( 'posts' );
+		$now   = current_time( 'mysql', true );
+		$wpdb->insert( $posts, array( 'space_id' => $space, 'author_id' => $this->qa_admin, 'title' => 'PG', 'slug' => $slug . '-t', 'content' => 'x', 'content_plain' => 'x', 'status' => 'publish', 'created_at' => $now, 'last_reply_at' => $now ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$topic = (int) $wpdb->insert_id;
+		$reply = \Jetonomy\Models\Reply::create( array( 'post_id' => $topic, 'author_id' => $this->qa_admin, 'content' => 'PG reply', 'status' => 'publish' ) );
+
+		$break = static function ( $sql ) use ( $posts, $space ) {
+			return false !== strpos( (string) $sql, "SELECT id FROM {$posts} WHERE space_id = {$space}" ) ? 'SELECT qa_pg_missing_column FROM qa_pg_missing_table' : $sql;
+		};
+		add_filter( 'query', $break );
+		$suppress = $wpdb->suppress_errors( true );
+		\Jetonomy\Space_Purge::purge( $space );
+		$wpdb->suppress_errors( $suppress );
+		remove_filter( 'query', $break );
+
+		$this->check(
+			'PG1: a failed read keeps the space, its topic and its reply',
+			null !== \Jetonomy\Models\Space::find( $space ) && null !== \Jetonomy\Models\Post::find( $topic ) && null !== \Jetonomy\Models\Reply::find( (int) $reply )
+		);
+
+		$fired   = did_action( 'jetonomy_space_purged' );
+		$refuse  = static function ( string $table ) use ( $wpdb, $space ) {
+			$break = static fn( $sql ) => 0 === strpos( (string) $sql, "DELETE FROM {$table} " ) ? 'DELETE FROM qa_pg_missing_table' : $sql;
+			add_filter( 'query', $break );
+			$suppress = $wpdb->suppress_errors( true );
+			\Jetonomy\Space_Purge::purge( $space );
+			$wpdb->suppress_errors( $suppress );
+			remove_filter( 'query', $break );
+		};
+		$refuse( \Jetonomy\table( 'replies' ) );
+		$this->check(
+			'PG3: a failed reply delete keeps the space, its topic and its reply',
+			null !== \Jetonomy\Models\Space::find( $space ) && null !== \Jetonomy\Models\Post::find( $topic ) && null !== \Jetonomy\Models\Reply::find( (int) $reply ) && did_action( 'jetonomy_space_purged' ) === $fired
+		);
+		$refuse( \Jetonomy\table( 'spaces' ) );
+		$this->check( 'PG4: a failed space-row delete keeps the space and fires no purged hook', null !== \Jetonomy\Models\Space::find( $space ) && did_action( 'jetonomy_space_purged' ) === $fired );
+
+		\Jetonomy\Space_Purge::purge( $space );
+		$this->check( 'PG2: the purge then completes once the database answers', null === \Jetonomy\Models\Space::find( $space ) && null === \Jetonomy\Models\Reply::find( (int) $reply ) );
+
+		// PG5: purging a space that no longer counts in its category (locked for a
+		// large purge, or archived) leaves the category's count alone.
+		$pg_cat   = Category::create( array( 'name' => 'QA PG cat ' . $slug, 'slug' => 'qa-pg-cat-' . $slug ) );
+		$cat_n    = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT space_count FROM ' . \Jetonomy\table( 'categories' ) . ' WHERE id = %d', $pg_cat ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$pg_space = fn( string $k ): int => (int) \Jetonomy\Models\Space::create( array( 'title' => 'QA PG ' . $k, 'slug' => $slug . '-' . $k, 'type' => 'forum', 'category_id' => $pg_cat, 'author_id' => $this->qa_admin ), $this->qa_admin );
+		$pg_keep  = $pg_space( 'keep' );
+		$pg_lock  = $pg_space( 'lock' );
+		$pg_arch  = $pg_space( 'arch' );
+		\Jetonomy\Models\Space::update( $pg_lock, array( 'status' => 'locked' ) );
+		\Jetonomy\Models\Space::update( $pg_arch, array( 'status' => 'archived' ) );
+		\Jetonomy\Space_Purge::purge( $pg_lock );
+		\Jetonomy\Space_Purge::purge( $pg_arch );
+		$pg_mid = $cat_n();
+		\Jetonomy\Space_Purge::purge( $pg_keep );
+		$this->check( 'PG5: purging a locked or archived space does not lower its category count again', 1 === $pg_mid && 0 === $cat_n(), "after locked/archived purges {$pg_mid}, expected 1" );
+		$wpdb->delete( \Jetonomy\table( 'categories' ), array( 'id' => $pg_cat ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * DI: counters and threading stay true through reply, merge, split, move.
+	 */
+	private function test_topic_data_integrity(): void {
+		$suffix = wp_generate_password( 6, false, false );
+		$space  = fn( string $slug, string $type = 'forum' ): int => (int) \Jetonomy\Models\Space::create( array( 'title' => $slug, 'slug' => $slug . '-' . $suffix, 'type' => $type, 'author_id' => $this->qa_admin ), $this->qa_admin );
+		$topic  = fn( int $sid, string $t, string $status = 'publish' ): int => (int) \Jetonomy\Models\Post::create( array( 'space_id' => $sid, 'author_id' => $this->qa_admin, 'title' => $t, 'slug' => sanitize_title( $t . ' ' . $suffix ), 'content' => 'x', 'status' => $status ) );
+		$reply  = fn( int $pid, int $parent = 0 ) => \Jetonomy\Models\Reply::create( array( 'post_id' => $pid, 'author_id' => $this->qa_admin, 'content' => 'r', 'status' => 'publish', 'parent_id' => $parent ) );
+		$a      = $space( 'qa-di-a' );
+		$b      = $space( 'qa-di-b' );
+		$q      = $space( 'qa-di-q', 'qa' );
+
+		$t1      = $topic( $a, 'DI one' );
+		$t2      = $topic( $a, 'DI two' );
+		$foreign = (int) $reply( $t2 );
+		$cross   = $reply( $t1, $foreign );
+		$this->check( 'DI1: a reply cannot answer a reply in another topic', is_wp_error( $cross ) && 'jetonomy_invalid_parent' === $cross->get_error_code() );
+
+		$qt = $topic( $q, 'DI target' );
+		$qs = $topic( $q, 'DI source' );
+		$at = (int) $reply( $qt );
+		$as = (int) $reply( $qs );
+		foreach ( array( array( $qt, $at ), array( $qs, $as ) ) as [ $pid, $rid ] ) {
+			\Jetonomy\Models\Reply::mark_accepted( $rid );
+			\Jetonomy\Models\Post::accept_reply( $pid, $rid );
+		}
+		\Jetonomy\Models\Post::merge_into( $qs, $qt );
+		global $wpdb;
+		$accepted = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'replies' ) . ' WHERE post_id = %d AND is_accepted = 1', $qt ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$this->check( 'DI2: a merged Q&A topic keeps one accepted answer, its own', array( (string) $at ) === array_map( 'strval', $accepted ), wp_json_encode( $accepted ) );
+
+		$st     = $topic( $a, 'DI split' );
+		$parent = (int) $reply( $st );
+		$reply( $st, $parent );
+		$reply( $st, $parent );
+		$gone = (int) $reply( $st, $parent );
+		\Jetonomy\Models\Reply::update( $gone, array( 'status' => 'trash' ) );
+		$new = \Jetonomy\Models\Reply::split_to_topic( $parent, 'DI split new ' . $suffix );
+		$this->check(
+			'DI3: split counts only published replies, on both topics',
+			$new && (int) \Jetonomy\Models\Post::find( $new )->reply_count === \Jetonomy\Models\Reply::count_by_post( $new )
+				&& (int) \Jetonomy\Models\Post::find( $st )->reply_count === \Jetonomy\Models\Reply::count_by_post( $st )
+		);
+
+		// DI7: split moves the whole subtree, and a leaving accepted answer is un-accepted.
+		$member = (int) wp_insert_user( array( 'user_login' => 'jt_qa_di_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'di-' . $suffix . '@example.test', 'role' => 'subscriber' ) );
+		$rep    = static fn(): int => (int) \Jetonomy\Models\UserProfile::find_or_create( $member )->reputation;
+		$by     = static fn( int $pid, int $parent = 0 ) => (int) \Jetonomy\Models\Reply::create( array( 'post_id' => $pid, 'author_id' => $member, 'content' => 'r', 'status' => 'publish', 'parent_id' => $parent ) );
+		$sq     = $topic( $q, 'DI split tree' );
+		$root   = $by( $sq );
+		$child  = $by( $sq, $root );
+		$grand  = $by( $sq, $child );
+		$before = $rep();
+		\Jetonomy\Models\Reply::accept_as_answer( $grand, $this->qa_admin );
+		$moved = \Jetonomy\Models\Reply::split_to_topic( $root, 'DI split tree new ' . $suffix );
+		$g = \Jetonomy\Models\Reply::find( $grand );
+		$this->check(
+			'DI7: split takes grandchildren along, and the source drops the answer that left',
+			$moved && (int) $g->post_id === $moved && (int) $g->parent_id === $child && null === \Jetonomy\Models\Reply::find( $child )->parent_id
+				&& empty( \Jetonomy\Models\Post::find( $sq )->accepted_reply_id ) && empty( $g->is_accepted ) && $rep() === $before
+		);
+
+		// DI9: a split never moves a private reply to a new audience, and never unmasks an anonymous one.
+		$pt    = $topic( $a, 'DI split private' );
+		$proot = $by( $pt );
+		\Jetonomy\Models\Reply::set_private( $by( $pt, $proot ), true );
+		$refused = \Jetonomy\Models\Reply::split_to_topic( $proot, 'DI split private new ' . $suffix );
+		$anon    = (int) \Jetonomy\Models\Reply::create( array( 'post_id' => $pt, 'author_id' => $member, 'content' => 'anon', 'status' => 'publish', 'is_anonymous' => 1 ) );
+		\Jetonomy\Models\Reply::update( $anon, array( 'is_anonymous' => 1 ) );
+		$anon_topic = \Jetonomy\Models\Reply::split_to_topic( $anon, 'DI split anon new ' . $suffix );
+		$this->check(
+			'DI9: split refuses a thread with private replies and keeps an anonymous reply anonymous',
+			is_wp_error( $refused ) && 'jetonomy_split_private' === $refused->get_error_code()
+				&& is_int( $anon_topic ) && $anon_topic > 0 && ! empty( \Jetonomy\Models\Post::find( $anon_topic )->is_anonymous )
+		);
+
+		// DI8: merge takes back the losing answer's reputation and clears the source's pointer.
+		$mt = $topic( $q, 'DI merge target' );
+		$ms = $topic( $q, 'DI merge source' );
+		\Jetonomy\Models\Reply::accept_as_answer( (int) $reply( $mt ), $member );
+		$loser  = $by( $ms );
+		$before = $rep();
+		\Jetonomy\Models\Reply::accept_as_answer( $loser, $this->qa_admin );
+		\Jetonomy\Models\Post::merge_into( $ms, $mt );
+		$this->check( 'DI8: merging un-accepts the source answer properly and clears the source', $rep() === $before && empty( \Jetonomy\Models\Post::find( $ms )->accepted_reply_id ) && empty( \Jetonomy\Models\Post::find( $ms )->is_resolved ) );
+
+		// DI10: a merge carries the opening post over without joining its author to the target space.
+		$m1     = $space( 'qa-di-m1' );
+		$m2     = $space( 'qa-di-m2' );
+		$di_src = (int) \Jetonomy\Models\Post::create( array( 'space_id' => $m1, 'author_id' => $member, 'title' => 'DI merge src ' . $suffix, 'slug' => 'di-merge-src-' . $suffix, 'content' => 'x', 'status' => 'publish' ) );
+		$di_dst = $topic( $m2, 'DI merge dst' );
+		SpaceMember::remove( $m2, $member );
+		\Jetonomy\Models\Post::merge_into( $di_src, $di_dst );
+		$this->check( 'DI10: merging does not make the source author a member of the target space', ! SpaceMember::is_member( $m2, $member ) );
+
+		// TC1: a tag page counts only topics the viewer may read, like its list.
+		$tc_tag     = \Jetonomy\Models\Tag::find_or_create( 'qa-tc-' . $suffix );
+		$tc_open    = $topic( $m1, 'TC open' );
+		$tc_private = $topic( $m1, 'TC private' );
+		\Jetonomy\Models\Post::update( $tc_private, array( 'is_private' => 1 ) );
+		\Jetonomy\Models\Tag::attach_to_post( $tc_open, $tc_tag );
+		\Jetonomy\Models\Tag::attach_to_post( $tc_private, $tc_tag );
+		$tc_prev = get_current_user_id();
+		wp_set_current_user( 0 );
+		$tc_count = \Jetonomy\Models\Post::count_by_tag_visible( $tc_tag );
+		$tc_list  = count( \Jetonomy\Models\Post::list_by_tag_visible( $tc_tag, 'latest', 50, 0 ) );
+		wp_set_current_user( $tc_prev );
+		$this->check( 'TC1: a guest\'s tag count matches the topics they can see (private excluded)', 1 === $tc_count && $tc_count === $tc_list, "count {$tc_count}, list {$tc_list}" );
+		\Jetonomy\Models\Tag::delete( $tc_tag );
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+
+		$draft = $topic( $a, 'DI draft', 'draft' );
+		$pub   = $topic( $a, 'DI pub' );
+		$a0    = (int) \Jetonomy\Models\Space::find( $a )->post_count;
+		\Jetonomy\Models\Post::update( $draft, array( 'space_id' => $b ) );
+		$this->check( 'DI4: moving a draft leaves both space counts alone', (int) \Jetonomy\Models\Space::find( $a )->post_count === $a0 && 0 === (int) \Jetonomy\Models\Space::find( $b )->post_count );
+		\Jetonomy\Models\Post::update( $pub, array( 'space_id' => $b ) );
+		$this->check( 'DI5: moving a published topic moves its count', (int) \Jetonomy\Models\Space::find( $a )->post_count === $a0 - 1 && 1 === (int) \Jetonomy\Models\Space::find( $b )->post_count );
+
+		$p     = $space( 'qa-di-p' );
+		$older = $topic( $p, 'DI older busy' );
+		for ( $i = 0; $i < 3; $i++ ) {
+			$reply( $older );
+		}
+		$topic( $p, 'DI newer quiet' );
+		$list = \Jetonomy\Models\Post::list_by_space_visible( $p, 0, false, 'popular', 5 );
+		$this->check( 'DI6: Popular breaks vote ties by replies', $list && (int) $list[0]->id === $older );
+
+		foreach ( array( $a, $b, $q, $p, $m1, $m2 ) as $sid ) {
+			\Jetonomy\Space_Purge::purge( $sid );
+		}
+		wp_delete_user( $member );
 	}
 
 	/**
 	 * Manual-reorder primitive, shared by categories and spaces.
 	 *
 	 * Had no coverage at all, which is why two corruptions shipped in a row on
-	 * the categories screen (Basecamp 10210539659): first the batch index was
+	 * the categories screen: first the batch index was
 	 * written as an absolute position, then the batch itself turned out to be
 	 * longer than per_page because child rows render inline on the parent's page.
 	 * Both silently overwrote the next page's positions.
@@ -1160,14 +1481,14 @@ class Model_Tests {
 		$slug = 'jt-qa-vis-' . wp_generate_password( 6, false, false );
 		$wpdb->insert(
 			\Jetonomy\table( 'categories' ),
-			[
+			array(
 				'name'       => 'QA Visibility Probe',
 				'slug'       => $slug,
 				'visibility' => 'hidden',
 				'parent_id'  => 0,
 				'sort_order' => 0,
 				'created_at' => \Jetonomy\now(),
-			]
+			)
 		);
 		$cat_id = (int) $wpdb->insert_id;
 
@@ -1184,7 +1505,7 @@ class Model_Tests {
 
 		// CV4: the owner keeps full sight - a filter that blinds the admin
 		// screen would "pass" CV1-CV3 while breaking management.
-		wp_set_current_user( 1 );
+		wp_set_current_user( $this->qa_admin );
 		$admin_slugs = array_column( Category::list_top_level(), 'slug' );
 		$this->check( 'CV4: a category manager still sees a hidden category', in_array( $slug, $admin_slugs, true ) );
 
@@ -1193,17 +1514,17 @@ class Model_Tests {
 		$spaces_table = \Jetonomy\table( 'spaces' );
 		$wpdb->insert(
 			$spaces_table,
-			[
+			array(
 				'category_id' => $cat_id,
 				'parent_id'   => 0,
-				'author_id'   => 1,
+				'author_id'   => $this->qa_admin,
 				'type'        => 'forum',
 				'title'       => 'QA Visibility Probe Space',
 				'slug'        => $slug . '-space',
 				'visibility'  => 'public',
 				'status'      => 'active',
 				'created_at'  => \Jetonomy\now(),
-			]
+			)
 		);
 		$space_id = (int) $wpdb->insert_id;
 
@@ -1229,29 +1550,29 @@ class Model_Tests {
 		$posts_table = \Jetonomy\table( 'posts' );
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$posts_table,
-			[
+			array(
 				'space_id'   => $space_id,
-				'author_id'  => 1,
+				'author_id'  => $this->qa_admin,
 				'title'      => 'QA Visibility Probe Topic',
 				'slug'       => $slug . '-topic',
 				'content'    => 'probe',
 				'status'     => 'publish',
 				'created_at' => \Jetonomy\now(),
-			]
+			)
 		);
 		$post_id  = (int) $wpdb->insert_id;
-		$probe_post = (object) [
+		$probe_post = (object) array(
 			'id'         => $post_id,
 			'space_id'   => $space_id,
-			'author_id'  => 1,
+			'author_id'  => $this->qa_admin,
 			'status'     => 'publish',
 			'is_private' => 0,
-		];
-		$probe_space = (object) [
+		);
+		$probe_space = (object) array(
 			'id'          => $space_id,
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
-		];
+		);
 
 		wp_set_current_user( 0 );
 		$this->check(
@@ -1282,29 +1603,29 @@ class Model_Tests {
 		// listing must open, which is why the listing and the read side are
 		// asserted together on the same row.
 		$member_id = wp_insert_user(
-			[
+			array(
 				'user_login' => 'jt_qa_cv_member_' . $post_id,
 				'user_pass'  => wp_generate_password( 16 ),
 				'user_email' => 'jt-qa-cv-' . $post_id . '@test.local',
 				'role'       => 'subscriber',
-			]
+			)
 		);
 		$member_id = ( $member_id && ! is_wp_error( $member_id ) ) ? (int) $member_id : 0;
 
 		if ( $member_id ) {
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$spaces_table,
-				[
+				array(
 					'category_id' => $cat_id,
 					'parent_id'   => 0,
-					'author_id'   => 1,
+					'author_id'   => $this->qa_admin,
 					'type'        => 'forum',
 					'title'       => 'QA Visibility Probe Private Space',
 					'slug'        => $slug . '-private',
 					'visibility'  => 'private',
 					'status'      => 'active',
 					'created_at'  => \Jetonomy\now(),
-				]
+				)
 			);
 			$priv_space_id = (int) $wpdb->insert_id;
 			SpaceMember::add( $priv_space_id, $member_id, 'member' );
@@ -1325,8 +1646,8 @@ class Model_Tests {
 					&& ! Permission_Engine::can( $member_id, 'read', $space_id )
 			);
 
-			$wpdb->delete( \Jetonomy\table( 'space_members' ), [ 'space_id' => $priv_space_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->delete( $spaces_table, [ 'id' => $priv_space_id ] );
+			$wpdb->delete( \Jetonomy\table( 'space_members' ), array( 'space_id' => $priv_space_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( $spaces_table, array( 'id' => $priv_space_id ) );
 			wp_delete_user( $member_id );
 		} else {
 			$this->skip( 'CV13: member keeps their space', 'test user creation failed' );
@@ -1336,7 +1657,7 @@ class Model_Tests {
 
 		// The widen-check that stops all of CV7-CV11 being satisfied by simply
 		// denying everyone.
-		wp_set_current_user( 1 );
+		wp_set_current_user( $this->qa_admin );
 		$this->check(
 			'CV12: the owner still reads the space and its topics',
 			Permission_Engine::can( 1, 'read', $space_id )
@@ -1347,23 +1668,20 @@ class Model_Tests {
 
 		wp_set_current_user( $previous_user );
 
-		$wpdb->delete( $posts_table, [ 'id' => $post_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->delete( $spaces_table, [ 'id' => $space_id ] );
-		$wpdb->delete( \Jetonomy\table( 'categories' ), [ 'id' => $cat_id ] );
+		$wpdb->delete( $posts_table, array( 'id' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->delete( $spaces_table, array( 'id' => $space_id ) );
+		$wpdb->delete( \Jetonomy\table( 'categories' ), array( 'id' => $cat_id ) );
 	}
 
 	/**
 	 * A child space is listed under the category it was assigned.
 	 *
-	 * The category listing used to carry `parent_id = 0`, so a space with a
-	 * parent had its `category_id` written, indexed and then ignored. Nothing
-	 * nested those children either, so an imported sub-forum was reachable
-	 * from nowhere in the directory - the shape two customers reported after
-	 * migrating.
+	 * The category listing must not filter on `parent_id = 0`: a space with a parent has
+	 * its `category_id` written and must still be listed, so an imported sub-forum is
+	 * reachable from the directory.
 	 *
-	 * The count is asserted alongside the list because they are separate
-	 * queries that carried the same clause: fixing one and not the other gives
-	 * pagination that disagrees with its own rows.
+	 * The count is asserted alongside the list because they are separate queries that
+	 * share one clause: the two must agree or pagination disagrees with its own rows.
 	 */
 	private function test_child_space_in_category_listing(): void {
 		global $wpdb;
@@ -1374,31 +1692,31 @@ class Model_Tests {
 
 		$wpdb->insert(
 			$cats,
-			[
+			array(
 				'name'       => 'QA Child Listing Probe',
 				'slug'       => 'jt-qa-child-' . $suffix,
 				'visibility' => 'public',
 				'parent_id'  => 0,
 				'sort_order' => 0,
 				'created_at' => \Jetonomy\now(),
-			]
+			)
 		);
 		$cat_id = (int) $wpdb->insert_id;
 
-		$make_space = static function ( int $parent_id, int $category_id, string $slug ) use ( $wpdb, $spaces ): int {
+		$make_space = function ( int $parent_id, int $category_id, string $slug ) use ( $wpdb, $spaces ): int {
 			$wpdb->insert(
 				$spaces,
-				[
+				array(
 					'category_id' => $category_id,
 					'parent_id'   => $parent_id,
-					'author_id'   => 1,
+					'author_id'   => $this->qa_admin,
 					'type'        => 'forum',
 					'title'       => 'QA Child Listing ' . $slug,
 					'slug'        => $slug,
 					'visibility'  => 'public',
 					'status'      => 'active',
 					'created_at'  => \Jetonomy\now(),
-				]
+				)
 			);
 			return (int) $wpdb->insert_id;
 		};
@@ -1427,7 +1745,7 @@ class Model_Tests {
 		// SS4: listed once. The tree groups by category, so a duplicate would
 		// show up as the same id twice in the same bucket.
 		$tree   = Space::visible_by_category( 0 );
-		$bucket = array_map( 'intval', array_column( $tree[ $cat_id ] ?? [], 'id' ) );
+		$bucket = array_map( 'intval', array_column( $tree[ $cat_id ] ?? array(), 'id' ) );
 		$this->check(
 			'SS4: the child is listed exactly once, not also nested',
 			1 === count( array_keys( $bucket, $child_id, true ) ),
@@ -1436,9 +1754,9 @@ class Model_Tests {
 
 		wp_set_current_user( $previous_user );
 
-		$wpdb->delete( $spaces, [ 'id' => $child_id ] );
-		$wpdb->delete( $spaces, [ 'id' => $parent_id ] );
-		$wpdb->delete( $cats, [ 'id' => $cat_id ] );
+		$wpdb->delete( $spaces, array( 'id' => $child_id ) );
+		$wpdb->delete( $spaces, array( 'id' => $parent_id ) );
+		$wpdb->delete( $cats, array( 'id' => $cat_id ) );
 		self::bust_space_tree();
 	}
 
@@ -1455,12 +1773,9 @@ class Model_Tests {
 	/**
 	 * The leaderboard ranks by reputation, and only real members hold a rank.
 	 *
-	 * Two defects sat in the same view. Rows were numbered by array index
-	 * while the "Your rank" badge used competition ranking, so tied members
-	 * were numbered 10 and 11 while both were told "#10". And a profile whose
-	 * WP user no longer existed was fetched, failed to render, and was dropped
-	 * AFTER spending its position - leaving a visible hole (... 17, 18, 20)
-	 * and shifting everyone below it.
+	 * Rows are numbered by competition ranking, as the "Your rank" badge is, so tied
+	 * members share a number. A profile whose WP user does not exist is excluded
+	 * BEFORE it spends a position, so there is no visible hole (... 17, 18, 20).
 	 */
 	private function test_leaderboard_ranking(): void {
 		$rows = UserProfile::list_for_leaderboard( 'all', 100, 0 );
@@ -1505,8 +1820,8 @@ class Model_Tests {
 		}
 		$this->check( 'LB3: competition rank agrees with reputation order (ties share)', $ok, $detail );
 
-		// LB4: ranks never skip except across a shared rank — the signature of
-		// the old hole. After N members share a rank, the next is rank+N.
+		// LB4: ranks never skip except across a shared rank. After N members share a rank,
+		// the next is rank+N.
 		$ranks    = array_map( static fn( $r ) => UserProfile::rank_for_user( (int) $r->user_id, 'all' ), array_values( $rows ) );
 		$holes    = 0;
 		$run_rank = null;
@@ -1575,12 +1890,10 @@ class Model_Tests {
 	/**
 	 * reply_count counts PUBLISHED replies, through every status path.
 	 *
-	 * Reply::create() used to increment unconditionally while the counter -
-	 * and Recount, which defines it - mean published only. update() already
-	 * applies its own +1/-1 when a reply crosses the publish boundary, so a
-	 * reply that did not start published was counted twice: held for approval
-	 * gave counter 1 against 0 published, and approving it gave 2 against 1.
-	 * Every moderated reply permanently inflated its thread by one.
+	 * Reply::create() increments only for a published reply, as Recount defines the
+	 * counter; update() applies its own +1/-1 when a reply crosses the publish boundary.
+	 * An unconditional increment would count a held reply twice (1 against 0 published,
+	 * then 2 against 1), inflating the thread by one per moderated reply.
 	 */
 	private function test_reply_count_moderation(): void {
 		global $wpdb;
@@ -1601,12 +1914,12 @@ class Model_Tests {
 
 		// RC1: a reply held for approval is not yet a published reply.
 		$held = Reply::create(
-			[
+			array(
 				'post_id'   => $post_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => 'QA moderation probe',
 				'status'    => 'pending',
-			]
+			)
 		);
 		$this->check(
 			'RC1: a pending reply does not raise reply_count',
@@ -1615,7 +1928,7 @@ class Model_Tests {
 		);
 
 		// RC2: approving it counts it exactly once, not a second time.
-		Reply::update( $held, [ 'status' => 'publish' ] );
+		Reply::update( $held, array( 'status' => 'publish' ) );
 		$this->check(
 			'RC2: approving a held reply counts it exactly once',
 			$counter() === $actual(),
@@ -1624,11 +1937,11 @@ class Model_Tests {
 
 		// RC3: and the ordinary path is unchanged.
 		$normal = Reply::create(
-			[
+			array(
 				'post_id'   => $post_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => 'QA direct probe',
-			]
+			)
 		);
 		$this->check( 'RC3: a directly published reply still counts', $counter() === $actual() );
 
@@ -1642,19 +1955,19 @@ class Model_Tests {
 		// corrected the counter. Any moderator trashing a reply that has
 		// children reproduces it.
 		$parent_id = Reply::create(
-			[
+			array(
 				'post_id'   => $post_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => 'QA orphan parent',
-			]
+			)
 		);
 		$child_id = Reply::create(
-			[
+			array(
 				'post_id'   => $post_id,
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => 'QA orphan child',
 				'parent_id' => $parent_id,
-			]
+			)
 		);
 		$parent_id = is_wp_error( $parent_id ) ? 0 : (int) $parent_id;
 		$child_id  = is_wp_error( $child_id ) ? 0 : (int) $child_id;
@@ -1672,7 +1985,7 @@ class Model_Tests {
 				! in_array( $child_id, $root_ids(), true )
 			);
 
-			Reply::update( $parent_id, [ 'status' => 'trash' ] );
+			Reply::update( $parent_id, array( 'status' => 'trash' ) );
 			$this->check(
 				'RC6: trashing the parent promotes the child to a root, not oblivion',
 				in_array( $child_id, $root_ids(), true )
@@ -1682,15 +1995,15 @@ class Model_Tests {
 				Reply::count_top_level( $post_id ) === count( $root_ids() )
 			);
 
-			$wpdb->delete( table( 'replies' ), [ 'id' => $child_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->delete( table( 'replies' ), [ 'id' => $parent_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( table( 'replies' ), array( 'id' => $child_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->delete( table( 'replies' ), array( 'id' => $parent_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		} else {
 			$this->skip( 'RC5: nested reply is not a root', 'reply insert failed' );
 			$this->skip( 'RC6: orphan promoted to root', 'precondition not met' );
 			$this->skip( 'RC7: count agrees with render', 'precondition not met' );
 		}
 
-		$wpdb->update( $posts_table, [ 'reply_count' => $restore ], [ 'id' => $post_id ] );
+		$wpdb->update( $posts_table, array( 'reply_count' => $restore ), array( 'id' => $post_id ) );
 	}
 
 	/**
@@ -1763,7 +2076,7 @@ class Model_Tests {
 		$make = static function ( string $title, array $meta, int $days ): int {
 			$when = gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
 			$id   = wp_insert_post(
-				[
+				array(
 					'post_type'      => 'attachment',
 					'post_title'     => $title,
 					'post_status'    => 'inherit',
@@ -1771,7 +2084,7 @@ class Model_Tests {
 					'post_mime_type' => 'image/png',
 					'post_date'      => $when,
 					'post_date_gmt'  => $when,
-				]
+				)
 			);
 			foreach ( $meta as $key => $value ) {
 				update_post_meta( $id, $key, $value );
@@ -1779,11 +2092,11 @@ class Model_Tests {
 			return (int) $id;
 		};
 
-		$ours_old   = $make( 'QA media ours old', [ \Jetonomy\Media_Library::META_ORIGIN => 'upload' ], 5 );
-		$ours_fresh = $make( 'QA media ours fresh', [ \Jetonomy\Media_Library::META_ORIGIN => 'upload' ], 0 );
-		// Flagged by the backfill but NOT recorded as ours - i.e. somebody
-		// else's file. The shape the old sweep destroyed.
-		$foreign = $make( 'QA media foreign', [ \Jetonomy\Media_Library::META_FLAG => '1' ], 30 );
+		$ours_old   = $make( 'QA media ours old', array( \Jetonomy\Media_Library::META_ORIGIN => 'upload' ), 5 );
+		$ours_fresh = $make( 'QA media ours fresh', array( \Jetonomy\Media_Library::META_ORIGIN => 'upload' ), 0 );
+		// Flagged by the backfill but NOT recorded as ours - i.e. somebody else's file,
+		// which the sweep must leave alone.
+		$foreign = $make( 'QA media foreign', array( \Jetonomy\Media_Library::META_FLAG => '1' ), 30 );
 
 		/*
 		 * MD5-MD7: the sweep must not delete a file that is IN USE.
@@ -1807,7 +2120,7 @@ class Model_Tests {
 		$reply_id                    = Reply::create(
 			array(
 				'post_id'   => (int) $wpdb->get_var( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" ),
-				'author_id' => 1,
+				'author_id' => $this->qa_admin,
 				'content'   => '<img src="' . esc_url( content_url( '/uploads/' . $inline_file ) ) . '" />',
 			)
 		);
@@ -1861,7 +2174,7 @@ class Model_Tests {
 			}
 		}
 
-		foreach ( [ $ours_old, $ours_fresh, $foreign ] as $id ) {
+		foreach ( array( $ours_old, $ours_fresh, $foreign ) as $id ) {
 			if ( get_post( $id ) ) {
 				wp_delete_post( $id, true );
 			}
@@ -1882,10 +2195,9 @@ class Model_Tests {
 	private function test_subscriber_fanout_batches(): void {
 		global $wpdb;
 		$hook   = 'jetonomy_fanout_post_subscribers';
-		$admins = get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] );
-		$author = (int) ( $admins[0] ?? 1 );
+		$author = $this->qa_admin; // Never a real member: posting earns reputation that the topic's deletion does not take back.
 		$fake   = range( 990000001, 990000250 );
-		$space  = Space::create( [ 'title' => 'QA FO', 'slug' => 'jt-qa-fo-' . wp_generate_password( 6, false, false ), 'author_id' => $author ] );
+		$space  = Space::create( array( 'title' => 'QA FO', 'slug' => 'jt-qa-fo-' . wp_generate_password( 6, false, false ), 'author_id' => $author ) );
 		$post   = 0;
 
 		try {
@@ -1893,7 +2205,7 @@ class Model_Tests {
 				\Jetonomy\Models\Subscription::subscribe( $uid, 'space', $space );
 			}
 
-			$seen  = [];
+			$seen  = array();
 			$after = 0;
 			do {
 				$batch = \Jetonomy\Models\Subscription::get_subscribers( 'space', $space, $after, 100 );
@@ -1902,25 +2214,34 @@ class Model_Tests {
 			} while ( 100 === count( $batch ) );
 			$this->check( 'FO1: cursor batches cover every subscriber once, in order', $fake === $seen );
 
-			$post = Post::create( [ 'space_id' => $space, 'author_id' => $author, 'title' => 'QA FO', 'slug' => 'jt-qa-fo-p-' . wp_generate_password( 6, false, false ), 'content' => '<p>FO</p>' ] );
+			$post = Post::create( array( 'space_id' => $space, 'author_id' => $author, 'title' => 'QA FO', 'slug' => 'jt-qa-fo-p-' . wp_generate_password( 6, false, false ), 'content' => '<p>FO</p>' ) );
 			do_action( 'jetonomy_after_create_post', $post, $space, null ); // As the REST create path fires it.
-			$this->check( 'FO2: a post to a large space queues the fan-out on Action Scheduler', function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, [ $post, $space ], 'jetonomy' ) );
+			$this->check( 'FO2: a post to a large space queues the fan-out on Action Scheduler', function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, array( $post, $space ), 'jetonomy' ) );
 
 			$count = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}jt_notifications WHERE object_type = 'post' AND object_id = %d AND type = 'new_post_in_sub'", $post ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			do_action( $hook, $post, $space );
-			$this->check( 'FO3: one run notifies one batch and queues the rest from its cursor', 100 === $count() && as_has_scheduled_action( $hook, [ $post, $space, 990000100 ], 'jetonomy' ) );
+			$this->check( 'FO3: one run notifies one batch and queues the rest from its cursor', 100 === $count() && as_has_scheduled_action( $hook, array( $post, $space, 990000100 ), 'jetonomy' ) );
 
+			// Run each continuation by hand, first taking it off the queue so a
+			// background Action Scheduler runner cannot run the same batch too.
+			$own = static function ( array $args ) use ( $hook ): void {
+				if ( function_exists( 'as_unschedule_all_actions' ) ) {
+					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
+				}
+			};
+			$own( array( $post, $space, 990000100 ) );
 			do_action( $hook, $post, $space, 990000100 );
+			$own( array( $post, $space, 990000200 ) );
 			do_action( $hook, $post, $space, 990000200 );
-			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 250 === $count() );
+			$this->check( 'FO4: following the cursor reaches every subscriber exactly once', 250 === $count(), 'notified ' . $count() );
 		} finally {
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
-				as_unschedule_all_actions( $hook, [], 'jetonomy' );
-				foreach ( [ [ $post, $space ], [ $post, $space, 990000100 ], [ $post, $space, 990000200 ] ] as $args ) {
+				as_unschedule_all_actions( $hook, array(), 'jetonomy' );
+				foreach ( array( array( $post, $space ), array( $post, $space, 990000100 ), array( $post, $space, 990000200 ) ) as $args ) {
 					as_unschedule_all_actions( $hook, $args, 'jetonomy' );
 				}
 			}
-			wp_clear_scheduled_hook( $hook, [ $post, $space ] );
+			wp_clear_scheduled_hook( $hook, array( $post, $space ) );
 			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_notifications WHERE user_id BETWEEN 990000001 AND 990000250" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->query( "DELETE FROM {$wpdb->prefix}jt_subscriptions WHERE user_id BETWEEN 990000001 AND 990000250" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			\Jetonomy\Space_Purge::purge( $space );
@@ -1930,7 +2251,6 @@ class Model_Tests {
 	/**
 	 * PL: count phrases go through _n() so languages with 3+ plural forms
 	 * translate every count; a renamed noun falls back to the owner's words
-	 * (Basecamp 10369320225).
 	 */
 	private function test_count_label_plurals(): void {
 		$polish = static function ( $t, $s, $p, $n, $d ) {
@@ -1943,44 +2263,130 @@ class Model_Tests {
 			return ( $n % 10 >= 2 && $n % 10 <= 4 && ( $n % 100 < 10 || $n % 100 >= 20 ) ) ? '%s tematy' : '%s tematów';
 		};
 		add_filter( 'ngettext', $polish, 10, 5 );
-		$this->check( 'PL1: a 3-form language gets each form (1/2/5/22)', '1 temat|2 tematy|5 tematów|22 tematy' === implode( '|', array_map( static fn( $n ) => \Jetonomy\count_label( $n, 'topic' ), [ 1, 2, 5, 22 ] ) ) );
+		$this->check( 'PL1: a 3-form language gets each form (1/2/5/22)', '1 temat|2 tematy|5 tematów|22 tematy' === implode( '|', array_map( static fn( $n ) => \Jetonomy\count_label( $n, 'topic' ), array( 1, 2, 5, 22 ) ) ) );
 		remove_filter( 'ngettext', $polish, 10 );
-		[ $sq_sql, $sq_params, $sq_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], 'qa' );
+		[ $sq_sql, $sq_params, $sq_like ] = \Jetonomy\Search\Fulltext_Search::match_predicate( array( 'p.title', 'p.content_plain' ), 'qa' );
 		$this->check( 'SQ1: a short query scans titles only, never topic bodies', $sq_like && false === strpos( $sq_sql, 'content_plain' ) && 1 === count( $sq_params ) );
-		[ $sq_sql ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'r.content_plain' ], 'qa' );
+		[ $sq_sql ] = \Jetonomy\Search\Fulltext_Search::match_predicate( array( 'r.content_plain' ), 'qa' );
 		$this->check( 'SQ2: a short query does not scan reply bodies', '0 = 1' === $sq_sql );
-		[ $sq_sql ] = \Jetonomy\Search\Fulltext_Search::match_predicate( [ 'p.title', 'p.content_plain' ], 'caching' );
+		[ $sq_sql ] = \Jetonomy\Search\Fulltext_Search::match_predicate( array( 'p.title', 'p.content_plain' ), 'caching' );
 		$this->check( 'SQ3: a normal query still searches bodies through FULLTEXT', 0 === strpos( $sq_sql, 'MATCH(p.title, p.content_plain)' ) );
 		$this->check( 'PL3: a stacked stat label agrees with its number', 'reply|replies|replies' === \Jetonomy\count_noun( 1, 'reply' ) . '|' . \Jetonomy\count_noun( 0, 'reply' ) . '|' . \Jetonomy\count_noun( 2, 'reply' ) );
 
-		$saved = get_option( 'jetonomy_settings', [] );
-		update_option( 'jetonomy_settings', array_merge( (array) $saved, [ 'topic_label_singular' => 'Thread', 'topic_label_plural' => 'Threads' ] ) );
+		$saved = get_option( 'jetonomy_settings', array() );
+		update_option( 'jetonomy_settings', array_merge( (array) $saved, array( 'topic_label_singular' => 'Thread', 'topic_label_plural' => 'Threads' ) ) );
 		$this->check( 'PL2: a renamed noun uses the owner\'s singular and plural', '1 thread|5 threads' === \Jetonomy\count_label( 1, 'topic' ) . '|' . \Jetonomy\count_label( 5, 'topic' ) );
+		update_option( 'jetonomy_settings', array_merge( (array) $saved, array( 'community_title' => 'Acme Forum' ) ) );
+		$this->check( 'CT1: the community home name (page title, JSON-LD) is the owner\'s Community Title', 'Acme Forum' === \Jetonomy\community_home_name() );
 		update_option( 'jetonomy_settings', $saved );
+	}
+
+	/**
+	 * IT: every state.i18n key the community app reads is defined in the one
+	 * shared list (Template_Loader::app_i18n), which community pages and the
+	 * compose embed both use, so no screen falls back to English.
+	 */
+	private function test_app_strings_defined(): void {
+		$js = (string) file_get_contents( JETONOMY_DIR . 'assets/js/view.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		preg_match_all( '/state\.i18n\??\.([a-zA-Z0-9_]+)/', $js, $m );
+		$missing = array_diff( array_unique( $m[1] ), array_keys( \Jetonomy\Template_Loader::app_i18n() ) );
+		$this->check( 'IT1: every state.i18n key view.js reads is defined for community pages and embeds', ! $missing, implode( ', ', $missing ) );
+	}
+
+	/**
+	 * AB: the mark-notifications-read ability only marks the caller's own
+	 * notifications; an id alone used to mark anyone's.
+	 */
+	private function test_ability_mark_read_scope(): void {
+		global $wpdb;
+		$suffix = wp_generate_password( 6, false, false );
+		$owner  = (int) wp_insert_user( array( 'user_login' => 'jt_qa_ab_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'ab-' . $suffix . '@example.test', 'role' => 'subscriber' ) );
+		$id     = Notification::create( array( 'user_id' => $owner, 'actor_id' => 0, 'type' => 'mention', 'object_type' => 'post', 'object_id' => 0, 'message' => 'QA AB' ) );
+		$prev   = get_current_user_id();
+		wp_set_current_user( $this->qa_admin );
+		$result = ( new \Jetonomy\Abilities() )->execute_mark_notifications_read( array( 'notification_id' => $id ) );
+		wp_set_current_user( $prev );
+		$read = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT is_read FROM ' . table( 'notifications' ) . ' WHERE id = %d', $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$this->check( 'AB1: another member cannot mark someone else\'s notification read', 0 === (int) $result['marked'] && 0 === $read );
+		$wpdb->delete( table( 'notifications' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $owner );
+	}
+
+	/**
+	 * QU: cancelling a job removes every queued copy, per-member ones with
+	 * arguments included (per-member Gravatar checks used to survive deactivation).
+	 */
+	private function test_queue_cancel(): void {
+		$hook = 'jetonomy_qa_queue_probe'; // Test-only hook: real queued jobs are never touched.
+		\Jetonomy\Queue::async( $hook, array( 999981 ) );
+		\Jetonomy\Queue::async( $hook, array( 999982 ) );
+		$queued = \Jetonomy\Queue::is_queued( $hook, array( 999981 ) );
+		\Jetonomy\Queue::cancel( $hook );
+		$this->check( 'QU1: Queue::cancel() removes per-member jobs whatever their arguments', $queued && ! \Jetonomy\Queue::is_queued( $hook, array( 999981 ) ) && ! \Jetonomy\Queue::is_queued( $hook, array( 999982 ) ) );
+	}
+
+	/**
+	 * UL: the Upload media box alone decides community uploads, even for a role
+	 * that holds WordPress's own upload_files.
+	 */
+	private function test_upload_box_rules(): void {
+		$suffix = wp_generate_password( 6, false, false );
+		$user   = (int) wp_insert_user( array( 'user_login' => 'jt_qa_up_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'up-' . $suffix . '@example.test', 'role' => 'author' ) );
+		if ( $user <= 0 ) {
+			$this->skip( 'UL1: upload box', 'could not create a test author' );
+			return;
+		}
+		$previous = get_current_user_id();
+		$wp_user  = new \WP_User( $user );
+		$wp_user->add_cap( 'jetonomy_upload_media', false ); // As if the Author box were unticked.
+		wp_set_current_user( $user );
+		$status = rest_do_request( new \WP_REST_Request( 'POST', '/jetonomy/v1/media' ) )->get_status();
+		$this->check( 'UL1: an Author with Upload media unticked cannot upload, despite upload_files', user_can( $user, 'upload_files' ) && ! \Jetonomy\Permissions\Capabilities::can_upload( $user ) && 403 === $status, "HTTP {$status}" );
+		$wp_user->remove_cap( 'jetonomy_upload_media' );
+		$wp_user->add_cap( 'jetonomy_upload_media' );
+		$this->check( 'UL2: ticking Upload media gives it back', \Jetonomy\Permissions\Capabilities::can_upload( $user ) );
+		wp_set_current_user( $previous );
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( $user );
+	}
+
+	/**
+	 * EM: the "edited" marker shows only for a real edit made a minute or more after posting.
+	 */
+	private function test_edited_marker(): void {
+		$render = static function ( $edited_at ): string {
+			ob_start();
+			\Jetonomy\Template_Loader::partial( 'edited-mark', array( 'item' => (object) array( 'created_at' => '2026-01-01 10:00:00', 'edited_at' => $edited_at ) ) );
+			return trim( (string) ob_get_clean() );
+		};
+		$this->check( 'EM1: a never-edited post shows no edited marker', '' === $render( null ) && '' === $render( '' ) );
+		$this->check( 'EM2: an edit within the first minute shows no marker', '' === $render( '2026-01-01 10:00:30' ) );
+		$this->check( 'EM3: a later edit shows the marker', false !== strpos( $render( '2026-01-01 12:00:00' ), 'jt-edited' ) );
 	}
 
 	/**
 	 * NV: a notification about a topic in a private space disappears for a
 	 * member who can no longer read that space, on the Jetonomy list and the
-	 * host bell twin alike (Basecamp 10345420194).
+	 * host bell twin alike.
 	 */
 	private function test_notification_space_read_gate(): void {
 		global $wpdb;
 		$suffix  = wp_generate_password( 6, false, false );
-		$stay    = (int) wp_insert_user( [ 'user_login' => 'jt_qa_nv_stay_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'nv-stay-' . $suffix . '@example.test', 'role' => 'subscriber' ] );
-		$leave   = (int) wp_insert_user( [ 'user_login' => 'jt_qa_nv_leave_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'nv-leave-' . $suffix . '@example.test', 'role' => 'subscriber' ] );
-		$space   = Space::create( [ 'title' => 'QA NV Private', 'slug' => 'jt-qa-nv-' . $suffix, 'author_id' => 1, 'type' => 'forum', 'visibility' => 'private' ] );
+		$stay    = (int) wp_insert_user( array( 'user_login' => 'jt_qa_nv_stay_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'nv-stay-' . $suffix . '@example.test', 'role' => 'subscriber' ) );
+		$leave   = (int) wp_insert_user( array( 'user_login' => 'jt_qa_nv_leave_' . $suffix, 'user_pass' => wp_generate_password(), 'user_email' => 'nv-leave-' . $suffix . '@example.test', 'role' => 'subscriber' ) );
+		$space   = Space::create( array( 'title' => 'QA NV Private', 'slug' => 'jt-qa-nv-' . $suffix, 'author_id' => $this->qa_admin, 'type' => 'forum', 'visibility' => 'private' ) );
 		$post    = 0;
 
 		try {
 			SpaceMember::add( (int) $space, $stay, 'member' );
 			SpaceMember::add( (int) $space, $leave, 'member' );
-			$post = (int) Post::create( [ 'space_id' => (int) $space, 'author_id' => 1, 'title' => 'QA NV topic', 'slug' => 'jt-qa-nv-topic-' . $suffix, 'content' => '<p>x</p>', 'status' => 'publish' ] );
-			foreach ( [ $stay, $leave ] as $uid ) {
-				Notification::create( [ 'user_id' => $uid, 'actor_id' => 1, 'type' => 'new_post_in_sub', 'object_type' => 'post', 'object_id' => $post, 'message' => 'QA NV' ] );
+			$post = (int) Post::create( array( 'space_id' => (int) $space, 'author_id' => $this->qa_admin, 'title' => 'QA NV topic', 'slug' => 'jt-qa-nv-topic-' . $suffix, 'content' => '<p>x</p>', 'status' => 'publish' ) );
+			foreach ( array( $stay, $leave ) as $uid ) {
+				Notification::create( array( 'user_id' => $uid, 'actor_id' => 1, 'type' => 'new_post_in_sub', 'object_type' => 'post', 'object_id' => $post, 'message' => 'QA NV' ) );
 			}
 			$sees = static fn( int $uid ): bool => in_array( $post, array_map( static fn( $n ) => (int) $n->object_id, Notification::list_for_user( $uid, 50 ) ), true );
-			$bell = static fn( int $uid ): bool => (bool) Notification::targets_visible( $uid, [ 'k' => [ 'type' => 'new_post_in_sub', 'object_type' => 'post', 'object_id' => $post, 'actor_id' => 1 ] ] )['k'];
+			$bell = static fn( int $uid ): bool => (bool) Notification::targets_visible( $uid, array( 'k' => array( 'type' => 'new_post_in_sub', 'object_type' => 'post', 'object_id' => $post, 'actor_id' => 1 ) ) )['k'];
 
 			$this->check( 'NV1: a member sees the private-space notification (list and bell)', $sees( $leave ) && $bell( $leave ) );
 			SpaceMember::remove( (int) $space, $leave );
@@ -2001,19 +2407,19 @@ class Model_Tests {
 	/**
 	 * CH: categories nest two levels deep, a hidden parent hides its branch,
 	 * and a category cannot be deleted from under its sub-categories or live
-	 * spaces (Basecamp 10355160875, 10355160993).
+	 * spaces.
 	 */
 	private function test_category_hierarchy_rules(): void {
 		global $wpdb;
 		$suffix = wp_generate_password( 6, false, false );
 		$table  = table( 'categories' );
 		$make   = static fn( string $name, int $parent = 0, string $vis = 'public' ): int => Category::create(
-			[
+			array(
 				'name'       => 'QA CH ' . $name,
 				'slug'       => 'jt-qa-ch-' . strtolower( $name ) . '-' . $suffix,
 				'parent_id'  => $parent,
 				'visibility' => $vis,
-			]
+			)
 		);
 		$top    = $make( 'Top' );
 		$child  = $make( 'Child', $top );
@@ -2022,8 +2428,8 @@ class Model_Tests {
 
 		try {
 			$this->check( 'CH1: a machine write under a sub-category lands on its top-level ancestor', $top === (int) ( Category::find( $deep )->parent_id ?? 0 ) );
-			$this->check( 'CH2: a category cannot parent itself', is_wp_error( Category::update( $top, [ 'parent_id' => $top ] ) ) );
-			$this->check( 'CH3: a parent cannot move under its own child (cycle)', is_wp_error( Category::update( $top, [ 'parent_id' => $child ] ) ) );
+			$this->check( 'CH2: a category cannot parent itself', is_wp_error( Category::update( $top, array( 'parent_id' => $top ) ) ) );
+			$this->check( 'CH3: a parent cannot move under its own child (cycle)', is_wp_error( Category::update( $top, array( 'parent_id' => $child ) ) ) );
 			$this->check( 'CH4: a missing parent is refused', null !== Category::parent_error( 0, PHP_INT_MAX ) );
 			$this->check( 'CH5: a third level is refused', null !== Category::parent_error( 0, $child ) );
 
@@ -2035,38 +2441,38 @@ class Model_Tests {
 			$this->check( 'CH6: a category with sub-categories cannot be deleted', is_wp_error( $blocked ) && 409 === ( $blocked->get_error_data()['status'] ?? 0 ) );
 
 			$space = Space::create(
-				[
+				array(
 					'title'       => 'QA CH Space',
 					'slug'        => 'jt-qa-ch-space-' . $suffix,
 					'category_id' => $deep,
-					'author_id'   => 1,
+					'author_id'   => $this->qa_admin,
 					'type'        => 'forum',
-				]
+				)
 			);
 			$this->check( 'CH7: a category holding an active space cannot be deleted', is_wp_error( Category::delete( $deep ) ) );
-			Space::update( $space, [ 'status' => 'locked' ] );
+			Space::update( $space, array( 'status' => 'locked' ) );
 			$this->check( 'CH7b: a locked (live, read-only) space blocks the delete too', is_wp_error( Category::delete( $deep ) ) );
 
-			Space::update( $space, [ 'status' => 'archived' ] );
+			Space::update( $space, array( 'status' => 'archived' ) );
 			$this->check( 'CH8: an archived space does not block the delete', true === Category::delete( $deep ) );
 			$this->check( 'CH9: and is parked as uncategorised, not left under a dead category', 0 === (int) ( Space::find( $space )->category_id ?? -1 ) );
 
 			// CH10: a hidden parent hides its branch from a guest by URL too.
-			Category::update( $top, [ 'visibility' => 'hidden' ] );
+			Category::update( $top, array( 'visibility' => 'hidden' ) );
 			$child_slug = Category::find( $child )->slug;
 			$previous   = get_current_user_id();
 			wp_set_current_user( 0 );
 			$this->check( 'CH10: a public sub-category under a hidden parent is not resolvable by a guest', null === Category::find_by_slug( $child_slug ) );
 			wp_set_current_user( $previous );
 
-			// CH11: the migration keeps an orphan's child grouped under it. The
-			// child gets the LOWER id so it is processed before its parent - the
-			// order that used to flatten it to top level.
-			$wpdb->insert( $table, [ 'name' => 'QA CH Orphan kid', 'slug' => 'jt-qa-ch-orphankid-' . $suffix, 'parent_id' => 0, 'created_at' => \Jetonomy\now() ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			// CH11: the migration keeps an orphan's child grouped under it. The child gets the
+			// LOWER id so it is processed before its parent, which keeps it from being
+			// flattened to top level.
+			$wpdb->insert( $table, array( 'name' => 'QA CH Orphan kid', 'slug' => 'jt-qa-ch-orphankid-' . $suffix, 'parent_id' => 0, 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$orphan_kid = (int) $wpdb->insert_id;
-			$wpdb->insert( $table, [ 'name' => 'QA CH Orphan', 'slug' => 'jt-qa-ch-orphan-' . $suffix, 'parent_id' => PHP_INT_MAX, 'created_at' => \Jetonomy\now() ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->insert( $table, array( 'name' => 'QA CH Orphan', 'slug' => 'jt-qa-ch-orphan-' . $suffix, 'parent_id' => PHP_INT_MAX, 'created_at' => \Jetonomy\now() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$orphan = (int) $wpdb->insert_id;
-			$wpdb->update( $table, [ 'parent_id' => $orphan ], [ 'id' => $orphan_kid ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->update( $table, array( 'parent_id' => $orphan ), array( 'id' => $orphan_kid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			require_once JETONOMY_DIR . 'includes/db/migrations/class-migration_2_0_1.php';
 			( new \Jetonomy\DB\Migrations\Migration_2_0_1() )->up();
 			$this->check(
@@ -2075,7 +2481,7 @@ class Model_Tests {
 			);
 		} finally {
 			if ( $space ) {
-				Space::delete( $space );
+				\Jetonomy\Space_Purge::purge( (int) $space ); // Members and content too, not just the row.
 			}
 			// Raw delete: fixtures must go even when a check above failed and
 			// left the tree in a state Category::delete() would refuse.
@@ -2087,30 +2493,29 @@ class Model_Tests {
 	/**
 	 * CS: every category writer gets a free slug, an explicit slug clash on
 	 * edit is refused with a reason, and colour is a top-level accent only
-	 * (Basecamp 10375159877, 10375031087).
 	 */
 	private function test_category_slug_and_colour(): void {
 		global $wpdb;
 		$name = 'QA CS ' . wp_generate_password( 6, false, false );
-		$ids  = [];
+		$ids  = array();
 
 		try {
-			$ids[] = $top = Category::create( [ 'name' => $name, 'color' => '#2563eb' ] );
-			$ids[] = $dup = Category::create( [ 'name' => $name, 'color' => 'not-a-colour' ] );
-			$ids[] = $sub = Category::create( [ 'name' => $name . ' Sub', 'parent_id' => $top, 'color' => '#e11d48' ] );
+			$ids[] = $top = Category::create( array( 'name' => $name, 'color' => '#2563eb' ) );
+			$ids[] = $dup = Category::create( array( 'name' => $name, 'color' => 'not-a-colour' ) );
+			$ids[] = $sub = Category::create( array( 'name' => $name . ' Sub', 'parent_id' => $top, 'color' => '#e11d48' ) );
 
 			$this->check( 'CS1: a second category with the same name gets its own slug instead of failing', $dup > 0 && Category::find( $dup )->slug === Category::find( $top )->slug . '-1' );
 			$this->check( 'CS2: a non-hex colour is dropped, a hex colour is kept on a top-level category', null === Category::find( $dup )->color && '#2563eb' === Category::find( $top )->color );
 			$this->check( 'CS3: a sub-category never stores a colour', null === Category::find( $sub )->color );
 
-			$clash = Category::update( $dup, [ 'slug' => Category::find( $top )->slug ] );
+			$clash = Category::update( $dup, array( 'slug' => Category::find( $top )->slug ) );
 			$this->check( 'CS4: editing a slug onto one in use is refused with 409', is_wp_error( $clash ) && 409 === ( $clash->get_error_data()['status'] ?? 0 ) );
 
-			Category::update( $dup, [ 'parent_id' => $top, 'color' => '#123456' ] );
+			Category::update( $dup, array( 'parent_id' => $top, 'color' => '#123456' ) );
 			$this->check( 'CS5: moving a category under a parent clears its colour', null === Category::find( $dup )->color );
 		} finally {
 			foreach ( array_reverse( array_filter( $ids ) ) as $id ) {
-				$wpdb->delete( table( 'categories' ), [ 'id' => (int) $id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->delete( table( 'categories' ), array( 'id' => (int) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			}
 			Space::bump_tree_generation();
 		}
@@ -2118,7 +2523,7 @@ class Model_Tests {
 
 	/**
 	 * DD: demo data can be brought back after it was skipped or removed - the
-	 * route exists for all three verbs and is admin-only (Basecamp 10375019266).
+	 * route exists for all three verbs and is admin-only.
 	 * Does not seed: that would rewrite the site's demo set on every QA run.
 	 */
 	private function test_demo_data_route(): void {
@@ -2138,7 +2543,7 @@ class Model_Tests {
 
 	/**
 	 * BP: the breadcrumb prints before <main> by default and moves to the
-	 * in-main slot when a site asks for it (Basecamp 10272509253).
+	 * in-main slot when a site asks for it.
 	 */
 	private function test_breadcrumb_placement(): void {
 		$crumbs  = array( array( 'label' => 'QA BP', 'url' => '' ) );
@@ -2164,7 +2569,7 @@ class Model_Tests {
 	 * SA: REST /search runs through the search adapter. A plugin adapter that
 	 * implements the full query contract serves it; one with only the narrow
 	 * contract cannot carry the filters and leaves REST on MySQL; the
-	 * query-args filter result is used (Basecamp 10368526736).
+	 * query-args filter result is used.
 	 */
 	private function test_search_adapter_routing(): void {
 		$narrow = new class() implements \Jetonomy\Adapters\Search_Adapter {
@@ -2201,7 +2606,9 @@ class Model_Tests {
 
 		// SA4/SA5: a plugin adapter is fed - index() on create, delete() on delete.
 		global $wpdb;
-		$post_id = (int) $wpdb->get_var( "SELECT id FROM " . table( 'posts' ) . " WHERE status = 'publish' ORDER BY id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		// A throwaway topic: firing the create hook for a real one would credit its real author.
+		$sa_space = (int) $wpdb->get_var( "SELECT id FROM " . table( 'spaces' ) . " WHERE status = 'active' ORDER BY id LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$post_id  = (int) Post::create( array( 'space_id' => $sa_space, 'author_id' => $this->qa_admin, 'title' => 'QA SA topic', 'slug' => 'jt-qa-sa-' . wp_generate_password( 6, false, false ), 'content' => 'x', 'status' => 'publish' ) );
 		$spy     = new class() extends \Jetonomy\Search\Fulltext_Search {
 			public static bool $on = true;
 			public static array $calls = array();
@@ -2215,12 +2622,12 @@ class Model_Tests {
 		$spy::$on = false;
 		$this->check( 'SA4: a plugin adapter is sent a published topic when it is created', $post_id > 0 && in_array( "index:post:{$post_id}", $spy::$calls, true ) );
 		$this->check( 'SA5: a plugin adapter is told when a topic is deleted', in_array( 'delete:post:987655', $spy::$calls, true ) );
+		Post::delete( $post_id );
 	}
 
 	/**
 	 * NR: reading an object reads that member's notifications about it, here
 	 * and (one signal) in the host's bell; other recipients keep theirs unread
-	 * (Basecamp 10369320232).
 	 */
 	private function test_notification_read_for_object(): void {
 		global $wpdb;
@@ -2271,12 +2678,12 @@ class Model_Tests {
 		// is correct, not a leak.
 		$token  = wp_generate_password( 8, false, false );
 		$author = wp_insert_user(
-			[
+			array(
 				'user_login'   => 'jt_qa_ax_' . strtolower( $token ),
 				'user_email'   => 'jt-qa-ax-' . strtolower( $token ) . '@example.invalid',
 				'user_pass'    => wp_generate_password( 24 ),
 				'display_name' => 'QA Anon ' . $token,
-			]
+			)
 		);
 		if ( is_wp_error( $author ) ) {
 			$this->skip( 'AX: anonymous author masking', 'could not create a test author' );
@@ -2284,7 +2691,7 @@ class Model_Tests {
 		}
 		$real   = \Jetonomy\user_display_name( $author );
 		$id   = Post::create(
-			[
+			array(
 				'space_id'     => (int) $space->id,
 				'author_id'    => $author,
 				'title'        => 'QA AN ' . wp_generate_password( 6, false, false ),
@@ -2292,21 +2699,51 @@ class Model_Tests {
 				'content'      => '<p>QA anonymous masking</p>',
 				'status'       => 'publish',
 				'is_anonymous' => 1,
-			]
+			)
 		);
+		// Pro gates anonymity per space and drops the flag when the space has
+		// not opted in. This test is about masking, not the gate.
+		if ( empty( Post::find( (int) $id )->is_anonymous ) ) {
+			Post::update( (int) $id, array( 'is_anonymous' => 1 ) );
+		}
 		$post     = Post::find( (int) $id );
 		$previous = get_current_user_id();
 
 		try {
-			$html = wp_remote_retrieve_body( wp_remote_get( \Jetonomy\route_url( 'post', $space->slug, $post->slug ), [ 'timeout' => 20 ] ) );
+			$html = wp_remote_retrieve_body( wp_remote_get( \Jetonomy\route_url( 'post', $space->slug, $post->slug ), array( 'timeout' => 20 ) ) );
 			$this->check( 'AX1: the anonymous topic page names no author in its SEO meta or JSON-LD', '' !== $html && false === strpos( $html, 'property="article:author"' ) && false === strpos( $html, esc_html( $real ) ) && false === strpos( $html, $real ) );
 
 			wp_set_current_user( 0 );
 			$recent = do_shortcode( '[jetonomy_recent_posts count="50" space_id="' . (int) $space->id . '"]' );
 			$this->check( 'AX2: the recent posts shortcode shows the anonymous topic without its author', false !== strpos( $recent, $post->title ) && false === strpos( $recent, esc_html( $real ) ) );
 
-			$ability = ( new \Jetonomy\Abilities() )->execute_get_post( [ 'post_id' => (int) $id ] );
+			$ability = ( new \Jetonomy\Abilities() )->execute_get_post( array( 'post_id' => (int) $id ) );
 			$this->check( 'AX3: the get-post ability masks the anonymous author', is_array( $ability ) && $real !== ( $ability['author_name'] ?? $real ) );
+
+			$req   = new \WP_REST_Request( 'GET', '/jetonomy/v1/oembed' );
+			$req->set_param( 'url', \Jetonomy\route_url( 'post', $space->slug, $post->slug ) );
+			$embed = (string) wp_json_encode( rest_do_request( $req )->get_data() );
+			$this->check( 'AX4: the public oEmbed of an anonymous topic names no author', false !== strpos( $embed, 'Anonymous' ) && false === strpos( $embed, $real ) && false === strpos( $embed, '/u/' ) );
+
+			wp_set_current_user( $previous );
+			$objects = \Jetonomy\Author::objects_of( array( (object) array( 'object_type' => 'post', 'object_id' => (int) $id ) ) );
+			$this->check( 'AX5: admin activity and revision rows show the anonymous author as Anonymous', \Jetonomy\Author::hides_actor( (int) $author, $objects[ 'post:' . (int) $id ] ?? null ) && ! \Jetonomy\Author::hides_actor( (int) $author + 1, $objects[ 'post:' . (int) $id ] ?? null ) );
+
+			// AX6: the reputation row the anonymous topic earns points at the topic, so it is masked too.
+			\Jetonomy\Trust\Reputation::award( (int) $author, 'post_created', array( 'object_type' => 'post', 'object_id' => (int) $id ) );
+			$rep_row  = $wpdb->get_row( $wpdb->prepare( 'SELECT object_type, object_id FROM ' . table( 'activity_log' ) . " WHERE user_id = %d AND action = 'reputation_changed' ORDER BY id DESC LIMIT 1", (int) $author ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$activity = ( new \Jetonomy\Abilities() )->execute_get_activity( array( 'limit' => 5 ) );
+			$named    = array_filter( $activity, static fn( $a ) => 'post' === $a['object_type'] && (int) $a['object_id'] === (int) $id && (int) $a['user_id'] === (int) $author );
+			$this->check( 'AX6: an anonymous topic\'s reputation row points at the topic and the activity tool does not name its author', $rep_row && 'post' === $rep_row->object_type && (int) $rep_row->object_id === (int) $id && ! $named );
+			$wpdb->delete( table( 'activity_log' ), array( 'user_id' => (int) $author ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+			// PV2: a private accepted answer stays out of the public page source.
+			$token  = 'pvtwozq' . strtolower( wp_generate_password( 6, false, false ) );
+			Post::update( (int) $id, array( 'type' => 'question', 'is_anonymous' => 0 ) );
+			$answer = (int) Reply::create( array( 'post_id' => (int) $id, 'author_id' => (int) $author, 'content' => "<p>{$token}</p>", 'is_private' => 1 ) );
+			Post::update( (int) $id, array( 'accepted_reply_id' => $answer ) );
+			$html = wp_remote_retrieve_body( wp_remote_get( \Jetonomy\route_url( 'post', $space->slug, $post->slug ), array( 'timeout' => 20 ) ) );
+			$this->check( 'PV2: a private accepted answer is not in the guest page or its JSON-LD', '' !== $html && false !== strpos( $html, 'QAPage' ) && false === strpos( $html, $token ) );
 		} finally {
 			wp_set_current_user( $previous );
 			Post::delete( (int) $id );
@@ -2318,21 +2755,20 @@ class Model_Tests {
 	/**
 	 * CR: the admin reorder saves one sibling group, and the server decides
 	 * which ids belong to it - sub-categories can be reordered, and a stale or
-	 * forged batch cannot move rows outside its group (Basecamp 10355161693).
+	 * forged batch cannot move rows outside its group.
 	 */
 	private function test_category_sibling_reorder(): void {
 		global $wpdb;
 		$suffix = wp_generate_password( 6, false, false );
 		$table  = table( 'categories' );
 		$make   = static fn( string $name, int $parent = 0 ): int => Category::create(
-			[
+			array(
 				'name'      => 'QA CR ' . $name,
 				'slug'      => 'jt-qa-cr-' . strtolower( $name ) . '-' . $suffix,
 				'parent_id' => $parent,
-			]
+			)
 		);
 		$prev_user = get_current_user_id();
-		$admins    = get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] );
 		$p         = $make( 'P' );
 		$a         = $make( 'A', $p );
 		$b         = $make( 'B', $p );
@@ -2344,7 +2780,7 @@ class Model_Tests {
 			throw new \RuntimeException( 'ajax done' );
 		};
 		$run       = static function ( array $post ) use ( $die ): void {
-			$_POST    = $post + [ 'nonce' => wp_create_nonce( 'jetonomy_admin' ) ];
+			$_POST    = $post + array( 'nonce' => wp_create_nonce( 'jetonomy_admin' ) );
 			$_REQUEST = $_POST;
 			add_filter( 'wp_doing_ajax', '__return_true' );
 			add_filter( 'wp_die_ajax_handler', $die );
@@ -2357,22 +2793,22 @@ class Model_Tests {
 			ob_end_clean();
 			remove_filter( 'wp_doing_ajax', '__return_true' );
 			remove_filter( 'wp_die_ajax_handler', $die );
-			$_POST    = [];
-			$_REQUEST = [];
+			$_POST    = array();
+			$_REQUEST = array();
 		};
 
 		try {
-			wp_set_current_user( (int) ( $admins[0] ?? 0 ) );
+			wp_set_current_user( $this->qa_admin );
 
-			$run( [ 'order' => [ $c, $a, $b ], 'parent_id' => $p ] );
-			$this->check( 'CR1: sub-categories reorder among their siblings', [ 0, 1, 2 ] === [ $pos( $c ), $pos( $a ), $pos( $b ) ] );
+			$run( array( 'order' => array( $c, $a, $b ), 'parent_id' => $p ) );
+			$this->check( 'CR1: sub-categories reorder among their siblings', array( 0, 1, 2 ) === array( $pos( $c ), $pos( $a ), $pos( $b ) ) );
 
-			$run( [ 'order' => [ $d, $q, $b, $a ], 'parent_id' => $p ] );
-			$this->check( 'CR2: a batch cannot move ids that are not children of its parent', 0 === $pos( $d ) && 0 === $pos( $q ) && [ 0, 1 ] === [ $pos( $b ), $pos( $a ) ] );
+			$run( array( 'order' => array( $d, $q, $b, $a ), 'parent_id' => $p ) );
+			$this->check( 'CR2: a batch cannot move ids that are not children of its parent', 0 === $pos( $d ) && 0 === $pos( $q ) && array( 0, 1 ) === array( $pos( $b ), $pos( $a ) ) );
 
-			$before = [ $pos( $a ), $pos( $b ), $pos( $c ) ];
-			$run( [ 'order' => [ $c, $q, $p ], 'parent_id' => 0, 'paged' => 1, 'per_page' => 20 ] );
-			$this->check( 'CR3: a top-level batch leaves sub-categories untouched', $before === [ $pos( $a ), $pos( $b ), $pos( $c ) ] && [ 0, 1 ] === [ $pos( $q ), $pos( $p ) ] );
+			$before = array( $pos( $a ), $pos( $b ), $pos( $c ) );
+			$run( array( 'order' => array( $c, $q, $p ), 'parent_id' => 0, 'paged' => 1, 'per_page' => 20 ) );
+			$this->check( 'CR3: a top-level batch leaves sub-categories untouched', $before === array( $pos( $a ), $pos( $b ), $pos( $c ) ) && array( 0, 1 ) === array( $pos( $q ), $pos( $p ) ) );
 		} finally {
 			wp_set_current_user( $prev_user );
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE slug LIKE %s", '%' . $wpdb->esc_like( '-' . $suffix ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -2383,11 +2819,9 @@ class Model_Tests {
 	/**
 	 * jt_categories.space_count survives a space being moved or archived.
 	 *
-	 * Only create() incremented it and only purge decremented it, so a space
-	 * moved between categories left the old count too high and the new one too
-	 * low, and archiving never decremented at all - while Recount counts active
-	 * spaces only. `wp jetonomy recount` repaired it and the next move broke it
-	 * again, which is the signature of a missing write-path adjustment.
+	 * Create, purge, move and archive all adjust it, because Recount counts active
+	 * spaces only; a missing write-path adjustment shows as `wp jetonomy recount`
+	 * repairing the count and the next move breaking it again.
 	 *
 	 * Asserted as "stored equals actual" after each transition rather than by
 	 * expected numbers, so the test stays true whatever the fixture holds.
@@ -2421,7 +2855,7 @@ class Model_Tests {
 			array(
 				'category_id' => $cat_a,
 				'parent_id'   => 0,
-				'author_id'   => 1,
+				'author_id'   => $this->qa_admin,
 				'type'        => 'forum',
 				'title'       => 'QA Count Space ' . $suffix,
 				'slug'        => 'qa-count-space-' . $suffix,
@@ -2446,7 +2880,7 @@ class Model_Tests {
 		Space::update( $space_id, array( 'category_id' => $cat_a, 'status' => 'active' ) );
 		$this->check( 'SC4: a move and a restore in one call stay exact', $exact(), $detail() );
 
-		$wpdb->delete( $spaces, array( 'id' => $space_id ) );
+		\Jetonomy\Space_Purge::purge( $space_id ); // The creator's membership goes too.
 		$wpdb->delete( $cats, array( 'id' => $cat_a ) );
 		$wpdb->delete( $cats, array( 'id' => $cat_b ) );
 	}
@@ -2454,15 +2888,13 @@ class Model_Tests {
 	/**
 	 * An importer can recognise its OWN rows, and only its own.
 	 *
-	 * This is the mechanism that replaced slug matching, and the reason matters
-	 * more than the mechanics: a bbPress forum called "general" matches an
-	 * owner's own existing "general" space, so a slug-based re-run adopted it
-	 * and poured the source forum's topics into the owner's space - skipping
-	 * the visibility mapping on the way, so private content could land in a
-	 * public space.
+	 * Importers recognise their own rows by identity, not by slug: a bbPress forum called
+	 * "general" matches an owner's own existing "general" space, so slug matching would
+	 * adopt it and pour the source forum's topics into it, skipping the visibility
+	 * mapping so private content could land in a public space.
 	 *
-	 * IM4 is the one that would catch a regression to slug matching: identity
-	 * must not be shared with a row this importer never created.
+	 * IM4 catches a fallback to slug matching: identity must not be shared with a
+	 * row this importer never created.
 	 */
 	private function test_import_map(): void {
 		global $wpdb;
@@ -2502,7 +2934,7 @@ class Model_Tests {
 			array(
 				'category_id' => 0,
 				'parent_id'   => 0,
-				'author_id'   => 1,
+				'author_id'   => $this->qa_admin,
 				'type'        => 'forum',
 				'title'       => 'QA import-map probe',
 				'slug'        => 'qa-import-map-probe-' . wp_generate_password( 6, false, false ),
@@ -2560,9 +2992,9 @@ class Model_Tests {
 		$this->check( 'RO4: unsupported per_page falls back', jetonomy_reorder_offset( 2, 999 ) >= 0 );
 
 		// RO5: positions are offset + index, contiguous and in submitted order.
-		$written = [];
+		$written = array();
 		jetonomy_apply_manual_order(
-			[ 11, 22, 33 ],
+			array( 11, 22, 33 ),
 			20,
 			static function ( int $id, int $pos ) use ( &$written ): void {
 				$written[ $id ] = $pos;
@@ -2570,7 +3002,7 @@ class Model_Tests {
 		);
 		$this->check(
 			'RO5: apply_manual_order writes offset+index',
-			[ 11 => 20, 22 => 21, 33 => 22 ] === $written,
+			array( 11 => 20, 22 => 21, 33 => 22 ) === $written,
 			wp_json_encode( $written )
 		);
 
@@ -2623,12 +3055,10 @@ class Model_Tests {
 	/**
 	 * Record a check that could NOT run.
 	 *
-	 * A skip used to be logged as `check( '... (skipped)', true )`, which made
-	 * it indistinguishable from a real assertion in the totals. On a box where
-	 * fixtures fail to build, dozens of those turn into "passes" and the suite
-	 * reports green while proving nothing - the failure mode this whole audit
-	 * exists to remove. Skips are counted separately and never inflate the
-	 * pass count.
+	 * Skips are counted separately and never inflate the pass count: logged as
+	 * `check( '... (skipped)', true )` they would be indistinguishable from real
+	 * assertions, and a box where fixtures fail to build would report green while
+	 * proving nothing.
 	 *
 	 * @param string $label  What did not run.
 	 * @param string $reason Why not.
@@ -2659,12 +3089,10 @@ class Model_Tests {
 	/**
 	 * The 2.0.0 counter backfill repairs a bounded slice, and no more than it.
 	 *
-	 * BF1 is the regression guard that matters. The range is half-open -
-	 * [from, until) - and the first slice therefore starts AT the cursor rather
-	 * than after it. An exclusive lower bound looks equivalent and is not: with
-	 * the cursor starting at 0 it skipped key 0 entirely, which on this schema
-	 * left a user_profiles row at user_id 0 carrying its drift forever. BF1
-	 * fails on that earlier bound.
+	 * BF1 is the guard that matters. The range is half-open - [from, until) - so the
+	 * first slice starts AT the cursor: an exclusive lower bound skips key 0 when the
+	 * cursor starts at 0, leaving a user_profiles row at user_id 0 carrying its drift
+	 * forever. BF1 fails on that bound.
 	 *
 	 * BF2 is the other half of the same contract: a slice must not reach past
 	 * its own span, or the cursor stops meaning anything and a resumed job
@@ -2677,12 +3105,12 @@ class Model_Tests {
 		$replies_t = \Jetonomy\table( 'replies' );
 		$suffix    = wp_generate_password( 6, false, false );
 
-		$mk_post = static function ( string $title ) use ( $wpdb, $posts_t ) {
+		$mk_post = function ( string $title ) use ( $wpdb, $posts_t ) {
 			$wpdb->insert(
 				$posts_t,
 				array(
 					'space_id'     => 1,
-					'author_id'    => 1,
+					'author_id'    => $this->qa_admin,
 					'type'         => 'forum',
 					'title'        => $title,
 					'slug'         => sanitize_title( $title ),
@@ -2705,7 +3133,7 @@ class Model_Tests {
 				$replies_t,
 				array(
 					'post_id'    => $pid,
-					'author_id'  => 1,
+					'author_id'  => $this->qa_admin,
 					'content'    => 'qa',
 					'status'     => 'publish',
 					'created_at' => \Jetonomy\now(),

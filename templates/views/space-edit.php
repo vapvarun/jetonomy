@@ -24,13 +24,13 @@ if ( ! $space ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -41,13 +41,13 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( get_current_user
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -121,10 +121,12 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 						<?php endif; ?>
 					</div>
 					<div class="jt-cover-actions">
+						<?php if ( \Jetonomy\Permissions\Capabilities::can_upload() ) : ?>
 						<label class="jt-btn jt-btn-ghost jt-cover-pick">
 							<?php esc_html_e( 'Choose image', 'jetonomy' ); ?>
 							<input type="file" accept="image/*" data-jt-cover-input data-wp-on--change="actions.uploadCover" hidden>
 						</label>
+						<?php endif; ?>
 						<button type="button" class="jt-btn jt-btn-ghost jt-cover-remove" data-jt-cover-remove data-wp-on--click="actions.removeCover" <?php echo empty( $space->cover_image ) ? 'hidden' : ''; ?>>
 							<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
 						</button>
@@ -163,18 +165,23 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 
 			<div class="jt-form-row">
 				<label for="jt-se-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
-				<select id="jt-se-visibility" name="visibility" class="jt-input">
+				<select id="jt-se-visibility" name="visibility" class="jt-input" data-wp-on--change="actions.syncJoinPolicy">
 					<?php \Jetonomy\space_visibility_options( (string) $space->visibility ); ?>
 				</select>
 			</div>
 
 			<div class="jt-form-row">
 				<label for="jt-se-join-policy"><?php esc_html_e( 'Join policy', 'jetonomy' ); ?></label>
-				<select id="jt-se-join-policy" name="join_policy" class="jt-input">
+				<select id="jt-se-join-policy" name="join_policy" class="jt-input" data-wp-on--change="actions.syncJoinPolicy">
 					<option value="open" <?php selected( $space->join_policy ?? 'open', 'open' ); ?>><?php esc_html_e( 'Open: anyone can join', 'jetonomy' ); ?></option>
 					<option value="approval" <?php selected( $space->join_policy ?? '', 'approval' ); ?>><?php esc_html_e( 'Approval required', 'jetonomy' ); ?></option>
 					<option value="invite" <?php selected( $space->join_policy ?? '', 'invite' ); ?>><?php esc_html_e( 'Invite only', 'jetonomy' ); ?></option>
 				</select>
+				<p class="jt-form-hint" data-jt-visibility-hint role="status" aria-live="polite" hidden
+					data-msg-forces="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Hidden %s are invite-only, so the join policy was switched to Invite only.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
+					data-msg-requires="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Only invite-only %s can be hidden, so visibility was switched to Private.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
+					data-msg-private-forces="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Private %s need approval or an invite, so the join policy was switched to Approval required.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
+					data-msg-open-requires="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Anyone-can-join %s must be public, so visibility was switched to Public.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"></p>
 			</div>
 
 			<div class="jt-form-row">
@@ -277,7 +284,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 		 * allow_space_admin_purge server-side, but nothing on the frontend ever
 		 * called it - the setting's own description promises space admins can
 		 * delete their space, and the only way to do it was wp-admin, which a
-		 * space admin has no reason to be able to reach (Basecamp 10221373732).
+		 * space admin has no reason to be able to reach.
 		 *
 		 * Two actions, because the route has two modes and they are not the same
 		 * decision:
@@ -290,17 +297,19 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 		 *              what the route gates on, so the UI never renders a
 		 *              control that can only 403.
 		 */
-		$jt_settings  = get_option( 'jetonomy_settings', array() );
-		$jt_may_purge = current_user_can( 'manage_options' ) || ! empty( $jt_settings['allow_space_admin_purge'] );
-		$jt_successor = \Jetonomy\Models\Space::resolve_successor( (int) $space->id, get_current_user_id() );
-		$jt_space_one = \Jetonomy\space_label( false, true );
+		$jt_settings      = get_option( 'jetonomy_settings', array() );
+		$jt_may_purge     = current_user_can( 'manage_options' ) || ! empty( $jt_settings['allow_space_admin_purge'] );
+		$jt_viewer_id     = get_current_user_id();
+		$jt_successor     = \Jetonomy\Models\Space::can_hand_over( $space, $jt_viewer_id ) ? \Jetonomy\Models\Space::resolve_successor( (int) $space->id ) : 0;
+		$jt_can_unarchive = \Jetonomy\Models\Space::can_unarchive( $space, $jt_viewer_id );
+		$jt_space_one     = \Jetonomy\space_label( false, true );
 
 		/* translators: 1: singular space label the site owner configured; 2: plural member label. */
 		$jt_confirm_archive = sprintf( __( 'Archive this %1$s and hand it over? %2$s keep everything they posted.', 'jetonomy' ), $jt_space_one, \Jetonomy\jetonomy_label( 'member', true ) );
 		/* translators: %s: the space title the admin must type to confirm. */
 		$jt_confirm_purge = sprintf( __( 'This destroys everything in it and cannot be undone. Type %s to confirm.', 'jetonomy' ), (string) $space->title );
 		?>
-		<?php if ( $jt_may_purge || $jt_successor ) : ?>
+		<?php if ( $jt_may_purge || $jt_successor || $jt_can_unarchive ) : ?>
 			<section class="jt-danger-zone" aria-labelledby="jt-danger-zone-title">
 				<h2 class="jt-danger-zone-title" id="jt-danger-zone-title">
 					<?php esc_html_e( 'Danger zone', 'jetonomy' ); ?>
@@ -317,8 +326,11 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 							</h3>
 							<p class="jt-danger-desc">
 								<?php
-								/* translators: 1: singular topic label; 2: singular reply label; 3: display name of the member who would take ownership. */
-								echo esc_html( sprintf( __( 'Every %1$s and %2$s is kept. Ownership passes to %3$s and the space is archived.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\user_display_name( get_userdata( $jt_successor ) ) ) );
+								/* translators: 1: singular topic label; 2: singular reply label; 3: display name of the member who would take ownership; 4: singular space label. */
+								echo esc_html( sprintf( __( 'Every %1$s and %2$s is kept. Ownership passes to %3$s and the %4$s is archived.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\user_display_name( get_userdata( $jt_successor ) ), \Jetonomy\space_label( false, true ) ) );
+								if ( (int) $space->author_id === $jt_viewer_id ) {
+									echo ' ' . esc_html__( 'You stay on as a moderator.', 'jetonomy' );
+								}
 								?>
 							</p>
 						</div>
@@ -327,9 +339,34 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 							data-wp-on--click="actions.deleteSpace"
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-mode="transfer"
-							data-redirect="<?php echo esc_attr( \Jetonomy\route_url( 'space', $space->slug ) ); ?>"
+							data-redirect="<?php echo esc_attr( add_query_arg( 'jt_handed_over', '1', \Jetonomy\route_url( 'space', $space->slug ) ) ); ?>"
 							data-confirm="<?php echo esc_attr( $jt_confirm_archive ); ?>">
 							<?php esc_html_e( 'Archive and hand over', 'jetonomy' ); ?>
+						</button>
+					</div>
+				<?php endif; ?>
+
+				<?php if ( $jt_can_unarchive ) : ?>
+					<div class="jt-danger-row">
+						<div class="jt-danger-copy">
+							<h3 class="jt-danger-heading">
+								<?php
+								/* translators: %s: the singular space label the site owner configured. */
+								echo esc_html( sprintf( __( 'This %s is archived', 'jetonomy' ), $jt_space_one ) );
+								?>
+							</h3>
+							<p class="jt-danger-desc">
+								<?php
+								/* translators: 1: display name of the owner; 2: plural topic label; 3: plural reply label. */
+								echo esc_html( sprintf( __( 'Owned by %1$s. Unarchive it to accept new %2$s and %3$s again.', 'jetonomy' ), \Jetonomy\user_display_name( (int) $space->author_id ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) );
+								?>
+							</p>
+						</div>
+						<button type="button"
+							class="jt-btn jt-btn-ghost jt-space-delete"
+							data-wp-on--click="actions.unarchiveSpace"
+							data-space-id="<?php echo absint( $space->id ); ?>">
+							<?php esc_html_e( 'Unarchive', 'jetonomy' ); ?>
 						</button>
 					</div>
 				<?php endif; ?>

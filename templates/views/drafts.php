@@ -31,7 +31,7 @@ $drafts = \Jetonomy\Models\Post::list_drafts_by_user( $user_id, $per_page, $offs
 
 // has_more compares the real total against what is shown — never count( $drafts ),
 // which showed a phantom "Load More" when the draft count was an exact multiple
-// of $per_page (Basecamp).
+// of $per_page.
 $total    = \Jetonomy\Models\Post::count_drafts_by_user( $user_id );
 $has_more = ( $page * $per_page ) < $total;
 
@@ -60,15 +60,15 @@ $crumbs = array(
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'        => 'edit',
 					'message'     => __( 'No drafts yet.', 'jetonomy' ),
 					/* translators: %s: singular topic label. */
-					'description' => sprintf( __( 'Start writing a %s and choose "Save draft". It will wait for you here until you publish.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					/* translators: %s: singular topic label. */
-					'cta_label'   => sprintf( __( 'Start a %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+					'description' => __( 'Start writing and choose "Save draft". It will wait for you here until you publish.', 'jetonomy' ),
+					/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+					'cta_label'   => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					'cta_url'     => $base . '/',
-				]
+				)
 			);
 			?>
 		<?php else : ?>

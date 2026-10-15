@@ -25,6 +25,12 @@ Use Public mode when:
 - You're running a customer support forum or open knowledge base
 - New visitors should be able to browse before signing up
 
+## Private spaces for visitors
+
+**Setting:** `guest_private_teasers` - **Show private spaces to logged-out visitors**, default off.
+
+When on, private spaces appear in listings for visitors who are not signed in, with a lock and their join policy, so they know the group exists and can log in or register to ask to join. Their topics, replies and counts behind the gate stay hidden. Hidden spaces are never shown. Leave it off if the names of your private spaces should stay private.
+
 ## Private Mode
 
 This is the **Private community** option: "Only logged-in members can view any forum content. Everyone else is redirected to the login page."

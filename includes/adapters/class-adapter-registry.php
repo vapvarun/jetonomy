@@ -11,10 +11,10 @@ defined( 'ABSPATH' ) || exit;
 
 class Adapter_Registry {
 
-	private static array $membership = [];
-	private static array $search     = [];
-	private static array $email      = [];
-	private static array $ai         = [];
+	private static array $membership = array();
+	private static array $search     = array();
+	private static array $email      = array();
+	private static array $ai         = array();
 
 	/**
 	 * Request-scoped cache for membership_level_owners().
@@ -70,12 +70,9 @@ class Adapter_Registry {
 	/**
 	 * Map every level id an active adapter exposes to that adapter's id.
 	 *
-	 * Asking the adapters which ids they own replaces the hardcoded prefix
-	 * table this used to rely on. That table silently went stale every time an
-	 * adapter shipped without someone remembering to add its prefix — WP Fusion
-	 * and SureMembers both landed after it was written, so their rules rendered
-	 * as raw `wpfusion_123` / `suremembers_5` on the Access Rules screen
-	 * (Basecamp 10126146658). A registry lookup cannot drift that way.
+	 * Asking the adapters which ids they own, instead of a hardcoded prefix table, means a
+	 * new adapter (WP Fusion, SureMembers, ...) never renders as a raw `wpfusion_123` /
+	 * `suremembers_5` on the Access Rules screen. A registry lookup cannot drift.
 	 *
 	 * `wp-roles` is skipped: its ids are bare role slugs with no prefix, it is
 	 * excluded from the membership picker, and a `membership` rule should never
@@ -88,7 +85,7 @@ class Adapter_Registry {
 			return self::$level_owners;
 		}
 
-		$owners = [];
+		$owners = array();
 		foreach ( self::$membership as $adapter_id => $adapter ) {
 			if ( 'wp-roles' === $adapter_id || ! $adapter->is_active() ) {
 				continue;
@@ -117,10 +114,10 @@ class Adapter_Registry {
 	 * @return array{type: string, value: string}
 	 */
 	public static function describe_membership_level( string $level_id ): array {
-		$fallback = [
+		$fallback = array(
 			'type'  => __( 'Membership', 'jetonomy' ),
 			'value' => $level_id,
-		];
+		);
 
 		if ( '' === $level_id ) {
 			return $fallback;
@@ -140,10 +137,10 @@ class Adapter_Registry {
 		$labels = self::membership_labels();
 		$label  = $adapter->get_level_label( $level_id );
 
-		return [
+		return array(
 			'type'  => $labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
 			'value' => '' !== $label ? $label : $level_id,
-		];
+		);
 	}
 
 	/**
@@ -225,9 +222,9 @@ class Adapter_Registry {
 	/**
 	 * The search adapter in use: the one the site names on
 	 * `jetonomy_search_adapter`, else any active adapter a plugin registered,
-	 * else the built-in 'fulltext' one. Registration order no longer decides:
-	 * the built-in adapter registers first, so a Meilisearch or Elasticsearch
-	 * adapter used to be shadowed by it.
+	 * else the built-in 'fulltext' one. Registration order does not decide: the built-in
+	 * adapter registers first, so a Meilisearch or Elasticsearch adapter would otherwise
+	 * be shadowed by it.
 	 */
 	public static function get_search(): ?Search_Adapter {
 		/**

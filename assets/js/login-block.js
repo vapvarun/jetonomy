@@ -109,7 +109,7 @@
 	 * (REST_Auth::auth_public_write) and don't use cookie auth. When the
 	 * header is present, WP core's rest_cookie_check_errors() verifies it,
 	 * and for logged-out visitors the anonymous-session nonce goes stale on
-	 * cached pages → "Cookie check failed" 403 (Basecamp #9977381553).
+	 * cached pages → "Cookie check failed" 403.
 	 * Omitting the header takes core's "no nonce → treat as logged out"
 	 * path, which is exactly what these forms are.
 	 *

@@ -1,0 +1,42 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-replies.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Saved!": [
+                "Opgeslagen!"
+            ],
+            "Move this to trash?": [
+                "Dit naar de prullenbak verplaatsen?"
+            ],
+            "Mark this as spam?": [
+                "Dit als spam markeren?"
+            ],
+            "Save failed. Please try again.": [
+                "Opslaan mislukt. Probeer het opnieuw."
+            ],
+            "Please choose a bulk action.": [
+                "Kies alstublieft een bulkbewerking."
+            ],
+            "Delete this reply permanently? This cannot be undone.": [
+                ""
+            ],
+            "Delete the selected replies permanently? This cannot be undone.": [
+                ""
+            ],
+            "Apply this action to all selected replies?": [
+                "Deze actie toepassen op alle geselecteerde reacties?"
+            ],
+            "Please select at least one reply.": [
+                "Selecteer alstublieft minstens \u00e9\u00e9n reactie."
+            ]
+        }
+    }
+}

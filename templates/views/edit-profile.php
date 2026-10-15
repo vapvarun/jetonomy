@@ -14,7 +14,7 @@ $profile_url  = \Jetonomy\get_profile_url( (int) $current_user->ID );
 
 // Cancel returns the member to wherever they opened the editor from — a member
 // who arrived from a topic or notification was being force-navigated to their
-// profile instead (support ticket 233992000086415470). wp_get_referer() only
+// profile instead (support ticket 2339920). wp_get_referer() only
 // yields a SAME-ORIGIN referer and already excludes the current request, so a
 // refresh can't loop Cancel back onto the form and a crafted cross-site referer
 // can't bounce the member off-site. When there is no safe place to return to
@@ -28,18 +28,18 @@ if ( ! $cancel_url ) {
 
 \Jetonomy\Template_Loader::partial(
 	'breadcrumb',
-	[
-		'crumbs' => [
-			[
+	array(
+		'crumbs' => array(
+			array(
 				'label' => \Jetonomy\user_display_name( $current_user ),
 				'url'   => $profile_url,
-			],
-			[
+			),
+			array(
 				'label' => __( 'Edit Profile', 'jetonomy' ),
 				'url'   => '',
-			],
-		],
-	]
+			),
+		),
+	)
 );
 ?>
 
@@ -51,7 +51,7 @@ if ( ! $cancel_url ) {
 	<form id="jt-edit-profile" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="actions.saveProfile"
-			data-wp-context='<?php echo wp_json_encode( [ 'profileUrl' => $profile_url ] ); ?>'>
+			data-wp-context='<?php echo wp_json_encode( array( 'profileUrl' => $profile_url ) ); ?>'>
 		<div class="jt-form-group">
 			<label class="jt-label" for="jt-first-name"><?php esc_html_e( 'First Name', 'jetonomy' ); ?></label>
 			<input type="text" id="jt-first-name" name="first_name" class="jt-input" data-wp-on--input="actions.refreshDisplayNameChoices" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'first_name', true ) ); ?>">
@@ -101,28 +101,37 @@ if ( ! $cancel_url ) {
 				<?php
 				$jt_default_avatar = get_avatar_url(
 					$current_user->ID,
-					[
+					array(
 						'size'          => 64,
 						'force_default' => true,
-					]
+					)
 				);
 				?>
 				<img id="jt-avatar-preview"
-					src="<?php echo esc_url( get_avatar_url( $current_user->ID, [ 'size' => 64 ] ) ); ?>"
+					src="<?php echo esc_url( get_avatar_url( $current_user->ID, array( 'size' => 64 ) ) ); ?>"
 					data-default-src="<?php echo esc_url( $jt_default_avatar ); ?>"
 					width="64" height="64" class="jt-avatar-round" alt="">
 				<div class="jt-avatar-controls">
 					<input type="hidden" name="avatar_url" value="<?php echo esc_url( $profile->avatar_url ?? '' ); ?>">
+					<?php $jt_can_upload = \Jetonomy\Permissions\Capabilities::can_upload(); ?>
+					<?php if ( $jt_can_upload ) : ?>
 					<input type="file" id="jt-avatar-file" accept="image/png,image/jpeg,image/gif,image/webp" hidden
 						data-wp-on--change="actions.avatarFileSelected">
+					<?php endif; ?>
 					<div class="jt-avatar-buttons">
+						<?php if ( $jt_can_upload ) : ?>
 						<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm"
 							data-wp-on--click="actions.chooseAvatar"><?php esc_html_e( 'Upload photo', 'jetonomy' ); ?></button>
+						<?php endif; ?>
 						<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm" id="jt-avatar-remove"
 							data-wp-on--click="actions.removeAvatar"
 							<?php echo empty( $profile->avatar_url ) ? 'hidden' : ''; ?>><?php esc_html_e( 'Remove photo', 'jetonomy' ); ?></button>
 					</div>
+					<?php if ( $jt_can_upload ) : ?>
 					<span class="jt-avatar-hint"><?php esc_html_e( 'JPG, PNG, GIF or WebP. Square images look best - you can crop after choosing a photo. Without a photo, your Gravatar is used.', 'jetonomy' ); ?></span>
+					<?php else : ?>
+					<span class="jt-avatar-hint"><?php esc_html_e( 'Your Gravatar is used as your photo.', 'jetonomy' ); ?></span>
+					<?php endif; ?>
 				</div>
 			</div>
 
@@ -150,13 +159,14 @@ if ( ! $cancel_url ) {
 
 		<?php
 		// Notification preferences.
-		$user_settings = json_decode( $profile->settings ?? '{}', true ) ?: [];
-		$notif_prefs   = $user_settings['notifications'] ?? [];
-		$global_defs   = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
-		$notif_types   = [
-			/* translators: %s: singular topic label. */
-			'reply_to_post'       => sprintf( __( 'Reply to my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-			'reply_to_reply'      => __( 'Reply to my reply', 'jetonomy' ),
+		$user_settings = json_decode( $profile->settings ?? '{}', true ) ?: array();
+		$notif_prefs   = $user_settings['notifications'] ?? array();
+		$global_defs   = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
+		$notif_types   = array(
+			/* translators: 1: singular reply label; 2: singular topic label. */
+			'reply_to_post'       => sprintf( __( '%1$s to my %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: 1: singular reply label; 2: singular topic label. */
+			'reply_to_reply'      => sprintf( __( '%1$s to my %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 			'mention'             => __( '@Mention', 'jetonomy' ),
 			/* translators: %s: singular topic label. */
 			'vote_on_post'        => sprintf( __( 'Vote on my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
@@ -165,7 +175,7 @@ if ( ! $cancel_url ) {
 			/* translators: 1: singular topic label; 2: singular space label. */
 			'new_post_in_sub'     => sprintf( __( 'New %1$s in followed %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
 			'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
-		];
+		);
 		if ( \Jetonomy\messaging_active() ) {
 			$notif_types['message'] = __( 'Private message', 'jetonomy' );
 		}

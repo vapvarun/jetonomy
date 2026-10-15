@@ -32,37 +32,37 @@ class Votes_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/posts/(?P<id>\d+)/vote',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'vote_post' ],
+					'callback'            => array( $this, 'vote_post' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_vote_args(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'unvote_post' ],
+					'callback'            => array( $this, 'unvote_post' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-			]
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/replies/(?P<id>\d+)/vote',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'vote_reply' ],
+					'callback'            => array( $this, 'vote_reply' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_vote_args(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'unvote_reply' ],
+					'callback'            => array( $this, 'unvote_reply' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -131,28 +131,32 @@ class Votes_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		$value = (int) $request->get_param( 'value' );
+		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
+			return $this->validation_error( __( 'Vote value must be 1 or -1.', 'jetonomy' ) );
+		}
+
+		// Pressing your active vote again takes it back (Vote::cast toggles it off).
+		// A retraction is not a new vote: it must not be refused by, or count
+		// toward, the daily limit, or a member at the cap could not undo a mistake.
+		$is_retraction = Vote::get_user_vote( $user_id, $type, $id ) === $value;
+
 		// Rate limit check.
 		$profile = UserProfile::find_or_create( $user_id );
 		$trust   = (int) ( $profile->trust_level ?? 0 );
-		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'vote', $trust ) ) {
+		if ( ! $is_retraction && ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'vote', $trust ) ) {
 			// Rate_Limiter::message() names the allowance and the real wait.
-			// The old string said "Rate limit exceeded. Please try again
-			// later." to a member who had never been told a limit existed and
-			// could not tell whether "later" meant a minute or a day.
+			// A bare "Rate limit exceeded. Please try again later." would not tell a member
+			// whether "later" means a minute or a day.
 			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'vote', $trust ) );
-		}
-
-		$value = (int) $request->get_param( 'value' );
-		if ( ! in_array( $value, [ 1, -1 ], true ) ) {
-			return $this->validation_error( __( 'Vote value must be 1 or -1.', 'jetonomy' ) );
 		}
 
 		$is_self = (int) ( $object->author_id ?? 0 ) === $user_id;
 
 		// Self-downvote block: an author downvoting their own post or reply
 		// drives the displayed score negative in a way that contradicts "I'm
-		// posting my view" (see Basecamp 9803889865 — admin voting down own
-		// topic left it at −1).
+		// posting my view" (an admin voting down their own
+		// topic would leave it at −1).
 		if ( -1 === $value && $is_self ) {
 			return $this->validation_error( __( 'You cannot downvote your own content.', 'jetonomy' ) );
 		}
@@ -175,16 +179,19 @@ class Votes_Controller extends Base_Controller {
 		$result = Vote::cast( $user_id, $type, $id, $value );
 		if ( is_wp_error( $result ) ) {
 			return new WP_REST_Response(
-				[
+				array(
 					'code'    => $result->get_error_code(),
 					'message' => $result->get_error_message(),
-				],
+				),
 				403
 			);
 		}
 
-		// Increment rate limit counter.
-		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
+		// Count new and changed votes only. Keyed on what cast() actually did, not
+		// the pre-read above, so parallel requests cannot slip an uncounted vote in.
+		if ( 'removed' !== $result['action'] ) {
+			\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
+		}
 
 		// Fire action for Notifier. Pass the vote value so listeners can tell an
 		// upvote from a downvote — the author should not get an encouraging
@@ -192,14 +199,14 @@ class Votes_Controller extends Base_Controller {
 		do_action( 'jetonomy_after_vote', $type, $id, $user_id, $value );
 
 		// Award or adjust reputation on the object author.
-		$this->maybe_adjust_reputation( $type, $value, $result, (int) $object->author_id );
+		$this->maybe_adjust_reputation( $type, $value, $result, (int) $object->author_id, $id );
 
 		// Re-fetch current score.
 		$updated = $this->load_object( $type, $id );
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );
 
 		return new WP_REST_Response(
-			array_merge( $result, [ 'score' => $score ] ),
+			array_merge( $result, array( 'score' => $score ) ),
 			200
 		);
 	}
@@ -236,10 +243,10 @@ class Votes_Controller extends Base_Controller {
 		$existing = Vote::get_user_vote( $user_id, $type, $id );
 		if ( null === $existing ) {
 			return new WP_REST_Response(
-				[
+				array(
 					'action' => 'none',
 					'score'  => (int) ( $object->vote_score ?? 0 ),
-				],
+				),
 				200
 			);
 		}
@@ -248,10 +255,10 @@ class Votes_Controller extends Base_Controller {
 		$result = Vote::cast( $user_id, $type, $id, $existing );
 		if ( is_wp_error( $result ) ) {
 			return new WP_REST_Response(
-				[
+				array(
 					'code'    => $result->get_error_code(),
 					'message' => $result->get_error_message(),
-				],
+				),
 				403
 			);
 		}
@@ -260,7 +267,7 @@ class Votes_Controller extends Base_Controller {
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );
 
 		return new WP_REST_Response(
-			array_merge( $result, [ 'score' => $score ] ),
+			array_merge( $result, array( 'score' => $score ) ),
 			200
 		);
 	}
@@ -298,12 +305,17 @@ class Votes_Controller extends Base_Controller {
 	 * @param int    $value     The vote value (1 or -1).
 	 * @param array  $result    The result from Vote::cast().
 	 * @param int    $author_id The object author's user ID.
+	 * @param int    $object_id The voted post or reply, logged as the source of the change.
 	 */
-	private function maybe_adjust_reputation( string $type, int $value, array $result, int $author_id ): void {
+	private function maybe_adjust_reputation( string $type, int $value, array $result, int $author_id, int $object_id = 0 ): void {
 		if ( ! $author_id ) {
 			return;
 		}
 
+		$source    = array(
+			'object_type' => $type,
+			'object_id'   => $object_id,
+		);
 		$action    = $result['action'];
 		$old_value = $result['old_value'] ?? null;
 
@@ -314,20 +326,20 @@ class Votes_Controller extends Base_Controller {
 
 		if ( 'created' === $action ) {
 			// New vote: award via Reputation class.
-			Reputation::award( $author_id, self::reputation_action_for( $type, $value ) );
+			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
 			return;
 		}
 
 		if ( 'removed' === $action ) {
 			// Undo vote: revoke the original award.
-			Reputation::revoke( $author_id, self::reputation_action_for( $type, $value ) );
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $value ), $source );
 			return;
 		}
 
 		if ( 'updated' === $action && null !== $old_value ) {
 			// Changed vote direction: revoke old award and apply new one.
-			Reputation::revoke( $author_id, self::reputation_action_for( $type, $old_value ) );
-			Reputation::award( $author_id, self::reputation_action_for( $type, $value ) );
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $old_value ), $source );
+			Reputation::award( $author_id, self::reputation_action_for( $type, $value ), $source );
 		}
 	}
 
@@ -349,12 +361,12 @@ class Votes_Controller extends Base_Controller {
 	 * Shared args for vote endpoints.
 	 */
 	private function get_vote_args(): array {
-		return [
-			'value' => [
+		return array(
+			'value' => array(
 				'type'     => 'integer',
 				'required' => true,
-				'enum'     => [ 1, -1 ],
-			],
-		];
+				'enum'     => array( 1, -1 ),
+			),
+		);
 	}
 }

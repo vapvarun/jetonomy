@@ -1,0 +1,5 @@
+# Mechanical changes git blame should skip:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# array() conversion (2.0.2)
+58bed674bcdf316695239261cb69a2e2ef525be6

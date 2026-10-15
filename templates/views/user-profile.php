@@ -14,12 +14,12 @@ if ( ! $user ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			'message'   => __( 'User not found.', 'jetonomy' ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -94,86 +94,42 @@ $page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $per_page = 20;
 $offset   = ( $page - 1 ) * $per_page;
 
-global $wpdb;
-$posts_tbl  = \Jetonomy\table( 'posts' );
-$spaces_tbl = \Jetonomy\table( 'spaces' );
-
-// Space-visibility + per-post is_private gate: a non-member viewing another
-// user's profile must not see that user's posts in private/hidden spaces, nor
-// their private posts in public spaces. is_anonymous = 0 (query below) is an
-// anonymity guard: an anonymous post must never surface on this profile's
-// public post stream, even to the author viewing their own profile — that
-// would deanonymize it by correlating it to this identity.
-[ $jt_space_vis_sql, $jt_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
-[ $jt_priv_sql, $jt_priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-
-$jt_gate_sql    = '';
-$jt_gate_params = array();
-if ( '1=1' !== $jt_space_vis_sql ) {
-	$jt_gate_sql   .= ' AND ' . $jt_space_vis_sql;
-	$jt_gate_params = array_merge( $jt_gate_params, $jt_space_vis_params );
-}
-if ( '' !== $jt_priv_sql ) {
-	$jt_gate_sql   .= ' AND ' . $jt_priv_sql;
-	$jt_gate_params = array_merge( $jt_gate_params, $jt_priv_params );
-}
-
-// Hide this profile's posts entirely when the VIEWER has blocked this user.
-// no-op for guests/no-blocks.
-[ $jt_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-if ( '' !== $jt_block_sql ) {
-	$jt_gate_sql .= ' AND ' . $jt_block_sql;
-}
-
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$recent_posts = $wpdb->get_results(
-	$wpdb->prepare(
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		"SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
-		 FROM {$posts_tbl} p
-		 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$jt_gate_sql}
-		 ORDER BY p.created_at DESC
-		 LIMIT %d OFFSET %d",
-		(int) $user->ID,
-		...array_merge( $jt_gate_params, array( $per_page, $offset ) )
-	)
-) ?: [];
+$recent_posts = \Jetonomy\Models\Post::list_by_author( (int) $user->ID, $per_page, $offset );
 
 // Current tab.
 $current_tab = $data['tab'] ?? '';
 $is_own      = is_user_logged_in() && get_current_user_id() === (int) $user->ID;
 
 // Bookmarks (only for own profile on bookmarks tab).
-$bookmarks = [];
+$bookmarks = array();
 if ( 'bookmarks' === $current_tab && $is_own ) {
 	$bookmarks = \Jetonomy\Models\Bookmark::list_by_user( (int) $user->ID, $per_page, $offset );
 }
 
 // Replies tab.
-$user_replies = [];
+$user_replies = array();
 if ( 'replies' === $current_tab ) {
 	$user_replies = \Jetonomy\Models\Reply::list_by_user( (int) $user->ID, $per_page, $offset );
 }
 
 // Votes tab.
-$user_votes = [];
+$user_votes = array();
 if ( 'votes' === $current_tab ) {
 	$user_votes = \Jetonomy\Models\Vote::list_by_user( (int) $user->ID, $per_page, $offset );
 }
 
 // Drafts tab — only for the profile owner.
-$user_drafts = [];
+$user_drafts = array();
 if ( 'drafts' === $current_tab && $is_own ) {
 	$user_drafts = \Jetonomy\Models\Post::list_drafts_by_user( (int) $user->ID, $per_page, $offset );
 }
 
-$crumbs = [
-	[
+$crumbs = array(
+	array(
 		'label' => \Jetonomy\user_display_name( $user ),
 		'url'   => '',
-	],
-];
+	),
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -188,11 +144,11 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'avatar',
-						[
+						array(
 							'user_id' => $profile_user_id,
 							'size'    => 64,
 							'class'   => 'jt-profile-av',
-						]
+						)
 					);
 					?>
 				</span>
@@ -200,7 +156,7 @@ $crumbs = [
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( \Jetonomy\user_display_name( $user ) ); ?>
 							<?php /* translators: %d: trust level number (0-5). */ ?>
-							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
+							<span class="jt-tl jt-tl-named" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( \Jetonomy\Trust\Trust_Levels::label( (int) $trust ) ); ?></span>
 						</h1>
 						<div class="jt-flex jt-items-center jt-gap-sm jt-flex-shrink-0 jt-profile-head-actions">
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
@@ -232,7 +188,7 @@ $crumbs = [
 								data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $user ) ); ?>"
 								title="<?php esc_attr_e( 'Lift this restriction', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
-								<?php esc_html_e( 'Lift', 'jetonomy' ); ?>
+								<?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?>
 							</button>
 						<?php elseif ( $jt_can_moderate ) : ?>
 							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
@@ -291,8 +247,9 @@ $crumbs = [
 							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $r_count, 'reply' ) ); ?></div>
 						</div>
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo esc_html( (int) $trust ); ?></div>
-							<div class="jt-stat-l"><?php esc_html_e( 'Trust', 'jetonomy' ); ?></div>
+							<div class="jt-stat-n"><?php echo esc_html( \Jetonomy\Trust\Trust_Levels::label( (int) $trust ) ); ?></div>
+							<?php /* translators: %d: trust level number (0-5). */ ?>
+							<div class="jt-stat-l"><?php echo esc_html( sprintf( __( 'Trust level %d', 'jetonomy' ), (int) $trust ) ); ?></div>
 						</div>
 					</div>
 
@@ -387,12 +344,12 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'message' => $is_own
 								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not replied to anything yet. Jump into a discussion and your %s will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
-								: sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+								: sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -410,7 +367,11 @@ $crumbs = [
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
-									<div class="jt-row-title"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
+									<?php if ( ! empty( $ur->is_private_hidden ) ) : ?>
+										<div class="jt-row-title jt-row-title--private"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo esc_html( sprintf( /* translators: %s: singular reply label. */ __( 'Private %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?></div>
+									<?php else : ?>
+										<div class="jt-row-title"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
+									<?php endif; ?>
 									<div class="jt-row-sub">
 										<?php
 										// Feed-space parent posts store an empty title — fall
@@ -440,7 +401,7 @@ $crumbs = [
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_replies ) >= $per_page ] ); ?>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $user_replies ) >= $per_page ) ); ?>
 				<?php endif; ?>
 
 			<?php elseif ( 'votes' === $current_tab ) : ?>
@@ -448,12 +409,12 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'message' => $is_own
 								? sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'You have not voted yet. Upvote %1$s and %2$s you find helpful and they will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
 								: __( 'No votes yet.', 'jetonomy' ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -491,7 +452,7 @@ $crumbs = [
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_votes ) >= $per_page ] ); ?>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $user_votes ) >= $per_page ) ); ?>
 				<?php endif; ?>
 
 			<?php elseif ( 'drafts' === $current_tab && $is_own ) : ?>
@@ -499,10 +460,10 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
-							'message' => sprintf( /* translators: %s: singular topic label. */ __( 'No drafts yet. Save a %s as draft and it will appear here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+						array(
+							'message' => __( 'No drafts yet. Save a draft and it will appear here.', 'jetonomy' ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 			<?php else : ?>
@@ -574,7 +535,7 @@ $crumbs = [
 						</div>
 					<?php endforeach; ?>
 				</div>
-				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_drafts ) >= $per_page ] ); ?>
+				<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $user_drafts ) >= $per_page ) ); ?>
 			<?php endif; ?>
 
 		<?php elseif ( 'bookmarks' === $current_tab && $is_own ) : ?>
@@ -582,10 +543,10 @@ $crumbs = [
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'message' => sprintf( /* translators: %s: plural topic label. */ __( 'No bookmarks yet. Bookmark %s to find them here later.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -642,17 +603,17 @@ $crumbs = [
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $bookmarks ) >= $per_page ] ); ?>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $bookmarks ) >= $per_page ) ); ?>
 				<?php endif; ?>
 			<?php else : ?>
 				<?php if ( empty( $recent_posts ) ) : ?>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
-							'message' => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+						array(
+							'message' => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 							'variant' => 'compact',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -693,7 +654,7 @@ $crumbs = [
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $recent_posts ) >= $per_page ] ); ?>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $recent_posts ) >= $per_page ) ); ?>
 				<?php endif; ?>
 			<?php endif; ?>
 		</main>

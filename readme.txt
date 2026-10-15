@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 7.0
-Stable tag: 2.0.1
+Stable tag: 2.0.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,110 @@ Absolutely. Jetonomy has 81 REST routes / 109 method-endpoints (141 routes acros
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 2.0.2 - October 2026 =
+
+Permissions that follow the Permissions screen, private spaces and private replies that stay private, terminology on every screen, safer space hand-overs and merges, and a round of security and reputation fixes.
+
+* New      - Owners can rename every trust level under Settings > Permissions, and members now see the level name on profiles, hover cards and badges, with level 5 called Veteran.
+* New      - A new setting lists private spaces to logged-out visitors as locked previews that explain how to request access, off by default.
+* New      - The leaderboard shortcode, widget and block can show this week's or this month's top members, and show each member's avatar.
+* New      - The Login block on its own page tells a signed-in member who they are signed in as, with links to the community, their profile and log out.
+* New      - Space pages link to their moderation queue, with a count, for space admins and site moderators.
+* New      - A switched-off feature such as Messages shows a "page not available" page inside the community instead of a blank page.
+* New      - Closed topics now show a "Closed" badge next to Pinned and Private in topic lists, and feed cards gain the same badges.
+* New      - Topics and replies show "edited 2 hours ago" to everyone when the edit came more than a minute after posting, with the exact time on hover.
+* New      - The reply composer quotes the first line of the reply being answered and links back to it, and a nested reply shows "in reply to" its parent at every depth.
+* New      - Owners can now unarchive a space they handed over, and the archived banner names the new owner; the former owner stays on as a space moderator.
+* New      - Admins see an error notice on every admin screen when Plain permalinks are active, linking to Settings > Permalinks, because community URLs cannot work with Plain permalinks.
+* Improve  - Renamed terms for spaces, topics, replies, members and categories now apply on every wp-admin screen, in notification preferences, empty states and messages, and read correctly with any word you choose.
+* Improve  - Private spaces always take join requests or invites, existing private spaces set to Open now take requests, and members see a pending state after asking to join.
+* Improve  - Every space card shows a Private badge and how to join, and the request form sits inside the private space notice with a clear Request to join button.
+* Improve  - The community home shows the first six spaces of each category with a View all link, so large communities stay easy to scan.
+* Improve  - Topic and reply menus follow the Permissions screen, so a role you allow to edit, delete, pin, close or move sees those actions and a role you do not allow does not.
+* Improve  - Site moderators can moderate in every space they can read without joining it first.
+* Improve  - The Manage community users, Manage badges and Manage extensions permissions now open their screens and API for staff you delegate them to.
+* Improve  - The member bio is the WordPress Biographical Info field, so wp-admin and the community profile always match, and existing bios are copied over on update.
+* Improve  - Vote buttons show clearly when your vote is active, say "Remove your upvote" there, and confirm every topic and reply vote as added or removed.
+* Improve  - Members who reach their daily vote limit can still take back a vote.
+* Improve  - wp-admin and the community use one neutral "Lift restriction" button and dialog for bans and silences.
+* Improve  - The idea bonus is awarded once when an idea first reaches the roadmap and taken back if it leaves, and a moderator moving content to Trash counts as removal, the same as Spam.
+* Improve  - Popular tags, tag pages and tag search count and list only topics the visitor can read.
+* Improve  - The Trust Levels table lists exactly what each level changes, including the CAPTCHA skip at level 2.
+* Improve  - Settings > Who can create spaces is the single control for creating spaces, and existing choices carry over.
+* Improve  - Access rule and join request buttons line up in one row in wp-admin and wrap neatly on phones.
+* Improve  - Only a space's owner or a site administrator can demote or remove the owner, so a co-admin can no longer lock an owner out of their own space.
+* Improve  - Site moderators skip the spam check like other staff.
+* Improve  - The notifications page names join requests, their answers, reactions and reviewed reports.
+* Improve  - Merging topics now moves votes, subscribers and bookmarks to the target and keeps the duplicate's opening post as a reply "Merged from <title>" with its attachments.
+* Improve  - Every Settings sidebar row, including the Pro extension tabs, now has an icon and lines up with the others.
+* Improve  - All community pages use the Community Title setting in the nav label, browser tab title, breadcrumbs, admin bar and home heading.
+* Improve  - Every space tab (Discussions, Members, Roadmap) shows the same space header with cover, description, counts and the Join, Follow and Leave buttons.
+* Improve  - The space form keeps visibility and join policy consistent, so choosing Hidden switches join to Invite only, with a note explaining why.
+* Improve  - The roadmap status picker is labelled "Roadmap status", shows "Not set" until a stage is chosen, and highlights the chosen stage with its colour dot.
+* Improve  - A deep-linked reply highlights briefly and then fades instead of staying highlighted.
+* Improve  - The Move topic dialog reads "Choose a space..." once spaces load, instead of staying on "Loading spaces...".
+* Improve  - Every user-facing string is now translatable, counts use each language's real plural forms (including "Show N replies" and "N new replies"), and the language files are updated.
+* Improve  - Member names in notifications, moderation lists, profile structured data, the leaderboard and members shortcodes, the user panel block and profile titles now follow the Name display setting.
+* Improve  - Popular lists (space lists, tag pages, the global feed, shortcodes and search) break vote ties by reply count, so a young community no longer reads like Newest.
+* Improve  - Creating a space from the front end follows it for its creator.
+* Improve  - On BuddyX and BuddyX Pro, community pages are wrapped like the theme's own pages, so a short page keeps the footer in the right place; the `jetonomy_theme_content_hooks` filter adjusts this.
+* Improve  - Setup wizard, Compose Topic block help, Integrations cards and the admin footer now describe what each feature actually does; the Learnomy card says course-gated spaces need Jetonomy Pro.
+* Fix      - Members whose display name is a reserved word, such as admin, can save their profile again.
+* Fix      - Refused actions such as reaching the pin limit show their message even when the community navigation is hidden.
+* Fix      - Members who cannot vote see why, instead of a vote button that does nothing.
+* Fix      - Dismissing a report on a reply now restores the author's reputation, as it already did for topics.
+* Fix      - The More options menu no longer opens empty for a role that can only moderate.
+* Fix      - Messages no longer return a 404 on Windows servers.
+* Fix      - The personal data export includes the member bio again.
+* Fix      - Community pages outside a space no longer write a database notice to the debug log.
+* Fix      - On block themes, community pages now load the header and footer styles, so the site title, menu and buttons look like the rest of the theme.
+* Fix      - With The SEO Framework active, community pages no longer show "Untitled - Site" or a second set of social tags.
+* Fix      - Saving Settings > Permissions no longer cuts off roles without defaults (Customer, Student and similar); a notice with a one-click button restores access for roles already saved empty.
+* Fix      - The Upload media permission now fully controls uploads, so unticking it stops a role, and the image buttons and avatar and cover upload controls hide for members who cannot upload.
+* Fix      - The Permissions tab lists only the trust level abilities that are actually enforced.
+* Fix      - Imported demo badges no longer show "(none)" and are now awarded.
+* Fix      - The last admin of a space can no longer be removed or demoted from wp-admin, the front end or the API, while membership expiry, group leave and automation removals still always apply.
+* Fix      - Users > Ban no longer offers a Space Ban that banned nothing, and stored space bans that never applied are cleaned up on update.
+* Fix      - Deleting a space no longer orphans its topics and replies after a database error; the purge stops with the space intact and retries.
+* Fix      - Deleting a space with more than 500 topics locks it at once and finishes in the background, and the screen says so.
+* Fix      - A reply can no longer be created under a parent that is missing, trashed, spam or in another topic.
+* Fix      - Merging topics keeps a single accepted answer, and splitting a thread moves the whole reply subtree and un-accepts a moved answer properly.
+* Fix      - Topic counts stay correct when a topic is moved between spaces, when a thread is split, and when a draft or trashed topic is moved.
+* Fix      - Merging a topic no longer joins the donor's author to the target space.
+* Fix      - Handing a space over now picks a valid heir, ignoring banned members and the current owner, and falls back to reassigning the author if a privacy hand-over fails.
+* Fix      - Account deletion and privacy erase no longer blank a space's owner when nobody can inherit it, so it is retried.
+* Fix      - Composer paste and drop of images follow the image button, so no upload is attempted when uploads are off.
+* Fix      - Space memberships can no longer be created for a space that no longer exists.
+* Fix      - The Delete permanently button in the danger zone is red again.
+* Security - Site moderators can no longer edit, trash, approve or resolve reports on content in private spaces they cannot read, and their moderation queues, report lists and counts leave those spaces out.
+* Security - Members can no longer report content they cannot see, which also stops reports being used to learn which private topics exist.
+* Security - A member's display name can no longer run script in wp-admin's member search or Users screen.
+* Security - Files posted in the community are no longer listed to visitors through the WordPress media API.
+* Security - The live updates API no longer shows members activity from private spaces, joins or moderation actions.
+* Security - Staff with delegated user management can no longer raise their own trust level, each other's, or an administrator's or moderator's.
+* Security - Sitemaps never list private spaces or their topics, including when private spaces are shown to visitors.
+* Security - Setting a new profile picture or space cover through the REST API now needs the upload permission, as the forms already did.
+* Security - Restoring removed content or declining an idea only gives back reputation that was actually taken.
+* Security - A private reply's full text was returned by the replies API to anyone, including logged-out visitors; it is now hidden like on the thread.
+* Security - Private replies no longer show their first words on profile Replies tabs (community and BuddyPress), which now read "Private reply".
+* Security - Private replies are now excluded from reply search and counts, Q&A structured data, the accepted-answer callout, reply attachments, @mention notices, subscriber notifications and split-to-topic.
+* Security - Hidden spaces no longer confirm they exist or name their admins through the privileged-members API; private spaces still show who runs them.
+* Security - The tag page's structured data and BuddyNext hashtag "Related discussions" no longer expose titles of private topics, topics in private spaces or unpublished topics, or the names of anonymous authors.
+* Security - Anonymous authors now stay anonymous in wp-admin lists, oEmbed cards, the Activity Log, Dashboard activity, Revisions and approval cards; only an admin's logged Reveal author shows the name.
+* Security - A space owner can no longer reverse a lock or archive that a site admin set; owners can undo only their own hand-over, and only while they still hold the space admin role and are not banned.
+* Security - Only the owner or a site admin can hand a space over.
+* Security - Merging a private topic is refused, so Private no longer turns public through a merge, and an unapproved opening post is never published by a merge.
+* Security - Splitting a thread that contains private replies is refused, and a split topic is named only when it sits in a public space.
+* Security - Replies could notify an author about a reply in a topic they may not read when a parent from another topic was used; that is no longer possible.
+* Security - The Abilities "mark notifications read" tool only touches the caller's own notifications.
+* Dev      - New filter jetonomy_space_preview_limit sets how many spaces a category previews, and REST user responses add trust_level_label.
+* Dev      - A pre-commit check now fails on hardcoded space, topic, reply, member or category nouns in translatable text.
+* Dev      - Error codes returned by the REST API and Abilities are now prefixed `jetonomy_` (for example `jetonomy_not_found`, `jetonomy_invalid_url`, `jetonomy_user_silenced`).
+* Dev      - The `jetonomy_post_card_after_badges` hook now fires for feed cards as well as topic rows.
+* Dev      - The `jetonomy_space_transferred` hook now fires once, only on a successful hand-over, with the real previous owner.
+* Dev      - The `jetonomy_theme_content_hooks` filter sets the theme hooks community pages are wrapped in.
+* Dev      - Every public hook now has a documented description and `@since` version, and the hooks reference is regenerated.
 
 = 2.0.1 - October 2026 =
 

@@ -179,6 +179,31 @@ fi
 # free Jetonomy from Pro are exempt: Pro cannot run without its base.
 #
 # Pro has no runner of its own, so it is gated from here alongside free.
+step "Comment references (free + pro)"
+if bin/check-comment-refs.sh && { [ -z "$PRO" ] || "$PRO/bin/check-comment-refs.sh"; }; then
+    ok "no tracker/plan references in source"
+else
+    fail "tracker/plan references in source"
+    FAILED_GATES+=("comment-refs")
+fi
+
+step "Terminology nouns (free)"
+if php bin/check-terminology.php >/dev/null; then
+    ok "every user-facing noun follows Settings -> Terminology"
+else
+    php bin/check-terminology.php | tail -5
+    fail "hardcoded terminology nouns"
+    FAILED_GATES+=("terminology")
+fi
+
+step "Data layer (free)"
+if bin/check-data-layer.sh; then
+    ok "no new \$wpdb use outside models"
+else
+    fail "\$wpdb use outside models grew"
+    FAILED_GATES+=("data-layer")
+fi
+
 step "Cross-plugin guards (free)"
 if php bin/check-cross-plugin-guards.php; then
     ok "cross-plugin guards free clean"

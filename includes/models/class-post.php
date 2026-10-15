@@ -253,14 +253,16 @@ class Post extends Model {
 	public static function update( int $id, array $data ): bool {
 		$data = self::sanitize_content_fields( $data );
 
-		$delta = 0;
-		$post  = null;
+		$delta       = 0;
+		$post        = null;
+		$was_publish = false;
+		$is_publish  = false;
 
-		if ( array_key_exists( 'status', $data ) ) {
+		if ( array_key_exists( 'status', $data ) || array_key_exists( 'space_id', $data ) ) {
 			$post = self::find( $id );
 			if ( $post ) {
 				$was_publish = 'publish' === ( $post->status ?? '' );
-				$is_publish  = 'publish' === (string) $data['status'];
+				$is_publish  = array_key_exists( 'status', $data ) ? 'publish' === (string) $data['status'] : $was_publish;
 				if ( $was_publish && ! $is_publish ) {
 					$delta = -1;
 				} elseif ( ! $was_publish && $is_publish ) {
@@ -283,10 +285,23 @@ class Post extends Model {
 		 */
 		self::bust_cache( $id );
 
-		if ( 0 !== $delta && $post ) {
-			if ( ! empty( $post->space_id ) ) {
-				Space::increment_post_count( (int) $post->space_id, $delta );
+		// A space counts its published topics: the old space loses one it had,
+		// the new one gains one it now has. Covers a publish change, a move to
+		// another space, and both at once, for every caller.
+		if ( $post ) {
+			$old_space = (int) ( $post->space_id ?? 0 );
+			$new_space = array_key_exists( 'space_id', $data ) ? (int) $data['space_id'] : $old_space;
+			if ( $old_space !== $new_space || $was_publish !== $is_publish ) {
+				if ( $was_publish && $old_space > 0 ) {
+					Space::increment_post_count( $old_space, -1 );
+				}
+				if ( $is_publish && $new_space > 0 ) {
+					Space::increment_post_count( $new_space, 1 );
+				}
 			}
+		}
+
+		if ( 0 !== $delta && $post ) {
 			if ( ! empty( $post->author_id ) ) {
 				UserProfile::increment_post_count( (int) $post->author_id, $delta );
 			}
@@ -352,10 +367,8 @@ class Post extends Model {
 		$post = self::find( $id );
 
 		// Replies first, while the topic row still exists for any listener
-		// that looks it up. A hard delete used to remove the topic and leave
-		// every reply behind pointing at a post_id that no longer resolved -
-		// still counted on their authors, still in search and activity
-		// (Basecamp 10344032754).
+		// that looks it up. Deleting the replies with the topic keeps them from pointing at
+		// a missing post_id - still counted on their authors, still in search and activity.
 		if ( $post ) {
 			self::delete_replies( $id );
 		}
@@ -397,17 +410,10 @@ class Post extends Model {
 			/**
 			 * Fires after a post row is deleted, whatever deleted it.
 			 *
-			 * Moved here from Posts_Controller::delete_item() in 1.9.5. Firing it
-			 * from the REST controller meant the contract only held on ONE path:
-			 * `wp jetonomy content delete`, the QA/journey harness and any
-			 * internal Post::delete() call left Pro's wp_jt_attachments rows
-			 * pointing at posts that no longer existed. Attachment GC did not
-			 * catch them either, because it checks whether the media FILE still
-			 * exists, not the post - so an orphan with a live file was never
-			 * collected (Basecamp 10268067864).
-			 *
-			 * The model is where every caller converges, so this is the only
-			 * place the hook can be guaranteed.
+			 * The hook fires from the model, where every caller converges (REST, `wp jetonomy
+			 * content delete`, the QA/journey harness, any internal Post::delete()), so Pro's
+			 * wp_jt_attachments rows never point at deleted posts. Attachment GC cannot catch
+			 * such orphans: it checks whether the media FILE still exists, not the post.
 			 *
 			 * @since 1.4.1
 			 * @param int $id Deleted post ID.
@@ -529,15 +535,15 @@ class Post extends Model {
 	 * the view, schema markup x2). Misses are deliberately never memoized:
 	 * unique_post_slug() loops `while ( find_by_slug() )` as its duplicate
 	 * guard, and a cached miss there mints duplicate slugs — the exact bug
-	 * Space's negative slug cache had (caching plan WP2.2 / graveyard #5).
+	 * Space's negative slug cache had.
 	 * Reset on every post write (update/delete) and via Cache::flush() (U1).
 	 *
 	 * @var array<string, object>
 	 */
-	private static array $slug_memo = [];
+	private static array $slug_memo = array();
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -548,7 +554,7 @@ class Post extends Model {
 	 * status change or slug rename must be visible to the next lookup.
 	 */
 	public static function reset_slug_memo(): void {
-		self::$slug_memo = [];
+		self::$slug_memo = array();
 	}
 
 	/**
@@ -562,7 +568,7 @@ class Post extends Model {
 			self::$slug_memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$slug_memo = [];
+					self::$slug_memo = array();
 				}
 			);
 		}
@@ -593,7 +599,7 @@ class Post extends Model {
 	 *
 	 * Sort options:
 	 *   'latest'      — sticky posts first, then last_reply_at DESC
-	 *   'popular'     — vote_score DESC
+	 *   'popular'     — votes, then replies (popular_order())
 	 *   'oldest'      — created_at ASC
 	 *   'newest'      — created_at DESC
 	 *   'unanswered'  — reply_count = 0, created_at DESC
@@ -620,10 +626,10 @@ class Post extends Model {
 		// non-unique — 25 of 26 seeded posts shared a single created_at second —
 		// and without a unique final key MySQL may return tied rows in any order,
 		// so consecutive pages of the same list could repeat or skip rows
-		// (Basecamp 10161324235). Tiebreaker direction matches its key's.
+		// Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
+				$order_by = 'is_sticky DESC, ' . self::popular_order();
 				break;
 
 			case 'oldest':
@@ -678,12 +684,9 @@ class Post extends Model {
 
 		// $after is a forward cursor carrying an OFFSET, not a row id.
 		//
-		// This used to run `... AND id > %d ORDER BY {$order_by}` as a keyset. That
-		// could never work here: $order_by leads with is_sticky/vote_score/
-		// last_reply_at/created_at, so an id filter does not follow the sort at all,
-		// and `id >` against a DESC sort actively contradicts it — every "next page"
-		// returned the top of the list again and clients looped forever
-		// (Basecamp 10161324235). Offset is the only scheme these sorts support.
+		// Offset is the only scheme these sorts support: $order_by leads with is_sticky/
+		// vote_score/last_reply_at/created_at, so a keyset `id > %d` filter does not follow
+		// the sort and would return the top of the list for every "next page".
 		$offset = $after > 0 ? $after : $offset;
 
 		$results = static::db()->get_results(
@@ -725,10 +728,10 @@ class Post extends Model {
 		// non-unique — 25 of 26 seeded posts shared a single created_at second —
 		// and without a unique final key MySQL may return tied rows in any order,
 		// so consecutive pages of the same list could repeat or skip rows
-		// (Basecamp 10161324235). Tiebreaker direction matches its key's.
+		// Tiebreaker direction matches its key's.
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
+				$order_by = 'is_sticky DESC, ' . self::popular_order();
 				break;
 
 			case 'oldest':
@@ -757,20 +760,7 @@ class Post extends Model {
 				break;
 		}
 
-		// Visibility filter: privileged users see everything, others see public + own private.
-		if ( ! $is_privileged ) {
-			if ( $user_id > 0 ) {
-				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
-			} else {
-				$extra_where .= ' AND is_private = 0';
-			}
-		}
-
-		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$extra_where .= ' AND ' . $block_sql;
-		}
+		$extra_where .= self::space_reader_sql( $user_id, $is_privileged );
 
 		// $after carries an OFFSET, not a row id — see list_by_space() for why the
 		// old `id > %d` keyset could not work against these sorts.
@@ -805,7 +795,7 @@ class Post extends Model {
 	}
 
 	/**
-	 * Card-projection variant of list_by_space_visible() (plan WP5.4).
+	 * Card-projection variant of list_by_space_visible().
 	 *
 	 * The topic-card templates render title + a trimmed excerpt — never the
 	 * body — yet the full method dragged `content` LONGTEXT for every row.
@@ -839,7 +829,7 @@ class Post extends Model {
 		$extra_where = '';
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'is_sticky DESC, vote_score DESC, id DESC';
+				$order_by = 'is_sticky DESC, ' . self::popular_order();
 				break;
 			case 'oldest':
 				$order_by = 'is_sticky DESC, created_at ASC, id ASC';
@@ -860,18 +850,7 @@ class Post extends Model {
 				break;
 		}
 
-		if ( ! $is_privileged ) {
-			if ( $user_id > 0 ) {
-				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
-			} else {
-				$extra_where .= ' AND is_private = 0';
-			}
-		}
-
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$extra_where .= ' AND ' . $block_sql;
-		}
+		$extra_where .= self::space_reader_sql( $user_id, $is_privileged );
 
 		$offset = $after > 0 ? $after : $offset;
 
@@ -914,7 +893,7 @@ class Post extends Model {
 	 * @return int
 	 */
 	public static function count_by_space_visible( int $space_id, int $user_id, bool $is_privileged, string $sort = 'latest' ): int {
-		// Cached 120s per viewer bucket (plan WP4.10): the COUNT doubles the
+		// Cached 120s per viewer bucket: the COUNT doubles the
 		// query cost of the hottest list on the site for a pager number that
 		// barely moves. Bucket honors EVERY viewer-dependent clause below
 		// (U2): privileged viewers share 'priv' (they see everything),
@@ -924,8 +903,7 @@ class Post extends Model {
 		// set is unbounded per space, so no write can enumerate it, and a
 		// ≤120s-stale pager count is invisible. The denormalized
 		// jt_spaces.post_count is a DIFFERENT population and is never
-		// substituted here (the reverted Basecamp 10118693115 bug —
-		// plan graveyard #1).
+		// substituted here (it would give wrong pager counts).
 		$bucket = $is_privileged ? 'priv' : ( $user_id > 0 ? "u{$user_id}" : 'guest' );
 		$key    = "postcount:{$space_id}:{$sort}:{$bucket}";
 		$cached = Cache::get( $key );
@@ -943,19 +921,8 @@ class Post extends Model {
 				: ' AND reply_count = 0';
 		}
 
-		if ( ! $is_privileged ) {
-			if ( $user_id > 0 ) {
-				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
-			} else {
-				$extra_where .= ' AND is_private = 0';
-			}
-		}
-
-		// Match list_by_space_visible()'s block exclusion exactly or pagination breaks.
-		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$extra_where .= ' AND ' . $block_sql;
-		}
+		// The same filter as list_by_space_visible(), or the pager disagrees with the list.
+		$extra_where .= self::space_reader_sql( $user_id, $is_privileged );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$count = (int) static::db()->get_var(
@@ -977,10 +944,10 @@ class Post extends Model {
 	 * both read one implementation instead of duplicating raw SQL. Served by the
 	 * status_created (status, created_at) index.
 	 *
-	 * @param string[]   $statuses  One or more of publish|pending|draft|spam|trash.
-	 * @param int        $limit     Max rows.
-	 * @param int        $offset    Pagination offset.
-	 * @param int[]|null $space_ids Limit to these spaces, or null for every space.
+	 * @param string[]                            $statuses  One or more of publish|pending|draft|spam|trash.
+	 * @param int                                 $limit     Max rows.
+	 * @param int                                 $offset    Pagination offset.
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids Limit to these spaces, or null for every space.
 	 * @return object[]
 	 */
 	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0, ?array $space_ids = null ): array {
@@ -1015,7 +982,7 @@ class Post extends Model {
 	 * pending queue - which is the exact privilege boundary the frontend
 	 * queue relies on.
 	 *
-	 * @param int[]|null $space_ids
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids
 	 * @return array{sql:string,params:array<int,int>}|null Null = match nothing.
 	 */
 	protected static function space_scope_sql( ?array $space_ids ): ?array {
@@ -1024,6 +991,22 @@ class Post extends Model {
 				'sql'    => '',
 				'params' => array(),
 			);
+		}
+		// array( 'skip_spaces' => ids ): every space but these (a site moderator's
+		// reach, Moderation_Permissions::staff_scope()). An empty exclude list
+		// is no filter at all, unlike an empty include list.
+		if ( isset( $space_ids['skip_spaces'] ) ) {
+			$skip = array_values( array_unique( array_filter( array_map( 'absint', (array) $space_ids['skip_spaces'] ) ) ) );
+			return array(
+				'sql'    => $skip ? ' AND space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '',
+				'params' => $skip,
+			);
+		}
+		// Any other keyed array is a malformed scope: match nothing rather than
+		// coerce it into space ids (fail closed - a moderator filter must never
+		// silently widen).
+		if ( array_filter( array_keys( $space_ids ), 'is_string' ) ) {
+			return null;
 		}
 		$ids = array_values( array_unique( array_filter( array_map( 'absint', $space_ids ) ) ) );
 		if ( empty( $ids ) ) {
@@ -1039,8 +1022,8 @@ class Post extends Model {
 	/**
 	 * Count posts in the given moderation statuses via COUNT(*) (no row load).
 	 *
-	 * @param string[]   $statuses
-	 * @param int[]|null $space_ids Limit to these spaces, or null for every space.
+	 * @param string[]                            $statuses
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids Limit to these spaces, or null for every space.
 	 * @return int
 	 */
 	public static function count_by_status( array $statuses, ?array $space_ids = null ): int {
@@ -1062,6 +1045,33 @@ class Post extends Model {
 				...array_merge( $statuses, $scope['params'] )
 			)
 		);
+	}
+
+	/**
+	 * Who wrote each row, and whether anonymously - just those columns, in
+	 * chunks, for screens that only need to mask an anonymous author (the
+	 * Activity Log export can hold tens of thousands of ids).
+	 *
+	 * @param int[] $ids Row IDs.
+	 * @return array<int, object> id => object with id, author_id, is_anonymous.
+	 */
+	public static function authorship_by_ids( array $ids ): array {
+		$ids   = array_values( array_unique( array_filter( array_map( 'intval', $ids ), static fn ( int $id ): bool => $id > 0 ) ) );
+		$by_id = array();
+		foreach ( array_chunk( $ids, 500 ) as $chunk ) {
+			$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+			$rows         = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table trusted, $placeholders is a list of %d.
+					'SELECT id, author_id, is_anonymous FROM ' . static::table() . " WHERE id IN ({$placeholders})",
+					...$chunk
+				)
+			) ?: array();
+			foreach ( $rows as $row ) {
+				$by_id[ (int) $row->id ] = $row;
+			}
+		}
+		return $by_id;
 	}
 
 	/**
@@ -1197,47 +1207,25 @@ class Post extends Model {
 	 * List published posts by a specific author.
 	 *
 	 * Anonymous posts (is_anonymous = 1) are always excluded, including from
-	 * the author's own profile: surfacing them here — even to the author
-	 * themselves — would deanonymize the post by correlating it to this
+	 * the author's own profile: surfacing them here, even to the author
+	 * themselves, would deanonymize the post by correlating it to this
 	 * identity, defeating the anonymity the space/activity views already mask.
 	 *
 	 * @param int $user_id Author user ID.
 	 * @param int $limit   Max rows.
 	 * @param int $offset  Pagination offset.
-	 * @return object[]
+	 * @return object[] Post rows with space_slug and space_title joined.
 	 */
 	public static function list_by_author( int $user_id, int $limit = 20, int $offset = 0 ): array {
 		$table      = static::table();
 		$spaces_tbl = \Jetonomy\table( 'spaces' );
 
-		// Public method surfaced to other viewers (BP/FluentCommunity profile
-		// tabs, etc.): gate by space visibility + per-post is_private so an
-		// author's posts in private/hidden spaces (or their private posts in
-		// public spaces) stay hidden from non-member / non-author viewers.
-		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
-		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-
-		$gate_sql    = '';
-		$gate_params = array();
-		if ( '1=1' !== $space_vis_sql ) {
-			$gate_sql   .= ' AND ' . $space_vis_sql;
-			$gate_params = array_merge( $gate_params, $space_vis_params );
-		}
-		if ( '' !== $priv_sql ) {
-			$gate_sql   .= ' AND ' . $priv_sql;
-			$gate_params = array_merge( $gate_params, $priv_params );
-		}
-
-		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-		[ $block_sql ] = BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$gate_sql .= ' AND ' . $block_sql;
-		}
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 's' );
 
 		$results = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.* FROM {$table} p
+				"SELECT p.*, s.slug AS space_slug, s.title AS space_title FROM {$table} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
 				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
 				 ORDER BY p.created_at DESC, p.id DESC LIMIT %d OFFSET %d",
@@ -1246,6 +1234,273 @@ class Post extends Model {
 			)
 		);
 		return $results ? $results : array();
+	}
+
+	/**
+	 * List published posts carrying a tag that the current viewer may read.
+	 *
+	 * @param int    $tag_id Tag ID.
+	 * @param string $sort   'latest' or 'popular'.
+	 * @param int    $limit  Max rows.
+	 * @param int    $offset Pagination offset.
+	 * @return object[] Post rows with space_slug joined.
+	 */
+	public static function list_by_tag_visible( int $tag_id, string $sort = 'latest', int $limit = 30, int $offset = 0 ): array {
+		$table         = static::table();
+		$spaces_tbl    = \Jetonomy\table( 'spaces' );
+		$post_tags_tbl = \Jetonomy\table( 'post_tags' );
+		$order_by      = 'popular' === $sort ? self::popular_order( 'p' ) : 'p.created_at DESC, p.id DESC';
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
+
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT p.*, sp.slug AS space_slug FROM {$table} p
+				 INNER JOIN {$post_tags_tbl} pt ON pt.post_id = p.id
+				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+				 WHERE pt.tag_id = %d AND p.status = 'publish'{$gate_sql}
+				 ORDER BY {$order_by}
+				 LIMIT %d OFFSET %d",
+				$tag_id,
+				...array_merge( $gate_params, array( $limit, $offset ) )
+			)
+		);
+		return $results ? $results : array();
+	}
+
+	/**
+	 * Count of what list_by_tag_visible() pages through, for the label and pager.
+	 *
+	 * The tag's stored post_count includes topics this viewer may not read, so a
+	 * guest saw "40 topics" over an empty second page, and the number disclosed
+	 * that private topics carry the tag.
+	 *
+	 * @param int $tag_id Tag ID.
+	 * @return int
+	 */
+	public static function count_by_tag_visible( int $tag_id ): int {
+		return self::count_by_tags_visible( array( $tag_id ) )[ $tag_id ] ?? 0;
+	}
+
+	/**
+	 * Published topics per tag that the current viewer may read, in one query.
+	 * The stored jt_tags.post_count counts every tagged topic, including ones in
+	 * spaces the viewer cannot open, so it must never be shown as-is.
+	 *
+	 * @param int[] $tag_ids Tag IDs.
+	 * @return array<int,int> tag_id => count (tags with none are absent).
+	 */
+	public static function count_by_tags_visible( array $tag_ids ): array {
+		$tag_ids = array_values( array_filter( array_map( 'absint', $tag_ids ) ) );
+		if ( ! $tag_ids ) {
+			return array();
+		}
+		$table         = static::table();
+		$spaces_tbl    = \Jetonomy\table( 'spaces' );
+		$post_tags_tbl = \Jetonomy\table( 'post_tags' );
+		$in            = implode( ',', array_fill( 0, count( $tag_ids ), '%d' ) );
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
+
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT pt.tag_id, COUNT(*) AS c FROM {$table} p
+				 INNER JOIN {$post_tags_tbl} pt ON pt.post_id = p.id
+				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+				 WHERE pt.tag_id IN ({$in}) AND p.status = 'publish'{$gate_sql}
+				 GROUP BY pt.tag_id",
+				...array_merge( $tag_ids, $gate_params )
+			)
+		) ?: array();
+
+		return array_map( 'intval', array_column( $rows, 'c', 'tag_id' ) );
+	}
+
+	/**
+	 * Count a space's published ideas per roadmap status, as the viewer sees them.
+	 *
+	 * @param int  $space_id      Space ID.
+	 * @param int  $user_id       Viewer (0 for guest).
+	 * @param bool $is_privileged True for admins and space staff.
+	 * @return array<string,int> Status => count.
+	 */
+	public static function count_ideas_by_status( int $space_id, int $user_id, bool $is_privileged ): array {
+		$table  = static::table();
+		$reader = self::space_reader_sql( $user_id, $is_privileged );
+
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT idea_status, COUNT(*) AS n FROM {$table}
+				 WHERE space_id = %d AND status = 'publish' AND idea_status IS NOT NULL{$reader}
+				 GROUP BY idea_status",
+				$space_id
+			)
+		);
+
+		$counts = array();
+		foreach ( $rows ? $rows : array() as $row ) {
+			$counts[ (string) $row->idea_status ] = (int) $row->n;
+		}
+		return $counts;
+	}
+
+	/**
+	 * List a space's top-voted published ideas in one roadmap status.
+	 *
+	 * @param int    $space_id      Space ID.
+	 * @param string $idea_status   Roadmap status.
+	 * @param int    $user_id       Viewer (0 for guest).
+	 * @param bool   $is_privileged True for admins and space staff.
+	 * @param int    $limit         Max rows.
+	 * @return object[]
+	 */
+	public static function list_ideas_by_status( int $space_id, string $idea_status, int $user_id, bool $is_privileged, int $limit = 50 ): array {
+		$table  = static::table();
+		$reader = self::space_reader_sql( $user_id, $is_privileged );
+
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$table}
+				 WHERE space_id = %d AND status = 'publish' AND idea_status = %s{$reader}
+				 ORDER BY vote_score DESC, created_at DESC, id DESC
+				 LIMIT %d",
+				$space_id,
+				$idea_status,
+				$limit
+			)
+		);
+		return $results ? $results : array();
+	}
+
+	/**
+	 * Top five published posts by votes, for the sidebar widget.
+	 *
+	 * All-time ranking, unlike list_trending()'s seven-day hot score; the
+	 * widget has always shown it. Cached for five minutes per viewer class,
+	 * because it filesorts on every page view.
+	 *
+	 * @param int $space_id Limit to one space, or 0 for every space the viewer can read.
+	 * @return object[] Post rows with space_slug joined.
+	 */
+	public static function list_top_voted( int $space_id = 0 ): array {
+		$user_id       = get_current_user_id();
+		$is_privileged = $user_id && user_can( $user_id, 'manage_options' );
+		if ( ! $is_privileged && $user_id && $space_id > 0 ) {
+			$is_privileged = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
+		}
+
+		// Every viewer-dependent clause is in the key: privileged viewers see
+		// the same list, guests have no blocks, anyone else binds their own id.
+		$bucket = $is_privileged ? 'priv' : ( $user_id ? "u{$user_id}" : 'guest' );
+
+		return Cache::remember(
+			"sidebar:trending:{$space_id}:{$bucket}",
+			static function () use ( $space_id, $user_id, $is_privileged ) {
+				$table      = static::table();
+				$spaces_tbl = \Jetonomy\table( 'spaces' );
+				// prepare() only with a value to bind: with no placeholder it raises a
+				// _doing_it_wrong notice on every sidebar outside a space.
+				$where  = $space_id > 0
+					? static::db()->prepare( "p.status = 'publish' AND p.space_id = %d", $space_id )
+					: "p.status = 'publish'";
+				$where .= self::space_reader_sql( $user_id, $is_privileged, 'p' );
+
+				// One space is already gated by the page that shows it; every
+				// other page needs the viewer's space access as well.
+				if ( 0 === $space_id ) {
+					[ $space_sql, $space_params ] = Space::content_visibility_sql( $user_id, 'sp' );
+					if ( '1=1' !== $space_sql ) {
+						$where .= $space_params
+							? static::db()->prepare( ' AND ' . $space_sql, ...$space_params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+							: ' AND ' . $space_sql;
+					}
+				}
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$rows = static::db()->get_results(
+					"SELECT p.*, sp.slug AS space_slug FROM {$table} p
+					 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+					 WHERE {$where}
+					 ORDER BY p.vote_score DESC, p.reply_count DESC
+					 LIMIT 5"
+				);
+				return $rows ? $rows : array();
+			},
+			300
+		);
+	}
+
+	/**
+	 * ORDER BY for every "Popular" topic list: votes, then replies, then
+	 * newest. Most topics on a young community have no votes, so without the
+	 * reply tiebreak Popular read exactly like Newest.
+	 *
+	 * @param string $alias Posts table alias, or '' for none.
+	 * @return string
+	 */
+	public static function popular_order( string $alias = '' ): string {
+		$col = '' !== $alias ? $alias . '.' : '';
+		return "{$col}vote_score DESC, {$col}reply_count DESC, {$col}id DESC";
+	}
+
+	/**
+	 * Filter for a space's post lists: private topics only for their author
+	 * and space staff, and nothing from authors the viewer blocked.
+	 *
+	 * @param int    $user_id       Viewer (0 for guest).
+	 * @param bool   $is_privileged True for admins and space staff.
+	 * @param string $alias         Posts table alias, or '' for none.
+	 * @return string Prepared SQL starting with ' AND', or ''.
+	 */
+	private static function space_reader_sql( int $user_id, bool $is_privileged, string $alias = '' ): string {
+		$col = '' !== $alias ? $alias . '.' : '';
+		$sql = '';
+
+		if ( ! $is_privileged ) {
+			$sql .= $user_id > 0
+				? static::db()->prepare( " AND ({$col}is_private = 0 OR {$col}author_id = %d)", $user_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				: " AND {$col}is_private = 0";
+		}
+
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, $alias, 'author_id' );
+		if ( '' !== $block_sql ) {
+			$sql .= ' AND ' . $block_sql;
+		}
+		return $sql;
+	}
+
+	/**
+	 * Filter for post lists that span spaces (author, tag): the viewer's
+	 * space access, private topics, and authors the viewer blocked.
+	 *
+	 * @param string $space_alias Alias of the joined spaces table.
+	 * @return array{0:string,1:array} SQL starting with ' AND' (or ''), and its params.
+	 */
+	private static function viewer_gate_sql( string $space_alias ): array {
+		$viewer_id = get_current_user_id();
+
+		[ $space_sql, $space_params ] = Space::content_visibility_sql( $viewer_id, $space_alias );
+		[ $priv_sql, $priv_params ]   = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+		[ $block_sql ]                = BlockedUser::exclusion_sql( $viewer_id, 'p', 'author_id' );
+
+		$sql    = '';
+		$params = array();
+		if ( '1=1' !== $space_sql ) {
+			$sql   .= ' AND ' . $space_sql;
+			$params = $space_params;
+		}
+		if ( '' !== $priv_sql ) {
+			$sql   .= ' AND ' . $priv_sql;
+			$params = array_merge( $params, $priv_params );
+		}
+		if ( '' !== $block_sql ) {
+			$sql .= ' AND ' . $block_sql;
+		}
+		return array( $sql, $params );
 	}
 
 	/**
@@ -1377,14 +1632,14 @@ class Post extends Model {
 				$order = 'COALESCE(p.published_at, p.created_at) DESC, p.id DESC';
 				break;
 			case 'top':
-				$order = 'p.vote_score DESC, p.id DESC';
+				$order = self::popular_order( 'p' );
 				break;
 			default:
 				$order = 'hot_score DESC, p.id DESC';
 				break;
 		}
 
-		// hot/top ORDERING cache (plan WP4.5). hot_score is computed per row
+		// hot/top ORDERING cache. hot_score is computed per row
 		// and unindexable — every feed request full-scanned the visible post
 		// set TWICE (COUNT + filesort). Cache the id ORDER + total only,
 		// 90s, TTL-only (decay-ranked sorts make staleness invisible; 'new'
@@ -1668,17 +1923,17 @@ class Post extends Model {
 			return false;
 		}
 
-		$screened = [
+		$screened = array(
 			'status' => 'publish',
 			'flag'   => false,
-		];
+		);
 		if ( $screen ) {
 			$screened = \Jetonomy\Moderation\Moderation_Service::screen_new_content(
 				'post',
-				[
+				array(
 					'title'   => (string) $post->title,
 					'content' => (string) $post->content,
-				],
+				),
 				(int) $post->space_id,
 				(int) $post->author_id
 			);
@@ -1745,6 +2000,14 @@ class Post extends Model {
 
 		// Keep the scheduled-specific extension point so an integration can still
 		// distinguish "published on schedule" from "published immediately".
+		/**
+		 * Fires after a scheduled post is published by the scheduler.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $post_id  Post ID.
+		 * @param int $space_id Space ID.
+		 */
 		do_action( 'jetonomy_scheduled_post_published', $id, (int) $post->space_id );
 
 		return true;
@@ -1883,14 +2146,16 @@ class Post extends Model {
 	/**
 	 * Merge a source post into a target post.
 	 *
-	 * Moves all replies from the source post to the target, recalculates
-	 * reply counts, and trashes the source post.
+	 * Moves replies, votes, subscribers, bookmarks and the opening post (as a
+	 * reply) from the source to the target, recalculates counts, and trashes
+	 * the source. A private source is refused.
 	 *
 	 * @param int $source_id Source post ID (will be trashed).
 	 * @param int $target_id Target post ID (receives replies).
-	 * @return bool True on success.
+	 * @return bool|\WP_Error True on success, false if either post is missing,
+	 *                        WP_Error when the source is private.
 	 */
-	public static function merge_into( int $source_id, int $target_id ): bool {
+	public static function merge_into( int $source_id, int $target_id ): bool|\WP_Error {
 		$source = static::find( $source_id );
 		$target = static::find( $target_id );
 
@@ -1898,7 +2163,26 @@ class Post extends Model {
 			return false;
 		}
 
+		// Merging publishes the source's replies (and its opening post) in the
+		// target, so a private topic would stop being private. The moderator
+		// makes it public first, on purpose.
+		if ( ! empty( $source->is_private ) ) {
+			return new \WP_Error(
+				'jetonomy_merge_private',
+				sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'This %s is private. Make it public before merging it.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+				array( 'status' => 400 )
+			);
+		}
+
 		$replies_table = \Jetonomy\table( 'replies' );
+
+		// One accepted answer per topic and the target's wins: a losing source
+		// answer goes through the normal un-accept (hook, reputation taken back)
+		// while it still sits in its own topic.
+		$source_answer = (int) ( $source->accepted_reply_id ?? 0 );
+		if ( $source_answer && (int) ( $target->accepted_reply_id ?? 0 ) ) {
+			Reply::unaccept_as_answer( $source_answer, 0 );
+		}
 
 		// Move all replies from source to target.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1912,24 +2196,405 @@ class Post extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Recalculate reply count on target.
+		// One accepted answer per topic: the target's own answer wins; if it
+		// had none, the source's answer becomes the target's.
+		$winner = (int) ( $target->accepted_reply_id ?? 0 ) ?: (int) ( $source->accepted_reply_id ?? 0 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		static::db()->query( static::db()->prepare( "UPDATE {$replies_table} SET is_accepted = 0 WHERE post_id = %d AND is_accepted = 1 AND id <> %d", $target_id, $winner ) );
+		if ( $winner > 0 && $winner !== (int) ( $target->accepted_reply_id ?? 0 ) ) {
+			static::accept_reply( $target_id, $winner );
+		}
+		// The source's answer now lives in the target; a restored source must not claim it.
+		static::clear_accepted_reply( $source_id );
+
+		// The rest of the source moves with it: votes,
+		// subscribers and bookmarks. UPDATE IGNORE skips a member who already
+		// has a row on the target (unique keys), and those leftovers are then
+		// dropped, so nobody votes or subscribes twice.
+		$votes = \Jetonomy\table( 'votes' );
+		$subs  = \Jetonomy\table( 'subscriptions' );
+		$marks = \Jetonomy\table( 'bookmarks' );
+		$db    = static::db();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		foreach ( array( $votes, $subs ) as $object_table ) {
+			$db->query( $db->prepare( "UPDATE IGNORE {$object_table} SET object_id = %d WHERE object_type = 'post' AND object_id = %d", $target_id, $source_id ) );
+			$db->query( $db->prepare( "DELETE FROM {$object_table} WHERE object_type = 'post' AND object_id = %d", $source_id ) );
+		}
+		$db->query( $db->prepare( "UPDATE IGNORE {$marks} SET post_id = %d WHERE post_id = %d", $target_id, $source_id ) );
+		$db->query( $db->prepare( "DELETE FROM {$marks} WHERE post_id = %d", $source_id ) );
+		$vote_score = (int) $db->get_var( $db->prepare( "SELECT COALESCE( SUM( value ), 0 ) FROM {$votes} WHERE object_type = 'post' AND object_id = %d", $target_id ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// Keep the source's opening post readable in the target, as split does
+		// for the thread it leaves: a real reply by the same author, dated when
+		// it was written, headed so readers know where it came from. It keeps
+		// the source's standing: an unapproved opening post arrives awaiting
+		// approval, and spam or a draft is never copied.
+		$donor_reply = 0;
+		if ( in_array( $source->status, array( 'publish', 'pending' ), true ) ) {
+			$donor_reply = Reply::create(
+				array(
+					'post_id'        => $target_id,
+					'author_id'      => (int) $source->author_id,
+					'skip_auto_join' => true,
+					'is_anonymous'   => (int) ( $source->is_anonymous ?? 0 ),
+					'status'         => (string) $source->status,
+					'created_at'     => (string) $source->created_at,
+					'content'        => sprintf(
+						/* translators: %s: title of the topic that was merged in. */
+						'<p><em>' . esc_html__( 'Merged from "%s":', 'jetonomy' ) . '</em></p>',
+						esc_html( (string) $source->title )
+					) . (string) $source->content,
+				)
+			);
+		}
+
+		$replies_t = \Jetonomy\table( 'replies' );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( is_int( $donor_reply ) && $donor_reply > 0 ) {
+			// The opening post's files travel with its text.
+			$attachments = \Jetonomy\table( 'attachments' );
+			$db->query( $db->prepare( "UPDATE {$attachments} SET object_type = 'reply', object_id = %d WHERE object_type = 'post' AND object_id = %d", $donor_reply, $source_id ) );
+		}
+		// The backdated donor reply must not move the thread's activity back.
+		$last_reply_at = $db->get_var( $db->prepare( "SELECT MAX( created_at ) FROM {$replies_t} WHERE post_id = %d AND status = 'publish'", $target_id ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// Recalculate reply count, score and last activity on target.
 		$new_count = Reply::count_by_post( $target_id );
 		static::update(
 			$target_id,
 			array(
-				'reply_count' => $new_count,
-				'updated_at'  => now(),
+				'reply_count'   => $new_count,
+				'vote_score'    => $vote_score,
+				'last_reply_at' => $last_reply_at,
+				'updated_at'    => now(),
 			)
 		);
+		Vote::reset_memo();
+		Subscription::reset_memo();
+
+		// Both threads changed under raw UPDATEs; the donor reply only busts the
+		// target's cache when one was created.
+		Reply::bust_thread( $target_id );
+		Reply::bust_thread( $source_id );
 
 		// Trash the source post. The publish→trash transition inside update()
 		// already decrements the space's post_count and the author's post_count
 		// — an explicit decrement here double-counted (-2 per merge), the same
-		// bug class as Reply::split_to_post (Basecamp 10161324705 / plan WP0.8).
+		// bug class as Reply::split_to_post.
 		static::update( $source_id, array( 'status' => 'trash' ) );
 
+		/**
+		 * Fires after one post is merged into another.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $source_id ID of the post that was merged away.
+		 * @param int $target_id ID of the post that received the content.
+		 */
 		do_action( 'jetonomy_post_merged', $source_id, $target_id );
 
 		return true;
+	}
+
+
+	// ── wp-admin listings ──
+
+	/**
+	 * Titles for a set of post ids, keyed by id.
+	 *
+	 * @param int[] $ids Post ids.
+	 * @return array<int,string>
+	 */
+	public static function titles_by_ids( array $ids ): array {
+		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$in   = implode( ',', $ids );
+		$rows = static::db()->get_results( 'SELECT id, title FROM ' . static::table() . " WHERE id IN ({$in})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integer list.
+		$out  = array();
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row->id ] = (string) $row->title;
+		}
+		return $out;
+	}
+
+	/**
+	 * Published topics created since a moment.
+	 *
+	 * @param string $since UTC MySQL datetime.
+	 * @return int
+	 */
+	public static function count_published_since( string $since ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'publish' AND created_at >= %s", $since )
+		);
+	}
+
+	/**
+	 * The space with the most new published topics since a moment.
+	 *
+	 * @param string $since UTC MySQL datetime.
+	 * @return object|null {title, n}
+	 */
+	public static function busiest_space_since( string $since ): ?object {
+		$spaces = \Jetonomy\table( 'spaces' );
+		$row    = static::db()->get_row(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT s.title, COUNT(*) AS n FROM ' . static::table() . " p
+				 INNER JOIN {$spaces} s ON s.id = p.space_id
+				 WHERE p.status = 'publish' AND p.created_at >= %s
+				 GROUP BY p.space_id, s.title ORDER BY n DESC LIMIT 1",
+				$since
+			)
+		);
+		return $row ? $row : null;
+	}
+
+	/**
+	 * Topics awaiting approval, newest first, with their space title.
+	 *
+	 * @param int   $limit  Max rows.
+	 * @param int   $offset Offset.
+	 * @param int[] $exclude_space_ids Spaces to leave out (site moderator scope).
+	 * @return object[]
+	 */
+	public static function list_pending_with_space( int $limit, int $offset, array $exclude_space_ids = array() ): array {
+		$spaces = \Jetonomy\table( 'spaces' );
+		$skip   = array_values( array_unique( array_filter( array_map( 'absint', $exclude_space_ids ) ) ) );
+		$not_in = $skip ? ' AND p.space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '';
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $not_in holds only %d placeholders.
+				'SELECT p.*, s.title as space_title FROM ' . static::table() . " p
+				 LEFT JOIN {$spaces} s ON s.id = p.space_id
+				 WHERE p.status = 'pending'{$not_in}
+				 ORDER BY p.created_at DESC
+				 LIMIT %d OFFSET %d",
+				...array_merge( $skip, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * The wp-admin Content screen's topics, newest first, with space title and slug.
+	 *
+	 * @param array{space_id?:int,status?:string,search?:string} $filters Filters.
+	 * @param int                                                $limit   Max rows.
+	 * @param int                                                $offset  Offset.
+	 * @return object[]
+	 */
+	public static function list_for_admin( array $filters, int $limit, int $offset ): array {
+		[ $where, $args ] = self::admin_where( $filters );
+		$spaces           = \Jetonomy\table( 'spaces' );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM ' . static::table() . " p
+				 LEFT JOIN {$spaces} s ON s.id = p.space_id
+				 WHERE {$where}
+				 ORDER BY p.created_at DESC
+				 LIMIT %d OFFSET %d",
+				...array_merge( $args, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many topics list_for_admin() pages through.
+	 *
+	 * @param array{space_id?:int,status?:string,search?:string} $filters Filters.
+	 * @return int
+	 */
+	public static function count_for_admin( array $filters ): int {
+		[ $where, $args ] = self::admin_where( $filters );
+		$sql              = 'SELECT COUNT(*) FROM ' . static::table() . " p WHERE {$where}";
+		return (int) ( $args ? static::db()->get_var( static::db()->prepare( $sql, ...$args ) ) : static::db()->get_var( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+	}
+
+	/**
+	 * Drafts waiting for their scheduled time (including overdue ones the
+	 * hourly job has not published yet).
+	 *
+	 * @return int
+	 */
+	public static function count_scheduled(): int {
+		return (int) static::db()->get_var( 'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'draft' AND published_at IS NOT NULL" );
+	}
+
+	/**
+	 * WHERE for the wp-admin Content screen.
+	 *
+	 * "All" leaves out the trash (WordPress convention); "scheduled" is a
+	 * draft with a published_at, overdue ones included so an owner can see
+	 * what the hourly job has not published yet.
+	 *
+	 * @param array{space_id?:int,status?:string,search?:string} $f Filters.
+	 * @return array{0:string,1:array}
+	 */
+	private static function admin_where( array $f ): array {
+		$where  = '1=1';
+		$args   = array();
+		$status = (string) ( $f['status'] ?? 'all' );
+		if ( ! empty( $f['space_id'] ) ) {
+			$where .= ' AND p.space_id = %d';
+			$args[] = (int) $f['space_id'];
+		}
+		if ( 'scheduled' === $status ) {
+			$where .= " AND p.status = 'draft' AND p.published_at IS NOT NULL";
+		} elseif ( 'all' !== $status ) {
+			$where .= ' AND p.status = %s';
+			$args[] = $status;
+		} else {
+			$where .= " AND p.status <> 'trash'";
+		}
+		if ( ! empty( $f['search'] ) ) {
+			$where .= ' AND p.title LIKE %s';
+			$args[] = '%' . static::db()->esc_like( (string) $f['search'] ) . '%';
+		}
+		return array( $where, $args );
+	}
+
+	/**
+	 * Count behind {@see self::list_by_author()}, under the same viewer gate.
+	 *
+	 * @param int $user_id Author user ID.
+	 * @return int
+	 */
+	public static function count_by_author( int $user_id ): int {
+		$spaces_tbl = \Jetonomy\table( 'spaces' );
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 's' );
+
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT COUNT(*) FROM ' . static::table() . " p
+				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
+				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}",
+				$user_id,
+				...$gate_params
+			)
+		);
+	}
+
+	/**
+	 * Ids of every topic an author wrote that is not in the trash.
+	 *
+	 * @param int $user_id Author user ID.
+	 * @return int[]
+	 */
+	public static function ids_by_author( int $user_id ): array {
+		return array_map(
+			'intval',
+			(array) static::db()->get_col(
+				static::db()->prepare( 'SELECT id FROM ' . static::table() . " WHERE author_id = %d AND status != 'trash'", $user_id )
+			)
+		);
+	}
+
+	/**
+	 * Topics whose body contains a text fragment (e.g. an upload's file path).
+	 *
+	 * @param string $fragment Literal text, LIKE-escaped here.
+	 * @return int
+	 */
+	public static function count_content_containing( string $fragment ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE content LIKE %s', '%' . static::db()->esc_like( $fragment ) . '%' )
+		);
+	}
+
+	/**
+	 * Latest or most popular published topics the current viewer may read,
+	 * site-wide or in one space, with the space slug and title joined.
+	 *
+	 * @param int    $limit    Max rows.
+	 * @param int    $space_id Space, or 0 for every space.
+	 * @param string $sort     'latest', or anything else for popular.
+	 * @return object[]
+	 */
+	public static function list_recent_visible( int $limit, int $space_id = 0, string $sort = 'latest' ): array {
+		$spaces_tbl = \Jetonomy\table( 'spaces' );
+
+		$where = "p.status = 'publish'";
+		$args  = array();
+		if ( $space_id > 0 ) {
+			$where .= ' AND p.space_id = %d';
+			$args[] = $space_id;
+		}
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
+
+		$order  = 'latest' === $sort ? 'p.created_at DESC, p.id DESC' : self::popular_order( 'p' );
+		$args   = array_merge( $args, $gate_params );
+		$args[] = $limit;
+
+		$query = 'SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
+		          FROM ' . static::table() . " p
+		          LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+		          WHERE {$where}{$gate_sql}
+		          ORDER BY {$order}
+		          LIMIT %d";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return static::db()->get_results( static::db()->prepare( $query, ...$args ) ) ?: array();
+	}
+
+	/**
+	 * SQL shared by the sitemap queries: published, non-private topics in
+	 * active spaces a guest can list.
+	 *
+	 * @return string FROM ... WHERE fragment.
+	 */
+	private static function sitemap_from_where(): string {
+		// The sitemap is crawler-facing, so the viewer is always a guest, and the
+		// guest LISTING predicate (category visibility included) is what belongs in it.
+		// s.visibility = 'public' stays explicit: the guest listing predicate also
+		// admits private spaces when the owner turns on guest teasers, and their
+		// topics must never reach a sitemap.
+		[ $vis_s ] = Space::listing_visibility_sql( 0, 's' );
+		return 'FROM ' . static::table() . ' p INNER JOIN ' . \Jetonomy\table( 'spaces' ) . " s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND {$vis_s} AND s.visibility = 'public' AND s.status = 'active'";
+	}
+
+	/**
+	 * Every sitemap topic id, ascending.
+	 *
+	 * @return int[]
+	 */
+	public static function sitemap_ids(): array {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', (array) static::db()->get_col( 'SELECT p.id ' . self::sitemap_from_where() . ' ORDER BY p.id ASC' ) );
+	}
+
+	/**
+	 * Newest change across sitemap topics (reply, edit or creation time).
+	 *
+	 * @return string UTC MySQL datetime, or '' when there are none.
+	 */
+	public static function sitemap_lastmod(): string {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (string) static::db()->get_var( "SELECT MAX(GREATEST(COALESCE(p.last_reply_at,'1970-01-01'), COALESCE(p.updated_at,'1970-01-01'), COALESCE(p.created_at,'1970-01-01'))) " . self::sitemap_from_where() );
+	}
+
+	/**
+	 * One keyset page of sitemap topics after an id.
+	 *
+	 * @param int $start_after Last id of the previous page.
+	 * @param int $limit       Page size.
+	 * @return object[] Rows with id, post_slug, space_slug, space_id, last_reply_at, updated_at, created_at.
+	 */
+	public static function list_sitemap_page( int $start_after, int $limit ): array {
+		return (array) static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.id, p.slug AS post_slug, s.slug AS space_slug, s.id AS space_id, p.last_reply_at, p.updated_at, p.created_at ' . self::sitemap_from_where() . ' AND p.id > %d ORDER BY p.id ASC LIMIT %d',
+				$start_after,
+				$limit
+			)
+		);
 	}
 }

@@ -88,16 +88,16 @@ final class Space_Backfill {
 	 * @return array<int,array{table:string,column:string,where:string}>
 	 */
 	public static function columns(): array {
-		$out = [];
+		$out = array();
 		foreach ( Space_Purge::relations() as $r ) {
 			if ( 'space' !== $r['ref'] || $r['self'] ) {
 				continue;
 			}
-			$out[] = [
+			$out[] = array(
 				'table'  => $r['table'],
 				'column' => $r['column'],
 				'where'  => $r['where'],
-			];
+			);
 		}
 		return $out;
 	}
@@ -117,10 +117,10 @@ final class Space_Backfill {
 
 		$spaces = table( 'spaces' );
 		if ( ! self::table_exists( $spaces ) ) {
-			return [];
+			return array();
 		}
 
-		$found = [];
+		$found = array();
 		foreach ( self::columns() as $target ) {
 			if ( count( $found ) >= $limit ) {
 				break;
@@ -170,10 +170,10 @@ final class Space_Backfill {
 
 		$spaces = table( 'spaces' );
 		if ( ! self::table_exists( $spaces ) ) {
-			return [];
+			return array();
 		}
 
-		$report = [];
+		$report = array();
 		foreach ( self::columns() as $target ) {
 			if ( ! self::table_exists( $target['table'] ) ) {
 				continue;
@@ -191,11 +191,11 @@ final class Space_Backfill {
 			);
 
 			if ( $n > 0 ) {
-				$report[] = [
+				$report[] = array(
 					'table'       => $tbl,
 					'column'      => $col,
 					'orphan_rows' => $n,
-				];
+				);
 			}
 		}
 		return $report;
@@ -260,10 +260,10 @@ final class Space_Backfill {
 			delete_option( self::QUEUE_OPTION );
 		}
 
-		return [
+		return array(
 			'purged'    => $purged,
 			'remaining' => count( $queue ),
-		];
+		);
 	}
 
 	/** Does a table exist? Pro tables are absent when the extension never ran. */

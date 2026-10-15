@@ -30,10 +30,9 @@ class Attachments {
 		add_filter( 'jetonomy_after_post_content', array( $this, 'render_post' ), 20, 2 );
 		add_filter( 'jetonomy_after_reply_content', array( $this, 'render_reply' ), 20, 2 );
 
-		// The REST payload is FREE too. It used to be injected by Pro, which meant the
-		// mobile app saw no attachments at all on a free site — the data was there and
-		// simply never left the server. Pro enriches each item through
-		// `jetonomy_rest_attachment_data`, so a Pro site's payload is unchanged.
+		// The REST payload is FREE too, so the mobile app sees attachments on a free site.
+		// Pro enriches each item through `jetonomy_rest_attachment_data`; a Pro site's
+		// payload is unchanged.
 		add_filter( 'jetonomy_rest_prepare_post', array( $this, 'inject_post_payload' ), 10, 2 );
 		add_filter( 'jetonomy_rest_prepare_reply', array( $this, 'inject_reply_payload' ), 10, 2 );
 	}
@@ -55,7 +54,9 @@ class Attachments {
 	public function inject_reply_payload( array $data, $reply ): array {
 		// get_for() is cache-transparent, and the reply list is primed in one query
 		// by prime_for_post(), so a page of N replies costs no extra queries.
-		$data['attachments'] = Attachment::payload_for( 'reply', (int) ( $reply->id ?? 0 ) );
+		// A tombstoned reply (private, or by a blocked author) withholds its files with its text.
+		$hidden              = ! empty( $reply->is_private_hidden ) || ! empty( $reply->is_blocked_author );
+		$data['attachments'] = $hidden ? array() : Attachment::payload_for( 'reply', (int) ( $reply->id ?? 0 ) );
 
 		return $data;
 	}

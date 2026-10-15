@@ -22,15 +22,29 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	<hr class="wp-header-end">
 	<?php
 	ob_start();
+	/**
+	 * Fires while the settings tab bar renders, so extensions can print additional tab links.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $active_tab Slug of the active settings tab.
+	 */
 	do_action( 'jetonomy_admin_settings_tabs', $active_tab );
 	$advanced_tabs_html = ob_get_clean();
 
 	// Pre-buffer Pro/extension tab content so notices can be hoisted above the layout.
-	$jt_primary_tabs = [ 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam', 'free-vs-pro' ];
+	$jt_primary_tabs = array( 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam', 'free-vs-pro' );
 	$jt_ext_html     = '';
 	$jt_ext_notices  = '';
 	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) && 'license' !== $active_tab ) {
 		ob_start();
+		/**
+		 * Fires to render the content of the active settings tab, for core tabs and extension tabs alike.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $active_tab Slug of the active settings tab.
+		 */
 		do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
 		$jt_ext_raw = ob_get_clean();
 		if ( $jt_ext_raw ) {
@@ -45,22 +59,22 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		}
 	}
 
-	$tab_icons  = [
+	$tab_icons  = array(
 		'general'     => 'dashicons-admin-settings',
 		'permissions' => 'dashicons-shield',
 		'email'       => 'dashicons-email-alt',
 		'appearance'  => 'dashicons-admin-appearance',
 		'seo'         => 'dashicons-search',
 		'antispam'    => 'dashicons-lock',
-	];
-	$tab_labels = [
+	);
+	$tab_labels = array(
 		'general'     => __( 'General', 'jetonomy' ),
 		'permissions' => __( 'Permissions', 'jetonomy' ),
 		'email'       => __( 'Email', 'jetonomy' ),
 		'appearance'  => __( 'Appearance', 'jetonomy' ),
 		'seo'         => __( 'SEO', 'jetonomy' ),
 		'antispam'    => __( 'Anti-Spam', 'jetonomy' ),
-	];
+	);
 
 	// Integrations tab appears only when BuddyPress Groups is active — the
 	// only context where the broadcast / comment-bridge toggles apply.
@@ -89,13 +103,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 			</div>
 			<nav class="jt-settings-sidebar-nav" aria-label="<?php esc_attr_e( 'Settings navigation', 'jetonomy' ); ?>">
-				<?php foreach ( $tab_labels as $slug => $label ) : ?>
-				<a href="<?php echo esc_url( $settings_url . '&tab=' . $slug ); ?>"
-					class="jt-snav-link<?php echo esc_attr( $active_tab === $slug ? ' jt-snav-link--active' : '' ); ?>">
-					<span class="dashicons <?php echo esc_attr( $tab_icons[ $slug ] ); ?>" aria-hidden="true"></span>
-					<?php echo esc_html( $label ); ?>
-				</a>
-				<?php endforeach; ?>
+				<?php
+				foreach ( $tab_labels as $slug => $label ) {
+					\Jetonomy\settings_tab_link( $slug, $label, $tab_icons[ $slug ], $active_tab );
+				}
+				?>
 
 				<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
@@ -109,11 +121,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 				<?php if ( defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
-				<a href="<?php echo esc_url( $settings_url . '&tab=license' ); ?>"
-					class="jt-snav-link<?php echo esc_attr( 'license' === $active_tab ? ' jt-snav-link--active' : '' ); ?>">
-					<span class="dashicons dashicons-shield-alt" aria-hidden="true"></span>
-					<?php esc_html_e( 'License', 'jetonomy' ); ?>
-				</a>
+					<?php \Jetonomy\settings_tab_link( 'license', __( 'License', 'jetonomy' ), 'dashicons-shield-alt', $active_tab ); ?>
 				<?php endif; ?>
 
 				<?php if ( $advanced_tabs_html ) : ?>
@@ -159,14 +167,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<th scope="row"><label for="terms_url"><?php esc_html_e( 'Terms of Service URL', 'jetonomy' ); ?></label></th>
 						<td>
 							<input type="url" id="terms_url" name="jetonomy_settings[terms_url]" value="<?php echo esc_attr( $settings['terms_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/terms/">
-							<p class="description"><?php esc_html_e( 'Shown to members before they sign up in the mobile app. Leave empty if you have none.', 'jetonomy' ); ?></p>
+							<p class="description"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Shown to %s before they sign up in the mobile app. Leave empty if you have none.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="privacy_url"><?php esc_html_e( 'Privacy Policy URL', 'jetonomy' ); ?></label></th>
 						<td>
 							<input type="url" id="privacy_url" name="jetonomy_settings[privacy_url]" value="<?php echo esc_attr( $settings['privacy_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/privacy/">
-							<p class="description"><?php esc_html_e( 'Shown to members before they sign up in the mobile app. Leave empty to use your WordPress Privacy Policy page.', 'jetonomy' ); ?></p>
+							<p class="description"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Shown to %s before they sign up in the mobile app. Leave empty to use your WordPress Privacy Policy page.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -177,14 +185,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							// across other sections. Space/Topic/Reply/Member/Category each get a
 							// singular + plural pair; both forms are explicit because we never
 							// auto-pluralise (breaks on irregulars like Person/Persons).
-							// Explicit per-field labels + a 12px gap (Basecamp 10150582271).
+							// Explicit per-field labels + a 12px gap.
 							$jt_defaults    = \Jetonomy\label_defaults();
 							$jt_noun_titles = array(
-								'space'    => esc_html__( 'Space', 'jetonomy' ),
-								'topic'    => esc_html__( 'Topic', 'jetonomy' ),
-								'reply'    => esc_html__( 'Reply', 'jetonomy' ),
-								'member'   => esc_html__( 'Member', 'jetonomy' ),
-								'category' => esc_html__( 'Category', 'jetonomy' ),
+								'space'    => esc_html__( 'Space', 'jetonomy' ), // jt-terms-ok: names the Terminology field itself.
+								'topic'    => esc_html__( 'Topic', 'jetonomy' ), // jt-terms-ok: names the Terminology field itself.
+								'reply'    => esc_html__( 'Reply', 'jetonomy' ), // jt-terms-ok: names the Terminology field itself.
+								'member'   => esc_html__( 'Member', 'jetonomy' ), // jt-terms-ok: names the Terminology field itself.
+								'category' => esc_html__( 'Category', 'jetonomy' ), // jt-terms-ok: names the Terminology field itself.
 							);
 							foreach ( $jt_noun_titles as $jt_noun => $jt_noun_title ) :
 								$jt_sing = $jt_noun . '_label_singular';
@@ -204,11 +212,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									</div>
 								</div>
 							<?php endforeach; ?>
+							<?php /* jt-terms-ok: help text for the Terminology setting; the default words are the subject. */ ?>
 							<p class="description"><?php esc_html_e( 'Rename the nouns your community uses, singular and plural (e.g. Space → Forum / Forums, Topic → Thread / Threads, Member → Player / Players). Leave a field empty to keep the default. Custom labels are shown exactly as typed and are not translated, so on a non-English site enter them in your own language.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="member_name_display"><?php esc_html_e( 'Member Names', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="member_name_display"><?php /* translators: %s: member label (e.g. "Member"). */ echo esc_html( sprintf( __( '%s Names', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ) ) ); ?></label></th>
 						<td>
 							<?php $jt_name_mode = \Jetonomy\name_display_mode(); ?>
 							<select id="member_name_display" name="jetonomy_settings[member_name_display]">
@@ -217,9 +226,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<option value="both" <?php selected( $jt_name_mode, 'both' ); ?>><?php esc_html_e( 'Both - Alex Rivera @alex-rivera', 'jetonomy' ); ?></option>
 							</select>
 							<p class="description">
-								<?php esc_html_e( 'How members are identified on bylines, member lists and the leaderboard.', 'jetonomy' ); ?>
+								<?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'How %1$s are identified on bylines, %2$s lists and the leaderboard.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?>
 								<br>
-								<?php esc_html_e( 'Display names are not unique - WordPress lets any number of accounts share one, so two members called "Alex Rivera" look identical on every post. A handle is the member\'s unique username, and is already what @mentions resolve against. Choose Both if you want readable names that can still be told apart.', 'jetonomy' ); ?>
+								<?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Display names are not unique - WordPress lets any number of accounts share one, so two %1$s called "Alex Rivera" look identical on every post. A handle is the %2$s\'s unique username, and is already what @mentions resolve against. Choose Both if you want readable names that can still be told apart.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?>
 							</p>
 						</td>
 					</tr>
@@ -308,7 +317,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<legend class="screen-reader-text"><?php echo esc_html( sprintf( __( 'Roles allowed to create %s from the front end', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></legend>
 								<?php foreach ( $jt_role_groups as $jt_group ) : ?>
 									<?php if ( ! empty( $jt_group['keys'] ) ) : ?>
-										<p style="margin:12px 0 4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#646970;"><?php echo esc_html( $jt_group['label'] ); ?></p>
+										<p style="margin:12px 0 4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--jt-admin-text-wp-2, #646970);"><?php echo esc_html( $jt_group['label'] ); ?></p>
 										<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;max-width:520px;">
 											<?php foreach ( $jt_group['keys'] as $jt_rk ) : ?>
 												<label style="display:flex;align-items:center;gap:6px;margin:0;">
@@ -320,7 +329,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									<?php endif; ?>
 								<?php endforeach; ?>
 							</fieldset>
-							<?php /* translators: 1: plural space label, 2: singular space label. */ ?>
+							<?php /* jt-terms-ok: new-space is the fixed URL path. */ /* translators: 1: plural space label, 2: singular space label. */ ?>
 							<p class="description" style="margin-block-start:12px;"><?php echo esc_html( sprintf( __( 'Site administrators always qualify. Tick any additional WordPress roles you trust to create %1$s from /community/new-space/. Leave every box unticked to keep front-end %2$s creation admin-only.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 						</td>
 					</tr>
@@ -329,19 +338,19 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td>
 							<label>
 								<input type="checkbox" name="jetonomy_settings[require_email_verification]" value="1" <?php checked( ! empty( $settings['require_email_verification'] ) ); ?>>
-								<?php esc_html_e( 'Require new members to confirm their email before they can sign in', 'jetonomy' ); ?>
+								<?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Require new %s to confirm their email before they can sign in', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'When on, the Login block sends a confirmation email after sign-up. Members can\'t log in until they click the link. Existing members are not affected.', 'jetonomy' ); ?></p>
+							<p class="description"><?php /* translators: 1: member label, plural (e.g. "Members"). 2: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'When on, the Login block sends a confirmation email after sign-up. %1$s can\'t log in until they click the link. Existing %2$s are not affected.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Deleting spaces', 'jetonomy' ); ?></th>
+						<th scope="row"><?php /* translators: %s: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'Deleting %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?></th>
 						<td>
 							<label>
 								<input type="checkbox" name="jetonomy_settings[allow_space_admin_purge]" value="1" <?php checked( ! empty( $settings['allow_space_admin_purge'] ) ); ?>>
-								<?php esc_html_e( 'Let space admins permanently delete a space and everything in it', 'jetonomy' ); ?>
+								<?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( 'Let %1$s admins permanently delete their %1$s and everything in it', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'Off by default. Deleting a space normally transfers it and archives it, because a space holds other members\' topics and replies - destroying it destroys their contributions too. With this on, a space admin can choose permanent deletion instead. Site administrators can always do either.', 'jetonomy' ); ?></p>
+							<p class="description"><?php /* translators: 1: space label, lowercase (e.g. "space"). 2: member label, plural, lowercase (e.g. "members"). 3: topic label, plural, lowercase (e.g. "topics"). 4: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'Off by default. A deleted %1$s is normally transferred and archived, because it holds %3$s and %4$s written by other %2$s - destroying it destroys their contributions too. With this on, %1$s admins can choose permanent deletion instead. Site administrators can always do either.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -366,7 +375,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="replies_per_page"><?php esc_html_e( 'Replies Per Page', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="replies_per_page"><?php /* translators: %s: reply label, plural (e.g. "Replies"). */ echo esc_html( sprintf( __( '%s Per Page', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></label></th>
 						<td><input type="number" id="replies_per_page" name="jetonomy_settings[replies_per_page]" value="<?php echo absint( $settings['replies_per_page'] ?? 30 ); ?>" min="5" max="100" class="small-text"></td>
 					</tr>
 				</table>
@@ -391,17 +400,27 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									<input type="radio" name="jetonomy_settings[guest_read]" value="1" <?php checked( $is_public ); ?>>
 									<strong><?php esc_html_e( 'Public community', 'jetonomy' ); ?></strong>
 									<span class="description" style="display:block;margin-left:24px;">
-										<?php esc_html_e( 'Anyone can read topics and replies. Visitors must log in to post, reply, or vote.', 'jetonomy' ); ?>
+										<?php /* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'Anyone can read %1$s and %2$s. Visitors must log in to post, reply, or vote.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); /* jt-terms-ok: "reply" left in the text is the verb. */ ?>
 									</span>
 								</label>
 								<label style="display:block;">
 									<input type="radio" name="jetonomy_settings[guest_read]" value="0" <?php checked( ! $is_public ); ?>>
 									<strong><?php esc_html_e( 'Private community', 'jetonomy' ); ?></strong>
 									<span class="description" style="display:block;margin-left:24px;">
-										<?php esc_html_e( 'Only logged-in members can view any forum content. Everyone else is redirected to the login page.', 'jetonomy' ); ?>
+										<?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Only logged-in %s can view any forum content. Everyone else is redirected to the login page.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 									</span>
 								</label>
 							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( sprintf( /* translators: %s: plural space label the site owner configured. */ __( 'Private %s for visitors', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[guest_private_teasers]" value="1" <?php checked( ! empty( $settings['guest_private_teasers'] ) ); ?>>
+								<?php echo esc_html( sprintf( /* translators: %s: plural space label the site owner configured. */ __( 'Show private %s to logged-out visitors', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>
+							</label>
+							<p class="description"><?php /* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'They appear in listings with a lock, so visitors know they exist and can log in or register to ask to join. Their %1$s stay hidden. Hidden %2$s are never shown.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -410,15 +429,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		<?php elseif ( 'permissions' === $active_tab ) : ?>
 
 			<?php
-			$thresholds  = $settings['trust_thresholds'] ?? [];
-			$rate_limits = $settings['rate_limits'] ?? [];
+			$thresholds  = $settings['trust_thresholds'] ?? array();
+			$rate_limits = $settings['rate_limits'] ?? array();
 			$tl_defaults = \Jetonomy\Trust\Trust_Levels::defaults();
 			$rl_defaults = \Jetonomy\Permissions\Rate_Limiter::defaults();
 			// Built from Trust_Levels::label() so renaming the ladder in one
 			// place updates this tab, the Users screen and the promotion email
-			// together (Basecamp 10210059424).
-			$level_names = [];
-			foreach ( [ 1, 2, 3 ] as $jt_lvl ) {
+			// together.
+			$level_names = array();
+			foreach ( array( 1, 2, 3 ) as $jt_lvl ) {
 				$level_names[ $jt_lvl ] = sprintf(
 					/* translators: 1: trust level number, 2: trust level name. */
 					__( 'Level %1$d: %2$s', 'jetonomy' ),
@@ -433,6 +452,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Trust Level Thresholds', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Define what users must achieve to advance through trust levels. Higher levels unlock posting privileges and reduce moderation scrutiny.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( "Level 3's moderation powers only apply to roles you gave those capabilities without Moderate community. Moderators (Editor by default) are not held to trust levels.", 'jetonomy' ); ?></p>
 				</div>
 				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
@@ -441,7 +461,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<th><?php esc_html_e( 'Posts Required', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Days Active', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Replies Received', 'jetonomy' ); ?></th>
+							<th><?php /* translators: %s: reply label, plural (e.g. "Replies"). */ echo esc_html( sprintf( __( '%s Received', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></th>
+
 								<th><?php esc_html_e( 'What this unlocks', 'jetonomy' ); ?></th>
 						</tr>
 					</thead>
@@ -458,23 +479,24 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<td data-colname="<?php esc_attr_e( 'Days Active', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Days Active for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
 								<?php /* translators: %s: trust level name. */ ?>
 								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Reputation for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
-								<?php /* translators: %s: trust level name. */ ?>
-								<td data-colname="<?php esc_attr_e( 'Replies Received', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Replies Received for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
+								<?php /* translators: %s: reply label, plural (e.g. "Replies"). */ ?>
+								<td data-colname="<?php echo esc_attr( sprintf( __( '%s Received', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?>"><input type="number" aria-label="<?php /* translators: 1: reply label, plural (e.g. "Replies"). 2: trust level name. */ echo esc_attr( sprintf( __( '%1$s Received for %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
+
 									<td class="description" data-colname="<?php esc_attr_e( 'What this unlocks', 'jetonomy' ); ?>">
 										<?php
-										// Surface what each level unlocks (data from Trust_Levels::LEVELS).
+										// Surface what each level unlocks (data from Trust_Levels::LEVELS,
+										// which lists only what the engine enforces).
 										$jt_ability_labels = array(
-											'upload_media' => __( 'Upload images', 'jetonomy' ),
-											'edit_own_posts' => __( 'Edit own posts', 'jetonomy' ),
-											'delete_own_posts' => __( 'Delete own posts', 'jetonomy' ),
-											/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
-											'join_spaces'  => sprintf( __( 'Join private %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+											'no_rate_limits' => __( 'No daily posting limits', 'jetonomy' ),
+											'skip_captcha' => __( 'Skips the CAPTCHA (when CAPTCHA is on)', 'jetonomy' ),
 											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
-											'close_posts'  => __( 'Close topics', 'jetonomy' ),
-											'pin_posts'    => __( 'Pin topics', 'jetonomy' ),
-											'moderate'     => __( 'Moderate content', 'jetonomy' ),
-											'recategorize_posts' => __( 'Recategorize topics', 'jetonomy' ),
-											'rename_topics' => __( 'Rename topics', 'jetonomy' ),
+											'delete_others_posts' => __( "Delete others' posts", 'jetonomy' ),
+											/* translators: %s: topic label, plural, lowercase (e.g. "topics"). */
+											'move_posts'   => sprintf( __( 'Move %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+											/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+											'close_posts'  => sprintf( __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+											/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+											'pin_posts'    => sprintf( __( 'Pin %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 										);
 										$jt_unlocks        = array();
 										foreach ( ( \Jetonomy\Trust\Trust_Levels::get( $level )['abilities'] ?? array() ) as $jt_ab ) {
@@ -483,12 +505,27 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											}
 										}
 										echo $jt_unlocks ? esc_html( implode( ', ', $jt_unlocks ) ) : esc_html__( 'None', 'jetonomy' );
+										if ( $jt_unlocks && 3 === $level ) {
+											// The trust floor only matters for a role already ticked for these caps above.
+											echo '<br>' . esc_html__( 'Only for roles that already have these permissions.', 'jetonomy' );
+										}
 										?>
 									</td>
 							</tr>
 						<?php endfor; ?>
 					</tbody>
 				</table>
+				<?php $jt_tl_names = (array) ( $settings['trust_level_names'] ?? array() ); ?>
+				<fieldset class="jt-trust-names">
+					<legend class="jt-settings-card__title"><?php esc_html_e( 'Trust level names', 'jetonomy' ); ?></legend>
+					<p class="description"><?php echo esc_html( sprintf( /* translators: %s: plural member label, lowercase (e.g. members). */ __( 'What %s see on profiles, hover cards and badges. Leave a field blank to keep the built-in name.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
+					<?php foreach ( range( 0, 5 ) as $jt_l ) : ?>
+						<?php /* translators: %d: trust level number. */ ?>
+						<label class="jt-trust-name-field"><span><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $jt_l ) ); ?></span>
+							<input type="text" class="regular-text" name="jetonomy_settings[trust_level_names][<?php echo (int) $jt_l; ?>]" value="<?php echo esc_attr( (string) ( $jt_tl_names[ $jt_l ] ?? '' ) ); ?>" placeholder="<?php echo esc_attr( (string) \Jetonomy\Trust\Trust_Levels::default_label( $jt_l ) ); ?>">
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
 			</div>
 
 			<!-- Rate Limits -->
@@ -503,7 +540,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td><input type="number" id="jt-rate-posts" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? $rl_defaults['posts'] ); ?>" min="1" class="small-text"></td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="jt-rate-replies"><?php esc_html_e( 'Replies per Day', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="jt-rate-replies"><?php /* translators: %s: reply label, plural (e.g. "Replies"). */ echo esc_html( sprintf( __( '%s per Day', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></label></th>
 						<td><input type="number" id="jt-rate-replies" name="jetonomy_settings[rate_limits][replies]" value="<?php echo absint( $rate_limits['replies'] ?? $rl_defaults['replies'] ); ?>" min="1" class="small-text"></td>
 					</tr>
 					<tr>
@@ -513,7 +550,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
-			<!-- Role -> Capability Mapping (editable - Basecamp 9725751235) -->
+			<!-- Role -> Capability Mapping (editable) -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Role Capability Mapping', 'jetonomy' ); ?></p>
@@ -535,6 +572,32 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					}
 					?>
 				<input type="hidden" name="jetonomy_settings[role_caps_submitted]" value="1">
+					<?php
+					// Third-party roles saved with nothing ticked are locked out of every
+					// space. 2.0.1 stored them that way on any save of this tab, so offer
+					// the owner a one-click way back instead of guessing.
+					$jt_stored_caps = get_option( \Jetonomy\Permissions\Capabilities::ROLE_CAPS_OPTION, array() );
+					$jt_role_defs   = \Jetonomy\Permissions\Capabilities::default_map();
+					foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) :
+						if ( isset( $jt_role_defs[ $jt_role_slug ] ) || ! is_array( $jt_stored_caps ) || ! array_key_exists( $jt_role_slug, $jt_stored_caps ) || $jt_stored_caps[ $jt_role_slug ] ) {
+							continue;
+						}
+						?>
+						<div class="notice notice-warning inline jt-role-locked-notice">
+							<p>
+								<?php
+								/* translators: 1: member label, plural (e.g. "Members"). 2: role name, e.g. Customer. 3: space label, lowercase (e.g. "space"). */
+								echo esc_html( sprintf( __( '%1$s with the %2$s role cannot read or post in any %3$s, because nothing is ticked for this role.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ), $jt_role_label, \Jetonomy\jetonomy_label( 'space', false, true ) ) );
+								?>
+								<button type="submit" class="button button-small" name="jetonomy_settings[role_caps_reset]" value="<?php echo esc_attr( $jt_role_slug ); ?>">
+									<?php
+									/* translators: 1: role name. 2: member label, plural, lowercase (e.g. "members"). 3: space label, plural, lowercase (e.g. "spaces"). */
+									echo esc_html( sprintf( __( 'Give %1$s %2$s access to their %3$s', 'jetonomy' ), $jt_role_label, \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ) );
+									?>
+								</button>
+							</p>
+						</div>
+					<?php endforeach; ?>
 				<div class="jt-matrix-scroll">
 				<table class="wp-list-table widefat jt-settings-matrix jt-settings-matrix--wide" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
@@ -548,7 +611,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<?php foreach ( $jt_cap_labels as $jt_cap => $jt_cap_label ) : ?>
 							<tr>
-								<th scope="row"><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $jt_cap ); ?></code></th>
+								<th scope="row"><strong><?php echo esc_html( $jt_cap_label ); ?></strong><br><code style="font-size:11px;color:var(--jt-admin-text-wp-2, #646970);"><?php echo esc_html( $jt_cap ); ?></code></th>
 								<?php foreach ( $jt_map_roles as $jt_role_slug => $jt_role_label ) : ?>
 									<td data-colname="<?php echo esc_attr( $jt_role_label ); ?>">
 										<input type="checkbox"
@@ -574,10 +637,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				: array();
 			$rep_labels    = array(
 				'post_upvoted'    => __( 'Post upvoted', 'jetonomy' ),
-				'reply_upvoted'   => __( 'Reply upvoted', 'jetonomy' ),
+				/* translators: %s: reply label (e.g. "Reply"). */
+				'reply_upvoted'   => sprintf( __( '%s upvoted', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 				'post_downvoted'  => __( 'Post downvoted', 'jetonomy' ),
-				'reply_downvoted' => __( 'Reply downvoted', 'jetonomy' ),
-				'reply_accepted'  => __( 'Reply accepted as answer', 'jetonomy' ),
+				/* translators: %s: reply label (e.g. "Reply"). */
+				'reply_downvoted' => sprintf( __( '%s downvoted', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+				/* translators: %s: reply label (e.g. "Reply"). */
+				'reply_accepted'  => sprintf( __( '%s accepted as answer', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 				'idea_planned'    => __( 'Idea moved to Planned/Shipped', 'jetonomy' ),
 				'flag_validated'  => __( 'Flag confirmed (reporter)', 'jetonomy' ),
 				'post_reported'   => __( 'Post reported', 'jetonomy' ),
@@ -658,7 +724,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td>
 							<input type="number" id="verification_reminder_hours" name="jetonomy_settings[verification_reminder_hours]" min="0" max="168" value="<?php echo esc_attr( (string) (int) ( $settings['verification_reminder_hours'] ?? 24 ) ); ?>" class="small-text">
 							<?php esc_html_e( 'hours', 'jetonomy' ); ?>
-							<p class="description"><?php esc_html_e( 'Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if a member has not verified. Set to 0 to disable.', 'jetonomy' ); ?></p>
+							<p class="description"><?php echo esc_html__( 'Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if the email is still unverified. Set to 0 to disable.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -693,13 +759,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Notification Defaults', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'Default on/off state for each notification type. Members can override these in their profile settings.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'Default on/off state for each notification type. %s can override these in their profile settings.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></p>
 				</div>
 				<?php
-				$notif_defaults = $settings['notification_defaults'] ?? [];
-				$notif_types    = [
-					'reply_to_post'       => __( 'Reply to your post', 'jetonomy' ),
-					'reply_to_reply'      => __( 'Reply to your reply', 'jetonomy' ),
+				$notif_defaults = $settings['notification_defaults'] ?? array();
+				$notif_types    = array(
+					/* translators: %s: reply label (e.g. "Reply"). */
+					'reply_to_post'       => sprintf( __( '%s to your post', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+					/* translators: 1: reply label (e.g. "Reply"). 2: reply label, lowercase (e.g. "reply"). */
+					'reply_to_reply'      => sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'mention'             => __( 'Mention (@username)', 'jetonomy' ),
 					'accepted_answer'     => __( 'Your answer accepted', 'jetonomy' ),
 					'idea_status_changed' => __( 'Your idea roadmap status changed', 'jetonomy' ),
@@ -712,7 +780,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'flag_resolved'       => __( 'Your report was reviewed', 'jetonomy' ),
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
-				];
+				);
 				if ( \Jetonomy\messaging_active() ) {
 					$notif_types['message'] = __( 'Private message', 'jetonomy' );
 				}
@@ -772,7 +840,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tr>
 						<th scope="row"><label for="email_footer_text"><?php esc_html_e( 'Footer Text', 'jetonomy' ); ?></label></th>
 						<td>
-							<input type="text" id="email_footer_text" name="jetonomy_settings[email_footer_text]" value="<?php echo esc_attr( $settings['email_footer_text'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'You received this because you are a member of the community.', 'jetonomy' ); ?>">
+							<input type="text" id="email_footer_text" name="jetonomy_settings[email_footer_text]" value="<?php echo esc_attr( $settings['email_footer_text'] ?? '' ); ?>" class="regular-text" placeholder="<?php echo esc_attr__( 'You received this because you are part of the community.', 'jetonomy' ); ?>">
 							<p class="description"><?php esc_html_e( 'Appears at the bottom of every branded notification email.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
@@ -790,9 +858,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<input type="hidden" name="jetonomy_email_templates[_submitted]" value="1" />
 				<?php
 				$tmpl_types = array(
-					'user_welcome'          => __( 'Welcome: new member', 'jetonomy' ),
-					'reply_to_post'         => __( 'Reply to your post', 'jetonomy' ),
-					'reply_to_reply'        => __( 'Reply to your reply', 'jetonomy' ),
+					/* translators: %s: member label, lowercase (e.g. "member"). */
+					'user_welcome'          => sprintf( __( 'Welcome: new %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
+					/* translators: %s: reply label (e.g. "Reply"). */
+					'reply_to_post'         => sprintf( __( '%s to your post', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
+					/* translators: 1: reply label (e.g. "Reply"). 2: reply label, lowercase (e.g. "reply"). */
+					'reply_to_reply'        => sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 					'mention'               => __( 'Mention (@username)', 'jetonomy' ),
 					'accepted_answer'       => __( 'Your answer accepted', 'jetonomy' ),
 					'idea_status_changed'   => __( 'Your idea roadmap status changed', 'jetonomy' ),
@@ -823,7 +894,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$body    = isset( $row['body'] ) ? (string) $row['body'] : '';
 							?>
 							<tr data-jt-email-type="<?php echo esc_attr( $type ); ?>">
-								<th scope="row"><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $type ); ?></code></th>
+								<th scope="row"><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:var(--jt-admin-text-wp-2, #646970);"><?php echo esc_html( $type ); ?></code></th>
 								<td data-colname="<?php esc_attr_e( 'Subject', 'jetonomy' ); ?>">
 									<input type="text"
 										aria-label="<?php echo esc_attr( sprintf( /* translators: %s: notification type */ __( 'Email subject for %s', 'jetonomy' ), $label ) ); ?>"
@@ -873,10 +944,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jetonomy-modal__overlay"></div>
 				<div class="jetonomy-modal__content" style="max-width:720px;">
 					<h2 id="jetonomy-email-preview-subject"><?php esc_html_e( 'Email Preview', 'jetonomy' ); ?></h2>
-					<p class="description" style="margin:0 0 12px;color:#646970;">
+					<p class="description" style="margin:0 0 12px;color:var(--jt-admin-text-wp-2, #646970);">
 						<?php esc_html_e( 'Preview rendered with sample data. Save the page to persist overrides.', 'jetonomy' ); ?>
 					</p>
-					<iframe id="jetonomy-email-preview-iframe" style="width:100%;height:520px;border:1px solid #dcdcde;border-radius:6px;background:#fff;" title="<?php esc_attr_e( 'Email preview', 'jetonomy' ); ?>"></iframe>
+					<iframe id="jetonomy-email-preview-iframe" style="width:100%;height:520px;border:1px solid var(--jt-admin-border-wp, #dcdcde);border-radius:6px;background:var(--jt-admin-white, #fff);" title="<?php esc_attr_e( 'Email preview', 'jetonomy' ); ?>"></iframe>
 					<p class="jetonomy-modal__actions">
 						<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Close', 'jetonomy' ); ?></button>
 					</p>
@@ -887,7 +958,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'Email Digest', 'jetonomy' ); ?></h4>
-					<p><?php esc_html_e( 'Send daily or weekly email digests to re-engage members who haven\'t visited recently.', 'jetonomy' ); ?></p>
+					<p><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Send daily or weekly email digests to re-engage %s who haven\'t visited recently.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
+
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
@@ -1264,7 +1336,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 						</li>
 						<li>
-							<?php esc_html_e( 'Save the settings here. Instagram and Facebook URLs pasted into posts and replies will now unfurl as rich embeds.', 'jetonomy' ); ?>
+							<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'Save the settings here. Instagram and Facebook URLs pasted into posts and %s will now unfurl as rich embeds.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 						</li>
 					</ol>
 					<p style="margin:12px 0 0;padding:10px 12px;background:var(--jt-warn-light,#fff8e5);border-left:3px solid var(--jt-warn,#dba617);border-radius:4px;font-size:13px;">
@@ -1290,7 +1362,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'CAPTCHA Provider', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'Protect post and reply forms from bots. Trusted members (trust level 2+) are always exempt.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php /* translators: 1: reply label, lowercase (e.g. "reply"). 2: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Protect post and %1$s forms from bots. Trusted %2$s (trust level 2+) are always exempt.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 				</div>
 				<?php
 				// Inline validation: warn when the provider/keys are in a state that renders nothing.
@@ -1328,10 +1400,19 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td>
 							<input type="text" id="captcha_site_key" name="jetonomy_settings[captcha_site_key]" value="<?php echo esc_attr( $settings['captcha_site_key'] ?? '' ); ?>" class="regular-text">
 							<p class="description">
-								<?php esc_html_e( 'reCAPTCHA: get keys at', 'jetonomy' ); ?>
-								<a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer">google.com/recaptcha/admin</a>.
-								<?php esc_html_e( 'Turnstile: get keys at', 'jetonomy' ); ?>
-								<a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener noreferrer">dash.cloudflare.com</a>.
+								<?php
+								printf(
+									/* translators: %s: link to the Google reCAPTCHA admin console. */
+									esc_html__( 'reCAPTCHA: get keys at %s.', 'jetonomy' ),
+									'<a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer">google.com/recaptcha/admin</a>'
+								);
+								echo ' ';
+								printf(
+									/* translators: %s: link to the Cloudflare Turnstile dashboard. */
+									esc_html__( 'Turnstile: get keys at %s.', 'jetonomy' ),
+									'<a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener noreferrer">dash.cloudflare.com</a>'
+								);
+								?>
 							</p>
 						</td>
 					</tr>
@@ -1355,16 +1436,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		<?php elseif ( 'free-vs-pro' === $active_tab && ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 
 			<!-- Hero -->
-			<div class="jt-settings-card" style="background: linear-gradient(135deg, #EDE9FE, #FEF3C7); border: none;">
+			<div class="jt-settings-card" style="background: linear-gradient(135deg, var(--jt-admin-pro-light, #EDE9FE), var(--jt-admin-warn-light, #FEF3C7)); border: none;">
 				<div style="text-align: center; padding: 12px 0;">
-					<h2 style="margin: 0 0 8px; font-size: 22px; color: #1F2937;"><?php esc_html_e( 'Unlock 13 Pro Extensions', 'jetonomy' ); ?></h2>
-					<p style="margin: 0 0 16px; color: #4B5563; font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
+					<h2 style="margin: 0 0 8px; font-size: 22px; color: var(--jt-admin-text, #1F2937);"><?php esc_html_e( 'Unlock 13 Pro Extensions', 'jetonomy' ); ?></h2>
+					<p style="margin: 0 0 16px; color: var(--jt-admin-text-2, #4B5563); font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
 						<?php esc_html_e( 'Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more. Each feature is an independent module you enable only when you need it.', 'jetonomy' ); ?>
 					</p>
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary button-hero" target="_blank" style="font-size: 14px; padding: 8px 28px;">
 						<?php esc_html_e( 'Get Jetonomy Pro. Starting at $69/yr.', 'jetonomy' ); ?>
 					</a>
-					<p style="margin: 8px 0 0; font-size: 12px; color: #6B7280;">
+					<p style="margin: 8px 0 0; font-size: 12px; color: var(--jt-admin-text-3, #6B7280);">
 						<?php
 						/* translators: %s: coupon code */
 						printf( esc_html__( 'Use code %s for 30%% off lifetime plans.', 'jetonomy' ), '<strong>Jetonomy30</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static trusted HTML tag.
@@ -1380,100 +1461,111 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Each extension is independent. Enable only what you need. Disabled extensions load zero code.', 'jetonomy' ); ?></p>
 				</div>
 				<?php
-				$jt_pro_exts = [
-					[
+				$jt_pro_exts = array(
+					array(
 						'name' => __( 'Emoji Reactions', 'jetonomy' ),
 						'icon' => 'dashicons-heart',
-						'desc' => __( 'Like, love, and celebrate with Slack-style reactions on posts and replies.', 'jetonomy' ),
+						/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+						'desc' => sprintf( __( 'Like, love, and celebrate with Slack-style reactions on posts and %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Private Messaging', 'jetonomy' ),
 						'icon' => 'dashicons-format-chat',
-						'desc' => __( 'One-on-one and group conversations between community members.', 'jetonomy' ),
+						/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+						'desc' => sprintf( __( 'One-on-one and group conversations between community %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Polls', 'jetonomy' ),
 						'icon' => 'dashicons-chart-bar',
 						'desc' => __( 'Create polls within posts for community voting and decision-making.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Analytics Dashboard', 'jetonomy' ),
 						'icon' => 'dashicons-chart-area',
 						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						'desc' => sprintf( __( 'Engagement graphs, user growth, top %s, post trends, and CSV export.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Email Digests', 'jetonomy' ),
 						'icon' => 'dashicons-email',
 						'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Web Push', 'jetonomy' ),
 						'icon' => 'dashicons-bell',
-						'desc' => __( 'Browser push notifications for replies, mentions, and forum events.', 'jetonomy' ),
+						/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+						'desc' => sprintf( __( 'Browser push notifications for %s, mentions, and forum events.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Webhooks', 'jetonomy' ),
 						'icon' => 'dashicons-rest-api',
 						'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ),
 						'tier' => 'Starter',
-					],
-					[
-						'name' => __( 'Reply by Email', 'jetonomy' ),
+					),
+					array(
+						'name' => __( 'Reply by Email', 'jetonomy' ), // jt-terms-ok: Pro add-on name; "Reply" is the verb.
 						'icon' => 'dashicons-email-alt2',
-						'desc' => __( 'Members reply to notifications by email. No login required.', 'jetonomy' ),
+						/* translators: %s: member label, plural (e.g. "Members"). */
+						'desc' => sprintf( __( '%s reply to notifications by email. No login required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ), // jt-terms-ok: "reply" left in the text is the verb.
 						'tier' => 'Starter',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Custom Badges', 'jetonomy' ),
 						'icon' => 'dashicons-awards',
 						'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ),
 						'tier' => 'Growth',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Custom Fields', 'jetonomy' ),
 						'icon' => 'dashicons-forms',
 						'desc' => __( 'Add custom fields to posts and user profiles: text, select, checkbox, date, and more.', 'jetonomy' ),
 						'tier' => 'Growth',
-					],
-					[
+					),
+					array(
 						'name' => __( 'Advanced Moderation', 'jetonomy' ),
 						'icon' => 'dashicons-shield',
 						'desc' => __( 'Auto-moderation rules engine: keyword filters, regex, link limits, and spam scoring.', 'jetonomy' ),
 						'tier' => 'Growth',
-					],
-					[
+					),
+					array(
 						'name' => __( 'SEO Pro', 'jetonomy' ),
 						'icon' => 'dashicons-search',
 						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 						'desc' => sprintf( __( 'Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						'tier' => 'Growth',
-					],
-					[
+					),
+					array(
 						'name' => __( 'White Label', 'jetonomy' ),
 						'icon' => 'dashicons-admin-appearance',
 						'desc' => __( 'Replace Jetonomy branding: community name, footer text, and wp-admin menu label and icon.', 'jetonomy' ),
 						'tier' => 'Agency',
-					],
-				];
+					),
+				);
 				?>
 				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 16px;">
 					<?php foreach ( $jt_pro_exts as $ext ) : ?>
-					<div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; background: #fff;">
+					<div style="border: 1px solid var(--jt-admin-border, #E5E7EB); border-radius: 8px; padding: 16px; background: var(--jt-admin-white, #fff);">
 						<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
 							<span class="dashicons <?php echo esc_attr( $ext['icon'] ); ?>" style="color: var(--jt-admin-pro, #7C3AED); font-size: 18px; width: 18px; height: 18px;"></span>
 							<strong style="font-size: 13px;"><?php echo esc_html( $ext['name'] ); ?></strong>
-							<span style="margin-left: auto; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; background: <?php echo 'Agency' === $ext['tier'] ? '#FEF3C7' : ( 'Growth' === $ext['tier'] ? '#E0E7FF' : '#F0FDF4' ); ?>; color: <?php echo 'Agency' === $ext['tier'] ? '#92400E' : ( 'Growth' === $ext['tier'] ? '#3730A3' : '#166534' ); ?>;">
-								<?php echo esc_html( $ext['tier'] ); ?>
+							<span class="jt-tier-badge jt-tier-badge--<?php echo esc_attr( sanitize_html_class( strtolower( (string) $ext['tier'] ) ) ); ?>">
+								<?php
+								$jt_tier_names = array(
+									'Starter' => __( 'Starter', 'jetonomy' ),
+									'Growth'  => __( 'Growth', 'jetonomy' ),
+									'Agency'  => __( 'Agency', 'jetonomy' ),
+								);
+								echo esc_html( $jt_tier_names[ $ext['tier'] ] );
+								?>
 							</span>
 						</div>
-						<p style="margin: 0; font-size: 12.5px; color: #6B7280; line-height: 1.5;"><?php echo esc_html( $ext['desc'] ); ?></p>
+						<p style="margin: 0; font-size: 12.5px; color: var(--jt-admin-text-3, #6B7280); line-height: 1.5;"><?php echo esc_html( $ext['desc'] ); ?></p>
 					</div>
 					<?php endforeach; ?>
 				</div>
@@ -1486,6 +1578,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Jetonomy Pro License', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Activate or manage your license key to unlock Pro extensions.', 'jetonomy' ); ?></p>
 				</div>
+				<?php
+				/**
+				 * Fires inside the license card on the License settings tab, where Pro prints its license form.
+				 *
+				 * @since 1.0.0
+				 */
+				?>
 				<?php do_action( 'jetonomy_admin_license_tab_content' ); ?>
 			</div>
 
@@ -1507,12 +1606,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					?>
 					<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin stacks label/field rows below 782px -->
 						<tr>
-							<th scope="row"><?php esc_html_e( 'Broadcast topics to group activity', 'jetonomy' ); ?></th>
+							<th scope="row"><?php /* translators: %s: topic label, plural, lowercase (e.g. "topics"). */ echo esc_html( sprintf( __( 'Broadcast %s to group activity', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></th>
 							<td>
 								<label for="jetonomy_bp_broadcast">
 									<input type="hidden" name="jetonomy_bp_broadcast" value="0">
 									<input type="checkbox" id="jetonomy_bp_broadcast" name="jetonomy_bp_broadcast" value="1" <?php checked( $jt_bp_broadcast ); ?>>
-									<?php esc_html_e( 'Post new Jetonomy topics to the paired BuddyPress group activity stream.', 'jetonomy' ); ?>
+									<?php /* translators: %s: topic label, plural, lowercase (e.g. "topics"). */ echo esc_html( sprintf( __( 'Post new Jetonomy %s to the paired BuddyPress group activity stream.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?>
 								</label>
 							</td>
 						</tr>
@@ -1522,9 +1621,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<label for="jetonomy_bp_comment_bridge">
 									<input type="hidden" name="jetonomy_bp_comment_bridge" value="0">
 									<input type="checkbox" id="jetonomy_bp_comment_bridge" name="jetonomy_bp_comment_bridge" value="1" <?php checked( $jt_bp_bridge ); ?>>
-									<?php esc_html_e( 'Mirror BuddyPress activity comments on broadcast items back as Jetonomy replies.', 'jetonomy' ); ?>
+									<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'Mirror BuddyPress activity comments on broadcast items back as Jetonomy %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 								</label>
-								<p class="description"><?php esc_html_e( 'Requires "Broadcast topics to group activity" to be enabled.', 'jetonomy' ); ?></p>
+								<p class="description"><?php /* translators: %s: topic label, plural, lowercase (e.g. "topics"). */ echo esc_html( sprintf( __( 'Requires "Broadcast %s to group activity" to be enabled.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></p>
 							</td>
 						</tr>
 					</table>

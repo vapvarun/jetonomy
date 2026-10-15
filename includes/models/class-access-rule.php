@@ -28,9 +28,9 @@ class AccessRule extends Model {
 	 */
 	public static function create( array $data ): int {
 		$data = array_merge(
-			[
+			array(
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -39,7 +39,6 @@ class AccessRule extends Model {
 		// A rule written mid-request must be visible to the next
 		// list_for_space() in the same process — the Pro course provisioner
 		// creates a rule and the integration reads the list in one flow
-		// (caching plan WP2.3).
 		self::reset_memo();
 
 		return $id;
@@ -59,7 +58,6 @@ class AccessRule extends Model {
 	 * role / capability / trust-level rule attached to a PUBLIC space silently
 	 * does nothing - the owner configures a gate, sees no error, and the content
 	 * stays open. That is the "configured but content still accessible" report
-	 * (Basecamp 10000074550).
 	 *
 	 * Rather than fail the save, flip the space to Private so the rule means what
 	 * the owner clearly intended, and let the caller tell them it happened.
@@ -101,14 +99,14 @@ class AccessRule extends Model {
 	 * several call sites), and every pass re-fans-out to the membership
 	 * adapters. Only the DB list is memoized; resolve_access() itself stays
 	 * live so third-party entitlements granted mid-request (a checkout
-	 * completing) are never frozen (caching plan WP2.3).
+	 * completing) are never frozen.
 	 *
 	 * @var array<int, object[]>
 	 */
-	private static array $memo = [];
+	private static array $memo = array();
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -119,7 +117,7 @@ class AccessRule extends Model {
 	 * Cache::flush().
 	 */
 	public static function reset_memo(): void {
-		self::$memo = [];
+		self::$memo = array();
 	}
 
 	/**
@@ -135,7 +133,7 @@ class AccessRule extends Model {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$memo = [];
+					self::$memo = array();
 				}
 			);
 		}
@@ -146,7 +144,7 @@ class AccessRule extends Model {
 					'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC',
 					$space_id
 				)
-			) ?: [];
+			) ?: array();
 		}
 
 		return self::$memo[ $space_id ];
@@ -191,7 +189,7 @@ class AccessRule extends Model {
 	 */
 	public static function rules_for_level( string $rule_value, string $rule_type = 'membership' ): array {
 		if ( '' === $rule_value ) {
-			return [];
+			return array();
 		}
 
 		return static::db()->get_results(
@@ -200,12 +198,12 @@ class AccessRule extends Model {
 				$rule_type,
 				$rule_value
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	public static function spaces_for_level( string $rule_value, string $rule_type = 'membership' ): array {
 		if ( '' === $rule_value ) {
-			return [];
+			return array();
 		}
 
 		$ids = static::db()->get_col(
@@ -216,7 +214,7 @@ class AccessRule extends Model {
 			)
 		);
 
-		return array_map( 'intval', $ids ?: [] );
+		return array_map( 'intval', $ids ?: array() );
 	}
 
 	/**
@@ -241,7 +239,7 @@ class AccessRule extends Model {
 	 */
 	public static function member_spaces_for_level_prefix( int $user_id, string $prefix, string $rule_type = 'membership' ): array {
 		if ( $user_id <= 0 || '' === $prefix ) {
-			return [];
+			return array();
 		}
 
 		$spaces  = table( 'spaces' );
@@ -266,7 +264,7 @@ class AccessRule extends Model {
 			)
 		);
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**
@@ -286,7 +284,7 @@ class AccessRule extends Model {
 	 */
 	public static function spaces_with_level_prefix( string $prefix, string $rule_type = 'membership' ): array {
 		if ( '' === $prefix ) {
-			return [];
+			return array();
 		}
 
 		$spaces = table( 'spaces' );
@@ -307,7 +305,7 @@ class AccessRule extends Model {
 			)
 		);
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**
@@ -334,16 +332,15 @@ class AccessRule extends Model {
 	 *
 	 * A rule stores BOTH what someone may do (`grants`) and what role they are
 	 * recorded as when "Sync Members" materialises them (`space_role`). Those
-	 * were independent, and the combination was not merely confusing - it was a
-	 * privilege escalation. A rule labelled "Read - view posts and replies,
-	 * cannot take part" with space_role=admin gave every matched person
-	 * `delete_others_posts` and `moderate` the moment an owner pressed Sync
-	 * Members, because Permission_Engine's space-moderator bypass reads the
-	 * ROSTER role and never looks at the rule's grants.
+	 * were independent, which allowed a privilege escalation: a rule labelled "Read -
+	 * view posts and replies, cannot take part" with space_role=admin would give every
+	 * matched person `delete_others_posts` and `moderate` when an owner presses Sync
+	 * Members, because Permission_Engine's space-moderator bypass reads the ROSTER role
+	 * and never looks at the rule's grants.
 	 *
-	 * Capping here closes that on every site, including the rules already
-	 * stored on installs that upgrade - the stored value is left alone, but it
-	 * can no longer buy more power than the rule advertises.
+	 * Capping here covers every site, including rules already stored on installs that
+	 * upgrade - the stored value is left alone, but it cannot buy more power than the
+	 * rule advertises.
 	 *
 	 * A `membership` rule is capped harder still: never above `member`, whatever
 	 * its grants say. A membership rule means "everyone holding this plan", and
@@ -466,12 +463,12 @@ class AccessRule extends Model {
 			}
 
 			if ( $matched ) {
-				return [
+				return array(
 					'grants'     => $rule->grants,     // 'read', 'participate', or 'full'
 					'space_role' => $rule->space_role,
 					'rule_id'    => (int) $rule->id,
 					'rule_type'  => $rule->rule_type,
-				];
+				);
 			}
 		}
 

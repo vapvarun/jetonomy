@@ -14,10 +14,10 @@ use Jetonomy\Models\Tag;
 class Tags_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_create_tag', [ $this, 'ajax_create_tag' ] );
-		add_action( 'wp_ajax_jetonomy_update_tag', [ $this, 'ajax_update_tag' ] );
-		add_action( 'wp_ajax_jetonomy_delete_tag', [ $this, 'ajax_delete_tag' ] );
-		add_action( 'wp_ajax_jetonomy_bulk_delete_tags', [ $this, 'ajax_bulk_delete_tags' ] );
+		add_action( 'wp_ajax_jetonomy_create_tag', array( $this, 'ajax_create_tag' ) );
+		add_action( 'wp_ajax_jetonomy_update_tag', array( $this, 'ajax_update_tag' ) );
+		add_action( 'wp_ajax_jetonomy_delete_tag', array( $this, 'ajax_delete_tag' ) );
+		add_action( 'wp_ajax_jetonomy_bulk_delete_tags', array( $this, 'ajax_bulk_delete_tags' ) );
 	}
 
 	public function ajax_create_tag(): void {
@@ -40,21 +40,21 @@ class Tags_Handler {
 		}
 
 		$id = Tag::insert(
-			[
+			array(
 				'name' => $name,
 				'slug' => $slug,
-			]
+			)
 		);
 		if ( ! $id ) {
 			wp_send_json_error( __( 'Failed to create tag.', 'jetonomy' ) );
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'id'      => $id,
 				'tag'     => Tag::find( $id ),
 				'message' => __( 'Tag created.', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -72,7 +72,7 @@ class Tags_Handler {
 			wp_send_json_error( __( 'Tag not found.', 'jetonomy' ) );
 		}
 
-		$data = [];
+		$data = array();
 		if ( isset( $_POST['name'] ) ) {
 			$name = sanitize_text_field( wp_unslash( $_POST['name'] ) );
 			if ( '' === $name ) {
@@ -102,10 +102,10 @@ class Tags_Handler {
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'tag'     => Tag::find( $id ),
 				'message' => __( 'Tag updated.', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -131,11 +131,11 @@ class Tags_Handler {
 		$force = ! empty( $_POST['force'] );
 		if ( (int) ( $tag->post_count ?? 0 ) > 0 && ! $force ) {
 			wp_send_json_error(
-				[
+				array(
 					'message'       => __( 'This tag is still attached to posts.', 'jetonomy' ),
 					'post_count'    => (int) $tag->post_count,
 					'needs_confirm' => true,
-				]
+				)
 			);
 		}
 
@@ -144,7 +144,7 @@ class Tags_Handler {
 			wp_send_json_error( __( 'Failed to delete tag.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Tag deleted.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Tag deleted.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_bulk_delete_tags(): void {
@@ -153,8 +153,8 @@ class Tags_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$raw = wp_unslash( $_POST['ids'] ?? [] );
-		$ids = is_array( $raw ) ? array_map( 'absint', $raw ) : [];
+		$raw = wp_unslash( $_POST['ids'] ?? array() );
+		$ids = is_array( $raw ) ? array_map( 'absint', $raw ) : array();
 		$ids = array_values( array_filter( $ids ) );
 		if ( empty( $ids ) ) {
 			wp_send_json_error( __( 'No tags selected.', 'jetonomy' ) );
@@ -168,14 +168,14 @@ class Tags_Handler {
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'deleted' => $deleted,
 				'message' => sprintf(
 					/* translators: %d: number of deleted tags */
 					_n( '%d tag deleted.', '%d tags deleted.', $deleted, 'jetonomy' ),
 					$deleted
 				),
-			]
+			)
 		);
 	}
 }

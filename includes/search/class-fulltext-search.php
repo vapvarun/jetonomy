@@ -45,9 +45,8 @@ class Fulltext_Search implements Search_Query_Adapter {
 
 	/**
 	 * The one MySQL search behind REST /search, the search page, the app and
-	 * Abilities (Basecamp 10368526736). It used to exist three times - in the
-	 * REST controller, in the search template and here - and the copies had
-	 * drifted (different short-term handling, ordering and space rules).
+	 * Abilities, so short-term handling, ordering and space rules cannot drift
+	 * between copies.
 	 *
 	 * @param array $args See Search_Query_Adapter::query().
 	 * @return array{items: object[], total: int}
@@ -145,14 +144,35 @@ class Fulltext_Search implements Search_Query_Adapter {
 		$is_privileged = $space_id
 			&& \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
 		if ( $is_privileged ) {
-			return [ '', [] ];
+			return array( '', array() );
 		}
 
 		if ( $viewer_id > 0 ) {
-			return [ "({$col}is_private = 0 OR {$col}author_id = %d)", [ $viewer_id ] ];
+			return array( "({$col}is_private = 0 OR {$col}author_id = %d)", array( $viewer_id ) );
 		}
 
-		return [ "{$col}is_private = 0", [] ];
+		return array( "{$col}is_private = 0", array() );
+	}
+
+	/**
+	 * Private-reply guard for reply search, the SQL twin of
+	 * Permission_Engine::can_read_reply(): a private reply is found only by its
+	 * author, the topic author, space staff and site admins. Expects aliases
+	 * r (replies) and p (posts).
+	 *
+	 * @param int|null $space_id Space context, or null for a global search.
+	 * @return array{0:string,1:array} Empty fragment when the viewer may read every private reply.
+	 */
+	public static function reply_visibility_clause( ?int $space_id ): array {
+		$viewer_id = get_current_user_id();
+		if ( user_can( $viewer_id, 'manage_options' )
+			|| ( $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id ) ) ) {
+			return array( '', array() );
+		}
+		if ( $viewer_id > 0 ) {
+			return array( '(r.is_private = 0 OR r.author_id = %d OR p.author_id = %d)', array( $viewer_id, $viewer_id ) );
+		}
+		return array( 'r.is_private = 0', array() );
 	}
 
 	/**
@@ -176,25 +196,22 @@ class Fulltext_Search implements Search_Query_Adapter {
 		// Build a BOOLEAN-MODE query string that treats each meaningful token
 		// as required with a prefix wildcard. Without the leading `+` each
 		// token is OR'd, which matches any post sharing a single word with the
-		// query ("test" bringing back every post with "test" anywhere). The
-		// user-visible symptom was the new-post similar-topics typeahead
-		// returning unrelated rows; fixing it here also fixes the general
-		// search page, where the old natural-mode fallback was equally loose.
+		// query ("test" bringing back every post with "test" anywhere), which makes the
+		// new-post similar-topics typeahead and the search page return unrelated rows.
 		//
 		// Tokens shorter than 4 chars are dropped: they are below typical
 		// innodb_ft_min_token_size AND dominated by stop words. If all tokens
-		// drop out the raw query is passed through, preserving the old
-		// behavior for short queries that would otherwise return nothing.
+		// drop out the raw query is passed through, so short queries still return rows.
 		// Scope-only listing (empty $q, e.g. a tag page): skip the full-text MATCH
 		// entirely and rank by recency — there is nothing to score against, and
 		// forcing a MATCH on an empty query would return zero rows.
 		$boolean_q = '';
 		$used_like = false;
-		$where     = [ "p.status = 'publish'" ];
-		$params    = [];
+		$where     = array( "p.status = 'publish'" );
+		$params    = array();
 		if ( '' !== $q ) {
 			$boolean_q                                = self::build_boolean_query( $q );
-			[ $match_sql, $match_params, $used_like ] = self::match_predicate( [ 'p.title', 'p.content_plain' ], $q );
+			[ $match_sql, $match_params, $used_like ] = self::match_predicate( array( 'p.title', 'p.content_plain' ), $q );
 			$where[]                                  = $match_sql;
 			$params                                   = $match_params;
 		} elseif ( 'relevance' === $sort ) {
@@ -244,14 +261,12 @@ class Fulltext_Search implements Search_Query_Adapter {
 		}
 
 		// Order:
-		// - relevance: the MATCH score against the same boolean query (previously
-		// defaulted to created_at DESC, which meant relevance sort was never
-		// actually sorting by relevance).
+		// - relevance: the MATCH score against the same boolean query.
 		// - newest:    created_at DESC.
-		// - votes:     vote_score DESC.
+		// - votes:     votes, then replies (Post::popular_order()).
 		switch ( $sort ) {
 			case 'votes':
-				$order_by = 'p.vote_score DESC, p.id DESC';
+				$order_by = \Jetonomy\Models\Post::popular_order( 'p' );
 				break;
 			case 'newest':
 				$order_by = 'p.created_at DESC, p.id DESC';
@@ -279,10 +294,10 @@ class Fulltext_Search implements Search_Query_Adapter {
 		// column. Repeat the same AGAINST(...) expression so MySQL can reuse
 		// the index; the extra params slot is prepended before $params.
 		$select_extra  = '';
-		$select_params = [];
+		$select_params = array();
 		if ( ! empty( $order_match ) ) {
 			$select_extra  = ', MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score';
-			$select_params = [ $boolean_q ];
+			$select_params = array( $boolean_q );
 		}
 
 		if ( $tag_slug ) {
@@ -290,14 +305,14 @@ class Fulltext_Search implements Search_Query_Adapter {
 			$post_tags_table = table( 'post_tags' );
 			// Param order matters: select_params, tag_slug, where params, then
 			// limit/offset LAST — the new placeholders are last in the SQL below.
-			$all_params = array_merge( $select_params, [ $tag_slug ], $params, [ $limit, $offset ] );
+			$all_params = array_merge( $select_params, array( $tag_slug ), $params, array( $limit, $offset ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
 				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
 				...$all_params
 			);
 		} else {
-			$all_params = array_merge( $select_params, $params, [ $limit, $offset ] );
+			$all_params = array_merge( $select_params, $params, array( $limit, $offset ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
 				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
@@ -305,7 +320,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 			);
 		}
 
-		return $wpdb->get_results( $sql ) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->get_results( $sql ) ?: array(); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**
@@ -332,8 +347,8 @@ class Fulltext_Search implements Search_Query_Adapter {
 		$boolean_q = self::build_boolean_query( $q );
 
 		// Always JOIN posts to filter out replies on private posts.
-		[ $r_match_sql, $r_match_params, $r_used_like ] = self::match_predicate( [ 'r.content_plain' ], $q );
-		$r_where                                        = [ $r_match_sql, "r.status = 'publish'", "p.status = 'publish'" ];
+		[ $r_match_sql, $r_match_params, $r_used_like ] = self::match_predicate( array( 'r.content_plain' ), $q );
+		$r_where                                        = array( $r_match_sql, "r.status = 'publish'", "p.status = 'publish'" );
 		$r_params                                       = $r_match_params;
 
 		// Private post visibility for replies — shared guard (single source of truth).
@@ -341,6 +356,11 @@ class Fulltext_Search implements Search_Query_Adapter {
 		if ( '' !== $r_vis_sql ) {
 			$r_where[] = $r_vis_sql;
 			$r_params  = array_merge( $r_params, $r_vis_params );
+		}
+		[ $r_priv_sql, $r_priv_params ] = self::reply_visibility_clause( $space_id );
+		if ( '' !== $r_priv_sql ) {
+			$r_where[] = $r_priv_sql;
+			$r_params  = array_merge( $r_params, $r_priv_params );
 		}
 
 		// Space-level content gate (parent post's space). See search_posts().
@@ -380,15 +400,15 @@ class Fulltext_Search implements Search_Query_Adapter {
 		// Order by the same boolean MATCH score so the best topical matches
 		// surface first instead of the most recent replies regardless of
 		// overlap.
-		$score_params = [ $boolean_q ];
-		$all_params   = array_merge( $score_params, $r_params, [ $limit, $offset ] );
+		$score_params = array( $boolean_q );
+		$all_params   = array_merge( $score_params, $r_params, array( $limit, $offset ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = $wpdb->prepare(
 			"SELECT r.*, MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY match_score DESC, r.created_at DESC LIMIT %d OFFSET %d",
 			...$all_params
 		);
 
-		return $wpdb->get_results( $sql ) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->get_results( $sql ) ?: array(); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**
@@ -408,7 +428,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 		// private spaces (content stays gated), hidden withheld from non-members.
 		[ $vis_sql, $vis_params ] = \Jetonomy\Models\Space::listing_visibility_sql( get_current_user_id() );
 
-		$all_params = array_merge( [ $like, $like ], $vis_params, [ $limit, $offset ] );
+		$all_params = array_merge( array( $like, $like ), $vis_params, array( $limit, $offset ) );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_results(
@@ -417,7 +437,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 				"SELECT * FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND {$vis_sql} ORDER BY member_count DESC, id DESC LIMIT %d OFFSET %d",
 				...$all_params
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -434,14 +454,21 @@ class Fulltext_Search implements Search_Query_Adapter {
 		$like       = '%' . $wpdb->esc_like( $q ) . '%';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $wpdb->get_results(
+		$tags = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$tags_table} WHERE name LIKE %s ORDER BY post_count DESC LIMIT %d OFFSET %d",
 				$like,
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
+
+		// Report what this viewer can read, not the stored all-spaces count.
+		$counts = \Jetonomy\Models\Post::count_by_tags_visible( wp_list_pluck( $tags, 'id' ) );
+		foreach ( $tags as $tag ) {
+			$tag->post_count = $counts[ (int) $tag->id ] ?? 0;
+		}
+		return $tags;
 	}
 
 	/**
@@ -464,10 +491,10 @@ class Fulltext_Search implements Search_Query_Adapter {
 
 		// Mirror search_posts(): skip the MATCH for a scope-only listing (empty $q)
 		// so meta.total counts the tag/space/author rows, not zero.
-		$where  = [ "p.status = 'publish'" ];
-		$params = [];
+		$where  = array( "p.status = 'publish'" );
+		$params = array();
 		if ( '' !== $q ) {
-			[ $match_sql, $match_params ] = self::match_predicate( [ 'p.title', 'p.content_plain' ], $q );
+			[ $match_sql, $match_params ] = self::match_predicate( array( 'p.title', 'p.content_plain' ), $q );
 			$where[]                      = $match_sql;
 			$params                       = $match_params;
 		}
@@ -515,7 +542,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 		if ( $tag_slug ) {
 			$tags_table      = table( 'tags' );
 			$post_tags_table = table( 'post_tags' );
-			$all_params      = array_merge( [ $tag_slug ], $params );
+			$all_params      = array_merge( array( $tag_slug ), $params );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			return (int) $wpdb->get_var(
 				$wpdb->prepare(
@@ -547,8 +574,8 @@ class Fulltext_Search implements Search_Query_Adapter {
 		$spaces_table  = table( 'spaces' );
 		$boolean_q     = self::build_boolean_query( $q );
 
-		[ $r_match_sql, $r_match_params, $r_used_like ] = self::match_predicate( [ 'r.content_plain' ], $q );
-		$r_where                                        = [ $r_match_sql, "r.status = 'publish'", "p.status = 'publish'" ];
+		[ $r_match_sql, $r_match_params, $r_used_like ] = self::match_predicate( array( 'r.content_plain' ), $q );
+		$r_where                                        = array( $r_match_sql, "r.status = 'publish'", "p.status = 'publish'" );
 		$r_params                                       = $r_match_params;
 
 		// Shared visibility guard (single source of truth) — see Fulltext_Search.
@@ -556,6 +583,11 @@ class Fulltext_Search implements Search_Query_Adapter {
 		if ( '' !== $r_vis_sql ) {
 			$r_where[] = $r_vis_sql;
 			$r_params  = array_merge( $r_params, $r_vis_params );
+		}
+		[ $r_priv_sql, $r_priv_params ] = self::reply_visibility_clause( $space_id );
+		if ( '' !== $r_priv_sql ) {
+			$r_where[] = $r_priv_sql;
+			$r_params  = array_merge( $r_params, $r_priv_params );
 		}
 
 		// Space-level content gate — mirror search_replies() so the total never
@@ -655,9 +687,9 @@ class Fulltext_Search implements Search_Query_Adapter {
 	 */
 	public static function build_boolean_query( string $query ): string {
 		$cleaned = preg_replace( '/[+\-<>()~*"@]/', ' ', $query );
-		$tokens  = preg_split( '/\s+/', (string) $cleaned, -1, PREG_SPLIT_NO_EMPTY ) ?: [];
+		$tokens  = preg_split( '/\s+/', (string) $cleaned, -1, PREG_SPLIT_NO_EMPTY ) ?: array();
 
-		$required = [];
+		$required = array();
 		foreach ( $tokens as $t ) {
 			$len = function_exists( 'mb_strlen' ) ? mb_strlen( $t ) : strlen( $t );
 			if ( $len < self::MIN_TOKEN_LEN ) {
@@ -682,7 +714,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 	 */
 	public static function has_indexable_token( string $query ): bool {
 		$cleaned = preg_replace( '/[+\-<>()~*"@]/', ' ', $query );
-		foreach ( preg_split( '/\s+/', (string) $cleaned, -1, PREG_SPLIT_NO_EMPTY ) ?: [] as $t ) {
+		foreach ( preg_split( '/\s+/', (string) $cleaned, -1, PREG_SPLIT_NO_EMPTY ) ?: array() as $t ) {
 			$len = function_exists( 'mb_strlen' ) ? mb_strlen( $t ) : strlen( $t );
 			if ( $len >= self::MIN_TOKEN_LEN ) {
 				return true;
@@ -702,7 +734,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 	 * was a silent empty result set: `q=QA` returned 0 against 26 posts titled
 	 * "QA Post N", while `q=Post` returned all 26. Short queries are common in a
 	 * forum (acronyms, product codes, "v2"), so members reasonably concluded
-	 * search was broken (Basecamp 10161324553).
+	 * search was broken.
 	 *
 	 * Below the floor we scan with LIKE instead. That cannot use the FULLTEXT
 	 * index, so it matches TITLE columns only: body columns (content_plain)
@@ -718,25 +750,25 @@ class Fulltext_Search implements Search_Query_Adapter {
 	 */
 	public static function match_predicate( array $columns, string $q ): array {
 		if ( self::has_indexable_token( $q ) ) {
-			return [
+			return array(
 				'MATCH(' . implode( ', ', $columns ) . ') AGAINST(%s IN BOOLEAN MODE)',
-				[ self::build_boolean_query( $q ) ],
+				array( self::build_boolean_query( $q ) ),
 				false,
-			];
+			);
 		}
 
 		global $wpdb;
 		$columns = array_values( array_filter( $columns, static fn( $c ) => false === strpos( $c, 'content' ) ) );
 		if ( ! $columns ) {
-			return [ '0 = 1', [], true ];
+			return array( '0 = 1', array(), true );
 		}
 		$like  = '%' . $wpdb->esc_like( $q ) . '%';
 		$parts = array_map( static fn( $c ) => $c . ' LIKE %s', $columns );
 
-		return [
+		return array(
 			'(' . implode( ' OR ', $parts ) . ')',
 			array_fill( 0, count( $columns ), $like ),
 			true,
-		];
+		);
 	}
 }

@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     2.0.1
+ * Version:     2.0.2
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '2.0.1' );
+define( 'JETONOMY_VERSION', '2.0.2' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -35,7 +35,7 @@ define( 'JETONOMY_VERSION', '2.0.1' );
 // upgrade block and Migration_1_9_3 never ran there. Keep this in step with
 // the newest key in Migrator::get_migrations() or the newest migration is
 // silently dead on exactly the sites that need it.
-define( 'JETONOMY_DB_VERSION', '2.0.1.1' );
+define( 'JETONOMY_DB_VERSION', '2.0.2' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -62,6 +62,7 @@ if ( ! defined( 'JETONOMY_SMOKE_TEST' ) ) {
 			'admin_notices',
 			function () {
 				echo '<div class="notice notice-error"><p>';
+				// jt-terms-ok: 'reply-by-email' is the feature name.
 				esc_html_e( 'Jetonomy: the bundled Action Scheduler library is missing from libs/action-scheduler/. Background jobs (email digest, badges, AI, reply-by-email, webhooks) will fall back to WP-Cron until the plugin files are restored. Reinstalling Jetonomy from the original zip fixes this.', 'jetonomy' );
 				echo '</p></div>';
 			}
@@ -119,7 +120,7 @@ add_action(
 // would fatal inside the SDK the moment it instantiates a src class — the
 // entry file registers callbacks against \EasyDigitalDownloads\Updater\Versions
 // with no guard of its own, so requiring it half-present white-screened every
-// page (Basecamp 10163871548; the WB Listora 1.2.1 stripped-SDK shape). Guard
+// page (the WB Listora stripped-SDK shape). Guard
 // on the source being present and degrade to "updates disabled" with a soft
 // admin notice instead — licensing only gates updates, never features, so the
 // community keeps working. Mirrors BuddyNext (the portfolio reference for this
@@ -455,6 +456,49 @@ function jetonomy_viewer_can_vote( $space ): bool {
 }
 
 /**
+ * Accessible name + tooltip for a vote button, and both states for view.js.
+ *
+ * An active vote reads "Remove your upvote" so pressing it again is clearly a
+ * retraction, not a downvote (the score drops by one when you take a vote back).
+ * view.js swaps between data-jt-label-on / -off in jetonomySetVoted().
+ *
+ * @param string $direction 'up' or 'down'.
+ * @param bool   $active    Whether the viewer's current vote is this one.
+ * @return string Escaped attribute string, leading space included.
+ */
+function jetonomy_vote_attrs( string $direction, bool $active ): string {
+	$off = 'down' === $direction ? __( 'Vote down', 'jetonomy' ) : __( 'Vote up', 'jetonomy' );
+	$on  = 'down' === $direction ? __( 'Remove your downvote', 'jetonomy' ) : __( 'Remove your upvote', 'jetonomy' );
+	$now = $active ? $on : $off;
+	return ' title="' . esc_attr( $now ) . '" aria-label="' . esc_attr( $now ) . '" data-jt-label-on="' . esc_attr( $on ) . '" data-jt-label-off="' . esc_attr( $off ) . '"';
+}
+
+/**
+ * Print the vote score for a logged-in viewer who may not vote here.
+ *
+ * Shows the score and explains on hover, to screen readers and (via the
+ * data-jt-denied handler in header.js) with a toast on click, instead of an
+ * inert icon that looks broken.
+ *
+ * @param int $score     Current vote score.
+ * @param int $icon_size Icon size in px.
+ */
+function jetonomy_vote_denied_control( int $score, int $icon_size ): void {
+	$why = __( 'Voting is not available to you here.', 'jetonomy' );
+	/* translators: 1: vote score, 2: reason voting is unavailable. */
+	$label = sprintf( __( 'Score %1$d. %2$s', 'jetonomy' ), $score, $why );
+	?>
+	<button type="button" class="jt-act jt-act-denied" aria-disabled="true"
+		data-jt-denied="<?php echo esc_attr( $why ); ?>"
+		title="<?php echo esc_attr( $why ); ?>"
+		aria-label="<?php echo esc_attr( $label ); ?>">
+		<?php jetonomy_echo_icon( 'chevron-up', $icon_size ); ?>
+		<span class="n"><?php echo esc_html( (string) $score ); ?></span>
+	</button>
+	<?php
+}
+
+/**
  * Resolve a customer-facing label for an idea roadmap status enum value.
  *
  * Mirrors the column labels in `templates/views/space-roadmap.php`. Used
@@ -582,7 +626,22 @@ function jetonomy_render_space_meta_badges( $space ): void {
 	}
 
 	$type        = isset( $space->type ) ? (string) $space->type : '';
-	$join_policy = isset( $space->join_policy ) ? (string) $space->join_policy : '';
+	$join_policy = \Jetonomy\Models\Space::effective_join_policy( $space );
+	$visibility  = (string) ( $space->visibility ?? 'public' );
+
+	// Private and hidden come first: they decide whether you can get in at all.
+	if ( 'public' !== $visibility ) {
+		$vis_label = 'hidden' === $visibility ? __( 'Hidden', 'jetonomy' ) : __( 'Private', 'jetonomy' );
+		$vis_aria  = 'hidden' === $visibility
+			/* translators: 1: singular space label; 2: plural member label. */
+			? sprintf( __( 'Hidden %1$s. Only admins and %2$s can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) )
+			/* translators: 1: singular space label; 2: plural member label; 3: plural topic label. */
+			: sprintf( __( 'Private %1$s. Only %2$s can read its %3$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
+		echo '<span class="jt-space-card-badge jt-space-card-badge-' . esc_attr( $visibility ) . '" aria-label="' . esc_attr( $vis_aria ) . '">';
+		jetonomy_echo_icon( 'lock', 12 );
+		echo esc_html( $vis_label );
+		echo '</span>';
+	}
 
 	if ( '' !== $type ) {
 		$icon  = jetonomy_space_type_icon( $type );
@@ -724,7 +783,7 @@ function jetonomy_maybe_enqueue_embed_scripts( string $content ): void {
  * `<br><br>`. wpautop() skips block-level tags, so those divs were stored and
  * rendered as-is - and because the CSS spacing contract targets
  * `.jt-post-body p`, consecutive paragraphs collided with 0px between them
- * (Basecamp 10138808747, measured: p->div 12px, div->div 0px).
+ * (measured: p->div 12px, div->div 0px).
  *
  * Called at BOTH ends, one implementation:
  *  - write time (posts/replies create + update, before wp_kses_post) so new
@@ -754,8 +813,8 @@ function jetonomy_normalize_editor_html( string $content ): string {
 	// wrapper, tearing the embed
 	// (`<div class="embed">one<br><br>two</div>` -> `...one</p><p>two</p></div>`).
 	// The detection is whitespace-class based - `<div\tclass=...>` and
-	// `<div\nclass=...>` count, not just the literal "<div " (QA probe,
-	// Basecamp 10138808747 reopen). Composer output never contains attributed
+	// `<div\nclass=...>` count, not just the literal "<div ".
+	// Composer output never contains attributed
 	// divs, so the reported case is always still covered.
 	if ( preg_match( '/<div\s+[^>]/i', $content ) ) {
 		return $content;
@@ -798,7 +857,7 @@ function jetonomy_normalize_editor_html( string $content ): string {
  * Post::create/update and Reply::create/update run every 'content' write
  * through this, so every writer - REST, wp-admin AJAX, CLI journeys,
  * Abilities, the importers, Pro reply-by-email - shares ONE choke point
- * (Basecamp 10138808747: per-writer sanitizing let div soup persist via
+ * (per-writer sanitizing lets div soup persist via
  * the paths that forgot the normalize half). Idempotent: normalized clean
  * HTML passes through byte-identical, so pre-sanitized callers lose nothing.
  *
@@ -828,7 +887,6 @@ function jetonomy_sanitize_editor_content( string $content ): string {
  * Both were visible wherever content_plain surfaces: the mobile app's Quote
  * action, feed excerpts, notification text, search snippets and FULLTEXT
  * search itself, which could not match a phrase spanning a block boundary
- * (Basecamp 10207964048).
  *
  * Order matters. Block closers become newlines BEFORE the strip (afterwards
  * there is no boundary left to find), and entities are decoded AFTER it
@@ -875,7 +933,7 @@ function jetonomy_content_to_plain( string $content ): string {
  *
  * The feed-space derived title used to strip the WHOLE body and take the
  * first 60 characters, so a multi-paragraph status ran its paragraphs
- * together in the headline and the slug (Basecamp 10138808747 reopen). A
+ * together in the headline and the slug (reopen). A
  * headline is the first paragraph, not the first 60 bytes of everything.
  *
  * @param string $content Stored/normalized HTML or plain text.
@@ -901,8 +959,8 @@ function jetonomy_first_paragraph_text( string $content ): string {
  * The mobile app inserted `![alt](url)` into the body until 1.9.3. The app has
  * its own markdown-image parser so the picture showed there, but nothing on the
  * web side ever understood the syntax - so the same topic showed the image in
- * the app and a line of raw `![alt](http://...)` text on the website (Basecamp
- * 10199514340). The app now writes `<img>`, which both renderers already
+ * the app and a line of raw `![alt](http://...)` text on the website. The app
+ * now writes `<img>`, which both renderers already
  * handle, but every post and reply ALREADY stored carries the old syntax, and
  * fixing the writer does not fix those rows.
  *

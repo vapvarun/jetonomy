@@ -275,6 +275,9 @@
   .jt-app button.jt-cat-chip-toggle:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-accent) !important; }
   .jt-app button.jt-cat-chip-toggle[aria-expanded="true"] { background-color: var(--jt-accent-light) !important; color: var(--jt-accent-strong) !important; border-color: var(--jt-accent) !important; }
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
+  /* A destructive filled button stays red: the reset above would paint it the accent blue. */
+  .jt-app button.jt-btn-fill.jt-btn-danger { background-color: var(--jt-danger-solid) !important; color: var(--jt-danger-fg) !important; }
+  .jt-app button.jt-btn-fill.jt-btn-danger:hover, .jt-app button.jt-btn-fill.jt-btn-danger:focus-visible { background-color: var(--jt-danger-strong) !important; color: var(--jt-danger-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
   /* Danger-ghost: an outlined pill (same shape as .jt-btn-ghost) that reads as
@@ -302,13 +305,20 @@
      vote surfaces being the ones members actually use. Each of those classes
      sits on a <button>, which is what the reset matches; an <a> is untouched by
      it and needs nothing here. */
+  /* Roadmap status picker: the chosen stage and the hover preview wear the
+     stage colour, so the current choice is obvious at a glance. */
+  .jt-app button.jt-idea-status-btn { color: var(--jt-text-secondary) !important; background-color: var(--jt-bg) !important; }
+  .jt-app button.jt-idea-status-btn:hover,
+  .jt-app button.jt-idea-status-btn:focus-visible { background-color: color-mix(in srgb, var(--jt-ip) 12%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: color-mix(in srgb, var(--jt-ip) 40%, transparent) !important; }
+  .jt-app button.jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip) !important; }
+  .jt-app button.jt-idea-status-btn.is-active { background-color: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)) !important; color: var(--jt-ip-fg) !important; border-color: var(--jt-ip) !important; box-shadow: inset 0 0 0 1px var(--jt-ip) !important; }
   .jt-app button.jt-bookmark-btn.bookmarked,
   .jt-app button.jt-bookmark-toggle.bookmarked,
   .jt-app button.jt-act.voted,
   .jt-app button.jt-v-btn.voted,
   .jt-app button.jt-v-btn.jt-voted,
   .jt-app button.jt-feed-act.voted,
-  .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent) !important; }
+  .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent) !important; background-color: var(--jt-accent-light) !important; }
   .jt-app button.jt-bookmark-btn.bookmarked svg,
   .jt-app button.jt-bookmark-toggle.bookmarked svg,
   .jt-app button.jt-act.voted svg,
@@ -427,7 +437,7 @@
   .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; color: var(--jt-accent); }
   .jt-icon-option-svg svg { width: 22px; height: 22px; }
   /* min-height 40px: this button measured 23px tall in the icon picker on admin
-     screens - below the touch-target floor (Basecamp 10146405920). */
+     screens - below the touch-target floor. */
   .jt-icon-picker-more { align-self: flex-start; font-size: 0.875rem; min-height: 40px; }
   .jt-icon-picker-empty { color: var(--jt-text-secondary); font-size: 0.875rem; padding: 8px 4px; grid-column: 1 / -1; margin: 0; }
 
@@ -478,7 +488,7 @@
   .jt-space-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-full); background: var(--jt-bg); border: 1px solid var(--jt-border); color: var(--jt-text); font-size: 0.8125rem; font-weight: 500; text-decoration: none; transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease; }
   .jt-space-card-action:hover { border-color: var(--jt-accent); color: var(--jt-accent-strong); background: var(--jt-accent-muted); }
   .jt-space-card-action svg { flex-shrink: 0; }
-  .jt-empty-cta { margin-block-start: 16px; text-align: center; }
+  .jt-empty-cta { margin-block-start: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--jt-space-2); }
   @media ( max-width: 640px ) {
     .jt-space-list { grid-template-columns: 1fr; }
   }
@@ -504,8 +514,7 @@
   .jt-row-stat-l { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); }
   /* Drafts-tab rows have a 2-column shape (title | actions), not the 4-column
      topic-listing grid. Without this the title lands in the 48px icon column and
-     wraps one word per line, with a huge gap before the meta column (Basecamp
-     drafts-tab alignment). The `.jt-row.jt-row--draft` (0,2,0) specificity beats
+     wraps one word per line, with a huge gap before the meta column (drafts-tab alignment). The `.jt-row.jt-row--draft` (0,2,0) specificity beats
      both the base and the mobile `.jt-row` (0,1,0) templates at every breakpoint,
      and the stat rule (0,3,0) overrides the mobile `.jt-row-stat:last-child`
      display:none so the time + Publish-now button stay visible. */
@@ -566,11 +575,12 @@
   .jt-tl[data-jt-tl="3"] { background: var(--jt-tl3); }
   .jt-tl[data-jt-tl="4"] { background: var(--jt-tl4); }
   .jt-tl[data-jt-tl="5"] { background: var(--jt-tl5); }
+  /* Named badge (profile header): the level name, not the digit, so it is a pill. */
+  .jt-tl.jt-tl-named { width: auto; height: auto; padding: 2px 8px; border-radius: var(--jt-radius-full); margin-inline-start: 0.375rem; letter-spacing: 0.02em; vertical-align: middle; white-space: nowrap; }
 
   /* ── Post ── */
   /* Note: we dropped `overflow: hidden` from this rule — it was clipping
-     the three-dot action dropdown to a thin sliver under the action bar
-     (Basecamp 9803818273). Border-radius clipping for the rare
+     the three-dot action dropdown to a thin sliver under the action bar. Border-radius clipping for the rare
      first-child (cover image) is enforced below via a scoped rule that
      only targets direct children inside the rounded top-left/right
      corners, so we don't pay the clipping tax on the whole card. */
@@ -692,9 +702,17 @@
      load AND re-evaluates :target on hashchange, so the whole feature needs
      no script — nothing to re-init after a client-side navigation, nothing to
      break when JS is off (crawlers, email webviews). scroll-margin-top keeps
-     the card clear of the sticky header it would otherwise land under. */
-  .jt-reply:target { border-color: var(--jt-accent); border-width: 2px; scroll-margin-top: var(--jt-scroll-offset); }
-  .jt-reply:target > .jt-reply-head { background: var(--jt-accent-light); background: color-mix(in srgb, var(--jt-accent) 12%, transparent); }
+     the card clear of the sticky header it would otherwise land under.
+     The highlight fades after a few seconds: it marks where you landed, it is
+     not a selection. The keyframes have no end state, so each card settles
+     back to its own normal look (accepted, nested or plain). */
+  .jt-reply:target { scroll-margin-top: var(--jt-scroll-offset); animation: jt-target-flash 4s ease-out; }
+  .jt-reply:target > .jt-reply-head { animation: jt-target-head 4s ease-out; }
+  @keyframes jt-target-flash { from, 60% { border-color: var(--jt-accent); box-shadow: 0 0 0 1px var(--jt-accent); } }
+  @keyframes jt-target-head { from, 60% { background: var(--jt-accent-light); background: color-mix(in srgb, var(--jt-accent) 12%, transparent); } }
+  @media (prefers-reduced-motion: reduce) {
+    .jt-reply:target, .jt-reply:target > .jt-reply-head { animation-duration: 2.5s; animation-timing-function: steps(1, end); }
+  }
   /* Translucent green tint (derived from --jt-success) instead of an opaque
      light token, so the accepted-answer header reads correctly in light AND
      dark and never paints a light block on a dark card. Hex token first as the
@@ -750,8 +768,8 @@
   .jt-nested-3 { margin-left: 24px; }
   /* A nested reply sits on the thread rail, not in a card of its own; only
      the accepted answer and a linked (#reply) reply keep their highlight. */
-  .jt-nested > .jt-reply:not(.accepted):not(:target) { border-color: transparent; box-shadow: none; }
-  .jt-nested > .jt-reply:not(.accepted):not(:target) > .jt-reply-head { background: transparent; }
+  .jt-nested > .jt-reply:not(.accepted) { border-color: transparent; box-shadow: none; }
+  .jt-nested > .jt-reply:not(.accepted) > .jt-reply-head { background: transparent; }
 
   /* Gap loader — in-between divider */
   .jt-load-gap { text-align: center; padding: 16px 0; position: relative; }
@@ -759,8 +777,12 @@
   .jt-load-gap-btn { position: relative; z-index: 1; background: var(--jt-bg) !important; padding: 8px 20px; border-radius: var(--jt-radius-full); }
 
   /* Reply-to indicator */
-  .jt-replying-to { font-size: 0.9375rem; color: var(--jt-text-tertiary); padding: 8px 14px; border-left: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); margin-bottom: 8px; border-radius: 0 var(--jt-radius) var(--jt-radius) 0; display: flex; align-items: center; justify-content: space-between; }
-  .jt-replying-to-cancel { cursor: pointer; color: var(--jt-text-tertiary); border: none; background: none; padding: 4px; }
+  .jt-replying-to { font-size: 0.9375rem; color: var(--jt-text-tertiary); padding: 8px 14px; border-inline-start: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); margin-bottom: 8px; border-start-end-radius: var(--jt-radius); border-end-end-radius: var(--jt-radius); display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
+  .jt-replying-to-excerpt { color: var(--jt-text-secondary); font-style: italic; text-decoration: none; min-width: 0; overflow-wrap: anywhere; }
+  .jt-replying-to-excerpt:hover, .jt-replying-to-excerpt:focus-visible { color: var(--jt-accent); text-decoration: underline; }
+  .jt-replying-to-cancel { cursor: pointer; color: var(--jt-text-tertiary); border: none; background: none; padding: 4px; margin-inline-start: auto; }
+  .jt-in-reply-to { display: inline-flex; align-items: center; gap: 4px; margin: var(--jt-space-2) var(--jt-space-4) 0; font-size: 0.8125rem; color: var(--jt-text-tertiary); text-decoration: none; }
+  .jt-in-reply-to:hover, .jt-in-reply-to:focus-visible { color: var(--jt-accent); text-decoration: underline; }
 
   /* ── Composer ── */
   .jt-editor { border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius-lg); overflow: hidden; background: var(--jt-bg); transition: border-color 0.2s; }
@@ -1188,7 +1210,7 @@
   /* ── Category header ── */
   /* Category sections on the community home. The description always sits on
      its own line under the name: side by side, a long name was squeezed into a
-     narrow column at 390px (Basecamp 10345571083). */
+     narrow column at 390px. */
   .jt-cat-section { margin-bottom: var(--jt-space-6); }
   .jt-cat-section + .jt-cat-section { border-top: 1px solid var(--jt-border); padding-top: var(--jt-space-6); }
   .jt-cat-row { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--jt-space-2); row-gap: var(--jt-space-1); margin-bottom: var(--jt-space-4); }
@@ -1206,7 +1228,7 @@
   .jt-app .jt-cat-chip:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); color: var(--jt-text); }
   .jt-app .jt-cat-chip:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-cat-chip-count { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); background: var(--jt-bg-muted); border-radius: var(--jt-radius-full); padding: 0 var(--jt-space-2); }
-  /* Sub-category chip + chevron read as one pill; the chevron shows that sub-category's spaces inline (Basecamp 10375135686). Every property is set here so a theme styling bare `button` cannot restyle it. */
+  /* Sub-category chip + chevron read as one pill; the chevron shows that sub-category's spaces inline. Every property is set here so a theme styling bare `button` cannot restyle it. */
   .jt-cat-chip-group { display: inline-flex; align-items: stretch; }
   .jt-app .jt-cat-chip-group .jt-cat-chip { border-start-end-radius: 0; border-end-end-radius: 0; }
   .jt-app .jt-cat-chip-toggle { appearance: none; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; margin: 0; padding: 0 var(--jt-space-2); border: 1px solid var(--jt-border); border-inline-start: 0; border-start-start-radius: 0; border-end-start-radius: 0; border-start-end-radius: var(--jt-radius-full); border-end-end-radius: var(--jt-radius-full); font: inherit; line-height: 1; text-transform: none; box-shadow: none; cursor: pointer; transition: border-color var(--jt-dur) var(--jt-ease), background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
@@ -1237,6 +1259,7 @@
      which spaces are alive. Same gap as the other stats: pushed to the end
      with an auto margin it floated a different distance on every card. */
   .jt-space-card-activity { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .jt-space-grid-more { margin-block-start: var(--jt-space-3); text-align: center; }
   .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
   .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
   .jt-space-card-badge svg { flex-shrink: 0; width: 12px; height: 12px; }
@@ -1343,6 +1366,12 @@
   .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
   .jt-idea-status-btn.is-active { background: color-mix(in srgb, var(--jt-ip) 20%, var(--jt-bg)); color: var(--jt-ip-fg); border-color: var(--jt-ip); box-shadow: inset 0 0 0 1px var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
+  /* Every choice carries its stage colour as a dot, so the row reads as a set
+     of options on touch screens too, where there is no hover to hint at it. */
+  .jt-idea-status-btn::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--jt-ip); margin-inline-end: 6px; flex-shrink: 0; }
+  .jt-idea-status-unset { cursor: default; border-style: dashed; }
+  .jt-idea-status-unset::before { background: transparent; border: 1px solid var(--jt-text-tertiary); width: 6px; height: 6px; }
+  .jt-idea-status-unset:not(.is-active) { display: none; }
   @media (max-width: 640px) {
     .jt-idea-status-setter { gap: var(--jt-space-2); padding: var(--jt-space-3); align-items: flex-start; flex-direction: column; }
     .jt-idea-status-options { width: 100%; }
@@ -1408,8 +1437,9 @@
   .jt-app .jt-empty-cta { margin: var(--jt-space-4) 0 0; }
 
   /* ── Space gate (private/invite/approval) standalone form / actions below empty-state ── */
-  .jt-space-gate-form { max-inline-size: 480px; margin-inline: auto; margin-block-start: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .jt-space-gate-actions { text-align: center; margin-block-start: 16px; }
+  /* Lives inside the gate card: full-width message box, button sized to its label and centred. */
+  .jt-space-gate-form { max-inline-size: 480px; margin-inline: auto; margin-block-start: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .jt-space-gate-form .jt-input { inline-size: 100%; box-sizing: border-box; }
 
   /* ── Reply composer wrapper ── */
   .jt-reply-composer { margin-top: var(--jt-space-6); }
@@ -1933,7 +1963,6 @@
     /* Let dropdown + badges wrap onto a second line on mobile. The row
        keeps avatar + name + trust on line 1; dropdown + badge + rep on
        line 2, full-width select so the truncation stops squeezing. */
-    .jt-app .jt-member-item { flex-wrap: wrap; }
     .jt-member-role-select { flex-basis: 100%; max-width: 100%; width: 100%; margin-top: var(--jt-space-1); }
     .jt-pending-actions { flex-basis: 100%; margin-top: var(--jt-space-1); }
   }
@@ -1967,6 +1996,7 @@
   .jt-reply-author { font-weight: 600; font-size: 0.9375rem; line-height: 1.4; color: var(--jt-text); text-decoration: none; }
   .jt-reply-author:hover { text-decoration: underline; color: var(--jt-text); }
   .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; line-height: 1.4; white-space: nowrap; }
+  .jt-edited { color: var(--jt-text-tertiary); font-size: 0.8125rem; font-style: italic; white-space: nowrap; }
   /* Timestamp doubles as the reply's permalink (Discourse/Reddit/GitHub
      convention) — the only way to share a link to a single reply. It must
      keep reading as METADATA, not a body link, so colour/underline are
@@ -1989,6 +2019,11 @@
 
   /* ── Space members ── */
   .jt-member-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); }
+  /* Wrap by available width, not viewport: a space admin's row carries role
+     select + Ban + rep, which squeezed the name to a sliver in a narrow column
+     at desktop widths. The name keeps 12rem; the controls drop a line first. */
+  .jt-member-item { flex-wrap: wrap; }
+  .jt-member-item > .jt-flex-1 { flex: 1 1 12rem; }
   .jt-member-name { font-weight: 600; color: var(--jt-text); }
   .jt-member-joined { font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-top: 2px; }
   /* Reputation is the last cell in the row, so its width sets where every
@@ -1996,7 +2031,7 @@
      select and Ban button ~10px further left than a 3-digit one and the
      column read as ragged down the list. Fixed width + end-alignment locks
      the whole trailing cluster into a column. */
-  .jt-member-rep { flex: 0 0 auto; min-width: 5.5rem; text-align: end; font-family: var(--jt-font-mono); font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
+  .jt-member-rep { flex: 0 0 auto; min-width: 5.5rem; margin-inline-start: auto; text-align: end; font-family: var(--jt-font-mono); font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
   .jt-pending-requests { margin-bottom: 20px; }
   /* Deep-linked from a join-request notification (#jt-pending-requests). Same
@@ -2182,13 +2217,13 @@
      joined-split-button shape that lived here before 1.3.6 never actually
      rendered — they always drew as two pills. Instead of fighting the
      base button shape we lean into it: two pills with a visible gap.
-     Matches Basecamp 9803889865 ("Post Topic button and dropdown touching
+     Matches the report ("Post Topic button and dropdown touching
      without proper spacing"). */
   /* stretch, not center: the chevron half has no text line, so centred it
      drew 35px tall beside the 45px submit pill and read as a stray button. */
   .jt-publish-mode { position: relative; display: inline-flex; gap: 6px; align-items: stretch; }
   .jt-publish-mode__toggle { min-width: 34px; padding-left: 8px; padding-right: 8px; }
-  /* [1.4.3 WS3-B] Positioning owned by jetonomySmartDropdown (position:
+  /* Positioning owned by jetonomySmartDropdown (position:
      fixed + JS-computed top/left). Keep z-index/border/background only. */
   .jt-publish-mode__menu { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
   .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: left; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
@@ -2478,7 +2513,7 @@
      action-menu (SmartDropdown). The hover lift above makes the card a
      containing block for that fixed panel, so the menu anchors to the card
      instead of the viewport — it renders far below the clicked row and shifts
-     when the hover state toggles (Basecamp). A full-width list has no use for
+     when the hover state toggles. A full-width list has no use for
      the lift; drop only the transform here, the shadow/border hover stays. */
   .jt-card.jt-notif-list:hover { transform: none; }
 
@@ -2608,9 +2643,14 @@
 	line-height: 1.4;
 }
 
+/* In forms the error follows the action buttons, so it needs space above. */
+.jt-form-actions + .jt-form-error { margin: var(--jt-space-3) 0 0; }
+
 @media (max-width: 640px) {
 	.jt-form-error { padding: 8px 12px; font-size: 0.875rem; }
 }
+.jt-form-hint { margin: var(--jt-space-2) 0 0; font-size: 0.875rem; color: var(--jt-text-secondary); }
+
 
 /* ── oEmbed wrappers ── */
 .jt-embed,
@@ -2774,7 +2814,7 @@
 .jt-following:hover { background: var(--jt-danger); border-color: var(--jt-danger); }
 
 /* ── Share dropdown ── */
-/* [Basecamp 9808920407] Positioning is owned by view.js::sharePost which
+/* Positioning is owned by view.js::sharePost which
    appends the dropdown to document.body with `position: fixed` and viewport-
    computed top/left. The previous CSS had `position: absolute; bottom: 100%;
    left: 0` which anchored to the dropdown's DOM parent (`.jt-post-foot`)
@@ -2843,10 +2883,10 @@
 /* More-trigger button — was styled for a text `…` character, now
    uses a Lucide more-horizontal SVG. Keep the min tap-target only. */
 .jt-more-trigger { min-width: var(--jt-tap); min-height: var(--jt-tap); justify-content: center; }
-/* Positioning is owned by jetonomySmartDropdown (WS3-A primitive, wired
-   in WS3-B). It sets `position: fixed` and computes top/left so the panel
+/* Positioning is owned by jetonomySmartDropdown (shared primitive, wired
+   in the dropdown wiring). It sets `position: fixed` and computes top/left so the panel
    flips above when there's no room below and shifts to stay on-screen —
-   fixing Basecamp 9886004438 (last-reply More menu clipped). We keep
+   fixing the report (last-reply More menu clipped). We keep
    z-index/border/background here; everything else is JS-controlled. */
 .jt-more-dropdown { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; }
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
@@ -3561,8 +3601,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	}
 }
 
-/* Composer toolbar + emoji picker touch floors (Basecamp 10149499573:
-   trigger measured 32x30, options ~37x33 at 320). */
+/* Composer toolbar + emoji picker touch floors (trigger measured 32x30, options ~37x33 at 320). */
 @media screen and (max-width: 782px) {
 	.jt-editor-bar button,
 	.jt-editor-bar .jt-editor-bar-btn {

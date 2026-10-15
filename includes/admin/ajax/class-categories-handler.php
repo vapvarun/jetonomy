@@ -14,10 +14,10 @@ use Jetonomy\Models\Category;
 class Categories_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_create_category', [ $this, 'ajax_create_category' ] );
-		add_action( 'wp_ajax_jetonomy_update_category', [ $this, 'ajax_update_category' ] );
-		add_action( 'wp_ajax_jetonomy_delete_category', [ $this, 'ajax_delete_category' ] );
-		add_action( 'wp_ajax_jetonomy_reorder_categories', [ $this, 'ajax_reorder_categories' ] );
+		add_action( 'wp_ajax_jetonomy_create_category', array( $this, 'ajax_create_category' ) );
+		add_action( 'wp_ajax_jetonomy_update_category', array( $this, 'ajax_update_category' ) );
+		add_action( 'wp_ajax_jetonomy_delete_category', array( $this, 'ajax_delete_category' ) );
+		add_action( 'wp_ajax_jetonomy_reorder_categories', array( $this, 'ajax_reorder_categories' ) );
 	}
 
 	public function ajax_create_category(): void {
@@ -38,7 +38,7 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Name is required.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $visibility, [ 'public', 'private', 'hidden' ], true ) ) {
+		if ( ! in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
 			$visibility = 'public';
 		}
 
@@ -48,7 +48,7 @@ class Categories_Handler {
 		}
 
 		$id = Category::create(
-			[
+			array(
 				'name'        => $name,
 				'slug'        => $slug,
 				'description' => $desc,
@@ -56,20 +56,22 @@ class Categories_Handler {
 				'icon'        => $icon ?: null,
 				'color'       => $color ?: null,
 				'visibility'  => $visibility,
-			]
+			)
 		);
 
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Failed to create category.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
 		$category = Category::find( $id );
 		wp_send_json_success(
-			[
+			array(
 				'id'       => $id,
 				'category' => $category,
-				'message'  => __( 'Category created.', 'jetonomy' ),
-			]
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'message'  => sprintf( __( '%s created.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
+			)
 		);
 	}
 
@@ -81,10 +83,11 @@ class Categories_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid category ID.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
-		$data = [];
+		$data = array();
 		if ( isset( $_POST['name'] ) ) {
 			$data['name'] = sanitize_text_field( wp_unslash( $_POST['name'] ) );
 		}
@@ -105,7 +108,7 @@ class Categories_Handler {
 		}
 		if ( isset( $_POST['visibility'] ) ) {
 			$visibility = sanitize_text_field( wp_unslash( $_POST['visibility'] ) );
-			if ( in_array( $visibility, [ 'public', 'private', 'hidden' ], true ) ) {
+			if ( in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
 				$data['visibility'] = $visibility;
 			}
 		}
@@ -119,15 +122,17 @@ class Categories_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to update category.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
 		$category = Category::find( $id );
 		wp_send_json_success(
-			[
+			array(
 				'category' => $category,
-				'message'  => __( 'Category updated.', 'jetonomy' ),
-			]
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'message'  => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
+			)
 		);
 	}
 
@@ -139,7 +144,8 @@ class Categories_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid category ID.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
 		// Category::delete() refuses while spaces or sub-categories remain.
@@ -148,10 +154,12 @@ class Categories_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to delete category.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Failed to delete %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Category deleted.', 'jetonomy' ) ] );
+		/* translators: %s: category label (e.g. "Category"). */
+		wp_send_json_success( array( 'message' => sprintf( __( '%s deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ) );
 	}
 
 	public function ajax_reorder_categories(): void {
@@ -160,7 +168,7 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$order = array_map( 'absint', (array) wp_unslash( $_POST['order'] ?? [] ) );
+		$order = array_map( 'absint', (array) wp_unslash( $_POST['order'] ?? array() ) );
 		if ( ! $order ) {
 			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
 		}
@@ -172,7 +180,7 @@ class Categories_Handler {
 		// (list_top_level() / list_children() order by sort_order), so mixing
 		// groups would write meaningless numbers. A stale cached admin script
 		// that still sends children in a top-level batch therefore cannot
-		// corrupt the order - they are simply dropped (Basecamp 10210539659).
+		// corrupt the order - they are simply dropped.
 		$parent_id = absint( $_POST['parent_id'] ?? 0 );
 		$siblings  = $parent_id
 			? Category::list_children( $parent_id, get_current_user_id() )
@@ -185,7 +193,7 @@ class Categories_Handler {
 
 		// Absolute positions, never the batch index. The browser only submits
 		// the rows it rendered, so on page 2 the index restarts at 0 and would
-		// renumber those rows over the top of page 1 (Basecamp 10210539659).
+		// renumber those rows over the top of page 1.
 		// Sub-categories always render in full under their parent, so their
 		// batch is the whole group and starts at 0.
 		$offset = $parent_id ? 0 : jetonomy_reorder_offset(
@@ -197,10 +205,10 @@ class Categories_Handler {
 			$order,
 			$offset,
 			static function ( int $cat_id, int $position ): void {
-				Category::update( $cat_id, [ 'sort_order' => $position ] );
+				Category::update( $cat_id, array( 'sort_order' => $position ) );
 			}
 		);
 
-		wp_send_json_success( [ 'message' => __( 'Order saved.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Order saved.', 'jetonomy' ) ) );
 	}
 }

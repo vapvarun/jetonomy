@@ -56,7 +56,7 @@ $_show_scheduler    = isset( $show_scheduler ) ? (bool) $show_scheduler : false;
 $_show_publish_menu = isset( $show_publish_menu ) ? (bool) $show_publish_menu : false;
 // When true, the active provider's widget container prints before the
 // submit row (Turnstile needs an explicit container to render + produce
-// its token; reCAPTCHA v3 returns '' so nothing prints). #9977126420.
+// its token; reCAPTCHA v3 returns '' so nothing prints).
 $_show_captcha             = isset( $show_captcha ) ? (bool) $show_captcha : false;
 $_fields_hook              = isset( $fields_hook ) && is_string( $fields_hook ) && '' !== $fields_hook
 	? $fields_hook
@@ -160,8 +160,10 @@ endif;
 				<button type="button" data-cmd="codeblock" title="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Code block', 'jetonomy' ); ?>">{ }</button>
 				<button type="button" data-cmd="link" title="<?php esc_attr_e( 'Link', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<button type="button" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 16 ); ?></button>
+				<?php if ( \Jetonomy\Permissions\Capabilities::can_upload() ) : ?>
 				<button type="button" data-cmd="image" title="<?php esc_attr_e( 'Upload image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
-				<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it (QA card 10149499573). ?>
+				<?php endif; ?>
+				<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it. ?>
 				<button type="button" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>
 			</div>
 			<div class="jt-editor-body" contenteditable="true" data-placeholder="<?php echo esc_attr( sprintf( /* translators: %s: singular topic label. */ __( 'Write your %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>"></div>
@@ -218,7 +220,7 @@ if ( '' !== $_extras_html ) {
 				<?php
 				// Two select dropdowns for the time — works consistently on every
 				// desktop browser (Firefox Desktop has no popup for <input type="time">,
-				// which previously blocked scheduling on Firefox). Mobile browsers
+				// which would block scheduling there). Mobile browsers
 				// render these as native scroll wheels. view.js combines them into
 				// the hidden published_at value before submit.
 				?>
@@ -270,7 +272,7 @@ if ( '' !== $_extras_html ) {
 					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 				</button>
 				<?php
-				// [1.4.3 WS3-B] Visibility now driven by jetonomySmartDropdown
+				// Visibility now driven by jetonomySmartDropdown
 				// (togglePublishMenu); removed `data-wp-bind--hidden` so JS owns
 				// display + position. Initial `hidden` attribute prevents flash
 				// before the primitive attaches.

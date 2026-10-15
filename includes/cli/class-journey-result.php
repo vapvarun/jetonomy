@@ -56,8 +56,8 @@ final class Journey_Result {
 	 * @param array<string,mixed> $data
 	 * @param array<int,string>   $logs
 	 */
-	public static function ok( array $data = [], array $logs = [], int $duration_ms = 0 ): self {
-		return new self( true, $data, [], $logs, $duration_ms );
+	public static function ok( array $data = array(), array $logs = array(), int $duration_ms = 0 ): self {
+		return new self( true, $data, array(), $logs, $duration_ms );
 	}
 
 	/**
@@ -67,10 +67,10 @@ final class Journey_Result {
 	 * @param array<string,mixed>      $data
 	 * @param array<int,string>        $logs
 	 */
-	public static function fail( $error, array $data = [], array $logs = [], int $duration_ms = 0 ): self {
+	public static function fail( $error, array $data = array(), array $logs = array(), int $duration_ms = 0 ): self {
 		$errors = is_array( $error )
 			? array_values( array_map( 'strval', $error ) )
-			: [ (string) $error ];
+			: array( (string) $error );
 		return new self( false, $data, $errors, $logs, $duration_ms );
 	}
 
@@ -80,8 +80,8 @@ final class Journey_Result {
 	 * @param \WP_Error           $err  WordPress error object.
 	 * @param array<string,mixed> $data Optional payload to carry alongside the error.
 	 */
-	public static function from_wp_error( \WP_Error $err, array $data = [] ): self {
-		$messages = [];
+	public static function from_wp_error( \WP_Error $err, array $data = array() ): self {
+		$messages = array();
 		foreach ( $err->get_error_codes() as $code ) {
 			foreach ( (array) $err->get_error_messages( $code ) as $msg ) {
 				$messages[] = sprintf( '[%s] %s', $code, $msg );
@@ -90,7 +90,7 @@ final class Journey_Result {
 		if ( empty( $messages ) ) {
 			$messages[] = 'Unknown WP_Error';
 		}
-		return new self( false, $data, $messages, [], 0 );
+		return new self( false, $data, $messages, array(), 0 );
 	}
 
 	public function is_success(): bool {
@@ -107,12 +107,12 @@ final class Journey_Result {
 	 * @return array<string,mixed>
 	 */
 	public function to_array(): array {
-		return [
+		return array(
 			'success'     => $this->success,
 			'data'        => $this->data,
 			'errors'      => $this->errors,
 			'logs'        => $this->logs,
 			'duration_ms' => $this->duration_ms,
-		];
+		);
 	}
 }

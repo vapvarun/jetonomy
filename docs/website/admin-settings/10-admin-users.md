@@ -5,7 +5,7 @@ The Users admin screen gives moderators and administrators a full view of every 
 ## What You Will Learn
 
 - How to search and filter members in the admin
-- How to ban, silence, or space-ban a member
+- How to ban or silence a member
 - How to override a member's trust level manually
 - Which capability gates access to this screen
 
@@ -66,13 +66,14 @@ Trust levels 0 through 3 are normally earned automatically by the trust cron job
 
 ### Ban
 
-Opens the Ban User modal. Three options:
+Opens the Ban User modal. Two options:
 
 | Type | Effect |
 |---|---|
 | Global Ban | Member cannot log in to Jetonomy at all |
 | Silence | Member can log in and read but cannot post, reply, or vote |
-| Space Ban | Member is banned from a single space (enter the space ID in the form) |
+
+To ban a member from one space only, use the **Ban** button on that space's **Members** page on the front end.
 
 **Duration options:** Permanent, 1 Day, 7 Days, 30 Days.
 

@@ -125,6 +125,12 @@ Every community action awards or deducts a fixed number of reputation points. Yo
 | `post_reported` | Post reported | -10 |
 | `post_removed` | Post removed by moderator | -20 |
 
+How these three behave:
+
+- **Idea moved to Planned/Shipped** is given once, when an idea first goes onto the roadmap (Planned, In progress or Shipped), and taken back if it moves to Declined or loses its status. Moving between Planned, In progress and Shipped changes nothing. Ideas a moderator files and plans themselves earn nothing.
+- **Post reported** is given back when a moderator dismisses the report, for topics and replies alike.
+- **Post removed by moderator** applies when a moderator marks a topic or reply as spam **or** deletes it, and is given back if they restore it. Deleting your own content never costs points.
+
 The **Default** column shows each value before any override is saved. You can restore a row to its default by deleting your override and saving again.
 
 Lookup order at runtime: saved admin override in `jetonomy_settings['reputation_points']` → hardcoded defaults above → 0. This means a site with no overrides still scores correctly out of the box.

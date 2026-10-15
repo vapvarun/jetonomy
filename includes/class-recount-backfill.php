@@ -49,9 +49,6 @@ final class Recount_Backfill {
 	/** Progress + completion record. Survives across requests; this is not a cache. */
 	private const OPTION = 'jetonomy_recount_backfill';
 
-	/** One group per plugin, so every Jetonomy job is observable together. */
-	private const AS_GROUP = 'jetonomy';
-
 	/** Continuation hook. Re-enqueued until every stage drains. */
 	public const BATCH_HOOK = 'jetonomy_recount_backfill_batch';
 
@@ -73,20 +70,20 @@ final class Recount_Backfill {
 	 *
 	 * @var array<string,array{table:string,key:string}>
 	 */
-	private const STAGES = [
-		'posts'  => [
+	private const STAGES = array(
+		'posts'  => array(
 			'table' => 'posts',
 			'key'   => 'id',
-		],
-		'spaces' => [
+		),
+		'spaces' => array(
 			'table' => 'spaces',
 			'key'   => 'id',
-		],
-		'users'  => [
+		),
+		'users'  => array(
 			'table' => 'user_profiles',
 			'key'   => 'user_id',
-		],
-	];
+		),
+	);
 
 	/**
 	 * Wire the runner.
@@ -94,14 +91,14 @@ final class Recount_Backfill {
 	 * @return void
 	 */
 	public static function register(): void {
-		add_action( self::BATCH_HOOK, [ self::class, 'run_batch' ] );
+		add_action( self::BATCH_HOOK, array( self::class, 'run_batch' ) );
 
 		// Action Scheduler's data store is not ready on plugins_loaded, which is
 		// when migrations run - so the migration only records that the work is
 		// due (see mark_pending()) and the hand-off happens here, once AS says
 		// it can accept a job. Scheduling any earlier is the timing bug the
 		// background-jobs standard calls out.
-		add_action( 'action_scheduler_init', [ self::class, 'ensure_scheduled' ] );
+		add_action( 'action_scheduler_init', array( self::class, 'ensure_scheduled' ) );
 	}
 
 	/**
@@ -122,12 +119,12 @@ final class Recount_Backfill {
 
 		update_option(
 			self::OPTION,
-			[
+			array(
 				'stage'     => array_key_first( self::STAGES ),
 				'cursor'    => 0,
 				'done'      => false,
 				'queued_at' => now(),
-			],
+			),
 			false
 		);
 	}
@@ -149,8 +146,7 @@ final class Recount_Backfill {
 			return;
 		}
 
-		if ( function_exists( 'as_has_scheduled_action' )
-			&& as_has_scheduled_action( self::BATCH_HOOK, [], self::AS_GROUP ) ) {
+		if ( Queue::is_queued( self::BATCH_HOOK ) ) {
 			return;
 		}
 
@@ -160,22 +156,13 @@ final class Recount_Backfill {
 	/**
 	 * Queue one continuation.
 	 *
-	 * AS-first; WP-Cron carries it if the store refuses the job. The return
-	 * value is load-bearing - as_enqueue_async_action() answers 0 when it
-	 * declines, and treating that as a successful hand-off is what strands a
-	 * half-finished backfill with nothing scheduled to finish it.
+	 * AS-first; WP-Cron carries it if the store refuses the job, so a
+	 * half-finished backfill always has something scheduled to finish it.
 	 *
 	 * @return void
 	 */
 	private static function enqueue(): void {
-		if ( function_exists( 'as_enqueue_async_action' )
-			&& as_enqueue_async_action( self::BATCH_HOOK, [], self::AS_GROUP ) ) {
-			return;
-		}
-
-		if ( ! wp_next_scheduled( self::BATCH_HOOK ) ) {
-			wp_schedule_single_event( time() + 60, self::BATCH_HOOK );
-		}
+		Queue::async( self::BATCH_HOOK, array(), true, MINUTE_IN_SECONDS );
 	}
 
 	/**
@@ -322,10 +309,6 @@ final class Recount_Backfill {
 	 * @return void
 	 */
 	public static function clear_scheduled(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( self::BATCH_HOOK, [], self::AS_GROUP );
-		}
-
-		wp_clear_scheduled_hook( self::BATCH_HOOK );
+		Queue::cancel( self::BATCH_HOOK );
 	}
 }

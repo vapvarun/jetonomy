@@ -57,7 +57,7 @@ If you want to run Jetonomy alongside an active BuddyPress install, start with t
 | `groups_get_group( $group_id )` | `\Jetonomy\Models\Space::find( $space_id )` | n/a |
 | `bp_activity_add( $args )` | REST `POST /jetonomy/v1/spaces/{id}/posts` or `\Jetonomy\Models\Post::create( $data )` | [01-rest-api.md](./01-rest-api.md) |
 | `bp_activity_delete( $args )` | REST `DELETE /jetonomy/v1/posts/{id}` | [01-rest-api.md](./01-rest-api.md) |
-| `xprofile_set_field_data( $field, $user_id, $value )` | Pro Custom Fields extension - REST `PUT /jetonomy/v1/users/{id}/custom-fields` | Pro only |
+| `xprofile_set_field_data( $field, $user_id, $value )` | Pro Custom Fields extension - REST `PATCH /jetonomy/v1/users/me/fields` (the member's own values) or WP-CLI `wp jetonomy-pro fields set-user-field` | Pro only |
 
 ### Hooks
 

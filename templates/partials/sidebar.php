@@ -17,107 +17,21 @@ if ( ! apply_filters( 'jetonomy_show_sidebar', true ) ) {
 	return;
 }
 
-global $wpdb;
-$posts_tbl  = \Jetonomy\table( 'posts' );
-$spaces_tbl = \Jetonomy\table( 'spaces' );
-
-// Trending: top voted published posts, optionally scoped to the current space.
-// Before 1.3.6 this widget ignored is_private entirely and leaked private
-// topics into the sidebar for anyone with space access (Basecamp 9803998504).
-// Non-privileged viewers now see only public topics + their own private ones;
-// admin / space-mod / space-admin callers still see everything.
-$_jt_trend_user    = get_current_user_id();
-$_jt_trend_is_priv = $_jt_trend_user && user_can( $_jt_trend_user, 'manage_options' );
-if ( ! $_jt_trend_is_priv && $_jt_trend_user && ! empty( $space ) && isset( $space->id ) ) {
-	$_jt_trend_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $_jt_trend_user, (int) $space->id );
-}
-$_jt_trend_priv_clause = $_jt_trend_is_priv
-	? ''
-	: ( $_jt_trend_user
-		? $wpdb->prepare( ' AND (p.is_private = 0 OR p.author_id = %d)', $_jt_trend_user )
-		: ' AND p.is_private = 0' );
-
-// Space-visibility gate (global branch only — the per-space branch is already
-// scoped to a single space the viewer is on). Pre-prepared and concatenated
-// because the global query below runs without an outer $wpdb->prepare().
-[ $_jt_space_vis_sql, $_jt_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
-$_jt_trend_space_clause                       = '';
-if ( '1=1' !== $_jt_space_vis_sql ) {
-	$_jt_trend_space_clause = $_jt_space_vis_params
-		? $wpdb->prepare( ' AND ' . $_jt_space_vis_sql, ...$_jt_space_vis_params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		: ' AND ' . $_jt_space_vis_sql;
-}
-
-// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
-[ $_jt_trend_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-$_jt_trend_block_clause  = '' !== $_jt_trend_block_sql ? ' AND ' . $_jt_trend_block_sql : '';
-
-// Cached 300s per exact viewer class (plan WP4.1) — the unindexed
-// vote_score/reply_count filesort ran on 100% of page views. Bucket
-// covers EVERY viewer-dependent clause above (U2): privileged viewers
-// of the scope share 'priv' (no private/visibility filtering), guests
-// share 'guest' (no blocks by definition), and any other logged-in
-// viewer gets a per-user key (own-private + blocks bind their id).
-// TTL-only: 5-minute staleness on a trending widget is invisible.
-// NOTE (plan WP4.1): unifying this all-time-top query onto
-// Post::list_trending()'s 7-day hot ranking is a PRODUCT decision —
-// it changes what every sidebar shows — and is deferred, not smuggled
-// in with the cache; queries are byte-identical to before.
-$_jt_trend_bucket = $_jt_trend_is_priv ? 'priv' : ( $_jt_trend_user ? "u{$_jt_trend_user}" : 'guest' );
-$_jt_trend_scope  = ( ! empty( $space ) && isset( $space->id ) ) ? (int) $space->id : 0;
-
-$trending = \Jetonomy\Cache::remember(
-	"sidebar:trending:{$_jt_trend_scope}:{$_jt_trend_bucket}",
-	// Captures $_jt_trend_scope, NOT $space. $space is only in scope on the
-	// space-scoped templates, so a use($space) capture raised "Undefined
-	// variable" on every other page that renders this sidebar - home,
-	// category, leaderboard, search, notifications, profile. The capture
-	// happens when the closure is CREATED, so it fired on cache hits too.
-	// $_jt_trend_scope is the same value, already derived safely on the line
-	// above, and keying the branch off it means the cache key and the query
-	// can no longer disagree about which scope this is.
-	static function () use ( $wpdb, $posts_tbl, $spaces_tbl, $_jt_trend_scope, $_jt_trend_priv_clause, $_jt_trend_space_clause, $_jt_trend_block_clause ) {
-		if ( $_jt_trend_scope > 0 ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			return $wpdb->get_results(
-				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
-					 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-					 WHERE p.space_id = %d AND p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_block_clause . '
-					 ORDER BY p.vote_score DESC, p.reply_count DESC
-					 LIMIT 5',
-					$_jt_trend_scope
-				)
-			) ?: [];
-		}
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
-			 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-			 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_space_clause . $_jt_trend_block_clause . '
-			 ORDER BY p.vote_score DESC, p.reply_count DESC
-			 LIMIT 5'
-		) ?: [];
-	},
-	300
-);
+$trending = \Jetonomy\Models\Post::list_top_voted( ( ! empty( $space ) && isset( $space->id ) ) ? (int) $space->id : 0 );
 
 // Top members by reputation. Deliberately NOT block-filtered — this is a
 // ranking/leaderboard, not a content feed; per-viewer filtering would
 // re-rank the board and leak "you blocked someone" via rank gaps.
 //
-// Cached 600s under ONE global key (plan WP4.2) — zero viewer variance,
+// Cached 600s under ONE global key — zero viewer variance,
 // runs on 100% of page views, and the bare ORDER BY reputation filesorts.
 // TTL-only by design: a 10-minute-stale Top Members widget is invisible,
 // and busting on every reputation write would defeat the point.
 //
 // Reads the leaderboard model, not its own query, so the widget ranks exactly
 // the population the Leaderboard page does (members with reputation > 0).
-// The key changed from 'sidebar:leaders' when that rule landed, so an upgraded
-// site does not serve the old unfiltered list for the rest of the TTL.
+// The key is not the legacy 'sidebar:leaders', so an upgraded site does not serve a
+// stale unfiltered list for the rest of the TTL.
 $leaders = \Jetonomy\Cache::remember(
 	'sidebar:top-members',
 	static fn() => \Jetonomy\Models\UserProfile::list_for_leaderboard( 'all', 5, 0 ),
@@ -130,7 +44,7 @@ if ( ! empty( $leaders ) ) {
 	\Jetonomy\Models\UserProfile::prime( array_map( static fn( $r ) => (int) $r->user_id, $leaders ) );
 }
 
-// Popular tags. Cached 900s under one global key (plan WP4.3) — fully
+// Popular tags. Cached 900s under one global key — fully
 // shared, ordered by post_count (indexed since 1.9.2), moves only on
 // post publish. TTL-only: staleness is invisible on a tag cloud.
 $popular_tags = \Jetonomy\Cache::remember(
@@ -140,6 +54,16 @@ $popular_tags = \Jetonomy\Cache::remember(
 	},
 	900
 );
+// The shared list is ordered by the stored count, which includes topics this
+// viewer cannot read. Show each tag's count as the tag page will (one grouped
+// query), and drop tags with nothing visible so a name never hints at a
+// private topic.
+// Guests share one cached answer (the bulk of traffic); members vary by membership.
+$jt_tag_ids    = wp_list_pluck( (array) $popular_tags, 'id' );
+$jt_tag_counts = is_user_logged_in()
+	? \Jetonomy\Models\Post::count_by_tags_visible( $jt_tag_ids )
+	: \Jetonomy\Cache::remember( 'tags:popular:15:guest-counts', static fn() => \Jetonomy\Models\Post::count_by_tags_visible( $jt_tag_ids ), 900 );
+$popular_tags  = array_values( array_filter( (array) $popular_tags, static fn( $t ) => ! empty( $jt_tag_counts[ (int) $t->id ] ) ) );
 
 // When BuddyNext is active, use its sidebar card skeleton so all sidebar
 // widgets across BuddyNext, Jetonomy, and WPMediaVerse look identical.
@@ -169,6 +93,17 @@ $bn_active = did_action( 'buddynext_loaded' );
 		 */
 		do_action( 'jetonomy_sidebar_before_about', $space );
 		?>
+		<?php
+		/**
+		 * Filters whether the sidebar renders the About card.
+		 *
+		 * @since 1.4.5
+		 *
+		 * @param bool        $show  Whether to render the card.
+		 * @param object|null $space Current space, or null outside a space.
+		 * @return bool Whether to render the card.
+		 */
+		?>
 		<?php if ( apply_filters( 'jetonomy_show_sidebar_about', 'space' !== get_query_var( 'jetonomy_route' ), $space ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
@@ -193,12 +128,12 @@ $bn_active = did_action( 'buddynext_loaded' );
 				</div>
 			</div>
 			<?php
-			$space_type_labels = [
+			$space_type_labels = array(
 				'forum'  => __( 'Forum', 'jetonomy' ),
 				'qa'     => __( 'Q&A', 'jetonomy' ),
 				'ideas'  => __( 'Ideas', 'jetonomy' ),
 				'social' => __( 'Social', 'jetonomy' ),
-			];
+			);
 			$space_type        = $space->type ?? 'forum';
 			?>
 			<div class="jt-sidebar-meta">
@@ -219,7 +154,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 			<?php if ( is_user_logged_in() ) : ?>
 				<div class="jt-sidebar-links">
 					<a href="<?php echo esc_url( \Jetonomy\route_url( 'space-members', $space->slug ) ); ?>" class="jt-sidebar-link-text">
-						<?php printf( /* translators: %s: the plural label of the item (the configured noun). */ esc_html__( 'View all %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
+						<?php printf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ esc_html__( 'View all %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 					</a>
 					<?php if ( \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( get_current_user_id(), (int) $space->id ) ) : ?>
 						<a href="<?php echo esc_url( \Jetonomy\route_url( 'space-moderation', $space->slug ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-mod">
@@ -255,6 +190,17 @@ $bn_active = did_action( 'buddynext_loaded' );
 		 * @param object $space Current space object.
 		 */
 		do_action( 'jetonomy_sidebar_before_managed_by', $space );
+		?>
+		<?php
+		/**
+		 * Filters whether the sidebar renders the Managed by card.
+		 *
+		 * @since 1.4.5
+		 *
+		 * @param bool        $show  Whether to render the card.
+		 * @param object|null $space Current space, or null outside a space.
+		 * @return bool Whether to render the card.
+		 */
 		?>
 		<?php if ( apply_filters( 'jetonomy_show_sidebar_managed_by', true, $space ) ) : ?>
 			<?php
@@ -302,6 +248,17 @@ $bn_active = did_action( 'buddynext_loaded' );
 	 * @param object|null $space Current space object, or null.
 	 */
 	do_action( 'jetonomy_sidebar_before_trending', $space ?? null );
+	?>
+	<?php
+	/**
+	 * Filters whether the sidebar renders the Trending card.
+	 *
+	 * @since 1.4.5
+	 *
+	 * @param bool        $show  Whether to render the card.
+	 * @param object|null $space Current space, or null outside a space.
+	 * @return bool Whether to render the card.
+	 */
 	?>
 	<?php if ( apply_filters( 'jetonomy_show_sidebar_trending', true, $space ?? null ) ) : ?>
 		<?php if ( ! empty( $trending ) ) : ?>
@@ -364,6 +321,17 @@ $bn_active = did_action( 'buddynext_loaded' );
 	 */
 	do_action( 'jetonomy_sidebar_before_top_members', $space ?? null );
 	?>
+	<?php
+	/**
+	 * Filters whether the sidebar renders the Top members card.
+	 *
+	 * @since 1.4.5
+	 *
+	 * @param bool        $show  Whether to render the card.
+	 * @param object|null $space Current space, or null outside a space.
+	 * @return bool Whether to render the card.
+	 */
+	?>
 	<?php if ( apply_filters( 'jetonomy_show_sidebar_top_members', true, $space ?? null ) ) : ?>
 		<?php if ( ! empty( $leaders ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
@@ -389,11 +357,11 @@ $bn_active = did_action( 'buddynext_loaded' );
 						// partial, consistent with every other member surface.
 						\Jetonomy\Template_Loader::partial(
 							'avatar',
-							[
+							array(
 								'user_id' => (int) $leader->user_id,
 								'size'    => 30,
 								'class'   => 'jt-avatar-sm jt-flex-shrink-0',
-							]
+							)
 						);
 						?>
 					</span>
@@ -431,6 +399,17 @@ $bn_active = did_action( 'buddynext_loaded' );
 	 */
 	do_action( 'jetonomy_sidebar_before_popular_tags', $space ?? null );
 	?>
+	<?php
+	/**
+	 * Filters whether the sidebar renders the Popular tags card.
+	 *
+	 * @since 1.4.5
+	 *
+	 * @param bool        $show  Whether to render the card.
+	 * @param object|null $space Current space, or null outside a space.
+	 * @return bool Whether to render the card.
+	 */
+	?>
 	<?php if ( apply_filters( 'jetonomy_show_sidebar_popular_tags', true, $space ?? null ) ) : ?>
 		<?php if ( ! empty( $popular_tags ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card' ); ?>">
@@ -446,7 +425,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 				<?php foreach ( $popular_tags as $tag ) : ?>
 					<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">
 						<?php echo esc_html( $tag->name ); ?>
-						<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
+						<span class="jt-tag-count"><?php echo (int) $jt_tag_counts[ (int) $tag->id ]; ?></span>
 					</a>
 				<?php endforeach; ?>
 			</div>

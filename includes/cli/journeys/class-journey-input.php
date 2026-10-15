@@ -52,7 +52,7 @@ final class Journey_Input {
 		 * @param array<int,string>   $allowed The keys the journey accepts.
 		 */
 		if ( ! apply_filters( 'jetonomy_journey_strict_input', true, $input, $allowed ) ) {
-			return [];
+			return array();
 		}
 
 		return array_values( array_diff( array_keys( $input ), $allowed ) );

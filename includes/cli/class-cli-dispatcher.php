@@ -31,7 +31,7 @@ final class CLI_Dispatcher {
 	 *
 	 * @var array<string,class-string>
 	 */
-	private const COMMANDS = [
+	private const COMMANDS = array(
 		'post'         => Commands\Post_Command::class,
 		'reply'        => Commands\Reply_Command::class,
 		'vote'         => Commands\Vote_Command::class,
@@ -47,7 +47,7 @@ final class CLI_Dispatcher {
 		'privacy'      => Commands\Privacy_Command::class,
 		'content'      => Commands\Content_Command::class,
 		'scenario'     => Commands\Scenario_Command::class,
-	];
+	);
 
 	public static function register(): void {
 		if ( ! defined( 'WP_CLI' ) || ! \WP_CLI ) {

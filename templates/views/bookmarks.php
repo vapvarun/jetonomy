@@ -34,7 +34,7 @@ $bookmarks = \Jetonomy\Models\Bookmark::list_by_user( $user_id, $per_page, $offs
 
 // has_more compares the real total against what is shown — never count( $bookmarks ),
 // which showed a phantom "Load More" when the bookmark count was an exact multiple
-// of $per_page (Basecamp).
+// of $per_page.
 $total    = \Jetonomy\Models\Bookmark::count_by_user( $user_id );
 $has_more = ( $page * $per_page ) < $total;
 
@@ -63,13 +63,13 @@ $crumbs = array(
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'      => 'bookmark',
 					/* translators: %s: plural topic label. */
 					'message'   => sprintf( __( "You haven't bookmarked anything yet. Bookmark %s to find them here later.", 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 					'cta_label' => __( 'Browse the community', 'jetonomy' ),
 					'cta_url'   => $base . '/',
-				]
+				)
 			);
 			?>
 		<?php else : ?>

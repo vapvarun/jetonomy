@@ -45,10 +45,9 @@ abstract class Model {
 	 * Post/Reply create+update call this so EVERY writer - REST, wp-admin
 	 * AJAX, CLI journeys, Abilities, the importers, Pro reply-by-email -
 	 * shares one normalize+kses choke point instead of each remembering both
-	 * halves (Basecamp 10138808747: several remembered only the kses half,
-	 * so contenteditable div soup persisted through them). Also derives the
-	 * FULLTEXT `content_plain` copy when the writer did not supply one, so a
-	 * forgetful writer can no longer create content that search cannot find.
+	 * halves. Also derives the FULLTEXT `content_plain` copy when the writer did
+	 * not supply one, so a forgetful writer cannot create content that search
+	 * cannot find.
 	 *
 	 * @param array $data Column payload about to be written.
 	 * @return array Payload with content sanitized (and content_plain filled).
@@ -83,18 +82,18 @@ abstract class Model {
 	 * @return bool False only on a database error.
 	 */
 	public static function update( int $id, array $data ): bool|\WP_Error {
-		return false !== static::db()->update( static::table(), $data, [ 'id' => $id ] );
+		return false !== static::db()->update( static::table(), $data, array( 'id' => $id ) );
 	}
 
 	public static function delete( int $id ): bool|\WP_Error {
-		return false !== static::db()->delete( static::table(), [ 'id' => $id ] );
+		return false !== static::db()->delete( static::table(), array( 'id' => $id ) );
 	}
 
-	public static function count( array $where = [] ): int {
+	public static function count( array $where = array() ): int {
 		$sql = 'SELECT COUNT(*) FROM ' . static::table();
 		if ( ! empty( $where ) ) {
-			$clauses = [];
-			$values  = [];
+			$clauses = array();
+			$values  = array();
 			foreach ( $where as $col => $val ) {
 				$clauses[] = "`{$col}` = %s";
 				$values[]  = $val;

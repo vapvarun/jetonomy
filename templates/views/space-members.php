@@ -14,13 +14,13 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -33,18 +33,26 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 	status_header( 403 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'    => 'lock',
-			/* translators: 1: singular member label; 2: plural member label. */
-			'message' => sprintf( __( 'You need to be a %1$s of this space to see its %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+			/* translators: 1: singular member label; 2: singular space label; 3: plural member label. */
+			'message' => sprintf( __( 'You need to join this %1$s to see its %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			'tone'    => 'forbidden',
-		]
+		)
 	);
 	return;
 }
 
 // Pagination. 25/page is readable on desktop, fits mobile, keeps the
 // COUNT(*) query trivial against the new space_role_joined index.
+/**
+ * Filters the number of members per page on a space's member list.
+ *
+ * @since 1.4.4
+ *
+ * @param int $per_page Members per page. Default 25.
+ * @return int Members per page.
+ */
 $jt_members_per_page = (int) apply_filters( 'jetonomy_space_members_per_page', 25 );
 $jt_members_paged    = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $jt_members_total    = \Jetonomy\Models\SpaceMember::count_by_space( (int) $space->id );
@@ -55,7 +63,7 @@ if ( $jt_members_paged > $jt_members_pages ) {
 $jt_members_offset = ( $jt_members_paged - 1 ) * $jt_members_per_page;
 $members           = $jt_members_total > 0
 	? \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id, $jt_members_per_page, $jt_members_offset )
-	: [];
+	: array();
 
 // Batch-fetch WP_User + UserProfile for the page's members up front
 // so the render loop reads from in-memory maps instead of firing two
@@ -82,8 +90,16 @@ $viewer_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( 
 // (mirrors the wp-admin Join Requests tab). Capped to keep the panel and its
 // COUNT cheap on approval-gated spaces with a large backlog; the wp-admin tab
 // remains the full-history surface.
-$jt_pending_requests = [];
-$jt_pending_cap      = (int) apply_filters( 'jetonomy_space_pending_requests_shown', 50 );
+$jt_pending_requests = array();
+/**
+ * Filters the maximum number of pending join requests listed on a space's member page.
+ *
+ * @since 1.5.0
+ *
+ * @param int $cap Maximum requests shown. Default 50.
+ * @return int Maximum requests shown.
+ */
+$jt_pending_cap = (int) apply_filters( 'jetonomy_space_pending_requests_shown', 50 );
 if ( $viewer_is_priv ) {
 	$jt_pending_all      = \Jetonomy\Models\JoinRequest::list_pending_for_space( (int) $space->id );
 	$jt_pending_total    = count( $jt_pending_all );
@@ -100,68 +116,49 @@ if ( $viewer_is_priv ) {
 // forms, and a hidden space is forced onto the `invite` join policy
 // (Space::save). Without this panel an owner could create a hidden space from
 // the front-end and have no way to invite anyone into it without wp-admin.
-$jt_invites = [];
+$jt_invites = array();
 if ( $viewer_is_sadm ) {
 	$jt_invites = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id );
 }
 
-$crumbs = [];
+$crumbs = array();
 if ( $category ) {
-	$crumbs[] = [
+	$crumbs[] = array(
 		'label' => $category->name,
 		'url'   => '',
-	];
+	);
 }
-$crumbs[] = [
+$crumbs[] = array(
 	'label' => $space->title,
 	'url'   => \Jetonomy\route_url( 'space', $space->slug ),
-];
-$crumbs[] = [
+);
+$crumbs[] = array(
 	'label' => \Jetonomy\jetonomy_label( 'member', true ),
 	'url'   => '',
-];
+);
 
-$role_labels = [
+$role_labels = array(
 	'viewer'    => __( 'Viewer', 'jetonomy' ),
-	'member'    => __( 'Member', 'jetonomy' ),
+	'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
 	'moderator' => __( 'Moderator', 'jetonomy' ),
 	'admin'     => __( 'Admin', 'jetonomy' ),
-];
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
 <div class="jt-two-col">
 		<main>
 			<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
-			<div class="jt-cat-page-row">
-				<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
-				<div>
-					<?php
-					// Every space sub-page (Members / Moderation / Roadmap) uses the
-					// same header: the space title alone as the h1, the section's
-					// status line as the subtitle. The section name is already the
-					// last breadcrumb, so compositing it into the h1 only produced
-					// three different separators across the three pages.
-					?>
-					<h1 class="jt-page-title jt-page-title-sm">
-						<?php echo esc_html( $space->title ); ?>
-					</h1>
-					<p class="jt-page-subtitle">
-						<?php
-						echo esc_html( \Jetonomy\count_label( (int) $space->member_count, 'member' ) );
-						?>
-					</p>
-				</div>
-			</div>
+			<?php \Jetonomy\Template_Loader::partial( 'space-header', array( 'space' => $space ) ); ?>
 
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'space-tabs',
-				[
+				array(
 					'space'     => $space,
 					'space_url' => \Jetonomy\route_url( 'space', $space->slug ),
 					'active'    => 'members',
-				]
+				)
 			);
 			?>
 
@@ -176,7 +173,7 @@ $role_labels = [
 							<?php
 							$jt_req_uid  = (int) $jt_req->user_id;
 							$jt_req_user = get_userdata( $jt_req_uid );
-							$jt_req_name = $jt_req_user ? \Jetonomy\user_display_name( $jt_req_user ) : sprintf( /* translators: %s: singular member label. */ __( 'Unknown %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
+							$jt_req_name = $jt_req_user ? \Jetonomy\user_display_name( $jt_req_user ) : sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Unknown %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
 							?>
 							<div class="jt-member-item jt-pending-item" data-jt-pending-row data-request-id="<?php echo absint( $jt_req->id ); ?>">
 								<?php echo \Jetonomy\get_user_link( $jt_req_uid, 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -341,17 +338,17 @@ $role_labels = [
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'    => 'empty-members',
-						'message' => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
-					]
+						'message' => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+					)
 				);
 				?>
 			<?php else : ?>
 				<?php
-				// WP3.7: fill the profile:{id} keys once for the page — the
+				// Fill the profile:{id} keys once for the page — the
 				// loop below reads UserProfile::find_by_user per row, which
-				// was ~50 cold queries per roster page.
+				// would cost ~50 cold queries per roster page.
 				\Jetonomy\Models\UserProfile::prime(
 					array_map( static fn( $m ) => (int) $m->user_id, $members )
 				);
@@ -494,5 +491,5 @@ $role_labels = [
 			<?php endif; ?>
 		</main>
 
-		<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => $space ] ); ?>
+		<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => $space ) ); ?>
 	</div>

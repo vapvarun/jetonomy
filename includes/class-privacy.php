@@ -12,9 +12,9 @@ defined( 'ABSPATH' ) || exit;
 class Privacy {
 
 	public function __construct() {
-		add_filter( 'wp_privacy_personal_data_exporters', [ $this, 'register_exporters' ] );
-		add_filter( 'wp_privacy_personal_data_erasers', [ $this, 'register_erasers' ] );
-		add_action( 'delete_user', [ $this, 'on_user_delete' ] );
+		add_filter( 'wp_privacy_personal_data_exporters', array( $this, 'register_exporters' ) );
+		add_filter( 'wp_privacy_personal_data_erasers', array( $this, 'register_erasers' ) );
+		add_action( 'delete_user', array( $this, 'on_user_delete' ) );
 
 		// Multisite: `wp_delete_user()` removes the account from the ENTIRE
 		// network, but a network admin more commonly just removes a member
@@ -28,8 +28,8 @@ class Privacy {
 		// three hooks. `remove_user_from_blog()` fires from inside a
 		// switch_to_blog() call, so $wpdb->prefix is already this site's when
 		// this listener runs.
-		add_action( 'remove_user_from_blog', [ $this, 'on_user_delete' ] );
-		add_action( 'wpmu_delete_user', [ $this, 'on_user_delete' ] );
+		add_action( 'remove_user_from_blog', array( $this, 'on_user_delete' ) );
+		add_action( 'wpmu_delete_user', array( $this, 'on_user_delete' ) );
 
 		// Remediation for accounts deleted BEFORE the above listeners existed.
 		// Those three hooks only help users deleted from now on; every account
@@ -37,9 +37,9 @@ class Privacy {
 		// still in the database. Privacy_Backfill finds those orphans and fires
 		// this action per id, routing them into the very same body a live
 		// deletion runs — so the cleanup can never drift from the fix.
-		add_action( 'jetonomy_purge_orphan_user', [ $this, 'on_user_delete' ] );
+		add_action( 'jetonomy_purge_orphan_user', array( $this, 'on_user_delete' ) );
 
-		add_action( 'admin_init', [ $this, 'add_privacy_policy_content' ] );
+		add_action( 'admin_init', array( $this, 'add_privacy_policy_content' ) );
 	}
 
 	/**
@@ -50,11 +50,11 @@ class Privacy {
 		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
 			return;
 		}
-		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'Jetonomy sets no cookies on community pages. It counts topic views with the storage described below.', 'jetonomy' ) . '</p>'
+		$content = '<p class="privacy-policy-tutorial">' . esc_html( sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'Jetonomy sets no cookies on community pages. It counts %s views with the storage described below.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) . '</p>'
 			. '<p><strong class="privacy-policy-tutorial">' . esc_html__( 'Suggested text:', 'jetonomy' ) . '</strong> '
-			. esc_html__( 'When you open a discussion topic in our community, your browser notes the topic ID in session storage, which is cleared when you close the tab, so reloading a topic does not count as a new view. To stop a view from being counted twice, our server also keeps a one-way hash of your IP address and the topic ID for 30 minutes. Neither is used for tracking or advertising.', 'jetonomy' )
+			. esc_html( sprintf( /* translators: 1: the singular Topic label, lowercase. */ __( 'When you open a discussion %1$s in our community, your browser notes the %1$s ID in session storage, which is cleared when you close the tab, so reloading the %1$s does not count as a new view. To stop a view from being counted twice, our server also keeps a one-way hash of your IP address and the %1$s ID for 30 minutes. Neither is used for tracking or advertising.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) )
 			. '</p><p>'
-			. esc_html__( 'If you have an account, the topics, replies, votes, reactions, follows and profile details you add to the community are stored with your account. You can request an export or erasure of this data.', 'jetonomy' )
+			. esc_html( sprintf( /* translators: 1: the plural Topic label, lowercase, 2: the plural Reply label, lowercase. */ __( 'If you have an account, the %1$s, %2$s, votes, reactions, follows and profile details you add to the community are stored with your account. You can request an export or erasure of this data.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) )
 			. '</p>';
 		wp_add_privacy_policy_content( 'Jetonomy', wp_kses_post( $content ) );
 	}
@@ -62,11 +62,10 @@ class Privacy {
 	/**
 	 * Hand every space owned by a departing user to the site admin.
 	 *
-	 * Deleting a member's WP account used to strand their space: `spaces` is
-	 * anonymized (author_id -> 0) while `space_members` is purged, and space
-	 * privilege comes from `space_members.role`, not `spaces.author_id`. If the
-	 * departing owner was the only space admin, the space kept running with its
-	 * members and content but nobody could manage it.
+	 * Without this, deleting a member's WP account strands their space: `spaces` is
+	 * anonymized (author_id -> 0) while `space_members` is purged, and space privilege
+	 * comes from `space_members.role`, not `spaces.author_id`. If the departing owner was
+	 * the only space admin, the space keeps running but nobody can manage it.
 	 *
 	 * The successor is deliberately simple (decision, Varun 2026-08-17): the
 	 * lowest-id site administrator. On the overwhelming majority of installs the
@@ -97,9 +96,6 @@ class Privacy {
 			return;
 		}
 
-		// Resolved once: it is the same for every space this user owned.
-		$site_admin = \Jetonomy\Models\Space::fallback_owner( $user_id );
-
 		foreach ( $space_ids as $space_id ) {
 			$space_id = (int) $space_id;
 
@@ -107,26 +103,26 @@ class Privacy {
 			// another space admin survives, the space is still fully manageable
 			// by them and nothing needs rescuing - archiving it would take a
 			// healthy space read-only for its whole membership because one
-			// unrelated member closed their account (Basecamp 10119343043, QA
-			// case B). Hand over attribution, leave the space running.
+			// unrelated member closed their account.
+			// Hand over attribution, leave the space running.
 			// Same successor rule the explicit delete flow uses, so the two
 			// cannot disagree about who inherits a space. Only step 1 of it
 			// here: whether a space admin survives decides archive vs keep,
 			// and a site administrator who is also a space admin is exactly
-			// such a survivor (Basecamp 10344393613).
+			// such a survivor.
 			$heir = \Jetonomy\Models\Space::surviving_admin( $space_id, $user_id );
 
 			if ( $heir ) {
 				// NOT archived: another admin is still running this space, so
 				// nothing is stranded and it keeps working.
-				\Jetonomy\Models\Space::hand_over( $space_id, $heir, $user_id, false );
+				self::hand_over_or_assign( $space_id, $heir, false );
 				continue;
 			}
 
 			// Genuinely stranded: no admin remains. Fall back to the site admin
 			// and park the space, so an owner decides what happens to it rather
 			// than it quietly running with nobody able to manage it.
-			$successor = $site_admin;
+			$successor = \Jetonomy\Models\Space::fallback_owner( $user_id, $space_id );
 			if ( ! $successor ) {
 				// No other administrator exists at all. Leave author_id alone
 				// rather than point it at nobody - a wrong owner is worse than a
@@ -138,7 +134,32 @@ class Privacy {
 			// decide what happens to it rather than it quietly continuing with
 			// no one able to manage it. hand_over() writes BOTH author_id and
 			// the admin row; attribution without the row leaves it unmanageable.
-			\Jetonomy\Models\Space::hand_over( $space_id, $successor, $user_id, true );
+			self::hand_over_or_assign( $space_id, $successor, true );
+		}
+	}
+
+	/**
+	 * Hand a leaver's space over; if the hand-over is refused, still record the
+	 * new owner.
+	 *
+	 * The hand-over adds the successor as a space admin first, and a join veto (a
+	 * seat limit, a membership rule) makes it give up before changing the
+	 * owner. The leaver's id is about to be cleared, so giving up would leave
+	 * the space with no owner at all; the successor is a surviving space admin
+	 * or a site administrator, who can manage it either way.
+	 *
+	 * @param int  $space_id  Space ID.
+	 * @param int  $successor New owner.
+	 * @param bool $archive   Archive the space (nobody is left running it).
+	 */
+	private static function hand_over_or_assign( int $space_id, int $successor, bool $archive ): void {
+		$handed = \Jetonomy\Models\Space::hand_over( $space_id, $successor, $archive );
+		if ( is_wp_error( $handed ) && 'jetonomy_transfer_noop' !== $handed->get_error_code() ) {
+			$fields = array( 'author_id' => $successor );
+			if ( $archive ) {
+				$fields['status'] = 'archived';
+			}
+			\Jetonomy\Models\Space::update( $space_id, $fields );
 		}
 	}
 
@@ -155,82 +176,82 @@ class Privacy {
 	 * @return array<int,array{table:string,column:string,where:string}>
 	 */
 	public static function orphan_columns(): array {
-		$columns = [];
+		$columns = array();
 
 		foreach ( self::ANON_TABLES as $t ) {
-			$columns[] = [
+			$columns[] = array(
 				'table'  => table( $t ),
 				'column' => 'author_id',
 				'where'  => '',
-			];
+			);
 		}
 		foreach ( self::PURGE_TABLES as [ $t, $col ] ) {
-			$columns[] = [
+			$columns[] = array(
 				'table'  => table( $t ),
 				'column' => $col,
 				'where'  => '',
-			];
+			);
 		}
 		foreach ( self::NULLIFY_TABLES as [ $t, $col ] ) {
-			$columns[] = [
+			$columns[] = array(
 				'table'  => table( $t ),
 				'column' => $col,
 				'where'  => '',
-			];
+			);
 		}
 
 		// blocked_users carries a SECOND user axis: PURGE_TABLES covers the
 		// leaver's own block list (blocker_id), while on_user_delete() also
 		// clears other members' blocks pointing AT them (blocked_id). Both are
 		// orphanable, so both are scanned.
-		$columns[] = [
+		$columns[] = array(
 			'table'  => table( 'blocked_users' ),
 			'column' => 'blocked_id',
 			'where'  => '',
-		];
+		);
 
 		return $columns;
 	}
 
 	public function register_exporters( array $exporters ): array {
-		$exporters['jetonomy-profile'] = [
+		$exporters['jetonomy-profile'] = array(
 			'exporter_friendly_name' => __( 'Jetonomy Profile', 'jetonomy' ),
-			'callback'               => [ $this, 'export_profile' ],
-		];
-		$exporters['jetonomy-posts']   = [
+			'callback'               => array( $this, 'export_profile' ),
+		);
+		$exporters['jetonomy-posts']   = array(
 			'exporter_friendly_name' => __( 'Jetonomy Posts', 'jetonomy' ),
-			'callback'               => [ $this, 'export_posts' ],
-		];
-		$exporters['jetonomy-replies'] = [
-			'exporter_friendly_name' => __( 'Jetonomy Replies', 'jetonomy' ),
-			'callback'               => [ $this, 'export_replies' ],
-		];
-		// Personal data that is erased but was previously not exported (GDPR
-		// export completeness). All paginated via the shared export_table() helper.
-		$exporters['jetonomy-bookmarks']     = [
+			'callback'               => array( $this, 'export_posts' ),
+		);
+		$exporters['jetonomy-replies'] = array(
+			'exporter_friendly_name' => sprintf( /* translators: %s: the plural Reply label. */ __( 'Jetonomy %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ),
+			'callback'               => array( $this, 'export_replies' ),
+		);
+		// Personal data that is erased is exported too (GDPR export completeness).
+		// All paginated via the shared export_table() helper.
+		$exporters['jetonomy-bookmarks']     = array(
 			'exporter_friendly_name' => __( 'Jetonomy Bookmarks', 'jetonomy' ),
-			'callback'               => [ $this, 'export_bookmarks' ],
-		];
-		$exporters['jetonomy-votes']         = [
+			'callback'               => array( $this, 'export_bookmarks' ),
+		);
+		$exporters['jetonomy-votes']         = array(
 			'exporter_friendly_name' => __( 'Jetonomy Votes', 'jetonomy' ),
-			'callback'               => [ $this, 'export_votes' ],
-		];
-		$exporters['jetonomy-subscriptions'] = [
+			'callback'               => array( $this, 'export_votes' ),
+		);
+		$exporters['jetonomy-subscriptions'] = array(
 			'exporter_friendly_name' => __( 'Jetonomy Subscriptions', 'jetonomy' ),
-			'callback'               => [ $this, 'export_subscriptions' ],
-		];
-		$exporters['jetonomy-notifications'] = [
+			'callback'               => array( $this, 'export_subscriptions' ),
+		);
+		$exporters['jetonomy-notifications'] = array(
 			'exporter_friendly_name' => __( 'Jetonomy Notifications', 'jetonomy' ),
-			'callback'               => [ $this, 'export_notifications' ],
-		];
-		$exporters['jetonomy-activity']      = [
+			'callback'               => array( $this, 'export_notifications' ),
+		);
+		$exporters['jetonomy-activity']      = array(
 			'exporter_friendly_name' => __( 'Jetonomy Activity Log', 'jetonomy' ),
-			'callback'               => [ $this, 'export_activity' ],
-		];
-		$exporters['jetonomy-blocks']        = [
+			'callback'               => array( $this, 'export_activity' ),
+		);
+		$exporters['jetonomy-blocks']        = array(
 			'exporter_friendly_name' => __( 'Jetonomy Blocked Users', 'jetonomy' ),
-			'callback'               => [ $this, 'export_blocks' ],
-		];
+			'callback'               => array( $this, 'export_blocks' ),
+		);
 		return $exporters;
 	}
 
@@ -250,10 +271,10 @@ class Privacy {
 	private function export_table( string $email, int $page, string $group_id, string $label, string $table_key, string $user_col, array $fields, string $key_col = 'id' ): array {
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
-			return [
-				'data' => [],
+			return array(
+				'data' => array(),
 				'done' => true,
-			];
+			);
 		}
 
 		global $wpdb;
@@ -263,7 +284,7 @@ class Privacy {
 		$user_col = sanitize_key( $user_col );
 		// $key_col drives pagination + the item id ('id' for most tables; some
 		// like jt_bookmarks have a composite PK and no single id column).
-		$cols = implode( ', ', array_unique( array_map( 'sanitize_key', array_merge( [ $key_col ], array_keys( $fields ) ) ) ) );
+		$cols = implode( ', ', array_unique( array_map( 'sanitize_key', array_merge( array( $key_col ), array_keys( $fields ) ) ) ) );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(
@@ -275,27 +296,27 @@ class Privacy {
 			)
 		);
 
-		$data = [];
+		$data = array();
 		foreach ( (array) $rows as $row ) {
-			$items = [];
+			$items = array();
 			foreach ( $fields as $col => $lbl ) {
-				$items[] = [
+				$items[] = array(
 					'name'  => $lbl,
 					'value' => (string) ( $row->$col ?? '' ),
-				];
+				);
 			}
-			$data[] = [
+			$data[] = array(
 				'group_id'    => $group_id,
 				'group_label' => $label,
 				'item_id'     => $group_id . '-' . (string) ( $row->$key_col ?? '' ),
 				'data'        => $items,
-			];
+			);
 		}
 
-		return [
+		return array(
 			'data' => $data,
 			'done' => count( $rows ) < $limit,
-		];
+		);
 	}
 
 	public function export_bookmarks( string $email, int $page = 1 ): array {
@@ -306,10 +327,10 @@ class Privacy {
 			__( 'Jetonomy Bookmarks', 'jetonomy' ),
 			'bookmarks',
 			'user_id',
-			[
+			array(
 				'post_id'    => __( 'Post ID', 'jetonomy' ),
 				'created_at' => __( 'Bookmarked At', 'jetonomy' ),
-			],
+			),
 			'post_id'
 		);
 	}
@@ -322,11 +343,11 @@ class Privacy {
 			__( 'Jetonomy Votes', 'jetonomy' ),
 			'votes',
 			'user_id',
-			[
+			array(
 				'object_id'  => __( 'On (object ID)', 'jetonomy' ),
 				'value'      => __( 'Vote', 'jetonomy' ),
 				'created_at' => __( 'Voted At', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -338,10 +359,10 @@ class Privacy {
 			__( 'Jetonomy Subscriptions', 'jetonomy' ),
 			'subscriptions',
 			'user_id',
-			[
+			array(
 				'object_id'  => __( 'Subscribed To (object ID)', 'jetonomy' ),
 				'created_at' => __( 'Since', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -353,11 +374,11 @@ class Privacy {
 			__( 'Jetonomy Notifications', 'jetonomy' ),
 			'notifications',
 			'user_id',
-			[
+			array(
 				'type'       => __( 'Type', 'jetonomy' ),
 				'message'    => __( 'Message', 'jetonomy' ),
 				'created_at' => __( 'Received', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -369,12 +390,12 @@ class Privacy {
 			__( 'Jetonomy Activity Log', 'jetonomy' ),
 			'activity_log',
 			'user_id',
-			[
+			array(
 				'action'      => __( 'Action', 'jetonomy' ),
 				'object_type' => __( 'Object Type', 'jetonomy' ),
 				'object_id'   => __( 'Object ID', 'jetonomy' ),
 				'created_at'  => __( 'At', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -386,29 +407,29 @@ class Privacy {
 			__( 'Jetonomy Blocked Users', 'jetonomy' ),
 			'blocked_users',
 			'blocker_id',
-			[
+			array(
 				'blocked_id' => __( 'Blocked User ID', 'jetonomy' ),
 				'created_at' => __( 'Blocked At', 'jetonomy' ),
-			],
+			),
 			'blocked_id'
 		);
 	}
 
 	public function register_erasers( array $erasers ): array {
-		$erasers['jetonomy'] = [
+		$erasers['jetonomy'] = array(
 			'eraser_friendly_name' => __( 'Jetonomy Data', 'jetonomy' ),
-			'callback'             => [ $this, 'erase_data' ],
-		];
+			'callback'             => array( $this, 'erase_data' ),
+		);
 		return $erasers;
 	}
 
 	public function export_profile( string $email, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
-			return [
-				'data' => [],
+			return array(
+				'data' => array(),
 				'done' => true,
-			];
+			);
 		}
 
 		global $wpdb;
@@ -419,57 +440,58 @@ class Privacy {
 			)
 		);
 
-		$data = [];
+		$data = array();
 		if ( $profile ) {
-			$data[] = [
+			$data[] = array(
 				'group_id'    => 'jetonomy-profile',
 				'group_label' => __( 'Jetonomy Profile', 'jetonomy' ),
 				'item_id'     => 'profile-' . $user->ID,
-				'data'        => [
-					[
+				'data'        => array(
+					array(
 						'name'  => __( 'Display Name', 'jetonomy' ),
 						// Read WP's canonical display_name from wp_users (the
 						// authoritative source) rather than the jt_user_profiles
 						// copy, which can be stale.
 						'value' => (string) $user->display_name,
-					],
-					[
+					),
+					array(
 						'name'  => __( 'Bio', 'jetonomy' ),
-						'value' => $profile->bio ?? '',
-					],
-					[
+						// The bio lives in the WordPress profile description since 2.0.2.
+						'value' => (string) get_user_meta( (int) $user->ID, 'description', true ),
+					),
+					array(
 						'name'  => __( 'Trust Level', 'jetonomy' ),
 						'value' => (string) $profile->trust_level,
-					],
-					[
+					),
+					array(
 						'name'  => __( 'Reputation', 'jetonomy' ),
 						'value' => (string) $profile->reputation,
-					],
-					[
+					),
+					array(
 						'name'  => __( 'Post Count', 'jetonomy' ),
 						'value' => (string) $profile->post_count,
-					],
-					[
-						'name'  => __( 'Reply Count', 'jetonomy' ),
+					),
+					array(
+						'name'  => sprintf( /* translators: %s: the singular Reply label. */ __( '%s Count', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 						'value' => (string) $profile->reply_count,
-					],
-				],
-			];
+					),
+				),
+			);
 		}
 
-		return [
+		return array(
 			'data' => $data,
 			'done' => true,
-		];
+		);
 	}
 
 	public function export_posts( string $email, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
-			return [
-				'data' => [],
+			return array(
+				'data' => array(),
 				'done' => true,
-			];
+			);
 		}
 
 		global $wpdb;
@@ -485,42 +507,42 @@ class Privacy {
 			)
 		);
 
-		$data = [];
+		$data = array();
 		foreach ( $posts as $post ) {
-			$data[] = [
+			$data[] = array(
 				'group_id'    => 'jetonomy-posts',
 				'group_label' => __( 'Jetonomy Posts', 'jetonomy' ),
 				'item_id'     => 'post-' . $post->id,
-				'data'        => [
-					[
+				'data'        => array(
+					array(
 						'name'  => __( 'Title', 'jetonomy' ),
 						'value' => $post->title,
-					],
-					[
+					),
+					array(
 						'name'  => __( 'Content', 'jetonomy' ),
 						'value' => $post->content,
-					],
-					[
+					),
+					array(
 						'name'  => __( 'Date', 'jetonomy' ),
 						'value' => $post->created_at,
-					],
-				],
-			];
+					),
+				),
+			);
 		}
 
-		return [
+		return array(
 			'data' => $data,
 			'done' => count( $posts ) < $limit,
-		];
+		);
 	}
 
 	public function export_replies( string $email, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
-			return [
-				'data' => [],
+			return array(
+				'data' => array(),
 				'done' => true,
-			];
+			);
 		}
 
 		global $wpdb;
@@ -536,52 +558,52 @@ class Privacy {
 			)
 		);
 
-		$data = [];
+		$data = array();
 		foreach ( $replies as $reply ) {
-			$data[] = [
+			$data[] = array(
 				'group_id'    => 'jetonomy-replies',
-				'group_label' => __( 'Jetonomy Replies', 'jetonomy' ),
+				'group_label' => sprintf( /* translators: %s: the plural Reply label. */ __( 'Jetonomy %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ),
 				'item_id'     => 'reply-' . $reply->id,
-				'data'        => [
-					[
+				'data'        => array(
+					array(
 						'name'  => __( 'Content', 'jetonomy' ),
 						'value' => $reply->content,
-					],
-					[
+					),
+					array(
 						'name'  => __( 'Date', 'jetonomy' ),
 						'value' => $reply->created_at,
-					],
-				],
-			];
+					),
+				),
+			);
 		}
 
-		return [
+		return array(
 			'data' => $data,
 			'done' => count( $replies ) < $limit,
-		];
+		);
 	}
 
 	/** Authored tables anonymized (author_id -> 0) on both erase + user delete. */
-	private const ANON_TABLES = [ 'posts', 'replies', 'revisions', 'spaces' ];
+	private const ANON_TABLES = array( 'posts', 'replies', 'revisions', 'spaces' );
 
 	/**
 	 * Personal-data tables purged on both the GDPR erase and the WP user-delete
 	 * path — a single [ table, user_column ] list so the two can never drift.
 	 */
-	private const PURGE_TABLES = [
-		[ 'user_profiles', 'user_id' ],
-		[ 'notifications', 'user_id' ],
-		[ 'subscriptions', 'user_id' ],
-		[ 'read_status', 'user_id' ],
-		[ 'space_members', 'user_id' ],
-		[ 'votes', 'user_id' ],
-		[ 'activity_log', 'user_id' ],
-		[ 'restrictions', 'user_id' ],
-		[ 'flags', 'reporter_id' ],
-		[ 'join_requests', 'user_id' ],
-		[ 'bookmarks', 'user_id' ],
-		[ 'blocked_users', 'blocker_id' ],
-	];
+	private const PURGE_TABLES = array(
+		array( 'user_profiles', 'user_id' ),
+		array( 'notifications', 'user_id' ),
+		array( 'subscriptions', 'user_id' ),
+		array( 'read_status', 'user_id' ),
+		array( 'space_members', 'user_id' ),
+		array( 'votes', 'user_id' ),
+		array( 'activity_log', 'user_id' ),
+		array( 'restrictions', 'user_id' ),
+		array( 'flags', 'reporter_id' ),
+		array( 'join_requests', 'user_id' ),
+		array( 'bookmarks', 'user_id' ),
+		array( 'blocked_users', 'blocker_id' ),
+	);
 
 	/**
 	 * Stale creator/actor-pointer columns nullified (set to 0) on BOTH the
@@ -593,29 +615,37 @@ class Privacy {
 	 * jt_notifications.actor_id — kept the leaver as the visible actor on
 	 * other members' notifications indefinitely.
 	 */
-	private const NULLIFY_TABLES = [
-		[ 'posts', 'last_reply_by' ],
-		[ 'posts', 'edited_by' ],
-		[ 'replies', 'edited_by' ],
-		[ 'notifications', 'actor_id' ],
-		[ 'restrictions', 'issued_by' ],
-		[ 'flags', 'resolved_by' ],
-		[ 'join_requests', 'reviewed_by' ],
-		[ 'invite_links', 'created_by' ],
-	];
+	private const NULLIFY_TABLES = array(
+		array( 'posts', 'last_reply_by' ),
+		array( 'posts', 'edited_by' ),
+		array( 'replies', 'edited_by' ),
+		array( 'notifications', 'actor_id' ),
+		array( 'restrictions', 'issued_by' ),
+		array( 'flags', 'resolved_by' ),
+		array( 'join_requests', 'reviewed_by' ),
+		array( 'invite_links', 'created_by' ),
+	);
 
 	public function erase_data( string $email, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
-			return [
+			return array(
 				'items_removed'  => 0,
 				'items_retained' => 0,
-				'messages'       => [],
+				'messages'       => array(),
 				'done'           => true,
-			];
+			);
 		}
 
-		$uid       = $user->ID;
+		$uid = $user->ID;
+		/**
+		 * Filters the number of rows the personal-data eraser removes per request.
+		 *
+		 * @since 1.6.0
+		 *
+		 * @param int $batch_size Rows per batch. Default 1000.
+		 * @return int Rows per batch.
+		 */
 		$batch     = max( 1, (int) apply_filters( 'jetonomy_erase_batch_size', 1000 ) );
 		$state_key = 'jetonomy_erase_' . $uid;
 		$work      = 0; // Rows touched (anonymized or deleted) this page.
@@ -626,16 +656,20 @@ class Privacy {
 		// those tables over several pages, so "capture then recompute" can no
 		// longer happen in a single call).
 		if ( 1 === $page ) {
+			// Spaces go to their successor first, the same rule as account
+			// deletion, or the erase strands them with no admin.
+			$this->transfer_spaces_to_site_admin( $uid );
+
 			// Durable option (not a transient): a transient can be evicted by an
 			// object cache under memory pressure or expire during a long
 			// multi-page erase, which would silently skip the counter recompute
 			// and leave vote_score / member_count drifted. Cleared on completion.
 			update_option(
 				$state_key,
-				[
+				array(
 					'votes'  => $this->collect_vote_objects( $uid ),
 					'spaces' => $this->collect_member_spaces( $uid ),
-				],
+				),
 				false
 			);
 		}
@@ -643,6 +677,9 @@ class Privacy {
 		// Anonymize authored content (kept — preserves community threads and the
 		// denormalized counters since the rows still exist), bounded per table.
 		foreach ( self::ANON_TABLES as $authored ) {
+			if ( 'spaces' === $authored ) {
+				continue; // Ownership is handed over above, never blanked.
+			}
 			$work += $this->batch_anonymize_author( $authored, $uid, $batch );
 		}
 
@@ -666,19 +703,19 @@ class Privacy {
 			$state = get_option( $state_key );
 			if ( is_array( $state ) ) {
 				$this->recompute_counters_after_purge(
-					(array) ( $state['votes'] ?? [] ),
-					(array) ( $state['spaces'] ?? [] )
+					(array) ( $state['votes'] ?? array() ),
+					(array) ( $state['spaces'] ?? array() )
 				);
 			}
 			delete_option( $state_key );
 		}
 
-		return [
+		return array(
 			'items_removed'  => $removed,
 			'items_retained' => 0,
-			'messages'       => $done ? [ __( 'Jetonomy: Posts and replies anonymized. Personal data deleted.', 'jetonomy' ) ] : [],
+			'messages'       => $done ? array( sprintf( /* translators: 1: the plural Topic label, 2: the plural Reply label, lowercase. */ __( 'Jetonomy: %1$s and %2$s anonymized. Personal data deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ) : array(),
 			'done'           => $done,
-		];
+		);
 	}
 
 	/** Anonymize up to $limit authored rows in one table; returns rows affected. */
@@ -752,8 +789,8 @@ class Privacy {
 	private function recompute_counters_after_purge( array $vote_objects, array $space_ids ): void {
 		global $wpdb;
 
-		$post_ids  = [];
-		$reply_ids = [];
+		$post_ids  = array();
+		$reply_ids = array();
 		foreach ( $vote_objects as $vo ) {
 			if ( 'reply' === ( $vo->object_type ?? 'post' ) ) {
 				$reply_ids[] = (int) $vo->object_id;
@@ -782,7 +819,6 @@ class Privacy {
 				// The purge also deleted this user's space_members rows. If they
 				// held admin/moderator, the "Managed by" sidebar card served the
 				// deleted user from priv_members_{sid} for up to its TTL
-				// (caching plan WP0.4).
 				\Jetonomy\Models\SpaceMember::bust_privileged_cache( (int) $sid );
 			}
 		}
@@ -819,15 +855,17 @@ class Privacy {
 		// running with content and members intact and nobody except a
 		// manage_options admin able to change a setting.
 		//
-		// Running first also makes the `spaces` entry in ANON_TABLES a no-op
-		// on this path (no rows still match the departing user), while keeping
-		// it as a backstop for the GDPR erase path.
 		$this->transfer_spaces_to_site_admin( $user_id );
 
 		// Anonymize content (rows kept so threads + denormalized counters stay
-		// intact), using the same shared list as erase_data().
+		// intact), using the same shared list as erase_data(). Spaces are
+		// skipped: any still owned by this user found no successor, and their
+		// author_id is what lets the backfill hand them over later.
 		foreach ( self::ANON_TABLES as $t ) {
-			$wpdb->update( table( $t ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
+			if ( 'spaces' === $t ) {
+				continue;
+			}
+			$wpdb->update( table( $t ), array( 'author_id' => 0 ), array( 'author_id' => $user_id ) );
 		}
 
 		// Capture vote/membership targets before deleting so the denormalized
@@ -838,7 +876,7 @@ class Privacy {
 		// Delete user-specific data (shared PURGE_TABLES list — flags is keyed by
 		// reporter_id in that list, so this stays in sync with the eraser).
 		foreach ( self::PURGE_TABLES as [ $table_key, $user_col ] ) {
-			$wpdb->delete( table( $table_key ), [ $user_col => $user_id ] );
+			$wpdb->delete( table( $table_key ), array( $user_col => $user_id ) );
 		}
 
 		// blocked_users is deleted above by blocker_id (this user's own block
@@ -846,11 +884,11 @@ class Privacy {
 		// users' blocks pointing AT this now-deleted account. KEY blocked_id
 		// exists specifically for this cleanup; without it every other
 		// member's block list accumulates a permanently-dangling row.
-		$wpdb->delete( table( 'blocked_users' ), [ 'blocked_id' => $user_id ] );
+		$wpdb->delete( table( 'blocked_users' ), array( 'blocked_id' => $user_id ) );
 
 		// Nullify stale creator/actor pointers (shared list — see NULLIFY_TABLES).
 		foreach ( self::NULLIFY_TABLES as [ $table_key, $col ] ) {
-			$wpdb->update( table( $table_key ), [ $col => 0 ], [ $col => $user_id ] );
+			$wpdb->update( table( $table_key ), array( $col => 0 ), array( $col => $user_id ) );
 		}
 
 		$this->recompute_counters_after_purge( $vote_objects, $member_spaces );

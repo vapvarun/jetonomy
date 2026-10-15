@@ -39,7 +39,7 @@ final class Notification_Journey {
 	 * value would fall back to the default (`post`) on write and silently
 	 * corrupt the data payload. We validate it up-front instead.
 	 */
-	private const ALLOWED_OBJECT_TYPES = [ 'post', 'reply', 'space', 'badge' ];
+	private const ALLOWED_OBJECT_TYPES = array( 'post', 'reply', 'space', 'badge' );
 
 	/**
 	 * Create a notification row directly via {@see Notification::create()}.
@@ -57,12 +57,12 @@ final class Notification_Journey {
 	public function trigger( array $input ): Journey_Result {
 		$start = microtime( true );
 
-		$missing = $this->require_keys( $input, [ 'type', 'user_id', 'actor_id', 'object_type', 'object_id', 'message' ] );
+		$missing = $this->require_keys( $input, array( 'type', 'user_id', 'actor_id', 'object_type', 'object_id', 'message' ) );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
-		$unknown = Journey_Input::error( $input, [ 'type', 'user_id', 'actor_id', 'object_type', 'object_id', 'message' ] );
+		$unknown = Journey_Input::error( $input, array( 'type', 'user_id', 'actor_id', 'object_type', 'object_id', 'message' ) );
 		if ( '' !== $unknown ) {
 			return Journey_Result::fail( $unknown );
 		}
@@ -83,14 +83,14 @@ final class Notification_Journey {
 		}
 
 		$id = Notification::create(
-			[
+			array(
 				'user_id'     => $user_id,
 				'actor_id'    => (int) $input['actor_id'],
 				'type'        => $type,
 				'object_type' => $object_type,
 				'object_id'   => (int) $input['object_id'],
 				'message'     => (string) $input['message'],
-			]
+			)
 		);
 
 		if ( ! $id ) {
@@ -98,15 +98,15 @@ final class Notification_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'          => (int) $id,
 				'user_id'     => $user_id,
 				'actor_id'    => (int) $input['actor_id'],
 				'type'        => $type,
 				'object_type' => $object_type,
 				'object_id'   => (int) $input['object_id'],
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -132,9 +132,9 @@ final class Notification_Journey {
 		}
 
 		$rows  = Notification::list_for_user( $user_id, $limit, $offset );
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'id'          => (int) $row->id,
 				'user_id'     => (int) $row->user_id,
 				'actor_id'    => (int) $row->actor_id,
@@ -144,15 +144,15 @@ final class Notification_Journey {
 				'message'     => (string) ( $row->message ?? '' ),
 				'is_read'     => (int) $row->is_read,
 				'created_at'  => (string) ( $row->created_at ?? '' ),
-			];
+			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'id', 'user_id', 'actor_id', 'type', 'object_type', 'object_id', 'message', 'is_read', 'created_at' ],
-			],
-			[],
+				'columns' => array( 'id', 'user_id', 'actor_id', 'type', 'object_type', 'object_id', 'message', 'is_read', 'created_at' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -172,11 +172,11 @@ final class Notification_Journey {
 		$count = Notification::unread_count( $user_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id' => $user_id,
 				'unread'  => (int) $count,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -201,12 +201,12 @@ final class Notification_Journey {
 		Notification::mark_read( $notification_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'      => $notification_id,
 				'user_id' => (int) $row->user_id,
 				'is_read' => 1,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -231,11 +231,11 @@ final class Notification_Journey {
 		Notification::mark_all_read( $user_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'user_id'  => $user_id,
 				'affected' => (int) $before,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -267,11 +267,11 @@ final class Notification_Journey {
 		);
 
 		return Journey_Result::ok(
-			[
+			array(
 				'to'   => (string) $user->user_email,
 				'sent' => (bool) $sent,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -284,7 +284,7 @@ final class Notification_Journey {
 	 * @return array<int,string> Missing key names; empty if all present.
 	 */
 	private function require_keys( array $input, array $keys ): array {
-		$missing = [];
+		$missing = array();
 		foreach ( $keys as $key ) {
 			if ( ! isset( $input[ $key ] ) || '' === $input[ $key ] ) {
 				$missing[] = $key;

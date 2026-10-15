@@ -1,6 +1,6 @@
 <?php // phpcs:ignore WordPress.Files.FileName.NotHyphenatedLowercase, WordPress.Files.FileName.InvalidClassFileName
 /**
- * Migration 1.9.2 — query-cost indexes (caching plan WP5.1–5.3).
+ * Migration 1.9.2 — query-cost indexes.
  *
  * Adds the three indexes the query-cost audit found missing:
  *   - jt_posts         : slug (slug) — Post::find_by_slug() full-scanned the

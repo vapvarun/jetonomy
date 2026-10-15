@@ -2,18 +2,18 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "2.0.1"
+        "version": "2.0.2"
     },
     "generated": {
-        "at": "2026-10-06T09:02:22+00:00",
+        "at": "2026-10-15T17:17:57+00:00",
         "manifest_at": "2026-09-22T22:58:00Z",
         "manifest_branch": "2.0.0"
     },
     "categories": {
         "rest": {
             "total": 112,
-            "covered": 47,
-            "uncovered": 65,
+            "covered": 49,
+            "uncovered": 63,
             "skipped": 0,
             "covered_items": [
                 {
@@ -39,6 +39,10 @@
                 {
                     "method": "POST",
                     "route": "/spaces/(?P<id>\\d+)/members"
+                },
+                {
+                    "method": "GET",
+                    "route": "/spaces/(?P<id>\\d+)/privileged-members"
                 },
                 {
                     "method": "GET",
@@ -169,6 +173,10 @@
                     "route": "/subscriptions/(?P<id>\\d+)"
                 },
                 {
+                    "method": "GET",
+                    "route": "/search"
+                },
+                {
                     "method": "POST",
                     "route": "/bookmarks"
                 },
@@ -220,11 +228,6 @@
                     "method": "GET",
                     "route": "/spaces/(?P<id>\\d+)/members",
                     "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/members\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/spaces/(?P<id>\\d+)/privileged-members",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/privileged-members\""
                 },
                 {
                     "method": "PATCH",
@@ -310,11 +313,6 @@
                     "method": "PATCH",
                     "route": "/notifications/(?P<id>\\d+)",
                     "stub_command": "bin/qa-stub-gen.php rest PATCH \"/notifications/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/search",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/search\""
                 },
                 {
                     "method": "GET",
@@ -717,7 +715,7 @@
             "total": 10,
             "covered": 5,
             "uncovered": 5,
-            "skipped": 238,
+            "skipped": 240,
             "covered_items": [
                 {
                     "name": "jetonomy_post_publish_transition",
@@ -879,14 +877,14 @@
     "summary": {
         "categories_checked": 5,
         "items_total": 190,
-        "items_covered": 68,
-        "items_uncovered": 122,
-        "items_skipped": 238,
-        "coverage_percent": 35.799999999999997
+        "items_covered": 70,
+        "items_uncovered": 120,
+        "items_skipped": 240,
+        "coverage_percent": 36.799999999999997
     },
     "drift": {
         "previous_uncovered": 120,
-        "current_uncovered": 122,
-        "delta": 2
+        "current_uncovered": 120,
+        "delta": 0
     }
 }

@@ -18,28 +18,28 @@ class Activity_Tracker {
 
 	public function __construct() {
 		// Post events.
-		add_action( 'jetonomy_after_create_post', [ $this, 'on_post_created' ], 5, 2 );
+		add_action( 'jetonomy_after_create_post', array( $this, 'on_post_created' ), 5, 2 );
 
 		// Reply events.
-		add_action( 'jetonomy_after_create_reply', [ $this, 'on_reply_created' ], 5, 2 );
+		add_action( 'jetonomy_after_create_reply', array( $this, 'on_reply_created' ), 5, 2 );
 
 		// Vote events.
-		add_action( 'jetonomy_after_vote', [ $this, 'on_vote' ], 5, 3 );
+		add_action( 'jetonomy_after_vote', array( $this, 'on_vote' ), 5, 3 );
 
 		// Trust level changes.
-		add_action( 'jetonomy_trust_level_changed', [ $this, 'on_trust_change' ], 5, 3 );
+		add_action( 'jetonomy_trust_level_changed', array( $this, 'on_trust_change' ), 5, 3 );
 
 		// Moderation actions.
-		add_action( 'jetonomy_content_moderated', [ $this, 'on_moderation' ], 5, 4 );
+		add_action( 'jetonomy_content_moderated', array( $this, 'on_moderation' ), 5, 4 );
 
 		// Reputation changes.
-		add_action( 'jetonomy_reputation_changed', [ $this, 'on_reputation' ], 5, 3 );
+		add_action( 'jetonomy_reputation_changed', array( $this, 'on_reputation' ), 5, 4 );
 
 		// Space membership.
-		add_action( 'jetonomy_user_joined_space', [ $this, 'on_space_join' ], 5, 3 );
+		add_action( 'jetonomy_user_joined_space', array( $this, 'on_space_join' ), 5, 3 );
 
 		// Idea roadmap status changes (Ideas spaces only).
-		add_action( 'jetonomy_idea_status_changed', [ $this, 'on_idea_status_changed' ], 5, 4 );
+		add_action( 'jetonomy_idea_status_changed', array( $this, 'on_idea_status_changed' ), 5, 5 );
 	}
 
 	/**
@@ -56,8 +56,15 @@ class Activity_Tracker {
 			return;
 		}
 
-		ActivityLog::log( $author, 'created_post', 'post', $post_id, [ 'space_id' => $space_id ] );
-		\Jetonomy\Trust\Reputation::award( $author, 'post_created' );
+		ActivityLog::log( $author, 'created_post', 'post', $post_id, array( 'space_id' => $space_id ) );
+		\Jetonomy\Trust\Reputation::award(
+			$author,
+			'post_created',
+			array(
+				'object_type' => 'post',
+				'object_id'   => $post_id,
+			)
+		);
 	}
 
 	/**
@@ -70,8 +77,15 @@ class Activity_Tracker {
 			return;
 		}
 
-		ActivityLog::log( $author, 'created_reply', 'reply', $reply_id, [ 'post_id' => $post_id ] );
-		\Jetonomy\Trust\Reputation::award( $author, 'reply_created' );
+		ActivityLog::log( $author, 'created_reply', 'reply', $reply_id, array( 'post_id' => $post_id ) );
+		\Jetonomy\Trust\Reputation::award(
+			$author,
+			'reply_created',
+			array(
+				'object_type' => 'reply',
+				'object_id'   => $reply_id,
+			)
+		);
 	}
 
 	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {
@@ -84,10 +98,10 @@ class Activity_Tracker {
 			'trust_level_changed',
 			'user',
 			$user_id,
-			[
+			array(
 				'old' => $old_level,
 				'new' => $new_level,
-			]
+			)
 		);
 	}
 
@@ -95,16 +109,27 @@ class Activity_Tracker {
 		ActivityLog::log( $moderator_id, 'moderated_' . $action, $object_type, $object_id );
 	}
 
-	public function on_reputation( int $user_id, string $reason, int $delta ): void {
+	/**
+	 * Log a reputation change against the content that caused it when there is
+	 * one, so the Activity Log, Dashboard and exports mask an anonymous author's
+	 * reputation row the same way as the content row beside it.
+	 *
+	 * @param int    $user_id Member whose reputation changed.
+	 * @param string $reason  Action key.
+	 * @param int    $delta   Points applied.
+	 * @param array  $context Source: object_type ('post' or 'reply') and object_id.
+	 */
+	public function on_reputation( int $user_id, string $reason, int $delta, array $context = array() ): void {
+		$source = in_array( $context['object_type'] ?? '', array( 'post', 'reply' ), true ) && ! empty( $context['object_id'] );
 		ActivityLog::log(
 			$user_id,
 			'reputation_changed',
-			'user',
-			$user_id,
-			[
+			$source ? (string) $context['object_type'] : 'user',
+			$source ? (int) $context['object_id'] : $user_id,
+			array(
 				'delta'  => $delta,
 				'reason' => $reason,
-			]
+			)
 		);
 	}
 
@@ -114,9 +139,9 @@ class Activity_Tracker {
 			'joined_space',
 			'space',
 			$space_id,
-			[
+			array(
 				'role' => $role,
-			]
+			)
 		);
 	}
 
@@ -130,7 +155,7 @@ class Activity_Tracker {
 	 * @param string $old_status The previous idea_status value (or '').
 	 * @param int    $actor_id   Moderator who triggered the change.
 	 */
-	public function on_idea_status_changed( int $post_id, string $new_status, string $old_status, int $actor_id ): void {
+	public function on_idea_status_changed( int $post_id, string $new_status, string $old_status, int $actor_id, int $author_id = 0 ): void {
 		ActivityLog::log(
 			$actor_id,
 			'idea_status_changed',
@@ -141,5 +166,26 @@ class Activity_Tracker {
 				'new' => $new_status,
 			)
 		);
+
+		// "Idea moved to Planned/Shipped": awarded once when the idea first
+		// joins the roadmap (planned, in progress or shipped), revoked when it
+		// leaves it (declined or cleared). Moves within the roadmap change
+		// nothing. Self-curated ideas earn nothing, as before.
+		$roadmap = array( 'planned', 'in_progress', 'shipped' );
+		$was_on  = in_array( $old_status, $roadmap, true );
+		$is_on   = in_array( $new_status, $roadmap, true );
+		$curated = $author_id > 0 && $author_id !== $actor_id;
+		$context = array(
+			'object_type' => 'post',
+			'object_id'   => $post_id,
+		);
+		// The ledger guards both directions: no second award while one stands,
+		// and a revoke only returns what was actually awarded (self-planned or
+		// pre-2.0.2 ideas were never awarded, so leaving the roadmap costs nothing).
+		if ( $curated && $is_on && ! $was_on ) {
+			\Jetonomy\Trust\Reputation::award_once( $author_id, 'idea_planned', $context );
+		} elseif ( $author_id > 0 && $was_on && ! $is_on ) {
+			\Jetonomy\Trust\Reputation::revoke_awarded( $author_id, 'idea_planned', $context );
+		}
 	}
 }

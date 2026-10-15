@@ -65,6 +65,9 @@ class LeaderboardEligibilityTest extends WP_UnitTestCase {
 
 		global $wpdb;
 		$wpdb->query( 'UPDATE ' . \Jetonomy\table( 'user_profiles' ) . ' SET reputation = 0' ); // phpcs:ignore
+		// The shortcode shares the leaderboard's 5-minute TTL cache (like GET
+		// /leaderboards), so a raw table write is only seen once that expires.
+		\Jetonomy\Cache::delete( 'lb:sc:all:10' );
 		$this->assertStringContainsString( 'jt-shortcode-empty', do_shortcode( '[jetonomy_leaderboard count="10"]' ) );
 	}
 }

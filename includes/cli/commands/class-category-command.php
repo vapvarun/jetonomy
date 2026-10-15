@@ -50,10 +50,10 @@ final class Category_Command extends Base_Command {
 	 *     wp jetonomy category create --name="Sub" --slug=sub --parent=1
 	 */
 	public function create( $args, $assoc ): void {
-		$input = [
+		$input = array(
 			'name' => (string) ( $assoc['name'] ?? '' ),
 			'slug' => (string) ( $assoc['slug'] ?? '' ),
-		];
+		);
 		if ( isset( $assoc['description'] ) ) {
 			$input['description'] = (string) $assoc['description'];
 		}
@@ -103,7 +103,7 @@ final class Category_Command extends Base_Command {
 	 */
 	public function update( $args, $assoc ): void {
 		$id      = (int) ( $args[0] ?? 0 );
-		$changes = [];
+		$changes = array();
 		if ( isset( $assoc['name'] ) ) {
 			$changes['name'] = (string) $assoc['name'];
 		}

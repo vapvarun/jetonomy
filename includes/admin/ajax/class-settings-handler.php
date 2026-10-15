@@ -39,7 +39,8 @@ class Settings_Handler {
 				'url'     => \Jetonomy\route_url( 'post', 'announcements', 'release-notes-discussion' ),
 			),
 			'accepted_answer'       => array(
-				'message' => __( 'Your answer was accepted as the best reply on "How do I enable dark mode?".', 'jetonomy' ),
+				/* translators: %s: reply label, lowercase (e.g. "reply"). */
+				'message' => sprintf( __( 'Your answer was accepted as the best %s on "How do I enable dark mode?".', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				'url'     => \Jetonomy\route_url( 'post', 'help', 'how-do-i-enable-dark-mode' ),
 			),
 			'idea_status_changed'   => array(
@@ -47,7 +48,8 @@ class Settings_Handler {
 				'url'     => \Jetonomy\route_url( 'space-roadmap', 'feature-requests' ),
 			),
 			'new_post_in_sub'       => array(
-				'message' => __( 'A new discussion was posted in a space you follow.', 'jetonomy' ),
+				/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
+				'message' => sprintf( __( 'A new discussion was posted in one of the %s you follow.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'badge_earned'          => array(
@@ -63,7 +65,8 @@ class Settings_Handler {
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
 			'join_request'          => array(
-				'message' => __( 'A member has asked to join one of your spaces.', 'jetonomy' ),
+				/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
+				'message' => sprintf( __( 'Someone has asked to join one of your %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
 			'verification_reminder' => array(
@@ -74,10 +77,10 @@ class Settings_Handler {
 	}
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_test_email', [ $this, 'ajax_test_email' ] );
-		add_action( 'wp_ajax_jetonomy_flush_rules', [ $this, 'ajax_flush_rules' ] );
-		add_action( 'wp_ajax_jetonomy_email_preview', [ $this, 'ajax_email_preview' ] );
-		add_action( 'wp_ajax_jetonomy_email_reset', [ $this, 'ajax_email_reset' ] );
+		add_action( 'wp_ajax_jetonomy_test_email', array( $this, 'ajax_test_email' ) );
+		add_action( 'wp_ajax_jetonomy_flush_rules', array( $this, 'ajax_flush_rules' ) );
+		add_action( 'wp_ajax_jetonomy_email_preview', array( $this, 'ajax_email_preview' ) );
+		add_action( 'wp_ajax_jetonomy_email_reset', array( $this, 'ajax_email_reset' ) );
 	}
 
 	public function ajax_test_email(): void {
@@ -104,10 +107,10 @@ class Settings_Handler {
 
 			if ( $result ) {
 				wp_send_json_success(
-					[
+					array(
 						/* translators: %s: admin email */
 						'message' => sprintf( __( 'Test email sent to %s.', 'jetonomy' ), $admin_email ),
-					]
+					)
 				);
 			}
 			wp_send_json_error( __( 'Failed to send test email. Check your WordPress email configuration.', 'jetonomy' ) );
@@ -140,10 +143,10 @@ class Settings_Handler {
 		);
 
 		wp_send_json_success(
-			[
+			array(
 				/* translators: 1: type label, 2: recipient email */
 				'message' => sprintf( __( 'Preview (%1$s) sent to %2$s.', 'jetonomy' ), $type, $admin_user->user_email ),
-			]
+			)
 		);
 	}
 
@@ -252,6 +255,6 @@ class Settings_Handler {
 		}
 
 		flush_rewrite_rules();
-		wp_send_json_success( [ 'message' => __( 'Rewrite rules flushed.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Rewrite rules flushed.', 'jetonomy' ) ) );
 	}
 }

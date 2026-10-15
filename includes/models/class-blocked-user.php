@@ -39,7 +39,7 @@ class BlockedUser extends Model {
 	 *
 	 * @var array<int,int[]>
 	 */
-	private static array $memo = [];
+	private static array $memo = array();
 
 	/**
 	 * Whether the per-request memo reset has been registered.
@@ -67,7 +67,7 @@ class BlockedUser extends Model {
 			return new WP_Error(
 				'jetonomy_cannot_block_self',
 				__( 'You cannot block yourself.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -75,7 +75,7 @@ class BlockedUser extends Model {
 			return new WP_Error(
 				'jetonomy_not_found',
 				__( 'User not found.', 'jetonomy' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -86,7 +86,7 @@ class BlockedUser extends Model {
 			return new WP_Error(
 				'jetonomy_cannot_block_moderator',
 				__( 'You cannot block a moderator.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -126,10 +126,10 @@ class BlockedUser extends Model {
 
 		$deleted = false !== static::db()->delete(
 			static::table(),
-			[
+			array(
 				'blocker_id' => $blocker_id,
 				'blocked_id' => $blocked_id,
-			]
+			)
 		);
 
 		self::bust_cache( $blocker_id );
@@ -231,7 +231,7 @@ class BlockedUser extends Model {
 	 */
 	public static function blocked_ids( int $viewer_id ): array {
 		if ( $viewer_id <= 0 ) {
-			return [];
+			return array();
 		}
 
 		/*
@@ -254,7 +254,7 @@ class BlockedUser extends Model {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$memo = [];
+					self::$memo = array();
 				}
 			);
 		}
@@ -272,7 +272,7 @@ class BlockedUser extends Model {
 						$viewer_id
 					)
 				);
-				return array_map( 'absint', $rows ?: [] );
+				return array_map( 'absint', $rows ?: array() );
 			},
 			300
 		);
@@ -314,7 +314,7 @@ class BlockedUser extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	public static function count_by_blocker( int $blocker_id ): int {
@@ -351,26 +351,26 @@ class BlockedUser extends Model {
 	public static function exclusion_sql( ?int $viewer_id, string $alias = '', string $column = 'author_id' ): array {
 		$viewer_id = $viewer_id ?? get_current_user_id();
 		if ( $viewer_id <= 0 ) {
-			return [ '', [] ];
+			return array( '', array() );
 		}
 
 		$ids = self::blocked_ids( $viewer_id );
 		if ( empty( $ids ) ) {
-			return [ '', [] ];
+			return array( '', array() );
 		}
 
 		$col = ( '' !== $alias ? $alias . '.' : '' ) . $column;
 
 		if ( count( $ids ) > self::INLINE_CAP ) {
-			return [
+			return array(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $col is built from a fixed alias/column, not user input; the %d placeholder still carries $viewer_id.
 				"{$col} NOT IN (SELECT blocked_id FROM " . static::table() . ' WHERE blocker_id = %d)',
-				[ $viewer_id ],
-			];
+				array( $viewer_id ),
+			);
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint()'d bigint-unsigned PK values from blocked_ids(); inlining (instead of %d placeholders) keeps $params empty so this fragment never shifts the ordinal position of a caller's own prepare() params.
-		return [ "{$col} NOT IN (" . implode( ',', $ids ) . ')', [] ];
+		return array( "{$col} NOT IN (" . implode( ',', $ids ) . ')', array() );
 	}
 
 	/**
@@ -383,7 +383,7 @@ class BlockedUser extends Model {
 		\Jetonomy\Cache::delete( "blocks:{$blocker_id}" );
 		unset( self::$memo[ $blocker_id ] );
 		// The notification counters apply the block exclusion on actor_id,
-		// so a block/unblock changes them for the blocker (plan WP4.7).
+		// so a block/unblock changes them for the blocker.
 		Notification::bust_user_cache( $blocker_id );
 	}
 }

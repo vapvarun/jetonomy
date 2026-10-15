@@ -15,9 +15,9 @@ defined( 'ABSPATH' ) || exit;
 class Nav_Menus {
 
 	public function __construct() {
-		add_action( 'admin_head-nav-menus.php', [ $this, 'add_meta_box' ] );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
-		add_filter( 'wp_setup_nav_menu_item', [ $this, 'resolve_self_profile_item' ] );
+		add_action( 'admin_head-nav-menus.php', array( $this, 'add_meta_box' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_filter( 'wp_setup_nav_menu_item', array( $this, 'resolve_self_profile_item' ) );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Nav_Menus {
 		wp_enqueue_script(
 			'jetonomy-admin-nav-menus',
 			JETONOMY_URL . 'assets/js/admin-nav-menus.js',
-			[ 'jquery' ],
+			array( 'jquery' ),
 			JETONOMY_VERSION,
 			true
 		);
@@ -94,7 +94,7 @@ class Nav_Menus {
 		add_meta_box(
 			'jetonomy-nav-menu',
 			__( 'Community', 'jetonomy' ),
-			[ $this, 'render_meta_box' ],
+			array( $this, 'render_meta_box' ),
 			'nav-menus',
 			'side',
 			'default'
@@ -107,45 +107,45 @@ class Nav_Menus {
 	public function render_meta_box(): void {
 		$base = base_url() . '/';
 
-		$items = [
-			[
+		$items = array(
+			array(
 				'title' => __( 'Community Home', 'jetonomy' ),
 				'url'   => $base,
 				'class' => 'jetonomy-community',
-			],
-			[
+			),
+			array(
 				'title' => __( 'Search', 'jetonomy' ),
 				'url'   => route_url( 'search' ),
 				'class' => 'jetonomy-search',
-			],
-			[
+			),
+			array(
 				'title' => __( 'Leaderboard', 'jetonomy' ),
 				'url'   => route_url( 'leaderboard' ),
 				'class' => 'jetonomy-leaderboard',
-			],
-			[
+			),
+			array(
 				'title' => __( 'Notifications', 'jetonomy' ),
 				'url'   => route_url( 'notifications' ),
 				'class' => 'jetonomy-notifications',
-			],
-			[
+			),
+			array(
 				// Placeholder URL — resolved per-visitor by
 				// resolve_self_profile_item() so the item honours
 				// `jetonomy_profile_url` without baking a user into postmeta.
 				'title' => __( 'My Profile', 'jetonomy' ),
 				'url'   => route_url( 'profile', 'me' ),
 				'class' => 'jetonomy-profile',
-			],
-		];
+			),
+		);
 
 		// Add dynamic spaces
-		$spaces = $this->get_spaces();
+		$spaces = \Jetonomy\Models\Space::list_public_titles();
 		foreach ( $spaces as $space ) {
-			$items[] = [
+			$items[] = array(
 				'title' => $space->title,
 				'url'   => route_url( 'space', $space->slug ),
 				'class' => 'jetonomy-space',
-			];
+			);
 		}
 
 		?>
@@ -205,16 +205,5 @@ class Nav_Menus {
 			</p>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Get all public spaces for the menu.
-	 */
-	private function get_spaces(): array {
-		global $wpdb;
-		$table = table( 'spaces' );
-		return $wpdb->get_results(
-			"SELECT title, slug FROM {$table} WHERE visibility = 'public' AND status = 'active' ORDER BY title ASC LIMIT 50"
-		);
 	}
 }

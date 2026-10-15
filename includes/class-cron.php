@@ -12,17 +12,14 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Notifications\Verification_Reminder;
 use Jetonomy\Trust\Trust_Evaluator;
-use function Jetonomy\table;
 
 class Cron {
-
-	private const AS_GROUP = 'jetonomy';
 
 	/**
 	 * Scheduled-topic publisher. Not recurring: one single action armed at the
 	 * earliest pending published_at and re-armed after every run (background
-	 * jobs standard, pattern 3). The old hourly poll published a topic up to 59
-	 * minutes late and ran on sites with nothing scheduled.
+	 * jobs standard, pattern 3). Publishes on time and costs nothing on sites with
+	 * nothing scheduled.
 	 */
 	public const PUBLISH_HOOK = 'jetonomy_publish_scheduled';
 
@@ -43,7 +40,7 @@ class Cron {
 	 * (WP-Cron only fires on page views — bad for trust evaluation, ban expiry,
 	 * activity pruning, scheduled-post publishing at the scale targets).
 	 */
-	private const RECURRING = [
+	private const RECURRING = array(
 		'jetonomy_trust_evaluation'      => 12 * HOUR_IN_SECONDS,
 		'jetonomy_cleanup_expired'       => HOUR_IN_SECONDS,
 		'jetonomy_prune_activity'        => DAY_IN_SECONDS,
@@ -58,25 +55,25 @@ class Cron {
 		// free (Media_Controller -> Media_Library::tag_upload), so a free-only
 		// site accumulated them forever with nothing to clean up.
 		'jetonomy_cleanup_media'         => DAY_IN_SECONDS,
-	];
+	);
 
 	public function __construct() {
 		// Handler listeners — fire whether scheduled via AS or (legacy) WP-Cron.
-		add_action( 'jetonomy_trust_evaluation', [ $this, 'evaluate_trust_levels' ] );
-		add_action( 'jetonomy_trust_evaluation_batch', [ $this, 'evaluate_trust_batch' ] );
-		add_action( 'jetonomy_cleanup_expired', [ $this, 'cleanup_expired_restrictions' ] );
-		add_action( 'jetonomy_prune_activity', [ $this, 'prune_activity_log' ] );
-		add_action( 'jetonomy_cleanup_notifications', [ $this, 'cleanup_old_notifications' ] );
-		add_action( 'jetonomy_publish_scheduled', [ $this, 'publish_scheduled_posts' ] );
-		add_action( 'jetonomy_verification_reminder', [ Verification_Reminder::class, 'run' ] );
-		add_action( 'jetonomy_reconcile_rosters', [ Membership_Roster_Sync::class, 'reconcile' ] );
-		add_action( 'jetonomy_cleanup_media', [ \Jetonomy\Media_Library::class, 'run_scheduled_cleanup' ] );
+		add_action( 'jetonomy_trust_evaluation', array( $this, 'evaluate_trust_levels' ) );
+		add_action( 'jetonomy_trust_evaluation_batch', array( $this, 'evaluate_trust_batch' ) );
+		add_action( 'jetonomy_cleanup_expired', array( $this, 'cleanup_expired_restrictions' ) );
+		add_action( 'jetonomy_prune_activity', array( $this, 'prune_activity_log' ) );
+		add_action( 'jetonomy_cleanup_notifications', array( $this, 'cleanup_old_notifications' ) );
+		add_action( 'jetonomy_publish_scheduled', array( $this, 'publish_scheduled_posts' ) );
+		add_action( 'jetonomy_verification_reminder', array( Verification_Reminder::class, 'run' ) );
+		add_action( 'jetonomy_reconcile_rosters', array( Membership_Roster_Sync::class, 'reconcile' ) );
+		add_action( 'jetonomy_cleanup_media', array( \Jetonomy\Media_Library::class, 'run_scheduled_cleanup' ) );
 
 		// Self-heal: ensure every recurring action is registered. We hook the
 		// 'action_scheduler_init' action AS fires once its data store is ready
 		// (not 'init', which can run before AS's data store is wired up and
 		// would emit "called incorrectly" notices on every page load).
-		add_action( 'action_scheduler_init', [ self::class, 'ensure_scheduled' ] );
+		add_action( 'action_scheduler_init', array( self::class, 'ensure_scheduled' ) );
 	}
 
 	/**
@@ -97,23 +94,12 @@ class Cron {
 	 * (idempotent — safe to call regardless of which scheduler the install was on).
 	 */
 	public static function unschedule(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			foreach ( array_keys( self::RECURRING ) as $hook ) {
-				as_unschedule_all_actions( $hook, [], self::AS_GROUP );
-			}
-			// Also drop any in-flight trust-sweep batch actions (async, not in
-			// the RECURRING map).
-			as_unschedule_all_actions( 'jetonomy_trust_evaluation_batch', [], self::AS_GROUP );
-			// …and any queued avatar Gravatar-existence checks (async, per-user).
-			as_unschedule_all_actions( 'jetonomy_gravatar_check', [], self::AS_GROUP );
-			as_unschedule_all_actions( self::PUBLISH_HOOK, [], self::AS_GROUP );
+		// The recurring jobs plus the one-off ones: trust-sweep batches, per-member
+		// Gravatar checks and the scheduled-topic publisher.
+		$hooks = array_merge( array_keys( self::RECURRING ), array( 'jetonomy_trust_evaluation_batch', Avatar::CHECK_HOOK, self::PUBLISH_HOOK ) );
+		foreach ( $hooks as $hook ) {
+			Queue::cancel( $hook );
 		}
-		foreach ( array_keys( self::RECURRING ) as $hook ) {
-			wp_clear_scheduled_hook( $hook );
-		}
-		wp_clear_scheduled_hook( 'jetonomy_trust_evaluation_batch' );
-		wp_clear_scheduled_hook( 'jetonomy_gravatar_check' );
-		wp_clear_scheduled_hook( self::PUBLISH_HOOK );
 		delete_option( self::TRUST_CURSOR_OPTION );
 	}
 
@@ -157,12 +143,12 @@ class Cron {
 
 		$now = time();
 		foreach ( self::RECURRING as $hook => $interval ) {
-			if ( as_has_scheduled_action( $hook, [], self::AS_GROUP ) ) {
+			if ( as_has_scheduled_action( $hook, array(), Queue::GROUP ) ) {
 				continue;
 			}
 			// Verification reminder starts +1h so it doesn't compete with everything else at time().
 			$start = ( 'jetonomy_verification_reminder' === $hook ) ? $now + HOUR_IN_SECONDS : $now;
-			as_schedule_recurring_action( $start, $interval, $hook, [], self::AS_GROUP );
+			as_schedule_recurring_action( $start, $interval, $hook, array(), Queue::GROUP );
 		}
 
 		// One-time move off the hourly recurring publisher (2.0.1): drop it
@@ -186,8 +172,8 @@ class Cron {
 		// Action Scheduler's store is not ready before action_scheduler_init;
 		// an early call would silently no-op, so defer it.
 		if ( function_exists( 'as_schedule_single_action' ) && ! did_action( 'action_scheduler_init' ) ) {
-			if ( ! has_action( 'action_scheduler_init', [ self::class, 'arm_scheduled_publish' ] ) ) {
-				add_action( 'action_scheduler_init', [ self::class, 'arm_scheduled_publish' ], 20 );
+			if ( ! has_action( 'action_scheduler_init', array( self::class, 'arm_scheduled_publish' ) ) ) {
+				add_action( 'action_scheduler_init', array( self::class, 'arm_scheduled_publish' ), 20 );
 			}
 			return;
 		}
@@ -195,33 +181,23 @@ class Cron {
 		$next = \Jetonomy\Models\Post::next_scheduled_at();
 		$when = null === $next ? 0 : max( (int) strtotime( $next . ' UTC' ), time() );
 
-		if ( function_exists( 'as_schedule_single_action' ) ) {
-			// Already armed for that instant (e.g. a later schedule was added):
-			// leave it, rather than cancel and re-queue an identical action.
-			if ( $when && as_next_scheduled_action( self::PUBLISH_HOOK, [], self::AS_GROUP ) === $when ) {
-				return;
-			}
-			as_unschedule_all_actions( self::PUBLISH_HOOK, [], self::AS_GROUP );
-			if ( $when ) {
-				as_schedule_single_action( $when, self::PUBLISH_HOOK, [], self::AS_GROUP );
-			}
+		// Already armed for that instant (e.g. a later schedule was added):
+		// leave it, rather than cancel and re-queue an identical action.
+		if ( $when && Queue::next( self::PUBLISH_HOOK ) === $when ) {
 			return;
 		}
-
-		wp_clear_scheduled_hook( self::PUBLISH_HOOK );
+		Queue::cancel( self::PUBLISH_HOOK );
 		if ( $when ) {
-			wp_schedule_single_event( $when, self::PUBLISH_HOOK );
+			Queue::at( $when, self::PUBLISH_HOOK );
 		}
 	}
 
 	/**
 	 * Dispatcher for the trust sweep (runs every 12h).
 	 *
-	 * The old single-query version selected `WHERE trust_level < 4 LIMIT 500`
-	 * with no ORDER BY / cursor, so every run re-processed the same first 500
-	 * rows and anyone past that window was never evaluated. This now resets the
-	 * keyset cursor and kicks off the first async batch; evaluate_trust_batch()
-	 * walks the whole base in bounded slices via Action Scheduler.
+	 * Resets the keyset cursor and kicks off the first async batch;
+	 * evaluate_trust_batch() walks the whole base in bounded slices via Action
+	 * Scheduler, so no user past the first N rows is skipped.
 	 */
 	public function evaluate_trust_levels(): void {
 		update_option( self::TRUST_CURSOR_OPTION, 0, false );
@@ -257,11 +233,7 @@ class Cron {
 	 * fallback). Reuses the plugin's AS group — no new scheduling surface.
 	 */
 	private static function enqueue_trust_batch(): void {
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( 'jetonomy_trust_evaluation_batch', [], self::AS_GROUP );
-		} else {
-			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, 'jetonomy_trust_evaluation_batch' );
-		}
+		Queue::async( 'jetonomy_trust_evaluation_batch', array(), true, MINUTE_IN_SECONDS );
 	}
 
 	/**
@@ -276,53 +248,20 @@ class Cron {
 	 *                                                    processed, promotions made.
 	 */
 	public static function run_trust_batch( int $after, int $limit ): array {
-		global $wpdb;
-		$profiles_t = table( 'user_profiles' );
-		$replies_t  = table( 'replies' );
-		$posts_t    = table( 'posts' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$profiles = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT user_id, post_count, reply_count, reputation, trust_level, created_at
-				 FROM {$profiles_t}
-				 WHERE trust_level < 4 AND user_id > %d
-				 ORDER BY user_id ASC
-				 LIMIT %d",
-				$after,
-				$limit
-			)
-		);
+		$profiles = UserProfile::list_for_trust_batch( $after, $limit );
 
 		if ( empty( $profiles ) ) {
-			return [
+			return array(
 				'last_id'  => $after,
 				'count'    => 0,
 				'promoted' => 0,
-			];
+			);
 		}
 
-		$user_ids        = wp_list_pluck( $profiles, 'user_id' );
-		$id_placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
-
 		// Batch-fetch replies-received for the whole slice (one query, no N+1).
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		$replies_received_rows = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.author_id, COUNT(*) AS cnt
-				 FROM {$replies_t} r
-				 INNER JOIN {$posts_t} p ON r.post_id = p.id
-				 WHERE p.author_id IN ({$id_placeholders})
-				   AND r.author_id != p.author_id
-				   AND r.status = 'publish'
-				 GROUP BY p.author_id",
-				...$user_ids
-			)
-		);
+		$replies_received_rows = \Jetonomy\Models\Reply::count_received_by_authors( array_map( 'intval', wp_list_pluck( $profiles, 'user_id' ) ) );
 
-		$replies_received_map = [];
+		$replies_received_map = array();
 		foreach ( $replies_received_rows as $row ) {
 			$replies_received_map[ (int) $row->author_id ] = (int) $row->cnt;
 		}
@@ -336,12 +275,12 @@ class Cron {
 				? (int) ( ( time() - strtotime( $profile->created_at ) ) / DAY_IN_SECONDS )
 				: 0;
 
-			$stats = [
+			$stats = array(
 				'post_count'       => (int) $profile->post_count,
 				'days_active'      => $days_active,
 				'reputation'       => (int) $profile->reputation,
 				'replies_received' => $replies_received_map[ (int) $profile->user_id ] ?? 0,
-			];
+			);
 
 			$new_level = Trust_Evaluator::evaluate_level( $stats );
 
@@ -365,18 +304,27 @@ class Cron {
 				// profile:{id} BEFORE the action below fires, so its four
 				// listeners (activity tracker, notifier, Pro badges, Pro
 				// webhooks) re-read the promoted level instead of a cached
-				// stale row (caching plan WP0.2).
-				UserProfile::update_profile( (int) $profile->user_id, [ 'trust_level' => $new_level ] );
+				// stale row.
+				UserProfile::update_profile( (int) $profile->user_id, array( 'trust_level' => $new_level ) );
+				/**
+				 * Fires after the trust-level sweep changes a user's trust level.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param int $user_id   User ID.
+				 * @param int $old_level Previous trust level.
+				 * @param int $new_level New trust level.
+				 */
 				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
 				++$promoted;
 			}
 		}
 
-		return [
+		return array(
 			'last_id'  => $last_id,
 			'count'    => count( $profiles ),
 			'promoted' => $promoted,
-		];
+		);
 	}
 
 	/**
@@ -386,16 +334,7 @@ class Cron {
 	 * to avoid long-running DELETE locks on large communities.
 	 */
 	public function cleanup_expired_restrictions(): void {
-		global $wpdb;
-		$table = table( 'restrictions' );
-		$batch = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_expired_restrictions' );
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE expires_at IS NOT NULL AND expires_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				current_time( 'mysql', true ),
-				$batch
-			)
-		);
+		\Jetonomy\Models\Restriction::delete_expired( (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_expired_restrictions' ) );
 	}
 
 	/**
@@ -406,9 +345,7 @@ class Cron {
 	 * Deletes in batches of 5 000 to avoid lock contention, looping until all expired rows are removed.
 	 */
 	public function prune_activity_log(): void {
-		global $wpdb;
-		$table    = table( 'activity_log' );
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 		$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
 		if ( $days <= 0 ) {
 			return; // 0 = keep forever.
@@ -416,12 +353,7 @@ class Cron {
 		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
 		// Delete in batches to avoid lock contention, loop until done.
 		do {
-			$deleted = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$wpdb->prepare(
-					"DELETE FROM {$table} WHERE created_at < %s LIMIT 5000", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					$cutoff
-				)
-			);
+			$deleted = \Jetonomy\Models\ActivityLog::delete_before( $cutoff, 5000 );
 		} while ( $deleted >= 5000 );
 	}
 
@@ -433,8 +365,6 @@ class Cron {
 	 * the run's time budget is spent.
 	 */
 	public function cleanup_old_notifications(): void {
-		global $wpdb;
-		$table  = table( 'notifications' );
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
 		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_old_notifications' );
 
@@ -444,13 +374,7 @@ class Cron {
 		// leaves is picked up next week.
 		$deadline = microtime( true ) + 20;
 		do {
-			$done = (int) $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-				$wpdb->prepare(
-					"UPDATE {$table} SET is_read = 1 WHERE is_read = 0 AND created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					$cutoff,
-					$batch
-				)
-			);
+			$done = \Jetonomy\Models\Notification::mark_read_before( $cutoff, $batch );
 		} while ( $done >= $batch && microtime( true ) < $deadline );
 	}
 

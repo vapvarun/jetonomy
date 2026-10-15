@@ -13,13 +13,13 @@ if ( ! $space ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -34,34 +34,34 @@ $space_url = \Jetonomy\route_url( 'space', esc_attr( $space->slug ) );
 // non-member), otherwise a plain permission-denied state.
 $jt_user_id = get_current_user_id();
 if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts', (int) $space->id ) ) {
-	$jt_can_join = ( 'open' === ( $space->join_policy ?? '' ) )
+	$jt_can_join = ( 'open' === \Jetonomy\Models\Space::effective_join_policy( $space ) )
 		&& ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $jt_user_id );
 
 	\Jetonomy\Template_Loader::partial(
 		'breadcrumb',
-		[
-			'crumbs' => [
-				[
+		array(
+			'crumbs' => array(
+				array(
 					'label' => $space->title,
 					'url'   => $space_url,
-				],
-			],
-		]
+				),
+			),
+		)
 	);
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		$jt_can_join
-			? [
+			? array(
 				'icon'      => 'users',
 				'icon_size' => 48,
 				/* translators: %s: space title */
 				'message'   => sprintf( __( 'Join %s to start a discussion.', 'jetonomy' ), $space->title ),
-				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				'cta_label' => sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ),
 				'cta_url'   => $space_url,
 				'tone'      => 'info',
-			]
-			: [
+			)
+			: array(
 				'icon'      => 'lock',
 				'icon_size' => 48,
 				/* translators: %s: space label (e.g. space, forum) */
@@ -70,7 +70,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 				'cta_label' => sprintf( __( 'Back to %s', 'jetonomy' ), \Jetonomy\space_label() ),
 				'cta_url'   => $space_url,
 				'tone'      => 'forbidden',
-			]
+			)
 	);
 	return;
 }
@@ -100,18 +100,18 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 
 \Jetonomy\Template_Loader::partial(
 	'breadcrumb',
-	[
-		'crumbs' => [
-			[
+	array(
+		'crumbs' => array(
+			array(
 				'label' => $space->title,
 				'url'   => $space_url,
-			],
-			[
+			),
+			array(
 				'label' => $type_label,
 				'url'   => '',
-			],
-		],
-	]
+			),
+		),
+	)
 );
 ?>
 
@@ -129,20 +129,30 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 		data-wp-text="state.submitError"
 		hidden></div>
 
+	<?php
+	/**
+	 * Filters the Interactivity API action run when the new-post form is submitted.
+	 *
+	 * @since 1.3.2
+	 *
+	 * @param string $action Action path. Default "actions.submitNewPost".
+	 * @return string Action path.
+	 */
+	?>
 	<form id="jt-new-post-form" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="<?php echo esc_attr( apply_filters( 'jetonomy_new_post_submit_action', 'actions.submitNewPost' ) ); ?>"
 			data-wp-context='
 			<?php
 			echo wp_json_encode(
-				[
+				array(
 					'spaceId'       => (int) $space->id,
 					'spaceSlug'     => $space->slug,
 					'spaceType'     => (string) ( $space->type ?? '' ),
 					'postType'      => $post_type,
 					'postStatus'    => 'publish',
 					'showScheduler' => false,
-				]
+				)
 			);
 			?>
 			'>
@@ -157,7 +167,7 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 		// added in compose-fields.php — both surfaces inherit it for free.
 		\Jetonomy\Template_Loader::partial(
 			'compose-fields',
-			[
+			array(
 				'space'             => $space,
 				// Feed spaces are short-form: hide the title field (matching the
 				// inline composer) so members post a status without a headline.
@@ -181,7 +191,7 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 				'body_mode'         => 'editor',
 				'submit_label'      => $jt_submit_label,
 				'cancel_url'        => $space_url,
-			]
+			)
 		);
 		?>
 	</form>

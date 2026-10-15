@@ -9,18 +9,30 @@
 (function () {
 	'use strict';
 
+	// Owner's terminology (Settings > General > Terminology); English fallback.
+	var L = window.jetonomyLabels || {};
+	var lbl = function ( noun, form, fallback ) {
+		return ( L[ noun ] && L[ noun ][ form ] ) || fallback;
+	};
+	var REPLY = lbl( 'reply', 'one_lower', 'reply' );
+	var REPLIES = lbl( 'reply', 'many_lower', 'replies' );
+
 	var cfg = {
 		ajaxUrl: (window.jetonomyAdmin && window.jetonomyAdmin.ajaxUrl) || window.ajaxurl,
 		nonce: (window.jetonomyReplies && window.jetonomyReplies.nonce) || (window.jetonomyAdmin && window.jetonomyAdmin.nonce) || '',
 		i18n: {
 			confirmTrash:      wp.i18n.__( 'Move this to trash?', 'jetonomy' ),
 			confirmSpam:       wp.i18n.__( 'Mark this as spam?', 'jetonomy' ),
-			confirmDelete:     wp.i18n.__( 'Delete this reply permanently? This cannot be undone.', 'jetonomy' ),
-			confirmBulkDelete: wp.i18n.__( 'Delete the selected replies permanently? This cannot be undone.', 'jetonomy' ),
-			confirmBulk:       wp.i18n.__( 'Apply this action to all selected replies?', 'jetonomy' ),
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			confirmDelete:     wp.i18n.sprintf( wp.i18n.__( 'Delete this %s permanently? This cannot be undone.', 'jetonomy' ), REPLY ),
+			/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
+			confirmBulkDelete: wp.i18n.sprintf( wp.i18n.__( 'Delete the selected %s permanently? This cannot be undone.', 'jetonomy' ), REPLIES ),
+			/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
+			confirmBulk:       wp.i18n.sprintf( wp.i18n.__( 'Apply this action to all selected %s?', 'jetonomy' ), REPLIES ),
 			saved:             wp.i18n.__( 'Saved!', 'jetonomy' ),
 			saveError:         wp.i18n.__( 'Save failed. Please try again.', 'jetonomy' ),
-			noneSelected:      wp.i18n.__( 'Please select at least one reply.', 'jetonomy' ),
+			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			noneSelected:      wp.i18n.sprintf( wp.i18n.__( 'Please select at least one %s.', 'jetonomy' ), REPLY ),
 			noAction:          wp.i18n.__( 'Please choose a bulk action.', 'jetonomy' ),
 		}
 	};

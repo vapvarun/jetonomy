@@ -14,7 +14,7 @@ if ( ! is_user_logged_in() ) {
 	?>
 	<div class="jt-editor jt-editor-login">
 		<a href="<?php echo esc_url( $login_url ); ?>" class="jt-btn jt-btn-fill">
-			<?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?>
+			<?php esc_html_e( 'Log in to reply', 'jetonomy' ); /* jt-terms-ok: verb */ ?>
 		</a>
 	</div>
 	<?php
@@ -37,8 +37,10 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 			<?php jetonomy_echo_icon( 'link', 14 ); ?>
 		</button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>">&ldquo;&rdquo;</button>
+		<?php if ( \Jetonomy\Permissions\Capabilities::can_upload() ) : ?>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="image" title="<?php esc_attr_e( 'Upload Image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
-		<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it (QA card 10149499573). ?>
+		<?php endif; ?>
+		<?php // Trigger for composer.js's data-cmd="emoji" picker - the handler shipped without any button firing it. ?>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="emoji" title="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Insert emoji', 'jetonomy' ); ?>" aria-haspopup="menu" aria-expanded="false" aria-controls="jt-emoji-picker"><?php jetonomy_echo_icon( 'smile-plus', 16 ); ?></button>
 		<?php
 		/**
@@ -61,7 +63,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 	<?php
 	// The replies endpoint verifies CAPTCHA for low-trust users; Turnstile
 	// needs this container to render and produce its token. Empty string
-	// when CAPTCHA is off or the provider is invisible. #9977126420.
+	// when CAPTCHA is off or the provider is invisible.
 	echo \Jetonomy\Captcha\Captcha_Manager::render_widget(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- adapter builds the HTML with esc_attr.
 	?>
 	<div class="jt-editor-foot">
@@ -70,7 +72,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : sprintf( /* translators: 
 		// so the desktop submit-shortcut copy reads as nonsense there. Detect
 		// touch via wp_is_mobile() (matches WP's own mobile signal) and swap.
 		// The editor formats through its toolbar; it does not convert typed
-		// Markdown, so the hint must not promise it (Basecamp 10320778207).
+		// Markdown, so the hint must not promise it.
 		$_jt_composer_hint = wp_is_mobile()
 			? __( 'Use the toolbar to format.', 'jetonomy' )
 			: __( 'Use the toolbar to format · Ctrl+Enter to submit', 'jetonomy' );

@@ -135,7 +135,8 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 									'colspan' => 4,
 									'icon'    => 'tag',
 									'title'   => __( 'No tags yet', 'jetonomy' ),
-									'body'    => __( 'Tags help members find related posts. Create your first one using the form on the left.', 'jetonomy' ),
+									/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+									'body'    => sprintf( __( 'Tags help %s find related posts. Create your first one using the form on the left.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 								)
 							);
 							?>
@@ -144,7 +145,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 						<?php foreach ( $tags as $tag ) : ?>
 							<tr data-id="<?php echo absint( $tag->id ); ?>" data-post-count="<?php echo absint( $tag->post_count ?? 0 ); ?>" class="jetonomy-tag-row">
 								<th scope="row" class="check-column">
-									<?php /* translators: %s: tag name. */ ?>
+									<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 									<input type="checkbox" class="jetonomy-tag-cb" value="<?php echo absint( $tag->id ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Select %s', 'jetonomy' ), $tag->name ) ); ?>">
 								</th>
 								<td class="column-name column-primary">

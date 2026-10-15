@@ -579,13 +579,7 @@ class Fluent_Community {
 					$cap + 1
 				)
 			);
-			$jt_members = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT user_id FROM {$wpdb->prefix}jt_space_members WHERE space_id = %d LIMIT %d",
-					$jt_id,
-					$cap + 1
-				)
-			);
+			$jt_members = \Jetonomy\Models\SpaceMember::user_ids_for_space( (int) $jt_id, $cap + 1 );
 			// phpcs:enable
 
 			if ( count( $fc_members ) > $cap || count( $jt_members ) > $cap ) {
@@ -774,8 +768,8 @@ class Fluent_Community {
 		$fc_title   = $this->fc_site_title();
 		/* translators: %s: FluentCommunity-configured site title. */
 		$head_label = sprintf( __( 'Also on %s', 'jetonomy' ), $fc_title );
-		/* translators: %s: FluentCommunity-configured site title. */
-		$desc_label = sprintf( __( 'This space has a matching feed on %s.', 'jetonomy' ), $fc_title );
+		/* translators: 1: the singular Space label, lowercase, 2: FluentCommunity-configured site title. */
+		$desc_label = sprintf( __( 'This %1$s has a matching feed on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $fc_title );
 		?>
 		<div class="<?php echo esc_attr( $wrap_class ); ?>">
 			<div class="<?php echo esc_attr( $head_class ); ?>">
@@ -871,7 +865,7 @@ class Fluent_Community {
 		}
 
 		$started   = Post::list_by_author( $user_id, 5, 0 );
-		$followed  = $this->list_followed_posts( $user_id, 5 );
+		$followed  = \Jetonomy\Models\Subscription::list_followed_posts( $user_id, 5 );
 		$replies   = Reply::list_by_user( $user_id, 5, 0 );
 		$is_own    = (int) get_current_user_id() === $user_id;
 		$bookmarks = $is_own ? Bookmark::list_by_user( $user_id, 5, 0 ) : array();
@@ -909,7 +903,7 @@ class Fluent_Community {
 			<?php endif; ?>
 
 			<?php if ( ! empty( $replies ) ) : ?>
-				<h4><?php esc_html_e( 'Recent replies', 'jetonomy' ); ?></h4>
+				<h4><?php printf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ esc_html__( 'Recent %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></h4>
 				<ul>
 					<?php foreach ( $replies as $r ) : ?>
 						<?php
@@ -980,40 +974,6 @@ class Fluent_Community {
 		</div>
 		<?php
 		return $html . (string) ob_get_clean();
-	}
-
-	/**
-	 * List the most-recently-followed Jetonomy posts for a user.
-	 *
-	 * Uses a direct JOIN between subscriptions and posts — crosses two
-	 * models so it lives here rather than behind a single-model helper.
-	 *
-	 * @param int $user_id Target user.
-	 * @param int $limit   Max rows (clamped to 20).
-	 * @return object[]
-	 */
-	private function list_followed_posts( int $user_id, int $limit = 5 ): array {
-		if ( $user_id <= 0 ) {
-			return array();
-		}
-		$limit = max( 1, min( 20, $limit ) );
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT p.id, p.title, p.slug, p.space_id
-				 FROM {$wpdb->prefix}jt_subscriptions s
-				 INNER JOIN {$wpdb->prefix}jt_posts p ON s.object_id = p.id
-				 WHERE s.user_id = %d
-				   AND s.object_type = 'post'
-				   AND p.status = 'publish'
-				 ORDER BY s.created_at DESC
-				 LIMIT %d",
-				$user_id,
-				$limit
-			)
-		);
-		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**
@@ -1092,20 +1052,7 @@ class Fluent_Community {
 	 * @param string $active_tab Currently active tab slug.
 	 */
 	public function register_settings_tab( $active_tab ): void {
-		$url       = add_query_arg(
-			array(
-				'page' => 'jetonomy-settings',
-				'tab'  => 'fluent-community',
-			),
-			admin_url( 'admin.php' )
-		);
-		$is_active = 'fluent-community' === $active_tab;
-		printf(
-			'<a href="%s" class="jt-snav-link%s"><span class="dashicons dashicons-groups" aria-hidden="true"></span>%s</a>',
-			esc_url( $url ),
-			$is_active ? ' jt-snav-link--active' : '',
-			esc_html__( 'FluentCommunity', 'jetonomy' )
-		);
+		\Jetonomy\settings_tab_link( 'fluent-community', __( 'FluentCommunity', 'jetonomy' ), 'dashicons-groups', (string) $active_tab );
 	}
 
 	/**
@@ -1119,7 +1066,7 @@ class Fluent_Community {
 		}
 
 		$pairs = $this->get_pair_map();
-		// Explicit cap (plan WP1.5): this feeds the pairing <select>; a site
+		// Explicit cap: this feeds the pairing <select>; a site
 		// with 500+ active spaces has outgrown a dropdown anyway, and the
 		// unbounded default materialized every row on each settings render.
 		$jt_spaces   = Space::list_all( 'active', 500 );
@@ -1149,15 +1096,16 @@ class Fluent_Community {
 				<p>
 					<?php
 					printf(
-						/* translators: 1: pair count, 2: members added to Jetonomy, 3: members added to FluentCommunity */
-						esc_html__( 'Backfill complete. Pairs processed: %1$d, members added to Jetonomy: %2$d, members added to FluentCommunity: %3$d.', 'jetonomy' ),
+						/* translators: 1: pair count, 2: members added to Jetonomy, 3: members added to FluentCommunity, 4: the plural Member label, lowercase */
+						esc_html__( 'Backfill complete. Pairs processed: %1$d, %4$s added to Jetonomy: %2$d, %4$s added to FluentCommunity: %3$d.', 'jetonomy' ),
 						(int) $bf_stats['pairs'],
 						(int) $bf_stats['added_to_jt'],
-						(int) $bf_stats['added_to_fc']
+						(int) $bf_stats['added_to_fc'],
+						esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) )
 					);
 					?>
 					<?php if ( ! empty( $bf_stats['capped'] ) ) : ?>
-						<br><em><?php esc_html_e( 'Some spaces had more than 5,000 members. Re-run the backfill to continue.', 'jetonomy' ); ?></em>
+						<br><em><?php printf( /* translators: 1: the plural Space label, lowercase, 2: the plural Member label, lowercase. */ esc_html__( 'Some %1$s had more than 5,000 %2$s. Re-run the backfill to continue.', 'jetonomy' ), esc_html( \Jetonomy\space_label( true, true ) ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></em>
 					<?php endif; ?>
 				</p>
 			</div>
@@ -1171,7 +1119,10 @@ class Fluent_Community {
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'FluentCommunity Integration', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc">
-						<?php esc_html_e( 'Pair FluentCommunity spaces with Jetonomy spaces so members can jump between the feed and the discussions in one click.', 'jetonomy' ); ?>
+						<?php
+						// jt-terms-ok: "FluentCommunity space" is FluentCommunity's own space term.
+						printf( /* translators: 1: the plural Space label, lowercase, 2: the plural Member label, lowercase. */ esc_html__( 'Pair FluentCommunity spaces with Jetonomy %1$s so %2$s can jump between the feed and the discussions in one click.', 'jetonomy' ), esc_html( \Jetonomy\space_label( true, true ) ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) );
+						?>
 					</p>
 				</div>
 				<table class="form-table">
@@ -1185,7 +1136,10 @@ class Fluent_Community {
 								placeholder="<?php esc_attr_e( 'Discussions', 'jetonomy' ); ?>"
 								class="regular-text" maxlength="40">
 							<p class="description">
-								<?php esc_html_e( 'Shown on the FluentCommunity space header, the Jetonomy space header, and the profile section. Leave blank to reset to "Discussions".', 'jetonomy' ); ?>
+								<?php
+								// jt-terms-ok: "FluentCommunity space" is FluentCommunity's own space term.
+								printf( /* translators: %s: the singular Space label, lowercase. */ esc_html__( 'Shown on the FluentCommunity space header, the Jetonomy %s header, and the profile section. Leave blank to reset to "Discussions".', 'jetonomy' ), esc_html( \Jetonomy\space_label( false, true ) ) );
+								?>
 							</p>
 						</td>
 					</tr>
@@ -1194,21 +1148,32 @@ class Fluent_Community {
 
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
-					<p class="jt-settings-card__title"><?php esc_html_e( 'Space Pairings', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__title"><?php printf( /* translators: %s: the singular Space label. */ esc_html__( '%s Pairings', 'jetonomy' ), esc_html( \Jetonomy\space_label() ) ); ?></p>
 					<p class="jt-settings-card__desc">
-						<?php esc_html_e( 'Each row pairs one FluentCommunity space with one Jetonomy space. A tab linking between the two appears on both sides. Leave the Jetonomy column set to "Not paired" to disable a row.', 'jetonomy' ); ?>
+						<?php
+						// jt-terms-ok: "FluentCommunity space" is FluentCommunity's own space term.
+						printf( /* translators: %s: the singular Space label, lowercase. */ esc_html__( 'Each row pairs one FluentCommunity space with one Jetonomy %s. A tab linking between the two appears on both sides. Leave the Jetonomy column set to "Not paired" to disable a row.', 'jetonomy' ), esc_html( \Jetonomy\space_label( false, true ) ) );
+						?>
 					</p>
 				</div>
 				<?php if ( empty( $fc_spaces ) ) : ?>
 					<p class="jt-fc-admin-hint">
-						<?php esc_html_e( 'No FluentCommunity spaces found. Create a space in FluentCommunity first.', 'jetonomy' ); ?>
+						<?php
+						// jt-terms-ok: FluentCommunity's own space term.
+						esc_html_e( 'No FluentCommunity spaces found. Create a space in FluentCommunity first.', 'jetonomy' );
+						?>
 					</p>
 				<?php else : ?>
 					<table class="wp-list-table widefat striped jt-fc-admin-table">
 						<thead>
 							<tr>
-								<th scope="col"><?php esc_html_e( 'FluentCommunity Space', 'jetonomy' ); ?></th>
-								<th scope="col"><?php esc_html_e( 'Paired Jetonomy Space', 'jetonomy' ); ?></th>
+								<th scope="col">
+								<?php
+								// jt-terms-ok: FluentCommunity's own space term.
+								esc_html_e( 'FluentCommunity Space', 'jetonomy' );
+								?>
+								</th>
+								<th scope="col"><?php printf( /* translators: %s: the singular Space label. */ esc_html__( 'Paired Jetonomy %s', 'jetonomy' ), esc_html( \Jetonomy\space_label() ) ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -1245,16 +1210,16 @@ class Fluent_Community {
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Sync Behavior', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc">
-						<?php esc_html_e( 'Controls what happens across paired spaces. Member sync is add-only: joins on either side add the member to both; leaves stay on the side they happened. This keeps behavior predictable and prevents accidental removal from both at once.', 'jetonomy' ); ?>
+						<?php printf( /* translators: 1: the plural Space label, lowercase, 2: the singular Member label, 3: the singular Member label, lowercase. */ esc_html__( 'Controls what happens across paired %1$s. %2$s sync is add-only: joins on either side add the %3$s to both; leaves stay on the side they happened. This keeps behavior predictable and prevents accidental removal from both at once.', 'jetonomy' ), esc_html( \Jetonomy\space_label( true, true ) ), esc_html( \Jetonomy\jetonomy_label( 'member' ) ), esc_html( \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?>
 					</p>
 				</div>
 				<table class="form-table">
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Member sync', 'jetonomy' ); ?></th>
+						<th scope="row"><?php printf( /* translators: %s: the singular Member label. */ esc_html__( '%s sync', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member' ) ) ); ?></th>
 						<td>
 							<label>
 								<input type="checkbox" name="jt_fc_sync_members" value="1" <?php checked( $sync_on ); ?>>
-								<?php esc_html_e( 'When a member joins one side, add them to the paired space on the other side.', 'jetonomy' ); ?>
+								<?php printf( /* translators: %s: the singular Space label, lowercase. */ esc_html__( 'When someone joins one side, add them to the paired %s on the other side.', 'jetonomy' ), esc_html( \Jetonomy\space_label( false, true ) ) ); ?>
 							</label>
 						</td>
 					</tr>
@@ -1263,7 +1228,7 @@ class Fluent_Community {
 						<td>
 							<label>
 								<input type="checkbox" name="jt_fc_broadcast" value="1" <?php checked( $broadcast ); ?>>
-								<?php esc_html_e( 'When a new topic is created in a paired Jetonomy space, post an announcement in the paired FluentCommunity feed with a link back to the topic.', 'jetonomy' ); ?>
+								<?php printf( /* translators: 1: the singular Topic label, lowercase, 2: the singular Space label, lowercase. */ esc_html__( 'When a new %1$s is created in a paired Jetonomy %2$s, post an announcement in the paired FluentCommunity feed with a link back to the %1$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\space_label( false, true ) ) ); ?>
 							</label>
 						</td>
 					</tr>
@@ -1272,14 +1237,14 @@ class Fluent_Community {
 
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
-					<p class="jt-settings-card__title"><?php esc_html_e( 'Backfill existing members', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__title"><?php printf( /* translators: %s: the plural Member label, lowercase. */ esc_html__( 'Backfill existing %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 					<p class="jt-settings-card__desc">
-						<?php esc_html_e( 'After pairing spaces, run this once to sync members who already belong to one side but not the other. Safe to run multiple times; members already in both sides are skipped. Large spaces are capped at 5,000 members per run; re-run to continue.', 'jetonomy' ); ?>
+						<?php printf( /* translators: 1: the plural Space label, lowercase, 2: the plural Member label, lowercase. */ esc_html__( 'After pairing %1$s, run this once to sync %2$s who already belong to one side but not the other. Safe to run multiple times; %2$s already in both sides are skipped. Large %1$s are capped at 5,000 %2$s per run; re-run to continue.', 'jetonomy' ), esc_html( \Jetonomy\space_label( true, true ) ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 					</p>
 				</div>
 				<p class="submit jt-fc-admin-submit">
 					<button type="submit" name="jt_fc_run_backfill" value="1" class="button">
-						<?php esc_html_e( 'Sync existing members now', 'jetonomy' ); ?>
+						<?php printf( /* translators: %s: the plural Member label, lowercase. */ esc_html__( 'Sync existing %s now', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?>
 					</button>
 				</p>
 			</div>

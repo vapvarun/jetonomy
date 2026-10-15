@@ -43,7 +43,7 @@ if ( ! is_user_logged_in() ) {
 		$_lede = sprintf( __( 'Sign in to start a discussion in %s. Share what you\'re thinking, ask the community a question, or float an idea.', 'jetonomy' ), '<strong>' . esc_html( $_space->title ) . '</strong>' );
 	} else {
 		/* translators: 1: singular topic label; 2: plural reply label. */
-		$_lede = sprintf( __( 'Sign in to start a discussion. Ask a question, share an idea, or kick off a %1$s. %2$s and reactions arrive in real time.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true ) );
+		$_lede = sprintf( __( 'Sign in to start a discussion. Ask a question, share an idea, or kick off a new %1$s. %2$s and reactions arrive in real time.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true ) );
 	}
 	?>
 	<div class="jt-compose-topic-embed jt-compose-topic-login" role="region" aria-label="<?php esc_attr_e( 'Start a new discussion', 'jetonomy' ); ?>">
@@ -138,7 +138,7 @@ $_partial_space = $_space ? $_space : (object) array(
 				data-wp-on--change="actions.composeTopicSelectSpace"
 				data-wp-bind--disabled="context.submitting">
 				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-				<option value="" data-type=""><?php echo esc_html( sprintf( __( 'Choose a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></option>
+				<option value="" data-type=""><?php echo esc_html( sprintf( __( 'Select %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></option>
 				<?php foreach ( $_postable as $_s ) : ?>
 					<option
 						value="<?php echo (int) $_s->id; ?>"
@@ -149,7 +149,7 @@ $_partial_space = $_space ? $_space : (object) array(
 				<small class="jt-compose-topic-empty">
 					<?php /* translators: 1: plural space label, 2: singular space label. */ ?>
 					<?php /* translators: 1: singular member label; 2: singular space label; 3: singular space label. */ ?>
-					<?php echo esc_html( sprintf( __( 'You are not a %1$s of any %2$s yet. Join a %3$s to start posting.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?>
+					<?php echo esc_html( sprintf( __( 'You have not joined any %s yet. Join one to start posting.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 				</small>
 			<?php endif; ?>
 		</label>
@@ -175,11 +175,11 @@ $_partial_space = $_space ? $_space : (object) array(
 		// changes); body uses a plain textarea (the embed is meant to be
 		// lightweight and host-page compatible); tags, prefix, scheduler,
 		// and publish-menu are full-page-only. Private toggle stays so
-		// regression #9886339472 (private leak) is fixed by giving the
-		// embed the same privacy switch the full page has.
+		// Private toggle stays so the embed has the same privacy switch as the full page,
+		// which keeps a private topic from leaking.
 		\Jetonomy\Template_Loader::partial(
 			'compose-fields',
-			[
+			array(
 				'space'                    => $_partial_space,
 				'show_title'               => $_show_title_initial,
 				'show_tags'                => false,
@@ -195,7 +195,7 @@ $_partial_space = $_space ? $_space : (object) array(
 				// Picker mode flips title visibility in response to space
 				// switches; fixed mode stays static (no binding emitted).
 				'title_visibility_binding' => ( 'picker' === $_mode ) ? '!context.composeShowTitle' : '',
-			]
+			)
 		);
 		?>
 

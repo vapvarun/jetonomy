@@ -40,11 +40,11 @@ class UserProfile extends Model {
 		$now = now();
 		static::db()->insert(
 			static::table(),
-			[
+			array(
 				'user_id'    => $user_id,
 				'created_at' => $now,
 				'updated_at' => $now,
-			]
+			)
 		);
 
 		// Bust the cache so find_by_user() hits the DB and returns the newly-inserted row.
@@ -60,7 +60,7 @@ class UserProfile extends Model {
 	 * @return object|null
 	 */
 	public static function find_by_user( int $user_id ): ?object {
-		return Cache::remember_object(
+		$row = Cache::remember_object(
 			"profile:{$user_id}",
 			function () use ( $user_id ) {
 				$row = static::db()->get_row(
@@ -73,6 +73,13 @@ class UserProfile extends Model {
 			},
 			120
 		);
+		if ( $row ) {
+			// One bio per person: WordPress's own Biographical Info, read after
+			// the cache so a wp-admin profile edit shows at once (WP caches meta).
+			$row      = clone $row;
+			$row->bio = (string) get_user_meta( $user_id, 'description', true );
+		}
+		return $row;
 	}
 
 	/**
@@ -84,7 +91,6 @@ class UserProfile extends Model {
 	 * layers from the loop that causes it, and it only shows COLD. Warm, in a
 	 * process that has already seen those users, the same code measures clean —
 	 * which is exactly how a "batch-loaded, no N+1" claim survived review twice
-	 * (Basecamp 10105928436).
 	 *
 	 * Seeds the same key find_by_user() reads, so callers need no new code path:
 	 * prime once, then call it normally and it answers from cache.
@@ -102,7 +108,7 @@ class UserProfile extends Model {
 		}
 
 		// Only fetch what is not already cached — priming twice must not re-query.
-		$missing = [];
+		$missing = array();
 		foreach ( $ids as $id ) {
 			if ( false === Cache::get( "profile:{$id}" ) ) {
 				$missing[] = $id;
@@ -112,13 +118,14 @@ class UserProfile extends Model {
 			return;
 		}
 
+		update_meta_cache( 'user', $missing ); // Bios come from user meta: one query, not one per member.
 		$ph = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		$rows = static::db()->get_results(
 			static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE user_id IN ({$ph})", ...$missing )
-		) ?: [];
+		) ?: array();
 
-		$found = [];
+		$found = array();
 		foreach ( $rows as $row ) {
 			$found[ (int) $row->user_id ] = $row;
 			Cache::set( "profile:{$row->user_id}", $row, 120 );
@@ -138,16 +145,24 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function update_profile( int $user_id, array $data ): bool {
+		// The bio is WordPress's Biographical Info (user meta), not a column here.
+		$result = true;
+		if ( array_key_exists( 'bio', $data ) ) {
+			update_user_meta( $user_id, 'description', (string) $data['bio'] );
+			unset( $data['bio'] );
+		}
 		// Bust AFTER the write. Busting first is a re-prime race: a concurrent
 		// find_by_user() between the delete and the update re-caches the old row.
-		$result = false !== static::db()->update(
-			static::table(),
-			$data,
-			[ 'user_id' => $user_id ]
-		);
+		if ( $data ) {
+			$result = false !== static::db()->update(
+				static::table(),
+				$data,
+				array( 'user_id' => $user_id )
+			);
+		}
 		Cache::delete( "profile:{$user_id}" );
 		// trust_level feeds the permission trust gates — clear the verdict
-		// memo so a promotion applies within the same request (WP0.1).
+		// memo so a promotion applies within the same request.
 		if ( array_key_exists( 'trust_level', $data ) ) {
 			\Jetonomy\Permissions\Permission_Engine::reset_memo();
 		}
@@ -242,8 +257,7 @@ class UserProfile extends Model {
 		// A bare UPDATE hits nothing for a member who has only ever READ the
 		// community, so lurkers never got a profile row: is_online() stayed
 		// false forever and the "profile is created on first visit" promise
-		// in the Users-screen copy was a lie (QA 2026-07-30, card
-		// 9725751235). Throttled by the transient above, so this costs one
+		// in the Users-screen copy was a lie. Throttled by the transient above, so this costs one
 		// SELECT per user per minute at most.
 		static::find_or_create( $user_id );
 
@@ -310,11 +324,11 @@ class UserProfile extends Model {
 		);
 
 		if ( ! $row || empty( $row->settings ) ) {
-			return [];
+			return array();
 		}
 
 		$decoded = json_decode( $row->settings, true );
-		return is_array( $decoded ) ? $decoded : [];
+		return is_array( $decoded ) ? $decoded : array();
 	}
 
 	/**
@@ -331,11 +345,10 @@ class UserProfile extends Model {
 		global $wpdb;
 
 		/*
-		 * A profile whose WP user is gone is not a member, and must not occupy
-		 * a rank. It used to: the row was fetched, the view could not render it
-		 * (no user to name or link), and `continue` dropped it AFTER its
-		 * position had been spent — so the board counted ... 17, 18, 20. Every
-		 * member below the hole was silently shifted by one.
+		 * A profile whose WP user is gone is not a member, and must not occupy a rank:
+		 * the view cannot render it (no user to name or link), so dropping it after its
+		 * position was spent would leave a hole (... 17, 18, 20) and shift every member
+		 * below it.
 		 *
 		 * Excluded here rather than in the view because this helper is the one
 		 * chokepoint the page query, the total and rank_for_user() all share.
@@ -363,10 +376,10 @@ class UserProfile extends Model {
 		$eligible = "{$is_member} AND reputation > 0";
 
 		if ( 'week' === $period ) {
-			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)";
+			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)";
 		}
 		if ( 'month' === $period ) {
-			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)";
+			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)";
 		}
 		return " WHERE {$eligible}";
 	}
@@ -374,11 +387,10 @@ class UserProfile extends Model {
 	/**
 	 * Count profiles eligible for the leaderboard in a given period.
 	 *
-	 * Single source of truth for the leaderboard total, used to compute
-	 * accurate pagination on both the server-rendered view and the REST
-	 * response. Replaces the per-surface `count( $rows ) >= $per_page`
-	 * heuristic that rendered a phantom "Load More" when the total was an
-	 * exact multiple of the page size.
+	 * Single source of truth for the leaderboard total, used to compute accurate
+	 * pagination on both the server-rendered view and the REST response; a
+	 * `count( $rows ) >= $per_page` heuristic shows a phantom "Load More" when the
+	 * total is an exact multiple of the page size.
 	 *
 	 * @param string $period One of 'week', 'month', or 'all'.
 	 * @return int Total profile count for the period.
@@ -424,7 +436,7 @@ class UserProfile extends Model {
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $rows ? $rows : [];
+		return $rows ? $rows : array();
 	}
 
 	/**
@@ -507,5 +519,151 @@ class UserProfile extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $ahead + 1;
+	}
+
+
+	/**
+	 * The wp-admin Users screen: profiles joined to their account, by
+	 * reputation, filtered by trust level and a login/name/email search.
+	 *
+	 * @param string $trust  Trust level, or '' for any.
+	 * @param string $search Text to match.
+	 * @param int    $limit  Max rows.
+	 * @param int    $offset Offset.
+	 * @return object[] Profile rows plus user_login, wp_display_name, user_email, user_registered.
+	 */
+	public static function list_for_admin( string $trust, string $search, int $limit, int $offset ): array {
+		global $wpdb;
+		[ $where, $args ] = self::admin_where( $trust, $search );
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.*, u.user_login, u.display_name as wp_display_name, u.user_email, u.user_registered FROM ' . static::table() . " p
+				 INNER JOIN {$wpdb->users} u ON u.ID = p.user_id
+				 WHERE {$where}
+				 ORDER BY p.reputation DESC
+				 LIMIT %d OFFSET %d",
+				...array_merge( $args, array( $limit, $offset ) )
+			)
+		) ?: array();
+	}
+
+	/**
+	 * How many profiles list_for_admin() pages through.
+	 *
+	 * @param string $trust  Trust level, or ''.
+	 * @param string $search Text to match.
+	 * @return int
+	 */
+	public static function count_for_admin( string $trust, string $search ): int {
+		global $wpdb;
+		[ $where, $args ] = self::admin_where( $trust, $search );
+		$sql              = 'SELECT COUNT(*) FROM ' . static::table() . " p INNER JOIN {$wpdb->users} u ON u.ID = p.user_id WHERE {$where}";
+		return (int) ( $args ? static::db()->get_var( static::db()->prepare( $sql, ...$args ) ) : static::db()->get_var( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only when $args.
+	}
+
+	/**
+	 * WHERE for the wp-admin Users screen.
+	 *
+	 * @param string $trust  Trust level, or ''.
+	 * @param string $search Text to match.
+	 * @return array{0:string,1:array}
+	 */
+	private static function admin_where( string $trust, string $search ): array {
+		$where = array( '1=1' );
+		$args  = array();
+		if ( '' !== $trust && is_numeric( $trust ) ) {
+			$where[] = 'p.trust_level = %d';
+			$args[]  = absint( $trust );
+		}
+		if ( '' !== $search ) {
+			$like    = '%' . static::db()->esc_like( $search ) . '%';
+			$where[] = '(u.user_login LIKE %s OR u.display_name LIKE %s OR u.user_email LIKE %s)';
+			array_push( $args, $like, $like, $like );
+		}
+		return array( implode( ' AND ', $where ), $args );
+	}
+
+	/**
+	 * One keyset slice of profiles still eligible for automatic promotion
+	 * (trust level below 4), by user id. Served by the trust_user index.
+	 *
+	 * @param int $after Return rows with user_id greater than this.
+	 * @param int $limit Slice size.
+	 * @return object[] Rows with user_id, post_count, reply_count, reputation, trust_level, created_at.
+	 */
+	public static function list_for_trust_batch( int $after, int $limit ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT user_id, post_count, reply_count, reputation, trust_level, created_at
+				 FROM ' . static::table() . '
+				 WHERE trust_level < 4 AND user_id > %d
+				 ORDER BY user_id ASC
+				 LIMIT %d',
+				$after,
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Profiles whose avatar URL contains a text fragment (e.g. an upload's file path).
+	 *
+	 * @param string $fragment Literal text, LIKE-escaped here.
+	 * @return int
+	 */
+	public static function count_avatar_containing( string $fragment ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE avatar_url LIKE %s', '%' . static::db()->esc_like( $fragment ) . '%' )
+		);
+	}
+
+	/**
+	 * Profile rows for a set of users, read straight from the table (no cache).
+	 *
+	 * @param int[] $user_ids User ids (non-empty).
+	 * @return object[]
+	 */
+	public static function list_by_user_ids( array $user_ids ): array {
+		if ( ! $user_ids ) {
+			return array();
+		}
+		$placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		return static::db()->get_results( static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE user_id IN ({$placeholders})", ...$user_ids ) ) ?: array();
+	}
+
+	/**
+	 * Profiles created at or before a moment that have not had the
+	 * verification reminder yet, oldest first.
+	 *
+	 * @param string $cutoff UTC MySQL datetime.
+	 * @param int    $limit  Batch size.
+	 * @return object[] Rows with user_id, created_at.
+	 */
+	public static function list_awaiting_verification_reminder( string $cutoff, int $limit ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT user_id, created_at
+				 FROM ' . static::table() . '
+				 WHERE verification_reminder_sent_at IS NULL
+				   AND created_at <= %s
+				 ORDER BY created_at ASC
+				 LIMIT %d',
+				$cutoff,
+				$limit
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Stamp the verification reminder as handled for a user, so the reminder
+	 * sweep skips them from now on.
+	 *
+	 * @param int $user_id WP user id.
+	 * @return bool
+	 */
+	public static function mark_verification_reminder_sent( int $user_id ): bool {
+		return self::update_profile( $user_id, array( 'verification_reminder_sent_at' => current_time( 'mysql', true ) ) );
 	}
 }

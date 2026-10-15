@@ -26,7 +26,7 @@ class Restriction extends Model {
 	 * by default, so an editor could issue a global_ban against the site
 	 * administrator; reject_banned_login() then refuses that account at
 	 * wp_signon(), locking the owner out of their own site with recovery only
-	 * by DB edit or WP-CLI. Reproduced end to end (Basecamp 10227908469): the
+	 * by DB edit or WP-CLI. Reproduced end to end: the
 	 * AJAX handler returned {"success":true}, a jt_restrictions row was written
 	 * against user 1, and the authenticate filter then returned
 	 * jetonomy_user_banned.
@@ -56,7 +56,7 @@ class Restriction extends Model {
 			return new \WP_Error(
 				'jetonomy_cannot_ban_self',
 				__( 'You cannot restrict your own account.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -69,7 +69,7 @@ class Restriction extends Model {
 			return new \WP_Error(
 				'jetonomy_cannot_ban_admin',
 				__( 'Administrators cannot be restricted.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -77,7 +77,7 @@ class Restriction extends Model {
 			return new \WP_Error(
 				'jetonomy_cannot_ban_peer_moderator',
 				__( 'Only an administrator can restrict another moderator.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -108,12 +108,18 @@ class Restriction extends Model {
 			return 0;
 		}
 
-		$data = [
+		// is_space_banned() matches an exact space, so a space ban with no
+		// space restricts nothing while every caller reports success
+		if ( 'space_ban' === $type && ! $space_id ) {
+			return 0;
+		}
+
+		$data = array(
 			'user_id'    => $user_id,
 			'type'       => $type,
 			'issued_by'  => $issued_by,
 			'created_at' => now(),
-		];
+		);
 
 		if ( null !== $space_id ) {
 			$data['space_id'] = $space_id;
@@ -143,14 +149,14 @@ class Restriction extends Model {
 	 * asks ~5 distinct actions — without the memo that is 15-20 identical
 	 * single-row lookups per request. Request-scoped only (never the object
 	 * cache): a ban must take effect on the very next request, and within
-	 * this request ban()/remove_ban() reset it (caching plan WP0.1).
+	 * this request ban()/remove_ban() reset it.
 	 *
 	 * @var array<string, bool>
 	 */
 	private static array $memo = array();
 
 	/**
-	 * Whether the reset is registered with Cache::flush() (plan U1).
+	 * Whether the reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -216,9 +222,30 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * SQL that drops users banned site-wide or from one space.
+	 *
+	 * For candidate lists (who may inherit a space), so the check runs inside
+	 * the query instead of once per candidate.
+	 *
+	 * @param string $user_column Qualified user id column, e.g. 'user_id'.
+	 * @param int    $space_id    Space whose own bans also count.
+	 * @return string Prepared SQL starting with ' AND'.
+	 */
+	public static function not_banned_sql( string $user_column, int $space_id ): string {
+		return static::db()->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- column name from the caller, table from static::table().
+			" AND {$user_column} NOT IN ( SELECT user_id FROM " . static::table() . "
+				WHERE ( type = 'global_ban' OR ( type = 'space_ban' AND space_id = %d ) )
+				  AND ( expires_at IS NULL OR expires_at > %s ) )",
+			$space_id,
+			now()
+		);
+	}
+
+	/**
 	 * Answer is_space_banned() for several spaces with one query, so a list of
 	 * topics from many spaces (tag page, drafts, search) does not check the
-	 * viewer's ban once per space (Basecamp 10369564133). Fills the same memo
+	 * viewer's ban once per space. Fills the same memo
 	 * is_space_banned() reads; spaces already answered are left alone.
 	 *
 	 * @param int   $user_id   Viewer.
@@ -475,5 +502,21 @@ class Restriction extends Model {
 		self::reset_memo();
 		\Jetonomy\Permissions\Permission_Engine::reset_memo();
 		return $result;
+	}
+
+	/**
+	 * Delete up to $limit restrictions whose expiry has passed.
+	 *
+	 * @param int $limit Max rows per call.
+	 * @return int Rows deleted.
+	 */
+	public static function delete_expired( int $limit ): int {
+		return (int) static::db()->query(
+			static::db()->prepare(
+				'DELETE FROM ' . static::table() . ' WHERE expires_at IS NOT NULL AND expires_at < %s LIMIT %d',
+				current_time( 'mysql', true ),
+				$limit
+			)
+		);
 	}
 }

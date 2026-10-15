@@ -27,12 +27,12 @@ class Search_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/search',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'search' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-				'args'                => [
-					'q'         => [
+				'callback'            => array( $this, 'search' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => array(
+					'q'         => array(
 						// Optional: a tag/space/author scope is a valid listing on its
 						// own (e.g. a tag page). The 2-char minimum is enforced in the
 						// handler only when there is no scope to narrow by.
@@ -40,62 +40,62 @@ class Search_Controller extends Base_Controller {
 						'required'          => false,
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'type'      => [
+					),
+					'type'      => array(
 						'type'    => 'string',
 						'default' => 'post',
-						'enum'    => [ 'post', 'reply', 'space', 'tag', 'all' ],
-					],
-					'space_id'  => [
+						'enum'    => array( 'post', 'reply', 'space', 'tag', 'all' ),
+					),
+					'space_id'  => array(
 						'type'    => 'integer',
 						'minimum' => 1,
-					],
-					'date_from' => [
+					),
+					'date_from' => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'date_to'   => [
+					),
+					'date_to'   => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'author_id' => [
+					),
+					'author_id' => array(
 						'type'    => 'integer',
 						'minimum' => 1,
-					],
-					'author'    => [
+					),
+					'author'    => array(
 						'type'              => 'string',
 						'description'       => 'Author name or username; resolved to author_id server-side (headless parity with the search UI).',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'tag'       => [
+					),
+					'tag'       => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					],
-					'sort'      => [
+					),
+					'sort'      => array(
 						'type'    => 'string',
 						'default' => 'relevance',
-						'enum'    => [ 'relevance', 'newest', 'votes' ],
-					],
-					'limit'     => [
+						'enum'    => array( 'relevance', 'newest', 'votes' ),
+					),
+					'limit'     => array(
 						'type'        => 'integer',
 						'minimum'     => 1,
 						'maximum'     => 50,
 						'description' => 'Page size (1-50, default 20). No default is declared here so an unsent value can fall back to the per_page alias.',
-					],
-					'offset'    => [
+					),
+					'offset'    => array(
 						'type'        => 'integer',
 						'default'     => 0,
 						'minimum'     => 0,
 						'description' => 'Row offset for pagination.',
-					],
-					'per_page'  => [
+					),
+					'per_page'  => array(
 						'type'        => 'integer',
 						'minimum'     => 1,
 						'maximum'     => 50,
 						'description' => 'Alias for limit — kept for existing web callers (assets/js/header.js) that already send per_page.',
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 	}
 
@@ -150,7 +150,7 @@ class Search_Controller extends Base_Controller {
 		// clamp to 1..50). `per_page` is accepted as an alias for `limit`: the
 		// header search overlay (assets/js/header.js) already sends per_page,
 		// and the composer typeahead (assets/js/composer.js) already sends
-		// limit — both were previously silently dropped by the route schema.
+		// limit, so the route schema declares both.
 		//
 		// Big-site note: limit is capped at 50; a deep OFFSET on a FULLTEXT+JOIN
 		// query is O(offset), which is fine at ~2000 rows. A keyset cursor would
@@ -168,7 +168,7 @@ class Search_Controller extends Base_Controller {
 		$offset = max( 0, (int) $pagination['offset'] );
 
 		// One search behind every entry point: the built-in MySQL search, or an
-		// adapter a plugin registered (Basecamp 10368526736).
+		// adapter a plugin registered.
 		$adapter = \Jetonomy\Adapters\Adapter_Registry::get_search_query();
 		$scope   = compact( 'q', 'space_id', 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' );
 
@@ -179,26 +179,26 @@ class Search_Controller extends Base_Controller {
 			$found_posts  = $adapter->query(
 				array_merge(
 					$scope,
-					[
+					array(
 						'type'   => 'post',
 						'limit'  => $limit,
 						'offset' => $offset,
-					]
+					)
 				)
 			);
 			$found_spaces = $adapter->query(
-				[
+				array(
 					'type'  => 'space',
 					'q'     => $q,
 					'limit' => 20,
-				]
+				)
 			);
 			$found_tags   = $adapter->query(
-				[
+				array(
 					'type'  => 'tag',
 					'q'     => $q,
 					'limit' => 10,
-				]
+				)
 			);
 			$posts        = $found_posts['items'];
 			$posts_total  = $found_posts['total'];
@@ -208,8 +208,8 @@ class Search_Controller extends Base_Controller {
 			$tags_total   = $found_tags['total'];
 
 			$response = new WP_REST_Response(
-				[
-					'data' => [
+				array(
+					'data' => array(
 						'posts'  => array_map(
 							function ( $row ) {
 								$item         = $this->prepare_post( $row );
@@ -220,7 +220,7 @@ class Search_Controller extends Base_Controller {
 						// Shared serializer, not `(array) $row` — see
 						// Base_Controller::prepare_space(). Casting the raw row here
 						// shipped string-typed numerics and internal columns to
-						// clients (Basecamp 10161324553).
+						// clients.
 						'spaces' => array_map(
 							function ( $row ) {
 								$item         = $this->prepare_space( $row );
@@ -233,24 +233,21 @@ class Search_Controller extends Base_Controller {
 								return (array) $row; },
 							$tags
 						),
-					],
-					'meta' => [
-						// Back-compat: `total` previously meant "rows returned across
-						// all three groups combined." It now means the posts group's
-						// real total (matching every other search mode + the new
-						// X-WP-Total/X-WP-TotalPages headers). `totals` carries the
-						// real per-group counts so callers than need the old combined
-						// number can add them up themselves.
+					),
+					'meta' => array(
+						// `total` is the posts group's real total (matching every other search mode and the
+						// X-WP-Total/X-WP-TotalPages headers). `totals` carries the real per-group counts, so
+						// callers that need a combined number can add them up themselves.
 						'total'    => $posts_total,
-						'totals'   => [
+						'totals'   => array(
 							'posts'  => $posts_total,
 							'spaces' => $spaces_total,
 							'tags'   => $tags_total,
-						],
+						),
 						'offset'   => $offset,
 						'has_more' => ( $offset + count( $posts ) ) < $posts_total,
-					],
-				],
+					),
+				),
 				200
 			);
 
@@ -260,18 +257,18 @@ class Search_Controller extends Base_Controller {
 			return $response;
 		}
 
-		$results = [];
+		$results = array();
 		$total   = 0;
 
-		if ( in_array( $type, [ 'post', 'reply', 'space', 'tag' ], true ) ) {
+		if ( in_array( $type, array( 'post', 'reply', 'space', 'tag' ), true ) ) {
 			$found   = $adapter->query(
 				array_merge(
 					$scope,
-					[
+					array(
 						'type'   => $type,
 						'limit'  => $limit,
 						'offset' => $offset,
-					]
+					)
 				)
 			);
 			$results = $found['items'];
@@ -284,7 +281,7 @@ class Search_Controller extends Base_Controller {
 			$results = $this->enrich_with_author( $results );
 		}
 		// Viewer state (bookmark/vote) batched too — without this prepare_post()
-		// fell through to 2 point queries PER ROW (plan WP3.4). Post rows only;
+		// fell through to 2 point queries PER ROW. Post rows only;
 		// the base method's type-gate additionally refuses reply/space rows.
 		if ( 'post' === $type ) {
 			$results = $this->enrich_viewer_state( $results );
@@ -296,7 +293,7 @@ class Search_Controller extends Base_Controller {
 				// endpoints use, so an object cannot have one shape from /search and
 				// a different one from /feed or /spaces/{id}/posts. Casting the raw
 				// DB row here shipped string-typed numerics, no _gmt twins and no
-				// author enrichment (Basecamp 10161324553).
+				// author enrichment.
 				switch ( $type ) {
 					case 'space':
 						$item = $this->prepare_space( $row );
@@ -323,10 +320,10 @@ class Search_Controller extends Base_Controller {
 		// total (base-controller.php), which is correct on every page.
 		$response = $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
-			]
+			)
 		);
 
 		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / max( 1, $limit ) ) );

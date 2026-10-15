@@ -59,12 +59,9 @@ class Rate_Limiter {
 	/**
 	 * Everything a caller needs to explain a refusal to the member.
 	 *
-	 * The old message was "Rate limit exceeded. Please try again later." -
-	 * three separate controllers saying the same unactionable thing. It named
-	 * no limit, so a member could not know they had one until they hit it, and
-	 * "later" concealed a wait that is measured in hours. Every number needed
-	 * to say something useful was already sitting in the transient; nothing
-	 * read it.
+	 * The refusal names the limit and the wait instead of a bare "Rate limit exceeded":
+	 * a member cannot know they have a limit until they hit it, and "later" can conceal a
+	 * wait measured in hours. Every number needed is already in the transient.
 	 *
 	 * Note on the window: increment() rewrites the TTL on every action, so the
 	 * 24 hours runs from the member's LAST action rather than their first.
@@ -142,26 +139,26 @@ class Rate_Limiter {
 
 		switch ( $action ) {
 			case 'create_posts':
-				/* translators: %s: a count of topics or replies, e.g. "3 topics". */
-				$allowance = sprintf( __( 'New members can post %s a day.', 'jetonomy' ), \Jetonomy\count_label( (int) $status['limit'], 'topic' ) );
+				/* translators: 1: the plural Member label, lowercase, 2: a count of topics or replies, e.g. "3 topics". */
+				$allowance = sprintf( __( 'New %1$s can post %2$s a day.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\count_label( (int) $status['limit'], 'topic' ) );
 				/* translators: %s: human-readable wait, e.g. "17 hours". */
 				$again = __( 'You can post again in about %s.', 'jetonomy' );
 				break;
 			case 'create_replies':
-				/* translators: %s: a count of topics or replies, e.g. "3 topics". */
-				$allowance = sprintf( __( 'New members can post %s a day.', 'jetonomy' ), \Jetonomy\count_label( (int) $status['limit'], 'reply' ) );
+				/* translators: 1: the plural Member label, lowercase, 2: a count of topics or replies, e.g. "3 topics". */
+				$allowance = sprintf( __( 'New %1$s can post %2$s a day.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\count_label( (int) $status['limit'], 'reply' ) );
 				/* translators: %s: human-readable wait, e.g. "45 minutes". */
-				$again = __( 'You can reply again in about %s.', 'jetonomy' );
+				$again = __( 'You can reply again in about %s.', 'jetonomy' ); // jt-terms-ok: "reply" is the verb here, not the noun.
 				break;
 			case 'vote':
-				/* translators: %s: number of votes allowed per day. */
-				$allowance = sprintf( _n( 'New members can cast %s vote a day.', 'New members can cast %s votes a day.', $status['limit'], 'jetonomy' ), $count );
+				/* translators: 1: the plural Member label, lowercase, 2: number of votes allowed per day. */
+				$allowance = sprintf( _n( 'New %1$s can cast %2$s vote a day.', 'New %1$s can cast %2$s votes a day.', $status['limit'], 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), $count );
 				/* translators: %s: human-readable wait, e.g. "2 minutes". */
 				$again = __( 'You can vote again in about %s.', 'jetonomy' );
 				break;
 			default:
-				/* translators: %s: number of actions allowed per day. */
-				$allowance = sprintf( __( 'New members are limited to %s of these a day.', 'jetonomy' ), $count );
+				/* translators: 1: the plural Member label, lowercase, 2: number of actions allowed per day. */
+				$allowance = sprintf( __( 'New %1$s are limited to %2$s of these a day.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), $count );
 				/* translators: %s: human-readable wait. */
 				$again = __( 'You can try again in about %s.', 'jetonomy' );
 		}
@@ -186,11 +183,11 @@ class Rate_Limiter {
 	 * @return array<string,int>
 	 */
 	public static function defaults(): array {
-		return [
+		return array(
 			'posts'   => 3,
 			'replies' => 10,
 			'votes'   => 5,
-		];
+		);
 	}
 
 	/**
@@ -204,17 +201,17 @@ class Rate_Limiter {
 	 */
 	private static function get_limits( int $trust_level ): array {
 		if ( $trust_level >= 1 ) {
-			return []; // No rate limits for Level 1+.
+			return array(); // No rate limits for Level 1+.
 		}
 
-		$settings = get_option( 'jetonomy_settings', [] );
-		$limits   = $settings['rate_limits'] ?? [];
+		$settings = get_option( 'jetonomy_settings', array() );
+		$limits   = $settings['rate_limits'] ?? array();
 		$defaults = self::defaults();
 
-		return [
+		return array(
 			'create_posts'   => (int) ( $limits['posts'] ?? $defaults['posts'] ),
 			'create_replies' => (int) ( $limits['replies'] ?? $defaults['replies'] ),
 			'vote'           => (int) ( $limits['votes'] ?? $defaults['votes'] ),
-		];
+		);
 	}
 }

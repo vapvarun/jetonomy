@@ -1,0 +1,216 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-common.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "es",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Import complete!": [
+                "\u00a1Importaci\u00f3n completada!"
+            ],
+            "Show more details": [
+                ""
+            ],
+            "Actions": [
+                "Acciones"
+            ],
+            "Expires": [
+                "Expira"
+            ],
+            "Unban": [
+                "Desbanear"
+            ],
+            "Member": [
+                "Miembro"
+            ],
+            "Moderator": [
+                "Moderador"
+            ],
+            "Admin": [
+                "Administrador"
+            ],
+            "Viewer": [
+                "Espectador"
+            ],
+            "Invite Link": [
+                "Enlace de invitaci\u00f3n"
+            ],
+            "Uses": [
+                "Usos"
+            ],
+            "Label": [
+                "Etiqueta"
+            ],
+            "Delete permanently": [
+                ""
+            ],
+            "Ban": [
+                "Banear"
+            ],
+            "Never": [
+                "Nunca"
+            ],
+            "Remove prefix": [
+                "Eliminar prefijo"
+            ],
+            "Copy": [
+                "Copiar"
+            ],
+            "Revoke": [
+                "Revocar"
+            ],
+            "Are you sure? This cannot be undone.": [
+                "\u00bfEst\u00e1s seguro? Esto no se puede deshacer."
+            ],
+            "Lift this restriction? The member can post again right away.": [
+                ""
+            ],
+            "Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.": [
+                ""
+            ],
+            "Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.": [
+                ""
+            ],
+            "This destroys every topic, reply and attachment in %s, including content written by other members. It cannot be undone. Type the space name to confirm.": [
+                ""
+            ],
+            "That name did not match, so nothing was deleted.": [
+                ""
+            ],
+            "Mark this as spam? It will be hidden from the community.": [
+                "\u00bfMarcar esto como spam? Se ocultar\u00e1 de la comunidad."
+            ],
+            "Move this to trash? This removes it from the community.": [
+                "\u00bfMover esto a la papelera? Esto lo eliminar\u00e1 de la comunidad."
+            ],
+            "Saving\u2026": [
+                ""
+            ],
+            "Saved!": [
+                "\u00a1Guardado!"
+            ],
+            "Something went wrong.": [
+                "Algo sali\u00f3 mal."
+            ],
+            "Error: %s": [
+                "Error: %s"
+            ],
+            "Unknown error": [
+                "Error desconocido"
+            ],
+            "Select Image": [
+                "Seleccionar imagen"
+            ],
+            "Use this image": [
+                "Usar esta imagen"
+            ],
+            "Hidden spaces must use Invite Only. Join policy switched.": [
+                "Los espacios ocultos deben usar Solo por invitaci\u00f3n. Pol\u00edtica de adhesi\u00f3n cambiada."
+            ],
+            "Switched visibility to Private because Hidden requires Invite Only.": [
+                "Se cambi\u00f3 la visibilidad a Privado porque Oculto requiere Solo por invitaci\u00f3n."
+            ],
+            "Reload page": [
+                "Recarga la p\u00e1gina"
+            ],
+            "Connection lost. You can resume this import later.": [
+                "Conexi\u00f3n perdida. Puedes reanudar esta importaci\u00f3n m\u00e1s tarde."
+            ],
+            "Invite link copied to clipboard.": [
+                "Enlace de invitaci\u00f3n copiado al portapapeles."
+            ],
+            "Revoke this invite link? Anyone holding it will no longer be able to join.": [
+                "\u00bfRevocar este enlace de invitaci\u00f3n? Cualquiera que lo tenga ya no podr\u00e1 unirse."
+            ],
+            "Unlimited": [
+                "Ilimitado"
+            ],
+            "Expired": [
+                "Expirado"
+            ],
+            "Sync": [
+                ""
+            ],
+            "Syncing\u2026": [
+                ""
+            ],
+            "Synced (%d)": [
+                ""
+            ],
+            "This will discard the interrupted import progress. Continue?": [
+                ""
+            ],
+            "Restart import": [
+                ""
+            ],
+            "People who match this rule": [
+                ""
+            ],
+            "%1$s can %2$s. They are recorded as %3$s.": [
+                ""
+            ],
+            "read posts and replies": [
+                ""
+            ],
+            "read, post, reply, vote and report": [
+                ""
+            ],
+            "read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people's topics": [
+                ""
+            ],
+            "Matches every visitor, signed in or not. Nobody is asked to log in first.": [
+                ""
+            ],
+            "Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.": [
+                ""
+            ],
+            "Matches anyone holding this WordPress role. Most members hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means \"everyone who signed up\".": [
+                ""
+            ],
+            "Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.": [
+                ""
+            ],
+            "Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.": [
+                ""
+            ],
+            "Matches members who hold the %s level you pick below.": [
+                ""
+            ],
+            "subscriber": [
+                ""
+            ],
+            "edit_posts": [
+                ""
+            ],
+            "2": [
+                ""
+            ],
+            "No matches": [
+                "Sin coincidencias"
+            ],
+            "%d more. Refine your search to see it.": [
+                ""
+            ],
+            "Banning: %s": [
+                ""
+            ],
+            "Silencing: %s": [
+                ""
+            ],
+            "%d record imported successfully.": [
+                ""
+            ],
+            "%d file could not be recovered and was left linked in the original post text.": [
+                ""
+            ],
+            "%s to see updated status.": [
+                ""
+            ]
+        }
+    }
+}

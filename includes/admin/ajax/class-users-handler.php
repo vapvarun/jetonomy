@@ -10,15 +10,14 @@ namespace Jetonomy\Admin\Ajax;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Restriction;
-use Jetonomy\Models\UserProfile;
 
 class Users_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_ban_user', [ $this, 'ajax_ban_user' ] );
-		add_action( 'wp_ajax_jetonomy_unban_user', [ $this, 'ajax_unban_user' ] );
-		add_action( 'wp_ajax_jetonomy_change_trust_level', [ $this, 'ajax_change_trust_level' ] );
-		add_action( 'wp_ajax_jetonomy_search_users', [ $this, 'ajax_search_users' ] );
+		add_action( 'wp_ajax_jetonomy_ban_user', array( $this, 'ajax_ban_user' ) );
+		add_action( 'wp_ajax_jetonomy_unban_user', array( $this, 'ajax_unban_user' ) );
+		add_action( 'wp_ajax_jetonomy_change_trust_level', array( $this, 'ajax_change_trust_level' ) );
+		add_action( 'wp_ajax_jetonomy_search_users', array( $this, 'ajax_search_users' ) );
 	}
 
 	public function ajax_ban_user(): void {
@@ -37,8 +36,13 @@ class Users_Handler {
 			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $type, [ 'global_ban', 'space_ban', 'silence' ], true ) ) {
+		if ( ! in_array( $type, array( 'global_ban', 'space_ban', 'silence' ), true ) ) {
 			$type = 'global_ban';
+		}
+
+		if ( 'space_ban' === $type && ! $space_id ) {
+			/* translators: 1: space label, lowercase (e.g. "space"). 2: member label, lowercase (e.g. "member"). 3: member label, plural (e.g. "Members"). */
+			wp_send_json_error( sprintf( __( 'This ban needs a specific %1$s. Ban the %2$s from that %1$s\'s %3$s screen.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'member', true ) ) );
 		}
 
 		/*
@@ -46,7 +50,7 @@ class Users_Handler {
 		 *
 		 * The cap check above is satisfied by the editor role out of the box, so
 		 * without this an editor could global_ban user 1 and lock the owner out
-		 * of their own site (Basecamp 10227908469). Restriction::ban() enforces
+		 * of their own site. Restriction::ban() enforces
 		 * the same rule as a backstop; this call is here so the moderator gets
 		 * the reason instead of a bare failure.
 		 */
@@ -94,10 +98,10 @@ class Users_Handler {
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'message'        => __( 'User banned.', 'jetonomy' ),
 				'restriction_id' => $restriction_id,
-			]
+			)
 		);
 	}
 
@@ -117,12 +121,12 @@ class Users_Handler {
 			wp_send_json_error( __( 'Failed to remove ban.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Ban removed.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Ban removed.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_change_trust_level(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+		if ( ! current_user_can( 'jetonomy_manage_users' ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
@@ -133,22 +137,16 @@ class Users_Handler {
 			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
 		}
 
-		if ( $trust_level > 5 ) {
-			$trust_level = 5;
-		}
-
-		UserProfile::find_or_create( $user_id );
-		$result = UserProfile::update_profile( $user_id, [ 'trust_level' => $trust_level ] );
-
-		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to update trust level.', 'jetonomy' ) );
+		$trust_level = \Jetonomy\Trust\Trust_Levels::set_manually( $user_id, $trust_level, get_current_user_id() );
+		if ( is_wp_error( $trust_level ) ) {
+			wp_send_json_error( $trust_level->get_error_message() );
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'message'     => __( 'Trust level updated.', 'jetonomy' ),
 				'trust_level' => $trust_level,
-			]
+			)
 		);
 	}
 
@@ -160,27 +158,27 @@ class Users_Handler {
 
 		$search = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
 		if ( strlen( $search ) < 2 ) {
-			wp_send_json_success( [ 'users' => [] ] );
+			wp_send_json_success( array( 'users' => array() ) );
 		}
 
 		$users = get_users(
-			[
+			array(
 				'search'         => '*' . $search . '*',
-				'search_columns' => [ 'user_login', 'display_name', 'user_email' ],
+				'search_columns' => array( 'user_login', 'display_name', 'user_email' ),
 				'number'         => 10,
-			]
+			)
 		);
 
-		$results = [];
+		$results = array();
 		foreach ( $users as $user ) {
-			$results[] = [
+			$results[] = array(
 				'id'           => $user->ID,
 				'display_name' => $user->display_name,
 				'user_login'   => $user->user_login,
-				'avatar'       => get_avatar_url( $user->ID, [ 'size' => 32 ] ),
-			];
+				'avatar'       => get_avatar_url( $user->ID, array( 'size' => 32 ) ),
+			);
 		}
 
-		wp_send_json_success( [ 'users' => $results ] );
+		wp_send_json_success( array( 'users' => $results ) );
 	}
 }

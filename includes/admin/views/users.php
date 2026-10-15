@@ -15,11 +15,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-// Read from Trust_Levels, never a local copy. This screen used to carry its own
-// list (New / Basic / Member / Regular / Leader / Elder) which sat a full level
-// off the names the promotion email and Permissions tab used, so a member
-// promoted to level 2 was emailed "Regular" and listed here as "Member"
-// (Basecamp 10210059424).
+// Read from Trust_Levels, never a local copy, so the labels match the promotion
+// email and the Permissions tab.
 $trust_labels = array();
 for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 	$trust_labels[ $jt_tl ] = \Jetonomy\Trust\Trust_Levels::label( $jt_tl );
@@ -28,11 +25,11 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Users', 'jetonomy' ); ?></h1>
 
-	<?php // Role-clarity explainer (Basecamp 9725751235): the #1 new-owner question is "how does someone become a Jetonomy user?". Collapsible so it costs experienced owners one line. ?>
+	<?php // Role-clarity explainer: the #1 new-owner question is "how does someone become a Jetonomy user?". Collapsible so it costs experienced owners one line. ?>
 	<details class="jt-roles-explainer">
 		<summary><?php esc_html_e( 'How users, roles, and trust levels fit together', 'jetonomy' ); ?></summary>
 		<div class="jt-roles-explainer__body">
-			<p class="jt-roles-explainer__lead"><?php esc_html_e( 'Community members ARE your WordPress users, with no separate registration. Anyone who can log in is a member; their community profile is created automatically the first time they visit a community page while logged in. Three independent layers decide what each person can do:', 'jetonomy' ); ?></p>
+			<p class="jt-roles-explainer__lead"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Community %1$s ARE your WordPress users, with no separate registration. Anyone who can log in is counted among them; their community profile is created automatically the first time they visit a community page while logged in. Three independent layers decide what each person can do:', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 			<div class="jt-roles-explainer__grid">
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'WordPress role', 'jetonomy' ); ?></h3>
@@ -40,35 +37,32 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 				</div>
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'Trust level (0-5)', 'jetonomy' ); ?></h3>
-					<p><?php esc_html_e( 'Earned automatically through participation: posting links, images, and editing privileges unlock as members prove themselves. Override per user below; tune thresholds under Settings → Trust.', 'jetonomy' ); ?></p>
+					<p><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Earned automatically through participation: posting links, images, and editing privileges unlock as %s prove themselves. Override per user below; tune thresholds under Settings → Trust.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 				</div>
 				<div class="jt-roles-explainer__col">
 					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<h3><?php echo esc_html( sprintf( __( '%s role', 'jetonomy' ), \Jetonomy\space_label( false ) ) ); ?></h3>
-					<?php /* translators: 1: singular space label, 2: singular space label */ ?>
-					<p><?php echo esc_html( sprintf( __( 'Member, moderator, or admin of ONE %1$s, granted on that %2$s’s Members screen. Never implies wp-admin access.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+					<?php /* jt-terms-ok: Member / moderator / admin are space role names. */ /* translators: 1: singular space label, 2: singular space label, 3: member label, plural (e.g. "Members"). */ ?>
+					<p><?php echo esc_html( sprintf( __( 'Member, moderator, or admin of ONE %1$s, granted on that %2$s’s %3$s screen. Never implies wp-admin access.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></p>
 				</div>
 			</div>
 			<p class="jt-roles-explainer__foot">
 				<?php
 				printf(
-					/* translators: 1: name of the highest trust level, 2: link to the full guide */
-					esc_html__( 'A Subscriber can be a Level 5 %1$s and a space admin: community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
-					// Read from $trust_labels for the same reason the rest of
-					// this screen does: the sentence used to hardcode "Elder",
-					// a name level 5 has not carried since the ladder was
-					// renamed, so the one surface that had just been fixed to
-					// stop keeping a local copy still shipped one in its own
-					// explainer (Basecamp 10212758778).
-					$trust_labels[5],
+					/* translators: 1: name of the highest trust level, 2: link to the full guide, 3: space label, lowercase (e.g. "space"). */
+					esc_html__( 'A Subscriber can be a Level 5 %1$s and admin of any %3$s: community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
+					// Read from $trust_labels for the same reason the rest of this screen does: the
+					// sentence must never hardcode a level name such as "Elder" that can be renamed.
+					esc_html( (string) $trust_labels[5] ), // Owner-editable since 2.0.2, so escaped like any stored text.
 					// Directory, not the deep link to 08-users-roles-and-trust.md.
 					// `blob/HEAD` resolves against the DEFAULT branch, and that
 					// file lands there only when the release branch merges - so
-					// the in-product link 404'd for anyone who clicked it before
-					// release (Basecamp 9725751235, bounced twice on exactly
-					// this). The directory exists on main today and gains the
+					// the in-product link would 404 for anyone who clicked it before
+					// release.
+					// The directory exists on main today and gains the
 					// guide at merge, so the link is correct in both states.
-					'<a href="https://github.com/vapvarun/jetonomy/tree/HEAD/docs/website/getting-started" target="_blank" rel="noopener">' . esc_html__( 'Browse the setup guides', 'jetonomy' ) . '</a>'
+					'<a href="https://github.com/vapvarun/jetonomy/tree/HEAD/docs/website/getting-started" target="_blank" rel="noopener">' . esc_html__( 'Browse the setup guides', 'jetonomy' ) . '</a>',
+					esc_html( \Jetonomy\space_label( false, true ) )
 				);
 				?>
 			</p>
@@ -111,9 +105,8 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 					'primary' => true,
 				),
 				'display-name' => array( 'label' => __( 'Display Name', 'jetonomy' ) ),
-				// Widths snap to the shared xs/s/m/l scale rather than the inline
-				// px this table used to carry; the scale drops to auto below
-				// 782px, which a hardcoded width does not.
+				// Widths snap to the shared xs/s/m/l scale rather than inline px; the scale
+				// drops to auto below 782px, which a hardcoded width does not.
 				'trust'        => array(
 					'label' => __( 'Trust Level', 'jetonomy' ),
 					'width' => 'm',
@@ -127,7 +120,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 					'width' => 'xs',
 				),
 				'replies'      => array(
-					'label' => __( 'Replies', 'jetonomy' ),
+					'label' => \Jetonomy\jetonomy_label( 'reply', true ),
 					'width' => 's',
 				),
 				'joined'       => array(
@@ -142,7 +135,8 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 			'empty'     => array(
 				'icon'  => 'admin-users',
 				'title' => __( 'No users match these filters', 'jetonomy' ),
-				'body'  => __( 'Try clearing a filter or broadening your search to see more members.', 'jetonomy' ),
+				/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+				'body'  => sprintf( __( 'Try clearing a filter or broadening your search to see more %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			),
 			'cell'      => function ( $u, $col ) use ( $trust_labels ) {
 				switch ( $col ) {
@@ -152,9 +146,11 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 						?>
 						<div class="row-actions">
 							<span class="edit"><a href="<?php echo esc_url( get_edit_user_link( $u->user_id ) ); ?>"><?php esc_html_e( 'View Profile', 'jetonomy' ); ?></a> | </span>
-							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a> | </span>
+							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a><?php echo current_user_can( 'jetonomy_moderate' ) ? ' | ' : ''; ?></span>
+							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 							<span class="ban"><a href="#" class="jetonomy-ban-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-username="<?php echo esc_attr( $u->user_login ); ?>"><?php esc_html_e( 'Ban', 'jetonomy' ); ?></a> | </span>
 							<span class="silence"><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a></span>
+							<?php endif; ?>
 						</div>
 						<?php
 						break;
@@ -237,7 +233,6 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 						<select id="ban-type">
 							<option value="global_ban"><?php esc_html_e( 'Global Ban', 'jetonomy' ); ?></option>
 							<option value="silence"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></option>
-							<option value="space_ban"><?php esc_html_e( 'Space Ban', 'jetonomy' ); ?></option>
 						</select>
 					</td>
 				</tr>

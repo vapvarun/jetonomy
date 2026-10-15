@@ -64,8 +64,8 @@ class Migration_1_2_6 {
 			}
 			$wpdb->update(
 				$table,
-				[ $column => $decoded ],
-				[ 'id' => (int) $row->id ]
+				array( $column => $decoded ),
+				array( 'id' => (int) $row->id )
 			);
 		}
 		// phpcs:enable

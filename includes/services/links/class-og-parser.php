@@ -3,8 +3,7 @@
  * Extract Open Graph / Twitter Card / schema.org metadata from HTML.
  *
  * DOM-based (not regex) so attribute order, quoting style, and HTML entities
- * parse correctly. The old regex parser returned empty titles for ~20% of
- * tested sites because of attribute ordering (`content` before `property`).
+ * parse correctly (a regex parser returns empty titles when `content` comes before `property`).
  *
  * @package Jetonomy
  */

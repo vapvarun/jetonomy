@@ -15,11 +15,11 @@ class WP_Mail_Adapter implements Email_Adapter {
 		return true;
 	}
 
-	public function send( string $to, string $subject, string $html, string $plain, array $extra_headers = [] ): bool {
-		$headers = [
+	public function send( string $to, string $subject, string $html, string $plain, array $extra_headers = array() ): bool {
+		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . $this->get_from_name() . ' <' . $this->get_from_email() . '>',
-		];
+		);
 
 		// Merge per-email headers (e.g. List-Unsubscribe with specific unsubscribe URL).
 		if ( ! empty( $extra_headers ) ) {
@@ -30,6 +30,16 @@ class WP_Mail_Adapter implements Email_Adapter {
 			$headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
 		}
 
+		/**
+		 * Filters the headers of a notification email.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string[] $headers Email headers.
+		 * @param string   $to      Recipient address.
+		 * @param string   $subject Email subject.
+		 * @return string[] Email headers.
+		 */
 		$headers = apply_filters( 'jetonomy_notification_email_headers', $headers, $to, $subject );
 
 		return $this->send_with_our_sender( $to, $subject, $html, $headers );
@@ -45,7 +55,7 @@ class WP_Mail_Adapter implements Email_Adapter {
 	 * ours. Learnomy's Notification_Service::filter_mail_from() does exactly
 	 * that at priority 20, which left a community that had configured
 	 * community@example.com sending as the WordPress admin address, breaking
-	 * SPF/DKIM alignment (Basecamp 10280327270).
+	 * SPF/DKIM alignment.
 	 *
 	 * The filters are registered immediately before the send and removed
 	 * immediately after, at a priority high enough to be the final word, so
@@ -88,7 +98,7 @@ class WP_Mail_Adapter implements Email_Adapter {
 	}
 
 	private function get_from_name(): string {
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 		$name     = $settings['email_from_name'] ?? '';
 		$name     = '' !== $name ? $name : get_bloginfo( 'name' );
 
@@ -109,7 +119,7 @@ class WP_Mail_Adapter implements Email_Adapter {
 	}
 
 	private function get_from_email(): string {
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 		$email    = $settings['email_from_email'] ?? '';
 		$email    = '' !== $email ? $email : get_option( 'admin_email' );
 

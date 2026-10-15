@@ -60,8 +60,7 @@ if ( $prefix_name && $space ) {
 					aria-pressed="<?php echo 1 === $viewer_vote ? 'true' : 'false'; ?>"
 					data-wp-on--click="actions.voteUp"
 					data-post-id="<?php echo absint( $post->id ); ?>"
-					title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-					aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></button>
+					<?php echo jetonomy_vote_attrs( 'up', 1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></button>
 				<span class="jt-v-num" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo (int) $post->vote_score; ?></span>
 				<?php // Hide downvote on own content (self-downvote landed at -1). ?>
 				<?php if ( (int) $post->author_id !== $viewer_id ) : ?>
@@ -69,8 +68,7 @@ if ( $prefix_name && $space ) {
 						aria-pressed="<?php echo -1 === $viewer_vote ? 'true' : 'false'; ?>"
 						data-wp-on--click="actions.voteDown"
 						data-post-id="<?php echo absint( $post->id ); ?>"
-						title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
+						<?php echo jetonomy_vote_attrs( 'down', -1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 				<?php endif; ?>
 			<?php else : ?>
 				<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
@@ -81,29 +79,20 @@ if ( $prefix_name && $space ) {
 	<?php endif; ?>
 	<div class="jt-row-main">
 		<?php
-		// 1.4.0 C.4 fix: row is no longer one big <a>. The title link is the
+		// The row is not one big <a>. The title link is the
 		// stretched anchor (CSS positions ::before to cover the whole row),
 		// so child <a> elements (tags, mentions) remain clickable without
 		// nested-anchor invalid markup. The whole row stays clickable.
 		?>
 		<a class="jt-row-title jt-row-title-link" href="<?php echo esc_url( $post_url ); ?>">
-			<?php if ( $post->is_sticky ) : ?>
-				<span class="jt-badge-pinned"><?php jetonomy_echo_icon( 'pin', 12 ); ?> <?php esc_html_e( 'Pinned', 'jetonomy' ); ?></span>
-			<?php endif; ?>
-			<?php if ( ! empty( $post->is_private ) ) : ?>
-				<span class="jt-badge-private"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
-			<?php endif; ?>
 			<?php
-			/**
-			 * Fires after the built-in post-card badges (sticky, private) so
-			 * Pro extensions can append extra markers (super-sticky / pinned
-			 * site-wide / "From announcements" etc.) without forking the
-			 * post-card partial.
-			 *
-			 * @param object      $post  Post row.
-			 * @param object|null $space Space row, if loaded.
-			 */
-			do_action( 'jetonomy_post_card_after_badges', $post, $space );
+			\Jetonomy\Template_Loader::partial(
+				'post-badges',
+				array(
+					'post'  => $post,
+					'space' => $space ?? null,
+				)
+			);
 			?>
 			<?php if ( $prefix_name ) : ?>
 				<span class="jt-prefix"

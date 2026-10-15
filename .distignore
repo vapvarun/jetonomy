@@ -24,3 +24,4 @@ seed-*.php
 !readme.txt
 marketing
 .playwright-mcp
+includes/qa

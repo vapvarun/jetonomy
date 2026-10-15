@@ -33,60 +33,60 @@ class Space_Moderation_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/moderation/flags',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_flags' ],
-				'permission_callback' => [ $this, 'require_view_space_queue' ],
-				'args'                => [
-					'id'     => [
+				'callback'            => array( $this, 'list_flags' ),
+				'permission_callback' => array( $this, 'require_view_space_queue' ),
+				'args'                => array(
+					'id'     => array(
 						'type'     => 'integer',
 						'required' => true,
 						'minimum'  => 1,
-					],
+					),
 					// Same contract as the global queue (/moderation/flags). Without
 					// this the Upheld/Dismissed chips on the per-space screen sent a
 					// status the route never registered, WP dropped it silently, and
 					// the filter returned pending rows forever — dead UI that looked
 					// like "no results" rather than "this filter does nothing".
-					'status' => [
+					'status' => array(
 						'type'    => 'string',
 						'default' => 'pending',
-						'enum'    => [ 'pending', 'valid', 'dismissed', 'all' ],
-					],
-				],
-			]
+						'enum'    => array( 'pending', 'valid', 'dismissed', 'all' ),
+					),
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/moderation/flags/(?P<flag_id>\d+)/resolve',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'resolve_flag' ],
+				'callback'            => array( $this, 'resolve_flag' ),
 				// REST_Auth handles login + nonce; the per-space queue gate
 				// (which needs the path-bound `id`) runs in the handler via
 				// Moderation_Permissions::can_view_space_queue.
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				'args'                => [
-					'status' => [
+				'args'                => array(
+					'status' => array(
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => [ 'valid', 'dismissed' ],
-					],
-				],
-			]
+						'enum'     => array( 'valid', 'dismissed' ),
+					),
+				),
+			)
 		);
 
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/moderation/(?P<action>approve|spam|trash)/(?P<type>post|reply)/(?P<obj_id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'act_on_object' ],
+				'callback'            => array( $this, 'act_on_object' ),
 				// Same shape as resolve_flag — gate is per-space + per-object
 				// inside the handler.
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-			]
+			)
 		);
 	}
 
@@ -123,7 +123,7 @@ class Space_Moderation_Controller extends Base_Controller {
 		// it listed pending-only regardless of the requested status, returned every
 		// row in the space (limit was ignored — 34 rows against limit=20), and
 		// carried no reporter, no total and no has_more. All three were fixed on the
-		// global route and never migrated here (Basecamp 10092724637, 10092652706).
+		// global route and never migrated here.
 		$pagination = $this->get_pagination( $request );
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];
@@ -133,13 +133,13 @@ class Space_Moderation_Controller extends Base_Controller {
 		// space-scoped rather than a way to read another space's queue.
 		if ( ! Moderation_Permissions::can_view_space_queue( get_current_user_id(), $space_id ) ) {
 			return new WP_REST_Response(
-				[
-					'data' => [],
-					'meta' => [
+				array(
+					'data' => array(),
+					'meta' => array(
 						'total'    => 0,
 						'space_id' => $space_id,
-					],
-				],
+					),
+				),
 				200
 			);
 		}
@@ -153,11 +153,11 @@ class Space_Moderation_Controller extends Base_Controller {
 
 		return $this->paginated_response(
 			$flags,
-			[
+			array(
 				'total'    => $total,
 				'offset'   => $offset,
 				'space_id' => $space_id,
-			]
+			)
 		);
 	}
 
@@ -183,11 +183,11 @@ class Space_Moderation_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'resolved' => true,
 				'id'       => $flag_id,
 				'status'   => $status,
-			],
+			),
 			200
 		);
 	}
@@ -214,12 +214,12 @@ class Space_Moderation_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'action'      => $action,
 				'object_type' => $type,
 				'id'          => $obj_id,
 				'ok'          => true,
-			],
+			),
 			200
 		);
 	}

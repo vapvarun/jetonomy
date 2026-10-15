@@ -15,6 +15,60 @@ function table( string $name ): string {
 }
 
 /**
+ * The community's display name: the Community Title setting, or "Community".
+ *
+ * Every member-facing label for the community as a whole reads it (nav,
+ * browser titles, breadcrumbs, admin bar), so renaming it in Settings renames
+ * it everywhere.
+ *
+ * @return string
+ */
+function community_title(): string {
+	$settings = get_option( 'jetonomy_settings', array() );
+	$title    = trim( (string) ( $settings['community_title'] ?? '' ) );
+	return '' !== $title ? $title : __( 'Community', 'jetonomy' );
+}
+
+/**
+ * The community's full name for search engines and the home page title: the
+ * owner's Community Title when set, otherwise "{Site} Community" (just the
+ * site name when it already ends in that word).
+ */
+function community_home_name(): string {
+	$title = community_title();
+	if ( __( 'Community', 'jetonomy' ) !== $title ) {
+		return $title;
+	}
+	$site = trim( (string) get_bloginfo( 'name' ) );
+	if ( '' === $site || 0 === strcasecmp( substr( $site, -strlen( $title ) ), $title ) ) {
+		return '' !== $site ? $site : $title;
+	}
+	return $site . ' ' . $title;
+}
+
+/**
+ * Print one link in the Settings screen's sidebar.
+ *
+ * Free's own tabs, integrations and Pro extensions all render their entry
+ * through here, so every row has the same icon, spacing and active state.
+ *
+ * @param string $slug       Tab slug (the ?tab= value).
+ * @param string $label      Visible, already translated label.
+ * @param string $icon       Dashicon class, e.g. 'dashicons-heart'.
+ * @param string $active_tab Slug of the tab being viewed.
+ */
+function settings_tab_link( string $slug, string $label, string $icon, string $active_tab ): void {
+	printf(
+		'<a href="%1$s" class="jt-snav-link%2$s"%3$s><span class="dashicons %4$s" aria-hidden="true"></span>%5$s</a>',
+		esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=' . rawurlencode( $slug ) ) ),
+		$slug === $active_tab ? ' jt-snav-link--active' : '',
+		$slug === $active_tab ? ' aria-current="page"' : '',
+		esc_attr( $icon ),
+		esc_html( $label )
+	);
+}
+
+/**
  * Get the community base URL (e.g. http://forums.local/discussion).
  *
  * Reads the `base_slug` from jetonomy_settings (default: 'community').
@@ -36,7 +90,7 @@ function base_url(): string {
  * @return string Base slug without slashes.
  */
 function base_slug(): string {
-	$settings = get_option( 'jetonomy_settings', [] );
+	$settings = get_option( 'jetonomy_settings', array() );
 	return (string) ( $settings['base_slug'] ?? 'community' );
 }
 
@@ -44,8 +98,7 @@ function base_slug(): string {
  * URL of a community route, e.g. route_url( 'post', $space_slug, $post_slug ).
  *
  * THE map of the segments after the base slug. They are fixed English and not
- * translatable or filterable by design - labels are display-only (Basecamp
- * 10344391975). Keys are the router's jetonomy_route values; Router::add_rewrite_rules()
+ * translatable or filterable by design - labels are display-only. Keys are the router's jetonomy_route values; Router::add_rewrite_rules()
  * holds the matching regexes, so a segment changed here must change there.
  *
  * Arguments are substituted verbatim - encode them at the call site where the
@@ -203,11 +256,11 @@ function current_url(): string {
  */
 function label_defaults(): array {
 	return array(
-		'space'    => array( __( 'Space', 'jetonomy' ), __( 'Spaces', 'jetonomy' ) ),
-		'topic'    => array( __( 'Topic', 'jetonomy' ), __( 'Topics', 'jetonomy' ) ),
-		'reply'    => array( __( 'Reply', 'jetonomy' ), __( 'Replies', 'jetonomy' ) ),
-		'member'   => array( __( 'Member', 'jetonomy' ), __( 'Members', 'jetonomy' ) ),
-		'category' => array( __( 'Category', 'jetonomy' ), __( 'Categories', 'jetonomy' ) ),
+		'space'    => array( __( 'Space', 'jetonomy' ), __( 'Spaces', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
+		'topic'    => array( __( 'Topic', 'jetonomy' ), __( 'Topics', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
+		'reply'    => array( __( 'Reply', 'jetonomy' ), __( 'Replies', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
+		'member'   => array( __( 'Member', 'jetonomy' ), __( 'Members', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
+		'category' => array( __( 'Category', 'jetonomy' ), __( 'Categories', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
 	);
 }
 
@@ -271,6 +324,29 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 }
 
 /**
+ * Every terminology noun in all four forms, for scripts.
+ *
+ * Exposed to wp-admin scripts as window.jetonomyLabels so script-built
+ * strings use the owner's words exactly like PHP does with jetonomy_label():
+ * labels.space.one, .many, .one_lower, .many_lower. Frontend scripts get
+ * finished strings in their localized i18n state instead, so they need no map.
+ *
+ * @return array<string, array{one:string, many:string, one_lower:string, many_lower:string}>
+ */
+function label_map(): array {
+	$map = array();
+	foreach ( array_keys( label_defaults() ) as $noun ) {
+		$map[ $noun ] = array(
+			'one'        => jetonomy_label( $noun ),
+			'many'       => jetonomy_label( $noun, true ),
+			'one_lower'  => jetonomy_label( $noun, false, true ),
+			'many_lower' => jetonomy_label( $noun, true, true ),
+		);
+	}
+	return $map;
+}
+
+/**
  * Batch-load everything a list of topic cards reads, so each card costs no
  * per-row queries: author role labels (per space, since a tag or drafts list
  * mixes spaces), author profiles, tag pills, and the viewer's votes. Every
@@ -319,41 +395,36 @@ function prime_post_cards( array $posts ): array {
  * forms (Polish, Russian, Arabic) get every form from their translation. A
  * label the owner renamed (or one a filter changes) only has the singular and
  * plural the owner typed, so it falls back to "number + label" in the
- * owner's words - the best that is possible with two forms (Basecamp
- * 10369320225).
+ * owner's words - the best that is possible with two forms.
  *
  * @param int    $count Number being counted.
  * @param string $noun  One of: space, topic, reply, member, category.
  * @return string Format containing one %s.
  */
 function count_label_format( int $count, string $noun ): string {
-	$noun     = strtolower( $noun );
-	$noun     = isset( label_defaults()[ $noun ] ) ? $noun : 'space';
-	$settings = get_option( 'jetonomy_settings', array() );
-	$renamed  = '' !== trim( (string) ( $settings[ $noun . '_label_singular' ] ?? '' ) . (string) ( $settings[ $noun . '_label_plural' ] ?? '' ) )
-		|| has_filter( 'jetonomy_label' )
-		|| ( 'space' === $noun && has_filter( 'jetonomy_space_label' ) );
+	$noun = strtolower( $noun );
+	$noun = isset( label_defaults()[ $noun ] ) ? $noun : 'space';
 
-	if ( $renamed ) {
+	if ( noun_is_renamed( $noun ) ) {
 		return '%s ' . str_replace( '%', '%%', jetonomy_label( $noun, 1 !== $count, true ) );
 	}
 
 	switch ( $noun ) {
 		case 'topic':
 			/* translators: %s: number of topics. */
-			return _n( '%s topic', '%s topics', $count, 'jetonomy' );
+			return _n( '%s topic', '%s topics', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 		case 'reply':
 			/* translators: %s: number of replies. */
-			return _n( '%s reply', '%s replies', $count, 'jetonomy' );
+			return _n( '%s reply', '%s replies', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 		case 'member':
 			/* translators: %s: number of members. */
-			return _n( '%s member', '%s members', $count, 'jetonomy' );
+			return _n( '%s member', '%s members', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 		case 'category':
 			/* translators: %s: number of categories. */
-			return _n( '%s category', '%s categories', $count, 'jetonomy' );
+			return _n( '%s category', '%s categories', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 		default:
 			/* translators: %s: number of spaces. */
-			return _n( '%s space', '%s spaces', $count, 'jetonomy' );
+			return _n( '%s space', '%s spaces', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 	}
 }
 
@@ -367,6 +438,20 @@ function count_label_format( int $count, string $noun ): string {
  */
 function count_label( int $count, string $noun ): string {
 	return sprintf( count_label_format( $count, $noun ), number_format_i18n( $count ) );
+}
+
+/**
+ * Whether the owner (or a filter) renamed a built-in noun. A renamed noun has
+ * only the two forms the owner typed, so counts fall back to "number + label";
+ * built-in nouns get every plural form of the site's language.
+ *
+ * @param string $noun space, topic, reply, member or category.
+ */
+function noun_is_renamed( string $noun ): bool {
+	$settings = get_option( 'jetonomy_settings', array() );
+	return '' !== trim( (string) ( $settings[ $noun . '_label_singular' ] ?? '' ) . (string) ( $settings[ $noun . '_label_plural' ] ?? '' ) )
+		|| has_filter( 'jetonomy_label' )
+		|| ( 'space' === $noun && has_filter( 'jetonomy_space_label' ) );
 }
 
 /**
@@ -400,11 +485,9 @@ function now(): string {
 /**
  * The verb a space type uses for "create something here".
  *
- * Single source of truth for the compose label. The same four strings used to
- * be written out separately in the composer heading, the space CTA button, the
- * BuddyPress tab CTA and (type-blind, so wrong on three of the four types) the
- * browser tab title — a Q&A space offered "Ask a Question" on the page while
- * the tab said "Start a discussion".
+ * Single source of truth for the compose label, used by the composer heading,
+ * the space CTA button, the BuddyPress tab CTA and the browser tab title, so a
+ * Q&A space says "Ask a Question" everywhere.
  *
  * @param string $space_type Space type: qa, ideas, feed, or anything else (forum).
  * @return string
@@ -421,7 +504,7 @@ function compose_label( string $space_type ): string {
 			$label = __( 'New Status', 'jetonomy' );
 			break;
 		default:
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			$label = sprintf( __( 'New %s', 'jetonomy' ), jetonomy_label( 'topic' ) );
 			break;
 	}
@@ -678,19 +761,17 @@ function user_handle( $user ): string {
  *
  * WordPress does not let a member author an arbitrary display name: wp-admin
  * offers a "Display name publicly as" select built from permutations of fields
- * they already own. Jetonomy's front-end editor used to be a free-text box that
- * wrote straight through to wp_users.display_name, which meant a member could
- * publish as "Administrator", could take another member's exact name, and could
- * silently overwrite a value the site owner had chosen in wp-admin - the stored
- * name then matched none of core's own options.
+ * they already own. The front-end editor offers the same set, so a member cannot
+ * publish as "Administrator", take another member's exact name, or store a name
+ * that matches none of core's own options.
  *
  * Shared by the form that renders the select and the endpoint that validates the
  * submission, so the two cannot disagree about what is allowed.
  *
  * The member's CURRENT display_name is always included, exactly as core does.
- * Sites upgrading from the free-text era have members whose stored name is not a
- * permutation of anything; excluding it would make simply saving the form fail,
- * or silently rename them. New arbitrary values still cannot be introduced.
+ * A stored name that is not a permutation of anything is kept; excluding it would
+ * make saving the form fail or silently rename the member. New arbitrary values
+ * still cannot be introduced.
  *
  * @param \WP_User $user User to build choices for.
  * @return string[] Unique, non-empty candidate names.
@@ -718,11 +799,15 @@ function display_name_choices( \WP_User $user ): array {
 	// are member-writable through the same endpoint: setting
 	// nickname="Administrator" and then selecting it was a two-call
 	// impersonation that the first version of this check missed entirely
-	// (Basecamp 10210055850, QA bounce).
 	$choices = array_filter(
 		$choices,
 		static fn( $name ) => ! is_reserved_display_name( (string) $name )
 	);
+	// The current name stays selectable even when reserved (an account literally
+	// named "admin"): keeping it changes nothing, while dropping it emptied the
+	// required select and blocked every profile save. Only NEW reserved values
+	// are refused.
+	array_unshift( $choices, (string) $user->display_name );
 
 	/**
 	 * Filter the names a member may publish as.
@@ -765,9 +850,9 @@ function name_display_mode(): string {
  * THE single source of truth for "what do we call this person on screen",
  * paired with get_profile_url() for "where does their name link to". Every
  * byline, member row, mention chip, moderation card AND the REST/CLI payloads
- * resolve through here (migration 1_9_4_1 routed the data surfaces in too), so
- * the site-wide member_name_display setting and the jetonomy_user_display_name
- * filter apply once, uniformly - web and app can no longer disagree.
+ * resolve through here, so the site-wide member_name_display setting and the
+ * jetonomy_user_display_name filter apply once, uniformly - web and app cannot
+ * disagree.
  *
  * Default chain is display_name -> user_nicename -> user_login. The fallbacks
  * matter: display_name can be empty on users created by an importer or a raw
@@ -941,7 +1026,7 @@ function community_profile_url( int $user_id ): string {
  * BuddyPress, BuddyBoss, Ultimate Member or any other profile system. Use this
  * to LINK TO a member (byline, avatar, "view profile"). For Jetonomy's OWN
  * edit/settings/badges/digest screens use get_profile_action_url() - those must
- * not follow this filter off-site (Zoho #41491).
+ * not follow this filter off-site.
  *
  * @param int $user_id The user ID.
  * @return string The profile URL.
@@ -972,9 +1057,8 @@ function get_profile_url( int $user_id ): string {
  *
  * These live on Jetonomy's own community route, so they are built on the
  * UNFILTERED community_profile_url() and never break when a site routes member
- * profiles off-site via jetonomy_profile_url (Zoho #41491: the Notifications
- * Settings button used to land at <foreign-profile>/edit/#notification-preferences,
- * a page that does not exist).
+ * profiles off-site via jetonomy_profile_url (a foreign profile page has no
+ * /edit/ or notification-preferences screen).
  *
  * Each action is INDEPENDENTLY remappable via the jetonomy_profile_action_url
  * filter, so an integration (BuddyNext, BuddyPress, Ultimate Member) can later
@@ -1038,9 +1122,8 @@ function replies_per_page(): int {
  * THE single producer of reply deep links. Every surface that points at a
  * reply — notifications (web, REST, email), the profile's reply list, JSON-LD
  * accepted answers, the FluentCommunity profile block — routes through here.
- * They each used to concatenate their own '#reply-' . $id, which produced an
- * anchor for an element that (a) had no matching id in the DOM and (b) was
- * usually not on the rendered page at all, because the thread paginates.
+ * Callers must not build '#reply-' . $id themselves: that anchor targets an element
+ * that is usually not on the rendered page, because the thread paginates.
  *
  * Slugs are passed in rather than resolved here: most callers already hold
  * them from a JOIN, and re-querying Post + Space per link would put two
@@ -1170,10 +1253,8 @@ function notification_deep_link( string $object_type, int $object_id ): string {
  *
  * Single source of truth for the three surfaces that link a `join_request`
  * notification: the email (Notifier), the /notifications/ page, and the REST
- * bell dropdown. They used to build this URL independently — the first two
- * had copies of the same logic and the third had none at all, so the bell
- * resolved join requests to an empty URL and fell back to /notifications/
- * (Basecamp 10118686521).
+ * bell dropdown. All three build the URL here, so the bell never resolves a join
+ * request to an empty URL.
  *
  * Recipient-dependent by necessity: wp-admin cap-holders get the Join
  * Requests tab, everyone else (space admins and moderators who own the space
@@ -1194,8 +1275,7 @@ function join_request_url_for( int $recipient_id, $space ): string {
 	// included. The capability branch that sent jetonomy_manage_spaces /
 	// manage_options holders to the wp-admin Join Requests tab meant the same
 	// notification promised one destination and delivered two, and QA kept
-	// reproducing "empty moderation screen" for the admin audience (Basecamp
-	// 10118686521). The frontend members page approves/rejects for both
+	// reproducing "empty moderation screen" for the admin audience. The frontend members page approves/rejects for both
 	// audiences, and the wp-admin tab remains reachable through Spaces > Edit
 	// for owners who prefer it. $recipient_id stays in the signature: the
 	// notifier passes it per-recipient and a filter may re-branch on it.
@@ -1239,8 +1319,7 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 
 	// The hidden .jt-avatar-fallback sibling is the initials the reader sees
 	// if the image URL is dead - view.js swaps the pair on the img's error
-	// event. Same contract as templates/partials/avatar.php (Basecamp
-	// 10110833991): an <img> with no fallback renders as broken-image alt
+	// event. Same contract as templates/partials/avatar.php: an <img> with no fallback renders as broken-image alt
 	// text in Firefox when the upload behind it has been deleted.
 	$avatar_html = $avatar_url
 		? '<img src="' . esc_url( $avatar_url ) . '" alt="' . esc_attr( $name ) . '" class="jt-avatar ' . esc_attr( $avatar_class ) . '" width="' . (int) $avatar_size . '" height="' . (int) $avatar_size . '" loading="lazy">'
@@ -1475,9 +1554,8 @@ function content_status_label( string $status ): string {
 /**
  * Human label for a space's stored `status` enum.
  *
- * The admin listing used to print ucfirst() of the raw enum, which is a
- * machine value — untranslatable, and wrong in any language that does not
- * capitalise the way English does.
+ * The raw enum is a machine value - untranslatable, and wrong in any language that
+ * does not capitalise like English - so the label is translated here.
  *
  * @param string $status Stored enum value.
  * @return string

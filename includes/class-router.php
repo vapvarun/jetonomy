@@ -21,24 +21,33 @@ class Router {
 	private const RENDER_PRIORITY = 9999;
 
 	public function __construct() {
-		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
-		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
-		add_filter( 'request', [ $this, 'suppress_default_query' ] );
+		add_action( 'init', array( $this, 'add_rewrite_rules' ) );
+		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
+		add_filter( 'request', array( $this, 'suppress_default_query' ) );
 		// Claim our sitemap URLs before ANY other plugin can. The rewrite table
 		// is not enough: an SEO plugin that answers at request time never
 		// consults it. AIOSEO matches `^(.+)-sitemap\.xml$` on `parse_request`
 		// at priority 10, so `community-sitemap.xml` looked to it like an object
 		// type called "community" and it served its own 404 XML over ours
-		// (Basecamp 10268378037). Priority 0 puts us ahead of that and of
+		// Priority 0 puts us ahead of that and of
 		// anything else hooking parse_request or template_redirect.
-		add_action( 'parse_request', [ $this, 'claim_sitemap_request' ], 0 );
-		add_action( 'parse_query', [ $this, 'correct_query_state' ], 1 );
+		add_action( 'parse_request', array( $this, 'claim_sitemap_request' ), 0 );
+		add_action( 'parse_query', array( $this, 'correct_query_state' ), 1 );
+		// The SEO Framework titles a page from its WP object. Our virtual routes
+		// have none, so it printed "Untitled" plus a second og: set over ours
+		// Jetonomy is the SEO source on its own routes;
+		// a mapped front page (no jetonomy_route) stays with the SEO plugin.
+		// Read early on purpose: TSF memoises this before template_include.
+		add_filter(
+			'the_seo_framework_query_supports_seo',
+			static fn( $supported ) => '' !== (string) get_query_var( 'jetonomy_route' ) ? false : $supported
+		);
 		// Keep core off its 404 path for a resolved route. Our routes are
 		// virtual, so the main query finds no posts and WP::handle_404() would
 		// queue nocache_headers() - which assert_route_state() cannot take
 		// back - and every page cache would skip the forum for logged-out
 		// visitors. Logged-in requests still get no-cache from WP::send_headers().
-		add_filter( 'pre_handle_404', [ $this, 'preempt_route_404' ], 10, 1 );
+		add_filter( 'pre_handle_404', array( $this, 'preempt_route_404' ), 10, 1 );
 
 		// Announce "this URL is a real page" BEFORE any other handler looks.
 		//
@@ -52,8 +61,8 @@ class Router {
 		// paginated Jetonomy URL straight to the theme's custom 404 page.
 		//
 		// So the not-404 assertion has to lead, and the render has to trail.
-		add_action( 'template_redirect', [ $this, 'assert_route_state' ], 0 );
-		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
+		add_action( 'template_redirect', array( $this, 'assert_route_state' ), 0 );
+		add_action( 'template_redirect', array( $this, 'redirect_old_base_slug' ), 5 );
 
 		// Rendering is a `template_include` FILTER, not a render-and-exit on
 		// `template_redirect`.
@@ -63,11 +72,9 @@ class Router {
 		// template_redirect hooks will be run ... Instead, use the
 		// template_include filter hook."
 		//
-		// The first attempt at Basecamp 10278698087 moved the render to
-		// template_redirect priority 9999 so later callbacks on THAT hook could
-		// still refuse the request. It looked fixed because the verification
-		// gates all hooked template_redirect - and it did not fix the plugin the
-		// card actually named, which enforces on `template_include` at 999999.
+		// A late template_redirect priority (say 9999) lets later callbacks on THAT
+		// hook still refuse the request, but it cannot help a plugin that enforces
+		// on `template_include` (e.g. at 999999).
 		// WordPress fires template_redirect BEFORE template_include, so exiting
 		// anywhere on the earlier hook means the later one never runs at all. No
 		// priority on template_redirect can fix that; only moving hooks can.
@@ -78,17 +85,17 @@ class Router {
 		// coming-soon screen. A higher-priority filter wins simply by returning
 		// something else, which is the contract those plugins are written
 		// against.
-		add_filter( 'template_include', [ $this, 'maybe_render_route' ], self::RENDER_PRIORITY );
+		add_filter( 'template_include', array( $this, 'maybe_render_route' ), self::RENDER_PRIORITY );
 
 		// Feeds and the XML sitemap still emit on template_redirect: they are
 		// not templates, they write their own content type and exit, and
 		// template_include is never reached for them anyway. Core's own feeds
 		// bypass template_include for the same reason.
-		add_action( 'template_redirect', [ $this, 'handle_non_template_routes' ], self::RENDER_PRIORITY );
+		add_action( 'template_redirect', array( $this, 'handle_non_template_routes' ), self::RENDER_PRIORITY );
 		// WP's canonical redirect would append a trailing slash to the extension-
 		// less-looking /…-sitemap.xml URL (301 -> …/) before the sitemap emits.
 		// Skip it for the sitemap route so the XML is served directly.
-		add_filter( 'redirect_canonical', [ $this, 'skip_canonical_for_sitemap' ] );
+		add_filter( 'redirect_canonical', array( $this, 'skip_canonical_for_sitemap' ) );
 
 		// `add_rewrite_rule( …, 'top' )` only prepends against the rules that
 		// exist WHEN IT RUNS, so 'top' is a last-writer-wins race, not a
@@ -99,13 +106,13 @@ class Router {
 		// and AIOSEO register the same shape. `rewrite_rules_array` sees the
 		// fully assembled set after every registrant has had its turn, so
 		// reordering here is the only placement that actually wins.
-		add_filter( 'rewrite_rules_array', [ $this, 'prioritize_rules' ], 99 );
+		add_filter( 'rewrite_rules_array', array( $this, 'prioritize_rules' ), 99 );
 		// Yoast does not use rewrite_rules_array at all - it filters
 		// `option_rewrite_rules`, injecting its dynamic rules every time the
 		// option is READ, which is after any generation-time ordering we do.
 		// So the read filter is the one that decides, and we have to run
 		// later than its default priority to land in front.
-		add_filter( 'option_rewrite_rules', [ $this, 'prioritize_rules' ], 99 );
+		add_filter( 'option_rewrite_rules', array( $this, 'prioritize_rules' ), 99 );
 	}
 
 	/**
@@ -127,7 +134,7 @@ class Router {
 	 * and Jetonomy defers (see Template_Loader::set_seo_meta()).
 	 */
 	public function is_mapped_front_page(): bool {
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings = get_option( 'jetonomy_settings', array() );
 		return ! empty( $settings['front_page'] ) && is_front_page();
 	}
 
@@ -143,9 +150,9 @@ class Router {
 	 * whole request — and everything downstream reads that lie: core's
 	 * wp_get_document_title(), themes, breadcrumbs, and SEO plugins.
 	 *
-	 * That is the root cause of Basecamp 10101954870: Yoast read `is_home` and
-	 * published the Posts page's title AND a canonical pointing at it, on every
-	 * Space and topic. Rank Math escaped only because it omits tags it cannot
+	 * That is the root cause of Yoast reading `is_home` and
+	 * publishing the Posts page's title AND a canonical pointing at it, on every
+	 * Space and topic. Rank Math escapes only because it omits tags it cannot
 	 * confidently build. The fix is not to argue with either plugin — it is to
 	 * stop lying about the query. Doing so is vendor-neutral: it fixes Yoast,
 	 * Rank Math, AIOSEO, SEOPress and core in one move, with no SEO-plugin code.
@@ -165,7 +172,7 @@ class Router {
 		unset( $query_vars['pagename'], $query_vars['name'], $query_vars['page'] );
 
 		// Return an empty result set — the template_include canvas renders the output.
-		$query_vars['post__in'] = [ 0 ];
+		$query_vars['post__in'] = array( 0 );
 
 		return $query_vars;
 	}
@@ -228,8 +235,8 @@ class Router {
 			return $rules;
 		}
 
-		$ours   = [];
-		$others = [];
+		$ours   = array();
+		$others = array();
 		foreach ( $rules as $pattern => $query ) {
 			if ( is_string( $query ) && false !== strpos( $query, 'jetonomy_route=' ) ) {
 				$ours[ $pattern ] = $query;

@@ -28,17 +28,17 @@ foreach ( (array) $jt_spaces as $jt_s ) {
 	<h1 class="wp-heading-inline"><?php esc_html_e( 'Community Media', 'jetonomy' ); ?></h1>
 	<hr class="wp-header-end">
 
-	<p class="jt-cmedia__intro"><?php esc_html_e( 'Media uploaded by members across your community. These are hidden from the main Media Library by default so member uploads do not drown your own assets.', 'jetonomy' ); ?></p>
+	<p class="jt-cmedia__intro"><?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Media uploaded by %1$s across your community. These are hidden from the main Media Library by default so %2$s uploads do not drown your own assets.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></p>
 
 	<form method="get" class="jt-cmedia__filters">
 		<input type="hidden" name="page" value="jetonomy-community-media">
 
-		<label class="screen-reader-text" for="jt_member"><?php esc_html_e( 'Filter by member', 'jetonomy' ); ?></label>
-		<input type="search" id="jt_member" name="jt_member" value="<?php echo esc_attr( $jt_member ); ?>" placeholder="<?php esc_attr_e( 'Member username or email', 'jetonomy' ); ?>">
+		<label class="screen-reader-text" for="jt_member"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></label>
+		<input type="search" id="jt_member" name="jt_member" value="<?php echo esc_attr( $jt_member ); ?>" placeholder="<?php /* translators: %s: member label (e.g. "Member"). */ echo esc_attr( sprintf( __( '%s username or email', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ) ) ); ?>">
 
-		<label class="screen-reader-text" for="jt_space"><?php esc_html_e( 'Filter by space', 'jetonomy' ); ?></label>
+		<label class="screen-reader-text" for="jt_space"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?></label>
 		<select id="jt_space" name="jt_space">
-			<option value="0"><?php esc_html_e( 'All spaces', 'jetonomy' ); ?></option>
+			<option value="0"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?></option>
 			<?php foreach ( $jt_space_names as $jt_sid => $jt_sname ) : ?>
 				<option value="<?php echo esc_attr( (string) $jt_sid ); ?>" <?php selected( $jt_space, $jt_sid ); ?>><?php echo esc_html( $jt_sname ); ?></option>
 			<?php endforeach; ?>
@@ -66,7 +66,7 @@ foreach ( (array) $jt_spaces as $jt_s ) {
 	<?php if ( empty( $jt_items ) ) : ?>
 		<div class="jt-cmedia__empty">
 			<p class="jt-cmedia__empty-title"><?php esc_html_e( 'No community uploads found', 'jetonomy' ); ?></p>
-			<p><?php esc_html_e( 'When members upload images in posts or replies, they appear here. Try clearing the filters above.', 'jetonomy' ); ?></p>
+			<p><?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'When %1$s upload images in posts or %2$s, they appear here. Try clearing the filters above.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
 		</div>
 	<?php else : ?>
 		<div class="jt-cmedia__grid">

@@ -35,7 +35,7 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 		return 'Seeds a post with two pending flags (spam + offensive) so moderators can test flag resolution.';
 	}
 
-	public function run( array $options = [] ): Scenario_Result {
+	public function run( array $options = array() ): Scenario_Result {
 		$this->reset();
 		$start = microtime( true );
 
@@ -44,22 +44,22 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 		$space_srv = new Space_Journey();
 		$content   = new Content_Journey();
 
-		$fixtures = [
+		$fixtures = array(
 			'category_id'  => 0,
 			'space_id'     => 0,
 			'post_id'      => 0,
 			'author_id'    => 0,
-			'reporter_ids' => [],
-			'flag_ids'     => [],
-		];
+			'reporter_ids' => array(),
+			'flag_ids'     => array(),
+		);
 
 		$cat = $this->step(
 			'create-category',
 			static fn (): Journey_Result => $taxonomy->create_category(
-				[
+				array(
 					'name' => 'Flag scenario cat',
 					'slug' => 'pff-cat-' . $suffix,
-				]
+				)
 			)
 		);
 		if ( null === $cat ) {
@@ -70,14 +70,14 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 		$space = $this->step(
 			'create-space',
 			static fn (): Journey_Result => $space_srv->create(
-				[
+				array(
 					'title'       => 'Flag scenario space',
 					'slug'        => 'pff-space-' . $suffix,
 					'category_id' => (int) $cat->data['id'],
 					'type'        => 'forum',
 					'visibility'  => 'public',
 					'join_policy' => 'open',
-				]
+				)
 			)
 		);
 		if ( null === $space ) {
@@ -115,12 +115,12 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 		$post = $this->step(
 			'create-post',
 			static fn (): Journey_Result => $content->create_post(
-				[
+				array(
 					'space_id'  => (int) $space->data['id'],
 					'author_id' => (int) $author->data['id'],
 					'title'     => 'Flag me',
 					'content'   => 'This is a post that will be flagged twice.',
-				]
+				)
 			)
 		);
 		if ( null === $post ) {
@@ -131,13 +131,13 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 		$flag_one = $this->step(
 			'flag-as-spam',
 			static fn (): Journey_Result => $content->flag(
-				[
+				array(
 					'object_type' => 'post',
 					'object_id'   => (int) $post->data['id'],
 					'reporter_id' => (int) $reporter_one->data['id'],
 					'reason'      => 'spam',
 					'description' => 'Scenario spam report',
-				]
+				)
 			)
 		);
 		if ( null === $flag_one ) {
@@ -148,13 +148,13 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 		$flag_two = $this->step(
 			'flag-as-offensive',
 			static fn (): Journey_Result => $content->flag(
-				[
+				array(
 					'object_type' => 'post',
 					'object_id'   => (int) $post->data['id'],
 					'reporter_id' => (int) $reporter_two->data['id'],
 					'reason'      => 'offensive',
 					'description' => 'Scenario offensive report',
-				]
+				)
 			)
 		);
 		if ( null === $flag_two ) {
@@ -174,9 +174,9 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 		$space_srv = new Space_Journey();
 		$taxonomy  = new Taxonomy_Journey();
 
-		$flag_ids     = (array) ( $fixtures['flag_ids'] ?? [] );
+		$flag_ids     = (array) ( $fixtures['flag_ids'] ?? array() );
 		$post_id      = (int) ( $fixtures['post_id'] ?? 0 );
-		$reporter_ids = (array) ( $fixtures['reporter_ids'] ?? [] );
+		$reporter_ids = (array) ( $fixtures['reporter_ids'] ?? array() );
 		$author_id    = (int) ( $fixtures['author_id'] ?? 0 );
 		$space_id     = (int) ( $fixtures['space_id'] ?? 0 );
 		$cat_id       = (int) ( $fixtures['category_id'] ?? 0 );
@@ -198,7 +198,7 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 			$this->failed = false;
 		}
 
-		foreach ( array_merge( $reporter_ids, [ $author_id ] ) as $idx => $uid ) {
+		foreach ( array_merge( $reporter_ids, array( $author_id ) ) as $idx => $uid ) {
 			$target = (int) $uid;
 			if ( $target <= 0 ) {
 				continue;
@@ -211,7 +211,7 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 					}
 					$ok = wp_delete_user( $target );
 					return $ok
-						? Journey_Result::ok( [ 'id' => $target ] )
+						? Journey_Result::ok( array( 'id' => $target ) )
 						: Journey_Result::fail( sprintf( 'wp_delete_user(%d) returned false.', $target ) );
 				}
 			);
@@ -242,16 +242,16 @@ final class Post_With_Flags_For_Moderation extends Abstract_Scenario {
 	 */
 	private static function insert_user( string $login ): Journey_Result {
 		$uid = wp_insert_user(
-			[
+			array(
 				'user_login' => $login,
 				'user_email' => $login . '@example.test',
 				'user_pass'  => wp_generate_password( 16, false ),
 				'role'       => 'subscriber',
-			]
+			)
 		);
 		if ( is_wp_error( $uid ) ) {
 			return Journey_Result::from_wp_error( $uid );
 		}
-		return Journey_Result::ok( [ 'id' => (int) $uid ] );
+		return Journey_Result::ok( array( 'id' => (int) $uid ) );
 	}
 }

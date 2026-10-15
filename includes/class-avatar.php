@@ -5,7 +5,7 @@
  * Jetonomy profiles have always stored an `avatar_url` column on
  * jt_user_profiles (writable via PATCH /users/me, readable via GET
  * /users/me), but nothing consumed it at render time — every surface fell
- * through to Gravatar (#9966775705). This class is the single consumer:
+ * through to Gravatar. This class is the single consumer:
  * one `pre_get_avatar_data` filter so get_avatar() / get_avatar_url()
  * callers everywhere (templates, REST payloads, wp-admin, Pro messaging)
  * pick the local avatar automatically, with Gravatar as the fallback when
@@ -51,7 +51,7 @@ class Avatar {
 	/**
 	 * Async action that populates META_HAS_GRAVATAR out of the render path.
 	 */
-	private const CHECK_HOOK = 'jetonomy_gravatar_check';
+	public const CHECK_HOOK = 'jetonomy_gravatar_check';
 
 	/**
 	 * Per-request guard so one page render enqueues at most one background
@@ -139,8 +139,7 @@ class Avatar {
 	 * about to render many avatars in one request. The pre_get_avatar_data
 	 * filter this class hooks runs once per avatar and cannot see the ids a
 	 * page will ask for next, so without priming, a leaderboard rendering 100
-	 * members costs 100 profile-table queries from this hook alone (Basecamp
-	 * 10142814595 - found via SAVEQUERIES on an external plugin's page).
+	 * members costs 100 profile-table queries from this hook alone (found via SAVEQUERIES on an external plugin's page).
 	 *
 	 * Call it before the loop:
 	 *
@@ -253,11 +252,7 @@ class Avatar {
 		}
 		set_transient( $lock, 1, HOUR_IN_SECONDS );
 
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( self::CHECK_HOOK, array( $user_id ), 'jetonomy' );
-		} else {
-			wp_schedule_single_event( time() + 30, self::CHECK_HOOK, array( $user_id ) );
-		}
+		Queue::async( self::CHECK_HOOK, array( $user_id ), true, 30 );
 	}
 
 	/**

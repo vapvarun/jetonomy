@@ -559,7 +559,7 @@ These endpoints require the `manage_options` capability (administrators only).
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | POST | `/admin/recount` | Admin (`manage_options`) | Rebuild all denormalized counters (reply counts, vote scores, post counts) |
-| POST | `/admin/users/trust-level` | Admin (`manage_options`) | Manually set a user's trust level |
+| POST | `/admin/users/trust-level` | `jetonomy_manage_users` | Manually set a user's trust level. Non-admins cannot change their own level, an administrator's or a moderator's (skipped as `forbidden`). |
 | GET | `/admin/demo-data` | Admin (`manage_options`) | Whether demo data is loaded: `{ active, counts: { users, categories, spaces, posts, replies } }` |
 | POST | `/admin/demo-data` | Admin (`manage_options`) | Import the demo community (replaces an earlier demo set). Returns `201` with the same shape plus `message` |
 | DELETE | `/admin/demo-data` | Admin (`manage_options`) | Remove the demo data; your own content is untouched. `404` when there is none |
@@ -924,12 +924,15 @@ Common error codes:
 
 | Code | HTTP | Meaning |
 |------|------|---------|
-| `rest_forbidden` | 403 | Missing capability or nonce |
+| `rest_forbidden` | 401/403 | Not logged in, or a missing or expired nonce |
+| `jetonomy_forbidden` | 403 | Logged in but not allowed to do this |
 | `jetonomy_user_banned` | 403 | The authenticated user is banned from the community (mutation routes) |
 | `jetonomy_pending_verification` | 403 | The authenticated user has not confirmed their email yet (mutation routes) |
-| `rest_not_found` | 404 | Resource does not exist |
-| `validation_error` | 422 | Invalid or missing parameters |
-| `rate_limited` | 429 | Too many requests from this user |
+| `jetonomy_not_found` | 404 | Resource does not exist (or is not visible to you) |
+| `jetonomy_validation` | 400 | Invalid or missing parameters |
+| `jetonomy_rate_limited` | 429 | Too many requests from this user |
+
+Every Jetonomy error code starts with `jetonomy_`, so a client can tell them apart from WordPress core's `rest_*` codes.
 
 **Account-status enforcement (1.6.0)**
 

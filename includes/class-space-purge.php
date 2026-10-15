@@ -51,11 +51,15 @@ final class Space_Purge {
 	/** Chunk size for `IN (...)` deletes, so a 50k-topic space never builds one enormous statement. */
 	private const CHUNK = 500;
 
-	/** One group per plugin, so every Jetonomy job is observable together. */
-	private const AS_GROUP = 'jetonomy';
-
 	/** Continuation hook. Carries the space id; re-enqueued until the space drains. */
 	public const BATCH_HOOK = 'jetonomy_space_purge_batch';
+
+	/**
+	 * Why the last purge() stopped early, or '' when it finished.
+	 *
+	 * @var string
+	 */
+	private static string $last_error = '';
 
 	/**
 	 * Listen for orphan remediation.
@@ -66,11 +70,11 @@ final class Space_Purge {
 	 * a parallel sweeper.
 	 */
 	public static function register(): void {
-		add_action( 'jetonomy_purge_orphan_space', [ self::class, 'on_purge_orphan_space' ] );
+		add_action( 'jetonomy_purge_orphan_space', array( self::class, 'on_purge_orphan_space' ) );
 
 		// Action Scheduler fires this like any other action, so a plain
 		// add_action is all the wiring the batch needs.
-		add_action( self::BATCH_HOOK, [ self::class, 'run_batch' ] );
+		add_action( self::BATCH_HOOK, array( self::class, 'run_batch' ) );
 	}
 
 	/**
@@ -79,24 +83,17 @@ final class Space_Purge {
 	 * The synchronous purge() drains everything in one request, which is fine
 	 * for an orphan sweep of a handful of rows and completely wrong for a real
 	 * community space - a space with 50k topics and their replies cannot be
-	 * deleted inside one PHP request (Basecamp 10119343634).
+	 * deleted inside one PHP request.
 	 *
-	 * THE FIRST BATCH RUNS IN THIS REQUEST. Handing the whole job to Action
-	 * Scheduler and returning "queued" was silently a no-op wherever the AS
-	 * queue never runs - a host that blocks loopback requests, DISABLE_WP_CRON
-	 * with no system cron, a firewalled staging box. On those sites the
-	 * operator saw "Space and all its content are being deleted", the row
-	 * faded out, and the space was still there on reload. Forever: nothing
-	 * ever drained the queue (Basecamp 10217204334, reproduced with 9 AS
-	 * actions stuck pending after 20 front-end requests).
-	 *
-	 * CHUNK is 500 topics, so a space smaller than that - which is nearly all
-	 * of them - is completely gone before the response is sent and the
-	 * "deleted" the UI reports is simply true. Only a genuinely large space
-	 * continues in the background, and run_batch() falls back to finishing
-	 * inline if it cannot hand off. The result is a purge that always makes
-	 * progress, on every host, rather than one that depends on infrastructure
-	 * the plugin cannot see.
+	 * Work always starts in this request, so a host whose Action Scheduler
+	 * queue never runs still makes progress:
+	 *   - up to CHUNK (500) topics: the whole space is deleted before the
+	 *     response is sent;
+	 *   - larger: the space is locked (members can no longer post), the first
+	 *     batch is deleted here and the rest is queued; run_batch() finishes
+	 *     inline if it cannot hand off.
+	 * A database error stops the purge with the space row intact and retries
+	 * a minute later, so a failed read can never orphan replies.
 	 *
 	 * Idempotent: a space already queued is left to the runner.
 	 *
@@ -109,12 +106,11 @@ final class Space_Purge {
 			return false;
 		}
 
-		$args = [ 'space_id' => $space_id ];
+		$args = array( 'space_id' => $space_id );
 
 		// Already handed off by an earlier request - let the runner have it
 		// rather than deleting the same slice from two directions.
-		if ( function_exists( 'as_has_scheduled_action' )
-			&& as_has_scheduled_action( self::BATCH_HOOK, $args, self::AS_GROUP ) ) {
+		if ( Queue::is_queued( self::BATCH_HOOK, $args ) ) {
 			return true;
 		}
 
@@ -122,7 +118,13 @@ final class Space_Purge {
 		// more than a batch holds: the answer is "no" for all but the largest
 		// spaces, and it costs a bounded id lookup rather than a COUNT(*) over
 		// a 50k-row table.
-		$oversized = count( self::post_ids( $space_id, self::CHUNK + 1 ) ) > self::CHUNK;
+		try {
+			$oversized = count( self::post_ids( $space_id, self::CHUNK + 1 ) ) > self::CHUNK;
+		} catch ( \RuntimeException $e ) {
+			// Cannot even size the space; leave it intact and try again shortly.
+			self::retry_later( $space_id );
+			return true;
+		}
 
 		if ( ! $oversized ) {
 			// Deleted here, now, in this request. A space this size is well
@@ -130,13 +132,26 @@ final class Space_Purge {
 			// operator's next page load shows the truth instead of a space that
 			// was reported deleted and is still sitting in the list.
 			self::purge( $space_id );
+			if ( '' !== self::$last_error ) {
+				self::retry_later( $space_id );
+			}
 			return true;
 		}
 
-		// Genuinely large: batch it, and only trust the hand-off if the store
-		// accepted the job.
-		if ( function_exists( 'as_enqueue_async_action' )
-			&& as_enqueue_async_action( self::BATCH_HOOK, $args, self::AS_GROUP ) ) {
+		// Genuinely large: members must stop posting into a space that is
+		// being deleted, so lock it, then make the first batch of progress in
+		// this request and hand the rest to the queue.
+		Models\Space::update( $space_id, array( 'status' => 'locked' ) );
+		$first = self::purge_step( $space_id );
+		if ( ! empty( $first['error'] ) ) {
+			self::retry_later( $space_id );
+			return true;
+		}
+		set_transient( 'jetonomy_purge_tally_' . $space_id, $first['removed'], DAY_IN_SECONDS );
+		set_transient( 'jetonomy_purge_authors_' . $space_id, $first['authors'], DAY_IN_SECONDS );
+
+		// Only trust the hand-off if the store accepted the job.
+		if ( Queue::async( self::BATCH_HOOK, $args, false ) ) {
 			return true;
 		}
 
@@ -161,6 +176,11 @@ final class Space_Purge {
 		}
 
 		$step = self::purge_step( $space_id );
+		if ( ! empty( $step['error'] ) ) {
+			// The database refused a read. Nothing was deleted past it; try again shortly.
+			self::retry_later( $space_id );
+			return;
+		}
 
 		// Counts accumulate across batches so the completion signal reports the
 		// whole purge, not whichever slice happened to finish it. Short TTL
@@ -195,14 +215,24 @@ final class Space_Purge {
 		// when the store refuses the job, and treating that as a successful
 		// hand-off is what strands a half-deleted space - its topics gone, its
 		// row still listed, and nothing scheduled to finish the job.
-		if ( function_exists( 'as_enqueue_async_action' )
-			&& as_enqueue_async_action( self::BATCH_HOOK, [ 'space_id' => $space_id ], self::AS_GROUP ) ) {
+		if ( Queue::async( self::BATCH_HOOK, array( 'space_id' => $space_id ), false ) ) {
 			return;
 		}
 
 		// AS vanished mid-purge (deactivated between batches), or refused the
 		// job. Finish inline rather than leaving a half-deleted space behind.
 		self::purge( $space_id );
+	}
+
+	/**
+	 * Schedule another attempt after a database error, a minute out so a
+	 * struggling database is not hammered. If even that fails, the next delete
+	 * request or orphan sweep resumes it, because the space row stays.
+	 *
+	 * @param int $space_id Space being purged.
+	 */
+	private static function retry_later( int $space_id ): void {
+		Queue::at( time() + MINUTE_IN_SECONDS, self::BATCH_HOOK, array( 'space_id' => $space_id ) );
 	}
 
 	/**
@@ -230,10 +260,7 @@ final class Space_Purge {
 	 * Clear any queued purge work. Called on deactivation.
 	 */
 	public static function clear_scheduled(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( self::BATCH_HOOK, [], self::AS_GROUP );
-		}
-		wp_clear_scheduled_hook( self::BATCH_HOOK );
+		Queue::cancel( self::BATCH_HOOK );
 	}
 
 	/**
@@ -263,108 +290,108 @@ final class Space_Purge {
 	 * @return array<int,array{table:string,column:string,ref:string,where:string,self:bool}>
 	 */
 	public static function relations(): array {
-		$rel = [
+		$rel = array(
 			// Direct space references.
-			[
+			array(
 				'table'  => table( 'posts' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'space_members' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'join_requests' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'access_rules' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'invite_links' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'restrictions' ),
 				'column' => 'space_id',
 				'ref'    => 'space',
-			],
+			),
 
 			// Polymorphic rows pointing AT the space.
-			[
+			array(
 				'table'  => table( 'notifications' ),
 				'column' => 'object_id',
 				'ref'    => 'space',
 				'where'  => "object_type = 'space'",
-			],
-			[
+			),
+			array(
 				'table'  => table( 'subscriptions' ),
 				'column' => 'object_id',
 				'ref'    => 'space',
 				'where'  => "object_type = 'space'",
-			],
-			[
+			),
+			array(
 				'table'  => table( 'activity_log' ),
 				'column' => 'object_id',
 				'ref'    => 'space',
 				'where'  => "object_type = 'space'",
-			],
+			),
 
 			// One hop out: rows hanging off the space's topics.
-			[
+			array(
 				'table'  => table( 'replies' ),
 				'column' => 'post_id',
 				'ref'    => 'post',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'post_tags' ),
 				'column' => 'post_id',
 				'ref'    => 'post',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'read_status' ),
 				'column' => 'post_id',
 				'ref'    => 'post',
-			],
-			[
+			),
+			array(
 				'table'  => table( 'bookmarks' ),
 				'column' => 'post_id',
 				'ref'    => 'post',
-			],
-		];
+			),
+		);
 
 		// Polymorphic rows pointing at those topics, and at their replies. Same
 		// tables, two id sets — declared as a loop so a table added to one type
 		// can never be forgotten for the other, which is the drift this whole
 		// class is built to avoid.
-		foreach ( [ 'post', 'reply' ] as $ref ) {
-			foreach ( [ 'notifications', 'subscriptions', 'activity_log', 'votes', 'flags', 'attachments', 'revisions' ] as $t ) {
+		foreach ( array( 'post', 'reply' ) as $ref ) {
+			foreach ( array( 'notifications', 'subscriptions', 'activity_log', 'votes', 'flags', 'attachments', 'revisions' ) as $t ) {
 				// subscriptions is ENUM('space','post') — it cannot hold a reply.
 				if ( 'reply' === $ref && 'subscriptions' === $t ) {
 					continue;
 				}
-				$rel[] = [
+				$rel[] = array(
 					'table'  => table( $t ),
 					'column' => 'object_id',
 					'ref'    => $ref,
 					'where'  => "object_type = '" . $ref . "'",
-				];
+				);
 			}
 		}
 
 		// The space row itself, deleted last.
-		$rel[] = [
+		$rel[] = array(
 			'table'  => table( 'spaces' ),
 			'column' => 'id',
 			'ref'    => 'space',
 			'self'   => true,
-		];
+		);
 
 		/**
 		 * Every table that holds a reference to a space, its topics, or their
@@ -378,21 +405,21 @@ final class Space_Purge {
 		 */
 		$rel = apply_filters( 'jetonomy_space_relations', $rel );
 
-		$clean = [];
+		$clean = array();
 		foreach ( (array) $rel as $r ) {
 			if ( empty( $r['table'] ) || empty( $r['column'] ) || empty( $r['ref'] ) ) {
 				continue;
 			}
-			if ( ! in_array( $r['ref'], [ 'space', 'post', 'reply' ], true ) ) {
+			if ( ! in_array( $r['ref'], array( 'space', 'post', 'reply' ), true ) ) {
 				continue; // Unknown id set — we have no way to resolve it.
 			}
-			$clean[] = [
+			$clean[] = array(
 				'table'  => (string) $r['table'],
 				'column' => sanitize_key( (string) $r['column'] ),
 				'ref'    => (string) $r['ref'],
 				'where'  => (string) ( $r['where'] ?? '' ),
 				'self'   => (bool) ( $r['self'] ?? false ),
-			];
+			);
 		}
 		return $clean;
 	}
@@ -426,19 +453,42 @@ final class Space_Purge {
 	 *
 	 * @param int $space_id Space being purged.
 	 * @param int $limit    Max parent rows to process this call.
-	 * @return array{done:bool,removed:array<string,int>,authors:int[]}
+	 * @return array{done:bool,removed:array<string,int>,authors:int[],error?:string}
 	 */
 	public static function purge_step( int $space_id, int $limit = self::CHUNK ): array {
+		try {
+			return self::run_step( (int) $space_id, $limit );
+		} catch ( \RuntimeException $e ) {
+			// Stop here: nothing past a failed read is trustworthy, and the
+			// space row must survive so the purge can be resumed.
+			return array(
+				'done'    => false,
+				'removed' => array(),
+				'authors' => array(),
+				'error'   => $e->getMessage(),
+			);
+		}
+	}
+
+	/**
+	 * The body of purge_step(), which turns a database error into a result.
+	 *
+	 * @param int $space_id Space being purged.
+	 * @param int $limit    Max parent rows to process this call.
+	 * @return array{done:bool,removed:array<string,int>,authors:int[]}
+	 * @throws \RuntimeException On a database error.
+	 */
+	private static function run_step( int $space_id, int $limit ): array {
 		$space_id = (int) $space_id;
 		$limit    = max( 1, $limit );
-		$removed  = [];
+		$removed  = array();
 
 		if ( $space_id <= 0 ) {
-			return [
+			return array(
 				'done'    => true,
 				'removed' => $removed,
-				'authors' => [],
-			];
+				'authors' => array(),
+			);
 		}
 
 		// The unit of work is a slice of TOPICS, because that is what a space
@@ -486,18 +536,19 @@ final class Space_Purge {
 			// the slice is deleted through the same helper with an id-keyed
 			// relation rather than hand-rolled SQL.
 			$n = self::delete_where_in(
-				[
+				array(
 					'table'  => table( 'posts' ),
 					'column' => 'id',
 					'ref'    => 'post',
 					'where'  => '',
 					'self'   => false,
-				],
+				),
 				$post_slice
 			);
-			if ( $n > 0 ) {
-				$removed[ table( 'posts' ) . '.id:post' ] = $n;
+			if ( $n <= 0 ) {
+				throw new \RuntimeException( 'Topic rows could not be deleted.' );
 			}
+			$removed[ table( 'posts' ) . '.id:post' ] = $n;
 
 			Models\Tag::recount( $tag_ids );
 
@@ -505,17 +556,25 @@ final class Space_Purge {
 			// ran and their delete hooks never told the host community to drop
 			// its bell rows. Same signal, for the ids this slice removed.
 			foreach ( $reply_slice as $reply_id ) {
+				/**
+				 * Fires after a purged reply or post is removed in bulk, so the host community can drop its notification rows.
+				 *
+				 * @since 2.0.1
+				 *
+				 * @param string $object_type Object type: 'reply' or 'post'.
+				 * @param int    $object_id   Reply or post ID.
+				 */
 				do_action( 'jetonomy_community_notification_removed', 'reply', (int) $reply_id );
 			}
 			foreach ( $post_slice as $post_id ) {
 				do_action( 'jetonomy_community_notification_removed', 'post', (int) $post_id );
 			}
 
-			return [
+			return array(
 				'done'    => false,
 				'removed' => $removed,
 				'authors' => $authors,
-			];
+			);
 		}
 
 		// No topics left. Space-scoped rows, then the space row, then counters.
@@ -527,7 +586,7 @@ final class Space_Purge {
 			if ( 'space' !== $r['ref'] || $r['self'] ) {
 				continue;
 			}
-			$n = self::delete_where_in( $r, [ $space_id ] );
+			$n = self::delete_where_in( $r, array( $space_id ) );
 			if ( $n > 0 ) {
 				$removed[ $r['table'] . '.' . $r['column'] . ':space' ] = $n;
 			}
@@ -539,15 +598,16 @@ final class Space_Purge {
 			if ( ! $r['self'] ) {
 				continue;
 			}
-			$n = self::delete_where_in( $r, [ $space_id ] );
+			$n = self::delete_where_in( $r, array( $space_id ) );
 			if ( $n > 0 ) {
 				$removed[ $r['table'] . '.' . $r['column'] ] = $n;
 			}
 		}
 
-		// Only when the space row was actually still there — an orphan sweep
-		// must not decrement a counter the original delete already adjusted.
-		if ( $category_id > 0 && $space ) {
+		// Only a space that still counted in its category: an orphan sweep has no
+		// row, and a locked (large purge) or archived space was already taken off
+		// the count by Space::update(), which counts active spaces only.
+		if ( $category_id > 0 && $space && 'active' === ( $space->status ?? '' ) ) {
 			Models\Category::increment_space_count( $category_id, -1 );
 		}
 
@@ -556,34 +616,48 @@ final class Space_Purge {
 		// Space-level notifications (join requests and the like) go with it.
 		do_action( 'jetonomy_community_notification_removed', 'space', $space_id );
 
-		return [
+		return array(
 			'done'    => true,
 			'removed' => $removed,
-			'authors' => [],
-		];
+			'authors' => array(),
+		);
 	}
 
 	public static function purge( int $space_id ): array {
 		$space_id = (int) $space_id;
 		if ( $space_id <= 0 ) {
-			return [];
+			return array();
 		}
+
+		self::$last_error = '';
 
 		// Drains by repeatedly calling the SAME bounded step the batched path
 		// uses, rather than carrying a second full-sweep implementation that
 		// could drift from it. Callers who cannot afford a long request should
 		// use queue(); this one runs to completion.
-		$removed = [];
-		$authors = [];
+		// A batched purge that falls back to finishing here brings the batches it
+		// already ran along, so their authors are recounted and the purged hook
+		// reports the whole purge.
+		$removed = array_filter( (array) get_transient( 'jetonomy_purge_tally_' . $space_id ) );
+		$authors = array_filter( (array) get_transient( 'jetonomy_purge_authors_' . $space_id ) );
 		do {
 			$step = self::purge_step( $space_id );
 			foreach ( $step['removed'] as $key => $n ) {
 				$removed[ $key ] = ( $removed[ $key ] ?? 0 ) + $n;
 			}
 			$authors = array_merge( $authors, $step['authors'] );
-		} while ( ! $step['done'] );
+		} while ( ! $step['done'] && empty( $step['error'] ) );
 
 		self::recount_authors( $authors );
+
+		if ( ! empty( $step['error'] ) ) {
+			// Not purged: the space row is still there, so a later run resumes.
+			self::$last_error = (string) $step['error'];
+			return $removed;
+		}
+
+		delete_transient( 'jetonomy_purge_tally_' . $space_id );
+		delete_transient( 'jetonomy_purge_authors_' . $space_id );
 
 		/**
 		 * A space and everything it owned has been removed.
@@ -617,17 +691,23 @@ final class Space_Purge {
 	 */
 	public static function delete_dependents( string $ref, array $ids ): int {
 		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
-		if ( ! $ids || ! in_array( $ref, [ 'post', 'reply' ], true ) ) {
+		if ( ! $ids || ! in_array( $ref, array( 'post', 'reply' ), true ) ) {
 			return 0;
 		}
 
 		$replies = table( 'replies' );
 		$n       = 0;
-		foreach ( self::relations() as $r ) {
-			if ( $ref !== $r['ref'] || $r['self'] || ( $replies === $r['table'] && 'post_id' === $r['column'] ) ) {
-				continue;
+		try {
+			foreach ( self::relations() as $r ) {
+				if ( $ref !== $r['ref'] || $r['self'] || ( $replies === $r['table'] && 'post_id' === $r['column'] ) ) {
+					continue;
+				}
+				$n += self::delete_where_in( $r, $ids );
 			}
-			$n += self::delete_where_in( $r, $ids );
+		} catch ( \RuntimeException $e ) {
+			// Leftover dependents are swept with the orphan backfill; a failed
+			// lookup must not break the delete the caller is in the middle of.
+			return $n;
 		}
 		return $n;
 	}
@@ -642,9 +722,9 @@ final class Space_Purge {
 	private static function author_ids( array $post_ids, array $reply_ids ): array {
 		global $wpdb;
 
-		$out = [];
+		$out = array();
 
-		foreach ( [ [ table( 'posts' ), $post_ids ], [ table( 'replies' ), $reply_ids ] ] as [ $tbl, $ids ] ) {
+		foreach ( array( array( table( 'posts' ), $post_ids ), array( table( 'replies' ), $reply_ids ) ) as [ $tbl, $ids ] ) {
 			if ( ! $ids || ! self::table_exists( $tbl ) ) {
 				continue;
 			}
@@ -671,7 +751,7 @@ final class Space_Purge {
 		global $wpdb;
 		$posts = table( 'posts' );
 		if ( ! self::table_exists( $posts ) ) {
-			return [];
+			return array();
 		}
 
 		// $limit > 0 is the batched path: take a slice instead of every id. A
@@ -680,8 +760,7 @@ final class Space_Purge {
 			? $wpdb->prepare( "SELECT id FROM {$posts} WHERE space_id = %d ORDER BY id ASC LIMIT %d", $space_id, $limit ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			: $wpdb->prepare( "SELECT id FROM {$posts} WHERE space_id = %d", $space_id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return array_map( 'intval', (array) $wpdb->get_col( $sql ) );
+		return self::ids_or_fail( $sql );
 	}
 
 	/**
@@ -694,15 +773,14 @@ final class Space_Purge {
 		global $wpdb;
 		$replies = table( 'replies' );
 		if ( ! $post_ids || ! self::table_exists( $replies ) ) {
-			return [];
+			return array();
 		}
 
-		$out = [];
+		$out = array();
 		foreach ( array_chunk( $post_ids, self::CHUNK ) as $chunk ) {
 			$in   = implode( ',', array_map( 'intval', $chunk ) );
 			$tail = $limit > 0 ? ' ORDER BY id ASC LIMIT ' . (int) ( $limit - count( $out ) ) : '';
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$out = array_merge( $out, (array) $wpdb->get_col( "SELECT id FROM {$replies} WHERE post_id IN ({$in}){$tail}" ) );
+			$out  = array_merge( $out, self::ids_or_fail( "SELECT id FROM {$replies} WHERE post_id IN ({$in}){$tail}" ) );
 
 			// Slice full - a single topic can hold more replies than the whole
 			// batch budget, so stop rather than walking the remaining chunks.
@@ -719,6 +797,7 @@ final class Space_Purge {
 	 * @param array{table:string,column:string,where:string} $rel Relation.
 	 * @param int[]                                          $ids Id set.
 	 * @return int Rows removed.
+	 * @throws \RuntimeException When a delete fails.
 	 */
 	private static function delete_where_in( array $rel, array $ids ): int {
 		global $wpdb;
@@ -736,18 +815,26 @@ final class Space_Purge {
 			$in = implode( ',', array_map( 'intval', $chunk ) );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$n += (int) $wpdb->query( "DELETE FROM {$tbl} WHERE {$col} IN ({$in}){$extra}" );
+			// A refused delete must stop the purge, or the parent rows go and these become orphans.
+			self::fail_on_db_error();
 		}
 		return $n;
 	}
 
-	/** Does a table exist? Pro tables are absent when the extension never ran. */
+	/**
+	 * Does a table exist? Pro tables are absent when the extension never ran.
+	 *
+	 * @param string $table Full table name.
+	 * @return bool
+	 * @throws \RuntimeException When the lookup itself fails.
+	 */
 	private static function table_exists( string $table ): bool {
 		global $wpdb;
 
 		// Only a positive answer is remembered: a table never disappears
 		// mid-request, but a Pro extension may create one. Without this every
 		// single-topic delete paid one SHOW TABLES per relation.
-		static $exists = [];
+		static $exists = array();
 		if ( isset( $exists[ $table ] ) ) {
 			return true;
 		}
@@ -756,6 +843,40 @@ final class Space_Purge {
 			$exists[ $table ] = true;
 			return true;
 		}
+		// A failed lookup is not "no table": treating it so would skip a
+		// whole table's rows and still report the purge done.
+		self::fail_on_db_error();
 		return false;
+	}
+
+	/**
+	 * Run an id lookup, failing loudly on a database error.
+	 *
+	 * An empty answer means "nothing left to delete" to every caller, so a
+	 * failed query must never look like one.
+	 *
+	 * @param string $sql Prepared SELECT returning one id column.
+	 * @return int[]
+	 * @throws \RuntimeException When the query fails.
+	 */
+	private static function ids_or_fail( string $sql ): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$ids = $wpdb->get_col( $sql );
+		self::fail_on_db_error();
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
+	 * Raise if the last query failed.
+	 *
+	 * @throws \RuntimeException When it did.
+	 */
+	private static function fail_on_db_error(): void {
+		global $wpdb;
+		$error = (string) $wpdb->last_error;
+		if ( '' !== $error ) {
+			throw new \RuntimeException( $error ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- never printed; caught by purge_step().
+		}
 	}
 }

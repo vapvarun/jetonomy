@@ -6,7 +6,7 @@
  * start but nothing ever called them, so an external adapter (Elasticsearch,
  * Meilisearch) would have answered from an index that was never filled. Since
  * 2.0.1 REST /search, the search page and the app use a plugin adapter when
- * one is registered (Basecamp 10368526736), so this class feeds it.
+ * one is registered, so this class feeds it.
  *
  * The built-in MySQL search reads the live tables, so nothing runs while it is
  * the adapter in use.

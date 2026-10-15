@@ -77,7 +77,7 @@ If you want plan holders on the Members list, click **Sync Members** next to the
 
 ## Check that it works
 
-1. As a guest, open the space address. You see "This space is private. Please log in to request access." and a **Log In** button.
+1. As a guest, open the space address. You see "This space is private. Log in to request access." (or the invite-only wording) and a **Log In** button.
 2. Sign in as the test account **without** the plan. You see "This space is included with" followed by the plan name. A **Get** button for that plan appears when your plugin has a sales page for it. If it has none, the message says to ask a site administrator.
 3. Sign in as the test account **with** the plan. The space opens and **+ New Topic** works.
 4. Cancel or expire that test plan in your membership plugin and reload the space. The lock returns on the next page load. Earlier posts stay in place.
@@ -90,8 +90,8 @@ No. Access is checked each time someone opens the space.
 **Can people without the plan still see the space name?**
 With **Private**, signed-in people see it in lists and get the "included with" message. With **Hidden**, they see "Space not found." instead, so they never get the **Get** button. Plan holders also will not see a hidden space in lists until you use **Sync Members**. Most owners choose **Private**.
 
-**Why does the Private plus Open combination not work?**
-**Open** lets any signed-in person join without the plan. Use **Invite Only**.
+**Why can't I pick Private plus Open?**
+A private space is always Requires Approval or Invite Only, so nobody gets in without the plan or a person saying yes. For a paid space use **Invite Only** with a membership rule.
 
 **The Get button is missing.**
 Roles, capabilities, trust levels, CRM tags and access groups are not things a visitor can buy, so no button is shown. A WooCommerce plan sold through several products also shows none.

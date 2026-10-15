@@ -109,10 +109,11 @@ class Captcha_Manager {
 			return null;
 		}
 
-		// Skip for trust level 2+ users (established community members).
+		// Skip for members whose trust level lists skip_captcha (level 2 and up
+		// by default) - the same list the Trust Levels settings table prints.
 		$profile = \Jetonomy\Models\UserProfile::find_by_user( $user_id );
-		if ( $profile && (int) ( $profile->trust_level ?? 0 ) >= 2 ) {
-			return null; // Trusted — skip.
+		if ( $profile && \Jetonomy\Trust\Trust_Levels::unlocked( (int) ( $profile->trust_level ?? 0 ), 'skip_captcha' ) ) {
+			return null;
 		}
 
 		if ( empty( $token ) ) {
@@ -138,7 +139,7 @@ class Captcha_Manager {
 	 * Every form whose endpoint runs verify_or_skip() must echo this:
 	 * login block (login/register/lost-password), the post composers, and
 	 * the reply composer. Without it Turnstile never renders and tokens
-	 * are never produced (#9977126420).
+	 * are never produced.
 	 *
 	 * @since 1.5.0
 	 * @return string Escaped HTML, safe to echo.

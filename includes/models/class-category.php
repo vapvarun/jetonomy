@@ -26,10 +26,10 @@ class Category extends Model {
 	 */
 	public static function create( array $data ): int {
 		$data = array_merge(
-			[
+			array(
 				'sort_order' => 0,
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -41,9 +41,8 @@ class Category extends Model {
 		}
 
 		// Every writer (wp-admin, REST, setup wizard, seeder, importers) gets a
-		// free slug here: a second "General" under another parent used to fail
-		// on the UNIQUE key with a bare "Failed to create category." (Basecamp
-		// 10375159877). Same rule as wp_insert_term(): suffix, never refuse.
+		// free slug here: a second "General" under another parent would otherwise fail on
+		// the UNIQUE key. Same rule as wp_insert_term(): suffix, never refuse.
 		$data['slug'] = self::unique_slug( (string) ( $data['slug'] ?? '' ) ?: (string) ( $data['name'] ?? '' ) );
 		$data         = self::normalize_color( $data, (int) ( $data['parent_id'] ?? 0 ) );
 
@@ -92,7 +91,7 @@ class Category extends Model {
 	}
 
 	/**
-	 * Colour is a top-level accent only (owner decision, Basecamp 10375031087):
+	 * Colour is a top-level accent only (owner decision):
 	 * it shows beside the category on the community home and nowhere else, so a
 	 * sub-category never stores one. Anything that is not a hex colour is
 	 * dropped rather than stored as free text.
@@ -139,9 +138,9 @@ class Category extends Model {
 				// so say why instead of quietly renaming it - wp_update_term() rule.
 				return new \WP_Error(
 					'jetonomy_slug_taken',
-					/* translators: %s: the category slug the owner typed. */
-					sprintf( __( 'The slug "%s" is already used by another category.', 'jetonomy' ), $slug ),
-					[ 'status' => 409 ]
+					/* translators: 1: the slug the owner typed, 2: the singular Category label, lowercase. */
+					sprintf( __( 'The slug "%1$s" is already used by another %2$s.', 'jetonomy' ), $slug, \Jetonomy\jetonomy_label( 'category', false, true ) ),
+					array( 'status' => 409 )
 				);
 			}
 			$data['slug'] = $slug;
@@ -162,12 +161,11 @@ class Category extends Model {
 	/**
 	 * Delete a category only when nothing is filed under it.
 	 *
-	 * The one guard every caller routes through. REST used to delete a parent
-	 * outright, leaving its sub-categories pointing at a missing row (gone
-	 * from every listing and unrepairable in wp-admin) and its spaces filed
-	 * under nothing (Basecamp 10355160875). Live spaces (anything not archived,
-	 * locked included) and sub-categories block the delete; archived spaces are
-	 * moved to uncategorised so a restore does not land in a deleted category.
+	 * The one guard every caller routes through, so REST cannot delete a parent and
+	 * leave its sub-categories pointing at a missing row or its spaces filed under
+	 * nothing. Live spaces (anything not archived, locked included) and sub-categories
+	 * block the delete; archived spaces are moved to uncategorised so a restore does
+	 * not land in a deleted category.
 	 *
 	 * @param int $id Category id.
 	 * @return bool|\WP_Error 409 WP_Error while spaces or sub-categories remain.
@@ -175,18 +173,18 @@ class Category extends Model {
 	public static function delete( int $id ): bool|\WP_Error {
 		$spaces = \Jetonomy\table( 'spaces' );
 		if ( (int) static::db()->get_var( static::db()->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE category_id = %d AND status <> 'archived'", $id ) ) > 0 ) {
-			return new \WP_Error( 'jetonomy_category_has_spaces', __( 'Cannot delete a category that contains spaces. Move or delete the spaces first.', 'jetonomy' ), [ 'status' => 409 ] );
+			return new \WP_Error( 'jetonomy_category_has_spaces', sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Space label, lowercase. */ __( 'Cannot delete this %1$s while it contains %2$s. Move or delete the %2$s first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\space_label( true, true ) ), array( 'status' => 409 ) );
 		}
 
-		if ( static::count( [ 'parent_id' => $id ] ) > 0 ) {
-			return new \WP_Error( 'jetonomy_category_has_children', __( 'Cannot delete a category that has sub-categories. Delete them first.', 'jetonomy' ), [ 'status' => 409 ] );
+		if ( static::count( array( 'parent_id' => $id ) ) > 0 ) {
+			return new \WP_Error( 'jetonomy_category_has_children', sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Category label, lowercase. */ __( 'Cannot delete this %1$s while it has sub-%2$s. Delete them first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'category', true, true ) ), array( 'status' => 409 ) );
 		}
 
 		$parked = static::db()->get_col(
 			static::db()->prepare( "SELECT id FROM {$spaces} WHERE category_id = %d AND status = 'archived'", $id )
 		);
 		foreach ( $parked as $space_id ) {
-			Space::update( (int) $space_id, [ 'category_id' => 0 ] );
+			Space::update( (int) $space_id, array( 'category_id' => 0 ) );
 		}
 
 		$deleted = parent::delete( $id );
@@ -214,16 +212,16 @@ class Category extends Model {
 		$message = null;
 		$parent  = static::find( $parent_id );
 		if ( $parent_id === $id ) {
-			$message = __( 'A category cannot be its own parent.', 'jetonomy' );
+			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'This %s cannot be its own parent.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( ! $parent ) {
-			$message = __( 'The parent category does not exist.', 'jetonomy' );
+			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'The parent %s does not exist.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( (int) $parent->parent_id > 0 ) {
-			$message = __( 'Categories nest two levels deep. Choose a top-level category as the parent.', 'jetonomy' );
-		} elseif ( $id > 0 && static::count( [ 'parent_id' => $id ] ) > 0 ) {
-			$message = __( 'This category has sub-categories, so it cannot become a sub-category itself.', 'jetonomy' );
+			$message = sprintf( /* translators: 1: the plural Category label, 2: the singular Category label, lowercase. */ __( '%1$s nest two levels deep. Choose a top-level %2$s as the parent.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\jetonomy_label( 'category', false, true ) );
+		} elseif ( $id > 0 && static::count( array( 'parent_id' => $id ) ) > 0 ) {
+			$message = sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Category label, lowercase. */ __( 'This %1$s has sub-%2$s, so it cannot become a sub-%1$s itself.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'category', true, true ) );
 		}
 
-		return $message ? new \WP_Error( 'jetonomy_invalid_parent', $message, [ 'status' => 400 ] ) : null;
+		return $message ? new \WP_Error( 'jetonomy_invalid_parent', $message, array( 'status' => 400 ) ) : null;
 	}
 
 	/**
@@ -237,7 +235,7 @@ class Category extends Model {
 	 * @return int
 	 */
 	public static function top_level_ancestor( int $id ): int {
-		$seen = [];
+		$seen = array();
 		$last = 0;
 		while ( $id > 0 && ! isset( $seen[ $id ] ) ) {
 			$seen[ $id ] = true;
@@ -283,16 +281,16 @@ class Category extends Model {
 		$col     = '' !== $alias ? $alias . '.' : '';
 
 		if ( $user_id > 0 && ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_manage_categories' ) ) ) {
-			$result = [ '1=1', [] ];
+			$result = array( '1=1', array() );
 		} else {
 			$allowed = $user_id <= 0 ? "'public'" : "'public','private'";
 			// A hidden parent hides its whole branch: a sub-category is visible
 			// only when its parent is too. Categories nest two levels deep, so
 			// one parent check covers the tree.
-			$result = [
+			$result = array(
 				"{$col}visibility IN ({$allowed}) AND ( {$col}parent_id IS NULL OR {$col}parent_id = 0 OR {$col}parent_id IN ( SELECT jt_vp.id FROM " . \Jetonomy\table( 'categories' ) . " jt_vp WHERE jt_vp.visibility IN ({$allowed}) ) )",
-				[],
-			];
+				array(),
+			);
 		}
 
 		/**
@@ -392,7 +390,7 @@ class Category extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		return static::db()->get_results(
 			empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values )
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -411,7 +409,7 @@ class Category extends Model {
 				$parent_id,
 				...$vis_values
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -425,7 +423,7 @@ class Category extends Model {
 	 * @param int[]    $parent_ids Limit to these parents (empty = every parent).
 	 * @return array<int, object[]> Parent id => children ordered like list_children().
 	 */
-	public static function children_by_parent( ?int $user_id = null, array $parent_ids = [] ): array {
+	public static function children_by_parent( ?int $user_id = null, array $parent_ids = array() ): array {
 		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id );
 
 		$parent_ids = array_values( array_filter( array_map( 'intval', $parent_ids ) ) );
@@ -439,9 +437,9 @@ class Category extends Model {
 		$sql = 'SELECT * FROM ' . static::table() . " WHERE parent_id > 0{$in} AND {$vis_where} ORDER BY sort_order ASC, name ASC";
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$rows = static::db()->get_results( empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values ) ) ?: [];
+		$rows = static::db()->get_results( empty( $vis_values ) ? $sql : static::db()->prepare( $sql, ...$vis_values ) ) ?: array();
 
-		$grouped = [];
+		$grouped = array();
 		foreach ( $rows as $row ) {
 			$grouped[ (int) $row->parent_id ][] = $row;
 		}
@@ -462,11 +460,11 @@ class Category extends Model {
 	 */
 	public static function list_tree( ?int $user_id = null, int $keep_id = 0 ): array {
 		$children = self::children_by_parent( $user_id );
-		$tree     = [];
+		$tree     = array();
 		foreach ( self::list_top_level( $user_id ) as $top ) {
 			$top->depth = 0;
 			$tree[]     = $top;
-			foreach ( $children[ (int) $top->id ] ?? [] as $child ) {
+			foreach ( $children[ (int) $top->id ] ?? array() as $child ) {
 				$child->depth = 1;
 				$tree[]       = $child;
 			}
@@ -504,7 +502,7 @@ class Category extends Model {
 	 * @return array{rows: object[], total: int}
 	 */
 	public static function list_paginated( string $search = '', string $orderby = 'sort_order', string $order = 'ASC', int $per_page = 20, int $offset = 0 ): array {
-		$allowed  = [ 'id', 'name', 'slug', 'sort_order' ];
+		$allowed  = array( 'id', 'name', 'slug', 'sort_order' );
 		$orderby  = in_array( $orderby, $allowed, true ) ? $orderby : 'sort_order';
 		$order    = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
 		$per_page = max( 1, min( 100, $per_page ) );
@@ -533,21 +531,21 @@ class Category extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$data_sql = "SELECT * FROM {$table} {$where} ORDER BY {$orderby} {$order}{$secondary} LIMIT %d OFFSET %d";
-		$args     = array_merge( $values, [ $per_page, $offset ] );
+		$args     = array_merge( $values, array( $per_page, $offset ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: [];
+		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: array();
 
 		// Hydrate children inline (children share parent's page; usually a small
 		// number per parent, no need to paginate those) - one query for the page.
 		$children = self::children_by_parent( null, array_column( $rows, 'id' ) );
 		foreach ( $rows as $row ) {
-			$row->children = $children[ (int) $row->id ] ?? [];
+			$row->children = $children[ (int) $row->id ] ?? array();
 		}
 
-		return [
+		return array(
 			'rows'  => $rows,
 			'total' => $total,
-		];
+		);
 	}
 
 	/**

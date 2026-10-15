@@ -58,7 +58,7 @@ class Vote extends Model {
 
 		// The write below (insert / flip / retract) must be visible to the
 		// next get_user_vote() in this request — clear the memo before the
-		// transaction so post-cast reads repopulate fresh (plan WP3.7).
+		// transaction so post-cast reads repopulate fresh.
 		self::reset_memo();
 
 		$started = static::db()->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -70,26 +70,26 @@ class Vote extends Model {
 		try {
 			if ( ! $existing ) {
 				$result = static::insert(
-					[
+					array(
 						'user_id'     => $user_id,
 						'object_type' => $object_type,
 						'object_id'   => $object_id,
 						'value'       => $value,
 						'created_at'  => now(),
-					]
+					)
 				);
 				if ( false === $result ) {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 					}
-					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to record vote.', 'jetonomy' ), [ 'status' => 500 ] );
+					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to record vote.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
 				static::update_target_score( $object_type, $object_id, $value );
 				if ( static::db()->last_error ) {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 					}
-					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), [ 'status' => 500 ] );
+					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
 				if ( null !== $started ) {
 					static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -109,10 +109,10 @@ class Vote extends Model {
 				 */
 				do_action( 'jetonomy_vote_cast', $value, $object_type, $object_id, $user_id );
 
-				return [
+				return array(
 					'action'    => 'created',
 					'old_value' => null,
-				];
+				);
 			}
 
 			$old_value = (int) $existing->value;
@@ -123,14 +123,14 @@ class Vote extends Model {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 					}
-					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to remove vote.', 'jetonomy' ), [ 'status' => 500 ] );
+					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to remove vote.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
 				static::update_target_score( $object_type, $object_id, -$value );
 				if ( static::db()->last_error ) {
 					if ( null !== $started ) {
 						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 					}
-					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), [ 'status' => 500 ] );
+					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), array( 'status' => 500 ) );
 				}
 				if ( null !== $started ) {
 					static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -146,28 +146,28 @@ class Vote extends Model {
 				 */
 				do_action( 'jetonomy_vote_retracted', $old_value, $object_type, $object_id, $user_id );
 
-				return [
+				return array(
 					'action'    => 'removed',
 					'old_value' => $old_value,
-				];
+				);
 			}
 
 			$result = static::update(
 				(int) $existing->id,
-				[ 'value' => $value ]
+				array( 'value' => $value )
 			);
 			if ( false === $result ) {
 				if ( null !== $started ) {
 					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				}
-				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update vote.', 'jetonomy' ), [ 'status' => 500 ] );
+				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update vote.', 'jetonomy' ), array( 'status' => 500 ) );
 			}
 			static::update_target_score( $object_type, $object_id, -$old_value + $value );
 			if ( static::db()->last_error ) {
 				if ( null !== $started ) {
 					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				}
-				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), [ 'status' => 500 ] );
+				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), array( 'status' => 500 ) );
 			}
 			if ( null !== $started ) {
 				static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -179,15 +179,15 @@ class Vote extends Model {
 			do_action( 'jetonomy_vote_retracted', $old_value, $object_type, $object_id, $user_id );
 			do_action( 'jetonomy_vote_cast', $value, $object_type, $object_id, $user_id );
 
-			return [
+			return array(
 				'action'    => 'updated',
 				'old_value' => $old_value,
-			];
+			);
 		} catch ( \Throwable $e ) {
 			if ( null !== $started ) {
 				static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			}
-			return new \WP_Error( 'jetonomy_vote_failed', $e->getMessage(), [ 'status' => 500 ] );
+			return new \WP_Error( 'jetonomy_vote_failed', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
 
@@ -223,18 +223,18 @@ class Vote extends Model {
 	/**
 	 * Per-request memo for get_user_vote(), filled per-row on miss and in
 	 * bulk (negatives included) by user_votes_map() — the memo-in-model
-	 * design from plan WP3.7: templates call user_votes_map() once for the
+	 * design: templates call user_votes_map() once for the
 	 * page's ids, and every per-row get_user_vote() in the card partials
 	 * (including theme-overridden copies and unprimed surfaces like drafts /
 	 * tag / bookmarks views) reads the memo or falls back per-row. Cleared
-	 * by cast() and via Cache::flush() (plan U1).
+	 * by cast() and via Cache::flush().
 	 *
 	 * @var array<string, ?int>
 	 */
 	private static array $memo = array();
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -248,7 +248,7 @@ class Vote extends Model {
 	}
 
 	/**
-	 * Register the memo reset with the shared registry once (plan U1).
+	 * Register the memo reset with the shared registry once.
 	 */
 	private static function register_memo_reset(): void {
 		if ( ! self::$memo_registered ) {
@@ -297,7 +297,7 @@ class Vote extends Model {
 		}
 
 		// Fill the get_user_vote() memo, negatives included, so per-row
-		// lookups over these ids cost zero further queries (plan WP3.7).
+		// lookups over these ids cost zero further queries.
 		self::register_memo_reset();
 		foreach ( $object_ids as $oid ) {
 			self::$memo[ "{$user_id}|{$object_type}|{$oid}" ] = $map[ $oid ] ?? null;
@@ -396,7 +396,7 @@ class Vote extends Model {
 				$user_id,
 				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
@@ -438,5 +438,22 @@ class Vote extends Model {
 				Reply::bust_thread( (int) ( $parent->post_id ?? 0 ) );
 			}
 		}
+	}
+
+	/**
+	 * Distinct members who voted on an object.
+	 *
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int    $object_id   Object id.
+	 * @return int
+	 */
+	public static function count_voters( string $object_type, int $object_id ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(DISTINCT v.user_id) FROM ' . static::table() . ' v WHERE v.object_type = %s AND v.object_id = %d',
+				$object_type,
+				$object_id
+			)
+		);
 	}
 }

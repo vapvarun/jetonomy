@@ -11,9 +11,10 @@ defined( 'ABSPATH' ) || exit;
 
 class Capabilities {
 
-	private const ROLE_MAP = [
-		'subscriber'    => [
+	private const ROLE_MAP = array(
+		'subscriber'    => array(
 			'jetonomy_read',
+			'jetonomy_upload_media',
 			'jetonomy_create_posts',
 			'jetonomy_create_replies',
 			'jetonomy_edit_own_posts',
@@ -21,10 +22,10 @@ class Capabilities {
 			'jetonomy_vote',
 			'jetonomy_flag',
 			'jetonomy_join_spaces',
-		],
-		'contributor'   => [ 'jetonomy_upload_media' ],
-		'author'        => [ 'jetonomy_create_spaces' ],
-		'editor'        => [
+		),
+		'contributor'   => array(),
+		'author'        => array(),
+		'editor'        => array(
 			'jetonomy_edit_others_posts',
 			'jetonomy_delete_others_posts',
 			'jetonomy_moderate',
@@ -32,29 +33,37 @@ class Capabilities {
 			'jetonomy_move_posts',
 			'jetonomy_close_posts',
 			'jetonomy_pin_posts',
-		],
-		'administrator' => [
+		),
+		'administrator' => array(
 			'jetonomy_manage_settings',
 			'jetonomy_manage_categories',
 			'jetonomy_manage_spaces',
 			'jetonomy_manage_badges',
 			'jetonomy_view_analytics',
 			'jetonomy_manage_extensions',
-		],
-	];
+		),
+	);
 
 	/**
 	 * Option holding the site owner's role => caps overrides.
 	 *
 	 * Absent role key = that role uses the ROLE_MAP default. Present key =
 	 * the role's Jetonomy caps are EXACTLY the stored list (an empty list is
-	 * a valid "none" choice). Administrator is never stored: admins always
+	 * a valid "none" choice). The Permissions tab never stores a row the
+	 * owner left untouched, so third-party roles keep the engine's space
+	 * membership fallback until someone configures them. Administrator is never stored: admins always
 	 * hold every cap, so a site owner cannot lock themselves out of the
-	 * mapping screen (Basecamp 9725751235 - the mapping used to be
-	 * hard-coded and the settings card literally said "This mapping is
-	 * fixed").
+	 * mapping screen.
 	 */
 	public const ROLE_CAPS_OPTION = 'jetonomy_role_caps';
+
+	/**
+	 * Community uploads (composer images, avatars, covers, Pro attachments)
+	 * follow the Upload media box alone, so unticking it stops every role,
+	 * Authors and Editors included, whatever their wp-admin Media rights.
+	 * Site admins always keep it.
+	 */
+	public const UPLOAD_CAPS = array( 'jetonomy_upload_media', 'manage_options' );
 
 	/**
 	 * The default cumulative cap set per core role, from ROLE_MAP.
@@ -62,8 +71,8 @@ class Capabilities {
 	 * @return array<string, string[]> role => caps.
 	 */
 	public static function default_map(): array {
-		$out        = [];
-		$cumulative = [];
+		$out        = array();
+		$cumulative = array();
 		foreach ( self::ROLE_MAP as $role_name => $caps ) {
 			$cumulative        = array_merge( $cumulative, $caps );
 			$out[ $role_name ] = array_values( $cumulative );
@@ -79,7 +88,7 @@ class Capabilities {
 	 */
 	public static function effective_map(): array {
 		$map       = self::default_map();
-		$overrides = get_option( self::ROLE_CAPS_OPTION, [] );
+		$overrides = get_option( self::ROLE_CAPS_OPTION, array() );
 		if ( is_array( $overrides ) ) {
 			foreach ( $overrides as $role => $caps ) {
 				if ( 'administrator' === $role ) {
@@ -110,7 +119,7 @@ class Capabilities {
 	 * @return bool True when at least one of the user's roles is explicitly stored.
 	 */
 	public static function has_explicit_role_mapping( int $user_id ): bool {
-		$stored = get_option( self::ROLE_CAPS_OPTION, [] );
+		$stored = get_option( self::ROLE_CAPS_OPTION, array() );
 		if ( ! is_array( $stored ) || ! $stored ) {
 			return false;
 		}
@@ -138,8 +147,8 @@ class Capabilities {
 	 * a box on the mapping screen actually revokes.
 	 */
 	public static function register(): void {
-		// Same guard roles_with_create_spaces() carries: in a minimal boot
-		// context (the WP-stub smoke test) the roles API may not exist yet.
+		// In a minimal boot context (the WP-stub smoke test) the roles API
+		// may not exist yet.
 		if ( ! function_exists( 'wp_roles' ) ) {
 			return;
 		}
@@ -147,8 +156,7 @@ class Capabilities {
 		// First sync on a site that predates the editable mapping: snapshot
 		// any live role whose Jetonomy caps differ from the ROLE_MAP default
 		// (hand-granted custom roles included) into the option, so syncing
-		// never changes a site's effective permissions out from under it -
-		// same seeding discipline roles_with_create_spaces() established.
+		// never changes a site's effective permissions out from under it.
 		//
 		// A role holding NO Jetonomy caps is deliberately NOT seeded. On a
 		// fresh install that is every role, and an empty snapshot is not a
@@ -162,7 +170,7 @@ class Capabilities {
 		// permission set worth protecting from the sync.
 		if ( false === get_option( self::ROLE_CAPS_OPTION, false ) ) {
 			$defaults = self::default_map();
-			$seed     = [];
+			$seed     = array();
 			foreach ( wp_roles()->role_objects as $slug => $role ) {
 				if ( 'administrator' === $slug ) {
 					continue;
@@ -171,7 +179,7 @@ class Capabilities {
 				if ( empty( $live ) ) {
 					continue;
 				}
-				$def = $defaults[ $slug ] ?? [];
+				$def = $defaults[ $slug ] ?? array();
 				sort( $live );
 				$def_sorted = $def;
 				sort( $def_sorted );
@@ -188,7 +196,7 @@ class Capabilities {
 		foreach ( wp_roles()->role_objects as $slug => $role ) {
 			// Roles outside the map (custom roles) default to no Jetonomy caps
 			// unless the owner saved a set for them.
-			$want = isset( $targets[ $slug ] ) ? $targets[ $slug ] : [];
+			$want = isset( $targets[ $slug ] ) ? $targets[ $slug ] : array();
 			foreach ( $all as $cap ) {
 				$should = in_array( $cap, $want, true );
 				$has    = $role->has_cap( $cap );
@@ -201,43 +209,13 @@ class Capabilities {
 		}
 	}
 
-	/**
-	 * Roles that hold `jetonomy_create_spaces` in the live roles registry.
-	 *
-	 * Read from wp_roles() rather than ROLE_MAP so a custom role the site
-	 * granted the cap to counts too. Used to seed the front-end allow-list on
-	 * upgrade, so a site's effective permissions do not change under it.
-	 *
-	 * @return string[]
-	 */
-	public static function roles_with_create_spaces(): array {
-		if ( ! function_exists( 'wp_roles' ) ) {
-			return [];
-		}
-
-		$out = [];
-		foreach ( wp_roles()->role_objects as $slug => $role ) {
-			if ( $role->has_cap( 'jetonomy_create_spaces' ) || $role->has_cap( 'manage_options' ) ) {
-				$out[] = (string) $slug;
-			}
-		}
-
-		return $out;
-	}
 
 	/**
 	 * Whether a user may create a space from the FRONT END.
 	 *
 	 * The single gate for the REST create route, the /new-space/ form, and the
-	 * user-panel "Create space" link. All three used to OR in
-	 * `current_user_can( 'jetonomy_create_spaces' )` before consulting the
-	 * admin's allow-list — and since that cap is granted cumulatively to
-	 * author and up, unticking Author or Editor under Settings → General did
-	 * nothing at all (Basecamp 10118734782). The setting could only ever
-	 * restrict subscribers and contributors, which was not what it said.
-	 *
-	 * The cap still gates programmatic paths (CLI, Abilities). It no longer
-	 * overrides what the site owner configured for the front end.
+	 * user-panel "Create space" link. Settings -> General -> "Who can create
+	 * spaces" is the single control; there is no separate capability for it.
 	 *
 	 * @param int $user_id WP user ID. 0 = current user.
 	 * @return bool
@@ -251,10 +229,10 @@ class Capabilities {
 				// Site admins always qualify; the setting describes who ELSE does.
 				$can = true;
 			} else {
-				$settings = get_option( 'jetonomy_settings', [] );
+				$settings = get_option( 'jetonomy_settings', array() );
 				$allowed  = isset( $settings['frontend_space_creation_roles'] )
 					? array_filter( array_map( 'sanitize_key', (array) $settings['frontend_space_creation_roles'] ) )
-					: [];
+					: array();
 
 				$user = $allowed ? get_userdata( $user_id ) : null;
 				$can  = $user && ! empty( $user->roles )
@@ -281,31 +259,62 @@ class Capabilities {
 	 * @return array<string, string> cap => label.
 	 */
 	public static function labels(): array {
-		return [
+		return array(
 			'jetonomy_read'                => __( 'Read the community', 'jetonomy' ),
 			'jetonomy_create_posts'        => __( 'Create posts', 'jetonomy' ),
-			'jetonomy_create_replies'      => __( 'Create replies', 'jetonomy' ),
+			'jetonomy_create_replies'      => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 			'jetonomy_edit_own_posts'      => __( 'Edit own posts', 'jetonomy' ),
 			'jetonomy_delete_own_posts'    => __( 'Delete own posts', 'jetonomy' ),
 			'jetonomy_vote'                => __( 'Vote', 'jetonomy' ),
 			'jetonomy_flag'                => __( 'Report content', 'jetonomy' ),
-			'jetonomy_join_spaces'         => __( 'Join spaces', 'jetonomy' ),
+			'jetonomy_join_spaces'         => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 			'jetonomy_upload_media'        => __( 'Upload media', 'jetonomy' ),
-			'jetonomy_create_spaces'       => __( 'Create spaces (programmatic)', 'jetonomy' ),
 			'jetonomy_edit_others_posts'   => __( "Edit others' posts", 'jetonomy' ),
 			'jetonomy_delete_others_posts' => __( "Delete others' posts", 'jetonomy' ),
 			'jetonomy_moderate'            => __( 'Moderate (queue, flags, bans)', 'jetonomy' ),
 			'jetonomy_manage_users'        => __( 'Manage community users', 'jetonomy' ),
-			'jetonomy_move_posts'          => __( 'Move posts between spaces', 'jetonomy' ),
-			'jetonomy_close_posts'         => __( 'Close topics', 'jetonomy' ),
-			'jetonomy_pin_posts'           => __( 'Pin topics', 'jetonomy' ),
+			'jetonomy_move_posts'          => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Move posts between %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+			'jetonomy_close_posts'         => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+			'jetonomy_pin_posts'           => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Pin %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 			'jetonomy_manage_settings'     => __( 'Manage settings', 'jetonomy' ),
-			'jetonomy_manage_categories'   => __( 'Manage categories', 'jetonomy' ),
-			'jetonomy_manage_spaces'       => __( 'Manage all spaces', 'jetonomy' ),
+			'jetonomy_manage_categories'   => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Manage %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
+			'jetonomy_manage_spaces'       => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Manage all %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 			'jetonomy_manage_badges'       => __( 'Manage badges', 'jetonomy' ),
 			'jetonomy_view_analytics'      => __( 'View analytics', 'jetonomy' ),
 			'jetonomy_manage_extensions'   => __( 'Manage extensions', 'jetonomy' ),
-		];
+		);
+	}
+
+	/**
+	 * Whether the user may upload media. Same rule the REST routes enforce,
+	 * so templates hide controls a refused request would sit behind.
+	 *
+	 * @param int $user_id User ID; 0 = current user.
+	 */
+	public static function can_upload( int $user_id = 0 ): bool {
+		$user_id = $user_id ?: get_current_user_id();
+		foreach ( self::UPLOAD_CAPS as $cap ) {
+			if ( user_can( $user_id, $cap ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether a user may set an image URL (profile picture, space cover).
+	 *
+	 * Pointing at a new image is an upload, so it needs can_upload() - the same
+	 * check the forms run before showing the control. Clearing the image, or
+	 * re-sending the unchanged value with the rest of a form, is always allowed.
+	 *
+	 * @param string $new_url     Sanitized URL being saved.
+	 * @param string $current_url URL stored now.
+	 * @param int    $user_id     User making the change.
+	 * @return bool
+	 */
+	public static function can_set_image( string $new_url, string $current_url, int $user_id ): bool {
+		return '' === $new_url || $new_url === $current_url || self::can_upload( $user_id );
 	}
 
 	/**
@@ -331,7 +340,7 @@ class Capabilities {
 	 * @return array<string, bool>
 	 */
 	public static function map_for_user( int $user_id ): array {
-		// Cached 60s per user (plan WP4.13) — /users/me runs on app boot and
+		// Cached 60s per user — /users/me runs on app boot and
 		// screen mounts, and this walks the whole capability set through
 		// user_can() each time. A whole-payload /users/me cache was rejected
 		// by the ownership map (it would stack over the profile/user row
@@ -342,8 +351,8 @@ class Capabilities {
 			return $cached;
 		}
 
-		$out = [];
-		foreach ( array_merge( self::all(), [ 'manage_options' ] ) as $cap ) {
+		$out = array();
+		foreach ( array_merge( self::all(), array( 'manage_options' ) ) as $cap ) {
 			$out[ $cap ] = user_can( $user_id, $cap );
 		}
 

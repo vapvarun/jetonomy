@@ -15,14 +15,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$members   = isset( $members ) ? (array) $members : [];
+$members   = isset( $members ) ? (array) $members : array();
 $base      = isset( $base ) ? (string) $base : \Jetonomy\base_url();
 $bn_active = isset( $bn_active ) ? (bool) $bn_active : false;
 
-$role_labels = [
+$role_labels = array(
 	'admin'     => __( 'Admin', 'jetonomy' ),
 	'moderator' => __( 'Mod', 'jetonomy' ),
-];
+);
 ?>
 
 <div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">

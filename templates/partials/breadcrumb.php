@@ -29,7 +29,7 @@ ob_start();
  *
  * Eighteen views render the trail through this one partial, so a site that
  * wants to restyle, replace or remove it has a single hook instead of
- * eighteen template overrides (Basecamp 10272509253). Return '' to suppress
+ * eighteen template overrides. Return '' to suppress
  * it, or rebuild it from $crumbs.
  *
  * Placement is a separate filter, jetonomy_breadcrumb_placement: views print

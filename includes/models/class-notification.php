@@ -46,10 +46,10 @@ class Notification extends Model {
 		}
 
 		$data = array_merge(
-			[
+			array(
 				'is_read'    => 0,
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -77,9 +77,9 @@ class Notification extends Model {
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name + fixed fragment from visibility_sql(); values bound below.
 				'SELECT n.* FROM ' . static::table() . ' n WHERE n.user_id = %d' . $visible_sql . ' ORDER BY n.created_at DESC, n.id DESC LIMIT %d OFFSET %d',
-				array_merge( [ $user_id ], $visible_params, [ $limit, $offset ] )
+				array_merge( array( $user_id ), $visible_params, array( $limit, $offset ) )
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -91,7 +91,7 @@ class Notification extends Model {
 	public static function mark_read( int $id ): bool {
 		// Load first: the row id alone can't name whose counters to bust.
 		$row    = static::find( $id );
-		$result = static::update( $id, [ 'is_read' => 1 ] );
+		$result = static::update( $id, array( 'is_read' => 1 ) );
 		if ( $row && ! empty( $row->user_id ) ) {
 			self::bust_user_cache( (int) $row->user_id );
 		}
@@ -106,11 +106,11 @@ class Notification extends Model {
 	public static function mark_all_read( int $user_id ): void {
 		static::db()->update(
 			static::table(),
-			[ 'is_read' => 1 ],
-			[
+			array( 'is_read' => 1 ),
+			array(
 				'user_id' => $user_id,
 				'is_read' => 0,
-			]
+			)
 		);
 		self::bust_user_cache( $user_id );
 	}
@@ -122,7 +122,7 @@ class Notification extends Model {
 	 * @return int
 	 */
 	public static function unread_count( int $user_id ): int {
-		// Cached 60s (plan WP4.7): the highest-QPS query in the plugin —
+		// Cached 60s: the highest-QPS query in the plugin —
 		// the header bell reads it on EVERY page view for every logged-in
 		// user. Busted by every named write path via bust_user_cache();
 		// the cron bulk mark-read/prune, space purge and privacy erase have
@@ -142,7 +142,7 @@ class Notification extends Model {
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT COUNT(*) FROM {$table} n WHERE n.user_id = %d AND n.is_read = 0{$visible_sql}",
-				array_merge( [ $user_id ], $visible_params )
+				array_merge( array( $user_id ), $visible_params )
 			)
 		);
 
@@ -151,7 +151,7 @@ class Notification extends Model {
 	}
 
 	/**
-	 * Bust the cached notification counters for one user (plan WP4.7).
+	 * Bust the cached notification counters for one user.
 	 *
 	 * The single bust point for notif:unread:{id} + notif:counts:{id} —
 	 * called from create(), mark_read(), mark_all_read(), delete_for_user(),
@@ -192,7 +192,7 @@ class Notification extends Model {
 		$sql = 'SELECT COUNT(*) FROM ' . static::table() . ' n WHERE n.user_id = %d' . $where;
 
 		return (int) static::db()->get_var(
-			static::db()->prepare( $sql, array_merge( [ $user_id ], $params ) )
+			static::db()->prepare( $sql, array_merge( array( $user_id ), $params ) )
 		);
 	}
 
@@ -247,11 +247,11 @@ class Notification extends Model {
 			ORDER BY n.created_at DESC, n.id DESC
 			LIMIT %d OFFSET %d";
 
-		$prepared = $wpdb->prepare( $sql, array_merge( [ $user_id ], $params, [ $limit, $offset ] ) );
+		$prepared = $wpdb->prepare( $sql, array_merge( array( $user_id ), $params, array( $limit, $offset ) ) );
 		$rows     = $wpdb->get_results( $prepared );
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		return $rows ?: [];
+		return $rows ?: array();
 	}
 
 	/**
@@ -276,7 +276,7 @@ class Notification extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders generated above; values passed via prepare.
 		$deleted = (int) static::db()->query(
-			static::db()->prepare( $sql, array_merge( [ $user_id ], $ids ) )
+			static::db()->prepare( $sql, array_merge( array( $user_id ), $ids ) )
 		);
 		self::bust_user_cache( $user_id );
 		return $deleted;
@@ -303,7 +303,7 @@ class Notification extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders generated above; values passed via prepare.
 		$updated = (int) static::db()->query(
-			static::db()->prepare( $sql, array_merge( [ $user_id ], $ids ) )
+			static::db()->prepare( $sql, array_merge( array( $user_id ), $ids ) )
 		);
 		self::bust_user_cache( $user_id );
 		return $updated;
@@ -315,7 +315,7 @@ class Notification extends Model {
 	 *
 	 * Opening a conversation (or anything else a notification points at) is
 	 * the read: nothing else ever cleared these rows, so a DM stayed unread in
-	 * Jetonomy's bell and the host's (Basecamp 10369320232).
+	 * Jetonomy's bell and the host's.
 	 *
 	 * @param int    $user_id     The member who read it.
 	 * @param string $object_type Notification object_type ('message', 'post', ...).
@@ -329,13 +329,13 @@ class Notification extends Model {
 
 		$updated = (int) static::db()->update(
 			static::table(),
-			[ 'is_read' => 1 ],
-			[
+			array( 'is_read' => 1 ),
+			array(
 				'user_id'     => $user_id,
 				'object_type' => $object_type,
 				'object_id'   => $object_id,
 				'is_read'     => 0,
-			]
+			)
 		);
 		if ( $updated > 0 ) {
 			self::bust_user_cache( $user_id );
@@ -377,7 +377,7 @@ class Notification extends Model {
 	 * @return array<string,int>
 	 */
 	public static function counts_by_filter( int $user_id ): array {
-		// Cached 60s alongside notif:unread (plan WP4.7) — this single-pass
+		// Cached 60s alongside notif:unread — this single-pass
 		// SUM(CASE) walks the user's ENTIRE notification history per render.
 		// Same bust point (bust_user_cache), same TTL-bounded exceptions.
 		$cached = \Jetonomy\Cache::get( "notif:counts:{$user_id}" );
@@ -403,27 +403,27 @@ class Notification extends Model {
 				FROM {$table} n
 				WHERE n.user_id = %d{$visible_sql}",
 				array_merge(
-					[ 'mention', 'reply_to_post', 'reply_to_reply', 'vote_on_post', 'badge_earned', $user_id ],
+					array( 'mention', 'reply_to_post', 'reply_to_reply', 'vote_on_post', 'badge_earned', $user_id ),
 					$visible_params
 				)
 			)
 		);
 
-		$counts = $row ? [
+		$counts = $row ? array(
 			'all'      => (int) $row->c_all,
 			'unread'   => (int) $row->c_unread,
 			'mentions' => (int) $row->c_mentions,
 			'replies'  => (int) $row->c_replies,
 			'votes'    => (int) $row->c_votes,
 			'badges'   => (int) $row->c_badges,
-		] : [
+		) : array(
 			'all'      => 0,
 			'unread'   => 0,
 			'mentions' => 0,
 			'replies'  => 0,
 			'votes'    => 0,
 			'badges'   => 0,
-		];
+		);
 
 		\Jetonomy\Cache::set( "notif:counts:{$user_id}", $counts, 60 );
 		return $counts;
@@ -436,7 +436,7 @@ class Notification extends Model {
 	 * review"), so hiding them once the target left `publish` would swallow
 	 * the only word the recipient gets.
 	 */
-	private const TARGET_STATUS_EXEMPT_TYPES = [ 'moderation', 'flag_resolved' ];
+	private const TARGET_STATUS_EXEMPT_TYPES = array( 'moderation', 'flag_resolved' );
 
 	/**
 	 * The one WHERE fragment every notification read path applies, so the
@@ -476,7 +476,7 @@ class Notification extends Model {
 
 		// The target's space must still be readable by the viewer: a member
 		// removed from a private space kept seeing its topic titles here and in
-		// the host bell, and the link landed on a 403 (Basecamp 10345420194).
+		// the host bell, and the link landed on a 403.
 		// Same set-based read rule search and feeds use; fails closed.
 		[ $read_p, $read_p_params ] = Space::content_visibility_sql( $user_id, 'nvs' );
 		[ $read_r, $read_r_params ] = Space::content_visibility_sql( $user_id, 'nvrs' );
@@ -487,17 +487,17 @@ class Notification extends Model {
 			. " OR ( n.object_type = 'reply' AND NOT EXISTS ( SELECT 1 FROM {$replies} nvy INNER JOIN {$posts} nvyp ON nvyp.id = nvy.post_id WHERE nvy.id = n.object_id AND ( nvy.status <> 'publish' OR nvyp.status <> 'publish' OR NOT EXISTS ( SELECT 1 FROM {$spaces} nvrs WHERE nvrs.id = nvyp.space_id AND {$read_r} ) ) ) )"
 			. " OR n.object_type NOT IN ('post','reply') )";
 
-		$params = array_merge( [ now() ], $read_p_params, $read_r_params );
+		$params = array_merge( array( now() ), $read_p_params, $read_r_params );
 
 		// Carry the block fragment's own params: past INLINE_CAP it switches to
-		// a `blocker_id = %d` subquery, which the old per-method copies dropped.
+		// a `blocker_id = %d` subquery, whose params a per-method copy would drop.
 		[ $block_sql, $block_params ] = BlockedUser::exclusion_sql( $user_id, 'n', 'actor_id' );
 		if ( '' !== $block_sql ) {
 			$sql   .= ' AND ' . $block_sql;
 			$params = array_merge( $params, $block_params );
 		}
 
-		return [ $sql, $params ];
+		return array( $sql, $params );
 	}
 
 	/**
@@ -620,22 +620,60 @@ class Notification extends Model {
 	private static function filter_where( string $filter ): array {
 		switch ( $filter ) {
 			case 'unread':
-				return [ ' AND n.is_read = 0', [] ];
+				return array( ' AND n.is_read = 0', array() );
 
 			case 'mentions':
-				return [ ' AND n.type = %s', [ 'mention' ] ];
+				return array( ' AND n.type = %s', array( 'mention' ) );
 
 			case 'replies':
-				return [ ' AND n.type IN (%s, %s)', [ 'reply_to_post', 'reply_to_reply' ] ];
+				return array( ' AND n.type IN (%s, %s)', array( 'reply_to_post', 'reply_to_reply' ) );
 
 			case 'votes':
-				return [ ' AND n.type = %s', [ 'vote_on_post' ] ];
+				return array( ' AND n.type = %s', array( 'vote_on_post' ) );
 
 			case 'badges':
-				return [ ' AND n.type = %s', [ 'badge_earned' ] ];
+				return array( ' AND n.type = %s', array( 'badge_earned' ) );
 
 			default:
-				return [ '', [] ];
+				return array( '', array() );
 		}
+	}
+
+	/**
+	 * A member's newest notification of a type about one object since a moment,
+	 * so repeated events can update it instead of stacking new rows.
+	 *
+	 * @param int    $user_id     Recipient.
+	 * @param string $type        Notification type.
+	 * @param string $object_type Object type.
+	 * @param int    $object_id   Object id.
+	 * @param string $since       UTC MySQL datetime (exclusive).
+	 * @return object|null Row with id, message.
+	 */
+	public static function find_recent_for_object( int $user_id, string $type, string $object_type, int $object_id, string $since ): ?object {
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT id, message FROM ' . static::table() . ' WHERE user_id = %d AND type = %s AND object_type = %s AND object_id = %d AND created_at > %s ORDER BY created_at DESC LIMIT 1',
+				$user_id,
+				$type,
+				$object_type,
+				$object_id,
+				$since
+			)
+		);
+		return $row ?: null;
+	}
+
+	/**
+	 * Mark up to $limit unread notifications older than a moment as read.
+	 *
+	 * @param string $cutoff UTC MySQL datetime.
+	 * @param int    $limit  Max rows per call.
+	 * @return int Rows changed.
+	 */
+	public static function mark_read_before( string $cutoff, int $limit ): int {
+		return (int) static::db()->query(
+			static::db()->prepare( 'UPDATE ' . static::table() . ' SET is_read = 1 WHERE is_read = 0 AND created_at < %s LIMIT %d', $cutoff, $limit )
+		);
 	}
 }

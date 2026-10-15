@@ -15,12 +15,12 @@ $token = $data['slug'] ?? '';
 if ( empty( $token ) ) {
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			'message'   => __( 'Invalid invite link.', 'jetonomy' ),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }
@@ -59,12 +59,12 @@ if ( is_wp_error( $result ) ) {
 
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
-		[
+		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
 			'message'   => $result->get_error_message(),
 			'tone'      => 'warn',
-		]
+		)
 	);
 	return;
 }

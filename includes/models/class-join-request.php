@@ -27,13 +27,13 @@ class JoinRequest extends Model {
 	 */
 	public static function create_request( int $space_id, int $user_id, string $message = '' ): int {
 		return self::insert(
-			[
+			array(
 				'space_id'   => $space_id,
 				'user_id'    => $user_id,
 				'message'    => $message,
 				'status'     => 'pending',
 				'created_at' => now(),
-			]
+			)
 		);
 	}
 
@@ -66,7 +66,7 @@ class JoinRequest extends Model {
 				'SELECT * FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending' ORDER BY created_at DESC",
 				$space_id
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -179,11 +179,11 @@ class JoinRequest extends Model {
 
 		$ok = self::update(
 			$id,
-			[
+			array(
 				'status'      => $status,
 				'reviewed_by' => $reviewed_by,
 				'reviewed_at' => now(),
-			]
+			)
 		);
 		if ( $ok ) {
 			self::fire( $status, (int) $request->space_id, (int) $request->user_id, $reviewed_by );
@@ -201,8 +201,26 @@ class JoinRequest extends Model {
 	 */
 	private static function fire( string $status, int $space_id, int $user_id, int $reviewed_by ): void {
 		if ( 'approved' === $status ) {
+			/**
+			 * Fires after a join request is approved.
+			 *
+			 * @since 1.4.4
+			 *
+			 * @param int $space_id    Space ID.
+			 * @param int $user_id     Requesting user ID.
+			 * @param int $reviewed_by Reviewer user ID.
+			 */
 			do_action( 'jetonomy_join_request_approved', $space_id, $user_id, $reviewed_by );
 		} else {
+			/**
+			 * Fires after a join request is denied.
+			 *
+			 * @since 1.4.4
+			 *
+			 * @param int $space_id    Space ID.
+			 * @param int $user_id     Requesting user ID.
+			 * @param int $reviewed_by Reviewer user ID.
+			 */
 			do_action( 'jetonomy_join_request_denied', $space_id, $user_id, $reviewed_by );
 		}
 	}

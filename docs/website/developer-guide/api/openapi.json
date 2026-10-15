@@ -296,7 +296,7 @@
         ],
         "summary": "Bulk-set trust level",
         "operationId": "adminSetTrustLevel",
-        "description": "Bulk-set trust level for users. Requires manage_options.",
+        "description": "Bulk-set trust level for users. Requires jetonomy_manage_users. Non-admins cannot change their own level, an administrator's or a moderator's; those users are returned in skipped with reason forbidden.",
         "responses": {
           "200": {
             "description": "Success",
@@ -7045,7 +7045,7 @@
         ],
         "summary": "Create a space",
         "operationId": "createSpace",
-        "description": "Create a sub-community. Requires manage_options OR jetonomy_create_spaces OR an opted-in WP role (Settings -> frontend_space_creation_roles).",
+        "description": "Create a sub-community. Requires manage_options OR an opted-in WP role (Settings -> frontend_space_creation_roles).",
         "responses": {
           "201": {
             "description": "Created",

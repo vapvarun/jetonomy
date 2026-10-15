@@ -38,6 +38,9 @@ jobs:
       - name: Check PHP format strings
         run: php bin/check-format-strings.php
 
+      - name: Check for tracker references in source
+        run: bash bin/check-comment-refs.sh
+
   # ── PHPUnit matrix: PHP 8.1/8.2/8.3/8.4 × WP 6.7/6.8/6.9 ─────────────
   phpunit:
     runs-on: ubuntu-latest

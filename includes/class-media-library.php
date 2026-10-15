@@ -36,19 +36,16 @@ class Media_Library {
 	 * PROVENANCE. Set only when Jetonomy itself created the upload.
 	 *
 	 * META_FLAG cannot be used to decide whether we may DELETE a file, because the
-	 * backfill below also applies it to media we did not create: it infers "this is a
-	 * community upload" from the author lacking `upload_files`, which is true of every
-	 * subscriber-authored attachment on the site — including another forum plugin's.
-	 * wpForo, for instance, inserts its attachments into the media library authored by
-	 * the posting member. Pro's GC then force-deleted any flagged, unlinked attachment
-	 * over 24h old (wp_delete_attachment with $force_delete = true, so the FILE went
-	 * from disk as well) — which meant enabling attachments on a site mid-migration
-	 * could destroy the very files the import existed to rescue.
+	 * backfill also applies it to media we did not create: it infers "community upload"
+	 * from the author lacking `upload_files`, true of every subscriber-authored attachment
+	 * on the site, including another forum plugin's (wpForo inserts its attachments authored
+	 * by the posting member). Pro's GC would force-delete any flagged, unlinked attachment
+	 * over 24h old, file included, so enabling attachments mid-migration could destroy the
+	 * very files the import existed to rescue.
 	 *
-	 * Ownership is now RECORDED at write time rather than guessed after the fact.
-	 * Only uploads carrying this meta are ever GC-eligible. A capability check is a
-	 * fine heuristic for HIDING a file from the owner's media grid; it is not one for
-	 * deleting it.
+	 * Ownership is RECORDED at write time rather than guessed after the fact. Only uploads
+	 * carrying this meta are ever GC-eligible. A capability check is a fine heuristic for
+	 * HIDING a file from the owner's media grid; it is not one for deleting it.
 	 */
 	const META_ORIGIN = '_jetonomy_media_origin';
 
@@ -66,6 +63,13 @@ class Media_Library {
 	 * REST stack never pay for it.
 	 */
 	public function register(): void {
+		// Core's /wp/v2/media treats a parentless attachment as public, and every
+		// community upload is parentless, so any visitor could list and read the
+		// files members post - including those in private spaces. These run only
+		// on /wp/v2/media requests.
+		add_filter( 'rest_attachment_query', array( $this, 'hide_community_media_from_rest_list' ) );
+		add_filter( 'rest_prepare_attachment', array( $this, 'hide_community_media_from_rest_item' ), 10, 2 );
+
 		if ( ! is_admin() ) {
 			return;
 		}
@@ -77,6 +81,48 @@ class Media_Library {
 		// Dedicated, paginated Community Media admin view (priority 20 so the
 		// parent Jetonomy menu is already registered).
 		add_action( 'admin_menu', array( $this, 'register_admin_page' ), 20 );
+	}
+
+	/**
+	 * Leave community uploads out of GET /wp/v2/media for anyone who cannot
+	 * manage media. Members reach a file only through the topic that embeds it.
+	 *
+	 * @param array $args WP_Query arguments for the attachment collection.
+	 * @return array
+	 */
+	public function hide_community_media_from_rest_list( array $args ): array {
+		if ( current_user_can( 'upload_files' ) ) {
+			return $args;
+		}
+		$meta_query         = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array(); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		$meta_query[]       = array(
+			'key'     => self::META_FLAG,
+			'compare' => 'NOT EXISTS',
+		);
+		$args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		return $args;
+	}
+
+	/**
+	 * Answer GET /wp/v2/media/{id} for a community upload as "not found" to
+	 * anyone who cannot manage media, matching the list above.
+	 *
+	 * @param \WP_REST_Response $response Prepared attachment.
+	 * @param \WP_Post          $post     Attachment.
+	 * @return \WP_REST_Response
+	 */
+	public function hide_community_media_from_rest_item( $response, $post ) {
+		if ( current_user_can( 'upload_files' ) || ! get_post_meta( (int) $post->ID, self::META_FLAG, true ) ) {
+			return $response;
+		}
+		return new \WP_REST_Response(
+			array(
+				'code'    => 'rest_post_invalid_id',
+				'message' => __( 'Invalid post ID.', 'jetonomy' ),
+				'data'    => array( 'status' => 404 ),
+			),
+			404
+		);
 	}
 
 	/**
@@ -252,8 +298,6 @@ class Media_Library {
 	 * @return bool True when referenced (or when we cannot be sure).
 	 */
 	private static function is_referenced( int $attachment_id ): bool {
-		global $wpdb;
-
 		$url  = (string) wp_get_attachment_url( $attachment_id );
 		$file = (string) get_post_meta( $attachment_id, '_wp_attached_file', true );
 
@@ -266,36 +310,18 @@ class Media_Library {
 		// than the full URL: an offload plugin (S3/R2) rewrites the host, so a
 		// full-URL match would miss and the file would look unused.
 		$needle = '' !== $file ? $file : wp_basename( $url );
-		$like   = '%' . $wpdb->esc_like( $needle ) . '%';
 
 		// 1. A link row, when the importer wrote one.
-		$links = \Jetonomy\table( 'attachments' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$links} WHERE attachment_id = %d", $attachment_id ) ) > 0 ) {
-			return true;
-		}
-
 		// 2. Inline in a post or a reply body - how the composer actually uses
 		// an upload, and what the data-loss report was about.
-		foreach ( array( 'posts', 'replies' ) as $table_key ) {
-			$table = \Jetonomy\table( $table_key );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE content LIKE %s", $like ) ) > 0 ) {
-				return true;
-			}
-		}
-
 		// 3. A member's avatar.
-		$profiles = \Jetonomy\table( 'user_profiles' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$profiles} WHERE avatar_url LIKE %s", $like ) ) > 0 ) {
-			return true;
-		}
-
 		// 4. A space cover or icon.
-		$spaces = \Jetonomy\table( 'spaces' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE cover_image LIKE %s OR icon LIKE %s", $like, $like ) ) > 0 ) {
+		if ( \Jetonomy\Models\Attachment::count_links_to( $attachment_id ) > 0
+			|| \Jetonomy\Models\Post::count_content_containing( $needle ) > 0
+			|| \Jetonomy\Models\Reply::count_content_containing( $needle ) > 0
+			|| \Jetonomy\Models\UserProfile::count_avatar_containing( $needle ) > 0
+			|| \Jetonomy\Models\Space::count_images_containing( $needle ) > 0
+		) {
 			return true;
 		}
 
@@ -360,25 +386,22 @@ class Media_Library {
 	public static function cleanup_abandoned_uploads(): array {
 		global $wpdb;
 
-		$links_table = \Jetonomy\table( 'attachments' );
-		$cutoff      = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
 
 		// Link rows whose WP attachment is gone - belt and braces against a
 		// manual media-library deletion bypassing the cascade. Safe on the
 		// first run too: this removes only dangling rows in our own table, it
 		// deletes no files, so it is not subject to the report-first rule.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "DELETE a FROM {$links_table} a LEFT JOIN {$wpdb->posts} p ON p.ID = a.attachment_id WHERE p.ID IS NULL" );
+		\Jetonomy\Models\Attachment::delete_dangling_links();
 
 		/*
 		 * CANDIDATES, not victims. This selects uploads of ours past the grace
 		 * window; whether each one is actually unused is decided per row by
 		 * is_referenced() below.
 		 *
-		 * The LEFT JOIN on the link table that used to live here is gone. It
-		 * encoded "no link row = abandoned", and the only free caller of
-		 * Attachment::link() is the importer - so every ordinary composer
-		 * upload looked abandoned and in-use images were deleted.
+		 * There is no LEFT JOIN on the link table: it would encode "no link row = abandoned",
+		 * and the only free caller of Attachment::link() is the importer, so every ordinary
+		 * composer upload would look abandoned and in-use images would be deleted.
 		 */
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$candidates = $wpdb->get_col(
@@ -406,10 +429,10 @@ class Media_Library {
 			// First ever sweep on this site: look, record, delete nothing.
 			update_option(
 				self::OPT_CLEANUP_REPORT,
-				[
+				array(
 					'first_seen_at' => gmdate( 'Y-m-d H:i:s' ),
 					'would_delete'  => count( $stale ),
-				],
+				),
 				false
 			);
 
@@ -423,10 +446,10 @@ class Media_Library {
 			 */
 			do_action( 'jetonomy_media_cleanup_reported', count( $stale ), $stale );
 
-			return [
+			return array(
 				'reported' => count( $stale ),
 				'deleted'  => 0,
-			];
+			);
 		}
 
 		$deleted = 0;
@@ -452,10 +475,10 @@ class Media_Library {
 		 */
 		do_action( 'jetonomy_media_cleanup_ran', $deleted );
 
-		return [
+		return array(
 			'reported' => 0,
 			'deleted'  => $deleted,
-		];
+		);
 	}
 
 	/**

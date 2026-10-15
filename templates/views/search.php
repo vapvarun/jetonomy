@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 $q = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $filter = isset( $_GET['filter'] ) ? sanitize_key( $_GET['filter'] ) : 'all';
-if ( ! in_array( $filter, [ 'all', 'posts', 'spaces', 'tags' ], true ) ) {
+if ( ! in_array( $filter, array( 'all', 'posts', 'spaces', 'tags' ), true ) ) {
 	$filter = 'all';
 }
 
@@ -64,23 +64,20 @@ if ( ! $author_id && '' !== $author_name ) {
 $tag_slug = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'relevance';
-if ( ! in_array( $sort, [ 'relevance', 'newest', 'votes' ], true ) ) {
+if ( ! in_array( $sort, array( 'relevance', 'newest', 'votes' ), true ) ) {
 	$sort = 'relevance';
 }
 
-$posts  = [];
-$spaces = [];
-$tags   = [];
+$posts  = array();
+$spaces = array();
+$tags   = array();
 
 // Has the viewer asked for ANYTHING - a keyword, or a filter on its own?
 //
-// Everything below used to be gated on a keyword alone, so the filters were
-// unreachable until you had already searched, and a filter-only URL
-// (?author_name=aisha, the kind you bookmark or share) rendered the empty
-// state. The REST route has always answered an author-only search - it returns
-// results for author_id with no q - so this was the web UI refusing to do what
-// the API does, which is the three-entry-points rule failing on the surface
-// members actually use.
+// Filters are reachable before a search runs, and a filter-only URL
+// (?author_name=aisha, the kind you bookmark or share) renders results rather than the
+// empty state. The REST route answers an author-only search - it returns results for
+// author_id with no q - so the web UI does the same (the three-entry-points rule).
 $jt_has_filters = ( $date_from || $date_to || $author_id || '' !== $author_name || $tag_slug || 'relevance' !== $sort );
 $jt_has_query   = ( '' !== $q && strlen( $q ) >= 2 );
 $jt_searching   = ( $jt_has_query || $jt_has_filters );
@@ -88,13 +85,13 @@ $jt_searching   = ( $jt_has_query || $jt_has_filters );
 $jt_posts_total = 0;
 if ( $jt_searching && ! $jt_author_unresolved ) {
 	// Same search, same rules as REST /search and the app: one adapter call per
-	// group instead of this view's own SQL (Basecamp 10368526736). Post rows
+	// group instead of this view's own SQL. Post rows
 	// already carry space_title / space_slug.
 	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search_query();
 
-	if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
+	if ( in_array( $filter, array( 'all', 'posts' ), true ) ) {
 		$jt_found       = $search_adapter->query(
-			[
+			array(
 				'type'      => 'post',
 				'q'         => $jt_has_query ? $q : '',
 				'date_from' => $date_from ?: null,
@@ -104,7 +101,7 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 				'sort'      => $sort,
 				'limit'     => $per_page,
 				'offset'    => $offset,
-			]
+			)
 		);
 		$posts          = $jt_found['items'];
 		$jt_posts_total = $jt_found['total'];
@@ -114,37 +111,37 @@ if ( $jt_searching && ! $jt_author_unresolved ) {
 	// tag) describe topics, not either of these. Without this guard a
 	// filter-only request searched them for '', which matched every tag on the
 	// site, so "this author's topics" came back decorated with arbitrary tags.
-	if ( $jt_has_query && in_array( $filter, [ 'all', 'spaces' ], true ) ) {
+	if ( $jt_has_query && in_array( $filter, array( 'all', 'spaces' ), true ) ) {
 		$spaces = $search_adapter->query(
-			[
+			array(
 				'type'       => 'space',
 				'q'          => $q,
 				'limit'      => 10,
 				'with_total' => false,
-			]
+			)
 		)['items'];
 	}
 
-	if ( $jt_has_query && in_array( $filter, [ 'all', 'tags' ], true ) ) {
+	if ( $jt_has_query && in_array( $filter, array( 'all', 'tags' ), true ) ) {
 		$tags = $search_adapter->query(
-			[
+			array(
 				'type'       => 'tag',
 				'q'          => $q,
 				'limit'      => 15,
 				'with_total' => false,
-			]
+			)
 		)['items'];
 	}
 }
 
 $total = count( $posts ) + count( $spaces ) + count( $tags );
 
-$crumbs = [
-	[
+$crumbs = array(
+	array(
 		'label' => __( 'Search', 'jetonomy' ),
 		'url'   => '',
-	],
-];
+	),
+);
 ?>
 <?php \Jetonomy\Template_Loader::breadcrumb( $crumbs ); ?>
 
@@ -168,12 +165,9 @@ $crumbs = [
 			/*
 			 * Filters render whether or not a search has run.
 			 *
-			 * They used to live inside the results branch, so the only way to reach
-			 * them was to search for a keyword first - and a filter-only search
-			 * (every post by one author) was therefore impossible from the UI even
-			 * though the REST route has always supported it. Exposing them on the
-			 * landing page is what makes that capability reachable; the accordion
-			 * stays collapsed until used, so the empty page is not busier.
+			 * They live outside the results branch so a filter-only search (every post by one
+			 * author) is reachable from the UI, as it is from the REST route. The accordion stays
+			 * collapsed until used, so the empty page is not busier.
 			 */
 			?>
 				<!-- Advanced filters -->
@@ -218,18 +212,18 @@ $crumbs = [
 				<div class="jt-bar jt-mb-20">
 					<div class="jt-pills">
 						<?php
-						$filters = [
+						$filters = array(
 							'all'    => __( 'All', 'jetonomy' ),
 							'posts'  => \Jetonomy\jetonomy_label( 'topic', true ),
 							'spaces' => \Jetonomy\space_label( true ),
 							'tags'   => __( 'Tags', 'jetonomy' ),
-						];
+						);
 						foreach ( $filters as $key => $label ) :
 							$f_url = add_query_arg(
-								[
+								array(
 									'q'      => $q,
 									'filter' => $key,
-								],
+								),
 								\Jetonomy\route_url( 'search' )
 							);
 							?>
@@ -249,13 +243,24 @@ $crumbs = [
 				</div>
 
 
+				<?php
+				/**
+				 * Fires below the search filter bar, so extensions can add their own filters.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param string $q      Search query.
+				 * @param string $filter Active result-type filter.
+				 * @param array  $args   Active date, author, tag and sort filters.
+				 */
+				?>
 				<?php do_action( 'jetonomy_search_filters', $q, $filter, compact( 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' ) ); ?>
 
 				<?php if ( 0 === $total ) : ?>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
-						[
+						array(
 							'icon'        => 'empty-search',
 							/* translators: %s: search query */
 							'message'     => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
@@ -264,7 +269,7 @@ $crumbs = [
 							'cta_label'   => sprintf( __( 'Browse all %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 							'cta_url'     => \Jetonomy\base_url() . '/',
 							'tone'        => 'warn',
-						]
+						)
 					);
 					?>
 				<?php else : ?>
@@ -312,7 +317,7 @@ $crumbs = [
 							<?php endforeach; ?>
 						</div>
 
-						<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => ( $offset + count( $posts ) ) < $jt_posts_total ] ); ?>
+						<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => ( $offset + count( $posts ) ) < $jt_posts_total ) ); ?>
 					<?php endif; ?>
 
 					<?php if ( ! empty( $spaces ) ) : ?>
@@ -360,11 +365,11 @@ $crumbs = [
 				// No query yet — invite the user to search.
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'    => 'empty-search',
 						/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 						'message' => sprintf( __( 'Enter a search term above to find discussions, %s, and tags.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
-					]
+					)
 				);
 				?>
 			<?php endif; ?>

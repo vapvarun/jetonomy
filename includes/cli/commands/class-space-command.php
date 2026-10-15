@@ -83,7 +83,7 @@ final class Space_Command extends Base_Command {
 	 */
 	public function create( $args, $assoc ): void {
 		$result = ( new Space_Journey() )->create(
-			[
+			array(
 				'title'       => (string) ( $assoc['title'] ?? '' ),
 				'slug'        => (string) ( $assoc['slug'] ?? '' ),
 				'category_id' => (int) ( $assoc['category'] ?? 0 ),
@@ -91,7 +91,7 @@ final class Space_Command extends Base_Command {
 				'type'        => (string) ( $assoc['type'] ?? 'forum' ),
 				'visibility'  => (string) ( $assoc['visibility'] ?? 'public' ),
 				'join_policy' => (string) ( $assoc['join-policy'] ?? 'open' ),
-			]
+			)
 		);
 		$this->render( $result, $assoc );
 	}
@@ -156,8 +156,8 @@ final class Space_Command extends Base_Command {
 	 */
 	public function update( $args, $assoc ): void {
 		$id      = (int) ( $args[0] ?? 0 );
-		$changes = [];
-		foreach ( [ 'title', 'description', 'type', 'visibility', 'status' ] as $key ) {
+		$changes = array();
+		foreach ( array( 'title', 'description', 'type', 'visibility', 'status' ) as $key ) {
 			if ( isset( $assoc[ $key ] ) ) {
 				$changes[ $key ] = (string) $assoc[ $key ];
 			}
@@ -401,7 +401,7 @@ final class Space_Command extends Base_Command {
 			return;
 		}
 
-		$columns = (array) ( $result->data['columns'] ?? [] );
+		$columns = (array) ( $result->data['columns'] ?? array() );
 		if ( ! $columns ) {
 			\WP_CLI::success( 'No orphaned space data. Nothing to remediate.' );
 			return;

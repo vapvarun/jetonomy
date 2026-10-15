@@ -31,22 +31,20 @@ class Permission_Engine {
 	/**
 	 * Per-request verdict memo, keyed "{user}:{action}:{space}".
 	 *
-	 * Replaces the old 60s persistent perm:{} object cache, which was never
-	 * busted anywhere — a ban, silence, or role demotion kept granting for up
-	 * to a minute across every web node (caching plan WP0.1). What a verdict
-	 * costs to recompute is a handful of single-row indexed lookups, and the
-	 * shared Restriction primitives are themselves memoized per request — so
-	 * a request-scope memo is as fast on the pages that matter and is
-	 * instantly correct on the next request. Writers that change a verdict
-	 * mid-request (Restriction::ban/remove_ban, SpaceMember role changes,
-	 * Space::bust_cache, UserProfile::update_profile) call reset_memo().
+	 * A request-scope memo, not a persistent cache: a persistent verdict cache would keep
+	 * granting after a ban, silence or role demotion across every web node. What a verdict
+	 * costs to recompute is a handful of single-row indexed lookups, and the shared
+	 * Restriction primitives are themselves memoized per request, so a request-scope memo
+	 * is as fast on the pages that matter and is instantly correct on the next request.
+	 * Writers that change a verdict mid-request (Restriction::ban/remove_ban, SpaceMember
+	 * role changes, Space::bust_cache, UserProfile::update_profile) call reset_memo().
 	 *
 	 * @var array<string, bool>
 	 */
 	private static array $memo = array();
 
 	/**
-	 * Whether the reset is registered with Cache::flush() (plan U1).
+	 * Whether the reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -88,7 +86,7 @@ class Permission_Engine {
 	 * holds ZERO Jetonomy caps, so Layer 1 rejected those users before Layer 2
 	 * could consider their roster row or a matching access rule. An owner could
 	 * put someone on a space roster, or gate a space on a paid tier, and the
-	 * people who matched still could not take part (Basecamp 10168260921).
+	 * people who matched still could not take part.
 	 *
 	 * Deliberately member-grade ONLY. Every moderation action is absent and
 	 * must stay absent: a rule stored with space_role=admin, or a roster row
@@ -113,13 +111,15 @@ class Permission_Engine {
 	 */
 	private const SPACE_ROLE_PERMS = array(
 		'viewer'    => array( 'read' ),
-		'member'    => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag' ),
+		'member'    => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' ),
 		'moderator' => array(
 			'read',
 			'create_posts',
 			'create_replies',
 			'vote',
 			'flag',
+			'edit_own_posts',
+			'delete_own_posts',
 			'edit_others_posts',
 			'delete_others_posts',
 			'close_posts',
@@ -132,6 +132,8 @@ class Permission_Engine {
 			'create_replies',
 			'vote',
 			'flag',
+			'edit_own_posts',
+			'delete_own_posts',
 			'edit_others_posts',
 			'delete_others_posts',
 			'close_posts',
@@ -185,7 +187,7 @@ class Permission_Engine {
 
 		// Layer 0b: Silence check — can read but not write.
 		if ( $user_id && class_exists( 'Jetonomy\Models\Restriction' ) && Restriction::is_silenced( $user_id ) ) {
-			$write_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'create_spaces', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
+			$write_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
 			if ( in_array( $action, $write_actions, true ) ) {
 				return false;
 			}
@@ -212,6 +214,19 @@ class Permission_Engine {
 		if ( $user_id && $space_id && in_array( $action, self::SPACE_MOD_ACTIONS, true ) ) {
 			$mod_role = SpaceMember::get_role( $space_id, $user_id );
 			if ( in_array( $mod_role, array( 'admin', 'moderator' ), true ) ) {
+				return true;
+			}
+			// A role holding jetonomy_moderate (Editor by default) is site-wide
+			// staff: in every space it can READ, it may use each moderation
+			// action its role carries, with no membership and no trust floor.
+			// The moderation queue already treats it this way
+			// (Moderation_Permissions); without this a new moderator could clear
+			// flags but pin or edit nothing. The read check keeps a private or
+			// hidden space the moderator is not in out of reach: the write
+			// endpoints return the post, so acting there would also leak it.
+			if ( user_can( $user_id, 'jetonomy_moderate' )
+				&& ( 'moderate' === $action || user_can( $user_id, 'jetonomy_' . $action ) )
+				&& self::can( $user_id, 'read', $space_id ) ) {
 				return true;
 			}
 		}
@@ -248,7 +263,6 @@ class Permission_Engine {
 				} else {
 					// Resolved here and reused by Layer 2 below. The membership
 					// adapter fan-out must not run twice for one check
-					// (caching plan WP2.3).
 					$jt_access          = AccessRule::resolve_access( $user_id, $space_id );
 					$jt_access_resolved = true;
 					$jt_has_claim       = null !== $jt_access;
@@ -301,7 +315,7 @@ class Permission_Engine {
 		// Resolve access rules ONCE. grants_access() is just
 		// resolve_access() !== null, and calling both re-ran the membership
 		// adapter fan-out (LearnDash/Woo/MemberPress lookups) twice for every
-		// non-member view of a private space (caching plan WP2.3).
+		// non-member view of a private space.
 		$access = $jt_access_resolved ? $jt_access : AccessRule::resolve_access( $user_id, $space_id );
 
 		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
@@ -314,8 +328,8 @@ class Permission_Engine {
 			// Access rule grants access — check if sufficient for the action.
 			$grants_map      = array(
 				'read'        => array( 'read' ),
-				'participate' => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag' ),
-				'full'        => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_others_posts', 'close_posts', 'pin_posts' ),
+				'participate' => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' ),
+				'full'        => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'close_posts', 'pin_posts' ),
 			);
 			$allowed_actions = $grants_map[ $access['grants'] ] ?? array( 'read' );
 			if ( in_array( $action, $allowed_actions, true ) ) {
@@ -356,7 +370,7 @@ class Permission_Engine {
 			}
 			$is_open = 'open' === ( $space->join_policy ?? 'open' );
 			if ( $is_open && $user_id ) {
-				$open_actions = array( 'create_posts', 'create_replies', 'vote', 'flag' );
+				$open_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' );
 				if ( in_array( $action, $open_actions, true ) ) {
 					return true;
 				}
@@ -373,27 +387,27 @@ class Permission_Engine {
 		// This is a CEILING on a capability the role already granted, not a
 		// second path INTO one it did not. Layer 1 above already rejected a
 		// user whose role lacks the underlying jetonomy_<action> capability
-		// (default roles: Subscriber through Contributor lack all four
+		// (default roles: Subscriber through Contributor lack all five
 		// moderation actions below) before this code ever runs, so raising a
-		// member's trust level cannot hand them edit/move/close/pin on a
-		// default install. What this table DOES do: a role that already
-		// carries the capability (Editor+, or any role a site owner mapped
-		// it onto) is additionally held to a trust-level floor below
-		// moderator/admin - an Editor at trust level 0 is denied
-		// edit_others_posts here even though their WP role allows it.
+		// member's trust level cannot hand them edit/delete/move/close/pin on
+		// a default install. Site-wide staff (jetonomy_moderate, Editor by
+		// default) and space moderators/admins never reach here: Layer 0d
+		// granted them already. What this table DOES do: a non-staff role a
+		// site owner mapped one of these capabilities onto is additionally
+		// held to a trust-level floor.
 		// Trust-threshold UI and docs describe only what the default roles
-		// unlock (Trust_Levels::LEVELS), which correctly omits these four -
+		// unlock (Trust_Levels::LEVELS), which correctly omits these five -
 		// keep it that way; don't add them there on the strength of this
 		// array alone.
 		$profile     = UserProfile::find_by_user( $user_id );
 		$trust_level = $profile ? (int) $profile->trust_level : 0;
 
 		$trust_requirements = array(
-			'edit_others_posts' => 3,
-			'move_posts'        => 3,
-			'close_posts'       => 3,
-			'pin_posts'         => 3,
-			'create_spaces'     => 4,
+			'edit_others_posts'   => 3,
+			'delete_others_posts' => 3,
+			'move_posts'          => 3,
+			'close_posts'         => 3,
+			'pin_posts'           => 3,
 		);
 
 		if ( isset( $trust_requirements[ $action ] ) ) {
@@ -545,7 +559,7 @@ class Permission_Engine {
 	}
 
 	/**
-	 * May this viewer read a PRIVATE reply's text? (1.9.0, Basecamp 9804279999)
+	 * May this viewer read a PRIVATE reply's text?
 	 *
 	 * Companion to {@see self::can_read_post()}'s private-post branch, with one
 	 * addition: the PARENT TOPIC's author always sees private replies on their

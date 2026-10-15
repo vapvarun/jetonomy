@@ -27,16 +27,16 @@ if ( empty( $flag ) || empty( $resolve_endpoint ) ) {
 	return;
 }
 
-$reason_labels = [
+$reason_labels = array(
 	'spam'           => __( 'Spam', 'jetonomy' ),
 	'offensive'      => __( 'Offensive', 'jetonomy' ),
 	'abuse'          => __( 'Abuse / Harassment', 'jetonomy' ),
 	'harassment'     => __( 'Harassment', 'jetonomy' ),
-	'off-topic'      => __( 'Off-topic', 'jetonomy' ),
-	'off_topic'      => __( 'Off-topic', 'jetonomy' ),
+	'off-topic'      => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
+	'off_topic'      => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
 	'misinformation' => __( 'Misinformation', 'jetonomy' ),
 	'other'          => __( 'Other', 'jetonomy' ),
-];
+);
 
 $reporter    = get_userdata( (int) $flag->reporter_id );
 $time_ago    = human_time_diff( strtotime( $flag->created_at ), time() );
@@ -46,51 +46,14 @@ $reason_text = $reason_labels[ $flag->reason ] ?? $flag->reason;
 // queue it belongs to: a blocked user's flagged content MUST still reach
 // moderators. Hard rule — never filter moderation.
 //
-// Deep link to the flagged object. Prefer the caller's batched context: the
-// per-card join below is correct but is one query per row, which is ~25 on a
-// full queue page and grew with nothing but the page size, so it stayed
-// invisible until someone opened a busy queue. The fallback is kept because
-// this partial is public API for anyone rendering a single card.
+// Deep link to the flagged object. A page of cards passes $context from
+// Moderation_Service::flag_context() so the queue costs a fixed number of
+// queries; a card rendered on its own resolves itself the same way.
 $object_url = isset( $context->permalink ) ? (string) $context->permalink : '';
 
-if ( '' === $object_url && 'post' === $flag->object_type ) {
-	global $wpdb;
-	$posts_tbl  = \Jetonomy\table( 'posts' );
-	$spaces_tbl = \Jetonomy\table( 'spaces' );
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$row = $wpdb->get_row(
-		$wpdb->prepare(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT p.slug, sp.slug AS space_slug
-			 FROM {$posts_tbl} p
-			 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-			 WHERE p.id = %d",
-			(int) $flag->object_id
-		)
-	);
-	if ( $row ) {
-		$object_url = \Jetonomy\route_url( 'post', $row->space_slug, $row->slug );
-	}
-} elseif ( '' === $object_url && 'reply' === $flag->object_type ) {
-	global $wpdb;
-	$replies_tbl = \Jetonomy\table( 'replies' );
-	$posts_tbl   = \Jetonomy\table( 'posts' );
-	$spaces_tbl  = \Jetonomy\table( 'spaces' );
-	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$row = $wpdb->get_row(
-		$wpdb->prepare(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT p.slug AS post_slug, sp.slug AS space_slug
-			 FROM {$replies_tbl} r
-			 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
-			 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-			 WHERE r.id = %d",
-			(int) $flag->object_id
-		)
-	);
-	if ( $row ) {
-		$object_url = \Jetonomy\route_url( 'post', $row->space_slug, $row->post_slug );
-	}
+if ( '' === $object_url ) {
+	$jt_flag_context = \Jetonomy\Moderation\Moderation_Service::flag_context( array( $flag ), \Jetonomy\base_url() );
+	$object_url      = $jt_flag_context[ $flag->object_type . ':' . (int) $flag->object_id ]->permalink ?? '';
 }
 ?>
 <div class="jt-mod-flag jt-mod-item"

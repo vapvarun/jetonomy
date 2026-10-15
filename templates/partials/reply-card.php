@@ -37,7 +37,7 @@ if ( ! empty( $reply->is_blocked_author ) ) {
 // Reply::apply_private_tombstone() when THIS viewer may not read the text
 // (not the author, not the topic author, not staff). Same keep-the-node
 // contract as the blocked tombstone above: children stay attached, counts
-// and deep-link page math stay viewer-independent (Basecamp 9804279999).
+// and deep-link page math stay viewer-independent.
 if ( ! empty( $reply->is_private_hidden ) ) {
 	?>
 	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-private-hidden" data-wp-interactive="jetonomy">
@@ -61,13 +61,16 @@ $time_ago     = human_time_diff( strtotime( $reply->created_at ), time() );
 $is_op        = (int) $reply->author_id === (int) $post->author_id;
 $is_accepted  = (int) $reply->is_accepted;
 
-// 1.4.0 C.1 fix: space-role moderators (subscriber WP role + jt_space_members
-// admin/mod) get the same edit / split / delete affordances as WP-cap mods.
-// Permission_Engine::can() checks WP cap → space role → trust level in order.
-$jt_reply_viewer       = get_current_user_id();
-$jt_can_moderate_reply = $jt_reply_viewer
-	? \Jetonomy\Permissions\Permission_Engine::can( $jt_reply_viewer, 'moderate', (int) ( $post->space_id ?? 0 ) )
-	: false;
+$jt_reply_viewer = get_current_user_id();
+
+// Edit / Delete / Split follow the replies endpoints exactly, so the menu
+// offers what the owner's Permissions screen grants and nothing REST refuses.
+$jt_rp_pe        = \Jetonomy\Permissions\Permission_Engine::class;
+$jt_rp_sid       = (int) ( $post->space_id ?? 0 );
+$jt_rp_is_author = $jt_reply_viewer && (int) $reply->author_id === $jt_reply_viewer;
+$jt_rp_can_edit  = $jt_reply_viewer && ( ( $jt_rp_is_author && $jt_rp_pe::can( $jt_reply_viewer, 'edit_own_posts', $jt_rp_sid ) ) || $jt_rp_pe::can( $jt_reply_viewer, 'edit_others_posts', $jt_rp_sid ) );
+$jt_rp_can_del   = $jt_reply_viewer && ( ( $jt_rp_is_author && $jt_rp_pe::can( $jt_reply_viewer, 'delete_own_posts', $jt_rp_sid ) ) || $jt_rp_pe::can( $jt_reply_viewer, 'delete_others_posts', $jt_rp_sid ) );
+$jt_rp_can_split = $jt_reply_viewer && $jt_rp_pe::can( $jt_reply_viewer, 'move_posts', $jt_rp_sid );
 
 // Same rule as single-post.php's $jt_is_live: a reply inside a trashed or
 // unpublished topic takes no votes, replies, quotes, reports, accepts or
@@ -157,6 +160,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				<time datetime="<?php echo esc_attr( $jt_time_iso ); ?>"><?php echo esc_html( $jt_time_text ); ?></time>
 			<?php endif; ?>
 		</span>
+		<?php \Jetonomy\Template_Loader::partial( 'edited-mark', array( 'item' => $reply ) ); ?>
 		<?php if ( $is_accepted ) : ?>
 			<span class="jt-accepted-tag"><?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Accepted', 'jetonomy' ); ?></span>
 		<?php endif; ?>
@@ -164,6 +168,15 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<span class="jt-private-tag" title="<?php printf( /* translators: 1: singular topic label; 2: singular reply label. */ esc_attr__( 'Only you, the %1$s author, and moderators can read this %2$s.', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_attr( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
 		<?php endif; ?>
 	</div>
+	<?php if ( ! empty( $reply->parent_id ) && ! empty( $reply->jt_parent_name ) ) : ?>
+		<a class="jt-in-reply-to" href="#reply-<?php echo (int) $reply->parent_id; ?>">
+			<?php jetonomy_echo_icon( 'corner-up-left', 12 ); ?>
+			<?php
+			/* translators: %s: display name of the member whose reply this answers. */
+			echo esc_html( sprintf( __( 'in reply to %s', 'jetonomy' ), $reply->jt_parent_name ) ); // jt-terms-ok: phrase meaning "answering", not the noun.
+			?>
+		</a>
+	<?php endif; ?>
 	<div class="jt-reply-body">
 		<?php
 		// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
@@ -179,6 +192,15 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 	<?php
 	// Reply after-content slot (Pro attachment strip renders here). Mirrors the
 	// post-level jetonomy_after_post_content filter; same shared kses set.
+	/**
+	 * Filters markup printed after a reply body. The result is passed through wp_kses() with the shared after-content allowlist.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param string $html  Markup to print. Default empty.
+	 * @param object $reply Reply row.
+	 * @return string Markup to print.
+	 */
 	$jt_reply_after = apply_filters( 'jetonomy_after_reply_content', '', $reply );
 	if ( '' !== $jt_reply_after ) {
 		echo wp_kses( $jt_reply_after, jetonomy_after_content_allowed_html() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kses'd above.
@@ -205,21 +227,19 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-wp-on--click="actions.voteReplyUp"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				aria-pressed="<?php echo 1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
-				title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-				aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+				<?php echo jetonomy_vote_attrs( 'up', 1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</button>
 				<?php
 				// Hide downvote on own replies — self-downvote was landing at
-				// -1 (Basecamp 9803889865).
+				// -1.
 				if ( (int) $reply->author_id !== get_current_user_id() ) :
 					?>
 			<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyDown"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				aria-pressed="<?php echo -1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
-				title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-				aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
+					<?php echo jetonomy_vote_attrs( 'down', -1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 				<?php endif; ?>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<?php
@@ -234,8 +254,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</a>
 			<?php else : ?>
-				<?php // Logged in but not allowed to vote here (Read-grant). Inert score, no clickable control the server would refuse. ?>
-			<span class="jt-act" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span></span>
+				<?php jetonomy_vote_denied_control( (int) $reply->vote_score, 14 ); ?>
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>
@@ -244,7 +263,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-wp-on--click="actions.setReplyTo"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				data-reply-author="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"
-				title="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"
+				title="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"
 				aria-label="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></span></button>
 			<button class="jt-act"
 				data-wp-on--click="actions.quoteReply"
@@ -260,13 +279,14 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?></button>
 		<?php endif; ?>
-		<?php if ( is_user_logged_in() && ( get_current_user_id() === (int) $reply->author_id || $jt_can_moderate_reply ) ) : ?>
+		<?php if ( $jt_rp_can_edit || $jt_rp_can_del || $jt_rp_can_split ) : ?>
 			<div class="jt-more-menu">
 				<button class="jt-act jt-more-trigger" type="button"
 					data-wp-on--click="actions.toggleMoreMenu"
 					title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 					aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'more-horizontal', 14 ); ?></button>
 				<div class="jt-more-dropdown" hidden>
+					<?php if ( $jt_rp_can_edit ) : ?>
 					<button class="jt-more-item"
 						data-wp-on--click="actions.editReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>">
@@ -278,7 +298,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 						data-private="<?php echo empty( $reply->is_private ) ? '0' : '1'; ?>">
 						<?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo empty( $reply->is_private ) ? esc_html__( 'Make Private', 'jetonomy' ) : esc_html__( 'Make Public', 'jetonomy' ); ?>
 					</button>
-					<?php if ( $jt_can_moderate_reply ) : ?>
+					<?php endif; ?>
+					<?php if ( $jt_rp_can_split ) : ?>
 					<button class="jt-more-item"
 						data-wp-on--click="actions.splitReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -287,11 +308,13 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 						<?php jetonomy_echo_icon( 'split', 14 ); ?> <?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Split to %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic' ) ) ); ?>
 					</button>
 					<?php endif; ?>
+					<?php if ( $jt_rp_can_del ) : ?>
 					<button class="jt-more-item jt-more-item--danger"
 						data-wp-on--click="actions.deleteReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>">
 						<?php jetonomy_echo_icon( 'trash', 14 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?>
 					</button>
+					<?php endif; ?>
 				</div>
 			</div>
 		<?php endif; ?>
@@ -347,6 +370,13 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<?php endif; ?>
 		<?php
 		if ( $jt_thread_live ) {
+			/**
+			 * Fires in the reply action bar for live threads, so extensions can add write actions.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param object $reply Reply row.
+			 */
 			do_action( 'jetonomy_reply_actions', $reply );
 		}
 		?>

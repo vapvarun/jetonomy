@@ -74,14 +74,14 @@ $crumbs = array(
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'      => 'users',
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'message'   => sprintf( __( 'You are not in any %s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'cta_label' => sprintf( __( 'Browse %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					'cta_url'   => $base . '/',
-				]
+				)
 			);
 			?>
 		<?php endif; ?>
@@ -89,8 +89,8 @@ $crumbs = array(
 		<?php
 		// One H1 ("My Spaces") + the per-card ADMIN / MOD pill is enough
 		// to tell the viewer which spaces they run vs are just in. The
-		// section eyebrows that used to live here read as a third
-		// heading layer saying the same thing — dropped.
+		// section eyebrows are omitted: they would read as a third heading layer saying the
+		// same thing.
 		?>
 
 		<?php if ( ! empty( $privileged_spaces ) ) : ?>

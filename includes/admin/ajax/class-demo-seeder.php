@@ -53,7 +53,7 @@ class Demo_Seeder {
 
 	/**
 	 * The one way to load demo data, used by the setup wizard, the Dashboard
-	 * and POST /admin/demo-data (Basecamp 10375019266). Re-running replaces
+	 * and POST /admin/demo-data. Re-running replaces
 	 * the previous demo set instead of adding a second one.
 	 *
 	 * @param int $admin_id Site administrator who owns the demo spaces.
@@ -62,7 +62,7 @@ class Demo_Seeder {
 	public static function import( int $admin_id ): array {
 		// One seed runs ~25k queries. Lift the admin memory limit, and stop
 		// Query Monitor keeping a backtrace for every one of them, which on its
-		// own pushed the request past 256MB (Basecamp 10375917700).
+		// own pushed the request past 256MB.
 		wp_raise_memory_limit( 'admin' );
 		do_action( 'qm/cease' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.NamingConventions.ValidHookName.UseUnderscores -- Query Monitor's hook.
 
@@ -398,7 +398,7 @@ class Demo_Seeder {
 
 		// ── Recount ────────────────────────────────────────────────────────────
 		// Rebuild every denormalized counter from the canonical tables so the
-		// seeded site never ships drifted stats (Basecamp 10161324705). The
+		// seeded site never ships drifted stats. The
 		// content above goes through the models, but votes/backdating touch rows
 		// directly, and a bulk seed is exactly the "explicit recount after bulk"
 		// path the Recount service exists for.
@@ -816,9 +816,8 @@ class Demo_Seeder {
 		// --- Spaces and everything in them ---
 		// Space_Purge is the one complete delete: topics, replies, votes, flags,
 		// tag links, notifications, subscriptions, bookmarks, read state,
-		// activity and Pro relations, plus the host-bell removal signals. Raw
-		// deletes here used to leave notifications and bookmarks pointing at
-		// topics that no longer existed.
+		// activity and Pro relations, plus the host-bell removal signals. Raw deletes
+		// would leave notifications and bookmarks pointing at deleted topics.
 		$space_ids = array_filter( array_map( 'absint', $manifest['spaces'] ?? array() ) );
 		foreach ( $space_ids as $space_id ) {
 			\Jetonomy\Space_Purge::purge( $space_id );
@@ -1048,11 +1047,26 @@ class Demo_Seeder {
 					'icon'             => $b[3],
 					'tier'             => $b[4],
 					'category'         => $b[5],
+					// Pro's criteria shape (threshold conditions); a {type, value}
+					// pair is not read by Pro, so those badges were never awarded.
 					'criteria'         => wp_json_encode(
-						array(
-							'type'  => $b[6],
-							'value' => $b[7],
-						)
+						'manual' === $b[6]
+							? array(
+								'type'       => 'manual',
+								'conditions' => array(),
+								'match'      => 'all',
+							)
+							: array(
+								'type'       => 'threshold',
+								'conditions' => array(
+									array(
+										'metric'   => $b[6],
+										'operator' => '>=',
+										'value'    => $b[7],
+									),
+								),
+								'match'      => 'all',
+							)
 					),
 					'reputation_bonus' => $b[8],
 					'is_repeatable'    => 0,
@@ -1163,12 +1177,13 @@ class Demo_Seeder {
 				array(
 					'trust_level' => $def['trust_level'],
 					'reputation'  => $def['reputation'],
-					'bio'         => $def['bio'],
 					'created_at'  => $joined,
 					'updated_at'  => $now,
 				),
 				array( 'user_id' => (int) $uid )
 			);
+
+			update_user_meta( (int) $uid, 'description', $def['bio'] ); // Bios live in WordPress's Biographical Info.
 
 			$users[ $def['login'] ] = (int) $uid;
 		}

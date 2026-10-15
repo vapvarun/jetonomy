@@ -214,22 +214,12 @@ if ( ! function_exists( 'jetonomy_community_pulse' ) ) {
 			return $cached;
 		}
 
-		global $wpdb;
-		$posts_tbl    = \Jetonomy\table( 'posts' );
-		$profiles_tbl = \Jetonomy\table( 'user_profiles' );
-		$spaces_tbl   = \Jetonomy\table( 'spaces' );
-
 		$pulse = array(
 			// Total posts: sum the denormalised per-space counter (cheap) rather
 			// than COUNT the posts table.
-			'posts'      => (int) $wpdb->get_var( "SELECT COALESCE(SUM(post_count),0) FROM {$spaces_tbl}" ),
-			'members'    => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$profiles_tbl}" ),
-			'posts_week' => (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$posts_tbl} WHERE status = 'publish' AND created_at >= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
-					gmdate( 'Y-m-d H:i:s', time() - WEEK_IN_SECONDS )
-				)
-			),
+			'posts'      => \Jetonomy\Models\Space::sum_post_counts(),
+			'members'    => \Jetonomy\Models\UserProfile::count(),
+			'posts_week' => \Jetonomy\Models\Post::count_published_since( gmdate( 'Y-m-d H:i:s', time() - WEEK_IN_SECONDS ) ),
 		);
 
 		set_transient( 'jetonomy_community_pulse', $pulse, HOUR_IN_SECONDS );
@@ -359,8 +349,7 @@ if ( ! function_exists( 'jetonomy_reorder_offset' ) ) {
 	 * Drag-reorder handlers must persist ABSOLUTE positions. Writing the row's
 	 * index within the submitted batch looks right on page 1 and silently
 	 * corrupts every later page: the batch index restarts at 0, so page 2 is
-	 * renumbered over the top of page 1 and the two collide (Basecamp
-	 * 10210539659 - reproduced with 28 categories, where a drop-in-place on
+	 * renumbered over the top of page 1 and the two collide (reproduced with 28 categories, where a drop-in-place on
 	 * page 2 rewrote sort_order 20-27 to 0-7).
 	 *
 	 * @param int $paged    1-based page number from the request.
@@ -413,7 +402,7 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 	 * Render an admin data table that satisfies the responsive contract.
 	 *
 	 * THE shared list-table primitive for Free and Pro admin screens
-	 * (Basecamp 10146443346). Hand-rolled `<table>` markup kept omitting the
+	 * Hand-rolled `<table>` markup kept omitting the
 	 * core small-screen semantics (`column-primary`, `data-colname`,
 	 * `.toggle-row`), so the shared responsive CSS could never activate and
 	 * every non-compliant screen clipped or overflowed on mobile/iPad. This
@@ -479,12 +468,11 @@ if ( ! function_exists( 'jetonomy_admin_table' ) ) {
 		}
 
 		// CONTAINMENT BY CONSTRUCTION: every table gets a scroll container.
-		// wrap=false call sites (tables living inside their own card) used to
-		// emit a bare <table>, and in the 783-960px squeeze band the desktop
-		// width classes pushed the document wide (QA 2026-07-30: Auto-Rules
-		// grew the page to 840px at exactly 783px). A width the layout cannot
-		// absorb now scrolls inside the container instead of widening the
-		// page - at ANY viewport, for every current and future call site.
+		// wrap=false call sites (tables living inside their own card) get the scroll
+		// container too: in the 783-960px squeeze band a bare <table> lets the desktop
+		// width classes push the document wide. A width the layout cannot absorb scrolls
+		// inside the container instead of widening the page - at ANY viewport, for every
+		// current and future call site.
 		echo $wrap ? '<div class="jt-content-table-wrap">' : '<div class="jt-table-scroll">';
 		$table_id = ! empty( $args['table_id'] ) ? ' id="' . esc_attr( (string) $args['table_id'] ) . '"' : '';
 		$tbody_id = ! empty( $args['tbody_id'] ) ? ' id="' . esc_attr( (string) $args['tbody_id'] ) . '"' : '';
@@ -578,7 +566,7 @@ if ( ! function_exists( 'jetonomy_register_token_style' ) ) {
 	 * screen looks empty rather than broken.
 	 *
 	 * That is exactly how the space-delete dialog shipped invisible in wp-admin
-	 * in 1.9.3 (Basecamp 10217204334) - the front end declared the dependency,
+	 * in 1.9.3 - the front end declared the dependency,
 	 * wp-admin did not, and the two enqueues had drifted apart because each one
 	 * open-coded its own wp_register_style() call. Registration is idempotent
 	 * (WordPress dedupes by handle), so every caller can call this
@@ -610,13 +598,29 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 	/**
 	 * Render a grid of space cards.
 	 *
+	 * With $view_all_url the grid is a preview: the first N cards (6, filter
+	 * jetonomy_space_preview_limit) and a "View all X" link to the page that
+	 * lists them all, so a category with hundreds of spaces stays one short
+	 * section on the community home.
+	 *
 	 * @param object[] $spaces
-	 * @param string   $base Community base URL.
+	 * @param string   $base         Community base URL.
+	 * @param string   $view_all_url Optional page listing every space in the group.
 	 */
-	function jetonomy_render_space_grid( array $spaces, string $base ): void {
+	function jetonomy_render_space_grid( array $spaces, string $base, string $view_all_url = '' ): void {
+		$total = count( $spaces );
+		if ( '' !== $view_all_url ) {
+			/**
+			 * Filter how many spaces a category preview shows before "View all".
+			 *
+			 * @param int $limit Default 6.
+			 */
+			$limit  = max( 1, (int) apply_filters( 'jetonomy_space_preview_limit', 6 ) );
+			$spaces = array_slice( $spaces, 0, $limit );
+		}
 		if ( empty( $spaces ) ) {
-			/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
-			echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</p>';
+			/* translators: 1: plural space label; 2: singular category label. */
+			echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %1$s in this %2$s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ) ) . '</p>';
 			return;
 		}
 
@@ -638,13 +642,6 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 						</div>
 						<div class="jt-space-card-badges">
 							<?php jetonomy_render_space_meta_badges( $space ); ?>
-							<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
-								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-								<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php echo esc_attr( sprintf( __( 'Hidden %s. Only admins and members can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>">
-									<?php jetonomy_echo_icon( 'lock', 12 ); ?>
-									<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
-								</span>
-							<?php endif; ?>
 						</div>
 						<?php if ( ! empty( $space->description ) ) : ?>
 							<div class="jt-space-card-excerpt">
@@ -685,5 +682,11 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 			do_action( 'jetonomy_space_card_after', $space );
 		}
 		echo '</div>';
+		if ( '' !== $view_all_url && $total > count( $spaces ) ) {
+			echo '<p class="jt-space-grid-more"><a class="jt-btn jt-btn-sm jt-btn-ghost" href="' . esc_url( $view_all_url ) . '">';
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			echo esc_html( sprintf( __( 'View all %s', 'jetonomy' ), \Jetonomy\count_label( $total, 'space' ) ) );
+			echo '</a></p>';
+		}
 	}
 }

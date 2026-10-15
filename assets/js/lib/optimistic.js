@@ -19,8 +19,6 @@
  *     toastOnError,  // boolean, default true
  *     errorFallback, // string, optional
  *   }
- *
- * Foundation for WS3-A; callsites migrate in WS3-B.
  */
 ( function ( window ) {
 	'use strict';
@@ -113,7 +111,7 @@
 	 * browser verification (vote buttons silently no-op'd).
 	 *
 	 * Returning a Promise instead — `yield Promise<void>` is awaited by IA
-	 * as expected. All WS3-B callsites keep working unchanged.
+	 * as expected, so existing callsites keep working unchanged.
 	 *
 	 * @param {Object} opts See module header.
 	 * @return {Promise<void>}

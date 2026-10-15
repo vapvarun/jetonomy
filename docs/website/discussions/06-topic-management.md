@@ -46,7 +46,7 @@ All replies, votes, bookmarks, and subscriptions move with the topic. Nothing is
 
 ## Merging Duplicate Topics
 
-Use this when two members post the same question or idea in the same space. Merging moves all replies from the source topic into the target topic and deletes the source.
+Use this when two members post the same question or idea in the same space. Merging moves everything from the duplicate into the target topic and puts the duplicate in the trash.
 
 1. Open the topic you want to remove (the duplicate).
 2. Click the **...** menu and select **Merge**.
@@ -54,9 +54,16 @@ Use this when two members post the same question or idea in the same space. Merg
 4. Select the target topic.
 5. Click **Merge**.
 
-All replies from the duplicate are appended to the target topic's reply list in chronological order. The source topic is permanently deleted - it is not moved to trash. A moderator note is added to the target topic indicating that replies were merged from another topic.
+What moves to the target topic:
 
-> **Warning:** Merging cannot be undone. Verify you have selected the correct target topic before confirming.
+- **The duplicate's opening post** becomes a reply by its original author, dated when it was written and headed *Merged from "title"*, so nothing anyone wrote is lost. Its attachments come with it.
+- **All replies**, in chronological order with the rest of the thread.
+- **Votes.** The target's score includes the duplicate's votes. A member who voted on both keeps only their vote on the target.
+- **Followers and bookmarks.** Members who followed or bookmarked the duplicate now follow or have bookmarked the target.
+
+The duplicate itself goes to the trash rather than being deleted. A private topic cannot be merged: make it public first. If the duplicate's opening post was still awaiting approval, it arrives in the target awaiting approval too.
+
+> **Warning:** Everything above stays on the target topic even if you restore the duplicate from the trash, so check the target before confirming.
 
 ## Splitting a Reply Into a New Topic
 

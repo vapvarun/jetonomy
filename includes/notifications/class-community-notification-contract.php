@@ -186,17 +186,17 @@ class Community_Notification_Contract {
 			'new_post_in_sub'     => array(
 				/* translators: 1: plural topic label, 2: plural space label. */
 				'label'       => ucfirst( sprintf( __( 'New %1$s in %2$s you follow', 'jetonomy' ), $topics, $spaces ) ),
-				/* translators: 1: singular topic label, 2: singular space label. */
-				'description' => sprintf( __( 'A new %1$s was posted in a %2$s you subscribed to.', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ),
+				/* translators: 1: singular topic label, 2: plural space label. */
+				'description' => sprintf( __( 'A new %1$s was posted in one of the %2$s you subscribed to.', 'jetonomy' ), $topic, $spaces ),
 			),
 			'reply_to_post'       => array(
-				/* translators: 1: plural reply label, 2: plural topic or reply label. */
+				/* translators: 1: reply label (e.g. "Reply"). 2: reply label, lowercase (e.g. "reply"). */
 				'label'       => ucfirst( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), $replies, $topics ) ),
-				/* translators: 1: singular reply label, 2: singular topic label. */
-				'description' => sprintf( __( 'Someone added a %1$s to a %2$s you started.', 'jetonomy' ), $reply, $topic ),
+				/* translators: 1: singular reply label, 2: plural topic label. */
+				'description' => sprintf( __( 'Someone added a new %1$s to one of the %2$s you started.', 'jetonomy' ), $reply, $topics ),
 			),
 			'reply_to_reply'      => array(
-				/* translators: 1: plural reply label, 2: plural topic or reply label. */
+				/* translators: 1: reply label (e.g. "Reply"). 2: reply label, lowercase (e.g. "reply"). */
 				'label'       => ucfirst( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), $replies, $replies ) ),
 				/* translators: %s: singular reply label. */
 				'description' => sprintf( __( 'Someone responded to your %s.', 'jetonomy' ), $reply ),
@@ -218,7 +218,7 @@ class Community_Notification_Contract {
 			),
 			'accepted_answer'     => array(
 				'label'       => __( 'Accepted answers', 'jetonomy' ),
-				'description' => __( 'Your reply was accepted as the answer.', 'jetonomy' ),
+				'description' => sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Your %s was accepted as the answer.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 			),
 			'idea_status_changed' => array(
 				'label'       => __( 'Idea status changes', 'jetonomy' ),
@@ -234,11 +234,11 @@ class Community_Notification_Contract {
 			),
 			'join_request_result' => array(
 				'label'       => __( 'Join request decisions', 'jetonomy' ),
-				'description' => __( 'Your request to join a space was decided.', 'jetonomy' ),
+				'description' => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Your request to join one of the %s was decided.', 'jetonomy' ), $spaces ),
 			),
 			'join_request'        => array(
 				'label'       => __( 'Join requests to review', 'jetonomy' ),
-				'description' => __( 'Someone requested to join a space you moderate.', 'jetonomy' ),
+				'description' => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Someone requested to join one of the %s you moderate.', 'jetonomy' ), $spaces ),
 			),
 			'mention'             => array(
 				'label'       => __( 'Mentions', 'jetonomy' ),

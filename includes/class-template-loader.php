@@ -11,6 +11,13 @@ defined( 'ABSPATH' ) || exit;
 
 class Template_Loader {
 
+	/**
+	 * True when this request fell back to views/not-found.php (title + view agree).
+	 *
+	 * @var bool
+	 */
+	private static bool $not_found = false;
+
 	public static function render( array $data ): void {
 		// ── /u/me/ redirect to actual user profile ──
 		if ( 'profile' === $data['route'] && 'me' === $data['slug'] ) {
@@ -46,8 +53,7 @@ class Template_Loader {
 		// space's queue (one less click for the common case). A user who
 		// moderates two or more spaces falls through to the aggregate
 		// dashboard so they can see every queue they own with pending
-		// counts at a glance — previously they got auto-redirected to
-		// their first space and had no UI affordance to reach the others.
+		// counts at a glance.
 		if ( 'moderation' === $data['route'] && is_user_logged_in() ) {
 			$mod_user_id = get_current_user_id();
 			if (
@@ -140,14 +146,19 @@ class Template_Loader {
 		$route         = $data['route'];
 		$template_file = $template_map[ $route ] ?? null;
 
+		// An unknown route, or one whose feature is switched off, renders the
+		// themed not-found view inside the shell rather than an empty body.
 		if ( ! $template_file ) {
 			status_header( 404 );
-			return;
+			$template_file   = 'views/not-found.php';
+			self::$not_found = true;
 		}
 
-		// If the template path is absolute (from Pro), use it directly.
-		// Otherwise, check theme override first, then plugin directory.
-		if ( str_starts_with( $template_file, '/' ) || str_starts_with( $template_file, ABSPATH ) ) {
+		// Absolute paths (Pro registers its own) are used as-is. The old
+		// leading-slash test treated Windows drive paths as relative, so Messages
+		// 404'd on Windows hosts. path_is_absolute() knows C:\ but not the C:/
+		// form wp_normalize_path() produces, hence the second test.
+		if ( path_is_absolute( $template_file ) || preg_match( '#^[a-zA-Z]:/#', $template_file ) ) {
 			$template_path = $template_file;
 		} else {
 			$template_path = file_exists( $theme_dir . $template_file )
@@ -157,7 +168,8 @@ class Template_Loader {
 
 		if ( ! file_exists( $template_path ) ) {
 			status_header( 404 );
-			return;
+			$template_path   = $plugin_dir . 'views/not-found.php';
+			self::$not_found = true;
 		}
 
 		// Enqueue styles. The --jt-* token layer is its own handle: blocks render
@@ -185,16 +197,10 @@ class Template_Loader {
 		// 2. Read WP's $content_width global (classic themes set this in functions.php)
 		// 3. Fallback to 1200px
 		//
-		// The `container_width` SETTING is deliberately not read here. It stores
-		// the enum theme / full / custom (see Admin::sanitize_settings), never a
-		// length, so this used to print `--jt-container-width:theme` - invalid at
-		// computed-value time, which makes `max-width: var(--jt-container-width,
-		// 1200px)` resolve to `none` rather than the fallback, because a var()
-		// fallback does not apply to an invalid substituted value. The community
-		// container therefore had NO max-width on any theme that does not wrap it
-		// itself, while the owner saw "Theme" selected and nothing wrong. It also
-		// meant the theme.json / $content_width detection below never ran, since
-		// the enum is always non-empty.
+		// The `container_width` SETTING is deliberately not read here: it stores the enum
+		// theme / full / custom (see Admin::sanitize_settings), never a length, and a
+		// non-length value makes `max-width: var(--jt-container-width, 1200px)` resolve to
+		// `none` instead of the fallback.
 		//
 		// `theme` means exactly this detection chain. `full` and `custom` are
 		// applied by Integrations\Layout_CSS::build_rules(), whose
@@ -221,24 +227,9 @@ class Template_Loader {
 		// Color palette overrides (accent + text/background/subtle/border).
 		$dynamic_css .= self::palette_css( $settings );
 
-		// Theme adoption is unconditional and lives in jetonomy.css — see the
-		// --jt-accent / --jt-font chains there. Two settings used to gate it here
-		// and both are gone:
-		//
-		// `inherit_fonts` emitted `--jt-font:inherit`. Measured across 11 themes it
-		// changed nothing: the chain already ends in `inherit`, so the token
-		// resolves to empty either way and .jt-app inherits the theme's font from
-		// body regardless. It was a checkbox with no effect, over a font setting
-		// that does not exist.
-		//
-		// `inherit_colors` did have an effect, and it was the wrong one: it made
-		// palette_tokens() return nothing, so an owner who picked an accent had it
-		// silently discarded — the checkbox defaults to checked, which left the
-		// colour picker directly beneath it dead on arrival. The picker already
-		// encodes the same intent honestly (the #0073aa default means "not set,
-		// adopt the theme"), so the toggle was redundant as well as harmful.
-		// It also re-declared the whole accent chain from a stale copy, which had
-		// already drifted from the real one in jetonomy.css.
+		// Theme adoption is unconditional and lives in jetonomy.css - see the
+		// --jt-accent / --jt-font chains there. No setting gates it: an owner-picked accent
+		// always applies, and the #0073aa default means "not set, adopt the theme".
 
 		// Layout density. Comfortable is the baseline (theme defaults, no override);
 		// compact tightens spacing/type, spacious loosens it. Rules are keyed to the
@@ -301,167 +292,12 @@ class Template_Loader {
 				'publishLabel'   => sprintf( __( 'Post %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 				'submitError'    => '',
 				'msgComposeOpen' => false,
-				'i18n'           => array(
-					'voteRecorded'          => __( 'Vote recorded', 'jetonomy' ),
-					'statusUpdated'         => __( 'Roadmap status updated', 'jetonomy' ),
-					'accepted'              => __( 'Accepted', 'jetonomy' ),
-					'reply'                 => __( 'Reply', 'jetonomy' ),
-					'cancel'                => __( 'Cancel', 'jetonomy' ),
-					'save'                  => __( 'Save', 'jetonomy' ),
-					'saving'                => __( 'Saving...', 'jetonomy' ),
-					'failedSave'            => __( 'Failed to save.', 'jetonomy' ),
-					'networkError'          => __( 'Network error. Please try again.', 'jetonomy' ),
-					'follow'                => __( 'Follow', 'jetonomy' ),
-					'following'             => __( 'Following', 'jetonomy' ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'followingSpace'        => sprintf( __( 'Following %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-					/* translators: %s: the unfollowed space or topic title. */
-					'unfollowedSpace'       => sprintf( __( 'Unfollowed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-					// Leave-space confirm (actions.leaveSpace).
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'leaveSpace'            => sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'confirmLeaveSpace'     => sprintf( __( 'Leave this %s? You can rejoin at any time.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-					'leave'                 => __( 'Leave', 'jetonomy' ),
-					'leaveSpaceFailed'      => __( 'Could not leave. Please try again.', 'jetonomy' ),
-					'copyLink'              => __( 'Copy link', 'jetonomy' ),
-					'bookmark'              => __( 'Bookmark', 'jetonomy' ),
-					'removeBookmark'        => __( 'Remove bookmark', 'jetonomy' ),
-					'bookmarked'            => __( 'Bookmarked', 'jetonomy' ),
-					'bookmarkRemoved'       => __( 'Bookmark removed', 'jetonomy' ),
-					/* translators: %s: the singular label of the item (the configured noun). */
-					'reportPrompt'          => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
-					'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
-					// Scoped, to match the "Pin to space" control. Pro can pin to
-					// the whole community, so an unqualified "Post pinned" leaves
-					// a moderator unsure which of the two just happened.
-					'postPinned'            => __( 'Pinned to this space', 'jetonomy' ),
-					'postUnpinned'          => __( 'Unpinned from this space', 'jetonomy' ),
-					'failedPin'             => __( 'Failed to toggle pin.', 'jetonomy' ),
-					/* translators: %s: the singular label of the item (the configured noun). */
-					'confirmDeletePost'     => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					/* translators: %s: the singular label of the item (the configured noun). */
-					'confirmDeleteReply'    => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					'failedDelete'          => __( 'Failed to delete.', 'jetonomy' ),
-					/* translators: 1: singular topic label, 2: singular space label the site owner configured. */
-					'moveTopicTitle'        => sprintf( __( 'Move %1$s to another %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'topicMoved'            => sprintf( __( '%s moved successfully.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'moveFailed'            => sprintf( __( 'Failed to move %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'mergeTopicTitle'       => sprintf( __( 'Merge into another %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					/* translators: 1: singular topic label, 2: plural reply label the site owner configured. */
-					'confirmMerge'          => sprintf( __( 'Merge this %1$s into the selected one? All %2$s will be moved and this %1$s will be deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-					/* translators: %s: the plural topic label the site owner configured. */
-					'topicMerged'           => sprintf( __( '%s merged successfully.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
-					/* translators: %s: the plural topic label the site owner configured. */
-					'mergeFailed'           => sprintf( __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-					// Says what the action DOES, not just what it needs. Split is a
-					// MOVE: the reply is removed from this thread and becomes the
-					// opening post of a new one. The prompt asked only for a title,
-					// so moderators used it expecting a copy and members watched a
-					// reply vanish. Merge has warned about its own destructiveness
-					// since 1.4.0; this is the same courtesy.
-					'splitReplyTitle'       => sprintf(
-						/* translators: 1: singular reply label, 2: singular topic label. */
-						__( 'This %1$s will be MOVED out of this %2$s and become the first post of a new one. Title for the new %2$s:', 'jetonomy' ),
-						\Jetonomy\jetonomy_label( 'reply', false, true ),
-						\Jetonomy\jetonomy_label( 'topic', false, true )
-					),
-					/* translators: 1: singular reply label, 2: singular topic label the site owner configured. */
-					'replySplit'            => sprintf( __( '%1$s split into new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					/* translators: %s: the singular reply label the site owner configured. */
-					'splitFailed'           => sprintf( __( 'Failed to split %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					'replyingTo'            => __( 'Replying to', 'jetonomy' ),
-					/* translators: %s: the singular reply label the site owner configured (lowercase). */
-					'cancelReply'           => sprintf( __( 'Cancel %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					'posting'               => __( 'Posting...', 'jetonomy' ),
-					/* translators: %d: number of new items; %s: the reply label (substituted server-side). */
-					'newReply'              => sprintf( __( '%%d new %s. Click to refresh.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					/* translators: %d: number of new items; %s: the reply label (substituted server-side). */
-					'newReplies'            => sprintf( __( '%%d new %s. Click to refresh.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-					'linkCopied'            => __( 'Link copied', 'jetonomy' ),
-					'linkCopyFailed'        => __( 'Could not copy the link. Copy it from the address bar.', 'jetonomy' ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'titleRequired'         => sprintf( __( 'Please enter a title for your %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					'bodyRequired'          => __( 'Please add some details before posting.', 'jetonomy' ),
-					'loginRequired'         => __( 'Please sign in to use this.', 'jetonomy' ),
-					// Pro Private Messaging composer (consumed by jetonomy-pro/assets/js/pro-view.js).
-					'messageSending'        => __( 'Sending...', 'jetonomy' ),
-					'messageSend'           => __( 'Send', 'jetonomy' ),
-					'messageSendFailed'     => __( 'Failed to send. Please try again.', 'jetonomy' ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'noMessageMatches'      => sprintf( __( 'No matches. You can only message people who share at least one %s with you.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-					'recipientRequired'     => __( 'Please enter a recipient.', 'jetonomy' ),
-					'userNotFound'          => __( 'User not found: ', 'jetonomy' ),
-					// Pro Private Messaging — conversation actions (kebab menu, WS3-C).
-					'muteFailed'            => __( 'Could not update mute setting.', 'jetonomy' ),
-					'archiveFailed'         => __( 'Could not archive the conversation.', 'jetonomy' ),
-					'leaveFailed'           => __( 'Could not leave the conversation.', 'jetonomy' ),
-					'blockFailed'           => __( 'Could not update block setting.', 'jetonomy' ),
-					'confirmLeave'          => __( 'Leave this conversation? You will not receive new messages.', 'jetonomy' ),
-					'confirmBlock'          => __( 'Block this user? They will no longer be able to message you here.', 'jetonomy' ),
-					// WS4-C: moderation flag toasts + profile-save failure (consumed by view.js via state.i18n).
-					'contentRemoved'        => __( 'Content removed', 'jetonomy' ),
-					'flagDismissed'         => __( 'Flag dismissed', 'jetonomy' ),
-					'failed'                => __( 'Failed', 'jetonomy' ),
-					'failedSaveProfile'     => __( 'Failed to save profile.', 'jetonomy' ),
-					'schedule'              => __( 'Schedule', 'jetonomy' ),
-					/* translators: %s: the label of the item being edited (the configured noun). */
-					'editPost'              => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					/* translators: %s: the label of the item being edited (the configured noun). */
-					'editReply'             => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					'unaccepted'            => __( 'Marked as unanswered', 'jetonomy' ),
-					// 1.4.4 i18n sweep — keys view.js reads via state.i18n that were
-					// missing here, so they always rendered the English fallback even
-					// on a translated locale.
-					'voteFailed'            => __( 'Vote failed.', 'jetonomy' ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'chooseSpace'           => sprintf( __( 'Choose a %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-					'draftSaved'            => __( 'Draft saved. You can find it in your profile under Drafts.', 'jetonomy' ),
-					'saveDraft'             => __( 'Save Draft', 'jetonomy' ),
-					'scheduleDateRequired'  => __( 'Please choose a publish date and time.', 'jetonomy' ),
-					'failedTogglePrivate'   => __( 'Failed to change visibility.', 'jetonomy' ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'madePrivate'           => sprintf( __( '%s is now private', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'madePublic'            => sprintf( __( '%s is now public', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					/* translators: %s: singular topic or reply label. */
-					'pendingNotice'         => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					/* translators: %s: singular topic or reply label. */
-					'pendingReplyNotice'    => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					'reportPlaceholder'     => __( 'Describe the issue...', 'jetonomy' ),
-					/* translators: %s: the singular label of the item (the configured noun). */
-					'reportReplyPrompt'     => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					'reportUserPrompt'      => __( 'Why are you reporting this user?', 'jetonomy' ),
-					'reportUserPlaceholder' => __( 'Describe the issue...', 'jetonomy' ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'topicClosed'           => sprintf( __( '%s closed', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'topicReopened'         => sprintf( __( '%s reopened', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-					/* translators: %s: the singular topic label the site owner configured. */
-					'failedClose'           => sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-					// WS4-C: Pro Polls strings consumed via state.i18n in pro-view.js.
-					'failedSubmitVote'      => __( 'Failed to submit vote. Please try again.', 'jetonomy' ),
-					'voteSingular'          => __( '1 vote', 'jetonomy' ),
-					/* translators: %d: vote count. */
-					'voteFormat'            => __( '%d votes', 'jetonomy' ),
-					// 1.6.1 i18n sweep - keys view.js reads via state.i18n that were
-					// never injected, so they rendered the English fallback on every locale.
-					'alreadyReported'       => __( 'You already reported this.', 'jetonomy' ),
-					'draftPublished'        => __( 'Published.', 'jetonomy' ),
-					'genericError'          => __( 'Could not publish.', 'jetonomy' ),
-					// Threaded-reply toggle label (single-post.php); the count is
-					// substituted client-side in the state.threadToggleLabel getter.
-					/* translators: %s: the plural label of the item (the configured noun). */
-					'hideReplies'           => sprintf( __( 'Hide %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-					/* translators: %s: the singular reply label the site owner configured. */
-					'showRepliesOne'        => sprintf( __( 'Show 1 %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
-					/* translators: %d: number of replies; %s substituted server-side is the plural reply label. */
-					'showRepliesMany'       => sprintf( __( 'Show %%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-				),
+				'i18n'           => self::app_i18n(),
+				// The app's own translations (all plural forms of the site language)
+				// for wp.i18n._n() in view.js; null when no translation is installed.
+				'localeData'     => self::app_locale_data(),
+				// Owner-renamed reply noun: the two forms they typed, else null.
+				'replyNoun'      => \Jetonomy\noun_is_renamed( 'reply' ) ? array( \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) : null,
 			)
 		);
 
@@ -470,12 +306,12 @@ class Template_Loader {
 		// \Jetonomy\version_assets_by_mtime() - so enqueues pass the plain
 		// plugin version.
 
-		// WS3-A primitives (1.4.3): shared optimistic-action helper and smart
+		// Primitives (1.4.3): shared optimistic-action helper and smart
 		// dropdown positioner. Registered as classic scripts so window globals
 		// (jetonomyOptimistic, jetonomySmartDropdown) exist before any
 		// downstream consumer evaluates. Depend on jetonomy-data so they share
 		// its enqueue context; the script-module below loads after them in
-		// document order. Callsite migration lands in WS3-B.
+		// document order.
 		wp_enqueue_script( 'jetonomy-optimistic', JETONOMY_URL . 'assets/js/lib/optimistic.min.js', array( 'jetonomy-data', 'wp-i18n' ), JETONOMY_VERSION, true );
 		\Jetonomy\script_translations( 'jetonomy-optimistic' );
 		wp_enqueue_script( 'jetonomy-smart-dropdown', JETONOMY_URL . 'assets/js/lib/smart-dropdown.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
@@ -517,10 +353,9 @@ class Template_Loader {
 		// Shared global for non-Interactivity JS on community pages (link preview
 		// cards, similar-topics typeahead). Keeps the REST nonce + base URL in
 		// one place so the same contract works for the future native app.
-		// Shared modal toolkit (1.4.0) — registers window.jetonomyConfirm /
-		// jetonomyAlert / jetonomyPrompt globally. Every JS callsite that
-		// previously used window.confirm / alert / prompt depends on this
-		// handle. Loaded BEFORE composer / space-members / etc.
+		// Shared modal toolkit - registers window.jetonomyConfirm / jetonomyAlert /
+		// jetonomyPrompt globally; every JS callsite that needs a confirm, alert or prompt
+		// depends on this handle. Loaded BEFORE composer / space-members / etc.
 		if ( ! wp_script_is( 'jetonomy-modals', 'registered' ) ) {
 			wp_register_script(
 				'jetonomy-modals',
@@ -546,96 +381,101 @@ class Template_Loader {
 				'restBase'      => esc_url_raw( rest_url( 'jetonomy/v1' ) ),
 				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
+				// Plain __(): the scripts insert these with textContent, where an
+				// escaped apostrophe would show as &#039; in many languages.
 				'i18n'          => array(
-					'queueClean'             => esc_html__( 'Queue cleared.', 'jetonomy' ),
-					'resolveFailed'          => esc_html__( 'Could not resolve flag. Please try again.', 'jetonomy' ),
-					'approvalFailed'         => esc_html__( 'Could not update this submission. It may have been handled by another moderator.', 'jetonomy' ),
-					'approvalsClean'         => esc_html__( 'Nothing left awaiting approval.', 'jetonomy' ),
-					'roleUpdateFailed'       => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
-					'uploading'              => esc_html__( 'Uploading...', 'jetonomy' ),
-					'uploaded'               => esc_html__( 'Uploaded.', 'jetonomy' ),
-					'uploadFailed'           => esc_html__( 'Upload failed.', 'jetonomy' ),
-					'networkError'           => esc_html__( 'Network error.', 'jetonomy' ),
-					'networkErrorRetry'      => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'queueClean'             => __( 'Queue cleared.', 'jetonomy' ),
+					'resolveFailed'          => __( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'approvalFailed'         => __( 'Could not update this submission. It may have been handled by another moderator.', 'jetonomy' ),
+					'approvalsClean'         => __( 'Nothing left awaiting approval.', 'jetonomy' ),
+					'roleUpdateFailed'       => __( 'Could not update role. Please try again.', 'jetonomy' ),
+					'uploading'              => __( 'Uploading...', 'jetonomy' ),
+					'uploaded'               => __( 'Uploaded.', 'jetonomy' ),
+					'uploadFailed'           => __( 'Upload failed.', 'jetonomy' ),
+					'networkError'           => __( 'Network error.', 'jetonomy' ),
+					'networkErrorRetry'      => __( 'Network error. Please try again.', 'jetonomy' ),
+					/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 					'createSpaceFailed'      => esc_html( sprintf( __( 'Could not create the %s. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
-					'saveFailed'             => esc_html__( 'Could not save changes.', 'jetonomy' ),
-					'prefixLabel'            => esc_html__( 'Label', 'jetonomy' ),
-					'removePrefix'           => esc_html__( 'Remove prefix', 'jetonomy' ),
+					'saveFailed'             => __( 'Could not save changes.', 'jetonomy' ),
+					'prefixLabel'            => __( 'Label', 'jetonomy' ),
+					'removePrefix'           => __( 'Remove prefix', 'jetonomy' ),
 					// Space danger zone (actions.deleteSpace).
-					'purgeConfirmLabel'      => esc_html__( 'Delete permanently', 'jetonomy' ),
-					'deleteFailed'           => esc_html__( 'Could not delete. Please try again.', 'jetonomy' ),
+					'purgeConfirmLabel'      => __( 'Delete permanently', 'jetonomy' ),
+					'deleteFailed'           => __( 'Could not delete. Please try again.', 'jetonomy' ),
+					'unarchiveFailed'        => __( 'Could not unarchive. Please try again.', 'jetonomy' ),
 					// Join-Space failure toast (composer.js); carries the owner's space noun.
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 					'joinSpaceFailed'        => esc_html( sprintf( __( 'Could not join %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
-					'memberBanned'           => esc_html__( 'Banned', 'jetonomy' ),
+					'memberBanned'           => __( 'Banned', 'jetonomy' ),
 					// Modal helpers in view.js (jetonomyConfirm / jetonomyPrompt /
 					// jetonomySpacePicker / jetonomyPostPicker). These live OUTSIDE the
 					// Interactivity store so they read window.jetonomyData.i18n, not
-					// state.i18n. Hard-coded English used to ship in the JS bundle.
-					'modalCancel'            => esc_html__( 'Cancel', 'jetonomy' ),
-					'modalConfirm'           => esc_html__( 'Confirm', 'jetonomy' ),
-					'modalSubmit'            => esc_html__( 'Submit', 'jetonomy' ),
-					'modalMove'              => esc_html__( 'Move', 'jetonomy' ),
-					'modalMerge'             => esc_html__( 'Merge', 'jetonomy' ),
+					// state.i18n, so the strings stay translatable.
+					'modalCancel'            => __( 'Cancel', 'jetonomy' ),
+					'modalConfirm'           => __( 'Confirm', 'jetonomy' ),
+					'modalSubmit'            => __( 'Submit', 'jetonomy' ),
+					'modalMove'              => __( 'Move', 'jetonomy' ),
+					'modalMerge'             => __( 'Merge', 'jetonomy' ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'loadingSpaces'          => esc_html( sprintf( __( 'Loading %s…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'noOtherSpaces'          => esc_html( sprintf( __( 'No other %s available', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
+					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					'chooseSpaceOption'      => esc_html( sprintf( __( 'Select %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					/* translators: %s: plural space label. */
 					'failedLoadSpaces'       => esc_html( sprintf( __( 'Failed to load %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: the singular topic label the site owner configured. */
-					'searchTopicPlaceholder' => esc_html( sprintf( __( 'Search for a %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ),
+					'searchTopicPlaceholder' => esc_html( sprintf( __( 'Search %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ),
 					/* translators: %s: the plural topic label the site owner configured. */
 					'noTopicsFound'          => esc_html( sprintf( __( 'No %s found', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ),
-					'searchFailed'           => esc_html__( 'Search failed', 'jetonomy' ),
+					'searchFailed'           => __( 'Search failed', 'jetonomy' ),
 					// Merge-picker copy. `mergeFromLabel` heads the "From <topic>"
 					// banner. The hint is shown until the visitor types enough
 					// to trigger a search; the reply placeholders use %d so the
 					// translator picks singular/plural per their locale.
-					'mergeFromLabel'         => esc_html__( 'From', 'jetonomy' ),
-					'pickerHintTwoChars'     => esc_html__( 'Type at least 2 characters to search.', 'jetonomy' ),
+					'mergeFromLabel'         => __( 'From', 'jetonomy' ),
+					'pickerHintTwoChars'     => __( 'Type at least 2 characters to search.', 'jetonomy' ),
 					/* translators: %d: number of replies; %s: the reply label (substituted server-side). */
 					'pickerReplySingular'    => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),
 					/* translators: %d: number of replies; %s: the reply label (substituted server-side). */
 					'pickerReplyPlural'      => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ),
 					'roleLabels'             => array(
-						'member'    => esc_html__( 'Member', 'jetonomy' ),
-						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
-						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
+						'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
+						'moderator' => __( 'Moderator', 'jetonomy' ),
+						'admin'     => __( 'Admin', 'jetonomy' ),
 					),
-					'failedSaveProfile'      => esc_html__( 'Failed to save profile.', 'jetonomy' ),
-					// WS4-C: space-members ban dialog (translator placeholders).
+					'failedSaveProfile'      => __( 'Failed to save profile.', 'jetonomy' ),
+					// space-members ban dialog (translator placeholders).
 					/* translators: 1: member display name (substituted client-side); 2: singular space label; 3: plural topic label; 4: plural reply label. */
 					'banConfirmFormat'       => sprintf( __( 'Ban %1$s from this %2$s? They will lose access to its %3$s and %4$s until you lift the ban.', 'jetonomy' ), '%s', \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					/* translators: %s: the singular member label the site owner configured. */
 					'banMemberTitle'         => esc_html( sprintf( __( 'Ban %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
-					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
+					'banLabel'               => __( 'Ban', 'jetonomy' ),
 					// Frontend member moderation from a profile (site ban / silence / lift).
 					/* translators: %s: member display name. */
-					'banSiteConfirmFormat'   => esc_html__( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ),
+					'banSiteConfirmFormat'   => __( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ), // jt-terms-ok: verbs.
 					/* translators: %s: the singular member label the site owner configured. */
 					'banSiteTitle'           => esc_html( sprintf( __( 'Ban %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
-					/* translators: 1: member display name (substituted client-side); 2: singular member label (lowercase). "post, reply, file" stay verbs on purpose. */
-					'silenceConfirmFormat'   => esc_html( sprintf( __( 'Silence %1$s? They stay a %2$s but cannot post, reply, or file reports until you lift it.', 'jetonomy' ), '%s', \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
+					/* translators: 1: member display name (substituted client-side). "post, reply, file" stay verbs on purpose. */
+					'silenceConfirmFormat'   => esc_html( sprintf( __( 'Silence %1$s? They stay in the community but cannot post, reply, or file reports until you lift it.', 'jetonomy' ), '%s' ) ), // jt-terms-ok: verbs; the noun is a label.
 					/* translators: %s: the singular member label the site owner configured. */
 					'silenceTitle'           => esc_html( sprintf( __( 'Silence %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
-					'silenceLabel'           => esc_html__( 'Silence', 'jetonomy' ),
+					'silenceLabel'           => __( 'Silence', 'jetonomy' ),
 					/* translators: %s: member display name. */
-					'liftConfirmFormat'      => esc_html__( 'Lift the restriction on %s? They regain full access right away.', 'jetonomy' ),
-					'liftTitle'              => esc_html__( 'Lift restriction', 'jetonomy' ),
-					'liftLabel'              => esc_html__( 'Lift', 'jetonomy' ),
+					'liftConfirmFormat'      => __( 'Lift the restriction on %s? They regain full access right away.', 'jetonomy' ),
+					'liftTitle'              => __( 'Lift restriction', 'jetonomy' ),
+					'liftLabel'              => __( 'Lift restriction', 'jetonomy' ),
 					// 1.6.1 i18n sweep - role-change + deny-join confirm dialogs (view.js reads
 					// window.jetonomyData.i18n outside the IA store; these were never injected).
 					/* translators: %name%, %from%, %to% are replaced client-side. */
-					'confirmRoleChange'      => esc_html__( 'Change %name% from %from% to %to%?', 'jetonomy' ),
-					'confirmRoleChangeTitle' => esc_html__( 'Change role', 'jetonomy' ),
-					'confirmLabel'           => esc_html__( 'Change role', 'jetonomy' ),
-					'cancelLabel'            => esc_html__( 'Cancel', 'jetonomy' ),
+					'confirmRoleChange'      => __( 'Change %name% from %from% to %to%?', 'jetonomy' ),
+					'confirmRoleChangeTitle' => __( 'Change role', 'jetonomy' ),
+					'confirmLabel'           => __( 'Change role', 'jetonomy' ),
+					'cancelLabel'            => __( 'Cancel', 'jetonomy' ),
 					/* translators: %s: the singular member label the site owner configured (lowercase). */
 					'denyJoinBody'           => esc_html( sprintf( __( 'Deny this join request? The %s can request again later.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
-					'denyJoinTitle'          => esc_html__( 'Deny request', 'jetonomy' ),
-					'denyLabel'              => esc_html__( 'Deny', 'jetonomy' ),
+					'denyJoinTitle'          => __( 'Deny request', 'jetonomy' ),
+					'denyLabel'              => __( 'Deny', 'jetonomy' ),
 				),
 			)
 		);
@@ -738,14 +578,28 @@ class Template_Loader {
 			'body_class',
 			static function ( array $classes ): array {
 				$classes[] = 'jt-page';
-				return $classes;
-			}
+				// Community pages never render the theme's sidebar, but a theme that
+				// sees widgets in its sidebar area still marks the body as having one
+				// (BuddyX: has-sidebar-right), and its content wrapper then reserves an
+				// empty sidebar column beside the community.
+				return array_values( preg_grep( '/^has-([a-z]+-)?sidebar-(left|right|both)$/', $classes, PREG_GREP_INVERT ) );
+			},
+			99
 		);
 
 		// Use WP's get_header/get_footer for theme integration.
 		// Block themes (FSE) have no header.php — use block_header_area() to avoid
 		// the "Theme without header.php is deprecated" notice introduced in WP 3.0.
+		$block_footer = '';
 		if ( wp_is_block_theme() ) {
+			// Render the header and footer parts BEFORE wp_head(), as core's
+			// template canvas does: blocks queue their layout and element styles
+			// while they render, and styles queued after the head is printed are
+			// never output (the header lost its layout on every community page).
+			// Same markup core gives a template part: a <header>/<footer> wrapper,
+			// all inside .wp-site-blocks, so global spacing matches other pages.
+			$block_header = do_blocks( '<!-- wp:template-part {"slug":"header","area":"header","tagName":"header"} /-->' );
+			$block_footer = do_blocks( '<!-- wp:template-part {"slug":"footer","area":"footer","tagName":"footer"} /-->' );
 			?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -755,11 +609,30 @@ class Template_Loader {
 <body <?php body_class(); ?>>
 			<?php
 			wp_body_open();
-			block_header_area();
+			echo '<div class="wp-site-blocks">';
+			echo $block_header; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered block markup, as core prints it.
 			?>
 			<?php
 		} else {
 			get_header();
+		}
+
+		/**
+		 * Filters the theme hooks fired around the community app, so a theme
+		 * that wraps its own page content wraps ours the same way. BuddyX and
+		 * BuddyX Pro open a full-height .site-wrapper there; without it a short
+		 * community page ends with the footer floating mid-screen.
+		 *
+		 * @since 2.0.2
+		 *
+		 * @param string[] $hooks Two hook names, before and after, or none.
+		 */
+		$theme_wrap = (array) apply_filters(
+			'jetonomy_theme_content_hooks',
+			has_action( 'buddyx_before_content' ) ? array( 'buddyx_before_content', 'buddyx_after_content' ) : array()
+		);
+		if ( 2 === count( $theme_wrap ) ) {
+			do_action( (string) $theme_wrap[0] ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- the theme's own hook.
 		}
 
 		// data-wp-on--click on the app wrapper delegates every internal link
@@ -812,8 +685,13 @@ class Template_Loader {
 
 		echo '</div>'; // #jetonomy-app
 
+		if ( 2 === count( $theme_wrap ) ) {
+			do_action( (string) $theme_wrap[1] ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- the theme's own hook.
+		}
+
 		if ( wp_is_block_theme() ) {
-			block_footer_area();
+			echo $block_footer; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered block markup, as core prints it.
+			echo '</div>'; // .wp-site-blocks
 			wp_footer();
 			?>
 			</body></html>
@@ -958,7 +836,7 @@ class Template_Loader {
 	 * localize only fires on embed surfaces (compose-topic shortcode/block
 	 * on a regular WP page) where no other Jetonomy script has run. Without
 	 * this, view.js actions that go through restFetch fail before the
-	 * request is made (Basecamp #9967059857).
+	 * request is made.
 	 *
 	 * @since 1.5.0
 	 */
@@ -1053,8 +931,8 @@ class Template_Loader {
 			}
 			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 			return str_replace(
-				[ '{post_title}', '{space_name}' ],
-				[ (string) $post->title, (string) ( $space->title ?? '' ) ],
+				array( '{post_title}', '{space_name}' ),
+				array( (string) $post->title, (string) ( $space->title ?? '' ) ),
 				$pattern
 			);
 		}
@@ -1144,6 +1022,10 @@ class Template_Loader {
 				// WP appends ' – {site_name}' via the default separator + tagline,
 				// so we only set the route-specific title fragment here. Don't
 				// concatenate the site name yourself — it doubles up.
+				if ( self::$not_found ) {
+					$parts['title'] = __( 'Page not available', 'jetonomy' );
+					return $parts;
+				}
 				$slug_pretty = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
 
 				// Owner-configurable title patterns (Settings → SEO). These are the
@@ -1163,7 +1045,7 @@ class Template_Loader {
 					// built FROM the title and would hand back the same words
 					// (1.8.0).
 					if ( null === $patterned ) {
-						$parts['title'] = __( 'Community', 'jetonomy' );
+						$parts['title'] = community_title();
 						return $parts;
 					}
 					if ( '' !== $patterned ) {
@@ -1176,10 +1058,10 @@ class Template_Loader {
 
 				switch ( $data['route'] ) {
 					case 'home':
-						$parts['title'] = __( 'Community', 'jetonomy' );
+						$parts['title'] = community_title();
 						break;
 					case 'space':
-						$parts['title'] = self::seo_display_name( 'space', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Community', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'space', (string) $data['slug'], $slug_pretty ) . ' — ' . community_title();
 						break;
 					case 'space-members':
 						$parts['title'] = self::seo_display_name( 'space-members', (string) $data['slug'], $slug_pretty ) . ' — ' . \Jetonomy\jetonomy_label( 'member', true );
@@ -1204,10 +1086,11 @@ class Template_Loader {
 						$parts['title'] = '#' . (string) $data['slug'];
 						break;
 					case 'category':
-						$parts['title'] = self::seo_display_name( 'category', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Community', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'category', (string) $data['slug'], $slug_pretty ) . ' — ' . community_title();
 						break;
 					case 'leaderboard':
-						$parts['title'] = __( 'Top members', 'jetonomy' );
+						/* translators: %s: plural member label. */
+						$parts['title'] = sprintf( __( 'Top %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) );
 						break;
 					case 'search':
 						$parts['title'] = __( 'Search', 'jetonomy' );
@@ -1239,8 +1122,8 @@ class Template_Loader {
 						$parts['title'] = __( 'My Subscriptions', 'jetonomy' );
 						break;
 					case 'new-space':
-						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-						$parts['title'] = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+						$parts['title'] = sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'edit-space':
 						/* translators: %s: the label of the item being edited (the configured noun). */
@@ -1258,13 +1141,10 @@ class Template_Loader {
 		);
 
 		// Meta description + canonical + OG/Twitter + robots — emitted on EVERY
-		// public route. Phase D contract (1.4.0): the free plugin alone is
-		// SEO-complete. The Pro `seo-pro` extension layers per-space overrides
-		// at priority 0, but we no longer hand it the entire emission — it
-		// only owns the routes it explicitly handles (currently `space` +
-		// `post`). All other routes are owned by free, so a community on the
-		// free plugin doesn't go invisible to crawlers on home / profile /
-		// leaderboard / search / tag / etc. (incident: 2026-04-28 SEO audit).
+		// public route. The free plugin alone is SEO-complete. The Pro `seo-pro`
+		// extension layers per-space overrides at priority 0 but only owns the routes it
+		// explicitly handles (currently `space` + `post`); free owns all other routes, so
+		// home / profile / leaderboard / search / tag / etc. stay visible to crawlers.
 		add_action(
 			'wp_head',
 			function () use ( $data ) {
@@ -1308,15 +1188,15 @@ class Template_Loader {
 
 				switch ( $data['route'] ) {
 					case 'home':
-						$title     = $site_name . ' ' . __( 'Community', 'jetonomy' );
+						$title     = community_home_name();
 						$desc      = __( 'Join our community discussions, Q&A, and more.', 'jetonomy' );
 						$url       = $base . '/';
 						$image_alt = $site_name;
 						break;
 					case 'category':
 						$title = self::seo_display_name( 'category', (string) $data['slug'], ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) ) );
-						/* translators: 1: plural space label, 2: category name, 3: site title. */
-						$desc      = sprintf( __( '%1$s in the %2$s category on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name );
+						/* translators: 1: plural space label, 2: category name, 3: site title, 4: singular category label. */
+						$desc      = sprintf( __( '%1$s in the %2$s %4$s on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name, \Jetonomy\jetonomy_label( 'category', false, true ) );
 						$url       = route_url( 'category', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $title;
 						break;
@@ -1327,7 +1207,7 @@ class Template_Loader {
 						$space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
 						// A concealed space's <head> must look exactly like a
 						// missing space's: no title/desc/og/image (pairs with the
-						// 404 in maybe_set_404 — Basecamp 10105630168).
+						// 404 in maybe_set_404).
 						if ( $space && \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 							$space = null;
 						}
@@ -1377,7 +1257,6 @@ class Template_Loader {
 						// Same permission gate as single-post.php — without this, the meta
 						// description, OG tags, article:* metadata, and oEmbed discovery URL
 						// for a private topic leak into every non-author response's <head>
-						// (Basecamp 9803998504).
 						//
 						// can_render_post_text() (not can_read_post()) because the <head> is
 						// also where a BLOCKED author's words were still arriving: the body
@@ -1440,12 +1319,12 @@ class Template_Loader {
 						if ( $user ) {
 							$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
 							$bio     = $profile && ! empty( $profile->bio ) ? wp_strip_all_tags( (string) $profile->bio ) : '';
-							$title   = $user->display_name;
+							$title   = user_display_name( $user );
 							/* translators: 1: user login, 2: site title. */
 							$desc      = $bio !== '' ? $bio : sprintf( __( 'Community profile for @%1$s on %2$s.', 'jetonomy' ), $user->user_login, $site_name );
 							$url       = \Jetonomy\get_profile_url( (int) $user->ID );
 							$image     = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
-							$image_alt = $user->display_name;
+							$image_alt = user_display_name( $user );
 						}
 						// Settings > SEO > "Noindex member profiles". This branch
 						// never read the setting: Schema_Markup emitted the tag
@@ -1462,16 +1341,17 @@ class Template_Loader {
 						$image_alt = $title;
 						break;
 					case 'leaderboard':
-						$title = __( 'Top members', 'jetonomy' );
-						/* translators: %s: site title. */
-						$desc      = sprintf( __( 'Top contributors and most-helpful members on %s.', 'jetonomy' ), $site_name );
+						/* translators: %s: plural member label. */
+						$title = sprintf( __( 'Top %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) );
+						/* translators: 1: site title, 2: plural member label, lowercase. */
+						$desc      = sprintf( __( 'Top contributors and most-helpful %2$s on %1$s.', 'jetonomy' ), $site_name, \Jetonomy\jetonomy_label( 'member', true, true ) );
 						$url       = route_url( 'leaderboard' );
 						$image_alt = $site_name;
 						break;
 					case 'search':
 						$title = __( 'Search the community', 'jetonomy' );
-						/* translators: %s: site title. */
-						$desc      = sprintf( __( 'Search discussions, replies, members, and tags on %s.', 'jetonomy' ), $site_name );
+						/* translators: 1: site title, 2: plural reply label, lowercase, 3: plural member label, lowercase. */
+						$desc      = sprintf( __( 'Search discussions, %2$s, %3$s, and tags on %1$s.', 'jetonomy' ), $site_name, \Jetonomy\jetonomy_label( 'reply', true, true ), \Jetonomy\jetonomy_label( 'member', true, true ) );
 						$url       = route_url( 'search' );
 						$image_alt = $site_name;
 						// Honour the owner's choice. This was hard-coded true, so
@@ -1544,8 +1424,8 @@ class Template_Loader {
 						$noindex   = true; // Logged-in personal view.
 						break;
 					case 'new-space':
-						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-						$title = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+						$title = sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: 1: singular space label, 2: site title. */
 						$desc      = sprintf( __( 'Start a new community %1$s on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $site_name );
 						$url       = route_url( 'new-space' );
@@ -1759,8 +1639,7 @@ class Template_Loader {
 				if ( $slug ) {
 					$space = \Jetonomy\Models\Space::find_by_slug( $slug );
 					// A hidden space answers 404 to non-members — its existence
-					// is concealed, same as the view templates render (Basecamp
-					// 10105630168). Missing and concealed are indistinguishable.
+					// is concealed, same as the view templates render. Missing and concealed are indistinguishable.
 					if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 						status_header( 404 );
 					}
@@ -1770,16 +1649,12 @@ class Template_Loader {
 			case 'post':
 				if ( $slug ) {
 					$post = \Jetonomy\Models\Post::find_by_slug( $slug );
-					// can_read_post() is the authoritative read decision and
-					// already owns the status gate (hoisted there in 1.8.0), the
-					// per-post privacy gate and the space gate - including a
-					// space concealed by its category. This case used to re-state
-					// only the status half in its own words, so a published topic
-					// the viewer could not read rendered "Post not found" under
-					// HTTP 200: a soft 404 the REST route (404) and the space
-					// route (404) both disagreed with, and one search engines
-					// index. The in-template gates run after the theme has begun
-					// output, which is why the status has to be decided here.
+					// can_read_post() is the authoritative read decision: it owns the status gate, the
+					// per-post privacy gate and the space gate, including a space concealed by its
+					// category. Deciding the status here keeps an unreadable post from rendering
+					// "Post not found" under HTTP 200 (a soft 404 search engines index); the
+					// in-template gates run after the theme has begun output, which is why the
+					// status is decided here.
 					if ( ! $post || ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 						status_header( 404 );
 					}
@@ -1816,7 +1691,7 @@ class Template_Loader {
 	/**
 	 * Print the breadcrumb trail where the view calls this (just before
 	 * <main>), or hold it for breadcrumb_in_main() when the site moved it
-	 * inside the main landmark (Basecamp 10272509253).
+	 * inside the main landmark.
 	 *
 	 * @param array<int,array<string,mixed>> $crumbs Crumbs, each with label and optional url.
 	 */
@@ -1867,5 +1742,196 @@ class Template_Loader {
 			extract( $args, EXTR_SKIP );
 			include $path;
 		}
+	}
+
+	/**
+	 * Translated strings for the community app (view.js), shared by the full
+	 * community pages and every embed that loads the same module (the compose
+	 * block and shortcode), so an embed never falls back to English.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function app_i18n(): array {
+		return array(
+			'voteRecorded'          => __( 'Vote added', 'jetonomy' ),
+			'voteRemoved'           => __( 'Vote removed', 'jetonomy' ),
+			'statusUpdated'         => __( 'Roadmap status updated', 'jetonomy' ),
+			'accepted'              => __( 'Accepted', 'jetonomy' ),
+			'reply'                 => \Jetonomy\jetonomy_label( 'reply' ),
+			'cancel'                => __( 'Cancel', 'jetonomy' ),
+			'save'                  => __( 'Save', 'jetonomy' ),
+			'saving'                => __( 'Saving...', 'jetonomy' ),
+			'failedSave'            => __( 'Failed to save.', 'jetonomy' ),
+			'networkError'          => __( 'Network error. Please try again.', 'jetonomy' ),
+			'follow'                => __( 'Follow', 'jetonomy' ),
+			'following'             => __( 'Following', 'jetonomy' ),
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			'followingSpace'        => sprintf( __( 'Following %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			/* translators: %s: the unfollowed space or topic title. */
+			'unfollowedSpace'       => sprintf( __( 'Unfollowed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			// Leave-space confirm (actions.leaveSpace).
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			'leaveSpace'            => sprintf( __( 'Leave %s', 'jetonomy' ), \Jetonomy\space_label() ),
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			'confirmLeaveSpace'     => sprintf( __( 'Leave this %s? You can rejoin at any time.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			'leave'                 => __( 'Leave', 'jetonomy' ),
+			'leaveSpaceFailed'      => __( 'Could not leave. Please try again.', 'jetonomy' ),
+			'copyLink'              => __( 'Copy link', 'jetonomy' ),
+			'bookmark'              => __( 'Bookmark', 'jetonomy' ),
+			'removeBookmark'        => __( 'Remove bookmark', 'jetonomy' ),
+			'bookmarked'            => __( 'Bookmarked', 'jetonomy' ),
+			'bookmarkRemoved'       => __( 'Bookmark removed', 'jetonomy' ),
+			/* translators: %s: the singular label of the item (the configured noun). */
+			'reportPrompt'          => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
+			'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
+			// Scoped, to match the "Pin to space" control. Pro can pin to
+			// the whole community, so an unqualified "Post pinned" leaves
+			// a moderator unsure which of the two just happened.
+			/* translators: %s: singular space label. */
+			'postPinned'            => sprintf( __( 'Pinned to this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			/* translators: %s: singular space label. */
+			'postUnpinned'          => sprintf( __( 'Unpinned from this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			'failedPin'             => __( 'Failed to toggle pin.', 'jetonomy' ),
+			/* translators: %s: the singular label of the item (the configured noun). */
+			'confirmDeletePost'     => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: %s: the singular label of the item (the configured noun). */
+			'confirmDeleteReply'    => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+			'failedDelete'          => __( 'Failed to delete.', 'jetonomy' ),
+			/* translators: 1: singular topic label, 2: singular space label the site owner configured. */
+			'moveTopicTitle'        => sprintf( __( 'Move %1$s to another %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
+			/* translators: %s: the singular topic label the site owner configured. */
+			'topicMoved'            => sprintf( __( '%s moved successfully.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			/* translators: %s: the singular topic label the site owner configured. */
+			'moveFailed'            => sprintf( __( 'Failed to move %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: %s: the singular topic label the site owner configured. */
+			'mergeTopicTitle'       => sprintf( __( 'Merge into another %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: 1: singular topic label, 2: plural reply label the site owner configured. */
+			'confirmMerge'          => sprintf( __( 'Merge this %1$s into the selected one? Its post, %2$s, votes and followers move there and this %1$s goes to the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			/* translators: %s: the plural topic label the site owner configured. */
+			'topicMerged'           => sprintf( __( '%s merged successfully.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			'mergeFailed'           => sprintf( __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+			// Says what the action DOES, not just what it needs. Split is a
+			// MOVE: the reply is removed from this thread and becomes the
+			// opening post of a new one. The prompt asked only for a title,
+			// so moderators used it expecting a copy and members watched a
+			// reply vanish. Merge has warned about its own destructiveness
+			// since 1.4.0; this is the same courtesy.
+			'splitReplyTitle'       => sprintf(
+				/* translators: 1: singular reply label, 2: singular topic label. */
+				__( 'This %1$s will be MOVED out of this %2$s and become the first post of a new one. Title for the new %2$s:', 'jetonomy' ),
+				\Jetonomy\jetonomy_label( 'reply', false, true ),
+				\Jetonomy\jetonomy_label( 'topic', false, true )
+			),
+			/* translators: 1: singular reply label, 2: singular topic label the site owner configured. */
+			'replySplit'            => sprintf( __( '%1$s split into new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: %s: the singular reply label the site owner configured. */
+			'splitFailed'           => sprintf( __( 'Failed to split %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+			/* translators: %s: name of the member being replied to. */
+			'replyingTo'            => __( 'Replying to %s', 'jetonomy' ), // jt-terms-ok: verb.
+			/* translators: %s: singular member label. */
+			'thisMember'            => sprintf( __( 'this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
+			/* translators: %s: a number and the reply label the owner renamed, e.g. "3 answers". */
+			'showCount'             => __( 'Show %s', 'jetonomy' ),
+			/* translators: %s: the singular reply label the site owner configured (lowercase). */
+			'cancelReply'           => sprintf( __( 'Cancel %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+			'posting'               => __( 'Posting...', 'jetonomy' ),
+			/* translators: %s: the reply label the site owner renamed; used only when it was renamed (built-in wording comes from view.js). */
+			'newRepliesRenamed'     => sprintf( __( 'New %s. Click to refresh.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+			'linkCopied'            => __( 'Link copied', 'jetonomy' ),
+			'linkCopyFailed'        => __( 'Could not copy the link. Copy it from the address bar.', 'jetonomy' ),
+			/* translators: %s: the singular topic label the site owner configured. */
+			'titleRequired'         => sprintf( __( 'Please enter a title for your %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			'bodyRequired'          => __( 'Please add some details before posting.', 'jetonomy' ),
+			'loginRequired'         => __( 'Please sign in to use this.', 'jetonomy' ),
+			// Pro Private Messaging composer (consumed by jetonomy-pro/assets/js/pro-view.js).
+			'messageSending'        => __( 'Sending...', 'jetonomy' ),
+			'messageSend'           => __( 'Send', 'jetonomy' ),
+			'messageSendFailed'     => __( 'Failed to send. Please try again.', 'jetonomy' ),
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			'noMessageMatches'      => sprintf( __( 'No matches. You can only message people who share at least one %s with you.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			'recipientRequired'     => __( 'Please enter a recipient.', 'jetonomy' ),
+			/* translators: %s: the username that was not found. */
+			'userNotFound'          => __( 'User not found: %s', 'jetonomy' ),
+			// Pro Private Messaging — conversation actions (kebab menu).
+			'muteFailed'            => __( 'Could not update mute setting.', 'jetonomy' ),
+			'archiveFailed'         => __( 'Could not archive the conversation.', 'jetonomy' ),
+			'leaveFailed'           => __( 'Could not leave the conversation.', 'jetonomy' ),
+			'blockFailed'           => __( 'Could not update block setting.', 'jetonomy' ),
+			'confirmLeave'          => __( 'Leave this conversation? You will not receive new messages.', 'jetonomy' ),
+			'confirmBlock'          => __( 'Block this user? They will no longer be able to message you here.', 'jetonomy' ),
+			// moderation flag toasts + profile-save failure (consumed by view.js via state.i18n).
+			'contentRemoved'        => __( 'Content removed', 'jetonomy' ),
+			'flagDismissed'         => __( 'Flag dismissed', 'jetonomy' ),
+			'failed'                => __( 'Failed', 'jetonomy' ),
+			'failedSaveProfile'     => __( 'Failed to save profile.', 'jetonomy' ),
+			'schedule'              => __( 'Schedule', 'jetonomy' ),
+			/* translators: %s: the label of the item being edited (the configured noun). */
+			'editPost'              => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: %s: the label of the item being edited (the configured noun). */
+			'editReply'             => sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+			'unaccepted'            => __( 'Marked as unanswered', 'jetonomy' ),
+			// 1.4.4 i18n sweep — keys view.js reads via state.i18n that were
+			// missing here, so they always rendered the English fallback even
+			// on a translated locale.
+			'voteFailed'            => __( 'Vote failed.', 'jetonomy' ),
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			'chooseSpace'           => sprintf( __( 'Choose the %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			'draftSaved'            => __( 'Draft saved. You can find it in your profile under Drafts.', 'jetonomy' ),
+			'saveDraft'             => __( 'Save Draft', 'jetonomy' ),
+			'scheduleDateRequired'  => __( 'Please choose a publish date and time.', 'jetonomy' ),
+			'failedTogglePrivate'   => __( 'Failed to change visibility.', 'jetonomy' ),
+			/* translators: %s: the singular topic label the site owner configured. */
+			'madePrivate'           => sprintf( __( '%s is now private', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			/* translators: %s: the singular topic label the site owner configured. */
+			'madePublic'            => sprintf( __( '%s is now public', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			/* translators: %s: singular topic or reply label. */
+			'pendingNotice'         => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: %s: singular topic or reply label. */
+			'pendingReplyNotice'    => sprintf( __( 'Your %s is awaiting moderation and will appear once approved.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+			'reportPlaceholder'     => __( 'Describe the issue...', 'jetonomy' ),
+			/* translators: %s: the singular label of the item (the configured noun). */
+			'reportReplyPrompt'     => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+			'reportUserPrompt'      => __( 'Why are you reporting this user?', 'jetonomy' ),
+			'reportUserPlaceholder' => __( 'Describe the issue...', 'jetonomy' ),
+			/* translators: %s: the singular topic label the site owner configured. */
+			'topicClosed'           => sprintf( __( '%s closed', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			/* translators: %s: the singular topic label the site owner configured. */
+			'topicReopened'         => sprintf( __( '%s reopened', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			'failedClose'           => sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			// Pro Polls strings consumed via state.i18n in pro-view.js.
+			'failedSubmitVote'      => __( 'Failed to submit vote. Please try again.', 'jetonomy' ),
+			// 1.6.1 i18n sweep - keys view.js reads via state.i18n that were
+			// never injected, so they rendered the English fallback on every locale.
+			'alreadyReported'       => __( 'You already reported this.', 'jetonomy' ),
+			'draftPublished'        => __( 'Published.', 'jetonomy' ),
+			'genericError'          => __( 'Could not publish.', 'jetonomy' ),
+			// Threaded-reply toggle label (single-post.php); the count is
+			// substituted client-side in the state.threadToggleLabel getter.
+			/* translators: %s: the plural label of the item (the configured noun). */
+			'hideReplies'           => sprintf( __( 'Hide %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+		);
+	}
+
+	/**
+	 * The community app's translations as wp.i18n locale data.
+	 *
+	 * The app (view.js) is a script module and cannot take wp_set_script_translations(),
+	 * so core's loader is pointed at the same file through a classic handle
+	 * that is registered, never enqueued, and the result is passed in the
+	 * page state; view.js hands it to wp.i18n.setLocaleData(). That gives
+	 * _n() every plural form of the site's language (Polish, Russian, Arabic).
+	 *
+	 * @return array|null Locale data for the 'jetonomy' domain, or null.
+	 */
+	public static function app_locale_data(): ?array {
+		if ( ! wp_script_is( 'jetonomy-view-l10n', 'registered' ) ) {
+			wp_register_script( 'jetonomy-view-l10n', JETONOMY_URL . 'assets/js/view.js', array(), JETONOMY_VERSION, true );
+		}
+		$json = load_script_textdomain( 'jetonomy-view-l10n', 'jetonomy', JETONOMY_DIR . 'languages' );
+		$data = $json ? json_decode( $json, true ) : null;
+		return is_array( $data['locale_data']['messages'] ?? null ) ? $data['locale_data']['messages'] : null;
 	}
 }

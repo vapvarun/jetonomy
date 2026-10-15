@@ -1,0 +1,66 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/composer.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "zh_CN",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Upload failed.": [
+                "\u4e0a\u4f20\u5931\u8d25\u3002"
+            ],
+            "Insert emoji": [
+                ""
+            ],
+            "Quote": [
+                "\u5f15\u7528"
+            ],
+            "Awaiting Approval": [
+                "\u7b49\u5f85\u5ba1\u6279"
+            ],
+            "Something went wrong. Please try again.": [
+                "\u51fa\u73b0\u9519\u8bef\uff0c\u8bf7\u91cd\u8bd5\u3002"
+            ],
+            "No matches": [
+                "\u65e0\u5339\u914d\u7ed3\u679c"
+            ],
+            "Close menu": [
+                "\u5173\u95ed\u83dc\u5355"
+            ],
+            "Enter URL:": [
+                "\u8f93\u5165 URL:"
+            ],
+            "https:\/\/example.com": [
+                "https:\/\/example.com"
+            ],
+            "Uploading\u2026": [
+                ""
+            ],
+            "Joining\u2026": [
+                ""
+            ],
+            "Requesting\u2026": [
+                ""
+            ],
+            "Request submitted. Awaiting approval.": [
+                "\u8bf7\u6c42\u5df2\u63d0\u4ea4\u3002\u7b49\u5f85\u5ba1\u6279\u3002"
+            ],
+            "Request to Join": [
+                "\u7533\u8bf7\u52a0\u5165"
+            ],
+            "Could not submit request.": [
+                "\u65e0\u6cd5\u63d0\u4ea4\u8bf7\u6c42\u3002"
+            ],
+            "Submitting\u2026": [
+                ""
+            ],
+            "Request Sent": [
+                "\u8bf7\u6c42\u5df2\u53d1\u9001"
+            ]
+        }
+    }
+}

@@ -18,7 +18,7 @@ class MemberPress_Adapter implements Membership_Adapter {
 
 	public function get_user_levels( int $user_id ): array {
 		if ( ! $this->is_active() ) {
-			return [];
+			return array();
 		}
 
 		$mepr_user = new \MeprUser( $user_id );
@@ -39,16 +39,16 @@ class MemberPress_Adapter implements Membership_Adapter {
 
 	public function get_all_levels(): array {
 		if ( ! $this->is_active() ) {
-			return [];
+			return array();
 		}
 
 		$products = \MeprCptModel::all( 'MeprProduct' );
-		$levels   = [];
+		$levels   = array();
 		foreach ( $products as $product ) {
-			$levels[] = [
+			$levels[] = array(
 				'id'    => 'mepr_' . $product->ID,
 				'label' => $product->post_title,
-			];
+			);
 		}
 		return $levels;
 	}
@@ -98,12 +98,12 @@ class MemberPress_Adapter implements Membership_Adapter {
 		}
 
 		// When a MemberPress transaction is completed
-		add_action( 'mepr-txn-status-complete', [ $this, 'on_membership_activated' ] );
+		add_action( 'mepr-txn-status-complete', array( $this, 'on_membership_activated' ) );
 
 		// When a subscription is paused/cancelled/expired
-		add_action( 'mepr-txn-status-refunded', [ $this, 'on_membership_deactivated' ] );
-		add_action( 'mepr-txn-expired', [ $this, 'on_membership_deactivated' ] );
-		add_action( 'mepr_subscription_transition_status', [ $this, 'on_subscription_status_change' ], 10, 3 );
+		add_action( 'mepr-txn-status-refunded', array( $this, 'on_membership_deactivated' ) );
+		add_action( 'mepr-txn-expired', array( $this, 'on_membership_deactivated' ) );
+		add_action( 'mepr_subscription_transition_status', array( $this, 'on_subscription_status_change' ), 10, 3 );
 	}
 
 	/**
@@ -117,6 +117,15 @@ class MemberPress_Adapter implements Membership_Adapter {
 		$user_id  = (int) $txn->user_id;
 		$level_id = 'mepr_' . $txn->product_id;
 
+		/**
+		 * Fires when a membership plugin reports that a user's membership became active.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int        $user_id  User ID.
+		 * @param string|int $level_id Membership level ID in the source plugin.
+		 * @param string     $source   Source adapter identifier.
+		 */
 		do_action( 'jetonomy_membership_activated', $user_id, $level_id, 'memberpress' );
 	}
 
@@ -136,12 +145,21 @@ class MemberPress_Adapter implements Membership_Adapter {
 		$active    = $mepr_user->active_product_subscriptions( 'ids' );
 
 		if ( ! in_array( $txn->product_id, $active, true ) ) {
+			/**
+			 * Fires when a membership plugin reports that a user's membership ended.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int        $user_id  User ID.
+			 * @param string|int $level_id Membership level ID in the source plugin.
+			 * @param string     $source   Source adapter identifier.
+			 */
 			do_action( 'jetonomy_membership_deactivated', $user_id, $level_id, 'memberpress' );
 		}
 	}
 
 	public function on_subscription_status_change( $old_status, $new_status, $subscription ): void {
-		if ( in_array( $new_status, [ 'suspended', 'cancelled' ], true ) ) {
+		if ( in_array( $new_status, array( 'suspended', 'cancelled' ), true ) ) {
 			$txn = $subscription->latest_txn();
 			if ( $txn ) {
 				$this->on_membership_deactivated( $txn );

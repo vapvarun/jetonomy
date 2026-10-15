@@ -21,8 +21,8 @@ use function Jetonomy\table;
 
 abstract class Importer {
 
-	public array $id_map    = [];
-	protected array $errors = [];
+	public array $id_map    = array();
+	protected array $errors = array();
 	protected int $imported = 0;
 	protected int $skipped  = 0;
 
@@ -54,7 +54,7 @@ abstract class Importer {
 	 *
 	 * @var array<string,int> 'topic' | 'reply' => count.
 	 */
-	protected array $orphans = [];
+	protected array $orphans = array();
 
 	/**
 	 * Placeholder id recorded in the id map during a dry run.
@@ -63,7 +63,7 @@ abstract class Importer {
 	 * still how a child row checks that its parent was handled. Mapping 0 made
 	 * every one of those checks fail: `! $mapped` cannot tell "parent was never
 	 * imported" from "dry run, nothing was created", so a clean dry run reported
-	 * an error per topic and per reply (Basecamp 10210057225).
+	 * an error per topic and per reply.
 	 *
 	 * Negative so it can never collide with a real auto-increment id, and truthy
 	 * so the existing parent checks read correctly without touching each one.
@@ -101,7 +101,7 @@ abstract class Importer {
 	abstract public function get_source_name(): string;
 	abstract public function is_source_available(): bool;
 	abstract public function get_source_stats(): array;
-	abstract public function run( array $options = [] ): array;
+	abstract public function run( array $options = array() ): array;
 
 	/**
 	 * Get the total count of records to import.
@@ -192,14 +192,14 @@ abstract class Importer {
 	public static function get_progress(): array {
 		return get_option(
 			'jetonomy_import_progress',
-			[
+			array(
 				'status'    => 'idle',
 				'phase'     => '',
 				'processed' => 0,
 				'total'     => 0,
 				'percent'   => 0,
 				'message'   => '',
-			]
+			)
 		);
 	}
 
@@ -223,14 +223,13 @@ abstract class Importer {
 	 * own source-specific resume options, calling parent::reset_run_state() first.
 	 */
 	public function reset_run_state(): void {
-		// Releases before 2.0.1 carried the whole id map between batches in
-		// this option. It is no longer written (see load_mapped()); deleted so
-		// a run aborted on an older version leaves nothing behind.
+		// Delete the legacy id-map option (see load_mapped()) so a run aborted on an
+		// older version leaves nothing behind.
 		delete_option( 'jetonomy_import_id_map' );
 		delete_option( 'jetonomy_import_total_processed' );
 		delete_option( 'jetonomy_import_errors' );
 		delete_option( 'jetonomy_import_tally' );
-		$this->id_map = [];
+		$this->id_map = array();
 	}
 
 	/**
@@ -263,7 +262,7 @@ abstract class Importer {
 	protected function find_imported( string $type, array $rows ): array {
 		$source = $this->map_source();
 		if ( '' === $source || ! $rows ) {
-			return [];
+			return array();
 		}
 
 		$found  = Import_Map::find_many( $source, $type, array_keys( $rows ) );
@@ -295,7 +294,7 @@ abstract class Importer {
 	 * @return void
 	 */
 	protected function load_mapped( string $key, string $type, array $ids ): void {
-		$ids = array_diff_key( $ids, $this->id_map[ $key ] ?? [] );
+		$ids = array_diff_key( $ids, $this->id_map[ $key ] ?? array() );
 		if ( ! $ids || '' === $this->map_source() ) {
 			return;
 		}
@@ -358,11 +357,10 @@ abstract class Importer {
 	/**
 	 * The category this source's spaces are filed under, created only when needed.
 	 *
-	 * A re-run used to create a fresh "Imported from ..." category every time,
-	 * so each re-import left another empty one behind. Resolution order: the
-	 * category this importer recorded, then the one a pre-map import used, then
-	 * a new one. Callers ask for it only when a forum actually has to be
-	 * created, so a re-run that finds nothing new creates nothing.
+	 * Resolution order: the category this importer recorded, then the one a pre-map
+	 * import used, then a new one. Callers ask for it only when a forum actually has to be
+	 * created, so a re-run that finds nothing new creates nothing (and no empty "Imported
+	 * from ..." category is left behind).
 	 *
 	 * @param string $key         Map key for the category ('default', or a board key).
 	 * @param string $slug_prefix Slug prefix, e.g. 'imported-bbpress'. A timestamp is appended.
@@ -382,7 +380,7 @@ abstract class Importer {
 
 		$cat_id = Import_Map::legacy_category( $slug_prefix );
 		if ( ! $cat_id ) {
-			$cat_id = (int) Category::create( array_merge( $args, [ 'slug' => $slug_prefix . '-' . time() ] ) );
+			$cat_id = (int) Category::create( array_merge( $args, array( 'slug' => $slug_prefix . '-' . time() ) ) );
 		}
 
 		$this->remember( 'category', $key, $cat_id );
@@ -396,12 +394,12 @@ abstract class Importer {
 	 * @return array{imported:int, already:int, rethreaded:int, orphans:array<string,int>}
 	 */
 	public function get_tally(): array {
-		return [
+		return array(
 			'imported'   => $this->imported,
 			'already'    => $this->already,
 			'rethreaded' => $this->rethreaded,
 			'orphans'    => $this->orphans,
-		];
+		);
 	}
 
 	/**
@@ -416,29 +414,29 @@ abstract class Importer {
 	 * @return string[] Translated sentences; empty when there is nothing to say.
 	 */
 	public static function describe_tally( array $tally ): array {
-		$lines   = [];
+		$lines   = array();
 		$already = (int) ( $tally['already'] ?? 0 );
 		$thread  = (int) ( $tally['rethreaded'] ?? 0 );
-		$orphans = (array) ( $tally['orphans'] ?? [] );
+		$orphans = (array) ( $tally['orphans'] ?? array() );
 
 		if ( $already > 0 ) {
 			/* translators: %s: number of items a previous import already brought over. */
 			$lines[] = sprintf( _n( '%s item was already imported and was skipped.', '%s items were already imported and were skipped.', $already, 'jetonomy' ), number_format_i18n( $already ) );
 		}
 		if ( $thread > 0 ) {
-			/* translators: %s: number of replies whose threading was restored. */
-			$lines[] = sprintf( _n( '%s reply from an earlier import had its threading restored.', '%s replies from an earlier import had their threading restored.', $thread, 'jetonomy' ), number_format_i18n( $thread ) );
+			/* translators: %s: number of replies with their label, e.g. "3 replies". */
+			$lines[] = sprintf( _n( '%s from an earlier import had its threading restored.', '%s from an earlier import had their threading restored.', $thread, 'jetonomy' ), \Jetonomy\count_label( (int) $thread, 'reply' ) );
 		}
 
 		$topics = (int) ( $orphans['topic'] ?? 0 );
 		if ( $topics > 0 ) {
 			/* translators: %s: number of topics left out. */
-			$lines[] = sprintf( _n( '%s topic was not imported because its forum was not imported (for example, the forum is a draft or in the trash).', '%s topics were not imported because their forum was not imported (for example, the forum is a draft or in the trash).', $topics, 'jetonomy' ), number_format_i18n( $topics ) );
+			$lines[] = sprintf( _n( '%s topic was not imported because its forum was not imported (for example, the forum is a draft or in the trash).', '%s topics were not imported because their forum was not imported (for example, the forum is a draft or in the trash).', $topics, 'jetonomy' ), number_format_i18n( $topics ) ); // jt-terms-ok: bbPress's own topics and forums in the source site, not imported content.
 		}
 		$replies = (int) ( $orphans['reply'] ?? 0 );
 		if ( $replies > 0 ) {
 			/* translators: %s: number of replies left out. */
-			$lines[] = sprintf( _n( '%s reply was not imported because its topic was not imported (for example, the topic is pending, spam or in the trash).', '%s replies were not imported because their topic was not imported (for example, the topic is pending, spam or in the trash).', $replies, 'jetonomy' ), number_format_i18n( $replies ) );
+			$lines[] = sprintf( _n( '%s reply was not imported because its topic was not imported (for example, the topic is pending, spam or in the trash).', '%s replies were not imported because their topic was not imported (for example, the topic is pending, spam or in the trash).', $replies, 'jetonomy' ), number_format_i18n( $replies ) ); // jt-terms-ok: bbPress's own replies and topics in the source site, not imported content.
 		}
 
 		return $lines;
@@ -454,11 +452,9 @@ abstract class Importer {
 	/**
 	 * Plain-language notes about what an import will actually do.
 	 *
-	 * The screen used to show raw counts and nothing else, so an owner could
-	 * not tell from it that closed topics and private forums are included now,
-	 * or that a private forum's members get imported, or that this source has
-	 * been imported before. All of that matters BEFORE committing to a one-way
-	 * migration.
+	 * These notes tell an owner that closed topics and private forums are included, that
+	 * a private forum's members get imported, or that this source has been imported
+	 * before - all of which matters BEFORE committing to a one-way migration.
 	 *
 	 * Importers override this; the default is silence.
 	 *
@@ -499,8 +495,8 @@ abstract class Importer {
 	 * @return object[] Same rows, parents first.
 	 */
 	protected function sort_rows_parents_first( array $rows, string $id_key, string $parent_key ): array {
-		$indexed  = [];
-		$children = [];
+		$indexed  = array();
+		$children = array();
 
 		foreach ( $rows as $row ) {
 			$id                    = (int) $row->$id_key;
@@ -509,8 +505,8 @@ abstract class Importer {
 			$children[ $parent ][] = $id;
 		}
 
-		$ordered = [];
-		$queue   = $children[0] ?? [];
+		$ordered = array();
+		$queue   = $children[0] ?? array();
 
 		while ( ! empty( $queue ) ) {
 			$id = array_shift( $queue );
@@ -544,18 +540,18 @@ abstract class Importer {
 	 * Log an error.
 	 */
 	protected function log_error( string $type, $id, string $message ): void {
-		$this->errors[] = [
+		$this->errors[] = array(
 			'type'    => $type,
 			'id'      => $id,
 			'message' => $message,
-		];
+		);
 	}
 
 	/**
 	 * Get import results.
 	 */
 	protected function results(): array {
-		return [
+		return array(
 			'source'     => $this->get_source_name(),
 			'imported'   => $this->imported,
 			'skipped'    => $this->skipped,
@@ -564,7 +560,7 @@ abstract class Importer {
 			'orphans'    => $this->orphans,
 			'errors'     => $this->errors,
 			'dry_run'    => $this->dry_run,
-		];
+		);
 	}
 
 	/**
@@ -573,8 +569,7 @@ abstract class Importer {
 	 *
 	 * The run_batch() call logs these into the per-request instance; the AJAX handler
 	 * reads this AFTER each batch and accumulates them, so a skipped file is reported
-	 * to the customer instead of vanishing behind a green "Import complete!". That
-	 * silent success is what let the original missing-media bug ship.
+	 * to the customer instead of vanishing behind a green "Import complete!".
 	 *
 	 * @return array<int,array{type:string,id:mixed,message:string}>
 	 */
@@ -596,11 +591,7 @@ abstract class Importer {
 	 * Attachments are stored in FREE from 1.7.1 on, so an import always has
 	 * somewhere to put them.
 	 *
-	 * This used to ask Pro over a filter, and answer "no" on a free site — which
-	 * meant a free-tier migration wrote no attachment rows at all, and we papered
-	 * over it by leaving the old forum's raw markup in the post body. Two
-	 * presentations, one of which only existed on free, and a body we had to mutate
-	 * to switch between them. Kept only so a caller can still ask.
+	 * Always true; kept only so a caller can still ask.
 	 */
 	protected function attachments_available(): bool {
 		return true;
@@ -609,9 +600,8 @@ abstract class Importer {
 	/**
 	 * Resolve a URL from an old forum body to the file's path inside uploads/.
 	 *
-	 * The single place any importer turns a source URL into a path. There used to be
-	 * two implementations that disagreed, and the naive one — a `strpos()` against
-	 * `$uploads['baseurl']` — was wrong against real forum markup:
+	 * The single place any importer turns a source URL into a path. A naive `strpos()`
+	 * against `$uploads['baseurl']` is wrong against real forum markup:
 	 *
 	 *   - wpForo writes attachment hrefs PROTOCOL-RELATIVE (`//host/path`). Its
 	 *     folder map builds a `url//` key with `preg_replace('#^https?:#i','',$url)`
@@ -707,13 +697,12 @@ abstract class Importer {
 			return (int) $existing;
 		}
 
-		// Refuse anything WordPress would not accept as an upload. The old code fell
-		// back to application/octet-stream here, which turned "WP rejects this file
-		// type" into "register it anyway" — and that is what made a planted
-		// `../../../wp-config.php` reachable.
+		// Refuse anything WordPress would not accept as an upload. Falling back to
+		// application/octet-stream would turn "WP rejects this file type" into "register it
+		// anyway" and make a planted `../../../wp-config.php` reachable.
 		$filetype = wp_check_filetype( basename( $path ), null );
 		if ( empty( $filetype['type'] ) ) {
-			$this->log_error( 'attachment', $file_url, 'Disallowed file type' );
+			$this->log_error( 'attachment', $file_url, __( 'Disallowed file type', 'jetonomy' ) );
 			return 0;
 		}
 
@@ -726,13 +715,13 @@ abstract class Importer {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
 		$attach_id = wp_insert_attachment(
-			[
+			array(
 				'guid'           => $canonical_url,
 				'post_mime_type' => $filetype['type'],
 				'post_title'     => $file_name ?: basename( $path ),
 				'post_content'   => '',
 				'post_status'    => 'inherit',
-			],
+			),
 			$path
 		);
 
@@ -832,7 +821,7 @@ abstract class Importer {
 		}
 
 		$registered = 0;
-		$seen       = [];
+		$seen       = array();
 
 		foreach ( array_unique( $matches[1] ) as $found ) {
 			$raw_url = html_entity_decode( $found, ENT_QUOTES, 'UTF-8' );

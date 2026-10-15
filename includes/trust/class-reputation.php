@@ -28,7 +28,7 @@ class Reputation {
 	 * Points awarded (or deducted) per action type.
 	 *
 	 * Keys are stable identifiers passed to {@see award()} / {@see revoke()}.
-	 * Some entries are populated for use by WS4-B (currently un-wired callsites).
+	 * Some entries are defined ahead of the callsites that will award them.
 	 */
 	private const POINTS_MAP = array(
 		// Small participation award for publishing content. Quality signals
@@ -116,16 +116,19 @@ class Reputation {
 	 *
 	 * @param int    $user_id WP user ID.
 	 * @param string $action  Action key from POINTS_MAP.
+	 * @param array  $context The post or reply that earned it: object_type, object_id.
+	 *                        Logs point at that content, so an anonymous author stays
+	 *                        masked wherever the activity is shown.
 	 * @return int The point delta that was applied (0 if action is unknown).
 	 */
-	public static function award( int $user_id, string $action ): int {
+	public static function award( int $user_id, string $action, array $context = array() ): int {
 		$delta = self::points_for( $action );
 
 		if ( 0 === $delta ) {
 			return 0;
 		}
 
-		return self::dispatch( $user_id, $delta, $action, array() );
+		return self::dispatch( $user_id, $delta, $action, $context );
 	}
 
 	/**
@@ -137,9 +140,10 @@ class Reputation {
 	 *
 	 * @param int    $user_id WP user ID.
 	 * @param string $action  The original action key that was awarded.
+	 * @param array  $context The post or reply concerned, as for award().
 	 * @return int The (negative or zero) delta that was applied.
 	 */
-	public static function revoke( int $user_id, string $action ): int {
+	public static function revoke( int $user_id, string $action, array $context = array() ): int {
 		$original = self::points_for( $action );
 
 		if ( 0 === $original ) {
@@ -148,7 +152,60 @@ class Reputation {
 
 		$delta = -$original;
 
-		return self::dispatch( $user_id, $delta, $action . '_revoked', array() );
+		return self::dispatch( $user_id, $delta, $action . '_revoked', $context );
+	}
+
+	/**
+	 * Award $action for this object unless an earlier award is still
+	 * outstanding (one per object, however often the triggering state repeats).
+	 *
+	 * @param int    $user_id Member.
+	 * @param string $action  POINTS_MAP key.
+	 * @param array  $context Must carry object_type + object_id.
+	 * @return int Delta applied.
+	 */
+	public static function award_once( int $user_id, string $action, array $context ): int {
+		// Claim the object first: add_option() is atomic (unique option_name), so
+		// a double-clicked moderator action cannot pass the outstanding check
+		// twice before the first award is logged.
+		$lock = '_jt_rep_lock_' . md5( $action . '|' . $user_id . '|' . ( $context['object_type'] ?? '' ) . '|' . ( $context['object_id'] ?? 0 ) );
+		if ( ! add_option( $lock, time(), '', false ) ) {
+			return 0;
+		}
+		try {
+			return self::outstanding( $user_id, $action, $context ) > 0 ? 0 : self::award( $user_id, $action, $context );
+		} finally {
+			delete_option( $lock );
+		}
+	}
+
+	/**
+	 * Give back $action for this object only if the ledger shows it was applied
+	 * and not yet given back - never return points that were never taken (or
+	 * take back points that were never given).
+	 *
+	 * @param int    $user_id Member.
+	 * @param string $action  POINTS_MAP key.
+	 * @param array  $context Must carry object_type + object_id.
+	 * @return int Delta applied (0 when nothing was outstanding).
+	 */
+	public static function revoke_awarded( int $user_id, string $action, array $context ): int {
+		if ( self::outstanding( $user_id, $action, $context ) <= 0 ) {
+			return 0;
+		}
+		return self::revoke( $user_id, $action, $context );
+	}
+
+	/**
+	 * Net applications of $action on the context object for $user_id.
+	 *
+	 * @param int    $user_id Member.
+	 * @param string $action  POINTS_MAP key.
+	 * @param array  $context object_type + object_id.
+	 * @return int
+	 */
+	private static function outstanding( int $user_id, string $action, array $context ): int {
+		return \Jetonomy\Models\ActivityLog::reputation_net( $user_id, $action, (string) ( $context['object_type'] ?? '' ), (int) ( $context['object_id'] ?? 0 ) );
 	}
 
 	/**

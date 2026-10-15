@@ -51,7 +51,7 @@
 	var iframe = document.getElementById('jetonomy-email-preview-iframe');
 	var subjEl = document.getElementById('jetonomy-email-preview-subject');
 
-	// Dialog keyboard contract (Basecamp 10146440810 a11y addendum): remember
+	// Dialog keyboard contract: remember
 	// the opener, move focus into the dialog on open, trap Tab inside it, and
 	// restore focus on close. The markup carries role="dialog" + aria-modal.
 	var lastOpener = null;
@@ -68,16 +68,15 @@
 	 *
 	 * The opener must be passed in, not read from document.activeElement:
 	 * this runs inside the preview request's .then(), by which point focus
-	 * has long since returned to <body>, so the dialog remembered the body
-	 * and Escape restored focus to nothing (Basecamp 10146440810, a11y
-	 * addendum, second pass).
+	 * has long since returned to <body>, so the dialog would remember the body
+	 * and Escape would restore focus to nothing.
 	 */
 	function openModal( opener ) {
 		lastOpener = opener || document.activeElement;
 		modal.style.display = '';
 		// Focus the Close button, not the first focusable: DOM order put the
 		// preview IFRAME first, which swallowed the dialog's key handling and
-		// read poorly to screen readers (QA 2026-07-30, card 10146440810).
+		// read poorly to screen readers.
 		var close = modal.querySelector('.jetonomy-modal-close');
 		var f = focusables();
 		if (close) { close.focus(); } else if (f.length) { f[0].focus(); }
@@ -114,8 +113,8 @@
 	// phase, so it wins) and hides the dialog itself. Whichever handler gets
 	// there first, the outcome has to be the same: focus returns to the button
 	// that opened the preview. Watching the element decouples that promise from
-	// which code path did the closing (Basecamp 10146440810, a11y addendum -
-	// Escape was leaving focus on <body> while the Close button was fine).
+	// which code path did the closing (otherwise
+	// Escape could leave focus on <body> while the Close button works).
 	new MutationObserver(function () {
 		if ('none' !== modal.style.display) { return; }
 		if (lastOpener && lastOpener.focus) { lastOpener.focus(); }

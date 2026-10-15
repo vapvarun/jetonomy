@@ -469,7 +469,7 @@
 	box-shadow: var(--jt-admin-shadow);
 	/* Grid children default to min-width:auto, so a card whose inner table
 	   has a wide min-content width silently stretched past the viewport
-	   (425px doc at 390 - Basecamp 10146406005). */
+	   (425px doc at 390). */
 	min-width: 0;
 	box-sizing: border-box;
 	max-width: 100%;
@@ -1596,6 +1596,7 @@ tr.jetonomy-moderated td {
 
 .jetonomy-rule-actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 6px;
 	align-items: center;
 }
@@ -2121,7 +2122,7 @@ tr.jetonomy-moderated td {
 	   out of that band.
 	   Changing the AXIS rather than replacing core's display keeps the rest of
 	   core's flex sizing intact - `display:block` on the row also works but
-	   throws away more than the problem needs. (Basecamp 10221440849, QA
+	   throws away more than the problem needs. (QA
 	   bounce after the toggle itself was fixed.) */
 	.jetonomy-admin .wp-list-table tr.is-expanded {
 		flex-direction: column;
@@ -2136,7 +2137,7 @@ tr.jetonomy-moderated td {
 		justify-content: space-between;
 		align-items: center;
 		/* wrap: a 4-button Actions cell pushed the last button past the
-		   viewport edge (Badges at 390 - Basecamp 10146405920). */
+		   viewport edge (Badges at 390). */
 		flex-wrap: wrap;
 		gap: 8px 12px;
 		padding: 9px 10px;
@@ -2153,8 +2154,7 @@ tr.jetonomy-moderated td {
 		float: none;
 		flex-shrink: 0;
 		/* Core keeps td::before ABSOLUTE in a left label lane; unreset, the
-		   label painted over the first ~98px of the value (Basecamp
-		   10150581217, measured 23-38px of text overlap at 390). Static
+		   label painted over the first ~98px of the value (measured 23-38px of text overlap at 390). Static
 		   makes the label a real flex item so label and value occupy
 		   separate lanes at every collapsed width. */
 		position: static;
@@ -2753,8 +2753,7 @@ tr.jetonomy-moderated td {
 }
 
 /* Never shrink controls below the touch floor on small screens - the fixed
-   16px above overrode WP core's own mobile checkbox sizing
-   (Basecamp 10146440810 a11y addendum). */
+   16px above overrode WP core's own mobile checkbox sizing. */
 @media screen and (max-width: 782px) {
 	.jt-notif-defaults-table input[type="checkbox"],
 	.jetonomy-admin table.jt-settings-matrix input[type="checkbox"] {
@@ -3338,7 +3337,7 @@ tr.jetonomy-moderated td {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Responsive table contract (Basecamp 10146443346)
+   Responsive table contract
    Emitted by jetonomy_admin_table() — the shared primitive every
    Free/Pro admin list table renders through. Breakpoints: 782px
    (core's own list-table collapse point) and 480px. Touch targets:
@@ -3355,7 +3354,7 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .wp-list-table th.jt-col-l  { width: 180px; }
 }
 
-/* The 1024px cliff (Basecamp 10150581904): the media query above keys on
+/* The 1024px cliff: the media query above keys on
    the VIEWPORT, but the open wp-admin menu leaves only ~820px of container
    at 1024 - table-layout:fixed then paid every fixed secondary width and
    crushed the PRIMARY column to 51-80px (titles fragmenting vertically,
@@ -3451,7 +3450,7 @@ tr.jetonomy-moderated td {
 		align-items: center;
 		min-height: 44px;
 	}
-	/* Settings tab nav measured 28.8px on phones (Basecamp 10150582519). */
+	/* Settings tab nav measured 28.8px on phones. */
 	.jetonomy-admin .nav-tab,
 	.jetonomy-admin .jt-settings-nav a {
 		display: inline-flex;
@@ -3472,7 +3471,7 @@ tr.jetonomy-moderated td {
 		max-width: 100%;
 	}
 
-	/* Settings matrix on a PHONE (Basecamp 10146440810, self-audit 2026-07-31).
+	/* Settings matrix on a PHONE.
 	   The stacked-matrix rules live in the 783-1100 squeeze band, so below 782
 	   the only thing stacking these tables is core's own .wp-list-table mobile
 	   CSS - which renders the data-colname as `position:absolute; left:10px;
@@ -3516,7 +3515,7 @@ tr.jetonomy-moderated td {
 	/* Settings FORM controls. The ladder above covers list tables, tablenavs
 	   and the settings nav, but never reached the fields themselves - every
 	   text input, select and textarea in a settings card measured 40px on a
-	   phone, i.e. the DESKTOP floor (Basecamp 10150582519, re-measured
+	   phone, i.e. the DESKTOP floor (re-measured
 	   2026-07-31 across general/permissions/email/ai/attachments/webhooks/
 	   branding). Touch gets 44. `.small-text` number fields are included on
 	   purpose: a rate-limit stepper is no easier to hit than any other. */
@@ -3575,13 +3574,11 @@ tr.jetonomy-moderated td {
    Core stacks label/field rows only ≤782px; between 783px and ~960px the
    folded-menu content column leaves our settings CARDS ~463px wide while a
    form-table row (200px label + 25em input) needs ~500px+, so controls
-   clipped ~19px under the card's hidden overflow (QA 2026-07-30, cards
-   10146440810/10146297370). Inside Jetonomy settings cards the stacked
+   clipped ~19px under the card's hidden overflow. Inside Jetonomy settings cards the stacked
    layout simply persists until the row genuinely fits. */
 /* Settings MATRICES get the same squeeze-band treatment as form-tables:
    at exactly 783px the Email Templates matrix reverted to desktop layout
-   inside a ~463px card - body editors measured 32px wide, actions 24px
-   (QA wave-7 on 10146440810). Non-wide matrices stay stacked until the
+   inside a ~463px card - body editors measured 32px wide, actions 24px. Non-wide matrices stay stacked until the
    card genuinely fits them; the role matrix keeps its scroll wrapper. */
 @media screen and (min-width: 783px) and (max-width: 1100px) {
 	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide),
@@ -3624,7 +3621,7 @@ tr.jetonomy-moderated td {
 		   to reserve a padding lane for it. Our cell is a flex row with no
 		   horizontal padding, so the label was painted straight over the
 		   value - "5" sitting on top of "POSTS REQUIRED" on every threshold
-		   row (Basecamp 10146440810, self-audit 2026-07-31). Same reset the
+		   row. Same reset the
 		   expanded-row labels needed: make it a real flex child. */
 		position: static;
 		left: auto;
@@ -3669,7 +3666,7 @@ tr.jetonomy-moderated td {
 
 /* Wide matrices (one column per ROLE — count is site-defined and unbounded)
    scroll horizontally inside their card instead of being squeezed to 100%
-   and clipped by the card's hidden overflow (Basecamp 10146440810 QA fail
+   and clipped by the card's hidden overflow (QA fail
    at 1024/1440: a 14-role site produced an ~1820px table inside a 578px
    card). Above 782px the wrapper scrolls and columns keep natural width;
    below 782px the stacking primitive takes over and the table collapses,
@@ -3677,6 +3674,18 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .jt-matrix-scroll {
 	overflow-x: auto;
 	-webkit-overflow-scrolling: touch;
+}
+
+/* Locked third-party role notice: the reset button carries a role name,
+   so it has to wrap instead of running off a phone screen. */
+.jetonomy-admin .jt-role-locked-notice .button {
+	height: auto;
+	min-height: 32px;
+	padding-block: 4px;
+	line-height: 1.4;
+	white-space: normal;
+	text-align: start;
+	margin-inline-start: 4px;
 }
 
 .jetonomy-admin .jt-role-caps-locked {
@@ -3738,8 +3747,7 @@ tr.jetonomy-moderated td {
 		align-items: center;
 		justify-content: space-between;
 		/* wrap: a three-button action cell (Preview + Send test + Reset) spanned
-		   past the viewport when an override made Reset visible
-		   (Basecamp 10146440810 QA fail at 320/390). */
+		   past the viewport when an override made Reset visible. */
 		flex-wrap: wrap;
 		gap: 8px 12px;
 		padding: 8px 0;
@@ -3756,7 +3764,7 @@ tr.jetonomy-moderated td {
 	}
 }
 
-/* Space editor list tables (Basecamp 10150588436): Members measured 472px
+/* Space editor list tables: Members measured 472px
    at 320 (152px document overflow) and Access Rules letter-wrapped its
    headings. Inside their scroll container the tables keep a readable
    natural width and single-line headings; the container absorbs the rest. */
@@ -3770,14 +3778,26 @@ tr.jetonomy-moderated td {
 /* These rows mix short text with action buttons, and WP core's widefat
    default is vertical-align: top. On the invite links row that left the
    21px <code> URL hugging the cell top while the 34px Copy/Revoke buttons
-   centred 9px lower, so the row read as misaligned (Basecamp 10203615939).
+   centred 9px lower, so the row read as misaligned.
    Centring every cell in the shared list class fixes it once for invites,
    members and join requests rather than per table. */
 .jetonomy-admin .jt-spacedit-list td {
 	vertical-align: middle;
 }
 
-/* Grouped field pairs in settings (Basecamp 10150582271): sibling inputs
+/* Action cells hold two buttons (Sync + Delete, Approve + Deny). In the fixed
+   table layout the column defaulted to an equal share that was ~15px short of
+   both, so they wrapped onto two rows at desktop. Desktop only: below 783px
+   core stacks each cell as a label + value row, and a fixed width there
+   pushed the second button past the screen edge. */
+@media screen and (min-width: 783px) {
+	.jetonomy-admin .jt-spacedit-list th.column-actions,
+	.jetonomy-admin .jt-spacedit-list td.column-actions {
+		width: 16rem;
+	}
+}
+
+/* Grouped field pairs in settings: sibling inputs
    used to touch with 0px gap and the second field's only "label" was its
    placeholder. The pair primitive gives each field a visible label and a
    consistent 12px rhythm, stacking on narrow cards. */
@@ -3812,7 +3832,7 @@ tr.jetonomy-moderated td {
 	margin-block-end: 4px;
 }
 
-/* ── Desktop target ladder (Basecamp 10150582519) ─────────────
+/* ── Desktop target ladder ─────────────
    Regular controls meet 40px; dense list rows (row actions, the
    expanded-row action links) carry the documented dense exception and
    never fall below 34px. Measured failures: Moderation actions
@@ -3877,7 +3897,7 @@ tr.jetonomy-moderated td {
 	/* Per-template Preview / Send test on the Email tab measured 24px - core
 	   `.button-small` with nothing raising it. It IS a dense repeating list,
 	   so it takes the documented 34px dense floor rather than the 40px
-	   regular one, but 24px was under even that (Basecamp 10150582519). */
+	   regular one, but 24px was under even that. */
 	.jetonomy-admin .jetonomy-email-actions .button,
 	.jetonomy-admin .jetonomy-email-actions button {
 		display: inline-flex;
@@ -3888,7 +3908,7 @@ tr.jetonomy-moderated td {
 	}
 }
 
-/* Dialog contract shared chrome (Basecamp 10150582851): every overlay
+/* Dialog contract shared chrome: every overlay
    keeps a phone edge gutter and actions on the ladder. */
 .jetonomy-modal .jetonomy-modal__content {
 	margin: 16px;
@@ -4183,8 +4203,7 @@ tr.jetonomy-moderated td {
 /* Tab bars keep the touch floor through the tablet range.
    The ladder gives 44px to phones (<=782) and 40px to desktop, and the
    space-editor tabs landed on 42px at 1024 - above the desktop floor, but
-   1024 is iPad landscape, which is a touch device navigating with a finger
-   (Basecamp 10150588436, second pass). A primary nav control should not drop
+   1024 is iPad landscape, which is a touch device navigating with a finger. A primary nav control should not drop
    below the touch target on any screen someone actually taps. */
 @media screen and (min-width: 783px) and (max-width: 1024px) {
 	.jetonomy-admin .nav-tab,
@@ -4198,7 +4217,7 @@ tr.jetonomy-moderated td {
 
 /* Core's .regular-text is a fixed 25em (~325px), which is wider than a 320px
    screen - the Users filter bar pushed the document to 335px and the whole
-   backend could not be called presentable while it did (Basecamp 10146297370).
+   backend could not be called presentable while it did.
    Cap every fixed-width core field to the space actually available. */
 .jetonomy-admin .regular-text,
 .jetonomy-admin .large-text,
@@ -4217,3 +4236,9 @@ tr.jetonomy-moderated td {
 	flex-wrap: wrap;
 	max-width: 100%;
 }
+
+/* Pro extension tier badge on the Free vs Pro tab. */
+.jetonomy-admin .jt-tier-badge { margin-inline-start: auto; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; background: var(--jt-admin-success-light, #f0fdf4); color: var(--jt-admin-success-dark, #166534); }
+.jetonomy-admin .jt-tier-badge--agency { background: var(--jt-admin-warn-light, #fef3c7); color: var(--jt-admin-warn-dark, #92400e); }
+.jetonomy-admin .jt-tier-badge--growth { background: var(--jt-admin-info-light, #e0e7ff); color: var(--jt-admin-info-dark, #3730a3); }
+

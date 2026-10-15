@@ -13,7 +13,7 @@ namespace Jetonomy\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
-use function Jetonomy\table;
+use Jetonomy\Models\ActivityLog;
 
 if ( ! class_exists( '\WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -39,6 +39,13 @@ class Activity_List_Table extends \WP_List_Table {
 	 * @var int
 	 */
 	private int $total_items = 0;
+
+	/**
+	 * Posts and replies this page's rows point at, for anonymous-actor masking.
+	 *
+	 * @var array<string, object>
+	 */
+	private array $objects = array();
 
 	public function __construct() {
 		parent::__construct(
@@ -67,8 +74,8 @@ class Activity_List_Table extends \WP_List_Table {
 		// overridden to Actor, Date stayed display:table-cell, table-layout:fixed
 		// squeezed it to 0 width, and at 390px it spilled a character per line.
 		//
-		// Same defect the Revisions screen had (Basecamp 10212987797): both
-		// overrode the primary in the 10146443346 batch without reordering.
+		// Same defect the Revisions screen had: both
+		// overrode the primary without reordering.
 		// Do not reorder these two without re-checking 390px - the browser gate
 		// in tests/browser/admin-tables.spec.js asserts it.
 		return array(
@@ -85,7 +92,7 @@ class Activity_List_Table extends \WP_List_Table {
 	 *
 	 * WP_List_Table makes the first column primary, which here was the date -
 	 * so every collapsed row on a phone read "22 minutes ago" and nothing
-	 * distinguished one entry from the next (Basecamp 10146443346). The actor
+	 * distinguished one entry from the next. The actor
 	 * is the identity in an activity log; the rest expands behind the toggle.
 	 *
 	 * Actor is now first, so this restates WP's default rather than changing it.
@@ -151,43 +158,9 @@ class Activity_List_Table extends \WP_List_Table {
 	}
 
 	/**
-	 * Build the WHERE clause + bind args for the active filters.
-	 *
-	 * @return array{0: string, 1: array<int, mixed>}
-	 */
-	private function build_where(): array {
-		global $wpdb;
-		$filters = self::read_filters();
-
-		$clauses = array( '1=1' );
-		$args    = array();
-
-		if ( $filters['user_id'] > 0 ) {
-			$clauses[] = 'user_id = %d';
-			$args[]    = $filters['user_id'];
-		}
-		if ( '' !== $filters['action'] ) {
-			$clauses[] = 'action = %s';
-			$args[]    = $filters['action'];
-		}
-		if ( '' !== $filters['date_from'] ) {
-			$clauses[] = 'created_at >= %s';
-			$args[]    = $filters['date_from'] . ' 00:00:00';
-		}
-		if ( '' !== $filters['date_to'] ) {
-			$clauses[] = 'created_at <= %s';
-			$args[]    = $filters['date_to'] . ' 23:59:59';
-		}
-
-		return array( implode( ' AND ', $clauses ), $args );
-	}
-
-	/**
 	 * Hydrate items + pagination state.
 	 */
 	public function prepare_items(): void {
-		global $wpdb;
-
 		$per_page = $this->get_items_per_page( 'jetonomy_activity_per_page', 20 );
 		$paged    = max( 1, absint( $this->get_pagenum() ) );
 		$offset   = ( $paged - 1 ) * $per_page;
@@ -197,32 +170,21 @@ class Activity_List_Table extends \WP_List_Table {
 		// the name against get_column_headers( $this->screen ) - and a custom admin
 		// page registers no screen columns, so the check fails and it silently
 		// falls back to the first column. That put the DATE in the mobile primary
-		// cell, so every collapsed row read "22 minutes ago" (Basecamp 10146443346).
+		// cell, so every collapsed row read "22 minutes ago".
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns(), 'actor' );
 
-		[ $where, $args ] = $this->build_where();
-		$activity_t       = table( 'activity_log' );
+		$filters = self::read_filters();
 
 		// Count first — lets the pager render even when the page query
 		// returns fewer rows than expected (e.g. last page partially full).
-		$count_sql         = "SELECT COUNT(*) FROM {$activity_t} WHERE {$where}";
-		$this->total_items = (int) ( $args ? $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) ) : $wpdb->get_var( $count_sql ) );
+		$this->total_items = ActivityLog::count_filtered( $filters );
 
-		// Order by — only created_at is sortable; whitelist defends
-		// against tampered ?orderby= values.
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only sort UI.
-		$orderby = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'created_at';
-		$order   = isset( $_GET['order'] ) && 'asc' === strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) ? 'ASC' : 'DESC';
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-		if ( 'created_at' !== $orderby ) {
-			$orderby = 'created_at';
-		}
+		// Only created_at is sortable (KEY created), so only the direction is read.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only sort UI.
+		$order = isset( $_GET['order'] ) && 'asc' === strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) ? 'ASC' : 'DESC';
 
-		$sql       = "SELECT * FROM {$activity_t} WHERE {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-		$full_args = array_merge( $args, array( $per_page, $offset ) );
-		$rows      = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: array();
-
-		$this->items = $rows;
+		$this->items   = ActivityLog::list_filtered( $filters, $order, $per_page, $offset );
+		$this->objects = \Jetonomy\Author::objects_of( $this->items );
 
 		$this->set_pagination_args(
 			array(
@@ -245,10 +207,7 @@ class Activity_List_Table extends \WP_List_Table {
 		if ( null !== $this->known_actions ) {
 			return $this->known_actions;
 		}
-		global $wpdb;
-		$activity_t          = table( 'activity_log' );
-		$rows                = $wpdb->get_col( "SELECT DISTINCT action FROM {$activity_t} WHERE action <> '' ORDER BY action ASC" );
-		$this->known_actions = is_array( $rows ) ? array_map( 'strval', $rows ) : array();
+		$this->known_actions = ActivityLog::list_actions();
 		return $this->known_actions;
 	}
 
@@ -288,6 +247,10 @@ class Activity_List_Table extends \WP_List_Table {
 		if ( $user_id <= 0 ) {
 			return '<em>' . esc_html__( 'System', 'jetonomy' ) . '</em>';
 		}
+		$object = $this->objects[ ( $item->object_type ?? '' ) . ':' . (int) ( $item->object_id ?? 0 ) ] ?? null;
+		if ( \Jetonomy\Author::hides_actor( $user_id, $object ) ) {
+			return '<em>' . esc_html__( 'Anonymous', 'jetonomy' ) . '</em>';
+		}
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {
 			return sprintf(
@@ -318,9 +281,9 @@ class Activity_List_Table extends \WP_List_Table {
 			return '&mdash;';
 		}
 		// Action codes are machine identifiers (e.g. created_post). Show
-		// a humanized version while keeping the raw value as a tooltip
+		// the human label while keeping the raw value as a tooltip
 		// for admins debugging tracker output.
-		$label = ucwords( str_replace( '_', ' ', $action ) );
+		$label = Admin::action_label( $action );
 		return sprintf(
 			'<code title="%1$s">%2$s</code>',
 			esc_attr( $action ),
@@ -335,7 +298,7 @@ class Activity_List_Table extends \WP_List_Table {
 			return '&mdash;';
 		}
 
-		$label = sprintf( '%s #%d', ucfirst( $type ), $id );
+		$label = sprintf( '%s #%d', Admin::object_type_label( $type ), $id );
 		$url   = $this->resolve_object_admin_url( $type, $id );
 		if ( '' === $url ) {
 			return esc_html( $label );
@@ -428,7 +391,7 @@ class Activity_List_Table extends \WP_List_Table {
 					<option value=""><?php esc_html_e( 'All types', 'jetonomy' ); ?></option>
 					<?php foreach ( $actions as $code ) : ?>
 						<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $filters['action'], $code ); ?>>
-							<?php echo esc_html( ucwords( str_replace( '_', ' ', $code ) ) ); ?>
+							<?php echo esc_html( Admin::action_label( (string) $code ) ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>

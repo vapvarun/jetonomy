@@ -34,21 +34,21 @@ class Users_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/users/me',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_current_user' ],
+					'callback'            => array( $this, 'get_current_user' ),
 					'permission_callback' => '__return_true',
-				],
-				[
+				),
+				array(
 					'methods'             => 'PATCH',
-					'callback'            => [ $this, 'update_current_user' ],
+					'callback'            => array( $this, 'update_current_user' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_update_args(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_account' ],
+					'callback'            => array( $this, 'delete_account' ),
 					// Apple 5.1.1(v) / GDPR Art. 17: an app supporting account
 					// creation must let a member delete their account from
 					// inside the app — including a banned or never-verified
@@ -58,48 +58,48 @@ class Users_Controller extends Base_Controller {
 					// nonce) still applies.
 					'permission_callback' => REST_Auth::auth_mutation(
 						'read',
-						[
+						array(
 							'allow_banned'     => true,
 							'allow_unverified' => true,
-						]
+						)
 					),
 					'args'                => $this->get_delete_account_args(),
-				],
-			]
+				),
+			)
 		);
 
 		// Public profile by ID.
 		register_rest_route(
 			$ns,
 			'/users/(?P<id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_item' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-			]
+				'callback'            => array( $this, 'get_item' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+			)
 		);
 
 		// Public profile by login (username).
 		register_rest_route(
 			$ns,
 			'/users/by-login/(?P<login>[a-zA-Z0-9_\-\.]+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_by_login' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
-			]
+				'callback'            => array( $this, 'get_by_login' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+			)
 		);
 
 		// Posts by user.
 		register_rest_route(
 			$ns,
 			'/users/(?P<id>\d+)/posts',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_user_posts' ],
-				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
+				'callback'            => array( $this, 'get_user_posts' ),
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
 				'args'                => $this->get_collection_params(),
-			]
+			)
 		);
 
 		// 1.4.0 C.7 — mention autocomplete: GET /users/suggest?q=&space_id=
@@ -211,7 +211,7 @@ class Users_Controller extends Base_Controller {
 				'is_banned'    => 'global_ban' === $rtype,
 				// Server-authoritative ban eligibility: viewer must moderate;
 				// staff and self are never bannable. Stops the app offering Ban
-				// on an admin (Basecamp: ban button shown for administrators).
+				// on an admin (ban button shown for administrators).
 				'can_ban'      => get_current_user_id() > 0
 					&& current_user_can( 'jetonomy_moderate' )
 					&& $uid !== get_current_user_id()
@@ -256,18 +256,16 @@ class Users_Controller extends Base_Controller {
 
 		$users = array();
 		if ( $space_id > 0 ) {
-			// Membership scoping via a JOIN inside WP_User_Query (plan WP1.4).
-			// The old shape fetched EVERY member id unbounded (a 500-member
-			// space materialized 500 ids into PHP and fed them back as a
-			// 500-element IN) — and a LIMIT there would have made results
-			// depend on physical row order. WP_User_Query has no join param,
-			// so hook the GLOBAL pre_user_query filter and remove it in the
-			// same call so it cannot leak into any other user query.
+			// Membership scoping via a JOIN inside WP_User_Query.
+			// Fetching EVERY member id unbounded would materialize them all into PHP and feed them
+			// back as one large IN, and a LIMIT there would depend on physical row order.
+			// WP_User_Query has no join param, so hook the GLOBAL pre_user_query filter and remove it
+			// in the same call so it cannot leak into any other user query.
 			//
 			// search_columns must match the global branch below — without it
 			// WP_User_Query's default set includes user_email, which lets a
 			// space member fish for other members' email addresses by typing
-			// an address prefix and seeing it resolve (Basecamp: WP0.10).
+			// an address prefix and seeing it resolve.
 			global $wpdb;
 			$members_tbl = table( 'space_members' );
 			$join_member = static function ( $query ) use ( $wpdb, $members_tbl, $space_id ): void {
@@ -350,11 +348,12 @@ class Users_Controller extends Base_Controller {
 		$response = new WP_REST_Response(
 			array_merge(
 				$this->prepare_profile( $profile ),
-				[
+				array(
 					'user_login'          => $wp_user->user_login,
 					'email'               => $wp_user->user_email,
 					'display_name'        => \Jetonomy\user_display_name( $wp_user ),
 					'trust_level_name'    => Trust_Levels::name( $trust_level ),
+					'trust_level_label'   => Trust_Levels::label( $trust_level ),
 					'spaces_joined_count' => $spaces_count,
 					'settings'            => UserProfile::get_settings( $user_id ),
 					'email_opt_out'       => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
@@ -366,11 +365,11 @@ class Users_Controller extends Base_Controller {
 					// the cap); this only tells the client what to render.
 					'is_admin'            => user_can( $user_id, 'manage_options' ),
 					'capabilities'        => \Jetonomy\Permissions\Capabilities::map_for_user( $user_id ),
-				]
+				)
 			),
 			200
 		);
-		// Client-tier only (plan WP4.13): app screen mounts re-fetch /users/me
+		// Client-tier only: app screen mounts re-fetch /users/me
 		// constantly; a short private cache absorbs the churn without a
 		// server-side payload cache stacking over the row caches.
 		$response->header( 'Cache-Control', 'private, max-age=30' );
@@ -391,25 +390,26 @@ class Users_Controller extends Base_Controller {
 		$profile     = UserProfile::find_by_user( $id );
 		$trust_level = (int) ( $profile->trust_level ?? 0 );
 
-		$data = [
-			'id'               => $id,
-			'display_name'     => \Jetonomy\user_display_name( $wp_user ),
-			'trust_level'      => $trust_level,
-			'trust_level_name' => Trust_Levels::name( $trust_level ),
-			'reputation'       => (int) ( $profile->reputation ?? 0 ),
-			'post_count'       => (int) ( $profile->post_count ?? 0 ),
-			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
-			'bio'              => $profile->bio ?? null,
+		$data = array(
+			'id'                => $id,
+			'display_name'      => \Jetonomy\user_display_name( $wp_user ),
+			'trust_level'       => $trust_level,
+			'trust_level_name'  => Trust_Levels::name( $trust_level ),
+			'trust_level_label' => Trust_Levels::label( $trust_level ),
+			'reputation'        => (int) ( $profile->reputation ?? 0 ),
+			'post_count'        => (int) ( $profile->post_count ?? 0 ),
+			'reply_count'       => (int) ( $profile->reply_count ?? 0 ),
+			'bio'               => $profile->bio ?? null,
 			// avatar_url = the raw stored upload (null when none) for the edit flow;
 			// avatar_display = the resolved render value ('' => client shows initials).
-			'avatar_url'       => $profile->avatar_url ?? null,
-			'avatar_display'   => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
-			'created_at'       => $wp_user->user_registered ?? null,
-			'last_seen_at'     => $profile->last_seen_at ?? null,
+			'avatar_url'        => $profile->avatar_url ?? null,
+			'avatar_display'    => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
+			'created_at'        => $wp_user->user_registered ?? null,
+			'last_seen_at'      => $profile->last_seen_at ?? null,
 			// Has the CURRENT viewer blocked this profile? Backs the app's
 			// Block/Unblock button. blocked_ids() is memoized per-request, so
 			// this is never a fresh query. Always false for guests.
-			'is_blocked'       => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
+			'is_blocked'        => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
 
 			/*
 			 * Additive (1.9.4): is this member currently restricted, and how?
@@ -420,21 +420,21 @@ class Users_Controller extends Base_Controller {
 			 * screen had no way to know - and the app drew its Ban control
 			 * identically before and after a ban landed, giving the moderator no
 			 * feedback that their action had taken and inviting them to press it
-			 * again (Basecamp 10217068821).
+			 * again.
 			 *
 			 * null when unrestricted. Same server-owned-rule, server-published-flag
 			 * pattern as can_block_author and can_downvote.
 			 */
-			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
+			'restriction'       => \Jetonomy\Models\Restriction::active_map_for_users( array( $id ) )[ $id ] ?? null,
 			// Server-authoritative ban eligibility (viewer must moderate; staff
 			// and self are never bannable) so the profile screen hides Ban on an
-			// admin (Basecamp: ban button shown for administrators).
-			'can_ban'          => get_current_user_id() > 0
+			// admin (ban button shown for administrators).
+			'can_ban'           => get_current_user_id() > 0
 				&& current_user_can( 'jetonomy_moderate' )
 				&& $id !== get_current_user_id()
 				&& ! user_can( $id, 'manage_options' )
 				&& ! user_can( $id, 'jetonomy_moderate' ),
-		];
+		);
 
 		/**
 		 * Filter the REST response data for a single user.
@@ -463,20 +463,21 @@ class Users_Controller extends Base_Controller {
 		$profile     = UserProfile::find_by_user( $id );
 		$trust_level = (int) ( $profile->trust_level ?? 0 );
 
-		$data = [
-			'id'               => $id,
-			'display_name'     => \Jetonomy\user_display_name( $wp_user ),
-			'trust_level'      => $trust_level,
-			'trust_level_name' => Trust_Levels::name( $trust_level ),
-			'reputation'       => (int) ( $profile->reputation ?? 0 ),
-			'post_count'       => (int) ( $profile->post_count ?? 0 ),
-			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
-			'bio'              => $profile->bio ?? null,
-			'avatar_url'       => $profile->avatar_url ?? null,
-			'avatar_display'   => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
-			'created_at'       => $wp_user->user_registered ?? null,
-			'last_seen_at'     => $profile->last_seen_at ?? null,
-			'is_blocked'       => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
+		$data = array(
+			'id'                => $id,
+			'display_name'      => \Jetonomy\user_display_name( $wp_user ),
+			'trust_level'       => $trust_level,
+			'trust_level_name'  => Trust_Levels::name( $trust_level ),
+			'trust_level_label' => Trust_Levels::label( $trust_level ),
+			'reputation'        => (int) ( $profile->reputation ?? 0 ),
+			'post_count'        => (int) ( $profile->post_count ?? 0 ),
+			'reply_count'       => (int) ( $profile->reply_count ?? 0 ),
+			'bio'               => $profile->bio ?? null,
+			'avatar_url'        => $profile->avatar_url ?? null,
+			'avatar_display'    => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
+			'created_at'        => $wp_user->user_registered ?? null,
+			'last_seen_at'      => $profile->last_seen_at ?? null,
+			'is_blocked'        => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
 
 			/*
 			 * Additive (1.9.4): is this member currently restricted, and how?
@@ -487,21 +488,21 @@ class Users_Controller extends Base_Controller {
 			 * screen had no way to know - and the app drew its Ban control
 			 * identically before and after a ban landed, giving the moderator no
 			 * feedback that their action had taken and inviting them to press it
-			 * again (Basecamp 10217068821).
+			 * again.
 			 *
 			 * null when unrestricted. Same server-owned-rule, server-published-flag
 			 * pattern as can_block_author and can_downvote.
 			 */
-			'restriction'      => \Jetonomy\Models\Restriction::active_map_for_users( [ $id ] )[ $id ] ?? null,
+			'restriction'       => \Jetonomy\Models\Restriction::active_map_for_users( array( $id ) )[ $id ] ?? null,
 			// Server-authoritative ban eligibility (viewer must moderate; staff
 			// and self are never bannable) so the profile screen hides Ban on an
-			// admin (Basecamp: ban button shown for administrators).
-			'can_ban'          => get_current_user_id() > 0
+			// admin (ban button shown for administrators).
+			'can_ban'           => get_current_user_id() > 0
 				&& current_user_can( 'jetonomy_moderate' )
 				&& $id !== get_current_user_id()
 				&& ! user_can( $id, 'manage_options' )
 				&& ! user_can( $id, 'jetonomy_moderate' ),
-		];
+		);
 
 		/** This filter is documented in includes/api/class-users-controller.php */
 		$data = apply_filters( 'jetonomy_rest_prepare_user', $data, $wp_user, $request );
@@ -518,14 +519,19 @@ class Users_Controller extends Base_Controller {
 			return $user_id;
 		}
 
-		$profile_data = [];
+		$profile_data = array();
 
 		if ( null !== $request->get_param( 'bio' ) ) {
 			$profile_data['bio'] = sanitize_textarea_field( (string) $request->get_param( 'bio' ) );
 		}
 
 		if ( null !== $request->get_param( 'avatar_url' ) ) {
-			$profile_data['avatar_url'] = esc_url_raw( (string) $request->get_param( 'avatar_url' ) );
+			$avatar_url = esc_url_raw( (string) $request->get_param( 'avatar_url' ) );
+			$current    = UserProfile::find_by_user( $user_id );
+			if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $avatar_url, (string) ( $current->avatar_url ?? '' ), $user_id ) ) {
+				return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload a profile picture.', 'jetonomy' ), array( 'status' => 403 ) );
+			}
+			$profile_data['avatar_url'] = $avatar_url;
 		}
 
 		if ( null !== $request->get_param( 'settings' ) ) {
@@ -540,23 +546,23 @@ class Users_Controller extends Base_Controller {
 			$notif_input = $request->get_param( 'notification_preferences' );
 			if ( is_array( $notif_input ) ) {
 				$existing     = UserProfile::find_by_user( $user_id );
-				$cur_settings = $existing ? json_decode( $existing->settings ?? '{}', true ) : [];
+				$cur_settings = $existing ? json_decode( $existing->settings ?? '{}', true ) : array();
 				if ( ! is_array( $cur_settings ) ) {
-					$cur_settings = []; }
+					$cur_settings = array(); }
 
 				// Must cover every type shown in the Edit-Profile + admin
 				// Notification Defaults UIs, or that toggle is silently dropped on
 				// save (idea_status_changed / moderation / join_request were missing).
-				$valid_types = [ 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'idea_status_changed', 'moderation', 'join_request', 'message' ];
-				$prefs       = [];
+				$valid_types = array( 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'idea_status_changed', 'moderation', 'join_request', 'message' );
+				$prefs       = array();
 				foreach ( $notif_input as $type => $channels ) {
 					if ( ! in_array( $type, $valid_types, true ) ) {
 						continue;
 					}
-					$prefs[ $type ] = [
+					$prefs[ $type ] = array(
 						'web'   => ! empty( $channels['web'] ),
 						'email' => ! empty( $channels['email'] ),
-					];
+					);
 				}
 				$cur_settings['notifications'] = $prefs;
 				$profile_data['settings']      = wp_json_encode( $cur_settings );
@@ -578,36 +584,35 @@ class Users_Controller extends Base_Controller {
 		// member is submitting rather than the ones already stored - otherwise
 		// setting a first name and selecting "First Last" in one save would be
 		// rejected for a permutation that does not exist yet.
-		foreach ( [ 'first_name', 'last_name', 'nickname' ] as $meta_key ) {
+		foreach ( array( 'first_name', 'last_name', 'nickname' ) as $meta_key ) {
 			if ( null !== $request->get_param( $meta_key ) ) {
 				update_user_meta( $user_id, $meta_key, sanitize_text_field( (string) $request->get_param( $meta_key ) ) );
 			}
 		}
 
-		// display_name must be one the member already owns. This used to accept
-		// any string and write it straight to wp_users, so a member could publish
-		// as "Administrator", take another member's exact name, and override the
+		// display_name must be one the member already owns: any string would let a member
+		// publish as "Administrator", take another member's exact name, and override the
 		// value the owner picked in wp-admin - site-wide, not just in the forum.
 		if ( null !== $request->get_param( 'display_name' ) ) {
 			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
 			if ( ! empty( $display_name ) ) {
 				$wp_user_now = get_userdata( $user_id );
-				$allowed     = $wp_user_now ? \Jetonomy\display_name_choices( $wp_user_now ) : [];
+				$allowed     = $wp_user_now ? \Jetonomy\display_name_choices( $wp_user_now ) : array();
 				if ( ! in_array( $display_name, $allowed, true ) ) {
 					return new WP_Error(
 						'jetonomy_invalid_display_name',
 						__( 'Choose a display name from your own name fields.', 'jetonomy' ),
-						[
+						array(
 							'status'  => 400,
 							'allowed' => $allowed,
-						]
+						)
 					);
 				}
 				wp_update_user(
-					[
+					array(
 						'ID'           => $user_id,
 						'display_name' => $display_name,
-					]
+					)
 				);
 			}
 		}
@@ -626,13 +631,14 @@ class Users_Controller extends Base_Controller {
 		return new WP_REST_Response(
 			array_merge(
 				$this->prepare_profile( $profile ),
-				[
-					'email'            => $wp_user->user_email,
-					'display_name'     => \Jetonomy\user_display_name( $wp_user ),
-					'trust_level_name' => Trust_Levels::name( (int) ( $profile->trust_level ?? 0 ) ),
-					'settings'         => UserProfile::get_settings( $user_id ),
-					'email_opt_out'    => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
-				]
+				array(
+					'email'             => $wp_user->user_email,
+					'display_name'      => \Jetonomy\user_display_name( $wp_user ),
+					'trust_level_name'  => Trust_Levels::name( (int) ( $profile->trust_level ?? 0 ) ),
+					'trust_level_label' => Trust_Levels::label( (int) ( $profile->trust_level ?? 0 ) ),
+					'settings'          => UserProfile::get_settings( $user_id ),
+					'email_opt_out'     => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
+				)
 			),
 			200
 		);
@@ -675,7 +681,7 @@ class Users_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_admin_must_use_wp_admin',
 				__( 'Site administrators can\'t delete their account from the app. Use the WordPress admin Users screen instead.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -683,7 +689,7 @@ class Users_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_rate_limited',
 				__( 'Too many attempts. Please wait a while and try again.', 'jetonomy' ),
-				[ 'status' => 429 ]
+				array( 'status' => 429 )
 			);
 		}
 
@@ -699,7 +705,7 @@ class Users_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_confirm_required',
 				__( 'Type DELETE to confirm you want to permanently delete your account.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -714,7 +720,7 @@ class Users_Controller extends Base_Controller {
 				return new WP_Error(
 					'jetonomy_bad_password',
 					__( 'That password is incorrect.', 'jetonomy' ),
-					[ 'status' => 403 ]
+					array( 'status' => 403 )
 				);
 			}
 		}
@@ -730,10 +736,10 @@ class Users_Controller extends Base_Controller {
 		// owns (core default: delete_with_user = true for attachments) even
 		// though their (anonymized, surviving) replies still reference those
 		// images. Captured before the delete call, reassigned afterward.
-		$attachment_ids = [];
+		$attachment_ids = array();
 		if ( ! $delete_content ) {
 			$attachment_ids = get_posts(
-				[
+				array(
 					'post_type'              => 'attachment',
 					'author'                 => $user_id,
 					'post_status'            => 'any',
@@ -742,15 +748,15 @@ class Users_Controller extends Base_Controller {
 					'no_found_rows'          => true,
 					'update_post_meta_cache' => false,
 					'update_post_term_cache' => false,
-				]
+				)
 			);
-			add_filter( 'post_types_to_delete_with_user', [ $this, 'exclude_attachments_from_user_delete' ] );
+			add_filter( 'post_types_to_delete_with_user', array( $this, 'exclude_attachments_from_user_delete' ) );
 		}
 
 		$deleted = $this->delete_wp_account( $user_id );
 
 		if ( ! $delete_content ) {
-			remove_filter( 'post_types_to_delete_with_user', [ $this, 'exclude_attachments_from_user_delete' ] );
+			remove_filter( 'post_types_to_delete_with_user', array( $this, 'exclude_attachments_from_user_delete' ) );
 			$this->reassign_attachments_to_tombstone( $attachment_ids );
 		}
 
@@ -758,7 +764,7 @@ class Users_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_delete_account_failed',
 				__( "We couldn't delete your account. Please try again or contact support.", 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
@@ -766,11 +772,11 @@ class Users_Controller extends Base_Controller {
 		wp_clear_auth_cookie();
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted'        => true,
 				'user_id'        => $user_id,
 				'content_policy' => $delete_content ? 'deleted' : 'anonymized',
-			],
+			),
 			200
 		);
 	}
@@ -796,20 +802,12 @@ class Users_Controller extends Base_Controller {
 		// real-world timeout, move it to a background job (Action Scheduler)
 		// per the plugin's background-jobs standard rather than inlining a
 		// batch/cursor here.
-		global $wpdb;
-		$posts_t   = table( 'posts' );
-		$replies_t = table( 'replies' );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$posts_t} WHERE author_id = %d AND status != 'trash'", $user_id ) );
-		foreach ( $post_ids as $post_id ) {
-			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/posts/' . (int) $post_id ) );
+		foreach ( \Jetonomy\Models\Post::ids_by_author( $user_id ) as $post_id ) {
+			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/posts/' . $post_id ) );
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$reply_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$replies_t} WHERE author_id = %d AND status != 'trash'", $user_id ) );
-		foreach ( $reply_ids as $reply_id ) {
-			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/replies/' . (int) $reply_id ) );
+		foreach ( \Jetonomy\Models\Reply::ids_by_author( $user_id ) as $reply_id ) {
+			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/replies/' . $reply_id ) );
 		}
 	}
 
@@ -871,7 +869,7 @@ class Users_Controller extends Base_Controller {
 	 * from outside the class, which fails on private/protected methods.
 	 */
 	public function exclude_attachments_from_user_delete( array $post_types ): array {
-		return array_values( array_diff( $post_types, [ 'attachment' ] ) );
+		return array_values( array_diff( $post_types, array( 'attachment' ) ) );
 	}
 
 	/**
@@ -903,21 +901,21 @@ class Users_Controller extends Base_Controller {
 	 * Args for DELETE /users/me.
 	 */
 	private function get_delete_account_args(): array {
-		return [
-			'password'       => [
+		return array(
+			'password'       => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'confirm'        => [
+			),
+			'confirm'        => array(
 				'type'     => 'string',
 				'required' => true,
-			],
-			'delete_content' => [
+			),
+			'delete_content' => array(
 				'type'     => 'boolean',
 				'required' => false,
 				'default'  => false,
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -934,84 +932,29 @@ class Users_Controller extends Base_Controller {
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];
 
-		global $wpdb;
-		$tbl        = table( 'posts' );
-		$spaces_tbl = table( 'spaces' );
-
-		// Space-visibility + per-post is_private gate so private/hidden-space
-		// posts (and private posts in public spaces) stay hidden from
-		// non-members / non-authors. Cross-space context → $space_id null.
-		// is_anonymous = 0 (both queries below) is an anonymity guard: an
-		// anonymous post must never surface on the real author's public
-		// profile stream, even to the author themselves — that would
+		// Post::list_by_author() applies the viewer's space access, the per-post
+		// is_private gate and their blocks. is_anonymous = 0 is an anonymity
+		// guard: an anonymous post must never surface on the real author's
+		// public profile stream, even to the author themselves - that would
 		// deanonymize it by correlation.
-		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
-		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
-
-		$gate_sql    = '';
-		$gate_params = [];
-		if ( '1=1' !== $space_vis_sql ) {
-			$gate_sql   .= ' AND ' . $space_vis_sql;
-			$gate_params = array_merge( $gate_params, $space_vis_params );
-		}
-		if ( '' !== $priv_sql ) {
-			$gate_sql   .= ' AND ' . $priv_sql;
-			$gate_params = array_merge( $gate_params, $priv_params );
-		}
-
-		// Hide this profile's posts entirely when the VIEWER has blocked $id.
-		// no-op for guests/no-blocks; must match the COUNT(*) below exactly.
-		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
-		if ( '' !== $block_sql ) {
-			$gate_sql .= ' AND ' . $block_sql;
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$posts = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				// `p.id DESC` is a tiebreaker, not decoration: created_at is
-				// second-granular and bulk-created posts routinely share one second
-				// (25 of 26 here), so ORDER BY created_at alone lets MySQL return
-				// tied rows in any order. Consecutive pages then repeat some rows
-				// and skip others — this list served id 10 on both page 3 and
-				// page 4 while dropping id 1 entirely (Basecamp 10161324385).
-				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$tbl} p
-				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
-				 ORDER BY p.created_at DESC, p.id DESC LIMIT %d OFFSET %d",
-				$id,
-				...array_merge( $gate_params, [ $limit, $offset ] )
-			)
-		) ?: [];
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$tbl} p
-				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}",
-				$id,
-				...$gate_params
-			)
-		);
+		$posts = \Jetonomy\Models\Post::list_by_author( $id, $limit, $offset );
+		$total = \Jetonomy\Models\Post::count_by_author( $id );
 
 		// Match the feed's batch author enrichment (base controller) so profile post
 		// cards render the author avatar/name instead of a blank "?" row — the same
-		// prepared shape /feed returns, not the minimal columns this route used to.
+		// prepared shape /feed returns.
 		$posts = $this->enrich_with_author( $posts, 'author_id' );
 		// Batch viewer state too — prepare_post() otherwise runs 2 point
-		// queries per row for the bookmark/vote flags (plan WP3.4).
+		// queries per row for the bookmark/vote flags.
 		$posts = $this->enrich_viewer_state( $posts );
-		$items = array_map( [ $this, 'prepare_post' ], $posts );
+		$items = array_map( array( $this, 'prepare_post' ), $posts );
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
-			]
+			)
 		);
 	}
 
@@ -1019,7 +962,7 @@ class Users_Controller extends Base_Controller {
 	 * Format a UserProfile row for API output.
 	 */
 	private function prepare_profile( ?object $profile ): array {
-		$data = [
+		$data = array(
 			'id'             => (int) ( $profile->user_id ?? 0 ),
 			'user_id'        => (int) ( $profile->user_id ?? 0 ),
 			'reputation'     => (int) ( $profile->reputation ?? 0 ),
@@ -1032,7 +975,7 @@ class Users_Controller extends Base_Controller {
 			'last_seen_at'   => $profile->last_seen_at ?? null,
 			'created_at'     => $profile->created_at ?? null,
 			'updated_at'     => $profile->updated_at ?? null,
-		];
+		);
 
 		/**
 		 * Filter the user profile REST response. Extensions (e.g. custom-fields)
@@ -1059,40 +1002,40 @@ class Users_Controller extends Base_Controller {
 	 * Args for PATCH /users/me.
 	 */
 	private function get_update_args(): array {
-		return [
-			'display_name'  => [
+		return array(
+			'display_name'  => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'first_name'    => [
+			),
+			'first_name'    => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'last_name'     => [
+			),
+			'last_name'     => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'nickname'      => [
+			),
+			'nickname'      => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'bio'           => [
+			),
+			'bio'           => array(
 				'type'     => 'string',
 				'required' => false,
-			],
-			'avatar_url'    => [
+			),
+			'avatar_url'    => array(
 				'type'     => 'string',
 				'required' => false,
 				'format'   => 'uri',
-			],
-			'settings'      => [
+			),
+			'settings'      => array(
 				'type'     => 'object',
 				'required' => false,
-			],
-			'email_opt_out' => [
+			),
+			'email_opt_out' => array(
 				'type'     => 'boolean',
 				'required' => false,
-			],
-		];
+			),
+		);
 	}
 }

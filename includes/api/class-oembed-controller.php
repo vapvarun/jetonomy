@@ -135,10 +135,11 @@ class OEmbed_Controller extends Base_Controller {
 			);
 		}
 
-		$author_id     = (int) $post->author_id;
-		$author        = $author_id ? get_userdata( $author_id ) : null;
-		$author_name   = $author ? \Jetonomy\user_display_name( $author ) : __( 'Anonymous', 'jetonomy' );
-		$author_url    = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
+		// Same resolver as the page byline, so an anonymous topic unfurls as "Anonymous".
+		$jt_author     = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+		$author_id     = $jt_author['id'];
+		$author_name   = '' !== $jt_author['name'] ? $jt_author['name'] : __( 'Anonymous', 'jetonomy' );
+		$author_url    = $jt_author['url'];
 		$author_avatar = $author_id ? get_avatar_url( $author_id, array( 'size' => 80 ) ) : '';
 
 		$title   = wp_strip_all_tags( (string) $post->title );
@@ -241,8 +242,7 @@ class OEmbed_Controller extends Base_Controller {
 		$thumb         = $parts['thumb'] ? esc_url( $parts['thumb'] ) : '';
 		$width         = (int) $parts['width'];
 
-		// translators: %d: number of replies.
-		$replies_label = sprintf( _n( '%d reply', '%d replies', $reply_count, 'jetonomy' ), $reply_count );
+		$replies_label = \Jetonomy\count_label( (int) $reply_count, 'reply' );
 		// translators: %d: number of votes.
 		$votes_label = sprintf( _n( '%d vote', '%d votes', max( 0, $vote_score ), 'jetonomy' ), max( 0, $vote_score ) );
 
@@ -265,10 +265,12 @@ class OEmbed_Controller extends Base_Controller {
 			$html .= '<div style="font-size:14px;color:#4b5563;line-height:1.5;margin-bottom:12px;">' . $excerpt . '</div>';
 		}
 		$html .= '<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#6b7280;">';
-		$html .= '<a href="' . $author_url . '" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;">' . $avatar_html . $author_name . '</a>';
-		$html .= '<span>' . esc_html( $replies_label ) . ' · ' . esc_html( $votes_label ) . '</span>';
-		$html .= '</div>';
-		$html .= '</div></div>';
+		// An anonymous or deleted author has no profile to link to.
+		$author_tag = '' !== $author_url ? 'a href="' . $author_url . '"' : 'span';
+		$html      .= '<' . $author_tag . ' style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;">' . $avatar_html . $author_name . ( '' !== $author_url ? '</a>' : '</span>' );
+		$html      .= '<span>' . esc_html( $replies_label ) . ' · ' . esc_html( $votes_label ) . '</span>';
+		$html      .= '</div>';
+		$html      .= '</div></div>';
 
 		return $html;
 	}

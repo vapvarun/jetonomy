@@ -14,7 +14,6 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Subscription;
-use function Jetonomy\table;
 
 class Subscriptions_Controller extends Base_Controller {
 
@@ -30,31 +29,31 @@ class Subscriptions_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/subscriptions',
-			[
-				[
+			array(
+				array(
 					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'list_items' ],
+					'callback'            => array( $this, 'list_items' ),
 					'permission_callback' => '__return_true',
 					'args'                => $this->get_collection_params(),
-				],
-				[
+				),
+				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
+					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_create_args(),
-				],
-			]
+				),
+			)
 		);
 
 		// Single item.
 		register_rest_route(
 			$ns,
 			'/subscriptions/(?P<id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'delete_item' ],
+				'callback'            => array( $this, 'delete_item' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-			]
+			)
 		);
 	}
 
@@ -71,39 +70,19 @@ class Subscriptions_Controller extends Base_Controller {
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];
 
-		global $wpdb;
-		$tbl = table( 'subscriptions' );
+		$rows  = Subscription::list_for_user( $user_id, $limit, $offset );
+		$total = Subscription::count_for_user( $user_id );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE user_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
-				$user_id,
-				$limit,
-				$offset
-			)
-		) ?: [];
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$tbl} WHERE user_id = %d",
-				$user_id
-			)
-		);
-
-		$items = array_map( [ $this, 'prepare_subscription' ], $rows );
+		$items = array_map( array( $this, 'prepare_subscription' ), $rows );
 		$items = $this->attach_subscription_targets( $items );
 		$items = Subscription::attach_delivery( $items, $user_id );
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
-			]
+			)
 		);
 	}
 
@@ -140,7 +119,8 @@ class Subscriptions_Controller extends Base_Controller {
 		$object_type = sanitize_key( (string) $request->get_param( 'object_type' ) );
 		$object_id   = absint( $request->get_param( 'object_id' ) );
 
-		if ( ! in_array( $object_type, [ 'space', 'post' ], true ) ) {
+		if ( ! in_array( $object_type, array( 'space', 'post' ), true ) ) {
+			// jt-terms-ok: literal object_type parameter values for API callers.
 			return $this->validation_error( __( 'object_type must be "space" or "post".', 'jetonomy' ) );
 		}
 
@@ -149,7 +129,7 @@ class Subscriptions_Controller extends Base_Controller {
 		}
 
 		$via = sanitize_key( (string) ( $request->get_param( 'via' ) ?? 'both' ) );
-		if ( ! in_array( $via, [ 'web', 'email', 'both' ], true ) ) {
+		if ( ! in_array( $via, array( 'web', 'email', 'both' ), true ) ) {
 			$via = 'both';
 		}
 
@@ -164,23 +144,11 @@ class Subscriptions_Controller extends Base_Controller {
 
 		// When INSERT IGNORE fires on a duplicate, insert_id is 0.
 		// Fetch the row regardless to return a consistent response.
-		global $wpdb;
-		$tbl = table( 'subscriptions' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE user_id = %d AND object_type = %s AND object_id = %d",
-				$user_id,
-				$object_type,
-				$object_id
-			)
-		);
+		$row = Subscription::find_for( $user_id, $object_type, $object_id );
 
 		$status = $id > 0 ? 201 : 200;
 
-		$item = $row ? Subscription::attach_delivery( [ $this->prepare_subscription( $row ) ], $user_id )[0] : [];
+		$item = $row ? Subscription::attach_delivery( array( $this->prepare_subscription( $row ) ), $user_id )[0] : array();
 
 		return new WP_REST_Response( $item, $status );
 	}
@@ -196,17 +164,7 @@ class Subscriptions_Controller extends Base_Controller {
 
 		$id = absint( $request->get_param( 'id' ) );
 
-		global $wpdb;
-		$tbl = table( 'subscriptions' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$subscription = $wpdb->get_row(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE id = %d",
-				$id
-			)
-		);
+		$subscription = Subscription::find( $id );
 
 		if ( ! $subscription ) {
 			return $this->not_found( 'Subscription' );
@@ -224,10 +182,10 @@ class Subscriptions_Controller extends Base_Controller {
 		);
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted' => true,
 				'id'      => $id,
-			],
+			),
 			200
 		);
 	}
@@ -237,10 +195,10 @@ class Subscriptions_Controller extends Base_Controller {
 	 */
 	private function prepare_subscription( ?object $subscription ): array {
 		if ( ! $subscription ) {
-			return [];
+			return array();
 		}
 
-		return [
+		return array(
 			'id'          => (int) $subscription->id,
 			'user_id'     => (int) $subscription->user_id,
 			'object_type' => $subscription->object_type ?? '',
@@ -251,33 +209,33 @@ class Subscriptions_Controller extends Base_Controller {
 			// object type with no mapped notification.
 			'via'         => $subscription->notify_via ?? 'both',
 			'created_at'  => $subscription->created_at ?? null,
-		];
+		);
 	}
 
 	/**
 	 * Args for create_item.
 	 */
 	private function get_create_args(): array {
-		return [
-			'object_type' => [
+		return array(
+			'object_type' => array(
 				'type'     => 'string',
 				'required' => true,
-				'enum'     => [ 'space', 'post' ],
-			],
-			'object_id'   => [
+				'enum'     => array( 'space', 'post' ),
+			),
+			'object_id'   => array(
 				'type'     => 'integer',
 				'required' => true,
 				'minimum'  => 1,
-			],
+			),
 			// Accepted and stored for back-compat; it does not change delivery.
 			// Channels follow the member's notification preferences, and the
 			// response's `via` reports that effective channel.
-			'via'         => [
+			'via'         => array(
 				'type'     => 'string',
 				'required' => false,
-				'enum'     => [ 'web', 'email', 'both' ],
+				'enum'     => array( 'web', 'email', 'both' ),
 				'default'  => 'both',
-			],
-		];
+			),
+		);
 	}
 }

@@ -1,0 +1,21 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/admin-revisions.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ru",
+                "plural-forms": "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
+            },
+            "View diff": [
+                "\u041f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u0442\u044c \u0440\u0430\u0437\u043b\u0438\u0447\u0438\u044f"
+            ],
+            "Hide diff": [
+                "\u0421\u043a\u0440\u044b\u0442\u044c \u0440\u0430\u0437\u043b\u0438\u0447\u0438\u044f"
+            ]
+        }
+    }
+}

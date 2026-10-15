@@ -37,19 +37,43 @@ abstract class Base_Controller extends WP_REST_Controller {
 		return new WP_Error(
 			'jetonomy_forbidden',
 			__( 'You do not have permission to perform this action.', 'jetonomy' ),
-			[ 'status' => 403 ]
+			array( 'status' => 403 )
 		);
 	}
 
 	/**
 	 * Standard not found error.
+	 *
+	 * Callers name the kind of item with a fixed English key ('Post', 'Space',
+	 * ...); it is translated here, once, using the owner's renamed nouns where
+	 * the community lets them rename it, so the message reads in the site's
+	 * language and words.
+	 *
+	 * @param string $what Item key: Post, Reply, Space, Category, User, Flag, Restriction,
+	 *                     Subscription, Notification, Invite link, Target post, Target space.
 	 */
 	protected function not_found( string $what = 'Resource' ): WP_Error {
+		$labels = array(
+			'Post'         => \Jetonomy\jetonomy_label( 'topic' ),
+			'Reply'        => \Jetonomy\jetonomy_label( 'reply' ),
+			'Space'        => \Jetonomy\space_label(),
+			'Category'     => \Jetonomy\jetonomy_label( 'category' ),
+			'User'         => \Jetonomy\jetonomy_label( 'member' ),
+			'Flag'         => __( 'Report', 'jetonomy' ),
+			'Restriction'  => __( 'Restriction', 'jetonomy' ),
+			'Subscription' => __( 'Subscription', 'jetonomy' ),
+			'Notification' => __( 'Notification', 'jetonomy' ),
+			'Invite link'  => __( 'Invite link', 'jetonomy' ),
+			/* translators: %s: singular topic or space label, lowercase. */
+			'Target post'  => sprintf( __( 'Target %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: %s: singular topic or space label, lowercase. */
+			'Target space' => sprintf( __( 'Target %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+		);
 		return new WP_Error(
 			'jetonomy_not_found',
-			/* translators: %s: the singular label of the item (the configured noun). */
-			sprintf( __( '%s not found.', 'jetonomy' ), $what ),
-			[ 'status' => 404 ]
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			sprintf( __( '%s not found.', 'jetonomy' ), $labels[ $what ] ?? __( 'Item', 'jetonomy' ) ),
+			array( 'status' => 404 )
 		);
 	}
 
@@ -60,7 +84,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		return new WP_Error(
 			'jetonomy_validation',
 			$message,
-			[ 'status' => 400 ]
+			array( 'status' => 400 )
 		);
 	}
 
@@ -81,7 +105,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 	/**
 	 * Is this user trusted enough that we should skip Akismet / content spam checks?
 	 *
-	 * Site admins (manage_options) and space admins/moderators are whitelisted:
+	 * Site admins (manage_options), site moderators (jetonomy_moderate) and space
+	 * admins/moderators are whitelisted:
 	 * they own the moderation workflow, so running their writes through Akismet
 	 * creates false positives and blocks staff responses. Lower-trust members
 	 * still get the full spam pipeline.
@@ -90,7 +115,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * definition of "space staff" (1.5.0 consolidation, audit B).
 	 */
 	protected function author_bypasses_spam_check( int $user_id, int $space_id ): bool {
-		return \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
+		// Site moderators are staff too (they act in every space they can read).
+		return user_can( $user_id, 'jetonomy_moderate' )
+			|| \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
 	}
 
 	/**
@@ -159,11 +186,11 @@ abstract class Base_Controller extends WP_REST_Controller {
 	/**
 	 * Build a paginated response with cursor support.
 	 */
-	protected function paginated_response( array $items, array $meta = [] ): WP_REST_Response {
+	protected function paginated_response( array $items, array $meta = array() ): WP_REST_Response {
 		// has_more is (offset + count) < total. If a paginating caller passes total
 		// but forgets offset, offset silently reads 0 and every page compares
 		// against page 1 — has_more is stuck true, a "Load more" that never ends.
-		// The per-space moderation route shipped exactly this (Basecamp 10105626990).
+		// The per-space moderation route shipped exactly this.
 		//
 		// offset is not optional when the response actually paginates, so say so out
 		// loud rather than assume it. The fix is not "add the missing line to one
@@ -184,34 +211,27 @@ abstract class Base_Controller extends WP_REST_Controller {
 
 		// cursor_next is the NEXT OFFSET, never a row id.
 		//
-		// It used to be the last item's id, which is only meaningful if the query
-		// filters on `id > cursor`. None of our list queries can: they sort by
-		// is_sticky/vote_score/last_reply_at/created_at (and `hot` is computed at
-		// query time and has no column at all), so an id cursor cannot advance a
-		// keyset. Worse, the id filter ran as `id > %d` against a DESC sort — the
-		// filter direction contradicted the sort direction, so every "next page"
-		// returned the top of the list again and the client looped forever
-		// (Basecamp 10161324385 / 10161324235).
-		//
-		// Offset is the only scheme that works uniformly here, so it lives in the
-		// shared helper rather than being re-derived per controller — that
-		// divergence is exactly how /feed ended up fixed while /users/{id}/posts
-		// and /spaces/{id}/posts stayed broken.
+		// An id cursor is only meaningful if the query filters on `id > cursor`, and none of
+		// our list queries can: they sort by is_sticky/vote_score/last_reply_at/created_at (and
+		// `hot` is computed at query time and has no column at all), and `id > %d` against a
+		// DESC sort contradicts the sort direction, so every "next page" would return the top
+		// of the list again. Offset is the only scheme that works uniformly here, so it lives
+		// in the shared helper rather than being re-derived per controller.
 		$offset   = (int) ( $meta['offset'] ?? 0 );
 		$has_more = isset( $meta['total'] ) ? ( $offset + count( $items ) ) < (int) $meta['total'] : false;
 
 		$response = new WP_REST_Response(
-			[
+			array(
 				'data' => $items,
 				'meta' => array_merge(
-					[
+					array(
 						'count'       => count( $items ),
 						'has_more'    => $has_more,
 						'cursor_next' => $has_more ? $offset + count( $items ) : null,
-					],
+					),
 					$meta
 				),
-			]
+			)
 		);
 
 		if ( isset( $meta['total'] ) ) {
@@ -233,13 +253,13 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// controller gets cursor support for free by reading `offset` alone — several
 		// (e.g. /users/{id}/posts) only ever read `offset`, so a client paginating
 		// with `after` was pinned to page 1 forever. `after` wins when both are sent.
-		return [
+		return array(
 			'limit'  => (int) ( $request->get_param( 'limit' ) ?? 20 ),
 			'offset' => $after > 0 ? $after : $offset,
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
 			'after'  => $after,
 			'before' => (int) ( $request->get_param( 'before' ) ?? 0 ),
-		];
+		);
 	}
 
 	/**
@@ -251,7 +271,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			return new WP_Error(
 				'jetonomy_unauthorized',
 				__( 'You must be logged in.', 'jetonomy' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 		return $user_id;
@@ -317,34 +337,34 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Standard pagination args for route registration — supports cursor and legacy offset.
 	 */
 	public function get_collection_params(): array {
-		return [
-			'limit'  => [
+		return array(
+			'limit'  => array(
 				'type'    => 'integer',
 				'minimum' => 1,
 				'maximum' => 100,
-			],
-			'after'  => [
+			),
+			'after'  => array(
 				'type'        => 'integer',
 				'default'     => 0,
 				'description' => 'Forward cursor: send back the `meta.cursor_next` from the previous page. Opaque to clients — treat it as a token, not a row ID.',
-			],
-			'before' => [
+			),
+			'before' => array(
 				'type'        => 'integer',
 				'default'     => 0,
 				'description' => 'Return items before this ID',
-			],
-			'offset' => [
+			),
+			'offset' => array(
 				'type'        => 'integer',
 				'default'     => 0,
 				'minimum'     => 0,
 				'description' => 'Legacy offset-based pagination (use after/before instead)',
-			],
-			'sort'   => [
+			),
+			'sort'   => array(
 				'type'    => 'string',
 				'default' => 'latest',
-				'enum'    => [ 'latest', 'popular', 'oldest', 'newest' ],
-			],
-		];
+				'enum'    => array( 'latest', 'popular', 'oldest', 'newest' ),
+			),
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -365,7 +385,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * showing the same rows to the same moderator. This enrichment was written
 	 * inline in the global controller, so the per-space screen never got it and
 	 * rendered "Reported by unknown" long after the global screen was fixed
-	 * (Basecamp 10092652706, 10092724637). One implementation, both callers: the
+	 * One implementation, both callers: the
 	 * next queue cannot inherit the bug by being written somewhere else.
 	 *
 	 * The raw flag row carries only reporter_id. A moderation queue that cannot
@@ -379,7 +399,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * @return object[] The same rows, enriched.
 	 */
 	protected function enrich_flag_actors( array $flags ): array {
-		$user_ids = [];
+		$user_ids = array();
 		foreach ( $flags as $flag ) {
 			if ( ! empty( $flag->reporter_id ) ) {
 				$user_ids[] = (int) $flag->reporter_id;
@@ -397,15 +417,15 @@ abstract class Base_Controller extends WP_REST_Controller {
 			$resolver    = $users[ (int) ( $flag->resolved_by ?? 0 ) ] ?? null;
 
 			$flag->reporter = $reporter
-				? [
+				? array(
 					'id'           => $reporter_id,
 					'display_name' => $reporter->display_name ?? '',
 					'user_login'   => $reporter->user_login ?? '',
-					'avatar_url'   => get_avatar_url( $reporter_id, [ 'size' => 48 ] ),
-				]
+					'avatar_url'   => get_avatar_url( $reporter_id, array( 'size' => 48 ) ),
+				)
 				: null;
 
-			$flag->resolved_by_name = $resolver->display_name ?? '';
+			$flag->resolved_by_name = $resolver ? \Jetonomy\user_display_name( $resolver ) : '';
 		}
 
 		return $flags;
@@ -413,12 +433,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 
 	protected function batch_load_users( array $ids ): array {
 		if ( empty( $ids ) ) {
-			return [];
+			return array();
 		}
 		$ids = array_unique( array_map( 'intval', $ids ) );
 
-		$cached  = [];
-		$missing = [];
+		$cached  = array();
+		$missing = array();
 
 		foreach ( $ids as $id ) {
 			$user = Cache::get( "user:{$id}" );
@@ -454,7 +474,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// appears COLD — measured warm, in a process that has already seen those
 		// users, the same code reads clean. That is how "batch-loaded, no N+1"
 		// passed review twice, mine included: a fixture where every row shared one
-		// reporter cannot see a per-person cost at all (Basecamp 10105928436).
+		// reporter cannot see a per-person cost at all.
 		//
 		// Priming here rather than in each caller: this is the one place that
 		// already knows the whole id set, and a fix living in the callers is a fix
@@ -476,17 +496,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 */
 	protected function batch_load_profiles( array $ids ): array {
 		if ( empty( $ids ) ) {
-			return [];
+			return array();
 		}
 		$ids = array_unique( array_map( 'intval', $ids ) );
 
-		global $wpdb;
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . \Jetonomy\table( 'user_profiles' ) . " WHERE user_id IN ({$placeholders})", ...$ids ) );
-
-		$map = [];
-		foreach ( $rows as $row ) {
+		$map = array();
+		foreach ( UserProfile::list_by_user_ids( $ids ) as $row ) {
 			$map[ (int) $row->user_id ] = $row;
 		}
 		return $map;
@@ -497,12 +512,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * POST rows in two batched queries, so prepare_post() can read the
 	 * pre-resolved value instead of running a per-row lookup (N+1).
 	 *
-	 * Lives on the base class (moved from Posts_Controller, plan WP3.4) so
+	 * Lives on the base class so
 	 * the search and user-posts lists can batch too. TYPE-GATED to post
 	 * rows: the vote map is keyed object_type='post', and search's reply/
 	 * space rows carry their own `id` column — enriching those would pin a
 	 * false "you voted" state onto any reply whose id collides with a post
-	 * id the viewer voted on (safety review, WP3.4). Rows without space_id
+	 * id the viewer voted on. Rows without space_id
 	 * are not post rows; bail rather than mislabel.
 	 *
 	 * No-op for logged-out callers — prepare_post() then falls back to the
@@ -535,7 +550,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// costs one query per page rather than one per row.
 		$flagged = \Jetonomy\Models\Flag::reporter_flag_map( $uid, 'post', $ids );
 		// Warm the subscription memo so prepare_post()'s is_subscribed flag
-		// (plan WP6.2) costs zero per-row queries on every list path.
+		// costs zero per-row queries on every list path.
 		\Jetonomy\Models\Subscription::warm_viewer_subscriptions( $uid, 'post', $ids );
 
 		foreach ( $posts as $post ) {
@@ -583,13 +598,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 			// author_name routes through the SAME seam every other render
 			// surface uses (\Jetonomy\Author::for_display()) so a tombstoned
 			// (author_id = 0, deleted-account) row reads "[deleted]" here too,
-			// instead of drifting to "Anonymous" the way this list endpoint
-			// used to render it. Passing the already-batch-loaded $user avoids
+			// instead of drifting to "Anonymous". Passing the already-batch-loaded $user avoids
 			// a redundant get_userdata() per row (author_id > 0 case).
 			$item_obj    = is_object( $item ) ? $item : (object) $item;
 			$author_name = \Jetonomy\Author::for_display( $uid, $item_obj, $user )['name'];
 
-			$enrichment = [
+			$enrichment = array(
 				'author_name'         => $author_name ?: __( 'Anonymous', 'jetonomy' ),
 				// display_url() returns '' when the member has no real avatar, so
 				// API clients (mobile app) render initials from author_name — the
@@ -602,7 +616,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 				// Presence source for API clients: the app derives an "online" dot
 				// from this (last_seen_at within 5 min), matching the web's badge.
 				'author_last_seen_at' => $profile ? $profile->last_seen_at : null,
-			];
+			);
 
 			if ( is_object( $item ) ) {
 				foreach ( $enrichment as $k => $v ) {
@@ -622,7 +636,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Every wpdb column comes back as a string, so a row handed straight to
 	 * json_encode ships `"id":"1","post_count":"12"`. A typed client doing
 	 * `post_count > 0` or sorting numerically then gets wrong answers
-	 * (Basecamp 10161324553).
 	 *
 	 * For rows that have a real serializer, use it — this is the fallback for
 	 * shapes that do not (search's reply rows carry joined post/space columns;
@@ -653,19 +666,17 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Serialize a space row for API output.
 	 *
 	 * Lives here, not on Spaces_Controller, because more than one controller
-	 * emits spaces. /search used to return `(array) $row` straight from the DB,
-	 * which meant every numeric came out as a STRING ("id":"1","post_count":"1")
-	 * and internal columns (`settings` as a raw JSON string, `sort_order`,
-	 * `parent_id`) leaked to clients — a typed client doing `post_count > 0` or
-	 * sorting numerically got wrong answers (Basecamp 10161324553). One
-	 * serializer means a space cannot have two different shapes depending on
-	 * which endpoint returned it.
+	 * emits spaces. A raw `(array) $row` would emit every numeric as a STRING
+	 * ("id":"1","post_count":"1") and leak internal columns (`settings` as a raw JSON
+	 * string, `sort_order`, `parent_id`), so a typed client doing `post_count > 0` or
+	 * sorting numerically would get wrong answers. One serializer means a space cannot
+	 * have two different shapes depending on which endpoint returned it.
 	 *
 	 * @param object $space Raw space row.
 	 * @return array
 	 */
 	protected function prepare_space( object $space ): array {
-		$data = [
+		$data = array(
 			'id'               => (int) $space->id,
 			'category_id'      => $space->category_id ? (int) $space->category_id : null,
 			'title'            => $space->title,
@@ -676,7 +687,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'join_policy'      => $space->join_policy ?? 'open',
 			'icon'             => $space->icon ?? '',
 			'cover_image'      => $space->cover_image ?? '',
-			'settings'         => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : [],
+			'settings'         => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : array(),
 			'member_count'     => (int) ( $space->member_count ?? 0 ),
 			'post_count'       => (int) ( $space->post_count ?? 0 ),
 			'sort_order'       => (int) ( $space->sort_order ?? 0 ),
@@ -685,7 +696,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'created_at_gmt'   => \Jetonomy\to_iso8601_z( $space->created_at ?? null ),
 			'updated_at'       => $space->updated_at ?? null,
 			'last_activity_at' => $space->last_activity_at ?? null,
-		];
+		);
 
 		// Viewer-relative membership context (additive, 1.6.0). All three are
 		// null-safe for logged-out callers and resolve to indexed point
@@ -713,7 +724,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * shape as /feed and /spaces/{id}/posts instead of casting the raw DB row.
 	 * Raw rows meant string-typed numerics, no _gmt twins and no author
 	 * enrichment, so the same post had two shapes depending on which endpoint
-	 * returned it (Basecamp 10161324553).
+	 * returned it.
 	 *
 	 * Self-contained by design - it calls no $this-> helpers, and falls back to
 	 * per-item author lookup when the row was not batch-enriched.
@@ -862,8 +873,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// rejects a self-downvote with a 400, and the web templates already hide
 		// the control on own content (templates/partials/post-card.php). Clients
 		// that only see the API had no way to mirror that rule — the app rendered
-		// the chevron on the viewer's own posts and the tap 400'd (Basecamp
-		// 10199587514). Server-owned rule, server-published flag: no client
+		// the chevron on the viewer's own posts and the tap 400'd. Server-owned rule, server-published flag: no client
 		// re-derives it, and the anonymous case stays correct.
 		$data['can_downvote'] = $uid > 0 && $real_author_id !== $uid;
 
@@ -875,7 +885,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 		 * moderators would make them unreachable to themselves. The API
 		 * published nothing to read that rule from, so the app rendered a Block
 		 * control on staff posts and the tap failed
-		 * (Basecamp 10207937443 / 10203753031).
 		 *
 		 * Same shape, and the same fix, as can_downvote directly above: a
 		 * server-owned rule gets a server-published flag rather than every
@@ -891,7 +900,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// moderator action, so unlike can_block_author this also requires the
 		// VIEWER to hold jetonomy_moderate. Staff authors are never bannable -
 		// this is what stops the app offering "Ban" on an admin's post
-		// (Basecamp: ban button shown for administrators). Absent before 1.9.4,
+		// (ban button shown for administrators). Absent before 1.9.4,
 		// so the app falls back to a local check on older sites.
 		$data['can_ban'] = $uid > 0
 			&& user_can( $uid, 'jetonomy_moderate' )
@@ -903,12 +912,11 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// report is answered 409 jetonomy_already_flagged, but the API published
 		// nothing to read that state from, so the app kept "reported" in local
 		// component state - lost on every refresh, after which the control drew
-		// itself un-reported and the re-tap silently 409'd (Basecamp
-		// 10202766654). Batched by enrich_viewer_state() on list paths.
+		// itself un-reported and the re-tap silently 409'd. Batched by enrich_viewer_state() on list paths.
 		$data['viewer_flagged'] = isset( $post->viewer_flagged )
 			? (bool) $post->viewer_flagged
 			: \Jetonomy\Models\Flag::has_reported( $uid, 'post', (int) $post->id );
-		// Additive (plan WP6.2): the web JS fetched a whole /subscriptions
+		// Additive: the web JS fetched a whole /subscriptions
 		// list per topic view just to render the follow toggle. Batched on
 		// list paths by enrich_viewer_state()'s subscription warm; the memo
 		// keeps unwarmed single-item paths at one query. prepare_space

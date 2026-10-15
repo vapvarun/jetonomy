@@ -24,7 +24,7 @@ $base                 = \Jetonomy\base_url();
 ?>
 <?php
 $settings        = get_option( 'jetonomy_settings', array() );
-$community_title = ! empty( $settings['community_title'] ) ? $settings['community_title'] : __( 'Community', 'jetonomy' );
+$community_title = \Jetonomy\community_title();
 ?>
 <h1 class="jt-page-title jt-home-title"><?php echo esc_html( $community_title ); ?></h1>
 <?php
@@ -39,12 +39,12 @@ if ( ! is_user_logged_in() ) :
 		/* translators: %s: community title. */
 		sprintf( __( 'Welcome to %s', 'jetonomy' ), $community_title )
 	);
+	// No setting writes a tagline; the subheading is changed through this
+	// filter.
 	$jt_welcome_sub = (string) apply_filters(
 		'jetonomy_home_welcome_subheading',
-		! empty( $settings['community_tagline'] )
-			? (string) $settings['community_tagline']
-			/* translators: %s: plural space label. */
-			: sprintf( __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
+		/* translators: %s: plural space label. */
+		sprintf( __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
 	);
 	$jt_pulse = jetonomy_community_pulse();
 	?>
@@ -79,7 +79,7 @@ if ( ! is_user_logged_in() ) :
 	 *
 	 * Deliberately NOT a compose button. A global "New topic" has to answer
 	 * "into which space?", and a picker on the primary landing page is a
-	 * bigger change than the problem warrants (Basecamp 10227705351). Naming
+	 * bigger change than the problem warrants. Naming
 	 * where posting happens turns the dead end into a signpost, which is the
 	 * whole gap.
 	 */
@@ -87,7 +87,7 @@ if ( ! is_user_logged_in() ) :
 		'jetonomy_home_member_hint',
 		sprintf(
 			/* translators: 1: singular space label, 2: plural space label, 3: plural topic label, 4: plural member label. */
-			__( 'Open a %1$s to read or start a discussion - %3$s live inside %2$s, each with its own %4$s and rules.', 'jetonomy' ),
+			__( 'Open any %1$s to read or start a discussion - %3$s live inside %2$s, each with its own %4$s and rules.', 'jetonomy' ),
 			\Jetonomy\space_label( false, true ),
 			\Jetonomy\space_label( true, true ),
 			\Jetonomy\jetonomy_label( 'topic', true, true ),
@@ -107,22 +107,22 @@ if ( ! is_user_logged_in() ) :
 				<?php
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
-					[
+					array(
 						'icon'    => 'empty-posts',
 						'message' => sprintf( /* translators: %s: plural category label. */ __( 'No %s yet. Check back soon!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
-					]
+					)
 				);
 				?>
 			<?php else : ?>
 				<?php
-				// One grouped query (+ the WP4.4 tree cache) for every
-				// category section instead of one query per category (WP3.9).
+				// One grouped query (the tree cache) for every
+				// category section instead of one query per category.
 				$jt_spaces_by_cat = \Jetonomy\Models\Space::visible_by_category();
 				$jt_children      = \Jetonomy\Models\Category::children_by_parent();
 				?>
 				<?php foreach ( $categories as $category ) : ?>
 					<?php
-					$spaces    = $jt_spaces_by_cat[ (int) $category->id ] ?? [];
+					$spaces    = $jt_spaces_by_cat[ (int) $category->id ] ?? array();
 					$jt_accent = sanitize_hex_color( (string) ( $category->color ?? '' ) );
 					?>
 					<section class="jt-cat-section<?php echo $jt_accent ? ' jt-cat-section--accent' : ''; ?>"<?php echo $jt_accent ? ' style="--jt-cat-accent:' . esc_attr( $jt_accent ) . '"' : ''; ?>>
@@ -149,14 +149,14 @@ if ( ! is_user_logged_in() ) :
 						<?php
 						\Jetonomy\Template_Loader::partial(
 							'category-chips',
-							[
-								'children'      => $jt_children[ (int) $category->id ] ?? [],
+							array(
+								'children'      => $jt_children[ (int) $category->id ] ?? array(),
 								'spaces_by_cat' => $jt_spaces_by_cat,
-							]
+							)
 						);
 						?>
 						<?php if ( ! empty( $spaces ) || empty( $jt_children[ (int) $category->id ] ) ) : ?>
-							<?php jetonomy_render_space_grid( $spaces, $base ); ?>
+							<?php jetonomy_render_space_grid( $spaces, $base, \Jetonomy\route_url( 'category', $category->slug ) ); ?>
 						<?php endif; ?>
 					</section>
 				<?php endforeach; ?>

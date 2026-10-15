@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Member_Journey {
 
-	private const ALLOWED_ROLES = [ 'member', 'moderator', 'admin' ];
+	private const ALLOWED_ROLES = array( 'member', 'moderator', 'admin' );
 
 	/**
 	 * Add a user to a space with the given role (default `member`).
@@ -58,12 +58,12 @@ final class Member_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
 				'role'     => $role,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -84,11 +84,11 @@ final class Member_Journey {
 		SpaceMember::remove( $space_id, $user_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -120,12 +120,12 @@ final class Member_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
 				'role'     => $role,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -146,12 +146,12 @@ final class Member_Journey {
 		$is_member = SpaceMember::is_member( $space_id, $user_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'space_id'  => $space_id,
 				'user_id'   => $user_id,
 				'is_member' => $is_member,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -172,12 +172,12 @@ final class Member_Journey {
 		$role = SpaceMember::get_role( $space_id, $user_id );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
 				'role'     => $role,
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -194,26 +194,26 @@ final class Member_Journey {
 			return Journey_Result::fail( 'space_id must be positive.' );
 		}
 
-		// Explicit cap (plan WP1.5): journeys assert their own small fixture
+		// Explicit cap: journeys assert their own small fixture
 		// sets; the unbounded default would materialize a live site's whole
 		// roster if pointed at a real space.
 		$rows  = SpaceMember::list_by_space( $space_id, 200 );
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'space_id'  => (int) $row->space_id,
 				'user_id'   => (int) $row->user_id,
 				'role'      => (string) ( $row->role ?? '' ),
 				'joined_at' => (string) ( $row->joined_at ?? '' ),
-			];
+			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'space_id', 'user_id', 'role', 'joined_at' ],
-			],
-			[],
+				'columns' => array( 'space_id', 'user_id', 'role', 'joined_at' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -231,22 +231,22 @@ final class Member_Journey {
 		}
 
 		$rows  = SpaceMember::list_user_spaces( $user_id );
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'space_id'  => (int) $row->space_id,
 				'user_id'   => (int) $row->user_id,
 				'role'      => (string) ( $row->role ?? '' ),
 				'joined_at' => (string) ( $row->joined_at ?? '' ),
-			];
+			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'space_id', 'user_id', 'role', 'joined_at' ],
-			],
-			[],
+				'columns' => array( 'space_id', 'user_id', 'role', 'joined_at' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -275,13 +275,13 @@ final class Member_Journey {
 		do_action( 'jetonomy_join_request_created', $space_id, $user_id, $message );
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'       => (int) $id,
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
 				'status'   => 'pending',
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -321,24 +321,24 @@ final class Member_Journey {
 		if ( is_wp_error( $added ) ) {
 			return Journey_Result::from_wp_error(
 				$added,
-				[
+				array(
 					'id'       => $request_id,
 					'space_id' => $space_id,
 					'user_id'  => $user_id,
 					'status'   => 'approved',
-				]
+				)
 			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'       => $request_id,
 				'space_id' => $space_id,
 				'user_id'  => $user_id,
 				'status'   => 'approved',
 				'role'     => 'member',
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -367,13 +367,13 @@ final class Member_Journey {
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'id'       => $request_id,
 				'space_id' => (int) $row->space_id,
 				'user_id'  => (int) $row->user_id,
 				'status'   => 'denied',
-			],
-			[],
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}
@@ -391,24 +391,24 @@ final class Member_Journey {
 		}
 
 		$rows  = JoinRequest::list_pending_for_space( $space_id );
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
-			$items[] = [
+			$items[] = array(
 				'id'         => (int) $row->id,
 				'space_id'   => (int) $row->space_id,
 				'user_id'    => (int) $row->user_id,
 				'status'     => (string) ( $row->status ?? '' ),
 				'message'    => (string) ( $row->message ?? '' ),
 				'created_at' => (string) ( $row->created_at ?? '' ),
-			];
+			);
 		}
 
 		return Journey_Result::ok(
-			[
+			array(
 				'items'   => $items,
-				'columns' => [ 'id', 'space_id', 'user_id', 'status', 'message', 'created_at' ],
-			],
-			[],
+				'columns' => array( 'id', 'space_id', 'user_id', 'status', 'message', 'created_at' ),
+			),
+			array(),
 			$this->duration_ms( $start )
 		);
 	}

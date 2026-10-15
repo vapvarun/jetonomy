@@ -44,7 +44,7 @@ class Subscription extends Model {
 		);
 
 		// A toggle mid-request must be visible to the next is_subscribed()
-		// in the same process (WP3.8 memo).
+		// in the same process.
 		self::reset_memo();
 
 		return (int) static::db()->insert_id;
@@ -77,7 +77,7 @@ class Subscription extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -113,15 +113,15 @@ class Subscription extends Model {
 	 * their own post while it waits on moderation.
 	 *
 	 * Space branch: the column is `title`, not `name` - jt_spaces has never
-	 * had a `name` (the wrong column once made every space subscription
-	 * render as "Space no longer available", Basecamp 10092766769).
+	 * had a `name` (the wrong column makes every space subscription
+	 * render as "Space no longer available").
 	 *
 	 * @param array<int,array<string,mixed>> $items Items with object_type + object_id.
 	 * @return array<int,array<string,mixed>> Items with title, slug, exists added.
 	 */
 	public static function attach_targets( array $items ): array {
-		$post_ids  = [];
-		$space_ids = [];
+		$post_ids  = array();
+		$space_ids = array();
 		foreach ( $items as $item ) {
 			if ( 'post' === ( $item['object_type'] ?? '' ) ) {
 				$post_ids[] = (int) $item['object_id'];
@@ -131,20 +131,20 @@ class Subscription extends Model {
 		}
 
 		global $wpdb;
-		$titles = [];
+		$titles = array();
 
 		if ( $post_ids ) {
 			$posts_tbl = table( 'posts' );
 			$ph        = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$spaces_tbl_j = table( 'spaces' );
-			$rows         = $wpdb->get_results( $wpdb->prepare( "SELECT p.id, p.title, p.slug, s.slug AS space_slug FROM {$posts_tbl} p LEFT JOIN {$spaces_tbl_j} s ON s.id = p.space_id WHERE p.id IN ({$ph}) AND p.status NOT IN ('trash','spam')", ...$post_ids ) ) ?: [];
+			$rows         = $wpdb->get_results( $wpdb->prepare( "SELECT p.id, p.title, p.slug, s.slug AS space_slug FROM {$posts_tbl} p LEFT JOIN {$spaces_tbl_j} s ON s.id = p.space_id WHERE p.id IN ({$ph}) AND p.status NOT IN ('trash','spam')", ...$post_ids ) ) ?: array();
 			foreach ( $rows as $row ) {
-				$titles[ 'post:' . (int) $row->id ] = [
+				$titles[ 'post:' . (int) $row->id ] = array(
 					'title'      => $row->title ?? '',
 					'slug'       => $row->slug ?? '',
 					'space_slug' => $row->space_slug ?? '',
-				];
+				);
 			}
 		}
 
@@ -152,12 +152,12 @@ class Subscription extends Model {
 			$spaces_tbl = table( 'spaces' );
 			$ph         = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, slug FROM {$spaces_tbl} WHERE id IN ({$ph})", ...$space_ids ) ) ?: [];
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, slug FROM {$spaces_tbl} WHERE id IN ({$ph})", ...$space_ids ) ) ?: array();
 			foreach ( $rows as $row ) {
-				$titles[ 'space:' . (int) $row->id ] = [
+				$titles[ 'space:' . (int) $row->id ] = array(
 					'title' => $row->title ?? '',
 					'slug'  => $row->slug ?? '',
-				];
+				);
 			}
 		}
 
@@ -180,20 +180,20 @@ class Subscription extends Model {
 	 * Notification type a follow of each object type delivers
 	 * (see Notifier::fanout_post_subscribers / fanout_reply_subscribers).
 	 */
-	const NOTIFICATION_TYPES = [
+	const NOTIFICATION_TYPES = array(
 		'space' => 'new_post_in_sub',
 		'post'  => 'reply_to_post',
-	];
+	);
 
 	/**
 	 * Set each item's `via` to the channel(s) the member will ACTUALLY be
 	 * notified on for it: 'both' | 'web' | 'email' | 'none'.
 	 *
 	 * Single source for the My Subscriptions badge and GET /subscriptions.
-	 * It used to echo jt_subscriptions.notify_via, a value written once at
-	 * follow time (always 'both') that the notifier never reads - so a member
-	 * who had turned email off, or whose site defaults email off for new
-	 * posts in followed spaces, was told "Web + Email" while no mail was sent.
+	 * It does not echo jt_subscriptions.notify_via: that value is written once at follow
+	 * time (always 'both') and the notifier never reads it, so a member who turned email
+	 * off, or whose site defaults email off for followed spaces, would be told "Web +
+	 * Email" while no mail is sent.
 	 *
 	 * Batched: every item belongs to one user and there are only two
 	 * notification types, so the preference read happens once per type
@@ -204,7 +204,7 @@ class Subscription extends Model {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function attach_delivery( array $items, int $user_id ): array {
-		$by_type = [];
+		$by_type = array();
 		foreach ( $items as &$item ) {
 			$type = self::NOTIFICATION_TYPES[ $item['object_type'] ?? '' ] ?? '';
 			if ( '' === $type ) {
@@ -223,11 +223,11 @@ class Subscription extends Model {
 	public static function unsubscribe( int $user_id, string $object_type, int $object_id ): bool {
 		$result = false !== static::db()->delete(
 			static::table(),
-			[
+			array(
 				'user_id'     => $user_id,
 				'object_type' => $object_type,
 				'object_id'   => $object_id,
-			]
+			)
 		);
 		self::reset_memo();
 		return $result;
@@ -236,14 +236,14 @@ class Subscription extends Model {
 	/**
 	 * Per-request memo for is_subscribed(), filled per-row on miss and in
 	 * bulk by warm_viewer_subscriptions(). Cleared on subscribe/unsubscribe
-	 * and via Cache::flush() (plan U1) so a toggle mid-request reads fresh.
+	 * and via Cache::flush() so a toggle mid-request reads fresh.
 	 *
 	 * @var array<string, bool>
 	 */
-	private static array $memo = [];
+	private static array $memo = array();
 
 	/**
-	 * Whether the memo reset is registered with Cache::flush() (plan U1).
+	 * Whether the memo reset is registered with Cache::flush().
 	 *
 	 * @var bool
 	 */
@@ -253,12 +253,12 @@ class Subscription extends Model {
 	 * Empty the subscription memo. Called from subscribe()/unsubscribe().
 	 */
 	public static function reset_memo(): void {
-		self::$memo = [];
+		self::$memo = array();
 	}
 
 	/**
 	 * Bulk-fill the is_subscribed() memo for one viewer over a set of
-	 * objects (plan WP3.8). One IN-query, negatives included, so a list
+	 * objects. One IN-query, negatives included, so a list
 	 * serializer's per-row is_subscribed() calls cost zero further queries.
 	 *
 	 * @param int    $user_id     Viewer.
@@ -278,9 +278,9 @@ class Subscription extends Model {
 		$subscribed = static::db()->get_col(
 			static::db()->prepare(
 				'SELECT object_id FROM ' . static::table() . " WHERE user_id = %d AND object_type = %s AND object_id IN ({$placeholders})",
-				array_merge( [ $user_id, $object_type ], $object_ids )
+				array_merge( array( $user_id, $object_type ), $object_ids )
 			)
-		) ?: [];
+		) ?: array();
 
 		$hit = array_fill_keys( array_map( 'intval', $subscribed ), true );
 		foreach ( $object_ids as $oid ) {
@@ -289,14 +289,14 @@ class Subscription extends Model {
 	}
 
 	/**
-	 * Register the memo reset with the shared registry once (plan U1).
+	 * Register the memo reset with the shared registry once.
 	 */
 	private static function register_memo_reset(): void {
 		if ( ! self::$memo_registered ) {
 			self::$memo_registered = true;
 			\Jetonomy\Cache::register_memo_reset(
 				static function (): void {
-					self::$memo = [];
+					self::$memo = array();
 				}
 			);
 		}
@@ -377,5 +377,53 @@ class Subscription extends Model {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from literals and the trusted table name.
 		return array_map( 'intval', static::db()->get_col( static::db()->prepare( $sql, ...$args ) ) ?: array() );
+	}
+
+
+	/**
+	 * Published topics a member follows, most recently followed first.
+	 *
+	 * @param int $user_id Member.
+	 * @param int $limit   Max rows (1 to 20).
+	 * @return object[] Rows with id, title, slug, space_id.
+	 */
+	public static function list_followed_posts( int $user_id, int $limit = 5 ): array {
+		if ( $user_id <= 0 ) {
+			return array();
+		}
+		$posts = \Jetonomy\table( 'posts' );
+		$rows  = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT p.id, p.title, p.slug, p.space_id FROM ' . static::table() . " s
+				 INNER JOIN {$posts} p ON s.object_id = p.id
+				 WHERE s.user_id = %d AND s.object_type = 'post' AND p.status = 'publish'
+				 ORDER BY s.created_at DESC
+				 LIMIT %d",
+				$user_id,
+				max( 1, min( 20, $limit ) )
+			)
+		);
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * A member's subscription row for one object.
+	 *
+	 * @param int    $user_id     Member.
+	 * @param string $object_type 'space' or 'post'.
+	 * @param int    $object_id   Object id.
+	 * @return object|null
+	 */
+	public static function find_for( int $user_id, string $object_type, int $object_id ): ?object {
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d AND object_type = %s AND object_id = %d',
+				$user_id,
+				$object_type,
+				$object_id
+			)
+		);
+		return $row ?: null;
 	}
 }

@@ -23,13 +23,13 @@ if ( ! in_array( $default_type, \Jetonomy\Models\Space::valid_types(), true ) ) 
 
 // Categories and their sub-categories for the Category select — mirrors the
 // edit form (G5) so the create form (G6) exposes the same options the backend
-// accepts. Top-level only hid every sub-category (Basecamp 10355160759).
+// accepts. Top-level only hid every sub-category.
 $categories = \Jetonomy\Models\Category::list_tree();
 
 $base   = \Jetonomy\base_url();
 $crumbs = array(
 	array(
-		/* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 		'label' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 		'url'   => '',
 	),
@@ -41,15 +41,15 @@ $crumbs = array(
 	<main>
 		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<h1 class="jt-page-title jt-mb-20">
-			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-			<?php echo esc_html( sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
+			<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
+			<?php echo esc_html( sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 		</h1>
 
 		<?php if ( ! $qualifies ) : ?>
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
-				[
+				array(
 					'icon'      => 'lock',
 					'icon_size' => 64,
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
@@ -57,7 +57,7 @@ $crumbs = array(
 					'cta_label' => __( 'Back to community', 'jetonomy' ),
 					'cta_url'   => $base . '/',
 					'tone'      => 'forbidden',
-				]
+				)
 			);
 			?>
 		<?php else : ?>
@@ -87,18 +87,23 @@ $crumbs = array(
 
 				<div class="jt-form-row">
 					<label for="jt-ns-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
-					<select id="jt-ns-visibility" name="visibility" class="jt-input">
+					<select id="jt-ns-visibility" name="visibility" class="jt-input" data-wp-on--change="actions.syncJoinPolicy">
 						<?php \Jetonomy\space_visibility_options(); ?>
 					</select>
 				</div>
 
 				<div class="jt-form-row">
 					<label for="jt-ns-join-policy"><?php esc_html_e( 'Join policy', 'jetonomy' ); ?></label>
-					<select id="jt-ns-join-policy" name="join_policy" class="jt-input">
+					<select id="jt-ns-join-policy" name="join_policy" class="jt-input" data-wp-on--change="actions.syncJoinPolicy">
 						<option value="open"><?php esc_html_e( 'Open: anyone can join', 'jetonomy' ); ?></option>
 						<option value="approval"><?php esc_html_e( 'Approval required', 'jetonomy' ); ?></option>
 						<option value="invite"><?php esc_html_e( 'Invite only', 'jetonomy' ); ?></option>
 					</select>
+					<p class="jt-form-hint" data-jt-visibility-hint role="status" aria-live="polite" hidden
+						data-msg-forces="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Hidden %s are invite-only, so the join policy was switched to Invite only.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
+						data-msg-requires="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Only invite-only %s can be hidden, so visibility was switched to Private.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
+					data-msg-private-forces="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Private %s need approval or an invite, so the join policy was switched to Approval required.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
+					data-msg-open-requires="<?php /* translators: %s: plural space label the site owner configured. */ echo esc_attr( sprintf( __( 'Anyone-can-join %s must be public, so visibility was switched to Public.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"></p>
 				</div>
 
 				<div class="jt-form-row">
@@ -115,6 +120,7 @@ $crumbs = array(
 					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %1$s under a top-level %2$s on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ) ); ?></p>
 				</div>
 
+				<?php if ( \Jetonomy\Permissions\Capabilities::can_upload() ) : ?>
 				<div class="jt-form-row">
 					<label><?php esc_html_e( 'Cover image', 'jetonomy' ); ?></label>
 					<div class="jt-cover-uploader" data-jt-cover>
@@ -134,6 +140,7 @@ $crumbs = array(
 					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Wide banner shown at the top of the %s page. Optional.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
+				<?php endif; ?>
 
 				<div class="jt-form-row">
 					<?php
@@ -162,7 +169,7 @@ $crumbs = array(
 
 				<div class="jt-form-actions">
 					<button type="submit" class="jt-btn jt-btn-fill">
-						<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
+						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 						<?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 					</button>
 					<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( $base . '/' ); ?>">

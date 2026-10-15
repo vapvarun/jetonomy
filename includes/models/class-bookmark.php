@@ -26,7 +26,7 @@ class Bookmark extends Model {
 	public static function toggle( int $user_id, int $post_id ): array {
 		if ( self::is_bookmarked( $user_id, $post_id ) ) {
 			self::remove( $user_id, $post_id );
-			return [ 'bookmarked' => false ];
+			return array( 'bookmarked' => false );
 		}
 
 		static::db()->query(
@@ -39,7 +39,7 @@ class Bookmark extends Model {
 			)
 		);
 
-		return [ 'bookmarked' => true ];
+		return array( 'bookmarked' => true );
 	}
 
 	public static function is_bookmarked( int $user_id, int $post_id ): bool {
@@ -109,10 +109,10 @@ class Bookmark extends Model {
 		// filters the read and never touches the saved row.
 		[ $block_sql, $block_vals ] = BlockedUser::exclusion_sql( $user_id, 'p', 'author_id' );
 		if ( '' !== $block_sql ) {
-			return [ $sql . ' AND ' . $block_sql, $block_vals ];
+			return array( $sql . ' AND ' . $block_sql, $block_vals );
 		}
 
-		return [ $sql, [] ];
+		return array( $sql, array() );
 	}
 
 	/**
@@ -130,9 +130,9 @@ class Bookmark extends Model {
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $vis_sql inlines absint'd ids; it only adds a %d (spread via $vis_vals) past the 500-block cap.
 				"SELECT p.*, b.created_at AS bookmarked_at FROM {$b} b JOIN {$p} p ON p.id = b.post_id WHERE b.user_id = %d{$vis_sql} ORDER BY b.created_at DESC LIMIT %d OFFSET %d",
-				...array_merge( [ $user_id ], $vis_vals, [ $limit, $offset ] )
+				...array_merge( array( $user_id ), $vis_vals, array( $limit, $offset ) )
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	public static function count_by_user( int $user_id ): int {
@@ -145,7 +145,7 @@ class Bookmark extends Model {
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- see list_by_user().
 				"SELECT COUNT(*) FROM {$b} b JOIN {$p} p ON p.id = b.post_id WHERE b.user_id = %d{$vis_sql}",
-				...array_merge( [ $user_id ], $vis_vals )
+				...array_merge( array( $user_id ), $vis_vals )
 			)
 		);
 	}
@@ -153,10 +153,10 @@ class Bookmark extends Model {
 	public static function remove( int $user_id, int $post_id ): bool {
 		return false !== static::db()->delete(
 			static::table(),
-			[
+			array(
 				'user_id' => $user_id,
 				'post_id' => $post_id,
-			]
+			)
 		);
 	}
 }

@@ -165,7 +165,12 @@
 			return createElement( Fragment, {},
 				createElement( InspectorControls, {},
 					createElement( PanelBody, { title: __( 'Leaderboard', 'jetonomy' ), initialOpen: true },
-						numberControl( __( 'Count', 'jetonomy' ), a.count, function ( v ) { set( { count: v } ); } )
+						numberControl( __( 'Count', 'jetonomy' ), a.count, function ( v ) { set( { count: v } ); } ),
+						selectControl( __( 'Period', 'jetonomy' ), a.period || 'all', [
+							{ label: __( 'All time', 'jetonomy' ), value: 'all' },
+							{ label: __( 'This month', 'jetonomy' ), value: 'month' },
+							{ label: __( 'This week', 'jetonomy' ), value: 'week' },
+						], function ( v ) { set( { period: v } ); } )
 					)
 				),
 				previewCard( __( 'Jetonomy · Leaderboard', 'jetonomy' ), __( 'Top members by reputation', 'jetonomy' ) )

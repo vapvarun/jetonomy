@@ -3,17 +3,12 @@
  * Attachment link model — maps WP media items to posts/replies with ordering,
  * plus a batch primer so rendering N reply cards issues zero per-row queries.
  *
- * This lived in Pro until 1.7.1, and that was the wrong home for the DATA. A
- * customer who migrated a forum with Pro active and later dropped Pro (licence
- * lapsed, downgrade) watched their attachments disappear from the page: the
- * importer had taken the old forum's markup out of the post body, and the only
- * remaining record sat in a table free cannot read. The files were fine — the
- * site simply had no way to show them.
- *
- * So the LINK is free. "This post has files on it" is forum content, not a paid
- * feature. Pro keeps what is genuinely Pro: the upload composer, the size/type
- * limits, and the richer previews. Pro's Model now extends this one, so Pro's
- * existing call sites are unchanged and both plugins read the same table.
+ * The LINK lives in free: "this post has files on it" is forum content, not a paid
+ * feature, and a site that drops Pro (licence lapsed, downgrade) must still show its
+ * attachments - after an import the original markup is gone from the post body, so
+ * the link table is the only record. Pro keeps what is genuinely Pro: the upload
+ * composer, the size/type limits, and the richer previews. Pro's Model extends this
+ * one, so both plugins read the same table.
  *
  * @package Jetonomy
  */
@@ -187,7 +182,7 @@ class Attachment {
 	protected static array $view_primed = array();
 
 	/**
-	 * Prime exactly the reply ids a view is about to render (plan WP1.3).
+	 * Prime exactly the reply ids a view is about to render.
 	 *
 	 * The single-post view knows the paged tree it renders (incl. the
 	 * off-page accepted-answer card), so it primes THAT set instead of every
@@ -214,7 +209,7 @@ class Attachment {
 	 * Skipped when prime_rendered_replies() already covered this post — the
 	 * hook-driven callers (free jetonomy_after_post_content, Pro
 	 * jetonomy_before_replies) fire after the view's scoped prime, and
-	 * re-running the whole-thread query would undo the WP1.3 bound. The
+	 * re-running the whole-thread query would undo that scoped bound. The
 	 * whole-post path stays for direct callers and free/pro version skew.
 	 */
 	public static function prime_for_post( int $post_id ): void {
@@ -324,5 +319,29 @@ class Attachment {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Link rows pointing at one media item, across every post and reply.
+	 *
+	 * @param int $attachment_id WP attachment id.
+	 * @return int
+	 */
+	public static function count_links_to( int $attachment_id ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . static::table() . ' WHERE attachment_id = %d', $attachment_id ) );
+	}
+
+	/**
+	 * Delete link rows whose WP attachment no longer exists (a media-library
+	 * delete that bypassed the cascade). Deletes no files.
+	 *
+	 * @return int Rows deleted.
+	 */
+	public static function delete_dangling_links(): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->query( 'DELETE a FROM ' . static::table() . " a LEFT JOIN {$wpdb->posts} p ON p.ID = a.attachment_id WHERE p.ID IS NULL" );
 	}
 }

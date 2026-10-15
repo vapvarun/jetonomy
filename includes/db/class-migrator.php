@@ -22,7 +22,7 @@ class Migrator {
 		// hosts with tight max_execution_time. An ALTER that outlives the PHP
 		// limit completes server-side but the version never gets stamped, so
 		// every subsequent request re-enters the whole loop. Lift the limits
-		// for the migration pass (caching plan WP5.0).
+		// for the migration pass.
 		ignore_user_abort( true );
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- disabled_functions on some hosts.
@@ -46,7 +46,7 @@ class Migrator {
 	 * @return array<string,string>
 	 */
 	private static function get_migrations(): array {
-		return [
+		return array(
 			'1.1.0'   => '1_1_0',
 			'1.2.0'   => '1_2_0',
 			'1.2.1'   => '1_2_1',
@@ -89,6 +89,7 @@ class Migrator {
 			'2.0.0'   => '2_0_0',
 			'2.0.1'   => '2_0_1',
 			'2.0.1.1' => '2_0_1_1',
-		];
+			'2.0.2'   => '2_0_2',
+		);
 	}
 }

@@ -127,8 +127,8 @@
 			var catNameEl = document.getElementById('jt-cat-name');
 			var spaceNameEl = document.getElementById('jt-space-name');
 			var spaceDescEl = document.getElementById('jt-space-desc');
-			var catName = catNameEl ? catNameEl.value : 'General';
-			var spaceName = spaceNameEl ? spaceNameEl.value : 'Community Discussion';
+			var catName = catNameEl ? catNameEl.value : __( 'General', 'jetonomy' );
+			var spaceName = spaceNameEl ? spaceNameEl.value : __( 'Community Discussion', 'jetonomy' );
 			var spaceDesc = spaceDescEl ? spaceDescEl.value : '';
 
 			if (!catName.trim() || !spaceName.trim()) {

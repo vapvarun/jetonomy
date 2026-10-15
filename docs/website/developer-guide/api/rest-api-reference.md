@@ -77,7 +77,7 @@ Every error is a standard `WP_Error`-shaped JSON body:
 
 ### Spaces
 
-Sub-communities. `POST /spaces` requires `manage_options` OR `jetonomy_create_spaces` OR a WP role the admin opted into (`Settings → General → frontend_space_creation_roles`). Space-level writes (`PATCH`/`DELETE` on a space, member-role changes, invites) require the caller to hold the `admin` per-space role (independent of WP capabilities) or `manage_options`.
+Sub-communities. `POST /spaces` requires `manage_options` OR a WP role the admin opted into (`Settings → General → frontend_space_creation_roles`). Space-level writes (`PATCH`/`DELETE` on a space, member-role changes, invites) require the caller to hold the `admin` per-space role (independent of WP capabilities) or `manage_options`.
 
 ```
 GET    /spaces                                          List (visibility-filtered)
@@ -316,7 +316,7 @@ GET  /media    List community media library uploads (jetonomy_manage_settings)
 GET  /updates    Poll for activity since a timestamp (scope=global|space|post)
 GET  /oembed     oEmbed 1.0 JSON for a forum thread URL (Slack/X/Discord unfurl)
 POST /admin/recount               Rebuild counters (manage_options)
-POST /admin/users/trust-level     Bulk-set trust level (manage_options)
+POST /admin/users/trust-level     Bulk-set trust level (jetonomy_manage_users; non-admins cannot change their own, an admin's or a moderator's level)
 GET/POST/DELETE /admin/demo-data  Demo data status / import / remove (manage_options)
 ```
 

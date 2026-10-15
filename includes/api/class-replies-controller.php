@@ -88,6 +88,7 @@ class Replies_Controller extends Base_Controller {
 						'force' => array(
 							'type'        => 'boolean',
 							'default'     => false,
+							// jt-terms-ok: REST schema description for API developers.
 							'description' => __( 'Delete permanently instead of moving to trash. Space moderators and admins only.', 'jetonomy' ),
 						),
 					),
@@ -150,7 +151,6 @@ class Replies_Controller extends Base_Controller {
 		// but a space-level check left every reply under a trashed or pending
 		// post readable — so deleting a topic did not take its conversation with
 		// it, and a private topic's thread answered to non-members
-		// (Basecamp 10105628594).
 		// 404, not 403, and for the same reason GET /posts/{id} answers 404: a
 		// 403 on the thread confirms the topic exists to a viewer the post
 		// route refuses to tell. Two answers to one question is the leak.
@@ -218,8 +218,7 @@ class Replies_Controller extends Base_Controller {
 		 * Banned/silenced, archived or locked space, closed post, and the
 		 * space-level right to reply - now shared with the inbound-email writer
 		 * through Content_Gate. These were spelled out here and only here, which
-		 * is exactly why the email path had none of them (Basecamp
-		 * 10228771444). Error codes and statuses are unchanged.
+		 * is exactly why the email path had none of them. Error codes and statuses are unchanged.
 		 *
 		 * Rate limiting and CAPTCHA stay below: they are per-surface policy
 		 * rather than facts about the post, and a CAPTCHA is meaningless for a
@@ -239,9 +238,8 @@ class Replies_Controller extends Base_Controller {
 		$trust   = (int) ( $profile->trust_level ?? 0 );
 		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_replies', $trust ) ) {
 			// Rate_Limiter::message() names the allowance and the real wait.
-			// The old string said "Rate limit exceeded. Please try again
-			// later." to a member who had never been told a limit existed and
-			// could not tell whether "later" meant a minute or a day.
+			// A bare "Rate limit exceeded. Please try again later." would not tell a member
+			// whether "later" means a minute or a day.
 			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'create_replies', $trust ) );
 		}
 
@@ -258,7 +256,7 @@ class Replies_Controller extends Base_Controller {
 
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 		if ( empty( $content ) ) {
-			return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: %s: the singular Reply label. */ __( '%s content is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) );
 		}
 
 		$content_plain = jetonomy_content_to_plain( $content );
@@ -286,7 +284,7 @@ class Replies_Controller extends Base_Controller {
 
 		// Carry the client-requested flag into the create data. Free only
 		// plumbs it through — Pro validates/enforces it via the
-		// `jetonomy_before_create_reply` filter (see Task 12).
+		// `jetonomy_before_create_reply` filter.
 		$reply_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
 
 		// Private reply (1.9.0): author's choice at compose time. Readable only
@@ -319,7 +317,7 @@ class Replies_Controller extends Base_Controller {
 			if ( null !== $backdate ) {
 				$parent_date = $post->published_at ?? $post->created_at ?? null;
 				if ( $parent_date && strtotime( $backdate ) < strtotime( $parent_date ) ) {
-					return $this->validation_error( __( 'Reply published_at cannot precede the parent post date.', 'jetonomy' ) );
+					return $this->validation_error( sprintf( /* translators: 1: the singular Reply label, 2: the singular Topic label, lowercase. */ __( '%1$s published_at cannot precede the parent %2$s date.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 				}
 				$reply_data['created_at'] = $backdate;
 			}
@@ -341,7 +339,7 @@ class Replies_Controller extends Base_Controller {
 		if ( ! $reply_id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',
-				__( 'Failed to create reply.', 'jetonomy' ),
+				sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}
@@ -380,7 +378,7 @@ class Replies_Controller extends Base_Controller {
 	 * Exists so a client holding only a reply id can resolve its parent thread:
 	 * the payload carries `post_id`. Reply notifications carry the reply id and
 	 * nothing else, so without this route the app had no way to route the tap and
-	 * every reply notification was a dead end (Basecamp 10159720057 / 10161329157).
+	 * every reply notification was a dead end.
 	 *
 	 * Read gate is the parent post's, not the reply's — a reply is only as visible
 	 * as the thread it lives in, and Permission_Engine::can_read_post already
@@ -403,6 +401,10 @@ class Replies_Controller extends Base_Controller {
 		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 			return $this->permission_error();
 		}
+
+		// Same placeholder the thread shows; cloned so the cached row keeps its body.
+		$reply = clone $reply;
+		Reply::apply_private_tombstone( $reply, $post, get_current_user_id() );
 
 		$enriched = $this->enrich_with_author( array( $reply ) );
 
@@ -433,7 +435,7 @@ class Replies_Controller extends Base_Controller {
 		$space_id  = (int) $post->space_id;
 		$is_author = (int) $reply->author_id === $user_id;
 
-		$can_edit = ( $is_author && $this->check_permission( 'create_replies', $space_id ) )
+		$can_edit = ( $is_author && $this->check_permission( 'edit_own_posts', $space_id ) )
 			|| $this->check_permission( 'edit_others_posts', $space_id );
 
 		if ( ! $can_edit ) {
@@ -459,12 +461,12 @@ class Replies_Controller extends Base_Controller {
 		if ( null !== $raw_content ) {
 			$content = jetonomy_sanitize_editor_content( (string) $raw_content );
 			if ( empty( $content ) ) {
-				return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
+				return $this->validation_error( sprintf( /* translators: %s: the singular Reply label. */ __( '%s content is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) );
 			}
 
 			$moderation_action = apply_filters( 'jetonomy_check_content', null, array( 'content' => $content ), $space_id, $user_id );
 			if ( 'block' === $moderation_action ) {
-				return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+				return $this->validation_error( sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 			}
 			// Enforce hold/spam/flag on EDIT too (only 'block' was handled before,
 			// so editing spam into a published reply bypassed moderation).
@@ -507,7 +509,7 @@ class Replies_Controller extends Base_Controller {
 			if ( null !== $backdate ) {
 				$parent_date = $post->published_at ?? $post->created_at ?? null;
 				if ( $parent_date && strtotime( $backdate ) < strtotime( $parent_date ) ) {
-					return $this->validation_error( __( 'Reply published_at cannot precede the parent post date.', 'jetonomy' ) );
+					return $this->validation_error( sprintf( /* translators: 1: the singular Reply label, 2: the singular Topic label, lowercase. */ __( '%1$s published_at cannot precede the parent %2$s date.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 				}
 				$update_data['created_at'] = $backdate;
 			}
@@ -572,7 +574,7 @@ class Replies_Controller extends Base_Controller {
 		$space_id  = (int) $post->space_id;
 		$is_author = (int) $reply->author_id === $user_id;
 
-		$can_delete = ( $is_author && $this->check_permission( 'create_replies', $space_id ) )
+		$can_delete = ( $is_author && $this->check_permission( 'delete_own_posts', $space_id ) )
 			|| $this->check_permission( 'delete_others_posts', $space_id );
 
 		if ( ! $can_delete ) {
@@ -591,7 +593,7 @@ class Replies_Controller extends Base_Controller {
 				return $result;
 			}
 			if ( true !== $result ) {
-				return new WP_Error( 'jetonomy_delete_failed', __( 'The reply could not be deleted.', 'jetonomy' ), array( 'status' => 500 ) );
+				return new WP_Error( 'jetonomy_delete_failed', sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'The %s could not be deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), array( 'status' => 500 ) );
 			}
 			return new WP_REST_Response(
 				array(
@@ -609,8 +611,22 @@ class Replies_Controller extends Base_Controller {
 
 		// Reply::update() detects the publish→trash transition and decrements
 		// post/user counters atomically — no manual pre-decrement needed.
-		Reply::update( $id, array( 'status' => 'trash' ) );
+		// Someone else's reply is a moderator removal; see the posts endpoint.
+		if ( $is_author ) {
+			Reply::update( $id, array( 'status' => 'trash' ) );
+		} else {
+			Moderation_Service::system_set_object_status( 'reply', $id, 'trash', $user_id );
+		}
 
+		/**
+		 * Fires after a reply is deleted through the REST API.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $reply_id Deleted reply ID.
+		 * @param int $space_id Space ID.
+		 * @param int $user_id  Acting user ID.
+		 */
 		do_action( 'jetonomy_reply_deleted', $id, $space_id, $user_id );
 
 		// jetonomy_after_delete_reply now fires from the model, so every
@@ -746,7 +762,7 @@ class Replies_Controller extends Base_Controller {
 
 		$title = sanitize_text_field( (string) $request->get_param( 'title' ) );
 		if ( empty( $title ) ) {
-			return $this->validation_error( __( 'A title is required for the new topic.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'A title is required for the new %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 		}
 
 		$target_space_id = absint( $request->get_param( 'space_id' ) );
@@ -759,11 +775,14 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$new_post_id = \Jetonomy\Models\Reply::split_to_topic( $reply_id, $title, $target_space_id );
+		if ( is_wp_error( $new_post_id ) ) {
+			return $new_post_id;
+		}
 
 		if ( ! $new_post_id ) {
 			return new \WP_Error(
 				'jetonomy_split_failed',
-				__( 'Failed to split reply into new topic.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Reply label, lowercase, 2: the singular Topic label, lowercase. */ __( 'Failed to split %1$s into new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}
@@ -894,7 +913,6 @@ class Replies_Controller extends Base_Controller {
 		 * moderators would make them unreachable to themselves. The API
 		 * published nothing to read that rule from, so the app rendered a Block
 		 * control on staff replys and the tap failed
-		 * (Basecamp 10207937443 / 10203753031).
 		 *
 		 * Same shape, and the same fix, as can_downvote directly above: a
 		 * server-owned rule gets a server-published flag rather than every
@@ -906,7 +924,7 @@ class Replies_Controller extends Base_Controller {
 			&& $real_author_id !== $uid
 			&& ! user_can( $real_author_id, 'manage_options' )
 			&& ! user_can( $real_author_id, 'jetonomy_moderate' );
-		// See the identical note in prepare_post() — Basecamp 10202766654.
+		// See the identical note in prepare_post().
 		$data['viewer_flagged'] = isset( $reply->viewer_flagged )
 			? (bool) $reply->viewer_flagged
 			: \Jetonomy\Models\Flag::has_reported( $uid, 'reply', (int) $reply->id );
@@ -954,10 +972,10 @@ class Replies_Controller extends Base_Controller {
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			// Undeclared passthrough before this fix — Pro's File Attachments
-			// extension reads this via $request->get_param() (class-extension.php
-			// link_on_create_reply()). Must stay a CSV STRING: Pro's link_pending()
-			// does explode(',', $csv), not an array walk.
+			// Pro's File Attachments extension reads this via $request->get_param()
+			// (class-extension.php link_on_create_reply()); declaring it makes it discoverable
+			// from the route schema. Must stay a CSV STRING: Pro's link_pending() does
+			// explode(',', $csv), not an array walk.
 			'attachment_ids' => array(
 				'type'              => 'string',
 				'required'          => false,

@@ -1,0 +1,135 @@
+{
+    "translation-revision-date": "2026-06-28 11:51:58+00:00",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/blocks-editor.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "es",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Forum Feed": [
+                "Feed del foro"
+            ],
+            "Space List": [
+                "Lista de Spaces"
+            ],
+            "Leaderboard": [
+                "Tabla de posiciones"
+            ],
+            "Login": [
+                "Iniciar sesi\u00f3n"
+            ],
+            "Trending": [
+                "Tendencias"
+            ],
+            "Sort": [
+                "Ordenar"
+            ],
+            "Latest": [
+                "M\u00e1s Recientes"
+            ],
+            "Filtered to space #": [
+                ""
+            ],
+            "Latest topics from all spaces": [
+                ""
+            ],
+            "Count": [
+                "Recuento"
+            ],
+            "Space ID (0 = all)": [
+                ""
+            ],
+            "Top voted": [
+                ""
+            ],
+            "Show header": [
+                ""
+            ],
+            "Header title (optional)": [
+                ""
+            ],
+            "Jetonomy \u00b7 Forum Feed": [
+                ""
+            ],
+            "day window": [
+                ""
+            ],
+            "Window (days)": [
+                ""
+            ],
+            "Jetonomy \u00b7 Trending Topics": [
+                ""
+            ],
+            "Category ID (0 = all)": [
+                ""
+            ],
+            "Jetonomy \u00b7 Space List": [
+                ""
+            ],
+            "Filtered to category #": [
+                ""
+            ],
+            "All public spaces": [
+                ""
+            ],
+            "Jetonomy \u00b7 Leaderboard": [
+                ""
+            ],
+            "Top members by reputation": [
+                ""
+            ],
+            "Navigation": [
+                ""
+            ],
+            "Show category headings": [
+                ""
+            ],
+            "Collapsible sections": [
+                ""
+            ],
+            "Show post counts": [
+                ""
+            ],
+            "Hide empty categories": [
+                ""
+            ],
+            "Title (optional)": [
+                ""
+            ],
+            "Jetonomy \u00b7 Navigation": [
+                ""
+            ],
+            "Categories \u2192 spaces tree, permission-aware": [
+                ""
+            ],
+            "User Panel": [
+                ""
+            ],
+            "Defaults to \"Hi, {display name}\".": [
+                ""
+            ],
+            "Jetonomy \u00b7 User Panel": [
+                ""
+            ],
+            "Logged-in profile card. Empty for guests.": [
+                ""
+            ],
+            "Show register tab": [
+                ""
+            ],
+            "Tab only appears if site allows new registrations.": [
+                ""
+            ],
+            "Jetonomy \u00b7 Login": [
+                ""
+            ],
+            "Quick login + register. Empty for signed-in viewers.": [
+                ""
+            ]
+        }
+    }
+}

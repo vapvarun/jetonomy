@@ -38,48 +38,48 @@ class Moderation_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/moderation/queue',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_queue' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
-				'args'                => [
-					'status' => [
+				'callback'            => array( $this, 'get_queue' ),
+				'permission_callback' => array( $this, 'require_moderate' ),
+				'args'                => array(
+					'status' => array(
 						'type'              => 'string',
 						'required'          => false,
 						'default'           => 'pending',
-						'enum'              => [ 'pending', 'spam', 'all' ],
+						'enum'              => array( 'pending', 'spam', 'all' ),
 						'sanitize_callback' => 'sanitize_key',
-					],
-					'type'   => [
+					),
+					'type'   => array(
 						'type'              => 'string',
 						'required'          => false,
-						'enum'              => [ 'post', 'reply' ],
+						'enum'              => array( 'post', 'reply' ),
 						'sanitize_callback' => 'sanitize_key',
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		// Approve a post or reply.
 		register_rest_route(
 			$ns,
 			'/moderation/approve/(?P<type>post|reply)/(?P<id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'approve' ],
+				'callback'            => array( $this, 'approve' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
-			]
+			)
 		);
 
 		// Mark a post or reply as spam.
 		register_rest_route(
 			$ns,
 			'/moderation/spam/(?P<type>post|reply)/(?P<id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'mark_spam' ],
+				'callback'            => array( $this, 'mark_spam' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
-			]
+			)
 		);
 
 		// Create a flag report (requires jetonomy_flag, not moderate).
@@ -89,83 +89,83 @@ class Moderation_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/flags',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'create_flag' ],
+				'callback'            => array( $this, 'create_flag' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_flag' ),
-				'args'                => [
-					'object_type' => [
+				'args'                => array(
+					'object_type' => array(
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => [ 'post', 'reply', 'user' ],
-					],
-					'object_id'   => [
+						'enum'     => array( 'post', 'reply', 'user' ),
+					),
+					'object_id'   => array(
 						'type'     => 'integer',
 						'required' => true,
 						'minimum'  => 1,
-					],
-					'reason'      => [
+					),
+					'reason'      => array(
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => [ 'spam', 'offensive', 'off_topic', 'harassment', 'other' ],
-					],
-					'description' => [
+						'enum'     => array( 'spam', 'offensive', 'off_topic', 'harassment', 'other' ),
+					),
+					'description' => array(
 						'type'     => 'string',
 						'required' => false,
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		// List flags, optionally filtered by status.
 		register_rest_route(
 			$ns,
 			'/moderation/flags',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_flags' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
-				'args'                => [
+				'callback'            => array( $this, 'list_flags' ),
+				'permission_callback' => array( $this, 'require_moderate' ),
+				'args'                => array(
 					// Was undeclared, so the route ALWAYS returned pending flags and
 					// any "resolved" / "all" filter a client offered was dead UI.
 					// Statuses are the ones Flag actually writes: a new flag is
 					// 'pending'; resolving it sets 'valid' or 'dismissed'.
-					'status' => [
+					'status' => array(
 						'type'    => 'string',
 						'default' => 'pending',
-						'enum'    => [ 'pending', 'valid', 'dismissed', 'all' ],
-					],
-				],
-			]
+						'enum'    => array( 'pending', 'valid', 'dismissed', 'all' ),
+					),
+				),
+			)
 		);
 
 		// Trash content.
 		register_rest_route(
 			$ns,
 			'/moderation/trash/(?P<type>post|reply)/(?P<id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'trash_content' ],
+				'callback'            => array( $this, 'trash_content' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
-			]
+			)
 		);
 
 		// Resolve flag.
 		register_rest_route(
 			$ns,
 			'/moderation/flags/(?P<id>\d+)/resolve',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'resolve_flag' ],
+				'callback'            => array( $this, 'resolve_flag' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
-				'args'                => [
-					'status' => [
+				'args'                => array(
+					'status' => array(
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => [ 'valid', 'dismissed' ],
-					],
-				],
-			]
+						'enum'     => array( 'valid', 'dismissed' ),
+					),
+				),
+			)
 		);
 
 		// Bulk moderation action — REST parity with the wp-admin AJAX handler
@@ -175,23 +175,23 @@ class Moderation_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/moderation/bulk',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'bulk_action' ],
+				'callback'            => array( $this, 'bulk_action' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
-				'args'                => [
-					'action' => [
+				'args'                => array(
+					'action' => array(
 						'type'              => 'string',
 						'required'          => true,
-						'enum'              => [ 'approve', 'spam', 'trash' ],
+						'enum'              => array( 'approve', 'spam', 'trash' ),
 						'sanitize_callback' => 'sanitize_key',
-					],
-					'items'  => [
+					),
+					'items'  => array(
 						'type'     => 'array',
 						'required' => true,
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		// Per-post flag inspection (1.4.1 A5). Mods looking at a specific post
@@ -201,18 +201,18 @@ class Moderation_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/posts/(?P<id>\d+)/flags',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_post_flags' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
-				'args'                => [
-					'id' => [
+				'callback'            => array( $this, 'get_post_flags' ),
+				'permission_callback' => array( $this, 'require_moderate' ),
+				'args'                => array(
+					'id' => array(
 						'type'     => 'integer',
 						'required' => true,
 						'minimum'  => 1,
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		// Ban user — REST_Auth handles login + cookie nonce only. The cap
@@ -225,36 +225,36 @@ class Moderation_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/moderation/ban',
-			[
+			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'ban_user' ],
+				'callback'            => array( $this, 'ban_user' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				'args'                => [
-					'user_id'    => [
+				'args'                => array(
+					'user_id'    => array(
 						'type'     => 'integer',
 						'required' => true,
-					],
-					'type'       => [
+					),
+					'type'       => array(
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => [ 'global_ban', 'space_ban', 'silence' ],
-					],
-					'reason'     => [ 'type' => 'string' ],
-					'space_id'   => [ 'type' => 'integer' ],
-					'expires_at' => [ 'type' => 'string' ],
-				],
-			]
+						'enum'     => array( 'global_ban', 'space_ban', 'silence' ),
+					),
+					'reason'     => array( 'type' => 'string' ),
+					'space_id'   => array( 'type' => 'integer' ),
+					'expires_at' => array( 'type' => 'string' ),
+				),
+			)
 		);
 
 		// Unban user.
 		register_rest_route(
 			$ns,
 			'/moderation/ban/(?P<id>\d+)',
-			[
+			array(
 				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'unban_user' ],
+				'callback'            => array( $this, 'unban_user' ),
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
-			]
+			)
 		);
 
 		// List active restrictions (the moderator ban-management surface). This is
@@ -264,21 +264,21 @@ class Moderation_Controller extends Base_Controller {
 		register_rest_route(
 			$ns,
 			'/moderation/ban',
-			[
+			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_bans' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
-				'args'                => [
-					'type'     => [
+				'callback'            => array( $this, 'list_bans' ),
+				'permission_callback' => array( $this, 'require_moderate' ),
+				'args'                => array(
+					'type'     => array(
 						'type' => 'string',
-						'enum' => [ 'global_ban', 'space_ban', 'silence' ],
-					],
-					'user_id'  => [ 'type' => 'integer' ],
-					'space_id' => [ 'type' => 'integer' ],
-					'limit'    => [ 'type' => 'integer' ],
-					'offset'   => [ 'type' => 'integer' ],
-				],
-			]
+						'enum' => array( 'global_ban', 'space_ban', 'silence' ),
+					),
+					'user_id'  => array( 'type' => 'integer' ),
+					'space_id' => array( 'type' => 'integer' ),
+					'limit'    => array( 'type' => 'integer' ),
+					'offset'   => array( 'type' => 'integer' ),
+				),
+			)
 		);
 	}
 
@@ -311,8 +311,11 @@ class Moderation_Controller extends Base_Controller {
 		$want_posts = '' === $type_filter || 'post' === $type_filter;
 		$want_reply = '' === $type_filter || 'reply' === $type_filter;
 
-		$post_total  = $want_posts ? Post::count_by_status( $statuses ) : 0;
-		$reply_total = $want_reply ? Reply::count_by_status( $statuses ) : 0;
+		// Site moderators see every space they can read; private and hidden
+		// spaces they are not in stay out of the rows AND the totals.
+		$scope       = \Jetonomy\Moderation\Moderation_Permissions::staff_scope( get_current_user_id() );
+		$post_total  = $want_posts ? Post::count_by_status( $statuses, $scope ) : 0;
+		$reply_total = $want_reply ? Reply::count_by_status( $statuses, $scope ) : 0;
 		$total       = $post_total + $reply_total;
 
 		// Fetch a bounded window from each table, tag the object type, merge and
@@ -321,11 +324,11 @@ class Moderation_Controller extends Base_Controller {
 		// assembled correctly; both slices are still index-served and bounded.
 		$window = $pagination['offset'] + $pagination['limit'];
 
-		$posts = $want_posts ? Post::list_by_status( $statuses, $window, 0 ) : array();
+		$posts = $want_posts ? Post::list_by_status( $statuses, $window, 0, $scope ) : array();
 		foreach ( $posts as $row ) {
 			$row->object_type = 'post';
 		}
-		$replies = $want_reply ? Reply::list_by_status( $statuses, $window, 0 ) : array();
+		$replies = $want_reply ? Reply::list_by_status( $statuses, $window, 0, $scope ) : array();
 		foreach ( $replies as $row ) {
 			$row->object_type = 'reply';
 		}
@@ -353,7 +356,7 @@ class Moderation_Controller extends Base_Controller {
 				'offset' => $pagination['offset'],
 			)
 		);
-		$response->header( 'X-Jetonomy-Pending-Flags', (string) Flag::count_pending() );
+		$response->header( 'X-Jetonomy-Pending-Flags', (string) Flag::count_pending( \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ) ) );
 
 		return $response;
 	}
@@ -371,11 +374,11 @@ class Moderation_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'approved'    => true,
 				'object_type' => $type,
 				'id'          => $id,
-			],
+			),
 			200
 		);
 	}
@@ -395,11 +398,11 @@ class Moderation_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'marked_spam' => true,
 				'object_type' => $type,
 				'id'          => $id,
-			],
+			),
 			200
 		);
 	}
@@ -415,7 +418,7 @@ class Moderation_Controller extends Base_Controller {
 		$user_id = get_current_user_id();
 
 		if ( Restriction::is_silenced( $user_id ) ) {
-			return new WP_Error( 'silenced', __( 'You are currently silenced.', 'jetonomy' ), [ 'status' => 403 ] );
+			return new WP_Error( 'jetonomy_user_silenced', __( 'You are currently silenced.', 'jetonomy' ), array( 'status' => 403 ) );
 		}
 
 		$object_type = sanitize_text_field( (string) $request->get_param( 'object_type' ) );
@@ -426,14 +429,24 @@ class Moderation_Controller extends Base_Controller {
 		// The target must exist, and members cannot report their own content /
 		// themselves. Both were client-side-only before, so a raw API call
 		// could 201 a flag against a nonexistent id or self-report to farm the
-		// reporter-reputation path (Basecamp 10130360032 contract audit).
+		// reporter-reputation path.
 		$target_author = null;
+		// Content must also be live and readable by the reporter. A topic in a
+		// private space you cannot open, or a trashed reply, answers exactly like a
+		// missing one: otherwise any member could flag (and dock reputation from)
+		// content they cannot see, and 404-vs-201 would confirm private ids exist.
 		if ( 'post' === $object_type ) {
 			$target        = \Jetonomy\Models\Post::find( $object_id );
-			$target_author = $target ? (int) $target->author_id : null;
+			$readable      = $target && 'publish' === $target->status
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $target );
+			$target_author = $readable ? (int) $target->author_id : null;
 		} elseif ( 'reply' === $object_type ) {
 			$target        = \Jetonomy\Models\Reply::find( $object_id );
-			$target_author = $target ? (int) $target->author_id : null;
+			$parent        = $target ? \Jetonomy\Models\Post::find( (int) $target->post_id ) : null;
+			$readable      = $target && $parent && 'publish' === $target->status && 'publish' === $parent->status
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $parent )
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( $user_id, $target, $parent );
+			$target_author = $readable ? (int) $target->author_id : null;
 		} else { // 'user' - schema enum guarantees one of the three.
 			$target        = get_userdata( $object_id );
 			$target_author = $target ? (int) $target->ID : null;
@@ -442,14 +455,14 @@ class Moderation_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_flag_target_missing',
 				__( 'The reported content no longer exists.', 'jetonomy' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 		if ( $target_author === $user_id ) {
 			return new WP_Error(
 				'jetonomy_flag_self',
 				__( 'You cannot report your own content.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -459,28 +472,36 @@ class Moderation_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_already_flagged',
 				__( 'You have already reported this content.', 'jetonomy' ),
-				[ 'status' => 409 ]
+				array( 'status' => 409 )
 			);
 		}
 
 		$flag_id = Flag::create(
-			[
+			array(
 				'reporter_id' => $user_id,
 				'object_type' => $object_type,
 				'object_id'   => $object_id,
 				'reason'      => $reason,
 				'description' => $description,
-			]
+			)
 		);
 
 		if ( ! $flag_id ) {
 			return new WP_Error(
 				'jetonomy_flag_failed',
 				__( 'Failed to create flag.', 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
+		/**
+		 * Fires after a content flag is created.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $flag_id     Flag ID.
+		 * @param string $object_type Flagged object type: 'post' or 'reply'.
+		 */
 		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
 
 		// Award reputation impact to reported content author (skip self-reports).
@@ -500,7 +521,14 @@ class Moderation_Controller extends Base_Controller {
 		}
 
 		if ( $author_id > 0 && $author_id !== (int) $user_id ) {
-			Reputation::award( $author_id, 'post_reported' );
+			Reputation::award(
+				$author_id,
+				'post_reported',
+				array(
+					'object_type' => $object_type,
+					'object_id'   => (int) $object_id,
+				)
+			);
 		}
 
 		/**
@@ -523,10 +551,10 @@ class Moderation_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'created' => true,
 				'id'      => $flag_id,
-			],
+			),
 			201
 		);
 	}
@@ -540,25 +568,26 @@ class Moderation_Controller extends Base_Controller {
 		$offset     = (int) $pagination['offset'];
 		$status     = (string) ( $request->get_param( 'status' ) ?: 'pending' );
 
+		// Private and hidden spaces the caller cannot read stay out (rows and total).
+		$skip  = \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() );
 		$flags = 'all' === $status
-			? Flag::list_all( $limit, $offset )
-			: Flag::list_by_status( $status, $limit, $offset );
+			? Flag::list_all( $limit, $offset, $skip )
+			: Flag::list_by_status( $status, $limit, $offset, $skip );
 
 		// Shared with the per-space queue — see Base_Controller::enrich_flag_actors().
-		// This used to be written out inline here, which is precisely why the
-		// per-space screen still said "Reported by unknown" after this one was fixed.
+		// Both queues share it, so neither shows "Reported by unknown".
 		$flags = $this->enrich_flag_actors( $flags );
 
 		// Count for the SAME status we listed, or has_more lies on every filter
 		// other than 'pending'.
-		$total = Flag::count_by_status( $status );
+		$total = Flag::count_by_status( $status, $skip );
 
 		return $this->paginated_response(
 			$flags,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $offset,
-			]
+			)
 		);
 	}
 
@@ -575,11 +604,11 @@ class Moderation_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'trashed'     => true,
 				'object_type' => $type,
 				'id'          => $id,
-			],
+			),
 			200
 		);
 	}
@@ -605,11 +634,11 @@ class Moderation_Controller extends Base_Controller {
 			return $this->validation_error( __( 'items must be a non-empty array.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $action, [ 'approve', 'spam', 'trash' ], true ) ) {
+		if ( ! in_array( $action, array( 'approve', 'spam', 'trash' ), true ) ) {
 			return $this->validation_error( __( 'Invalid action; expected approve, spam, or trash.', 'jetonomy' ) );
 		}
 
-		$results = [];
+		$results = array();
 		foreach ( $items as $item ) {
 			// Tolerate both array and stdClass payloads (REST decodes JSON to assoc arrays
 			// by default, but PHP arg passing through internal callers can yield objects).
@@ -623,12 +652,12 @@ class Moderation_Controller extends Base_Controller {
 				$id   = isset( $item->id ) ? absint( $item->id ) : 0;
 			}
 
-			if ( ! in_array( $type, [ 'post', 'reply' ], true ) || $id <= 0 ) {
-				$results[] = [
+			if ( ! in_array( $type, array( 'post', 'reply' ), true ) || $id <= 0 ) {
+				$results[] = array(
 					'type'   => $type,
 					'id'     => $id,
 					'status' => 'invalid_item',
-				];
+				);
 				continue;
 			}
 
@@ -639,25 +668,25 @@ class Moderation_Controller extends Base_Controller {
 			};
 
 			if ( is_wp_error( $result ) ) {
-				$results[] = [
+				$results[] = array(
 					'type'   => $type,
 					'id'     => $id,
 					'status' => $result->get_error_code() ?: 'error',
-				];
+				);
 			} else {
-				$results[] = [
+				$results[] = array(
 					'type'   => $type,
 					'id'     => $id,
 					'status' => 'ok',
-				];
+				);
 			}
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'action'  => $action,
 				'results' => $results,
-			],
+			),
 			200
 		);
 	}
@@ -676,7 +705,9 @@ class Moderation_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Invalid post id.', 'jetonomy' ) );
 		}
 
-		if ( ! \Jetonomy\Models\Post::find( $post_id ) ) {
+		$post = \Jetonomy\Models\Post::find( $post_id );
+		// A topic in a space the caller cannot read answers exactly like a missing one.
+		if ( ! $post || in_array( (int) $post->space_id, \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ), true ) ) {
 			return $this->not_found( 'Post' );
 		}
 
@@ -690,10 +721,9 @@ class Moderation_Controller extends Base_Controller {
 	 *
 	 * Delegates to Moderation_Service::resolve_flag — the single owner of the
 	 * resolution contract (content trash on valid, related-flag clearing,
-	 * reporter reputation award, jetonomy_flag_resolved hook). This route
-	 * previously called Flag::resolve() directly, so flags resolved through
-	 * the global REST surface skipped all of those side effects while the
-	 * admin-AJAX, CLI, and space-moderation surfaces applied them.
+	 * reporter reputation award, jetonomy_flag_resolved hook), so flags resolved through
+	 * the global REST surface get the same side effects as the admin-AJAX, CLI, and
+	 * space-moderation surfaces.
 	 */
 	public function resolve_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id     = absint( $request->get_param( 'id' ) );
@@ -711,11 +741,11 @@ class Moderation_Controller extends Base_Controller {
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'resolved' => true,
 				'id'       => $id,
 				'status'   => $status,
-			],
+			),
 			200
 		);
 	}
@@ -754,12 +784,10 @@ class Moderation_Controller extends Base_Controller {
 			return $this->not_found( 'User' );
 		}
 
-		// Who may be TARGETED. The cap matrix above only ever checked the actor,
-		// so any user with jetonomy_moderate (the editor role, by default) could
-		// issue a global_ban against the site administrator — and a global ban makes
-		// REST_Auth reject that account's mutations, so a moderator could lock the
-		// owner out of their own community. Verified against a live site before this
-		// guard existed: an editor banned user 1 and the row was written.
+		// Who may be TARGETED. The cap matrix above only checks the actor, so without this
+		// any user with jetonomy_moderate (the editor role, by default) could issue a
+		// global_ban against the site administrator - and a global ban makes REST_Auth reject
+		// that account's mutations, locking the owner out of their own community.
 		//
 		// Rules, mirroring the ones user-blocking already enforces:
 		// - nobody restricts themselves,
@@ -769,7 +797,7 @@ class Moderation_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_cannot_ban_self',
 				__( 'You cannot restrict your own account.', 'jetonomy' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -777,7 +805,7 @@ class Moderation_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_cannot_ban_admin',
 				__( 'Administrators cannot be restricted.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -785,7 +813,7 @@ class Moderation_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_cannot_ban_moderator',
 				__( 'Only an administrator can restrict a moderator.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -802,17 +830,17 @@ class Moderation_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_ban_failed',
 				__( 'Failed to issue restriction.', 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'banned'         => true,
 				'restriction_id' => $restriction_id,
 				'user_id'        => $user_id,
 				'type'           => $type,
-			],
+			),
 			201
 		);
 	}
@@ -834,15 +862,15 @@ class Moderation_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_unban_failed',
 				__( 'Failed to remove restriction.', 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
 		return new WP_REST_Response(
-			[
+			array(
 				'removed' => true,
 				'id'      => $id,
-			],
+			),
 			200
 		);
 	}
@@ -859,10 +887,10 @@ class Moderation_Controller extends Base_Controller {
 	public function list_bans( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$pagination = $this->get_pagination( $request );
 
-		$filters = [
+		$filters = array(
 			'limit'  => $pagination['limit'],
 			'offset' => $pagination['offset'],
-		];
+		);
 
 		$type = (string) $request->get_param( 'type' );
 		if ( '' !== $type ) {
@@ -882,8 +910,8 @@ class Moderation_Controller extends Base_Controller {
 
 		// Batch-load banned members AND issuing moderators in one query, plus the
 		// spaces referenced by space bans — no per-row get_userdata()/Space::find().
-		$user_ids  = [];
-		$space_ids = [];
+		$user_ids  = array();
+		$space_ids = array();
 		foreach ( $rows as $row ) {
 			$user_ids[] = (int) $row->user_id;
 			if ( (int) $row->issued_by ) {
@@ -894,7 +922,7 @@ class Moderation_Controller extends Base_Controller {
 			}
 		}
 		$users  = $this->batch_load_users( array_values( array_unique( array_filter( $user_ids ) ) ) );
-		$spaces = [];
+		$spaces = array();
 		foreach ( array_unique( array_filter( $space_ids ) ) as $sid ) {
 			$space = Space::find( (int) $sid );
 			if ( $space ) {
@@ -902,41 +930,41 @@ class Moderation_Controller extends Base_Controller {
 			}
 		}
 
-		$items = [];
+		$items = array();
 		foreach ( $rows as $row ) {
 			$uid    = (int) $row->user_id;
 			$banned = $users[ $uid ] ?? null;
 			$issuer = isset( $users[ (int) $row->issued_by ] ) ? $users[ (int) $row->issued_by ] : null;
 			$space  = ( $row->space_id && isset( $spaces[ (int) $row->space_id ] ) ) ? $spaces[ (int) $row->space_id ] : null;
 
-			$items[] = [
+			$items[] = array(
 				'id'             => (int) $row->id,
 				'user_id'        => $uid,
-				'user'           => [
+				'user'           => array(
 					'id'           => $uid,
 					'display_name' => $banned ? $banned->display_name : __( '[deleted]', 'jetonomy' ),
 					'user_login'   => $banned ? $banned->user_login : '',
 					'avatar_url'   => $banned ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
-				],
+				),
 				'type'           => (string) $row->type,
 				'space_id'       => $row->space_id ? (int) $row->space_id : null,
 				'space_title'    => $space ? $space->title : null,
 				'reason'         => null !== $row->reason ? (string) $row->reason : null,
 				'issued_by'      => (int) $row->issued_by,
-				'issuer_name'    => $issuer ? $issuer->display_name : ( (int) $row->issued_by ? __( '[deleted]', 'jetonomy' ) : __( 'System', 'jetonomy' ) ),
+				'issuer_name'    => $issuer ? \Jetonomy\user_display_name( $issuer ) : ( (int) $row->issued_by ? __( '[deleted]', 'jetonomy' ) : __( 'System', 'jetonomy' ) ),
 				'expires_at'     => $row->expires_at ?: null,
 				'expires_at_gmt' => \Jetonomy\to_iso8601_z( $row->expires_at ?? null ),
 				'created_at'     => $row->created_at,
 				'created_at_gmt' => \Jetonomy\to_iso8601_z( $row->created_at ?? null ),
-			];
+			);
 		}
 
 		return $this->paginated_response(
 			$items,
-			[
+			array(
 				'total'  => $total,
 				'offset' => $pagination['offset'],
-			]
+			)
 		);
 	}
 

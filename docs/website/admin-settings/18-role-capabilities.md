@@ -34,8 +34,7 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_vote` | Vote on posts and replies |
 | `jetonomy_flag` | Report content to moderators |
 | `jetonomy_join_spaces` | Join spaces that allow it |
-| `jetonomy_upload_media` | Attach files and images (one of four capabilities that allow uploads, see [Common changes](#common-changes)) |
-| `jetonomy_create_spaces` | Create spaces programmatically |
+| `jetonomy_upload_media` | Attach files and images (see [Common changes](#common-changes)) |
 
 ### Moderating
 
@@ -44,7 +43,7 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_edit_others_posts` | Edit anyone's post |
 | `jetonomy_delete_others_posts` | Delete anyone's post |
 | `jetonomy_moderate` | Work the moderation queue, resolve reports, ban members |
-| `jetonomy_manage_users` | Manage community members |
+| `jetonomy_manage_users` | Open **Jetonomy → Users** and change members' trust levels (not their own, an administrator's or a moderator's) |
 | `jetonomy_move_posts` | Move topics between spaces |
 | `jetonomy_close_posts` | Close topics |
 | `jetonomy_pin_posts` | Pin topics |
@@ -56,9 +55,9 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_manage_settings` | Change Jetonomy settings |
 | `jetonomy_manage_categories` | Create and edit categories |
 | `jetonomy_manage_spaces` | Manage every space |
-| `jetonomy_manage_badges` | Manage badges |
+| `jetonomy_manage_badges` | Open **Badges** (Pro) and create, edit, award and revoke badges |
 | `jetonomy_view_analytics` | View community analytics |
-| `jetonomy_manage_extensions` | Enable and disable Pro extensions |
+| `jetonomy_manage_extensions` | Open **Extensions** (Pro) and enable or disable them |
 
 ## Defaults
 
@@ -66,13 +65,17 @@ Out of the box, capabilities accumulate up the role hierarchy - each role holds 
 
 | Role | Adds |
 |---|---|
-| **Subscriber** | Read, create topics and replies, edit and delete own posts, vote, report, join spaces |
-| **Contributor** | Upload media |
-| **Author** | Create spaces |
+| **Subscriber** | Read, create topics and replies, edit and delete own posts, upload media, vote, report, join spaces |
+| **Contributor** | Nothing extra |
+| **Author** | Nothing extra (who may create spaces is set in **Settings → General → Who can create spaces**) |
 | **Editor** | Edit and delete others' posts, moderate, manage users, move, close and pin topics |
 | **Administrator** | Manage settings, categories, all spaces, badges, analytics and extensions |
 
 So an Editor holds everything a Subscriber, Contributor and Author hold, plus the moderation set. This is why Editor is the natural role for a community moderator with no other change needed.
+
+**Site-wide moderators.** Any role holding `jetonomy_moderate` is treated as staff: in every space it can use each moderation capability it holds (edit or delete others' posts, move, close, pin), without joining the space and without a trust level.
+
+**Moderation capabilities on other roles.** If you give a role without `jetonomy_moderate` one of those capabilities, a member with that role can use it only in spaces they belong to, and only from trust level 3.
 
 ## Roles from other plugins
 
@@ -84,11 +87,13 @@ If a custom role should behave like a full community member everywhere rather th
 
 ## Common changes
 
+**Roles from other plugins.** Roles such as Customer or Student start with nothing ticked. Leaving them that way is safe: their members can still read and take part in the spaces they belong to. Tick boxes only when you want that role to have site-wide abilities. If a role from another plugin was saved with nothing ticked, its members cannot read or post anywhere and this screen shows a warning with a **Give members access to their spaces** button. Click it to return the role to space-membership access; leave it if blocking that role was your intention.
+
 **Read-only community.** Untick `jetonomy_create_posts` and `jetonomy_create_replies` for Subscriber. Members can read and vote but not post. Useful for an announcement-style community.
 
 **Moderators who cannot delete.** Give a role `jetonomy_moderate` but leave `jetonomy_delete_others_posts` unticked. They can work the queue, resolve reports and hide content without permanently removing anyone's writing.
 
-**Stopping file and image uploads.** Unticking `jetonomy_upload_media` on its own does not stop uploads. The upload route lets a member in if their role holds **any one** of these: WordPress's own `upload_files`, `jetonomy_upload_media`, `jetonomy_create_posts`, or `jetonomy_create_replies`. Subscribers hold the create-posts and create-replies capabilities by default, so they can upload even though `jetonomy_upload_media` only starts at Contributor. To stop a role uploading, untick all three Jetonomy capabilities for it, and make sure the role does not hold `upload_files`. WordPress gives `upload_files` to Author, Editor and Administrator, and this grid cannot remove it. Unticking those capabilities also stops the role posting and replying, so there is no way to block uploads while keeping posting for the same role. Banned and silenced members cannot upload regardless.
+**Stopping file and image uploads.** Untick `jetonomy_upload_media` for the role. Members of that role keep posting and replying, but the image button and Attach files disappear and the upload routes refuse them. WordPress's own `upload_files` (Author, Editor and Administrator) also allows uploads, and this grid cannot remove it. Banned and silenced members cannot upload regardless.
 
 **Analytics for a manager.** Tick `jetonomy_view_analytics` for a role that holds nothing else. They see the numbers without gaining any content control.
 

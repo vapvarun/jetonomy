@@ -110,13 +110,15 @@ class Spaces_Handler {
 			wp_send_json_error( $id->get_error_message() );
 		}
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Failed to create space.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		wp_send_json_success(
 			array(
 				'id'      => $id,
-				'message' => __( 'Space created.', 'jetonomy' ),
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'message' => sprintf( __( '%s created.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
 			)
 		);
 	}
@@ -129,7 +131,8 @@ class Spaces_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid space ID.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		$data           = array();
@@ -242,12 +245,14 @@ class Spaces_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to update space.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'Space updated.', 'jetonomy' ),
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+				'message' => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
 			)
 		);
 	}
@@ -262,7 +267,7 @@ class Spaces_Handler {
 	 *
 	 * Positions are absolute via the shared reorder primitive, so a drag on
 	 * page 2 cannot renumber over page 1 - the defect this shipped alongside
-	 * fixing for categories (Basecamp 10210539659).
+	 * fixing for categories.
 	 */
 	public function ajax_reorder_spaces(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
@@ -299,12 +304,13 @@ class Spaces_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid space ID.', 'jetonomy' ) );
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		$space = Space::find( $id );
 		if ( ! $space ) {
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
@@ -328,12 +334,17 @@ class Spaces_Handler {
 			// admin is a member with a space-level role rather than a WordPress
 			// one. See Spaces_Controller::delete_item().
 			\Jetonomy\Space_Purge::queue( $id );
+			$deleted = null === Space::find( $id );
 
 			wp_send_json_success(
 				array(
-					'message' => __( 'Space and all its content are being deleted.', 'jetonomy' ),
+					'message' => $deleted
+						/* translators: %s: space label (e.g. "Space"). */
+						? sprintf( __( '%s and all its content were deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) )
+						/* translators: %s: space label, lowercase (e.g. "space"). */
+						: sprintf( __( 'This %s is locked and its content is being deleted in the background.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ),
 					'mode'    => 'purge',
-					'removed' => true,
+					'removed' => $deleted,
 				)
 			);
 		} else {
@@ -354,16 +365,15 @@ class Spaces_Handler {
 	 * @param int $id Space to archive and transfer.
 	 */
 	private function transfer_space( int $id ): void {
-		$successor = Space::resolve_successor( $id, get_current_user_id() );
-		if ( ! $successor ) {
-			wp_send_json_error( __( 'No one else can take over this space. Delete it permanently instead.', 'jetonomy' ) );
+		$successor = Space::archive_and_hand_over( $id );
+		if ( is_wp_error( $successor ) ) {
+			wp_send_json_error( $successor->get_error_message() );
 		}
-
-		Space::hand_over( $id, $successor, get_current_user_id(), true );
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'Space archived and transferred. Its content was kept.', 'jetonomy' ),
+				/* translators: %s: space label (e.g. "Space"). */
+				'message' => sprintf( __( '%s archived and transferred. Its content was kept.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
 				'mode'    => 'transfer',
 				'removed' => false,
 			)
@@ -423,9 +433,13 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
 		}
 
-		SpaceMember::remove( $space_id, $user_id );
+		$removed = SpaceMember::remove( $space_id, $user_id, true );
+		if ( is_wp_error( $removed ) ) {
+			wp_send_json_error( $removed->get_error_message() );
+		}
 
-		wp_send_json_success( array( 'message' => __( 'Member removed.', 'jetonomy' ) ) );
+		/* translators: %s: member label (e.g. "Member"). */
+		wp_send_json_success( array( 'message' => sprintf( __( '%s removed.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ) ) ) );
 	}
 
 	public function ajax_change_member_role(): void {
@@ -451,7 +465,7 @@ class Spaces_Handler {
 		// still add() a brand-new member so this admin control keeps working for
 		// both cases.
 		$result = SpaceMember::is_member( $space_id, $user_id )
-			? SpaceMember::set_role( $space_id, $user_id, $role )
+			? SpaceMember::set_role( $space_id, $user_id, $role, true )
 			: SpaceMember::add( $space_id, $user_id, $role );
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( $result->get_error_message() );
@@ -474,7 +488,8 @@ class Spaces_Handler {
 		$priority   = absint( $_POST['priority'] ?? 0 );
 
 		if ( ! $space_id ) {
-			wp_send_json_error( __( 'Missing space ID.', 'jetonomy' ) );
+			/* translators: %s: space label, lowercase (e.g. "space"). */
+			wp_send_json_error( sprintf( __( 'Missing %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		$valid_types = array( 'membership', 'role', 'capability', 'trust_level', 'logged_in', 'everyone' );
@@ -511,13 +526,14 @@ class Spaces_Handler {
 		// spaces are always readable, and the Permission_Engine blocks non-members
 		// on private/hidden spaces *before* rules run — so a membership/role/
 		// capability/trust-level rule on a public space silently does nothing (the
-		// "configured but content still accessible" report, #10000074550). When
+		// "configured but content still accessible" report). When
 		// such a rule is attached to a public space, switch the space to Private
 		// so the rule actually restricts access, and tell the admin what happened.
 		$made_private = AccessRule::enforce_gate_on_public_space( $space_id, $rule_type );
 
 		$message = $made_private
-			? __( 'Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.', 'jetonomy' )
+			/* translators: %s: space label, lowercase (e.g. "space"). */
+			? sprintf( __( 'Access rule added. This %1$s was switched to Private so the rule can restrict access. A rule cannot gate a public %1$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) )
 			: __( 'Access rule added.', 'jetonomy' );
 
 		wp_send_json_success(
@@ -571,10 +587,9 @@ class Spaces_Handler {
 		}
 
 		// The roster role comes from the STORED rule, capped by that rule's own
-		// grants - never from the request. Sync used to write whatever role the
-		// button carried, so a rule advertising "Read" could deposit space
-		// admins, who then get the moderation bypass that reads the roster role
-		// and never looks at grants. See AccessRule::cap_space_role().
+		// grants - never from the request, so a rule advertising "Read" cannot deposit
+		// space admins, who get the moderation bypass that reads the roster role and never
+		// looks at grants. See AccessRule::cap_space_role().
 		$rule = $rule_id ? AccessRule::find( $rule_id ) : null;
 		if ( $rule && (int) $rule->space_id === $space_id ) {
 			$space_role = AccessRule::cap_space_role( (string) $rule->grants, (string) $rule->space_role, (string) $rule->rule_type );
@@ -630,8 +645,8 @@ class Spaces_Handler {
 
 		wp_send_json_success(
 			array(
-				/* translators: %d: number of members synced */
-				'message' => sprintf( __( 'Synced %d existing members.', 'jetonomy' ), $synced ),
+				/* translators: 1: number of members synced. 2: member label, singular or plural to match the number (e.g. "member" / "members"). */
+				'message' => sprintf( _n( 'Synced %1$d existing %2$s.', 'Synced %1$d existing %2$s.', $synced, 'jetonomy' ), $synced, \Jetonomy\count_noun( $synced, 'member' ) ),
 				'synced'  => $synced,
 			)
 		);
@@ -703,7 +718,8 @@ class Spaces_Handler {
 
 		$space_id = absint( $_POST['space_id'] ?? 0 );
 		if ( ! $space_id ) {
-			wp_send_json_error( __( 'Missing space ID.', 'jetonomy' ) );
+			/* translators: %s: space label, lowercase (e.g. "space"). */
+			wp_send_json_error( sprintf( __( 'Missing %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		$max_uses   = absint( $_POST['max_uses'] ?? 0 );
@@ -735,7 +751,8 @@ class Spaces_Handler {
 
 		$space_id = absint( $_POST['space_id'] ?? 0 );
 		if ( ! $space_id ) {
-			wp_send_json_error( __( 'Missing space ID.', 'jetonomy' ) );
+			/* translators: %s: space label, lowercase (e.g. "space"). */
+			wp_send_json_error( sprintf( __( 'Missing %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		$invites = array();

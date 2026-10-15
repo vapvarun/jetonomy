@@ -35,8 +35,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
         // Track the selection range inside the composer body while the user
         // is interacting with it. Saved on every selectionchange that lands
         // within `body` so we can restore it after `prompt()` / `confirm()`
-        // steals focus (Basecamp 9803832443: Link button did nothing because
-        // prompt blurred the composer and createLink had nothing to wrap).
+        // steals focus (otherwise the Link button does nothing: the
+        // prompt blurs the composer and createLink has nothing to wrap).
         let savedRange = null;
         document.addEventListener( 'selectionchange', () => {
             const sel = window.getSelection();
@@ -51,7 +51,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         // Code block and Quote are toggles over one block element each. The
         // bare formatBlock call had no way back out: clicking again nested a
         // second block, and Enter only ever added lines inside it, so text
-        // typed after a code block stayed in the <pre> (QA 10320778207).
+        // typed after a code block stayed in the <pre>.
         const BLOCK_TAGS = { codeblock: 'pre', quote: 'blockquote' };
         const MEDIA = 'img, video, iframe, audio, hr, table';
 
@@ -330,6 +330,23 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
     // ── G1: Drag-Drop & Paste-to-Upload Image Handling ──
 
+    // The toolbar renders its image button only for members who may upload, so
+    // paste and drop follow it: no button, no upload request that can only fail.
+    function canUploadHere( editor ) {
+        for ( var el = editor.parentElement; el; el = el.parentElement ) {
+            if ( el.querySelector( '[data-cmd]' ) ) {
+                return !! el.querySelector( '[data-cmd="image"]' );
+            }
+        }
+        return false;
+    }
+
+    function refuseUpload() {
+        if ( window.bnToast ) {
+            window.bnToast( wp.i18n.__( 'You do not have permission to upload images.', 'jetonomy' ) );
+        }
+    }
+
     document.querySelectorAll( '.jt-editor-body' ).forEach( function( editor ) {
         // Paste handler — paste screenshots from clipboard
         editor.addEventListener( 'paste', function( e ) {
@@ -337,6 +354,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
             for ( var i = 0; i < items.length; i++ ) {
                 if ( items[ i ].type.indexOf( 'image' ) !== -1 ) {
                     e.preventDefault();
+                    if ( ! canUploadHere( editor ) ) {
+                        refuseUpload();
+                        return;
+                    }
                     var file = items[ i ].getAsFile();
                     uploadImage( file, editor );
                     return;
@@ -362,6 +383,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
             editor.classList.remove( 'jt-editor-dragover' );
 
             var files = e.dataTransfer.files;
+            if ( files.length && ! canUploadHere( editor ) ) {
+                refuseUpload();
+                return;
+            }
             for ( var i = 0; i < files.length; i++ ) {
                 if ( files[ i ].type.indexOf( 'image' ) !== -1 ) {
                     uploadImage( files[ i ], editor );
@@ -424,7 +449,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         }
 
         // restFetch handles nonce injection + the 403/invalid-nonce refresh
-        // path centrally so this upload no longer has to remember the
+        // path centrally so this upload does not have to remember the
         // X-WP-Nonce header (or fail silently when restNonce isn't around).
         var doUpload = function () {
             if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
@@ -585,16 +610,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
     // ── Keyboard shortcuts live in header.js ──
     //
-    // This file used to carry a second, competing implementation of the whole
-    // set (?, /, n, j/k, Enter) plus its own `.jt-shortcut-help` modal. Two
-    // handlers owned `?`, so the help surface toggled itself and QA could not
-    // get a stable panel (10150869012). The duplicate was also the worse copy:
-    // hardcoded English, no `l`/`r` rows, an inline onclick, and the broken
-    // `focused.href` Enter handler that started the "Enter does nothing" report
-    // in the first place - a .jt-row DIV has no href.
-    //
-    // header.js is the single owner: localized strings, the full shortcut list,
-    // and Enter resolving the row's real title link.
+    // header.js is the single owner: localized strings, the full shortcut list (?, /, n,
+    // j/k, Enter, l/r), its own `.jt-shortcut-help` modal, and Enter resolving the row's
+    // real title link (a .jt-row DIV has no href). A second handler here would fight it
+    // over `?` and the help surface would toggle itself.
 
     // ── G9: Emoji Picker (delegated — works for composers injected after DOMContentLoaded) ──
     //
@@ -640,7 +659,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
     }
 
     // Shared singleton picker — repositioned beside the active emoji button.
-    // Popup semantics (QA 10149499573): the picker is a named menu, the
+    // Popup semantics: the picker is a named menu, the
     // trigger carries aria-haspopup/expanded/controls, focus moves into the
     // menu on open, arrows/Tab move between options, Escape closes and
     // returns focus to the trigger.
@@ -715,7 +734,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 pickerTrigger = emojiBtn;
                 // aria-haspopup / aria-controls are stamped in the template so
                 // the contract is complete on first paint rather than only
-                // after the first click (QA 10149499573, second pass). Kept
+                // after the first click. Kept
                 // here as a belt-and-braces for any theme override that
                 // renders its own toolbar without them.
                 emojiBtn.setAttribute('aria-haspopup', 'menu');
@@ -788,6 +807,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             if (res.ok && res.data && res.data.status === 'joined') {
                 window.location.reload();
+            } else if (res.data && res.data.status === 'pending') {
+                // The server filed a request (a page cached before the space
+                // went private): show it rather than silently resetting.
+                btn.textContent = wp.i18n.__( 'Awaiting Approval', 'jetonomy' );
+                btn.classList.remove('jt-btn-fill');
+                btn.classList.add('jt-btn-outline');
+                (window.bnToast ? window.bnToast(res.data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), 'success') : null);
             } else {
                 btn.disabled = false;
                 btn.textContent = label;

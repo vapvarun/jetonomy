@@ -25,7 +25,9 @@ Promotion to levels 1-3 is based on a combination of activity stats, not a singl
 | TL2 | Regular | 30 posts, 20 days active, 50 reputation |
 | TL3 | Trusted | 100 posts, 60 days active, 200 reputation |
 | TL4 | Leader | Manually granted by an admin |
-| TL5 | Moderator | Manually granted by an admin |
+| TL5 | Veteran | Manually granted by an admin |
+
+You can rename any level under **Jetonomy > Settings > Permissions > Trust level names**. Leave a field blank to keep the built-in name. Members see the name on profiles, hover cards and badges, with "Trust level N" as the tooltip.
 
 ## What Each Level Unlocks
 
@@ -53,11 +55,11 @@ Trust levels only change a few things. What a member can do day to day comes fro
 - **Uploads and editing or deleting your own posts.** Every member's role gets the capabilities by default, so every trust level can do them. To change this, edit the role in [Role Capabilities](../admin-settings/18-role-capabilities.md).
 - **Moderation.** Trust level never makes someone a moderator. Moderating needs the `jetonomy_moderate` capability (Editor and above by default) or a **Moderator** or **Admin** role in the space. TL4 ("Leader") and TL5 ("Moderator") are names only. Promoting a member to TL4 or TL5 does not give them moderation tools, access to the moderation queue, or any admin screen.
 - **Managing settings, categories and analytics.** These need the matching capabilities, which Administrators hold. TL5 does not grant them.
-- **Creating spaces.** Front-end space creation follows the **Front-end space creation** role list in **Jetonomy → Settings → General**. Trust level does not unlock it. The permission engine also lists TL4 plus the `jetonomy_create_spaces` capability as a requirement for programmatic checks, but the front-end form and the REST route do not use it.
+- **Creating spaces.** Front-end space creation follows the **Front-end space creation** role list in **Jetonomy → Settings → General**. Trust level does not unlock it, and there is no separate capability for it.
 
-The **Unlocks** column on the Permissions settings screen is a summary of each level's intent. Use the table above as the source of truth for what is enforced.
+The **What this unlocks** column on the Permissions settings screen lists only what the engine enforces: no daily limits from TL1, no CAPTCHA from TL2 (when CAPTCHA is on), and the TL3 minimum for editing, deleting, moving, closing and pinning others' topics. That TL3 minimum applies only to roles you gave those capabilities without **Moderate community**.
 
-Space Moderators and Space Admins can moderate inside their own space regardless of trust level. WordPress administrators bypass all of these checks.
+Site-wide moderators (any role with `jetonomy_moderate`, Editor by default) are not held to the trust floor: they can use their moderation capabilities in every space they can read. Space Moderators and Space Admins can moderate inside their own space regardless of trust level. WordPress administrators bypass all of these checks.
 
 > **Note:** "Rate limit lifted" at TL1 refers to the per-day posting caps that apply to brand-new (TL0) accounts - 3 topics, 10 replies, and 5 votes per day by default. Those caps and how to tune them are covered in [Anti-Spam Protection → Rate Limiting for New Members](04-anti-spam.md#rate-limiting-for-new-members).
 
@@ -70,11 +72,11 @@ Reputation is updated in real time whenever a qualifying event occurs.
 | Your topic is upvoted | +10 |
 | Your reply is upvoted | +5 |
 | Your reply is accepted as an answer (Q&A) | +15 |
-| Your idea is moved to Planned/Shipped | +20 |
+| Your idea goes onto the roadmap (Planned, In progress or Shipped), once per idea; taken back if declined | +20 |
 | A flag you submitted is confirmed | +5 |
 | Your topic or reply is downvoted | -2 |
-| Your post is reported | -10 |
-| A moderator deletes your content | -20 |
+| Your topic or reply is reported (given back if the report is dismissed) | -10 |
+| A moderator deletes your content or marks it as spam (given back if restored) | -20 |
 
 Every point value is editable at **Jetonomy → Settings → Permissions → Reputation Points** - adjust any action's score without touching code.
 

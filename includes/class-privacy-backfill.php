@@ -108,16 +108,16 @@ final class Privacy_Backfill {
 		 */
 		$columns = apply_filters( 'jetonomy_privacy_orphan_columns', Privacy::orphan_columns() );
 
-		$clean = [];
+		$clean = array();
 		foreach ( (array) $columns as $c ) {
 			if ( empty( $c['table'] ) || empty( $c['column'] ) ) {
 				continue;
 			}
-			$clean[] = [
+			$clean[] = array(
 				'table'  => (string) $c['table'],
 				'column' => sanitize_key( (string) $c['column'] ),
 				'where'  => (string) ( $c['where'] ?? '' ),
-			];
+			);
 		}
 		return $clean;
 	}
@@ -141,7 +141,7 @@ final class Privacy_Backfill {
 	public static function find_orphans( int $limit = self::DISCOVERY_CAP ): array {
 		global $wpdb;
 
-		$found = [];
+		$found = array();
 		foreach ( self::columns() as $target ) {
 			if ( count( $found ) >= $limit ) {
 				break;
@@ -190,7 +190,7 @@ final class Privacy_Backfill {
 	public static function count_orphans(): array {
 		global $wpdb;
 
-		$report = [];
+		$report = array();
 		foreach ( self::columns() as $target ) {
 			if ( ! self::table_exists( $target['table'] ) ) {
 				continue;
@@ -208,11 +208,11 @@ final class Privacy_Backfill {
 			);
 
 			if ( $n > 0 ) {
-				$report[] = [
+				$report[] = array(
 					'table'       => $tbl,
 					'column'      => $col,
 					'orphan_rows' => $n,
-				];
+				);
 			}
 		}
 		return $report;
@@ -278,10 +278,10 @@ final class Privacy_Backfill {
 			delete_option( self::QUEUE_OPTION );
 		}
 
-		return [
+		return array(
 			'purged'    => $purged,
 			'remaining' => count( $queue ),
-		];
+		);
 	}
 
 	/** Does a table exist? Pro tables are absent when the extension never ran. */

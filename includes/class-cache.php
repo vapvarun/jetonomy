@@ -20,7 +20,7 @@ class Cache {
 	 * the per-key busts cannot reach it. Any class that keeps a request-scope
 	 * memo registers a reset here, so the one-shot recompute paths that call
 	 * flush() mid-process (importers, recount, migrations) clear BOTH layers
-	 * and never read a memo primed before their bulk writes (caching plan U1).
+	 * and never read a memo primed before their bulk writes.
 	 *
 	 * @var callable[]
 	 */

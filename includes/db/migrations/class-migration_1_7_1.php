@@ -28,13 +28,10 @@ class Migration_1_7_1 {
 		/*
 		 * Attachments live in FREE from 1.7.1 on.
 		 *
-		 * They used to live only in Pro (jt_pro_attachments), and that turned out to
-		 * be the wrong home for the DATA. A customer who migrated a forum with Pro
-		 * active and later dropped Pro — licence lapsed, downgrade — saw their
-		 * attachments disappear from the page entirely: the importer had taken the old
-		 * forum's markup out of the post body, and the only remaining record was in a
-		 * table free cannot read. Their files were fine; the site simply had no way to
-		 * show them.
+		 * They live in free because the DATA belongs there: a customer who migrated a forum with
+		 * Pro active and later dropped Pro - licence lapsed, downgrade - would lose their
+		 * attachments from the page entirely, since the importer took the old forum's markup
+		 * out of the post body and the only remaining record sat in a table free cannot read.
 		 *
 		 * So the LINK is free ("this post has files on it" is forum content, not a paid
 		 * feature) and Pro keeps what is genuinely Pro: the upload composer, the size
