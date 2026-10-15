@@ -46,6 +46,17 @@ delete_option( 'jetonomy_setup_complete' );
 delete_option( 'jetonomy_demo_data' );
 delete_option( 'jetonomy_clean_uninstall' );
 
+// Then every other jetonomy_ option (role map, email templates, migration and
+// seeding flags...) - a fixed list kept missing new ones. jetonomy_pro_ options
+// are left to Pro's own uninstall: Pro and its licence may still be installed.
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name NOT LIKE %s",
+		$wpdb->esc_like( 'jetonomy_' ) . '%',
+		$wpdb->esc_like( 'jetonomy_pro_' ) . '%'
+	)
+);
+
 // Delete any option whose name begins with "jetonomy_permalinks_flushed"
 // (the plugin stores per-blog variants of this key on multisite).
 $wpdb->query(
@@ -58,42 +69,23 @@ $wpdb->query(
 // -------------------------------------------------------------------------
 // 3. Remove Jetonomy capabilities from all WordPress roles.
 //
-// get_editable_roles() covers built-in and any custom roles added by other
-// plugins, ensuring nothing is left behind regardless of site configuration.
+// wp_roles() covers built-in roles and custom roles added by other plugins,
+// so nothing is left behind regardless of site configuration.
 // -------------------------------------------------------------------------
 
-$jetonomy_caps = array(
-	'jetonomy_read',
-	'jetonomy_create_posts',
-	'jetonomy_create_replies',
-	'jetonomy_vote',
-	'jetonomy_upload',
-	'jetonomy_edit_own_posts',
-	'jetonomy_edit_others_posts',
-	'jetonomy_delete_others_posts',
-	'jetonomy_close_posts',
-	'jetonomy_pin_posts',
-	'jetonomy_move_posts',
-	'jetonomy_moderate',
-	'jetonomy_manage_spaces',
-	'jetonomy_manage_settings',
-	'jetonomy_manage_users',
-	'jetonomy_view_reports',
-	'jetonomy_manage_tags',
-	'jetonomy_manage_categories',
-	'jetonomy_ban_users',
-	'jetonomy_manage_restrictions',
-);
-
-foreach ( array_keys( get_editable_roles() ) as $role_name ) {
-	$role = get_role( $role_name );
-
-	if ( ! $role ) {
+// Every capability whose name starts with "jetonomy_", read from the roles
+// themselves. A hand-kept list went stale (it still named "jetonomy_upload"
+// and missed delete_own_posts, manage_badges, manage_extensions and others),
+// leaving capabilities on roles after the plugin was deleted.
+foreach ( wp_roles()->roles as $jetonomy_role_name => $jetonomy_role_data ) {
+	$jetonomy_role = get_role( $jetonomy_role_name );
+	if ( ! $jetonomy_role ) {
 		continue;
 	}
-
-	foreach ( $jetonomy_caps as $cap ) {
-		$role->remove_cap( $cap );
+	foreach ( array_keys( (array) ( $jetonomy_role_data['capabilities'] ?? array() ) ) as $jetonomy_cap ) {
+		if ( str_starts_with( (string) $jetonomy_cap, 'jetonomy_' ) ) {
+			$jetonomy_role->remove_cap( $jetonomy_cap );
+		}
 	}
 }
 
