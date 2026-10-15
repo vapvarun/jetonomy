@@ -897,6 +897,9 @@ function jetonomySetVoted( el, on ) {
  * @return {string} The form for n, number not yet substituted.
  */
 const _n = ( single, plural, n, domain ) => {
+    // Pass-through wrapper: every caller hands it literal strings and the
+    // 'jetonomy' domain, which is what the string extractors read.
+    // eslint-disable-next-line @wordpress/i18n-text-domain, @wordpress/i18n-no-variables
     const translated = window.wp?.i18n?._n ? window.wp.i18n._n( single, plural, n, domain ) : single;
     // Still untranslated: wp.i18n then picks the language's first form for every
     // count (one-form languages such as Japanese read "3 reply"), so use English's

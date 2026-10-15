@@ -29,8 +29,7 @@
 			/* translators: 1: space label, lowercase. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. */
 			confirmPurgeSpace:    sprintf( __( 'Permanently delete this %1$s and EVERY %2$s, %3$s and attachment in it, including content written by other %4$s? This cannot be undone.', 'jetonomy' ), SPACE, TOPIC, REPLY, MEMBERS ),
 			// %1$s stays a literal %s, filled with the space name at click time.
-			/* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */
-			purgeTypeToConfirm:   sprintf( __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
+			purgeTypeToConfirm:   sprintf( /* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */ __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
 			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
 			purgeNameMismatch:    __( 'That name did not match, so nothing was deleted.', 'jetonomy' ),
 			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
@@ -88,8 +87,7 @@
 					/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
 					read:        sprintf( __( 'read posts and %s', 'jetonomy' ), REPLIES ),
 					participate: __( 'read, post, reply, vote and report', 'jetonomy' ), // jt-terms-ok: "reply" is the verb here, not the noun.
-					/* translators: %s: topic label, plural lowercase (e.g. "topics"). */
-					full:        sprintf( __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
+					full:        sprintf( /* translators: %s: topic label, plural lowercase (e.g. "topics"). */ __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
 				},
 				// The consequence of each rule type, not its definition.
 				typeNotes: {
@@ -102,8 +100,7 @@
 					trust_level: sprintf( __( 'Matches %s at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ), MEMBERS ),
 				},
 				// %1$s stays a literal %s, filled with the adapter name at runtime.
-				/* translators: 1: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. 2: member label, plural lowercase. */
-				membershipNote: sprintf( __( 'Matches %2$s who hold the %1$s level you pick below.', 'jetonomy' ), '%s', MEMBERS ),
+				membershipNote: sprintf( /* translators: 1: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. 2: member label, plural lowercase. */ __( 'Matches %2$s who hold the %1$s level you pick below.', 'jetonomy' ), '%s', MEMBERS ),
 				// One generic example cannot serve a role slug, a capability and a number.
 				typePlaceholders: {
 					role:        __( 'subscriber', 'jetonomy' ),

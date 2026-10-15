@@ -87,13 +87,21 @@ class JoinRequestResolveTest extends WP_UnitTestCase {
 		$this->assertSame( $denied + 1, did_action( 'jetonomy_join_request_denied' ) );
 	}
 
-	public function test_private_to_public_with_open_policy_settles_too(): void {
+	/**
+	 * Private + Open is stored as Approval (private spaces are always request
+	 * or invite), so making the space public alone keeps the queue; opening the
+	 * join policy as well is what settles it.
+	 */
+	public function test_private_open_is_approval_and_settles_only_when_opened(): void {
 		$space = $this->space( 'private', 'open' );
-		$uid   = self::factory()->user->create();
+		$this->assertSame( 'approval', Space::find( $space )->join_policy, 'private + open is stored as approval' );
+		$uid = self::factory()->user->create();
 		$this->assertSame( 'pending', SpaceMember::join( $space, $uid )['status'] );
 
 		Space::update( $space, array( 'visibility' => 'public' ) );
+		$this->assertSame( array( 'pending' ), $this->status_of( $space, $uid ), 'still approval: request waits' );
 
+		Space::update( $space, array( 'join_policy' => 'open' ) );
 		$this->assertSame( array( 'approved' ), $this->status_of( $space, $uid ) );
 		$this->assertTrue( SpaceMember::is_member( $space, $uid ) );
 	}
