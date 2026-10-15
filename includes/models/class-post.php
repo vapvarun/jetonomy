@@ -944,10 +944,10 @@ class Post extends Model {
 	 * both read one implementation instead of duplicating raw SQL. Served by the
 	 * status_created (status, created_at) index.
 	 *
-	 * @param string[]                        $statuses  One or more of publish|pending|draft|spam|trash.
-	 * @param int                             $limit     Max rows.
-	 * @param int                             $offset    Pagination offset.
-	 * @param int[]|array{exclude:int[]}|null $space_ids Limit to these spaces, or null for every space.
+	 * @param string[]                            $statuses  One or more of publish|pending|draft|spam|trash.
+	 * @param int                                 $limit     Max rows.
+	 * @param int                                 $offset    Pagination offset.
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids Limit to these spaces, or null for every space.
 	 * @return object[]
 	 */
 	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0, ?array $space_ids = null ): array {
@@ -982,7 +982,7 @@ class Post extends Model {
 	 * pending queue - which is the exact privilege boundary the frontend
 	 * queue relies on.
 	 *
-	 * @param int[]|array{exclude:int[]}|null $space_ids
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids
 	 * @return array{sql:string,params:array<int,int>}|null Null = match nothing.
 	 */
 	protected static function space_scope_sql( ?array $space_ids ): ?array {
@@ -992,11 +992,11 @@ class Post extends Model {
 				'params' => array(),
 			);
 		}
-		// array( 'exclude' => ids ): every space but these (a site moderator's
+		// array( 'skip_spaces' => ids ): every space but these (a site moderator's
 		// reach, Moderation_Permissions::staff_scope()). An empty exclude list
 		// is no filter at all, unlike an empty include list.
-		if ( isset( $space_ids['exclude'] ) ) {
-			$skip = array_values( array_unique( array_filter( array_map( 'absint', (array) $space_ids['exclude'] ) ) ) );
+		if ( isset( $space_ids['skip_spaces'] ) ) {
+			$skip = array_values( array_unique( array_filter( array_map( 'absint', (array) $space_ids['skip_spaces'] ) ) ) );
 			return array(
 				'sql'    => $skip ? ' AND space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '',
 				'params' => $skip,
@@ -1016,8 +1016,8 @@ class Post extends Model {
 	/**
 	 * Count posts in the given moderation statuses via COUNT(*) (no row load).
 	 *
-	 * @param string[]                        $statuses
-	 * @param int[]|array{exclude:int[]}|null $space_ids Limit to these spaces, or null for every space.
+	 * @param string[]                            $statuses
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids Limit to these spaces, or null for every space.
 	 * @return int
 	 */
 	public static function count_by_status( array $statuses, ?array $space_ids = null ): int {

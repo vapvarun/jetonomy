@@ -200,6 +200,10 @@ includes/qa/
 .github/
 .githooks/
 .gitignore
+.git-blame-ignore-revs
+.wp-env.json
+.wp-env.override.json
+.gitkeep
 .gitattributes
 .claude/
 node_modules/

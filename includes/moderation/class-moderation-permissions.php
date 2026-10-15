@@ -155,11 +155,11 @@ class Moderation_Permissions {
 	 * ones they cannot read. Null (no filter) for administrators.
 	 *
 	 * @param int $user_id User ID.
-	 * @return array{exclude:int[]}|null
+	 * @return array{skip_spaces:int[]}|null
 	 */
 	public static function staff_scope( int $user_id ): ?array {
 		$exclude = self::unreadable_space_ids( $user_id );
-		return $exclude ? array( 'exclude' => $exclude ) : null;
+		return $exclude ? array( 'skip_spaces' => $exclude ) : null;
 	}
 
 	/**

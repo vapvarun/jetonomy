@@ -116,7 +116,7 @@ class Moderation_Service {
 	 * @param int      $user_id
 	 * @param int|null $space_id
 	 * @return array|null Null = unscoped (administrators); int[] = these spaces only;
-	 *                    array( 'exclude' => int[] ) = every space but these (site moderators).
+	 *                    array( 'skip_spaces' => int[] ) = every space but these (site moderators).
 	 */
 	private static function approval_scope( int $user_id, ?int $space_id ): ?array {
 		if ( ! $user_id ) {

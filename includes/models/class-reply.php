@@ -691,10 +691,10 @@ class Reply extends Model {
 	 * wp-admin Moderation screen share one implementation. Served by the
 	 * status_created (status, created_at) index.
 	 *
-	 * @param string[]                        $statuses  One or more of publish|pending|draft|spam|trash.
-	 * @param int                             $limit     Max rows.
-	 * @param int                             $offset    Pagination offset.
-	 * @param int[]|array{exclude:int[]}|null $space_ids Limit to replies whose POST lives in these
+	 * @param string[]                            $statuses  One or more of publish|pending|draft|spam|trash.
+	 * @param int                                 $limit     Max rows.
+	 * @param int                                 $offset    Pagination offset.
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids Limit to replies whose POST lives in these
 	 *                              spaces, or null for every space.
 	 * @return object[]
 	 */
@@ -733,7 +733,7 @@ class Reply extends Model {
 	 * means "no filter", an EMPTY array means "no spaces in scope" and must
 	 * return nothing.
 	 *
-	 * @param int[]|array{exclude:int[]}|null $space_ids
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids
 	 * @return array{join:string,sql:string,params:array<int,int>}|null Null = match nothing.
 	 */
 	protected static function space_scope_sql( ?array $space_ids ): ?array {
@@ -745,9 +745,9 @@ class Reply extends Model {
 			);
 		}
 		$posts = \Jetonomy\table( 'posts' );
-		// array( 'exclude' => ids ): every space but these, as Post::space_scope_sql().
-		if ( isset( $space_ids['exclude'] ) ) {
-			$skip = array_values( array_unique( array_filter( array_map( 'absint', (array) $space_ids['exclude'] ) ) ) );
+		// array( 'skip_spaces' => ids ): every space but these, as Post::space_scope_sql().
+		if ( isset( $space_ids['skip_spaces'] ) ) {
+			$skip = array_values( array_unique( array_filter( array_map( 'absint', (array) $space_ids['skip_spaces'] ) ) ) );
 			return array(
 				'join'   => $skip ? " INNER JOIN {$posts} p ON p.id = r.post_id" : '',
 				'sql'    => $skip ? ' AND p.space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '',
@@ -769,8 +769,8 @@ class Reply extends Model {
 	/**
 	 * Count replies in the given moderation statuses via COUNT(*).
 	 *
-	 * @param string[]                        $statuses
-	 * @param int[]|array{exclude:int[]}|null $space_ids Limit to replies whose POST lives in these
+	 * @param string[]                            $statuses
+	 * @param int[]|array{skip_spaces:int[]}|null $space_ids Limit to replies whose POST lives in these
 	 *                              spaces, or null for every space.
 	 * @return int
 	 */

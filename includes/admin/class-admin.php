@@ -1520,7 +1520,7 @@ class Admin {
 		// Site moderators (not administrators) never see the queue of a private
 		// or hidden space they cannot read - rows and totals alike.
 		$skip          = \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() );
-		$scope         = $skip ? array( 'exclude' => $skip ) : null;
+		$scope         = $skip ? array( 'skip_spaces' => $skip ) : null;
 		$total_posts   = Post::count_by_status( array( 'pending' ), $scope );
 		$total_replies = Reply::count_by_status( array( 'pending' ), $scope );
 		$total_flags   = Flag::count_pending( $skip );
