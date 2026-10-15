@@ -456,6 +456,24 @@ function jetonomy_viewer_can_vote( $space ): bool {
 }
 
 /**
+ * Accessible name + tooltip for a vote button, and both states for view.js.
+ *
+ * An active vote reads "Remove your upvote" so pressing it again is clearly a
+ * retraction, not a downvote (the score drops by one when you take a vote back).
+ * view.js swaps between data-jt-label-on / -off in jetonomySetVoted().
+ *
+ * @param string $direction 'up' or 'down'.
+ * @param bool   $active    Whether the viewer's current vote is this one.
+ * @return string Escaped attribute string, leading space included.
+ */
+function jetonomy_vote_attrs( string $direction, bool $active ): string {
+	$off = 'down' === $direction ? __( 'Vote down', 'jetonomy' ) : __( 'Vote up', 'jetonomy' );
+	$on  = 'down' === $direction ? __( 'Remove your downvote', 'jetonomy' ) : __( 'Remove your upvote', 'jetonomy' );
+	$now = $active ? $on : $off;
+	return ' title="' . esc_attr( $now ) . '" aria-label="' . esc_attr( $now ) . '" data-jt-label-on="' . esc_attr( $on ) . '" data-jt-label-off="' . esc_attr( $off ) . '"';
+}
+
+/**
  * Print the vote score for a logged-in viewer who may not vote here.
  *
  * Shows the score and explains on hover, to screen readers and (via the

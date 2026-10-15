@@ -1177,12 +1177,13 @@ class Demo_Seeder {
 				array(
 					'trust_level' => $def['trust_level'],
 					'reputation'  => $def['reputation'],
-					'bio'         => $def['bio'],
 					'created_at'  => $joined,
 					'updated_at'  => $now,
 				),
 				array( 'user_id' => (int) $uid )
 			);
+
+			update_user_meta( (int) $uid, 'description', $def['bio'] ); // Bios live in WordPress's Biographical Info.
 
 			$users[ $def['login'] ] = (int) $uid;
 		}

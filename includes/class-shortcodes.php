@@ -164,6 +164,27 @@ class Shortcodes {
 	 * register defensively in case we beat Blocks::register_block_assets(),
 	 * then enqueue. WordPress dedupes by handle.
 	 */
+	/**
+	 * The member avatar partial (real avatar or initials), captured for the
+	 * string-built shortcodes so they match the profile page.
+	 *
+	 * @param int $user_id User ID.
+	 * @param int $size    Pixel size.
+	 * @return string
+	 */
+	private static function avatar_html( int $user_id, int $size ): string {
+		ob_start();
+		Template_Loader::partial(
+			'avatar',
+			array(
+				'user_id' => $user_id,
+				'size'    => $size,
+				'class'   => 'jt-sc-avatar',
+			)
+		);
+		return (string) ob_get_clean();
+	}
+
 	private static function enqueue_styles(): void {
 		if ( ! wp_style_is( 'jetonomy-blocks', 'registered' ) ) {
 			// blocks.css declares no tokens of its own, so this fallback has to
@@ -367,21 +388,33 @@ class Shortcodes {
 	 * [jetonomy_leaderboard count="10"]
 	 */
 	public static function leaderboard( $atts ): string {
-		$atts = shortcode_atts( array( 'count' => 10 ), $atts, 'jetonomy_leaderboard' );
+		$atts = shortcode_atts(
+			array(
+				'count'  => 10,
+				'period' => 'all',
+			),
+			$atts,
+			'jetonomy_leaderboard'
+		);
 
 		self::enqueue_styles();
 
 		$limit = absint( $atts['count'] ) ?: 10;
+		// Same periods as the Leaderboard page: all time, this month, this week.
+		$period = in_array( $atts['period'], array( 'all', 'month', 'week' ), true ) ? $atts['period'] : 'all';
 
 		// The Leaderboard page's own model query (same eligible population:
 		// real members with reputation > 0, same tie order). Also backs the
 		// leaderboard block and the classic widget, which render this shortcode.
-		$leaders = Models\UserProfile::list_for_leaderboard( 'all', $limit, 0 );
+		$leaders = Models\UserProfile::list_for_leaderboard( $period, $limit, 0 );
 
 		if ( empty( $leaders ) ) {
 			/* translators: %s: plural member label. */
 			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
 		}
+
+		cache_users( array_map( static fn( $l ) => (int) $l->user_id, $leaders ) ); // Users + meta for names and avatars in one go.
+		Models\UserProfile::prime( array_map( static fn( $l ) => (int) $l->user_id, $leaders ) );
 
 		$out = '<div class="jt-shortcode jt-shortcode-leaderboard"><ol>';
 		foreach ( $leaders as $leader ) {
@@ -390,7 +423,7 @@ class Shortcodes {
 				continue;
 			}
 			$url  = get_profile_url( (int) $leader->user_id );
-			$out .= '<li><a href="' . esc_url( $url ) . '">' . esc_html( user_display_name( $user ) ) . '</a>';
+			$out .= '<li><a href="' . esc_url( $url ) . '">' . self::avatar_html( (int) $leader->user_id, 28 ) . '<span>' . esc_html( user_display_name( $user ) ) . '</span></a>';
 			$out .= ' <span class="jt-shortcode-rep">' . esc_html( sprintf( /* translators: %s: reputation points. */ _n( '%s rep', '%s rep', (int) $leader->reputation, 'jetonomy' ), number_format_i18n( (int) $leader->reputation ) ) ) . '</span></li>';
 		}
 		$out .= '</ol></div>';
@@ -430,8 +463,10 @@ class Shortcodes {
 
 		$out  = '<div class="jt-shortcode jt-shortcode-profile-card">';
 		$out .= '<a href="' . esc_url( $url ) . '">';
+		$out .= self::avatar_html( $user_id, 48 );
 		$out .= '<strong>' . esc_html( user_display_name( $user ) ) . '</strong>';
-		$out .= '<span class="jt-tl" data-jt-tl="' . $trust . '">' . $trust . '</span>';
+		/* translators: %d: trust level number (0-5). */
+		$out .= '<span class="jt-tl jt-tl-named" data-jt-tl="' . $trust . '" title="' . esc_attr( sprintf( __( 'Trust level %d', 'jetonomy' ), $trust ) ) . '">' . esc_html( Trust\Trust_Levels::label( $trust ) ) . '</span>';
 		$out .= '</a>';
 		if ( ! empty( $profile->bio ) ) {
 			$out .= '<p>' . esc_html( wp_trim_words( $profile->bio, 20 ) ) . '</p>';

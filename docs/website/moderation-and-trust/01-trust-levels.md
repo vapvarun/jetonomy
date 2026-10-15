@@ -25,7 +25,9 @@ Promotion to levels 1-3 is based on a combination of activity stats, not a singl
 | TL2 | Regular | 30 posts, 20 days active, 50 reputation |
 | TL3 | Trusted | 100 posts, 60 days active, 200 reputation |
 | TL4 | Leader | Manually granted by an admin |
-| TL5 | Moderator | Manually granted by an admin |
+| TL5 | Veteran | Manually granted by an admin |
+
+You can rename any level under **Jetonomy > Settings > Permissions > Trust level names**. Leave a field blank to keep the built-in name. Members see the name on profiles, hover cards and badges, with "Trust level N" as the tooltip.
 
 ## What Each Level Unlocks
 

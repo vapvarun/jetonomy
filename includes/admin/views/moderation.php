@@ -496,7 +496,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									break;
 								case 'actions':
 									?>
-									<button type="button" class="jt-btn jt-btn-sm jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Unban', 'jetonomy' ); ?></button>
+									<button type="button" class="jt-btn jt-btn-sm jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?></button>
 									<?php
 									break;
 							}

@@ -513,6 +513,17 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<?php endfor; ?>
 					</tbody>
 				</table>
+				<?php $jt_tl_names = (array) ( $settings['trust_level_names'] ?? array() ); ?>
+				<fieldset class="jt-trust-names">
+					<legend class="jt-settings-card__title"><?php esc_html_e( 'Trust level names', 'jetonomy' ); ?></legend>
+					<p class="description"><?php echo esc_html( sprintf( /* translators: %s: plural member label, lowercase (e.g. members). */ __( 'What %s see on profiles, hover cards and badges. Leave a field blank to keep the built-in name.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
+					<?php foreach ( range( 0, 5 ) as $jt_l ) : ?>
+						<?php /* translators: %d: trust level number. */ ?>
+						<label class="jt-trust-name-field"><span><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $jt_l ) ); ?></span>
+							<input type="text" class="regular-text" name="jetonomy_settings[trust_level_names][<?php echo (int) $jt_l; ?>]" value="<?php echo esc_attr( (string) ( $jt_tl_names[ $jt_l ] ?? '' ) ); ?>" placeholder="<?php echo esc_attr( (string) \Jetonomy\Trust\Trust_Levels::default_label( $jt_l ) ); ?>">
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
 			</div>
 
 			<!-- Rate Limits -->

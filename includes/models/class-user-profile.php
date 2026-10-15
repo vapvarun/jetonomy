@@ -60,7 +60,7 @@ class UserProfile extends Model {
 	 * @return object|null
 	 */
 	public static function find_by_user( int $user_id ): ?object {
-		return Cache::remember_object(
+		$row = Cache::remember_object(
 			"profile:{$user_id}",
 			function () use ( $user_id ) {
 				$row = static::db()->get_row(
@@ -73,6 +73,13 @@ class UserProfile extends Model {
 			},
 			120
 		);
+		if ( $row ) {
+			// One bio per person: WordPress's own Biographical Info, read after
+			// the cache so a wp-admin profile edit shows at once (WP caches meta).
+			$row      = clone $row;
+			$row->bio = (string) get_user_meta( $user_id, 'description', true );
+		}
+		return $row;
 	}
 
 	/**
@@ -111,6 +118,7 @@ class UserProfile extends Model {
 			return;
 		}
 
+		update_meta_cache( 'user', $missing ); // Bios come from user meta: one query, not one per member.
 		$ph = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		$rows = static::db()->get_results(
@@ -137,13 +145,21 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function update_profile( int $user_id, array $data ): bool {
+		// The bio is WordPress's Biographical Info (user meta), not a column here.
+		$result = true;
+		if ( array_key_exists( 'bio', $data ) ) {
+			update_user_meta( $user_id, 'description', (string) $data['bio'] );
+			unset( $data['bio'] );
+		}
 		// Bust AFTER the write. Busting first is a re-prime race: a concurrent
 		// find_by_user() between the delete and the update re-caches the old row.
-		$result = false !== static::db()->update(
-			static::table(),
-			$data,
-			array( 'user_id' => $user_id )
-		);
+		if ( $data ) {
+			$result = false !== static::db()->update(
+				static::table(),
+				$data,
+				array( 'user_id' => $user_id )
+			);
+		}
 		Cache::delete( "profile:{$user_id}" );
 		// trust_level feeds the permission trust gates — clear the verdict
 		// memo so a promotion applies within the same request.

@@ -79,7 +79,7 @@ class Trust_Levels {
 			'abilities'    => array(),
 		),
 		5 => array(
-			'name'         => 'Moderator',
+			'name'         => 'Veteran',
 			'requirements' => array(), // Manually granted.
 			'rate_limits'  => array(),
 			'abilities'    => array(),
@@ -185,6 +185,19 @@ class Trust_Levels {
 	 * @return string Translated name, or empty string for an unknown level.
 	 */
 	public static function label( int $level ): string {
+		// Owner-chosen names (Settings -> Permissions -> Trust level names) win.
+		$custom = trim( (string) ( get_option( 'jetonomy_settings', array() )['trust_level_names'][ $level ] ?? '' ) );
+
+		return (string) apply_filters( 'jetonomy_trust_level_label', '' !== $custom ? $custom : self::default_label( $level ), $level );
+	}
+
+	/**
+	 * Built-in translated name for a level (used when the owner set none).
+	 *
+	 * @param int $level Trust level (0-5).
+	 * @return string
+	 */
+	public static function default_label( int $level ): string {
 		$labels = array(
 			0 => __( 'Newcomer', 'jetonomy' ),
 			// jt-terms-ok: trust level name (rank vocabulary), not the member noun.
@@ -192,22 +205,12 @@ class Trust_Levels {
 			2 => __( 'Regular', 'jetonomy' ),
 			3 => __( 'Trusted', 'jetonomy' ),
 			4 => __( 'Leader', 'jetonomy' ),
-			5 => __( 'Moderator', 'jetonomy' ),
+			// Earned rank, not a staff role: "Moderator" made long-standing members
+			// look like staff once names were shown on profiles.
+			5 => __( 'Veteran', 'jetonomy' ),
 		);
 
-		/**
-		 * Filter the display name of a trust level.
-		 *
-		 * Lets a site rename the ladder (e.g. back to New/Basic/.../Elder)
-		 * without forking a template, and keeps every surface in step because
-		 * they all read through here.
-		 *
-		 * @since 1.9.3
-		 *
-		 * @param string $label The translated level name.
-		 * @param int    $level Trust level (0-5).
-		 */
-		return (string) apply_filters( 'jetonomy_trust_level_label', $labels[ $level ] ?? '', $level );
+		return $labels[ $level ] ?? '';
 	}
 
 	/**

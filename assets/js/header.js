@@ -427,9 +427,9 @@
 		var trustEl = document.createElement('span');
 		trustEl.className = 'jt-hc-trust';
 		trustEl.textContent = wp.i18n.sprintf(
-			/* translators: 1: trust level number, 2: reputation points. */
-			__( 'Level %1$d · %2$d rep', 'jetonomy' ),
-			data.trust_level || 0,
+			/* translators: 1: trust level name (e.g. Regular), 2: reputation points. */
+			__( '%1$s · %2$d rep', 'jetonomy' ),
+			data.trust_level_label || data.trust_level_name || '',
 			data.reputation || 0
 		);
 		info.appendChild(trustEl);

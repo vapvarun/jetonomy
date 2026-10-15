@@ -802,6 +802,11 @@ function display_name_choices( \WP_User $user ): array {
 		$choices,
 		static fn( $name ) => ! is_reserved_display_name( (string) $name )
 	);
+	// The current name stays selectable even when reserved (an account literally
+	// named "admin"): keeping it changes nothing, while dropping it emptied the
+	// required select and blocked every profile save. Only NEW reserved values
+	// are refused.
+	array_unshift( $choices, (string) $user->display_name );
 
 	/**
 	 * Filter the names a member may publish as.

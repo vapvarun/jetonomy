@@ -820,6 +820,12 @@ class Admin {
 					'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
 				);
 			}
+			// Display names per level; blank keeps the built-in name.
+			$raw_names                  = is_array( $input['trust_level_names'] ?? null ) ? $input['trust_level_names'] : array();
+			$clean['trust_level_names'] = array();
+			foreach ( range( 0, 5 ) as $level ) {
+				$clean['trust_level_names'][ $level ] = sanitize_text_field( wp_unslash( (string) ( $raw_names[ $level ] ?? '' ) ) );
+			}
 		}
 
 		// How members are identified on bylines, member lists and REST.

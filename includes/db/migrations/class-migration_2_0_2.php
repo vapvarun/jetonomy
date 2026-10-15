@@ -17,6 +17,9 @@
  *   seeded from the roles holding the cap, so nobody loses space creation.
  * - Private spaces are request or invite only: stored private + open rows
  *   become private + approval (the gate already treated them that way).
+ * - One bio per member: community bios move into WordPress's Biographical
+ *   Info (user meta 'description') where that is still empty; profiles read
+ *   and write the bio there from now on.
  *
  * @package Jetonomy
  */
@@ -44,6 +47,7 @@ class Migration_2_0_2 {
 		$spaces = $wpdb->prefix . 'jt_spaces';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query( "UPDATE {$spaces} SET join_policy = 'approval' WHERE visibility = 'private' AND join_policy = 'open'" );
+		self::move_bios_to_wordpress();
 
 		if ( ! function_exists( 'wp_roles' ) ) {
 			return;
@@ -117,5 +121,26 @@ class Migration_2_0_2 {
 			}
 			update_option( Capabilities::ROLE_CAPS_OPTION, $stored, false );
 		}
+	}
+
+	/**
+	 * Copy community bios into the WordPress profile field where it is empty,
+	 * in batches so a large community does not hold one long query.
+	 */
+	private static function move_bios_to_wordpress(): void {
+		global $wpdb;
+		$profiles = $wpdb->prefix . 'jt_user_profiles';
+		$after    = 0;
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, bio FROM {$profiles} WHERE user_id > %d AND bio IS NOT NULL AND bio <> '' ORDER BY user_id LIMIT 500", $after ) );
+			$batch = count( $rows );
+			foreach ( $rows as $row ) {
+				$after = (int) $row->user_id;
+				if ( '' === (string) get_user_meta( $after, 'description', true ) && get_userdata( $after ) ) {
+					update_user_meta( $after, 'description', (string) $row->bio );
+				}
+			}
+		} while ( 500 === $batch );
 	}
 }

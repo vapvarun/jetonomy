@@ -854,6 +854,13 @@ function jetonomySetVoted( el, on ) {
     if ( ! el ) return;
     el.classList.toggle( 'voted', !! on );
     el.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+    // "Remove your upvote" while active, so a second press reads as taking the
+    // vote back (jetonomy_vote_attrs() renders both labels).
+    const label = on ? el.dataset.jtLabelOn : el.dataset.jtLabelOff;
+    if ( label ) {
+        el.setAttribute( 'title', label );
+        el.setAttribute( 'aria-label', label );
+    }
 }
 
 /**
@@ -1191,7 +1198,7 @@ const { state, actions } = store( 'jetonomy', {
             const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const ok = yield window.jetonomyConfirm(
                 ( i18n.liftConfirmFormat || 'Lift the restriction on %s? They regain full access right away.' ).replace( '%s', name || '' ),
-                { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift' }
+                { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift restriction' }
             );
             if ( ! ok ) return;
 

@@ -672,8 +672,7 @@ class Blocks {
 						<?php if ( $trust_level > 0 ) : ?>
 							<span class="jt-userpanel-tl" data-jt-tl="<?php echo (int) $trust_level; ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: trust level number (0-5). */ __( 'Trust Level %d', 'jetonomy' ), $trust_level ) ); ?>">
 								<?php
-								/* translators: %d: trust level number, shown as a short badge such as "TL2". */
-								echo esc_html( sprintf( _x( 'TL%d', 'trust level badge', 'jetonomy' ), (int) $trust_level ) );
+								echo esc_html( \Jetonomy\Trust\Trust_Levels::label( (int) $trust_level ) );
 								?>
 							</span>
 						<?php endif; ?>
@@ -740,7 +739,7 @@ class Blocks {
 		if ( is_user_logged_in() ) {
 			echo self::render_user_panel( array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — method returns escaped HTML.
 		} else {
-			echo self::render_login( array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — method returns escaped HTML.
+			echo self::render_login( array( 'context' => 'sidebar' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — method returns escaped HTML.
 		}
 	}
 
@@ -751,7 +750,21 @@ class Blocks {
 	 */
 	public static function render_login( array $attributes ): string {
 		if ( is_user_logged_in() ) {
-			return '';
+			// In the sidebar the user panel replaces this card. Placed on its own
+			// (a "Sign in" page), a blank block looked broken: say who is signed in.
+			if ( 'sidebar' === ( $attributes['context'] ?? '' ) ) {
+				return '';
+			}
+			wp_enqueue_style( 'jetonomy-blocks' );
+			$jt_user = wp_get_current_user();
+			return '<div class="jt-block jt-login-signed-in"><p>'
+				/* translators: %s: the signed-in member's display name. */
+				. esc_html( sprintf( __( 'You are signed in as %s.', 'jetonomy' ), \Jetonomy\user_display_name( $jt_user ) ) )
+				. '</p><p class="jt-login-signed-in-links">'
+				. '<a class="jt-login-submit" href="' . esc_url( \Jetonomy\base_url() ) . '">' . esc_html__( 'Go to the community', 'jetonomy' ) . '</a> '
+				. '<a class="jt-login-secondary" href="' . esc_url( \Jetonomy\get_profile_url( (int) $jt_user->ID ) ) . '">' . esc_html__( 'My profile', 'jetonomy' ) . '</a> '
+				. '<a class="jt-login-secondary" href="' . esc_url( wp_logout_url( \Jetonomy\current_url() ) ) . '">' . esc_html__( 'Log out', 'jetonomy' ) . '</a>'
+				. '</p></div>';
 		}
 
 		// Enqueue only when this block is actually rendered. Safe from duplicate

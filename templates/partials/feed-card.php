@@ -83,7 +83,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 			aria-pressed="<?php echo 1 === $viewer_vote ? 'true' : 'false'; ?>"
 			data-wp-on--click="actions.voteUp"
 			data-post-id="<?php echo absint( $post->id ); ?>"
-			aria-label="<?php esc_attr_e( 'Upvote', 'jetonomy' ); ?>">
+				<?php echo jetonomy_vote_attrs( 'up', 1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 				<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 			<span class="n jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 		</button>
@@ -97,7 +97,7 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 			aria-pressed="<?php echo -1 === $viewer_vote ? 'true' : 'false'; ?>"
 			data-wp-on--click="actions.voteDown"
 			data-post-id="<?php echo absint( $post->id ); ?>"
-			aria-label="<?php esc_attr_e( 'Downvote', 'jetonomy' ); ?>">
+					<?php echo jetonomy_vote_attrs( 'down', -1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 		</button>
 				<?php endif; ?>

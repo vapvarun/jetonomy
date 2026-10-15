@@ -44,7 +44,7 @@
 			importErrorUnknown:   __( 'Unknown error', 'jetonomy' ),
 			selectImage:          __( 'Select Image', 'jetonomy' ),
 			useImage:             __( 'Use this image', 'jetonomy' ),
-			unban:                __( 'Unban', 'jetonomy' ),
+			unban:                __( 'Lift restriction', 'jetonomy' ),
 			ban:                  __( 'Ban', 'jetonomy' ),
 			/* translators: %s: space label, plural lowercase (e.g. "spaces"). */
 			hiddenForcesInvite:   sprintf( __( 'Hidden %s must use Invite Only. Join policy switched.', 'jetonomy' ), lbl( 'space', 'many_lower', 'spaces' ) ),
@@ -1563,10 +1563,11 @@
 				var $row = $btn.closest('tr');
 				var restrictionId = $btn.data('restriction-id');
 
-				// Pass the danger tone so the OK button renders red. Unbanning
-				// is destructive (the user immediately regains site access) and
-				// should look like every other destructive admin confirm.
-				self.confirmAsync(self.i18n.confirmUnban).then(function(ok) {
+				// Neutral on purpose (owner decision 2026-10-15): lifting gives
+				// access back and destroys nothing, and red stays reserved for
+				// destructive actions like Ban and Delete. Same verb as the
+				// community-side Lift control.
+				self.confirmAsync(self.i18n.confirmUnban, { title: self.i18n.unban, confirmLabel: self.i18n.unban }).then(function(ok) {
 					if (!ok) return;
 					$btn.prop('disabled', true);
 

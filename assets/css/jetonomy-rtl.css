@@ -318,7 +318,7 @@
   .jt-app button.jt-v-btn.voted,
   .jt-app button.jt-v-btn.jt-voted,
   .jt-app button.jt-feed-act.voted,
-  .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent) !important; }
+  .jt-app button.jt-feed-act.jt-voted { color: var(--jt-accent) !important; background-color: var(--jt-accent-light) !important; }
   .jt-app button.jt-bookmark-btn.bookmarked svg,
   .jt-app button.jt-bookmark-toggle.bookmarked svg,
   .jt-app button.jt-act.voted svg,
@@ -575,6 +575,8 @@
   .jt-tl[data-jt-tl="3"] { background: var(--jt-tl3); }
   .jt-tl[data-jt-tl="4"] { background: var(--jt-tl4); }
   .jt-tl[data-jt-tl="5"] { background: var(--jt-tl5); }
+  /* Named badge (profile header): the level name, not the digit, so it is a pill. */
+  .jt-tl.jt-tl-named { width: auto; height: auto; padding: 2px 8px; border-radius: var(--jt-radius-full); margin-inline-start: 0.375rem; letter-spacing: 0.02em; vertical-align: middle; white-space: nowrap; }
 
   /* ── Post ── */
   /* Note: we dropped `overflow: hidden` from this rule — it was clipping

@@ -617,8 +617,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								aria-pressed="<?php echo 1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteUp"
 								data-post-id="<?php echo absint( $post->id ); ?>"
-								title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-								aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+								<?php echo jetonomy_vote_attrs( 'up', 1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 								<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</button>
@@ -631,8 +630,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								aria-pressed="<?php echo -1 === $user_post_vote ? 'true' : 'false'; ?>"
 								data-wp-on--click="actions.voteDown"
 								data-post-id="<?php echo absint( $post->id ); ?>"
-								title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-								aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
+									<?php echo jetonomy_vote_attrs( 'down', -1 === $user_post_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 									<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 							</button>
 								<?php endif; ?>

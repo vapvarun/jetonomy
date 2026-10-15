@@ -227,8 +227,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-wp-on--click="actions.voteReplyUp"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				aria-pressed="<?php echo 1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
-				title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-				aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+				<?php echo jetonomy_vote_attrs( 'up', 1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>>
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</button>
 				<?php
@@ -240,8 +239,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-wp-on--click="actions.voteReplyDown"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				aria-pressed="<?php echo -1 === $reply_viewer_vote ? 'true' : 'false'; ?>"
-				title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-				aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
+					<?php echo jetonomy_vote_attrs( 'down', -1 === $reply_viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 				<?php endif; ?>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<?php

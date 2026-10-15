@@ -156,7 +156,7 @@ $crumbs = array(
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( \Jetonomy\user_display_name( $user ) ); ?>
 							<?php /* translators: %d: trust level number (0-5). */ ?>
-							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
+							<span class="jt-tl jt-tl-named" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( \Jetonomy\Trust\Trust_Levels::label( (int) $trust ) ); ?></span>
 						</h1>
 						<div class="jt-flex jt-items-center jt-gap-sm jt-flex-shrink-0 jt-profile-head-actions">
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
@@ -188,7 +188,7 @@ $crumbs = array(
 								data-user-name="<?php echo esc_attr( \Jetonomy\user_display_name( $user ) ); ?>"
 								title="<?php esc_attr_e( 'Lift this restriction', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
-								<?php esc_html_e( 'Lift', 'jetonomy' ); ?>
+								<?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?>
 							</button>
 						<?php elseif ( $jt_can_moderate ) : ?>
 							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
@@ -247,8 +247,9 @@ $crumbs = array(
 							<div class="jt-stat-l"><?php echo esc_html( \Jetonomy\count_noun( (int) $r_count, 'reply' ) ); ?></div>
 						</div>
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo esc_html( (int) $trust ); ?></div>
-							<div class="jt-stat-l"><?php esc_html_e( 'Trust', 'jetonomy' ); ?></div>
+							<div class="jt-stat-n"><?php echo esc_html( \Jetonomy\Trust\Trust_Levels::label( (int) $trust ) ); ?></div>
+							<?php /* translators: %d: trust level number (0-5). */ ?>
+							<div class="jt-stat-l"><?php echo esc_html( sprintf( __( 'Trust level %d', 'jetonomy' ), (int) $trust ) ); ?></div>
 						</div>
 					</div>
 

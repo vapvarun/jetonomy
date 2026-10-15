@@ -366,7 +366,7 @@ $crumbs = array(
 								data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
 								data-user-name="<?php echo esc_attr( $jt_banned_user ? \Jetonomy\user_display_name( $jt_banned_user ) : '' ); ?>">
 								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
-								<?php esc_html_e( 'Lift', 'jetonomy' ); ?>
+								<?php esc_html_e( 'Lift restriction', 'jetonomy' ); ?>
 							</button>
 						</div>
 					</li>
