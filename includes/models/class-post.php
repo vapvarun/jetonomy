@@ -1264,23 +1264,42 @@ class Post extends Model {
 	 * @return int
 	 */
 	public static function count_by_tag_visible( int $tag_id ): int {
+		return self::count_by_tags_visible( array( $tag_id ) )[ $tag_id ] ?? 0;
+	}
+
+	/**
+	 * Published topics per tag that the current viewer may read, in one query.
+	 * The stored jt_tags.post_count counts every tagged topic, including ones in
+	 * spaces the viewer cannot open, so it must never be shown as-is.
+	 *
+	 * @param int[] $tag_ids Tag IDs.
+	 * @return array<int,int> tag_id => count (tags with none are absent).
+	 */
+	public static function count_by_tags_visible( array $tag_ids ): array {
+		$tag_ids = array_values( array_filter( array_map( 'absint', $tag_ids ) ) );
+		if ( ! $tag_ids ) {
+			return array();
+		}
 		$table         = static::table();
 		$spaces_tbl    = \Jetonomy\table( 'spaces' );
 		$post_tags_tbl = \Jetonomy\table( 'post_tags' );
+		$in            = implode( ',', array_fill( 0, count( $tag_ids ), '%d' ) );
 
 		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
 
-		return (int) static::db()->get_var(
+		$rows = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$table} p
+				"SELECT pt.tag_id, COUNT(*) AS c FROM {$table} p
 				 INNER JOIN {$post_tags_tbl} pt ON pt.post_id = p.id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-				 WHERE pt.tag_id = %d AND p.status = 'publish'{$gate_sql}",
-				$tag_id,
-				...$gate_params
+				 WHERE pt.tag_id IN ({$in}) AND p.status = 'publish'{$gate_sql}
+				 GROUP BY pt.tag_id",
+				...array_merge( $tag_ids, $gate_params )
 			)
-		);
+		) ?: array();
+
+		return array_map( 'intval', array_column( $rows, 'c', 'tag_id' ) );
 	}
 
 	/**

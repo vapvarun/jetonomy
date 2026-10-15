@@ -109,10 +109,11 @@ class Captcha_Manager {
 			return null;
 		}
 
-		// Skip for trust level 2+ users (established community members).
+		// Skip for members whose trust level lists skip_captcha (level 2 and up
+		// by default) - the same list the Trust Levels settings table prints.
 		$profile = \Jetonomy\Models\UserProfile::find_by_user( $user_id );
-		if ( $profile && (int) ( $profile->trust_level ?? 0 ) >= 2 ) {
-			return null; // Trusted — skip.
+		if ( $profile && \Jetonomy\Trust\Trust_Levels::unlocked( (int) ( $profile->trust_level ?? 0 ), 'skip_captcha' ) ) {
+			return null;
 		}
 
 		if ( empty( $token ) ) {

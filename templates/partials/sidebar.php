@@ -54,6 +54,12 @@ $popular_tags = \Jetonomy\Cache::remember(
 	},
 	900
 );
+// The shared list is ordered by the stored count, which includes topics this
+// viewer cannot read. Show each tag's count as the tag page will (one grouped
+// query), and drop tags with nothing visible so a name never hints at a
+// private topic.
+$jt_tag_counts = \Jetonomy\Models\Post::count_by_tags_visible( wp_list_pluck( (array) $popular_tags, 'id' ) );
+$popular_tags  = array_values( array_filter( (array) $popular_tags, static fn( $t ) => ! empty( $jt_tag_counts[ (int) $t->id ] ) ) );
 
 // When BuddyNext is active, use its sidebar card skeleton so all sidebar
 // widgets across BuddyNext, Jetonomy, and WPMediaVerse look identical.
@@ -415,7 +421,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 				<?php foreach ( $popular_tags as $tag ) : ?>
 					<a href="<?php echo esc_url( \Jetonomy\route_url( 'tag', $tag->slug ) ); ?>" class="jt-tag">
 						<?php echo esc_html( $tag->name ); ?>
-						<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
+						<span class="jt-tag-count"><?php echo (int) $jt_tag_counts[ (int) $tag->id ]; ?></span>
 					</a>
 				<?php endforeach; ?>
 			</div>

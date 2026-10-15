@@ -454,7 +454,7 @@ class Fulltext_Search implements Search_Query_Adapter {
 		$like       = '%' . $wpdb->esc_like( $q ) . '%';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $wpdb->get_results(
+		$tags = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$tags_table} WHERE name LIKE %s ORDER BY post_count DESC LIMIT %d OFFSET %d",
 				$like,
@@ -462,6 +462,13 @@ class Fulltext_Search implements Search_Query_Adapter {
 				$offset
 			)
 		) ?: array();
+
+		// Report what this viewer can read, not the stored all-spaces count.
+		$counts = \Jetonomy\Models\Post::count_by_tags_visible( wp_list_pluck( $tags, 'id' ) );
+		foreach ( $tags as $tag ) {
+			$tag->post_count = $counts[ (int) $tag->id ] ?? 0;
+		}
+		return $tags;
 	}
 
 	/**

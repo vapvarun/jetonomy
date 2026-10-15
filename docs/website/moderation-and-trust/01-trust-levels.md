@@ -55,9 +55,9 @@ Trust levels only change a few things. What a member can do day to day comes fro
 - **Managing settings, categories and analytics.** These need the matching capabilities, which Administrators hold. TL5 does not grant them.
 - **Creating spaces.** Front-end space creation follows the **Front-end space creation** role list in **Jetonomy → Settings → General**. Trust level does not unlock it, and there is no separate capability for it.
 
-The **What this unlocks** column on the Permissions settings screen lists only what the engine enforces: no daily limits from TL1, and the TL3 minimum for editing, moving, closing and pinning others' topics.
+The **What this unlocks** column on the Permissions settings screen lists only what the engine enforces: no daily limits from TL1, no CAPTCHA from TL2 (when CAPTCHA is on), and the TL3 minimum for editing, deleting, moving, closing and pinning others' topics. That TL3 minimum applies only to roles you gave those capabilities without **Moderate community**.
 
-Space Moderators and Space Admins can moderate inside their own space regardless of trust level. WordPress administrators bypass all of these checks.
+Site-wide moderators (any role with `jetonomy_moderate`, Editor by default) are not held to the trust floor: they can use their moderation capabilities in every space they can read. Space Moderators and Space Admins can moderate inside their own space regardless of trust level. WordPress administrators bypass all of these checks.
 
 > **Note:** "Rate limit lifted" at TL1 refers to the per-day posting caps that apply to brand-new (TL0) accounts - 3 topics, 10 replies, and 5 votes per day by default. Those caps and how to tune them are covered in [Anti-Spam Protection → Rate Limiting for New Members](04-anti-spam.md#rate-limiting-for-new-members).
 

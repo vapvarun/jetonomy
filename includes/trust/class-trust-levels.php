@@ -25,7 +25,8 @@ class Trust_Levels {
 	 *   requirements  - Stats thresholds that must ALL be met for auto-promotion.
 	 *   rate_limits   - Override limits applied at this level (empty = no limits).
 	 *   abilities     - What reaching this level changes, and ONLY what the
-	 *                   engine enforces: the rate-limit lift (Rate_Limiter) and
+	 *                   engine enforces: the rate-limit lift (Rate_Limiter),
+	 *                   the CAPTCHA skip (Captcha_Manager, via unlocked()) and
 	 *                   the trust floors in Permission_Engine::can(). The
 	 *                   Permissions tab prints these, so an entry nothing
 	 *                   enforces promises owners a power members never get
@@ -59,7 +60,7 @@ class Trust_Levels {
 				'reputation'  => 50,
 			),
 			'rate_limits'  => array(),
-			'abilities'    => array(),
+			'abilities'    => array( 'skip_captcha' ),
 		),
 		3 => array(
 			'name'         => 'Trusted',
@@ -69,7 +70,7 @@ class Trust_Levels {
 				'reputation'  => 200,
 			),
 			'rate_limits'  => array(),
-			'abilities'    => array( 'edit_others_posts', 'move_posts', 'close_posts', 'pin_posts' ),
+			'abilities'    => array( 'edit_others_posts', 'delete_others_posts', 'move_posts', 'close_posts', 'pin_posts' ),
 		),
 		4 => array(
 			'name'         => 'Leader',
@@ -84,6 +85,23 @@ class Trust_Levels {
 			'abilities'    => array(),
 		),
 	);
+
+	/**
+	 * Whether reaching $level (or any level below it) unlocks $ability.
+	 *
+	 * @param int    $level   Trust level.
+	 * @param string $ability Ability key from LEVELS.
+	 * @return bool
+	 */
+	public static function unlocked( int $level, string $ability ): bool {
+		$top = min( 5, $level );
+		for ( $l = 0; $l <= $top; $l++ ) {
+			if ( in_array( $ability, self::LEVELS[ $l ]['abilities'], true ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Return the full configuration array for a trust level.

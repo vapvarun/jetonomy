@@ -742,7 +742,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				$jt_can_close = $jt_viewer_id && $jt_is_live && $jt_pe::can( $jt_viewer_id, 'close_posts', $jt_sid );
 				$jt_can_move  = $jt_viewer_id && $jt_pe::can( $jt_viewer_id, 'move_posts', $jt_sid );
 				?>
-				<?php if ( $jt_can_moderate_here || $jt_can_edit || $jt_can_del || $jt_can_pin || $jt_can_close || $jt_can_move ) : ?>
+				<?php if ( $jt_can_edit || $jt_can_del || $jt_can_pin || $jt_can_close || $jt_can_move || current_user_can( 'jetonomy_manage_settings' ) ) : ?>
 					<div class="jt-more-menu">
 						<button class="jt-act jt-more-trigger" type="button"
 							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"

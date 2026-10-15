@@ -451,6 +451,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Trust Level Thresholds', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Define what users must achieve to advance through trust levels. Higher levels unlock posting privileges and reduce moderation scrutiny.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( "Level 3's moderation powers only apply to roles you gave those capabilities without Moderate community. Moderators (Editor by default) are not held to trust levels.", 'jetonomy' ); ?></p>
 				</div>
 				<table class="wp-list-table widefat fixed jt-settings-matrix" style="margin:0;border:none;box-shadow:none;border-radius:0;">
 					<thead>
@@ -484,10 +485,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 										// which lists only what the engine enforces).
 										$jt_ability_labels = array(
 											'no_rate_limits' => __( 'No daily posting limits', 'jetonomy' ),
+											'skip_captcha' => __( 'Skips the CAPTCHA (when CAPTCHA is on)', 'jetonomy' ),
 											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
-											'move_posts'  => __( 'Move topics', 'jetonomy' ),
-											'close_posts' => __( 'Close topics', 'jetonomy' ),
-											'pin_posts'   => __( 'Pin topics', 'jetonomy' ),
+											'delete_others_posts' => __( "Delete others' posts", 'jetonomy' ),
+											'move_posts'   => __( 'Move topics', 'jetonomy' ),
+											'close_posts'  => __( 'Close topics', 'jetonomy' ),
+											'pin_posts'    => __( 'Pin topics', 'jetonomy' ),
 										);
 										$jt_unlocks        = array();
 										foreach ( ( \Jetonomy\Trust\Trust_Levels::get( $level )['abilities'] ?? array() ) as $jt_ab ) {
