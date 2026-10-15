@@ -1753,7 +1753,8 @@ class Template_Loader {
 	 */
 	public static function app_i18n(): array {
 		return array(
-			'voteRecorded'          => __( 'Vote recorded', 'jetonomy' ),
+			'voteRecorded'          => __( 'Vote added', 'jetonomy' ),
+			'voteRemoved'           => __( 'Vote removed', 'jetonomy' ),
 			'statusUpdated'         => __( 'Roadmap status updated', 'jetonomy' ),
 			'accepted'              => __( 'Accepted', 'jetonomy' ),
 			'reply'                 => \Jetonomy\jetonomy_label( 'reply' ),

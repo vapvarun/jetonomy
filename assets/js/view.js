@@ -850,6 +850,22 @@ function jtSetCoverPreview( form, url ) {
  * @param {Element|null|undefined} el Vote button.
  * @param {boolean}                on Whether the viewer's vote is on this button.
  */
+/**
+ * One confirmation toast per vote, for topics and replies alike, saying what
+ * happened: added or taken back. Throttled so fast double-clicks don't stack.
+ *
+ * @param {Object} data REST vote response ({ action: 'created'|'updated'|'removed' }).
+ */
+function jetonomyVoteToast( data ) {
+    if ( ! window.bnToast || window._jetonomyVoteToasted ) return;
+    const i18n = state.i18n || {}; // Module-level store state; only read on click, after init.
+    window.bnToast( data && data.action === 'removed'
+        ? ( i18n.voteRemoved || 'Vote removed' )
+        : ( i18n.voteRecorded || 'Vote added' ) );
+    window._jetonomyVoteToasted = true;
+    setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 );
+}
+
 function jetonomySetVoted( el, on ) {
     if ( ! el ) return;
     el.classList.toggle( 'voted', !! on );
@@ -1699,11 +1715,7 @@ const { state, actions } = store( 'jetonomy', {
                         jetonomySetVoted( btnEl, true );
                         jetonomySetVoted( downSibling, false );
                     }
-                    if ( window.bnToast && ! window._jetonomyVoteToasted ) {
-                        window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
-                        window._jetonomyVoteToasted = true;
-                        setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 );
-                    }
+                    jetonomyVoteToast( data );
                 },
                 revert: ( snap ) => {
                     state.postScores[ postId ] = snap.prevScore;
@@ -1756,11 +1768,7 @@ const { state, actions } = store( 'jetonomy', {
                         jetonomySetVoted( btnEl, true );
                         jetonomySetVoted( upSibling, false );
                     }
-                    if ( window.bnToast && ! window._jetonomyVoteToasted ) {
-                        window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
-                        window._jetonomyVoteToasted = true;
-                        setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 );
-                    }
+                    jetonomyVoteToast( data );
                 },
                 revert: ( snap ) => {
                     state.postScores[ postId ] = snap.prevScore;
@@ -1814,6 +1822,7 @@ const { state, actions } = store( 'jetonomy', {
                         jetonomySetVoted( btnEl, true );
                         jetonomySetVoted( downSibling, false );
                     }
+                    jetonomyVoteToast( data );
                 },
                 revert: ( snap ) => {
                     state.replyScores[ replyId ] = snap.prevScore;
@@ -1871,6 +1880,7 @@ const { state, actions } = store( 'jetonomy', {
                         jetonomySetVoted( btnEl, true );
                         jetonomySetVoted( upSibling, false );
                     }
+                    jetonomyVoteToast( data );
                 },
                 revert: ( snap ) => {
                     // Restore DOM + state from snapshot — this was the

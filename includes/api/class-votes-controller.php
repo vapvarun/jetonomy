@@ -131,19 +131,24 @@ class Votes_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		$value = (int) $request->get_param( 'value' );
+		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
+			return $this->validation_error( __( 'Vote value must be 1 or -1.', 'jetonomy' ) );
+		}
+
+		// Pressing your active vote again takes it back (Vote::cast toggles it off).
+		// A retraction is not a new vote: it must not be refused by, or count
+		// toward, the daily limit, or a member at the cap could not undo a mistake.
+		$is_retraction = Vote::get_user_vote( $user_id, $type, $id ) === $value;
+
 		// Rate limit check.
 		$profile = UserProfile::find_or_create( $user_id );
 		$trust   = (int) ( $profile->trust_level ?? 0 );
-		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'vote', $trust ) ) {
+		if ( ! $is_retraction && ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'vote', $trust ) ) {
 			// Rate_Limiter::message() names the allowance and the real wait.
 			// A bare "Rate limit exceeded. Please try again later." would not tell a member
 			// whether "later" means a minute or a day.
 			return $this->validation_error( \Jetonomy\Permissions\Rate_Limiter::message( $user_id, 'vote', $trust ) );
-		}
-
-		$value = (int) $request->get_param( 'value' );
-		if ( ! in_array( $value, array( 1, -1 ), true ) ) {
-			return $this->validation_error( __( 'Vote value must be 1 or -1.', 'jetonomy' ) );
 		}
 
 		$is_self = (int) ( $object->author_id ?? 0 ) === $user_id;
@@ -182,8 +187,10 @@ class Votes_Controller extends Base_Controller {
 			);
 		}
 
-		// Increment rate limit counter.
-		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
+		// Increment rate limit counter (new or changed votes only).
+		if ( ! $is_retraction ) {
+			\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
+		}
 
 		// Fire action for Notifier. Pass the vote value so listeners can tell an
 		// upvote from a downvote — the author should not get an encouraging
