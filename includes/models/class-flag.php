@@ -280,7 +280,8 @@ class Flag extends Model {
 				$author_id   = (int) $object->author_id;
 				$reporter_id = (int) ( $flag->reporter_id ?? 0 );
 				if ( $author_id > 0 && $author_id !== $reporter_id ) {
-					\Jetonomy\Trust\Reputation::revoke(
+					// Ledger-guarded: only returns a deduction the report really made.
+					\Jetonomy\Trust\Reputation::revoke_awarded(
 						$author_id,
 						'post_reported',
 						array(

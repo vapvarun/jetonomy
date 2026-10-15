@@ -168,6 +168,51 @@ class Reputation {
 	 * @param array  $context Extra context passed to the hook (e.g. badge_id).
 	 * @return int The delta that was applied (0 if $delta was 0).
 	 */
+	/**
+	 * Award $action for this object unless an earlier award is still
+	 * outstanding (one per object, however often the triggering state repeats).
+	 *
+	 * @param int    $user_id Member.
+	 * @param string $action  POINTS_MAP key.
+	 * @param array  $context Must carry object_type + object_id.
+	 * @return int Delta applied.
+	 */
+	public static function award_once( int $user_id, string $action, array $context ): int {
+		if ( self::outstanding( $user_id, $action, $context ) > 0 ) {
+			return 0;
+		}
+		return self::award( $user_id, $action, $context );
+	}
+
+	/**
+	 * Give back $action for this object only if the ledger shows it was applied
+	 * and not yet given back - never return points that were never taken (or
+	 * take back points that were never given).
+	 *
+	 * @param int    $user_id Member.
+	 * @param string $action  POINTS_MAP key.
+	 * @param array  $context Must carry object_type + object_id.
+	 * @return int Delta applied (0 when nothing was outstanding).
+	 */
+	public static function revoke_awarded( int $user_id, string $action, array $context ): int {
+		if ( self::outstanding( $user_id, $action, $context ) <= 0 ) {
+			return 0;
+		}
+		return self::revoke( $user_id, $action, $context );
+	}
+
+	/**
+	 * Net applications of $action on the context object for $user_id.
+	 *
+	 * @param int    $user_id Member.
+	 * @param string $action  POINTS_MAP key.
+	 * @param array  $context object_type + object_id.
+	 * @return int
+	 */
+	private static function outstanding( int $user_id, string $action, array $context ): int {
+		return \Jetonomy\Models\ActivityLog::reputation_net( $user_id, $action, (string) ( $context['object_type'] ?? '' ), (int) ( $context['object_id'] ?? 0 ) );
+	}
+
 	public static function award_custom( int $user_id, int $delta, string $action, array $context = array() ): int {
 		if ( 0 === $delta ) {
 			return 0;

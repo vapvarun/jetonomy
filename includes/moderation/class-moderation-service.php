@@ -770,8 +770,10 @@ class Moderation_Service {
 		// $row is the pre-action row, so a repeat action on the same status
 		// changes nothing.
 		$was_removed = in_array( (string) ( $row->status ?? '' ), array( 'spam', 'trash' ), true );
+		// Ledger-guarded: content the author trashed themselves (no penalty) or
+		// removed before 2.0.2 gives nothing back when approved.
 		if ( ! empty( $row->author_id ) && 'approve' === $action && $was_removed ) {
-			Reputation::revoke(
+			Reputation::revoke_awarded(
 				(int) $row->author_id,
 				'post_removed',
 				array(
@@ -781,7 +783,7 @@ class Moderation_Service {
 			);
 		}
 		if ( in_array( $action, array( 'spam', 'trash' ), true ) && ! $was_removed && ! empty( $row->author_id ) ) {
-			Reputation::award(
+			Reputation::award_once(
 				(int) $row->author_id,
 				'post_removed',
 				array(

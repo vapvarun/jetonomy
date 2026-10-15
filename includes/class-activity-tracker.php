@@ -179,10 +179,13 @@ class Activity_Tracker {
 			'object_type' => 'post',
 			'object_id'   => $post_id,
 		);
+		// The ledger guards both directions: no second award while one stands,
+		// and a revoke only returns what was actually awarded (self-planned or
+		// pre-2.0.2 ideas were never awarded, so leaving the roadmap costs nothing).
 		if ( $curated && $is_on && ! $was_on ) {
-			\Jetonomy\Trust\Reputation::award( $author_id, 'idea_planned', $context );
-		} elseif ( $curated && $was_on && ! $is_on ) {
-			\Jetonomy\Trust\Reputation::revoke( $author_id, 'idea_planned', $context );
+			\Jetonomy\Trust\Reputation::award_once( $author_id, 'idea_planned', $context );
+		} elseif ( $author_id > 0 && $was_on && ! $is_on ) {
+			\Jetonomy\Trust\Reputation::revoke_awarded( $author_id, 'idea_planned', $context );
 		}
 	}
 }

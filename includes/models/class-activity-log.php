@@ -50,6 +50,29 @@ class ActivityLog extends Model {
 	}
 
 	/**
+	 * Net times $reason was applied to this object for $user_id: awards minus
+	 * the matching "{$reason}_revoked" rows written by Reputation::revoke().
+	 * The ledger lives in reputation_changed rows (Activity_Tracker::on_reputation).
+	 * Rides the user_created index.
+	 */
+	public static function reputation_net( int $user_id, string $reason, string $object_type, int $object_id ): int {
+		// shortcut: rows pruned by the activity-log retention window are forgotten, so a
+		// give-back after that window finds nothing to return (fails safe); move the ledger
+		// to its own table if owners need refunds older than the retention window.
+		$db = self::db();
+		return (int) $db->get_var(
+			$db->prepare(
+				'SELECT SUM( CASE WHEN metadata LIKE %s THEN 1 WHEN metadata LIKE %s THEN -1 ELSE 0 END ) FROM ' . self::table() . " WHERE user_id = %d AND action = 'reputation_changed' AND object_type = %s AND object_id = %d",
+				'%' . $db->esc_like( '"reason":"' . $reason . '"' ) . '%',
+				'%' . $db->esc_like( '"reason":"' . $reason . '_revoked"' ) . '%',
+				$user_id,
+				$object_type,
+				$object_id
+			)
+		);
+	}
+
+	/**
 	 * Get recent activity for a user.
 	 */
 	public static function list_for_user( int $user_id, int $limit = 20, int $offset = 0 ): array {
