@@ -105,14 +105,25 @@ $space_id = static function ( string $title ) {
 	return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'spaces' ) . ' WHERE title = %s', $title ) );
 };
 $make_space = static function ( array $d ) use ( $owner, $space_id ) {
-	return $space_id( $d['title'] ) ?: (int) Space::create( $d + array( 'author_id' => $owner, 'type' => 'forum', 'visibility' => 'public', 'join_policy' => 'open', 'status' => 'active' ), $owner );
+	$d   += array( 'author_id' => $owner, 'type' => 'forum', 'visibility' => 'public', 'join_policy' => 'open', 'status' => 'active' );
+	$sid  = $space_id( $d['title'] );
+	if ( $sid ) {
+		// The demo import recreates its categories with new ids on every run,
+		// so re-home an existing extra space instead of leaving it orphaned.
+		Space::update( $sid, array( 'category_id' => $d['category_id'], 'status' => $d['status'] ) );
+		return $sid;
+	}
+	return (int) Space::create( $d, $owner );
 };
 $days_ago = static fn( int $d ) => gmdate( 'Y-m-d H:i:s', time() - $d * DAY_IN_SECONDS - mt_rand( 0, 80000 ) );
 $post     = static function ( int $sid, int $author, string $title, string $body, array $replies = array(), array $extra = array() ) use ( $days_ago ) {
 	global $wpdb;
-	// Re-runs add nothing: a topic with this title in this space already exists.
-	if ( $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . ' WHERE space_id = %d AND title = %s', $sid, $title ) ) ) {
-		return 0;
+	// Re-runs rebuild the topic instead of keeping the old one: the demo
+	// import recreates its members with new ids, so an old topic would show
+	// "[deleted]" as its author.
+	$old = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . \Jetonomy\table( 'posts' ) . ' WHERE space_id = %d AND title = %s', $sid, $title ) );
+	if ( $old ) {
+		Post::delete( $old );
 	}
 	$when = $days_ago( mt_rand( 2, 60 ) );
 	$pid  = Post::create( array( 'space_id' => $sid, 'author_id' => $author, 'title' => $title, 'content' => "<p>{$body}</p>", 'status' => 'publish', 'created_at' => $when, 'published_at' => $when ) + $extra );
@@ -127,7 +138,15 @@ $post     = static function ( int $sid, int $author, string $title, string $body
 
 // 1. Subcategory with a long list: Community > Local Chapters, 14 city spaces.
 $community = $cat_id( 'Community' );
-$chapters  = $cat_id( 'Local Chapters' ) ?: (int) Category::create( array( 'name' => 'Local Chapters', 'slug' => 'local-chapters', 'parent_id' => $community, 'description' => 'Meet members near you. Each chapter runs its own meetups.' ) );
+$sub_cat   = static function ( string $name, int $parent, array $d ) use ( $cat_id ) {
+	$id = $cat_id( $name );
+	if ( $id ) {
+		Category::update( $id, array( 'parent_id' => $parent ) );
+		return $id;
+	}
+	return (int) Category::create( $d + array( 'name' => $name, 'parent_id' => $parent ) );
+};
+$chapters  = $sub_cat( 'Local Chapters', $community, array( 'slug' => 'local-chapters', 'description' => 'Meet members near you. Each chapter runs its own meetups.' ) );
 $cities    = array( 'London', 'Berlin', 'Toronto', 'Lagos', 'Bengaluru', 'São Paulo', 'Sydney', 'Tokyo', 'Austin', 'Amsterdam', 'Nairobi', 'Lisbon', 'Seoul', 'Mexico City' );
 foreach ( $cities as $i => $city ) {
 	$sid = $make_space( array( 'title' => "{$city} Chapter", 'slug' => sanitize_title( "{$city}-chapter" ), 'category_id' => $chapters, 'description' => "Meetups, coworking days and local news for members in {$city}." ) );
@@ -144,14 +163,14 @@ foreach ( $cities as $i => $city ) {
 }
 
 // 2. Second subcategory: Product & Engineering > Labs (two spaces, one archived).
-$labs = $cat_id( 'Labs' ) ?: (int) Category::create( array( 'name' => 'Labs', 'slug' => 'labs', 'parent_id' => $cat_id( 'Product & Engineering' ), 'description' => 'Experiments that may or may not ship.' ) );
+$labs = $sub_cat( 'Labs', $cat_id( 'Product & Engineering' ), array( 'slug' => 'labs', 'description' => 'Experiments that may or may not ship.' ) );
 $make_space( array( 'title' => 'AI Assistant Experiments', 'slug' => 'ai-assistant-experiments', 'category_id' => $labs, 'type' => 'ideas', 'description' => 'Try the experimental AI features and tell us what breaks.' ) );
 $make_space( array( 'title' => '2025 Hackathon', 'slug' => '2025-hackathon', 'category_id' => $labs, 'status' => 'archived', 'description' => 'Archive of last year\'s hackathon projects. Read-only.' ) );
 
 // 3. Visibility / join-policy mix the cards are about.
 $pe      = $cat_id( 'Product & Engineering' );
 $help    = $cat_id( 'Help & Support' );
-$partner = $make_space( array( 'title' => 'Partner Program', 'slug' => 'partner-program', 'category_id' => $pe, 'visibility' => 'private', 'join_policy' => 'open', 'description' => 'For agencies and freelancers building on the platform. Open to any member who joins.' ) );
+$partner = $make_space( array( 'title' => 'Partner Program', 'slug' => 'partner-program', 'category_id' => $pe, 'visibility' => 'private', 'join_policy' => 'open', 'description' => 'For agencies and freelancers building on the platform. Request to join and the partner team reviews it.' ) );
 $cab     = $make_space( array( 'title' => 'Customer Advisory Board', 'slug' => 'customer-advisory-board', 'category_id' => $community, 'visibility' => 'private', 'join_policy' => 'invite', 'description' => 'Invite-only group of long-time customers who review roadmap drafts.' ) );
 $modroom = $make_space( array( 'title' => "Moderators' Room", 'slug' => 'moderators-room', 'category_id' => $help, 'visibility' => 'hidden', 'join_policy' => 'invite', 'description' => 'Private coordination for the moderation team.' ) );
 foreach ( array( 'alice', 'bob', 'david', 'marco' ) as $l ) {

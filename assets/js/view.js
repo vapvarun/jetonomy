@@ -3425,6 +3425,15 @@ const { state, actions } = store( 'jetonomy', {
                     vis.value = 'private';
                     message = hint ? hint.dataset.msgRequires : '';
                 }
+            } else if ( 'private' === vis.value && 'open' === join.value ) {
+                // Private always means request or invite.
+                if ( changed === vis ) {
+                    join.value = 'approval';
+                    message = hint ? hint.dataset.msgPrivateForces : '';
+                } else {
+                    vis.value = 'public';
+                    message = hint ? hint.dataset.msgOpenRequires : '';
+                }
             }
             if ( hint ) {
                 hint.textContent = message || '';

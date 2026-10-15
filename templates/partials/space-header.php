@@ -19,7 +19,7 @@ $_jt_is_member   = $_jt_is_member ?? ( $_jt_user_id && \Jetonomy\Models\SpaceMem
 $_jt_rule_admits = $_jt_rule_admits ?? ( $_jt_user_id && \Jetonomy\Models\AccessRule::grants_access( $_jt_user_id, (int) $space->id ) );
 $_jt_is_admin    = $_jt_is_admin ?? current_user_can( 'manage_options' );
 // Hidden spaces are invite-only whatever the stored policy says.
-$_jt_join_policy = $_jt_join_policy ?? ( 'hidden' === ( $space->visibility ?? '' ) ? 'invite' : ( $space->join_policy ?? 'open' ) );
+$_jt_join_policy = $_jt_join_policy ?? \Jetonomy\Models\Space::effective_join_policy( $space );
 $space_status    = $space->status ?? 'active';
 $is_restricted   = in_array( $space_status, array( 'archived', 'locked' ), true );
 ?>
@@ -128,7 +128,7 @@ $_jt_can_edit_space = is_user_logged_in()
 					<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-request-btn"
 						data-space-id="<?php echo absint( $space->id ); ?>"
 						data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
-						<?php esc_html_e( 'Join', 'jetonomy' ); ?>
+						<?php esc_html_e( 'Request to join', 'jetonomy' ); ?>
 					</button>
 				<?php endif; ?>
 				<?php

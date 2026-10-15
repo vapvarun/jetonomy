@@ -25,7 +25,9 @@ if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_curr
 	return;
 }
 
-$_jt_join_policy = $space->join_policy ?? 'open';
+// The policy the viewer actually meets (hidden = invite, private = never
+// open), from the same rule the join endpoint enforces.
+$_jt_join_policy = \Jetonomy\Models\Space::effective_join_policy( $space );
 $_jt_user_id     = get_current_user_id();
 $_jt_is_member   = $_jt_user_id && \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $_jt_user_id );
 // Somebody an access rule admits (a paying subscriber, say) is not on the
@@ -36,16 +38,6 @@ $_jt_is_member   = $_jt_user_id && \Jetonomy\Models\SpaceMember::is_member( (int
 $_jt_rule_admits = $_jt_user_id && \Jetonomy\Models\AccessRule::grants_access( $_jt_user_id, (int) $space->id );
 $_jt_is_admin    = current_user_can( 'manage_options' );
 $_jt_is_hidden   = 'hidden' === ( $space->visibility ?? '' );
-
-// Read-side defence against legacy data: hidden spaces are invite-only
-// regardless of what stored join_policy says. The write-side validator
-// rejects the bad combo on every entry point now, but a site that already
-// had hidden + open rows in the database before upgrading must still gate
-// correctly until the data migration runs. Forcing the local view of
-// join_policy here keeps the gate, sidebar, and join button consistent.
-if ( $_jt_is_hidden ) {
-	$_jt_join_policy = 'invite';
-}
 
 // Gate: block access for private/hidden spaces (full block) or public spaces with
 // restricted join policies (buttons handled below; content stays readable).
@@ -68,16 +60,21 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		// Guest - prompt to log in. Only private spaces get here: a hidden
 		// space answers 404 to guests before this template runs
 		// (Space::concealed_from_viewer), so its existence is never confirmed
-		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-		$gate_message = sprintf( __( 'This %s is private. Please log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		$gate_message = 'invite' === $_jt_join_policy
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			? sprintf( __( 'This %s is private and invite-only. Log in if you have an invitation.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			: sprintf( __( 'This %s is private. Log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
-				'icon'      => 'lock',
-				'message'   => $gate_message,
-				'cta_label' => __( 'Log In', 'jetonomy' ),
-				'cta_url'   => wp_login_url( \Jetonomy\current_url() ),
-				'tone'      => 'forbidden',
+				'icon'            => 'lock',
+				'message'         => $gate_message,
+				'cta_label'       => __( 'Log In', 'jetonomy' ),
+				'cta_url'         => wp_login_url( \Jetonomy\current_url() ),
+				'secondary_label' => get_option( 'users_can_register' ) ? __( 'Register', 'jetonomy' ) : '',
+				'secondary_url'   => get_option( 'users_can_register' ) ? wp_registration_url() : '',
+				'tone'            => 'forbidden',
 			)
 		);
 		return;
@@ -155,39 +152,19 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 			array(
 				'icon'    => 'lock',
 				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-				'message' => sprintf( __( 'This %s requires approval to join. Submit a request below.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				'message' => sprintf( __( 'This %s is private. Request to join and an admin will review it.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'    => 'forbidden',
+				// The form sits inside the gate card, not floating below it.
+				'slot'    => static function () use ( $space, $join_nonce ) {
+					?>
+					<form class="jt-join-request-form jt-space-gate-form" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
+						<textarea class="jt-input" name="message" rows="3" aria-label="<?php esc_attr_e( 'Message to the admins (optional)', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'Optional: why do you want to join?', 'jetonomy' ); ?>"></textarea>
+						<button type="submit" class="jt-btn jt-btn-fill"><?php esc_html_e( 'Request to join', 'jetonomy' ); ?></button>
+					</form>
+					<?php
+				},
 			)
 		);
-		?>
-		<form class="jt-join-request-form jt-space-gate-form" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
-			<textarea class="jt-input" name="message" rows="3" placeholder="<?php esc_attr_e( 'Optional: why do you want to join?', 'jetonomy' ); ?>"></textarea>
-			<button type="submit" class="jt-btn jt-btn-fill"><?php esc_html_e( 'Join', 'jetonomy' ); ?></button>
-		</form>
-		<?php
-		return;
-	} else {
-		// Open join policy but private visibility — allow direct join.
-		$join_nonce = wp_create_nonce( 'wp_rest' );
-		?>
-		<?php
-		\Jetonomy\Template_Loader::partial(
-			'empty-state',
-			array(
-				'icon'    => 'lock',
-				/* translators: 1: the singular space label the site owner configured (e.g. space, group); 2: plural topic label. */
-				'message' => sprintf( __( 'This %1$s is private. Join to access its %2$s and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-				'tone'    => 'forbidden',
-			)
-		);
-		?>
-		<div class="jt-space-gate-actions">
-			<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
-				<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-				<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
-			</button>
-		</div>
-		<?php
 		return;
 	}
 }

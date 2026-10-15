@@ -32,12 +32,15 @@ Use Public when you want maximum reach and SEO value. Most community spaces shou
 
 ### Private
 
-The space itself appears in the space listings for signed-in members, so they can discover it. Only members can read the posts and replies. Logged-out visitors do not see private spaces in listings. If they open the space's address, they see "This space is private. Please log in to request access." and a **Log In** button.
+The space itself appears in the space listings for signed-in members, with a **Private** badge, so they can discover it. Only members can read the posts and replies.
 
-A signed-in person who is not a member sees a message instead of the content, based on the join policy:
+A private space is always **Requires Approval** or **Invite Only**: someone decides who gets in. If you pick Private while the join policy is Open, Jetonomy switches it to Requires Approval and tells you (spaces saved as Private + Open before 2.0.2 are converted the same way).
 
-- **Open** - "This space is private. Join to access its topics and discussions." with a **Join Space** button that admits them instantly.
-- **Requires Approval** - "This space requires approval to join. Submit a request below." with an optional message box and a **Join** button. After they submit, they see "Your request to join this space is awaiting approval."
+Logged-out visitors do not see private spaces in listings unless you turn on **Show private spaces to logged-out visitors** under **Settings → General → Access Control**; then they appear with a lock, and their topics stay hidden. If a visitor opens the space's address they see, depending on the policy, "This space is private. Log in to request access." or "This space is private and invite-only. Log in if you have an invitation.", with a **Log In** button (and **Register** when your site allows registration).
+
+A signed-in person who is not a member sees a message instead of the content:
+
+- **Requires Approval** - "This space is private. Request to join and an admin will review it." with an optional message box and a **Request to join** button. After they submit, they see "Your request to join this space is awaiting approval."
 - **Invite Only** - "This space is invite-only. You need an invitation to join." with no button.
 
 The discoverable part is the space, not its content. A post inside a private or hidden space is not leaked to non-members anywhere: it is excluded from search results, from oEmbed and link-preview cards, from tag pages, from trending and popular lists, and from the recent-posts widgets and home feed. A non-member cannot pull the post body in through any of these public surfaces - only members (and admins) see it.
@@ -64,7 +67,7 @@ Join policy controls how members gain access to the space. It works in combinati
 
 ### Open
 
-Any logged-in user can join instantly by clicking the **Join** button on the space header. There is no approval step.
+Any logged-in user can join instantly by clicking the **Join** button on the space header. There is no approval step. Open is available for public spaces only.
 
 Members who join an Open space can post and reply immediately (subject to your per-space posting restrictions).
 
@@ -157,7 +160,7 @@ The dropdown is hidden for members who cannot manage roles, and a member cannot 
 | Team-only internal channel | Hidden | Invite Only |
 | Verified customer support | Public | Requires Approval |
 | Early access beta group | Hidden | Invite Only |
-| Course community | Private | Open (link-gated via Invite Only) |
+| Course community | Private | Invite Only (share an invite link with enrolled students) |
 
 ## What's Next?
 

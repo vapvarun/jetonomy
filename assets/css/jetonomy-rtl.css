@@ -488,7 +488,7 @@
   .jt-space-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-full); background: var(--jt-bg); border: 1px solid var(--jt-border); color: var(--jt-text); font-size: 0.8125rem; font-weight: 500; text-decoration: none; transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease; }
   .jt-space-card-action:hover { border-color: var(--jt-accent); color: var(--jt-accent-strong); background: var(--jt-accent-muted); }
   .jt-space-card-action svg { flex-shrink: 0; }
-  .jt-empty-cta { margin-block-start: 16px; text-align: center; }
+  .jt-empty-cta { margin-block-start: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--jt-space-2); }
   @media ( max-width: 640px ) {
     .jt-space-list { grid-template-columns: 1fr; }
   }
@@ -1434,8 +1434,9 @@
   .jt-app .jt-empty-cta { margin: var(--jt-space-4) 0 0; }
 
   /* ── Space gate (private/invite/approval) standalone form / actions below empty-state ── */
-  .jt-space-gate-form { max-inline-size: 480px; margin-inline: auto; margin-block-start: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .jt-space-gate-actions { text-align: center; margin-block-start: 16px; }
+  /* Lives inside the gate card: full-width message box, button sized to its label and centred. */
+  .jt-space-gate-form { max-inline-size: 480px; margin-inline: auto; margin-block-start: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .jt-space-gate-form .jt-input { inline-size: 100%; box-sizing: border-box; }
 
   /* ── Reply composer wrapper ── */
   .jt-reply-composer { margin-top: var(--jt-space-6); }

@@ -15,6 +15,8 @@
  *   create spaces" is the only control and nothing read the cap. Before it is
  *   removed from every role, a site that never saved that setting gets it
  *   seeded from the roles holding the cap, so nobody loses space creation.
+ * - Private spaces are request or invite only: stored private + open rows
+ *   become private + approval (the gate already treated them that way).
  *
  * @package Jetonomy
  */
@@ -39,6 +41,9 @@ class Migration_2_0_2 {
 		$restrictions = $wpdb->prefix . 'jt_restrictions';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query( "DELETE FROM {$restrictions} WHERE type = 'space_ban' AND ( space_id IS NULL OR space_id = 0 )" );
+		$spaces = $wpdb->prefix . 'jt_spaces';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "UPDATE {$spaces} SET join_policy = 'approval' WHERE visibility = 'private' AND join_policy = 'open'" );
 
 		if ( ! function_exists( 'wp_roles' ) ) {
 			return;

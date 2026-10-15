@@ -607,7 +607,22 @@ function jetonomy_render_space_meta_badges( $space ): void {
 	}
 
 	$type        = isset( $space->type ) ? (string) $space->type : '';
-	$join_policy = isset( $space->join_policy ) ? (string) $space->join_policy : '';
+	$join_policy = \Jetonomy\Models\Space::effective_join_policy( $space );
+	$visibility  = (string) ( $space->visibility ?? 'public' );
+
+	// Private and hidden come first: they decide whether you can get in at all.
+	if ( 'public' !== $visibility ) {
+		$vis_label = 'hidden' === $visibility ? __( 'Hidden', 'jetonomy' ) : __( 'Private', 'jetonomy' );
+		$vis_aria  = 'hidden' === $visibility
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			? sprintf( __( 'Hidden %s. Only admins and members can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			: sprintf( __( 'Private %s. Only members can read its topics.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		echo '<span class="jt-space-card-badge jt-space-card-badge-' . esc_attr( $visibility ) . '" aria-label="' . esc_attr( $vis_aria ) . '">';
+		jetonomy_echo_icon( 'lock', 12 );
+		echo esc_html( $vis_label );
+		echo '</span>';
+	}
 
 	if ( '' !== $type ) {
 		$icon  = jetonomy_space_type_icon( $type );

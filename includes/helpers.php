@@ -626,13 +626,6 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 						</div>
 						<div class="jt-space-card-badges">
 							<?php jetonomy_render_space_meta_badges( $space ); ?>
-							<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
-								<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
-								<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php echo esc_attr( sprintf( __( 'Hidden %s. Only admins and members can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>">
-									<?php jetonomy_echo_icon( 'lock', 12 ); ?>
-									<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
-								</span>
-							<?php endif; ?>
 						</div>
 						<?php if ( ! empty( $space->description ) ) : ?>
 							<div class="jt-space-card-excerpt">

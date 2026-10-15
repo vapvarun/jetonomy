@@ -53,7 +53,7 @@ Guests who open any community address are sent to the WordPress sign-in page and
 3. Set **Join Policy**: **Open**, **Requires Approval** or **Invite Only**.
 4. Click **Update Space**.
 
-Pick the join policy with care. A **Private** space with an **Open** policy is readable by any signed-in person who clicks **Join Space**. For a real lock, use **Requires Approval** or **Invite Only**.
+A **Private** space is always **Requires Approval** or **Invite Only**. If you pick Private while the policy is Open, Jetonomy switches it to Requires Approval and tells you.
 
 **Hidden** always means **Invite Only**. If you pick Hidden, Jetonomy switches the join policy for you and tells you so.
 
@@ -77,14 +77,13 @@ Open a private browser window where you are not signed in.
 | Setup | What the guest sees |
 |---|---|
 | **Private community** | The WordPress login page |
-| Public community, **Private** space | The space is missing from the lists. A direct link shows "This space is private. Please log in to request access." with a **Log In** button |
+| Public community, **Private** space | The space is missing from the lists (unless "Show private spaces to logged-out visitors" is on, then it shows with a lock). A direct link shows "This space is private. Log in to request access." with a **Log In** button |
 | Public community, **Hidden** space | "Space not found." |
 
 Then sign in as a test member who is not in the space:
 
-- **Requires Approval**: "This space requires approval to join. Submit a request below."
+- **Requires Approval**: "This space is private. Request to join and an admin will review it."
 - **Invite Only**: "This space is invite-only. You need an invitation to join."
-- **Open** (but Private): "This space is private. Join to access its topics and discussions."
 
 ## Common questions
 

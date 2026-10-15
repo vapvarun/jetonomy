@@ -34,7 +34,7 @@ $space_url = \Jetonomy\route_url( 'space', esc_attr( $space->slug ) );
 // non-member), otherwise a plain permission-denied state.
 $jt_user_id = get_current_user_id();
 if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts', (int) $space->id ) ) {
-	$jt_can_join = ( 'open' === ( $space->join_policy ?? '' ) )
+	$jt_can_join = ( 'open' === \Jetonomy\Models\Space::effective_join_policy( $space ) )
 		&& ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $jt_user_id );
 
 	\Jetonomy\Template_Loader::partial(

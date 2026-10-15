@@ -31,6 +31,8 @@
 			ban:                  __( 'Ban', 'jetonomy' ),
 			hiddenForcesInvite:   __( 'Hidden spaces must use Invite Only. Join policy switched.', 'jetonomy' ),
 			hiddenRequiresInvite: __( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
+			privateForcesApproval: __( 'Private spaces need approval or an invite. Join policy switched to Approval Required.', 'jetonomy' ),
+			openRequiresPublic:   __( 'Switched visibility to Public because anyone-can-join needs a public space.', 'jetonomy' ),
 			reloadPage:           __( 'Reload page', 'jetonomy' ),
 			importConnectionLost: __( 'Connection lost. You can resume this import later.', 'jetonomy' ),
 			inviteCopied:         __( 'Invite link copied to clipboard.', 'jetonomy' ),
@@ -523,6 +525,9 @@
 					if ($(this).val() === 'hidden' && $join.val() !== 'invite') {
 						$join.val('invite').trigger('change.jtCoupleSilent');
 						ensureNote(self.i18n.hiddenForcesInvite);
+					} else if ($(this).val() === 'private' && $join.val() === 'open') {
+						$join.val('approval').trigger('change.jtCoupleSilent');
+						ensureNote(self.i18n.privateForcesApproval);
 					}
 				});
 				$join.off('change.jtCouple').on('change.jtCouple', function(e) {
@@ -532,6 +537,9 @@
 					if ($vis.val() === 'hidden' && $(this).val() !== 'invite') {
 						$vis.val('private');
 						ensureNote(self.i18n.hiddenRequiresInvite);
+					} else if ($vis.val() === 'private' && $(this).val() === 'open') {
+						$vis.val('public');
+						ensureNote(self.i18n.openRequiresPublic);
 					}
 				});
 			};

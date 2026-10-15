@@ -807,6 +807,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             if (res.ok && res.data && res.data.status === 'joined') {
                 window.location.reload();
+            } else if (res.data && res.data.status === 'pending') {
+                // The server filed a request (a page cached before the space
+                // went private): show it rather than silently resetting.
+                btn.textContent = wp.i18n.__( 'Awaiting Approval', 'jetonomy' );
+                btn.classList.remove('jt-btn-fill');
+                btn.classList.add('jt-btn-outline');
+                (window.bnToast ? window.bnToast(res.data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), 'success') : null);
             } else {
                 btn.disabled = false;
                 btn.textContent = label;

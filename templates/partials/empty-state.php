@@ -17,6 +17,9 @@
  *   description — Optional secondary line below the message.
  *   cta_label   — Optional primary-button label.
  *   cta_url     — Optional primary-button URL. Both required to render.
+ *   secondary_label / secondary_url — Optional second (ghost) button beside the CTA.
+ *   slot        — Optional callable rendered inside the card, after the buttons
+ *                 (e.g. a request form), so it shares the card's spacing.
  *   tone        — 'info' (default) | 'warn' | 'forbidden'.
  *                 Forbidden renders with a lock icon by default and
  *                 darker text. Warn is for "no results match your filter"
@@ -40,6 +43,8 @@ $jt_es_tone        = isset( $tone ) && in_array( $tone, array( 'info', 'warn', '
 	? $tone
 	: 'info';
 $jt_es_variant     = isset( $variant ) && 'compact' === $variant ? 'compact' : 'default';
+$jt_es_sec_label   = isset( $secondary_label ) ? (string) $secondary_label : '';
+$jt_es_sec_url     = isset( $secondary_url ) ? (string) $secondary_url : '';
 
 if ( 'forbidden' === $jt_es_tone && 'help-circle' === $jt_es_icon ) {
 	$jt_es_icon      = 'lock';
@@ -63,6 +68,16 @@ $jt_es_wrapper = 'compact' === $jt_es_variant ? 'jt-empty-compact' : 'jt-empty';
 			<a href="<?php echo esc_url( $jt_es_cta_url ); ?>" class="jt-btn jt-btn-fill">
 				<?php echo esc_html( $jt_es_cta_label ); ?>
 			</a>
+			<?php if ( '' !== $jt_es_sec_label && '' !== $jt_es_sec_url ) : ?>
+				<a href="<?php echo esc_url( $jt_es_sec_url ); ?>" class="jt-btn jt-btn-ghost">
+					<?php echo esc_html( $jt_es_sec_label ); ?>
+				</a>
+			<?php endif; ?>
 		</p>
 	<?php endif; ?>
+	<?php
+	if ( isset( $slot ) && is_callable( $slot ) ) {
+		$slot();
+	}
+	?>
 </div>

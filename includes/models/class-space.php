@@ -140,6 +140,15 @@ class Space extends Model {
 		$old_slug = $slug_changing ? ( $existing->slug ?? null ) : null;
 		$old_type = $type_changing ? ( $existing->type ?? null ) : null;
 
+		// Private always means request or invite (owner decision, 2.0.2): an
+		// "open" join policy on a private space is stored as approval, so the
+		// saved value, the gate and the admin form all say the same thing.
+		if ( $access_changing && $existing
+			&& 'private' === ( $data['visibility'] ?? $existing->visibility ?? 'public' )
+			&& 'open' === ( $data['join_policy'] ?? $existing->join_policy ?? 'open' ) ) {
+			$data['join_policy'] = 'approval';
+		}
+
 		$result = parent::update( $id, $data );
 
 		/*
@@ -588,6 +597,11 @@ class Space extends Model {
 			$data['sort_order'] = static::next_sort_order( (int) ( $data['category_id'] ?? 0 ) );
 		}
 
+		// Private always means request or invite; see update().
+		if ( 'private' === ( $data['visibility'] ?? 'public' ) && 'open' === ( $data['join_policy'] ?? 'open' ) ) {
+			$data['join_policy'] = 'approval';
+		}
+
 		$id = static::insert( $data );
 
 		if ( $id <= 0 ) {
@@ -755,7 +769,10 @@ class Space extends Model {
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
 			$result = array( '1=1', array() );
 		} elseif ( $user_id <= 0 ) {
-			$result = array( "{$col}visibility = 'public'" . self::parent_category_and( $user_id, $col ), array() );
+			// Settings -> Access Control can list private spaces to guests as
+			// locked teasers; their topics stay behind can( 'read' ).
+			$guest_vis = ! empty( get_option( 'jetonomy_settings', array() )['guest_private_teasers'] ) ? "IN ('public','private')" : "= 'public'";
+			$result    = array( "{$col}visibility {$guest_vis}" . self::parent_category_and( $user_id, $col ), array() );
 		} else {
 			$members_table = \Jetonomy\table( 'space_members' );
 			$parent        = self::parent_category_clause( $user_id, $col );
@@ -1753,6 +1770,8 @@ class Space extends Model {
 	 * @return string 'invite' | 'request' | 'open'
 	 */
 	public static function join_mode( string $visibility, string $join_policy ): string {
+		// shortcut: 'private' => request also covers rows saved before 2.0.2
+		// normalised private+open to approval; drop it once no such rows can exist.
 		if ( 'invite' === $join_policy || 'hidden' === $visibility ) {
 			return 'invite';
 		}
@@ -1760,6 +1779,20 @@ class Space extends Model {
 			return 'request';
 		}
 		return 'open';
+	}
+
+	/**
+	 * The join policy a viewer actually meets on this space: 'invite' |
+	 * 'approval' | 'open', derived from join_mode() so templates, badges and the
+	 * join endpoint can never disagree (a hidden space is invite-only, a private
+	 * one never open).
+	 *
+	 * @param object $space Space row.
+	 * @return string
+	 */
+	public static function effective_join_policy( object $space ): string {
+		$mode = self::join_mode( (string) ( $space->visibility ?? 'public' ), (string) ( $space->join_policy ?? 'open' ) );
+		return 'request' === $mode ? 'approval' : $mode;
 	}
 
 	/**

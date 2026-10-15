@@ -412,6 +412,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							</fieldset>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php echo esc_html( sprintf( /* translators: %s: plural space label the site owner configured. */ __( 'Private %s for visitors', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[guest_private_teasers]" value="1" <?php checked( ! empty( $settings['guest_private_teasers'] ) ); ?>>
+								<?php echo esc_html( sprintf( /* translators: %s: plural space label the site owner configured. */ __( 'Show private %s to logged-out visitors', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'They appear in listings with a lock, so visitors know they exist and can log in or register to ask to join. Their topics stay hidden. Hidden spaces are never shown.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
 				</table>
 			</div>
 

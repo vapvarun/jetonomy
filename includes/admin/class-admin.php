@@ -718,6 +718,11 @@ class Admin {
 			// Community as homepage — unchecked checkboxes don't submit, so
 			// absence inside a General-tab save means OFF (default).
 			$clean['front_page'] = ! empty( $input['front_page'] );
+			// Private spaces as locked teasers for logged-out visitors (default off).
+			$clean['guest_private_teasers'] = ! empty( $input['guest_private_teasers'] );
+			if ( $clean['guest_private_teasers'] !== ! empty( $existing['guest_private_teasers'] ) ) {
+				Space::bump_tree_generation(); // Cached guest listings must re-read.
+			}
 
 			// Front-end space creation role allowlist (G6). Validate each
 			// posted role against the live wp_roles() registry so a stale or
