@@ -157,7 +157,7 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 
 ### A1 - Activation and first-request routing
 **Covers:** includes/class-router.php, includes/class-jetonomy.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** after a clean activation, the plugin's front-end routes respond 200 on the very first request, without the user having to hit Settings > Permalinks. A route whose feature is switched off (for example Messages) shows a "page not available" page inside the community, not a blank page. With Plain permalinks active, every admin screen shows an error notice linking to Settings > Permalinks, because community URLs cannot work there.
 **Why it matters:** rewrite-flush-on-activation regressions have broken customer sites before (1.3.5 incident).
 **Acceptance:** any `/community/*` route returns HTTP 200 on the first request after activating, and `rewrite_rules` option contains the plugin's routes.
@@ -170,7 +170,7 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 
 ### A3 - Pro pairs cleanly (if Pro is also being installed)
 **Covers:** includes/class-jetonomy.php, includes/integrations/class-companion-registry.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** activating Pro on top of free does not fatal, adds Pro-only tables, and both version constants agree.
 
 ---
@@ -192,7 +192,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.home
 **Covers:** templates/views/home.php, templates/partials/post-card.php, templates/partials/sidebar.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** the community home page renders for a logged-out visitor, shows real content (posts or spaces), and offers a clear way in (login/register/join). Each category shows its first six spaces with a "View all" link to the category page. Private spaces appear to logged-out visitors only as locked previews, and only when Settings > General > Access Control > "Show private spaces to logged-out visitors" is on (off by default); hidden spaces never appear.
 **Why it matters:** first impression surface; a broken home means no acquisition.
 
@@ -203,18 +203,18 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.space-listing
 **Covers:** templates/views/space.php, templates/partials/space-header.php, templates/partials/pagination.php, includes/models/class-post.php
-**Verified:** d1392e03
-**What to verify:** a space page shows its topics in the configured order (Popular breaks vote ties by reply count), with pagination that actually advances, and a visible "new post" invitation for authed users. The same space header (cover, description, counts, Join / Follow / Leave) appears on the Discussions, Members and Roadmap tabs. Open spaces show Join; private spaces show "Request to join" (invite-only ones say so); archived and locked spaces show Follow instead of Join. A private space shows a logged-out visitor the login prompt (and Register when registration is open), not its topics. Closed topics carry a "Closed" badge next to Pinned and Private.
+**Verified:** 83f00772
+**What to verify:** a space page shows its topics in the configured order (Popular breaks vote ties by reply count), with pagination that actually advances, and a visible "new post" invitation for authed users. The same space header (cover, description, counts, Join / Follow / Leave) appears on the Discussions, Members and Roadmap tabs. Open spaces show Join; private spaces show "Request to join" (invite-only ones say so); archived and locked spaces show Follow instead of Join, and their empty state reads "No topics were posted here." with no New Topic link. The header "Request to join" on a public approval space asks for an optional message first. A private space shows a logged-out visitor the login prompt (and Register when registration is open), not its topics. A signed-in non-member of a private or invite-only space gets a gate that names the space and shows its description (a hidden space is never named). After requesting, the page reloads into "Your request to join <Space> is awaiting approval" with a Withdraw request button (REST DELETE /jetonomy/v1/spaces/{id}/join-requests/mine); withdrawing returns the Request to join form and removes the staff's notice of it. Closed topics carry a "Closed" badge next to Pinned and Private.
 
 ### C.anon.single-post
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/models/class-reply.php
-**Verified:** d1392e03
-**What to verify:** a topic renders with its title, body, author, replies, and vote counts; auth-gated actions (reply, vote, subscribe) cleanly redirect a logged-out visitor to login rather than failing silently with 403 (the reply area offers "Log in to reply" as a button). A topic or reply edited more than a minute after posting shows "edited 2 hours ago" to everyone, with the exact time on hover. A nested reply shows "in reply to <name>" linking to its parent. Private replies show as a tombstone to people who may not read them.
+**Verified:** 83f00772
+**What to verify:** a topic renders with its title, body, author, replies, and vote counts; auth-gated actions (reply, vote, subscribe) cleanly redirect a logged-out visitor to login rather than failing silently with 403 (the reply area offers "Log in to reply" as a button). A topic or reply edited more than a minute after posting shows "edited 2 hours ago" to everyone, with the exact time on hover. A nested reply shows "in reply to <name>" linking to its parent. Private replies show as a tombstone to people who may not read them. A topic in a private space says "This content is in a private space."; a topic in a hidden space answers "Topic not found" exactly like a missing topic, so a guessed URL confirms nothing.
 
 ### C.anon.user-profile
 **Covers:** templates/views/user-profile.php, includes/models/class-user-profile.php
-**Verified:** d1392e03
-**What to verify:** any user's public profile is viewable by anonymous visitors and shows their posts/replies/badges without leaking private data (email, settings, drafts). The trust level shows by its name (owner-renamable under Settings > Permissions; level 5 is "Veteran" by default). Topics from private spaces and private replies are not listed to viewers who cannot read them (a private reply reads "Private reply").
+**Verified:** 83f00772
+**What to verify:** any user's public profile is viewable by anonymous visitors and shows their posts/replies/badges without leaking private data (email, settings, drafts). The trust level shows by its name (owner-renamable under Settings > Permissions; level 5 is "Veteran" by default). Topics from private spaces and private replies are not listed to viewers who cannot read them (a private reply reads "Private reply"). A logged-in viewer sees a Message button when Jetonomy messaging is active or another messenger supplies a link through the `jetonomy_member_message_url` filter; otherwise there is no button.
 
 ### C.anon.tag
 **Covers:** templates/views/tag.php, includes/models/class-tag.php
@@ -234,127 +234,127 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.invite-landing
 **Covers:** templates/views/invite.php, includes/models/class-invite-link.php, includes/api/class-spaces-controller.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** an invite link lands on a page that names the space being offered and does NOT join anyone by itself. Logged out: it offers "Create free account" (when registration is open) and "Log in to accept invite", and returns to the invite after login. Logged in: it shows a "Join" button; the member is added only when they click it (a POST with a nonce), then land in the space. Opening the link, a link preview or a prefetch never adds anyone. Invalid codes, expired links and links at their usage limit get a clean error, not a fatal. An archived or locked space, or a member banned from the space, cannot be joined by invite.
 
 ### C.member.post-create
 **Covers:** templates/views/new-post.php, templates/partials/composer.php, templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php
-**Verified:** d1392e03
-**What to verify:** a logged-in member can compose a new post with title + content, pick a visibility / schedule / tags, submit, and land on the new topic. The post is persisted, appears in the space listing, and fires any expected notifications (subscribers notified, activity log updated). The image button, paste and drop of images appear and work only for a member who holds the Upload media permission; otherwise they are hidden and a paste or drop shows "You do not have permission to upload images". An archived or locked space refuses new topics with a message.
+**Verified:** 83f00772
+**What to verify:** a logged-in member can compose a new post with title + content, pick a visibility / schedule / tags, submit, and land on the new topic. The post is persisted, appears in the space listing, and fires any expected notifications (subscribers notified, activity log updated). The image button, paste and drop of images appear and work only for a member who holds the Upload media permission; otherwise they are hidden and a paste or drop shows "You do not have permission to upload images". An archived or locked space refuses new topics with a message, and its /s/<slug>/new/ page shows that notice with "Back to <Space>" instead of a form.
 
 ### C.member.post-edit
 **Covers:** templates/views/single-post.php, templates/partials/edited-mark.php, includes/api/class-posts-controller.php, includes/models/class-post.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** a post author can edit their own post (this needs the Edit own posts permission, which Member and Participate grants include); changes persist and are reflected everywhere the post is referenced (home feed, space list, search). The "edited ... ago" marker appears when the edit came more than a minute after posting. The topic menu offers only the actions the viewer's permissions allow.
 
 ### C.member.post-delete
 **Covers:** templates/views/single-post.php, includes/api/class-posts-controller.php, includes/models/class-post.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** a post author can delete their own post (this needs the Delete own posts permission); it disappears from all listings and its single-post URL no longer serves the body (either 404 or "trashed" state per plugin contract); replies are handled consistently (cascaded or orphaned per contract).
 
 ### C.member.reply-create
 **Covers:** templates/views/single-post.php, includes/api/class-replies-controller.php, includes/models/class-reply.php, includes/notifications/class-notifier.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** a member can post a reply on any topic they can see; the reply appears inline, increments the topic's reply count, and triggers a notification to the OP (unless OP unsubscribed). A reply cannot be created under a parent that is missing, trashed, spam or in another topic. A private reply is not sent to thread subscribers.
 
 ### C.member.reply-quote
 **Covers:** templates/partials/reply-card.php, assets/js/view.js, assets/js/composer.js
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** a member can quote an existing reply and the quoted content is visually preserved as a blockquote in the new reply. Choosing Reply on a reply shows "Replying to <name>" with the first line of that reply quoted and linking back to it.
 
 ### C.member.mention
 **Covers:** includes/class-mentions.php, includes/notifications/class-notifier.php, includes/api/class-posts-controller.php, includes/api/class-replies-controller.php
-**Verified:** d1392e03
-**What to verify:** using `@username` in a post or reply produces a notification for that user AND renders as a link to their profile in the saved content. Mentioning someone in a private reply notifies them only if they may read it.
+**Verified:** 83f00772
+**What to verify:** using `@username` in a post or reply produces a notification for that user AND renders as a link to their profile in the saved content. Mentioning someone in a private reply notifies them only if they may read it. The mention email uses the owner's saved Mention subject and body (Settings > Emails), like every other email.
 
 ### C.member.vote
 **Covers:** includes/api/class-votes-controller.php, includes/models/class-vote.php, assets/js/view.js, templates/views/single-post.php, templates/partials/reply-card.php
-**Verified:** d1392e03
-**What to verify:** a member can vote up/down on posts and replies, the score updates on screen, the vote persists across page reloads, and re-clicking the same vote toggles it off. The active vote button reads "Remove your upvote" / "Remove your downvote", and every vote on a topic or reply shows one toast, "Vote added" or "Vote removed" (never two). A member at the daily vote limit can still take a vote back. A logged-in member who may not vote sees the score as a disabled control that explains why on hover or click, not a button that does nothing.
+**Verified:** 83f00772
+**What to verify:** a member can vote up/down on posts and replies, the score updates on screen, the vote persists across page reloads, and re-clicking the same vote toggles it off. The active vote button reads "Remove your upvote" / "Remove your downvote", and every vote on a topic or reply shows one toast, "Vote added" or "Vote removed" (never two). A member at the daily vote limit can still take a vote back. A logged-in member who may not vote sees the score as a disabled control that explains why on hover or click, not a button that does nothing. Taking back a vote removes the author's grouped "X people voted" notification once no votes remain; it never shows "0 people voted".
 
 ### C.member.flag
 **Covers:** includes/api/class-moderation-controller.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php
-**Verified:** d1392e03
-**What to verify:** a member can flag a post or reply as inappropriate, pick a reason, submit, and the flag reaches moderation (a moderator sees it in the queue). The flagging member gets acknowledgment, not a silent submit. Content the member cannot read (a private space, a private reply) cannot be reported, and the error does not reveal whether it exists.
+**Verified:** 83f00772
+**What to verify:** a member can report a topic, reply or member; a dialog asks for a required reason (Spam, Offensive, Off-topic, Harassment, Other) plus optional details, and submitting with no reason shows "Choose a reason.". The report reaches moderation (a moderator sees it in the queue with that reason). The reporting member gets the toast "Reported. Thank you.", not a silent submit. Content the member cannot read (a private space, a private reply) cannot be reported, and the error does not reveal whether it exists.
 
 ### C.member.subscribe-thread-and-space
 **Covers:** includes/api/class-subscriptions-controller.php, includes/models/class-subscription.php, includes/notifications/class-notifier.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** a member can subscribe to a thread and to a space; a subsequent reply (thread) or new post (space) produces a notification; unsubscribing stops new notifications. A member who creates a space from the front end follows it automatically. Thread subscribers are not notified about private replies.
 
 ### C.member.accept-answer
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/api/class-replies-controller.php, includes/models/class-reply.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** on Q&A-typed spaces, the OP can mark a reply as the accepted answer, the reply is visibly promoted, and a second acceptance replaces the first per contract. A private reply is never shown in the accepted-answer callout to people who may not read it, and merging or splitting topics keeps exactly one accepted answer.
 
 ### C.member.profile-edit
 **Covers:** templates/views/edit-profile.php, includes/api/class-users-controller.php, includes/models/class-user-profile.php
-**Verified:** d1392e03
-**What to verify:** a member can edit their display name, bio, avatar, social links, and notification preferences; changes save, reload cleanly, and reflect across the site. The bio is the WordPress Biographical Info field, so wp-admin and the community profile always match. A display name that is a reserved word (such as admin) saves. The avatar upload controls appear only for a member with the Upload media permission; others see "Your Gravatar is used as your photo."
+**Verified:** 83f00772
+**What to verify:** a member can edit their display name, bio, avatar, social links, and notification preferences; changes save, reload cleanly, and reflect across the site. The bio is the WordPress Biographical Info field, so wp-admin and the community profile always match. A display name that is a reserved word (such as admin) saves. The avatar upload controls appear only for a member with the Upload media permission; others see "Your Gravatar is used as your photo." The notification preferences list "Answer to my request to join a space" (email on by default).
 
 ### C.member.bookmarks
 **Covers:** templates/views/bookmarks.php, includes/api/class-bookmarks-controller.php, includes/models/class-bookmark.php
-**Verified:** d1392e03
-**What to verify:** a member can bookmark a post, find it in their bookmarks view, and unbookmark it; count reflects the change.
+**Verified:** 83f00772
+**What to verify:** a member can bookmark a post, find it in their bookmarks view, and unbookmark it; count reflects the change. Removing the last bookmark shows the empty state immediately, without a reload.
 
 ### C.member.share
 **Covers:** templates/views/single-post.php, assets/js/view.js, assets/js/lib/smart-dropdown.js
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** the Share control on a topic opens a dropdown anchored to the button, offers Copy Link + X + Facebook + LinkedIn, Copy Link actually writes the URL to the clipboard, external links open on the right platform, and the dropdown closes when the user scrolls or clicks outside.
 
 ### C.member.scheduled-post
 **Covers:** templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php, includes/class-cron.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** a member can schedule a post for a future date/time using the composer's schedule mode, picking both hour and minute; the scheduled post is stored with the correct `published_at`, does not appear on public listings before that time, and appears automatically when the time arrives. The HH:MM picker works in every supported browser (Chromium proven here; Firefox + Safari iOS in `manual_required`).
 
 ### C.member.space-pagination
 **Covers:** templates/views/space.php, templates/partials/pagination.php, assets/js/pagination-frontend.js, assets/js/pagination-hydrator.js
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** on a space page, `posts_per_page` controls how many topics load initially; scroll-to-load reveals additional batches without doubling up on first load; the load-more behavior does not re-trigger until the user actually scrolls.
 
 ### C.member.profile-mobile-tabs
 **Covers:** templates/views/user-profile.php, templates/views/drafts.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** on mobile (390px), the profile tabs bar is fully usable - no tab falls unreachable off-screen, the active tab is visible on load.
 
 ### C.member.online-indicator
 **Covers:** templates/partials/reply-card.php, templates/views/user-profile.php, templates/partials/sidebar.php, includes/models/class-user-profile.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** a user who is active within the threshold shows an online dot on every avatar context (topic page, profile header, home feed). The dot is visually attached to the avatar's top-right corner across all avatar sizes.
 
 ### C.mod.queue-and-actions
 **Covers:** templates/views/moderation.php, templates/partials/moderation/*.php, includes/api/class-moderation-controller.php, includes/moderation/class-moderation-service.php
-**Verified:** d1392e03
-**What to verify:** a user with moderator capability sees the moderation queue, can filter by type (post/reply) and status (pending/spam/trash/resolved-flag), and can approve / trash / mark-spam from the queue. Every action updates the underlying record, disappears from its source tab, and appears in the destination tab. Silenced users cannot post until unsilenced. A site moderator (not a site admin) sees queues, report lists and counts only for spaces they can read, and cannot act on content in private spaces they cannot read. Space pages link to their own moderation queue with a count for space admins and site moderators. Moving content to Trash counts as removal for reputation, the same as Spam, and approving it restores only what was taken.
+**Verified:** 83f00772
+**What to verify:** a user with moderator capability sees the moderation queue, can filter by type (post/reply) and status (pending/spam/trash/resolved-flag), and can approve / trash / mark-spam from the queue. Every action updates the underlying record, disappears from its source tab, and appears in the destination tab. Silenced users cannot post until unsilenced. A site moderator (not a site admin) sees queues, report lists and counts only for spaces they can read, and cannot act on content in private spaces they cannot read. Space pages link to their own moderation queue with a count for space admins and site moderators; the header "Moderation queue" button opens the Approvals tab when only held content is pending, so it never lands on "0 pending flags". Per-space flag cards show the topic title (or an excerpt for an untitled feed post) and the flagged text. Site-wide bans listed there include IP address bans. Moving content to Trash counts as removal for reputation, the same as Spam, and approving it restores only what was taken.
 
 ### C.mod.flag-resolution
 **Covers:** templates/partials/moderation/flag-card.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php
-**Verified:** d1392e03
-**What to verify:** a moderator sees flagged content with the flagging user's reason, can resolve the flag with an action (ignore / trash / spam / silence author), and the resolution is recorded and reflected on the reporter's side (the reporter gets a "A moderator reviewed your report" notification). Dismissing a report on a reply restores the author's reputation, as it does for topics. Anonymous authors stay anonymous on approval cards. The restriction-lifting button reads "Lift restriction".
+**Verified:** 83f00772
+**What to verify:** a moderator sees flagged content with the flagging user's reason, can resolve the flag with an action (ignore / trash / spam / silence author), and the resolution is recorded and reflected on the reporter's side (the reporter gets a "A moderator reviewed your report" notification). Dismissing a report on a reply restores the author's reputation, as it does for topics. Anonymous authors stay anonymous on approval cards. The restriction-lifting button reads "Lift restriction". The per-space flag card shows the linked topic title and the start of the flagged text, so a moderator need not open each item.
 
 ### C.admin.plugin-pages
 **Covers:** includes/admin/class-admin.php, includes/admin/views/*.php
-**Verified:** d1392e03
-**What to verify:** every Jetonomy admin page (overview, spaces, categories, content, users, moderation, settings, plus any Pro extension pages) renders without PHP Notice / Warning / Fatal. Every tab on those pages loads its content without AJAX errors. The Spaces, Users and Extensions screens open for staff holding Manage spaces, Manage community users and Manage extensions respectively. The Dashboard's "Review flags" link opens the Flags tab. Anonymous authors stay anonymous in the admin lists, Activity Log and Revisions. Every Settings sidebar row has an icon.
+**Verified:** 83f00772
+**What to verify:** every Jetonomy admin page (overview, spaces, categories, content, users, moderation, settings, plus any Pro extension pages) renders without PHP Notice / Warning / Fatal. Every tab on those pages loads its content without AJAX errors. The Spaces, Users and Extensions screens open for staff holding Manage spaces, Manage community users and Manage extensions respectively. The Dashboard's "Review flags" link opens the Flags tab. Anonymous authors stay anonymous in the admin lists, Activity Log and Revisions. Every Settings sidebar row has an icon. Labels follow Terminology (topics, not posts), and the brand name set by White Label (`jetonomy_brand_name`) replaces "Jetonomy" in admin headings. Settings > Emails lists every email type: reactions, report reviewed, join request, join answer and "Confirm your email (new accounts)"; saved templates for each are kept. The Activity Log shows titles and "Gained/Lost N reputation points" with plain reasons, and its retention setting is its own card. The Permissions role table keeps its first column visible while scrolling sideways, and the trust level name fields are styled. Revisions show the stored title with "(deleted)" when the topic is gone. The setup wizard calls the type "Feed".
 
 ### C.admin.category-and-space-crud
 **Covers:** includes/admin/ajax/class-categories-handler.php, includes/admin/ajax/class-spaces-handler.php, includes/admin/views/categories.php, includes/admin/views/spaces.php, includes/models/class-space.php, includes/models/class-category.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** an admin can create, edit, reorder, and delete categories and spaces. Deleting a non-empty category handles its spaces per contract (cascade or refuse). Space settings edits persist and MERGE with existing settings (editing one key does not drop others - this is a hard contract). The space form keeps visibility and join policy consistent: choosing Hidden forces Invite only, choosing Private turns Open into Approval required, each with a note. The last admin of a space cannot be removed or demoted from wp-admin. Deleting a space with more than 500 topics locks it and finishes in the background, and the screen says so; a database error stops the delete with the space intact. Archive and hand-over moves ownership to a valid heir, and the former owner stays as a moderator.
 
 ### C.admin.user-management
 **Covers:** includes/admin/ajax/class-users-handler.php, includes/admin/views/users.php, includes/trust/class-trust-levels.php
-**Verified:** d1392e03
-**What to verify:** an admin can search users, promote trust level, ban / unban, and see the correct state in the listing; bans prevent access to gated actions as expected. The Ban dialog offers site-wide bans only (a space ban is made from that space's Members screen). Staff with only delegated user management cannot raise their own or another staff member's trust level; the Users screen opens with the Manage community users permission. Trust levels show their owner-set names.
+**Verified:** 83f00772
+**What to verify:** an admin can search users, promote trust level, ban / unban, and see the correct state in the listing; bans prevent access to gated actions as expected. The dialog title follows the action (Ban User, Silence User, Ban IP address) and offers site-wide actions only (a space ban is made from that space's Members screen). "Ban IP address" exists only for site administrators: an IPv4 or IPv6 address is typed in (an invalid one, your own current address or one already banned is refused), and the ban is listed and liftable with the other restrictions (REST POST /moderation/ban with type=ip_ban and ip; WP-CLI --ip). Staff with only delegated user management cannot raise their own or another staff member's trust level; the Users screen opens with the Manage community users permission. Trust levels show their owner-set names.
 
 ### C.admin.invite-links
 **Covers:** includes/models/class-invite-link.php, templates/views/invite.php, includes/api/class-spaces-controller.php, templates/views/space-edit.php, templates/partials/space-header.php
-**Verified:** d1392e03
-**What to verify:** an admin can mint an invite link for a space (optionally with a use limit and an expiry date), copy it, and the link works through the full accept flow: opening it shows the space with a Join button, and the member is added only when they click Join (sign up or log in first if needed), landing in the space with correct membership. An expiry date means the link works until the end of that day in the site's timezone; an unreadable or past date is refused, and the invite list shows the date in the site's format. A link past its limit or date is refused, and two people using the last use at the same moment cannot exceed the limit. The invite and join-request lists are paginated.
+**Verified:** 83f00772
+**What to verify:** an admin can mint an invite link for a space (optionally with a use limit and an expiry date), copy it, and the link works through the full accept flow: opening it shows the space with a Join button, and the member is added only when they click Join (sign up or log in first if needed), landing in the space with correct membership. An expiry date means the link works until the end of that day in the site's timezone; an unreadable or past date is refused, and the invite list shows the date in the site's format. A link past its limit or date is refused, and two people using the last use at the same moment cannot exceed the limit. The invite and join-request lists are paginated. A request the member withdrew leaves the list.
 
 ### C.admin.recount
 **Covers:** includes/class-recount.php, includes/class-recount-backfill.php, includes/admin/ajax/class-settings-handler.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** running the manual recount tool fixes any drift in denormalized counters (member_count, reply_count, vote_score); a deliberately corrupted counter is restored to the correct value.
 
 ### C.admin.akismet-staff-bypass
@@ -364,13 +364,13 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.notifications
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, includes/api/class-notifications-controller.php, templates/views/notifications.php
-**Verified:** d1392e03
-**What to verify:** every notification-triggering event (reply to subscribed thread, mention, flag resolution, badge award, admin announcement) produces a new notification for the correct recipient; the bell badge count updates; clicking through takes the user to the correct destination. Join requests and their answers, reactions and reviewed reports also produce notifications that read correctly. Unread count endpoint is accurate; mark-all-read zeroes it out. Names in notifications follow the Name display setting.
+**Verified:** 83f00772
+**What to verify:** every notification-triggering event (reply to subscribed thread, mention, flag resolution, badge award, admin announcement) produces a new notification for the correct recipient; the bell badge count updates; clicking through takes the user to the correct destination. Join requests and their answers, reactions and reviewed reports also produce notifications that read correctly. Withdrawing a join request removes the staff's "new join request" notices. Unread count endpoint is accurate; mark-all-read zeroes it out. Names in notifications follow the Name display setting.
 
 ### C.notifications.email
 **Covers:** includes/adapters/class-wp-mail-adapter.php, templates/emails/*.php, includes/notifications/class-notifier.php, includes/notifications/class-verification-reminder.php
-**Verified:** d1392e03
-**What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work.
+**Verified:** 83f00772
+**What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work. A member is emailed the answer to a join request (approved or declined). Mention emails use the owner's saved subject and body. The confirmation email's subject and intro follow Settings > Emails, with the link always added.
 
 ### C.search
 **Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/search/class-search-indexer.php, includes/api/class-search-controller.php
@@ -393,17 +393,17 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 Setup once: a **public** space with open joining, a **private** space with invite-only joining, and a plain subscriber-role test user who is a member of neither.
 
 ### C.gating.rule-never-locks-out
-**Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php
-**Verified:** d1392e03
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php
+**Verified:** 83f00772
 **What to verify:** note what the subscriber can do in the public space. Add any access rule to that space. Everything they could do before, they can still do.
-**Promise:** "A rule lets people in to this space. It never locks anyone out on its own - visibility and join policy do that."
+**Promise:** "A rule lets more people in to this space: anyone who matches it gets what it grants, without being added to the members list. Who else gets in is set by the space's visibility and join policy."
 **Why it matters:** owners reach for rules to restrict. They do not restrict, and an owner who believes otherwise has left a space open while thinking it is closed.
 
 ### C.gating.read-on-public
-**Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** d1392e03
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
+**Verified:** 83f00772
 **What to verify:** with a **Read** rule on the public open-join space, the subscriber can still post.
-**Promise:** "Read ... does not hold anyone back - on a public space that anyone may join, a signed-in member can still post."
+**Promise:** "Lets matching people in to read. It takes nothing away from people who already get in another way, such as members on the roster."
 
 ### C.gating.read-on-private
 **Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/permissions/class-content-gate.php
@@ -411,53 +411,53 @@ Setup once: a **public** space with open joining, a **private** space with invit
 **What to verify:** with a **Read** rule on the private space, the subscriber can read it and cannot post, reply or vote.
 
 ### C.gating.participate
-**Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** d1392e03
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
+**Verified:** 83f00772
 **What to verify:** with a **Participate** rule on the private space, the subscriber can read, post, reply, vote and report - all five - and can edit and delete their own posts (the Edit own posts and Delete own posts permissions come with Participate and Full).
 **Promise:** "Participate - Read, plus post, reply, vote and report."
 
 ### C.gating.full-is-not-moderation
-**Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** d1392e03
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
+**Verified:** 83f00772
 **What to verify:** with a **Full** rule on the private space, an ordinary subscriber gets exactly what Participate gives and cannot edit, delete, close or pin anyone else's topic.
 **Promise:** "For an ordinary member this behaves exactly like Participate."
 **Why it matters:** "Full" reads like "everything". It is not, and never has been.
 
 ### C.gating.no-rule-hands-out-moderation
-**Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/class-membership-roster-sync.php
-**Verified:** d1392e03
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/class-membership-roster-sync.php
+**Verified:** 83f00772
 **What to verify:** try every grant level, and set the rule's Space Role as high as the screen allows. A subscriber matched by that rule still cannot moderate, edit others' posts, delete others' posts, or pin. (A site moderator holding the Moderate capability does moderate in spaces they can read, but that comes from their WordPress role, never from a rule.)
 **Promise:** "A rule can never hand out moderation."
 **Why it matters:** **this is the 1.9.1 escalation.** Before the fix, a rule set to Read with an elevated space role made every matched person a space admin. If this step ever fails again, it is a security bug - file it immediately and say so in the title.
 
 ### C.gating.roster-role-is-a-per-person-decision
-**Covers:** includes/class-membership-roster-sync.php, includes/models/class-space-member.php, templates/views/space-members.php
-**Verified:** d1392e03
+**Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-space-member.php, templates/views/space-members.php
+**Verified:** 83f00772
 **What to verify:** after anyone is admitted by a rule - including via an LMS or membership plugin enrolment if one is installed - open the space **Members** tab. Nobody added by a rule is listed as Moderator or Admin.
 **Promise:** "To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule."
 
 ### C.gating.admission-without-a-roster-row
-**Covers:** includes/class-membership-roster-sync.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** d1392e03
+**Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
+**Verified:** 83f00772
 **What to verify:** a person matched by a rule can use the space **without** appearing on the Members tab, unless Sync Members was pressed.
-**Promise:** "'Sync Members' is only needed if you also want these people listed on the roster."
+**Promise:** "The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well."
 
 ### C.gating.access-ends-by-itself
-**Covers:** includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** d1392e03
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
+**Verified:** 83f00772
 **What to verify:** remove the rule (or let the membership lapse where a plugin provides one). Access closes on the next page load, with no admin action.
-**Promise:** "Access begins the moment a plan becomes active and ends when it lapses - there is nothing to sync and nothing to undo by hand."
+**Promise:** "Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand."
 
 ### C.gating.builder-explains-itself
 **Covers:** includes/admin/views/space-edit.php, includes/admin/views/spaces.php, includes/models/class-access-rule.php
-**Verified:** d1392e03
-**What to verify:** on the Access Rules tab, step through every entry in the Rule type dropdown. Each shows a second sentence under the live preview saying **who** the rule catches, and the value box carries an example for that type. **Everyone** and **Logged In** show no value box at all. A rule needs a value that can work: a trust level rule with no level (or outside 1-5), a role that does not exist, or an empty capability or membership value is refused with a message, so it can never admit every member.
+**Verified:** 83f00772
+**What to verify:** on the Access Rules tab, step through every entry in the Rule type dropdown. The tab intro and empty state say a rule only lets more people in; visibility and join policy decide who else gets in. Each type shows a second sentence under the live preview saying **who** the rule catches, and the value box carries an example for that type. **Everyone** and **Logged In** show no value box at all. A rule needs a value that can work: a trust level rule with no level (or outside 1-5), a role that does not exist, or an empty capability or membership value is refused with a message, so it can never admit every member.
 **Why it matters:** picking the wrong rule is silent - it saves, the space looks configured, and the mistake only surfaces when the wrong people are in the room.
 
 ### C.gating.surfaces-agree
 **Covers:** includes/class-visibility.php, includes/permissions/class-permission-engine.php, includes/search/class-fulltext-search.php, templates/views/home.php, templates/partials/sidebar.php
-**Verified:** d1392e03
-**What to verify:** for a person who is NOT admitted to a private space, confirm every surface agrees they cannot see its topics: the space page, its topics, site search, tag pages and tag counts, the community home feed, the sidebar, the sitemap and the live-updates feed. The one allowed difference is the optional locked preview card for logged-out visitors (Settings > General > Access Control, off by default), which shows the space name and how to request access but never its topics. A surface that shows content another surface refuses is a bug even when neither is obviously "wrong".
+**Verified:** 83f00772
+**What to verify:** for a person who is NOT admitted to a private space, confirm every surface agrees they cannot see its topics: the space page, its topics, site search, tag pages and tag counts, the community home feed, the sidebar, the sitemap and the live-updates feed. A topic URL inside a hidden space answers "Topic not found", the same as a missing topic. The one allowed difference is the optional locked preview card for logged-out visitors (Settings > General > Access Control, off by default), which shows the space name and how to request access but never its topics. A surface that shows content another surface refuses is a bug even when neither is obviously "wrong".
 **Why it matters:** admission is answered in more than one place in the code. Several past bugs were one surface disagreeing with another, and only a human comparing screens catches that.
 
 ---
@@ -522,32 +522,32 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.polls
 **Covers:** templates/partials/compose-fields.php, templates/views/single-post.php
-**Verified:** d1392e03
-**What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set.
+**Verified:** 83f00772
+**What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set. A composer poll with a question but fewer than two options blocks the post with "Question and at least 2 options required.". The Polls admin list shows topic titles.
 
 ### E.reactions
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, assets/js/view.js
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; the reactor's avatar appears in the hover-card listing reactors. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
 
 ### E.analytics
 **Covers:** includes/admin/views/dashboard.php
-**Verified:** d1392e03
-**What to verify:** an admin sees a dashboard with non-zero metrics on a site with demo data, can switch date range, and can export the underlying data as CSV. Widget values are internally consistent (total posts ≥ posts in last 30d, etc.).
+**Verified:** 83f00772
+**What to verify:** an admin sees a dashboard with non-zero metrics on a site with demo data, can switch date range, and can export the underlying data as CSV. Widget values are internally consistent (total topics ≥ topics in last 30d, etc.), and widget labels use the owner's topic label.
 
 ### E.custom-badges
 **Covers:** templates/views/user-profile.php, templates/partials/post-badges.php
-**Verified:** d1392e03
-**What to verify:** an admin can create a badge (name, icon, description, criteria), award it manually to a user, and that badge appears on the recipient's profile AND in the public badge list.
+**Verified:** 83f00772
+**What to verify:** an admin can create a badge (name, icon, description, criteria), award it manually to a user, and that badge appears on the recipient's profile AND in the public badge list. Badges are once-only: a member never holds a duplicate (existing duplicates are repaired), and "Earned by" counts members.
 
 ### E.white-label
 **Covers:** includes/admin/class-admin.php
-**Verified:** d1392e03
-**What to verify:** the White Label extension is BACKEND-ONLY by design (its own class docblock: "Backend-only; it does not touch the community frontend or emails"). It renames the Jetonomy presence in wp-admin only. Set `community_name`, `admin_label`, `admin_icon`, `footer_text`, then confirm each is reflected in wp-admin: the sidebar menu label, the plugin name on the Plugins page, and the admin footer (on Jetonomy screens the default footer reads "Thank you for building your community with Jetonomy.", which is the text White Label's brand substitution replaces). Confirm the public `/community/` render is UNCHANGED — there is no brand-color or frontend-logo field, and none is expected. (A frontend brand-color/logo capability would be a new paid feature to scope, not a bug in this extension.)
+**Verified:** 83f00772
+**What to verify:** the White Label extension is BACKEND-ONLY by design (its own class docblock: "Backend-only; it does not touch the community frontend or emails"). It renames the Jetonomy presence in wp-admin only. Set `community_name`, `admin_label`, `admin_icon`, `footer_text`, then confirm each is reflected in wp-admin: the brand name (`jetonomy_brand_name`) replaces "Jetonomy" in admin headings, banners and help text, the sidebar menu label, the plugin name on the Plugins page, and the admin footer (on Jetonomy screens the default footer reads "Thank you for building your community with Jetonomy.", which is the text White Label's brand substitution replaces). Confirm the public `/community/` render is UNCHANGED — there is no brand-color or frontend-logo field, and none is expected. (A frontend brand-color/logo capability would be a new paid feature to scope, not a bug in this extension.)
 
 ### E.advanced-moderation
 **Covers:** includes/moderation/class-moderation-service.php, includes/api/class-base-controller.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** an admin can create a moderation rule (pattern + action), posting content matching the rule triggers the action (hold / spam / auto-delete), and rule stats reflect hits over time.
 
 ### E.ai
@@ -557,13 +557,13 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.custom-fields
 **Covers:** assets/js/lib/custom-fields.js, templates/views/edit-profile.php, templates/views/user-profile.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** an admin can define a custom field (text / select / url / etc.), a user can set a value in their profile, and the value is publicly visible where the field is marked public. Creating a field via REST must not fatal when optional params (like `slug`) are omitted.
 
 ### E.email-digest
 **Covers:** includes/adapters/interface-email-adapter.php, includes/notifications/class-notifier.php
-**Verified:** d1392e03
-**What to verify:** users subscribed to the digest actually receive one at the configured cadence; a manual test-send from admin dispatches within 30s; the stats endpoint reports sends without error.
+**Verified:** 83f00772
+**What to verify:** users subscribed to the digest actually receive one at the configured cadence; a manual test-send from admin dispatches within 30s; the stats endpoint reports sends without error. When the digest's own sender is blank it uses the sender from Settings > Emails.
 
 ### E.reply-by-email
 **Covers:** templates/emails/reply-to-post.php, includes/models/class-reply.php
@@ -572,17 +572,17 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.seo-pro
 **Covers:** includes/seo/class-schema-markup.php, includes/class-template-loader.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** space-level SEO overrides (meta description, og:image) appear in the rendered HTML `<head>` on that space's pages. Defaults apply when overrides are absent.
 
 ### E.web-push
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** the browser push subscription flow completes end-to-end, a test push reaches the subscribed browser. VAPID keys and service worker endpoints respond correctly.
 
 ### E.webhooks
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-post.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** an admin can create a webhook bound to one or more events; triggering one of those events actually fires a request to the configured URL; the test-fire button delivers a payload the receiver can parse.
 
 ---
@@ -591,12 +591,12 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### F.chromium
 **Covers:** includes/class-router.php, includes/class-template-loader.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 Already covered by Sections A-E. Chromium is the default engine.
 
 ### F.firefox-desktop and F.safari-ios
 **Covers:** assets/js/composer.js, assets/js/lib/smart-dropdown.js, templates/views/user-profile.php
-**Verified:** d1392e03
+**Verified:** 83f00772
 Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `manual_required[]` with the critical flows a human must spot-check:
 - Composer time picker in Firefox (native select behavior)
 - Share dropdown on Safari iOS at 390px
@@ -606,13 +606,13 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 
 ### F.rtl
 **Covers:** assets/css/jetonomy.css, assets/css/jetonomy-tokens.css
-**Verified:** d1392e03
+**Verified:** 83f00772
 **What to verify:** on an RTL locale (e.g. `ar`), the primary templates render right-to-left without horizontal overflow, text flows correctly, icons mirror where appropriate and stay fixed where they should not (brand logos, directional glyphs).
 
 ### F.a11y
 **Covers:** templates/partials/header.php, templates/partials/composer.php, templates/partials/reply-card.php, assets/js/view.js
-**Verified:** d1392e03
-**What to verify:** the main interactive surfaces have a visible keyboard focus ring (not suppressed by theme), tab order is logical, main content is reachable within a reasonable number of tabs from the top of the page, and icon-only buttons have `aria-label`. Screen-reader critical labels are present on composers, voting controls, share controls, and moderation actions.
+**Verified:** 83f00772
+**What to verify:** the main interactive surfaces have a visible keyboard focus ring (not suppressed by theme), tab order is logical, main content is reachable within a reasonable number of tabs from the top of the page, and icon-only buttons have `aria-label`. Screen-reader critical labels are present on composers, voting controls, share controls, and moderation actions. The report dialog is a labelled radio group, focuses its first reason on open, and closes on Escape.
 
 ---
 
