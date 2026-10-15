@@ -60,7 +60,7 @@ class Categories_Handler {
 		);
 
 		if ( ! $id ) {
-			/* translators: %s: category label, lowercase (e.g. "category"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
@@ -69,7 +69,7 @@ class Categories_Handler {
 			array(
 				'id'       => $id,
 				'category' => $category,
-				/* translators: %s: category label (e.g. "Category"). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				'message'  => sprintf( __( '%s created.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
 			)
 		);
@@ -83,7 +83,7 @@ class Categories_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			/* translators: %s: category label, lowercase (e.g. "category"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
@@ -122,7 +122,7 @@ class Categories_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 		if ( ! $result ) {
-			/* translators: %s: category label, lowercase (e.g. "category"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
@@ -130,7 +130,7 @@ class Categories_Handler {
 		wp_send_json_success(
 			array(
 				'category' => $category,
-				/* translators: %s: category label (e.g. "Category"). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				'message'  => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
 			)
 		);
@@ -144,7 +144,7 @@ class Categories_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			/* translators: %s: category label, lowercase (e.g. "category"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
@@ -154,7 +154,7 @@ class Categories_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 		if ( ! $result ) {
-			/* translators: %s: category label, lowercase (e.g. "category"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Failed to delete %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 

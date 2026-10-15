@@ -526,11 +526,11 @@ class Reply extends Model {
 	public static function accept_as_answer( int $id, int $actor_id ) {
 		$reply = static::find( $id );
 		if ( ! $reply ) {
-			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular Reply label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
 		}
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
-			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
 		}
 
 		// A trashed or unpublished reply, or one inside such a topic, cannot
@@ -599,11 +599,11 @@ class Reply extends Model {
 	public static function unaccept_as_answer( int $id, int $actor_id ) {
 		$reply = static::find( $id );
 		if ( ! $reply ) {
-			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular Reply label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
 		}
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
-			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ), array( 'status' => 404 ) );
 		}
 
 		$author_id = (int) $reply->author_id;

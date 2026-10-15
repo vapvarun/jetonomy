@@ -118,8 +118,8 @@ if ( ! empty( $trash_count ) ) {
 				name="s"
 				id="jt-filter-search"
 				value="<?php echo esc_attr( $search_query ); ?>"
-				placeholder="<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
-				aria-label="<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_attr( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
+				placeholder="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
+				aria-label="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
 				class="regular-text"
 			>
 			<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
@@ -208,7 +208,7 @@ if ( ! empty( $trash_count ) ) {
 								type="checkbox"
 								class="jt-row-cb"
 								value="<?php echo absint( $r->id ); ?>"
-								aria-label="<?php /* translators: %s: reply label, lowercase (e.g. "reply"). */ echo esc_attr( sprintf( __( 'Select %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>"
+								aria-label="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( 'Select %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>"
 							>
 						</th>
 						<td class="column-primary">

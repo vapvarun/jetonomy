@@ -147,7 +147,7 @@ class Admin_Bar {
 
 		$admin_links = array(
 			'spaces'     => array(
-				'label' => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Manage %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+				'label' => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Manage %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				'url'   => admin_url( 'admin.php?page=jetonomy-spaces' ),
 			),
 			'new-space'  => array(
@@ -163,7 +163,7 @@ class Admin_Bar {
 				'url'   => admin_url( 'admin.php?page=jetonomy-moderation' ),
 			),
 			'content'    => array(
-				'label' => sprintf( /* translators: 1: the plural Topic label, 2: the plural Reply label, lowercase. */ __( '%1$s &amp; %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+				'label' => sprintf( /* translators: 1: the plural Topic label, 2: the plural Reply label, lowercase. Matches the admin bar entry. */ __( '%1$s &amp; %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 				'url'   => admin_url( 'admin.php?page=jetonomy-content' ),
 			),
 			'settings'   => array(

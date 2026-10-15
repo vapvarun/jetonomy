@@ -877,7 +877,7 @@ class BBPress_Importer extends Importer {
 			}
 
 			if ( ! $space_id ) {
-				$this->log_error( 'forum', $id, sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+				$this->log_error( 'forum', $id, sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
 				++$this->skipped;
 				continue;
 			}
@@ -996,7 +996,7 @@ class BBPress_Importer extends Importer {
 			);
 
 			if ( is_wp_error( $reply_id ) || ! $reply_id ) {
-				$this->log_error( 'reply', $reply->ID, is_wp_error( $reply_id ) ? $reply_id->get_error_message() : sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
+				$this->log_error( 'reply', $reply->ID, is_wp_error( $reply_id ) ? $reply_id->get_error_message() : sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 				++$this->skipped;
 				continue;
 			}

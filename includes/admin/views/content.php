@@ -62,8 +62,8 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		<div class="jt-content-toolbar">
 
 			<!-- Space filter -->
-			<select name="space_id" id="jt-filter-space" aria-label="<?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_attr( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?>">
-				<option value="0" <?php selected( $current_space, 0 ); ?>><?php /* translators: %s: space label, plural (e.g. "Spaces"). */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true ) ) ); ?></option>
+			<select name="space_id" id="jt-filter-space" aria-label="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?>">
+				<option value="0" <?php selected( $current_space, 0 ); ?>><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true ) ) ); ?></option>
 				<?php foreach ( $spaces as $space ) : ?>
 					<option value="<?php echo absint( $space->id ); ?>" <?php selected( $current_space, (int) $space->id ); ?>><?php echo esc_html( $space->title ); ?></option>
 				<?php endforeach; ?>

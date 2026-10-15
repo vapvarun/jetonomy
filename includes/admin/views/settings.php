@@ -462,6 +462,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<th><?php esc_html_e( 'Days Active', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></th>
 							<th><?php /* translators: %s: reply label, plural (e.g. "Replies"). */ echo esc_html( sprintf( __( '%s Received', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></th>
+
 								<th><?php esc_html_e( 'What this unlocks', 'jetonomy' ); ?></th>
 						</tr>
 					</thead>
@@ -480,6 +481,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<td data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><input type="number" aria-label="<?php echo esc_attr( sprintf( __( 'Reputation for %s', 'jetonomy' ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
 								<?php /* translators: %s: reply label, plural (e.g. "Replies"). */ ?>
 								<td data-colname="<?php echo esc_attr( sprintf( __( '%s Received', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?>"><input type="number" aria-label="<?php /* translators: 1: reply label, plural (e.g. "Replies"). 2: trust level name. */ echo esc_attr( sprintf( __( '%1$s Received for %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ), $level_names[ $level ] ) ); ?>" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
+
 									<td class="description" data-colname="<?php esc_attr_e( 'What this unlocks', 'jetonomy' ); ?>">
 										<?php
 										// Surface what each level unlocks (data from Trust_Levels::LEVELS,
@@ -491,9 +493,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											'delete_others_posts' => __( "Delete others' posts", 'jetonomy' ),
 											/* translators: %s: topic label, plural, lowercase (e.g. "topics"). */
 											'move_posts'   => sprintf( __( 'Move %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-											/* translators: %s: topic label, plural, lowercase (e.g. "topics"). */
+											/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 											'close_posts'  => sprintf( __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-											/* translators: %s: topic label, plural, lowercase (e.g. "topics"). */
+											/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 											'pin_posts'    => sprintf( __( 'Pin %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 										);
 										$jt_unlocks        = array();
@@ -957,6 +959,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'Email Digest', 'jetonomy' ); ?></h4>
 					<p><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Send daily or weekly email digests to re-engage %s who haven\'t visited recently.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
+
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>

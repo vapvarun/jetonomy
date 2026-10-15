@@ -1517,7 +1517,7 @@ class Abilities {
 	public function execute_get_space( $input ) {
 		$space = Space::find( (int) $input['space_id'] );
 		if ( ! $space ) {
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
@@ -1528,7 +1528,7 @@ class Abilities {
 		// split this whole round is about. Same error as the missing row, so an
 		// id probe cannot tell "no such space" from "not for you".
 		if ( ! $this->check_permission_or_public( 'read', (int) $space->id ) ) {
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
@@ -1549,7 +1549,7 @@ class Abilities {
 		$space    = Space::find( $space_id );
 
 		if ( ! $space ) {
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			return new WP_Error( 'jetonomy_not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 

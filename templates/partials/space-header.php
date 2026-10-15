@@ -139,7 +139,7 @@ $_jt_can_edit_space = is_user_logged_in()
 				<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-btn"
 					data-space-id="<?php echo absint( $space->id ); ?>"
 					data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
-					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+					<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 					<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 				</button>
 				<?php

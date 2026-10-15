@@ -165,7 +165,7 @@ if ( ! $cancel_url ) {
 		$notif_types   = array(
 			/* translators: 1: singular reply label; 2: singular topic label. */
 			'reply_to_post'       => sprintf( __( '%1$s to my %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-			/* translators: 1: singular reply label; 2: singular reply label, lower case. */
+			/* translators: 1: singular reply label; 2: singular topic label. */
 			'reply_to_reply'      => sprintf( __( '%1$s to my %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 			'mention'             => __( '@Mention', 'jetonomy' ),
 			/* translators: %s: singular topic label. */

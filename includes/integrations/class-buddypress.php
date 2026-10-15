@@ -887,7 +887,7 @@ class BuddyPress {
 			}
 			echo '</ul>';
 
-			echo '<p class="jt-bp-view-all"><a href="' . esc_url( $space_url ) . '">' . esc_html( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'View all %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . ' &rarr;</a></p>';
+			echo '<p class="jt-bp-view-all"><a href="' . esc_url( $space_url ) . '">' . esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'View all %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . ' &rarr;</a></p>';
 		}
 
 		echo '</div>';
@@ -1011,7 +1011,7 @@ class BuddyPress {
 			}
 			echo '</ul>';
 		} else {
-			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: plural topic label. */ __( 'No forum %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . '</p>';
+			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No forum %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) . '</p>';
 		}
 
 		$this->render_profile_link( $user_id );
@@ -1044,7 +1044,7 @@ class BuddyPress {
 			}
 			echo '</ul>';
 		} else {
-			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: the plural Reply label, lowercase. */ __( 'No forum %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ) . '</p>';
+			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No forum %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ) . '</p>';
 		}
 
 		$this->render_profile_link( $user_id );

@@ -1604,16 +1604,16 @@ class Notifier {
 		$logo_url = \Jetonomy\header_logo( $logo_url );
 
 		$type_labels = array(
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'reply_to_post'       => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'reply_to_reply'      => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 			'mention'             => __( 'Mention', 'jetonomy' ),
 			'vote_on_post'        => __( 'Vote', 'jetonomy' ),
 			'reaction'            => __( 'Reaction', 'jetonomy' ),
 			'accepted_answer'     => __( 'Answer Accepted', 'jetonomy' ),
 			'idea_status_changed' => __( 'Roadmap Update', 'jetonomy' ),
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'new_post_in_sub'     => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			'badge_earned'        => __( 'Achievement', 'jetonomy' ),
 			'moderation'          => __( 'Moderation', 'jetonomy' ),

@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 	<!-- Add New Category Form -->
 	<div class="jt-settings-card" id="jetonomy-add-category-form">
 		<div class="jt-settings-card__head">
-			<h2 class="jt-settings-card__title"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Add New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></h2>
+			<h2 class="jt-settings-card__title"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Add New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></h2>
 		</div>
 		<div class="jetonomy-form-grid">
 			<div class="jetonomy-form-field">
@@ -76,7 +76,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		</div>
 		<p>
-			<button type="button" class="button button-primary" id="jetonomy-save-category"><?php /* translators: %s: singular category label. */ echo esc_html( sprintf( __( 'Add %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></button>
+			<button type="button" class="button button-primary" id="jetonomy-save-category"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Add %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></button>
 			<span class="spinner"></span>
 		</p>
 	</div>
@@ -103,8 +103,8 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 
 			<p class="search-box">
-				<label class="screen-reader-text" for="cats-search"><?php /* translators: %s: category label, plural, lowercase (e.g. "categories"). */ echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?></label>
-				<input type="search" id="cats-search" name="s" value="<?php echo esc_attr( isset( $search ) ? $search : '' ); ?>" placeholder="<?php /* translators: %s: category label, plural, lowercase (e.g. "categories"). */ echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?>">
+				<label class="screen-reader-text" for="cats-search"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?></label>
+				<input type="search" id="cats-search" name="s" value="<?php echo esc_attr( isset( $search ) ? $search : '' ); ?>" placeholder="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?>">
 				<button type="submit" class="button"><?php esc_html_e( 'Search', 'jetonomy' ); ?></button>
 			</p>
 		</form>
@@ -162,7 +162,7 @@ defined( 'ABSPATH' ) || exit;
 					)
 					: array(
 						'icon'  => 'category',
-						/* translators: %s: the plural label of the item (the configured noun). */
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 						'title' => sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ),
 						/* translators: 1: plural category label; 2: plural space label (lowercase). */
 						'body'  => sprintf( __( '%1$s let you group related %2$s. Create your first one using the form above.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\space_label( true, true ) ),
@@ -320,6 +320,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<p class="jetonomy-modal__actions">
 				<button type="button" class="button button-primary" id="jetonomy-update-category"><?php /* translators: %s: the label of the item being saved (the configured noun). */ echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></button>
+
 				<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></button>
 				<span class="spinner"></span>
 			</p>

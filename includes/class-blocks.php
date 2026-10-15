@@ -379,7 +379,7 @@ class Blocks {
 		}
 		$atts .= ' sort="' . esc_attr( $attributes['sort'] ?? 'latest' ) . '"';
 
-		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, sprintf( /* translators: %s: plural topic label the site owner configured. */ __( 'Recent %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) : '';
+		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Recent %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ) : '';
 
 		return '<div class="wp-block-jetonomy-forum-feed jt-feed-block jt-app">'
 			. $header
@@ -709,7 +709,7 @@ class Blocks {
 				</a>
 				<?php if ( $can_create_space ) : ?>
 					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">
-						<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
+						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 						<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 					</a>
 				<?php endif; ?>

@@ -33,12 +33,12 @@ foreach ( (array) $jt_spaces as $jt_s ) {
 	<form method="get" class="jt-cmedia__filters">
 		<input type="hidden" name="page" value="jetonomy-community-media">
 
-		<label class="screen-reader-text" for="jt_member"><?php /* translators: %s: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></label>
+		<label class="screen-reader-text" for="jt_member"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></label>
 		<input type="search" id="jt_member" name="jt_member" value="<?php echo esc_attr( $jt_member ); ?>" placeholder="<?php /* translators: %s: member label (e.g. "Member"). */ echo esc_attr( sprintf( __( '%s username or email', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ) ) ); ?>">
 
-		<label class="screen-reader-text" for="jt_space"><?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?></label>
+		<label class="screen-reader-text" for="jt_space"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?></label>
 		<select id="jt_space" name="jt_space">
-			<option value="0"><?php /* translators: %s: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?></option>
+			<option value="0"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?></option>
 			<?php foreach ( $jt_space_names as $jt_sid => $jt_sname ) : ?>
 				<option value="<?php echo esc_attr( (string) $jt_sid ); ?>" <?php selected( $jt_space, $jt_sid ); ?>><?php echo esc_html( $jt_sname ); ?></option>
 			<?php endforeach; ?>

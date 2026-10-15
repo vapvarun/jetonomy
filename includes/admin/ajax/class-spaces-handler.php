@@ -110,14 +110,14 @@ class Spaces_Handler {
 			wp_send_json_error( $id->get_error_message() );
 		}
 		if ( ! $id ) {
-			/* translators: %s: space label, lowercase (e.g. "space"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		wp_send_json_success(
 			array(
 				'id'      => $id,
-				/* translators: %s: space label (e.g. "Space"). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				'message' => sprintf( __( '%s created.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
 			)
 		);
@@ -131,7 +131,7 @@ class Spaces_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			/* translators: %s: space label, lowercase (e.g. "space"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
@@ -245,13 +245,13 @@ class Spaces_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 		if ( ! $result ) {
-			/* translators: %s: space label, lowercase (e.g. "space"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		wp_send_json_success(
 			array(
-				/* translators: %s: space label (e.g. "Space"). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				'message' => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ),
 			)
 		);
@@ -304,13 +304,13 @@ class Spaces_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			/* translators: %s: space label, lowercase (e.g. "space"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) );
 		}
 
 		$space = Space::find( $id );
 		if ( ! $space ) {
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 

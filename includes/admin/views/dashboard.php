@@ -52,7 +52,7 @@ $stat_cards = array(
 		'icon'  => 'dashicons-format-chat',
 	),
 	'active_spaces' => array(
-		/* translators: %s: space label, plural (e.g. "Spaces"). */
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 		'label' => sprintf( __( 'Active %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true ) ),
 		'icon'  => 'dashicons-networking',
 	),
@@ -193,7 +193,7 @@ $stat_cards = array(
 								$space_row   = \Jetonomy\Models\Space::find( $object_id );
 								$object_html = $space_row
 									? esc_html( $space_row->title )
-									/* translators: 1: space label, lowercase (e.g. "space"). 2: space ID. */
+									/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
 									: esc_html( sprintf( __( '%1$s #%2$d', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), $object_id ) );
 							} elseif ( 'user' === $object_type ) {
 								$obj_user    = get_userdata( $object_id );
@@ -236,7 +236,7 @@ $stat_cards = array(
 				<div class="jetonomy-quick-actions">
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=new' ) ); ?>" class="button button-primary">
 						<span class="dashicons dashicons-plus-alt2"></span>
-						<?php /* translators: %s: space label (e.g. "Space"). */ echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?>
+						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?>
 					</a>
 					<a href="<?php echo esc_url( home_url( '/' . $base_slug . '/' ) ); ?>" class="button" target="_blank">
 						<span class="dashicons dashicons-external"></span>

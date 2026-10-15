@@ -261,7 +261,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		// post's title, prefixed so the row is still scannable.
 		if ( '' === $title ) {
 			$label = sprintf(
-				/* translators: %1$s: object type, %2$d: object id */
+				/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
 				__( '%1$s #%2$d', 'jetonomy' ),
 				Admin::object_type_label( $type ),
 				$id

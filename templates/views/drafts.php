@@ -65,7 +65,7 @@ $crumbs = array(
 					'message'     => __( 'No drafts yet.', 'jetonomy' ),
 					/* translators: %s: singular topic label. */
 					'description' => __( 'Start writing and choose "Save draft". It will wait for you here until you publish.', 'jetonomy' ),
-					/* translators: %s: singular topic label. */
+					/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 					'cta_label'   => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					'cta_url'     => $base . '/',
 				)

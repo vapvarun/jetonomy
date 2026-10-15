@@ -504,7 +504,7 @@ function compose_label( string $space_type ): string {
 			$label = __( 'New Status', 'jetonomy' );
 			break;
 		default:
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			$label = sprintf( __( 'New %s', 'jetonomy' ), jetonomy_label( 'topic' ) );
 			break;
 	}

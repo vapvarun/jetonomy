@@ -724,7 +724,7 @@ class Moderation_Service {
 		} else {
 			$row = Reply::find( $id );
 			if ( ! $row ) {
-				return new WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular Reply label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
+				return new WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
 			}
 			Reply::update( $id, array( 'status' => $new_status ) );
 		}

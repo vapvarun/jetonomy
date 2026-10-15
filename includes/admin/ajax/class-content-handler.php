@@ -147,7 +147,7 @@ class Content_Handler {
 
 		$id = absint( $_POST['reply_id'] ?? 0 );
 		if ( ! $id ) {
-			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 		}
 
@@ -179,7 +179,7 @@ class Content_Handler {
 		 * @param int $user_id  Editing user ID.
 		 */
 		do_action( 'jetonomy_reply_updated', $id, (int) ( $jt_reply ? ( Post::find( (int) $jt_reply->post_id )->space_id ?? 0 ) : 0 ), get_current_user_id() );
-		/* translators: %s: reply label (e.g. "Reply"). */
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 		wp_send_json_success( array( 'message' => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) ) );
 	}
 
@@ -192,7 +192,7 @@ class Content_Handler {
 		$id     = absint( $_POST['reply_id'] ?? 0 );
 		$status = sanitize_text_field( wp_unslash( $_POST['status'] ?? 'trash' ) );
 		if ( ! $id ) {
-			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 		}
 

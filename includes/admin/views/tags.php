@@ -145,7 +145,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 						<?php foreach ( $tags as $tag ) : ?>
 							<tr data-id="<?php echo absint( $tag->id ); ?>" data-post-count="<?php echo absint( $tag->post_count ?? 0 ); ?>" class="jetonomy-tag-row">
 								<th scope="row" class="check-column">
-									<?php /* translators: %s: tag name. */ ?>
+									<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 									<input type="checkbox" class="jetonomy-tag-cb" value="<?php echo absint( $tag->id ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Select %s', 'jetonomy' ), $tag->name ) ); ?>">
 								</th>
 								<td class="column-name column-primary">

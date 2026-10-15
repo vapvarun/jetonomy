@@ -60,7 +60,7 @@ class Setup_Handler {
 			)
 		);
 		if ( $cat_id <= 0 ) {
-			/* translators: %s: category label, lowercase (e.g. "category"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			wp_send_json_error( sprintf( __( 'Could not create the %s. Please try again.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 

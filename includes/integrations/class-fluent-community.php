@@ -903,7 +903,7 @@ class Fluent_Community {
 			<?php endif; ?>
 
 			<?php if ( ! empty( $replies ) ) : ?>
-				<h4><?php printf( /* translators: %s: the plural Reply label, lowercase. */ esc_html__( 'Recent %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></h4>
+				<h4><?php printf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ esc_html__( 'Recent %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></h4>
 				<ul>
 					<?php foreach ( $replies as $r ) : ?>
 						<?php

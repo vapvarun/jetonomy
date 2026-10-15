@@ -190,13 +190,13 @@ class Community_Notification_Contract {
 				'description' => sprintf( __( 'A new %1$s was posted in one of the %2$s you subscribed to.', 'jetonomy' ), $topic, $spaces ),
 			),
 			'reply_to_post'       => array(
-				/* translators: 1: plural reply label, 2: plural topic or reply label. */
+				/* translators: 1: reply label (e.g. "Reply"). 2: reply label, lowercase (e.g. "reply"). */
 				'label'       => ucfirst( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), $replies, $topics ) ),
 				/* translators: 1: singular reply label, 2: plural topic label. */
 				'description' => sprintf( __( 'Someone added a new %1$s to one of the %2$s you started.', 'jetonomy' ), $reply, $topics ),
 			),
 			'reply_to_reply'      => array(
-				/* translators: 1: plural reply label, 2: plural topic or reply label. */
+				/* translators: 1: reply label (e.g. "Reply"). 2: reply label, lowercase (e.g. "reply"). */
 				'label'       => ucfirst( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), $replies, $replies ) ),
 				/* translators: %s: singular reply label. */
 				'description' => sprintf( __( 'Someone responded to your %s.', 'jetonomy' ), $reply ),

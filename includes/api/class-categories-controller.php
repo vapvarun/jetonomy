@@ -153,7 +153,7 @@ class Categories_Controller extends Base_Controller {
 		if ( ! $id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',
-				sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
+				sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}
@@ -234,7 +234,7 @@ class Categories_Controller extends Base_Controller {
 		if ( ! $deleted ) {
 			return new WP_Error(
 				'jetonomy_delete_failed',
-				sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'Failed to delete %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
+				sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to delete %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}

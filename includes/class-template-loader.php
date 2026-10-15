@@ -394,7 +394,7 @@ class Template_Loader {
 					'uploadFailed'           => __( 'Upload failed.', 'jetonomy' ),
 					'networkError'           => __( 'Network error.', 'jetonomy' ),
 					'networkErrorRetry'      => __( 'Network error. Please try again.', 'jetonomy' ),
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+					/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 					'createSpaceFailed'      => esc_html( sprintf( __( 'Could not create the %s. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					'saveFailed'             => __( 'Could not save changes.', 'jetonomy' ),
 					'prefixLabel'            => __( 'Label', 'jetonomy' ),
@@ -1122,7 +1122,7 @@ class Template_Loader {
 						$parts['title'] = __( 'My Subscriptions', 'jetonomy' );
 						break;
 					case 'new-space':
-						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 						$parts['title'] = sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'edit-space':
@@ -1424,7 +1424,7 @@ class Template_Loader {
 						$noindex   = true; // Logged-in personal view.
 						break;
 					case 'new-space':
-						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 						$title = sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: 1: singular space label, 2: site title. */
 						$desc      = sprintf( __( 'Start a new community %1$s on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $site_name );
@@ -1810,7 +1810,7 @@ class Template_Loader {
 			'confirmMerge'          => sprintf( __( 'Merge this %1$s into the selected one? Its post, %2$s, votes and followers move there and this %1$s goes to the trash.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 			/* translators: %s: the plural topic label the site owner configured. */
 			'topicMerged'           => sprintf( __( '%s merged successfully.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
-			/* translators: %s: the plural topic label the site owner configured. */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'mergeFailed'           => sprintf( __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 			// Says what the action DOES, not just what it needs. Split is a
 			// MOVE: the reply is removed from this thread and becomes the
@@ -1876,7 +1876,7 @@ class Template_Loader {
 			// missing here, so they always rendered the English fallback even
 			// on a translated locale.
 			'voteFailed'            => __( 'Vote failed.', 'jetonomy' ),
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'chooseSpace'           => sprintf( __( 'Choose the %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'draftSaved'            => __( 'Draft saved. You can find it in your profile under Drafts.', 'jetonomy' ),
 			'saveDraft'             => __( 'Save Draft', 'jetonomy' ),
@@ -1899,7 +1899,7 @@ class Template_Loader {
 			'topicClosed'           => sprintf( __( '%s closed', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
 			/* translators: %s: the singular topic label the site owner configured. */
 			'topicReopened'         => sprintf( __( '%s reopened', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ),
-			/* translators: %s: the singular topic label the site owner configured. */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'failedClose'           => sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			// Pro Polls strings consumed via state.i18n in pro-view.js.
 			'failedSubmitVote'      => __( 'Failed to submit vote. Please try again.', 'jetonomy' ),

@@ -586,7 +586,7 @@ class WPForo_Importer extends Importer {
 				$this->remember( 'space', $sid, (int) $space_id );
 				++$this->imported;
 			} else {
-				$this->log_error( 'forum', $sid, sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+				$this->log_error( 'forum', $sid, sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
 				++$this->skipped;
 			}
 		}

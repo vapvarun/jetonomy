@@ -168,14 +168,14 @@ wp_head();
 		<div class="jt-setup-error" id="jt-error-2"></div>
 
 		<div class="jt-form-group">
-			<label for="jt-cat-name"><?php /* translators: %s: category label (e.g. "Category"). */ echo esc_html( sprintf( __( '%s Name', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></label>
+			<label for="jt-cat-name"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Name', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></label>
 			<input type="text" id="jt-cat-name" value="<?php esc_attr_e( 'General', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'General', 'jetonomy' ); ?>">
 			<?php /* translators: 1: category label, plural (e.g. "Categories"). 2: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 			<p class="jt-form-hint"><?php echo esc_html( sprintf( __( '%1$s group related %2$s together.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 		</div>
 
 		<div class="jt-form-group">
-			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+			<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 			<label for="jt-space-name"><?php echo esc_html( sprintf( __( '%s Name', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></label>
 			<input type="text" id="jt-space-name" value="<?php esc_attr_e( 'Community Discussion', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'Community Discussion', 'jetonomy' ); ?>">
 		</div>
@@ -197,7 +197,7 @@ wp_head();
 		<div class="jt-btn-row">
 			<button type="button" class="jt-btn jt-btn--secondary" id="jt-back-2"><?php esc_html_e( 'Back', 'jetonomy' ); ?></button>
 			<button type="button" class="jt-btn jt-btn--primary" id="jt-next-2">
-				<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
+				<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 				<?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 				<span class="jt-spinner"></span>
 			</button>

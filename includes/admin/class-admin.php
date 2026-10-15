@@ -1460,7 +1460,7 @@ class Admin {
 		if ( 'edit' === $action && $space_id > 0 ) {
 			$space = Space::find( $space_id );
 			if ( ! $space ) {
-				/* translators: %s: the singular label of the item (the configured noun). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
 			$categories = Category::list_tree( null, (int) ( $space->category_id ?? 0 ) );

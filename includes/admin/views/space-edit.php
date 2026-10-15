@@ -195,7 +195,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 	<?php elseif ( 'members' === $active_tab ) : ?>
 		<!-- Members Tab -->
 		<div class="jetonomy-tab-content">
-			<h2><?php /* translators: %s: member label (e.g. "Member"). */ echo esc_html( sprintf( __( 'Add %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ) ) ); ?></h2>
+			<h2><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Add %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ) ) ); ?></h2>
 			<div class="jetonomy-inline-form" id="jetonomy-add-member-form">
 				<div class="jetonomy-form-row">
 					<input type="text" id="member-search" class="regular-text" placeholder="<?php esc_attr_e( 'Search users by name or email...', 'jetonomy' ); ?>">
@@ -272,7 +272,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					'empty'     => array(
 						'variant' => 'compact',
 						'icon'    => 'groups',
-						/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 						'title'   => sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 						/* translators: 1: member label, plural, lowercase (e.g. "members"). 2: the singular space label the site owner configured (e.g. space, group). */
 						'body'    => sprintf( __( 'Invite %1$s or open this %2$s to the wider community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\space_label( false, true ) ),

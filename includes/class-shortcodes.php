@@ -234,7 +234,7 @@ class Shortcodes {
 		$posts = Models\Post::list_recent_visible( $limit, $space_id, (string) $atts['sort'] );
 
 		if ( empty( $posts ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), jetonomy_label( 'topic', true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
@@ -364,7 +364,7 @@ class Shortcodes {
 		$spaces = Models\Space::list_public_by_post_count( $limit, $category_id );
 
 		if ( empty( $spaces ) ) {
-			/* translators: %s: plural space label. */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</div>';
 		}
 
@@ -415,7 +415,7 @@ class Shortcodes {
 		);
 
 		if ( empty( $leaders ) ) {
-			/* translators: %s: plural member label. */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
 		}
 
@@ -545,7 +545,7 @@ class Shortcodes {
 		$members = Models\SpaceMember::list_top_by_reputation( $space_id, $limit );
 
 		if ( empty( $members ) ) {
-			/* translators: %s: plural member label. */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
 		}
 
@@ -649,7 +649,7 @@ class Shortcodes {
 					'i18n'          => array_merge(
 						Template_Loader::app_i18n(),
 						array(
-							/* translators: %s: singular space label. */
+							/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 							'chooseSpace'   => sprintf( __( 'Choose the %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							'titleRequired' => __( 'Title is required.', 'jetonomy' ),
 						)

@@ -347,7 +347,7 @@ $crumbs = array(
 						array(
 							'message' => $is_own
 								? sprintf( /* translators: %s: plural reply label. */ __( 'You have not replied to anything yet. Jump into a discussion and your %s will show here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
-								: sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+								: sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 							'variant' => 'compact',
 						)
 					);
@@ -611,7 +611,7 @@ $crumbs = array(
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						array(
-							'message' => sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+							'message' => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 							'variant' => 'compact',
 						)
 					);

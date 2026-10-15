@@ -17,7 +17,7 @@ if ( ! $category ) {
 		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
+			'message'   => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
 			'tone'      => 'warn',
 		)
 	);
@@ -98,7 +98,7 @@ $jt_children = \Jetonomy\Models\Category::list_children( (int) $category->id );
 					array(
 						'icon'      => 'empty-search',
 						'icon_size' => 48,
-						/* translators: 1: plural space label (e.g. spaces, groups); 2: singular category label. */
+						/* translators: 1: plural space label; 2: singular category label. */
 						'message'   => sprintf( __( 'No %1$s in this %2$s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
 					)
 				);

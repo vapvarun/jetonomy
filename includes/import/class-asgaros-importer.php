@@ -292,7 +292,7 @@ class Asgaros_Importer extends Importer {
 				$this->remember( 'space', (int) $forum->id, (int) $space_id );
 				++$this->imported;
 			} else {
-				$this->log_error( 'forum', $forum->id, sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+				$this->log_error( 'forum', $forum->id, sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
 				++$this->skipped;
 			}
 		}
@@ -749,7 +749,7 @@ class Asgaros_Importer extends Importer {
 
 				++$this->imported;
 			} else {
-				$this->log_error( 'reply', $asgaros_post->id, sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
+				$this->log_error( 'reply', $asgaros_post->id, sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 				++$this->skipped;
 			}
 

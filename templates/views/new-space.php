@@ -29,7 +29,7 @@ $categories = \Jetonomy\Models\Category::list_tree();
 $base   = \Jetonomy\base_url();
 $crumbs = array(
 	array(
-		/* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 		'label' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 		'url'   => '',
 	),
@@ -41,7 +41,7 @@ $crumbs = array(
 	<main>
 		<?php \Jetonomy\Template_Loader::breadcrumb_in_main(); ?>
 		<h1 class="jt-page-title jt-mb-20">
-			<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
+			<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 			<?php echo esc_html( sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 		</h1>
 
@@ -169,7 +169,7 @@ $crumbs = array(
 
 				<div class="jt-form-actions">
 					<button type="submit" class="jt-btn jt-btn-fill">
-						<?php /* translators: %s: the space label the site owner configured, singular or plural (e.g. space, spaces, group, groups). */ ?>
+						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 						<?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 					</button>
 					<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( $base . '/' ); ?>">

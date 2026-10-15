@@ -16,7 +16,7 @@ if ( ! $space ) {
 		array(
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			/* translators: %s: the singular label of the item (the configured noun). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		)
@@ -56,7 +56,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts'
 				'icon_size' => 48,
 				/* translators: %s: space title */
 				'message'   => sprintf( __( 'Join %s to start a discussion.', 'jetonomy' ), $space->title ),
-				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				'cta_label' => sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ),
 				'cta_url'   => $space_url,
 				'tone'      => 'info',

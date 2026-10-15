@@ -132,9 +132,9 @@ class Import_Handler {
 			'forums'   => __( 'Importing forums...', 'jetonomy' ),
 			/* translators: 1: member label, plural, lowercase (e.g. "members"). 2: space label, plural, lowercase (e.g. "spaces"). */
 			'members'  => sprintf( __( 'Adding %1$s to private and group %2$s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
-			/* translators: %s: topic label, plural, lowercase (e.g. "topics"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'topics'   => sprintf( __( 'Importing %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-			/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			'replies'  => sprintf( __( 'Importing %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 			'profiles' => __( 'Creating user profiles...', 'jetonomy' ),
 			'recount'  => __( 'Recounting statistics...', 'jetonomy' ),

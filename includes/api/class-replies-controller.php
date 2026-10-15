@@ -339,7 +339,7 @@ class Replies_Controller extends Base_Controller {
 		if ( ! $reply_id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',
-				sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
+				sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}

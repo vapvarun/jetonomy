@@ -684,7 +684,7 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 		echo '</div>';
 		if ( '' !== $view_all_url && $total > count( $spaces ) ) {
 			echo '<p class="jt-space-grid-more"><a class="jt-btn jt-btn-sm jt-btn-ghost" href="' . esc_url( $view_all_url ) . '">';
-			/* translators: %s: count with the plural space label, e.g. "14 spaces". */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			echo esc_html( sprintf( __( 'View all %s', 'jetonomy' ), \Jetonomy\count_label( $total, 'space' ) ) );
 			echo '</a></p>';
 		}

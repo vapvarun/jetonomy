@@ -266,7 +266,7 @@ class SpaceMember extends Model {
 		if ( ! $space ) {
 			return new \WP_Error(
 				'jetonomy_not_found',
-				/* translators: %s: the singular label of the item (the configured noun). */
+				/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 				array( 'status' => 404 )
 			);

@@ -128,7 +128,7 @@ $jt_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space->id .
 				data-action-name="delete"
 				data-rest-method="DELETE"
 				data-rest-path="<?php echo esc_attr( ( $jt_is_reply ? '/replies/' : '/posts/' ) . absint( $item->id ) . '?force=true' ); ?>"
-				data-confirm="<?php echo esc_attr( $jt_is_reply ? sprintf( /* translators: %s: the singular label of the item (the configured noun). */ __( 'Delete this %s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) : sprintf( /* translators: 1: singular topic label; 2: plural reply label. */ __( 'Delete this %1$s and all its %2$s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
+				data-confirm="<?php echo esc_attr( $jt_is_reply ? sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Delete this %s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) : sprintf( /* translators: 1: singular topic label; 2: plural reply label. */ __( 'Delete this %1$s and all its %2$s permanently? This cannot be undone.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>">
 				<?php jetonomy_echo_icon( 'trash', 14 ); ?>
 				<?php esc_html_e( 'Delete permanently', 'jetonomy' ); ?>
 			</button>

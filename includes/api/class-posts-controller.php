@@ -1228,7 +1228,7 @@ class Posts_Controller extends Base_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'jetonomy_merge_failed',
-				sprintf( /* translators: %s: the plural Topic label, lowercase. */ __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
+				sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				array( 'status' => 500 )
 			);
 		}

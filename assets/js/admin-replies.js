@@ -23,7 +23,7 @@
 		i18n: {
 			confirmTrash:      wp.i18n.__( 'Move this to trash?', 'jetonomy' ),
 			confirmSpam:       wp.i18n.__( 'Mark this as spam?', 'jetonomy' ),
-			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 			confirmDelete:     wp.i18n.sprintf( wp.i18n.__( 'Delete this %s permanently? This cannot be undone.', 'jetonomy' ), REPLY ),
 			/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
 			confirmBulkDelete: wp.i18n.sprintf( wp.i18n.__( 'Delete the selected %s permanently? This cannot be undone.', 'jetonomy' ), REPLIES ),

@@ -319,7 +319,7 @@ class Space extends Model {
 	public static function hand_over( int $space_id, int $to_user_id, bool $archive = false, bool $demote_previous = false ) {
 		$space = $space_id > 0 ? self::find( $space_id ) : null;
 		if ( ! $space ) {
-			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 
 		$from_user_id = (int) $space->author_id;
@@ -378,7 +378,7 @@ class Space extends Model {
 	public static function archive_and_hand_over( int $space_id ) {
 		$space = self::find( $space_id );
 		if ( ! $space ) {
-			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 		if ( 'archived' === ( $space->status ?? '' ) ) {
 			return new \WP_Error( 'jetonomy_space_archived', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is already archived.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 409 ) );

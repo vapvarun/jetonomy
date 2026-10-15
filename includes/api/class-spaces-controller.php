@@ -326,7 +326,7 @@ class Spaces_Controller extends Base_Controller {
 	public function list_access_rules( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$space_id = (int) $request->get_param( 'id' );
 		if ( ! Space::find( $space_id ) ) {
-			return new WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
+			return new WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 
 		return new WP_REST_Response( array( 'data' => AccessRule::list_for_space( $space_id ) ), 200 );
@@ -345,7 +345,7 @@ class Spaces_Controller extends Base_Controller {
 	public function create_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$space_id = (int) $request->get_param( 'id' );
 		if ( ! Space::find( $space_id ) ) {
-			return new WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
+			return new WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 
 		$rule_type  = (string) $request->get_param( 'rule_type' );
@@ -373,7 +373,7 @@ class Spaces_Controller extends Base_Controller {
 				'data'         => AccessRule::find( (int) $id ),
 				'made_private' => $made_private,
 				'message'      => $made_private
-					? sprintf( /* translators: 1: the singular Space label, lowercase. */ __( 'Access rule added. This %1$s was switched to Private so the rule can restrict access. A rule cannot gate a public %1$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+					? sprintf( /* translators: %s: space label, lowercase (e.g. "space"). */ __( 'Access rule added. This %1$s was switched to Private so the rule can restrict access. A rule cannot gate a public %1$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
 					: __( 'Access rule added.', 'jetonomy' ),
 			),
 			201
@@ -664,7 +664,7 @@ class Spaces_Controller extends Base_Controller {
 		if ( ! $id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',
-				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1159,7 +1159,7 @@ class Spaces_Controller extends Base_Controller {
 			$items[] = array(
 				'id'           => (int) $row->id,
 				'user_id'      => $uid,
-				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : sprintf( /* translators: %s: the singular Member label, lowercase. */ __( 'Unknown %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
+				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Unknown %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 48 ),
 				'profile_url'  => \Jetonomy\get_profile_url( $uid ),
 				'message'      => (string) ( $row->message ?? '' ),
