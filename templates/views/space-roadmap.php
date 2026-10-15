@@ -92,7 +92,7 @@ foreach ( array_keys( $columns ) as $jt_col_status ) {
 	$columns[ $jt_col_status ]['total'] = $jt_status_counts[ $jt_col_status ] ?? count( $columns[ $jt_col_status ]['posts'] );
 }
 
-$category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$category = $space->category_id ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 
 $crumbs = array();
 if ( $category ) {

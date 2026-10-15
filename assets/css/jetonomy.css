@@ -2011,6 +2011,12 @@
 
   /* ── Time stat on post rows ── */
   .jt-row-time { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); white-space: nowrap; }
+  /* In the narrow last column a longer phrase ("saved 2 minutes ago", or any
+     translation) wraps instead of being clipped by the card. */
+  .jt-row-stat .jt-row-time { white-space: normal; text-wrap: balance; }
+  /* A state shown in a button's place (Invite Only, Awaiting Approval): not clickable. */
+  .jt-app .jt-btn--status { cursor: default; opacity: 0.7; text-align: center; }
+  .jt-app .jt-invite-landing { text-align: center; padding: 48px 0; }
 
   /* ── Category page header ── */
   .jt-cat-page-row { display: flex; align-items: center; gap: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
@@ -2965,6 +2971,9 @@
 }
 .jt-modal-msg { font-size: 0.9375rem; line-height: 1.5; margin: 0 0 16px; color: var(--jt-text); }
 .jt-modal-input { width: 100%; margin-bottom: 16px; resize: vertical; }
+.jt-modal-hint { margin: -8px 0 16px; font-size: 0.875rem; color: var(--jt-danger-strong); }
+.jt-modal-hint:empty { display: none; }
+.jt-modal-actions .jt-btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 /* The confirm/alert/prompt modal is appended to <body>, OUTSIDE .jt-app, so the
    `.jt-app .jt-btn` rules never reach its buttons - they'd render as bare native
@@ -3709,10 +3718,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
     min-inline-size: var(--jt-tap);
     justify-content: center;
   }
-  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-login-prompt a, .jt-notif-item__select) {
+  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-notif-item__select) {
     position: relative;
   }
-  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-login-prompt a, .jt-notif-item__select)::after {
+  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-notif-item__select)::after {
     content: "";
     position: absolute;
     inset-block: min(0px, calc((100% - var(--jt-tap)) / 2));

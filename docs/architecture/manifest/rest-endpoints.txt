@@ -21,7 +21,7 @@
 [x] DELETE /spaces/{id}/members/{user_id} | class-spaces-controller.php:103 | status:documented
 [x] PATCH  /spaces/{id}/members/{user_id} | class-spaces-controller.php:103 | status:documented
 [x] POST   /spaces/{id}/invite | class-spaces-controller.php:86 | status:documented
-[x] GET    /invite/{token} | class-spaces-controller.php:96 | status:documented
+[x] POST   /invite/{token} | class-spaces-controller.php:96 | status:documented
 
 ## Posts (7)
 [x] GET    /spaces/{space_id}/posts | class-posts-controller.php:27 | status:documented

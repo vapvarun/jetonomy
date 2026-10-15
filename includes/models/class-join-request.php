@@ -55,29 +55,69 @@ class JoinRequest extends Model {
 	}
 
 	/**
-	 * List all pending requests for a space.
+	 * One page of a space's pending requests, newest first (uses the
+	 * space_status_created index).
 	 *
-	 * @param int $space_id
-	 * @return array
+	 * @param int $space_id Space ID.
+	 * @param int $limit    Page size.
+	 * @param int $offset   Offset.
+	 * @return object[]
 	 */
-	public static function list_pending_for_space( int $space_id ): array {
+	public static function list_pending_for_space( int $space_id, int $limit = 100, int $offset = 0 ): array {
 		return self::db()->get_results(
 			self::db()->prepare(
-				'SELECT * FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending' ORDER BY created_at DESC",
-				$space_id
+				'SELECT * FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending' ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				$space_id,
+				max( 1, $limit ),
+				max( 0, $offset )
 			)
 		) ?: array();
 	}
 
 	/**
-	 * Approve a join request.
+	 * How many requests are pending on a space.
+	 */
+	public static function count_pending_for_space( int $space_id ): int {
+		return (int) self::db()->get_var(
+			self::db()->prepare( 'SELECT COUNT(*) FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending'", $space_id )
+		);
+	}
+
+	/**
+	 * Approve a pending join request: admit the requester, then settle it.
+	 *
+	 * Admission comes first. If a join filter vetoes it, the request stays
+	 * pending and nobody is told "approved" for a space they are not in.
 	 *
 	 * @param int $id          Request row ID.
 	 * @param int $reviewed_by User ID of the reviewer.
-	 * @return bool
+	 * @return true|\WP_Error WP_Error when the request is gone or already
+	 *                        decided (409) or the admission was refused.
 	 */
-	public static function approve( int $id, int $reviewed_by ): bool {
-		return self::settle( $id, 'approved', $reviewed_by );
+	public static function approve( int $id, int $reviewed_by ): bool|\WP_Error {
+		$request = self::find( $id );
+		if ( ! $request || 'pending' !== (string) $request->status ) {
+			return self::already_handled();
+		}
+
+		// Banned from the space after asking: approving must not let them in.
+		if ( Restriction::is_space_banned( (int) $request->user_id, (int) $request->space_id ) ) {
+			return new \WP_Error( 'jetonomy_space_banned', sprintf( /* translators: 1: singular member label, lowercase; 2: singular space label, lowercase. */ __( 'This %1$s is banned from this %2$s. Deny the request or lift the ban first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ), array( 'status' => 403 ) );
+		}
+
+		$added = SpaceMember::add( (int) $request->space_id, (int) $request->user_id, 'member' );
+		if ( is_wp_error( $added ) ) {
+			return $added;
+		}
+
+		return self::settle( $id, 'approved', $reviewed_by ) ? true : self::already_handled();
+	}
+
+	/**
+	 * The answer when a request was decided by someone else first.
+	 */
+	private static function already_handled(): \WP_Error {
+		return new \WP_Error( 'jetonomy_join_request_processed', __( 'This request has already been handled.', 'jetonomy' ), array( 'status' => 409 ) );
 	}
 
 	/**
@@ -111,54 +151,31 @@ class JoinRequest extends Model {
 	 * @return int Number of requests settled.
 	 */
 	public static function resolve_pending_for_space( int $space_id, bool $admit, int $reviewed_by ): int {
-		$user_ids = array_map(
-			'intval',
-			self::db()->get_col(
-				self::db()->prepare(
-					'SELECT user_id FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending'",
-					$space_id
-				)
+		$rows = self::db()->get_results(
+			self::db()->prepare(
+				'SELECT id, user_id FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending'",
+				$space_id
 			)
-		);
-		if ( empty( $user_ids ) ) {
-			return 0;
-		}
+		) ?: array();
 
-		$outcome = array(
-			'approved' => array(),
-			'denied'   => array(),
-		);
-		foreach ( $user_ids as $user_id ) {
+		$settled = 0;
+		foreach ( $rows as $row ) {
 			// ponytail: one roster write + one notification per requester - the
 			// same per-person cost as approving them one by one, paid once on a
 			// policy save. Defer to a background job if queues reach thousands.
-			$admitted = $admit && ! is_wp_error( SpaceMember::add( $space_id, $user_id, 'member' ) );
+			$user_id = (int) $row->user_id;
+			// Someone already in the space (granted a role meanwhile) keeps it:
+			// add() would lift a viewer to member.
+			// A member banned from the space meanwhile is denied, not admitted.
+			$admitted = $admit && ! Restriction::is_space_banned( $user_id, $space_id )
+				&& ( null !== SpaceMember::get_role( $space_id, $user_id )
+					|| ! is_wp_error( SpaceMember::add( $space_id, $user_id, 'member' ) ) );
 
-			$outcome[ $admitted ? 'approved' : 'denied' ][] = $user_id;
+			// settle() moves only a still-pending row and fires once for it.
+			$settled += (int) self::settle( (int) $row->id, $admitted ? 'approved' : 'denied', $reviewed_by );
 		}
 
-		foreach ( $outcome as $status => $ids ) {
-			if ( empty( $ids ) ) {
-				continue;
-			}
-			self::clear_superseded( $space_id, $status, $ids, 0 );
-			$in = implode( ',', $ids ); // intval()'d above.
-			self::db()->query(
-				self::db()->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in is a list of ints.
-					'UPDATE ' . self::table() . " SET status = %s, reviewed_by = %d, reviewed_at = %s WHERE space_id = %d AND status = 'pending' AND user_id IN ({$in})",
-					$status,
-					$reviewed_by,
-					now(),
-					$space_id
-				)
-			);
-			foreach ( $ids as $user_id ) {
-				self::fire( $status, $space_id, $user_id, $reviewed_by );
-			}
-		}
-
-		return count( $user_ids );
+		return $settled;
 	}
 
 	/**
@@ -171,24 +188,28 @@ class JoinRequest extends Model {
 	 */
 	private static function settle( int $id, string $status, int $reviewed_by ): bool {
 		$request = self::find( $id );
-		if ( ! $request ) {
+		if ( ! $request || 'pending' !== (string) $request->status ) {
 			return false;
 		}
 
 		self::clear_superseded( (int) $request->space_id, $status, array( (int) $request->user_id ), $id );
 
-		$ok = self::update(
-			$id,
-			array(
-				'status'      => $status,
-				'reviewed_by' => $reviewed_by,
-				'reviewed_at' => now(),
+		// Only a still-pending row moves, and only the call that moved it
+		// fires the hook: a concurrent approve and deny cannot both notify.
+		$changed = self::db()->query(
+			self::db()->prepare(
+				'UPDATE ' . self::table() . " SET status = %s, reviewed_by = %d, reviewed_at = %s WHERE id = %d AND status = 'pending'",
+				$status,
+				$reviewed_by,
+				now(),
+				$id
 			)
 		);
-		if ( $ok ) {
-			self::fire( $status, (int) $request->space_id, (int) $request->user_id, $reviewed_by );
+		if ( 1 !== (int) $changed ) {
+			return false;
 		}
-		return $ok;
+		self::fire( $status, (int) $request->space_id, (int) $request->user_id, $reviewed_by );
+		return true;
 	}
 
 	/**

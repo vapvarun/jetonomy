@@ -496,6 +496,10 @@ class Spaces_Handler {
 		if ( ! in_array( $rule_type, $valid_types, true ) ) {
 			wp_send_json_error( __( 'Invalid rule type.', 'jetonomy' ) );
 		}
+		$invalid = AccessRule::value_error( $rule_type, $rule_value );
+		if ( $invalid ) {
+			wp_send_json_error( $invalid->get_error_message() );
+		}
 
 		if ( ! in_array( $grants, array( 'read', 'participate', 'full' ), true ) ) {
 			$grants = 'read';
@@ -662,21 +666,15 @@ class Spaces_Handler {
 		}
 
 		$request_id = absint( $_POST['id'] ?? 0 );
-		$space_id   = absint( $_POST['space_id'] ?? 0 );
-
-		if ( ! $request_id || ! $space_id ) {
+		if ( ! $request_id ) {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
 		}
 
-		$request = JoinRequest::find( $request_id );
-		if ( ! $request || 'pending' !== $request->status ) {
-			wp_send_json_error( __( 'Join request not found or already processed.', 'jetonomy' ) );
-		}
-
-		JoinRequest::approve( $request_id, get_current_user_id() );
-		$add_result = SpaceMember::add( $space_id, (int) $request->user_id, 'member' );
-		if ( is_wp_error( $add_result ) ) {
-			wp_send_json_error( $add_result->get_error_message() );
+		// The request's own space decides where the member is added; a posted
+		// space_id is not trusted.
+		$approved = JoinRequest::approve( $request_id, get_current_user_id() );
+		if ( is_wp_error( $approved ) ) {
+			wp_send_json_error( $approved->get_error_message() );
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Join request approved.', 'jetonomy' ) ) );
@@ -702,7 +700,9 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Join request not found or already processed.', 'jetonomy' ) );
 		}
 
-		JoinRequest::deny( $request_id, get_current_user_id() );
+		if ( ! JoinRequest::deny( $request_id, get_current_user_id() ) ) {
+			wp_send_json_error( __( 'This request has already been handled.', 'jetonomy' ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Join request denied.', 'jetonomy' ) ) );
 	}
@@ -723,19 +723,26 @@ class Spaces_Handler {
 		}
 
 		$max_uses   = absint( $_POST['max_uses'] ?? 0 );
-		$expires_at = sanitize_text_field( wp_unslash( $_POST['expires_at'] ?? '' ) );
+		$expires_at = InviteLink::expiry_utc( sanitize_text_field( wp_unslash( $_POST['expires_at'] ?? '' ) ) );
+		if ( is_wp_error( $expires_at ) ) {
+			wp_send_json_error( $expires_at->get_error_message() );
+		}
 
-		$token  = InviteLink::generate( $space_id, get_current_user_id(), $max_uses, $expires_at ?: null );
-		$invite = InviteLink::find_by_token( $token );
+		$token  = InviteLink::generate( $space_id, get_current_user_id(), $max_uses, $expires_at );
+		$invite = '' !== $token ? InviteLink::find_by_token( $token ) : null;
+		if ( ! $invite ) {
+			wp_send_json_error( __( 'The invite link could not be created. Please try again.', 'jetonomy' ) );
+		}
 
 		wp_send_json_success(
 			array(
-				'id'         => $invite ? (int) $invite->id : 0,
-				'token'      => $token,
-				'invite_url' => $this->invite_url( $token ),
-				'max_uses'   => $max_uses,
-				'expires_at' => $expires_at ?: null,
-				'message'    => __( 'Invite link generated.', 'jetonomy' ),
+				'id'            => (int) $invite->id,
+				'token'         => $token,
+				'invite_url'    => $this->invite_url( $token ),
+				'max_uses'      => $max_uses,
+				'expires_at'    => $invite->expires_at,
+				'expires_label' => InviteLink::expiry_label( $invite ),
+				'message'       => __( 'Invite link generated.', 'jetonomy' ),
 			)
 		);
 	}
@@ -758,12 +765,13 @@ class Spaces_Handler {
 		$invites = array();
 		foreach ( InviteLink::list_by_space( $space_id ) as $invite ) {
 			$invites[] = array(
-				'id'         => (int) $invite->id,
-				'invite_url' => $this->invite_url( (string) $invite->token ),
-				'max_uses'   => (int) $invite->max_uses,
-				'used_count' => (int) $invite->use_count,
-				'expires_at' => $invite->expires_at,
-				'is_valid'   => InviteLink::is_valid( $invite ),
+				'id'            => (int) $invite->id,
+				'invite_url'    => $this->invite_url( (string) $invite->token ),
+				'max_uses'      => (int) $invite->max_uses,
+				'used_count'    => (int) $invite->use_count,
+				'expires_at'    => $invite->expires_at,
+				'expires_label' => InviteLink::expiry_label( $invite ),
+				'is_valid'      => InviteLink::is_valid( $invite ),
 			);
 		}
 

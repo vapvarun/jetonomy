@@ -8,6 +8,8 @@
  * @var object[] $categories
  * @var array<int,object{user_id:int,role:string,space_role?:string,joined_at?:string,display_name?:string}> $members
  * @var object[] $access_rules
+ * @var object[] $join_requests First page of pending join requests.
+ * @var int      $join_total    Every pending join request on the space.
  *
  * @package Jetonomy
  */
@@ -40,7 +42,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			<a href="<?php echo esc_url( $edit_url . '&tab=join_requests' ); ?>" class="nav-tab <?php echo esc_attr( 'join_requests' === $active_tab ? 'nav-tab-active' : '' ); ?>">
 				<?php esc_html_e( 'Join Requests', 'jetonomy' ); ?>
 				<?php if ( ! empty( $join_requests ) ) : ?>
-					<span class="count">(<?php echo (int) count( $join_requests ); ?>)</span>
+					<span class="count">(<?php echo (int) $join_total; ?>)</span>
 				<?php endif; ?>
 			</a>
 		<?php endif; ?>
@@ -752,7 +754,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<!-- Join Requests Tab -->
 		<div class="jetonomy-tab-content">
 			<?php /* translators: %d: number of pending join requests */ ?>
-		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), (int) count( $join_requests ) ); ?></h2>
+		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), (int) $join_total ); ?></h2>
 			<?php
 			// Same filter as the members table: drop requests whose WP account
 			// has since gone, and let the cell renderer re-read from WP's cache.

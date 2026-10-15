@@ -339,13 +339,16 @@ class Space extends Model {
 			$data['status'] = 'archived';
 		}
 		self::update( $space_id, $data );
-		if ( $archive ) {
-			self::update( $space_id, array( 'settings' => wp_json_encode( array_merge( self::get_settings( $space_id ), array( self::HANDOVER_ARCHIVE => 1 ) ) ) ) );
-		}
 
 		$after = self::find( $space_id );
-		if ( ! $after || (int) $after->author_id !== $to_user_id ) {
+		if ( ! $after || (int) $after->author_id !== $to_user_id || ( $archive && 'archived' !== (string) $after->status ) ) {
 			return new \WP_Error( 'jetonomy_transfer_failed', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'The %s could not be handed over. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 500 ) );
+		}
+
+		// The marker records that this hand-over archived the space, so it is
+		// stamped only once the archive is confirmed.
+		if ( $archive ) {
+			self::update( $space_id, array( 'settings' => wp_json_encode( array_merge( self::get_settings( $space_id ), array( self::HANDOVER_ARCHIVE => 1 ) ) ) ) );
 		}
 
 		if ( $demote_previous && $from_user_id > 0 && 'admin' === SpaceMember::get_role( $space_id, $from_user_id ) ) {
@@ -620,7 +623,9 @@ class Space extends Model {
 		// A new space must appear in the cached category tree.
 		self::bump_tree_generation();
 
-		if ( ! empty( $data['category_id'] ) ) {
+		// Counted as update() counts: only active spaces (a space created
+		// archived or locked is not in its category's count).
+		if ( ! empty( $data['category_id'] ) && 'active' === (string) ( $data['status'] ?? 'active' ) ) {
 			Category::increment_space_count( (int) $data['category_id'] );
 		}
 
@@ -1288,13 +1293,15 @@ class Space extends Model {
 	 */
 	public static function increment_post_count( int $id, int $by = 1 ): void {
 		$now = now();
+		// Only a new topic is activity: removing one (delete, trash, move out)
+		// must not make a quiet space jump up the "active" listings.
+		$activity = $by > 0 ? 'last_activity_at = %s, ' : '';
+		$args     = $by > 0 ? array( $by, $now, $now, $id ) : array( $by, $now, $id );
 		static::db()->query(
 			static::db()->prepare(
-				'UPDATE ' . static::table() . ' SET post_count = GREATEST(post_count + %d, 0), last_activity_at = %s, updated_at = %s WHERE id = %d',
-				$by,
-				$now,
-				$now,
-				$id
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $activity is one of two fixed fragments.
+				'UPDATE ' . static::table() . " SET post_count = GREATEST(post_count + %d, 0), {$activity}updated_at = %s WHERE id = %d",
+				...$args
 			)
 		);
 		self::bust_cache( $id );

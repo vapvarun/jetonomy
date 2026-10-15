@@ -49,7 +49,7 @@ if ( ! Moderation_Permissions::can_view_space_queue( $user_id, (int) $space->id 
 }
 
 $base     = \Jetonomy\base_url();
-$category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$category = $space->category_id ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 $space_id = (int) $space->id;
 
 // Two panels, two sources. A flag is a member REPORTING published content; an

@@ -194,15 +194,15 @@
       {
         "route": "/invite/(?P<token>[a-zA-Z0-9]+)",
         "methods": [
-          "GET"
+          "POST"
         ],
         "handler": "Spaces_Controller::use_invite",
-        "permission": "Visibility::rest_check",
+        "permission": "REST_Auth::auth_mutation(read)",
         "purpose": "Accept invite link and join space",
-        "auth": "public",
+        "auth": "logged_in",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Accept invite link. 1.4.1 A11: wrapped with Visibility::rest_check - responds 401 in private mode."
+        "audit_notes": "Accept invite link and join. 2.0.3: POST behind auth_mutation (was GET, which joined on any page view or prefetch). The landing page previews with InviteLink::accept(..., false) and joins on a nonce-checked form POST."
       },
       {
         "route": "/spaces/(?P<space_id>\\d+)/posts",

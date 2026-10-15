@@ -53,11 +53,9 @@ function jetonomyConfirm( message, opts = {} ) {
 function jetonomyPrompt( message, options ) {
 	// Back-compat: every caller before 1.9.4 passed a plain placeholder string.
 	const opts = 'string' === typeof options ? { placeholder: options } : ( options || {} );
-	// requireMatch turns this into a type-to-confirm gate: the submit button
-	// stays disabled until the typed text matches exactly. Used for actions
-	// with no undo, so the weight of the confirmation matches the weight of
-	// the action - the same contract admin-common.js already uses for space purge.
-	const requireMatch = opts.requireMatch ? String( opts.requireMatch ) : '';
+	// Type-to-confirm (requireMatch) lives only in the shared window.jetonomyPrompt
+	// (jetonomy-modals.js), which the space purge calls; this copy serves the
+	// free-text prompts (report reasons, split title).
 
 	return new Promise( ( resolve ) => {
 		const t = jtModalI18n();
@@ -69,18 +67,10 @@ function jetonomyPrompt( message, options ) {
 		msg.className = 'jt-modal-msg';
 		msg.textContent = message;
 		box.appendChild( msg );
-		// A single-line field when confirming a name: you are copying a label,
-		// not composing a message, and a 3-row textarea invites newlines that
-		// then fail the exact match.
-		const input = document.createElement( requireMatch ? 'input' : 'textarea' );
+		const input = document.createElement( 'textarea' );
 		input.className = 'jt-modal-input jt-input';
 		input.placeholder = opts.placeholder || '';
-		if ( requireMatch ) {
-			input.type = 'text';
-			input.autocomplete = 'off';
-		} else {
-			input.rows = 3;
-		}
+		input.rows = 3;
 		box.appendChild( input );
 		const actions = document.createElement( 'div' );
 		actions.className = 'jt-modal-actions';
@@ -92,15 +82,6 @@ function jetonomyPrompt( message, options ) {
 		okBtn.className = 'jt-btn jt-btn-fill' + ( opts.danger ? ' jt-btn-danger' : '' );
 		okBtn.textContent = opts.confirmLabel || t.modalSubmit || 'Submit';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( input.value.trim() ); } );
-		if ( requireMatch ) {
-			okBtn.disabled = true;
-			input.addEventListener( 'input', () => {
-				okBtn.disabled = input.value.trim() !== requireMatch;
-			} );
-			input.addEventListener( 'keydown', ( e ) => {
-				if ( 'Enter' === e.key && ! okBtn.disabled ) { okBtn.click(); }
-			} );
-		}
 		actions.appendChild( cancelBtn );
 		actions.appendChild( okBtn );
 		box.appendChild( actions );
@@ -167,7 +148,14 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		// does type-ahead, so adding one would reimplement the browser.
 		const fetchAllSpaces = ( acc = [], offset = 0 ) =>
 			window.jetonomyRest.restFetch( '/spaces?movable_by_me=1&limit=100&offset=' + offset )
-				.then( ( r ) => r.data || {} )
+				// restFetch resolves on errors too; reject so the .catch below
+				// says the list failed instead of "No other spaces available".
+				.then( ( r ) => {
+					if ( ! r || ! r.ok ) {
+						throw new Error( 'spaces' );
+					}
+					return r.data || {};
+				} )
 				.then( ( data ) => {
 					const page = Array.isArray( data.data ) ? data.data : ( Array.isArray( data ) ? data : [] );
 					const all = acc.concat( page );
@@ -684,8 +672,14 @@ function jtModerateJoinRequest( btn, action ) {
         { method: 'POST', body: {} }
     ).then( ( res ) => {
         if ( ! res || ! res.ok ) {
-            if ( row ) row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = false; } );
-            return;
+            const msg = ( res && res.data && res.data.message ) || 'Could not update the request. Please try again.';
+            if ( window.bnToast ) window.bnToast( msg, 'error' );
+            // Decided elsewhere (404/409): the row is stale, so drop it below.
+            const stale = res && ( 404 === res.status || 409 === res.status );
+            if ( ! stale ) {
+                if ( row ) row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = false; } );
+                return;
+            }
         }
         if ( ! row ) return;
         const list = row.parentNode;
@@ -770,9 +764,9 @@ function jtBuildInviteRow( panel, invite ) {
 
     const exp = document.createElement( 'span' );
     if ( invite.expires_at ) {
-        const parsed = new Date( invite.expires_at.replace( ' ', 'T' ) );
-        const shown  = isNaN( parsed.getTime() ) ? invite.expires_at : parsed.toLocaleDateString();
-        exp.textContent = ( d.jtExpiresFormat || 'Expires %s' ).replace( '%s', shown );
+        // expires_label is formatted server-side in the site timezone; the
+        // browser's own timezone would shift the date.
+        exp.textContent = ( d.jtExpiresFormat || 'Expires %s' ).replace( '%s', invite.expires_label || invite.expires_at );
     } else {
         exp.textContent = d.jtNoExpiry || 'No expiry';
     }
@@ -1451,7 +1445,7 @@ const { state, actions } = store( 'jetonomy', {
             if ( Object.keys( customFields ).length > 0 ) payload.custom_fields = customFields;
 
             const res = yield window.jetonomyRest.restFetch( '/spaces', { method: 'POST', body: payload } );
-            if ( ! res.ok || ! res.data || ! res.data.slug ) {
+            if ( ! res.ok || ! res.data || ! res.data.url ) {
                 if ( errBox ) {
                     errBox.textContent = ( res.data && res.data.message ) || i18n.createSpaceFailed || 'Could not create the space. Please try again.';
                     errBox.hidden = false;
@@ -1459,7 +1453,7 @@ const { state, actions } = store( 'jetonomy', {
                 if ( btn ) btn.disabled = false;
                 return;
             }
-            window.location.href = ( form.dataset.jtCommunityBase || '' ) + '/s/' + res.data.slug + '/';
+            window.location.href = res.data.url;
         },
 
         // ── Edit space (edit-space form; declarative, was space-edit.js) ──

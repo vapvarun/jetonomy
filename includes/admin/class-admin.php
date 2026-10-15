@@ -170,7 +170,7 @@ class Admin {
 			'jetonomy',
 			$jt_spaces_label,
 			$jt_spaces_label,
-			'jetonomy_manage_settings',
+			'jetonomy_manage_spaces', // The capability every Spaces action checks.
 			'jetonomy-spaces',
 			array( $this, 'render_spaces' )
 		);
@@ -1454,6 +1454,9 @@ class Admin {
 	}
 
 	public function render_spaces(): void {
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'jetonomy' ), 403 );
+		}
 		$action   = sanitize_text_field( $_GET['action'] ?? 'list' );
 		$space_id = absint( $_GET['space_id'] ?? 0 );
 
@@ -1475,6 +1478,7 @@ class Admin {
 			$access_rules   = AccessRule::list_for_space( $space_id );
 			$space_settings = Space::get_settings( $space_id );
 			$join_requests  = JoinRequest::list_pending_for_space( $space_id );
+			$join_total     = JoinRequest::count_pending_for_space( $space_id );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
 		}

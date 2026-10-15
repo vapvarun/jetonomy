@@ -88,7 +88,7 @@ $stat_cards = array(
 					// action — give the owner a one-click path to the queue.
 					if ( 'pending_flags' === $key && $stats[ $key ] > 0 ) :
 						?>
-						<a class="jetonomy-stat-card__cta" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation' ) ); ?>"><?php esc_html_e( 'Review flags →', 'jetonomy' ); ?></a>
+						<a class="jetonomy-stat-card__cta" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>"><?php esc_html_e( 'Review flags →', 'jetonomy' ); ?></a>
 					<?php endif; ?>
 				</div>
 			</div>

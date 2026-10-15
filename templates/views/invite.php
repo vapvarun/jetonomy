@@ -5,6 +5,10 @@
  * Presentation only — the token → membership flow lives in
  * InviteLink::accept() (shared with POST /invite/{token}, audit B).
  *
+ * Opening the link only checks it and shows a Join button; the join itself
+ * is the button's nonce-checked POST, so a link preview, prefetch or a
+ * cross-site request can never add anyone to a space.
+ *
  * @package Jetonomy
  */
 
@@ -25,7 +29,9 @@ if ( empty( $token ) ) {
 	return;
 }
 
-$result = \Jetonomy\Models\InviteLink::accept( $token, get_current_user_id() );
+$jt_confirmed = isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD']
+	&& isset( $_POST['jt_invite_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['jt_invite_nonce'] ) ), 'jetonomy_accept_invite_' . $token );
+$result       = \Jetonomy\Models\InviteLink::accept( $token, get_current_user_id(), $jt_confirmed );
 
 if ( is_wp_error( $result ) ) {
 	// Logged-out visitors with a VALID token get the invite panel with a
@@ -40,7 +46,7 @@ if ( is_wp_error( $result ) ) {
 		// offer it first and bring them back here to accept the invite.
 		$signup_url = get_option( 'users_can_register' ) ? add_query_arg( 'redirect_to', rawurlencode( $invite_url ), wp_registration_url() ) : '';
 		?>
-		<div class="jt-narrow" style="text-align:center;padding:48px 0;">
+		<div class="jt-narrow jt-invite-landing">
 			<?php /* translators: %s: space title. */ ?>
 			<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong>' . esc_html( $space_title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
 			<?php if ( '' !== $space_desc ) : ?>
@@ -66,6 +72,26 @@ if ( is_wp_error( $result ) ) {
 			'tone'      => 'warn',
 		)
 	);
+	return;
+}
+
+if ( 'ready' === $result['status'] ) {
+	?>
+	<div class="jt-narrow jt-invite-landing">
+		<?php /* translators: %s: space title. */ ?>
+		<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong>' . esc_html( (string) $result['space']->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
+		<?php if ( ! empty( $result['space']->description ) ) : ?>
+			<p class="jt-text-secondary"><?php echo esc_html( wp_strip_all_tags( (string) $result['space']->description ) ); ?></p>
+		<?php endif; ?>
+		<form method="post" class="jt-invite-actions">
+			<?php wp_nonce_field( 'jetonomy_accept_invite_' . $token, 'jt_invite_nonce' ); ?>
+			<button type="submit" class="jt-btn jt-btn-fill">
+				<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
+				<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
+			</button>
+		</form>
+	</div>
+	<?php
 	return;
 }
 

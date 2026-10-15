@@ -65,7 +65,7 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | PATCH | `/spaces/{id}/members/{user_id}` | Moderator / Admin | Change a member's role |
 | DELETE | `/spaces/{id}/members/{user_id}` | Moderator / Admin | Remove a member |
 | POST | `/spaces/{id}/invite` | Space admin | Generate an invite link |
-| GET | `/invite/{token}` | Public | Resolve an invite token |
+| POST | `/invite/{token}` | Logged in | Accept an invite and join (POST since 2.0.3; it was GET) |
 | GET | `/spaces/{id}/privileged-members` | Public | List admins and moderators of a space |
 | GET | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | List the membership access rules gating a space. Added 1.9.4. |
 | POST | `/spaces/{id}/access-rules` | `jetonomy_manage_spaces` | Add an access rule (membership level / role / tag that grants access). Added 1.9.4. |

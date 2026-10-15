@@ -31,7 +31,6 @@
 			// %1$s stays a literal %s, filled with the space name at click time.
 			purgeTypeToConfirm:   sprintf( /* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */ __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
 			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
-			purgeNameMismatch:    __( 'That name did not match, so nothing was deleted.', 'jetonomy' ),
 			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
 			confirmTrash:         __( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
 			saving:               __( 'Saving…', 'jetonomy' ),
@@ -686,15 +685,11 @@
 							confirmLabel: self.i18n.purgeConfirmLabel
 						}
 					).then(function(typed) {
-						// null = cancelled. A mismatch cannot reach here (the
-						// button stays disabled), but re-check anyway: the
-						// dialog is convenience, never the control.
-						if (typed === null) return false;
-						if (String(typed).trim() !== title) {
-							self.toast(self.i18n.purgeNameMismatch || self.i18n.error, 'error');
-							return false;
-						}
-						return true;
+						// null = cancelled. The dialog explains a mismatch and
+						// should only resolve on an exact match, but this is the
+						// one check the purge request relies on, so it never
+						// trusts the dialog alone.
+						return typed !== null && String(typed).trim() === title;
 					});
 				} else {
 					var warning = mode === 'purge'
@@ -1322,7 +1317,7 @@
 				var uses = invite.max_uses > 0
 					? (invite.used_count + ' / ' + invite.max_uses)
 					: (invite.used_count + ' / ' + (i18n.inviteUnlimited));
-				var expires = invite.expires_at ? invite.expires_at : (i18n.inviteNever);
+				var expires = invite.expires_at ? (invite.expires_label || invite.expires_at) : (i18n.inviteNever);
 				if (!invite.is_valid) {
 					expires = (i18n.inviteExpired);
 				}
@@ -1414,6 +1409,7 @@
 							max_uses: res.data.max_uses,
 							used_count: 0,
 							expires_at: res.data.expires_at,
+							expires_label: res.data.expires_label,
 							is_valid: true
 						}));
 						copyToClipboard(res.data.invite_url);

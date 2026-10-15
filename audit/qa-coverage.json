@@ -5,15 +5,15 @@
         "version": "2.0.2"
     },
     "generated": {
-        "at": "2026-10-15T17:17:57+00:00",
+        "at": "2026-10-15T19:21:15+00:00",
         "manifest_at": "2026-09-22T22:58:00Z",
         "manifest_branch": "2.0.0"
     },
     "categories": {
         "rest": {
             "total": 112,
-            "covered": 49,
-            "uncovered": 63,
+            "covered": 54,
+            "uncovered": 58,
             "skipped": 0,
             "covered_items": [
                 {
@@ -34,6 +34,10 @@
                 },
                 {
                     "method": "GET",
+                    "route": "/spaces/(?P<id>\\d+)"
+                },
+                {
+                    "method": "PATCH",
                     "route": "/spaces/(?P<id>\\d+)"
                 },
                 {
@@ -177,6 +181,14 @@
                     "route": "/search"
                 },
                 {
+                    "method": "GET",
+                    "route": "/categories"
+                },
+                {
+                    "method": "GET",
+                    "route": "/tags"
+                },
+                {
                     "method": "POST",
                     "route": "/bookmarks"
                 },
@@ -202,6 +214,10 @@
                 },
                 {
                     "method": "GET",
+                    "route": "/spaces/(?P<id>\\d+)/moderation/flags"
+                },
+                {
+                    "method": "GET",
                     "route": "/media"
                 },
                 {
@@ -211,14 +227,13 @@
                 {
                     "method": "GET",
                     "route": "/auth/nonce"
+                },
+                {
+                    "method": "POST",
+                    "route": "/spaces/(?P<id>\\d+)/access-rules"
                 }
             ],
             "uncovered_items": [
-                {
-                    "method": "PATCH",
-                    "route": "/spaces/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest PATCH \"/spaces/(?P<id>\\d+)\""
-                },
                 {
                     "method": "DELETE",
                     "route": "/spaces/(?P<id>\\d+)",
@@ -255,9 +270,9 @@
                     "stub_command": "bin/qa-stub-gen.php rest DELETE \"/spaces/(?P<id>\\d+)/invites/(?P<invite_id>\\d+)\""
                 },
                 {
-                    "method": "GET",
+                    "method": "POST",
                     "route": "/invite/(?P<token>[a-zA-Z0-9]+)",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/invite/(?P<token>[a-zA-Z0-9]+)\""
+                    "stub_command": "bin/qa-stub-gen.php rest POST \"/invite/(?P<token>[a-zA-Z0-9]+)\""
                 },
                 {
                     "method": "GET",
@@ -315,11 +330,6 @@
                     "stub_command": "bin/qa-stub-gen.php rest PATCH \"/notifications/(?P<id>\\d+)\""
                 },
                 {
-                    "method": "GET",
-                    "route": "/categories",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/categories\""
-                },
-                {
                     "method": "POST",
                     "route": "/categories",
                     "stub_command": "bin/qa-stub-gen.php rest POST \"/categories\""
@@ -338,11 +348,6 @@
                     "method": "DELETE",
                     "route": "/categories/(?P<id>\\d+)",
                     "stub_command": "bin/qa-stub-gen.php rest DELETE \"/categories/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/tags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/tags\""
                 },
                 {
                     "method": "GET",
@@ -408,11 +413,6 @@
                     "method": "DELETE",
                     "route": "/moderation/ban/(?P<id>\\d+)",
                     "stub_command": "bin/qa-stub-gen.php rest DELETE \"/moderation/ban/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/spaces/(?P<id>\\d+)/moderation/flags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/moderation/flags\""
                 },
                 {
                     "method": "POST",
@@ -503,11 +503,6 @@
                     "method": "GET",
                     "route": "/spaces/(?P<id>\\d+)/access-rules",
                     "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/access-rules\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/spaces/(?P<id>\\d+)/access-rules",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/access-rules\""
                 },
                 {
                     "method": "DELETE",
@@ -877,14 +872,14 @@
     "summary": {
         "categories_checked": 5,
         "items_total": 190,
-        "items_covered": 70,
-        "items_uncovered": 120,
+        "items_covered": 75,
+        "items_uncovered": 115,
         "items_skipped": 240,
-        "coverage_percent": 36.799999999999997
+        "coverage_percent": 39.5
     },
     "drift": {
         "previous_uncovered": 120,
-        "current_uncovered": 120,
-        "delta": 0
+        "current_uncovered": 115,
+        "delta": -5
     }
 }

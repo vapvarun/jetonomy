@@ -486,7 +486,7 @@ Shared methods:
 | GET/POST | `/spaces/{id}/members` | varies by action |
 | DELETE/PATCH | `/spaces/{id}/members/{user_id}` | space admin |
 | POST | `/spaces/{id}/invite` | space admin |
-| GET | `/invite/{token}` | public |
+| POST | `/invite/{token}` | logged in |
 
 **Posts** (`Jetonomy\API\Posts_Controller`)
 | Method | Route | Notes |

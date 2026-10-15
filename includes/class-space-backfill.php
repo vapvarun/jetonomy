@@ -244,6 +244,12 @@ final class Space_Backfill {
 				 * @param int $space_id The orphaned (already-deleted) space id.
 				 */
 				do_action( 'jetonomy_purge_orphan_space', $space_id );
+				// A purge that stopped early is not done: keep the id at the
+				// front of the queue for the next slice instead of counting it.
+				if ( '' !== Space_Purge::last_error() ) {
+					array_unshift( $queue, $space_id );
+					break;
+				}
 				++$purged;
 			}
 

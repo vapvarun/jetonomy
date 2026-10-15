@@ -172,6 +172,32 @@ class AccessRule extends Model {
 	 * @return int[] Space IDs, ascending, unique.
 	 */
 	/**
+	 * Why a rule's value cannot work for its type, or null. A rule with a
+	 * missing value must not save: a trust_level rule with no level read as
+	 * "trust >= 0" and admitted every logged-in member to a private space.
+	 *
+	 * @param string $rule_type  Rule type.
+	 * @param string $rule_value Submitted value (sanitized).
+	 */
+	public static function value_error( string $rule_type, string $rule_value ): ?\WP_Error {
+		$ok = match ( $rule_type ) {
+			'trust_level'               => ctype_digit( $rule_value ) && (int) $rule_value >= 1 && (int) $rule_value <= 5,
+			'role'                      => '' !== $rule_value && wp_roles()->is_role( $rule_value ),
+			'capability', 'membership'  => '' !== $rule_value,
+			default                     => true,
+		};
+		if ( $ok ) {
+			return null;
+		}
+		$message = match ( $rule_type ) {
+			'trust_level' => __( 'Choose a trust level from 1 to 5.', 'jetonomy' ),
+			'role'        => __( 'Choose a role that exists on this site.', 'jetonomy' ),
+			default       => __( 'Enter a value for this rule.', 'jetonomy' ),
+		};
+		return new \WP_Error( 'jetonomy_invalid_rule_value', $message, array( 'status' => 400 ) );
+	}
+
+	/**
 	 * Full rule rows for a level, not just the space ids.
 	 *
 	 * Callers that only need to point at the spaces should use

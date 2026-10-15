@@ -109,7 +109,11 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 		</div>
 
 		<div class="jt-community-nav-actions">
-			<?php if ( $user_id ) : ?>
+			<?php
+			// With BuddyNext, its site-header bell is the one inbox (forum
+			// notifications reach it), so a second bell here is a duplicate.
+			if ( $user_id && ! did_action( 'buddynext_loaded' ) ) :
+				?>
 				<?php // jt-nav-dup: the phone tab bar's Alerts tab is the same destination. ?>
 				<div class="jt-notif-dropdown-wrap jt-nav-dup">
 					<button type="button" class="jt-community-nav-notif" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">

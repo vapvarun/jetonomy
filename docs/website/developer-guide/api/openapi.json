@@ -3344,11 +3344,11 @@
       }
     },
     "/invite/{token}": {
-      "get": {
+      "post": {
         "tags": [
           "Spaces"
         ],
-        "summary": "Accept an invite",
+        "summary": "Accept an invite and join (POST since 2.0.3; logged in)",
         "operationId": "acceptInvite",
         "description": "Resolve and accept a space invite token. Login required to join.",
         "responses": {

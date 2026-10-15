@@ -791,7 +791,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
         e.preventDefault();
 
         var spaceId = btn.dataset.spaceId;
-        var nonce   = btn.dataset.nonce;
         if (!spaceId) return;
 
         // Restore the server-rendered label on failure: it carries the owner's
@@ -829,7 +828,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
         e.preventDefault();
 
         var spaceId = btn.dataset.spaceId;
-        var nonce   = btn.dataset.nonce;
         if (!spaceId) return;
 
         btn.disabled = true;
@@ -864,7 +862,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
         e.preventDefault();
 
         var spaceId = form.dataset.spaceId;
-        var nonce   = form.dataset.nonce;
         var message = (form.querySelector('[name="message"]') || {}).value || '';
         if (!spaceId) return;
 

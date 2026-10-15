@@ -1319,6 +1319,55 @@ class Post extends Model {
 	}
 
 	/**
+	 * Tags that have at least one topic the current viewer can read, with that
+	 * visible count as post_count, paginated. A tag used only in spaces the
+	 * viewer cannot read is left out entirely, so its name never leaks.
+	 *
+	 * @param string $sort   'popular' (visible count) or 'alphabetical'.
+	 * @param int    $limit  Page size.
+	 * @param int    $offset Offset.
+	 * @return array{rows:object[],total:int}
+	 */
+	public static function list_tags_visible( string $sort, int $limit, int $offset = 0 ): array {
+		$table         = static::table();
+		$tags_tbl      = \Jetonomy\table( 'tags' );
+		$spaces_tbl    = \Jetonomy\table( 'spaces' );
+		$post_tags_tbl = \Jetonomy\table( 'post_tags' );
+		$order         = 'alphabetical' === $sort ? 't.name ASC' : 'post_count DESC, t.name ASC';
+
+		[ $gate_sql, $gate_params ] = self::viewer_gate_sql( 'sp' );
+
+		$from = "FROM {$post_tags_tbl} pt
+				 INNER JOIN {$tags_tbl} t ON t.id = pt.tag_id
+				 INNER JOIN {$table} p ON p.id = pt.post_id
+				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+				 WHERE p.status = 'publish'{$gate_sql}";
+
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names, a fixed ORDER BY and the gate's placeholders.
+				"SELECT t.id, t.name, t.slug, COUNT(*) AS post_count {$from}
+				 GROUP BY t.id
+				 ORDER BY {$order} LIMIT %d OFFSET %d",
+				...array_merge( $gate_params, array( $limit, $offset ) )
+			)
+		);
+		$total = $gate_params
+			? static::db()->get_var( static::db()->prepare( "SELECT COUNT(DISTINCT pt.tag_id) {$from}", ...$gate_params ) ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			: static::db()->get_var( "SELECT COUNT(DISTINCT pt.tag_id) {$from}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		foreach ( (array) $rows as $row ) {
+			$row->id         = (int) $row->id;
+			$row->post_count = (int) $row->post_count;
+		}
+
+		return array(
+			'rows'  => $rows ?: array(),
+			'total' => (int) $total,
+		);
+	}
+
+	/**
 	 * Count a space's published ideas per roadmap status, as the viewer sees them.
 	 *
 	 * @param int  $space_id      Space ID.

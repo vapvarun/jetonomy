@@ -128,7 +128,7 @@ $jt_author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $pos
 $jt_author_masked  = (int) $jt_author_display['id'] !== (int) $post->author_id;
 $profile           = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $tags              = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
-$category          = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$category          = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 
 $author_id = (int) $post->author_id;
 $trust     = $profile ? (int) $profile->trust_level : 0;
@@ -1033,9 +1033,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 				</div>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
-				<div class="jt-login-prompt">
-					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); /* jt-terms-ok: verb */ ?></a>
-				</div>
+				<?php
+				// Guests get the composer partial's own logged-out state (the
+				// styled Log in to reply button), so there is one copy of it.
+				\Jetonomy\Template_Loader::partial( 'composer', array( 'post_url' => $post_url ) );
+				?>
 			<?php endif; ?>
 		</main>
 
