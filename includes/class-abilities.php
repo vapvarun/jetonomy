@@ -1747,7 +1747,7 @@ class Abilities {
 	public function execute_list_flags( $input ) {
 		$status = sanitize_text_field( $input['status'] ?? 'pending' );
 		$limit  = (int) ( $input['limit'] ?? 20 );
-		$flags  = Flag::list_by_status( $status, $limit );
+		$flags  = Flag::list_by_status( $status, $limit, 0, \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ) );
 		$items  = array();
 		foreach ( $flags as $f ) {
 			$items[] = array(

@@ -691,10 +691,10 @@ class Reply extends Model {
 	 * wp-admin Moderation screen share one implementation. Served by the
 	 * status_created (status, created_at) index.
 	 *
-	 * @param string[]   $statuses  One or more of publish|pending|draft|spam|trash.
-	 * @param int        $limit     Max rows.
-	 * @param int        $offset    Pagination offset.
-	 * @param int[]|null $space_ids Limit to replies whose POST lives in these
+	 * @param string[]                        $statuses  One or more of publish|pending|draft|spam|trash.
+	 * @param int                             $limit     Max rows.
+	 * @param int                             $offset    Pagination offset.
+	 * @param int[]|array{exclude:int[]}|null $space_ids Limit to replies whose POST lives in these
 	 *                              spaces, or null for every space.
 	 * @return object[]
 	 */
@@ -733,7 +733,7 @@ class Reply extends Model {
 	 * means "no filter", an EMPTY array means "no spaces in scope" and must
 	 * return nothing.
 	 *
-	 * @param int[]|null $space_ids
+	 * @param int[]|array{exclude:int[]}|null $space_ids
 	 * @return array{join:string,sql:string,params:array<int,int>}|null Null = match nothing.
 	 */
 	protected static function space_scope_sql( ?array $space_ids ): ?array {
@@ -744,11 +744,20 @@ class Reply extends Model {
 				'params' => array(),
 			);
 		}
+		$posts = \Jetonomy\table( 'posts' );
+		// array( 'exclude' => ids ): every space but these, as Post::space_scope_sql().
+		if ( isset( $space_ids['exclude'] ) ) {
+			$skip = array_values( array_unique( array_filter( array_map( 'absint', (array) $space_ids['exclude'] ) ) ) );
+			return array(
+				'join'   => $skip ? " INNER JOIN {$posts} p ON p.id = r.post_id" : '',
+				'sql'    => $skip ? ' AND p.space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '',
+				'params' => $skip,
+			);
+		}
 		$ids = array_values( array_unique( array_filter( array_map( 'absint', $space_ids ) ) ) );
 		if ( empty( $ids ) ) {
 			return null;
 		}
-		$posts = \Jetonomy\table( 'posts' );
 
 		return array(
 			'join'   => " INNER JOIN {$posts} p ON p.id = r.post_id",
@@ -760,8 +769,8 @@ class Reply extends Model {
 	/**
 	 * Count replies in the given moderation statuses via COUNT(*).
 	 *
-	 * @param string[]   $statuses
-	 * @param int[]|null $space_ids Limit to replies whose POST lives in these
+	 * @param string[]                        $statuses
+	 * @param int[]|array{exclude:int[]}|null $space_ids Limit to replies whose POST lives in these
 	 *                              spaces, or null for every space.
 	 * @return int
 	 */
@@ -1934,22 +1943,24 @@ class Reply extends Model {
 	/**
 	 * Replies awaiting approval, newest first, with their topic title.
 	 *
-	 * @param int $limit  Max rows.
-	 * @param int $offset Offset.
+	 * @param int   $limit  Max rows.
+	 * @param int   $offset Offset.
+	 * @param int[] $exclude_space_ids Spaces to leave out (site moderator scope).
 	 * @return object[]
 	 */
-	public static function list_pending_with_post( int $limit, int $offset ): array {
-		$posts = \Jetonomy\table( 'posts' );
+	public static function list_pending_with_post( int $limit, int $offset, array $exclude_space_ids = array() ): array {
+		$posts  = \Jetonomy\table( 'posts' );
+		$skip   = array_values( array_unique( array_filter( array_map( 'absint', $exclude_space_ids ) ) ) );
+		$not_in = $skip ? ' AND p.space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '';
 		return static::db()->get_results(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $not_in holds only %d placeholders.
 				'SELECT r.*, p.title as post_title FROM ' . static::table() . " r
 				 LEFT JOIN {$posts} p ON p.id = r.post_id
-				 WHERE r.status = 'pending'
+				 WHERE r.status = 'pending'{$not_in}
 				 ORDER BY r.created_at DESC
 				 LIMIT %d OFFSET %d",
-				$limit,
-				$offset
+				...array_merge( $skip, array( $limit, $offset ) )
 			)
 		) ?: array();
 	}

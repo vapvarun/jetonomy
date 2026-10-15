@@ -77,9 +77,83 @@ class Moderation_Permissions {
 			return false;
 		}
 		if ( user_can( $user_id, 'jetonomy_moderate' ) ) {
-			return true;
+			return self::staff_can_reach_space( $user_id, $space_id );
 		}
 		return Permission_Engine::is_space_privileged( $user_id, $space_id );
+	}
+
+	/**
+	 * Per-request memo for unreadable_space_ids(), keyed by user id.
+	 *
+	 * @var array<int, int[]>
+	 */
+	private static array $unreadable_memo = array();
+
+	/**
+	 * Whether the memo reset is registered with Cache.
+	 *
+	 * @var bool
+	 */
+	private static bool $unreadable_memo_registered = false;
+
+	/**
+	 * Private or hidden spaces a site moderator cannot read.
+	 *
+	 * Site moderators (jetonomy_moderate) act in every space they can READ,
+	 * the same rule Permission_Engine applies to editing and pinning. Every
+	 * moderation list, count and action leaves these spaces out, so staff never
+	 * see or touch a private space's queue, flags or content without access.
+	 * Administrators read everything, so this is empty for them.
+	 *
+	 * @param int $user_id User ID.
+	 * @return int[]
+	 */
+	public static function unreadable_space_ids( int $user_id ): array {
+		if ( ! $user_id || user_can( $user_id, 'manage_options' ) ) {
+			return array();
+		}
+		if ( ! self::$unreadable_memo_registered ) {
+			self::$unreadable_memo_registered = true;
+			// Same lifetime as Permission_Engine's memo: reset with every cache flush.
+			\Jetonomy\Cache::register_memo_reset(
+				static function (): void {
+					self::$unreadable_memo = array();
+				}
+			);
+		}
+		$memo = &self::$unreadable_memo;
+		if ( ! isset( $memo[ $user_id ] ) ) {
+			$memo[ $user_id ] = array_values(
+				array_filter(
+					\Jetonomy\Models\Space::non_public_ids(),
+					static fn( int $space_id ): bool => ! Permission_Engine::can( $user_id, 'read', $space_id )
+				)
+			);
+		}
+		return $memo[ $user_id ];
+	}
+
+	/**
+	 * Scope for a site moderator's cross-space lists: every space but the
+	 * ones they cannot read. Null (no filter) for administrators.
+	 *
+	 * @param int $user_id User ID.
+	 * @return array{exclude:int[]}|null
+	 */
+	public static function staff_scope( int $user_id ): ?array {
+		$exclude = self::unreadable_space_ids( $user_id );
+		return $exclude ? array( 'exclude' => $exclude ) : null;
+	}
+
+	/**
+	 * Whether a site moderator may act in this space (they can read it).
+	 *
+	 * @param int $user_id  User ID.
+	 * @param int $space_id Space ID.
+	 * @return bool
+	 */
+	private static function staff_can_reach_space( int $user_id, int $space_id ): bool {
+		return user_can( $user_id, 'manage_options' ) || Permission_Engine::can( $user_id, 'read', $space_id );
 	}
 
 	/**
@@ -100,11 +174,12 @@ class Moderation_Permissions {
 		if ( user_can( $user_id, 'manage_options' ) ) {
 			return true;
 		}
+		$space_id = Flag_Scope::space_id( $flag );
 		if ( user_can( $user_id, 'jetonomy_moderate' ) ) {
-			return true;
+			// A flag on a member (no space) stays cap-only; content flags need read access.
+			return null === $space_id || self::staff_can_reach_space( $user_id, $space_id );
 		}
 
-		$space_id = Flag_Scope::space_id( $flag );
 		if ( null === $space_id ) {
 			return false;
 		}
@@ -126,13 +201,12 @@ class Moderation_Permissions {
 		if ( user_can( $user_id, 'manage_options' ) ) {
 			return true;
 		}
-		if ( user_can( $user_id, 'jetonomy_moderate' ) ) {
-			return true;
-		}
-
 		$space_id = Flag_Scope::space_id_for_object( $type, $id );
 		if ( null === $space_id ) {
 			return false;
+		}
+		if ( user_can( $user_id, 'jetonomy_moderate' ) ) {
+			return self::staff_can_reach_space( $user_id, $space_id );
 		}
 		return Permission_Engine::is_space_privileged( $user_id, $space_id );
 	}

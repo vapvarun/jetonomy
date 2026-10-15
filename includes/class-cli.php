@@ -501,9 +501,13 @@ class CLI {
 
 		if ( file_exists( $notif_template ) ) {
 			$src = file_get_contents( $notif_template ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-			preg_match_all( "/['\"]([a-z_]+)['\"]\s*=>/", $src, $matches );
-			$template_keys = array_filter( $matches[1], fn( $k ) => str_contains( $k, '_' ) );
-			$template_keys = array_values( array_unique( $template_keys ) );
+			// Read only the $type_labels array. Scanning the whole file picked up
+			// unrelated array keys (pagination's has_more, param_key) and the old
+			// "must contain _" filter skipped one-word types such as mention.
+			if ( preg_match( '/\$type_labels\s*=\s*array\((.*?)\n\);/s', $src, $block ) ) {
+				preg_match_all( "/^\s*['\"]([a-z_]+)['\"]\s*=>/m", $block[1], $matches );
+				$template_keys = array_values( array_unique( $matches[1] ) );
+			}
 		}
 
 		$settings   = get_option( 'jetonomy_settings', array() );
@@ -512,7 +516,11 @@ class CLI {
 		if ( empty( $template_keys ) ) {
 			$record( 'notification_keys', 'notifications.php $type_labels parseable', false, 'Could not parse template or file missing' );
 		} else {
-			foreach ( $template_keys as $key ) {
+			// Types with a label but deliberately no member preference: 'flag' is
+			// kept only for rows older versions wrote, and a member who asked to
+			// join always hears the answer (join_request_result).
+			$display_only = array( 'flag', 'join_request_result' );
+			foreach ( array_diff( $template_keys, $display_only ) as $key ) {
 				$in_settings = array_key_exists( $key, $notif_defs );
 				$record( 'notification_keys', "Type '{$key}' in notification_defaults", $in_settings, $in_settings ? '' : 'key exists in template but missing from settings' );
 			}
@@ -670,7 +678,15 @@ class CLI {
 					$src        = file_get_contents( $ext_file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 					$has_routes = str_contains( $src, 'register_routes' );
 
-					if ( $has_routes && $is_enabled ) {
+					// An enabled extension can stand down on purpose (messaging when
+					// another plugin owns messages): it registers no routes by design.
+					$ext_class = '\\Jetonomy_Pro\\Extensions\\' . str_replace( ' ', '_', ucwords( str_replace( '-', ' ', $ext_id ) ) ) . '\\Extension';
+					$dormant   = $is_enabled && class_exists( $ext_class ) && method_exists( $ext_class, 'is_dormant' ) && $ext_class::is_dormant();
+					if ( $dormant ) {
+						$record( 'pro_extensions', "Extension '{$ext_id}' REST routes registered", true, 'dormant on this site: routes intentionally not registered', false );
+					}
+
+					if ( $has_routes && $is_enabled && ! $dormant ) {
 						preg_match_all(
 							"/register_rest_route\s*\([^,]+,\s*['\"]([^'\"]+)['\"]/",
 							$src,
@@ -745,10 +761,19 @@ class CLI {
 				$concat_matches
 			);
 
+			// The app calls window.jetonomyRest.restFetch( '/path' ) since the REST
+			// migration; the two raw fetch() shapes above only catch older code.
+			preg_match_all(
+				'/restFetch\s*\(\s*[`\'"]\/([a-z0-9_\-\/]+)/i',
+				$js_src,
+				$rest_fetch_matches
+			);
+
 			$js_segments = array_unique(
 				array_merge(
 					$template_literal_matches[1] ?? array(),
-					$concat_matches[1] ?? array()
+					$concat_matches[1] ?? array(),
+					$rest_fetch_matches[1]
 				)
 			);
 

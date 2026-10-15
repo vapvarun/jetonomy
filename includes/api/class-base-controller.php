@@ -105,7 +105,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 	/**
 	 * Is this user trusted enough that we should skip Akismet / content spam checks?
 	 *
-	 * Site admins (manage_options) and space admins/moderators are whitelisted:
+	 * Site admins (manage_options), site moderators (jetonomy_moderate) and space
+	 * admins/moderators are whitelisted:
 	 * they own the moderation workflow, so running their writes through Akismet
 	 * creates false positives and blocks staff responses. Lower-trust members
 	 * still get the full spam pipeline.
@@ -114,7 +115,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * definition of "space staff" (1.5.0 consolidation, audit B).
 	 */
 	protected function author_bypasses_spam_check( int $user_id, int $space_id ): bool {
-		return \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
+		// Site moderators are staff too (they act in every space they can read).
+		return user_can( $user_id, 'jetonomy_moderate' )
+			|| \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
 	}
 
 	/**

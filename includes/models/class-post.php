@@ -944,10 +944,10 @@ class Post extends Model {
 	 * both read one implementation instead of duplicating raw SQL. Served by the
 	 * status_created (status, created_at) index.
 	 *
-	 * @param string[]   $statuses  One or more of publish|pending|draft|spam|trash.
-	 * @param int        $limit     Max rows.
-	 * @param int        $offset    Pagination offset.
-	 * @param int[]|null $space_ids Limit to these spaces, or null for every space.
+	 * @param string[]                        $statuses  One or more of publish|pending|draft|spam|trash.
+	 * @param int                             $limit     Max rows.
+	 * @param int                             $offset    Pagination offset.
+	 * @param int[]|array{exclude:int[]}|null $space_ids Limit to these spaces, or null for every space.
 	 * @return object[]
 	 */
 	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0, ?array $space_ids = null ): array {
@@ -982,7 +982,7 @@ class Post extends Model {
 	 * pending queue - which is the exact privilege boundary the frontend
 	 * queue relies on.
 	 *
-	 * @param int[]|null $space_ids
+	 * @param int[]|array{exclude:int[]}|null $space_ids
 	 * @return array{sql:string,params:array<int,int>}|null Null = match nothing.
 	 */
 	protected static function space_scope_sql( ?array $space_ids ): ?array {
@@ -990,6 +990,16 @@ class Post extends Model {
 			return array(
 				'sql'    => '',
 				'params' => array(),
+			);
+		}
+		// array( 'exclude' => ids ): every space but these (a site moderator's
+		// reach, Moderation_Permissions::staff_scope()). An empty exclude list
+		// is no filter at all, unlike an empty include list.
+		if ( isset( $space_ids['exclude'] ) ) {
+			$skip = array_values( array_unique( array_filter( array_map( 'absint', (array) $space_ids['exclude'] ) ) ) );
+			return array(
+				'sql'    => $skip ? ' AND space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '',
+				'params' => $skip,
 			);
 		}
 		$ids = array_values( array_unique( array_filter( array_map( 'absint', $space_ids ) ) ) );
@@ -1006,8 +1016,8 @@ class Post extends Model {
 	/**
 	 * Count posts in the given moderation statuses via COUNT(*) (no row load).
 	 *
-	 * @param string[]   $statuses
-	 * @param int[]|null $space_ids Limit to these spaces, or null for every space.
+	 * @param string[]                        $statuses
+	 * @param int[]|array{exclude:int[]}|null $space_ids Limit to these spaces, or null for every space.
 	 * @return int
 	 */
 	public static function count_by_status( array $statuses, ?array $space_ids = null ): int {
@@ -1386,8 +1396,12 @@ class Post extends Model {
 			static function () use ( $space_id, $user_id, $is_privileged ) {
 				$table      = static::table();
 				$spaces_tbl = \Jetonomy\table( 'spaces' );
-				$where      = static::db()->prepare( "p.status = 'publish'" . ( $space_id > 0 ? ' AND p.space_id = %d' : '' ), ...( $space_id > 0 ? array( $space_id ) : array() ) );
-				$where     .= self::space_reader_sql( $user_id, $is_privileged, 'p' );
+				// prepare() only with a value to bind: with no placeholder it raises a
+				// _doing_it_wrong notice on every sidebar outside a space.
+				$where  = $space_id > 0
+					? static::db()->prepare( "p.status = 'publish' AND p.space_id = %d", $space_id )
+					: "p.status = 'publish'";
+				$where .= self::space_reader_sql( $user_id, $is_privileged, 'p' );
 
 				// One space is already gated by the page that shows it; every
 				// other page needs the viewer's space access as well.
@@ -2337,22 +2351,24 @@ class Post extends Model {
 	/**
 	 * Topics awaiting approval, newest first, with their space title.
 	 *
-	 * @param int $limit  Max rows.
-	 * @param int $offset Offset.
+	 * @param int   $limit  Max rows.
+	 * @param int   $offset Offset.
+	 * @param int[] $exclude_space_ids Spaces to leave out (site moderator scope).
 	 * @return object[]
 	 */
-	public static function list_pending_with_space( int $limit, int $offset ): array {
+	public static function list_pending_with_space( int $limit, int $offset, array $exclude_space_ids = array() ): array {
 		$spaces = \Jetonomy\table( 'spaces' );
+		$skip   = array_values( array_unique( array_filter( array_map( 'absint', $exclude_space_ids ) ) ) );
+		$not_in = $skip ? ' AND p.space_id NOT IN (' . implode( ', ', array_fill( 0, count( $skip ), '%d' ) ) . ')' : '';
 		return static::db()->get_results(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $not_in holds only %d placeholders.
 				'SELECT p.*, s.title as space_title FROM ' . static::table() . " p
 				 LEFT JOIN {$spaces} s ON s.id = p.space_id
-				 WHERE p.status = 'pending'
+				 WHERE p.status = 'pending'{$not_in}
 				 ORDER BY p.created_at DESC
 				 LIMIT %d OFFSET %d",
-				$limit,
-				$offset
+				...array_merge( $skip, array( $limit, $offset ) )
 			)
 		) ?: array();
 	}

@@ -72,6 +72,13 @@ $type_labels = array(
 	'new_post_in_sub'     => sprintf( __( 'New activity in one of the %s you follow', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 	'moderation'          => __( 'A moderator acted on your content', 'jetonomy' ),
 	'badge_earned'        => __( 'You earned a badge', 'jetonomy' ),
+	'reaction'            => __( 'reacted to what you wrote', 'jetonomy' ),
+	/* translators: %s: plural space label, lowercase. */
+	'join_request'        => sprintf( __( 'asked to join one of your %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+	'join_request_result' => __( 'Your request to join was answered', 'jetonomy' ),
+	'flag_resolved'       => __( 'A moderator reviewed your report', 'jetonomy' ),
+	// Not emitted any more (reports reach staff as 'moderation'); kept so rows
+	// older versions wrote still read as a sentence.
 	'flag'                => __( 'New content flag requires review', 'jetonomy' ),
 );
 
@@ -80,7 +87,7 @@ $type_labels = array(
  *
  * @var array<int,string>
  */
-$self_contained_types = array( 'new_post_in_sub', 'moderation', 'badge_earned', 'flag' );
+$self_contained_types = array( 'new_post_in_sub', 'moderation', 'badge_earned', 'flag', 'join_request_result', 'flag_resolved' );
 
 // Icon shown in the row's circle when a notification has no actor at all
 // (system events: a flag needing review, an aggregated vote roll-up). Keyed
@@ -97,6 +104,9 @@ $type_icons = array(
 	'moderation'          => 'shield',
 	'badge_earned'        => 'award',
 	'flag'                => 'flag',
+	'flag_resolved'       => 'check-circle',
+	'join_request'        => 'users',
+	'join_request_result' => 'users',
 );
 
 $filter_tabs = array(

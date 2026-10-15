@@ -311,8 +311,11 @@ class Moderation_Controller extends Base_Controller {
 		$want_posts = '' === $type_filter || 'post' === $type_filter;
 		$want_reply = '' === $type_filter || 'reply' === $type_filter;
 
-		$post_total  = $want_posts ? Post::count_by_status( $statuses ) : 0;
-		$reply_total = $want_reply ? Reply::count_by_status( $statuses ) : 0;
+		// Site moderators see every space they can read; private and hidden
+		// spaces they are not in stay out of the rows AND the totals.
+		$scope       = \Jetonomy\Moderation\Moderation_Permissions::staff_scope( get_current_user_id() );
+		$post_total  = $want_posts ? Post::count_by_status( $statuses, $scope ) : 0;
+		$reply_total = $want_reply ? Reply::count_by_status( $statuses, $scope ) : 0;
 		$total       = $post_total + $reply_total;
 
 		// Fetch a bounded window from each table, tag the object type, merge and
@@ -321,11 +324,11 @@ class Moderation_Controller extends Base_Controller {
 		// assembled correctly; both slices are still index-served and bounded.
 		$window = $pagination['offset'] + $pagination['limit'];
 
-		$posts = $want_posts ? Post::list_by_status( $statuses, $window, 0 ) : array();
+		$posts = $want_posts ? Post::list_by_status( $statuses, $window, 0, $scope ) : array();
 		foreach ( $posts as $row ) {
 			$row->object_type = 'post';
 		}
-		$replies = $want_reply ? Reply::list_by_status( $statuses, $window, 0 ) : array();
+		$replies = $want_reply ? Reply::list_by_status( $statuses, $window, 0, $scope ) : array();
 		foreach ( $replies as $row ) {
 			$row->object_type = 'reply';
 		}
@@ -353,7 +356,7 @@ class Moderation_Controller extends Base_Controller {
 				'offset' => $pagination['offset'],
 			)
 		);
-		$response->header( 'X-Jetonomy-Pending-Flags', (string) Flag::count_pending() );
+		$response->header( 'X-Jetonomy-Pending-Flags', (string) Flag::count_pending( \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ) ) );
 
 		return $response;
 	}
@@ -428,12 +431,22 @@ class Moderation_Controller extends Base_Controller {
 		// could 201 a flag against a nonexistent id or self-report to farm the
 		// reporter-reputation path.
 		$target_author = null;
+		// Content must also be live and readable by the reporter. A topic in a
+		// private space you cannot open, or a trashed reply, answers exactly like a
+		// missing one: otherwise any member could flag (and dock reputation from)
+		// content they cannot see, and 404-vs-201 would confirm private ids exist.
 		if ( 'post' === $object_type ) {
 			$target        = \Jetonomy\Models\Post::find( $object_id );
-			$target_author = $target ? (int) $target->author_id : null;
+			$readable      = $target && 'publish' === $target->status
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $target );
+			$target_author = $readable ? (int) $target->author_id : null;
 		} elseif ( 'reply' === $object_type ) {
 			$target        = \Jetonomy\Models\Reply::find( $object_id );
-			$target_author = $target ? (int) $target->author_id : null;
+			$parent        = $target ? \Jetonomy\Models\Post::find( (int) $target->post_id ) : null;
+			$readable      = $target && $parent && 'publish' === $target->status && 'publish' === $parent->status
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_post( $user_id, $parent )
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( $user_id, $target, $parent );
+			$target_author = $readable ? (int) $target->author_id : null;
 		} else { // 'user' - schema enum guarantees one of the three.
 			$target        = get_userdata( $object_id );
 			$target_author = $target ? (int) $target->ID : null;
@@ -555,9 +568,11 @@ class Moderation_Controller extends Base_Controller {
 		$offset     = (int) $pagination['offset'];
 		$status     = (string) ( $request->get_param( 'status' ) ?: 'pending' );
 
+		// Private and hidden spaces the caller cannot read stay out (rows and total).
+		$skip  = \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() );
 		$flags = 'all' === $status
-			? Flag::list_all( $limit, $offset )
-			: Flag::list_by_status( $status, $limit, $offset );
+			? Flag::list_all( $limit, $offset, $skip )
+			: Flag::list_by_status( $status, $limit, $offset, $skip );
 
 		// Shared with the per-space queue — see Base_Controller::enrich_flag_actors().
 		// Both queues share it, so neither shows "Reported by unknown".
@@ -565,7 +580,7 @@ class Moderation_Controller extends Base_Controller {
 
 		// Count for the SAME status we listed, or has_more lies on every filter
 		// other than 'pending'.
-		$total = Flag::count_by_status( $status );
+		$total = Flag::count_by_status( $status, $skip );
 
 		return $this->paginated_response(
 			$flags,
@@ -690,7 +705,9 @@ class Moderation_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Invalid post id.', 'jetonomy' ) );
 		}
 
-		if ( ! \Jetonomy\Models\Post::find( $post_id ) ) {
+		$post = \Jetonomy\Models\Post::find( $post_id );
+		// A topic in a space the caller cannot read answers exactly like a missing one.
+		if ( ! $post || in_array( (int) $post->space_id, \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ), true ) ) {
 			return $this->not_found( 'Post' );
 		}
 

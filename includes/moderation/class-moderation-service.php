@@ -58,7 +58,7 @@ class Moderation_Service {
 		}
 
 		if ( Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
-			return Flag::list_pending( $limit, $offset );
+			return Flag::list_pending( $limit, $offset, Moderation_Permissions::unreadable_space_ids( $user_id ) );
 		}
 
 		$space_ids = SpaceMember::moderated_space_ids( $user_id );
@@ -92,7 +92,7 @@ class Moderation_Service {
 		}
 
 		if ( Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
-			return Flag::count_pending();
+			return Flag::count_pending( Moderation_Permissions::unreadable_space_ids( $user_id ) );
 		}
 
 		$space_ids = SpaceMember::moderated_space_ids( $user_id );
@@ -115,7 +115,8 @@ class Moderation_Service {
 	 *
 	 * @param int      $user_id
 	 * @param int|null $space_id
-	 * @return int[]|null Null = unscoped (admin dashboard); array = these spaces only.
+	 * @return array|null Null = unscoped (administrators); int[] = these spaces only;
+	 *                    array( 'exclude' => int[] ) = every space but these (site moderators).
 	 */
 	private static function approval_scope( int $user_id, ?int $space_id ): ?array {
 		if ( ! $user_id ) {
@@ -129,7 +130,8 @@ class Moderation_Service {
 		}
 
 		if ( Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
-			return null;
+			// Site moderators: every space they can read (null = all, for admins).
+			return Moderation_Permissions::staff_scope( $user_id );
 		}
 
 		return SpaceMember::moderated_space_ids( $user_id );

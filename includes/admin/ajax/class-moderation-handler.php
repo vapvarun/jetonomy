@@ -57,6 +57,11 @@ class Moderation_Handler {
 		if ( ! $object_id || ! in_array( $object_type, array( 'post', 'reply' ), true ) ) {
 			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
 		}
+		// Same per-object rule as the REST and frontend queues: a site moderator
+		// acts only in spaces they can read.
+		if ( ! \Jetonomy\Moderation\Moderation_Permissions::can_act_on_object( get_current_user_id(), $object_type, $object_id ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
 
 		$result = Moderation_Service::system_set_object_status( $object_type, $object_id, $action, get_current_user_id() );
 		if ( is_wp_error( $result ) ) {

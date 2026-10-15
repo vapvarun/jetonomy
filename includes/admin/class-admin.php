@@ -1349,7 +1349,7 @@ class Admin {
 			'total_replies' => Reply::count( array( 'status' => 'publish' ) ),
 			'active_spaces' => Space::count( array( 'status' => 'active' ) ),
 			'users'         => UserProfile::count(),
-			'pending_flags' => Flag::count_pending(),
+			'pending_flags' => Flag::count_pending( \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() ) ),
 			'posts_today'   => Post::count_published_since( $today . ' 00:00:00' ),
 		);
 
@@ -1517,14 +1517,18 @@ class Admin {
 		$paged_flags   = max( 1, absint( $_GET['paged_flags'] ?? 1 ) );
 		$paged_banned  = max( 1, absint( $_GET['paged_banned'] ?? 1 ) );
 
-		$total_posts   = Post::count_by_status( array( 'pending' ) );
-		$total_replies = Reply::count_by_status( array( 'pending' ) );
-		$total_flags   = Flag::count_pending();
+		// Site moderators (not administrators) never see the queue of a private
+		// or hidden space they cannot read - rows and totals alike.
+		$skip          = \Jetonomy\Moderation\Moderation_Permissions::unreadable_space_ids( get_current_user_id() );
+		$scope         = $skip ? array( 'exclude' => $skip ) : null;
+		$total_posts   = Post::count_by_status( array( 'pending' ), $scope );
+		$total_replies = Reply::count_by_status( array( 'pending' ), $scope );
+		$total_flags   = Flag::count_pending( $skip );
 		$total_banned  = Restriction::count_active();
 
-		$pending_posts   = Post::list_pending_with_space( $per_page, ( $paged_posts - 1 ) * $per_page );
-		$pending_replies = Reply::list_pending_with_post( $per_page, ( $paged_replies - 1 ) * $per_page );
-		$pending_flags   = Flag::list_pending( $per_page, ( $paged_flags - 1 ) * $per_page );
+		$pending_posts   = Post::list_pending_with_space( $per_page, ( $paged_posts - 1 ) * $per_page, $skip );
+		$pending_replies = Reply::list_pending_with_post( $per_page, ( $paged_replies - 1 ) * $per_page, $skip );
+		$pending_flags   = Flag::list_pending( $per_page, ( $paged_flags - 1 ) * $per_page, $skip );
 
 		$this->prime_flag_objects( $pending_flags );
 

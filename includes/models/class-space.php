@@ -1937,6 +1937,20 @@ class Space extends Model {
 	}
 
 	/**
+	 * Ids of every private or hidden space, any status.
+	 *
+	 * The candidates for "a site moderator may not be able to read this"
+	 * (Moderation_Permissions::unreadable_space_ids()). Public spaces never
+	 * need the per-space read check, so this stays a short list on any site.
+	 *
+	 * @return int[]
+	 */
+	public static function non_public_ids(): array {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', (array) static::db()->get_col( 'SELECT id FROM ' . static::table() . " WHERE visibility <> 'public'" ) );
+	}
+
+	/**
 	 * Every sitemap space id (active spaces a guest can list), ascending.
 	 *
 	 * @return int[]

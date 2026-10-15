@@ -219,7 +219,8 @@ class Trust_Levels {
 	 * Trust unlocks capabilities held behind the trust floor, so a delegated
 	 * "Manage community users" holder must not raise themselves or reach above
 	 * their rank: only an administrator may change their own level, another
-	 * administrator's, or a moderator's. Same rules as Restriction::actor_may_restrict().
+	 * administrator's, a moderator's, or another user manager's. Same rules as
+	 * Restriction::actor_may_restrict().
 	 *
 	 * @param int $user_id  Member whose level changes.
 	 * @param int $level    New level, clamped to 0-5.
@@ -233,8 +234,10 @@ class Trust_Levels {
 			if ( $user_id === $actor_id ) {
 				return new \WP_Error( 'jetonomy_trust_self', __( 'You cannot change your own trust level.', 'jetonomy' ), array( 'status' => 403 ) );
 			}
-			if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_moderate' ) ) {
-				return new \WP_Error( 'jetonomy_trust_peer', __( 'Only an administrator can change the trust level of an administrator or moderator.', 'jetonomy' ), array( 'status' => 403 ) );
+			// Fellow user managers count as peers too: two delegates could
+			// otherwise raise each other past the trust floor.
+			if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_moderate' ) || user_can( $user_id, 'jetonomy_manage_users' ) ) {
+				return new \WP_Error( 'jetonomy_trust_peer', __( 'Only an administrator can change the trust level of an administrator, moderator or user manager.', 'jetonomy' ), array( 'status' => 403 ) );
 			}
 		}
 
