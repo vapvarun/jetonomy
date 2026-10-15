@@ -193,7 +193,7 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 				if ( select.options.length <= 1 ) {
 					loadingOpt.textContent = t.noOtherSpaces || 'No other spaces available';
 				} else {
-					loadingOpt.textContent = t.chooseSpaceOption || 'Choose a space…';
+					loadingOpt.textContent = t.chooseSpaceOption || 'Select space…';
 					select.addEventListener( 'change', () => { okBtn.disabled = ! select.value; } );
 				}
 			} )
@@ -252,8 +252,8 @@ function jetonomyPostPicker( title, excludePostId, spaceId, sourceTitle ) {
 		const searchInput = document.createElement( 'input' );
 		searchInput.type = 'search';
 		searchInput.className = 'jt-modal-picker-input';
-		searchInput.placeholder = t.searchTopicPlaceholder || 'Search for a topic...';
-		searchInput.setAttribute( 'aria-label', t.searchTopicPlaceholder || 'Search for a topic' );
+		searchInput.placeholder = t.searchTopicPlaceholder || 'Search topics...';
+		searchInput.setAttribute( 'aria-label', t.searchTopicPlaceholder || 'Search topics' );
 		searchWrap.appendChild( searchInput );
 		box.appendChild( searchWrap );
 
@@ -1171,7 +1171,7 @@ const { state, actions } = store( 'jetonomy', {
             const i18n      = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
             const isSilence = 'silence' === type;
             const bodyTpl   = isSilence
-                ? ( i18n.silenceConfirmFormat || 'Silence %s? They stay a member but cannot post, reply, or file reports until you lift it.' )
+                ? ( i18n.silenceConfirmFormat || 'Silence %s? They stay in the community but cannot post, reply, or file reports until you lift it.' )
                 : ( i18n.banSiteConfirmFormat || 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.' );
             const ok = yield window.jetonomyConfirm( bodyTpl.replace( '%s', name || '' ), {
                 title: isSilence ? ( i18n.silenceTitle || 'Silence member' ) : ( i18n.banSiteTitle || 'Ban member' ),
@@ -4306,7 +4306,7 @@ const { state, actions } = store( 'jetonomy', {
 
             // Picker mode demands a chosen space before anything else.
             if ( ! ctx.spaceId ) {
-                ctx.error = state.i18n?.chooseSpace || 'Choose a space first.';
+                ctx.error = state.i18n?.chooseSpace || 'Choose the space first.';
                 return;
             }
 

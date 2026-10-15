@@ -48,7 +48,7 @@ class Settings_Handler {
 				'url'     => \Jetonomy\route_url( 'space-roadmap', 'feature-requests' ),
 			),
 			'new_post_in_sub'       => array(
-				/* translators: %s: space label, lowercase (e.g. "space"). */
+				/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
 				'message' => sprintf( __( 'A new discussion was posted in one of the %s you follow.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
@@ -65,7 +65,7 @@ class Settings_Handler {
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
 			'join_request'          => array(
-				/* translators: 1: member label, lowercase (e.g. "member"). 2: space label, plural, lowercase (e.g. "spaces"). */
+				/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
 				'message' => sprintf( __( 'Someone has asked to join one of your %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),

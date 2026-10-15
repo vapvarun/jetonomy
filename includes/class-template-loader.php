@@ -11,6 +11,13 @@ defined( 'ABSPATH' ) || exit;
 
 class Template_Loader {
 
+	/**
+	 * True when this request fell back to views/not-found.php (title + view agree).
+	 *
+	 * @var bool
+	 */
+	private static bool $not_found = false;
+
 	public static function render( array $data ): void {
 		// ── /u/me/ redirect to actual user profile ──
 		if ( 'profile' === $data['route'] && 'me' === $data['slug'] ) {
@@ -143,7 +150,8 @@ class Template_Loader {
 		// themed not-found view inside the shell rather than an empty body.
 		if ( ! $template_file ) {
 			status_header( 404 );
-			$template_file = 'views/not-found.php';
+			$template_file   = 'views/not-found.php';
+			self::$not_found = true;
 		}
 
 		// Absolute paths (Pro registers its own) are used as-is. The old
@@ -160,7 +168,8 @@ class Template_Loader {
 
 		if ( ! file_exists( $template_path ) ) {
 			status_header( 404 );
-			$template_path = $plugin_dir . 'views/not-found.php';
+			$template_path   = $plugin_dir . 'views/not-found.php';
+			self::$not_found = true;
 		}
 
 		// Enqueue styles. The --jt-* token layer is its own handle: blocks render
@@ -1013,6 +1022,10 @@ class Template_Loader {
 				// WP appends ' – {site_name}' via the default separator + tagline,
 				// so we only set the route-specific title fragment here. Don't
 				// concatenate the site name yourself — it doubles up.
+				if ( self::$not_found ) {
+					$parts['title'] = __( 'Page not available', 'jetonomy' );
+					return $parts;
+				}
 				$slug_pretty = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
 
 				// Owner-configurable title patterns (Settings → SEO). These are the
