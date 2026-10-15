@@ -27,7 +27,8 @@ class Settings_Handler {
 				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'reply_to_post'         => array(
-				'message' => __( 'Alice replied to your post "Getting started with Jetonomy".', 'jetonomy' ),
+				/* translators: %s: singular topic label, lowercase. */
+				'message' => sprintf( __( 'Alice replied to your %s "Getting started with Jetonomy".', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 				'url'     => \Jetonomy\route_url( 'post', 'general', 'getting-started-with-jetonomy' ),
 			),
 			'reply_to_reply'        => array(
@@ -53,11 +54,34 @@ class Settings_Handler {
 				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'badge_earned'          => array(
-				'message' => __( 'You earned the "First Post" badge. Nice work.', 'jetonomy' ),
+				'message' => __( 'You earned the "First Post" badge. Nice work.', 'jetonomy' ), // jt-terms-ok: the seeded badge's proper name.
 				'url'     => \Jetonomy\route_url( 'profile', 'me' ),
 			),
 			'vote_on_post'          => array(
-				'message' => __( 'Your post received a new vote.', 'jetonomy' ),
+				/* translators: %s: singular topic label, lowercase. */
+				'message' => sprintf( __( 'Your %s received a new vote.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+				'url'     => \Jetonomy\base_url() . '/',
+			),
+			'reaction'              => array(
+				// translators: %s: content title.
+				'message' => sprintf( __( 'Someone reacted to %s', 'jetonomy' ), '"Hosting recommendations"' ),
+				'url'     => \Jetonomy\route_url( 'post', 'general', 'hosting-recommendations' ),
+			),
+			'flag_resolved'         => array(
+				'message' => __( 'Your report was reviewed. Thanks for helping keep the community healthy.', 'jetonomy' ),
+				'url'     => \Jetonomy\base_url() . '/',
+			),
+			'join_request_result'   => array(
+				/* translators: %s: space name */
+				'message' => sprintf( __( 'Your request to join %s was approved', 'jetonomy' ), 'Feature Requests' ),
+				'url'     => \Jetonomy\route_url( 'space', 'feature-requests' ),
+			),
+			'message'               => array(
+				'message' => __( 'Someone sent you a private message.', 'jetonomy' ),
+				'url'     => \Jetonomy\base_url() . '/',
+			),
+			'verification'          => array(
+				'message' => __( 'Please confirm your email address to finish creating your account.', 'jetonomy' ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'moderation'            => array(
@@ -99,8 +123,8 @@ class Settings_Handler {
 			// wp_mail() directly, which bypassed any Pro Mailgun / SES /
 			// Postmark adapter and defeated the whole point of "test email".
 			$adapter = \Jetonomy\Adapters\Adapter_Registry::get_email();
-			$body    = __( 'This is a test email from your Jetonomy forum plugin. If you received this, email is working correctly.', 'jetonomy' );
-			$subject = __( 'Jetonomy Test Email', 'jetonomy' );
+			$body    = sprintf( /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ __( 'This is a test email from your %s forum plugin. If you received this, email is working correctly.', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() );
+			$subject = sprintf( /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ __( '%s Test Email', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() );
 			$result  = $adapter
 				? $adapter->send( $admin_email, $subject, $body, $body, array() )
 				: wp_mail( $admin_email, $subject, $body );
@@ -128,12 +152,19 @@ class Settings_Handler {
 
 		$fixture = self::sample_fixtures()[ $type ];
 
-		// Notifier::send_email_notification is private; invoke via reflection
-		// so we don't duplicate the template-rendering logic.
-		$notifier = new Notifier();
-		$ref      = new \ReflectionMethod( Notifier::class, 'send_email_notification' );
-		$ref->invoke(
-			$notifier,
+		// The confirmation email has its own sender (fixed link + button), so test the real one.
+		// The token is a placeholder: the link it carries simply fails verification.
+		if ( 'verification' === $type ) {
+			Notifier::send_verification_email( (int) $admin_user->ID, 'preview' );
+			wp_send_json_success(
+				array(
+					/* translators: 1: type label, 2: recipient email */
+					'message' => sprintf( __( 'Preview (%1$s) sent to %2$s.', 'jetonomy' ), $type, $admin_user->user_email ),
+				)
+			);
+		}
+
+		Notifier::send_email_notification(
 			(int) $admin_user->ID,
 			$type,
 			$fixture['message'],

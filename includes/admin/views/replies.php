@@ -50,7 +50,7 @@ if ( ! empty( $trash_count ) ) {
 	<p class="jt-breadcrumb">
 		<a href="<?php echo esc_url( $back_url ); ?>">
 			<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
-			<?php esc_html_e( 'All Posts', 'jetonomy' ); ?>
+			<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?>
 		</a>
 	</p>
 
@@ -220,7 +220,7 @@ if ( ! empty( $trash_count ) ) {
 								<textarea
 									class="jt-edit-reply-content large-text"
 									rows="5"
-									aria-label="<?php /* translators: %s: reply label (e.g. "Reply"). */ echo esc_attr( sprintf( __( '%s content', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>"
+									aria-label="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( '%s content', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>"
 								><?php echo esc_textarea( $r->content ?? '' ); ?></textarea>
 								<p class="jt-inline-edit-actions">
 									<button

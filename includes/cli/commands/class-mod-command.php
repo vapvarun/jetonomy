@@ -134,6 +134,9 @@ final class Mod_Command extends Base_Command {
 	 * [--reason=<text>]
 	 * : Optional human-readable reason.
 	 *
+	 * [--ip=<address>]
+	 * : The IPv4 or IPv6 address to block (type=ip_ban).
+	 *
 	 * [--expires=<datetime>]
 	 * : Optional MySQL datetime when the restriction expires. Omit for permanent.
 	 *
@@ -157,8 +160,12 @@ final class Mod_Command extends Base_Command {
 		$type     = (string) ( $assoc['type'] ?? 'global_ban' );
 		$space_id = isset( $assoc['space'] ) ? (int) $assoc['space'] : null;
 		$reason   = isset( $assoc['reason'] ) ? (string) $assoc['reason'] : null;
-		$expires  = isset( $assoc['expires'] ) ? (string) $assoc['expires'] : null;
-		$result   = ( new Moderation_Journey() )->ban_user( $target, $issuer, $type, $space_id, $reason, $expires );
+		// An IP ban stores its address where the reason goes (is_ip_banned() matches it).
+		if ( 'ip_ban' === ( $assoc['type'] ?? '' ) && isset( $assoc['ip'] ) ) {
+			$reason = (string) $assoc['ip'];
+		}
+		$expires = isset( $assoc['expires'] ) ? (string) $assoc['expires'] : null;
+		$result  = ( new Moderation_Journey() )->ban_user( $target, $issuer, $type, $space_id, $reason, $expires );
 		$this->render( $result, $assoc );
 	}
 

@@ -50,6 +50,97 @@ function jetonomyConfirm( message, opts = {} ) {
 	} );
 }
 
+/**
+ * Report dialog: a reason (the moderation queue's own list) plus optional
+ * details. Resolves { reason, description }, or null when cancelled. A report
+ * needs a reason; free text alone used to be filed as "Other", empty included.
+ *
+ * @param {string} message Dialog question.
+ * @param {Object} labels  The store's i18n (state.i18n): reasons and button text.
+ * @return {Promise<{reason:string,description:string}|null>}
+ */
+function jetonomyReport( message, labels ) {
+	return new Promise( ( resolve ) => {
+		const t       = jtModalI18n();
+		const i18n    = labels || {};
+		const reasons = i18n.reportReasons || { spam: 'Spam', offensive: 'Offensive', off_topic: 'Off-topic', harassment: 'Harassment', other: 'Other' };
+		const overlay = document.createElement( 'div' );
+		overlay.className = 'jt-modal-overlay';
+		const box = document.createElement( 'div' );
+		box.className = 'jt-modal-box';
+		box.setAttribute( 'role', 'dialog' );
+		box.setAttribute( 'aria-modal', 'true' );
+		const msg = document.createElement( 'p' );
+		msg.className = 'jt-modal-msg';
+		msg.id = 'jt-report-title';
+		msg.textContent = message;
+		box.setAttribute( 'aria-labelledby', msg.id );
+		box.appendChild( msg );
+
+		const list = document.createElement( 'div' );
+		list.className = 'jt-report-reasons';
+		list.setAttribute( 'role', 'radiogroup' );
+		list.setAttribute( 'aria-labelledby', msg.id );
+		Object.keys( reasons ).forEach( ( key ) => {
+			const label = document.createElement( 'label' );
+			label.className = 'jt-report-reason';
+			const radio = document.createElement( 'input' );
+			radio.type = 'radio';
+			radio.name = 'jt-report-reason';
+			radio.value = key;
+			label.appendChild( radio );
+			label.appendChild( document.createTextNode( ' ' + reasons[ key ] ) );
+			list.appendChild( label );
+		} );
+		box.appendChild( list );
+
+		const details = document.createElement( 'textarea' );
+		details.className = 'jt-modal-input jt-input';
+		details.rows = 3;
+		details.placeholder = i18n.reportDetails || 'Add details (optional)';
+		details.setAttribute( 'aria-label', details.placeholder );
+		box.appendChild( details );
+
+		const hint = document.createElement( 'p' );
+		hint.className = 'jt-modal-hint';
+		hint.setAttribute( 'aria-live', 'polite' );
+		box.appendChild( hint );
+
+		const actions = document.createElement( 'div' );
+		actions.className = 'jt-modal-actions';
+		const cancelBtn = document.createElement( 'button' );
+		cancelBtn.type = 'button';
+		cancelBtn.className = 'jt-btn jt-btn-ghost';
+		cancelBtn.textContent = t.modalCancel || 'Cancel';
+		const okBtn = document.createElement( 'button' );
+		okBtn.type = 'button';
+		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.textContent = i18n.reportSubmit || 'Report';
+		const close = ( value ) => { overlay.remove(); resolve( value ); };
+		cancelBtn.addEventListener( 'click', () => close( null ) );
+		okBtn.addEventListener( 'click', () => {
+			const picked = list.querySelector( 'input:checked' );
+			if ( ! picked ) {
+				hint.textContent = i18n.reportChooseReason || 'Choose a reason.';
+				const first = list.querySelector( 'input' );
+				if ( first ) first.focus();
+				return;
+			}
+			close( { reason: picked.value, description: details.value.trim() } );
+		} );
+		list.addEventListener( 'change', () => { hint.textContent = ''; } );
+		actions.appendChild( cancelBtn );
+		actions.appendChild( okBtn );
+		box.appendChild( actions );
+		overlay.appendChild( box );
+		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) close( null ); } );
+		overlay.addEventListener( 'keydown', ( e ) => { if ( 'Escape' === e.key ) close( null ); } );
+		document.body.appendChild( overlay );
+		const first = list.querySelector( 'input' );
+		if ( first ) first.focus();
+	} );
+}
+
 function jetonomyPrompt( message, options ) {
 	// Back-compat: every caller before 1.9.4 passed a plain placeholder string.
 	const opts = 'string' === typeof options ? { placeholder: options } : ( options || {} );
@@ -2378,7 +2469,18 @@ const { state, actions } = store( 'jetonomy', {
                         if ( card ) {
                             card.style.transition = 'opacity 200ms';
                             card.style.opacity = '0';
-                            setTimeout( () => card.remove(), 220 );
+                            setTimeout( () => {
+                                const list = card.parentNode;
+                                card.remove();
+                                // The last one gone: show the page's own empty state.
+                                if ( list && ! list.querySelector( '.jt-row' ) ) {
+                                    const empty = document.querySelector( '.jt-bookmarks-empty' );
+                                    if ( empty ) {
+                                        empty.hidden = false;
+                                        list.remove();
+                                    }
+                                }
+                            }, 220 );
                         }
                     }
                 },
@@ -2404,13 +2506,13 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
-            const reason = yield jetonomyPrompt( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
-            if ( reason === null ) return; // Cancelled
+            const report = yield jetonomyReport( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n );
+            if ( report === null ) return; // Cancelled
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    body: { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason },
+                    body: { object_type: 'post', object_id: parseInt( postId ), reason: report.reason, description: report.description },
                 } );
                 if ( res.ok ) {
                     // Reflect "already reported" state inline so the next click
@@ -2436,13 +2538,13 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
-            const reason = yield jetonomyPrompt( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
-            if ( reason === null ) return;
+            const report = yield jetonomyReport( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n );
+            if ( report === null ) return; // Cancelled
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    body: { object_type: 'reply', object_id: parseInt( replyId ), reason: 'other', description: reason },
+                    body: { object_type: 'reply', object_id: parseInt( replyId ), reason: report.reason, description: report.description },
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
@@ -2461,13 +2563,13 @@ const { state, actions } = store( 'jetonomy', {
             const userId = el.ref.dataset.userId;
             if ( ! userId ) return;
 
-            const reason = yield jetonomyPrompt( state.i18n?.reportUserPrompt || 'Why are you reporting this user?', state.i18n?.reportUserPlaceholder || 'Describe the issue...' );
-            if ( reason === null ) return;
+            const report = yield jetonomyReport( state.i18n?.reportUserPrompt || 'Why are you reporting this user?', state.i18n );
+            if ( report === null ) return; // Cancelled
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    body: { object_type: 'user', object_id: parseInt( userId ), reason: 'other', description: reason },
+                    body: { object_type: 'user', object_id: parseInt( userId ), reason: report.reason, description: report.description },
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );

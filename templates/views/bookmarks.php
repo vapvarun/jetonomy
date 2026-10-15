@@ -59,7 +59,8 @@ $crumbs = array(
 			</p>
 		</header>
 
-		<?php if ( empty( $bookmarks ) ) : ?>
+		<?php // Rendered always (hidden while there are bookmarks) so removing the last one can show it without a reload. ?>
+		<div class="jt-bookmarks-empty"<?php echo empty( $bookmarks ) ? '' : ' hidden'; ?>>
 			<?php
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
@@ -72,7 +73,8 @@ $crumbs = array(
 				)
 			);
 			?>
-		<?php else : ?>
+		</div>
+		<?php if ( ! empty( $bookmarks ) ) : ?>
 			<div class="jt-topics">
 				<?php foreach ( $bookmarks as $bookmarked_post ) : ?>
 					<?php

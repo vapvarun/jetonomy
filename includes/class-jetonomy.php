@@ -257,6 +257,10 @@ final class Jetonomy {
 					'web'   => true,
 					'email' => true,
 				),
+				'join_request_result' => array(
+					'web'   => true,
+					'email' => true,
+				),
 			);
 			$changed                           = true;
 		}

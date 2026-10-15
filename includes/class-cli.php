@@ -516,9 +516,10 @@ class CLI {
 		if ( empty( $template_keys ) ) {
 			$record( 'notification_keys', 'notifications.php $type_labels parseable', false, 'Could not parse template or file missing' );
 		} else {
-			// Types with a label but deliberately no member preference: 'flag' is
-			// kept only for rows older versions wrote, and a member who asked to
-			// join always hears the answer (join_request_result).
+			// Types with a label that may have no stored default: 'flag' is kept
+			// only for rows older versions wrote; join_request_result arrived
+			// after most sites seeded their defaults and is on by default at
+			// read time (Notifier::EMAIL_ON_WHEN_UNSET), so its key is optional.
 			$display_only = array( 'flag', 'join_request_result' );
 			foreach ( array_diff( $template_keys, $display_only ) as $key ) {
 				$in_settings = array_key_exists( $key, $notif_defs );

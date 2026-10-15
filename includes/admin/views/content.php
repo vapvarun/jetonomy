@@ -77,7 +77,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			</select>
 
 			<!-- Search -->
-			<input type="search" name="s" id="jt-filter-search" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Search by title…', 'jetonomy' ); ?>" aria-label="<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_attr( sprintf( __( 'Search posts and %s by title', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>" class="regular-text">
+			<input type="search" name="s" id="jt-filter-search" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Search by title…', 'jetonomy' ); ?>" aria-label="<?php /* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). */ echo esc_attr( sprintf( __( 'Search %1$s and %2$s by title', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>" class="regular-text">
 
 			<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
 
@@ -127,7 +127,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		jetonomy_admin_empty_state(
 			array(
 				'icon'  => 'admin-post',
-				'title' => __( 'No posts match these filters', 'jetonomy' ),
+				'title' => __( 'Nothing matches these filters', 'jetonomy' ),
 				'body'  => __( 'Try clearing a filter or broadening your search to see more.', 'jetonomy' ),
 			)
 		);
@@ -207,13 +207,13 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 									type="text"
 									class="jt-edit-title large-text"
 									value="<?php echo esc_attr( $p->title ); ?>"
-									aria-label="<?php esc_attr_e( 'Post title', 'jetonomy' ); ?>"
+									aria-label="<?php /* translators: %s: the singular label of the item (the configured noun). */ echo esc_attr( sprintf( __( '%s title', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ) ); ?>"
 									maxlength="255"
 								>
 								<textarea
 									class="jt-edit-content large-text"
 									rows="6"
-									aria-label="<?php esc_attr_e( 'Post content', 'jetonomy' ); ?>"
+									aria-label="<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_attr( sprintf( __( '%s content', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ) ); ?>"
 								><?php echo esc_textarea( $p->content ?? '' ); ?></textarea>
 								<p class="jt-inline-edit-actions">
 									<button

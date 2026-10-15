@@ -66,7 +66,7 @@ foreach ( (array) $jt_spaces as $jt_s ) {
 	<?php if ( empty( $jt_items ) ) : ?>
 		<div class="jt-cmedia__empty">
 			<p class="jt-cmedia__empty-title"><?php esc_html_e( 'No community uploads found', 'jetonomy' ); ?></p>
-			<p><?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'When %1$s upload images in posts or %2$s, they appear here. Try clearing the filters above.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
+			<p><?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: topic label, plural, lowercase (e.g. "topics"). 3: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'When %1$s upload images in %2$s or %3$s, they appear here. Try clearing the filters above.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
 		</div>
 	<?php else : ?>
 		<div class="jt-cmedia__grid">

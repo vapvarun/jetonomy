@@ -37,6 +37,10 @@ $skip = array(
 );
 
 $nouns = '/\b(spaces?|topics?|repl(?:y|ies)|members?|categor(?:y|ies))\b/i';
+// wp-admin also says "post" for what the product calls a topic ("Total Posts",
+// "Posts Per Page"), which the owner's Topic label never reached. Checked in
+// includes/admin/ only: elsewhere "post" is mostly the verb or a WordPress post.
+$admin_nouns = '/\b(spaces?|topics?|repl(?:y|ies)|members?|categor(?:y|ies)|posts?)\b/i';
 // Matched against the whole file, so a call whose string starts on the next
 // line (`_n(\n 'text'`) is still seen. /s lets `.` cross escaped newlines.
 $php    = '/\b(?:__|_e|_x|_ex|_n|_nx|esc_html__|esc_html_e|esc_html_x|esc_attr__|esc_attr_e|esc_attr_x)\(\s*([\'"])((?:\\\\.|(?!\1).)*)\1/s';
@@ -79,8 +83,9 @@ foreach ( $files as $file ) {
 	foreach ( $m[3] as $g ) {
 		$found[] = $g;
 	}
+	$file_nouns = str_starts_with( $rel, 'includes/admin/' ) ? $admin_nouns : $nouns;
 	foreach ( $found as list( $text, $offset ) ) {
-		if ( ! preg_match( $nouns, $text ) ) {
+		if ( ! preg_match( $file_nouns, $text ) ) {
 			continue;
 		}
 		$i = substr_count( $src, "\n", 0, $offset ); // 0-based line of the string itself.

@@ -85,13 +85,51 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * Validate an IP address for an ip_ban.
+	 *
+	 * An IP ban is enforced for EVERY account at Permission_Engine layer 0,
+	 * administrators included, so an operator who bans the address they are
+	 * using right now locks themselves out of the community. That is refused
+	 * here, where the admin screen, REST and WP-CLI all pass through.
+	 *
+	 * @param string $ip        Candidate address (IPv4 or IPv6).
+	 * @param int    $issued_by Actor issuing it; 0 or less means system-issued.
+	 * @return string|\WP_Error The validated address, or why it is refused.
+	 */
+	public static function validate_ip_ban( string $ip, int $issued_by ) {
+		// An IP ban blocks every account on that address, administrators
+		// included, and the target-user rules (no admins, no peer moderators)
+		// cannot see whose address it is. Only a site administrator issues one.
+		if ( $issued_by > 0 && ! user_can( $issued_by, 'manage_options' ) ) {
+			return new \WP_Error( 'jetonomy_ip_ban_admin_only', __( 'Only a site administrator can ban an IP address.', 'jetonomy' ), array( 'status' => 403 ) );
+		}
+		$ip = (string) filter_var( trim( $ip ), FILTER_VALIDATE_IP );
+		if ( '' === $ip ) {
+			return new \WP_Error( 'jetonomy_invalid_ip', __( 'Enter a valid IPv4 or IPv6 address.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+		// shortcut: stored as typed, matched exactly against client_ip(); an IPv6 address written in a
+		// non-canonical spelling would not match. Normalise both sides if that is ever reported.
+
+		if ( $issued_by > 0 && \Jetonomy\client_ip() === $ip ) {
+			return new \WP_Error( 'jetonomy_cannot_ban_own_ip', __( 'This is the IP address you are using right now. Banning it would lock you out.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
+		if ( self::is_ip_banned( $ip ) ) {
+			return new \WP_Error( 'jetonomy_ip_already_banned', __( 'This IP address is already banned.', 'jetonomy' ), array( 'status' => 409 ) );
+		}
+
+		return $ip;
+	}
+
+	/**
 	 * Issue a ban or silence restriction.
 	 *
 	 * @param int         $user_id    Target user.
-	 * @param string      $type       Restriction type (e.g. 'global_ban', 'space_ban', 'silence').
+	 * @param string      $type       Restriction type: 'global_ban', 'space_ban', 'silence' or 'ip_ban'.
 	 * @param int         $issued_by  ID of the moderator/admin issuing the restriction.
 	 * @param int|null    $space_id   Scoped space ID, or null for global restrictions.
-	 * @param string|null $reason     Optional reason text.
+	 * @param string|null $reason     Optional reason text. For 'ip_ban' this is the IP address
+	 *                                (the column is_ip_banned() matches) and is required.
 	 * @param string|null $expires_at Optional expiry datetime (MySQL format). Null = permanent.
 	 * @return int Inserted row ID.
 	 */
@@ -112,6 +150,13 @@ class Restriction extends Model {
 		// space restricts nothing while every caller reports success
 		if ( 'space_ban' === $type && ! $space_id ) {
 			return 0;
+		}
+
+		if ( 'ip_ban' === $type ) {
+			$reason = self::validate_ip_ban( (string) $reason, $issued_by );
+			if ( is_wp_error( $reason ) ) {
+				return 0;
+			}
 		}
 
 		$data = array(
@@ -372,9 +417,9 @@ class Restriction extends Model {
 	 * List active (non-expired) member restrictions, newest first.
 	 *
 	 * Powers the moderator ban-management surface (REST GET /moderation/ban).
-	 * Defaults to the member-facing types (global_ban, space_ban, silence);
-	 * ip_ban / post_restrict are excluded unless an explicit `type` filter asks
-	 * for one, since they are not tied to a listable member. Paginated for
+	 * Defaults to every type a moderator issues and lifts (global_ban,
+	 * space_ban, silence, ip_ban; an ip_ban row carries the IP in `reason`);
+	 * post_restrict is excluded unless an explicit `type` filter asks for it. Paginated for
 	 * big-site safety — served by the user_type_space + expires indexes.
 	 *
 	 * @param array $args {type?, user_id?, space_id?, limit?, offset?}
@@ -432,8 +477,8 @@ class Restriction extends Model {
 			$where[]  = 'type = %s';
 			$params[] = (string) $args['type'];
 		} else {
-			// Member-facing bans only; ip_ban / post_restrict have no listable member.
-			$where[] = "type IN ('global_ban','space_ban','silence')";
+			// Every restriction a moderator can lift; post_restrict is not issued from any screen.
+			$where[] = "type IN ('global_ban','space_ban','silence','ip_ban')";
 		}
 
 		if ( ! empty( $args['user_id'] ) ) {

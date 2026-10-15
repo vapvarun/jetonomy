@@ -3774,7 +3774,7 @@
         ],
         "summary": "Issue a restriction",
         "operationId": "createBan",
-        "description": "Issue a ban, silence, or space-ban. Requires jetonomy_moderate. Guards: cannot restrict self, a site admin, or (as a mere moderator) another moderator.",
+        "description": "Issue a site ban, space ban, silence or IP address ban. Requires jetonomy_moderate. Guards: cannot restrict self, a site admin, or (as a mere moderator) another moderator. type=ip_ban needs ip (refused for your own address or one already banned).",
         "responses": {
           "201": {
             "description": "Created",
@@ -3809,9 +3809,10 @@
                   "type": {
                     "type": "string",
                     "enum": [
-                      "ban",
+                      "global_ban",
+                      "space_ban",
                       "silence",
-                      "spaceban"
+                      "ip_ban"
                     ]
                   },
                   "space_id": {
@@ -3824,6 +3825,10 @@
                   "expires_at": {
                     "type": "string",
                     "format": "date-time"
+                  },
+                  "ip": {
+                    "type": "string",
+                    "description": "IPv4 or IPv6 address (type=ip_ban)."
                   }
                 },
                 "required": [

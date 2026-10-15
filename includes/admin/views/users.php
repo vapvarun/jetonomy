@@ -33,7 +33,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 			<div class="jt-roles-explainer__grid">
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'WordPress role', 'jetonomy' ); ?></h3>
-					<p><?php esc_html_e( 'Subscriber, Editor, Administrator… Controls wp-admin access and which Jetonomy capabilities (moderate, manage settings) a person holds. Assign roles on the WordPress Users screen; edit which capabilities each role carries under Jetonomy → Settings → Permissions.', 'jetonomy' ); ?></p>
+					<p><?php /* translators: %1$s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( 'Subscriber, Editor, Administrator… Controls wp-admin access and which %1$s capabilities (moderate, manage settings) a person holds. Assign roles on the WordPress Users screen; edit which capabilities each role carries under %1$s → Settings → Permissions.', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></p>
 				</div>
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'Trust level (0-5)', 'jetonomy' ); ?></h3>
@@ -116,7 +116,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 					'width' => 's',
 				),
 				'posts'        => array(
-					'label' => __( 'Posts', 'jetonomy' ),
+					'label' => \Jetonomy\jetonomy_label( 'topic', true ),
 					'width' => 'xs',
 				),
 				'replies'      => array(
@@ -149,7 +149,10 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 							<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a><?php echo current_user_can( 'jetonomy_moderate' ) ? ' | ' : ''; ?></span>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 							<span class="ban"><a href="#" class="jetonomy-ban-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-username="<?php echo esc_attr( $u->user_login ); ?>"><?php esc_html_e( 'Ban', 'jetonomy' ); ?></a> | </span>
-							<span class="silence"><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a></span>
+							<span class="silence"><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a><?php echo current_user_can( 'manage_options' ) ? ' | ' : ''; ?></span>
+								<?php if ( current_user_can( 'manage_options' ) ) : // IP bans block everyone on the address: administrators only (Restriction::validate_ip_ban). ?>
+							<span class="ban-ip"><a href="#" class="jetonomy-ban-ip-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Ban IP address', 'jetonomy' ); ?></a></span>
+								<?php endif; ?>
 							<?php endif; ?>
 						</div>
 						<?php
@@ -223,7 +226,8 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 	<div class="jetonomy-modal" id="jetonomy-ban-modal" style="display:none;">
 		<div class="jetonomy-modal__overlay"></div>
 		<div class="jetonomy-modal__content">
-			<h2><?php esc_html_e( 'Ban User', 'jetonomy' ); ?></h2>
+			<?php // Title and confirm button are re-labelled by admin-common.js to match the chosen type. ?>
+			<h2 id="ban-modal-title"><?php esc_html_e( 'Ban User', 'jetonomy' ); ?></h2>
 			<input type="hidden" id="ban-user-id" value="">
 			<p id="ban-user-label"></p>
 			<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table in the ban modal, not a data list; wp-admin stacks label/field rows below 782px -->
@@ -233,10 +237,21 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 						<select id="ban-type">
 							<option value="global_ban"><?php esc_html_e( 'Global Ban', 'jetonomy' ); ?></option>
 							<option value="silence"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></option>
+							<?php if ( current_user_can( 'manage_options' ) ) : ?>
+								<option value="ip_ban"><?php esc_html_e( 'IP address ban', 'jetonomy' ); ?></option>
+							<?php endif; ?>
 						</select>
 					</td>
 				</tr>
-				<tr>
+				<tr id="ban-ip-row" hidden>
+					<th scope="row"><label for="ban-ip"><?php esc_html_e( 'IP address', 'jetonomy' ); ?></label></th>
+					<td>
+						<input type="text" id="ban-ip" class="regular-text" inputmode="decimal" autocomplete="off" aria-describedby="ban-ip-help">
+						<?php /* translators: 1: product name shown in wp-admin (default "Jetonomy"). 2: member label, plural, lowercase (e.g. "members"). */ ?>
+						<p class="description" id="ban-ip-help"><?php echo esc_html( sprintf( __( '%1$s does not record the IP addresses of %2$s. Copy the address from your server logs or security plugin. Everyone using it, signed in or not, loses access to the community.', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name(), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
+					</td>
+				</tr>
+				<tr id="ban-reason-row">
 					<th scope="row"><label for="ban-reason"><?php esc_html_e( 'Reason', 'jetonomy' ); ?></label></th>
 					<td><input type="text" id="ban-reason" class="regular-text"></td>
 				</tr>

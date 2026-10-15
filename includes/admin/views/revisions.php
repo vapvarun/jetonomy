@@ -49,14 +49,12 @@ if ( 'detail' === $mode ) :
 
 		<h2 class="title">
 			<?php
+			// The source is gone when no live title resolves: name it from the
+			// newest stored snapshot instead of an id.
 			echo esc_html(
-				sprintf(
-					/* translators: 1: object type label, 2: object id, 3: title */
-					__( '%1$s #%2$d: %3$s', 'jetonomy' ),
-					ucfirst( $object_type ),
-					$object_id,
-					$object_title !== '' ? $object_title : __( '(no title)', 'jetonomy' )
-				)
+				'' !== $object_title
+					? $object_title
+					: \Jetonomy\Admin\Revisions_List_Table::deleted_title( $object_type, $revisions ? \Jetonomy\Admin\Revisions_List_Table::stored_title( $revisions[0] ) : '' )
 			);
 			?>
 		</h2>
@@ -107,7 +105,7 @@ if ( 'detail' === $mode ) :
 					),
 					'empty'     => array(
 						'icon'  => 'backup',
-						'title' => __( 'No revisions have been recorded for this object yet.', 'jetonomy' ),
+						'title' => __( 'No revisions have been recorded here yet.', 'jetonomy' ),
 					),
 					'cell'      => function ( $rev, $col ) use ( $jt_prev, $jt_objects ) {
 						switch ( $col ) {
@@ -149,7 +147,7 @@ if ( 'detail' === $mode ) :
 										$author_id
 									);
 								} else {
-									echo '<em>' . esc_html__( 'Unknown', 'jetonomy' ) . '</em>';
+									echo \Jetonomy\Admin\Revisions_List_Table::editor_not_recorded(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
 								}
 								break;
 
@@ -234,7 +232,16 @@ else :
 		<hr class="wp-header-end" />
 
 		<p class="description">
-			<?php /* translators: %s: reply label, lowercase (e.g. "reply"). */ echo esc_html( sprintf( __( 'Audit trail of post and %s edits. Click a title to see the full revision history with diffs.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
+			<?php
+			echo esc_html(
+				sprintf(
+					/* translators: 1: topic label, lowercase (e.g. "topic"). 2: reply label, lowercase (e.g. "reply"). */
+					__( 'Every edit to a %1$s or %2$s, newest first. Click a title to see each version and what changed.', 'jetonomy' ),
+					\Jetonomy\jetonomy_label( 'topic', false, true ),
+					\Jetonomy\jetonomy_label( 'reply', false, true )
+				)
+			);
+			?>
 		</p>
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">

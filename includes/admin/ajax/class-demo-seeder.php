@@ -386,7 +386,8 @@ class Demo_Seeder {
 
 		// ── Badges ─────────────────────────────────────────────────────────────
 
-		$demo['badges'] = self::seed_badges( $all_ids, $by_login, $now );
+		// Demo members only: awarding the site admin re-awarded the same badges on every import.
+		$demo['badges'] = self::seed_badges( $member_ids, $by_login, $now );
 		self::checkpoint( $demo );
 
 		// ── Pro data ───────────────────────────────────────────────────────────
@@ -809,6 +810,11 @@ class Demo_Seeder {
 		if ( $user_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $user_badges_t ) ) === $user_badges_t ) {
 			self::delete_in( $user_badges_t, 'user_id', $user_ids );
 		}
+		// Awards of the badges deleted below, whoever holds them (older seeds
+		// awarded the site admin too), or they are left pointing at nothing.
+		if ( $badge_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $user_badges_t ) ) === $user_badges_t ) {
+			self::delete_in( $user_badges_t, 'badge_id', $badge_ids );
+		}
 		if ( $badge_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $badges_t ) ) === $badges_t ) {
 			self::delete_in( $badges_t, 'id', $badge_ids );
 		}
@@ -994,12 +1000,12 @@ class Demo_Seeder {
 	/**
 	 * Define and award the badge set. Returns the created badge ids.
 	 *
-	 * @param array  $all_ids  Admin + members.
-	 * @param array  $by_login login → id map (admin addressable).
+	 * @param array  $member_ids Demo member ids (never the site admin).
+	 * @param array  $by_login   login → id map (admin addressable; only member logins are awarded).
 	 * @param string $now      Current datetime.
 	 * @return array<int, int> Badge ids.
 	 */
-	private static function seed_badges( array $all_ids, array $by_login, string $now ): array {
+	private static function seed_badges( array $member_ids, array $by_login, string $now ): array {
 		global $wpdb;
 
 		// Badges live in the Pro custom-badges tables. The schema carries a
@@ -1083,7 +1089,21 @@ class Demo_Seeder {
 			return $created_ids;
 		}
 
-		$award = static function ( int $uid, int $badge_id ) use ( $wpdb, $user_badges_t, $now ) {
+		// Awards already held, loaded once: a reused Pro badge may already be held,
+		// and a non-repeatable badge must never be awarded twice.
+		$ids_in    = implode( ',', array_map( 'absint', $badge_ids ) );
+		$held      = array();
+		$repeating = array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$badges_t} WHERE is_repeatable = 1 AND id IN ({$ids_in})" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint'd.
+		foreach ( (array) $wpdb->get_results( "SELECT user_id, badge_id FROM {$user_badges_t} WHERE badge_id IN ({$ids_in})" ) as $row ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint'd.
+			$held[ (int) $row->user_id . ':' . (int) $row->badge_id ] = true;
+		}
+
+		$award = static function ( int $uid, int $badge_id ) use ( $wpdb, $user_badges_t, $now, &$held, $repeating ) {
+			$key = $uid . ':' . $badge_id;
+			if ( isset( $held[ $key ] ) && ! in_array( $badge_id, $repeating, true ) ) {
+				return;
+			}
+			$held[ $key ] = true;
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$user_badges_t,
 				array(
@@ -1101,8 +1121,8 @@ class Demo_Seeder {
 		$badge_rising = $badge_ids[4];        // Rising Star.
 		$badge_top    = $badge_ids[6];        // Top Contributor.
 
-		// Everyone gets Early Adopter + First Post.
-		foreach ( $all_ids as $uid ) {
+		// Every demo member gets Early Adopter + First Post.
+		foreach ( $member_ids as $uid ) {
 			$award( $uid, $badge_early );
 			$award( $uid, $badge_first );
 		}

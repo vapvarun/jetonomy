@@ -195,8 +195,10 @@ class Votes_Controller extends Base_Controller {
 
 		// Fire action for Notifier. Pass the vote value so listeners can tell an
 		// upvote from a downvote — the author should not get an encouraging
-		// "voted on your post" notification when someone downvotes.
-		do_action( 'jetonomy_after_vote', $type, $id, $user_id, $value );
+		// "voted on your post" notification when someone downvotes. A toggle-off
+		// passes 0, what actually happened: passing the requested 1 made a
+		// removal look like a new upvote ("0 people voted on ...").
+		do_action( 'jetonomy_after_vote', $type, $id, $user_id, 'removed' === $result['action'] ? 0 : $value );
 
 		// Award or adjust reputation on the object author.
 		$this->maybe_adjust_reputation( $type, $value, $result, (int) $object->author_id, $id );

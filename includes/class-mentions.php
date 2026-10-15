@@ -346,36 +346,9 @@ class Mentions {
 			// inbox. Same predicate, one implementation (1.8.0).
 			if ( ! \Jetonomy\Notifications\Notifier::recipient_blocked_actor( $uid, $actor_id )
 				&& \Jetonomy\Notifications\Notifier::should_email( $uid, 'mention', $user_prefs ) ) {
-				$email_adapter = Adapters\Adapter_Registry::get_email();
-				if ( $email_adapter ) {
-					$user = get_userdata( $uid );
-					if ( $user && $user->user_email ) {
-						$site_name = get_bloginfo( 'name' );
-						$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );
-
-						// Build List-Unsubscribe headers (RFC 8058) with a signed,
-						// time-limited unsubscribe token.
-						$unsub_exp   = \Jetonomy\Notifications\Notifier::unsubscribe_expiry();
-						$unsub_token = \Jetonomy\Notifications\Notifier::unsubscribe_token( $uid, 'mention', $unsub_exp );
-						$unsub_url   = add_query_arg(
-							array(
-								'jetonomy_unsubscribe' => $unsub_token,
-								'jetonomy_unsub_exp'   => $unsub_exp,
-								'uid'                  => $uid,
-								'type'                 => 'mention',
-							),
-							home_url( '/' )
-						);
-						$headers     = array(
-							'List-Unsubscribe: <' . $unsub_url . '>',
-							'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
-						);
-
-						// $content_url already resolved above via notification_deep_link().
-						$html = Notifications\Notifier::render_email_template( 'mention', $message, $user, $unsub_url, $content_url );
-						$email_adapter->send( $user->user_email, $subject, $html, wp_strip_all_tags( $message ), $headers );
-					}
-				}
+				// The shared sender: the owner's Mention template (subject and
+				// body), the email filters and headers, like every other email.
+				\Jetonomy\Notifications\Notifier::send_email_notification( $uid, 'mention', $message, $object_type, $object_id, $content_url );
 			}
 		}
 	}

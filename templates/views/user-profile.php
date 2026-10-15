@@ -159,12 +159,13 @@ $crumbs = array(
 							<span class="jt-tl jt-tl-named" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( \Jetonomy\Trust\Trust_Levels::label( (int) $trust ) ); ?></span>
 						</h1>
 						<div class="jt-flex jt-items-center jt-gap-sm jt-flex-shrink-0 jt-profile-head-actions">
+						<?php $jt_message_url = is_user_logged_in() ? \Jetonomy\member_message_url( $user ) : ''; ?>
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
 							<a href="<?php echo esc_url( \Jetonomy\get_profile_action_url( 'edit', (int) $user->ID ) ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
 							</a>
-						<?php elseif ( is_user_logged_in() && \Jetonomy\messaging_active() ) : ?>
-							<a href="<?php echo esc_url( \Jetonomy\route_url( 'messages' ) . '?to=' . rawurlencode( $user->user_login ) ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
+						<?php elseif ( '' !== $jt_message_url ) : ?>
+							<a href="<?php echo esc_url( $jt_message_url ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php jetonomy_echo_icon( 'send', 14 ); ?>
 								<?php esc_html_e( 'Message', 'jetonomy' ); ?>
 							</a>

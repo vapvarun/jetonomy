@@ -120,9 +120,30 @@ if ( '' !== $jt_claude ) {
 		'WP-CLI command groups'                       => count( (array) ( $jt_manifest['wp_cli'] ?? array() ) ),
 		'cron hooks'                                  => count( (array) ( $jt_manifest['cron'] ?? array() ) ),
 	);
+	// Every occurrence, not the first: the same count is restated further down.
 	foreach ( $jt_counts as $jt_label => $jt_want ) {
-		if ( preg_match( '/(\d+) ' . preg_quote( $jt_label, '/' ) . '/', $jt_claude, $jt_cm ) && (int) $jt_cm[1] !== $jt_want ) {
-			$jt_problems[] = "CLAUDE.md says {$jt_cm[1]} {$jt_label}, the manifest has {$jt_want}";
+		preg_match_all( '/(\d+) ' . preg_quote( $jt_label, '/' ) . '/', $jt_claude, $jt_cm );
+		foreach ( array_unique( $jt_cm[1] ) as $jt_said ) {
+			if ( (int) $jt_said !== $jt_want ) {
+				$jt_problems[] = "CLAUDE.md says {$jt_said} {$jt_label}, the manifest has {$jt_want}";
+			}
+		}
+	}
+}
+
+// readme.txt states the same numbers to customers and reviewers.
+$jt_readme = (string) @file_get_contents( $jt_root . '/readme.txt' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+if ( '' !== $jt_readme && isset( $jt_counts ) ) {
+	foreach ( array(
+		'REST routes'      => $jt_counts['REST routes'],
+		'method-endpoints' => $jt_counts['method-endpoints'],
+		'action hooks and filters' => $jt_counts['hooks fired'],
+	) as $jt_label => $jt_want ) {
+		preg_match_all( '/(\d+) ' . preg_quote( $jt_label, '/' ) . '/', $jt_readme, $jt_rm );
+		foreach ( array_unique( $jt_rm[1] ) as $jt_said ) {
+			if ( (int) $jt_said !== $jt_want ) {
+				$jt_problems[] = "readme.txt says {$jt_said} {$jt_label}, the manifest has {$jt_want}";
+			}
 		}
 	}
 }

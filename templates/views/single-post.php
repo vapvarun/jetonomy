@@ -67,6 +67,12 @@ if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true 
 	// hit "private space" opening the very post they wrote (2026-08-06).
 	if ( ! $user_id || ! \Jetonomy\Models\Space::admitted( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
+			// A hidden space is not discoverable, so its topics answer exactly
+			// like a missing one: a different message confirmed a guessed URL.
+			if ( 'hidden' === $space->visibility ) {
+				$jt_not_found();
+				return;
+			}
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				array(

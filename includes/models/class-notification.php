@@ -255,6 +255,45 @@ class Notification extends Model {
 	}
 
 	/**
+	 * Remove the notifications an actor caused about one object, for everyone
+	 * who received them (e.g. the "new join request" notices sent to a space's
+	 * staff, once the member withdraws that request).
+	 *
+	 * @param string $type        Notification type.
+	 * @param string $object_type Object type.
+	 * @param int    $object_id   Object ID.
+	 * @param int    $actor_id    The member whose action caused them.
+	 * @return int Rows removed.
+	 */
+	public static function delete_caused_by( string $type, string $object_type, int $object_id, int $actor_id ): int {
+		$recipients = array_map(
+			'intval',
+			static::db()->get_col(
+				static::db()->prepare(
+					'SELECT DISTINCT user_id FROM ' . static::table() . ' WHERE type = %s AND object_type = %s AND object_id = %d AND actor_id = %d',
+					$type,
+					$object_type,
+					$object_id,
+					$actor_id
+				)
+			)
+		);
+		$removed    = (int) static::db()->query(
+			static::db()->prepare(
+				'DELETE FROM ' . static::table() . ' WHERE type = %s AND object_type = %s AND object_id = %d AND actor_id = %d',
+				$type,
+				$object_type,
+				$object_id,
+				$actor_id
+			)
+		);
+		foreach ( $recipients as $recipient ) {
+			self::bust_user_cache( $recipient );
+		}
+		return $removed;
+	}
+
+	/**
 	 * Delete a set of notifications belonging to a specific user.
 	 *
 	 * Ownership is enforced in the WHERE clause so even a forged ID list

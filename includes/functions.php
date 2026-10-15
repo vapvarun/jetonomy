@@ -580,6 +580,34 @@ function messaging_active(): bool {
 }
 
 /**
+ * Where "Message" on a member's profile leads, or '' for no button.
+ *
+ * Jetonomy Pro's own messaging when it is active; otherwise whichever
+ * messenger the site runs (WPMediaVerse, BuddyNext...) supplies its link
+ * through the filter. Jetonomy renders the button; the messenger owns the
+ * conversation.
+ *
+ * @param \WP_User $member The member being viewed.
+ */
+function member_message_url( \WP_User $member ): string {
+	$url = messaging_active() ? route_url( 'messages' ) . '?to=' . rawurlencode( $member->user_login ) : '';
+
+	/**
+	 * Filter the link behind a profile's Message button ('' hides it).
+	 *
+	 * A messenger that is not Jetonomy's own (Pro messaging stands down while
+	 * WPMediaVerse is active) returns a link that opens a conversation with
+	 * this member.
+	 *
+	 * @since 2.0.2
+	 *
+	 * @param string   $url    Link, or '' for no button.
+	 * @param \WP_User $member The member being viewed.
+	 */
+	return (string) apply_filters( 'jetonomy_member_message_url', $url, $member );
+}
+
+/**
  * Resolve the requesting client's IP, honouring a trusted reverse-proxy chain.
  *
  * Single source of truth for "who is this request from" — used by IP-bans and

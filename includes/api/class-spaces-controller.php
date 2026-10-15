@@ -163,6 +163,16 @@ class Spaces_Controller extends Base_Controller {
 				'args'                => $this->get_collection_params(),
 			)
 		);
+		// A member takes back their own pending request (only ever their own).
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/join-requests/mine',
+			array(
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => array( $this, 'withdraw_join_request' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+			)
+		);
 		register_rest_route(
 			$ns,
 			'/spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/approve',
@@ -1197,6 +1207,23 @@ class Spaces_Controller extends Base_Controller {
 				'total'  => JoinRequest::count_pending_for_space( $id ),
 				'offset' => $pagination['offset'],
 			)
+		);
+	}
+
+	/**
+	 * DELETE /spaces/{id}/join-requests/mine — Withdraw the caller's pending request.
+	 */
+	public function withdraw_join_request( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id = absint( $request->get_param( 'id' ) );
+		if ( ! JoinRequest::withdraw( $id, get_current_user_id() ) ) {
+			return new WP_Error( 'jetonomy_no_pending_request', __( 'You have no pending request here.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
+		return new WP_REST_Response(
+			array(
+				'status'   => 'withdrawn',
+				'space_id' => $id,
+			),
+			200
 		);
 	}
 

@@ -1665,35 +1665,55 @@
 				}
 			});
 
+			// One modal serves Ban, Silence and IP ban; its title and confirm button
+			// follow the chosen type so the operator never confirms the wrong action.
+			var banActions = {
+				global_ban: __( 'Ban User', 'jetonomy' ),
+				silence:    __( 'Silence User', 'jetonomy' ),
+				ip_ban:     __( 'Ban IP address', 'jetonomy' )
+			};
+			var syncBanModal = function() {
+				var type = $('#ban-type').val();
+				var label = banActions[ type ] || banActions.global_ban;
+				$('#ban-modal-title').text(label);
+				$('#jetonomy-confirm-ban').text(label);
+				$('#ban-ip-row').prop('hidden', 'ip_ban' !== type);
+				// An IP ban keeps the address in the reason column, so a typed reason would be dropped.
+				$('#ban-reason-row').prop('hidden', 'ip_ban' === type);
+			};
+			var openBanModal = function($trigger, type, duration, labelFormat) {
+				var username = $trigger.data('username') || $trigger.closest('tr').find('.column-username strong').text();
+				$('#ban-user-id').val($trigger.data('user-id'));
+				$('#ban-user-label').text(sprintf(labelFormat, username));
+				$('#ban-type').val(type);
+				$('#ban-reason').val('');
+				$('#ban-ip').val('');
+				$('#ban-duration').val(duration);
+				syncBanModal();
+				$('#jetonomy-ban-modal').show();
+			};
+			$(document).on('change', '#ban-type', syncBanModal);
+
 			// Ban User - Show Modal
 			$(document).on('click', '.jetonomy-ban-trigger', function(e) {
 				e.preventDefault();
-				var userId = $(this).data('user-id');
-				var username = $(this).data('username');
-
-				$('#ban-user-id').val(userId);
 				/* translators: %s: username of the member being banned. */
-				$('#ban-user-label').text(sprintf(__('Banning: %s', 'jetonomy'), username));
-				$('#ban-type').val('global_ban');
-				$('#ban-reason').val('');
-				$('#ban-duration').val('permanent');
-				$('#jetonomy-ban-modal').show();
+				openBanModal($(this), 'global_ban', 'permanent', __('Banning: %s', 'jetonomy'));
 			});
 
 			// Silence User - Show Modal with Silence preselected
 			$(document).on('click', '.jetonomy-silence-trigger', function(e) {
 				e.preventDefault();
-				var userId = $(this).data('user-id');
-				var $row = $(this).closest('tr');
-				var username = $row.find('.column-username strong').text();
-
-				$('#ban-user-id').val(userId);
 				/* translators: %s: username of the member being silenced. */
-				$('#ban-user-label').text(sprintf(__('Silencing: %s', 'jetonomy'), username));
-				$('#ban-type').val('silence');
-				$('#ban-reason').val('');
-				$('#ban-duration').val('7d');
-				$('#jetonomy-ban-modal').show();
+				openBanModal($(this), 'silence', '7d', __('Silencing: %s', 'jetonomy'));
+			});
+
+			// Ban IP - Show Modal with IP ban preselected
+			$(document).on('click', '.jetonomy-ban-ip-trigger', function(e) {
+				e.preventDefault();
+				/* translators: %s: username of the member whose IP address is being banned. */
+				openBanModal($(this), 'ip_ban', 'permanent', __('Banning an IP address used by: %s', 'jetonomy'));
+				$('#ban-ip').trigger('focus');
 			});
 
 			// Confirm Ban
@@ -1705,15 +1725,21 @@
 				$btn.prop('disabled', true);
 				self.showSpinner($btn);
 
+				var banType = $('#ban-type').val();
 				self.ajax('jetonomy_ban_user', {
 					user_id: userId,
-					type: $('#ban-type').val(),
+					type: banType,
 					reason: $('#ban-reason').val(),
+					ip: $('#ban-ip').val(),
 					duration: $('#ban-duration').val()
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);
 						$('#jetonomy-ban-modal').hide();
+						// An IP ban is not the member's own standing; it is lifted from Moderation > Banned Users.
+						if ('ip_ban' === banType) {
+							return;
+						}
 						// Toggle row action: Ban → Unban
 						var $row = $('tr[data-user-id="' + userId + '"]');
 						$row.find('.ban').html(

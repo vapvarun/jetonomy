@@ -24,7 +24,7 @@ class Notifier {
 	private const UNSUB_TTL_DAYS = 60;
 
 	/** Types whose email is on when no stored default exists (see default_email()). */
-	private const EMAIL_ON_WHEN_UNSET = array( 'message' );
+	private const EMAIL_ON_WHEN_UNSET = array( 'message', 'join_request_result' );
 
 	public function __construct() {
 		$this->register_hooks();
@@ -162,6 +162,15 @@ class Notifier {
 				'subject' => sprintf( __( '[{site}] New %s join request', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nReview the request and approve or decline it.", 'jetonomy' ),
 			),
+			'verification'          => array(
+				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
+				'body'    => __( 'Thanks for joining {site}. Confirm your email to finish creating your account.', 'jetonomy' ),
+			),
+			'join_request_result'   => array(
+				/* translators: %s: the singular space label; {site} is replaced with the site name before sending. */
+				'subject' => sprintf( __( '[{site}] Your %s join request was answered', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				'body'    => __( "Hi {user},\n\n{message}.", 'jetonomy' ),
+			),
 			'verification_reminder' => array(
 				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\nWe noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.\n\nThis link expires in 24 hours.", 'jetonomy' ),
@@ -231,14 +240,23 @@ class Notifier {
 		$site_name    = wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES );
 		$display_name = $user->display_name ? $user->display_name : $user->user_login;
 
-		/* translators: %s: site name */
-		$subject = sprintf( __( 'Confirm your email to finish signing up at %s', 'jetonomy' ), $site_name );
+		// The owner may edit the subject and the intro sentence (Settings >
+		// Emails, type "verification"); the link, button and expiry note are
+		// fixed so an edit can never break verification.
+		$tpl          = (array) ( get_option( 'jetonomy_email_templates', array() )['verification'] ?? array() );
+		$placeholders = array(
+			'{site}' => $site_name,
+			'{user}' => $display_name,
+		);
+		$defaults     = self::get_default_template( 'verification' );
+		$subject      = strtr( '' !== (string) ( $tpl['subject'] ?? '' ) ? (string) $tpl['subject'] : $defaults['subject'], $placeholders );
+		$intro        = strtr( '' !== (string) ( $tpl['body'] ?? '' ) ? (string) $tpl['body'] : $defaults['body'], $placeholders );
 
 		$plain = sprintf(
-			/* translators: 1: display name, 2: site name */
-			__( "Hi %1\$s,\n\nThanks for joining %2\$s. Click the link below to confirm your email and finish creating your account:\n\n%3\$s\n\nThis link expires in 24 hours.\n\nIf you didn't sign up, you can ignore this email.\n\nThe %2\$s team", 'jetonomy' ),
+			/* translators: 1: display name, 2: the intro sentence, 3: verification link. */
+			__( "Hi %1\$s,\n\n%2\$s\n\n%3\$s\n\nThis link expires in 24 hours.\n\nIf you didn't sign up, you can ignore this email.", 'jetonomy' ),
 			$display_name,
-			$site_name,
+			$intro,
 			$verify_url
 		);
 
@@ -257,13 +275,7 @@ class Notifier {
 		</p>
 		<p style="margin:0 0 16px;">
 			<?php
-			echo esc_html(
-				sprintf(
-					/* translators: %s: site name */
-					__( 'Thanks for joining %s. Confirm your email to finish creating your account.', 'jetonomy' ),
-					$site_name
-				)
-			);
+			echo esc_html( $intro );
 			?>
 		</p>
 		<p style="margin:24px 0;">
@@ -754,9 +766,8 @@ class Notifier {
 		// Only an upvote earns the author a "voted on your post" notification.
 		// Downvotes (-1) and vote removals (0) must not ping the author with an
 		// encouraging-sounding message. Default 1 keeps legacy 3-arg callers safe.
-		if ( $value < 1 ) {
-			return;
-		}
+		// A removal still corrects an existing grouped notice (below).
+		$is_upvote = $value >= 1;
 
 		$content_url = '';
 		if ( 'post' === $object_type ) {
@@ -785,9 +796,20 @@ class Notifier {
 		// Check for existing vote notification on same object within last hour.
 		$existing = Notification::find_recent_for_object( $author_id, 'vote_on_post', $object_type, $object_id, gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) );
 
+		if ( ! $is_upvote && ! $existing ) {
+			return;
+		}
+
 		if ( $existing ) {
 			// Update existing — show current total vote count.
 			$vote_count = \Jetonomy\Models\Vote::count_voters( $object_type, $object_id );
+
+			// Nobody left (every vote taken back): the notice goes, rather than
+			// telling the author "0 people voted".
+			if ( $vote_count < 1 ) {
+				Notification::delete_for_user( $author_id, array( (int) $existing->id ) );
+				return;
+			}
 
 			$message = sprintf(
 				// translators: 1: vote count, 2: content title.
@@ -1402,7 +1424,13 @@ class Notifier {
 		return is_array( $settings ) && is_array( $settings['notifications'] ?? null ) ? $settings['notifications'] : array();
 	}
 
-	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {
+	/**
+	 * Send one notification email: the owner's template (subject and body),
+	 * the email filters, unsubscribe headers and the shared layout. Every
+	 * email path calls this; mentions used a copy that skipped the template
+	 * and filters until 2.0.2.
+	 */
+	public static function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! $user->user_email ) {
 			return;
@@ -1619,6 +1647,7 @@ class Notifier {
 			'moderation'          => __( 'Moderation', 'jetonomy' ),
 			'flag_resolved'       => __( 'Report Reviewed', 'jetonomy' ),
 			'join_request'        => __( 'Join Request', 'jetonomy' ),
+			'join_request_result' => __( 'Join Request Result', 'jetonomy' ),
 			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
 			'message'             => __( 'Private Message', 'jetonomy' ),
 		);
@@ -1640,6 +1669,7 @@ class Notifier {
 			'moderation'          => __( 'Review in Mod Queue', 'jetonomy' ),
 			'flag_resolved'       => __( 'Open the Community', 'jetonomy' ),
 			'join_request'        => __( 'Review Request', 'jetonomy' ),
+			'join_request_result' => __( 'Open the Community', 'jetonomy' ),
 			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
 			'message'             => __( 'Read Message', 'jetonomy' ),
 		);

@@ -34,7 +34,7 @@ endif;
 if ( ! get_option( 'jetonomy_setup_complete' ) && ! $jt_has_content ) :
 	?>
 <div class="notice notice-info" style="padding:20px;border-left-color:var(--jt-accent,#3B82F6);">
-	<h3 style="margin:0 0 8px;"><?php esc_html_e( 'Welcome to Jetonomy!', 'jetonomy' ); ?></h3>
+	<h3 style="margin:0 0 8px;"><?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( 'Welcome to %s!', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></h3>
 	<p><?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( 'Complete the setup wizard to create your first community %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?></p>
 	<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-setup' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Run Setup Wizard', 'jetonomy' ); ?></a>
 </div>
@@ -43,11 +43,12 @@ endif;
 
 $stat_cards = array(
 	'total_posts'   => array(
-		'label' => __( 'Total Posts', 'jetonomy' ),
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+		'label' => sprintf( __( 'Total %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
 		'icon'  => 'dashicons-admin-post',
 	),
 	'total_replies' => array(
-		/* translators: %s: reply label, plural (e.g. "Replies"). */
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 		'label' => sprintf( __( 'Total %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ),
 		'icon'  => 'dashicons-format-chat',
 	),
@@ -65,13 +66,14 @@ $stat_cards = array(
 		'icon'  => 'dashicons-flag',
 	),
 	'posts_today'   => array(
-		'label' => __( 'Posts Today', 'jetonomy' ),
+		/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+		'label' => sprintf( __( '%s Today', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ),
 		'icon'  => 'dashicons-calendar-alt',
 	),
 );
 ?>
 <div class="wrap jetonomy-admin">
-	<h1><?php esc_html_e( 'Jetonomy Dashboard', 'jetonomy' ); ?></h1>
+	<h1><?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( '%s Dashboard', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></h1>
 
 	<!-- Stat Cards -->
 	<div class="jetonomy-stat-cards">
@@ -133,14 +135,13 @@ $stat_cards = array(
 					<tbody>
 						<?php
 						$jt_objects = \Jetonomy\Author::objects_of( $recent_activity );
+						$jt_context = \Jetonomy\Admin\Activity_List_Table::prime( $recent_activity );
 						foreach ( $recent_activity as $activity ) :
 							$actor       = get_userdata( $activity->user_id );
 							$jt_masked   = \Jetonomy\Author::hides_actor( (int) $activity->user_id, $jt_objects[ $activity->object_type . ':' . (int) $activity->object_id ] ?? null );
 							$action_code = $activity->action;
-							$object_type = $activity->object_type;
-							$object_id   = (int) $activity->object_id;
 
-							$action_label = \Jetonomy\Admin\Admin::action_label( (string) $action_code );
+							$action_label = \Jetonomy\Admin\Activity_List_Table::action_text( $activity );
 
 							// --- Dot color by action category ---
 							$create_actions   = array( 'created_post', 'created_reply', 'joined_space' );
@@ -157,53 +158,7 @@ $stat_cards = array(
 								$dot_color = '#94a3b8'; // gray
 							}
 
-							// --- Object reference ---
-							$object_html = '';
-
-							if ( 'post' === $object_type ) {
-								$post_row = \Jetonomy\Models\Post::find( $object_id );
-								if ( $post_row ) {
-									$post_url    = admin_url( 'admin.php?page=jetonomy-content&post_id=' . $object_id );
-									$object_html = '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post_row->title ) . '</a>';
-								} else {
-									/* translators: %d: post ID */
-									$object_html = esc_html( sprintf( __( 'post #%d', 'jetonomy' ), $object_id ) );
-								}
-							} elseif ( 'reply' === $object_type ) {
-								$reply_row = \Jetonomy\Models\Reply::find( $object_id );
-								if ( $reply_row ) {
-									$parent_post = \Jetonomy\Models\Post::find( (int) $reply_row->post_id );
-									if ( $parent_post ) {
-										$post_url    = admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply_row->post_id );
-										$object_html = sprintf(
-											/* translators: 1: reply label (e.g. "Reply"). 2: linked post title. */
-											__( '%1$s on %2$s', 'jetonomy' ),
-											esc_html( \Jetonomy\jetonomy_label( 'reply' ) ),
-											'<a href="' . esc_url( $post_url ) . '">' . esc_html( $parent_post->title ) . '</a>'
-										);
-									} else {
-										/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
-										$object_html = esc_html( sprintf( __( '%1$s #%2$d', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ), $object_id ) );
-									}
-								} else {
-									/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
-									$object_html = esc_html( sprintf( __( '%1$s #%2$d', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ), $object_id ) );
-								}
-							} elseif ( 'space' === $object_type ) {
-								$space_row   = \Jetonomy\Models\Space::find( $object_id );
-								$object_html = $space_row
-									? esc_html( $space_row->title )
-									/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
-									: esc_html( sprintf( __( '%1$s #%2$d', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), $object_id ) );
-							} elseif ( 'user' === $object_type ) {
-								$obj_user    = get_userdata( $object_id );
-								$object_html = $obj_user
-									? esc_html( $obj_user->display_name )
-									/* translators: %d: user ID */
-									: esc_html( sprintf( __( 'user #%d', 'jetonomy' ), $object_id ) );
-							} else {
-								$object_html = esc_html( $object_type . ' #' . $object_id );
-							}
+							$object_html = \Jetonomy\Admin\Activity_List_Table::object_html( $activity, $jt_context );
 							?>
 							<?php
 							// column-primary + data-colname put this table on the same

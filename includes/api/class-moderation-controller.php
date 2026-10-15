@@ -237,8 +237,11 @@ class Moderation_Controller extends Base_Controller {
 					'type'       => array(
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => array( 'global_ban', 'space_ban', 'silence' ),
+						'enum'     => array( 'global_ban', 'space_ban', 'silence', 'ip_ban' ),
 					),
+					// Required when type is ip_ban: the address to block. user_id names the
+					// member it was seen on, so the same target rules apply.
+					'ip'         => array( 'type' => 'string' ),
 					'reason'     => array( 'type' => 'string' ),
 					'space_id'   => array( 'type' => 'integer' ),
 					'expires_at' => array( 'type' => 'string' ),
@@ -271,7 +274,7 @@ class Moderation_Controller extends Base_Controller {
 				'args'                => array(
 					'type'     => array(
 						'type' => 'string',
-						'enum' => array( 'global_ban', 'space_ban', 'silence' ),
+						'enum' => array( 'global_ban', 'space_ban', 'silence', 'ip_ban' ),
 					),
 					'user_id'  => array( 'type' => 'integer' ),
 					'space_id' => array( 'type' => 'integer' ),
@@ -751,7 +754,7 @@ class Moderation_Controller extends Base_Controller {
 	}
 
 	/**
-	 * POST /moderation/ban — Issue a ban, space ban, or silence.
+	 * POST /moderation/ban — Issue a ban, space ban, silence, or IP ban.
 	 *
 	 * REST_Auth gates this on `jetonomy_moderate` OR `manage_options`. Space
 	 * admins legitimately need to issue `space_ban` for their own space even
@@ -817,6 +820,17 @@ class Moderation_Controller extends Base_Controller {
 			);
 		}
 
+		// An ip_ban stores the address in `reason` (the column is_ip_banned() matches).
+		$ip = null;
+		if ( 'ip_ban' === $type ) {
+			$ip = Restriction::validate_ip_ban( (string) $request->get_param( 'ip' ), $actor_id );
+			if ( is_wp_error( $ip ) ) {
+				return $ip;
+			}
+			$reason   = $ip;
+			$space_id = null;
+		}
+
 		$restriction_id = Restriction::ban(
 			$user_id,
 			$type,
@@ -840,6 +854,7 @@ class Moderation_Controller extends Base_Controller {
 				'restriction_id' => $restriction_id,
 				'user_id'        => $user_id,
 				'type'           => $type,
+				'ip'             => $ip,
 			),
 			201
 		);

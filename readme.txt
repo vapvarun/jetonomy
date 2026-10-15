@@ -93,7 +93,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 
 **Notifications**
 - In-app notification bell with unread count
-- Email notifications (immediate) for replies, votes, mentions, and moderation actions
+- Email notifications (immediate) for replies, mentions, join requests and moderation actions; votes, reactions and badges notify in the community by default, and the owner can turn their emails on
 - Notification preferences per user
 
 **Moderation**
@@ -125,9 +125,9 @@ The trust level system is your best spam defense. New accounts can post, but the
 - FULLTEXT indexes for instant search
 
 **Developer Tools**
-- 81 REST routes (109 method-endpoints) at `/wp-json/jetonomy/v1/`
+- 84 REST routes (114 method-endpoints) at `/wp-json/jetonomy/v1/`
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
-- 239 action hooks and filters for customization (110 actions, 129 filters)
+- 253 action hooks and filters for customization (114 actions, 139 filters)
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
 - RTL stylesheet included
@@ -256,7 +256,7 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 81 REST routes / 109 method-endpoints (141 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 239 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 84 REST routes / 114 method-endpoints (143 routes across the pair with Pro), 19 WordPress Abilities (WP 6.9+), 253 action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
@@ -279,6 +279,9 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * New      - The reply composer quotes the first line of the reply being answered and links back to it, and a nested reply shows "in reply to" its parent at every depth.
 * New      - Owners can now unarchive a space they handed over, and the archived banner names the new owner; the former owner stays on as a space moderator.
 * New      - Admins see an error notice on every admin screen when Plain permalinks are active, linking to Settings > Permalinks, because community URLs cannot work with Plain permalinks.
+* New      - Members can withdraw a join request they are still waiting on.
+* New      - Reporting a topic, reply or member asks for a reason (spam, offensive, off-topic, harassment, other) and optional details.
+* New      - Site staff can ban an IP address from Jetonomy > Users, and lift it with the other restrictions.
 * Improve  - Renamed terms for spaces, topics, replies, members and categories now apply on every wp-admin screen, in notification preferences, empty states and messages, and read correctly with any word you choose.
 * Improve  - Private spaces always take join requests or invites, existing private spaces set to Open now take requests, and members see a pending state after asking to join.
 * Improve  - Every space card shows a Private badge and how to join, and the request form sits inside the private space notice with a clear Request to join button.
@@ -317,6 +320,13 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Improve  - Opening an invite link shows a Join button; joining happens when the member clicks it, so link previews can never add anyone.
 * Improve  - Invite links set to expire on a date now work until the end of that day in your site's timezone, and an unreadable or past date is refused.
 * Improve  - Archived and locked spaces show Follow instead of Join, and accept no new members by any route.
+* Improve  - Private and invite-only pages name the space and show its description.
+* Improve  - Members are emailed when their join request is approved or declined, and can turn this off in their preferences.
+* Improve  - Settings > Emails lists every email the community sends, including reactions, report reviews, join answers and the account confirmation email.
+* Improve  - The Activity Log reads like the Dashboard: titles, plain reputation changes and no raw codes.
+* Improve  - Flags in a space's own moderation queue show the topic and the flagged text.
+* Improve  - Admin screens follow your Terminology everywhere, and White Label brand names replace Jetonomy in admin headings.
+* Improve  - The Permissions role table scrolls with its first column fixed, and trust level names, revisions and the Activity Log retention setting are clearer.
 * Fix      - Members whose display name is a reserved word, such as admin, can save their profile again.
 * Fix      - Refused actions such as reaching the pin limit show their message even when the community navigation is hidden.
 * Fix      - Members who cannot vote see why, instead of a vote button that does nothing.
@@ -354,6 +364,12 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Fix      - The Spaces admin screen and its actions now need the same Manage spaces permission.
 * Fix      - Join request and invite lists are paginated, and approve or deny failures now show a message.
 * Fix      - Deleting a space also clears its import records, so re-running an importer cannot attach content to a deleted space.
+* Fix      - Archived and locked spaces no longer offer a composer that the server then refuses.
+* Fix      - A space's moderation queue button opens the tab its count is about.
+* Fix      - The edited Mention email subject and body are now used.
+* Fix      - Taking back a vote no longer leaves "0 people voted" in the bell.
+* Fix      - Removing the last bookmark shows the empty state straight away.
+* Fix      - Re-importing demo data no longer awards the site admin the same badge again.
 * Security - Site moderators can no longer edit, trash, approve or resolve reports on content in private spaces they cannot read, and their moderation queues, report lists and counts leave those spaces out.
 * Security - Members can no longer report content they cannot see, which also stops reports being used to learn which private topics exist.
 * Security - A member's display name can no longer run script in wp-admin's member search or Users screen.
@@ -379,6 +395,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Security - Breadcrumbs, category space counts and tag lists no longer reveal hidden categories, private spaces or tags used only in private topics.
 * Security - Access rules need a value that can work, so a trust level rule with no level can no longer admit every member.
 * Security - Space admins can no longer edit a space a site admin archived or locked; unarchiving still works where allowed.
+* Security - Topics in hidden spaces now answer exactly like missing ones, so a guessed link no longer confirms they exist.
 * Dev      - New filter jetonomy_space_preview_limit sets how many spaces a category previews, and REST user responses add trust_level_label.
 * Dev      - A pre-commit check now fails on hardcoded space, topic, reply, member or category nouns in translatable text.
 * Dev      - Error codes returned by the REST API and Abilities are now prefixed `jetonomy_` (for example `jetonomy_not_found`, `jetonomy_invalid_url`, `jetonomy_user_silenced`).
@@ -387,6 +404,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Dev      - The `jetonomy_theme_content_hooks` filter sets the theme hooks community pages are wrapped in.
 * Dev      - Every public hook now has a documented description and `@since` version, and the hooks reference is regenerated.
 * Dev      - REST: POST /invite/{token} accepts an invite (it was GET); the invites and join-requests lists take limit and offset; space responses include url; invite responses include expires_label.
+* Dev      - New DELETE /spaces/{id}/join-requests/mine, POST /moderation/ban accepts type ip_ban with ip, space responses keep their url, and new hooks jetonomy_join_request_withdrawn, jetonomy_member_message_url (Message button link from another messenger) and jetonomy_brand_name.
 
 = 2.0.1 - October 2026 =
 

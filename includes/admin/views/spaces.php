@@ -236,7 +236,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 						'width' => 's',
 					),
 					'posts'      => array(
-						'label' => __( 'Posts', 'jetonomy' ),
+						'label' => \Jetonomy\jetonomy_label( 'topic', true ),
 						'width' => 'xs',
 					),
 					'status'     => array(

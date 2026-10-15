@@ -13,8 +13,8 @@
   },
   "rest": {
     "namespace": "jetonomy/v1",
-    "route_count": 83,
-    "method_endpoints": 113,
+    "route_count": 84,
+    "method_endpoints": 114,
     "counted_by": "Live REST index at /wp-json/jetonomy/v1 with Pro deactivated, 2026-10-06 (re-derived from rest_get_server() filtered to free controller classes). route_count INCLUDES the /jetonomy/v1 index route itself (82 without it); method_endpoints counts route+method pairs. Do NOT cite the length of the endpoints array as a route count: it holds 88 entries covering 82 unique paths, because 5 paths (/users/me, /tags, /tags/{id}, /notifications/{id}, /spaces/{id}/access-rules) are listed once per method. Quoting 86 as 'routes' is the error this field exists to prevent. Pro is counted from code rather than live, because several Pro routes only register when an integration is installed.",
     "endpoints": [
       {
@@ -852,11 +852,11 @@
         ],
         "handler": "Moderation_Controller::list_bans,ban_user",
         "permission": "GET require_moderate; POST REST_Auth::auth_mutation('read') + in-handler cap matrix",
-        "purpose": "List active member restrictions (GET) or ban/silence a user (POST)",
+        "purpose": "List active restrictions (GET) or ban/silence/IP-ban a user (POST)",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
         "ownership_check": "handler_enforces",
-        "audit_notes": "1.8.1: GET list_bans implemented (was documented-but-missing) - paginated active restrictions enriched with banned user + issuer + space, backed by Restriction::list_active(). POST ban_user unchanged. Space bans also accept the target space's admin."
+        "audit_notes": "1.8.1: GET list_bans implemented (was documented-but-missing) - paginated active restrictions enriched with banned user + issuer + space, backed by Restriction::list_active(). POST ban_user unchanged. Space bans also accept the target space's admin. 2.0.2: type enum gains ip_ban with a required `ip` param (validated by Restriction::validate_ip_ban - valid IPv4/IPv6, not the caller's own IP, not already banned; same target rules as a ban, needs jetonomy_moderate or manage_options); the IP is stored in `reason`. GET default list now includes ip_ban rows so they can be lifted; GET type enum also accepts ip_ban."
       },
       {
         "route": "/moderation/ban/(?P<id>\\d+)",
@@ -1173,6 +1173,19 @@
         "capability": "manage_options",
         "ownership_check": "not_applicable",
         "audit_notes": "2.0.1. 401 guest, 403 member (qa-actions DD1-DD2)."
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/join-requests/mine",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Spaces_Controller::withdraw_join_request",
+        "permission": "REST_Auth::auth_mutation(read)",
+        "purpose": "A member withdraws their own pending join request",
+        "auth": "logged_in",
+        "capability": null,
+        "ownership_check": "only the caller's own pending request",
+        "audit_notes": "2.0.2 owner pass: removes the staff join_request notices too. 404 when nothing is pending."
       }
     ]
   },
@@ -1211,7 +1224,7 @@
       "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_users",
       "purpose": "Ban user",
-      "notes": "Global ban or silence only (2.0.2). A space_ban without space_id is refused here and in Restriction::ban(); space bans come from the front-end space Members page (REST)."
+      "notes": "Global ban, silence or ip_ban (2.0.2; ip_ban takes an `ip` POST field validated by Restriction::validate_ip_ban). A space_ban without space_id is refused here and in Restriction::ban(); space bans come from the front-end space Members page (REST)."
     },
     {
       "action": "jetonomy_bulk_content_action",
@@ -2252,6 +2265,13 @@
       "args": "post_id, reply",
       "where": "templates/post.php",
       "consumed_by": null
+    },
+    {
+      "name": "jetonomy_brand_name",
+      "type": "filter",
+      "args": "name",
+      "where": "includes/admin/class-admin.php",
+      "consumed_by": "jetonomy-pro"
     },
     {
       "name": "jetonomy_composer_toolbar",
@@ -3917,6 +3937,22 @@
       "args": "hooks",
       "where": "includes/class-template-loader.php",
       "notes": "Two theme hook names fired around the community app (before, after); defaults to BuddyX/BuddyX Pro content-wrapper hooks when present."
+    },
+    {
+      "name": "jetonomy_join_request_withdrawn",
+      "type": "action",
+      "args": "space_id, user_id",
+      "where": "includes/models/class-join-request.php",
+      "consumed_by": null,
+      "notes": "A member withdrew their own pending join request; the staff join_request notices are removed with it."
+    },
+    {
+      "name": "jetonomy_member_message_url",
+      "type": "filter",
+      "args": "url, member",
+      "where": "includes/functions.php",
+      "consumed_by": null,
+      "notes": "Link behind a profile's Message button ('' hides it). A non-Jetonomy messenger (WPMediaVerse while Pro messaging stands down) supplies its conversation link."
     }
   ],
   "buddypress_integration": {

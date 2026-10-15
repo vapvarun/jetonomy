@@ -213,6 +213,7 @@ $jt_ban_types = array(
 	/* translators: %s: singular space label. */
 	'space_ban'  => sprintf( __( '%s ban', 'jetonomy' ), \Jetonomy\space_label() ),
 	'silence'    => __( 'Silenced', 'jetonomy' ),
+	'ip_ban'     => __( 'IP address ban', 'jetonomy' ),
 );
 
 // Reason → human label map. Source of truth for the badge text;

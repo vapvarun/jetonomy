@@ -64,7 +64,10 @@ $jt_methods = static function ( string $src ): array {
 $jt_changed        .= "\n" . $jt_untracked;
 $jt_targets       = array(); // file => [ method, ... ]
 foreach ( array_filter( explode( "\n", $jt_changed ) ) as $jt_file ) {
-	if ( ! str_ends_with( $jt_file, 'Test.php' ) || ! is_file( $jt_file ) ) {
+	// tests/pro/ exercises jetonomy-pro, whose base lives in another repo:
+	// rewinding this one cannot put Pro's old code back, so those tests would
+	// always "pass on base". Pro guards are proven by check-guards-can-fail.php.
+	if ( ! str_ends_with( $jt_file, 'Test.php' ) || ! is_file( $jt_file ) || str_starts_with( $jt_file, 'tests/pro/' ) ) {
 		continue;
 	}
 	$jt_now = (string) file_get_contents( $jt_file );
@@ -95,10 +98,6 @@ if ( 0 !== $jt_code ) {
 
 $jt_problems = array();
 try {
-	// Today's tests and runner config over yesterday's code; dependencies shared.
-	$jt_run( 'rm -rf ' . escapeshellarg( $jt_tree . '/tests' ) );
-	$jt_run( 'cp -R ' . escapeshellarg( $jt_root . '/tests' ) . ' ' . escapeshellarg( $jt_tree . '/tests' ) );
-	copy( $jt_root . '/phpunit.xml.dist', $jt_tree . '/phpunit.xml.dist' );
 	// vendor/ is partly tracked (the bundled EDD SDK), so the old checkout has
 	// the directory but none of the dev tools. Link in whatever it lacks.
 	if ( ! is_dir( $jt_tree . '/vendor' ) ) {
@@ -114,6 +113,29 @@ try {
 		throw new \RuntimeException( "PHPUnit does not start in the base checkout:\n{$jt_ver}" );
 	}
 
+	// Canary: one of the base's OWN tests must run on the base checkout.
+	// Without this, a harness that cannot boot at all made every new test
+	// look like it "failed on base", and the gate went green.
+	[ , $jt_base_tests ] = $jt_run( 'git ls-tree -r --name-only ' . $jt_base . ' -- tests/unit' );
+	$jt_canary           = '';
+	foreach ( explode( "\n", $jt_base_tests ) as $jt_candidate ) {
+		if ( str_ends_with( $jt_candidate, 'Test.php' ) ) {
+			$jt_canary = $jt_candidate;
+			break;
+		}
+	}
+	$jt_canary_xml = $jt_tree . '/junit-canary.xml';
+	[ , $jt_canary_out ] = $jt_run( 'cd ' . escapeshellarg( $jt_tree ) . ' && JETONOMY_TEST_SKIP_PRO=1 php vendor/bin/phpunit --log-junit ' . escapeshellarg( $jt_canary_xml ) . ' ' . escapeshellarg( $jt_canary ) );
+	$jt_canary_ran       = is_file( $jt_canary_xml ) ? (array) simplexml_load_file( $jt_canary_xml )->xpath( '//testcase[not(skipped)]' ) : array();
+	if ( '' === $jt_canary || ! $jt_canary_ran ) {
+		throw new \RuntimeException( "The base checkout cannot run its own tests ({$jt_canary}), so nothing could be proven:\n" . substr( (string) $jt_canary_out, -1500 ) );
+	}
+
+	// Today's tests and runner config over yesterday's code; dependencies shared.
+	$jt_run( 'rm -rf ' . escapeshellarg( $jt_tree . '/tests' ) );
+	$jt_run( 'cp -R ' . escapeshellarg( $jt_root . '/tests' ) . ' ' . escapeshellarg( $jt_tree . '/tests' ) );
+	copy( $jt_root . '/phpunit.xml.dist', $jt_tree . '/phpunit.xml.dist' );
+
 	$jt_total = 0;
 	foreach ( $jt_targets as $jt_file => $jt_names ) {
 		$jt_total += count( $jt_names );
@@ -128,7 +150,14 @@ try {
 		$jt_ran = array();
 		if ( $jt_xml ) {
 			foreach ( $jt_xml->xpath( '//testcase' ) as $jt_case ) {
-				$jt_ran[ (string) $jt_case['name'] ] = isset( $jt_case->failure ) || isset( $jt_case->error );
+				// A skipped test did not run: it is neither proof nor a pass.
+				if ( isset( $jt_case->skipped ) ) {
+					continue;
+				}
+				// A data-provider case is "test_x with data set #0": key it by the
+				// method; the method fails on base if any of its data sets does.
+				$jt_method            = (string) preg_replace( '/ with data set .*$/', '', (string) $jt_case['name'] );
+				$jt_ran[ $jt_method ] = ( $jt_ran[ $jt_method ] ?? false ) || isset( $jt_case->failure ) || isset( $jt_case->error );
 			}
 		}
 		// "Did not run" is never "failed": only a recorded failure, or PHP

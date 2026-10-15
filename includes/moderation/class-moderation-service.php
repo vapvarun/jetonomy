@@ -321,6 +321,7 @@ class Moderation_Service {
 
 			$context[ $type . ':' . $id ] = (object) array(
 				'object'    => $object,
+				'topic'     => $parent,
 				'space'     => $space,
 				'permalink' => '' !== $base
 					? \Jetonomy\route_url( 'post', $space->slug, $parent->slug )

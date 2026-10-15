@@ -1784,6 +1784,17 @@ class Template_Loader {
 			/* translators: %s: the singular label of the item (the configured noun). */
 			'reportPrompt'          => sprintf( __( 'Why are you reporting this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 			'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
+			// The report dialog's reasons: the moderation queue's own list.
+			'reportReasons'         => array(
+				'spam'       => __( 'Spam', 'jetonomy' ),
+				'offensive'  => __( 'Offensive', 'jetonomy' ),
+				'off_topic'  => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
+				'harassment' => __( 'Harassment', 'jetonomy' ),
+				'other'      => __( 'Other', 'jetonomy' ),
+			),
+			'reportDetails'         => __( 'Add details (optional)', 'jetonomy' ),
+			'reportSubmit'          => __( 'Report', 'jetonomy' ),
+			'reportChooseReason'    => __( 'Choose a reason.', 'jetonomy' ),
 			'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
 			// Scoped, to match the "Pin to space" control. Pro can pin to
 			// the whole community, so an unqualified "Post pinned" leaves

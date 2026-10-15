@@ -31,11 +31,11 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 
 	<nav class="nav-tab-wrapper">
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=posts' ) ); ?>" class="nav-tab <?php echo esc_attr( 'posts' === $active_tab ? 'nav-tab-active' : '' ); ?>">
-			<?php /* translators: %d: number of pending posts. */ ?>
-			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), absint( $total_posts ) ); ?>
+			<?php /* translators: 1: topic or reply label, plural (e.g. "Topics"). 2: number of items waiting. */ ?>
+			<?php printf( esc_html__( 'Pending %1$s (%2$d)', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ), absint( $total_posts ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=replies' ) ); ?>" class="nav-tab <?php echo esc_attr( 'replies' === $active_tab ? 'nav-tab-active' : '' ); ?>">
-			<?php /* translators: 1: reply label, plural (e.g. "Replies"). 2: number of pending replies. */ ?>
+			<?php /* translators: 1: topic or reply label, plural (e.g. "Topics"). 2: number of items waiting. */ ?>
 			<?php printf( esc_html__( 'Pending %1$s (%2$d)', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ), absint( $total_replies ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>" class="nav-tab <?php echo esc_attr( 'flags' === $active_tab ? 'nav-tab-active' : '' ); ?>">
@@ -70,7 +70,8 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						'variant' => 'success',
 						'icon'    => 'yes-alt',
 						'title'   => __( 'Queue is clear', 'jetonomy' ),
-						'body'    => __( 'No posts are waiting on moderation right now.', 'jetonomy' ),
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+						'body'    => sprintf( __( 'No %s are waiting on moderation right now.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 					)
 				);
 				?>
@@ -186,7 +187,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						'variant' => 'success',
 						'icon'    => 'yes-alt',
 						'title'   => __( 'Queue is clear', 'jetonomy' ),
-						/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+						/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
 						'body'    => sprintf( __( 'No %s are waiting on moderation right now.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					)
 				);
@@ -205,7 +206,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 								'width' => 'm',
 							),
 							'parent'  => array(
-								'label' => __( 'Parent Post', 'jetonomy' ),
+								'label' => \Jetonomy\jetonomy_label( 'topic' ),
 								'width' => 'l',
 							),
 							'date'    => array(
@@ -342,25 +343,16 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									// which is honest rather than a dead link.
 									$jt_label = (string) ( $f->jt_object_title ?? '' );
 									$jt_url   = (string) ( $f->jt_object_url ?? '' );
+									$jt_type  = \Jetonomy\Admin\Admin::object_type_label( (string) $f->object_type );
+									$jt_noun  = 'post' === $f->object_type ? 'topic' : (string) $f->object_type;
 									if ( '' !== $jt_label && '' !== $jt_url ) {
-										printf(
-											'<a href="%s">%s</a><br><code>%s</code>',
-											esc_url( $jt_url ),
-											esc_html( $jt_label ),
-											esc_html( $f->object_type . ' #' . $f->object_id )
-										);
+										printf( '<a href="%s">%s</a><br><span class="description">%s</span>', esc_url( $jt_url ), esc_html( $jt_label ), esc_html( $jt_type ) );
 									} elseif ( '' !== $jt_label ) {
-										printf(
-											'%s<br><code>%s</code>',
-											esc_html( $jt_label ),
-											esc_html( $f->object_type . ' #' . $f->object_id )
-										);
+										printf( '%s<br><span class="description">%s</span>', esc_html( $jt_label ), esc_html( $jt_type ) );
+									} elseif ( isset( \Jetonomy\label_defaults()[ $jt_noun ] ) ) {
+										echo '<span class="description">' . esc_html( \Jetonomy\Admin\Activity_List_Table::deleted_label( $jt_noun ) ) . '</span>';
 									} else {
-										printf(
-											'<code>%s</code> <span class="description">%s</span>',
-											esc_html( $f->object_type . ' #' . $f->object_id ),
-											esc_html__( '(deleted)', 'jetonomy' )
-										);
+										echo '<span class="description">' . esc_html( $jt_type . ' ' . __( '(deleted)', 'jetonomy' ) ) . '</span>';
 									}
 									break;
 								case 'reason':
@@ -379,8 +371,8 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 								case 'actions':
 									?>
 									<span class="jetonomy-mod-actions">
-										<button type="button" class="button button-small button-link-delete jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="valid"><?php esc_html_e( 'Valid (Trash)', 'jetonomy' ); ?></button>
-										<button type="button" class="button button-small jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="dismissed"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></button>
+										<button type="button" class="button button-small button-link-delete jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="valid" title="<?php esc_attr_e( 'The report is right: close it and move the content to the trash.', 'jetonomy' ); ?>"><?php esc_html_e( 'Uphold and trash', 'jetonomy' ); ?></button>
+										<button type="button" class="button button-small jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="dismissed" title="<?php esc_attr_e( 'The report is wrong: close it and leave the content as it is.', 'jetonomy' ); ?>"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></button>
 									</span>
 									<?php
 									break;
@@ -476,8 +468,14 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo '<strong>' . esc_html( $ban->display_name ?? $ban->user_login ?? __( 'Unknown', 'jetonomy' ) ) . '</strong>';
 									break;
 								case 'type':
-									/* translators: %s: singular space label. */
-									$jt_ban_label = 'space_ban' === $ban->type ? sprintf( __( '%s ban', 'jetonomy' ), \Jetonomy\space_label() ) : str_replace( '_', ' ', ucfirst( $ban->type ) );
+									$jt_ban_label = match ( (string) $ban->type ) {
+										'global_ban' => __( 'Global Ban', 'jetonomy' ),
+										'silence'    => __( 'Silence', 'jetonomy' ),
+										'ip_ban'     => __( 'IP address ban', 'jetonomy' ),
+										/* translators: %s: singular space label. */
+										'space_ban'  => sprintf( __( '%s ban', 'jetonomy' ), \Jetonomy\space_label() ),
+										default      => ucfirst( str_replace( '_', ' ', (string) $ban->type ) ),
+									};
 									echo '<span class="jetonomy-badge jetonomy-badge--ban">' . esc_html( $jt_ban_label ) . '</span>';
 									break;
 								case 'reason':

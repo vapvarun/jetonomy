@@ -132,7 +132,7 @@ class Tags_Handler {
 		if ( (int) ( $tag->post_count ?? 0 ) > 0 && ! $force ) {
 			wp_send_json_error(
 				array(
-					'message'       => __( 'This tag is still attached to posts.', 'jetonomy' ),
+					'message'       => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'This tag is still attached to %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 					'post_count'    => (int) $tag->post_count,
 					'needs_confirm' => true,
 				)

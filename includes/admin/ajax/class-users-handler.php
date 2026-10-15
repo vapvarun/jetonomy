@@ -36,7 +36,7 @@ class Users_Handler {
 			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $type, array( 'global_ban', 'space_ban', 'silence' ), true ) ) {
+		if ( ! in_array( $type, array( 'global_ban', 'space_ban', 'silence', 'ip_ban' ), true ) ) {
 			$type = 'global_ban';
 		}
 
@@ -57,6 +57,16 @@ class Users_Handler {
 		$allowed = Restriction::actor_may_restrict( $user_id, get_current_user_id() );
 		if ( is_wp_error( $allowed ) ) {
 			wp_send_json_error( $allowed->get_error_message() );
+		}
+
+		// An ip_ban stores the address in `reason` (the column is_ip_banned() matches).
+		if ( 'ip_ban' === $type ) {
+			$ip = Restriction::validate_ip_ban( sanitize_text_field( wp_unslash( $_POST['ip'] ?? '' ) ), get_current_user_id() );
+			if ( is_wp_error( $ip ) ) {
+				wp_send_json_error( $ip->get_error_message() );
+			}
+			$reason   = $ip;
+			$space_id = 0;
 		}
 
 		$expires_at = null;
@@ -97,9 +107,14 @@ class Users_Handler {
 			wp_send_json_error( __( 'Failed to ban user.', 'jetonomy' ) );
 		}
 
+		$messages = array(
+			'silence' => __( 'User silenced.', 'jetonomy' ),
+			'ip_ban'  => __( 'IP address banned.', 'jetonomy' ),
+		);
+
 		wp_send_json_success(
 			array(
-				'message'        => __( 'User banned.', 'jetonomy' ),
+				'message'        => $messages[ $type ] ?? __( 'User banned.', 'jetonomy' ),
 				'restriction_id' => $restriction_id,
 			)
 		);

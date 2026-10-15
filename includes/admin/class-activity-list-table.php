@@ -14,6 +14,9 @@ namespace Jetonomy\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\ActivityLog;
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
+use Jetonomy\Models\Space;
 
 if ( ! class_exists( '\WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -46,6 +49,17 @@ class Activity_List_Table extends \WP_List_Table {
 	 * @var array<string, object>
 	 */
 	private array $objects = array();
+
+	/**
+	 * Titles, parents and spaces this page's rows point at (see prime()).
+	 *
+	 * @var array{posts: array<int, object>, replies: array<int, object>, spaces: array<int, object>}
+	 */
+	private array $context = array(
+		'posts'   => array(),
+		'replies' => array(),
+		'spaces'  => array(),
+	);
 
 	public function __construct() {
 		parent::__construct(
@@ -185,6 +199,7 @@ class Activity_List_Table extends \WP_List_Table {
 
 		$this->items   = ActivityLog::list_filtered( $filters, $order, $per_page, $offset );
 		$this->objects = \Jetonomy\Author::objects_of( $this->items );
+		$this->context = self::prime( $this->items );
 
 		$this->set_pagination_args(
 			array(
@@ -276,83 +291,247 @@ class Activity_List_Table extends \WP_List_Table {
 	}
 
 	public function column_action( $item ): string {
-		$action = (string) ( $item->action ?? '' );
-		if ( '' === $action ) {
+		if ( '' === (string) ( $item->action ?? '' ) ) {
 			return '&mdash;';
 		}
-		// Action codes are machine identifiers (e.g. created_post). Show
-		// the human label while keeping the raw value as a tooltip
-		// for admins debugging tracker output.
-		$label = Admin::action_label( $action );
+		// The raw code stays as a tooltip for admins debugging tracker output.
 		return sprintf(
-			'<code title="%1$s">%2$s</code>',
-			esc_attr( $action ),
-			esc_html( $label )
+			'<span title="%1$s">%2$s</span>',
+			esc_attr( (string) $item->action ),
+			esc_html( self::action_text( $item ) )
 		);
 	}
 
 	public function column_object( $item ): string {
-		$type = (string) ( $item->object_type ?? '' );
-		$id   = (int) ( $item->object_id ?? 0 );
-		if ( '' === $type || $id <= 0 ) {
-			return '&mdash;';
+		return self::object_html( $item, $this->context );
+	}
+
+	public function column_snippet( $item ): string {
+		$text = self::details_text( $item );
+		return '' === $text ? '&mdash;' : esc_html( $text );
+	}
+
+	/**
+	 * Batch-load everything the activity formatters need for a set of log rows:
+	 * one query each for posts, replies (plus their parent posts) and spaces,
+	 * and one for the users involved, so rendering a page is N+1-free.
+	 *
+	 * Shared by the Activity Log screen and the Dashboard's Recent Activity.
+	 *
+	 * @param array<int, object> $rows Activity log rows.
+	 * @return array{posts: array<int, object>, replies: array<int, object>, spaces: array<int, object>}
+	 */
+	public static function prime( array $rows ): array {
+		$ids = array(
+			'post'  => array(),
+			'reply' => array(),
+			'space' => array(),
+			'user'  => array(),
+		);
+		foreach ( $rows as $row ) {
+			$type = (string) ( $row->object_type ?? '' );
+			if ( isset( $ids[ $type ] ) ) {
+				$ids[ $type ][] = (int) $row->object_id;
+			}
+			$ids['user'][] = (int) ( $row->user_id ?? 0 );
 		}
 
-		$label = sprintf( '%s #%d', Admin::object_type_label( $type ), $id );
-		$url   = $this->resolve_object_admin_url( $type, $id );
-		if ( '' === $url ) {
-			return esc_html( $label );
+		$replies = Reply::list_by_ids( $ids['reply'] );
+		foreach ( $replies as $reply ) {
+			$ids['post'][] = (int) $reply->post_id;
 		}
-		return sprintf(
-			'<a href="%1$s">%2$s</a>',
-			esc_url( $url ),
-			esc_html( $label )
+		$user_ids = array_values( array_unique( array_filter( $ids['user'] ) ) );
+		if ( $user_ids ) {
+			cache_users( $user_ids ); // Primes get_userdata() for the actor and user-object cells.
+		}
+
+		return array(
+			'posts'   => Post::list_by_ids( $ids['post'] ),
+			'replies' => $replies,
+			'spaces'  => array_column( Space::list_by_ids( array_unique( $ids['space'] ) ), null, 'id' ),
 		);
 	}
 
 	/**
-	 * Best-effort link to the related admin screen for the object — keeps
-	 * the activity row clickable without requiring per-type joins in the
-	 * main query. Unknown types fall through to plain text.
+	 * The action, in words. Reputation rows say how much was gained or lost
+	 * instead of a bare "Reputation changed".
+	 *
+	 * @param object $row Activity log row.
+	 * @return string Unescaped.
 	 */
-	private function resolve_object_admin_url( string $type, int $id ): string {
-		switch ( $type ) {
-			case 'post':
-				return admin_url( 'admin.php?page=jetonomy-content&post_id=' . $id );
-			case 'space':
-				return admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . $id );
-			case 'reply':
-				// Replies live under their parent post; the activity row
-				// only knows the reply id, so link to the global content
-				// page rather than guessing the post.
-				return admin_url( 'admin.php?page=jetonomy-content' );
-			case 'user':
-				return admin_url( 'admin.php?page=jetonomy-users&user_id=' . $id );
-			default:
-				return '';
+	public static function action_text( object $row ): string {
+		$action = (string) ( $row->action ?? '' );
+		if ( 'reputation_changed' === $action ) {
+			$delta = (int) ( self::metadata( $row )['delta'] ?? 0 );
+			$abs   = abs( $delta );
+			return $delta < 0
+				/* translators: %s: number of reputation points. */
+				? sprintf( _n( 'Lost %s reputation point', 'Lost %s reputation points', $abs, 'jetonomy' ), number_format_i18n( $abs ) )
+				/* translators: %s: number of reputation points. */
+				: sprintf( _n( 'Gained %s reputation point', 'Gained %s reputation points', $abs, 'jetonomy' ), number_format_i18n( $abs ) );
 		}
+		return Admin::action_label( $action );
 	}
 
-	public function column_snippet( $item ): string {
-		$raw = (string) ( $item->metadata ?? '' );
-		if ( '' === $raw ) {
+	/**
+	 * The thing acted on: its linked title, or a "Deleted ..." note when it is gone.
+	 *
+	 * @param object $row     Activity log row.
+	 * @param array  $context Output of prime() for the rows being rendered.
+	 * @return string Escaped HTML.
+	 */
+	public static function object_html( object $row, array $context ): string {
+		$type = (string) ( $row->object_type ?? '' );
+		$id   = (int) ( $row->object_id ?? 0 );
+		if ( '' === $type || $id <= 0 ) {
 			return '&mdash;';
 		}
-		$decoded = json_decode( $raw, true );
-		if ( ! is_array( $decoded ) || empty( $decoded ) ) {
-			return esc_html( wp_trim_words( $raw, 12, '…' ) );
+		$link = static fn ( string $url, string $text ): string => sprintf( '<a href="%1$s">%2$s</a>', esc_url( $url ), esc_html( $text ) );
+
+		switch ( $type ) {
+			case 'post':
+				$post = $context['posts'][ $id ] ?? null;
+				return $post
+					? $link( admin_url( 'admin.php?page=jetonomy-content&post_id=' . $id ), jetonomy_post_title_or_excerpt( $post ) )
+					: esc_html( self::deleted_label( 'topic' ) );
+
+			case 'reply':
+				$reply  = $context['replies'][ $id ] ?? null;
+				$parent = $reply ? ( $context['posts'][ (int) $reply->post_id ] ?? null ) : null;
+				if ( ! $parent ) {
+					return esc_html( self::deleted_label( 'reply' ) );
+				}
+				return sprintf(
+					/* translators: 1: reply label (e.g. "Reply"). 2: linked post title. */
+					esc_html__( '%1$s on %2$s', 'jetonomy' ),
+					esc_html( \Jetonomy\jetonomy_label( 'reply' ) ),
+					$link( admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply->post_id ), jetonomy_post_title_or_excerpt( $parent ) )
+				);
+
+			case 'space':
+				$space = $context['spaces'][ $id ] ?? null;
+				return $space
+					? $link( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . $id ), (string) $space->title )
+					: esc_html( self::deleted_label( 'space' ) );
+
+			case 'user':
+				$user = get_userdata( $id );
+				return $user
+					? $link( admin_url( 'admin.php?page=jetonomy-users&user_id=' . $id ), $user->display_name ?: $user->user_login )
+					/* translators: %d: deleted user id */
+					: esc_html( sprintf( __( 'Deleted user (#%d)', 'jetonomy' ), $id ) );
 		}
-		// Render `key=value` pairs joined with bullets; truncates each
-		// value to keep the row height predictable.
+		return esc_html( sprintf( '%s #%d', Admin::object_type_label( $type ), $id ) );
+	}
+
+	/**
+	 * "Deleted topic" / "Deleted reply" / "Deleted space" in the owner's terms.
+	 *
+	 * @param string $noun Terminology noun (topic, reply, space).
+	 * @return string Unescaped.
+	 */
+	public static function deleted_label( string $noun ): string {
+		/* translators: %s: content label, lowercase (e.g. "topic" or "reply"). */
+		return sprintf( __( 'Deleted %s', 'jetonomy' ), \Jetonomy\jetonomy_label( $noun, false, true ) );
+	}
+
+	/**
+	 * The row's metadata in plain words (why reputation changed, the new
+	 * trust level, the role a member joined with). Empty when there is none.
+	 *
+	 * @param object $row Activity log row.
+	 * @return string Unescaped.
+	 */
+	public static function details_text( object $row ): string {
+		$meta = self::metadata( $row );
+		if ( ! $meta ) {
+			return '';
+		}
+		$humanize = static fn ( $value ): string => ucfirst( str_replace( '_', ' ', (string) $value ) );
+
+		switch ( (string) ( $row->action ?? '' ) ) {
+			case 'reputation_changed':
+				return self::reputation_reason( (string) ( $meta['reason'] ?? '' ) );
+			case 'trust_level_changed':
+				return sprintf(
+					/* translators: 1: previous value. 2: new value. */
+					__( '%1$s to %2$s', 'jetonomy' ),
+					\Jetonomy\Trust\Trust_Levels::label( (int) ( $meta['old'] ?? 0 ) ),
+					\Jetonomy\Trust\Trust_Levels::label( (int) ( $meta['new'] ?? 0 ) )
+				);
+			case 'idea_status_changed':
+				return sprintf(
+					/* translators: 1: previous value. 2: new value. */
+					__( '%1$s to %2$s', 'jetonomy' ),
+					$humanize( $meta['old'] ?? '' ),
+					$humanize( $meta['new'] ?? '' )
+				);
+			case 'joined_space':
+				/* translators: %s: the member's role in the space (e.g. "Moderator"). */
+				return sprintf( __( 'Role: %s', 'jetonomy' ), $humanize( $meta['role'] ?? '' ) );
+		}
+
+		// Unknown action (an add-on's): readable "Key: value" pairs.
 		$parts = array();
-		foreach ( $decoded as $key => $value ) {
-			if ( is_scalar( $value ) ) {
-				$parts[] = sprintf( '%s=%s', sanitize_key( (string) $key ), wp_trim_words( (string) $value, 6, '…' ) );
-			} elseif ( is_array( $value ) ) {
-				$parts[] = sprintf( '%s=%s', sanitize_key( (string) $key ), wp_json_encode( $value ) );
-			}
+		foreach ( $meta as $key => $value ) {
+			$parts[] = $humanize( $key ) . ': ' . ( is_scalar( $value ) ? wp_trim_words( (string) $value, 6, '…' ) : wp_json_encode( $value ) );
 		}
-		return esc_html( implode( ' • ', $parts ) );
+		return implode( ' · ', $parts );
+	}
+
+	/**
+	 * Why reputation changed, in words. Reason keys are Reputation's action
+	 * keys; "{key}_revoked" is the same award taken back (e.g. an upvote removed).
+	 *
+	 * @param string $reason Reason key from the reputation_changed row.
+	 * @return string Unescaped.
+	 */
+	public static function reputation_reason( string $reason ): string {
+		$revoked = str_ends_with( $reason, '_revoked' );
+		$key     = $revoked ? substr( $reason, 0, -8 ) : $reason;
+		$topic   = \Jetonomy\jetonomy_label( 'topic', false, true );
+		$reply   = \Jetonomy\jetonomy_label( 'reply', false, true );
+
+		/* translators: %s: content label, lowercase (e.g. "topic" or "reply"). */
+		$upvoted = __( 'Their %s was upvoted', 'jetonomy' );
+		/* translators: %s: content label, lowercase (e.g. "topic" or "reply"). */
+		$downvoted = __( 'Their %s was downvoted', 'jetonomy' );
+		/* translators: %s: content label, lowercase (e.g. "topic" or "reply"). */
+		$created = __( 'They posted a new %s', 'jetonomy' );
+
+		$labels = array(
+			'post_created'    => sprintf( $created, $topic ),
+			'reply_created'   => sprintf( $created, $reply ),
+			'post_upvoted'    => sprintf( $upvoted, $topic ),
+			'reply_upvoted'   => sprintf( $upvoted, $reply ),
+			'post_downvoted'  => sprintf( $downvoted, $topic ),
+			'reply_downvoted' => sprintf( $downvoted, $reply ),
+			'downvoted'       => __( 'Their content was downvoted', 'jetonomy' ),
+			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			'reply_accepted'  => sprintf( __( 'Their %s was accepted as the answer', 'jetonomy' ), $reply ),
+			'idea_planned'    => __( 'Their idea moved to Planned or Shipped', 'jetonomy' ),
+			'flag_validated'  => __( 'A report they filed was upheld', 'jetonomy' ),
+			/* translators: %s: topic label, lowercase (e.g. "topic"). */
+			'post_reported'   => sprintf( __( 'Their %s was reported', 'jetonomy' ), $topic ),
+			/* translators: %s: topic label, lowercase (e.g. "topic"). */
+			'post_removed'    => sprintf( __( 'Their %s was removed by a moderator', 'jetonomy' ), $topic ),
+			'badge_earned'    => __( 'They earned a badge', 'jetonomy' ),
+		);
+		$text   = $labels[ $key ] ?? ucfirst( str_replace( '_', ' ', $key ) );
+
+		/* translators: %s: why reputation changed (e.g. "Their topic was upvoted"). */
+		return $revoked ? sprintf( __( '%s, then undone', 'jetonomy' ), $text ) : $text;
+	}
+
+	/**
+	 * Decoded metadata JSON of a log row.
+	 *
+	 * @param object $row Activity log row.
+	 * @return array<string, mixed>
+	 */
+	private static function metadata( object $row ): array {
+		$decoded = json_decode( (string) ( $row->metadata ?? '' ), true );
+		return is_array( $decoded ) ? $decoded : array();
 	}
 
 	/**

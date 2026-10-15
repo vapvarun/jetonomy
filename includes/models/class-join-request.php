@@ -114,6 +114,39 @@ class JoinRequest extends Model {
 	}
 
 	/**
+	 * A member takes back their own pending request. Only a still-pending row
+	 * goes, and the "new join request" notices sent to the space's staff go
+	 * with it, so nobody acts on a request that no longer exists.
+	 *
+	 * @param int $space_id Space ID.
+	 * @param int $user_id  The requesting member.
+	 * @return bool True when a pending request was withdrawn.
+	 */
+	public static function withdraw( int $space_id, int $user_id ): bool {
+		$removed = (int) self::db()->query(
+			self::db()->prepare(
+				'DELETE FROM ' . self::table() . " WHERE space_id = %d AND user_id = %d AND status = 'pending'",
+				$space_id,
+				$user_id
+			)
+		);
+		if ( 1 > $removed ) {
+			return false;
+		}
+		Notification::delete_caused_by( 'join_request', 'space', $space_id, $user_id );
+		/**
+		 * Fires after a member withdraws their pending join request.
+		 *
+		 * @since 2.0.2
+		 *
+		 * @param int $space_id Space ID.
+		 * @param int $user_id  The member.
+		 */
+		do_action( 'jetonomy_join_request_withdrawn', $space_id, $user_id );
+		return true;
+	}
+
+	/**
 	 * The answer when a request was decided by someone else first.
 	 */
 	private static function already_handled(): \WP_Error {
