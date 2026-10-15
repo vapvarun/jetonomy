@@ -117,6 +117,37 @@ class StaffReachTest extends WP_UnitTestCase {
 		$this->assertTrue( Moderation_Permissions::can_act_on_object( $this->editor, 'post', $this->private_post ), 'membership restores reach' );
 	}
 
+	public function test_every_read_denial_is_covered_not_only_space_visibility(): void {
+		// A public space inside a hidden category is concealed by its category.
+		$hidden_cat = Category::create(
+			array(
+				'name'       => 'Staging',
+				'slug'       => 'staging-' . uniqid(),
+				'visibility' => 'hidden',
+			)
+		);
+		$concealed  = (int) Space::create(
+			array(
+				'title'       => 'Launch prep',
+				'slug'        => 'launch-' . uniqid(),
+				'category_id' => $hidden_cat,
+				'visibility'  => 'public',
+				'type'        => 'forum',
+			)
+		);
+		\Jetonomy\Cache::flush();
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can( $this->editor, 'read', $concealed ) ) {
+			$this->assertContains( $concealed, Moderation_Permissions::unreadable_space_ids( $this->editor ), 'category concealment' );
+		}
+
+		// A moderator banned from one public space cannot read or moderate it.
+		\Jetonomy\Models\Restriction::ban( $this->editor, 'space_ban', 1, $this->public_space );
+		\Jetonomy\Cache::flush();
+		$this->assertContains( $this->public_space, Moderation_Permissions::unreadable_space_ids( $this->editor ), 'space ban' );
+		$this->assertFalse( Moderation_Permissions::can_act_on_object( $this->editor, 'post', $this->public_post ) );
+		$this->assertSame( 0, Post::count_by_status( array( 'pending' ), Moderation_Permissions::staff_scope( $this->editor ) ), 'lists agree with the per-object check' );
+	}
+
 	public function test_queue_rows_and_totals_leave_out_unreadable_spaces(): void {
 		$scope = Moderation_Permissions::staff_scope( $this->editor );
 		$ids   = array_map( 'intval', wp_list_pluck( Post::list_by_status( array( 'pending' ), 50, 0, $scope ), 'id' ) );

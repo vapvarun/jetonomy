@@ -101,7 +101,14 @@ class Updates_Controller extends Base_Controller {
 		if ( 'post' === $scope ) {
 			$data = Reply::ids_since( $id, $since_dt );
 		} else {
-			$rows = 'space' === $scope ? ActivityLog::list_since_in_space( $since_dt, $id ) : ActivityLog::list_since( $since_dt );
+			// Space scope needs read access to that space (404 like a missing one);
+			// the global feed carries only published topic and reply activity in
+			// spaces the caller can read - never joins, moderation actions or
+			// private-space content.
+			if ( 'space' === $scope && ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $id ) ) {
+				return $this->not_found( 'Space' );
+			}
+			$rows = 'space' === $scope ? ActivityLog::list_since_in_space( $since_dt, $id ) : ActivityLog::list_since_visible( $since_dt, get_current_user_id() );
 			$data = array_map(
 				static function ( $row ) {
 					return array(

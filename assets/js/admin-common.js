@@ -268,7 +268,7 @@
 					if ($preview.find('img').length) {
 						$preview.find('img').attr('src', attachment.url);
 					} else {
-						$preview.prepend('<img src="' + attachment.url + '" alt="">');
+						$preview.prepend($('<img alt="">').attr('src', attachment.url));
 					}
 					$preview.show();
 				});
@@ -830,14 +830,18 @@
 				searchTimeout = setTimeout(function() {
 					self.ajax('jetonomy_search_users', { search: query }).done(function(res) {
 						if (res.success && res.data.users.length) {
-							var html = '';
+							// Built with attr()/text(), never string concatenation: a
+							// member's display name is free text and may contain quotes,
+							// which .text().html() does not escape inside an attribute.
+							var $results = $('#member-search-results').empty();
 							$.each(res.data.users, function(i, user) {
-								html += '<div class="jetonomy-search-item" data-user-id="' + user.id + '" data-name="' + $('<span>').text(user.display_name).html() + '">';
-								html += '<img src="' + user.avatar + '" alt="">';
-								html += '<span>' + $('<span>').text(user.display_name).html() + ' (' + $('<span>').text(user.user_login).html() + ')</span>';
-								html += '</div>';
+								$('<div class="jetonomy-search-item"></div>')
+									.attr({ 'data-user-id': user.id, 'data-name': user.display_name })
+									.append($('<img alt="">').attr('src', user.avatar))
+									.append($('<span></span>').text(user.display_name + ' (' + user.user_login + ')'))
+									.appendTo($results);
 							});
-							$('#member-search-results').html(html).show();
+							$results.show();
 						} else {
 							$('#member-search-results').hide();
 						}
@@ -1575,12 +1579,12 @@
 							self.toast(res.data.message);
 							// On Users page: restore Ban link. On Moderation page: remove row.
 							if ($row.find('.ban').length) {
-								$row.find('.ban').html(
-									'<a href="#" class="jetonomy-ban-trigger" data-user-id="' +
-									$row.data('user-id') + '" data-username="' +
-									$row.find('strong').first().text() + '">' +
-									self.i18n.ban +
-									'</a> | '
+								// The name is member-chosen text: set it as an attribute, never splice it into HTML.
+								$row.find('.ban').empty().append(
+									$('<a href="#" class="jetonomy-ban-trigger"></a>')
+										.attr({ 'data-user-id': $row.data('user-id'), 'data-username': $row.find('strong').first().text() })
+										.text(self.i18n.ban),
+									document.createTextNode(' | ')
 								);
 							} else {
 								$row.fadeOut(300, function() { $(this).remove(); });

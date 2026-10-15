@@ -1937,17 +1937,22 @@ class Space extends Model {
 	}
 
 	/**
-	 * Ids of every private or hidden space, any status.
+	 * Ids of every space a guest cannot read, any status.
 	 *
-	 * The candidates for "a site moderator may not be able to read this"
-	 * (Moderation_Permissions::unreadable_space_ids()). Public spaces never
-	 * need the per-space read check, so this stays a short list on any site.
+	 * Private and hidden spaces, plus public spaces concealed by a private or
+	 * hidden category - the same guest predicate content_visibility_sql()
+	 * applies. These are the candidates for "a site moderator may not be able
+	 * to read this" (Moderation_Permissions::unreadable_space_ids()); every
+	 * other space is readable by any signed-in member, so the list stays short.
 	 *
+	 * @param bool $all Return every space id instead (a globally banned viewer).
 	 * @return int[]
 	 */
-	public static function non_public_ids(): array {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return array_map( 'intval', (array) static::db()->get_col( 'SELECT id FROM ' . static::table() . " WHERE visibility <> 'public'" ) );
+	public static function guest_unreadable_ids( bool $all = false ): array {
+		[ $guest_sql ] = self::content_visibility_sql( 0 );
+		$where         = $all ? '1=1' : "NOT ({$guest_sql})";
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the guest predicate has no bind values.
+		return array_map( 'intval', (array) static::db()->get_col( 'SELECT id FROM ' . static::table() . " WHERE {$where}" ) );
 	}
 
 	/**

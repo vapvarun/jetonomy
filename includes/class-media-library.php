@@ -63,6 +63,13 @@ class Media_Library {
 	 * REST stack never pay for it.
 	 */
 	public function register(): void {
+		// Core's /wp/v2/media treats a parentless attachment as public, and every
+		// community upload is parentless, so any visitor could list and read the
+		// files members post - including those in private spaces. These run only
+		// on /wp/v2/media requests.
+		add_filter( 'rest_attachment_query', array( $this, 'hide_community_media_from_rest_list' ) );
+		add_filter( 'rest_prepare_attachment', array( $this, 'hide_community_media_from_rest_item' ), 10, 2 );
+
 		if ( ! is_admin() ) {
 			return;
 		}
@@ -74,6 +81,48 @@ class Media_Library {
 		// Dedicated, paginated Community Media admin view (priority 20 so the
 		// parent Jetonomy menu is already registered).
 		add_action( 'admin_menu', array( $this, 'register_admin_page' ), 20 );
+	}
+
+	/**
+	 * Leave community uploads out of GET /wp/v2/media for anyone who cannot
+	 * manage media. Members reach a file only through the topic that embeds it.
+	 *
+	 * @param array $args WP_Query arguments for the attachment collection.
+	 * @return array
+	 */
+	public function hide_community_media_from_rest_list( array $args ): array {
+		if ( current_user_can( 'upload_files' ) ) {
+			return $args;
+		}
+		$meta_query         = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array(); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		$meta_query[]       = array(
+			'key'     => self::META_FLAG,
+			'compare' => 'NOT EXISTS',
+		);
+		$args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		return $args;
+	}
+
+	/**
+	 * Answer GET /wp/v2/media/{id} for a community upload as "not found" to
+	 * anyone who cannot manage media, matching the list above.
+	 *
+	 * @param \WP_REST_Response $response Prepared attachment.
+	 * @param \WP_Post          $post     Attachment.
+	 * @return \WP_REST_Response
+	 */
+	public function hide_community_media_from_rest_item( $response, $post ) {
+		if ( current_user_can( 'upload_files' ) || ! get_post_meta( (int) $post->ID, self::META_FLAG, true ) ) {
+			return $response;
+		}
+		return new \WP_REST_Response(
+			array(
+				'code'    => 'rest_post_invalid_id',
+				'message' => __( 'Invalid post ID.', 'jetonomy' ),
+				'data'    => array( 'status' => 404 ),
+			),
+			404
+		);
 	}
 
 	/**

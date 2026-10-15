@@ -97,7 +97,7 @@ class Moderation_Permissions {
 	private static bool $unreadable_memo_registered = false;
 
 	/**
-	 * Private or hidden spaces a site moderator cannot read.
+	 * Spaces a site moderator cannot read (concealed, or banned from).
 	 *
 	 * Site moderators (jetonomy_moderate) act in every space they can READ,
 	 * the same rule Permission_Engine applies to editing and pinning. Every
@@ -123,9 +123,26 @@ class Moderation_Permissions {
 		}
 		$memo = &self::$unreadable_memo;
 		if ( ! isset( $memo[ $user_id ] ) ) {
+			// Candidates must cover everything that can deny read, or the lists
+			// and the per-object checks disagree: concealed spaces and categories
+			// (guest predicate), the viewer's space bans, and - for a globally
+			// banned viewer - every space.
+			$banned     = \Jetonomy\Models\Restriction::is_banned( $user_id );
+			$candidates = \Jetonomy\Models\Space::guest_unreadable_ids( $banned );
+			if ( ! $banned ) {
+				foreach ( \Jetonomy\Models\Restriction::list_active(
+					array(
+						'type'    => 'space_ban',
+						'user_id' => $user_id,
+						'limit'   => 100,
+					)
+				) as $row ) {
+					$candidates[] = (int) $row->space_id;
+				}
+			}
 			$memo[ $user_id ] = array_values(
 				array_filter(
-					\Jetonomy\Models\Space::non_public_ids(),
+					array_unique( $candidates ),
 					static fn( int $space_id ): bool => ! Permission_Engine::can( $user_id, 'read', $space_id )
 				)
 			);

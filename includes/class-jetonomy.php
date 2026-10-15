@@ -619,8 +619,9 @@ final class Jetonomy {
 		Adapters\Adapter_Registry::register_search( 'fulltext', new Search\Fulltext_Search() );
 		Search\Search_Indexer::init();
 
-		// Community media library hygiene: tag member uploads and hide them from
-		// the admin Media Library by default. register() self-gates to wp-admin.
+		// Community media: tag member uploads, keep them out of /wp/v2/media for
+		// non-uploaders, and hide them from the admin Media Library by default.
+		// The admin-only parts of register() self-gate to wp-admin.
 		( new Media_Library() )->register();
 		( new Attachments() )->register();
 

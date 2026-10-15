@@ -166,17 +166,36 @@ class ActivityLog extends Model {
 		return array_map( 'strval', self::db()->get_col( 'SELECT DISTINCT action FROM ' . self::table() . " WHERE action <> '' ORDER BY action ASC" ) );
 	}
 
+
 	/**
-	 * Recent log rows since a moment, newest first, for live-update polling.
+	 * Recent log rows since a moment about published topics and replies the
+	 * viewer can read, newest first (GET /updates global scope). Other object
+	 * types (joins, moderation) never appear, and private or hidden spaces
+	 * count only for their members - Space::content_visibility_sql().
 	 *
-	 * @param string $since UTC MySQL datetime (exclusive).
+	 * @param string $since   UTC MySQL datetime (exclusive).
+	 * @param int    $user_id Viewer.
 	 * @return object[] Rows with action, object_type, object_id, created_at.
 	 */
-	public static function list_since( string $since ): array {
+	public static function list_since_visible( string $since, int $user_id ): array {
+		$posts_table              = table( 'posts' );
+		$replies_table            = table( 'replies' );
+		$spaces_table             = table( 'spaces' );
+		[ $vis_sql, $vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( $user_id, 'vs' );
+		$readable_posts           = "SELECT p.id FROM {$posts_table} p INNER JOIN {$spaces_table} vs ON vs.id = p.space_id WHERE p.status = 'publish' AND {$vis_sql}";
 		return self::db()->get_results(
 			self::db()->prepare(
-				'SELECT action, object_type, object_id, created_at FROM ' . self::table() . ' WHERE created_at > %s ORDER BY created_at DESC LIMIT 50',
-				$since
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names trusted; $vis_sql carries only %d placeholders bound below.
+				'SELECT action, object_type, object_id, created_at
+				 FROM ' . self::table() . "
+				 WHERE created_at > %s
+				   AND (
+				     ( object_type = 'post' AND object_id IN ( {$readable_posts} ) )
+				     OR ( object_type = 'reply' AND object_id IN ( SELECT r.id FROM {$replies_table} r WHERE r.status = 'publish' AND r.post_id IN ( {$readable_posts} ) ) )
+				   )
+				 ORDER BY created_at DESC
+				 LIMIT 50",
+				...array_merge( array( $since ), $vis_params, $vis_params )
 			)
 		) ?: array();
 	}
@@ -184,7 +203,8 @@ class ActivityLog extends Model {
 	/**
 	 * Recent log rows since a moment about one space's topics and replies,
 	 * newest first. The created_at filter runs first and the space match is an
-	 * IN( subquery ), so a large space never becomes a literal id list.
+	 * IN( subquery ), so a large space never becomes a literal id list. The
+	 * caller checks the viewer may read the space.
 	 *
 	 * @param string $since    UTC MySQL datetime (exclusive).
 	 * @param int    $space_id Space.

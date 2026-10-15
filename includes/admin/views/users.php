@@ -53,7 +53,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 					esc_html__( 'A Subscriber can be a Level 5 %1$s and admin of any %3$s: community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
 					// Read from $trust_labels for the same reason the rest of this screen does: the
 					// sentence must never hardcode a level name such as "Elder" that can be renamed.
-					$trust_labels[5],
+					esc_html( (string) $trust_labels[5] ), // Owner-editable since 2.0.2, so escaped like any stored text.
 					// Directory, not the deep link to 08-users-roles-and-trust.md.
 					// `blob/HEAD` resolves against the DEFAULT branch, and that
 					// file lands there only when the release branch merges - so
