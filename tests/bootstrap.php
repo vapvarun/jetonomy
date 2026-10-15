@@ -15,6 +15,7 @@ if ( ! defined( 'SAVEQUERIES' ) ) {
 // Registered in phpunit.xml.dist <extensions>; must be loadable before the
 // runner instantiates it, which is earlier than the WP test lib bootstraps.
 require_once __DIR__ . '/class-memo-reset-extension.php';
+require_once __DIR__ . '/class-coverage-extension.php';
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' ) ?: '/tmp/wordpress-tests-lib';
 
@@ -110,4 +111,11 @@ require $_tests_dir . '/includes/bootstrap.php';
 global $wpdb;
 if ( isset( $wpdb ) && is_object( $wpdb ) ) {
 	$wpdb->query( "SET SESSION transaction_isolation = 'READ-COMMITTED'" );
+}
+
+// Runtime coverage (CI and bin/local-ci.sh): record what the suite actually
+// exercised when JETONOMY_COVERAGE_OUT names a file. See Coverage_Recorder.
+if ( getenv( 'JETONOMY_COVERAGE_OUT' ) ) {
+	require_once dirname( __DIR__ ) . '/includes/qa/class-coverage-recorder.php';
+	\Jetonomy\QA\Coverage_Recorder::start( (string) getenv( 'JETONOMY_COVERAGE_OUT' ) );
 }

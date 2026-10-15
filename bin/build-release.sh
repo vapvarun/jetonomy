@@ -19,6 +19,7 @@
 #   20 composer install failed
 #   30 smoke test failed — plugin fatals on boot
 #   31 qa-coverage gate regressed
+#   33 manifest or smoke runbook out of date with the code being released
 #   32 phpunit gate failed (tests red, or WP test scaffold absent)
 #   40 zip missing expected files
 #
@@ -441,6 +442,22 @@ if [ -f "$ROOT/bin/qa-coverage-check.php" ] && [ -z "${COVERAGE_SKIP:-}" ]; then
 		echo "      Bypass (emergency only): COVERAGE_SKIP=1 bin/build-release.sh" >&2
 		exit 31
 	fi
+fi
+
+# --- 6b2. CHECKS MATCH THE CODE BEING RELEASED -----------------------------
+# The manifest (and CLAUDE.md's counts) must describe this code, and every
+# smoke-runbook journey must have been verified against it: the release smoke
+# walks that runbook, so a journey whose code changed since it was last read
+# would "pass" against behaviour that no longer exists.
+echo "==> manifest and runbook freshness"
+if ! php "$ROOT/bin/check-manifest-fresh.php"; then
+	echo "FAIL: audit/manifest.json does not match the code. Update it, commit, rebuild." >&2
+	exit 33
+fi
+if ! php "$ROOT/bin/check-runbook-fresh.php"; then
+	echo "FAIL: smoke-runbook journeys above changed since they were last verified." >&2
+	echo "      Re-read each against its diff, fix the text, set **Verified:** to HEAD, commit, rebuild." >&2
+	exit 33
 fi
 
 # --- 6c. PHPUNIT GATE — run the free test matrix CI runs, locally ---------

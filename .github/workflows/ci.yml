@@ -94,6 +94,64 @@ jobs:
           JETONOMY_TEST_SKIP_PRO: '1'
         run: vendor/bin/phpunit --testdox --testsuite=unit,integration,security,error-paths,concurrency
 
+  # ── Coverage gates: checks that must change with the plugin ────────────────
+  # A check that no longer matches the code reports green while proving nothing.
+  #   - qa-runtime-coverage: what the suite actually REACHED (not what test
+  #     source mentions). Fails on a request to a route that no longer exists,
+  #     on a write / membership / moderation route no test reaches, and on any
+  #     newly uncovered item (audit/qa-runtime-baseline.json only shrinks).
+  #   - new-tests-fail-on-base: on a pull request, every test it adds must fail
+  #     against the base branch's code; a new test that passes there proves
+  #     nothing about the change.
+  #   - runbook freshness: on a release PR into main, every smoke-runbook
+  #     journey must be verified against the code being released.
+  coverage-gates:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_tests
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, mbstring, intl
+          coverage: none
+      - name: Install system dependencies
+        run: sudo apt-get install -y subversion
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+      - name: Install WordPress test library
+        run: bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 latest true
+      - name: Manifest matches the code (static)
+        run: php bin/check-manifest-fresh.php
+      - name: Record what the suite reaches
+        env:
+          JETONOMY_TEST_SKIP_PRO: '1'
+          JETONOMY_COVERAGE_OUT: /tmp/coverage/phpunit.json
+        run: vendor/bin/phpunit --testsuite=unit,integration,security,error-paths,concurrency
+      - name: Runtime coverage gate
+        run: php bin/qa-runtime-coverage.php --runtime=/tmp/coverage/phpunit.json
+      - name: New tests must fail on the base branch
+        if: github.event_name == 'pull_request'
+        run: php bin/check-new-tests-fail-on-base.php "${{ github.event.pull_request.base.sha }}"
+      - name: Smoke runbook verified against the release (release PRs)
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: php bin/check-runbook-fresh.php
+
   # ── PHPUnit combo: Free + Pro loaded together ─────────────────────────────
   # Exercises the Pro testsuite alongside the free unit testsuite so any
   # regression that only shows up when both plugins are active (e.g. Pro
@@ -468,7 +526,11 @@ jobs:
             echo "public spaces: ".$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}jt_spaces WHERE visibility=\"public\" AND status=\"active\"")."\n";
           ' --path=/tmp/wp
           : > /tmp/wp/wp-content/debug.log
-          wp jetonomy qa-actions --path=/tmp/wp
+          JETONOMY_COVERAGE_OUT=/tmp/coverage/qa-actions.json wp jetonomy qa-actions --path=/tmp/wp
+          # A journey that calls a route the plugin no longer has tests nothing.
+          php "$GITHUB_WORKSPACE/bin/qa-runtime-coverage.php" --stale-only=/tmp/coverage/qa-actions.json
+          # Live REST routes and their HTTP methods must match the manifest.
+          wp eval-file "$GITHUB_WORKSPACE/bin/check-manifest-fresh.php" --path=/tmp/wp
           if grep -q "Fatal error" /tmp/wp/wp-content/debug.log; then
             echo "::error::Fatal error logged during the action tests"
             grep -n "Fatal error" -A 12 /tmp/wp/wp-content/debug.log | head -40

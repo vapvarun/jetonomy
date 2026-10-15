@@ -76,6 +76,11 @@ class InputValidationTest extends WP_UnitTestCase {
         $this->assertEquals(404, $response->get_status());
     }
 
+    /**
+     * A negative id matches no route pattern (\d+), so the router answers.
+     *
+     * @expects-no-route
+     */
     public function test_negative_post_id_handled(): void {
         $request = new \WP_REST_Request('GET', '/jetonomy/v1/posts/-1');
         $response = rest_do_request($request);

@@ -475,7 +475,7 @@
         "audit_notes": "Get user profile (public). 1.4.1 A11: wrapped with Visibility::rest_check - responds 401 in private mode. Note: PATCH for users is on /users/me only, not the numeric-ID route."
       },
       {
-        "route": "/users/by-login/(?P<login>[a-zA-Z0-9_\\-.]+)",
+        "route": "/users/by-login/(?P<login>[a-zA-Z0-9_\\-\\.]+)",
         "methods": [
           "GET"
         ],
@@ -4234,7 +4234,12 @@
     "phpstan_baseline": "phpstan-baseline.neon",
     "phpcs_config": "phpcs.xml",
     "docs_consistency": "bin/audit-docs-consistency.php (build-release step 0c, exit 24)",
-    "admin_tables": "bin/audit-admin-tables.php (build-release step 5c2, exit 41; baseline 5 free / 13 pro, shrink-only)"
+    "admin_tables": "bin/audit-admin-tables.php (build-release step 5c2, exit 41; baseline 5 free / 13 pro, shrink-only)",
+    "manifest_fresh": "bin/check-manifest-fresh.php: hooks, AJAX, cron, routes and CLAUDE.md counts vs the manifest; live REST methods under wp eval-file (pre-commit, local-ci, CI, build-release exit 33)",
+    "runtime_coverage": "bin/qa-runtime-coverage.php over includes/qa/class-coverage-recorder.php records (JETONOMY_COVERAGE_OUT): stale requests, must-cover write/membership/moderation routes, shrink-only audit/qa-runtime-baseline.json (local-ci, CI coverage-gates)",
+    "new_tests_fail_on_base": "bin/check-new-tests-fail-on-base.php: tests added since the base must fail on the base code; @covers-existing opts out (local-ci, CI on pull requests)",
+    "refusal_journeys": "qa-actions Phase 5 (includes/qa/class-refusal-tests.php): RF1-RF10 refusal paths; RF4 registered in bin/check-guards-can-fail.php",
+    "runbook_fresh": "bin/check-runbook-fresh.php: every docs/qa/AGENT_SMOKE_RUNBOOK.md journey carries Covers + Verified; stale journeys block build-release (exit 33) and release PRs into main"
   },
   "coding_rules": [
     "REST-first: every mutation reachable via jetonomy/v1/*",

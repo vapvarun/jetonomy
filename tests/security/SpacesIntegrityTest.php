@@ -126,6 +126,7 @@ class SpacesIntegrityTest extends WP_UnitTestCase {
 		$this->assertSame( 409, $again->get_error_data()['status'] );
 		$this->assertSame( 'denied', JoinRequest::find( (int) $jr->id )->status );
 		$this->assertSame( 0, $approved->n );
+		$this->assertNull( SpaceMember::get_role( $space, $this->user ), 'and nobody was admitted on the way' );
 		$this->assertFalse( JoinRequest::deny( (int) $jr->id, $this->admin ), 'deny twice fires nothing' );
 	}
 

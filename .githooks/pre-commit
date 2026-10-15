@@ -121,6 +121,15 @@ if [ -n "$STAGED_SRC" ] && ! php bin/check-terminology.php $STAGED_SRC; then
     exit 1
 fi
 
+# The manifest must describe the code in this commit: hooks, AJAX actions,
+# cron hooks, REST routes and CLAUDE.md's counts (live methods are checked in
+# CI and bin/local-ci.sh, which load WordPress).
+echo "  -> manifest freshness"
+if ! php bin/check-manifest-fresh.php; then
+    echo "pre-commit FAILED: update audit/manifest.json (and CLAUDE.md's counts) in this commit."
+    exit 1
+fi
+
 # $wpdb outside the data layer may only shrink (rule 2).
 echo "  -> data layer"
 if ! bin/check-data-layer.sh; then
