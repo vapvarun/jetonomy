@@ -111,13 +111,15 @@ class Permission_Engine {
 	 */
 	private const SPACE_ROLE_PERMS = array(
 		'viewer'    => array( 'read' ),
-		'member'    => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag' ),
+		'member'    => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' ),
 		'moderator' => array(
 			'read',
 			'create_posts',
 			'create_replies',
 			'vote',
 			'flag',
+			'edit_own_posts',
+			'delete_own_posts',
 			'edit_others_posts',
 			'delete_others_posts',
 			'close_posts',
@@ -130,6 +132,8 @@ class Permission_Engine {
 			'create_replies',
 			'vote',
 			'flag',
+			'edit_own_posts',
+			'delete_own_posts',
 			'edit_others_posts',
 			'delete_others_posts',
 			'close_posts',
@@ -183,7 +187,7 @@ class Permission_Engine {
 
 		// Layer 0b: Silence check — can read but not write.
 		if ( $user_id && class_exists( 'Jetonomy\Models\Restriction' ) && Restriction::is_silenced( $user_id ) ) {
-			$write_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'create_spaces', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
+			$write_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
 			if ( in_array( $action, $write_actions, true ) ) {
 				return false;
 			}
@@ -210,6 +214,15 @@ class Permission_Engine {
 		if ( $user_id && $space_id && in_array( $action, self::SPACE_MOD_ACTIONS, true ) ) {
 			$mod_role = SpaceMember::get_role( $space_id, $user_id );
 			if ( in_array( $mod_role, array( 'admin', 'moderator' ), true ) ) {
+				return true;
+			}
+			// A role holding jetonomy_moderate (Editor by default) is site-wide
+			// staff: it may use, in every space, each moderation action its role
+			// carries, with no membership and no trust floor. The moderation
+			// queue already treats it this way (Moderation_Permissions); without
+			// this a new moderator could clear flags but pin or edit nothing.
+			if ( user_can( $user_id, 'jetonomy_moderate' )
+				&& ( 'moderate' === $action || user_can( $user_id, 'jetonomy_' . $action ) ) ) {
 				return true;
 			}
 		}
@@ -311,8 +324,8 @@ class Permission_Engine {
 			// Access rule grants access — check if sufficient for the action.
 			$grants_map      = array(
 				'read'        => array( 'read' ),
-				'participate' => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag' ),
-				'full'        => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_others_posts', 'close_posts', 'pin_posts' ),
+				'participate' => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' ),
+				'full'        => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts', 'edit_others_posts', 'close_posts', 'pin_posts' ),
 			);
 			$allowed_actions = $grants_map[ $access['grants'] ] ?? array( 'read' );
 			if ( in_array( $action, $allowed_actions, true ) ) {
@@ -353,7 +366,7 @@ class Permission_Engine {
 			}
 			$is_open = 'open' === ( $space->join_policy ?? 'open' );
 			if ( $is_open && $user_id ) {
-				$open_actions = array( 'create_posts', 'create_replies', 'vote', 'flag' );
+				$open_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'edit_own_posts', 'delete_own_posts' );
 				if ( in_array( $action, $open_actions, true ) ) {
 					return true;
 				}
@@ -370,27 +383,27 @@ class Permission_Engine {
 		// This is a CEILING on a capability the role already granted, not a
 		// second path INTO one it did not. Layer 1 above already rejected a
 		// user whose role lacks the underlying jetonomy_<action> capability
-		// (default roles: Subscriber through Contributor lack all four
+		// (default roles: Subscriber through Contributor lack all five
 		// moderation actions below) before this code ever runs, so raising a
-		// member's trust level cannot hand them edit/move/close/pin on a
-		// default install. What this table DOES do: a role that already
-		// carries the capability (Editor+, or any role a site owner mapped
-		// it onto) is additionally held to a trust-level floor below
-		// moderator/admin - an Editor at trust level 0 is denied
-		// edit_others_posts here even though their WP role allows it.
+		// member's trust level cannot hand them edit/delete/move/close/pin on
+		// a default install. Site-wide staff (jetonomy_moderate, Editor by
+		// default) and space moderators/admins never reach here: Layer 0d
+		// granted them already. What this table DOES do: a non-staff role a
+		// site owner mapped one of these capabilities onto is additionally
+		// held to a trust-level floor.
 		// Trust-threshold UI and docs describe only what the default roles
-		// unlock (Trust_Levels::LEVELS), which correctly omits these four -
+		// unlock (Trust_Levels::LEVELS), which correctly omits these five -
 		// keep it that way; don't add them there on the strength of this
 		// array alone.
 		$profile     = UserProfile::find_by_user( $user_id );
 		$trust_level = $profile ? (int) $profile->trust_level : 0;
 
 		$trust_requirements = array(
-			'edit_others_posts' => 3,
-			'move_posts'        => 3,
-			'close_posts'       => 3,
-			'pin_posts'         => 3,
-			'create_spaces'     => 4,
+			'edit_others_posts'   => 3,
+			'delete_others_posts' => 3,
+			'move_posts'          => 3,
+			'close_posts'         => 3,
+			'pin_posts'           => 3,
 		);
 
 		if ( isset( $trust_requirements[ $action ] ) ) {

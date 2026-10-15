@@ -1016,6 +1016,9 @@
 					$input.val($(this).text());
 					$hidden.val($(this).data('id'));
 					$results.hide();
+					// Setting .val() fires no input event, so refresh the hint
+					// or it keeps the typed search text instead of the pick.
+					renderRulePreview();
 				});
 
 				$(document).on('click', function(e) {

@@ -394,7 +394,6 @@ WP capabilities synced by `Capabilities::register()` (activation, version change
 |------------|----------------------------------------|
 | `jetonomy_read`, `jetonomy_create_posts`, `jetonomy_create_replies`, `jetonomy_edit_own_posts`, `jetonomy_delete_own_posts`, `jetonomy_vote`, `jetonomy_flag`, `jetonomy_join_spaces` | subscriber+ |
 | `jetonomy_upload_media` | contributor+ |
-| `jetonomy_create_spaces` | author+ |
 | `jetonomy_edit_others_posts`, `jetonomy_delete_others_posts`, `jetonomy_moderate`, `jetonomy_manage_users`, `jetonomy_move_posts`, `jetonomy_close_posts`, `jetonomy_pin_posts` | editor+ |
 | `jetonomy_manage_settings`, `jetonomy_manage_categories`, `jetonomy_manage_spaces`, `jetonomy_manage_badges`, `jetonomy_view_analytics`, `jetonomy_manage_extensions` | administrator |
 

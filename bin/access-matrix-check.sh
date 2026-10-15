@@ -404,7 +404,7 @@ run_check POST "/categories"                             mod        403      '{"
 # blocked on payload validation"). Empty body → 400.
 run_check POST "/categories"                             admin      400,201  '{}'
 
-# 19. /spaces POST — needs jetonomy_create_spaces (subscriber=403, admin=201)
+# 19. /spaces POST — needs a role ticked in Settings "Who can create spaces" (subscriber=403, admin=201)
 run_check POST "/spaces"                                 anon       401,403,400  '{}'
 run_check POST "/spaces"                                 subscriber 403,400  '{"name":"runner-test"}'
 # admin gets through cap → fails on validation

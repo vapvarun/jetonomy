@@ -126,7 +126,7 @@ class Users_Handler {
 
 	public function ajax_change_trust_level(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+		if ( ! current_user_can( 'jetonomy_manage_users' ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 

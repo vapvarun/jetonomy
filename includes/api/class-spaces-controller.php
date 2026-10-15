@@ -59,8 +59,8 @@ class Spaces_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
 					// REST_Auth handles login + nonce. The detailed cap matrix
-					// (manage_options OR jetonomy_create_spaces OR admin-allowed
-					// role) stays in create_permission_check because it consults
+					// (manage_options OR admin-allowed role) stays in
+					// create_permission_check because it consults
 					// the admin's saved frontend_space_creation_roles list and
 					// the user's WP roles — neither belongs in REST_Auth.
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
@@ -570,7 +570,7 @@ class Spaces_Controller extends Base_Controller {
 	 * POST /spaces — Create a new space.
 	 *
 	 * REST_Auth at the route layer enforces login + nonce. The cap matrix
-	 * (manage_options / jetonomy_create_spaces / admin-allowed role) is too
+	 * (manage_options / admin-allowed role) is too
 	 * contextual for the helper, so re-run create_permission_check() here.
 	 */
 	public function create_item( $request ) {

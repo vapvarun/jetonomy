@@ -29,6 +29,16 @@
 		};
 	}
 
+	// Controls the viewer may not use (e.g. voting without the permission)
+	// explain themselves on click instead of doing nothing.
+	document.addEventListener('click', function (e) {
+		var el = e.target && e.target.closest ? e.target.closest('[data-jt-denied]') : null;
+		if (el) {
+			e.preventDefault();
+			window.bnToast(el.getAttribute('data-jt-denied'));
+		}
+	});
+
 	/* ── Notification Dropdown ── */
 	var notifLoaded = false;
 	window.jtToggleNotifDropdown = function (btn) {

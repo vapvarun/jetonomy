@@ -1959,7 +1959,6 @@
     /* Let dropdown + badges wrap onto a second line on mobile. The row
        keeps avatar + name + trust on line 1; dropdown + badge + rep on
        line 2, full-width select so the truncation stops squeezing. */
-    .jt-app .jt-member-item { flex-wrap: wrap; }
     .jt-member-role-select { flex-basis: 100%; max-width: 100%; width: 100%; margin-top: var(--jt-space-1); }
     .jt-pending-actions { flex-basis: 100%; margin-top: var(--jt-space-1); }
   }
@@ -2016,6 +2015,11 @@
 
   /* ── Space members ── */
   .jt-member-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); }
+  /* Wrap by available width, not viewport: a space admin's row carries role
+     select + Ban + rep, which squeezed the name to a sliver in a narrow column
+     at desktop widths. The name keeps 12rem; the controls drop a line first. */
+  .jt-member-item { flex-wrap: wrap; }
+  .jt-member-item > .jt-flex-1 { flex: 1 1 12rem; }
   .jt-member-name { font-weight: 600; color: var(--jt-text); }
   .jt-member-joined { font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-top: 2px; }
   /* Reputation is the last cell in the row, so its width sets where every
@@ -2023,7 +2027,7 @@
      select and Ban button ~10px further left than a 3-digit one and the
      column read as ragged down the list. Fixed width + end-alignment locks
      the whole trailing cluster into a column. */
-  .jt-member-rep { flex: 0 0 auto; min-width: 5.5rem; text-align: end; font-family: var(--jt-font-mono); font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
+  .jt-member-rep { flex: 0 0 auto; min-width: 5.5rem; margin-inline-start: auto; text-align: end; font-family: var(--jt-font-mono); font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
   .jt-pending-requests { margin-bottom: 20px; }
   /* Deep-linked from a join-request notification (#jt-pending-requests). Same

@@ -55,7 +55,6 @@ Defaults are seeded per role and fully editable in the **Jetonomy → Settings �
 | `jetonomy_moderate` | Site-wide moderation: flag queue, member restrictions, content actions |
 | `jetonomy_manage_settings` | Jetonomy settings + the Spaces admin screen |
 | `jetonomy_manage_spaces` | Space administration in wp-admin |
-| `jetonomy_create_spaces` | Creating spaces from the frontend |
 
 Tick the capabilities for any role - custom roles included - in the **Jetonomy → Settings → Permissions** matrix; every check falls back safely to `manage_options`, so Administrators are never locked out.
 

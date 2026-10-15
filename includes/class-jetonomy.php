@@ -343,10 +343,10 @@ final class Jetonomy {
 	/**
 	 * One-time seed for Settings → General → front-end space creation.
 	 *
-	 * The front-end gate reads only the role allow-list, so an install that never
-	 * touched the setting would lose front-end space creation for its authors and
-	 * editors. Seed the list with the roles that hold the cap today: effective
-	 * permissions stay the same and the admin screen shows the truth.
+	 * The front-end gate reads only the role allow-list. A fresh install starts
+	 * with Administrator, Editor and Author, the long-standing default; sites
+	 * upgrading to 2.0.2 are seeded by Migration_2_0_2 from the roles that held
+	 * the retired create-spaces capability, before it was removed.
 	 *
 	 * Only seeds when the key is ABSENT. An admin who already configured the
 	 * setting (including deliberately ticking nothing) keeps their choice.
@@ -363,7 +363,9 @@ final class Jetonomy {
 		}
 
 		if ( ! array_key_exists( 'frontend_space_creation_roles', $settings ) ) {
-			$settings['frontend_space_creation_roles'] = Permissions\Capabilities::roles_with_create_spaces();
+			$settings['frontend_space_creation_roles'] = function_exists( 'wp_roles' )
+				? array_values( array_intersect( array( 'administrator', 'editor', 'author' ), array_keys( wp_roles()->roles ) ) )
+				: array();
 			update_option( 'jetonomy_settings', $settings );
 		}
 

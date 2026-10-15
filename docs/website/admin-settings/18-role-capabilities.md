@@ -35,7 +35,6 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_flag` | Report content to moderators |
 | `jetonomy_join_spaces` | Join spaces that allow it |
 | `jetonomy_upload_media` | Attach files and images (see [Common changes](#common-changes)) |
-| `jetonomy_create_spaces` | Create spaces programmatically |
 
 ### Moderating
 
@@ -44,7 +43,7 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_edit_others_posts` | Edit anyone's post |
 | `jetonomy_delete_others_posts` | Delete anyone's post |
 | `jetonomy_moderate` | Work the moderation queue, resolve reports, ban members |
-| `jetonomy_manage_users` | Manage community members |
+| `jetonomy_manage_users` | Open **Jetonomy → Users** and change members' trust levels |
 | `jetonomy_move_posts` | Move topics between spaces |
 | `jetonomy_close_posts` | Close topics |
 | `jetonomy_pin_posts` | Pin topics |
@@ -56,9 +55,9 @@ Grouped by what they let someone do. The identifier in `code` is what a develope
 | `jetonomy_manage_settings` | Change Jetonomy settings |
 | `jetonomy_manage_categories` | Create and edit categories |
 | `jetonomy_manage_spaces` | Manage every space |
-| `jetonomy_manage_badges` | Manage badges |
+| `jetonomy_manage_badges` | Open **Badges** (Pro) and create, edit, award and revoke badges |
 | `jetonomy_view_analytics` | View community analytics |
-| `jetonomy_manage_extensions` | Enable and disable Pro extensions |
+| `jetonomy_manage_extensions` | Open **Extensions** (Pro) and enable or disable them |
 
 ## Defaults
 
@@ -68,11 +67,15 @@ Out of the box, capabilities accumulate up the role hierarchy - each role holds 
 |---|---|
 | **Subscriber** | Read, create topics and replies, edit and delete own posts, upload media, vote, report, join spaces |
 | **Contributor** | Nothing extra |
-| **Author** | Create spaces |
+| **Author** | Nothing extra (who may create spaces is set in **Settings → General → Who can create spaces**) |
 | **Editor** | Edit and delete others' posts, moderate, manage users, move, close and pin topics |
 | **Administrator** | Manage settings, categories, all spaces, badges, analytics and extensions |
 
 So an Editor holds everything a Subscriber, Contributor and Author hold, plus the moderation set. This is why Editor is the natural role for a community moderator with no other change needed.
+
+**Site-wide moderators.** Any role holding `jetonomy_moderate` is treated as staff: in every space it can use each moderation capability it holds (edit or delete others' posts, move, close, pin), without joining the space and without a trust level.
+
+**Moderation capabilities on other roles.** If you give a role without `jetonomy_moderate` one of those capabilities, a member with that role can use it only in spaces they belong to, and only from trust level 3.
 
 ## Roles from other plugins
 

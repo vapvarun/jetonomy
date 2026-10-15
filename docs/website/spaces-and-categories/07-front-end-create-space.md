@@ -77,7 +77,7 @@ Submitting the form does five things in one transaction:
 4. Flushes the relevant rewrite caches so the space URL resolves immediately
 5. Redirects the user to the new space at `/community/s/<slug>/`
 
-There is no approval queue. The space is live the moment the form is submitted. Who may reach the form at all is gated by the `jetonomy_create_spaces` capability plus the Front-end space creation roles setting, so you control space creation by role rather than by an after-the-fact approval step.
+There is no approval queue. The space is live the moment the form is submitted. Who may reach the form at all is set by the Front-end space creation roles setting, so you control space creation by role rather than by an after-the-fact approval step.
 
 ## Validation Hints
 
@@ -114,7 +114,7 @@ The front-end form covers everything a member or space owner needs. The wp-admin
 
 The two controls that come up most often when customising this page:
 
-- `jetonomy_create_spaces` (capability) - granted to roles via the Front-end space creation roles setting. A user without this capability never sees the Create Space link or page. This is the primary gate.
+- Front-end space creation roles (Settings → General) - the only gate. A member whose role is not ticked never sees the Create Space link or page. Developers can grant or revoke per user with the `jetonomy_can_create_space_frontend` filter.
 - `jetonomy_use_frontend_space_edit` (filter) - returns true to route both the Create and Edit space flows through the front-end UI. Default true. Return false to send these flows to wp-admin instead.
 
 See the Developer Reference for the full signatures and examples.

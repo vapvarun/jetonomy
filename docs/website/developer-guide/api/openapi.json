@@ -7045,7 +7045,7 @@
         ],
         "summary": "Create a space",
         "operationId": "createSpace",
-        "description": "Create a sub-community. Requires manage_options OR jetonomy_create_spaces OR an opted-in WP role (Settings -> frontend_space_creation_roles).",
+        "description": "Create a sub-community. Requires manage_options OR an opted-in WP role (Settings -> frontend_space_creation_roles).",
         "responses": {
           "201": {
             "description": "Created",

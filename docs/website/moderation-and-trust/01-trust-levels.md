@@ -53,7 +53,7 @@ Trust levels only change a few things. What a member can do day to day comes fro
 - **Uploads and editing or deleting your own posts.** Every member's role gets the capabilities by default, so every trust level can do them. To change this, edit the role in [Role Capabilities](../admin-settings/18-role-capabilities.md).
 - **Moderation.** Trust level never makes someone a moderator. Moderating needs the `jetonomy_moderate` capability (Editor and above by default) or a **Moderator** or **Admin** role in the space. TL4 ("Leader") and TL5 ("Moderator") are names only. Promoting a member to TL4 or TL5 does not give them moderation tools, access to the moderation queue, or any admin screen.
 - **Managing settings, categories and analytics.** These need the matching capabilities, which Administrators hold. TL5 does not grant them.
-- **Creating spaces.** Front-end space creation follows the **Front-end space creation** role list in **Jetonomy → Settings → General**. Trust level does not unlock it. The permission engine also lists TL4 plus the `jetonomy_create_spaces` capability as a requirement for programmatic checks, but the front-end form and the REST route do not use it.
+- **Creating spaces.** Front-end space creation follows the **Front-end space creation** role list in **Jetonomy → Settings → General**. Trust level does not unlock it, and there is no separate capability for it.
 
 The **What this unlocks** column on the Permissions settings screen lists only what the engine enforces: no daily limits from TL1, and the TL3 minimum for editing, moving, closing and pinning others' topics.
 

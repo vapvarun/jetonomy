@@ -230,7 +230,7 @@ class Admin {
 			'jetonomy',
 			__( 'Users', 'jetonomy' ),
 			__( 'Users', 'jetonomy' ),
-			'jetonomy_manage_settings',
+			'jetonomy_manage_users',
 			'jetonomy-users',
 			array( $this, 'render_users' )
 		);
@@ -259,7 +259,7 @@ class Admin {
 				'jetonomy',
 				__( 'Extensions', 'jetonomy' ),
 				__( 'Extensions', 'jetonomy' ),
-				'jetonomy_manage_settings',
+				'jetonomy_manage_extensions',
 				'jetonomy-extensions',
 				array( $this, 'render_extensions' )
 			);

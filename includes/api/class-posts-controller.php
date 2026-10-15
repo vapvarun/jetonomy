@@ -684,7 +684,7 @@ class Posts_Controller extends Base_Controller {
 		$is_author = (int) $post->author_id === $user_id;
 
 		// Must be author with edit_own_posts or moderator/admin with edit_others_posts.
-		$can_edit = ( $is_author && $this->check_permission( 'create_posts', $space_id ) )
+		$can_edit = ( $is_author && $this->check_permission( 'edit_own_posts', $space_id ) )
 			|| $this->check_permission( 'edit_others_posts', $space_id );
 
 		if ( ! $can_edit ) {
@@ -918,7 +918,7 @@ class Posts_Controller extends Base_Controller {
 		$space_id  = (int) $post->space_id;
 		$is_author = (int) $post->author_id === $user_id;
 
-		$can_delete = ( $is_author && $this->check_permission( 'create_posts', $space_id ) )
+		$can_delete = ( $is_author && $this->check_permission( 'delete_own_posts', $space_id ) )
 			|| $this->check_permission( 'delete_others_posts', $space_id );
 
 		if ( ! $can_delete ) {

@@ -24,7 +24,7 @@ class Capabilities {
 			'jetonomy_join_spaces',
 		),
 		'contributor'   => array(),
-		'author'        => array( 'jetonomy_create_spaces' ),
+		'author'        => array(),
 		'editor'        => array(
 			'jetonomy_edit_others_posts',
 			'jetonomy_delete_others_posts',
@@ -147,8 +147,8 @@ class Capabilities {
 	 * a box on the mapping screen actually revokes.
 	 */
 	public static function register(): void {
-		// Same guard roles_with_create_spaces() carries: in a minimal boot
-		// context (the WP-stub smoke test) the roles API may not exist yet.
+		// In a minimal boot context (the WP-stub smoke test) the roles API
+		// may not exist yet.
 		if ( ! function_exists( 'wp_roles' ) ) {
 			return;
 		}
@@ -156,8 +156,7 @@ class Capabilities {
 		// First sync on a site that predates the editable mapping: snapshot
 		// any live role whose Jetonomy caps differ from the ROLE_MAP default
 		// (hand-granted custom roles included) into the option, so syncing
-		// never changes a site's effective permissions out from under it -
-		// same seeding discipline roles_with_create_spaces() established.
+		// never changes a site's effective permissions out from under it.
 		//
 		// A role holding NO Jetonomy caps is deliberately NOT seeded. On a
 		// fresh install that is every role, and an empty snapshot is not a
@@ -210,41 +209,13 @@ class Capabilities {
 		}
 	}
 
-	/**
-	 * Roles that hold `jetonomy_create_spaces` in the live roles registry.
-	 *
-	 * Read from wp_roles() rather than ROLE_MAP so a custom role the site
-	 * granted the cap to counts too. Used to seed the front-end allow-list on
-	 * upgrade, so a site's effective permissions do not change under it.
-	 *
-	 * @return string[]
-	 */
-	public static function roles_with_create_spaces(): array {
-		if ( ! function_exists( 'wp_roles' ) ) {
-			return array();
-		}
-
-		$out = array();
-		foreach ( wp_roles()->role_objects as $slug => $role ) {
-			if ( $role->has_cap( 'jetonomy_create_spaces' ) || $role->has_cap( 'manage_options' ) ) {
-				$out[] = (string) $slug;
-			}
-		}
-
-		return $out;
-	}
 
 	/**
 	 * Whether a user may create a space from the FRONT END.
 	 *
 	 * The single gate for the REST create route, the /new-space/ form, and the
-	 * user-panel "Create space" link. It consults only the admin's allow-list, not
-	 * `current_user_can( 'jetonomy_create_spaces' )`: that cap is granted cumulatively to
-	 * author and up, so OR-ing it in would make unticking Author or Editor under
-	 * Settings -> General do nothing.
-	 *
-	 * The cap still gates programmatic paths (CLI, Abilities); it does not override
-	 * what the site owner configured for the front end.
+	 * user-panel "Create space" link. Settings -> General -> "Who can create
+	 * spaces" is the single control; there is no separate capability for it.
 	 *
 	 * @param int $user_id WP user ID. 0 = current user.
 	 * @return bool
@@ -298,7 +269,6 @@ class Capabilities {
 			'jetonomy_flag'                => __( 'Report content', 'jetonomy' ),
 			'jetonomy_join_spaces'         => __( 'Join spaces', 'jetonomy' ),
 			'jetonomy_upload_media'        => __( 'Upload media', 'jetonomy' ),
-			'jetonomy_create_spaces'       => __( 'Create spaces (programmatic)', 'jetonomy' ),
 			'jetonomy_edit_others_posts'   => __( "Edit others' posts", 'jetonomy' ),
 			'jetonomy_delete_others_posts' => __( "Delete others' posts", 'jetonomy' ),
 			'jetonomy_moderate'            => __( 'Moderate (queue, flags, bans)', 'jetonomy' ),

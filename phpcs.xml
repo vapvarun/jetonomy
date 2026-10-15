@@ -120,13 +120,14 @@
 				<element value="jetonomy_manage_categories"/>
 				<element value="jetonomy_moderate_content"/>
 				<element value="jetonomy_moderate"/>
-				<element value="jetonomy_create_spaces"/>
 				<element value="jetonomy_create_posts"/>
 				<element value="jetonomy_create_replies"/>
 				<element value="jetonomy_upload_media"/>
 				<element value="jetonomy_view_content"/>
 				<element value="jetonomy_ban_users"/>
 				<element value="jetonomy_manage_users"/>
+				<element value="jetonomy_manage_badges"/>
+				<element value="jetonomy_manage_extensions"/>
 				<element value="jetonomy_manage_settings"/>
 				<element value="jetonomy_view_analytics"/>
 				<element value="jetonomy_vote"/>

@@ -455,6 +455,31 @@ function jetonomy_viewer_can_vote( $space ): bool {
 }
 
 /**
+ * Print the vote score for a logged-in viewer who may not vote here.
+ *
+ * Shows the score and explains on hover, to screen readers and (via the
+ * data-jt-denied handler in header.js) with a toast on click, instead of an
+ * inert icon that looks broken.
+ *
+ * @param int $score     Current vote score.
+ * @param int $icon_size Icon size in px.
+ */
+function jetonomy_vote_denied_control( int $score, int $icon_size ): void {
+	$why = __( 'Voting is not available to you here.', 'jetonomy' );
+	/* translators: 1: vote score, 2: reason voting is unavailable. */
+	$label = sprintf( __( 'Score %1$d. %2$s', 'jetonomy' ), $score, $why );
+	?>
+	<button type="button" class="jt-act jt-act-denied" aria-disabled="true"
+		data-jt-denied="<?php echo esc_attr( $why ); ?>"
+		title="<?php echo esc_attr( $why ); ?>"
+		aria-label="<?php echo esc_attr( $label ); ?>">
+		<?php jetonomy_echo_icon( 'chevron-up', $icon_size ); ?>
+		<span class="n"><?php echo esc_html( (string) $score ); ?></span>
+	</button>
+	<?php
+}
+
+/**
  * Resolve a customer-facing label for an idea roadmap status enum value.
  *
  * Mirrors the column labels in `templates/views/space-roadmap.php`. Used

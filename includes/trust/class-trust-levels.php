@@ -59,9 +59,6 @@ class Trust_Levels {
 				'reputation'  => 50,
 			),
 			'rate_limits'  => array(),
-			// Not create_spaces: creating a space needs the jetonomy_create_spaces
-			// capability plus trust level 4 (Permission_Engine), so listing it here
-			// told owners Regular members could do it.
 			'abilities'    => array(),
 		),
 		3 => array(
@@ -78,7 +75,7 @@ class Trust_Levels {
 			'name'         => 'Leader',
 			'requirements' => array(), // Manually granted.
 			'rate_limits'  => array(),
-			'abilities'    => array( 'create_spaces' ),
+			'abilities'    => array(),
 		),
 		5 => array(
 			'name'         => 'Moderator',

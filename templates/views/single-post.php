@@ -649,11 +649,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 							</a>
 							<?php else : ?>
-								<?php // Logged in but not allowed to vote here (Read-grant). Inert score, no clickable control the server would refuse. ?>
-							<span class="jt-act" aria-hidden="true">
-								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-							</span>
+								<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16 ); ?>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
@@ -734,16 +730,26 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// useful (DELETE on a trashed post is a 409), so its author has
 				// no menu at all and moderators keep only the moderation tools.
 				$jt_is_trashed = 'trash' === $post->status;
-				$jt_is_author  = (int) $post->author_id === get_current_user_id();
+				$jt_is_author  = (int) $post->author_id === $jt_viewer_id;
+				// One flag per action, asked exactly as the REST endpoint asks it,
+				// so the menu offers what the owner's Permissions screen grants and
+				// nothing the server would refuse.
+				$jt_pe        = \Jetonomy\Permissions\Permission_Engine::class;
+				$jt_sid       = (int) $post->space_id;
+				$jt_can_edit  = $jt_viewer_id && ! $jt_is_trashed && ( ( $jt_is_author && $jt_pe::can( $jt_viewer_id, 'edit_own_posts', $jt_sid ) ) || $jt_pe::can( $jt_viewer_id, 'edit_others_posts', $jt_sid ) );
+				$jt_can_del   = $jt_viewer_id && ! $jt_is_trashed && ( ( $jt_is_author && $jt_pe::can( $jt_viewer_id, 'delete_own_posts', $jt_sid ) ) || $jt_pe::can( $jt_viewer_id, 'delete_others_posts', $jt_sid ) );
+				$jt_can_pin   = $jt_viewer_id && $jt_is_live && $jt_pe::can( $jt_viewer_id, 'pin_posts', $jt_sid );
+				$jt_can_close = $jt_viewer_id && $jt_is_live && $jt_pe::can( $jt_viewer_id, 'close_posts', $jt_sid );
+				$jt_can_move  = $jt_viewer_id && $jt_pe::can( $jt_viewer_id, 'move_posts', $jt_sid );
 				?>
-				<?php if ( $jt_can_moderate_here || ( $jt_is_author && ! $jt_is_trashed ) ) : ?>
+				<?php if ( $jt_can_moderate_here || $jt_can_edit || $jt_can_del || $jt_can_pin || $jt_can_close || $jt_can_move ) : ?>
 					<div class="jt-more-menu">
 						<button class="jt-act jt-more-trigger" type="button"
 							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
 						<div class="jt-more-dropdown" hidden>
-							<?php if ( ! $jt_is_trashed && ( $jt_is_author || $jt_can_moderate_here ) ) : ?>
+							<?php if ( $jt_can_edit ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
@@ -752,7 +758,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( $jt_can_moderate_here && $jt_is_live ) : ?>
+							<?php if ( $jt_can_pin ) : ?>
 								<?php
 								/*
 								 * "Pin to space", not bare "Pin". Pro's
@@ -771,21 +777,24 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo esc_html( $jt_pin_label ); ?></button>
+							<?php endif; ?>
+							<?php if ( $jt_can_close ) : ?>
 									<button class="jt-more-item"
 										data-wp-on--click="actions.toggleClose"
 										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Reopen %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) : esc_html( sprintf( /* translators: %s: singular topic label. */ __( 'Close %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?></button>
 							<?php endif; ?>
-							<?php if ( $jt_can_moderate_here ) : ?>
+							<?php if ( $jt_can_move ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.movePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'move', 14 ); ?> <?php esc_html_e( 'Move', 'jetonomy' ); ?></button>
+								<?php // Merge moves replies across topics, so REST gates it on move_posts too. ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.mergePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( ! $jt_is_trashed && ( $jt_is_author || $jt_can_moderate_here ) ) : ?>
+							<?php if ( $jt_can_del ) : ?>
 								<button class="jt-more-item jt-more-item--danger"
 									data-wp-on--click="actions.deletePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"

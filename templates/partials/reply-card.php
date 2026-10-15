@@ -69,6 +69,15 @@ $jt_can_moderate_reply = $jt_reply_viewer
 	? \Jetonomy\Permissions\Permission_Engine::can( $jt_reply_viewer, 'moderate', (int) ( $post->space_id ?? 0 ) )
 	: false;
 
+// Edit / Delete / Split follow the replies endpoints exactly, so the menu
+// offers what the owner's Permissions screen grants and nothing REST refuses.
+$jt_rp_pe        = \Jetonomy\Permissions\Permission_Engine::class;
+$jt_rp_sid       = (int) ( $post->space_id ?? 0 );
+$jt_rp_is_author = $jt_reply_viewer && (int) $reply->author_id === $jt_reply_viewer;
+$jt_rp_can_edit  = $jt_reply_viewer && ( ( $jt_rp_is_author && $jt_rp_pe::can( $jt_reply_viewer, 'edit_own_posts', $jt_rp_sid ) ) || $jt_rp_pe::can( $jt_reply_viewer, 'edit_others_posts', $jt_rp_sid ) );
+$jt_rp_can_del   = $jt_reply_viewer && ( ( $jt_rp_is_author && $jt_rp_pe::can( $jt_reply_viewer, 'delete_own_posts', $jt_rp_sid ) ) || $jt_rp_pe::can( $jt_reply_viewer, 'delete_others_posts', $jt_rp_sid ) );
+$jt_rp_can_split = $jt_reply_viewer && $jt_rp_pe::can( $jt_reply_viewer, 'move_posts', $jt_rp_sid );
+
 // Same rule as single-post.php's $jt_is_live: a reply inside a trashed or
 // unpublished topic takes no votes, replies, quotes, reports, accepts or
 // reactions - Content_Gate answers all of them with a 409.
@@ -253,8 +262,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</a>
 			<?php else : ?>
-				<?php // Logged in but not allowed to vote here (Read-grant). Inert score, no clickable control the server would refuse. ?>
-			<span class="jt-act" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span></span>
+				<?php jetonomy_vote_denied_control( (int) $reply->vote_score, 14 ); ?>
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>
@@ -279,13 +287,14 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?></button>
 		<?php endif; ?>
-		<?php if ( is_user_logged_in() && ( get_current_user_id() === (int) $reply->author_id || $jt_can_moderate_reply ) ) : ?>
+		<?php if ( $jt_rp_can_edit || $jt_rp_can_del || $jt_rp_can_split ) : ?>
 			<div class="jt-more-menu">
 				<button class="jt-act jt-more-trigger" type="button"
 					data-wp-on--click="actions.toggleMoreMenu"
 					title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 					aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'more-horizontal', 14 ); ?></button>
 				<div class="jt-more-dropdown" hidden>
+					<?php if ( $jt_rp_can_edit ) : ?>
 					<button class="jt-more-item"
 						data-wp-on--click="actions.editReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>">
@@ -297,7 +306,8 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 						data-private="<?php echo empty( $reply->is_private ) ? '0' : '1'; ?>">
 						<?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo empty( $reply->is_private ) ? esc_html__( 'Make Private', 'jetonomy' ) : esc_html__( 'Make Public', 'jetonomy' ); ?>
 					</button>
-					<?php if ( $jt_can_moderate_reply ) : ?>
+					<?php endif; ?>
+					<?php if ( $jt_rp_can_split ) : ?>
 					<button class="jt-more-item"
 						data-wp-on--click="actions.splitReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -306,11 +316,13 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 						<?php jetonomy_echo_icon( 'split', 14 ); ?> <?php printf( /* translators: %s: singular topic label. */ esc_html__( 'Split to %s', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic' ) ) ); ?>
 					</button>
 					<?php endif; ?>
+					<?php if ( $jt_rp_can_del ) : ?>
 					<button class="jt-more-item jt-more-item--danger"
 						data-wp-on--click="actions.deleteReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>">
 						<?php jetonomy_echo_icon( 'trash', 14 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?>
 					</button>
+					<?php endif; ?>
 				</div>
 			</div>
 		<?php endif; ?>
