@@ -1002,6 +1002,12 @@ class Post extends Model {
 				'params' => $skip,
 			);
 		}
+		// Any other keyed array is a malformed scope: match nothing rather than
+		// coerce it into space ids (fail closed - a moderator filter must never
+		// silently widen).
+		if ( array_filter( array_keys( $space_ids ), 'is_string' ) ) {
+			return null;
+		}
 		$ids = array_values( array_unique( array_filter( array_map( 'absint', $space_ids ) ) ) );
 		if ( empty( $ids ) ) {
 			return null;

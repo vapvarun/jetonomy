@@ -169,6 +169,12 @@ class StaffReachTest extends WP_UnitTestCase {
 		$this->assertSame( 0, Reply::count_by_status( array( 'pending' ), $scope ) );
 	}
 
+	public function test_malformed_scope_fails_closed(): void {
+		$this->assertSame( array(), Post::list_by_status( array( 'pending' ), 50, 0, array( 'exclude' => array( $this->private_space ) ) ), 'unknown key matches nothing' );
+		$this->assertSame( 0, Post::count_by_status( array( 'pending' ), array( 'exclude' => array( $this->private_space ) ) ) );
+		$this->assertSame( 0, Reply::count_by_status( array( 'pending' ), array( 'bogus' => 1 ) ) );
+	}
+
 	public function test_flag_lists_leave_out_unreadable_spaces_but_keep_member_flags(): void {
 		foreach ( array( $this->private_post, $this->public_post ) as $pid ) {
 			Flag::create(
