@@ -18,9 +18,16 @@
 	if (!card || !window.wp || !wp.apiFetch) {
 		return;
 	}
+	// Owner's terminology (Settings > General > Terminology); English fallback.
+	var L = window.jetonomyLabels || {};
+	var lbl = function ( noun, form, fallback ) {
+		return ( L[ noun ] && L[ noun ][ form ] ) || fallback;
+	};
 	var i18n = {
-		removeConfirm: wp.i18n.__( 'Delete all sample categories, spaces, posts, and replies? Your own content is not affected.', 'jetonomy' ),
-		importConfirm: wp.i18n.__( 'Add sample members, categories, spaces and topics to this community? You can remove them again in one click.', 'jetonomy' ),
+		/* translators: 1: category label, plural lowercase. 2: space label, plural lowercase. 3: reply label, plural lowercase. */
+		removeConfirm: wp.i18n.sprintf( wp.i18n.__( 'Delete all sample %1$s, %2$s, posts, and %3$s? Your own content is not affected.', 'jetonomy' ), lbl( 'category', 'many_lower', 'categories' ), lbl( 'space', 'many_lower', 'spaces' ), lbl( 'reply', 'many_lower', 'replies' ) ),
+		/* translators: 1: member label, plural lowercase. 2: category label, plural lowercase. 3: space label, plural lowercase. 4: topic label, plural lowercase. */
+		importConfirm: wp.i18n.sprintf( wp.i18n.__( 'Add sample %1$s, %2$s, %3$s and %4$s to this community? You can remove them again in one click.', 'jetonomy' ), lbl( 'member', 'many_lower', 'members' ), lbl( 'category', 'many_lower', 'categories' ), lbl( 'space', 'many_lower', 'spaces' ), lbl( 'topic', 'many_lower', 'topics' ) ),
 		removing:      wp.i18n.__( 'Removing…', 'jetonomy' ),
 		importing:     wp.i18n.__( 'Importing…', 'jetonomy' ),
 		error:         wp.i18n.__( 'Something went wrong.', 'jetonomy' ),

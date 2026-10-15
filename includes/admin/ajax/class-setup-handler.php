@@ -60,7 +60,8 @@ class Setup_Handler {
 			)
 		);
 		if ( $cat_id <= 0 ) {
-			wp_send_json_error( __( 'Could not create the category. Please try again.', 'jetonomy' ) );
+			/* translators: %s: category label, lowercase (e.g. "category"). */
+			wp_send_json_error( sprintf( __( 'Could not create the %s. Please try again.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
 		$space_id = Space::create(

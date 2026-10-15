@@ -343,7 +343,8 @@ class Shortcodes {
 		$spaces = Models\Space::list_public_by_post_count( $limit, $category_id );
 
 		if ( empty( $spaces ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No spaces yet.', 'jetonomy' ) . '</div>';
+			/* translators: %s: plural space label. */
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-spaces">';
@@ -378,7 +379,8 @@ class Shortcodes {
 		$leaders = Models\UserProfile::list_for_leaderboard( 'all', $limit, 0 );
 
 		if ( empty( $leaders ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No members yet.', 'jetonomy' ) . '</div>';
+			/* translators: %s: plural member label. */
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-leaderboard"><ol>';
@@ -478,7 +480,7 @@ class Shortcodes {
 				return self::config_notice(
 					sprintf(
 						/* translators: %s: the space slug or id that was passed. */
-						__( 'jetonomy_space_members: no space matching "%s".', 'jetonomy' ),
+						__( 'jetonomy_space_members: no space matching "%s".', 'jetonomy' ), // jt-terms-ok: shortcode config notice for the site builder; names the attribute.
 						$space_ref
 					)
 				);
@@ -488,7 +490,7 @@ class Shortcodes {
 		$space_id = $space ? absint( $space->id ) : 0;
 		if ( ! $space_id ) {
 			return self::config_notice(
-				__( 'jetonomy_space_members needs a space_id attribute - the space slug or its numeric id, e.g. [jetonomy_space_members space_id="announcements"].', 'jetonomy' )
+				__( 'jetonomy_space_members needs a space_id attribute - the space slug or its numeric id, e.g. [jetonomy_space_members space_id="announcements"].', 'jetonomy' ) // jt-terms-ok: shortcode attribute docs.
 			);
 		}
 
@@ -502,7 +504,8 @@ class Shortcodes {
 		$members = Models\SpaceMember::list_top_by_reputation( $space_id, $limit );
 
 		if ( empty( $members ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No members yet.', 'jetonomy' ) . '</div>';
+			/* translators: %s: plural member label. */
+			return '<div class="jt-shortcode-empty">' . esc_html( sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ) . '</div>';
 		}
 
 		$out = '<div class="jt-shortcode jt-shortcode-members">';
@@ -605,7 +608,8 @@ class Shortcodes {
 					'i18n'          => array_merge(
 						Template_Loader::app_i18n(),
 						array(
-							'chooseSpace'   => __( 'Choose a space first.', 'jetonomy' ),
+							/* translators: %s: singular space label. */
+							'chooseSpace'   => sprintf( __( 'Choose a %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							'titleRequired' => __( 'Title is required.', 'jetonomy' ),
 						)
 					),

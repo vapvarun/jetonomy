@@ -424,19 +424,19 @@ abstract class Importer {
 			$lines[] = sprintf( _n( '%s item was already imported and was skipped.', '%s items were already imported and were skipped.', $already, 'jetonomy' ), number_format_i18n( $already ) );
 		}
 		if ( $thread > 0 ) {
-			/* translators: %s: number of replies whose threading was restored. */
-			$lines[] = sprintf( _n( '%s reply from an earlier import had its threading restored.', '%s replies from an earlier import had their threading restored.', $thread, 'jetonomy' ), number_format_i18n( $thread ) );
+			/* translators: %s: number of replies with their label, e.g. "3 replies". */
+			$lines[] = sprintf( _n( '%s from an earlier import had its threading restored.', '%s from an earlier import had their threading restored.', $thread, 'jetonomy' ), \Jetonomy\count_label( (int) $thread, 'reply' ) );
 		}
 
 		$topics = (int) ( $orphans['topic'] ?? 0 );
 		if ( $topics > 0 ) {
 			/* translators: %s: number of topics left out. */
-			$lines[] = sprintf( _n( '%s topic was not imported because its forum was not imported (for example, the forum is a draft or in the trash).', '%s topics were not imported because their forum was not imported (for example, the forum is a draft or in the trash).', $topics, 'jetonomy' ), number_format_i18n( $topics ) );
+			$lines[] = sprintf( _n( '%s topic was not imported because its forum was not imported (for example, the forum is a draft or in the trash).', '%s topics were not imported because their forum was not imported (for example, the forum is a draft or in the trash).', $topics, 'jetonomy' ), number_format_i18n( $topics ) ); // jt-terms-ok: bbPress's own topics and forums in the source site, not imported content.
 		}
 		$replies = (int) ( $orphans['reply'] ?? 0 );
 		if ( $replies > 0 ) {
 			/* translators: %s: number of replies left out. */
-			$lines[] = sprintf( _n( '%s reply was not imported because its topic was not imported (for example, the topic is pending, spam or in the trash).', '%s replies were not imported because their topic was not imported (for example, the topic is pending, spam or in the trash).', $replies, 'jetonomy' ), number_format_i18n( $replies ) );
+			$lines[] = sprintf( _n( '%s reply was not imported because its topic was not imported (for example, the topic is pending, spam or in the trash).', '%s replies were not imported because their topic was not imported (for example, the topic is pending, spam or in the trash).', $replies, 'jetonomy' ), number_format_i18n( $replies ) ); // jt-terms-ok: bbPress's own replies and topics in the source site, not imported content.
 		}
 
 		return $lines;

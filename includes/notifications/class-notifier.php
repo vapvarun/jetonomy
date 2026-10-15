@@ -114,7 +114,7 @@ class Notifier {
 			),
 			'reply_to_post'         => array(
 				'subject' => sprintf( /* translators: %s: singular topic or reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $topic ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the discussion to read the full reply and join the conversation.", 'jetonomy' ),
+				'body'    => sprintf( /* translators: %s: the singular Reply label, lowercase; {user} and {message} are replaced before sending. */ __( "Hi {user},\n\n{message}\n\nOpen the discussion to read the full %s and join the conversation.", 'jetonomy' ), $reply ),
 			),
 			'reply_to_reply'        => array(
 				'subject' => sprintf( /* translators: %s: singular topic or reply label, lowercase; {site} and the other {tokens} are replaced before sending. */ __( '[{site}] {actor_display_name} replied to your %s', 'jetonomy' ), $reply ),
@@ -154,6 +154,7 @@ class Notifier {
 			),
 			'moderation'            => array(
 				'subject' => __( '[{site}] A moderator reviewed your content', 'jetonomy' ),
+				// jt-terms-ok: "reply" is the verb here, not the noun.
 				'body'    => __( "Hi {user},\n\n{message}\n\nIf you think this was a mistake, reply to a moderator in the community.", 'jetonomy' ),
 			),
 			'join_request'          => array(
@@ -772,7 +773,7 @@ class Notifier {
 				return;
 			}
 			$author_id = (int) $obj->author_id;
-			$title     = __( 'your reply', 'jetonomy' );
+			$title     = sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) );
 			$parent    = $obj->post_id ? Post::find( (int) $obj->post_id ) : null;
 			if ( $parent ) {
 				$content_url = $this->get_post_url( $parent );
@@ -847,7 +848,7 @@ class Notifier {
 				return;
 			}
 			$author_id = (int) $obj->author_id;
-			$title     = __( 'your reply', 'jetonomy' );
+			$title     = sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) );
 			$parent    = $obj->post_id ? Post::find( (int) $obj->post_id ) : null;
 			if ( $parent ) {
 				$content_url = $this->get_post_url( $parent );

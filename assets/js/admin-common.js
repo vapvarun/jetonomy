@@ -3,17 +3,34 @@
 
 	const { __, _n, sprintf } = wp.i18n;
 
+	// Owner's terminology (Settings > General > Terminology), localized as
+	// window.jetonomyLabels; the English default covers a missing localize.
+	const L = window.jetonomyLabels || {};
+	const lbl = ( noun, form, fallback ) => ( L[ noun ] && L[ noun ][ form ] ) || fallback;
+	const SPACE = lbl( 'space', 'one_lower', 'space' );
+	const TOPIC = lbl( 'topic', 'one_lower', 'topic' );
+	const TOPICS = lbl( 'topic', 'many_lower', 'topics' );
+	const REPLY = lbl( 'reply', 'one_lower', 'reply' );
+	const REPLIES = lbl( 'reply', 'many_lower', 'replies' );
+	const MEMBER = lbl( 'member', 'one_lower', 'member' );
+	const MEMBERS = lbl( 'member', 'many_lower', 'members' );
+	const MEMBERS_CAP = lbl( 'member', 'many', 'Members' );
+
 	var Jetonomy = {
 		nonce: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.nonce : '',
 		ajaxUrl: typeof jetonomyAdmin !== 'undefined' ? jetonomyAdmin.ajaxUrl : '',
 		// UI copy, translated in the browser by wp.i18n (JSON files in languages/).
 		i18n: {
 			confirmDelete:        __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
-			confirmUnban:         __( 'Lift this restriction? The member can post again right away.', 'jetonomy' ),
-			confirmArchiveSpace:  __( 'Archive this space and hand it to an administrator? Its topics and replies are kept and nothing is deleted. Members will no longer be able to post in it.', 'jetonomy' ),
-			confirmPurgeSpace:    __( 'Permanently delete this space and EVERY topic, reply and attachment in it, including content written by other members? This cannot be undone.', 'jetonomy' ),
-			/* translators: %s: the space name the operator must retype. */
-			purgeTypeToConfirm:   __( 'This destroys every topic, reply and attachment in %s, including content written by other members. It cannot be undone. Type the space name to confirm.', 'jetonomy' ),
+			/* translators: %s: the member label, lowercase (e.g. "member"). */
+			confirmUnban:         sprintf( __( 'Lift this restriction? The %s can post again right away.', 'jetonomy' ), MEMBER ),
+			/* translators: 1: space label, lowercase. 2: topic label, plural lowercase. 3: reply label, plural lowercase. 4: member label, plural (e.g. "Members"). */
+			confirmArchiveSpace:  sprintf( __( 'Archive this %1$s and hand it to an administrator? Its %2$s and %3$s are kept and nothing is deleted. %4$s will no longer be able to post in it.', 'jetonomy' ), SPACE, TOPICS, REPLIES, MEMBERS_CAP ),
+			/* translators: 1: space label, lowercase. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. */
+			confirmPurgeSpace:    sprintf( __( 'Permanently delete this %1$s and EVERY %2$s, %3$s and attachment in it, including content written by other %4$s? This cannot be undone.', 'jetonomy' ), SPACE, TOPIC, REPLY, MEMBERS ),
+			// %1$s stays a literal %s, filled with the space name at click time.
+			/* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */
+			purgeTypeToConfirm:   sprintf( __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
 			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
 			purgeNameMismatch:    __( 'That name did not match, so nothing was deleted.', 'jetonomy' ),
 			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
@@ -29,10 +46,13 @@
 			useImage:             __( 'Use this image', 'jetonomy' ),
 			unban:                __( 'Unban', 'jetonomy' ),
 			ban:                  __( 'Ban', 'jetonomy' ),
-			hiddenForcesInvite:   __( 'Hidden spaces must use Invite Only. Join policy switched.', 'jetonomy' ),
+			/* translators: %s: space label, plural lowercase (e.g. "spaces"). */
+			hiddenForcesInvite:   sprintf( __( 'Hidden %s must use Invite Only. Join policy switched.', 'jetonomy' ), lbl( 'space', 'many_lower', 'spaces' ) ),
 			hiddenRequiresInvite: __( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
-			privateForcesApproval: __( 'Private spaces need approval or an invite. Join policy switched to Approval Required.', 'jetonomy' ),
-			openRequiresPublic:   __( 'Switched visibility to Public because anyone-can-join needs a public space.', 'jetonomy' ),
+			/* translators: %s: space label, plural lowercase (e.g. "spaces"). */
+			privateForcesApproval: sprintf( __( 'Private %s need approval or an invite. Join policy switched to Approval Required.', 'jetonomy' ), lbl( 'space', 'many_lower', 'spaces' ) ),
+			/* translators: %s: space label, lowercase (e.g. "space"). */
+			openRequiresPublic:   sprintf( __( 'Switched visibility to Public because anyone-can-join needs a public %s.', 'jetonomy' ), SPACE ),
 			reloadPage:           __( 'Reload page', 'jetonomy' ),
 			importConnectionLost: __( 'Connection lost. You can resume this import later.', 'jetonomy' ),
 			inviteCopied:         __( 'Invite link copied to clipboard.', 'jetonomy' ),
@@ -65,20 +85,25 @@
 				sentence: __( '%1$s can %2$s. They are recorded as %3$s.', 'jetonomy' ),
 				// A rule admits; it does not restrict, so no "but not take part".
 				grants: {
-					read:        __( 'read posts and replies', 'jetonomy' ),
-					participate: __( 'read, post, reply, vote and report', 'jetonomy' ),
-					full:        __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s topics', 'jetonomy' ),
+					/* translators: %s: reply label, plural lowercase (e.g. "replies"). */
+					read:        sprintf( __( 'read posts and %s', 'jetonomy' ), REPLIES ),
+					participate: __( 'read, post, reply, vote and report', 'jetonomy' ), // jt-terms-ok: "reply" is the verb here, not the noun.
+					/* translators: %s: topic label, plural lowercase (e.g. "topics"). */
+					full:        sprintf( __( 'read, post, reply, vote, report, and - if their WordPress role already allows moderation - edit, close or pin other people\'s %s', 'jetonomy' ), TOPICS ), // jt-terms-ok: "reply" is the verb; the noun is the placeholder.
 				},
 				// The consequence of each rule type, not its definition.
 				typeNotes: {
 					everyone:    __( 'Matches every visitor, signed in or not. Nobody is asked to log in first.', 'jetonomy' ),
 					logged_in:   __( 'Matches anyone with an account on this site, whoever they are. A new registration matches the moment it is created.', 'jetonomy' ),
-					role:        __( 'Matches anyone holding this WordPress role. Most members hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ),
+					/* translators: %s: member label, plural lowercase (e.g. "members"). */
+					role:        sprintf( __( 'Matches anyone holding this WordPress role. Most %s hold Subscriber, the role WordPress gives new registrations, so a Subscriber rule usually means "everyone who signed up".', 'jetonomy' ), MEMBERS ),
 					capability:  __( 'Matches anyone whose WordPress role carries this capability. Use it when several roles should match one rule, or when another plugin grants the capability on the fly.', 'jetonomy' ),
-					trust_level: __( 'Matches members at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ),
+					/* translators: %s: member label, plural lowercase (e.g. "members"). */
+					trust_level: sprintf( __( 'Matches %s at or above this trust level, 0 to 5. Trust is earned by taking part, so this rule lets more people in over time without you touching it.', 'jetonomy' ), MEMBERS ),
 				},
-				/* translators: %s: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. */
-				membershipNote: __( 'Matches members who hold the %s level you pick below.', 'jetonomy' ),
+				// %1$s stays a literal %s, filled with the adapter name at runtime.
+				/* translators: 1: the membership adapter's name, e.g. "WooCommerce Memberships". Adapters register their own rule types at runtime, so they share this note. 2: member label, plural lowercase. */
+				membershipNote: sprintf( __( 'Matches %2$s who hold the %1$s level you pick below.', 'jetonomy' ), '%s', MEMBERS ),
 				// One generic example cannot serve a role slug, a capability and a number.
 				typePlaceholders: {
 					role:        __( 'subscriber', 'jetonomy' ),
@@ -88,7 +113,7 @@
 				// Roster-role labels for the derived value in the preview.
 				roles: {
 					viewer:    __( 'Viewer', 'jetonomy' ),
-					member:    __( 'Member', 'jetonomy' ),
+					member:    __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
 					moderator: __( 'Moderator', 'jetonomy' ),
 					admin:     __( 'Admin', 'jetonomy' ),
 				},

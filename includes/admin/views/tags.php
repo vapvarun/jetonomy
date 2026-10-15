@@ -135,7 +135,8 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 									'colspan' => 4,
 									'icon'    => 'tag',
 									'title'   => __( 'No tags yet', 'jetonomy' ),
-									'body'    => __( 'Tags help members find related posts. Create your first one using the form on the left.', 'jetonomy' ),
+									/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+									'body'    => sprintf( __( 'Tags help %s find related posts. Create your first one using the form on the left.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 								)
 							);
 							?>

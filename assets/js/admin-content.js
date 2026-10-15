@@ -9,14 +9,25 @@
 (function () {
 	'use strict';
 
+	// Owner's terminology (Settings > General > Terminology); English fallback.
+	var L = window.jetonomyLabels || {};
+	var lbl = function ( noun, form, fallback ) {
+		return ( L[ noun ] && L[ noun ][ form ] ) || fallback;
+	};
+	var TOPIC = lbl( 'topic', 'one_lower', 'topic' );
+	var TOPICS = lbl( 'topic', 'many_lower', 'topics' );
+	var REPLIES = lbl( 'reply', 'many_lower', 'replies' );
+
 	var cfg = {
 		ajaxUrl: (window.jetonomyAdmin && window.jetonomyAdmin.ajaxUrl) || window.ajaxurl,
 		nonce: (window.jetonomyContent && window.jetonomyContent.nonce) || (window.jetonomyAdmin && window.jetonomyAdmin.nonce) || '',
 		i18n: {
 			confirmTrash:      wp.i18n.__( 'Move this to trash?', 'jetonomy' ),
 			confirmSpam:       wp.i18n.__( 'Mark this as spam?', 'jetonomy' ),
-			confirmDelete:     wp.i18n.__( 'Delete permanently? The topic and all of its replies are removed and cannot be restored.', 'jetonomy' ),
-			confirmBulkDelete: wp.i18n.__( 'Delete the selected topics permanently, with all of their replies? This cannot be undone.', 'jetonomy' ),
+			/* translators: 1: topic label, lowercase. 2: reply label, plural lowercase. */
+			confirmDelete:     wp.i18n.sprintf( wp.i18n.__( 'Delete permanently? The %1$s and all of its %2$s are removed and cannot be restored.', 'jetonomy' ), TOPIC, REPLIES ),
+			/* translators: 1: topic label, plural lowercase. 2: reply label, plural lowercase. */
+			confirmBulkDelete: wp.i18n.sprintf( wp.i18n.__( 'Delete the selected %1$s permanently, with all of their %2$s? This cannot be undone.', 'jetonomy' ), TOPICS, REPLIES ),
 			confirmBulk:       wp.i18n.__( 'Apply this action to all selected posts?', 'jetonomy' ),
 			saved:             wp.i18n.__( 'Saved!', 'jetonomy' ),
 			saveError:         wp.i18n.__( 'Save failed. Please try again.', 'jetonomy' ),

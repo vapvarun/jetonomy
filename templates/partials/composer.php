@@ -14,7 +14,7 @@ if ( ! is_user_logged_in() ) {
 	?>
 	<div class="jt-editor jt-editor-login">
 		<a href="<?php echo esc_url( $login_url ); ?>" class="jt-btn jt-btn-fill">
-			<?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?>
+			<?php esc_html_e( 'Log in to reply', 'jetonomy' ); /* jt-terms-ok: verb */ ?>
 		</a>
 	</div>
 	<?php

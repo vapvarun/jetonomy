@@ -141,7 +141,7 @@ class InviteLink extends Model {
 
 		$space = Space::find( (int) $invite->space_id );
 		if ( ! $space ) {
-			return new \WP_Error( 'jetonomy_space_not_found', __( 'The space for this invite no longer exists.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'The %s for this invite no longer exists.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 404 ) );
 		}
 
 		if ( $user_id <= 0 ) {

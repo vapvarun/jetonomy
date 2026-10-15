@@ -922,6 +922,7 @@ const { state, actions } = store( 'jetonomy', {
                 const noun  = state.replyNoun;
                 const label = ( noun
                     ? ( i18n.showCount || 'Show %s' ).replace( '%s', n + ' ' + ( 1 === n ? noun[ 0 ] : noun[ 1 ] ) )
+                    // jt-terms-ok: only reached when the reply noun is not renamed (full plural forms).
                     : /* translators: %s: number of replies. */ _n( 'Show %s reply', 'Show %s replies', n, 'jetonomy' ).replace( '%s', String( n ) ) );
                 return '+ ' + label;
             }
@@ -4381,6 +4382,7 @@ const { state, actions } = store( 'jetonomy', {
                             }
                             banner.textContent = state.replyNoun
                                 ? ( state.i18n?.newRepliesRenamed || 'New replies. Click to refresh.' )
+                                // jt-terms-ok: only reached when the reply noun is not renamed (full plural forms).
                                 : /* translators: %s: number of new replies. */ _n( '%s new reply. Click to refresh.', '%s new replies. Click to refresh.', newReplies, 'jetonomy' ).replace( '%s', String( newReplies ) );
                             interval = MIN_INTERVAL;                      // activity -> fast again
                         } else {

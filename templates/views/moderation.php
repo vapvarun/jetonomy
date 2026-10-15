@@ -210,7 +210,8 @@ if ( $jt_bans ) {
 }
 $jt_ban_types = array(
 	'global_ban' => __( 'Banned', 'jetonomy' ),
-	'space_ban'  => __( 'Space ban', 'jetonomy' ),
+	/* translators: %s: singular space label. */
+	'space_ban'  => sprintf( __( '%s ban', 'jetonomy' ), \Jetonomy\space_label() ),
 	'silence'    => __( 'Silenced', 'jetonomy' ),
 );
 
@@ -219,7 +220,7 @@ $jt_ban_types = array(
 $jt_reason_labels = array(
 	'spam'       => __( 'Spam', 'jetonomy' ),
 	'offensive'  => __( 'Offensive', 'jetonomy' ),
-	'off_topic'  => __( 'Off-topic', 'jetonomy' ),
+	'off_topic'  => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
 	'harassment' => __( 'Harassment', 'jetonomy' ),
 	'other'      => __( 'Other', 'jetonomy' ),
 );
@@ -270,8 +271,8 @@ $crumbs = array(
 					/* translators: %d: total pending flag count across every space */
 					echo esc_html( sprintf( _n( '%d pending flag across your community', '%d pending flags across your community', $total, 'jetonomy' ), $total ) );
 				} else {
-					/* translators: %d: total pending flag count across the spaces this moderator owns */
-					echo esc_html( sprintf( _n( '%d pending flag across the spaces you moderate', '%d pending flags across the spaces you moderate', $total, 'jetonomy' ), $total ) );
+					/* translators: 1: total pending flag count; 2: plural space label. */
+					echo esc_html( sprintf( _n( '%1$d pending flag across the %2$s you moderate', '%1$d pending flags across the %2$s you moderate', $total, 'jetonomy' ), $total, \Jetonomy\space_label( true, true ) ) );
 				}
 				?>
 			</p>
@@ -481,7 +482,8 @@ $crumbs = array(
 		<?php
 		$jt_empty_message = $is_admin
 			? __( 'No pending flags anywhere. Your community is clean.', 'jetonomy' )
-			: __( 'No pending flags in the spaces you moderate.', 'jetonomy' );
+			/* translators: %s: plural space label. */
+			: sprintf( __( 'No pending flags in the %s you moderate.', 'jetonomy' ), \Jetonomy\space_label( true, true ) );
 		\Jetonomy\Template_Loader::partial( 'moderation/queue-empty', array( 'message' => $jt_empty_message ) );
 		?>
 	<?php else : ?>

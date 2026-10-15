@@ -256,11 +256,11 @@ function current_url(): string {
  */
 function label_defaults(): array {
 	return array(
-		'space'    => array( __( 'Space', 'jetonomy' ), __( 'Spaces', 'jetonomy' ) ),
-		'topic'    => array( __( 'Topic', 'jetonomy' ), __( 'Topics', 'jetonomy' ) ),
-		'reply'    => array( __( 'Reply', 'jetonomy' ), __( 'Replies', 'jetonomy' ) ),
-		'member'   => array( __( 'Member', 'jetonomy' ), __( 'Members', 'jetonomy' ) ),
-		'category' => array( __( 'Category', 'jetonomy' ), __( 'Categories', 'jetonomy' ) ),
+		'space'    => array( __( 'Space', 'jetonomy' ), __( 'Spaces', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
+		'topic'    => array( __( 'Topic', 'jetonomy' ), __( 'Topics', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
+		'reply'    => array( __( 'Reply', 'jetonomy' ), __( 'Replies', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
+		'member'   => array( __( 'Member', 'jetonomy' ), __( 'Members', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
+		'category' => array( __( 'Category', 'jetonomy' ), __( 'Categories', 'jetonomy' ) ), // jt-terms-ok: the default labels themselves.
 	);
 }
 
@@ -321,6 +321,28 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 	}
 
 	return $lower ? mb_strtolower( $label ) : $label;
+}
+
+/**
+ * Every terminology noun in all four forms, for scripts.
+ *
+ * Exposed to JavaScript as window.jetonomyLabels (frontend and wp-admin) so
+ * script-built strings use the owner's words exactly like PHP does with
+ * jetonomy_label(): labels.space.one, .many, .one_lower, .many_lower.
+ *
+ * @return array<string, array{one:string, many:string, one_lower:string, many_lower:string}>
+ */
+function label_map(): array {
+	$map = array();
+	foreach ( array_keys( label_defaults() ) as $noun ) {
+		$map[ $noun ] = array(
+			'one'        => jetonomy_label( $noun ),
+			'many'       => jetonomy_label( $noun, true ),
+			'one_lower'  => jetonomy_label( $noun, false, true ),
+			'many_lower' => jetonomy_label( $noun, true, true ),
+		);
+	}
+	return $map;
 }
 
 /**
@@ -389,19 +411,19 @@ function count_label_format( int $count, string $noun ): string {
 	switch ( $noun ) {
 		case 'topic':
 			/* translators: %s: number of topics. */
-			return _n( '%s topic', '%s topics', $count, 'jetonomy' );
+			return _n( '%s topic', '%s topics', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 		case 'reply':
 			/* translators: %s: number of replies. */
-			return _n( '%s reply', '%s replies', $count, 'jetonomy' );
+			return _n( '%s reply', '%s replies', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 		case 'member':
 			/* translators: %s: number of members. */
-			return _n( '%s member', '%s members', $count, 'jetonomy' );
+			return _n( '%s member', '%s members', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 		case 'category':
 			/* translators: %s: number of categories. */
-			return _n( '%s category', '%s categories', $count, 'jetonomy' );
+			return _n( '%s category', '%s categories', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 		default:
 			/* translators: %s: number of spaces. */
-			return _n( '%s space', '%s spaces', $count, 'jetonomy' );
+			return _n( '%s space', '%s spaces', $count, 'jetonomy' ); // jt-terms-ok: plural forms for a noun that was not renamed.
 	}
 }
 

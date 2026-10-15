@@ -60,7 +60,8 @@ class Categories_Handler {
 		);
 
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Failed to create category.', 'jetonomy' ) );
+			/* translators: %s: category label, lowercase (e.g. "category"). */
+			wp_send_json_error( sprintf( __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
 		$category = Category::find( $id );
@@ -68,7 +69,8 @@ class Categories_Handler {
 			array(
 				'id'       => $id,
 				'category' => $category,
-				'message'  => __( 'Category created.', 'jetonomy' ),
+				/* translators: %s: category label (e.g. "Category"). */
+				'message'  => sprintf( __( '%s created.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
 			)
 		);
 	}
@@ -81,7 +83,8 @@ class Categories_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid category ID.', 'jetonomy' ) );
+			/* translators: %s: category label, lowercase (e.g. "category"). */
+			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
 		$data = array();
@@ -119,14 +122,16 @@ class Categories_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to update category.', 'jetonomy' ) );
+			/* translators: %s: category label, lowercase (e.g. "category"). */
+			wp_send_json_error( sprintf( __( 'Failed to update %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
 		$category = Category::find( $id );
 		wp_send_json_success(
 			array(
 				'category' => $category,
-				'message'  => __( 'Category updated.', 'jetonomy' ),
+				/* translators: %s: category label (e.g. "Category"). */
+				'message'  => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ),
 			)
 		);
 	}
@@ -139,7 +144,8 @@ class Categories_Handler {
 
 		$id = absint( $_POST['id'] ?? 0 );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid category ID.', 'jetonomy' ) );
+			/* translators: %s: category label, lowercase (e.g. "category"). */
+			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
 		// Category::delete() refuses while spaces or sub-categories remain.
@@ -148,10 +154,12 @@ class Categories_Handler {
 			wp_send_json_error( $result->get_error_message() );
 		}
 		if ( ! $result ) {
-			wp_send_json_error( __( 'Failed to delete category.', 'jetonomy' ) );
+			/* translators: %s: category label, lowercase (e.g. "category"). */
+			wp_send_json_error( sprintf( __( 'Failed to delete %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Category deleted.', 'jetonomy' ) ) );
+		/* translators: %s: category label (e.g. "Category"). */
+		wp_send_json_success( array( 'message' => sprintf( __( '%s deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ) );
 	}
 
 	public function ajax_reorder_categories(): void {

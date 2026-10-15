@@ -29,7 +29,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 	<details class="jt-roles-explainer">
 		<summary><?php esc_html_e( 'How users, roles, and trust levels fit together', 'jetonomy' ); ?></summary>
 		<div class="jt-roles-explainer__body">
-			<p class="jt-roles-explainer__lead"><?php esc_html_e( 'Community members ARE your WordPress users, with no separate registration. Anyone who can log in is a member; their community profile is created automatically the first time they visit a community page while logged in. Three independent layers decide what each person can do:', 'jetonomy' ); ?></p>
+			<p class="jt-roles-explainer__lead"><?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Community %1$s ARE your WordPress users, with no separate registration. Anyone who can log in is a %2$s; their community profile is created automatically the first time they visit a community page while logged in. Three independent layers decide what each person can do:', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></p>
 			<div class="jt-roles-explainer__grid">
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'WordPress role', 'jetonomy' ); ?></h3>
@@ -37,20 +37,20 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 				</div>
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'Trust level (0-5)', 'jetonomy' ); ?></h3>
-					<p><?php esc_html_e( 'Earned automatically through participation: posting links, images, and editing privileges unlock as members prove themselves. Override per user below; tune thresholds under Settings → Trust.', 'jetonomy' ); ?></p>
+					<p><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Earned automatically through participation: posting links, images, and editing privileges unlock as %s prove themselves. Override per user below; tune thresholds under Settings → Trust.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 				</div>
 				<div class="jt-roles-explainer__col">
 					<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 					<h3><?php echo esc_html( sprintf( __( '%s role', 'jetonomy' ), \Jetonomy\space_label( false ) ) ); ?></h3>
-					<?php /* translators: 1: singular space label, 2: singular space label */ ?>
-					<p><?php echo esc_html( sprintf( __( 'Member, moderator, or admin of ONE %1$s, granted on that %2$s’s Members screen. Never implies wp-admin access.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+					<?php /* jt-terms-ok: Member / moderator / admin are space role names. */ /* translators: 1: singular space label, 2: singular space label, 3: member label, plural (e.g. "Members"). */ ?>
+					<p><?php echo esc_html( sprintf( __( 'Member, moderator, or admin of ONE %1$s, granted on that %2$s’s %3$s screen. Never implies wp-admin access.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></p>
 				</div>
 			</div>
 			<p class="jt-roles-explainer__foot">
 				<?php
 				printf(
-					/* translators: 1: name of the highest trust level, 2: link to the full guide */
-					esc_html__( 'A Subscriber can be a Level 5 %1$s and a space admin: community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
+					/* translators: 1: name of the highest trust level, 2: link to the full guide, 3: space label, lowercase (e.g. "space"). */
+					esc_html__( 'A Subscriber can be a Level 5 %1$s and a %3$s admin: community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
 					// Read from $trust_labels for the same reason the rest of this screen does: the
 					// sentence must never hardcode a level name such as "Elder" that can be renamed.
 					$trust_labels[5],
@@ -61,7 +61,8 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 					// release.
 					// The directory exists on main today and gains the
 					// guide at merge, so the link is correct in both states.
-					'<a href="https://github.com/vapvarun/jetonomy/tree/HEAD/docs/website/getting-started" target="_blank" rel="noopener">' . esc_html__( 'Browse the setup guides', 'jetonomy' ) . '</a>'
+					'<a href="https://github.com/vapvarun/jetonomy/tree/HEAD/docs/website/getting-started" target="_blank" rel="noopener">' . esc_html__( 'Browse the setup guides', 'jetonomy' ) . '</a>',
+					esc_html( \Jetonomy\space_label( false, true ) )
 				);
 				?>
 			</p>
@@ -119,7 +120,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 					'width' => 'xs',
 				),
 				'replies'      => array(
-					'label' => __( 'Replies', 'jetonomy' ),
+					'label' => \Jetonomy\jetonomy_label( 'reply', true ),
 					'width' => 's',
 				),
 				'joined'       => array(
@@ -134,7 +135,8 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 			'empty'     => array(
 				'icon'  => 'admin-users',
 				'title' => __( 'No users match these filters', 'jetonomy' ),
-				'body'  => __( 'Try clearing a filter or broadening your search to see more members.', 'jetonomy' ),
+				/* translators: %s: member label, plural, lowercase (e.g. "members"). */
+				'body'  => sprintf( __( 'Try clearing a filter or broadening your search to see more %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			),
 			'cell'      => function ( $u, $col ) use ( $trust_labels ) {
 				switch ( $col ) {

@@ -138,8 +138,8 @@ class Category extends Model {
 				// so say why instead of quietly renaming it - wp_update_term() rule.
 				return new \WP_Error(
 					'jetonomy_slug_taken',
-					/* translators: %s: the category slug the owner typed. */
-					sprintf( __( 'The slug "%s" is already used by another category.', 'jetonomy' ), $slug ),
+					/* translators: 1: the slug the owner typed, 2: the singular Category label, lowercase. */
+					sprintf( __( 'The slug "%1$s" is already used by another %2$s.', 'jetonomy' ), $slug, \Jetonomy\jetonomy_label( 'category', false, true ) ),
 					array( 'status' => 409 )
 				);
 			}
@@ -173,11 +173,11 @@ class Category extends Model {
 	public static function delete( int $id ): bool|\WP_Error {
 		$spaces = \Jetonomy\table( 'spaces' );
 		if ( (int) static::db()->get_var( static::db()->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE category_id = %d AND status <> 'archived'", $id ) ) > 0 ) {
-			return new \WP_Error( 'jetonomy_category_has_spaces', __( 'Cannot delete a category that contains spaces. Move or delete the spaces first.', 'jetonomy' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'jetonomy_category_has_spaces', sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Space label, lowercase. */ __( 'Cannot delete a %1$s that contains %2$s. Move or delete the %2$s first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\space_label( true, true ) ), array( 'status' => 409 ) );
 		}
 
 		if ( static::count( array( 'parent_id' => $id ) ) > 0 ) {
-			return new \WP_Error( 'jetonomy_category_has_children', __( 'Cannot delete a category that has sub-categories. Delete them first.', 'jetonomy' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'jetonomy_category_has_children', sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Category label, lowercase. */ __( 'Cannot delete a %1$s that has sub-%2$s. Delete them first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'category', true, true ) ), array( 'status' => 409 ) );
 		}
 
 		$parked = static::db()->get_col(
@@ -212,13 +212,13 @@ class Category extends Model {
 		$message = null;
 		$parent  = static::find( $parent_id );
 		if ( $parent_id === $id ) {
-			$message = __( 'A category cannot be its own parent.', 'jetonomy' );
+			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'A %s cannot be its own parent.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( ! $parent ) {
-			$message = __( 'The parent category does not exist.', 'jetonomy' );
+			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'The parent %s does not exist.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( (int) $parent->parent_id > 0 ) {
-			$message = __( 'Categories nest two levels deep. Choose a top-level category as the parent.', 'jetonomy' );
+			$message = sprintf( /* translators: 1: the plural Category label, 2: the singular Category label, lowercase. */ __( '%1$s nest two levels deep. Choose a top-level %2$s as the parent.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( $id > 0 && static::count( array( 'parent_id' => $id ) ) > 0 ) {
-			$message = __( 'This category has sub-categories, so it cannot become a sub-category itself.', 'jetonomy' );
+			$message = sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Category label, lowercase. */ __( 'This %1$s has sub-%2$s, so it cannot become a sub-%1$s itself.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'category', true, true ) );
 		}
 
 		return $message ? new \WP_Error( 'jetonomy_invalid_parent', $message, array( 'status' => 400 ) ) : null;

@@ -234,7 +234,7 @@ else :
 		<hr class="wp-header-end" />
 
 		<p class="description">
-			<?php esc_html_e( 'Audit trail of post and reply edits. Click a title to see the full revision history with diffs.', 'jetonomy' ); ?>
+			<?php /* translators: %s: reply label, lowercase (e.g. "reply"). */ echo esc_html( sprintf( __( 'Audit trail of post and %s edits. Click a title to see the full revision history with diffs.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
 		</p>
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">

@@ -35,8 +35,8 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), absint( $total_posts ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=replies' ) ); ?>" class="nav-tab <?php echo esc_attr( 'replies' === $active_tab ? 'nav-tab-active' : '' ); ?>">
-			<?php /* translators: %d: number of pending replies. */ ?>
-			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), absint( $total_replies ) ); ?>
+			<?php /* translators: 1: reply label, plural (e.g. "Replies"). 2: number of pending replies. */ ?>
+			<?php printf( esc_html__( 'Pending %1$s (%2$d)', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ), absint( $total_replies ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>" class="nav-tab <?php echo esc_attr( 'flags' === $active_tab ? 'nav-tab-active' : '' ); ?>">
 			<?php /* translators: %d: number of open flags. */ ?>
@@ -90,7 +90,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 								'width' => 'm',
 							),
 							'space'   => array(
-								'label' => __( 'Space', 'jetonomy' ),
+								'label' => \Jetonomy\jetonomy_label( 'space' ),
 								'width' => 'm',
 							),
 							'date'    => array(
@@ -186,7 +186,8 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						'variant' => 'success',
 						'icon'    => 'yes-alt',
 						'title'   => __( 'Queue is clear', 'jetonomy' ),
-						'body'    => __( 'No replies are waiting on moderation right now.', 'jetonomy' ),
+						/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+						'body'    => sprintf( __( 'No %s are waiting on moderation right now.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					)
 				);
 				?>
@@ -433,7 +434,8 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						'variant' => 'success',
 						'icon'    => 'yes-alt',
 						'title'   => __( 'No active bans', 'jetonomy' ),
-						'body'    => __( 'Every member is currently in good standing.', 'jetonomy' ),
+						/* translators: %s: member label, lowercase (e.g. "member"). */
+						'body'    => sprintf( __( 'Every %s is currently in good standing.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
 					)
 				);
 				?>
@@ -474,7 +476,9 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 									echo '<strong>' . esc_html( $ban->display_name ?? $ban->user_login ?? __( 'Unknown', 'jetonomy' ) ) . '</strong>';
 									break;
 								case 'type':
-									echo '<span class="jetonomy-badge jetonomy-badge--ban">' . esc_html( str_replace( '_', ' ', ucfirst( $ban->type ) ) ) . '</span>';
+									/* translators: %s: singular space label. */
+									$jt_ban_label = 'space_ban' === $ban->type ? sprintf( __( '%s ban', 'jetonomy' ), \Jetonomy\space_label() ) : str_replace( '_', ' ', ucfirst( $ban->type ) );
+									echo '<span class="jetonomy-badge jetonomy-badge--ban">' . esc_html( $jt_ban_label ) . '</span>';
 									break;
 								case 'reason':
 									echo esc_html( $ban->reason ? $ban->reason : '—' );

@@ -309,6 +309,55 @@ class Admin {
 		return current_user_can( 'jetonomy_manage_settings' );
 	}
 
+	/**
+	 * Display name for a stored object type (space, reply, category, ...).
+	 *
+	 * Terminology nouns use the owner's label; other types (post, user) are
+	 * humanized from the key as before.
+	 *
+	 * @param string $type Object type key.
+	 * @return string Unescaped.
+	 */
+	public static function object_type_label( string $type ): string {
+		return isset( \Jetonomy\label_defaults()[ $type ] ) ? \Jetonomy\jetonomy_label( $type ) : ucfirst( str_replace( '_', ' ', $type ) );
+	}
+
+	/**
+	 * Human label for an activity-log action code (e.g. joined_space).
+	 *
+	 * Shared by the Dashboard feed and the Activity screen so both read the
+	 * same and follow the owner's terminology. Unknown codes are humanized.
+	 *
+	 * @param string $code Action code.
+	 * @return string Unescaped.
+	 */
+	public static function action_label( string $code ): string {
+		switch ( $code ) {
+			case 'created_post':
+				return __( 'Created a post', 'jetonomy' );
+			case 'created_reply':
+				return __( 'Replied', 'jetonomy' );
+			case 'voted':
+				return __( 'Voted', 'jetonomy' );
+			case 'trust_level_changed':
+				return __( 'Trust level changed', 'jetonomy' );
+			case 'moderated_approve':
+				return __( 'Approved content', 'jetonomy' );
+			case 'moderated_trash':
+				return __( 'Trashed content', 'jetonomy' );
+			case 'moderated_spam':
+				return __( 'Marked as spam', 'jetonomy' );
+			case 'reputation_changed':
+				return __( 'Reputation changed', 'jetonomy' );
+			case 'joined_space':
+				/* translators: %s: space label, lowercase (e.g. "space"). */
+				return sprintf( __( 'Joined a %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) );
+			case 'idea_status_changed':
+				return __( 'Updated idea roadmap status', 'jetonomy' );
+		}
+		return ucwords( str_replace( '_', ' ', $code ) );
+	}
+
 	// ── Settings API ──
 
 	/**
@@ -477,8 +526,8 @@ class Admin {
 				case 'reply':
 					if ( isset( $reply_parents[ $id ] ) ) {
 						$parent = $reply_parents[ $id ];
-						/* translators: %s: title of the topic the flagged reply belongs to. */
-						$f->jt_object_title = sprintf( __( 'Reply on "%s"', 'jetonomy' ), $parent['title'] );
+						/* translators: 1: reply label (e.g. "Reply"). 2: title of the topic the flagged reply belongs to. */
+						$f->jt_object_title = sprintf( __( '%1$s on "%2$s"', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $parent['title'] );
 						$f->jt_object_url   = $parent['post_id']
 							? admin_url( 'admin.php?page=jetonomy-content&post_id=' . $parent['post_id'] )
 							: '';
@@ -1236,6 +1285,7 @@ class Admin {
 				'membershipAdapters' => $membership_adapters,
 			)
 		);
+		wp_localize_script( 'jetonomy-admin', 'jetonomyLabels', \Jetonomy\label_map() );
 
 		// Per-page admin scripts. WP builds sub-page hooks as
 		// '{sanitize_title(menu_label)}_page_{slug}', and White Label filters the
@@ -1669,8 +1719,9 @@ class Admin {
 			$parent = Reply::parents_by_ids( array( $id ) )[ $id ]['title'] ?? '';
 			if ( '' !== $parent ) {
 				return sprintf(
-					/* translators: %s: parent post title */
-					__( 'Reply to: %s', 'jetonomy' ),
+					/* translators: 1: reply label (e.g. "Reply"). 2: parent post title. */
+					__( '%1$s to: %2$s', 'jetonomy' ),
+					\Jetonomy\jetonomy_label( 'reply' ),
 					$parent
 				);
 			}

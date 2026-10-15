@@ -225,9 +225,9 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						<div class="jetonomy-import-steps">
 							<span class="jetonomy-step" data-step="forums"><?php esc_html_e( 'Forums', 'jetonomy' ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
-							<span class="jetonomy-step" data-step="topics"><?php esc_html_e( 'Topics', 'jetonomy' ); ?></span>
+							<span class="jetonomy-step" data-step="topics"><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
-							<span class="jetonomy-step" data-step="replies"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></span>
+							<span class="jetonomy-step" data-step="replies"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
 							<span class="jetonomy-step" data-step="profiles"><?php esc_html_e( 'Profiles', 'jetonomy' ); ?></span>
 							<span class="jetonomy-step-arrow">&rarr;</span>
@@ -350,7 +350,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 <div class="jt-pro-upsell">
 	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 	<h4><?php esc_html_e( 'Private Messaging & Email Digests', 'jetonomy' ); ?></h4>
-	<p><?php esc_html_e( 'Keep members engaged after migration with private messaging, daily/weekly email digests, and web push notifications.', 'jetonomy' ); ?></p>
+	<p><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Keep %s engaged after migration with private messaging, daily/weekly email digests, and web push notifications.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 	&nbsp;
 	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>

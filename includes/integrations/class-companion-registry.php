@@ -47,7 +47,7 @@ final class Companion_Registry {
 			array(
 				'wb-gamification' => array(
 					'label'     => __( 'WB Gamification', 'jetonomy' ),
-					'why'       => __( 'Points, badges, and leaderboards for posts, replies, and community activity.', 'jetonomy' ),
+					'why'       => sprintf( /* translators: %s: the plural Reply label, lowercase. */ __( 'Points, badges, and leaderboards for posts, %s, and community activity.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 					'detect'    => static fn() => defined( 'WB_GAM_VERSION' ) || function_exists( 'wb_gam' ),
 					'free'      => array(
 						'item_id'  => 1662147,
@@ -67,10 +67,11 @@ final class Companion_Registry {
 						'basename' => 'wpmediaverse/wpmediaverse.php',
 					),
 					'store_url' => 'https://wbcomdesigns.com',
-					'unlocks'   => __( 'Media-rich social posting next to your spaces.', 'jetonomy' ),
+					'unlocks'   => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Media-rich social posting next to your %s.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				),
 				'buddynext'       => array(
 					'label'     => __( 'BuddyNext', 'jetonomy' ),
+					// jt-terms-ok: BuddyNext's own feature names.
 					'why'       => __( 'Community engine - profiles, activity feeds, and member spaces.', 'jetonomy' ),
 					'detect'    => static fn() => defined( 'BUDDYNEXT_VERSION' ),
 					'free'      => array(
@@ -79,11 +80,11 @@ final class Companion_Registry {
 						'basename' => 'buddynext/buddynext.php',
 					),
 					'store_url' => 'https://wbcomdesigns.com/downloads/buddynext/',
-					'unlocks'   => __( 'Community feed + member profiles around your spaces.', 'jetonomy' ),
+					'unlocks'   => sprintf( /* translators: 1: the singular Member label, lowercase, 2: the plural Space label, lowercase. */ __( 'Community feed + %1$s profiles around your %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( true, true ) ),
 				),
 				'learnomy'        => array(
 					'label'     => __( 'Learnomy', 'jetonomy' ),
-					'why'       => __( 'Sell and deliver online courses. With Jetonomy Pro, community spaces can be gated on course enrollment.', 'jetonomy' ),
+					'why'       => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Sell and deliver online courses. With Jetonomy Pro, community %s can be gated on course enrollment.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					'detect'    => static fn() => defined( 'LEARNOMY_VERSION' ) || class_exists( '\\Learnomy\\Learnomy' ),
 					'free'      => array(
 						'item_id'  => 1662698,
@@ -92,7 +93,7 @@ final class Companion_Registry {
 					),
 					'store_url' => 'https://wbcomdesigns.com',
 					// The access adapter ships in Pro; never claim it on a free-only site.
-					'unlocks'   => defined( 'JETONOMY_PRO_VERSION' ) ? __( 'Course-gated spaces: enrolled students get in automatically.', 'jetonomy' ) : '',
+					'unlocks'   => defined( 'JETONOMY_PRO_VERSION' ) ? sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Course-gated %s: enrolled students get in automatically.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) : '',
 				),
 				'wp-career-board' => array(
 					'label'     => __( 'WP Career Board', 'jetonomy' ),
@@ -107,6 +108,7 @@ final class Companion_Registry {
 				),
 				'wb-listora'      => array(
 					'label'     => __( 'Listora', 'jetonomy' ),
+					// jt-terms-ok: Listora's own feature description.
 					'why'       => __( 'Member-submitted directory listings.', 'jetonomy' ),
 					'detect'    => static fn() => defined( 'WB_LISTORA_VERSION' ),
 					'free'      => array(

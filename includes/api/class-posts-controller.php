@@ -105,6 +105,7 @@ class Posts_Controller extends Base_Controller {
 						'force' => array(
 							'type'        => 'boolean',
 							'default'     => false,
+							// jt-terms-ok: REST schema description for API developers.
 							'description' => __( 'Delete permanently instead of moving to trash. Space moderators and admins only.', 'jetonomy' ),
 						),
 					),
@@ -431,7 +432,7 @@ class Posts_Controller extends Base_Controller {
 		if ( in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
 			return new WP_Error(
 				'jetonomy_space_restricted',
-				__( 'This space is archived or locked and no longer accepts new posts.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Space label, lowercase, 2: the plural Topic label, lowercase. */ __( 'This %1$s is archived or locked and no longer accepts new %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				array( 'status' => 403 )
 			);
 		}
@@ -1039,7 +1040,7 @@ class Posts_Controller extends Base_Controller {
 		if ( ! $space || 'ideas' !== ( $space->type ?? '' ) ) {
 			return new \WP_Error(
 				'jetonomy_not_ideas_space',
-				__( 'Roadmap status only applies to Ideas spaces.', 'jetonomy' ),
+				sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Roadmap status only applies to Ideas %s.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1161,7 +1162,7 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		if ( $source_space_id === $target_space_id ) {
-			return $this->validation_error( __( 'Post is already in the target space.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: 1: the singular Topic label, 2: the singular Space label, lowercase. */ __( '%1$s is already in the target %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ), \Jetonomy\space_label( false, true ) ) );
 		}
 
 		$target_space = Space::find( $target_space_id );
@@ -1230,7 +1231,7 @@ class Posts_Controller extends Base_Controller {
 		if ( ! $success ) {
 			return new WP_Error(
 				'jetonomy_merge_failed',
-				__( 'Failed to merge topics.', 'jetonomy' ),
+				sprintf( /* translators: %s: the plural Topic label, lowercase. */ __( 'Failed to merge %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				array( 'status' => 500 )
 			);
 		}

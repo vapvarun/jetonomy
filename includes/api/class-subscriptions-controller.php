@@ -120,6 +120,7 @@ class Subscriptions_Controller extends Base_Controller {
 		$object_id   = absint( $request->get_param( 'object_id' ) );
 
 		if ( ! in_array( $object_type, array( 'space', 'post' ), true ) ) {
+			// jt-terms-ok: literal object_type parameter values for API callers.
 			return $this->validation_error( __( 'object_type must be "space" or "post".', 'jetonomy' ) );
 		}
 

@@ -39,7 +39,8 @@ class Settings_Handler {
 				'url'     => \Jetonomy\route_url( 'post', 'announcements', 'release-notes-discussion' ),
 			),
 			'accepted_answer'       => array(
-				'message' => __( 'Your answer was accepted as the best reply on "How do I enable dark mode?".', 'jetonomy' ),
+				/* translators: %s: reply label, lowercase (e.g. "reply"). */
+				'message' => sprintf( __( 'Your answer was accepted as the best %s on "How do I enable dark mode?".', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				'url'     => \Jetonomy\route_url( 'post', 'help', 'how-do-i-enable-dark-mode' ),
 			),
 			'idea_status_changed'   => array(
@@ -47,7 +48,8 @@ class Settings_Handler {
 				'url'     => \Jetonomy\route_url( 'space-roadmap', 'feature-requests' ),
 			),
 			'new_post_in_sub'       => array(
-				'message' => __( 'A new discussion was posted in a space you follow.', 'jetonomy' ),
+				/* translators: %s: space label, lowercase (e.g. "space"). */
+				'message' => sprintf( __( 'A new discussion was posted in a %s you follow.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'badge_earned'          => array(
@@ -63,7 +65,8 @@ class Settings_Handler {
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
 			'join_request'          => array(
-				'message' => __( 'A member has asked to join one of your spaces.', 'jetonomy' ),
+				/* translators: 1: member label, lowercase (e.g. "member"). 2: space label, plural, lowercase (e.g. "spaces"). */
+				'message' => sprintf( __( 'A %1$s has asked to join one of your %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
 			'verification_reminder' => array(

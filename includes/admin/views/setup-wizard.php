@@ -51,8 +51,8 @@ wp_localize_script(
 		'siteUrl' => $site_url,
 		// The one label-dependent string; the rest use wp.i18n in the script.
 		'i18n'    => array(
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			'fillCategoryAndSpace' => esc_html( sprintf( __( 'Please fill in the category and %s name.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
+			/* translators: 1: category label, lowercase (e.g. "category"). 2: the singular space label the site owner configured (e.g. space, group). */
+			'fillCategoryAndSpace' => esc_html( sprintf( __( 'Please fill in the %1$s and %2$s name.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\space_label( false, true ) ) ),
 		),
 	)
 );
@@ -122,7 +122,7 @@ wp_head();
 					<input type="radio" name="jt-default-type" id="jt-type-forum" value="forum" checked>
 					<label for="jt-type-forum">
 						<strong><?php esc_html_e( 'Forum', 'jetonomy' ); ?></strong>
-						<span><?php esc_html_e( 'Threaded discussions, replies, topics', 'jetonomy' ); ?></span>
+						<span><?php /* translators: 1: reply label, plural, lowercase (e.g. "replies"). 2: topic label, plural, lowercase (e.g. "topics"). */ echo esc_html( sprintf( __( 'Threaded discussions, %1$s, %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></span>
 					</label>
 				</div>
 				<div class="jt-radio-option">
@@ -168,10 +168,10 @@ wp_head();
 		<div class="jt-setup-error" id="jt-error-2"></div>
 
 		<div class="jt-form-group">
-			<label for="jt-cat-name"><?php esc_html_e( 'Category Name', 'jetonomy' ); ?></label>
+			<label for="jt-cat-name"><?php /* translators: %s: category label (e.g. "Category"). */ echo esc_html( sprintf( __( '%s Name', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) ); ?></label>
 			<input type="text" id="jt-cat-name" value="<?php esc_attr_e( 'General', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'General', 'jetonomy' ); ?>">
-			<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
-			<p class="jt-form-hint"><?php echo esc_html( sprintf( __( 'Categories group related %s together.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></p>
+			<?php /* translators: 1: category label, plural (e.g. "Categories"). 2: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+			<p class="jt-form-hint"><?php echo esc_html( sprintf( __( '%1$s group related %2$s together.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 		</div>
 
 		<div class="jt-form-group">
@@ -227,9 +227,9 @@ wp_head();
 			<h4><?php esc_html_e( 'Next Steps', 'jetonomy' ); ?></h4>
 			<ul>
 				<li><?php esc_html_e( 'Customize appearance in Settings (colors, fonts, layout)', 'jetonomy' ); ?></li>
-				<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
+				<?php /* jt-terms-ok: "topics" means subjects here, not the content noun. */ /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 				<li><?php echo esc_html( sprintf( __( 'Create more %s for different topics', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></li>
-				<li><?php esc_html_e( 'Invite members to start discussions', 'jetonomy' ); ?></li>
+				<li><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Invite %s to start discussions', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></li>
 				<li><?php esc_html_e( 'Import existing content from bbPress or wpForo', 'jetonomy' ); ?></li>
 			</ul>
 		</div>

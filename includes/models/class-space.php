@@ -319,12 +319,12 @@ class Space extends Model {
 	public static function hand_over( int $space_id, int $to_user_id, bool $archive = false, bool $demote_previous = false ) {
 		$space = $space_id > 0 ? self::find( $space_id ) : null;
 		if ( ! $space ) {
-			return new \WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 
 		$from_user_id = (int) $space->author_id;
 		if ( $to_user_id <= 0 || $to_user_id === $from_user_id ) {
-			return new \WP_Error( 'jetonomy_transfer_noop', __( 'This member already owns the space.', 'jetonomy' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'jetonomy_transfer_noop', sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'This %1$s already owns the %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ), array( 'status' => 409 ) );
 		}
 
 		// Power first: if the new owner cannot be made an admin (a join filter
@@ -345,7 +345,7 @@ class Space extends Model {
 
 		$after = self::find( $space_id );
 		if ( ! $after || (int) $after->author_id !== $to_user_id ) {
-			return new \WP_Error( 'jetonomy_transfer_failed', __( 'The space could not be handed over. Please try again.', 'jetonomy' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'jetonomy_transfer_failed', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'The %s could not be handed over. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 500 ) );
 		}
 
 		if ( $demote_previous && $from_user_id > 0 && 'admin' === SpaceMember::get_role( $space_id, $from_user_id ) ) {
@@ -378,17 +378,17 @@ class Space extends Model {
 	public static function archive_and_hand_over( int $space_id ) {
 		$space = self::find( $space_id );
 		if ( ! $space ) {
-			return new \WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 		if ( 'archived' === ( $space->status ?? '' ) ) {
-			return new \WP_Error( 'jetonomy_space_archived', __( 'This space is already archived.', 'jetonomy' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'jetonomy_space_archived', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is already archived.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 409 ) );
 		}
 
 		$successor = self::resolve_successor( $space_id );
 		if ( ! $successor ) {
 			return new \WP_Error(
 				'jetonomy_no_successor',
-				__( 'No one else can take over this space, so it cannot be transferred. An administrator must delete it permanently instead.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'No one else can take over this %s, so it cannot be transferred. An administrator must delete it permanently instead.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 409 )
 			);
 		}
@@ -1704,15 +1704,15 @@ class Space extends Model {
 		return array(
 			'public'  => array(
 				'label'       => __( 'Public', 'jetonomy' ),
-				'description' => __( 'Anyone can find this space and read it.', 'jetonomy' ),
+				'description' => sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Anyone can find this %s and read it.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			),
 			'private' => array(
 				'label'       => __( 'Private', 'jetonomy' ),
-				'description' => __( 'Anyone can find this space, but only members can read it.', 'jetonomy' ),
+				'description' => sprintf( /* translators: 1: the singular Space label, lowercase, 2: the plural Member label, lowercase. */ __( 'Anyone can find this %1$s, but only %2$s can read it.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			),
 			'hidden'  => array(
 				'label'       => __( 'Hidden', 'jetonomy' ),
-				'description' => __( 'Only members can find this space. It is invite-only.', 'jetonomy' ),
+				'description' => sprintf( /* translators: 1: the plural Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'Only %1$s can find this %2$s. It is invite-only.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\space_label( false, true ) ),
 			),
 		);
 	}
@@ -1745,8 +1745,9 @@ class Space extends Model {
 		return new \WP_Error(
 			'jetonomy_invalid_space_type',
 			sprintf(
-				/* translators: 1: rejected space type, 2: comma-separated list of valid space types. */
-				__( 'Invalid space type "%1$s". Use one of: %2$s.', 'jetonomy' ),
+				/* translators: 1: the singular Space label, lowercase, 2: rejected type, 3: comma-separated list of valid types. */
+				__( 'Invalid %1$s type "%2$s". Use one of: %3$s.', 'jetonomy' ),
+				\Jetonomy\space_label( false, true ),
 				is_scalar( $data['type'] ) ? (string) $data['type'] : gettype( $data['type'] ),
 				implode( ', ', self::valid_types() )
 			),
@@ -1818,7 +1819,7 @@ class Space extends Model {
 		if ( 'hidden' === $visibility && 'invite' !== $join_policy ) {
 			return new \WP_Error(
 				'jetonomy_invalid_combo',
-				__( 'Hidden spaces must use the invite-only join policy.', 'jetonomy' ),
+				sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Hidden %s must use the invite-only join policy.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				array( 'status' => 400 )
 			);
 		}

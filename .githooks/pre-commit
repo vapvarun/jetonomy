@@ -115,6 +115,12 @@ if [ -n "$STAGED_SRC" ] && ! bin/check-comment-refs.sh $STAGED_SRC; then
     exit 1
 fi
 
+# Terminology nouns must come from the owner's labels (Settings -> Terminology).
+echo "  -> terminology"
+if [ -n "$STAGED_SRC" ] && ! php bin/check-terminology.php $STAGED_SRC; then
+    exit 1
+fi
+
 # $wpdb outside the data layer may only shrink (rule 2).
 echo "  -> data layer"
 if ! bin/check-data-layer.sh; then

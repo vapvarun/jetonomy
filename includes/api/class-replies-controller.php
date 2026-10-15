@@ -88,6 +88,7 @@ class Replies_Controller extends Base_Controller {
 						'force' => array(
 							'type'        => 'boolean',
 							'default'     => false,
+							// jt-terms-ok: REST schema description for API developers.
 							'description' => __( 'Delete permanently instead of moving to trash. Space moderators and admins only.', 'jetonomy' ),
 						),
 					),
@@ -255,7 +256,7 @@ class Replies_Controller extends Base_Controller {
 
 		$content = jetonomy_sanitize_editor_content( (string) $request->get_param( 'content' ) );
 		if ( empty( $content ) ) {
-			return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: %s: the singular Reply label. */ __( '%s content is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) );
 		}
 
 		$content_plain = jetonomy_content_to_plain( $content );
@@ -316,7 +317,7 @@ class Replies_Controller extends Base_Controller {
 			if ( null !== $backdate ) {
 				$parent_date = $post->published_at ?? $post->created_at ?? null;
 				if ( $parent_date && strtotime( $backdate ) < strtotime( $parent_date ) ) {
-					return $this->validation_error( __( 'Reply published_at cannot precede the parent post date.', 'jetonomy' ) );
+					return $this->validation_error( sprintf( /* translators: 1: the singular Reply label, 2: the singular Topic label, lowercase. */ __( '%1$s published_at cannot precede the parent %2$s date.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 				}
 				$reply_data['created_at'] = $backdate;
 			}
@@ -338,7 +339,7 @@ class Replies_Controller extends Base_Controller {
 		if ( ! $reply_id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',
-				__( 'Failed to create reply.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}
@@ -460,12 +461,12 @@ class Replies_Controller extends Base_Controller {
 		if ( null !== $raw_content ) {
 			$content = jetonomy_sanitize_editor_content( (string) $raw_content );
 			if ( empty( $content ) ) {
-				return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
+				return $this->validation_error( sprintf( /* translators: %s: the singular Reply label. */ __( '%s content is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) );
 			}
 
 			$moderation_action = apply_filters( 'jetonomy_check_content', null, array( 'content' => $content ), $space_id, $user_id );
 			if ( 'block' === $moderation_action ) {
-				return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+				return $this->validation_error( sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 			}
 			// Enforce hold/spam/flag on EDIT too (only 'block' was handled before,
 			// so editing spam into a published reply bypassed moderation).
@@ -508,7 +509,7 @@ class Replies_Controller extends Base_Controller {
 			if ( null !== $backdate ) {
 				$parent_date = $post->published_at ?? $post->created_at ?? null;
 				if ( $parent_date && strtotime( $backdate ) < strtotime( $parent_date ) ) {
-					return $this->validation_error( __( 'Reply published_at cannot precede the parent post date.', 'jetonomy' ) );
+					return $this->validation_error( sprintf( /* translators: 1: the singular Reply label, 2: the singular Topic label, lowercase. */ __( '%1$s published_at cannot precede the parent %2$s date.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 				}
 				$update_data['created_at'] = $backdate;
 			}
@@ -592,7 +593,7 @@ class Replies_Controller extends Base_Controller {
 				return $result;
 			}
 			if ( true !== $result ) {
-				return new WP_Error( 'jetonomy_delete_failed', __( 'The reply could not be deleted.', 'jetonomy' ), array( 'status' => 500 ) );
+				return new WP_Error( 'jetonomy_delete_failed', sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'The %s could not be deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), array( 'status' => 500 ) );
 			}
 			return new WP_REST_Response(
 				array(
@@ -761,7 +762,7 @@ class Replies_Controller extends Base_Controller {
 
 		$title = sanitize_text_field( (string) $request->get_param( 'title' ) );
 		if ( empty( $title ) ) {
-			return $this->validation_error( __( 'A title is required for the new topic.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'A title is required for the new %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) );
 		}
 
 		$target_space_id = absint( $request->get_param( 'space_id' ) );
@@ -781,7 +782,7 @@ class Replies_Controller extends Base_Controller {
 		if ( ! $new_post_id ) {
 			return new \WP_Error(
 				'jetonomy_split_failed',
-				__( 'Failed to split reply into new topic.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Reply label, lowercase, 2: the singular Topic label, lowercase. */ __( 'Failed to split %1$s into new %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}

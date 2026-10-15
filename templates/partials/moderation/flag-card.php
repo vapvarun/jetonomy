@@ -32,8 +32,8 @@ $reason_labels = array(
 	'offensive'      => __( 'Offensive', 'jetonomy' ),
 	'abuse'          => __( 'Abuse / Harassment', 'jetonomy' ),
 	'harassment'     => __( 'Harassment', 'jetonomy' ),
-	'off-topic'      => __( 'Off-topic', 'jetonomy' ),
-	'off_topic'      => __( 'Off-topic', 'jetonomy' ),
+	'off-topic'      => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
+	'off_topic'      => __( 'Off-topic', 'jetonomy' ), // jt-terms-ok: report reason idiom, not the noun.
 	'misinformation' => __( 'Misinformation', 'jetonomy' ),
 	'other'          => __( 'Other', 'jetonomy' ),
 );

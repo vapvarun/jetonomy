@@ -109,8 +109,8 @@ $jt_render_group = static function ( array $items, string $type, string $base, a
 					array(
 						'icon'      => 'bell',
 						'icon_size' => 48,
-						/* translators: %s: singular topic label. */
-						'message'   => sprintf( __( 'You are not following anything yet. Follow a %s or a space and it will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+						/* translators: 1: singular topic label; 2: singular space label. */
+						'message'   => sprintf( __( 'You are not following anything yet. Follow a %1$s or a %2$s and it will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\space_label( false, true ) ),
 					)
 				);
 				?>

@@ -95,7 +95,7 @@ class Reply extends Model {
 		if ( $parent_id > 0 ) {
 			$parent = self::find( $parent_id );
 			if ( ! $parent || (int) $parent->post_id !== (int) ( $data['post_id'] ?? 0 ) || in_array( $parent->status, array( 'trash', 'spam' ), true ) ) {
-				return new \WP_Error( 'jetonomy_invalid_parent', __( 'The reply you are answering is no longer available.', 'jetonomy' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'jetonomy_invalid_parent', sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'The %s you are answering is no longer available.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), array( 'status' => 400 ) );
 			}
 		}
 
@@ -526,7 +526,7 @@ class Reply extends Model {
 	public static function accept_as_answer( int $id, int $actor_id ) {
 		$reply = static::find( $id );
 		if ( ! $reply ) {
-			return new \WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular Reply label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
 		}
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
@@ -546,7 +546,7 @@ class Reply extends Model {
 		if ( ! $space || 'qa' !== ( $space->type ?? '' ) ) {
 			return new \WP_Error(
 				'jetonomy_not_qa_space',
-				__( 'Accepted answers only apply to Q&A spaces.', 'jetonomy' ),
+				sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Accepted answers only apply to Q&A %s.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -599,7 +599,7 @@ class Reply extends Model {
 	public static function unaccept_as_answer( int $id, int $actor_id ) {
 		$reply = static::find( $id );
 		if ( ! $reply ) {
-			return new \WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular Reply label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
 		}
 		$post = Post::find( (int) $reply->post_id );
 		if ( ! $post ) {
@@ -612,7 +612,7 @@ class Reply extends Model {
 		if ( ! self::unmark_accepted( $id ) ) {
 			return new \WP_Error(
 				'jetonomy_not_accepted',
-				__( 'This reply is not the accepted answer.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'This %s is not the accepted answer.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1768,7 +1768,7 @@ class Reply extends Model {
 		if ( $private ) {
 			return new \WP_Error(
 				'jetonomy_split_private',
-				__( 'This thread has private replies. Make them public before splitting it.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Topic label, lowercase, 2: the plural Reply label, lowercase. */ __( 'This %1$s has private %2$s. Make them public before splitting it.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 				array( 'status' => 400 )
 			);
 		}

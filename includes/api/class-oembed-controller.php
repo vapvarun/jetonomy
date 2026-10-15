@@ -242,8 +242,7 @@ class OEmbed_Controller extends Base_Controller {
 		$thumb         = $parts['thumb'] ? esc_url( $parts['thumb'] ) : '';
 		$width         = (int) $parts['width'];
 
-		// translators: %d: number of replies.
-		$replies_label = sprintf( _n( '%d reply', '%d replies', $reply_count, 'jetonomy' ), $reply_count );
+		$replies_label = \Jetonomy\count_label( (int) $reply_count, 'reply' );
 		// translators: %d: number of votes.
 		$votes_label = sprintf( _n( '%d vote', '%d votes', max( 0, $vote_score ), 'jetonomy' ), max( 0, $vote_score ) );
 

@@ -187,6 +187,15 @@ else
     FAILED_GATES+=("comment-refs")
 fi
 
+step "Terminology nouns (free)"
+if php bin/check-terminology.php >/dev/null; then
+    ok "every user-facing noun follows Settings -> Terminology"
+else
+    php bin/check-terminology.php | tail -5
+    fail "hardcoded terminology nouns"
+    FAILED_GATES+=("terminology")
+fi
+
 step "Data layer (free)"
 if bin/check-data-layer.sh; then
     ok "no new \$wpdb use outside models"

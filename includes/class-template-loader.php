@@ -361,6 +361,7 @@ class Template_Loader {
 			wp_register_script( 'jetonomy-data', '', array(), JETONOMY_VERSION, false );
 		}
 		wp_enqueue_script( 'jetonomy-data' );
+		wp_localize_script( 'jetonomy-data', 'jetonomyLabels', \Jetonomy\label_map() );
 		wp_localize_script(
 			'jetonomy-data',
 			'jetonomyData',
@@ -427,7 +428,7 @@ class Template_Loader {
 					/* translators: %d: number of replies; %s: the reply label (substituted server-side). */
 					'pickerReplyPlural'      => esc_html( sprintf( __( '%%d %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ),
 					'roleLabels'             => array(
-						'member'    => __( 'Member', 'jetonomy' ),
+						'member'    => __( 'Member', 'jetonomy' ), // jt-terms-ok: space role name.
 						'moderator' => __( 'Moderator', 'jetonomy' ),
 						'admin'     => __( 'Admin', 'jetonomy' ),
 					),
@@ -440,11 +441,11 @@ class Template_Loader {
 					'banLabel'               => __( 'Ban', 'jetonomy' ),
 					// Frontend member moderation from a profile (site ban / silence / lift).
 					/* translators: %s: member display name. */
-					'banSiteConfirmFormat'   => __( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ),
+					'banSiteConfirmFormat'   => __( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ), // jt-terms-ok: verbs.
 					/* translators: %s: the singular member label the site owner configured. */
 					'banSiteTitle'           => esc_html( sprintf( __( 'Ban %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					/* translators: 1: member display name (substituted client-side); 2: singular member label (lowercase). "post, reply, file" stay verbs on purpose. */
-					'silenceConfirmFormat'   => esc_html( sprintf( __( 'Silence %1$s? They stay a %2$s but cannot post, reply, or file reports until you lift it.', 'jetonomy' ), '%s', \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
+					'silenceConfirmFormat'   => esc_html( sprintf( __( 'Silence %1$s? They stay a %2$s but cannot post, reply, or file reports until you lift it.', 'jetonomy' ), '%s', \Jetonomy\jetonomy_label( 'member', false, true ) ) ), // jt-terms-ok: verbs; the noun is a label.
 					/* translators: %s: the singular member label the site owner configured. */
 					'silenceTitle'           => esc_html( sprintf( __( 'Silence %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					'silenceLabel'           => __( 'Silence', 'jetonomy' ),
@@ -1072,7 +1073,8 @@ class Template_Loader {
 						$parts['title'] = self::seo_display_name( 'category', (string) $data['slug'], $slug_pretty ) . ' — ' . community_title();
 						break;
 					case 'leaderboard':
-						$parts['title'] = __( 'Top members', 'jetonomy' );
+						/* translators: %s: plural member label. */
+						$parts['title'] = sprintf( __( 'Top %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) );
 						break;
 					case 'search':
 						$parts['title'] = __( 'Search', 'jetonomy' );
@@ -1177,8 +1179,8 @@ class Template_Loader {
 						break;
 					case 'category':
 						$title = self::seo_display_name( 'category', (string) $data['slug'], ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) ) );
-						/* translators: 1: plural space label, 2: category name, 3: site title. */
-						$desc      = sprintf( __( '%1$s in the %2$s category on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name );
+						/* translators: 1: plural space label, 2: category name, 3: site title, 4: singular category label. */
+						$desc      = sprintf( __( '%1$s in the %2$s %4$s on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name, \Jetonomy\jetonomy_label( 'category', false, true ) );
 						$url       = route_url( 'category', rawurlencode( (string) $data['slug'] ) );
 						$image_alt = $title;
 						break;
@@ -1323,16 +1325,17 @@ class Template_Loader {
 						$image_alt = $title;
 						break;
 					case 'leaderboard':
-						$title = __( 'Top members', 'jetonomy' );
+						/* translators: %s: plural member label. */
+						$title = sprintf( __( 'Top %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) );
 						/* translators: %s: site title. */
-						$desc      = sprintf( __( 'Top contributors and most-helpful members on %s.', 'jetonomy' ), $site_name );
+						$desc      = sprintf( __( 'Top contributors and most-helpful %2$s on %1$s.', 'jetonomy' ), $site_name, \Jetonomy\jetonomy_label( 'member', true, true ) );
 						$url       = route_url( 'leaderboard' );
 						$image_alt = $site_name;
 						break;
 					case 'search':
 						$title = __( 'Search the community', 'jetonomy' );
 						/* translators: %s: site title. */
-						$desc      = sprintf( __( 'Search discussions, replies, members, and tags on %s.', 'jetonomy' ), $site_name );
+						$desc      = sprintf( __( 'Search discussions, %2$s, %3$s, and tags on %1$s.', 'jetonomy' ), $site_name, \Jetonomy\jetonomy_label( 'reply', true, true ), \Jetonomy\jetonomy_label( 'member', true, true ) );
 						$url       = route_url( 'search' );
 						$image_alt = $site_name;
 						// Honour the owner's choice. This was hard-coded true, so
@@ -1737,7 +1740,7 @@ class Template_Loader {
 			'voteRecorded'          => __( 'Vote recorded', 'jetonomy' ),
 			'statusUpdated'         => __( 'Roadmap status updated', 'jetonomy' ),
 			'accepted'              => __( 'Accepted', 'jetonomy' ),
-			'reply'                 => __( 'Reply', 'jetonomy' ),
+			'reply'                 => \Jetonomy\jetonomy_label( 'reply' ),
 			'cancel'                => __( 'Cancel', 'jetonomy' ),
 			'save'                  => __( 'Save', 'jetonomy' ),
 			'saving'                => __( 'Saving...', 'jetonomy' ),
@@ -1768,8 +1771,10 @@ class Template_Loader {
 			// Scoped, to match the "Pin to space" control. Pro can pin to
 			// the whole community, so an unqualified "Post pinned" leaves
 			// a moderator unsure which of the two just happened.
-			'postPinned'            => __( 'Pinned to this space', 'jetonomy' ),
-			'postUnpinned'          => __( 'Unpinned from this space', 'jetonomy' ),
+			/* translators: %s: singular space label. */
+			'postPinned'            => sprintf( __( 'Pinned to this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			/* translators: %s: singular space label. */
+			'postUnpinned'          => sprintf( __( 'Unpinned from this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'failedPin'             => __( 'Failed to toggle pin.', 'jetonomy' ),
 			/* translators: %s: the singular label of the item (the configured noun). */
 			'confirmDeletePost'     => sprintf( __( 'Are you sure you want to delete this %s?', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
@@ -1807,8 +1812,9 @@ class Template_Loader {
 			/* translators: %s: the singular reply label the site owner configured. */
 			'splitFailed'           => sprintf( __( 'Failed to split %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 			/* translators: %s: name of the member being replied to. */
-			'replyingTo'            => __( 'Replying to %s', 'jetonomy' ),
-			'thisMember'            => __( 'this member', 'jetonomy' ),
+			'replyingTo'            => __( 'Replying to %s', 'jetonomy' ), // jt-terms-ok: verb.
+			/* translators: %s: singular member label. */
+			'thisMember'            => sprintf( __( 'this %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
 			/* translators: %s: a number and the reply label the owner renamed, e.g. "3 answers". */
 			'showCount'             => __( 'Show %s', 'jetonomy' ),
 			/* translators: %s: the singular reply label the site owner configured (lowercase). */

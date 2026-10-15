@@ -62,6 +62,7 @@ if ( ! defined( 'JETONOMY_SMOKE_TEST' ) ) {
 			'admin_notices',
 			function () {
 				echo '<div class="notice notice-error"><p>';
+				// jt-terms-ok: 'reply-by-email' is the feature name.
 				esc_html_e( 'Jetonomy: the bundled Action Scheduler library is missing from libs/action-scheduler/. Background jobs (email digest, badges, AI, reply-by-email, webhooks) will fall back to WP-Cron until the plugin files are restored. Reinstalling Jetonomy from the original zip fixes this.', 'jetonomy' );
 				echo '</p></div>';
 			}
@@ -614,10 +615,10 @@ function jetonomy_render_space_meta_badges( $space ): void {
 	if ( 'public' !== $visibility ) {
 		$vis_label = 'hidden' === $visibility ? __( 'Hidden', 'jetonomy' ) : __( 'Private', 'jetonomy' );
 		$vis_aria  = 'hidden' === $visibility
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			? sprintf( __( 'Hidden %s. Only admins and members can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			: sprintf( __( 'Private %s. Only members can read its topics.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+			/* translators: 1: singular space label; 2: plural member label. */
+			? sprintf( __( 'Hidden %1$s. Only admins and %2$s can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) )
+			/* translators: 1: singular space label; 2: plural member label; 3: plural topic label. */
+			: sprintf( __( 'Private %1$s. Only %2$s can read its %3$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 		echo '<span class="jt-space-card-badge jt-space-card-badge-' . esc_attr( $visibility ) . '" aria-label="' . esc_attr( $vis_aria ) . '">';
 		jetonomy_echo_icon( 'lock', 12 );
 		echo esc_html( $vis_label );

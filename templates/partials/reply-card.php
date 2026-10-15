@@ -173,7 +173,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 			<?php jetonomy_echo_icon( 'corner-up-left', 12 ); ?>
 			<?php
 			/* translators: %s: display name of the member whose reply this answers. */
-			echo esc_html( sprintf( __( 'in reply to %s', 'jetonomy' ), $reply->jt_parent_name ) );
+			echo esc_html( sprintf( __( 'in reply to %s', 'jetonomy' ), $reply->jt_parent_name ) ); // jt-terms-ok: phrase meaning "answering", not the noun.
 			?>
 		</a>
 	<?php endif; ?>
@@ -265,7 +265,7 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 				data-wp-on--click="actions.setReplyTo"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				data-reply-author="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"
-				title="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"
+				title="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"
 				aria-label="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply' ) ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></span></button>
 			<button class="jt-act"
 				data-wp-on--click="actions.quoteReply"

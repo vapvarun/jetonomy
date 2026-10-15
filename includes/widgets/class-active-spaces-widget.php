@@ -14,8 +14,10 @@ class Active_Spaces_Widget extends \WP_Widget {
 	public function __construct() {
 		parent::__construct(
 			'jetonomy_active_spaces',
-			__( 'Jetonomy: Active Spaces', 'jetonomy' ),
-			array( 'description' => __( 'Display the most active forum spaces.', 'jetonomy' ) )
+			/* translators: %s: plural space label. */
+			sprintf( __( 'Jetonomy: Active %s', 'jetonomy' ), \Jetonomy\space_label( true ) ),
+			/* translators: %s: plural space label. */
+			array( 'description' => sprintf( __( 'Display the most active forum %s.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) )
 		);
 	}
 
@@ -30,7 +32,8 @@ class Active_Spaces_Widget extends \WP_Widget {
 	}
 
 	public function form( $instance ): void {
-		$title = $instance['title'] ?? __( 'Active Spaces', 'jetonomy' );
+		/* translators: %s: plural space label. */
+		$title = $instance['title'] ?? sprintf( __( 'Active %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 		$count = $instance['count'] ?? 5;
 		?>
 		<p>
@@ -38,7 +41,7 @@ class Active_Spaces_Widget extends \WP_Widget {
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" value="<?php echo esc_attr( $title ); ?>" />
 		</p>
 		<p>
-			<label for="<?php echo esc_attr( $this->get_field_id( 'count' ) ); ?>"><?php esc_html_e( 'Number of spaces:', 'jetonomy' ); ?></label>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'count' ) ); ?>"><?php /* translators: %s: plural space label. */ echo esc_html( sprintf( __( 'Number of %s:', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></label>
 			<input class="tiny-text" type="number" id="<?php echo esc_attr( $this->get_field_id( 'count' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'count' ) ); ?>" value="<?php echo esc_attr( $count ); ?>" min="1" max="20" />
 		</p>
 		<?php

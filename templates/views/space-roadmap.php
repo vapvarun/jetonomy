@@ -162,9 +162,10 @@ $space_url = \Jetonomy\route_url( 'space', $space->slug );
 							<a href="<?php echo esc_url( \Jetonomy\route_url( 'space', $space->slug ) ); ?>">
 								<?php
 								printf(
-									/* translators: %d: number of additional ideas not shown in this column. */
-									esc_html( _n( '+%d more idea in the space feed', '+%d more ideas in the space feed', (int) ( $col['total'] - count( $col['posts'] ) ), 'jetonomy' ) ),
-									(int) ( $col['total'] - count( $col['posts'] ) )
+									/* translators: 1: number of additional ideas not shown in this column; 2: singular space label. */
+									esc_html( _n( '+%1$d more idea in the %2$s feed', '+%1$d more ideas in the %2$s feed', (int) ( $col['total'] - count( $col['posts'] ) ), 'jetonomy' ) ),
+									(int) ( $col['total'] - count( $col['posts'] ) ),
+									esc_html( \Jetonomy\space_label( false, true ) )
 								);
 								?>
 							</a>

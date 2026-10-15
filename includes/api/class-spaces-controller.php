@@ -326,7 +326,7 @@ class Spaces_Controller extends Base_Controller {
 	public function list_access_rules( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$space_id = (int) $request->get_param( 'id' );
 		if ( ! Space::find( $space_id ) ) {
-			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 
 		return new WP_REST_Response( array( 'data' => AccessRule::list_for_space( $space_id ) ), 200 );
@@ -345,7 +345,7 @@ class Spaces_Controller extends Base_Controller {
 	public function create_access_rule( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$space_id = (int) $request->get_param( 'id' );
 		if ( ! Space::find( $space_id ) ) {
-			return new WP_Error( 'jetonomy_space_not_found', __( 'Space not found.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ), array( 'status' => 404 ) );
 		}
 
 		$rule_type  = (string) $request->get_param( 'rule_type' );
@@ -373,7 +373,7 @@ class Spaces_Controller extends Base_Controller {
 				'data'         => AccessRule::find( (int) $id ),
 				'made_private' => $made_private,
 				'message'      => $made_private
-					? __( 'Access rule added. This space was switched to Private so the rule can restrict access. A rule cannot gate a public space.', 'jetonomy' )
+					? sprintf( /* translators: 1: the singular Space label, lowercase. */ __( 'Access rule added. This %1$s was switched to Private so the rule can restrict access. A rule cannot gate a public %1$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
 					: __( 'Access rule added.', 'jetonomy' ),
 			),
 			201
@@ -582,7 +582,7 @@ class Spaces_Controller extends Base_Controller {
 		$title = sanitize_text_field( $request->get_param( 'title' ) );
 
 		if ( empty( $title ) ) {
-			return $this->validation_error( __( 'Space title is required.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: %s: the singular Space label. */ __( '%s title is required.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		$slug = $request->get_param( 'slug' )
@@ -659,7 +659,7 @@ class Spaces_Controller extends Base_Controller {
 		if ( ! $id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',
-				__( 'Failed to create space.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 500 )
 			);
 		}
@@ -751,7 +751,7 @@ class Spaces_Controller extends Base_Controller {
 		// locked space or an archive a site admin imposed stays as it is.
 		if ( null !== $request->get_param( 'status' ) ) {
 			if ( 'active' !== $request->get_param( 'status' ) ) {
-				return new WP_Error( 'jetonomy_invalid_status', __( 'A space can only be set back to active here.', 'jetonomy' ), array( 'status' => 400 ) );
+				return new WP_Error( 'jetonomy_invalid_status', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'A %s can only be set back to active here.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 400 ) );
 			}
 			if ( ! Space::can_unarchive( $space, $user_id ) ) {
 				return $this->permission_error();
@@ -873,7 +873,7 @@ class Spaces_Controller extends Base_Controller {
 			if ( ! $is_site_admin && ! $admins_may ) {
 				return new WP_Error(
 					'jetonomy_purge_not_allowed',
-					__( 'Permanently deleting a space is restricted to site administrators on this community.', 'jetonomy' ),
+					sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Permanently deleting a %s is restricted to site administrators on this community.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					array( 'status' => 403 )
 				);
 			}
@@ -910,7 +910,7 @@ class Spaces_Controller extends Base_Controller {
 		// space admins.
 		if ( ! Space::can_hand_over( $space, $user_id ) ) {
 			return 'archived' === ( $space->status ?? '' )
-				? new WP_Error( 'jetonomy_space_archived', __( 'This space is already archived.', 'jetonomy' ), array( 'status' => 409 ) )
+				? new WP_Error( 'jetonomy_space_archived', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is already archived.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 409 ) )
 				: $this->permission_error();
 		}
 
@@ -1063,7 +1063,7 @@ class Spaces_Controller extends Base_Controller {
 					'status'  => 'pending',
 					'message' => empty( $result['already_pending'] )
 						? __( 'Join request submitted. Awaiting approval.', 'jetonomy' )
-						: __( 'You already have a pending join request for this space.', 'jetonomy' ),
+						: sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You already have a pending join request for this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				),
 				202
 			);
@@ -1107,7 +1107,7 @@ class Spaces_Controller extends Base_Controller {
 		if ( ! SpaceMember::is_member( $id, $user_id ) ) {
 			return new WP_Error(
 				'jetonomy_not_member',
-				__( 'User is not a member of this space.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'User is not a %1$s of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1151,7 +1151,7 @@ class Spaces_Controller extends Base_Controller {
 			$items[] = array(
 				'id'           => (int) $row->id,
 				'user_id'      => $uid,
-				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : __( 'Unknown member', 'jetonomy' ),
+				'display_name' => $user ? \Jetonomy\user_display_name( $user ) : sprintf( /* translators: %s: the singular Member label, lowercase. */ __( 'Unknown %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ),
 				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 48 ),
 				'profile_url'  => \Jetonomy\get_profile_url( $uid ),
 				'message'      => (string) ( $row->message ?? '' ),
@@ -1281,7 +1281,7 @@ class Spaces_Controller extends Base_Controller {
 		if ( ! SpaceMember::is_member( $id, $user_id ) ) {
 			return new WP_Error(
 				'jetonomy_not_member',
-				__( 'User is not a member of this space.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'User is not a %1$s of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1558,6 +1558,7 @@ class Spaces_Controller extends Base_Controller {
 				'postable_by_me' => array(
 					'type'              => 'boolean',
 					'default'           => false,
+					// jt-terms-ok: REST schema description for API developers.
 					'description'       => __( 'Return only spaces the current user is a member of AND can create posts in. Logged-out callers receive an empty array.', 'jetonomy' ),
 					'sanitize_callback' => 'rest_sanitize_boolean',
 				),

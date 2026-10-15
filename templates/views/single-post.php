@@ -70,7 +70,8 @@ if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true 
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				array(
-					'message' => __( 'This content is in a private space.', 'jetonomy' ),
+					/* translators: %s: singular space label. */
+					'message' => sprintf( __( 'This content is in a private %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'tone'    => 'forbidden',
 				)
 			);
@@ -771,8 +772,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								 * scope makes them a matched pair, not a guess.
 								 */
 								$jt_pin_label = $post->is_sticky
-									? __( 'Unpin from space', 'jetonomy' )
-									: __( 'Pin to space', 'jetonomy' );
+									/* translators: %s: singular space label. */
+									? sprintf( __( 'Unpin from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+									/* translators: %s: singular space label. */
+									: sprintf( __( 'Pin to %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 								?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
@@ -947,6 +950,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						'empty-state',
 						array(
 							'icon'    => 'empty-replies',
+							// jt-terms-ok: 'reply' at the end is the verb; the noun comes from the label.
 							'message' => sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet. Be the first to reply!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 						)
 					);
@@ -1032,7 +1036,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				</div>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
 				<div class="jt-login-prompt">
-					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?></a>
+					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); /* jt-terms-ok: verb */ ?></a>
 				</div>
 			<?php endif; ?>
 		</main>

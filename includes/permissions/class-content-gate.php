@@ -47,6 +47,7 @@ class Content_Gate {
 		if ( $user_id <= 0 ) {
 			return new \WP_Error(
 				'jetonomy_not_logged_in',
+				// jt-terms-ok: "reply" is the verb here, not the noun.
 				__( 'You must be logged in to reply.', 'jetonomy' ),
 				array( 'status' => 401 )
 			);
@@ -121,7 +122,7 @@ class Content_Gate {
 		if ( $space_id && ! Permission_Engine::can( $user_id, 'create_replies', $space_id ) ) {
 			return new \WP_Error(
 				'jetonomy_forbidden',
-				__( 'You cannot post in this space.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You cannot post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 403 )
 			);
 		}
@@ -148,7 +149,7 @@ class Content_Gate {
 		if ( $space && in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
 			return new \WP_Error(
 				'jetonomy_space_restricted',
-				__( 'This space is archived or locked and no longer accepts new content.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is archived or locked and no longer accepts new content.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 403 )
 			);
 		}

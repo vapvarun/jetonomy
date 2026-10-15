@@ -126,7 +126,7 @@ class Categories_Controller extends Base_Controller {
 		$name = sanitize_text_field( $request->get_param( 'name' ) );
 
 		if ( empty( $name ) ) {
-			return $this->validation_error( __( 'Category name is required.', 'jetonomy' ) );
+			return $this->validation_error( sprintf( /* translators: %s: the singular Category label. */ __( '%s name is required.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category' ) ) );
 		}
 
 		// Category::create() turns this into a free slug (name when empty).
@@ -153,7 +153,7 @@ class Categories_Controller extends Base_Controller {
 		if ( ! $id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',
-				__( 'Failed to create category.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}
@@ -234,7 +234,7 @@ class Categories_Controller extends Base_Controller {
 		if ( ! $deleted ) {
 			return new WP_Error(
 				'jetonomy_delete_failed',
-				__( 'Failed to delete category.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'Failed to delete %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) ),
 				array( 'status' => 500 )
 			);
 		}

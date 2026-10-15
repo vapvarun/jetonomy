@@ -551,7 +551,7 @@ class Moderation_Service {
 		if ( 'block' === $action ) {
 			return new WP_Error(
 				'jetonomy_validation',
-				'post' === $type ? __( 'Your post was blocked by our content policy.', 'jetonomy' ) : __( 'Your reply was blocked by our content policy.', 'jetonomy' ),
+				'post' === $type ? __( 'Your post was blocked by our content policy.', 'jetonomy' ) : sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Your %s was blocked by our content policy.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -722,7 +722,7 @@ class Moderation_Service {
 		} else {
 			$row = Reply::find( $id );
 			if ( ! $row ) {
-				return new WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), array( 'status' => 404 ) );
+				return new WP_Error( 'jetonomy_not_found', sprintf( /* translators: %s: the singular Reply label. */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ), array( 'status' => 404 ) );
 			}
 			Reply::update( $id, array( 'status' => $new_status ) );
 		}

@@ -123,7 +123,7 @@ class Admin_Bar {
 						array(
 							'parent' => 'jetonomy-community',
 							'id'     => 'jetonomy-community-edit-space',
-							'title'  => __( 'Edit this space', 'jetonomy' ),
+							'title'  => sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Edit this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							'href'   => esc_url( route_url( 'edit-space', rawurlencode( $space->slug ) ) ),
 						)
 					);
@@ -147,15 +147,15 @@ class Admin_Bar {
 
 		$admin_links = array(
 			'spaces'     => array(
-				'label' => __( 'Manage spaces', 'jetonomy' ),
+				'label' => sprintf( /* translators: %s: the plural Space label, lowercase. */ __( 'Manage %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				'url'   => admin_url( 'admin.php?page=jetonomy-spaces' ),
 			),
 			'new-space'  => array(
-				'label' => __( 'Add new space', 'jetonomy' ),
+				'label' => sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Add new %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'url'   => admin_url( 'admin.php?page=jetonomy-spaces&action=new' ),
 			),
 			'categories' => array(
-				'label' => __( 'Categories', 'jetonomy' ),
+				'label' => \Jetonomy\jetonomy_label( 'category', true ),
 				'url'   => admin_url( 'admin.php?page=jetonomy-categories' ),
 			),
 			'moderation' => array(
@@ -163,7 +163,7 @@ class Admin_Bar {
 				'url'   => admin_url( 'admin.php?page=jetonomy-moderation' ),
 			),
 			'content'    => array(
-				'label' => __( 'Posts &amp; replies', 'jetonomy' ),
+				'label' => sprintf( /* translators: 1: the plural Topic label, 2: the plural Reply label, lowercase. */ __( '%1$s &amp; %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 				'url'   => admin_url( 'admin.php?page=jetonomy-content' ),
 			),
 			'settings'   => array(

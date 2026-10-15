@@ -51,7 +51,7 @@ defined( 'ABSPATH' ) || exit;
 					<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
 				</select>
 				<p class="description" id="cat-visibility-help">
-					<?php esc_html_e( 'Public: anyone can see it. Private: signed-in members can see it. Hidden: only you and other category managers can see it - and the spaces inside it are hidden too, whatever their own visibility says.', 'jetonomy' ); ?>
+					<?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: category label, lowercase (e.g. "category"). 3: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'Public: anyone can see it. Private: signed-in %1$s can see it. Hidden: only you and other %2$s managers can see it - and the %3$s inside it are hidden too, whatever their own visibility says.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>
 				</p>
 			</div>
 			<div class="jetonomy-form-field jetonomy-form-field--wide">
@@ -103,8 +103,8 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 
 			<p class="search-box">
-				<label class="screen-reader-text" for="cats-search"><?php esc_html_e( 'Search categories', 'jetonomy' ); ?></label>
-				<input type="search" id="cats-search" name="s" value="<?php echo esc_attr( isset( $search ) ? $search : '' ); ?>" placeholder="<?php esc_attr_e( 'Search categories…', 'jetonomy' ); ?>">
+				<label class="screen-reader-text" for="cats-search"><?php /* translators: %s: category label, plural, lowercase (e.g. "categories"). */ echo esc_html( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?></label>
+				<input type="search" id="cats-search" name="s" value="<?php echo esc_attr( isset( $search ) ? $search : '' ); ?>" placeholder="<?php /* translators: %s: category label, plural, lowercase (e.g. "categories"). */ echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ) ) ); ?>">
 				<button type="submit" class="button"><?php esc_html_e( 'Search', 'jetonomy' ); ?></button>
 			</p>
 		</form>
@@ -294,7 +294,7 @@ defined( 'ABSPATH' ) || exit;
 						<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
 					</select>
 					<p class="description" id="edit-cat-visibility-help">
-						<?php esc_html_e( 'Public: anyone can see it. Private: signed-in members can see it. Hidden: only you and other category managers can see it - and the spaces inside it are hidden too, whatever their own visibility says.', 'jetonomy' ); ?>
+						<?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: category label, lowercase (e.g. "category"). 3: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'Public: anyone can see it. Private: signed-in %1$s can see it. Hidden: only you and other %2$s managers can see it - and the %3$s inside it are hidden too, whatever their own visibility says.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?>
 					</p>
 				</div>
 				<div class="jetonomy-form-field jetonomy-form-field--wide">

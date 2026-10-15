@@ -2149,7 +2149,7 @@ class Post extends Model {
 		if ( ! empty( $source->is_private ) ) {
 			return new \WP_Error(
 				'jetonomy_merge_private',
-				__( 'This topic is private. Make it public before merging it.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'This %s is private. Make it public before merging it.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 				array( 'status' => 400 )
 			);
 		}

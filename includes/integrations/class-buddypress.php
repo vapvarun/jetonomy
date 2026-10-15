@@ -875,8 +875,7 @@ class BuddyPress {
 				echo '<div class="jt-bp-topic-row">';
 				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
 				if ( $replies > 0 ) {
-					// translators: %d: number of replies.
-					echo ' <span class="jt-bp-space-tag">' . esc_html( sprintf( _n( '%d reply', '%d replies', $replies, 'jetonomy' ), $replies ) ) . '</span>';
+					echo ' <span class="jt-bp-space-tag">' . esc_html( \Jetonomy\count_label( (int) $replies, 'reply' ) ) . '</span>';
 				}
 				echo '</div>';
 				echo '<div class="jt-bp-topic-meta">';
@@ -939,7 +938,7 @@ class BuddyPress {
 		// Sub-tab: Replies.
 		bp_core_new_subnav_item(
 			array(
-				'name'            => __( 'Replies', 'jetonomy' ),
+				'name'            => \Jetonomy\jetonomy_label( 'reply', true ),
 				'slug'            => 'replies',
 				'parent_slug'     => 'forum',
 				'parent_url'      => $bp_url . 'forum/',
@@ -1045,7 +1044,7 @@ class BuddyPress {
 			}
 			echo '</ul>';
 		} else {
-			echo '<p class="jt-bp-empty">' . esc_html__( 'No forum replies yet.', 'jetonomy' ) . '</p>';
+			echo '<p class="jt-bp-empty">' . esc_html( sprintf( /* translators: %s: the plural Reply label, lowercase. */ __( 'No forum %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ) . '</p>';
 		}
 
 		$this->render_profile_link( $user_id );
@@ -1145,7 +1144,12 @@ class BuddyPress {
 		?>
 		<div class="jt-bp-forum-settings">
 			<h4><?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?></h4>
-			<p class="description"><?php esc_html_e( 'Add a discussion forum to this group. Members will be synced automatically.', 'jetonomy' ); ?></p>
+			<p class="description">
+				<?php
+				// jt-terms-ok: BuddyPress group members, BuddyPress's own vocabulary.
+				esc_html_e( 'Add a discussion forum to this group. Members will be synced automatically.', 'jetonomy' );
+				?>
+			</p>
 
 			<label for="jt-bp-forum-action">
 				<?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?>

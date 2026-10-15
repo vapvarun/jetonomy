@@ -93,6 +93,7 @@ class Updates_Controller extends Base_Controller {
 
 		if ( in_array( $scope, array( 'space', 'post' ), true ) && ! $id ) {
 			return $this->validation_error(
+				// jt-terms-ok: literal scope parameter values for API callers.
 				__( 'The `id` parameter is required for space or post scope.', 'jetonomy' )
 			);
 		}

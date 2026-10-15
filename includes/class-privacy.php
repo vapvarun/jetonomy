@@ -50,11 +50,11 @@ class Privacy {
 		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
 			return;
 		}
-		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'Jetonomy sets no cookies on community pages. It counts topic views with the storage described below.', 'jetonomy' ) . '</p>'
+		$content = '<p class="privacy-policy-tutorial">' . esc_html( sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'Jetonomy sets no cookies on community pages. It counts %s views with the storage described below.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) . '</p>'
 			. '<p><strong class="privacy-policy-tutorial">' . esc_html__( 'Suggested text:', 'jetonomy' ) . '</strong> '
-			. esc_html__( 'When you open a discussion topic in our community, your browser notes the topic ID in session storage, which is cleared when you close the tab, so reloading a topic does not count as a new view. To stop a view from being counted twice, our server also keeps a one-way hash of your IP address and the topic ID for 30 minutes. Neither is used for tracking or advertising.', 'jetonomy' )
+			. esc_html( sprintf( /* translators: 1: the singular Topic label, lowercase. */ __( 'When you open a discussion %1$s in our community, your browser notes the %1$s ID in session storage, which is cleared when you close the tab, so reloading a %1$s does not count as a new view. To stop a view from being counted twice, our server also keeps a one-way hash of your IP address and the %1$s ID for 30 minutes. Neither is used for tracking or advertising.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) )
 			. '</p><p>'
-			. esc_html__( 'If you have an account, the topics, replies, votes, reactions, follows and profile details you add to the community are stored with your account. You can request an export or erasure of this data.', 'jetonomy' )
+			. esc_html( sprintf( /* translators: 1: the plural Topic label, lowercase, 2: the plural Reply label, lowercase. */ __( 'If you have an account, the %1$s, %2$s, votes, reactions, follows and profile details you add to the community are stored with your account. You can request an export or erasure of this data.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) )
 			. '</p>';
 		wp_add_privacy_policy_content( 'Jetonomy', wp_kses_post( $content ) );
 	}
@@ -223,7 +223,7 @@ class Privacy {
 			'callback'               => array( $this, 'export_posts' ),
 		);
 		$exporters['jetonomy-replies'] = array(
-			'exporter_friendly_name' => __( 'Jetonomy Replies', 'jetonomy' ),
+			'exporter_friendly_name' => sprintf( /* translators: %s: the plural Reply label. */ __( 'Jetonomy %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ),
 			'callback'               => array( $this, 'export_replies' ),
 		);
 		// Personal data that is erased is exported too (GDPR export completeness).
@@ -471,7 +471,7 @@ class Privacy {
 						'value' => (string) $profile->post_count,
 					),
 					array(
-						'name'  => __( 'Reply Count', 'jetonomy' ),
+						'name'  => sprintf( /* translators: %s: the singular Reply label. */ __( '%s Count', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ),
 						'value' => (string) $profile->reply_count,
 					),
 				),
@@ -561,7 +561,7 @@ class Privacy {
 		foreach ( $replies as $reply ) {
 			$data[] = array(
 				'group_id'    => 'jetonomy-replies',
-				'group_label' => __( 'Jetonomy Replies', 'jetonomy' ),
+				'group_label' => sprintf( /* translators: %s: the plural Reply label. */ __( 'Jetonomy %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ),
 				'item_id'     => 'reply-' . $reply->id,
 				'data'        => array(
 					array(
@@ -712,7 +712,7 @@ class Privacy {
 		return array(
 			'items_removed'  => $removed,
 			'items_retained' => 0,
-			'messages'       => $done ? array( __( 'Jetonomy: Posts and replies anonymized. Personal data deleted.', 'jetonomy' ) ) : array(),
+			'messages'       => $done ? array( sprintf( /* translators: 1: the plural Topic label, 2: the plural Reply label, lowercase. */ __( 'Jetonomy: %1$s and %2$s anonymized. Personal data deleted.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ) : array(),
 			'done'           => $done,
 		);
 	}

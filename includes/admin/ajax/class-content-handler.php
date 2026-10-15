@@ -147,7 +147,8 @@ class Content_Handler {
 
 		$id = absint( $_POST['reply_id'] ?? 0 );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid reply ID.', 'jetonomy' ) );
+			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 		}
 
 		$data = array();
@@ -178,7 +179,8 @@ class Content_Handler {
 		 * @param int $user_id  Editing user ID.
 		 */
 		do_action( 'jetonomy_reply_updated', $id, (int) ( $jt_reply ? ( Post::find( (int) $jt_reply->post_id )->space_id ?? 0 ) : 0 ), get_current_user_id() );
-		wp_send_json_success( array( 'message' => __( 'Reply updated.', 'jetonomy' ) ) );
+		/* translators: %s: reply label (e.g. "Reply"). */
+		wp_send_json_success( array( 'message' => sprintf( __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) ) );
 	}
 
 	public function ajax_delete_reply(): void {
@@ -190,7 +192,8 @@ class Content_Handler {
 		$id     = absint( $_POST['reply_id'] ?? 0 );
 		$status = sanitize_text_field( wp_unslash( $_POST['status'] ?? 'trash' ) );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid reply ID.', 'jetonomy' ) );
+			/* translators: %s: reply label, lowercase (e.g. "reply"). */
+			wp_send_json_error( sprintf( __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 		}
 
 		// Route through the moderation choke-point (flag resolution + canonical

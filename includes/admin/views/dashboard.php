@@ -35,7 +35,7 @@ if ( ! get_option( 'jetonomy_setup_complete' ) && ! $jt_has_content ) :
 	?>
 <div class="notice notice-info" style="padding:20px;border-left-color:var(--jt-accent,#3B82F6);">
 	<h3 style="margin:0 0 8px;"><?php esc_html_e( 'Welcome to Jetonomy!', 'jetonomy' ); ?></h3>
-	<p><?php esc_html_e( 'Complete the setup wizard to create your first community space.', 'jetonomy' ); ?></p>
+	<p><?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( 'Complete the setup wizard to create your first community %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?></p>
 	<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-setup' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Run Setup Wizard', 'jetonomy' ); ?></a>
 </div>
 	<?php
@@ -47,11 +47,13 @@ $stat_cards = array(
 		'icon'  => 'dashicons-admin-post',
 	),
 	'total_replies' => array(
-		'label' => __( 'Total Replies', 'jetonomy' ),
+		/* translators: %s: reply label, plural (e.g. "Replies"). */
+		'label' => sprintf( __( 'Total %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ),
 		'icon'  => 'dashicons-format-chat',
 	),
 	'active_spaces' => array(
-		'label' => __( 'Active Spaces', 'jetonomy' ),
+		/* translators: %s: space label, plural (e.g. "Spaces"). */
+		'label' => sprintf( __( 'Active %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true ) ),
 		'icon'  => 'dashicons-networking',
 	),
 	'users'         => array(
@@ -113,7 +115,8 @@ $stat_cards = array(
 						'variant' => 'compact',
 						'icon'    => 'chart-line',
 						'title'   => __( 'No activity yet', 'jetonomy' ),
-						'body'    => __( 'Member actions will appear here as your community grows.', 'jetonomy' ),
+						/* translators: %s: member label (e.g. "Member"). */
+						'body'    => sprintf( __( '%s actions will appear here as your community grows.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member' ) ),
 					)
 				);
 				?>
@@ -137,23 +140,7 @@ $stat_cards = array(
 							$object_type = $activity->object_type;
 							$object_id   = (int) $activity->object_id;
 
-							// --- Action label mapping ---
-							$action_labels = array(
-								'created_post'        => __( 'Created a post', 'jetonomy' ),
-								'created_reply'       => __( 'Replied', 'jetonomy' ),
-								'voted'               => __( 'Voted', 'jetonomy' ),
-								'trust_level_changed' => __( 'Trust level changed', 'jetonomy' ),
-								'moderated_approve'   => __( 'Approved content', 'jetonomy' ),
-								'moderated_trash'     => __( 'Trashed content', 'jetonomy' ),
-								'moderated_spam'      => __( 'Marked as spam', 'jetonomy' ),
-								'reputation_changed'  => __( 'Reputation changed', 'jetonomy' ),
-								'joined_space'        => __( 'Joined a space', 'jetonomy' ),
-								'idea_status_changed' => __( 'Updated idea roadmap status', 'jetonomy' ),
-							);
-
-							$action_label = isset( $action_labels[ $action_code ] )
-								? $action_labels[ $action_code ]
-								: ucwords( str_replace( '_', ' ', $action_code ) );
+							$action_label = \Jetonomy\Admin\Admin::action_label( (string) $action_code );
 
 							// --- Dot color by action category ---
 							$create_actions   = array( 'created_post', 'created_reply', 'joined_space' );
@@ -187,27 +174,27 @@ $stat_cards = array(
 								if ( $reply_row ) {
 									$parent_post = \Jetonomy\Models\Post::find( (int) $reply_row->post_id );
 									if ( $parent_post ) {
-										$post_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply_row->post_id );
-										/* translators: %s: post title */
+										$post_url    = admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply_row->post_id );
 										$object_html = sprintf(
-											/* translators: %s: site title. */
-											__( 'Reply on %s', 'jetonomy' ),
+											/* translators: 1: reply label (e.g. "Reply"). 2: linked post title. */
+											__( '%1$s on %2$s', 'jetonomy' ),
+											esc_html( \Jetonomy\jetonomy_label( 'reply' ) ),
 											'<a href="' . esc_url( $post_url ) . '">' . esc_html( $parent_post->title ) . '</a>'
 										);
 									} else {
-										/* translators: %d: reply ID */
-										$object_html = esc_html( sprintf( __( 'reply #%d', 'jetonomy' ), $object_id ) );
+										/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
+										$object_html = esc_html( sprintf( __( '%1$s #%2$d', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ), $object_id ) );
 									}
 								} else {
-									/* translators: %d: reply ID */
-									$object_html = esc_html( sprintf( __( 'reply #%d', 'jetonomy' ), $object_id ) );
+									/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
+									$object_html = esc_html( sprintf( __( '%1$s #%2$d', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ), $object_id ) );
 								}
 							} elseif ( 'space' === $object_type ) {
 								$space_row   = \Jetonomy\Models\Space::find( $object_id );
 								$object_html = $space_row
 									? esc_html( $space_row->title )
-									/* translators: %d: space ID */
-									: esc_html( sprintf( __( 'space #%d', 'jetonomy' ), $object_id ) );
+									/* translators: 1: space label, lowercase (e.g. "space"). 2: space ID. */
+									: esc_html( sprintf( __( '%1$s #%2$d', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), $object_id ) );
 							} elseif ( 'user' === $object_type ) {
 								$obj_user    = get_userdata( $object_id );
 								$object_html = $obj_user
@@ -249,7 +236,7 @@ $stat_cards = array(
 				<div class="jetonomy-quick-actions">
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=new' ) ); ?>" class="button button-primary">
 						<span class="dashicons dashicons-plus-alt2"></span>
-						<?php esc_html_e( 'Create Space', 'jetonomy' ); ?>
+						<?php /* translators: %s: space label (e.g. "Space"). */ echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?>
 					</a>
 					<a href="<?php echo esc_url( home_url( '/' . $base_slug . '/' ) ); ?>" class="button" target="_blank">
 						<span class="dashicons dashicons-external"></span>
@@ -280,7 +267,7 @@ $stat_cards = array(
 				<?php else : ?>
 					<h2><?php esc_html_e( 'Demo Data', 'jetonomy' ); ?></h2>
 					<p class="description">
-						<?php esc_html_e( 'Fill the community with sample categories, spaces, members and topics to try things out. You can remove it again in one click.', 'jetonomy' ); ?>
+						<?php /* translators: 1: category label, plural, lowercase (e.g. "categories"). 2: space label, plural, lowercase (e.g. "spaces"). 3: member label, plural, lowercase (e.g. "members"). 4: topic label, plural, lowercase (e.g. "topics"). */ echo esc_html( sprintf( __( 'Fill the community with sample %1$s, %2$s, %3$s and %4$s to try things out. You can remove it again in one click.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true, true ), \Jetonomy\jetonomy_label( 'space', true, true ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?>
 					</p>
 					<button type="button" class="button" id="jetonomy-import-demo">
 						<span class="dashicons dashicons-download" aria-hidden="true"></span>
@@ -327,7 +314,7 @@ $stat_cards = array(
 					<div class="jt-pulse-grid">
 						<div class="jt-pulse-stat">
 							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['posts'] ) ); ?></span>
-							<span class="jt-pulse-l"><?php echo esc_html( _n( 'new topic', 'new topics', (int) $pulse['posts'], 'jetonomy' ) ); ?></span>
+							<span class="jt-pulse-l"><?php /* translators: %s: topic label, singular or plural to match the number (e.g. "topic" / "topics"). */ echo esc_html( sprintf( _n( 'new %s', 'new %s', (int) $pulse['posts'], 'jetonomy' ), \Jetonomy\count_noun( (int) $pulse['posts'], 'topic' ) ) ); ?></span>
 						</div>
 						<div class="jt-pulse-stat">
 							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['replies'] ) ); ?></span>
@@ -335,17 +322,18 @@ $stat_cards = array(
 						</div>
 						<div class="jt-pulse-stat">
 							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['contributors'] ) ); ?></span>
-							<span class="jt-pulse-l"><?php echo esc_html( _n( 'active member', 'active members', (int) $pulse['contributors'], 'jetonomy' ) ); ?></span>
+							<span class="jt-pulse-l"><?php /* translators: %s: member label, singular or plural to match the number (e.g. "member" / "members"). */ echo esc_html( sprintf( _n( 'active %s', 'active %s', (int) $pulse['contributors'], 'jetonomy' ), \Jetonomy\count_noun( (int) $pulse['contributors'], 'member' ) ) ); ?></span>
 						</div>
 					</div>
 					<?php if ( ! empty( $pulse['top_space'] ) ) : ?>
 						<p class="jt-pulse-top">
 							<?php
 							printf(
-								/* translators: 1: space title, 2: number of new topics. */
-								esc_html( _n( 'Most active: %1$s (%2$s new topic)', 'Most active: %1$s (%2$s new topics)', (int) $pulse['top_space_posts'], 'jetonomy' ) ),
+								/* translators: 1: space title, 2: number of new topics, 3: topic label, singular or plural to match the number. */
+								esc_html( _n( 'Most active: %1$s (%2$s new %3$s)', 'Most active: %1$s (%2$s new %3$s)', (int) $pulse['top_space_posts'], 'jetonomy' ) ),
 								'<strong>' . esc_html( $pulse['top_space'] ) . '</strong>',
-								esc_html( number_format_i18n( $pulse['top_space_posts'] ) )
+								esc_html( number_format_i18n( $pulse['top_space_posts'] ) ),
+								esc_html( \Jetonomy\count_noun( (int) $pulse['top_space_posts'], 'topic' ) )
 							);
 							?>
 						</p>

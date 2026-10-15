@@ -68,7 +68,8 @@ $type_labels = array(
 	'vote_on_post'        => sprintf( /* translators: %s: singular topic label. */ __( 'voted on your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 	'accepted_answer'     => sprintf( /* translators: %s: singular reply label. */ __( 'accepted your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 	'idea_status_changed' => __( 'updated your idea on the roadmap', 'jetonomy' ),
-	'new_post_in_sub'     => __( 'New activity in a space you follow', 'jetonomy' ),
+	/* translators: %s: singular space label. */
+	'new_post_in_sub'     => sprintf( __( 'New activity in a %s you follow', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 	'moderation'          => __( 'A moderator acted on your content', 'jetonomy' ),
 	'badge_earned'        => __( 'You earned a badge', 'jetonomy' ),
 	'flag'                => __( 'New content flag requires review', 'jetonomy' ),
@@ -112,7 +113,7 @@ if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
 }
 
 $empty_copy = array(
-	'all'      => array( __( 'No notifications yet', 'jetonomy' ), sprintf( /* translators: 1: plural member label; 2: plural topic label. */ __( 'When %1$s reply to your %2$s or mention you, those updates land here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ),
+	'all'      => array( __( 'No notifications yet', 'jetonomy' ), sprintf( /* translators: 1: plural member label; 2: plural topic label. */ __( 'When %1$s reply to your %2$s or mention you, those updates land here.', 'jetonomy' ) /* jt-terms-ok: 'reply' is the verb here; nouns come from labels */, \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ),
 	'unread'   => array( __( "You're all caught up!", 'jetonomy' ), __( 'Nothing new since you last checked. Switch to All to see your history.', 'jetonomy' ) ),
 	'replies'  => array( sprintf( /* translators: %s: the plural label of the item (the configured noun). */ __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ), sprintf( /* translators: 1: plural reply label; 2: plural topic label; 3: plural reply label, lowercase. */ __( '%1$s to your %2$s and %3$s will show up here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ),
 	'mentions' => array( __( 'No mentions yet', 'jetonomy' ), sprintf( /* translators: 1: singular topic label; 2: singular reply label. */ __( 'When someone @-mentions you in a %1$s or %2$s, you\'ll see it here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ),

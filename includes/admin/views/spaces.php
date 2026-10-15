@@ -24,7 +24,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 <div class="wrap jetonomy-admin">
 	<?php if ( 'new' === $action_param ) : ?>
 		<!-- New Space Form -->
-		<h1><?php esc_html_e( 'Add New Space', 'jetonomy' ); ?></h1>
+		<h1><?php /* translators: %s: space label (e.g. "Space"). */ echo esc_html( sprintf( __( 'Add New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?></h1>
 		<form id="jetonomy-new-space-form" class="jetonomy-space-form">
 			<table class="form-table"><!-- jetonomy-audit-table-ok: core .form-table; wp-admin's own CSS stacks label/field rows below 782px -->
 				<tr>
@@ -40,7 +40,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<td><textarea id="space-description" rows="4" class="large-text"></textarea></td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="space-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></label></th>
+					<th scope="row"><label for="space-category"><?php echo esc_html( \Jetonomy\jetonomy_label( 'category' ) ); ?></label></th>
 					<td>
 						<select id="space-category">
 							<option value="0"><?php esc_html_e( '(None)', 'jetonomy' ); ?></option>
@@ -65,7 +65,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 							<option value="ideas" <?php selected( $default_new_space, 'ideas' ); ?>><?php esc_html_e( 'Ideas', 'jetonomy' ); ?></option>
 							<option value="feed" <?php selected( $default_new_space, 'feed' ); ?>><?php esc_html_e( 'Feed', 'jetonomy' ); ?></option>
 						</select>
-						<p class="description"><?php esc_html_e( 'Default comes from Settings → General → Default Space Type.', 'jetonomy' ); ?></p>
+						<p class="description"><?php /* translators: %s: space label (e.g. "Space"). */ echo esc_html( sprintf( __( 'Default comes from Settings → General → Default %s Type.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -135,7 +135,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				</tr>
 			</table>
 			<p class="submit">
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Create Space', 'jetonomy' ); ?></button>
+				<button type="submit" class="button button-primary"><?php /* translators: %s: space label (e.g. "Space"). */ echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?></button>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces' ) ); ?>" class="button"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></a>
 				<span class="spinner"></span>
 			</p>
@@ -153,7 +153,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 			<input type="hidden" name="page" value="jetonomy-spaces">
 			<div class="jt-content-toolbar">
 				<select name="category_id">
-					<option value=""><?php esc_html_e( 'All Categories', 'jetonomy' ); ?></option>
+					<option value=""><?php /* translators: %s: category label, plural (e.g. "Categories"). */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', true ) ) ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
 						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $filter_category, (int) $cat->id ); ?>><?php echo esc_html( \Jetonomy\Models\Category::picker_label( $cat ) ); ?></option>
 					<?php endforeach; ?>
@@ -171,7 +171,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<option value="archived" <?php selected( $filter_status, 'archived' ); ?>><?php esc_html_e( 'Archived', 'jetonomy' ); ?></option>
 					<option value="locked" <?php selected( $filter_status, 'locked' ); ?>><?php esc_html_e( 'Locked', 'jetonomy' ); ?></option>
 				</select>
-				<select name="per_page" onchange="this.form.submit()" aria-label="<?php esc_attr_e( 'Spaces per page', 'jetonomy' ); ?>">
+				<select name="per_page" onchange="this.form.submit()" aria-label="<?php /* translators: %s: space label, plural (e.g. "Spaces"). */ echo esc_attr( sprintf( __( '%s per page', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true ) ) ); ?>">
 					<?php foreach ( array( 20, 50, 100 ) as $jt_pp ) : ?>
 						<option value="<?php echo (int) $jt_pp; ?>" <?php selected( (int) $per_page, $jt_pp ); ?>>
 							<?php
@@ -229,9 +229,9 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 						'label' => __( 'Type', 'jetonomy' ),
 						'width' => 's',
 					),
-					'category'   => array( 'label' => __( 'Category', 'jetonomy' ) ),
+					'category'   => array( 'label' => \Jetonomy\jetonomy_label( 'category' ) ),
 					'members'    => array(
-						'label' => __( 'Members', 'jetonomy' ),
+						'label' => \Jetonomy\jetonomy_label( 'member', true ),
 						'width' => 's',
 					),
 					'posts'      => array(
@@ -257,8 +257,10 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				},
 				'empty'     => array(
 					'icon'  => 'admin-multisite',
-					'title' => __( 'No spaces yet', 'jetonomy' ),
-					'body'  => __( 'Spaces group your topics. Create one to start organizing the community.', 'jetonomy' ),
+					/* translators: %s: space label, plural, lowercase (e.g. "spaces"). */
+					'title' => sprintf( __( 'No %s yet', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
+					/* translators: 1: space label, plural (e.g. "Spaces"). 2: topic label, plural, lowercase (e.g. "topics"). */
+					'body'  => sprintf( __( '%1$s group your %2$s. Create one to start organizing the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 				),
 				'cell'      => static function ( $space, string $key ) use ( $jt_cat_names, $jt_type_labels, $can_reorder ): void {
 					switch ( $key ) {
@@ -349,8 +351,8 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 <?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 <div class="jt-pro-upsell">
 	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
-	<h4><?php esc_html_e( 'Polls, Reactions & Analytics for Every Space', 'jetonomy' ); ?></h4>
-	<p><?php esc_html_e( 'Add emoji reactions, polls, and custom fields to your spaces. Track engagement with the analytics dashboard.', 'jetonomy' ); ?></p>
+	<h4><?php /* translators: %s: space label (e.g. "Space"). */ echo esc_html( sprintf( __( 'Polls, Reactions & Analytics for Every %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space' ) ) ); ?></h4>
+	<p><?php /* translators: %s: space label, plural, lowercase (e.g. "spaces"). */ echo esc_html( sprintf( __( 'Add emoji reactions, polls, and custom fields to your %s. Track engagement with the analytics dashboard.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ) ); ?></p>
 	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 	&nbsp;
 	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>

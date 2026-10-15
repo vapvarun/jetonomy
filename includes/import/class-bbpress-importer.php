@@ -302,10 +302,12 @@ class BBPress_Importer extends Importer {
 		$hidden  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'hidden'" );
 		if ( $private > 0 || $hidden > 0 ) {
 			$notes[] = sprintf(
-				/* translators: 1: number of private forums, 2: number of hidden forums. */
-				_n( '%1$s private and %2$s hidden forum will keep their privacy. Everyone who posted in them is added as a member so they keep access; new members need approving.', '%1$s private and %2$s hidden forums will keep their privacy. Everyone who posted in them is added as a member so they keep access; new members need approving.', $private + $hidden, 'jetonomy' ),
+				/* translators: 1: number of private forums, 2: number of hidden forums, 3: the singular Member label, lowercase, 4: the plural Member label, lowercase. */
+				_n( '%1$s private and %2$s hidden forum will keep their privacy. Everyone who posted in them is added as a %3$s so they keep access; new %4$s need approving.', '%1$s private and %2$s hidden forums will keep their privacy. Everyone who posted in them is added as a %3$s so they keep access; new %4$s need approving.', $private + $hidden, 'jetonomy' ),
 				number_format_i18n( $private ),
-				number_format_i18n( $hidden )
+				number_format_i18n( $hidden ),
+				\Jetonomy\jetonomy_label( 'member', false, true ),
+				\Jetonomy\jetonomy_label( 'member', true, true )
 			);
 		}
 
@@ -874,7 +876,7 @@ class BBPress_Importer extends Importer {
 			}
 
 			if ( ! $space_id ) {
-				$this->log_error( 'forum', $id, __( 'Failed to create space', 'jetonomy' ) );
+				$this->log_error( 'forum', $id, sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
 				++$this->skipped;
 				continue;
 			}
@@ -993,7 +995,7 @@ class BBPress_Importer extends Importer {
 			);
 
 			if ( is_wp_error( $reply_id ) || ! $reply_id ) {
-				$this->log_error( 'reply', $reply->ID, is_wp_error( $reply_id ) ? $reply_id->get_error_message() : __( 'Failed to create reply', 'jetonomy' ) );
+				$this->log_error( 'reply', $reply->ID, is_wp_error( $reply_id ) ? $reply_id->get_error_message() : sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Failed to create %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 				++$this->skipped;
 				continue;
 			}

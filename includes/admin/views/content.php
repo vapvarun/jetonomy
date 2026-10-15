@@ -54,7 +54,7 @@ $page_url     = admin_url( 'admin.php?page=jetonomy-content' );
 $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 ?>
 <div class="wrap jetonomy-admin">
-	<h1><?php esc_html_e( 'Posts &amp; Replies', 'jetonomy' ); ?></h1>
+	<h1><?php /* translators: %s: reply label, plural (e.g. "Replies"). */ echo esc_html( sprintf( __( 'Posts &amp; %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></h1>
 
 	<!-- ── Toolbar ───────────────────────────────────────────── -->
 	<form method="get" action="" id="jetonomy-content-filters">
@@ -62,8 +62,8 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		<div class="jt-content-toolbar">
 
 			<!-- Space filter -->
-			<select name="space_id" id="jt-filter-space" aria-label="<?php esc_attr_e( 'Filter by space', 'jetonomy' ); ?>">
-				<option value="0" <?php selected( $current_space, 0 ); ?>><?php esc_html_e( 'All Spaces', 'jetonomy' ); ?></option>
+			<select name="space_id" id="jt-filter-space" aria-label="<?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_attr( sprintf( __( 'Filter by %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?>">
+				<option value="0" <?php selected( $current_space, 0 ); ?>><?php /* translators: %s: space label, plural (e.g. "Spaces"). */ echo esc_html( sprintf( __( 'All %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true ) ) ); ?></option>
 				<?php foreach ( $spaces as $space ) : ?>
 					<option value="<?php echo absint( $space->id ); ?>" <?php selected( $current_space, (int) $space->id ); ?>><?php echo esc_html( $space->title ); ?></option>
 				<?php endforeach; ?>
@@ -77,7 +77,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			</select>
 
 			<!-- Search -->
-			<input type="search" name="s" id="jt-filter-search" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Search by title…', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Search posts and replies by title', 'jetonomy' ); ?>" class="regular-text">
+			<input type="search" name="s" id="jt-filter-search" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Search by title…', 'jetonomy' ); ?>" aria-label="<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_attr( sprintf( __( 'Search posts and %s by title', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>" class="regular-text">
 
 			<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
 
@@ -142,10 +142,10 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 						<input type="checkbox" id="jt-select-all" aria-label="<?php esc_attr_e( 'Select all rows', 'jetonomy' ); ?>">
 					</td>
 					<th class="manage-column column-title column-primary"><?php esc_html_e( 'Title', 'jetonomy' ); ?></th>
-					<th class="manage-column jt-col-m"><?php esc_html_e( 'Space', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-m"><?php echo esc_html( \Jetonomy\jetonomy_label( 'space' ) ); ?></th>
 					<th class="manage-column jt-col-m"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
 					<th class="manage-column jt-col-s"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
-					<th class="manage-column jt-col-xs"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-xs"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></th>
 					<th class="manage-column jt-col-xs"><?php esc_html_e( 'Views', 'jetonomy' ); ?></th>
 					<th class="manage-column jt-col-m"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
 				</tr>
@@ -314,7 +314,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							<?php // Core small-screen expander: without it the six data-colname cells stayed hidden below 783px with no way to reveal them (QA wave-5). ?>
 							<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 						</td>
-						<td data-colname="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
+						<td data-colname="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'space' ) ); ?>">
 							<?php echo esc_html( $p->space_title ?? '' ); ?>
 							<?php
 							if ( empty( $p->space_title ) ) :
@@ -364,7 +364,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 								<span class="jt-scheduled-when"><?php echo esc_html( $jt_when ); ?></span>
 							<?php endif; ?>
 						</td>
-						<td data-colname="<?php esc_attr_e( 'Replies', 'jetonomy' ); ?>">
+						<td data-colname="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'reply', true ) ); ?>">
 							<?php
 							$reply_count = absint( $p->reply_count ?? 0 );
 							if ( $reply_count > 0 ) :
@@ -415,10 +415,10 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 						<input type="checkbox" aria-label="<?php esc_attr_e( 'Select all', 'jetonomy' ); ?>">
 					</td>
 					<th class="manage-column column-primary"><?php esc_html_e( 'Title', 'jetonomy' ); ?></th>
-					<th class="manage-column"><?php esc_html_e( 'Space', 'jetonomy' ); ?></th>
+					<th class="manage-column"><?php echo esc_html( \Jetonomy\jetonomy_label( 'space' ) ); ?></th>
 					<th class="manage-column"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
 					<th class="manage-column"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
-					<th class="manage-column"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
+					<th class="manage-column"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></th>
 					<th class="manage-column"><?php esc_html_e( 'Views', 'jetonomy' ); ?></th>
 					<th class="manage-column"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
 				</tr>

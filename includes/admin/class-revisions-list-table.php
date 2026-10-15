@@ -243,7 +243,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		}
 		return sprintf(
 			'<code>%s</code>',
-			esc_html( ucfirst( $type ) )
+			esc_html( Admin::object_type_label( $type ) )
 		);
 	}
 
@@ -263,13 +263,14 @@ class Revisions_List_Table extends \WP_List_Table {
 			$label = sprintf(
 				/* translators: %1$s: object type, %2$d: object id */
 				__( '%1$s #%2$d', 'jetonomy' ),
-				ucfirst( $type ),
+				Admin::object_type_label( $type ),
 				$id
 			);
 		} elseif ( 'reply' === $type ) {
 			$label = sprintf(
-				/* translators: %s: parent post title */
-				__( 'Reply to: %s', 'jetonomy' ),
+				/* translators: 1: reply label (e.g. "Reply"). 2: parent post title. */
+				__( '%1$s to: %2$s', 'jetonomy' ),
+				\Jetonomy\jetonomy_label( 'reply' ),
 				$title
 			);
 		} else {
@@ -341,7 +342,8 @@ class Revisions_List_Table extends \WP_List_Table {
 	 * Empty-state copy when no rows match the active filters.
 	 */
 	public function no_items(): void {
-		esc_html_e( 'No revisions have been recorded yet. Revisions are created automatically when a post or reply is edited.', 'jetonomy' );
+		/* translators: %s: reply label, lowercase (e.g. "reply"). */
+		echo esc_html( sprintf( __( 'No revisions have been recorded yet. Revisions are created automatically when a post or %s is edited.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
 	}
 
 	/**
@@ -358,7 +360,7 @@ class Revisions_List_Table extends \WP_List_Table {
 				<select id="jt-revisions-type" name="object_type">
 					<option value=""><?php esc_html_e( 'All types', 'jetonomy' ); ?></option>
 					<option value="post" <?php selected( $filters['object_type'], 'post' ); ?>><?php esc_html_e( 'Posts', 'jetonomy' ); ?></option>
-					<option value="reply" <?php selected( $filters['object_type'], 'reply' ); ?>><?php esc_html_e( 'Replies', 'jetonomy' ); ?></option>
+					<option value="reply" <?php selected( $filters['object_type'], 'reply' ); ?>><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></option>
 				</select>
 
 				<label class="screen-reader-text" for="jt-revisions-from"><?php esc_html_e( 'From date', 'jetonomy' ); ?></label>

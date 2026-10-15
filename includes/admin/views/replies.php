@@ -57,8 +57,9 @@ if ( ! empty( $trash_count ) ) {
 	<h1>
 	<?php
 		printf(
-			/* translators: %s: post title */
-			esc_html__( 'Replies: %s', 'jetonomy' ),
+			/* translators: 1: reply label, plural (e.g. "Replies"). 2: post title. */
+			esc_html__( '%1$s: %2$s', 'jetonomy' ),
+			esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ),
 			esc_html( wp_trim_words( $post->title, 10 ) )
 		);
 		?>
@@ -81,9 +82,9 @@ if ( ! empty( $trash_count ) ) {
 		<span class="jt-rpmeta-item">
 			<?php
 			printf(
-				/* translators: %s: number of replies */
-				esc_html( _n( '%s reply total', '%s replies total', (int) $post->reply_count, 'jetonomy' ) ),
-				esc_html( number_format_i18n( (int) $post->reply_count ) )
+				/* translators: %s: number of replies with the reply label (e.g. "14 replies"). */
+				esc_html__( '%s total', 'jetonomy' ),
+				esc_html( \Jetonomy\count_label( (int) $post->reply_count, 'reply' ) )
 			);
 			?>
 		</span>
@@ -117,8 +118,8 @@ if ( ! empty( $trash_count ) ) {
 				name="s"
 				id="jt-filter-search"
 				value="<?php echo esc_attr( $search_query ); ?>"
-				placeholder="<?php esc_attr_e( 'Search replies…', 'jetonomy' ); ?>"
-				aria-label="<?php esc_attr_e( 'Search replies', 'jetonomy' ); ?>"
+				placeholder="<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_attr( sprintf( __( 'Search %s…', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
+				aria-label="<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_attr( sprintf( __( 'Search %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>"
 				class="regular-text"
 			>
 			<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
@@ -167,7 +168,8 @@ if ( ! empty( $trash_count ) ) {
 		jetonomy_admin_empty_state(
 			array(
 				'icon'  => 'format-chat',
-				'title' => __( 'No replies match these filters', 'jetonomy' ),
+				/* translators: %s: reply label, plural, lowercase (e.g. "replies"). */
+				'title' => sprintf( __( 'No %s match these filters', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 				'body'  => __( 'Try clearing a filter or broadening your search to see more.', 'jetonomy' ),
 			)
 		);
@@ -181,7 +183,7 @@ if ( ! empty( $trash_count ) ) {
 					<td class="manage-column column-cb check-column">
 						<input type="checkbox" id="jt-select-all" aria-label="<?php esc_attr_e( 'Select all rows', 'jetonomy' ); ?>">
 					</td>
-					<th class="manage-column column-primary"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></th>
+					<th class="manage-column column-primary"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></th>
 					<th class="manage-column jt-col-m"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
 					<th class="manage-column jt-col-s"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
 					<th class="manage-column jt-col-m"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
@@ -206,7 +208,7 @@ if ( ! empty( $trash_count ) ) {
 								type="checkbox"
 								class="jt-row-cb"
 								value="<?php echo absint( $r->id ); ?>"
-								aria-label="<?php esc_attr_e( 'Select reply', 'jetonomy' ); ?>"
+								aria-label="<?php /* translators: %s: reply label, lowercase (e.g. "reply"). */ echo esc_attr( sprintf( __( 'Select %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>"
 							>
 						</th>
 						<td class="column-primary">
@@ -218,7 +220,7 @@ if ( ! empty( $trash_count ) ) {
 								<textarea
 									class="jt-edit-reply-content large-text"
 									rows="5"
-									aria-label="<?php esc_attr_e( 'Reply content', 'jetonomy' ); ?>"
+									aria-label="<?php /* translators: %s: reply label (e.g. "Reply"). */ echo esc_attr( sprintf( __( '%s content', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ) ) ); ?>"
 								><?php echo esc_textarea( $r->content ?? '' ); ?></textarea>
 								<p class="jt-inline-edit-actions">
 									<button
@@ -338,7 +340,7 @@ if ( ! empty( $trash_count ) ) {
 					<td class="manage-column column-cb check-column">
 						<input type="checkbox" aria-label="<?php esc_attr_e( 'Select all', 'jetonomy' ); ?>">
 					</td>
-					<th class="manage-column column-primary"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></th>
+					<th class="manage-column column-primary"><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply' ) ); ?></th>
 					<th class="manage-column"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
 					<th class="manage-column"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
 					<th class="manage-column"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>

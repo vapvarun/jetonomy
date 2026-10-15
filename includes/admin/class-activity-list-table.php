@@ -281,9 +281,9 @@ class Activity_List_Table extends \WP_List_Table {
 			return '&mdash;';
 		}
 		// Action codes are machine identifiers (e.g. created_post). Show
-		// a humanized version while keeping the raw value as a tooltip
+		// the human label while keeping the raw value as a tooltip
 		// for admins debugging tracker output.
-		$label = ucwords( str_replace( '_', ' ', $action ) );
+		$label = Admin::action_label( $action );
 		return sprintf(
 			'<code title="%1$s">%2$s</code>',
 			esc_attr( $action ),
@@ -298,7 +298,7 @@ class Activity_List_Table extends \WP_List_Table {
 			return '&mdash;';
 		}
 
-		$label = sprintf( '%s #%d', ucfirst( $type ), $id );
+		$label = sprintf( '%s #%d', Admin::object_type_label( $type ), $id );
 		$url   = $this->resolve_object_admin_url( $type, $id );
 		if ( '' === $url ) {
 			return esc_html( $label );
@@ -391,7 +391,7 @@ class Activity_List_Table extends \WP_List_Table {
 					<option value=""><?php esc_html_e( 'All types', 'jetonomy' ); ?></option>
 					<?php foreach ( $actions as $code ) : ?>
 						<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $filters['action'], $code ); ?>>
-							<?php echo esc_html( ucwords( str_replace( '_', ' ', $code ) ) ); ?>
+							<?php echo esc_html( Admin::action_label( (string) $code ) ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>

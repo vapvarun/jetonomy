@@ -163,9 +163,10 @@ if ( ! $cancel_url ) {
 		$notif_prefs   = $user_settings['notifications'] ?? array();
 		$global_defs   = get_option( 'jetonomy_settings', array() )['notification_defaults'] ?? array();
 		$notif_types   = array(
-			/* translators: %s: singular topic label. */
-			'reply_to_post'       => sprintf( __( 'Reply to my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
-			'reply_to_reply'      => __( 'Reply to my reply', 'jetonomy' ),
+			/* translators: 1: singular reply label; 2: singular topic label. */
+			'reply_to_post'       => sprintf( __( '%1$s to my %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+			/* translators: 1: singular reply label; 2: singular reply label, lower case. */
+			'reply_to_reply'      => sprintf( __( '%1$s to my %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 			'mention'             => __( '@Mention', 'jetonomy' ),
 			/* translators: %s: singular topic label. */
 			'vote_on_post'        => sprintf( __( 'Vote on my %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),

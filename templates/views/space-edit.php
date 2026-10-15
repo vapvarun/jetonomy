@@ -326,8 +326,8 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 							</h3>
 							<p class="jt-danger-desc">
 								<?php
-								/* translators: 1: singular topic label; 2: singular reply label; 3: display name of the member who would take ownership. */
-								echo esc_html( sprintf( __( 'Every %1$s and %2$s is kept. Ownership passes to %3$s and the space is archived.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\user_display_name( get_userdata( $jt_successor ) ) ) );
+								/* translators: 1: singular topic label; 2: singular reply label; 3: display name of the member who would take ownership; 4: singular space label. */
+								echo esc_html( sprintf( __( 'Every %1$s and %2$s is kept. Ownership passes to %3$s and the %4$s is archived.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ), \Jetonomy\jetonomy_label( 'reply', false, true ), \Jetonomy\user_display_name( get_userdata( $jt_successor ) ), \Jetonomy\space_label( false, true ) ) );
 								if ( (int) $space->author_id === $jt_viewer_id ) {
 									echo ' ' . esc_html__( 'You stay on as a moderator.', 'jetonomy' );
 								}

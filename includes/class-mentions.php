@@ -270,7 +270,7 @@ class Mentions {
 
 		$post          = 'reply' === $object_type ? Models\Post::find( (int) $object->post_id ) : $object;
 		$actor_id      = (int) $object->author_id;
-		$context_title = 'reply' === $object_type ? ( $post->title ?? __( 'your reply', 'jetonomy' ) ) : (string) $object->title;
+		$context_title = 'reply' === $object_type ? ( $post->title ?? sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'your %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) ) : (string) $object->title;
 		$space_id      = (int) ( $post->space_id ?? 0 );
 		$is_private    = (bool) ( $post->is_private ?? false );
 

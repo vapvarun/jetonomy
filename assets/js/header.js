@@ -341,7 +341,7 @@
 				['j / k', __( 'Navigate up/down', 'jetonomy' )],
 				[_x( 'Enter', 'keyboard key', 'jetonomy' ), __( 'Open selected', 'jetonomy' )],
 				['l', __( 'Upvote selected', 'jetonomy' )],
-				['r', __( 'Reply to selected', 'jetonomy' )],
+				['r', __( 'Reply to selected', 'jetonomy' )], // jt-terms-ok: verb.
 				['n', __( 'Home', 'jetonomy' )],
 				['?', __( 'This help', 'jetonomy' )]
 			];

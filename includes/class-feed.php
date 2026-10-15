@@ -88,7 +88,7 @@ class Feed {
 		<link><?php echo esc_url( $post_url ); ?></link>
 		<guid isPermaLink="true"><?php echo esc_url( $post_url ); ?></guid>
 		<pubDate><?php echo esc_html( mysql2date( 'r', (string) $post->created_at, false ) ); ?></pubDate>
-		<dc:creator><?php echo esc_html( '' !== $display['name'] ? $display['name'] : __( 'Member', 'jetonomy' ) ); ?></dc:creator>
+		<dc:creator><?php echo esc_html( '' !== $display['name'] ? $display['name'] : \Jetonomy\jetonomy_label( 'member' ) ); ?></dc:creator>
 		<description><?php echo esc_html( $excerpt ); ?></description>
 	</item>
 <?php endforeach; ?>

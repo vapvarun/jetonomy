@@ -187,6 +187,7 @@ class Trust_Levels {
 	public static function label( int $level ): string {
 		$labels = array(
 			0 => __( 'Newcomer', 'jetonomy' ),
+			// jt-terms-ok: trust level name (rank vocabulary), not the member noun.
 			1 => __( 'Member', 'jetonomy' ),
 			2 => __( 'Regular', 'jetonomy' ),
 			3 => __( 'Trusted', 'jetonomy' ),

@@ -63,7 +63,7 @@ class SpaceMember extends Model {
 		// A membership plugin, automation or access rule can still name a space the
 		// owner deleted; joining it would store an orphan row on every enrolment.
 		if ( $space_id <= 0 || ! Space::find( $space_id ) ) {
-			return new \WP_Error( 'jetonomy_space_not_found', __( 'That space no longer exists.', 'jetonomy' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'jetonomy_space_not_found', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'That %s no longer exists.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 404 ) );
 		}
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
@@ -274,7 +274,7 @@ class SpaceMember extends Model {
 		if ( self::is_member( $space_id, $user_id ) ) {
 			return new \WP_Error(
 				'jetonomy_already_member',
-				__( 'You are already a member of this space.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'You are already a %1$s of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 409 )
 			);
 		}
@@ -291,7 +291,7 @@ class SpaceMember extends Model {
 		if ( 'invite' === $mode ) {
 			return new \WP_Error(
 				'jetonomy_invite_only',
-				__( 'This space is invite-only.', 'jetonomy' ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is invite-only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 403 )
 			);
 		}
@@ -360,7 +360,7 @@ class SpaceMember extends Model {
 		if ( null === $old_role ) {
 			return new \WP_Error(
 				'jetonomy_not_a_member',
-				__( 'User is not a member of this space.', 'jetonomy' ),
+				sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'User is not a %1$s of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 404 )
 			);
 		}
@@ -846,7 +846,7 @@ class SpaceMember extends Model {
 		}
 		return new \WP_Error(
 			'jetonomy_last_admin_required',
-			__( 'A space must keep at least one admin. Promote someone else first.', 'jetonomy' ),
+			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'A %s must keep at least one admin. Promote someone else first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			array( 'status' => 400 )
 		);
 	}

@@ -156,7 +156,7 @@ class Blocks {
 				'render_callback' => array( __CLASS__, 'render_forum_feed' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Forum Feed', 'jetonomy' ),
-				'description'     => __( 'Display recent forum discussions. Optionally scope to a single space with a header.', 'jetonomy' ),
+				'description'     => __( 'Display recent forum discussions. Optionally scope to a single space with a header.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'format-chat',
 				'keywords'        => array( 'forum', 'posts', 'discussions', 'space', 'topics', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -192,8 +192,8 @@ class Blocks {
 				),
 				'render_callback' => array( __CLASS__, 'render_trending' ),
 				'category'        => 'widgets',
-				'title'           => __( 'Trending Topics', 'jetonomy' ),
-				'description'     => __( 'Display trending forum topics ranked by recent engagement (votes + replies over the last 7 days).', 'jetonomy' ),
+				'title'           => __( 'Trending Topics', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
+				'description'     => __( 'Display trending forum topics ranked by recent engagement (votes + replies over the last 7 days).', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'chart-line',
 				'keywords'        => array( 'trending', 'hot', 'popular', 'topics', 'posts', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -217,8 +217,8 @@ class Blocks {
 				),
 				'render_callback' => array( __CLASS__, 'render_space_list' ),
 				'category'        => 'widgets',
-				'title'           => __( 'Space List', 'jetonomy' ),
-				'description'     => __( 'Display forum spaces as a grid.', 'jetonomy' ),
+				'title'           => __( 'Space List', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
+				'description'     => __( 'Display forum spaces as a grid.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'groups',
 				'keywords'        => array( 'spaces', 'categories', 'forum', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -239,7 +239,7 @@ class Blocks {
 				'render_callback' => array( __CLASS__, 'render_leaderboard' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Leaderboard', 'jetonomy' ),
-				'description'     => __( 'Display top community members by reputation.', 'jetonomy' ),
+				'description'     => __( 'Display top community members by reputation.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'awards',
 				'keywords'        => array( 'leaderboard', 'ranking', 'reputation', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -276,7 +276,7 @@ class Blocks {
 				'render_callback' => array( __CLASS__, 'render_navigation' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Jetonomy Navigation', 'jetonomy' ),
-				'description'     => __( 'Sidebar navigation for categories and spaces, permission-aware.', 'jetonomy' ),
+				'description'     => __( 'Sidebar navigation for categories and spaces, permission-aware.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'menu-alt3',
 				'keywords'        => array( 'navigation', 'sidebar', 'spaces', 'categories', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-blocks-editor',
@@ -351,8 +351,8 @@ class Blocks {
 				),
 				'render_callback' => array( __CLASS__, 'render_compose_topic' ),
 				'category'        => 'widgets',
-				'title'           => __( 'Jetonomy Compose Topic', 'jetonomy' ),
-				'description'     => __( 'Let signed-in members start a new topic from any page. Fixed-space mode or member-only picker.', 'jetonomy' ),
+				'title'           => __( 'Jetonomy Compose Topic', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
+				'description'     => __( 'Let signed-in members start a new topic from any page. Fixed-space mode or member-only picker.', 'jetonomy' ), // jt-terms-ok: block name/description, mirrors static block.json.
 				'icon'            => 'edit-page',
 				'keywords'        => array( 'compose', 'topic', 'post', 'form', 'new', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-compose-topic-block',

@@ -218,7 +218,7 @@ class Community_Notification_Contract {
 			),
 			'accepted_answer'     => array(
 				'label'       => __( 'Accepted answers', 'jetonomy' ),
-				'description' => __( 'Your reply was accepted as the answer.', 'jetonomy' ),
+				'description' => sprintf( /* translators: %s: the singular Reply label, lowercase. */ __( 'Your %s was accepted as the answer.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 			),
 			'idea_status_changed' => array(
 				'label'       => __( 'Idea status changes', 'jetonomy' ),
@@ -234,11 +234,11 @@ class Community_Notification_Contract {
 			),
 			'join_request_result' => array(
 				'label'       => __( 'Join request decisions', 'jetonomy' ),
-				'description' => __( 'Your request to join a space was decided.', 'jetonomy' ),
+				'description' => sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Your request to join a %s was decided.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			),
 			'join_request'        => array(
 				'label'       => __( 'Join requests to review', 'jetonomy' ),
-				'description' => __( 'Someone requested to join a space you moderate.', 'jetonomy' ),
+				'description' => sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Someone requested to join a %s you moderate.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			),
 			'mention'             => array(
 				'label'       => __( 'Mentions', 'jetonomy' ),

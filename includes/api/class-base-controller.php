@@ -58,7 +58,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'Reply'        => \Jetonomy\jetonomy_label( 'reply' ),
 			'Space'        => \Jetonomy\space_label(),
 			'Category'     => \Jetonomy\jetonomy_label( 'category' ),
-			'User'         => __( 'Member', 'jetonomy' ),
+			'User'         => \Jetonomy\jetonomy_label( 'member' ),
 			'Flag'         => __( 'Report', 'jetonomy' ),
 			'Restriction'  => __( 'Restriction', 'jetonomy' ),
 			'Subscription' => __( 'Subscription', 'jetonomy' ),
