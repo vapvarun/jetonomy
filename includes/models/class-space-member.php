@@ -183,7 +183,8 @@ class SpaceMember extends Model {
 		// Revocations (membership expiry, group leave, automations) must
 		// always remove, or a lapsed last admin keeps access.
 		if ( $keep_last_admin ) {
-			$last_admin = self::last_admin_error( $space_id, self::get_role( $space_id, $user_id ), null );
+			$last_admin = self::last_admin_error( $space_id, self::get_role( $space_id, $user_id ), null )
+				?? self::owner_change_error( $space_id, $user_id );
 			if ( $last_admin ) {
 				return $last_admin;
 			}
@@ -371,7 +372,9 @@ class SpaceMember extends Model {
 
 		// Opt-in, as in remove(): automations that demote on a plan change
 		// must not leave someone holding admin rights they lost.
-		$last_admin = $keep_last_admin ? self::last_admin_error( $space_id, $old_role, $role ) : null;
+		$last_admin = $keep_last_admin
+			? ( self::last_admin_error( $space_id, $old_role, $role ) ?? ( 'admin' === $old_role ? self::owner_change_error( $space_id, $user_id ) : null ) )
+			: null;
 		if ( $last_admin ) {
 			return $last_admin;
 		}
@@ -848,6 +851,36 @@ class SpaceMember extends Model {
 			'jetonomy_last_admin_required',
 			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s must keep at least one admin. Promote someone else first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			array( 'status' => 400 )
+		);
+	}
+
+	/**
+	 * Refuse a manual demotion or removal of the space owner by someone else.
+	 *
+	 * The owner (spaces.author_id) needs their admin row to hand the space over
+	 * or undo their own archive, so a co-admin removing it would lock them out
+	 * of their own space (owner decision 2026-10-15). The owner may step down
+	 * themselves, and a site administrator - or WP-CLI, which runs as no user -
+	 * can always change it. Same opt-in as the last-admin rule: automations
+	 * (membership expiry, group sync) still revoke.
+	 *
+	 * @param int $space_id Space ID.
+	 * @param int $user_id  Member being demoted or removed.
+	 * @return \WP_Error|null
+	 */
+	private static function owner_change_error( int $space_id, int $user_id ): ?\WP_Error {
+		$actor = get_current_user_id();
+		if ( 0 === $actor || $actor === $user_id || user_can( $actor, 'manage_options' ) ) {
+			return null;
+		}
+		$space = Space::find( $space_id );
+		if ( ! $space || (int) $space->author_id !== $user_id ) {
+			return null;
+		}
+		return new \WP_Error(
+			'jetonomy_owner_protected',
+			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Only the owner of this %s or a site administrator can change the owner\'s role.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			array( 'status' => 403 )
 		);
 	}
 

@@ -226,6 +226,38 @@ class StaffReachTest extends WP_UnitTestCase {
 		$this->assertSame( 2, Trust_Levels::set_manually( $this->outsider, 2, $a ), 'ordinary members can still be changed' );
 	}
 
+	public function test_space_owner_role_changes_only_by_owner_or_site_admin(): void {
+		$owner    = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$co_admin = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$space    = (int) Space::create(
+			array(
+				'title'     => 'Owned space',
+				'slug'      => 'owned-' . uniqid(),
+				'author_id' => $owner,
+				'type'      => 'forum',
+			)
+		);
+		SpaceMember::add( $space, $owner, 'admin' );
+		SpaceMember::add( $space, $co_admin, 'admin' );
+
+		wp_set_current_user( $co_admin );
+		$demote = SpaceMember::set_role( $space, $owner, 'member', true );
+		$this->assertWPError( $demote, 'a co-admin cannot demote the owner' );
+		$this->assertSame( 'jetonomy_owner_protected', $demote->get_error_code() );
+		$this->assertWPError( SpaceMember::remove( $space, $owner, true ), 'or remove them' );
+		$this->assertSame( 'admin', SpaceMember::get_role( $space, $owner ) );
+
+		$this->assertTrue( SpaceMember::set_role( $space, $owner, 'moderator', false ), 'automations still revoke' );
+		SpaceMember::set_role( $space, $owner, 'admin', false );
+
+		wp_set_current_user( $owner );
+		$this->assertTrue( SpaceMember::set_role( $space, $owner, 'member', true ), 'the owner may step down' );
+		SpaceMember::set_role( $space, $owner, 'admin', false );
+
+		wp_set_current_user( 1 );
+		$this->assertTrue( SpaceMember::set_role( $space, $owner, 'member', true ), 'a site administrator can always change it' );
+	}
+
 	private function report( string $type, int $id ): int {
 		$req = new WP_REST_Request( 'POST', '/jetonomy/v1/flags' );
 		$req->set_param( 'object_type', $type );
