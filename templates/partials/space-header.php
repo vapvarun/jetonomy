@@ -72,6 +72,27 @@ $_jt_can_edit_space = is_user_logged_in()
 					</a>
 				</p>
 			<?php endif; ?>
+			<?php
+			// The sidebar About card (and its queue link) is suppressed on the
+			// space page, and the global nav link vanishes when the nav is
+			// hidden, so space moderators get their queue here.
+			$_jt_mod_uid = get_current_user_id();
+			if ( $_jt_mod_uid && \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( $_jt_mod_uid, (int) $space->id ) ) :
+				$_jt_queue_count = \Jetonomy\Moderation\Moderation_Service::count_pending_flags( $_jt_mod_uid, (int) $space->id )
+					+ \Jetonomy\Moderation\Moderation_Service::count_pending_approvals( $_jt_mod_uid, 'post', (int) $space->id )
+					+ \Jetonomy\Moderation\Moderation_Service::count_pending_approvals( $_jt_mod_uid, 'reply', (int) $space->id );
+				?>
+				<p class="jt-space-edit-cta">
+					<a class="jt-btn jt-btn-sm jt-btn-ghost"
+						href="<?php echo esc_url( \Jetonomy\route_url( 'space-moderation', $space->slug ) ); ?>">
+						<?php jetonomy_echo_icon( 'shield', 14 ); ?>
+						<?php esc_html_e( 'Moderation queue', 'jetonomy' ); ?>
+						<?php if ( $_jt_queue_count > 0 ) : ?>
+							<span class="jt-count-pill"><?php echo esc_html( number_format_i18n( $_jt_queue_count ) ); ?></span>
+						<?php endif; ?>
+					</a>
+				</p>
+			<?php endif; ?>
 		</div>
 		<div class="jt-space-nums">
 			<div class="jt-num">

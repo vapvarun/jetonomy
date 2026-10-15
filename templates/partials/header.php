@@ -19,6 +19,42 @@ if ( $user_id ) {
 }
 $base = \Jetonomy\base_url();
 
+// Enqueued before the nav filter below: header.js also carries the toast
+// fallback, keyboard shortcuts, search overlay and hover cards, which a site
+// that hides the nav still needs.
+wp_enqueue_style(
+	'jetonomy-header',
+	JETONOMY_URL . 'assets/css/header.css',
+	array(),
+	JETONOMY_VERSION
+);
+wp_enqueue_script(
+	'jetonomy-header',
+	JETONOMY_URL . 'assets/js/header.js',
+	array( 'jetonomy-rest', 'wp-i18n' ),
+	JETONOMY_VERSION,
+	true
+);
+\Jetonomy\script_translations( 'jetonomy-header' );
+wp_localize_script(
+	'jetonomy-header',
+	'jetonomyHeader',
+	array(
+		'base'         => $base,
+		'restBase'     => rest_url( 'jetonomy/v1' ),
+		'nonce'        => wp_create_nonce( 'wp_rest' ),
+		'isLoggedIn'   => (bool) $user_id,
+		'restNotif'    => rest_url( 'jetonomy/v1/notifications' ),
+		'restMarkRead' => rest_url( 'jetonomy/v1/notifications/mark-all-read' ),
+		'restSearch'   => rest_url( 'jetonomy/v1/search' ),
+		// Label-dependent copy only; header.js translates the rest with wp.i18n.
+		'i18n'         => array(
+			/* translators: 1: plural topic label, 2: plural reply label. The %%1$d (topic count) and %%2$d (reply count) are filled in by JS. */
+			'hcStatsFormat' => sprintf( __( '%%1$d %1$s · %%2$d %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+		),
+	)
+);
+
 /**
  * Filter whether to show the Jetonomy community navigation bar.
  * Themes can disable this if they integrate the nav into their own header.
@@ -150,41 +186,8 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 <template id="jt-search-icon-tpl"><?php jetonomy_echo_icon( 'search', 20 ); ?></template>
 
 <?php
-// Enqueue header CSS + JS. Font-scale assets only when BuddyNext is
-// not present (it provides its own implementation).
-wp_enqueue_style(
-	'jetonomy-header',
-	JETONOMY_URL . 'assets/css/header.css',
-	array(),
-	JETONOMY_VERSION
-);
-wp_enqueue_script(
-	'jetonomy-header',
-	JETONOMY_URL . 'assets/js/header.js',
-	array( 'jetonomy-rest', 'wp-i18n' ),
-	JETONOMY_VERSION,
-	true
-);
-\Jetonomy\script_translations( 'jetonomy-header' );
-wp_localize_script(
-	'jetonomy-header',
-	'jetonomyHeader',
-	array(
-		'base'         => $base,
-		'restBase'     => rest_url( 'jetonomy/v1' ),
-		'nonce'        => wp_create_nonce( 'wp_rest' ),
-		'isLoggedIn'   => (bool) $user_id,
-		'restNotif'    => rest_url( 'jetonomy/v1/notifications' ),
-		'restMarkRead' => rest_url( 'jetonomy/v1/notifications/mark-all-read' ),
-		'restSearch'   => rest_url( 'jetonomy/v1/search' ),
-		// Label-dependent copy only; header.js translates the rest with wp.i18n.
-		'i18n'         => array(
-			/* translators: 1: plural topic label, 2: plural reply label. The %%1$d (topic count) and %%2$d (reply count) are filled in by JS. */
-			'hcStatsFormat' => sprintf( __( '%%1$d %1$s · %%2$d %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
-		),
-	)
-);
-
+// Font-scale drives the nav's A / A+ / A++ buttons, so it loads only with the
+// nav, and only when BuddyNext is not present (it provides its own).
 if ( ! did_action( 'buddynext_loaded' ) ) {
 	wp_enqueue_script(
 		'jetonomy-header-font-scale',
