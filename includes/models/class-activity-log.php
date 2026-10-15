@@ -56,9 +56,10 @@ class ActivityLog extends Model {
 	 * Rides the user_created index.
 	 */
 	public static function reputation_net( int $user_id, string $reason, string $object_type, int $object_id ): int {
-		// shortcut: rows pruned by the activity-log retention window are forgotten, so a
-		// give-back after that window finds nothing to return (fails safe); move the ledger
-		// to its own table if owners need refunds older than the retention window.
+		// shortcut: rows pruned by the activity-log retention window are forgotten. A
+		// give-back after that window returns nothing (safe), but award_once() can then
+		// award the same object again (e.g. spam -> 90+ days -> restore -> spam = a
+		// second -20). Move the ledger to its own table if that ever matters to owners.
 		$db = self::db();
 		return (int) $db->get_var(
 			$db->prepare(

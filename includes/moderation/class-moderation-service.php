@@ -782,7 +782,8 @@ class Moderation_Service {
 				)
 			);
 		}
-		if ( in_array( $action, array( 'spam', 'trash' ), true ) && ! $was_removed && ! empty( $row->author_id ) ) {
+		// A moderator removing their OWN content is a self-delete: no penalty.
+		if ( in_array( $action, array( 'spam', 'trash' ), true ) && ! $was_removed && ! empty( $row->author_id ) && (int) $row->author_id !== $user_id ) {
 			Reputation::award_once(
 				(int) $row->author_id,
 				'post_removed',

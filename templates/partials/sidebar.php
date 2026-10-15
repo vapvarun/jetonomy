@@ -58,7 +58,11 @@ $popular_tags = \Jetonomy\Cache::remember(
 // viewer cannot read. Show each tag's count as the tag page will (one grouped
 // query), and drop tags with nothing visible so a name never hints at a
 // private topic.
-$jt_tag_counts = \Jetonomy\Models\Post::count_by_tags_visible( wp_list_pluck( (array) $popular_tags, 'id' ) );
+// Guests share one cached answer (the bulk of traffic); members vary by membership.
+$jt_tag_ids    = wp_list_pluck( (array) $popular_tags, 'id' );
+$jt_tag_counts = is_user_logged_in()
+	? \Jetonomy\Models\Post::count_by_tags_visible( $jt_tag_ids )
+	: \Jetonomy\Cache::remember( 'tags:popular:15:guest-counts', static fn() => \Jetonomy\Models\Post::count_by_tags_visible( $jt_tag_ids ), 900 );
 $popular_tags  = array_values( array_filter( (array) $popular_tags, static fn( $t ) => ! empty( $jt_tag_counts[ (int) $t->id ] ) ) );
 
 // When BuddyNext is active, use its sidebar card skeleton so all sidebar

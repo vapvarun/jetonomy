@@ -156,19 +156,6 @@ class Reputation {
 	}
 
 	/**
-	 * Apply a custom delta not present in POINTS_MAP.
-	 *
-	 * Intended for callers that compute reputation dynamically (e.g. per-badge
-	 * bonuses, admin overrides). Fires `jetonomy_reputation_changed` with the
-	 * caller-supplied action key and context payload.
-	 *
-	 * @param int    $user_id WP user ID.
-	 * @param int    $delta   Signed point delta to apply. Zero is a no-op.
-	 * @param string $action  Free-form action key for logging/listeners.
-	 * @param array  $context Extra context passed to the hook (e.g. badge_id).
-	 * @return int The delta that was applied (0 if $delta was 0).
-	 */
-	/**
 	 * Award $action for this object unless an earlier award is still
 	 * outstanding (one per object, however often the triggering state repeats).
 	 *
@@ -178,10 +165,18 @@ class Reputation {
 	 * @return int Delta applied.
 	 */
 	public static function award_once( int $user_id, string $action, array $context ): int {
-		if ( self::outstanding( $user_id, $action, $context ) > 0 ) {
+		// Claim the object first: add_option() is atomic (unique option_name), so
+		// a double-clicked moderator action cannot pass the outstanding check
+		// twice before the first award is logged.
+		$lock = '_jt_rep_lock_' . md5( $action . '|' . $user_id . '|' . ( $context['object_type'] ?? '' ) . '|' . ( $context['object_id'] ?? 0 ) );
+		if ( ! add_option( $lock, time(), '', false ) ) {
 			return 0;
 		}
-		return self::award( $user_id, $action, $context );
+		try {
+			return self::outstanding( $user_id, $action, $context ) > 0 ? 0 : self::award( $user_id, $action, $context );
+		} finally {
+			delete_option( $lock );
+		}
 	}
 
 	/**
@@ -213,6 +208,19 @@ class Reputation {
 		return \Jetonomy\Models\ActivityLog::reputation_net( $user_id, $action, (string) ( $context['object_type'] ?? '' ), (int) ( $context['object_id'] ?? 0 ) );
 	}
 
+	/**
+	 * Apply a custom delta not present in POINTS_MAP.
+	 *
+	 * Intended for callers that compute reputation dynamically (e.g. per-badge
+	 * bonuses, admin overrides). Fires `jetonomy_reputation_changed` with the
+	 * caller-supplied action key and context payload.
+	 *
+	 * @param int    $user_id WP user ID.
+	 * @param int    $delta   Signed point delta to apply. Zero is a no-op.
+	 * @param string $action  Free-form action key for logging/listeners.
+	 * @param array  $context Extra context passed to the hook (e.g. badge_id).
+	 * @return int The delta that was applied (0 if $delta was 0).
+	 */
 	public static function award_custom( int $user_id, int $delta, string $action, array $context = array() ): int {
 		if ( 0 === $delta ) {
 			return 0;

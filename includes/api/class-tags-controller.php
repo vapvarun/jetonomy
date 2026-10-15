@@ -230,6 +230,13 @@ class Tags_Controller extends Base_Controller {
 		$tags  = 'alphabetical' === $sort ? Tag::list_alphabetical( $limit, $offset ) : Tag::list_popular( $limit, $offset );
 		$total = Tag::count();
 
+		// Report what this viewer can read, not the stored all-spaces count
+		// (same rule as the sidebar and tag search).
+		$counts = \Jetonomy\Models\Post::count_by_tags_visible( wp_list_pluck( $tags, 'id' ) );
+		foreach ( $tags as $tag ) {
+			$tag->post_count = $counts[ (int) $tag->id ] ?? 0;
+		}
+
 		return $this->paginated_response(
 			$tags,
 			array(
