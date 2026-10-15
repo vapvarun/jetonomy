@@ -348,9 +348,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td>
 							<label>
 								<input type="checkbox" name="jetonomy_settings[allow_space_admin_purge]" value="1" <?php checked( ! empty( $settings['allow_space_admin_purge'] ) ); ?>>
-								<?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( 'Let %1$s admins permanently delete a %1$s and everything in it', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?>
+								<?php /* translators: %s: space label, lowercase (e.g. "space"). */ echo esc_html( sprintf( __( 'Let %1$s admins permanently delete their %1$s and everything in it', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ) ); ?>
 							</label>
-							<p class="description"><?php /* translators: 1: space label, lowercase (e.g. "space"). 2: member label, plural, lowercase (e.g. "members"). 3: topic label, plural, lowercase (e.g. "topics"). 4: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'Off by default. Deleting a %1$s normally transfers it and archives it, because a %1$s holds other %2$s\' %3$s and %4$s - destroying it destroys their contributions too. With this on, a %1$s admin can choose permanent deletion instead. Site administrators can always do either.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
+							<p class="description"><?php /* translators: 1: space label, lowercase (e.g. "space"). 2: member label, plural, lowercase (e.g. "members"). 3: topic label, plural, lowercase (e.g. "topics"). 4: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'Off by default. A deleted %1$s is normally transferred and archived, because it holds %3$s and %4$s written by other %2$s - destroying it destroys their contributions too. With this on, %1$s admins can choose permanent deletion instead. Site administrators can always do either.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -722,7 +722,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td>
 							<input type="number" id="verification_reminder_hours" name="jetonomy_settings[verification_reminder_hours]" min="0" max="168" value="<?php echo esc_attr( (string) (int) ( $settings['verification_reminder_hours'] ?? 24 ) ); ?>" class="small-text">
 							<?php esc_html_e( 'hours', 'jetonomy' ); ?>
-							<p class="description"><?php /* translators: %s: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if a %s has not verified. Set to 0 to disable.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></p>
+							<p class="description"><?php echo esc_html__( 'Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if the email is still unverified. Set to 0 to disable.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -838,7 +838,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tr>
 						<th scope="row"><label for="email_footer_text"><?php esc_html_e( 'Footer Text', 'jetonomy' ); ?></label></th>
 						<td>
-							<input type="text" id="email_footer_text" name="jetonomy_settings[email_footer_text]" value="<?php echo esc_attr( $settings['email_footer_text'] ?? '' ); ?>" class="regular-text" placeholder="<?php /* translators: %s: member label, lowercase (e.g. "member"). */ echo esc_attr( sprintf( __( 'You received this because you are a %s of the community.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?>">
+							<input type="text" id="email_footer_text" name="jetonomy_settings[email_footer_text]" value="<?php echo esc_attr( $settings['email_footer_text'] ?? '' ); ?>" class="regular-text" placeholder="<?php echo esc_attr__( 'You received this because you are part of the community.', 'jetonomy' ); ?>">
 							<p class="description"><?php esc_html_e( 'Appears at the bottom of every branded notification email.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>

@@ -184,6 +184,10 @@ A few words deliberately keep their default form:
 - **Space roles.** The roles inside a space (Viewer, Member, Moderator, Admin) are role names, not the community noun.
 - **Block names in the editor.** Jetonomy's blocks keep their built-in names (for example "Trending Topics") in the block inserter, because those come from fixed block files. What the blocks show on the page follows your labels.
 - **Developer-facing text.** REST API schema descriptions and the Abilities API keep the product's own terms.
+- **Trust level names.** "Member" is also the name of trust level 1. It is a rank, not the community noun. Rename ranks under **Settings → Permissions → Trust level names**.
+- **"Post" as a general word.** Screens that cover topics and replies together, such as "Posts" in the Activity log, keep the word "post".
+- **Importer notes.** The bbPress and wpForo importers describe the source forum in that forum's own words, such as "forum" and "closed topic".
+- **Data already saved.** Text stored before a rename, such as badge descriptions you wrote or past email subjects, is not rewritten.
 
 **Labels change words, not web addresses.** The fixed parts of community URLs stay the same whatever you call things: `/s/` for a space, `/t/` for a topic, `/u/` for a profile, `/category/`, `/my-spaces/`, `/new-space/`, `/leaderboard/` and so on. Links members have bookmarked or shared keep working when you rename a noun, and every visible link text, heading and menu item uses your label. To change the first part of every address (for example `/community/` to `/lounges/`), use the **Community Base URL** setting above.
 

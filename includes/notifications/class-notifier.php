@@ -561,7 +561,7 @@ class Notifier {
 
 		$space = Space::find( $space_id );
 		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		$space_name = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$actor_id   = (int) $post->author_id;
 		$post_url   = $this->get_post_url( $post );
 		// Actor is the post author; an anonymous post must not leak the real
@@ -1744,7 +1744,7 @@ class Notifier {
 	public function on_join_request( int $space_id, int $user_id, string $message ): void {
 		$space = Space::find( $space_id );
 		/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+		$space_name = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 
 		// Collect recipients: space-level admins/moderators + WP-level admins.
 		$recipient_ids = array();

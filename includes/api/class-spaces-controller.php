@@ -623,6 +623,11 @@ class Spaces_Controller extends Base_Controller {
 			return $combo;
 		}
 
+		$cover = esc_url_raw( (string) $request->get_param( 'cover_image' ) );
+		if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $cover, '', get_current_user_id() ) ) {
+			return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload images.', 'jetonomy' ), array( 'status' => 403 ) );
+		}
+
 		$data = array(
 			'category_id' => absint( $request->get_param( 'category_id' ) ) ?: null,
 			'title'       => $title,
@@ -632,7 +637,7 @@ class Spaces_Controller extends Base_Controller {
 			'visibility'  => $visibility,
 			'join_policy' => $join_policy,
 			'icon'        => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
-			'cover_image' => esc_url_raw( (string) $request->get_param( 'cover_image' ) ),
+			'cover_image' => $cover,
 			'settings'    => $settings,
 			'author_id'   => get_current_user_id(),
 			// Only carried when the client actually sent it. Left null it is
@@ -751,7 +756,7 @@ class Spaces_Controller extends Base_Controller {
 		// locked space or an archive a site admin imposed stays as it is.
 		if ( null !== $request->get_param( 'status' ) ) {
 			if ( 'active' !== $request->get_param( 'status' ) ) {
-				return new WP_Error( 'jetonomy_invalid_status', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'A %s can only be set back to active here.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 400 ) );
+				return new WP_Error( 'jetonomy_invalid_status', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s can only be set back to active here.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 400 ) );
 			}
 			if ( ! Space::can_unarchive( $space, $user_id ) ) {
 				return $this->permission_error();
@@ -783,6 +788,9 @@ class Spaces_Controller extends Base_Controller {
 		}
 		if ( null !== $request->get_param( 'cover_image' ) ) {
 			$data['cover_image'] = esc_url_raw( (string) $request->get_param( 'cover_image' ) );
+			if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $data['cover_image'], (string) ( $space->cover_image ?? '' ), get_current_user_id() ) ) {
+				return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload images.', 'jetonomy' ), array( 'status' => 403 ) );
+			}
 		}
 		if ( null !== $request->get_param( 'settings' ) ) {
 			$settings_raw = $request->get_param( 'settings' );
@@ -873,7 +881,7 @@ class Spaces_Controller extends Base_Controller {
 			if ( ! $is_site_admin && ! $admins_may ) {
 				return new WP_Error(
 					'jetonomy_purge_not_allowed',
-					sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Permanently deleting a %s is restricted to site administrators on this community.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'Permanently deleting this %s is restricted to site administrators on this community.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					array( 'status' => 403 )
 				);
 			}
@@ -1107,7 +1115,7 @@ class Spaces_Controller extends Base_Controller {
 		if ( ! SpaceMember::is_member( $id, $user_id ) ) {
 			return new WP_Error(
 				'jetonomy_not_member',
-				sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'User is not a %1$s of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'User does not belong to this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1281,7 +1289,7 @@ class Spaces_Controller extends Base_Controller {
 		if ( ! SpaceMember::is_member( $id, $user_id ) ) {
 			return new WP_Error(
 				'jetonomy_not_member',
-				sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'User is not a %1$s of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'User does not belong to this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 404 )
 			);
 		}

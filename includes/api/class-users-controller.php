@@ -526,7 +526,12 @@ class Users_Controller extends Base_Controller {
 		}
 
 		if ( null !== $request->get_param( 'avatar_url' ) ) {
-			$profile_data['avatar_url'] = esc_url_raw( (string) $request->get_param( 'avatar_url' ) );
+			$avatar_url = esc_url_raw( (string) $request->get_param( 'avatar_url' ) );
+			$current    = UserProfile::find_by_user( $user_id );
+			if ( ! \Jetonomy\Permissions\Capabilities::can_set_image( $avatar_url, (string) ( $current->avatar_url ?? '' ), $user_id ) ) {
+				return new WP_Error( 'jetonomy_forbidden', __( 'You do not have permission to upload a profile picture.', 'jetonomy' ), array( 'status' => 403 ) );
+			}
+			$profile_data['avatar_url'] = $avatar_url;
 		}
 
 		if ( null !== $request->get_param( 'settings' ) ) {

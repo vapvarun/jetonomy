@@ -1596,6 +1596,7 @@ tr.jetonomy-moderated td {
 
 .jetonomy-rule-actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 6px;
 	align-items: center;
 }
@@ -3782,6 +3783,18 @@ tr.jetonomy-moderated td {
    members and join requests rather than per table. */
 .jetonomy-admin .jt-spacedit-list td {
 	vertical-align: middle;
+}
+
+/* Action cells hold two buttons (Sync + Delete, Approve + Deny). In the fixed
+   table layout the column defaulted to an equal share that was ~15px short of
+   both, so they wrapped onto two rows at desktop. Desktop only: below 783px
+   core stacks each cell as a label + value row, and a fixed width there
+   pushed the second button past the screen edge. */
+@media screen and (min-width: 783px) {
+	.jetonomy-admin .jt-spacedit-list th.column-actions,
+	.jetonomy-admin .jt-spacedit-list td.column-actions {
+		width: 16rem;
+	}
 }
 
 /* Grouped field pairs in settings: sibling inputs

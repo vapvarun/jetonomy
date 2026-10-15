@@ -432,7 +432,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<?php
 					printf(
 						/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: the singular space label the site owner configured, lowercase (e.g. space, group). */
-						esc_html__( 'Editing, closing or pinning other people\'s %1$s comes from the person\'s WordPress role - set those under Jetonomy - Settings - Permissions. Ordinary taking part is different: being admitted to a %2$s, by a rule or by the roster, carries reading, posting, replying, voting and reporting on its own. That holds for roles Jetonomy does not map, such as the ones a course or membership plugin creates for its own members.', 'jetonomy' ), // jt-terms-ok: "members" here is a membership plugin's own word.
+						esc_html__( 'Editing, closing or pinning other people\'s %1$s comes from the person\'s WordPress role - set those under Jetonomy - Settings - Permissions. Ordinary taking part is different: being admitted to any %2$s, by a rule or by the roster, carries reading, posting, replying, voting and reporting on its own. That holds for roles Jetonomy does not map, such as the ones a course or membership plugin creates for its own members.', 'jetonomy' ), // jt-terms-ok: "members" here is a membership plugin's own word.
 						esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 						esc_html( \Jetonomy\space_label( false, true ) )
 					);
@@ -578,6 +578,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								echo esc_html( ucfirst( $rule->space_role ) );
 								break;
 							case 'actions':
+								echo '<div class="jetonomy-rule-actions">';
 								if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) :
 									?>
 									<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>" data-role="<?php echo esc_attr( $rule->space_role ); ?>"><span class="dashicons dashicons-update"></span> <?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'Sync %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?></button>
@@ -585,6 +586,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								endif;
 								?>
 								<button type="button" class="button button-small button-link-delete jetonomy-delete-rule" data-id="<?php echo absint( $rule->id ); ?>"><span class="dashicons dashicons-trash"></span> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
+								</div>
 								<?php
 								break;
 						}
@@ -809,8 +811,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								break;
 							case 'actions':
 								?>
+								<div class="jetonomy-rule-actions">
 								<button type="button" class="button button-small button-primary jetonomy-approve-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
 								<button type="button" class="button button-small jetonomy-deny-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Deny', 'jetonomy' ); ?></button>
+								</div>
 								<?php
 								break;
 						}

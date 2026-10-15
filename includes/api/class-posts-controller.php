@@ -1117,14 +1117,11 @@ class Posts_Controller extends Base_Controller {
 				return new WP_Error(
 					'jetonomy_pin_limit',
 					sprintf(
-						/* translators: %d: maximum number of pinned topics allowed per space */
-						_n(
-							'You can pin up to %d topic in a space. Unpin one first.',
-							'You can pin up to %d topics in a space. Unpin one first.',
-							$max,
-							'jetonomy'
-						),
-						$max
+						/* translators: 1: maximum number of pinned topics allowed per space, 2: the topic label (singular or plural to match the number), lowercase, 3: the singular space label, lowercase. */
+						__( 'You can pin up to %1$d %2$s per %3$s. Unpin one first.', 'jetonomy' ),
+						$max,
+						\Jetonomy\jetonomy_label( 'topic', $max > 1, true ),
+						\Jetonomy\space_label( false, true )
 					),
 					array( 'status' => 400 )
 				);

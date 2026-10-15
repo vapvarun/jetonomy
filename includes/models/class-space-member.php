@@ -274,7 +274,7 @@ class SpaceMember extends Model {
 		if ( self::is_member( $space_id, $user_id ) ) {
 			return new \WP_Error(
 				'jetonomy_already_member',
-				sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'You are already a %1$s of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You are already in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 409 )
 			);
 		}
@@ -360,7 +360,7 @@ class SpaceMember extends Model {
 		if ( null === $old_role ) {
 			return new \WP_Error(
 				'jetonomy_not_a_member',
-				sprintf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ __( 'User is not a %1$s of this %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
+				sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'User does not belong to this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				array( 'status' => 404 )
 			);
 		}
@@ -846,7 +846,7 @@ class SpaceMember extends Model {
 		}
 		return new \WP_Error(
 			'jetonomy_last_admin_required',
-			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'A %s must keep at least one admin. Promote someone else first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s must keep at least one admin. Promote someone else first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			array( 'status' => 400 )
 		);
 	}

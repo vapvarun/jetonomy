@@ -231,9 +231,14 @@ class Blocks {
 			array(
 				'api_version'     => '3',
 				'attributes'      => array(
-					'count' => array(
+					'count'  => array(
 						'type'    => 'number',
 						'default' => 10,
+					),
+					'period' => array(
+						'type'    => 'string',
+						'default' => 'all',
+						'enum'    => array( 'all', 'month', 'week' ),
 					),
 				),
 				'render_callback' => array( __CLASS__, 'render_leaderboard' ),
@@ -453,7 +458,7 @@ class Blocks {
 	public static function render_leaderboard( array $attributes ): string {
 		wp_enqueue_style( 'jetonomy-blocks' );
 
-		return '<div class="wp-block-jetonomy-leaderboard">' . do_shortcode( '[jetonomy_leaderboard count="' . absint( $attributes['count'] ) . '"]' ) . '</div>';
+		return '<div class="wp-block-jetonomy-leaderboard">' . do_shortcode( '[jetonomy_leaderboard count="' . absint( $attributes['count'] ?? 10 ) . '" period="' . esc_attr( (string) ( $attributes['period'] ?? 'all' ) ) . '"]' ) . '</div>';
 	}
 
 	/**

@@ -36,7 +36,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 		array(
 			'icon'    => 'lock',
 			/* translators: 1: singular member label; 2: singular space label; 3: plural member label. */
-			'message' => sprintf( __( 'You need to be a %1$s of this %2$s to see its %3$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+			'message' => sprintf( __( 'You need to join this %1$s to see its %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
 			'tone'    => 'forbidden',
 		)
 	);

@@ -289,8 +289,8 @@ class BBPress_Importer extends Importer {
 			$notes[] = sprintf(
 				/* translators: %s: number of closed topics. */
 				_n(
-					'%s closed topic will be imported and will stay closed.',
-					'%s closed topics will be imported and will stay closed.',
+					'%s closed topic will be imported and will stay closed.', // jt-terms-ok: source forum vocabulary (bbPress topics).
+					'%s closed topics will be imported and will stay closed.', // jt-terms-ok: source forum vocabulary (bbPress topics).
 					$closed,
 					'jetonomy'
 				),
@@ -302,11 +302,10 @@ class BBPress_Importer extends Importer {
 		$hidden  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'hidden'" );
 		if ( $private > 0 || $hidden > 0 ) {
 			$notes[] = sprintf(
-				/* translators: 1: number of private forums, 2: number of hidden forums, 3: the singular Member label, lowercase, 4: the plural Member label, lowercase. */
-				_n( '%1$s private and %2$s hidden forum will keep their privacy. Everyone who posted in them is added as a %3$s so they keep access; new %4$s need approving.', '%1$s private and %2$s hidden forums will keep their privacy. Everyone who posted in them is added as a %3$s so they keep access; new %4$s need approving.', $private + $hidden, 'jetonomy' ),
+				/* translators: 1: number of private forums, 2: number of hidden forums, 3: the plural Member label, lowercase. */
+				_n( '%1$s private and %2$s hidden forum will keep their privacy. Everyone who posted in them is added to your %3$s so they keep access; new %3$s need approving.', '%1$s private and %2$s hidden forums will keep their privacy. Everyone who posted in them is added to your %3$s so they keep access; new %3$s need approving.', $private + $hidden, 'jetonomy' ),
 				number_format_i18n( $private ),
 				number_format_i18n( $hidden ),
-				\Jetonomy\jetonomy_label( 'member', false, true ),
 				\Jetonomy\jetonomy_label( 'member', true, true )
 			);
 		}
@@ -317,14 +316,16 @@ class BBPress_Importer extends Importer {
 		$containers = count( array_diff_key( $containers, Import_Map::find_many( self::SOURCE, 'space', array_keys( $containers ) ) ) );
 		if ( $containers > 0 ) {
 			$notes[] = sprintf(
-				/* translators: %s: number of bbPress forums that only contain other forums. */
+				/* translators: 1: number of bbPress forums that only contain other forums, 2: the Category label, lowercase (singular or plural to match the number), 3: the Space label, lowercase (singular or plural to match the number). */
 				_n(
-					'%s forum that only groups other forums (a bbPress category or the group forums root) becomes a category, not an empty space.',
-					'%s forums that only group other forums (bbPress categories or the group forums root) become categories, not empty spaces.',
+					'%1$s forum that only groups other forums (a bbPress category or the group forums root) becomes a parent %2$s, not an empty %3$s.', // jt-terms-ok: "bbPress category" is the source forum's own word.
+					'%1$s forums that only group other forums (bbPress categories or the group forums root) become parent %2$s, not empty %3$s.', // jt-terms-ok: "bbPress categories" is the source forum's own word.
 					$containers,
 					'jetonomy'
 				),
-				number_format_i18n( $containers )
+				number_format_i18n( $containers ),
+				\Jetonomy\jetonomy_label( 'category', $containers > 1, true ),
+				\Jetonomy\space_label( $containers > 1, true )
 			);
 		}
 

@@ -211,7 +211,7 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 5;
+		$limit = min( 50, absint( $atts['count'] ) ?: 5 ); // Capped: a huge count would render every row per page view.
 
 		// A supplied space reference must name something. Without this the query
 		// matches nothing and the owner sees "No posts yet." for a space that
@@ -280,7 +280,7 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 5;
+		$limit = min( 50, absint( $atts['count'] ) ?: 5 ); // Capped: a huge count would render every row per page view.
 
 		// See jetonomy_recent_posts: a reference that names nothing must say so
 		// rather than render the empty state.
@@ -343,7 +343,7 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 6;
+		$limit = min( 50, absint( $atts['count'] ) ?: 6 ); // Capped: a huge count would render every row per page view.
 
 		// Same contract for the category reference.
 		$category_ref = trim( (string) $atts['category_id'] );
@@ -399,14 +399,20 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 10;
+		$limit = min( 50, absint( $atts['count'] ) ?: 10 ); // Capped: a huge count would render every row per page view.
 		// Same periods as the Leaderboard page: all time, this month, this week.
 		$period = in_array( $atts['period'], array( 'all', 'month', 'week' ), true ) ? $atts['period'] : 'all';
 
 		// The Leaderboard page's own model query (same eligible population:
 		// real members with reputation > 0, same tie order). Also backs the
 		// leaderboard block and the classic widget, which render this shortcode.
-		$leaders = Models\UserProfile::list_for_leaderboard( $period, $limit, 0 );
+		// Same 5-minute TTL as GET /leaderboards: the ranking is shared by every
+		// viewer, and a sidebar widget would otherwise sort on every page view.
+		$leaders = (array) \Jetonomy\Cache::remember(
+			"lb:sc:{$period}:{$limit}",
+			static fn() => Models\UserProfile::list_for_leaderboard( $period, $limit, 0 ),
+			300
+		);
 
 		if ( empty( $leaders ) ) {
 			/* translators: %s: plural member label. */
@@ -531,7 +537,7 @@ class Shortcodes {
 
 		self::enqueue_styles();
 
-		$limit = absint( $atts['count'] ) ?: 10;
+		$limit = min( 50, absint( $atts['count'] ) ?: 10 ); // Capped: a huge count would render every row per page view.
 
 		// Deliberately NOT block-filtered — a member roster/ranking, not a
 		// content feed. Per-viewer filtering would re-rank the list and leak
@@ -644,7 +650,7 @@ class Shortcodes {
 						Template_Loader::app_i18n(),
 						array(
 							/* translators: %s: singular space label. */
-							'chooseSpace'   => sprintf( __( 'Choose a %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+							'chooseSpace'   => sprintf( __( 'Choose the %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							'titleRequired' => __( 'Title is required.', 'jetonomy' ),
 						)
 					),

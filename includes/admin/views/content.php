@@ -54,7 +54,7 @@ $page_url     = admin_url( 'admin.php?page=jetonomy-content' );
 $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 ?>
 <div class="wrap jetonomy-admin">
-	<h1><?php /* translators: %s: reply label, plural (e.g. "Replies"). */ echo esc_html( sprintf( __( 'Posts &amp; %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true ) ) ); ?></h1>
+	<h1><?php /* translators: 1: the plural Topic label, 2: the plural Reply label, lowercase. Matches the admin bar entry. */ echo esc_html( sprintf( __( '%1$s &amp; %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?></h1>
 
 	<!-- ── Toolbar ───────────────────────────────────────────── -->
 	<form method="get" action="" id="jetonomy-content-filters">

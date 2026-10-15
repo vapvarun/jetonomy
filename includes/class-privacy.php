@@ -52,7 +52,7 @@ class Privacy {
 		}
 		$content = '<p class="privacy-policy-tutorial">' . esc_html( sprintf( /* translators: %s: the singular Topic label, lowercase. */ __( 'Jetonomy sets no cookies on community pages. It counts %s views with the storage described below.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ) . '</p>'
 			. '<p><strong class="privacy-policy-tutorial">' . esc_html__( 'Suggested text:', 'jetonomy' ) . '</strong> '
-			. esc_html( sprintf( /* translators: 1: the singular Topic label, lowercase. */ __( 'When you open a discussion %1$s in our community, your browser notes the %1$s ID in session storage, which is cleared when you close the tab, so reloading a %1$s does not count as a new view. To stop a view from being counted twice, our server also keeps a one-way hash of your IP address and the %1$s ID for 30 minutes. Neither is used for tracking or advertising.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) )
+			. esc_html( sprintf( /* translators: 1: the singular Topic label, lowercase. */ __( 'When you open a discussion %1$s in our community, your browser notes the %1$s ID in session storage, which is cleared when you close the tab, so reloading the %1$s does not count as a new view. To stop a view from being counted twice, our server also keeps a one-way hash of your IP address and the %1$s ID for 30 minutes. Neither is used for tracking or advertising.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) )
 			. '</p><p>'
 			. esc_html( sprintf( /* translators: 1: the plural Topic label, lowercase, 2: the plural Reply label, lowercase. */ __( 'If you have an account, the %1$s, %2$s, votes, reactions, follows and profile details you add to the community are stored with your account. You can request an export or erasure of this data.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) )
 			. '</p>';
@@ -456,7 +456,8 @@ class Privacy {
 					),
 					array(
 						'name'  => __( 'Bio', 'jetonomy' ),
-						'value' => $profile->bio ?? '',
+						// The bio lives in the WordPress profile description since 2.0.2.
+						'value' => (string) get_user_meta( (int) $user->ID, 'description', true ),
 					),
 					array(
 						'name'  => __( 'Trust Level', 'jetonomy' ),

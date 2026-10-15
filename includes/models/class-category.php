@@ -173,11 +173,11 @@ class Category extends Model {
 	public static function delete( int $id ): bool|\WP_Error {
 		$spaces = \Jetonomy\table( 'spaces' );
 		if ( (int) static::db()->get_var( static::db()->prepare( "SELECT COUNT(*) FROM {$spaces} WHERE category_id = %d AND status <> 'archived'", $id ) ) > 0 ) {
-			return new \WP_Error( 'jetonomy_category_has_spaces', sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Space label, lowercase. */ __( 'Cannot delete a %1$s that contains %2$s. Move or delete the %2$s first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\space_label( true, true ) ), array( 'status' => 409 ) );
+			return new \WP_Error( 'jetonomy_category_has_spaces', sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Space label, lowercase. */ __( 'Cannot delete this %1$s while it contains %2$s. Move or delete the %2$s first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\space_label( true, true ) ), array( 'status' => 409 ) );
 		}
 
 		if ( static::count( array( 'parent_id' => $id ) ) > 0 ) {
-			return new \WP_Error( 'jetonomy_category_has_children', sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Category label, lowercase. */ __( 'Cannot delete a %1$s that has sub-%2$s. Delete them first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'category', true, true ) ), array( 'status' => 409 ) );
+			return new \WP_Error( 'jetonomy_category_has_children', sprintf( /* translators: 1: the singular Category label, lowercase, 2: the plural Category label, lowercase. */ __( 'Cannot delete this %1$s while it has sub-%2$s. Delete them first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ), \Jetonomy\jetonomy_label( 'category', true, true ) ), array( 'status' => 409 ) );
 		}
 
 		$parked = static::db()->get_col(
@@ -212,7 +212,7 @@ class Category extends Model {
 		$message = null;
 		$parent  = static::find( $parent_id );
 		if ( $parent_id === $id ) {
-			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'A %s cannot be its own parent.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
+			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'This %s cannot be its own parent.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( ! $parent ) {
 			$message = sprintf( /* translators: %s: the singular Category label, lowercase. */ __( 'The parent %s does not exist.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'category', false, true ) );
 		} elseif ( (int) $parent->parent_id > 0 ) {

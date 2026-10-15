@@ -127,6 +127,11 @@ function get_current_user_id(): int { return 0; }
 function wp_next_scheduled( string $h, array $args = array() ) { return false; }
 function wp_schedule_event( ...$a ): bool { return true; }
 function wp_clear_scheduled_hook( ...$a ): bool { return true; }
+function wp_unschedule_hook( ...$a ) { return 0; }
+function cache_users( ...$a ): void {}
+function wp_list_pluck( $list, $field ): array { return array_map( static fn( $r ) => is_object( $r ) ? $r->$field : $r[ $field ], (array) $list ); }
+function get_user_meta( ...$a ) { return ""; }
+function update_user_meta( ...$a ) { return true; }
 function load_plugin_textdomain( ...$a ): bool { return true; }
 
 function add_shortcode( ...$a ): void {}

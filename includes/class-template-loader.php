@@ -139,14 +139,18 @@ class Template_Loader {
 		$route         = $data['route'];
 		$template_file = $template_map[ $route ] ?? null;
 
+		// An unknown route, or one whose feature is switched off, renders the
+		// themed not-found view inside the shell rather than an empty body.
 		if ( ! $template_file ) {
 			status_header( 404 );
-			return;
+			$template_file = 'views/not-found.php';
 		}
 
-		// If the template path is absolute (from Pro), use it directly.
-		// Otherwise, check theme override first, then plugin directory.
-		if ( str_starts_with( $template_file, '/' ) || str_starts_with( $template_file, ABSPATH ) ) {
+		// Absolute paths (Pro registers its own) are used as-is. The old
+		// leading-slash test treated Windows drive paths as relative, so Messages
+		// 404'd on Windows hosts. path_is_absolute() knows C:\ but not the C:/
+		// form wp_normalize_path() produces, hence the second test.
+		if ( path_is_absolute( $template_file ) || preg_match( '#^[a-zA-Z]:/#', $template_file ) ) {
 			$template_path = $template_file;
 		} else {
 			$template_path = file_exists( $theme_dir . $template_file )
@@ -156,7 +160,7 @@ class Template_Loader {
 
 		if ( ! file_exists( $template_path ) ) {
 			status_header( 404 );
-			return;
+			$template_path = $plugin_dir . 'views/not-found.php';
 		}
 
 		// Enqueue styles. The --jt-* token layer is its own handle: blocks render
@@ -361,7 +365,6 @@ class Template_Loader {
 			wp_register_script( 'jetonomy-data', '', array(), JETONOMY_VERSION, false );
 		}
 		wp_enqueue_script( 'jetonomy-data' );
-		wp_localize_script( 'jetonomy-data', 'jetonomyLabels', \Jetonomy\label_map() );
 		wp_localize_script(
 			'jetonomy-data',
 			'jetonomyData',
@@ -409,11 +412,11 @@ class Template_Loader {
 					/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 					'noOtherSpaces'          => esc_html( sprintf( __( 'No other %s available', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'chooseSpaceOption'      => esc_html( sprintf( __( 'Choose a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
+					'chooseSpaceOption'      => esc_html( sprintf( __( 'Select %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					/* translators: %s: plural space label. */
 					'failedLoadSpaces'       => esc_html( sprintf( __( 'Failed to load %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					/* translators: %s: the singular topic label the site owner configured. */
-					'searchTopicPlaceholder' => esc_html( sprintf( __( 'Search for a %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ) ),
+					'searchTopicPlaceholder' => esc_html( sprintf( __( 'Search %s...', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ),
 					/* translators: %s: the plural topic label the site owner configured. */
 					'noTopicsFound'          => esc_html( sprintf( __( 'No %s found', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ),
 					'searchFailed'           => __( 'Search failed', 'jetonomy' ),
@@ -444,8 +447,8 @@ class Template_Loader {
 					'banSiteConfirmFormat'   => __( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ), // jt-terms-ok: verbs.
 					/* translators: %s: the singular member label the site owner configured. */
 					'banSiteTitle'           => esc_html( sprintf( __( 'Ban %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
-					/* translators: 1: member display name (substituted client-side); 2: singular member label (lowercase). "post, reply, file" stay verbs on purpose. */
-					'silenceConfirmFormat'   => esc_html( sprintf( __( 'Silence %1$s? They stay a %2$s but cannot post, reply, or file reports until you lift it.', 'jetonomy' ), '%s', \Jetonomy\jetonomy_label( 'member', false, true ) ) ), // jt-terms-ok: verbs; the noun is a label.
+					/* translators: 1: member display name (substituted client-side). "post, reply, file" stay verbs on purpose. */
+					'silenceConfirmFormat'   => esc_html( sprintf( __( 'Silence %1$s? They stay in the community but cannot post, reply, or file reports until you lift it.', 'jetonomy' ), '%s' ) ), // jt-terms-ok: verbs; the noun is a label.
 					/* translators: %s: the singular member label the site owner configured. */
 					'silenceTitle'           => esc_html( sprintf( __( 'Silence %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ),
 					'silenceLabel'           => __( 'Silence', 'jetonomy' ),
@@ -1107,7 +1110,7 @@ class Template_Loader {
 						break;
 					case 'new-space':
 						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-						$parts['title'] = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						$parts['title'] = sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'edit-space':
 						/* translators: %s: the label of the item being edited (the configured noun). */
@@ -1327,14 +1330,14 @@ class Template_Loader {
 					case 'leaderboard':
 						/* translators: %s: plural member label. */
 						$title = sprintf( __( 'Top %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) );
-						/* translators: %s: site title. */
+						/* translators: 1: site title, 2: plural member label, lowercase. */
 						$desc      = sprintf( __( 'Top contributors and most-helpful %2$s on %1$s.', 'jetonomy' ), $site_name, \Jetonomy\jetonomy_label( 'member', true, true ) );
 						$url       = route_url( 'leaderboard' );
 						$image_alt = $site_name;
 						break;
 					case 'search':
 						$title = __( 'Search the community', 'jetonomy' );
-						/* translators: %s: site title. */
+						/* translators: 1: site title, 2: plural reply label, lowercase, 3: plural member label, lowercase. */
 						$desc      = sprintf( __( 'Search discussions, %2$s, %3$s, and tags on %1$s.', 'jetonomy' ), $site_name, \Jetonomy\jetonomy_label( 'reply', true, true ), \Jetonomy\jetonomy_label( 'member', true, true ) );
 						$url       = route_url( 'search' );
 						$image_alt = $site_name;
@@ -1409,7 +1412,7 @@ class Template_Loader {
 						break;
 					case 'new-space':
 						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-						$title = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						$title = sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						/* translators: 1: singular space label, 2: site title. */
 						$desc      = sprintf( __( 'Start a new community %1$s on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $site_name );
 						$url       = route_url( 'new-space' );
@@ -1860,7 +1863,7 @@ class Template_Loader {
 			// on a translated locale.
 			'voteFailed'            => __( 'Vote failed.', 'jetonomy' ),
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			'chooseSpace'           => sprintf( __( 'Choose a %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+			'chooseSpace'           => sprintf( __( 'Choose the %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'draftSaved'            => __( 'Draft saved. You can find it in your profile under Drafts.', 'jetonomy' ),
 			'saveDraft'             => __( 'Save Draft', 'jetonomy' ),
 			'scheduleDateRequired'  => __( 'Please choose a publish date and time.', 'jetonomy' ),

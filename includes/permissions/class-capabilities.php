@@ -302,6 +302,22 @@ class Capabilities {
 	}
 
 	/**
+	 * Whether a user may set an image URL (profile picture, space cover).
+	 *
+	 * Pointing at a new image is an upload, so it needs can_upload() - the same
+	 * check the forms run before showing the control. Clearing the image, or
+	 * re-sending the unchanged value with the rest of a form, is always allowed.
+	 *
+	 * @param string $new_url     Sanitized URL being saved.
+	 * @param string $current_url URL stored now.
+	 * @param int    $user_id     User making the change.
+	 * @return bool
+	 */
+	public static function can_set_image( string $new_url, string $current_url, int $user_id ): bool {
+		return '' === $new_url || $new_url === $current_url || self::can_upload( $user_id );
+	}
+
+	/**
 	 * Every Jetonomy capability, flattened from ROLE_MAP.
 	 *
 	 * ROLE_MAP stays the single source of truth. Headless clients (the mobile

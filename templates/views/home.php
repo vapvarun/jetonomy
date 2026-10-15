@@ -87,7 +87,7 @@ if ( ! is_user_logged_in() ) :
 		'jetonomy_home_member_hint',
 		sprintf(
 			/* translators: 1: singular space label, 2: plural space label, 3: plural topic label, 4: plural member label. */
-			__( 'Open a %1$s to read or start a discussion - %3$s live inside %2$s, each with its own %4$s and rules.', 'jetonomy' ),
+			__( 'Open any %1$s to read or start a discussion - %3$s live inside %2$s, each with its own %4$s and rules.', 'jetonomy' ),
 			\Jetonomy\space_label( false, true ),
 			\Jetonomy\space_label( true, true ),
 			\Jetonomy\jetonomy_label( 'topic', true, true ),

@@ -326,9 +326,10 @@ function jetonomy_label( string $noun, bool $plural = false, bool $lower = false
 /**
  * Every terminology noun in all four forms, for scripts.
  *
- * Exposed to JavaScript as window.jetonomyLabels (frontend and wp-admin) so
- * script-built strings use the owner's words exactly like PHP does with
- * jetonomy_label(): labels.space.one, .many, .one_lower, .many_lower.
+ * Exposed to wp-admin scripts as window.jetonomyLabels so script-built
+ * strings use the owner's words exactly like PHP does with jetonomy_label():
+ * labels.space.one, .many, .one_lower, .many_lower. Frontend scripts get
+ * finished strings in their localized i18n state instead, so they need no map.
  *
  * @return array<string, array{one:string, many:string, one_lower:string, many_lower:string}>
  */

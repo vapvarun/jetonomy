@@ -64,9 +64,9 @@ $crumbs = array(
 					'icon'        => 'edit',
 					'message'     => __( 'No drafts yet.', 'jetonomy' ),
 					/* translators: %s: singular topic label. */
-					'description' => sprintf( __( 'Start writing a %s and choose "Save draft". It will wait for you here until you publish.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+					'description' => __( 'Start writing and choose "Save draft". It will wait for you here until you publish.', 'jetonomy' ),
 					/* translators: %s: singular topic label. */
-					'cta_label'   => sprintf( __( 'Start a %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+					'cta_label'   => sprintf( __( 'New %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
 					'cta_url'     => $base . '/',
 				)
 			);

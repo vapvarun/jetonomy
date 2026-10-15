@@ -944,8 +944,8 @@ class WPForo_Importer extends Importer {
 			$notes[] = sprintf(
 				/* translators: %s: number of unapproved replies. */
 				_n(
-					'%s unapproved reply will be imported as Pending, not published.',
-					'%s unapproved replies will be imported as Pending, not published.',
+					'%s unapproved reply will be imported as Pending, not published.', // jt-terms-ok: source forum vocabulary (wpForo replies).
+					'%s unapproved replies will be imported as Pending, not published.', // jt-terms-ok: source forum vocabulary (wpForo replies).
 					$held,
 					'jetonomy'
 				),
@@ -963,8 +963,8 @@ class WPForo_Importer extends Importer {
 				$notes[] = sprintf(
 					/* translators: %s: number of private replies. */
 					_n(
-						'%s private reply will be imported as Pending for review - replies have no private state in Jetonomy, so it will not be published.',
-						'%s private replies will be imported as Pending for review - replies have no private state in Jetonomy, so they will not be published.',
+						'%s private reply will be imported as Pending for review - replies have no private state in Jetonomy, so it will not be published.', // jt-terms-ok: source forum vocabulary (wpForo replies).
+						'%s private replies will be imported as Pending for review - replies have no private state in Jetonomy, so they will not be published.', // jt-terms-ok: source forum vocabulary (wpForo replies).
 						$private,
 						'jetonomy'
 					),

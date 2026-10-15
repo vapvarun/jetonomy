@@ -163,7 +163,7 @@ wp_head();
 		<?php /* translators: %s: the singular space label the site owner configured (e.g. space, group). */ ?>
 		<h2><?php echo esc_html( sprintf( __( 'Create Your First %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></h2>
 		<?php /* translators: 1: singular space label, 2: plural space label. */ ?>
-		<p class="jt-setup-card__desc"><?php echo esc_html( sprintf( __( 'A %1$s is a community section where people can start discussions. You can add more %2$s later.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( true, true ) ) ); ?></p>
+		<p class="jt-setup-card__desc"><?php echo esc_html( sprintf( __( 'Each %1$s is a community section where people can start discussions. You can add more %2$s later.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 
 		<div class="jt-setup-error" id="jt-error-2"></div>
 

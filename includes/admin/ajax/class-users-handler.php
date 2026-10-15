@@ -42,7 +42,7 @@ class Users_Handler {
 
 		if ( 'space_ban' === $type && ! $space_id ) {
 			/* translators: 1: space label, lowercase (e.g. "space"). 2: member label, lowercase (e.g. "member"). 3: member label, plural (e.g. "Members"). */
-			wp_send_json_error( sprintf( __( 'A %1$s ban needs a %1$s. Ban the %2$s from that %1$s\'s %3$s screen.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'member', true ) ) );
+			wp_send_json_error( sprintf( __( 'This ban needs a specific %1$s. Ban the %2$s from that %1$s\'s %3$s screen.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'member', true ) ) );
 		}
 
 		/*

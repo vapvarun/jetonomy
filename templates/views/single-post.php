@@ -1015,7 +1015,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<?php elseif ( $jt_can_reply_here ) : ?>
 				<?php if ( $post->is_closed ) : ?>
 					<div class="jt-closed-notice jt-closed-notice--staff">
-						<?php printf( /* translators: 1: singular topic label; 2: singular reply label. */ esc_html__( 'This %1$s is closed. As a moderator, you can still add a %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ) ); ?>
+						<?php printf( /* translators: %s: singular topic label. */ esc_html__( 'This %s is closed. As a moderator, you can still take part.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ) ); ?>
 					</div>
 				<?php endif; ?>
 				<div class="jt-reply-composer" id="jt-composer">

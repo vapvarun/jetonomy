@@ -1219,7 +1219,7 @@ class Fluent_Community {
 						<td>
 							<label>
 								<input type="checkbox" name="jt_fc_sync_members" value="1" <?php checked( $sync_on ); ?>>
-								<?php printf( /* translators: 1: the singular Member label, lowercase, 2: the singular Space label, lowercase. */ esc_html__( 'When a %1$s joins one side, add them to the paired %2$s on the other side.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'member', false, true ) ), esc_html( \Jetonomy\space_label( false, true ) ) ); ?>
+								<?php printf( /* translators: %s: the singular Space label, lowercase. */ esc_html__( 'When someone joins one side, add them to the paired %s on the other side.', 'jetonomy' ), esc_html( \Jetonomy\space_label( false, true ) ) ); ?>
 							</label>
 						</td>
 					</tr>

@@ -461,7 +461,7 @@ $crumbs = array(
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						array(
-							'message' => sprintf( /* translators: %s: singular topic label. */ __( 'No drafts yet. Save a %s as draft and it will appear here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) ),
+							'message' => __( 'No drafts yet. Save a draft and it will appear here.', 'jetonomy' ),
 							'variant' => 'compact',
 						)
 					);

@@ -351,7 +351,7 @@ class Admin {
 				return __( 'Reputation changed', 'jetonomy' );
 			case 'joined_space':
 				/* translators: %s: space label, lowercase (e.g. "space"). */
-				return sprintf( __( 'Joined a %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) );
+				return sprintf( __( 'Joined the %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) );
 			case 'idea_status_changed':
 				return __( 'Updated idea roadmap status', 'jetonomy' );
 		}
@@ -823,8 +823,9 @@ class Admin {
 			// Display names per level; blank keeps the built-in name.
 			$raw_names                  = is_array( $input['trust_level_names'] ?? null ) ? $input['trust_level_names'] : array();
 			$clean['trust_level_names'] = array();
+			// No wp_unslash(): options.php has already unslashed the posted value.
 			foreach ( range( 0, 5 ) as $level ) {
-				$clean['trust_level_names'][ $level ] = sanitize_text_field( wp_unslash( (string) ( $raw_names[ $level ] ?? '' ) ) );
+				$clean['trust_level_names'][ $level ] = sanitize_text_field( (string) ( $raw_names[ $level ] ?? '' ) );
 			}
 		}
 

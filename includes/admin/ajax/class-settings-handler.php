@@ -49,7 +49,7 @@ class Settings_Handler {
 			),
 			'new_post_in_sub'       => array(
 				/* translators: %s: space label, lowercase (e.g. "space"). */
-				'message' => sprintf( __( 'A new discussion was posted in a %s you follow.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ) ),
+				'message' => sprintf( __( 'A new discussion was posted in one of the %s you follow.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\base_url() . '/',
 			),
 			'badge_earned'          => array(
@@ -66,7 +66,7 @@ class Settings_Handler {
 			),
 			'join_request'          => array(
 				/* translators: 1: member label, lowercase (e.g. "member"). 2: space label, plural, lowercase (e.g. "spaces"). */
-				'message' => sprintf( __( 'A %1$s has asked to join one of your %2$s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
+				'message' => sprintf( __( 'Someone has asked to join one of your %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', true, true ) ),
 				'url'     => \Jetonomy\route_url( 'moderation' ),
 			),
 			'verification_reminder' => array(

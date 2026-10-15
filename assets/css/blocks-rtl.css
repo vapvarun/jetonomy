@@ -1307,7 +1307,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-signed-in p { margin: 0; }
 .jt-login-signed-in .jt-login-signed-in-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); margin-block-start: var(--jt-space-3); }
 .jt-login-signed-in .jt-login-submit { margin-top: 0; text-decoration: none; }
-.jt-login-secondary { display: inline-flex; align-items: center; padding: 9px 15px; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius-full); color: var(--jt-text); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
+.jt-login-secondary { display: inline-flex; align-items: center; padding: 0.5625rem 0.9375rem; border: 1px solid var(--jt-border-strong); border-radius: var(--jt-radius-full); color: var(--jt-text); font-size: 0.9375rem; font-weight: 600; text-decoration: none; }
 .jt-login-secondary:hover, .jt-login-secondary:focus-visible { border-color: var(--jt-accent); color: var(--jt-accent); }
 .jt-login-secondary:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
 

@@ -110,7 +110,7 @@ fi
 # Tracker/plan references belong in commit messages, not source
 # (docs/standards/developer-quality.md, rule 1).
 echo "  -> comment refs"
-STAGED_SRC=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(includes|templates|assets/js)/.*\.(php|js)$' | grep -v '\.min\.js$' || true)
+STAGED_SRC=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^((includes|templates|assets/js)/.*\.(php|js)|jetonomy\.php)$' | grep -v '\.min\.js$' || true)
 if [ -n "$STAGED_SRC" ] && ! bin/check-comment-refs.sh $STAGED_SRC; then
     exit 1
 fi

@@ -376,10 +376,10 @@ class UserProfile extends Model {
 		$eligible = "{$is_member} AND reputation > 0";
 
 		if ( 'week' === $period ) {
-			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)";
+			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)";
 		}
 		if ( 'month' === $period ) {
-			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)";
+			return " WHERE {$eligible} AND last_seen_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)";
 		}
 		return " WHERE {$eligible}";
 	}

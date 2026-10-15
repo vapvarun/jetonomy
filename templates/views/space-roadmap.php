@@ -43,7 +43,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 		array(
 			'icon'    => 'lock',
 			/* translators: 1: singular member label; 2: singular space label (e.g. space, group). */
-			'message' => sprintf( __( 'You need to be a %1$s of this %2$s to see its roadmap.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ),
+			'message' => sprintf( __( 'You need to join this %s to see its roadmap.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
 		)
 	);

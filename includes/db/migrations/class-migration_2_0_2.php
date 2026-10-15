@@ -135,6 +135,8 @@ class Migration_2_0_2 {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, bio FROM {$profiles} WHERE user_id > %d AND bio IS NOT NULL AND bio <> '' ORDER BY user_id LIMIT 500", $after ) );
 			$batch = count( $rows );
+			// One query for the batch's users and their meta, not three per row.
+			cache_users( array_map( 'intval', wp_list_pluck( $rows, 'user_id' ) ) );
 			foreach ( $rows as $row ) {
 				$after = (int) $row->user_id;
 				if ( '' === (string) get_user_meta( $after, 'description', true ) && get_userdata( $after ) ) {

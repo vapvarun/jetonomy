@@ -29,7 +29,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 	<details class="jt-roles-explainer">
 		<summary><?php esc_html_e( 'How users, roles, and trust levels fit together', 'jetonomy' ); ?></summary>
 		<div class="jt-roles-explainer__body">
-			<p class="jt-roles-explainer__lead"><?php /* translators: 1: member label, plural, lowercase (e.g. "members"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Community %1$s ARE your WordPress users, with no separate registration. Anyone who can log in is a %2$s; their community profile is created automatically the first time they visit a community page while logged in. Three independent layers decide what each person can do:', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></p>
+			<p class="jt-roles-explainer__lead"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Community %1$s ARE your WordPress users, with no separate registration. Anyone who can log in is counted among them; their community profile is created automatically the first time they visit a community page while logged in. Three independent layers decide what each person can do:', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></p>
 			<div class="jt-roles-explainer__grid">
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'WordPress role', 'jetonomy' ); ?></h3>
@@ -50,7 +50,7 @@ for ( $jt_tl = 0; $jt_tl <= 5; $jt_tl++ ) {
 				<?php
 				printf(
 					/* translators: 1: name of the highest trust level, 2: link to the full guide, 3: space label, lowercase (e.g. "space"). */
-					esc_html__( 'A Subscriber can be a Level 5 %1$s and a %3$s admin: community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
+					esc_html__( 'A Subscriber can be a Level 5 %1$s and admin of any %3$s: community standing and wp-admin access are separate on purpose. %2$s', 'jetonomy' ),
 					// Read from $trust_labels for the same reason the rest of this screen does: the
 					// sentence must never hardcode a level name such as "Elder" that can be renamed.
 					$trust_labels[5],

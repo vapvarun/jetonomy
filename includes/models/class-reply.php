@@ -1866,7 +1866,7 @@ class Reply extends Model {
 					'is_anonymous' => empty( $reply->is_anonymous ) ? 0 : 1,
 					'content'      => sprintf(
 						/* translators: 1: singular reply label, 2: link to the new topic, or "another discussion". */
-						'<p><em>' . esc_html__( 'A %1$s was split into a new discussion: %2$s', 'jetonomy' ) . '</em></p>',
+						'<p><em>' . esc_html__( 'This %1$s was split into a new discussion: %2$s', 'jetonomy' ) . '</em></p>',
 						esc_html( \Jetonomy\jetonomy_label( 'reply', false, true ) ),
 						$where
 					),
