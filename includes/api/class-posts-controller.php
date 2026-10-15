@@ -952,7 +952,14 @@ class Posts_Controller extends Base_Controller {
 
 		// Post::update() detects the publish→trash transition and decrements
 		// space/user counters atomically — no manual pre-decrement needed.
-		Post::update( $id, array( 'status' => 'trash' ) );
+		// Someone else's post is a moderator removal: run it through the
+		// moderation choke point (already authorised above) so its open reports
+		// resolve and the author's "post removed" reputation applies.
+		if ( $is_author ) {
+			Post::update( $id, array( 'status' => 'trash' ) );
+		} else {
+			Moderation_Service::system_set_object_status( 'post', $id, 'trash', $user_id );
+		}
 
 		/**
 		 * Fires after a post is deleted through the REST API.
@@ -1051,23 +1058,9 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Invalid roadmap status.', 'jetonomy' ) );
 		}
 
-		// Reward author when status transitions TO 'planned'. Idempotent on
-		// no-op changes (planned → planned awards nothing) and skips
-		// self-curated ideas (author == actor) so a moderator can't farm
-		// reputation by re-planning their own idea.
-		if ( 'planned' === $status && 'planned' !== $previous_status && ! empty( $post->author_id ) ) {
-			$author_id = (int) $post->author_id;
-			if ( $author_id !== (int) $user_id ) {
-				\Jetonomy\Trust\Reputation::award(
-					$author_id,
-					'idea_planned',
-					array(
-						'object_type' => 'post',
-						'object_id'   => $id,
-					)
-				);
-			}
-		}
+		// The author's roadmap reputation is awarded / revoked by
+		// Activity_Tracker on jetonomy_idea_status_changed, so the CLI, the
+		// Abilities API and the seeder follow the same rule as REST.
 
 		$updated = Post::find( $id );
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );

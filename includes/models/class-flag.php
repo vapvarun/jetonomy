@@ -270,21 +270,22 @@ class Flag extends Model {
 		// already-dismissed flag doesn't double-restore. Self-flags (reporter
 		// equals author) are excluded because the original report awarded no
 		// deduction either — symmetry with the report-create path.
+		// Posts and replies alike: the report deducted from either.
 		if ( 'pending' === $flag->status
 			&& 'dismissed' === $status
-			&& 'post' === $flag->object_type
+			&& in_array( $flag->object_type, array( 'post', 'reply' ), true )
 		) {
-			$post = Post::find( (int) $flag->object_id );
-			if ( $post ) {
-				$author_id   = (int) $post->author_id;
+			$object = 'reply' === $flag->object_type ? Reply::find( (int) $flag->object_id ) : Post::find( (int) $flag->object_id );
+			if ( $object ) {
+				$author_id   = (int) $object->author_id;
 				$reporter_id = (int) ( $flag->reporter_id ?? 0 );
 				if ( $author_id > 0 && $author_id !== $reporter_id ) {
 					\Jetonomy\Trust\Reputation::revoke(
 						$author_id,
 						'post_reported',
 						array(
-							'object_type' => 'post',
-							'object_id'   => (int) $post->id,
+							'object_type' => $flag->object_type,
+							'object_id'   => (int) $object->id,
 						)
 					);
 				}

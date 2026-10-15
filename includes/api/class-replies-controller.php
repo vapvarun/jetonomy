@@ -610,7 +610,12 @@ class Replies_Controller extends Base_Controller {
 
 		// Reply::update() detects the publish→trash transition and decrements
 		// post/user counters atomically — no manual pre-decrement needed.
-		Reply::update( $id, array( 'status' => 'trash' ) );
+		// Someone else's reply is a moderator removal; see the posts endpoint.
+		if ( $is_author ) {
+			Reply::update( $id, array( 'status' => 'trash' ) );
+		} else {
+			Moderation_Service::system_set_object_status( 'reply', $id, 'trash', $user_id );
+		}
 
 		/**
 		 * Fires after a reply is deleted through the REST API.

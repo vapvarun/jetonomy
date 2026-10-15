@@ -70,11 +70,11 @@ Reputation is updated in real time whenever a qualifying event occurs.
 | Your topic is upvoted | +10 |
 | Your reply is upvoted | +5 |
 | Your reply is accepted as an answer (Q&A) | +15 |
-| Your idea is moved to Planned/Shipped | +20 |
+| Your idea goes onto the roadmap (Planned, In progress or Shipped), once per idea; taken back if declined | +20 |
 | A flag you submitted is confirmed | +5 |
 | Your topic or reply is downvoted | -2 |
-| Your post is reported | -10 |
-| A moderator deletes your content | -20 |
+| Your topic or reply is reported (given back if the report is dismissed) | -10 |
+| A moderator deletes your content or marks it as spam (given back if restored) | -20 |
 
 Every point value is editable at **Jetonomy → Settings → Permissions → Reputation Points** - adjust any action's score without touching code.
 

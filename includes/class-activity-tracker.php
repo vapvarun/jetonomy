@@ -39,7 +39,7 @@ class Activity_Tracker {
 		add_action( 'jetonomy_user_joined_space', array( $this, 'on_space_join' ), 5, 3 );
 
 		// Idea roadmap status changes (Ideas spaces only).
-		add_action( 'jetonomy_idea_status_changed', array( $this, 'on_idea_status_changed' ), 5, 4 );
+		add_action( 'jetonomy_idea_status_changed', array( $this, 'on_idea_status_changed' ), 5, 5 );
 	}
 
 	/**
@@ -155,7 +155,7 @@ class Activity_Tracker {
 	 * @param string $old_status The previous idea_status value (or '').
 	 * @param int    $actor_id   Moderator who triggered the change.
 	 */
-	public function on_idea_status_changed( int $post_id, string $new_status, string $old_status, int $actor_id ): void {
+	public function on_idea_status_changed( int $post_id, string $new_status, string $old_status, int $actor_id, int $author_id = 0 ): void {
 		ActivityLog::log(
 			$actor_id,
 			'idea_status_changed',
@@ -166,5 +166,23 @@ class Activity_Tracker {
 				'new' => $new_status,
 			)
 		);
+
+		// "Idea moved to Planned/Shipped": awarded once when the idea first
+		// joins the roadmap (planned, in progress or shipped), revoked when it
+		// leaves it (declined or cleared). Moves within the roadmap change
+		// nothing. Self-curated ideas earn nothing, as before.
+		$roadmap = array( 'planned', 'in_progress', 'shipped' );
+		$was_on  = in_array( $old_status, $roadmap, true );
+		$is_on   = in_array( $new_status, $roadmap, true );
+		$curated = $author_id > 0 && $author_id !== $actor_id;
+		$context = array(
+			'object_type' => 'post',
+			'object_id'   => $post_id,
+		);
+		if ( $curated && $is_on && ! $was_on ) {
+			\Jetonomy\Trust\Reputation::award( $author_id, 'idea_planned', $context );
+		} elseif ( $curated && $was_on && ! $is_on ) {
+			\Jetonomy\Trust\Reputation::revoke( $author_id, 'idea_planned', $context );
+		}
 	}
 }

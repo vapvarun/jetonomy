@@ -765,7 +765,22 @@ class Moderation_Service {
 			Flag::resolve_siblings_for( $type, $id, $user_id, $flag_status, 0 );
 		}
 
-		if ( 'spam' === $action && ! empty( $row->author_id ) ) {
+		// A moderator removing content (spam or trash) costs the author the
+		// "Post removed by moderator" points; approving it back restores them.
+		// $row is the pre-action row, so a repeat action on the same status
+		// changes nothing.
+		$was_removed = in_array( (string) ( $row->status ?? '' ), array( 'spam', 'trash' ), true );
+		if ( ! empty( $row->author_id ) && 'approve' === $action && $was_removed ) {
+			Reputation::revoke(
+				(int) $row->author_id,
+				'post_removed',
+				array(
+					'object_type' => $type,
+					'object_id'   => $id,
+				)
+			);
+		}
+		if ( in_array( $action, array( 'spam', 'trash' ), true ) && ! $was_removed && ! empty( $row->author_id ) ) {
 			Reputation::award(
 				(int) $row->author_id,
 				'post_removed',
