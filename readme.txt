@@ -295,6 +295,9 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Improve  - The Trust Levels table lists exactly what each level changes, including the CAPTCHA skip at level 2.
 * Improve  - Settings > Who can create spaces is the single control for creating spaces, and existing choices carry over.
 * Improve  - Access rule and join request buttons line up in one row in wp-admin and wrap neatly on phones.
+* Improve  - Only a space's owner or a site administrator can demote or remove the owner, so a co-admin can no longer lock an owner out of their own space.
+* Improve  - Site moderators skip the spam check like other staff.
+* Improve  - The notifications page names join requests, their answers, reactions and reviewed reports.
 * Improve  - Merging topics now moves votes, subscribers and bookmarks to the target and keeps the duplicate's opening post as a reply "Merged from <title>" with its attachments.
 * Improve  - Every Settings sidebar row, including the Pro extension tabs, now has an icon and lines up with the others.
 * Improve  - All community pages use the Community Title setting in the nav label, browser tab title, breadcrumbs, admin bar and home heading.
@@ -316,6 +319,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Fix      - The More options menu no longer opens empty for a role that can only moderate.
 * Fix      - Messages no longer return a 404 on Windows servers.
 * Fix      - The personal data export includes the member bio again.
+* Fix      - Community pages outside a space no longer write a database notice to the debug log.
 * Fix      - On block themes, community pages now load the header and footer styles, so the site title, menu and buttons look like the rest of the theme.
 * Fix      - With The SEO Framework active, community pages no longer show "Untitled - Site" or a second set of social tags.
 * Fix      - Saving Settings > Permissions no longer cuts off roles without defaults (Customer, Student and similar); a notice with a one-click button restores access for roles already saved empty.
@@ -335,8 +339,12 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Fix      - Composer paste and drop of images follow the image button, so no upload is attempted when uploads are off.
 * Fix      - Space memberships can no longer be created for a space that no longer exists.
 * Fix      - The Delete permanently button in the danger zone is red again.
-* Security - Site moderators can no longer act on topics, replies, polls or custom fields in private spaces they cannot read.
-* Security - Staff with delegated user management can no longer raise their own trust level or change an administrator's or moderator's.
+* Security - Site moderators can no longer edit, trash, approve or resolve reports on content in private spaces they cannot read, and their moderation queues, report lists and counts leave those spaces out.
+* Security - Members can no longer report content they cannot see, which also stops reports being used to learn which private topics exist.
+* Security - A member's display name can no longer run script in wp-admin's member search or Users screen.
+* Security - Files posted in the community are no longer listed to visitors through the WordPress media API.
+* Security - The live updates API no longer shows members activity from private spaces, joins or moderation actions.
+* Security - Staff with delegated user management can no longer raise their own trust level, each other's, or an administrator's or moderator's.
 * Security - Sitemaps never list private spaces or their topics, including when private spaces are shown to visitors.
 * Security - Setting a new profile picture or space cover through the REST API now needs the upload permission, as the forms already did.
 * Security - Restoring removed content or declining an idea only gives back reputation that was actually taken.

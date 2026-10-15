@@ -56,6 +56,12 @@ Attached files render as cards under the post or reply. The base card - image th
 
 The cards are server-rendered on every page load, so they show correctly even with JavaScript disabled. The PDF viewer library itself is only downloaded the first time a member opens a PDF - never on a normal page load - so it does not slow down browsing.
 
+## Files in Private Spaces
+
+Members only see attachment cards on topics and replies they are allowed to read, and community uploads are left out of the WordPress media API (`/wp/v2/media`) for anyone who cannot manage media, so visitors cannot browse a list of files.
+
+Like every WordPress upload, the file itself sits in your `wp-content/uploads` folder and your web server sends it to anyone who has its exact address. If your private spaces hold sensitive documents, ask your host to protect the uploads folder (for example with a rule that only serves files to signed-in visitors), or keep such documents outside the community.
+
 ## If You Deactivate Pro
 
 Attachment link records live in the free plugin as of 1.8.0. Deactivating or uninstalling Jetonomy Pro does not remove or hide attachments already on a post or reply - the free plugin keeps rendering them exactly as described in "Free vs. Pro" above. You only lose the composer's Attach files control, the lightbox, the inline PDF viewer, and the configurable limits until Pro is reactivated.
