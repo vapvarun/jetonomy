@@ -187,8 +187,9 @@ class Votes_Controller extends Base_Controller {
 			);
 		}
 
-		// Increment rate limit counter (new or changed votes only).
-		if ( ! $is_retraction ) {
+		// Count new and changed votes only. Keyed on what cast() actually did, not
+		// the pre-read above, so parallel requests cannot slip an uncounted vote in.
+		if ( 'removed' !== $result['action'] ) {
 			\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
 		}
 

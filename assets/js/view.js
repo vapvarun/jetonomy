@@ -852,18 +852,21 @@ function jtSetCoverPreview( form, url ) {
  */
 /**
  * One confirmation toast per vote, for topics and replies alike, saying what
- * happened: added or taken back. Throttled so fast double-clicks don't stack.
+ * happened: added or taken back. A repeat of the same message within 2s is dropped.
  *
  * @param {Object} data REST vote response ({ action: 'created'|'updated'|'removed' }).
  */
 function jetonomyVoteToast( data ) {
-    if ( ! window.bnToast || window._jetonomyVoteToasted ) return;
+    if ( ! window.bnToast ) return;
     const i18n = state.i18n || {}; // Module-level store state; only read on click, after init.
-    window.bnToast( data && data.action === 'removed'
+    const msg  = data && data.action === 'removed'
         ? ( i18n.voteRemoved || 'Vote removed' )
-        : ( i18n.voteRecorded || 'Vote added' ) );
-    window._jetonomyVoteToasted = true;
-    setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 );
+        : ( i18n.voteRecorded || 'Vote added' );
+    // Drop only a repeat of the same message; "added" then "removed" both show.
+    if ( window._jetonomyVoteToasted === msg ) return;
+    window.bnToast( msg );
+    window._jetonomyVoteToasted = msg;
+    setTimeout( () => { if ( window._jetonomyVoteToasted === msg ) window._jetonomyVoteToasted = false; }, 2000 );
 }
 
 function jetonomySetVoted( el, on ) {
