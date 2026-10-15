@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     2.0.1
+ * Version:     2.0.2
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '2.0.1' );
+define( 'JETONOMY_VERSION', '2.0.2' );
 // Schema milestone, deliberately ahead of JETONOMY_VERSION, and it has to be.
 //
 // The rule_lookup index is now in CREATE TABLE, so a fresh install gets it from
@@ -959,8 +959,8 @@ function jetonomy_first_paragraph_text( string $content ): string {
  * The mobile app inserted `![alt](url)` into the body until 1.9.3. The app has
  * its own markdown-image parser so the picture showed there, but nothing on the
  * web side ever understood the syntax - so the same topic showed the image in
- * the app and a line of raw `![alt](http://...)` text on the website (Basecamp
- * 10199514340). The app now writes `<img>`, which both renderers already
+ * the app and a line of raw `![alt](http://...)` text on the website. The app
+ * now writes `<img>`, which both renderers already
  * handle, but every post and reply ALREADY stored carries the old syntax, and
  * fixing the writer does not fix those rows.
  *
