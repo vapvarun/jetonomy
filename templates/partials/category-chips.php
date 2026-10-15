@@ -58,7 +58,7 @@ $jt_spaces_by_cat = $spaces_by_cat ?? array();
 			data-wp-context='<?php echo wp_json_encode( array( 'subId' => (int) $jt_child->id ) ); ?>'
 			data-wp-bind--hidden="!state.isSubOpen">
 			<h3 class="jt-cat-sub-title"><?php echo esc_html( $jt_child->name ); ?></h3>
-			<?php jetonomy_render_space_grid( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? array(), \Jetonomy\base_url() ); ?>
+			<?php jetonomy_render_space_grid( $jt_spaces_by_cat[ (int) $jt_child->id ] ?? array(), \Jetonomy\base_url(), \Jetonomy\route_url( 'category', $jt_child->slug ) ); ?>
 		</div>
 	<?php endforeach; ?>
 </div>

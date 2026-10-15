@@ -1257,6 +1257,7 @@
      which spaces are alive. Same gap as the other stats: pushed to the end
      with an auto margin it floated a different distance on every card. */
   .jt-space-card-activity { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .jt-space-grid-more { margin-block-start: var(--jt-space-3); text-align: center; }
   .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
   .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
   .jt-space-card-badge svg { flex-shrink: 0; width: 12px; height: 12px; }

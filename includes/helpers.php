@@ -598,10 +598,26 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 	/**
 	 * Render a grid of space cards.
 	 *
+	 * With $view_all_url the grid is a preview: the first N cards (6, filter
+	 * jetonomy_space_preview_limit) and a "View all X" link to the page that
+	 * lists them all, so a category with hundreds of spaces stays one short
+	 * section on the community home.
+	 *
 	 * @param object[] $spaces
-	 * @param string   $base Community base URL.
+	 * @param string   $base         Community base URL.
+	 * @param string   $view_all_url Optional page listing every space in the group.
 	 */
-	function jetonomy_render_space_grid( array $spaces, string $base ): void {
+	function jetonomy_render_space_grid( array $spaces, string $base, string $view_all_url = '' ): void {
+		$total = count( $spaces );
+		if ( '' !== $view_all_url ) {
+			/**
+			 * Filter how many spaces a category preview shows before "View all".
+			 *
+			 * @param int $limit Default 6.
+			 */
+			$limit  = max( 1, (int) apply_filters( 'jetonomy_space_preview_limit', 6 ) );
+			$spaces = array_slice( $spaces, 0, $limit );
+		}
 		if ( empty( $spaces ) ) {
 			/* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */
 			echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</p>';
@@ -666,5 +682,11 @@ if ( ! function_exists( 'jetonomy_render_space_grid' ) ) {
 			do_action( 'jetonomy_space_card_after', $space );
 		}
 		echo '</div>';
+		if ( '' !== $view_all_url && $total > count( $spaces ) ) {
+			echo '<p class="jt-space-grid-more"><a class="jt-btn jt-btn-sm jt-btn-ghost" href="' . esc_url( $view_all_url ) . '">';
+			/* translators: %s: count with the plural space label, e.g. "14 spaces". */
+			echo esc_html( sprintf( __( 'View all %s', 'jetonomy' ), \Jetonomy\count_label( $total, 'space' ) ) );
+			echo '</a></p>';
+		}
 	}
 }
