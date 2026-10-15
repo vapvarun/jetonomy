@@ -312,6 +312,11 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Improve  - Creating a space from the front end follows it for its creator.
 * Improve  - On BuddyX and BuddyX Pro, community pages are wrapped like the theme's own pages, so a short page keeps the footer in the right place; the `jetonomy_theme_content_hooks` filter adjusts this.
 * Improve  - Setup wizard, Compose Topic block help, Integrations cards and the admin footer now describe what each feature actually does; the Learnomy card says course-gated spaces need Jetonomy Pro.
+* Improve  - The account panel highlights the page you are on and announces it to screen readers.
+* Improve  - With BuddyNext active, community pages show its notification bell only, since it already carries forum notifications.
+* Improve  - Opening an invite link shows a Join button; joining happens when the member clicks it, so link previews can never add anyone.
+* Improve  - Invite links set to expire on a date now work until the end of that day in your site's timezone, and an unreadable or past date is refused.
+* Improve  - Archived and locked spaces show Follow instead of Join, and accept no new members by any route.
 * Fix      - Members whose display name is a reserved word, such as admin, can save their profile again.
 * Fix      - Refused actions such as reaching the pin limit show their message even when the community navigation is hidden.
 * Fix      - Members who cannot vote see why, instead of a vote button that does nothing.
@@ -339,6 +344,16 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Fix      - Composer paste and drop of images follow the image button, so no upload is attempted when uploads are off.
 * Fix      - Space memberships can no longer be created for a space that no longer exists.
 * Fix      - The Delete permanently button in the danger zone is red again.
+* Fix      - Delete permanently now explains an empty or wrong confirmation name, whether you click the button or press Enter.
+* Fix      - The Dashboard's Review flags link opens the Flags tab.
+* Fix      - Logged-out visitors see Log in to reply as a button on topic pages.
+* Fix      - Saved times on the Bookmarks tab are no longer cut off.
+* Fix      - Approving a join request no longer tells the member they are in when the join did not happen, and a decided request cannot be decided again.
+* Fix      - Two people joining or using the last invite at the same moment no longer double-count members or exceed the invite's limit.
+* Fix      - Deleting a topic no longer makes a quiet space look recently active, and archived spaces are no longer counted in their category.
+* Fix      - The Spaces admin screen and its actions now need the same Manage spaces permission.
+* Fix      - Join request and invite lists are paginated, and approve or deny failures now show a message.
+* Fix      - Deleting a space also clears its import records, so re-running an importer cannot attach content to a deleted space.
 * Security - Site moderators can no longer edit, trash, approve or resolve reports on content in private spaces they cannot read, and their moderation queues, report lists and counts leave those spaces out.
 * Security - Members can no longer report content they cannot see, which also stops reports being used to learn which private topics exist.
 * Security - A member's display name can no longer run script in wp-admin's member search or Users screen.
@@ -360,6 +375,10 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Security - Splitting a thread that contains private replies is refused, and a split topic is named only when it sits in a public space.
 * Security - Replies could notify an author about a reply in a topic they may not read when a parent from another topic was used; that is no longer possible.
 * Security - The Abilities "mark notifications read" tool only touches the caller's own notifications.
+* Security - Members banned from a space can no longer join it through a join, a request, an invite or an approval.
+* Security - Breadcrumbs, category space counts and tag lists no longer reveal hidden categories, private spaces or tags used only in private topics.
+* Security - Access rules need a value that can work, so a trust level rule with no level can no longer admit every member.
+* Security - Space admins can no longer edit a space a site admin archived or locked; unarchiving still works where allowed.
 * Dev      - New filter jetonomy_space_preview_limit sets how many spaces a category previews, and REST user responses add trust_level_label.
 * Dev      - A pre-commit check now fails on hardcoded space, topic, reply, member or category nouns in translatable text.
 * Dev      - Error codes returned by the REST API and Abilities are now prefixed `jetonomy_` (for example `jetonomy_not_found`, `jetonomy_invalid_url`, `jetonomy_user_silenced`).
@@ -367,6 +386,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Dev      - The `jetonomy_space_transferred` hook now fires once, only on a successful hand-over, with the real previous owner.
 * Dev      - The `jetonomy_theme_content_hooks` filter sets the theme hooks community pages are wrapped in.
 * Dev      - Every public hook now has a documented description and `@since` version, and the hooks reference is regenerated.
+* Dev      - REST: POST /invite/{token} accepts an invite (it was GET); the invites and join-requests lists take limit and offset; space responses include url; invite responses include expires_label.
 
 = 2.0.1 - October 2026 =
 
