@@ -107,6 +107,12 @@ class Restriction extends Model {
 		if ( '' === $ip ) {
 			return new \WP_Error( 'jetonomy_invalid_ip', __( 'Enter a valid IPv4 or IPv6 address.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
+		// Loopback and reserved ranges (127.0.0.0/8, ::1, 0.0.0.0/8 ...) are never a real visitor; behind a
+		// local proxy every visitor can arrive from one, so a ban there locks the whole community out.
+		if ( false === filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE ) ) {
+			return new \WP_Error( 'jetonomy_reserved_ip', __( 'This is a loopback or reserved address, not a visitor. Banning it could lock everyone out.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
 		// shortcut: stored as typed, matched exactly against client_ip(); an IPv6 address written in a
 		// non-canonical spelling would not match. Normalise both sides if that is ever reported.
 

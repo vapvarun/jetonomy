@@ -95,6 +95,10 @@ class IpBanTest extends WP_UnitTestCase {
 		$this->assertSame( 400, $this->ip_ban( $this->admin, $this->member, 'not-an-ip' )->get_status(), 'garbage is refused' );
 		$this->assertSame( 400, $this->ip_ban( $this->admin, $this->member, '' )->get_status(), 'the ip param is required for ip_ban' );
 		$this->assertSame( 400, $this->ip_ban( $this->admin, $this->member, '198.51.100.9' )->get_status(), 'an operator cannot ban the IP they are using' );
+		foreach ( array( '::1', '127.0.0.2', '0.0.0.0' ) as $reserved ) {
+			$res = $this->ip_ban( $this->admin, $this->member, $reserved );
+			$this->assertSame( 'jetonomy_reserved_ip', $res->get_data()['code'] ?? '', "{$reserved} is loopback/reserved, never a visitor" );
+		}
 		// An IP ban blocks every account on the address, the owner's included,
 		// and naming an ordinary member as the target hides whose address it is.
 		$owner_lockout = $this->ip_ban( $this->mod, $this->member, '203.0.113.9' );
