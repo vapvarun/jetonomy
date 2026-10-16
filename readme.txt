@@ -327,6 +327,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Improve  - Flags in a space's own moderation queue show the topic and the flagged text.
 * Improve  - Admin screens follow your Terminology everywhere, and White Label brand names replace Jetonomy in admin headings.
 * Improve  - The Permissions role table scrolls with its first column fixed, and trust level names, revisions and the Activity Log retention setting are clearer.
+* Improve  - An empty space invites a first post, and a topic with no replies invites a first reply, only to visitors who can post there.
 * Fix      - Members whose display name is a reserved word, such as admin, can save their profile again.
 * Fix      - Refused actions such as reaching the pin limit show their message even when the community navigation is hidden.
 * Fix      - Members who cannot vote see why, instead of a vote button that does nothing.
@@ -370,6 +371,8 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Fix      - Taking back a vote no longer leaves "0 people voted" in the bell.
 * Fix      - Removing the last bookmark shows the empty state straight away.
 * Fix      - Re-importing demo data no longer awards the site admin the same badge again.
+* Fix      - Profile links work for members whose username is an email address or contains spaces or other special characters, and older profile links still open.
+* Fix      - The email telling a member their join request was answered is headed "Your join request was answered".
 * Security - Site moderators can no longer edit, trash, approve or resolve reports on content in private spaces they cannot read, and their moderation queues, report lists and counts leave those spaces out.
 * Security - Members can no longer report content they cannot see, which also stops reports being used to learn which private topics exist.
 * Security - A member's display name can no longer run script in wp-admin's member search or Users screen.
@@ -396,6 +399,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Security - Access rules need a value that can work, so a trust level rule with no level can no longer admit every member.
 * Security - Space admins can no longer edit a space a site admin archived or locked; unarchiving still works where allowed.
 * Security - Topics in hidden spaces now answer exactly like missing ones, so a guessed link no longer confirms they exist.
+* Security - A profile page's meta description shows the member's public handle instead of their username, which on some sites is an email address.
 * Dev      - New filter jetonomy_space_preview_limit sets how many spaces a category previews, and REST user responses add trust_level_label.
 * Dev      - A pre-commit check now fails on hardcoded space, topic, reply, member or category nouns in translatable text.
 * Dev      - Error codes returned by the REST API and Abilities are now prefixed `jetonomy_` (for example `jetonomy_not_found`, `jetonomy_invalid_url`, `jetonomy_user_silenced`).
