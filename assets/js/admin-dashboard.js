@@ -1,9 +1,10 @@
 /**
  * Jetonomy — admin Dashboard page.
  *
- * Imports or removes demo data through /jetonomy/v1/admin/demo-data. Both
- * reload the Dashboard (its stats change) with a jt_demo arg, so the PHP
- * view prints the success notice after the reload. UI strings use wp.i18n.
+ * Imports or removes demo data through /jetonomy/v1/admin/demo-data, and
+ * rebuilds counters through /jetonomy/v1/admin/recount. Each reloads the
+ * Dashboard (its stats change) with a jt_demo arg, so the PHP view prints the
+ * success notice after the reload. UI strings use wp.i18n.
  */
 (function () {
 	// The jt_demo arg only carries the post-reload notice; drop it so a later
@@ -14,8 +15,7 @@
 		window.history.replaceState(null, '', here.toString());
 	}
 
-	var card = document.getElementById('jt-demo-card');
-	if (!card || !window.wp || !wp.apiFetch) {
+	if (!window.wp || !wp.apiFetch) {
 		return;
 	}
 	// Owner's terminology (Settings > General > Terminology); English fallback.
@@ -30,6 +30,9 @@
 		importConfirm: wp.i18n.sprintf( wp.i18n.__( 'Add sample %1$s, %2$s, %3$s and %4$s to this community? You can remove them again in one click.', 'jetonomy' ), lbl( 'member', 'many_lower', 'members' ), lbl( 'category', 'many_lower', 'categories' ), lbl( 'space', 'many_lower', 'spaces' ), lbl( 'topic', 'many_lower', 'topics' ) ),
 		removing:      wp.i18n.__( 'Removing…', 'jetonomy' ),
 		importing:     wp.i18n.__( 'Importing…', 'jetonomy' ),
+		/* translators: 1: topic label, plural lowercase. 2: reply label, plural lowercase. 3: member label, plural lowercase. */
+		recountConfirm: wp.i18n.sprintf( wp.i18n.__( 'Rebuild the %1$s, %2$s, %3$s and vote counts from your content? It can take a minute on a large community.', 'jetonomy' ), lbl( 'topic', 'many_lower', 'topics' ), lbl( 'reply', 'many_lower', 'replies' ), lbl( 'member', 'many_lower', 'members' ) ),
+		recounting:    wp.i18n.__( 'Recounting…', 'jetonomy' ),
 		error:         wp.i18n.__( 'Something went wrong.', 'jetonomy' ),
 	};
 
@@ -44,14 +47,14 @@
 		return typeof window.jetonomyConfirm === 'function' ? window.jetonomyConfirm(msg, opts) : Promise.resolve(false);
 	};
 
-	function run(btn, method, confirmMsg, busyLabel, done, danger) {
+	function run(btn, path, method, confirmMsg, busyLabel, done, danger) {
 		btn.addEventListener('click', function () {
 			_confirm(confirmMsg, { danger: danger }).then(function (ok) {
 				if (!ok) { return; }
 				var label = Array.prototype.slice.call(btn.childNodes);
 				btn.disabled = true;
 				btn.textContent = busyLabel;
-				wp.apiFetch({ path: '/jetonomy/v1/admin/demo-data', method: method })
+				wp.apiFetch({ path: path, method: method })
 					.then(function () {
 						var url = new URL(window.location.href);
 						url.searchParams.set('jt_demo', done);
@@ -68,10 +71,14 @@
 
 	var remove = document.getElementById('jetonomy-cleanup-demo');
 	if (remove) {
-		run(remove, 'DELETE', i18n.removeConfirm, i18n.removing, 'removed', true);
+		run(remove, '/jetonomy/v1/admin/demo-data', 'DELETE', i18n.removeConfirm, i18n.removing, 'removed', true);
 	}
 	var add = document.getElementById('jetonomy-import-demo');
 	if (add) {
-		run(add, 'POST', i18n.importConfirm, i18n.importing, 'imported', false);
+		run(add, '/jetonomy/v1/admin/demo-data', 'POST', i18n.importConfirm, i18n.importing, 'imported', false);
+	}
+	var recount = document.getElementById('jetonomy-recount');
+	if (recount) {
+		run(recount, '/jetonomy/v1/admin/recount', 'POST', i18n.recountConfirm, i18n.recounting, 'recounted', false);
 	}
 })();

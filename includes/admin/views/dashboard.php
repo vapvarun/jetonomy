@@ -22,12 +22,17 @@ defined( 'ABSPATH' ) || exit;
 $jt_has_content = ( (int) ( $stats['active_spaces'] ?? 0 ) > 0 )
 	|| ( (int) ( $stats['total_posts'] ?? 0 ) > 0 );
 
-// Printed after the Dashboard reloads from a demo-data import/removal, so the
-// owner sees the outcome instead of a silent page refresh.
-$jt_demo_done = sanitize_key( wp_unslash( $_GET['jt_demo'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag.
-if ( in_array( $jt_demo_done, array( 'imported', 'removed' ), true ) ) :
+// Printed after the Dashboard reloads from a demo-data import/removal or a
+// recount, so the owner sees the outcome instead of a silent page refresh.
+$jt_demo_done    = sanitize_key( wp_unslash( $_GET['jt_demo'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag.
+$jt_done_notices = array(
+	'imported'  => __( 'Demo data imported.', 'jetonomy' ),
+	'removed'   => __( 'All demo data has been removed.', 'jetonomy' ),
+	'recounted' => __( 'Counters rebuilt from your content.', 'jetonomy' ),
+);
+if ( isset( $jt_done_notices[ $jt_demo_done ] ) ) :
 	?>
-<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'imported' === $jt_demo_done ? __( 'Demo data imported.', 'jetonomy' ) : __( 'All demo data has been removed.', 'jetonomy' ) ); ?></p></div>
+<div class="notice notice-success is-dismissible"><p><?php echo esc_html( $jt_done_notices[ $jt_demo_done ] ); ?></p></div>
 	<?php
 endif;
 
@@ -201,6 +206,12 @@ $stat_cards = array(
 						<span class="dashicons dashicons-update"></span>
 						<?php esc_html_e( 'Flush Rules', 'jetonomy' ); ?>
 					</button>
+					<?php if ( current_user_can( 'manage_options' ) ) : // Same cap as POST /admin/recount. ?>
+						<button type="button" class="button" id="jetonomy-recount">
+							<span class="dashicons dashicons-chart-bar"></span>
+							<?php esc_html_e( 'Recount counters', 'jetonomy' ); ?>
+						</button>
+					<?php endif; ?>
 				</div>
 			</div>
 
