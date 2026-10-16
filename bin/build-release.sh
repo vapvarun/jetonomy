@@ -276,6 +276,16 @@ if [ -f "$STAGE/composer.json" ]; then
 		echo "FAIL: composer install in staging exited non-zero" >&2
 		exit 20
 	}
+	# composer/installers is required only so Composer users get the plugin in
+	# wp-content/plugins/. It is a Composer plugin, never loaded by WordPress,
+	# and adds ~100 files to the zip. Removing it through Composer (not rm)
+	# also drops it from the generated autoload maps.
+	composer remove composer/installers --update-no-dev --optimize-autoloader --no-scripts --quiet || {
+		echo "FAIL: composer remove composer/installers in staging exited non-zero" >&2
+		exit 20
+	}
+	# The remove leaves an empty vendor/bin behind.
+	rmdir vendor/bin 2>/dev/null || true
 	popd > /dev/null
 
 	# composer.json has to survive the EXCLUDES so the install above can run,
@@ -283,11 +293,6 @@ if [ -f "$STAGE/composer.json" ]; then
 	# vendor/autoload.php is self-contained - so drop both now that vendor/
 	# exists. Leaving them shipped our dependency graph to customers for free.
 	rm -f "$STAGE/composer.json" "$STAGE/composer.lock"
-
-	# composer/installers is required only so Composer users get the plugin in
-	# wp-content/plugins/. It is a Composer plugin, never loaded by WordPress,
-	# and adds ~100 files to the zip.
-	rm -rf "$STAGE/vendor/composer/installers"
 fi
 
 # --- 5. sanity — required files present -----------------------------------
