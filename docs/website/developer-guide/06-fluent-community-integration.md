@@ -40,7 +40,7 @@ Four WordPress options hold the entire integration footprint. No custom tables, 
 | `jetonomy_fc_sync_members` | `'1'` / `'0'` | `'1'` | Toggle for bidirectional member sync. |
 | `jetonomy_fc_broadcast` | `'1'` / `'0'` | `'1'` | Toggle for topic broadcast to the paired FC feed. |
 
-All four options are removed on uninstall by Jetonomy's standard `jetonomy_*` option sweep in `uninstall.php`.
+All four options are removed by Jetonomy's standard `jetonomy_*` option sweep in `uninstall.php` when the plugin is deleted with the Data setting's removal option on; otherwise they are kept.
 
 ### Reading the pair map
 
