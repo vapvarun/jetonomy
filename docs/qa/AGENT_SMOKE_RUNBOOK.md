@@ -28,6 +28,13 @@ D (regression guards) stays specific - those are repros of past incidents; the e
 
 Infrastructure sections (preconditions, output contract, debug-log protocol, fixture cleanup, failure protocol) stay specific because they are the stable machinery the walk rides on.
 
+**Covers and Verified - what makes this runbook a release gate.** Every journey names the files it walks (`**Covers:**`, git globs; Pro files as `pro:path`) and the commits it last passed a browser walk at (`**Verified:** <free-sha>`, plus `pro:<sha>` when it covers Pro). Two gates read them, and `bin/build-release.sh` (Free and Pro) will not build until both are clear:
+
+- `bin/check-journey-coverage.php`: every shipped PHP / JS / CSS file in Free and Pro is in some journey's Covers, or in `docs/qa/journey-exempt.txt` with a reason. A file no journey claims is a change no walk would catch.
+- `bin/check-runbook-fresh.php`: no covered file has changed since the journey's Verified commits. A changed file means the journey must be walked again.
+
+Developer and QA use one command, `bin/self-qa.sh`: it prints the files with no journey and the journeys to walk now. Walk each as every role it names, at 1440 and 390, then `bin/self-qa.sh --stamp <id>...` records the commits it passed at. Stamp only what passed. When you add a template, partial, script or class, add it to the Covers of every journey whose behaviour it renders, not only the one you were fixing.
+
 ## Global preconditions
 
 - Working directory: `/Users/varundubey/Local Sites/forums/app/public`
@@ -156,8 +163,8 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 ## A - Fresh install (skip on live dev sites)
 
 ### A1 - Activation and first-request routing
-**Covers:** includes/class-router.php, includes/class-jetonomy.php
-**Verified:** 83f00772
+**Covers:** includes/class-router.php, includes/class-jetonomy.php, includes/api/class-api.php, includes/class-autoloader.php, includes/class-cache.php, includes/functions-multisite.php, includes/functions.php, includes/helpers.php, templates/views/not-found.php, jetonomy.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** after a clean activation, the plugin's front-end routes respond 200 on the very first request, without the user having to hit Settings > Permalinks. A route whose feature is switched off (for example Messages) shows a "page not available" page inside the community, not a blank page. With Plain permalinks active, every admin screen shows an error notice linking to Settings > Permalinks, because community URLs cannot work there.
 **Why it matters:** rewrite-flush-on-activation regressions have broken customer sites before (1.3.5 incident).
 **Acceptance:** any `/community/*` route returns HTTP 200 on the first request after activating, and `rewrite_rules` option contains the plugin's routes.
@@ -169,8 +176,8 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 **Acceptance:** `wp_jt_*` tables count matches the schema class; `jetonomy_db_version` option equals `JETONOMY_DB_VERSION`.
 
 ### A3 - Pro pairs cleanly (if Pro is also being installed)
-**Covers:** includes/class-jetonomy.php, includes/integrations/class-companion-registry.php
-**Verified:** 83f00772
+**Covers:** includes/class-jetonomy.php, includes/integrations/class-companion-registry.php, includes/integrations/class-companion-installer.php, includes/integrations/views/companion-cards.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** activating Pro on top of free does not fatal, adds Pro-only tables, and both version constants agree.
 
 ---
@@ -178,8 +185,8 @@ At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<r
 ## B - Upgrade from previous version (skip if no prior version)
 
 ### B1 - Migration runs quietly, existing data still works
-**Covers:** includes/db/class-migrator.php, includes/db/migrations/class-migration_2_0_2.php
-**Verified:** d1392e03
+**Covers:** includes/db/class-migrator.php, includes/db/migrations/class-migration_2_0_2.php, includes/db/migrations/*.php, includes/class-content-backfill.php, includes/class-privacy-backfill.php, includes/class-space-backfill.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** bumping from the prior stable version to this build completes with no debug.log entries during the activation HTTP request; pre-existing posts, spaces, users, and settings still render and function; denormalized counters remain in sync. The 2.0.2 migration also leaves these true: private spaces stored as Open now take join requests (Private + Approval), community bios are copied into the member's WordPress Biographical Info, roles that can post keep uploading (they gain the Upload media capability), and space bans that were stored without a space are gone.
 
 ---
@@ -191,44 +198,44 @@ Persona ladder in this section: **Anonymous > Member > Moderator > Admin**. Pick
 Each step below is a contract, not a script. When you verify it, exercise the UI as a user would AND confirm the server-side effect (DB row, REST response, email queued) to rule out a "looks right, didn't actually save" bug.
 
 ### C.anon.home
-**Covers:** templates/views/home.php, templates/partials/post-card.php, templates/partials/sidebar.php
-**Verified:** d44f151c
+**Covers:** templates/views/home.php, templates/partials/post-card.php, templates/partials/sidebar.php, assets/css/header.css, assets/js/header.js, assets/js/header-font-scale.js, assets/js/dark-mode-mirror.js, includes/api/class-feed-controller.php, includes/functions.php, includes/helpers.php, includes/template-canvas.php, templates/partials/category-chips.php, templates/partials/managed-by-card.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** the community home page renders for a logged-out visitor, shows real content (posts or spaces), and offers a clear way in (login/register/join). Each category shows its first six spaces with a "View all" link to the category page. Private spaces appear to logged-out visitors only as locked previews, and only when Settings > General > Access Control > "Show private spaces to logged-out visitors" is on (off by default); hidden spaces never appear.
 **Why it matters:** first impression surface; a broken home means no acquisition.
 
 ### C.anon.category
-**Covers:** templates/views/category.php, includes/models/class-category.php
-**Verified:** d1392e03
+**Covers:** templates/views/category.php, includes/models/class-category.php, includes/api/class-categories-controller.php, templates/partials/breadcrumb.php, templates/partials/category-chips.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a category page renders its child spaces, with working links into each space. Each space card shows a Private badge and how to join. A category the visitor cannot see (it holds only hidden or unreadable spaces) is not revealed through breadcrumbs or counts.
 
 ### C.anon.space-listing
-**Covers:** templates/views/space.php, templates/partials/space-header.php, templates/partials/pagination.php, includes/models/class-post.php
-**Verified:** dc84ba02
+**Covers:** templates/views/space.php, templates/partials/space-header.php, templates/partials/pagination.php, includes/models/class-post.php, includes/class-feed.php, includes/models/class-read-status.php, includes/models/class-model.php, templates/partials/feed-card.php, templates/partials/managed-by-card.php, templates/partials/space-tabs.php, templates/views/space-roadmap.php, pro:includes/extensions/seo-pro/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a space page shows its topics in the configured order (Popular breaks vote ties by reply count), with pagination that actually advances, and a visible "new post" invitation for authed users. The same space header (cover, description, counts, Join / Follow / Leave) appears on the Discussions, Members and Roadmap tabs. Open spaces show Join; private spaces show "Request to join" (invite-only ones say so); archived and locked spaces show Follow instead of Join, and their empty state reads "No topics were posted here." with no New Topic link. An empty space invites a post ("No ideas yet. Suggest the first one…" plus the button) only to a viewer who can post; a guest, non-member, pending requester or read-only viewer sees the plain "No ideas yet." / "No questions yet." / "Nothing posted yet." / "No topics yet." with no button. The header "Request to join" on a public approval space asks for an optional message first. A private space shows a logged-out visitor the login prompt (and Register when registration is open), not its topics. A signed-in non-member of a private or invite-only space gets a gate that names the space and shows its description (a hidden space is never named). After requesting, the page reloads into "Your request to join <Space> is awaiting approval" with a Withdraw request button (REST DELETE /jetonomy/v1/spaces/{id}/join-requests/mine); withdrawing returns the Request to join form and removes the staff's notice of it. Closed topics carry a "Closed" badge next to Pinned and Private.
 
 ### C.anon.single-post
-**Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/models/class-reply.php
-**Verified:** dc84ba02
+**Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/models/class-reply.php, includes/class-attachments.php, includes/class-author.php, includes/class-embeds.php, includes/functions.php, includes/helpers.php, includes/models/class-read-status.php, includes/models/class-model.php, templates/partials/avatar.php, templates/partials/breadcrumb.php, pro:includes/extensions/polls/*.php, pro:includes/extensions/reactions/*.php, pro:assets/js/polls-frontend.js, pro:assets/js/pro-view.js, pro:includes/extensions/seo-pro/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a topic renders with its title, body, author, replies, and vote counts; auth-gated actions (reply, vote, subscribe) cleanly redirect a logged-out visitor to login rather than failing silently with 403 (the reply area offers "Log in to reply" as a button). A topic or reply edited more than a minute after posting shows "edited 2 hours ago" to everyone, with the exact time on hover. A nested reply shows "in reply to <name>" linking to its parent. A topic with no replies says "Be the first to reply!" only to a viewer who could reply; a guest, read-only viewer, or anyone on a closed topic (moderators excepted) sees "No replies yet.". Private replies show as a tombstone to people who may not read them. A topic in a private space says "This content is in a private space."; a topic in a hidden space returns the same 404 page as a missing topic, so a guessed URL confirms nothing.
 
 ### C.anon.user-profile
-**Covers:** templates/views/user-profile.php, includes/models/class-user-profile.php
-**Verified:** dc84ba02
+**Covers:** templates/views/user-profile.php, includes/models/class-user-profile.php, includes/class-author.php, includes/class-avatar.php, templates/partials/avatar.php, pro:includes/extensions/custom-badges/*.php, pro:includes/extensions/custom-fields/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** any user's public profile is viewable by anonymous visitors and shows their posts/replies/badges without leaking private data (email, settings, drafts). The trust level shows by its name (owner-renamable under Settings > Permissions; level 5 is "Veteran" by default). Topics from private spaces and private replies are not listed to viewers who cannot read them (a private reply reads "Private reply"). Profile links use the member's public slug (user_nicename), so a member whose login is an email address opens normally, an old link with the login still opens, and the email never appears in the URL or the meta description. A logged-in viewer sees a Message button when Jetonomy messaging is active or another messenger supplies a link through the `jetonomy_member_message_url` filter; otherwise there is no button.
 
 ### C.anon.tag
-**Covers:** templates/views/tag.php, includes/models/class-tag.php
-**Verified:** 5b60f854
+**Covers:** templates/views/tag.php, includes/models/class-tag.php, includes/api/class-tags-controller.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** the tag page lists topics carrying that tag, or shows a clean empty state; no fatal on unknown tag slug. The topic count and the list include only topics the visitor can read, so a tag used only in private topics shows nothing to a guest. Popular tags in the sidebar count the same way.
 
 ### C.anon.leaderboard
-**Covers:** templates/views/leaderboard.php, includes/api/class-leaderboards-controller.php, includes/trust/class-reputation.php
-**Verified:** d1392e03
+**Covers:** templates/views/leaderboard.php, includes/api/class-leaderboards-controller.php, includes/trust/class-reputation.php, pro:includes/extensions/custom-badges/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** the leaderboard page renders a ranking, not an error; period selector (if present) switches the dataset.
 
 ### C.anon.search
-**Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/api/class-search-controller.php
-**Verified:** d1392e03
+**Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/api/class-search-controller.php, includes/adapters/interface-search-adapter.php, includes/adapters/interface-search-query-adapter.php, templates/partials/empty-state.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** searching for a known-present term returns matching topics with relevance that actually looks relevant (share ≥ 1 meaningful token with the query). Searching for gibberish returns a clean empty state. Results never include private replies or content in spaces the searcher cannot read.
 **Why it matters:** this is how customers find existing answers; a broken search drives support tickets.
 
@@ -238,23 +245,23 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** an invite link lands on a page that names the space being offered and does NOT join anyone by itself. Logged out: it offers "Create free account" (when registration is open) and "Log in to accept invite", and returns to the invite after login. Logged in: it shows a "Join" button; the member is added only when they click it (a POST with a nonce), then land in the space. Opening the link, a link preview or a prefetch never adds anyone. Invalid codes, expired links and links at their usage limit get a clean error, not a fatal. An archived or locked space, or a member banned from the space, cannot be joined by invite.
 
 ### C.member.post-create
-**Covers:** templates/views/new-post.php, templates/partials/composer.php, templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php
-**Verified:** 83f00772
+**Covers:** templates/views/new-post.php, templates/partials/composer.php, templates/partials/compose-fields.php, assets/js/composer.js, includes/api/class-posts-controller.php, includes/api/class-media-controller.php, includes/api/class-rest-auth.php, assets/js/jetonomy-rest.js, includes/class-attachments.php, includes/class-media-library.php, includes/models/class-attachment.php, includes/models/class-model.php, includes/permissions/class-rate-limiter.php, templates/partials/compose-topic-embed.php, pro:includes/extensions/polls/*.php, pro:assets/js/polls-frontend.js, pro:includes/extensions/advanced-moderation/*.php, pro:includes/extensions/ai/*.php, pro:includes/extensions/webhooks/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a logged-in member can compose a new post with title + content, pick a visibility / schedule / tags, submit, and land on the new topic. The post is persisted, appears in the space listing, and fires any expected notifications (subscribers notified, activity log updated). The image button, paste and drop of images appear and work only for a member who holds the Upload media permission; otherwise they are hidden and a paste or drop shows "You do not have permission to upload images". An archived or locked space refuses new topics with a message, and its /s/<slug>/new/ page shows that notice with "Back to <Space>" instead of a form.
 
 ### C.member.post-edit
-**Covers:** templates/views/single-post.php, templates/partials/edited-mark.php, includes/api/class-posts-controller.php, includes/models/class-post.php
-**Verified:** dc84ba02
+**Covers:** templates/views/single-post.php, templates/partials/edited-mark.php, includes/api/class-posts-controller.php, includes/models/class-post.php, includes/models/class-revision.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a post author can edit their own post (this needs the Edit own posts permission, which Member and Participate grants include); changes persist and are reflected everywhere the post is referenced (home feed, space list, search). The "edited ... ago" marker appears when the edit came more than a minute after posting. The topic menu offers only the actions the viewer's permissions allow.
 
 ### C.member.post-delete
-**Covers:** templates/views/single-post.php, includes/api/class-posts-controller.php, includes/models/class-post.php
-**Verified:** dc84ba02
+**Covers:** templates/views/single-post.php, includes/api/class-posts-controller.php, includes/models/class-post.php, assets/js/jetonomy-modals.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a post author can delete their own post (this needs the Delete own posts permission); it disappears from all listings and its single-post URL no longer serves the body (either 404 or "trashed" state per plugin contract); replies are handled consistently (cascaded or orphaned per contract).
 
 ### C.member.reply-create
-**Covers:** templates/views/single-post.php, includes/api/class-replies-controller.php, includes/models/class-reply.php, includes/notifications/class-notifier.php
-**Verified:** 75301a65
+**Covers:** templates/views/single-post.php, includes/api/class-replies-controller.php, includes/models/class-reply.php, includes/notifications/class-notifier.php, includes/permissions/class-rate-limiter.php, pro:includes/extensions/reply-by-email/*.php, pro:includes/extensions/webhooks/*.php, pro:assets/js/pro-view.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a member can post a reply on any topic they can see; the reply appears inline, increments the topic's reply count, and triggers a notification to the OP (unless OP unsubscribed). A reply cannot be created under a parent that is missing, trashed, spam or in another topic. A private reply is not sent to thread subscribers.
 
 ### C.member.reply-quote
@@ -268,18 +275,18 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** using `@username` in a post or reply produces a notification for that user AND renders as a link to their profile in the saved content. Mentioning someone in a private reply notifies them only if they may read it. The mention email uses the owner's saved Mention subject and body (Settings > Emails), like every other email.
 
 ### C.member.vote
-**Covers:** includes/api/class-votes-controller.php, includes/models/class-vote.php, assets/js/view.js, templates/views/single-post.php, templates/partials/reply-card.php
-**Verified:** 75301a65
+**Covers:** includes/api/class-votes-controller.php, includes/models/class-vote.php, assets/js/view.js, templates/views/single-post.php, templates/partials/reply-card.php, assets/js/lib/optimistic.js, assets/js/jetonomy-rest.js, includes/api/class-rest-auth.php, includes/permissions/class-rate-limiter.php, templates/partials/feed-card.php, pro:includes/extensions/reactions/*.php, pro:assets/js/pro-view.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a member can vote up/down on posts and replies, the score updates on screen, the vote persists across page reloads, and re-clicking the same vote toggles it off. The active vote button reads "Remove your upvote" / "Remove your downvote", and every vote on a topic or reply shows one toast, "Vote added" or "Vote removed" (never two). A member at the daily vote limit can still take a vote back. A logged-in member who may not vote sees the score as a disabled control that explains why on hover or click, not a button that does nothing. Taking back a vote removes the author's grouped "X people voted" notification once no votes remain; it never shows "0 people voted".
 
 ### C.member.flag
-**Covers:** includes/api/class-moderation-controller.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php
-**Verified:** 83f00772
+**Covers:** includes/api/class-moderation-controller.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php, assets/js/jetonomy-modals.js, assets/js/jetonomy-rest.js, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a member can report a topic, reply or member; a dialog asks for a required reason (Spam, Offensive, Off-topic, Harassment, Other) plus optional details, and submitting with no reason shows "Choose a reason.". The report reaches moderation (a moderator sees it in the queue with that reason). The reporting member gets the toast "Reported. Thank you.", not a silent submit. Content the member cannot read (a private space, a private reply) cannot be reported, and the error does not reveal whether it exists.
 
 ### C.member.subscribe-thread-and-space
-**Covers:** includes/api/class-subscriptions-controller.php, includes/models/class-subscription.php, includes/notifications/class-notifier.php
-**Verified:** 75301a65
+**Covers:** includes/api/class-subscriptions-controller.php, includes/models/class-subscription.php, includes/notifications/class-notifier.php, templates/views/subscriptions.php, assets/js/lib/optimistic.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a member can subscribe to a thread and to a space; a subsequent reply (thread) or new post (space) produces a notification; unsubscribing stops new notifications. A member who creates a space from the front end follows it automatically. Thread subscribers are not notified about private replies.
 
 ### C.member.accept-answer
@@ -288,18 +295,18 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** on Q&A-typed spaces, the OP can mark a reply as the accepted answer, the reply is visibly promoted, and a second acceptance replaces the first per contract. A private reply is never shown in the accepted-answer callout to people who may not read it, and merging or splitting topics keeps exactly one accepted answer.
 
 ### C.member.profile-edit
-**Covers:** templates/views/edit-profile.php, includes/api/class-users-controller.php, includes/models/class-user-profile.php
-**Verified:** 75301a65
+**Covers:** templates/views/edit-profile.php, includes/api/class-users-controller.php, includes/models/class-user-profile.php, includes/class-avatar.php, pro:includes/extensions/custom-fields/*.php, pro:assets/js/admin-custom-fields.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a member can edit their display name, bio, avatar, social links, and notification preferences; changes save, reload cleanly, and reflect across the site. The bio is the WordPress Biographical Info field, so wp-admin and the community profile always match. A display name that is a reserved word (such as admin) saves. The avatar upload controls appear only for a member with the Upload media permission; others see "Your Gravatar is used as your photo." The notification preferences list "Answer to my request to join a space" (email on by default).
 
 ### C.member.bookmarks
-**Covers:** templates/views/bookmarks.php, includes/api/class-bookmarks-controller.php, includes/models/class-bookmark.php
-**Verified:** 83f00772
+**Covers:** templates/views/bookmarks.php, includes/api/class-bookmarks-controller.php, includes/models/class-bookmark.php, assets/js/lib/optimistic.js, templates/partials/empty-state.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a member can bookmark a post, find it in their bookmarks view, and unbookmark it; count reflects the change. Removing the last bookmark shows the empty state immediately, without a reload, and the next tab you open shows its full content (after a hand-made DOM change the next navigation is a full page load).
 
 ### C.member.share
-**Covers:** templates/views/single-post.php, assets/js/view.js, assets/js/lib/smart-dropdown.js
-**Verified:** 75301a65
+**Covers:** templates/views/single-post.php, assets/js/view.js, assets/js/lib/smart-dropdown.js, includes/api/class-oembed-controller.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** the Share control on a topic opens a dropdown anchored to the button, offers Copy Link + X + Facebook + LinkedIn, Copy Link actually writes the URL to the clipboard, external links open on the right platform, and the dropdown closes when the user scrolls or clicks outside.
 
 ### C.member.scheduled-post
@@ -308,8 +315,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** a member can schedule a post for a future date/time using the composer's schedule mode, picking both hour and minute; the scheduled post is stored with the correct `published_at`, does not appear on public listings before that time, and appears automatically when the time arrives. The HH:MM picker works in every supported browser (Chromium proven here; Firefox + Safari iOS in `manual_required`).
 
 ### C.member.space-pagination
-**Covers:** templates/views/space.php, templates/partials/pagination.php, assets/js/pagination-frontend.js, assets/js/pagination-hydrator.js
-**Verified:** dc84ba02
+**Covers:** templates/views/space.php, templates/partials/pagination.php, assets/js/pagination-frontend.js, assets/js/pagination-hydrator.js, templates/partials/feed-card.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** on a space page, `posts_per_page` controls how many topics load initially; scroll-to-load reveals additional batches without doubling up on first load; the load-more behavior does not re-trigger until the user actually scrolls.
 
 ### C.member.profile-mobile-tabs
@@ -318,33 +325,33 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** on mobile (390px), the profile tabs bar is fully usable - no tab falls unreachable off-screen, the active tab is visible on load.
 
 ### C.member.online-indicator
-**Covers:** templates/partials/reply-card.php, templates/views/user-profile.php, templates/partials/sidebar.php, includes/models/class-user-profile.php
-**Verified:** dc84ba02
+**Covers:** templates/partials/reply-card.php, templates/views/user-profile.php, templates/partials/sidebar.php, includes/models/class-user-profile.php, templates/partials/avatar.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a user who is active within the threshold shows an online dot on every avatar context (topic page, profile header, home feed). The dot is visually attached to the avatar's top-right corner across all avatar sizes.
 
 ### C.mod.queue-and-actions
-**Covers:** templates/views/moderation.php, templates/partials/moderation/*.php, includes/api/class-moderation-controller.php, includes/moderation/class-moderation-service.php
-**Verified:** 5b60f854
+**Covers:** templates/views/moderation.php, templates/partials/moderation/*.php, includes/api/class-moderation-controller.php, includes/moderation/class-moderation-service.php, assets/js/jetonomy-modals.js, includes/models/class-restriction.php, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php, templates/partials/pagination-nav.php, templates/partials/empty-state.php, pro:includes/extensions/advanced-moderation/*.php, pro:assets/js/moderation-admin.js, pro:includes/extensions/ai/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a user with moderator capability sees the moderation queue, can filter by type (post/reply) and status (pending/spam/trash/resolved-flag), and can approve / trash / mark-spam from the queue. Every action updates the underlying record, disappears from its source tab, and appears in the destination tab. Silenced users cannot post until unsilenced. A site moderator (not a site admin) sees queues, report lists and counts only for spaces they can read, and cannot act on content in private spaces they cannot read. Space pages link to their own moderation queue with a count for space admins and site moderators; the header "Moderation queue" button opens the Approvals tab when only held content is pending, so it never lands on "0 pending flags". Per-space flag cards show the topic title (or an excerpt for an untitled feed post) and the flagged text. Site-wide bans listed there include IP address bans. Moving content to Trash counts as removal for reputation, the same as Spam, and approving it restores only what was taken.
 
 ### C.mod.flag-resolution
-**Covers:** templates/partials/moderation/flag-card.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php
-**Verified:** 83f00772
+**Covers:** templates/partials/moderation/flag-card.php, includes/models/class-flag.php, includes/moderation/class-moderation-service.php, includes/moderation/class-flag-scope.php, includes/moderation/class-moderation-permissions.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a moderator sees flagged content with the flagging user's reason, can resolve the flag with an action (ignore / trash / spam / silence author), and the resolution is recorded and reflected on the reporter's side (the reporter gets a "A moderator reviewed your report" notification). Dismissing a report on a reply restores the author's reputation, as it does for topics. Anonymous authors stay anonymous on approval cards. The restriction-lifting button reads "Lift restriction". The per-space flag card shows the linked topic title and the start of the flagged text, so a moderator need not open each item.
 
 ### C.admin.plugin-pages
-**Covers:** includes/admin/class-admin.php, includes/admin/views/*.php
-**Verified:** 83f00772
+**Covers:** includes/admin/class-admin.php, includes/admin/views/*.php, assets/css/admin.css, assets/js/admin-common.js, assets/js/admin-confirm.js, assets/js/admin-content.js, assets/js/admin-dashboard.js, assets/js/admin-media-grid.js, assets/js/admin-nav-menus.js, assets/js/admin-replies.js, assets/js/admin-revisions.js, assets/js/admin-settings.js, assets/js/admin-tags.js, includes/admin/class-activity-list-table.php, includes/admin/class-revisions-list-table.php, includes/admin/ajax/class-content-handler.php, includes/admin/ajax/class-moderation-handler.php, includes/admin/ajax/class-tags-handler.php, includes/class-activity-tracker.php, includes/class-admin-bar.php, includes/class-nav-menus.php, includes/models/class-activity-log.php, includes/models/class-revision.php, pro:includes/extensions/white-label/*.php, pro:includes/extensions/analytics/views/*.php, pro:includes/extensions/custom-fields/views/*.php, pro:includes/extensions/private-messaging/views/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** every Jetonomy admin page (overview, spaces, categories, content, users, moderation, settings, plus any Pro extension pages) renders without PHP Notice / Warning / Fatal. Every tab on those pages loads its content without AJAX errors. The Spaces, Users and Extensions screens open for staff holding Manage spaces, Manage community users and Manage extensions respectively. The Dashboard's "Review flags" link opens the Flags tab. Anonymous authors stay anonymous in the admin lists, Activity Log and Revisions. Every Settings sidebar row has an icon. Labels follow Terminology (topics, not posts), and the brand name set by White Label (`jetonomy_brand_name`) replaces "Jetonomy" in admin headings. Settings > Emails lists every email type: reactions, report reviewed, join request, join answer and "Confirm your email (new accounts)"; saved templates for each are kept. The Activity Log shows titles and "Gained/Lost N reputation points" with plain reasons, and its retention setting is its own card. The Permissions role table keeps its first column visible while scrolling sideways, and the trust level name fields are styled. Revisions show the stored title with "(deleted)" when the topic is gone. The setup wizard calls the type "Feed".
 
 ### C.admin.category-and-space-crud
-**Covers:** includes/admin/ajax/class-categories-handler.php, includes/admin/ajax/class-spaces-handler.php, includes/admin/views/categories.php, includes/admin/views/spaces.php, includes/models/class-space.php, includes/models/class-category.php
-**Verified:** d44f151c
+**Covers:** includes/admin/ajax/class-categories-handler.php, includes/admin/ajax/class-spaces-handler.php, includes/admin/views/categories.php, includes/admin/views/spaces.php, includes/models/class-space.php, includes/models/class-category.php, includes/api/class-categories-controller.php, includes/class-space-purge.php, includes/models/class-model.php, pro:includes/class-space-relations.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an admin can create, edit, reorder, and delete categories and spaces. Deleting a non-empty category handles its spaces per contract (cascade or refuse). Space settings edits persist and MERGE with existing settings (editing one key does not drop others - this is a hard contract). The space form keeps visibility and join policy consistent: choosing Hidden forces Invite only, choosing Private turns Open into Approval required, each with a note. The last admin of a space cannot be removed or demoted from wp-admin. Deleting a space with more than 500 topics locks it and finishes in the background, and the screen says so; a database error stops the delete with the space intact. Archive and hand-over moves ownership to a valid heir, and the former owner stays as a moderator.
 
 ### C.admin.user-management
-**Covers:** includes/admin/ajax/class-users-handler.php, includes/admin/views/users.php, includes/trust/class-trust-levels.php
-**Verified:** 83f00772
+**Covers:** includes/admin/ajax/class-users-handler.php, includes/admin/views/users.php, includes/trust/class-trust-levels.php, includes/permissions/class-capabilities.php, includes/trust/class-trust-evaluator.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an admin can search users, promote trust level, ban / unban, and see the correct state in the listing; bans prevent access to gated actions as expected. The dialog title follows the action (Ban User, Silence User, Ban IP address) and offers site-wide actions only (a space ban is made from that space's Members screen). "Ban IP address" exists only for site administrators: an IPv4 or IPv6 address is typed in (an invalid one, your own current address or one already banned is refused), and the ban is listed and liftable with the other restrictions (REST POST /moderation/ban with type=ip_ban and ip; WP-CLI --ip). Staff with only delegated user management cannot raise their own or another staff member's trust level; the Users screen opens with the Manage community users permission. Trust levels show their owner-set names.
 
 ### C.admin.invite-links
@@ -353,8 +360,8 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** an admin can mint an invite link for a space (optionally with a use limit and an expiry date), copy it, and the link works through the full accept flow: opening it shows the space with a Join button, and the member is added only when they click Join (sign up or log in first if needed), landing in the space with correct membership. An expiry date means the link works until the end of that day in the site's timezone; an unreadable or past date is refused, and the invite list shows the date in the site's format. A link past its limit or date is refused, and two people using the last use at the same moment cannot exceed the limit. The invite and join-request lists are paginated. A request the member withdrew leaves the list.
 
 ### C.admin.recount
-**Covers:** includes/class-recount.php, includes/class-recount-backfill.php, includes/admin/ajax/class-settings-handler.php
-**Verified:** 83f00772
+**Covers:** includes/class-recount.php, includes/class-recount-backfill.php, includes/admin/ajax/class-settings-handler.php, includes/api/class-admin-controller.php, includes/class-cache.php, assets/js/admin-settings.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** running the manual recount tool fixes any drift in denormalized counters (member_count, reply_count, vote_score); a deliberately corrupted counter is restored to the correct value.
 
 ### C.admin.akismet-staff-bypass
@@ -363,26 +370,101 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 **What to verify:** staff-role submissions are NOT routed through Akismet; they post instantly with no spam-check lag. Staff includes site admins, space admins and moderators, and site moderators (the Moderate capability). This is a customer-experience contract, not an optimization.
 
 ### C.notifications
-**Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, includes/api/class-notifications-controller.php, templates/views/notifications.php
-**Verified:** 75301a65
+**Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, includes/api/class-notifications-controller.php, templates/views/notifications.php, includes/notifications/class-community-notification-contract.php, includes/api/class-updates-controller.php, pro:includes/extensions/web-push/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** every notification-triggering event (reply to subscribed thread, mention, flag resolution, badge award, admin announcement) produces a new notification for the correct recipient; the bell badge count updates; clicking through takes the user to the correct destination. Join requests and their answers, reactions and reviewed reports also produce notifications that read correctly. Withdrawing a join request removes the staff's "new join request" notices. Unread count endpoint is accurate; mark-all-read zeroes it out. Names in notifications follow the Name display setting.
 
 ### C.notifications.email
-**Covers:** includes/adapters/class-wp-mail-adapter.php, templates/emails/*.php, includes/notifications/class-notifier.php, includes/notifications/class-verification-reminder.php
-**Verified:** 75301a65
+**Covers:** includes/adapters/class-wp-mail-adapter.php, templates/emails/*.php, includes/notifications/class-notifier.php, includes/notifications/class-verification-reminder.php, pro:includes/extensions/email-digest/*.php, pro:includes/extensions/reply-by-email/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work. A member is emailed the answer to a join request (approved or declined), headed "Your join request was answered" (the Settings > Emails name), never "Join Request Result". Mention emails use the owner's saved subject and body. When a moderator removes or approves a member's content, the member's email names it with the owner's terminology ("Your topic was removed by a moderator") and its button reads "Open the Community", never "Review in Mod Queue" (staff flag emails keep that button). The confirmation email's subject and intro follow Settings > Emails, with the link always added.
 
 ### C.search
-**Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/search/class-search-indexer.php, includes/api/class-search-controller.php
-**Verified:** d1392e03
+**Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/search/class-search-indexer.php, includes/api/class-search-controller.php, includes/adapters/interface-search-adapter.php, includes/adapters/interface-search-query-adapter.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** the full search page handles query, space-scoped filter, date filter, author filter, and sort (relevance / newest / votes) without breakage; relevance sort actually ranks by relevance, not just recency, and votes sort breaks ties by reply count. Private replies and unreadable spaces never appear in results, and tag results count only readable topics.
 
 ### C.cron
-**Covers:** includes/class-cron.php
-**Verified:** d1392e03
+**Covers:** includes/class-cron.php, includes/class-queue.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** after plugin activation, every expected cron event (digest, reminders, reputation recalc, etc.) is scheduled; none are orphaned after deactivation; cron actually executes when triggered manually.
 
 ---
+
+### C.cli.qa-actions
+**Covers:** includes/cli/**, includes/class-cli.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** Site owner/QA runs `wp jetonomy qa-actions` and expects every phase (including Phase 4 journeys and Phase 5 refusal paths RF1-RF10) to report only PASS, with a phase that ran zero checks failing loudly. Then run `wp jetonomy scenario run` for each scenario (voting thread, pending join request, flags for moderation, notification sweep, membership approval) and check the scenario result lists each step and cleans up. Spot-check one subject command per root (space, post, reply, vote, flag, member, mod, tag, category, privacy, notification, config, user) and confirm it returns the same data the member and moderator screens show. CLI has no viewport, so check 1440 and 390 only on a page the command created (for example a seeded post).
+
+### C.admin.setup-wizard
+**Covers:** includes/admin/ajax/class-setup-handler.php, includes/admin/ajax/class-demo-content.php, includes/admin/ajax/class-demo-seeder.php, assets/js/setup-wizard.js, assets/css/setup-wizard.css
+**Verified:** pending - new journey, not walked yet
+**What to verify:** A site admin on a fresh install walks the setup wizard end to end: pick the community base, create the first category and space, optionally seed demo content, and finish on a working /community/ page. A non-admin cannot reach the wizard or its AJAX handlers. Demo content can be removed again without leaving orphans. Check the wizard at 1440 and 390 widths (steps stack, buttons reachable, no horizontal scroll).
+
+### C.admin.import
+**Covers:** includes/import/*.php, includes/admin/ajax/class-import-handler.php, includes/models/class-import-map.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** Site admin imports a seeded bbPress, Asgaros or wpForo forum from the Import admin screen, sees progress, and finds categories, spaces, topics, replies and authors on the front end with correct counts. Re-running the import must not duplicate rows (import map), and a non-admin cannot start it. Check the import screen at 1440 and 390 and a few imported threads as a guest and a member.
+
+### C.admin.blocks-shortcodes-widgets
+**Covers:** includes/class-blocks.php, includes/class-shortcodes.php, includes/class-widgets.php, includes/widgets/*.php, assets/js/blocks-editor.js, assets/js/compose-topic-block.js, assets/css/blocks.css, assets/css/blocks-editor.css
+**Verified:** pending - new journey, not walked yet
+**What to verify:** Site admin inserts each Jetonomy block in the editor, each shortcode on a page, and each widget in a sidebar, then views them as a guest and as a member: they render the same content the community shows, honour private/hidden spaces (a guest never sees private space titles), and the compose-topic block posts a topic. The editor preview must match the front end. Check 1440 and 390 widths and dark mode.
+
+### C.anon.quick-login-and-captcha
+**Covers:** includes/api/class-auth-controller.php, includes/captcha/*.php, assets/js/login-block.js
+**Verified:** pending - new journey, not walked yet
+**What to verify:** A guest uses the Login block to sign in and (if enabled) register without leaving the page; wrong password and duplicate email show clear errors and no account is revealed beyond the standard message. With reCAPTCHA or Turnstile configured, the challenge appears on register and on topic/reply submission, a failed challenge blocks the submit, and with captcha off nothing extra shows. Check 1440 and 390 widths.
+
+### C.member.space-create-and-join
+**Covers:** templates/views/new-space.php, templates/views/my-spaces.php, templates/partials/icon-picker.php, assets/js/jetonomy-icon-picker.js, includes/models/class-join-request.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** A member (where space creation is allowed) creates a space with an icon, sees it under My Spaces, and a second member requests to join a private space; the space admin sees the request and approves or declines it, and the requester sees the outcome. A member without the capability cannot reach new-space; a guest is sent to login. Check 1440 and 390 widths.
+
+### C.mod.space-moderation
+**Covers:** templates/views/space-moderation.php, includes/api/class-space-moderation-controller.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** A space moderator opens /community/s/{slug}/mod/, sees only that space's flags and pending items, can resolve flags, restrict a member and page through a long queue, and cannot see or act on another space. A plain member and a guest get no access, and a silenced member cannot moderate. Check 1440 and 390 widths.
+
+### C.member.block-user
+**Covers:** includes/api/class-blocks-controller.php, includes/models/class-blocked-user.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** A member blocks another member from a post or profile; that author's content collapses to a tombstone for the blocker only, and unblocking from the tombstone restores it after reload. The blocked member sees no change and cannot tell, and a member cannot block themselves or a moderator-level account in a way that hides moderation. Check 1440 and 390 widths.
+
+### C.member.connect-app
+**Covers:** templates/views/connect-app.php, assets/js/connect-app.js, includes/integrations/class-app-connect.php, includes/api/class-app-config-controller.php, includes/api/class-rest-auth.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** A signed-in member opens /community/connect-app, generates an app credential, and the mobile app config endpoint returns the right base URL and features for that member; revoking the credential makes the app lose access. A guest is redirected to login and cannot read member-only config. Check 1440 and 390 widths.
+
+### C.member.link-preview
+**Covers:** includes/services/links/*.php, includes/services/links/providers/*.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** A member pastes a URL into a topic or reply and the published post shows a preview card (title, image, site) for normal pages, oEmbed providers and X posts. Internal or private-network URLs (localhost, 169.254.x, file:) must never be fetched, a slow or broken site must not block posting, and the card is the same for guests. Check 1440 and 390 widths.
+
+### C.member.privacy-export-erase
+**Covers:** includes/class-privacy.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** Site admin runs Tools > Export Personal Data and Erase Personal Data for a seeded member and expects the export to list their posts, replies, votes, bookmarks and profile, and erase to remove or anonymise them without breaking threads other people replied in. The privacy policy suggested text appears in the Policy Guide. Check the admin screens at 1440 and 390.
+
+### C.anon.sitemap
+**Covers:** includes/seo/class-sitemap.php, includes/seo/class-sitemap-emitter.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** A guest or crawler opens the sitemap index and finds the Jetonomy sitemap listing public spaces and public topics with correct URLs and lastmod, paginated for large forums; private and hidden spaces and their topics never appear. Check that the sitemap loads fast with 2000+ topics. Browser width is irrelevant for XML; check the linked pages at 1440 and 390.
+
+### C.site.host-integrations
+**Covers:** includes/integrations/class-buddypress.php, includes/integrations/class-fluent-community.php, includes/integrations/class-layout-css.php, includes/integrations/class-theme-integration.php, assets/css/buddypress.css, assets/css/fluent-community.css
+**Verified:** pending - new journey, not walked yet
+**What to verify:** On a BuddyPress site, a Fluent Community site, and under BuddyX or Reign themes, community pages pick up the theme's colours and fonts, the layout settings (width, sidebar) set by the admin apply, and the BuddyPress profile tab shows the member's Jetonomy activity. Nothing breaks when the host plugin is absent. Check 1440 and 390 widths, light and dark mode.
+
+### C.integration.abilities-api
+**Covers:** includes/class-abilities.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** On WordPress 6.9+ the abilities list includes the Jetonomy abilities, an authorised user or agent can run each (create post, reply, vote, search) and gets the same result as the UI, and a guest or under-privileged caller is refused. On older WordPress the plugin loads without errors. Verify through the abilities REST endpoint; no viewport needed.
+
+### C.admin.uninstall
+**Covers:** uninstall.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** Site admin deactivates and deletes the plugin: with "remove data on uninstall" off, tables and options stay so a reinstall restores the forum; with it on, every jt_ table, option, capability and cron hook is gone and the rest of the site still loads. Check the Plugins screen at 1440 and 390.
 
 ## C.gating - Access rules and who gets in
 
@@ -411,8 +493,8 @@ Setup once: a **public** space with open joining, a **private** space with invit
 **What to verify:** with a **Read** rule on the private space, the subscriber can read it and cannot post, reply or vote.
 
 ### C.gating.participate
-**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** 83f00772
+**Covers:** includes/admin/views/space-edit.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/adapters/class-adapter-registry.php, includes/adapters/interface-membership-adapter.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** with a **Participate** rule on the private space, the subscriber can read, post, reply, vote and report - all five - and can edit and delete their own posts (the Edit own posts and Delete own posts permissions come with Participate and Full).
 **Promise:** "Participate - Read, plus post, reply, vote and report."
 
@@ -437,8 +519,8 @@ Setup once: a **public** space with open joining, a **private** space with invit
 **Promise:** "To give one person a different role, change it on the Members tab; that keeps it a visible, per-person decision rather than a side effect of a rule."
 
 ### C.gating.admission-without-a-roster-row
-**Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php
-**Verified:** 83f00772
+**Covers:** includes/admin/views/space-edit.php, includes/class-membership-roster-sync.php, includes/models/class-access-rule.php, includes/permissions/class-permission-engine.php, includes/adapters/class-adapter-registry.php, includes/adapters/class-member-press-adapter.php, includes/adapters/class-pmpro-adapter.php, includes/adapters/class-wp-roles-adapter.php, includes/adapters/interface-membership-adapter.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a person matched by a rule can use the space **without** appearing on the Members tab, unless Sync Members was pressed.
 **Promise:** "The \"Sync Members\" button on a membership rule below is only for listing those people on the roster as well."
 
@@ -525,82 +607,184 @@ Every customer-visible fix ships a matching D row in the same PR. After 2 clean 
 Every active Pro extension gets a check here. Each contract covers the customer-visible promise, not the implementation.
 
 ### E.private-messaging
-**Covers:** includes/class-router.php, templates/partials/header.php
-**Verified:** d1392e03
+**Covers:** includes/class-router.php, templates/partials/header.php, pro:includes/extensions/private-messaging/*.php, pro:includes/extensions/private-messaging/views/*.php, pro:assets/js/pro-view.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a user can start a DM with another user, send a message, receive a reply, see read receipts, and block/mute. A TL0 user in an existing conversation can still reply. Unread count endpoint tracks correctly.
 
 ### E.polls
-**Covers:** templates/partials/compose-fields.php, templates/views/single-post.php
-**Verified:** dc84ba02
+**Covers:** templates/partials/compose-fields.php, templates/views/single-post.php, pro:includes/extensions/polls/*.php, pro:assets/js/polls-frontend.js, pro:assets/js/pro-view.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set. A composer poll with a question but fewer than two options blocks the post with "Question and at least 2 options required.". The Polls admin list shows topic titles.
 
 ### E.reactions
-**Covers:** templates/views/single-post.php, templates/partials/reply-card.php, assets/js/view.js
-**Verified:** 75301a65
+**Covers:** templates/views/single-post.php, templates/partials/reply-card.php, assets/js/view.js, pro:includes/extensions/reactions/*.php, pro:assets/js/pro-view.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; the reactor's avatar appears in the hover-card listing reactors. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
 
 ### E.analytics
-**Covers:** includes/admin/views/dashboard.php
-**Verified:** 83f00772
+**Covers:** includes/admin/views/dashboard.php, pro:includes/extensions/analytics/*.php, pro:includes/extensions/analytics/views/*.php, pro:assets/js/admin-analytics.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an admin sees a dashboard with non-zero metrics on a site with demo data, can switch date range, and can export the underlying data as CSV. Widget values are internally consistent (total topics ≥ topics in last 30d, etc.), and widget labels use the owner's topic label.
 
+**Analytics page width (1.4.5 regression guard, Basecamp 9941705191).** **What to verify:** the Analytics admin page (`admin.php?page=jetonomy-pro-analytics`) uses the full available wp-admin width. Admin pages are WordPress backend - they always fill the wrap, per WP standard; the frontend container-width setting never applies to them.
+
+**Pass (assert at a wide viewport, e.g. 1881px):** `getComputedStyle(document.querySelector('.jtp-analytics')).maxWidth === 'none'`; the container's right edge is within ~20px (standard wrap margin) of the wrap's right edge - no blank band. The "Verify dual-path" toggle and `#jtp-diff-panel` are NOT present for site admins (internal dev tool, opt-in only via the `jetonomy_pro_analytics_dual_path_verify` filter).
+
+**Why it bounced twice before this row existed:** "empty space" reports are axis-ambiguous - the first two fixes attacked vertical space (the dev panel) while QA meant the horizontal `max-width: 1200px` cap. Measure BOTH axes at the reporter's viewport before fixing any layout-gap report.
+
 ### E.custom-badges
-**Covers:** templates/views/user-profile.php, templates/partials/post-badges.php
-**Verified:** dc84ba02
+**Covers:** templates/views/user-profile.php, templates/partials/post-badges.php, pro:includes/extensions/custom-badges/*.php, pro:assets/js/badges-admin.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an admin can create a badge (name, icon, description, criteria), award it manually to a user, and that badge appears on the recipient's profile AND in the public badge list. Badges are once-only: a member never holds a duplicate (existing duplicates are repaired), and "Earned by" counts members.
 
 ### E.white-label
-**Covers:** includes/admin/class-admin.php
-**Verified:** 83f00772
+**Covers:** includes/admin/class-admin.php, pro:includes/extensions/white-label/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** the White Label extension is BACKEND-ONLY by design (its own class docblock: "Backend-only; it does not touch the community frontend or emails"). It renames the Jetonomy presence in wp-admin only. Set `community_name`, `admin_label`, `admin_icon`, `footer_text`, then confirm each is reflected in wp-admin: the brand name (`jetonomy_brand_name`) replaces "Jetonomy" in admin headings, banners and help text, the sidebar menu label, the plugin name on the Plugins page, and the admin footer (on Jetonomy screens the default footer reads "Thank you for building your community with Jetonomy.", which is the text White Label's brand substitution replaces). Confirm the public `/community/` render is UNCHANGED — there is no brand-color or frontend-logo field, and none is expected. (A frontend brand-color/logo capability would be a new paid feature to scope, not a bug in this extension.)
 
 ### E.advanced-moderation
-**Covers:** includes/moderation/class-moderation-service.php, includes/api/class-base-controller.php
-**Verified:** 75301a65
+**Covers:** includes/moderation/class-moderation-service.php, includes/api/class-base-controller.php, pro:includes/extensions/advanced-moderation/*.php, pro:assets/js/moderation-admin.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an admin can create a moderation rule (pattern + action), posting content matching the rule triggers the action (hold / spam / auto-delete), and rule stats reflect hits over time.
 
 ### E.ai
-**Covers:** includes/adapters/interface-ai-adapter.php, includes/adapters/class-ollama-ai-adapter.php
-**Verified:** d1392e03
+**Covers:** includes/adapters/interface-ai-adapter.php, includes/adapters/class-ollama-ai-adapter.php, pro:includes/extensions/ai/*.php, pro:includes/adapters/class-anthropic-ai-adapter.php, pro:includes/adapters/class-openai-ai-adapter.php, pro:includes/adapters/class-custom-ai-adapter.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** with an AI provider configured, obviously spammy content is correctly flagged; AI usage endpoint reports consistent numbers. With no provider configured, the extension silently no-ops (no fatals, no false positives).
 
 ### E.custom-fields
-**Covers:** assets/js/lib/custom-fields.js, templates/views/edit-profile.php, templates/views/user-profile.php
-**Verified:** dc84ba02
+**Covers:** assets/js/lib/custom-fields.js, templates/views/edit-profile.php, templates/views/user-profile.php, pro:includes/extensions/custom-fields/*.php, pro:includes/extensions/custom-fields/views/*.php, pro:assets/js/admin-custom-fields.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an admin can define a custom field (text / select / url / etc.), a user can set a value in their profile, and the value is publicly visible where the field is marked public. Creating a field via REST must not fatal when optional params (like `slug`) are omitted.
 
+**Custom fields lifecycle (1.4.5 regression guards, Basecamp 9947496606 / 9942068436).** **What to verify:** a post created from the frontend composer with a custom field value persists that value; the inline post editor pre-populates and can change it after update; at 390px a long URL value wraps inside its container (`scrollWidth === clientWidth`, no horizontal overflow). Space-context fields render and save on space create, edit, and display.
+
 ### E.email-digest
-**Covers:** includes/adapters/interface-email-adapter.php, includes/notifications/class-notifier.php
-**Verified:** 75301a65
+**Covers:** includes/adapters/interface-email-adapter.php, includes/notifications/class-notifier.php, pro:includes/extensions/email-digest/*.php, pro:assets/js/admin-email-digest.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** users subscribed to the digest actually receive one at the configured cadence; a manual test-send from admin dispatches within 30s; the stats endpoint reports sends without error. When the digest's own sender is blank it uses the sender from Settings > Emails.
 
 ### E.reply-by-email
-**Covers:** templates/emails/reply-to-post.php, includes/models/class-reply.php
-**Verified:** d1392e03
+**Covers:** templates/emails/reply-to-post.php, includes/models/class-reply.php, pro:includes/extensions/reply-by-email/*.php, pro:assets/js/admin-reply-by-email.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an inbound email matching a reply token produces a new reply on the correct post with the correct author; an inbound email without a valid token is rejected cleanly.
 
 ### E.seo-pro
-**Covers:** includes/seo/class-schema-markup.php, includes/class-template-loader.php
-**Verified:** dc84ba02
+**Covers:** includes/seo/class-schema-markup.php, includes/class-template-loader.php, pro:includes/extensions/seo-pro/*.php, pro:assets/js/admin-seo-pro.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** space-level SEO overrides (meta description, og:image) appear in the rendered HTML `<head>` on that space's pages. Defaults apply when overrides are absent.
 
 ### E.web-push
-**Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php
-**Verified:** 75301a65
+**Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, pro:includes/extensions/web-push/*.php, pro:assets/js/push-frontend.js, pro:assets/js/push-service-worker.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** the browser push subscription flow completes end-to-end, a test push reaches the subscribed browser. VAPID keys and service worker endpoints respond correctly.
 
 ### E.webhooks
-**Covers:** includes/notifications/class-notifier.php, includes/models/class-post.php
-**Verified:** 75301a65
+**Covers:** includes/notifications/class-notifier.php, includes/models/class-post.php, pro:includes/extensions/webhooks/*.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** an admin can create a webhook bound to one or more events; triggering one of those events actually fires a request to the configured URL; the test-fire button delivers a payload the receiver can parse.
 
 ---
 
+### E.pro-license-and-lockstep
+**Covers:** pro:jetonomy-pro.php, pro:includes/class-jetonomy-pro.php, pro:includes/license/*.php, pro:includes/functions-multisite.php, pro:uninstall.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** As site admin, Pro and Free versions match (lockstep), and activating Pro without Free active shows the dependency notice instead of a fatal. Enter a valid license key, confirm it shows Active with an expiry, then deactivate and confirm Pro features are gated with a clear message. Confirm the EDD update check routes to the Pro product, every Pro REST route still boots with Free-only data (no fatal on /wp-json/jetonomy/v1 or /jetonomy-pro/v1), and on multisite a newly created sub-site gets Pro tables. Deleting Pro with "remove data" removes its tables and nothing else. Check the license screen at 1440 and 390 widths.
+
+**Version lockstep.** **What to verify:** the free and Pro version constants are identical. Pro never ships at a version that diverges from free.
+
+```
+wp eval 'echo "free:" . JETONOMY_VERSION . " pro:" . JETONOMY_PRO_VERSION;'
+```
+
+**Pass:** both constants print the same `x.y.z`. **Fail:** drift, halt, file a card.
+
+**License activation.** **What to verify:** an admin can activate, deactivate, and reactivate a license key from `wp-admin > Jetonomy > License`. Invalid keys produce a clear error, not a fatal. Tier-gated extensions reflect the active tier on the Extensions page.
+
+**Pro dependency guard.** **What to verify:** deactivating free while Pro stays active surfaces a clean admin notice ("Jetonomy Pro requires Jetonomy") and Pro bails out without fataling. Reactivating free restores Pro automatically.
+
+**Lockstep upgrade path.** **What to verify:** updating one plugin's zip without updating the other is either prevented by the updater or handled gracefully. Version drift warning renders in the admin bar.
+
+**EDD updater routing.** **What to verify:** the Pro auto-updater queries the correct SL endpoint, reports the right current version, and successfully fetches a newer version when one exists on the store.
+
+**REST boot resilience (1.4.5 fatal guard, Basecamp 9953887096).** **What to verify:** Pro extension REST routes never reference free's `REST_Auth` eagerly. `curl -s <site>/wp-json/jetonomy/v1/` returns the route index (HTTP 200, no 500) with both plugins active, AND with Pro active while free is deactivated mid-request cycle the REST API still responds (Pro bails with an admin notice instead of fataling). `php ../jetonomy/bin/audit-rest-routes.php includes/` reports OK.
+
+### E.extensions-manager
+**Covers:** pro:includes/class-extension.php, pro:includes/class-extensions-admin.php, pro:assets/js/pro-admin.js, pro:assets/css/pro-admin.css, pro:includes/functions.php, pro:includes/class-queue.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** As admin, open the Pro Extensions page, use the category filter, toggle each extension off and on, and confirm its menu pages, routes and frontend UI disappear and return with no fatal and no lost settings. Every Pro admin page keeps the shared admin styling. Renamed product nouns (Topic, Reply, Member) and the brand name show on Pro screens. Background work (digest, push, AI batch, badges) runs through Action Scheduler or the WP-Cron fallback and completes with an empty debug.log. Check 1440 and 390 widths.
+
+### E.pro-privacy-and-abilities
+**Covers:** pro:includes/class-privacy.php, pro:includes/class-abilities.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** As admin, run Tools > Export Personal Data for a member who has DMs, reactions, poll votes, badges, custom field values and a push subscription, and confirm each appears. Run Erase Personal Data and confirm those Pro rows are removed or anonymised and other members' data is untouched. On WP 6.9+, the Pro abilities list only for enabled and licensed extensions, and an ability call respects the caller's capabilities. Check admin screens at 1440 and 390 widths.
+
+### E.membership-gating-adapters
+**Covers:** pro:includes/adapters/class-adapter-url.php, pro:includes/adapters/class-buddynext-pro-adapter.php, pro:includes/adapters/class-learndash-adapter.php, pro:includes/adapters/class-learnomy-adapter.php, pro:includes/adapters/class-lifterlms-adapter.php, pro:includes/adapters/class-masterstudy-adapter.php, pro:includes/adapters/class-rcp-adapter.php, pro:includes/adapters/class-sensei-adapter.php, pro:includes/adapters/class-suremembers-adapter.php, pro:includes/adapters/class-suremembers-space-integration.php, pro:includes/adapters/class-tag-membership-adapter.php, pro:includes/adapters/class-tag-space-integration.php, pro:includes/adapters/class-tutor-adapter.php, pro:includes/adapters/class-woocommerce-adapter.php, pro:includes/adapters/class-wpfusion-adapter.php, pro:includes/adapters/class-wpfusion-space-integration.php, pro:assets/js/admin-integrations.js
+**Verified:** pending - new journey, not walked yet
+**What to verify:** For each membership or LMS plugin installed on the dev site (WooCommerce, RCP, LearnDash, Tutor, LifterLMS, Sensei, MasterStudy, Learnomy, BuddyNext Pro, WP Fusion, SureMembers), as admin pick its level in an Access Rule on the Integrations tab (the toast confirms the save) and as a member who holds the level versus one who does not, confirm the space opens only for the holder, the locked teaser shows a working "buy or enrol" link, and removing the level ends access. A rule never grants moderation or a role above its Space Role (D.rule-role-escalation). The per-space WP Fusion and SureMembers tab links both ways. Plugins not installed must not fatal or list. Walk 1440 and 390 widths.
+
+### E.lms-course-spaces-and-automator
+**Covers:** pro:includes/integrations/*.php
+**Verified:** pending - new journey, not walked yet
+**What to verify:** As admin, publish a course in an installed LMS (LearnDash, Tutor, LifterLMS, Sensei, MasterStudy, Learnomy) and confirm exactly one discussion space is created, with the right type and access, and that republishing never makes a second. An enrolled student sees the course space and an unenrolled member does not. With Uncanny Automator active, the Jetonomy add/remove member and set-role actions and the role-changed trigger work in a recipe. Check the course space page at 1440 and 390 widths.
+
+### E.site-announcements
+**Covers:** pro:includes/extensions/site-announcements/*.php, pro:assets/js/announcements-frontend.js
+**Verified:** pending - new journey, not walked yet
+**What to verify:** As admin or moderator, mark a topic as a site announcement and confirm it is pinned at the top of every space listing, not only its own, for member and guest views. Unmarking removes it everywhere, and dismissing (if offered) persists for that member. Normal per-space pinned topics are unchanged. Walk 1440 and 390 widths.
+
+### E.anonymous-posting
+**Covers:** pro:includes/extensions/anonymous-posting/**
+**Verified:** pending - new journey, not walked yet
+**What to verify:** As space admin, enable anonymous posting in a space's settings. As a member, post a topic and a reply anonymously, and confirm other members, guests and the profile page show no author identity, avatar or link, including in REST output, search and notifications. A moderator or admin can reveal the real author, and that action is audited. A space with the setting off shows no anonymous toggle in the composer. Check the composer and space setting at 1440 and 390 widths.
+
+**Anonymous Posting (1.7.0).** Extension id `anonymous-posting` (`includes/extensions/anonymous-posting/`). Each row is a contract: verify the UI behavior AND the server-side effect.
+
+**What/why:** members can author a topic or reply with their identity hidden from every other member, gated by a global master switch (the extension's own enable toggle — `Gate::global_enabled()` reads `jetonomy_pro_extensions` option, no separate global option) AND a per-space opt-in (`allow_anonymous` key inside the space's `settings` JSON, `Gate::space_allows()`). Real `author_id` is always stored; only display is masked, via the single seam `\Jetonomy\Author::for_display()`.
+
+| ID | What to verify | Expected |
+|----|-----------------|----------|
+| E.anon.space-toggle | Space edit admin has an "Anonymous" tab (`jetonomy_admin_space_edit_tabs` / `_tab_content`, `views/space-setting.php`) with an "Allow anonymous posts in this space" checkbox, nonce `jetonomy_pro_anon_space_nonce`, field `allow_anonymous` | Saving persists into the space's `settings` JSON (`allow_anonymous: true/false`) via `Space::update()` — a MERGE, not an overwrite (an unrelated existing settings key must survive the save). Verify via `wp eval` reading `Space::get_settings($id)`. Unchecking + save clears the key to false, not removing the whole JSON. |
+| E.anon.composer-gate | `.jt-anon-toggle` (checkbox, new-topic composer, `jetonomy_new_post_fields`) and `.jt-anon-toggle-btn` (icon button, reply composer toolbar, `jetonomy_composer_toolbar`, `data-jt-anon-toggle`, `aria-pressed`) render ONLY when both gates pass for the target space AND the viewer is logged in (`Gate::can_author_anonymously()`) | In a space with the per-space setting OFF, or with the Anonymous Posting extension disabled, neither control is present in the composer DOM. In a space with both ON, the control renders for a logged-in member. |
+| E.anon.post-persist | Submit a new topic with the toggle on (`is_anonymous` mirrored onto the create payload by `assets/anonymous.js` via the `jetonomy:before-post-submit` CustomEvent) | `wp_jt_posts` row for the new post has `is_anonymous = 1` AND `author_id` = the real posting user's ID (never 0, never rewritten). Server re-validates via `enforce_post_anonymity()` on `jetonomy_before_create_post` — client value is never trusted; posting the same payload in a space where the per-space gate is OFF must persist `is_anonymous = 0` even though the client sent 1. |
+| E.anon.reply-persist | Same as above for a reply (`jetonomy:before-reply-submit`, `enforce_reply_anonymity()` on `jetonomy_before_create_reply`, space resolved from the parent post) | `wp_jt_replies` row has `is_anonymous = 1`, real `author_id` intact. Gate re-validated server-side against the parent post's space, not the client. |
+| E.anon.mask-feed-and-single | View the space listing / home feed card, and the single-post page, for an anonymous topic | Author name renders "Anonymous" with no avatar image and no profile link (`Author::for_display()` returns `id: 0, name: 'Anonymous', avatar: '', url: ''`); confirm via `templates/partials/feed-card.php` (feed) and `templates/views/single-post.php` (`$jt_author_display`) — neither template bypasses `Author::for_display()`. No real display name or `get_userdata()` output appears in the rendered HTML. |
+| E.anon.mask-reply-card | View a reply card for an anonymous reply | Same masking as above (reply-card partial routes through `Author::for_display()` too — same seam as post/feed). |
+| E.anon.mask-search | Search for a term that matches the anonymous topic/reply's content | Result appears (content is searchable) but author is masked the same as the listing card — no real name/avatar in the result row. |
+| E.anon.mask-rss | `GET /community/s/{slug}/feed/` for a space containing an anonymous post | The RSS `<item>` for that post shows author "Anonymous" (`includes/class-feed.php:80` routes through `Author::for_display()`), never the real display name. |
+| E.anon.excluded-from-profile-stream | View the anonymous author's own public profile (`/community/u/{login}/`) | The anonymous post/reply does NOT appear in their public posts/replies stream — confirmed by the `is_anonymous = 0` guard in the profile-stream SQL (`includes/models/class-post.php` / `class-reply.php`, `WHERE ... AND p.is_anonymous = 0`, and `templates/views/user-profile.php`). |
+| E.anon.mask-notification | Trigger a notification from the anonymous post/reply (e.g. reply to a subscribed thread, or a mention) | The notification's REST payload (`class-notifications-controller.php`) reports `actor_id: null` and `actor_name: "Anonymous"` when `actor_anonymous` is set; verify the underlying `wp_jt_notifications` row has `actor_anonymous = 1` (persisted at creation from the post/reply's `is_anonymous` flag via `Notifier::create_and_maybe_email()`'s `$actor_anonymous` param) while `actor_id` still stores the real user id server-side (masking is display-only). The notifications template masks the same way. |
+| E.anon.reveal-admin-only | As a site admin, click "Reveal author" (`.jt-anon-reveal`, rendered only for `manage_options` + `is_anonymous` rows, `Reveal::render_button()`) on an anonymous post/reply | `POST /jetonomy/v1/anonymous/reveal` with `{object_type, object_id}` returns HTTP 200 `{success:true, author:{id,name}}` with the REAL author; a `wp_jt_activity_log` row is written with `action = 'anonymous_author_revealed'`, `actor_id` = the revealing admin, and `meta.real_author` = the real author id (`ActivityLog::log()` call in `Reveal::reveal()`). As a non-admin (member/moderator without `manage_options`), the same request returns HTTP 403 (`rest_auth_mutation('manage_options')` gate) and no activity-log row is written. Confirm the reveal is NOT persistent: reloading the page as a non-revealing viewer still shows "Anonymous" (reveal context is request-scoped, `Reveal::$context`). |
+
+### E.attachments
+**Covers:** pro:includes/extensions/attachments/**, pro:assets/css/attachments.css, pro:assets/js/attachments-admin.js, pro:assets/js/attachments-frontend.js, pro:assets/js/pdf-viewer.js
+**Verified:** pending - new journey, not walked yet
+**What to verify:** As admin, set allowed types and size limits on the Attachments settings page. As a member, attach an image, a PDF and a disallowed file type to a topic and a reply. Confirm the allowed ones upload and render, the PDF opens in the viewer modal, and the disallowed or oversized one is refused with a clear message. A guest cannot upload, a user who cannot see the topic cannot download the file, and deleting the post removes the file. Walk 1440 and 390 widths.
+
+**File Attachments (1.7.0).** Extension id `attachments` (`includes/extensions/attachments/`). Option key `jetonomy_pro_attachments` (`Extension::OPTION` / `Settings::OPTION`), fields `allowed_types` (array of extensions), `max_size_bytes` (int), `max_files` (int, default 5). Link table `wp_jt_attachments` (FREE owns it from 1.7.1 — it is the old `wp_jt_attachments`, renamed by free's Migration_1_7_1; same schema, no rows copied) (`object_type` enum post/reply, `object_id`, `attachment_id`, `sort`, `created_at`, `UNIQUE KEY object_attachment (object_type,object_id,attachment_id)`).
+
+| ID | What to verify | Expected |
+|----|-----------------|----------|
+| E.attach.settings-persist | Settings tab `wp-admin/admin.php?page=jetonomy-settings&tab=attachments` (`views/settings.php`, nonce `jetonomy_pro_attachments_settings`/`jt_attachments_nonce`, fields `jt_attach_types[]`, `jt_attach_max_mb`, `jt_attach_max_files`) | Saving persists `allowed_types`, `max_size_bytes` (MB × `MB_IN_BYTES`), `max_files` into the `jetonomy_pro_attachments` option via `Settings::sanitize()`. `max_size_bytes` is clamped to `[MB_IN_BYTES, wp_max_upload_size()]`; `max_files` clamped to `[1,20]`. |
+| E.attach.svg-never-allowed | Attempt to add `svg` to `jt_attach_types[]` via a raw POST to the settings save handler (bypassing the UI, which doesn't render an SVG checkbox at all) | `Settings::sanitize()` intersects against `Uploader::ext_mime_map()`, which has no `svg`/`svgz` key — `svg` is silently dropped from the saved `allowed_types` regardless of what was posted. `Uploader::extend_allowed_types()` also explicitly skips `svg`/`svgz` even if it somehow reached the option. Confirm `wp option get jetonomy_pro_attachments` never contains `svg` after the attempt. |
+| E.attach.upload-validates | Upload a file via the composer's attach button (`data-jt-attach`, `.jt-attach-trigger`) through the existing hardened `POST /jetonomy/v1/media` (widened by `jetonomy_upload_allowed_types` / `jetonomy_upload_max_size` filters registered in `Uploader::register()`), then `POST /jetonomy-pro/v1/attachments` with `{object_type, object_id, attachment_id, sort}` | Disallowed extension (e.g. `.exe`) → `/media` rejects it (existing free upload gate) before Pro even sees it. Oversized file (> configured `max_size_bytes`) → rejected the same way. Allowed type within size → `/media` returns HTTP 201 with an attachment id; `POST /attachments` then returns HTTP 200 with `{link_id, attachment:{...}}`. Attaching a file NOT owned by the current user (and the actor lacks `moderate_comments`) returns HTTP 403 `jetonomy_attach_forbidden`. Attaching a file whose stored type fails `Media_Controller::validate_upload()` re-check returns HTTP 400 `jetonomy_attach_type` (defense in depth — the endpoint never trusts the earlier upload alone). Attaching a file count at/above `max_files` for the object returns HTTP 400 `jetonomy_attach_limit`. |
+| E.attach.create-links-idempotent | Create a post/reply with pending attachment ids: browser path links them via an explicit `POST /jetonomy-pro/v1/attachments` call once the create response resolves (`attachments-frontend.js`'s `restFetch` wrapper); API/app path can instead pass `attachment_ids` (CSV) inline on the create request (`Extension::link_on_create_post()` / `link_on_create_reply()`, hooked on `jetonomy_after_create_post` / `jetonomy_after_create_reply`) | Either path results in `wp_jt_attachments` rows with `object_type`/`object_id` matching the new post/reply and `attachment_id` matching the uploaded file(s). Linking the SAME `(object_type, object_id, attachment_id)` twice (e.g. both paths firing for the same request) does NOT create a duplicate row — `Model::link()` checks for an existing row first and the table's `UNIQUE KEY object_attachment` backstops it; assert `COUNT(*)` for that triple stays at 1. |
+| E.attach.render-cards | View a post/reply with attachments | Server-rendered `.jt-attach-strip` (role="list") renders one card per attachment with zero extra per-row queries when the reply list was primed via `jetonomy_before_replies` → `Renderer::prime()` → `Model::prime_for_post()`. Image type → `.jt-attach-img` inline thumbnail + lightbox link (works with zero JS: plain `<a target="_blank">`). PDF type → `.jt-attach-pdf` button with thumbnail/page-count/size meta. Office/text type → `.jt-attach-chip` download link with `download` attribute, no inline preview. |
+| E.attach.pdf-lazy-viewer | Click a `.jt-attach-pdf` card | `attachments-frontend.js` (loaded as an ES module, `wp_enqueue_script_module`) dynamically `import('./pdf-viewer.js')` ONLY on click — confirm via network panel that `pdf-viewer.js` and the vendored `assets/lib/pdfjs/pdf.min.mjs` / `pdf.worker.min.mjs` are NOT requested on initial page load, only after the click. The modal opens (`.jt-modal-box.jt-pdf-box`, `role="dialog"`, `aria-modal="true"`), traps focus, and Esc/overlay-click closes it. If pdf.js fails to load, falls back to `window.open(url, '_blank')` (never a broken/blank modal). |
+| E.attach.cascade-delete | Delete a post/reply that has linked attachments | `jetonomy_after_delete_post` / `jetonomy_after_delete_reply` fire `Extension::on_delete_post()` / `on_delete_reply()` → `Model::unlink_all()`. All `wp_jt_attachments` rows for that `object_type`/`object_id` are gone (the underlying WP media attachment itself is left in the library, not deleted). |
+| E.attach.gc-sweep | Trigger the recurring GC job (`jetonomy_pro_attachments_gc`, scheduled daily via `Queue::recurring()` in `Extension::activate()`) — e.g. `wp cron event run jetonomy_pro_attachments_gc` or call `Extension::gc()` directly | Two independent sweeps: (1) any `wp_jt_attachments` row whose `attachment_id` no longer resolves to a WP post row is deleted (orphan link cleanup); (2) any WP attachment carrying **`_jetonomy_media_origin = 'upload'`** — the provenance meta that `Media_Library::tag_upload()` records when WE created the file — that is NOT linked in `wp_jt_attachments` AND is older than 24h is hard-deleted via `wp_delete_attachment( $id, true )`. An abandoned upload younger than 24h must survive (confirm the boundary). **CRITICAL — the sweep must NOT key on `_jetonomy_media`.** That flag is also applied by free's backfill, which infers "community upload" from the author lacking `upload_files` — true of every subscriber-authored attachment on the site, INCLUDING another forum plugin's (wpForo authors its media as the posting member). Keying on it made the GC force-delete wpForo's own files off disk 24h after a customer enabled the extension: the very files a migration exists to rescue. **Regression check:** create an attachment authored by a subscriber, tag it `_jetonomy_media` only (no origin meta), age it >24h, leave it unlinked, run the sweep — it MUST survive. Then tag one via `Media_Library::tag_upload()`, age it, leave it unlinked — it MUST be reclaimed. Both are covered by `AttachmentsModelTest::test_gc_never_deletes_media_we_did_not_upload()` and `::test_gc_still_reclaims_our_own_abandoned_upload()`. |
+
+### E.pro-cli
+**Covers:** pro:includes/cli/**
+**Verified:** pending - new journey, not walked yet
+**What to verify:** On the dev site run `wp jetonomy-pro` for each command group (extension, polls, reactions, messaging, webhooks, and the rest), then `wp jetonomy-pro journeys` (or the equivalent qa subcommand) for all extension journeys. Confirm every journey passes, output names roles and extensions plainly, a disabled extension is skipped rather than failing, and debug.log stays empty. Any failure blocks the Pro walk.
+
 ## F - Cross-browser, RTL, accessibility
 
 ### F.chromium
-**Covers:** includes/class-router.php, includes/class-template-loader.php
-**Verified:** dc84ba02
+**Covers:** includes/class-router.php, includes/class-template-loader.php, includes/template-canvas.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 Already covered by Sections A-E. Chromium is the default engine.
 
 ### F.firefox-desktop and F.safari-ios
@@ -614,13 +798,13 @@ Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `
 - Any flow that relies on a browser-native control whose behavior diverges between engines.
 
 ### F.rtl
-**Covers:** assets/css/jetonomy.css, assets/css/jetonomy-tokens.css
-**Verified:** d44f151c
+**Covers:** assets/css/jetonomy.css, assets/css/jetonomy-tokens.css, assets/js/dark-mode-mirror.js
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** on an RTL locale (e.g. `ar`), the primary templates render right-to-left without horizontal overflow, text flows correctly, icons mirror where appropriate and stay fixed where they should not (brand logos, directional glyphs).
 
 ### F.a11y
-**Covers:** templates/partials/header.php, templates/partials/composer.php, templates/partials/reply-card.php, assets/js/view.js
-**Verified:** 75301a65
+**Covers:** templates/partials/header.php, templates/partials/composer.php, templates/partials/reply-card.php, assets/js/view.js, assets/css/header.css, assets/js/header.js, assets/js/header-font-scale.js, assets/js/dark-mode-mirror.js, templates/partials/breadcrumb.php
+**Verified:** pending - not walked since its Covers widened on 2026-10-16
 **What to verify:** the main interactive surfaces have a visible keyboard focus ring (not suppressed by theme), tab order is logical, main content is reachable within a reasonable number of tabs from the top of the page, and icon-only buttons have `aria-label`. Screen-reader critical labels are present on composers, voting controls, share controls, and moderation actions. The report dialog is a labelled radio group, focuses its first reason on open, and closes on Escape.
 
 ---

@@ -8,14 +8,14 @@
 
 | Need | Where |
 |---|---|
-| Canonical inventory, coverage data, graph viewer | **free** `audit/manifest.json`, `audit/qa-coverage.json`, `audit/graph.html` |
+| Canonical inventory, coverage data, graph viewer | **free** `audit/manifest.json`, `audit/qa-runtime-baseline.json`, `audit/graph.html` |
 | Build + QA tooling | **free** `bin/` |
 | Customer + developer docs | **free** `docs/website/`, `docs/architecture/`, `docs/developer/`, `ARCHITECTURE.md`, `DESIGN-SYSTEM.md`, `CONTRIBUTING.md` |
 | Engineering standards | **free** `docs/standards/` |
 | Full audits, feature/gap analyses, wppqa baselines, UX punchlists, expectation records | **pro** `../jetonomy-pro/audit/free/` |
 | Implementation plans | **pro** `../jetonomy-pro/docs/plans/free/` |
 
-The manifest deliberately stays in free: four scripts read it (`build-release.sh`, `qa-coverage-check.php`, `qa-stub-gen.php`, `audit-wiring.php`), and a public repo's build must not depend on a private one. Pro's build excludes `audit/` and `docs/` from its zip, so nothing internal ships to customers either.
+The manifest deliberately stays in free: the release build and its gates read it (`build-release.sh`, `check-manifest-fresh.php`, `qa-runtime-coverage.php`, `audit-wiring.php`), and a public repo's build must not depend on a private one. Pro's build excludes `audit/` and `docs/` from its zip, so nothing internal ships to customers either.
 
 Interactive graph: `cd audit && python3 -m http.server 8765`, then <http://localhost:8765/graph.html>.
 End-to-end customer flows: runnable PHP scenarios in `includes/cli/scenarios/`, plus the pre-release smoke runbook (`/wp-plugin-smoke`, which superseded the per-plugin `/jetonomy-smoke` skill in 1.9.4).
@@ -51,7 +51,9 @@ extra careful; never fix blindly.
    - `bin/qa-runtime-coverage.php` (with `WP_TESTS_DIR`): what the suite actually reached. A request to a route that no longer exists fails (mark a deliberate one `@expects-no-route`), every write or membership/moderation route must be reached, and `audit/qa-runtime-baseline.json` only shrinks.
    - `php bin/check-new-tests-fail-on-base.php`: a test added with a fix must fail on the code before it; mark coverage of behaviour that already worked `@covers-existing`.
    - `wp jetonomy qa-actions` Phase 5 walks refusal paths (RF1-RF10); a phase that runs no checks fails the run.
-   - `php bin/check-runbook-fresh.php`: each smoke-runbook journey names the files it covers (`**Covers:**`) and the commit it was last checked at (`**Verified:**`); a release build fails while any is stale.
+   - `php bin/check-runbook-fresh.php`: each smoke-runbook journey names the files it covers (`**Covers:**`, Pro files as `pro:path`) and the commits it last passed a browser walk at (`**Verified:** <sha> pro:<sha>`); a release build fails while any is stale.
+   - `php bin/check-journey-coverage.php`: every shipped Free and Pro file is in some journey's Covers (or exempt with a reason in `docs/qa/journey-exempt.txt`); a release build fails while any is not.
+   - `bin/self-qa.sh` is the one command for both: it lists what to walk, and `--stamp <id>...` records a passed walk. Self-QA through it is mandatory before every release.
 
 ## Build Rule (enforced)
 

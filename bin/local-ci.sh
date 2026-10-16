@@ -207,10 +207,18 @@ fi
 
 step "Smoke runbook freshness (report; blocks at release)"
 if php bin/check-runbook-fresh.php >/dev/null 2>&1; then
-    ok "every runbook journey verified against the current code"
+    ok "every runbook journey walked against the current code"
 else
     php bin/check-runbook-fresh.php 2>/dev/null | tail -4
-    warn "runbook journeys need review before the next release (bin/build-release.sh blocks on this)"
+    warn "runbook journeys need a walk before the next release (bin/build-release.sh blocks on this)"
+fi
+
+step "Journey coverage, Free + Pro (report; blocks at release)"
+if php bin/check-journey-coverage.php >/dev/null 2>&1; then
+    ok "every shipped file is walked by a runbook journey"
+else
+    php bin/check-journey-coverage.php 2>/dev/null | grep -E '^journey-coverage'
+    warn "shipped files with no journey: php bin/check-journey-coverage.php --list (bin/build-release.sh blocks on this)"
 fi
 
 step "Data layer (free)"
