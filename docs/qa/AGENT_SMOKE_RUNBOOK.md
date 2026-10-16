@@ -203,18 +203,18 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.anon.space-listing
 **Covers:** templates/views/space.php, templates/partials/space-header.php, templates/partials/pagination.php, includes/models/class-post.php
-**Verified:** 83f00772
-**What to verify:** a space page shows its topics in the configured order (Popular breaks vote ties by reply count), with pagination that actually advances, and a visible "new post" invitation for authed users. The same space header (cover, description, counts, Join / Follow / Leave) appears on the Discussions, Members and Roadmap tabs. Open spaces show Join; private spaces show "Request to join" (invite-only ones say so); archived and locked spaces show Follow instead of Join, and their empty state reads "No topics were posted here." with no New Topic link. The header "Request to join" on a public approval space asks for an optional message first. A private space shows a logged-out visitor the login prompt (and Register when registration is open), not its topics. A signed-in non-member of a private or invite-only space gets a gate that names the space and shows its description (a hidden space is never named). After requesting, the page reloads into "Your request to join <Space> is awaiting approval" with a Withdraw request button (REST DELETE /jetonomy/v1/spaces/{id}/join-requests/mine); withdrawing returns the Request to join form and removes the staff's notice of it. Closed topics carry a "Closed" badge next to Pinned and Private.
+**Verified:** dc84ba02
+**What to verify:** a space page shows its topics in the configured order (Popular breaks vote ties by reply count), with pagination that actually advances, and a visible "new post" invitation for authed users. The same space header (cover, description, counts, Join / Follow / Leave) appears on the Discussions, Members and Roadmap tabs. Open spaces show Join; private spaces show "Request to join" (invite-only ones say so); archived and locked spaces show Follow instead of Join, and their empty state reads "No topics were posted here." with no New Topic link. An empty space invites a post ("No ideas yet. Suggest the first one…" plus the button) only to a viewer who can post; a guest, non-member, pending requester or read-only viewer sees the plain "No ideas yet." / "No questions yet." / "Nothing posted yet." / "No topics yet." with no button. The header "Request to join" on a public approval space asks for an optional message first. A private space shows a logged-out visitor the login prompt (and Register when registration is open), not its topics. A signed-in non-member of a private or invite-only space gets a gate that names the space and shows its description (a hidden space is never named). After requesting, the page reloads into "Your request to join <Space> is awaiting approval" with a Withdraw request button (REST DELETE /jetonomy/v1/spaces/{id}/join-requests/mine); withdrawing returns the Request to join form and removes the staff's notice of it. Closed topics carry a "Closed" badge next to Pinned and Private.
 
 ### C.anon.single-post
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/models/class-reply.php
-**Verified:** 83f00772
-**What to verify:** a topic renders with its title, body, author, replies, and vote counts; auth-gated actions (reply, vote, subscribe) cleanly redirect a logged-out visitor to login rather than failing silently with 403 (the reply area offers "Log in to reply" as a button). A topic or reply edited more than a minute after posting shows "edited 2 hours ago" to everyone, with the exact time on hover. A nested reply shows "in reply to <name>" linking to its parent. Private replies show as a tombstone to people who may not read them. A topic in a private space says "This content is in a private space."; a topic in a hidden space returns the same 404 page as a missing topic, so a guessed URL confirms nothing.
+**Verified:** dc84ba02
+**What to verify:** a topic renders with its title, body, author, replies, and vote counts; auth-gated actions (reply, vote, subscribe) cleanly redirect a logged-out visitor to login rather than failing silently with 403 (the reply area offers "Log in to reply" as a button). A topic or reply edited more than a minute after posting shows "edited 2 hours ago" to everyone, with the exact time on hover. A nested reply shows "in reply to <name>" linking to its parent. A topic with no replies says "Be the first to reply!" only to a viewer who could reply; a guest, read-only viewer, or anyone on a closed topic (moderators excepted) sees "No replies yet.". Private replies show as a tombstone to people who may not read them. A topic in a private space says "This content is in a private space."; a topic in a hidden space returns the same 404 page as a missing topic, so a guessed URL confirms nothing.
 
 ### C.anon.user-profile
 **Covers:** templates/views/user-profile.php, includes/models/class-user-profile.php
-**Verified:** 83f00772
-**What to verify:** any user's public profile is viewable by anonymous visitors and shows their posts/replies/badges without leaking private data (email, settings, drafts). The trust level shows by its name (owner-renamable under Settings > Permissions; level 5 is "Veteran" by default). Topics from private spaces and private replies are not listed to viewers who cannot read them (a private reply reads "Private reply"). A logged-in viewer sees a Message button when Jetonomy messaging is active or another messenger supplies a link through the `jetonomy_member_message_url` filter; otherwise there is no button.
+**Verified:** dc84ba02
+**What to verify:** any user's public profile is viewable by anonymous visitors and shows their posts/replies/badges without leaking private data (email, settings, drafts). The trust level shows by its name (owner-renamable under Settings > Permissions; level 5 is "Veteran" by default). Topics from private spaces and private replies are not listed to viewers who cannot read them (a private reply reads "Private reply"). Profile links use the member's public slug (user_nicename), so a member whose login is an email address opens normally, an old link with the login still opens, and the email never appears in the URL or the meta description. A logged-in viewer sees a Message button when Jetonomy messaging is active or another messenger supplies a link through the `jetonomy_member_message_url` filter; otherwise there is no button.
 
 ### C.anon.tag
 **Covers:** templates/views/tag.php, includes/models/class-tag.php
@@ -244,17 +244,17 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.post-edit
 **Covers:** templates/views/single-post.php, templates/partials/edited-mark.php, includes/api/class-posts-controller.php, includes/models/class-post.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** a post author can edit their own post (this needs the Edit own posts permission, which Member and Participate grants include); changes persist and are reflected everywhere the post is referenced (home feed, space list, search). The "edited ... ago" marker appears when the edit came more than a minute after posting. The topic menu offers only the actions the viewer's permissions allow.
 
 ### C.member.post-delete
 **Covers:** templates/views/single-post.php, includes/api/class-posts-controller.php, includes/models/class-post.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** a post author can delete their own post (this needs the Delete own posts permission); it disappears from all listings and its single-post URL no longer serves the body (either 404 or "trashed" state per plugin contract); replies are handled consistently (cascaded or orphaned per contract).
 
 ### C.member.reply-create
 **Covers:** templates/views/single-post.php, includes/api/class-replies-controller.php, includes/models/class-reply.php, includes/notifications/class-notifier.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** a member can post a reply on any topic they can see; the reply appears inline, increments the topic's reply count, and triggers a notification to the OP (unless OP unsubscribed). A reply cannot be created under a parent that is missing, trashed, spam or in another topic. A private reply is not sent to thread subscribers.
 
 ### C.member.reply-quote
@@ -264,12 +264,12 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.mention
 **Covers:** includes/class-mentions.php, includes/notifications/class-notifier.php, includes/api/class-posts-controller.php, includes/api/class-replies-controller.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** using `@username` in a post or reply produces a notification for that user AND renders as a link to their profile in the saved content. Mentioning someone in a private reply notifies them only if they may read it. The mention email uses the owner's saved Mention subject and body (Settings > Emails), like every other email.
 
 ### C.member.vote
 **Covers:** includes/api/class-votes-controller.php, includes/models/class-vote.php, assets/js/view.js, templates/views/single-post.php, templates/partials/reply-card.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** a member can vote up/down on posts and replies, the score updates on screen, the vote persists across page reloads, and re-clicking the same vote toggles it off. The active vote button reads "Remove your upvote" / "Remove your downvote", and every vote on a topic or reply shows one toast, "Vote added" or "Vote removed" (never two). A member at the daily vote limit can still take a vote back. A logged-in member who may not vote sees the score as a disabled control that explains why on hover or click, not a button that does nothing. Taking back a vote removes the author's grouped "X people voted" notification once no votes remain; it never shows "0 people voted".
 
 ### C.member.flag
@@ -279,12 +279,12 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.subscribe-thread-and-space
 **Covers:** includes/api/class-subscriptions-controller.php, includes/models/class-subscription.php, includes/notifications/class-notifier.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** a member can subscribe to a thread and to a space; a subsequent reply (thread) or new post (space) produces a notification; unsubscribing stops new notifications. A member who creates a space from the front end follows it automatically. Thread subscribers are not notified about private replies.
 
 ### C.member.accept-answer
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, includes/api/class-replies-controller.php, includes/models/class-reply.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** on Q&A-typed spaces, the OP can mark a reply as the accepted answer, the reply is visibly promoted, and a second acceptance replaces the first per contract. A private reply is never shown in the accepted-answer callout to people who may not read it, and merging or splitting topics keeps exactly one accepted answer.
 
 ### C.member.profile-edit
@@ -299,7 +299,7 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.share
 **Covers:** templates/views/single-post.php, assets/js/view.js, assets/js/lib/smart-dropdown.js
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** the Share control on a topic opens a dropdown anchored to the button, offers Copy Link + X + Facebook + LinkedIn, Copy Link actually writes the URL to the clipboard, external links open on the right platform, and the dropdown closes when the user scrolls or clicks outside.
 
 ### C.member.scheduled-post
@@ -309,17 +309,17 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.member.space-pagination
 **Covers:** templates/views/space.php, templates/partials/pagination.php, assets/js/pagination-frontend.js, assets/js/pagination-hydrator.js
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** on a space page, `posts_per_page` controls how many topics load initially; scroll-to-load reveals additional batches without doubling up on first load; the load-more behavior does not re-trigger until the user actually scrolls.
 
 ### C.member.profile-mobile-tabs
 **Covers:** templates/views/user-profile.php, templates/views/drafts.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** on mobile (390px), the profile tabs bar is fully usable - no tab falls unreachable off-screen, the active tab is visible on load.
 
 ### C.member.online-indicator
 **Covers:** templates/partials/reply-card.php, templates/views/user-profile.php, templates/partials/sidebar.php, includes/models/class-user-profile.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** a user who is active within the threshold shows an online dot on every avatar context (topic page, profile header, home feed). The dot is visually attached to the avatar's top-right corner across all avatar sizes.
 
 ### C.mod.queue-and-actions
@@ -364,13 +364,13 @@ Each step below is a contract, not a script. When you verify it, exercise the UI
 
 ### C.notifications
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php, includes/api/class-notifications-controller.php, templates/views/notifications.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** every notification-triggering event (reply to subscribed thread, mention, flag resolution, badge award, admin announcement) produces a new notification for the correct recipient; the bell badge count updates; clicking through takes the user to the correct destination. Join requests and their answers, reactions and reviewed reports also produce notifications that read correctly. Withdrawing a join request removes the staff's "new join request" notices. Unread count endpoint is accurate; mark-all-read zeroes it out. Names in notifications follow the Name display setting.
 
 ### C.notifications.email
 **Covers:** includes/adapters/class-wp-mail-adapter.php, templates/emails/*.php, includes/notifications/class-notifier.php, includes/notifications/class-verification-reminder.php
-**Verified:** 83f00772
-**What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work. A member is emailed the answer to a join request (approved or declined). Mention emails use the owner's saved subject and body. The confirmation email's subject and intro follow Settings > Emails, with the link always added.
+**Verified:** dc84ba02
+**What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work. A member is emailed the answer to a join request (approved or declined), headed "Your join request was answered" (the Settings > Emails name), never "Join Request Result". Mention emails use the owner's saved subject and body. The confirmation email's subject and intro follow Settings > Emails, with the link always added.
 
 ### C.search
 **Covers:** templates/views/search.php, includes/search/class-fulltext-search.php, includes/search/class-search-indexer.php, includes/api/class-search-controller.php
@@ -522,12 +522,12 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.polls
 **Covers:** templates/partials/compose-fields.php, templates/views/single-post.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set. A composer poll with a question but fewer than two options blocks the post with "Question and at least 2 options required.". The Polls admin list shows topic titles.
 
 ### E.reactions
 **Covers:** templates/views/single-post.php, templates/partials/reply-card.php, assets/js/view.js
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; the reactor's avatar appears in the hover-card listing reactors. Removing must work on a reaction you just added, *without reloading the page* - that chip is built in JS and is exactly the one a person is most likely to click again to undo.
 
 ### E.analytics
@@ -537,7 +537,7 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.custom-badges
 **Covers:** templates/views/user-profile.php, templates/partials/post-badges.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** an admin can create a badge (name, icon, description, criteria), award it manually to a user, and that badge appears on the recipient's profile AND in the public badge list. Badges are once-only: a member never holds a duplicate (existing duplicates are repaired), and "Earned by" counts members.
 
 ### E.white-label
@@ -557,12 +557,12 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.custom-fields
 **Covers:** assets/js/lib/custom-fields.js, templates/views/edit-profile.php, templates/views/user-profile.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** an admin can define a custom field (text / select / url / etc.), a user can set a value in their profile, and the value is publicly visible where the field is marked public. Creating a field via REST must not fatal when optional params (like `slug`) are omitted.
 
 ### E.email-digest
 **Covers:** includes/adapters/interface-email-adapter.php, includes/notifications/class-notifier.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** users subscribed to the digest actually receive one at the configured cadence; a manual test-send from admin dispatches within 30s; the stats endpoint reports sends without error. When the digest's own sender is blank it uses the sender from Settings > Emails.
 
 ### E.reply-by-email
@@ -572,17 +572,17 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### E.seo-pro
 **Covers:** includes/seo/class-schema-markup.php, includes/class-template-loader.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** space-level SEO overrides (meta description, og:image) appear in the rendered HTML `<head>` on that space's pages. Defaults apply when overrides are absent.
 
 ### E.web-push
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-notification.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** the browser push subscription flow completes end-to-end, a test push reaches the subscribed browser. VAPID keys and service worker endpoints respond correctly.
 
 ### E.webhooks
 **Covers:** includes/notifications/class-notifier.php, includes/models/class-post.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 **What to verify:** an admin can create a webhook bound to one or more events; triggering one of those events actually fires a request to the configured URL; the test-fire button delivers a payload the receiver can parse.
 
 ---
@@ -591,12 +591,12 @@ Every active Pro extension gets a check here. Each contract covers the customer-
 
 ### F.chromium
 **Covers:** includes/class-router.php, includes/class-template-loader.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 Already covered by Sections A-E. Chromium is the default engine.
 
 ### F.firefox-desktop and F.safari-ios
 **Covers:** assets/js/composer.js, assets/js/lib/smart-dropdown.js, templates/views/user-profile.php
-**Verified:** 83f00772
+**Verified:** dc84ba02
 Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `manual_required[]` with the critical flows a human must spot-check:
 - Composer time picker in Firefox (native select behavior)
 - Share dropdown on Safari iOS at 390px
