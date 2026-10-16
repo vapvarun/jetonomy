@@ -283,6 +283,11 @@ if [ -f "$STAGE/composer.json" ]; then
 	# vendor/autoload.php is self-contained - so drop both now that vendor/
 	# exists. Leaving them shipped our dependency graph to customers for free.
 	rm -f "$STAGE/composer.json" "$STAGE/composer.lock"
+
+	# composer/installers is required only so Composer users get the plugin in
+	# wp-content/plugins/. It is a Composer plugin, never loaded by WordPress,
+	# and adds ~100 files to the zip.
+	rm -rf "$STAGE/vendor/composer/installers"
 fi
 
 # --- 5. sanity — required files present -----------------------------------
