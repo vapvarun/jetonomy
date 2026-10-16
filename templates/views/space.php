@@ -398,6 +398,12 @@ $crumbs[] = array(
 				// invites a question, a feed invites an update, an ideas space
 				// invites an idea — "No posts yet" reads as generic and dead.
 				$_jt_space_type = (string) ( $space->type ?? 'forum' );
+				// Mirror the space-header New Topic gate (Permission_Engine::can,
+				// which folds in membership, admin, trust AND the access rule's
+				// grant LEVEL) instead of the binary $_jt_rule_admits - a Read-only
+				// rule-admit is admitted but cannot post, and the server refuses
+				// it, so it must not get a New Post CTA either.
+				$_jt_can_post = ! $is_restricted && is_user_logged_in() && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id );
 				if ( $is_restricted ) {
 					// No invitation to post where posting is closed.
 					/* translators: %s: plural topic label. */
@@ -406,6 +412,15 @@ $crumbs[] = array(
 					$_jt_no_posts_msg = ( 'qa' === $_jt_space_type )
 						? __( 'Every question has an accepted answer.', 'jetonomy' )
 						: sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'No %1$s without %2$s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) );
+				} elseif ( ! $_jt_can_post ) {
+					// Not a member yet, a guest, or read-only: same noun, no invitation it cannot act on.
+					$_jt_no_posts_by_type = array(
+						'qa'    => __( 'No questions yet.', 'jetonomy' ),
+						'feed'  => __( 'Nothing posted yet.', 'jetonomy' ),
+						'ideas' => __( 'No ideas yet.', 'jetonomy' ),
+					);
+					/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+					$_jt_no_posts_msg = $_jt_no_posts_by_type[ $_jt_space_type ] ?? sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 				} else {
 					switch ( $_jt_space_type ) {
 						case 'qa':
@@ -428,12 +443,6 @@ $crumbs[] = array(
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
 				);
 				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? \Jetonomy\compose_label( $_jt_space_type );
-				// Mirror the space-header New Topic gate (Permission_Engine::can,
-				// which folds in membership, admin, trust AND the access rule's
-				// grant LEVEL) instead of the binary $_jt_rule_admits - a Read-only
-				// rule-admit is admitted but cannot post, and the server refuses
-				// it, so it must not get a New Post CTA either.
-				$_jt_can_post = ! $is_restricted && is_user_logged_in() && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					array(

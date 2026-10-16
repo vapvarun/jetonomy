@@ -49,6 +49,11 @@ class DemoBadgeAwardsTest extends WP_UnitTestCase {
 		$this->real_tables(
 			static function () use ( $wpdb ) {
 				$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}jt_pro_badges, {$wpdb->prefix}jt_pro_user_badges" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// Put Pro's real tables back: left missing, later tests get TEMPORARY
+				// ones, and MySQL cannot open a temporary table twice in one query.
+				if ( class_exists( \Jetonomy_Pro\Extensions\Custom_Badges\Extension::class ) ) {
+					( new \Jetonomy_Pro\Extensions\Custom_Badges\Extension() )->activate();
+				}
 			}
 		);
 		parent::tear_down();

@@ -1647,7 +1647,7 @@ class Notifier {
 			'moderation'          => __( 'Moderation', 'jetonomy' ),
 			'flag_resolved'       => __( 'Report Reviewed', 'jetonomy' ),
 			'join_request'        => __( 'Join Request', 'jetonomy' ),
-			'join_request_result' => __( 'Join Request Result', 'jetonomy' ),
+			'join_request_result' => __( 'Your join request was answered', 'jetonomy' ),
 			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
 			'message'             => __( 'Private Message', 'jetonomy' ),
 		);

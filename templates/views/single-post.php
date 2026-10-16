@@ -948,14 +948,27 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					</aside>
 				<?php endif; ?>
 
+				<?php
+				// "may actually reply here", not merely "is logged in": a Read-grant admits
+				// a member to the space without granting create_replies, and POST /replies
+				// then 403s. Gate the composer on the same permission the server enforces so
+				// a read-only member never sees a Post Reply box they cannot submit - the
+				// Vote / New-Topic seam, applied to the reply surface. The empty state
+				// below uses it too, so it never invites a reply the viewer cannot post.
+				$jt_can_reply_here = $jt_is_live
+					&& $jt_viewer_id
+					&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
+				?>
 				<?php if ( empty( $reply_batch ) ) : ?>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						array(
 							'icon'    => 'empty-replies',
-							// jt-terms-ok: 'reply' at the end is the verb; the noun comes from the label.
-							'message' => sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet. Be the first to reply!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+							'message' => ( $jt_can_reply_here && ( ! $post->is_closed || $jt_can_moderate_here ) )
+								// jt-terms-ok: 'reply' at the end is the verb; the noun comes from the label.
+								? sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet. Be the first to reply!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+								: sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 						)
 					);
 					?>
@@ -1004,16 +1017,6 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			</div>
 
 			<!-- Composer -->
-			<?php
-			// "may actually reply here", not merely "is logged in": a Read-grant admits
-			// a member to the space without granting create_replies, and POST /replies
-			// then 403s. Gate the composer on the same permission the server enforces so
-			// a read-only member never sees a Post Reply box they cannot submit - the
-			// Vote / New-Topic seam, applied to the reply surface.
-			$jt_can_reply_here = $jt_is_live
-				&& $jt_viewer_id
-				&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
-			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
 					<?php printf( /* translators: 1: singular topic label; 2: plural reply label. */ esc_html__( 'This %1$s is closed and no longer accepts %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>

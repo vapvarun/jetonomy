@@ -103,6 +103,22 @@ class OwnerPassFixesTest extends WP_UnitTestCase {
 		$this->assertNotEmpty( $this->subjects_to( get_userdata( $this->member )->user_email ), 'the answer reaches the member by email' );
 	}
 
+	public function test_the_join_answer_email_heading_reads_like_settings_not_an_internal_label(): void {
+		$space = $this->space();
+		SpaceMember::join( $space, $this->member );
+		JoinRequest::approve( (int) JoinRequest::find_pending( $space, $this->member )->id, $this->admin );
+
+		$to   = get_userdata( $this->member )->user_email;
+		$body = '';
+		foreach ( (array) tests_retrieve_phpmailer_instance()->mock_sent as $mail ) {
+			if ( $to === $mail['to'][0][0] ) {
+				$body = (string) $mail['body'];
+			}
+		}
+		$this->assertStringContainsString( 'Your join request was answered', $body, 'the heading the owner sees in Settings > Emails' );
+		$this->assertStringNotContainsString( 'Join Request Result', $body );
+	}
+
 	public function test_the_owners_mention_subject_is_used(): void {
 		update_option(
 			'jetonomy_email_templates',
