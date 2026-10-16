@@ -329,26 +329,49 @@ class Space extends Model {
 
 		// Power first: if the new owner cannot be made an admin (a join filter
 		// can veto it), nothing else changes.
-		$added = SpaceMember::add( $space_id, $to_user_id, 'admin' );
+		$heir_role = SpaceMember::get_role( $space_id, $to_user_id );
+		$added     = SpaceMember::add( $space_id, $to_user_id, 'admin' );
 		if ( is_wp_error( $added ) ) {
 			return $added;
 		}
+
+		// A hand-over that reports failure must leave the space as it found it:
+		// the heir goes back to the role they had (or out of the space).
+		$failed = static function () use ( $space_id, $to_user_id, $heir_role ): \WP_Error {
+			if ( null === $heir_role ) {
+				SpaceMember::remove( $space_id, $to_user_id );
+			} elseif ( 'admin' !== $heir_role ) {
+				SpaceMember::set_role( $space_id, $to_user_id, $heir_role );
+			}
+			return new \WP_Error( 'jetonomy_transfer_failed', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'The %s could not be handed over. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 500 ) );
+		};
 
 		$data = array( 'author_id' => $to_user_id );
 		if ( $archive ) {
 			$data['status'] = 'archived';
 		}
-		self::update( $space_id, $data );
+		$written = self::update( $space_id, $data );
 
 		$after = self::find( $space_id );
-		if ( ! $after || (int) $after->author_id !== $to_user_id || ( $archive && 'archived' !== (string) $after->status ) ) {
-			return new \WP_Error( 'jetonomy_transfer_failed', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'The %s could not be handed over. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 500 ) );
+		if ( true !== $written || ! $after || (int) $after->author_id !== $to_user_id || ( $archive && 'archived' !== (string) $after->status ) ) {
+			return $failed();
 		}
 
 		// The marker records that this hand-over archived the space, so it is
-		// stamped only once the archive is confirmed.
+		// stamped only once the archive is confirmed. Without it the new owner
+		// could not unarchive, so a missing marker undoes the whole hand-over.
 		if ( $archive ) {
-			self::update( $space_id, array( 'settings' => wp_json_encode( array_merge( self::get_settings( $space_id ), array( self::HANDOVER_ARCHIVE => 1 ) ) ) ) );
+			$marked = self::update( $space_id, array( 'settings' => wp_json_encode( array_merge( self::get_settings( $space_id ), array( self::HANDOVER_ARCHIVE => 1 ) ) ) ) );
+			if ( true !== $marked || empty( self::get_settings( $space_id )[ self::HANDOVER_ARCHIVE ] ) ) {
+				self::update(
+					$space_id,
+					array(
+						'author_id' => $from_user_id,
+						'status'    => (string) $space->status,
+					)
+				);
+				return $failed();
+			}
 		}
 
 		if ( $demote_previous && $from_user_id > 0 && 'admin' === SpaceMember::get_role( $space_id, $from_user_id ) ) {

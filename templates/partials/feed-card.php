@@ -101,8 +101,10 @@ $author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'je
 					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 		</button>
 				<?php endif; ?>
+			<?php elseif ( is_user_logged_in() ) : ?>
+				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 16 ); ?>
 			<?php else : ?>
-				<?php // Read-grant / guest: inert score, no clickable control the server would refuse. ?>
+				<?php // Guest: inert score, no clickable control the server would refuse. ?>
 		<span class="jt-feed-act" aria-hidden="true">
 				<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 			<span class="n jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>

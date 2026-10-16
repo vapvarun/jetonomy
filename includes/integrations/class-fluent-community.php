@@ -219,7 +219,7 @@ class Fluent_Community {
 		}
 
 		self::$syncing = true;
-		SpaceMember::add( $jt_id, $user_id );
+		SpaceMember::add_unless_blocked( $jt_id, $user_id );
 		self::$syncing = false;
 	}
 
@@ -593,8 +593,7 @@ class Fluent_Community {
 
 			self::$syncing = true;
 			foreach ( $only_in_fc as $uid ) {
-				if ( $uid > 0 && ! SpaceMember::is_member( $jt_id, $uid ) ) {
-					SpaceMember::add( $jt_id, $uid );
+				if ( $uid > 0 && ! SpaceMember::is_member( $jt_id, $uid ) && true === SpaceMember::add_unless_blocked( $jt_id, $uid ) ) {
 					++$stats['added_to_jt'];
 				}
 			}

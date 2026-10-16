@@ -70,6 +70,9 @@ if ( $prefix_name && $space ) {
 						data-post-id="<?php echo absint( $post->id ); ?>"
 						<?php echo jetonomy_vote_attrs( 'down', -1 === $viewer_vote ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper. ?>><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 				<?php endif; ?>
+			<?php elseif ( is_user_logged_in() ) : ?>
+				<?php // Logged in but not allowed to vote here: say why, same as the single topic page. ?>
+				<?php jetonomy_vote_denied_control( (int) $post->vote_score, 14 ); ?>
 			<?php else : ?>
 				<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
 				<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
