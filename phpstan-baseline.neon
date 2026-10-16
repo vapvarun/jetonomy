@@ -80,10 +80,6 @@ parameters:
 			count: 3
 			path: includes/class-cli.php
 
-		-
-			message: "#^Variable \\$base in empty\\(\\) always exists and is not falsy\\.$#"
-			count: 1
-			path: includes/class-cli.php
 
 		-
 			message: "#^Parameter \\#1 \\$text of function esc_attr expects string, int\\<min, \\-1\\> given\\.$#"
