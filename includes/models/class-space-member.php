@@ -252,6 +252,31 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Admit someone who asked to join somewhere else - a linked BuddyPress
+	 * or FluentCommunity group, or an approved join request - unless the
+	 * space is archived, locked, or bans them.
+	 *
+	 * Unlike join(), the space's own join policy does not apply: the group
+	 * or the reviewer already decided entry. Staff grants (wp-admin, hand-over,
+	 * tier sync) call add() directly and are not gated here.
+	 *
+	 * @param int    $space_id Space ID.
+	 * @param int    $user_id  User ID.
+	 * @param string $role     Role to grant.
+	 * @return \WP_Error|bool
+	 */
+	public static function add_unless_blocked( int $space_id, int $user_id, string $role = 'member' ): \WP_Error|bool {
+		$space = Space::find( $space_id );
+		if ( $space ) {
+			$blocked = self::join_blocked( $space, $user_id );
+			if ( $blocked ) {
+				return $blocked;
+			}
+		}
+		return self::add( $space_id, $user_id, $role );
+	}
+
+	/**
 	 * Self-service join (facade — the single "a user asks to join" path).
 	 *
 	 * Distinct from add(): add() is the low-level primitive used by invite

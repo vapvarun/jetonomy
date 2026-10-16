@@ -710,8 +710,10 @@ class BuddyPress {
 			return;
 		}
 
+		// Joining the group is asking to join the space: an archived or locked
+		// space, or a space ban, still says no.
 		if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
-			$result = SpaceMember::add( $space_id, $user_id, 'member' );
+			$result = SpaceMember::add_unless_blocked( $space_id, $user_id );
 			if ( is_wp_error( $result ) ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[Jetonomy] BP member join sync: ' . $result->get_error_message() );
@@ -753,8 +755,11 @@ class BuddyPress {
 		);
 		$role     = $role_map[ $status ] ?? 'member';
 
-		// SpaceMember::add with REPLACE semantics updates the role.
-		$result = SpaceMember::add( $space_id, $user_id, $role );
+		// add() updates an existing member's role; for someone not in the space
+		// yet this is a join, so the archived/locked/ban gate applies.
+		$result = SpaceMember::is_member( $space_id, $user_id )
+			? SpaceMember::add( $space_id, $user_id, $role )
+			: SpaceMember::add_unless_blocked( $space_id, $user_id, $role );
 		if ( is_wp_error( $result ) ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[Jetonomy] BP member promote sync: ' . $result->get_error_message() );
@@ -773,7 +778,9 @@ class BuddyPress {
 			return;
 		}
 
-		$result = SpaceMember::add( $space_id, $user_id, 'member' );
+		$result = SpaceMember::is_member( $space_id, $user_id )
+			? SpaceMember::add( $space_id, $user_id, 'member' )
+			: SpaceMember::add_unless_blocked( $space_id, $user_id );
 		if ( is_wp_error( $result ) ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[Jetonomy] BP member demote sync: ' . $result->get_error_message() );

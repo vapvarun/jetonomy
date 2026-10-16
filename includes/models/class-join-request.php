@@ -84,10 +84,14 @@ class JoinRequest extends Model {
 	}
 
 	/**
-	 * Approve a pending join request: admit the requester, then settle it.
+	 * Approve a pending join request: claim it, then admit the requester.
 	 *
-	 * Admission comes first. If a join filter vetoes it, the request stays
-	 * pending and nobody is told "approved" for a space they are not in.
+	 * The claim comes first. Admitting first left a window where a deny or a
+	 * withdraw could land between the two writes: the request ended denied
+	 * (or deleted) while the membership row stayed, so a refused requester
+	 * kept access. Once the row is ours nobody else can settle it; if the
+	 * admission is then refused (a join filter veto, an archived or locked
+	 * space) the claim is handed back and the request stays pending.
 	 *
 	 * @param int $id          Request row ID.
 	 * @param int $reviewed_by User ID of the reviewer.
@@ -105,12 +109,18 @@ class JoinRequest extends Model {
 			return new \WP_Error( 'jetonomy_space_banned', sprintf( /* translators: 1: singular member label, lowercase; 2: singular space label, lowercase. */ __( 'This %1$s is banned from this %2$s. Deny the request or lift the ban first.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ), \Jetonomy\space_label( false, true ) ), array( 'status' => 403 ) );
 		}
 
-		$added = SpaceMember::add( (int) $request->space_id, (int) $request->user_id, 'member' );
+		if ( ! self::claim( $request, 'approved', $reviewed_by ) ) {
+			return self::already_handled();
+		}
+
+		$added = SpaceMember::add_unless_blocked( (int) $request->space_id, (int) $request->user_id );
 		if ( is_wp_error( $added ) ) {
+			self::release( $id );
 			return $added;
 		}
 
-		return self::settle( $id, 'approved', $reviewed_by ) ? true : self::already_handled();
+		self::fire( 'approved', (int) $request->space_id, (int) $request->user_id, $reviewed_by );
+		return true;
 	}
 
 	/**
@@ -186,7 +196,7 @@ class JoinRequest extends Model {
 	public static function resolve_pending_for_space( int $space_id, bool $admit, int $reviewed_by ): int {
 		$rows = self::db()->get_results(
 			self::db()->prepare(
-				'SELECT id, user_id FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending'",
+				'SELECT id, space_id, user_id FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending'",
 				$space_id
 			)
 		) ?: array();
@@ -200,12 +210,26 @@ class JoinRequest extends Model {
 			// Someone already in the space (granted a role meanwhile) keeps it:
 			// add() would lift a viewer to member.
 			// A member banned from the space meanwhile is denied, not admitted.
-			$admitted = $admit && ! Restriction::is_space_banned( $user_id, $space_id )
-				&& ( null !== SpaceMember::get_role( $space_id, $user_id )
-					|| ! is_wp_error( SpaceMember::add( $space_id, $user_id, 'member' ) ) );
+			$admit_one = $admit && ! Restriction::is_space_banned( $user_id, $space_id );
+			if ( ! $admit_one ) {
+				$settled += (int) self::settle( (int) $row->id, 'denied', $reviewed_by );
+				continue;
+			}
 
-			// settle() moves only a still-pending row and fires once for it.
-			$settled += (int) self::settle( (int) $row->id, $admitted ? 'approved' : 'denied', $reviewed_by );
+			// Claim before admitting, as approve() does, so a withdraw racing
+			// this loop cannot leave a member behind a deleted request.
+			if ( ! self::claim( $row, 'approved', $reviewed_by ) ) {
+				continue;
+			}
+			if ( null === SpaceMember::get_role( $space_id, $user_id )
+				&& is_wp_error( SpaceMember::add_unless_blocked( $space_id, $user_id ) ) ) {
+				// Refused by the open door too: deny instead of approve.
+				self::release( (int) $row->id );
+				$settled += (int) self::settle( (int) $row->id, 'denied', $reviewed_by );
+				continue;
+			}
+			self::fire( 'approved', $space_id, $user_id, $reviewed_by );
+			++$settled;
 		}
 
 		return $settled;
@@ -221,28 +245,51 @@ class JoinRequest extends Model {
 	 */
 	private static function settle( int $id, string $status, int $reviewed_by ): bool {
 		$request = self::find( $id );
-		if ( ! $request || 'pending' !== (string) $request->status ) {
+		if ( ! $request || 'pending' !== (string) $request->status || ! self::claim( $request, $status, $reviewed_by ) ) {
 			return false;
 		}
+		self::fire( $status, (int) $request->space_id, (int) $request->user_id, $reviewed_by );
+		return true;
+	}
 
-		self::clear_superseded( (int) $request->space_id, $status, array( (int) $request->user_id ), $id );
-
-		// Only a still-pending row moves, and only the call that moved it
-		// fires the hook: a concurrent approve and deny cannot both notify.
+	/**
+	 * Take a still-pending request to a terminal status.
+	 *
+	 * The conditional UPDATE is the lock: of a concurrent approve, deny and
+	 * withdraw, exactly one moves the row and the others see 0 rows. Only the
+	 * caller that claimed the row may fire its outcome hook.
+	 *
+	 * @param object $request     Request row (id, space_id, user_id).
+	 * @param string $status      'approved' | 'denied'.
+	 * @param int    $reviewed_by Reviewer.
+	 * @return bool True when this call moved the row.
+	 */
+	private static function claim( object $request, string $status, int $reviewed_by ): bool {
+		self::clear_superseded( (int) $request->space_id, $status, array( (int) $request->user_id ), (int) $request->id );
 		$changed = self::db()->query(
 			self::db()->prepare(
 				'UPDATE ' . self::table() . " SET status = %s, reviewed_by = %d, reviewed_at = %s WHERE id = %d AND status = 'pending'",
 				$status,
 				$reviewed_by,
 				now(),
+				(int) $request->id
+			)
+		);
+		return 1 === (int) $changed;
+	}
+
+	/**
+	 * Hand a claimed approval back when the admission behind it was refused.
+	 *
+	 * @param int $id Request row ID.
+	 */
+	private static function release( int $id ): void {
+		self::db()->query(
+			self::db()->prepare(
+				'UPDATE ' . self::table() . " SET status = 'pending', reviewed_by = NULL, reviewed_at = NULL WHERE id = %d AND status = 'approved'",
 				$id
 			)
 		);
-		if ( 1 !== (int) $changed ) {
-			return false;
-		}
-		self::fire( $status, (int) $request->space_id, (int) $request->user_id, $reviewed_by );
-		return true;
 	}
 
 	/**
