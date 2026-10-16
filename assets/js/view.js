@@ -735,6 +735,16 @@ function notifMarkRowRead( row ) {
     }
 }
 
+/**
+ * Lower every unread-count badge on the page (header bell, user panel, Unread tab)
+ * by `by`, or clear them when `by` is null. The server renders them; reads made
+ * here must not leave them showing the old number until a reload.
+ */
+function notifLowerUnreadBadges( by ) {
+    // header.js owns the badge list; it is enqueued with the header that renders them.
+    window.jtLowerUnreadBadges?.( by );
+}
+
 /** Refresh the notifications bulk toolbar count + visibility from current checks. */
 function notifUpdateBulkbar() {
     const bulkbar = document.querySelector( '[data-jt-notif-bulkbar]' );
@@ -1680,6 +1690,7 @@ const { state, actions } = store( 'jetonomy', {
             const res = yield window.jetonomyRest.restFetch( '/notifications/mark-all-read', { method: 'POST' } );
             if ( ! res.ok ) { btn.disabled = false; return; }
             document.querySelectorAll( '[data-jt-notif-list] .jt-notif-item.unread' ).forEach( notifMarkRowRead );
+            notifLowerUnreadBadges( null );
             btn.remove();
         },
         toggleNotifMenu( event ) {
@@ -1706,8 +1717,11 @@ const { state, actions } = store( 'jetonomy', {
             const row = trigger && trigger.closest( '.jt-notif-item' );
             const id = row && parseInt( row.getAttribute( 'data-jt-notif-id' ), 10 );
             if ( ! id ) return;
+            const wasUnread = row.classList.contains( 'unread' );
             const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'PATCH' } );
-            if ( res.ok ) notifMarkRowRead( row );
+            if ( ! res.ok ) return;
+            notifMarkRowRead( row );
+            if ( wasUnread ) notifLowerUnreadBadges( 1 );
         },
         *deleteNotif( event ) {
             const trigger = triggerOf( event );
@@ -1774,12 +1788,15 @@ const { state, actions } = store( 'jetonomy', {
             const res = yield window.jetonomyRest.restFetch( '/notifications/bulk', { method: 'POST', body: { action, ids } } );
             btn.disabled = false;
             if ( ! res.ok ) return;
+            let unreadTouched = 0;
             ids.forEach( ( id ) => {
                 const row = document.querySelector( '[data-jt-notif-list] .jt-notif-item[data-jt-notif-id="' + id + '"]' );
                 if ( ! row ) return;
+                if ( row.classList.contains( 'unread' ) ) unreadTouched++;
                 if ( 'delete' === action ) row.remove();
                 else notifMarkRowRead( row );
             } );
+            if ( unreadTouched ) notifLowerUnreadBadges( unreadTouched );
             const selectAll = document.querySelector( '[data-jt-notif-selectall]' );
             if ( selectAll ) selectAll.checked = false;
             notifUpdateBulkbar();

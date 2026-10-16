@@ -82,12 +82,23 @@
 		}
 	};
 
+	/**
+	 * Lower every unread-count badge by `by`, or clear them all when `by` is null:
+	 * the desktop bell, the mobile Alerts tab, the user panel and the Unread tab.
+	 * The one place that knows where the count is shown; view.js calls it too.
+	 */
+	window.jtLowerUnreadBadges = function (by) {
+		document.querySelectorAll('.jt-community-nav-badge, .jt-mobile-tab-badge, .jt-userpanel-badge, [data-jt-notif-tab="unread"] .jt-notif-tab__count').forEach(function (badge) {
+			var next = null === by ? 0 : (parseInt(badge.textContent.replace(/\D/g, ''), 10) || 0) - by;
+			if (next > 0) { badge.textContent = String(next); } else { badge.remove(); }
+		});
+	};
+
 	window.jtMarkAllRead = function () {
 		window.jetonomyRest.restFetch('/notifications/mark-all-read', {
 			method: 'POST'
 		}).then(function () {
-			var badge = document.querySelector('.jt-community-nav-badge');
-			if (badge) { badge.remove(); }
+			window.jtLowerUnreadBadges(null);
 			document.querySelectorAll('.jt-notif-panel-item.unread').forEach(function (i) {
 				i.classList.remove('unread');
 			});
@@ -104,11 +115,7 @@
 		window.jetonomyRest.restFetch('/notifications/' + encodeURIComponent(id), {
 			method: 'PATCH'
 		});
-		var badge = document.querySelector('.jt-community-nav-badge');
-		if (badge) {
-			var next = parseInt(badge.textContent, 10) - 1;
-			if (next > 0) { badge.textContent = String(next); } else { badge.remove(); }
-		}
+		window.jtLowerUnreadBadges(1);
 	});
 
 	document.addEventListener('click', function (e) {

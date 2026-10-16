@@ -172,6 +172,7 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 			?>
 			<a href="<?php echo esc_url( $tab_url ); ?>"
 				class="<?php echo esc_attr( $tab_class ); ?>"
+				data-jt-notif-tab="<?php echo esc_attr( $tab_slug ); ?>"
 				<?php echo $is_active ? 'aria-current="page"' : ''; ?>>
 				<span class="jt-notif-tab__label"><?php echo esc_html( $tab_label ); ?></span>
 				<?php if ( $tab_count > 0 ) : ?>
