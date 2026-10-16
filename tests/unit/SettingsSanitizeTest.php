@@ -69,6 +69,29 @@ class SettingsSanitizeTest extends WP_UnitTestCase {
 		$this->assertFalse( (bool) $clean[ $key ], "{$key} could be switched on but not off" );
 	}
 
+	/**
+	 * Clearing the Community Base URL field and saving must not unmount the community.
+	 *
+	 * An empty slug was stored as-is, base_slug() returned '', and every
+	 * /community/ URL 404'd (the base moved to the site root) after one save.
+	 */
+	public function test_a_cleared_base_slug_keeps_the_current_base(): void {
+		update_option( 'jetonomy_settings', [ 'base_slug' => 'forum' ] );
+
+		$clean = $this->admin->sanitize_settings( $this->general_tab( [ 'base_slug' => '' ] ) );
+
+		$this->assertSame( 'forum', $clean['base_slug'] );
+	}
+
+	/** A site that already stored an empty slug, or never saved Settings, runs on 'community'. */
+	public function test_base_slug_falls_back_to_community_when_empty_or_unset(): void {
+		update_option( 'jetonomy_settings', [ 'base_slug' => '' ] );
+		$this->assertSame( 'community', \Jetonomy\base_slug() );
+
+		update_option( 'jetonomy_settings', [] );
+		$this->assertSame( 'community', \Jetonomy\base_slug() );
+	}
+
 	public static function general_tab_checkboxes(): array {
 		return [
 			// Gates permanent space deletion for non-administrators.

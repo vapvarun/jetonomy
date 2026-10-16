@@ -615,9 +615,8 @@ class CLI {
 		}
 
 		// ── Section 6: Rewrite Rules ──────────────────────────────────────────
-		$_jt_settings = get_option( 'jetonomy_settings', array() );
-		$base         = ! empty( $_jt_settings['base_slug'] ) ? $_jt_settings['base_slug'] : 'community';
-		$rules        = get_option( 'rewrite_rules', array() ) ?: array();
+		$base  = base_slug();
+		$rules = get_option( 'rewrite_rules', array() ) ?: array();
 
 		$record( 'rewrite_rules', 'Rewrite rules option is populated', ! empty( $rules ), empty( $rules ) ? 'No rules found -- run wp rewrite flush' : '' );
 		$record( 'rewrite_rules', "Base slug '{$base}' is non-empty", ! empty( $base ) );
@@ -650,7 +649,6 @@ class CLI {
 		$jt = get_option( 'jetonomy_settings', array() );
 
 		$record( 'settings', 'jetonomy_settings option exists', ! empty( $jt ) );
-		$record( 'settings', 'base_slug is set', ! empty( $jt['base_slug'] ) );
 		$record( 'settings', 'trust_thresholds is set', ! empty( $jt['trust_thresholds'] ) );
 		$record( 'settings', 'rate_limits is set', ! empty( $jt['rate_limits'] ) );
 		$record( 'settings', 'notification_defaults is set', ! empty( $jt['notification_defaults'] ) );
