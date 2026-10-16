@@ -140,6 +140,33 @@ class ReactionsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Asking for one reaction names who chose it, as one translated sentence;
+	 * past ten names the rest are counted.
+	 */
+	public function test_get_with_emoji_names_who_reacted(): void {
+		$users = [];
+		foreach ( range( 1, 12 ) as $i ) {
+			$id = $this->factory()->user->create( [ 'role' => 'subscriber', 'display_name' => "Reactor {$i}" ] );
+			get_user_by( 'id', $id )->add_cap( 'jetonomy_vote' );
+			$this->toggle( 'thumbsup', $id );
+			$users[] = $id;
+		}
+
+		$get = function ( string $emoji ): array {
+			$request = new WP_REST_Request( 'GET', "/jetonomy/v1/posts/{$this->post_id}/reactions" );
+			$request->set_param( 'emoji', $emoji );
+			return $this->server->dispatch( $request )->get_data();
+		};
+
+		$data = $get( 'thumbsup' );
+		$this->assertSame( 12, $data['reactors']['total'] );
+		$this->assertCount( 10, $data['reactors']['names'] );
+		$this->assertStringEndsWith( 'and 2 others', $data['reactors']['label'] );
+
+		$this->assertArrayNotHasKey( 'reactors', $get( 'heart' ), 'no one chose heart' );
+	}
+
+	/**
 	 * The first toggle for a user on a post must respond with action=added.
 	 */
 	public function test_toggle_reaction_on_returns_action_added(): void {
