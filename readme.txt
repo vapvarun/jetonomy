@@ -330,7 +330,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Improve  - An empty space invites a first post, and a topic with no replies invites a first reply, only to visitors who can post there.
 * Fix      - Members whose display name is a reserved word, such as admin, can save their profile again.
 * Fix      - Refused actions such as reaching the pin limit show their message even when the community navigation is hidden.
-* Fix      - Members who cannot vote see why, instead of a vote button that does nothing.
+* Fix      - Members who cannot vote see why, in topic lists as well as on the topic page, instead of a vote button that does nothing.
 * Fix      - Dismissing a report on a reply now restores the author's reputation, as it already did for topics.
 * Fix      - The More options menu no longer opens empty for a role that can only moderate.
 * Fix      - Messages no longer return a 404 on Windows servers.
@@ -376,6 +376,8 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Fix      - Next and Previous on member lists, tag pages, notifications and moderation queues no longer end on a 404 on sites that rewrite paged links.
 * Fix      - Profile links work for members whose username is an email address or contains spaces or other special characters, and older profile links still open.
 * Fix      - The email telling a member their join request was answered is headed "Your join request was answered".
+* Fix      - The "View all spaces" link on the community home has room above it instead of touching the space cards.
+* Fix      - A space hand-over that fails part-way is undone, so the proposed owner is not left as a space admin.
 * Security - Site moderators can no longer edit, trash, approve or resolve reports on content in private spaces they cannot read, and their moderation queues, report lists and counts leave those spaces out.
 * Security - Members can no longer report content they cannot see, which also stops reports being used to learn which private topics exist.
 * Security - A member's display name can no longer run script in wp-admin's member search or Users screen.
@@ -404,6 +406,8 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Security - Topics in hidden spaces now answer exactly like missing ones, so a guessed link no longer confirms they exist.
 * Security - The REST API no longer returns members' usernames (an email address on some sites) to visitors; the author_login, actor_login and mention-suggest login fields now carry the public handle.
 * Security - A profile page's meta description shows the member's public handle instead of their username, which on some sites is an email address.
+* Security - A join request denied or withdrawn while it was being approved no longer grants membership.
+* Security - Joining a linked BuddyPress or FluentCommunity group no longer adds anyone to an archived or locked space, or to a space that bans them.
 * Dev      - New filter jetonomy_space_preview_limit sets how many spaces a category previews, and REST user responses add trust_level_label.
 * Dev      - A pre-commit check now fails on hardcoded space, topic, reply, member or category nouns in translatable text.
 * Dev      - Error codes returned by the REST API and Abilities are now prefixed `jetonomy_` (for example `jetonomy_not_found`, `jetonomy_invalid_url`, `jetonomy_user_silenced`).

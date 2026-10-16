@@ -165,4 +165,23 @@ class ReactionsTest extends WP_UnitTestCase {
 		$this->assertContains( $response->get_status(), [ 401, 403 ],
 			'Unauthenticated request must be rejected with 401 or 403.' );
 	}
+
+	/**
+	 * A visitor sees counts and a "Log in to react" link, never a picker or a
+	 * button that only bounces them to the login screen.
+	 */
+	public function test_guest_sees_static_counts_and_a_login_link(): void {
+		$this->toggle( 'thumbsup', $this->user_id );
+		wp_set_current_user( 0 );
+
+		$ext = new \Jetonomy_Pro\Extensions\Reactions\Extension();
+		ob_start();
+		$ext->render_post_reactions( (object) array( 'id' => $this->post_id ) );
+		$html = (string) ob_get_clean();
+
+		$this->assertStringContainsString( 'Log in to react', $html );
+		$this->assertStringContainsString( 'jt-reaction-chip is-static', $html );
+		$this->assertStringNotContainsString( '<button', $html );
+		$this->assertStringNotContainsString( 'jt-reaction-picker', $html );
+	}
 }
