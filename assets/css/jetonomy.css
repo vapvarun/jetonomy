@@ -539,6 +539,9 @@
   .jt-act.jt-flagged-indicator:hover { color: var(--jt-danger-strong); background: var(--jt-danger-light); }
   .jt-flagged-count { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.8125rem; }
   .jt-v-num { font-variant-numeric: tabular-nums; font-size: 0.9375rem; font-weight: 700; }
+  /* Denied vote control in the topic list: stack icon over score like the live up/score/down column. */
+  .jt-votes .jt-act-denied { flex-direction: column; gap: 1px; padding: 0; min-block-size: 0; color: var(--jt-text-secondary); }
+  .jt-votes .jt-act-denied .n { font-size: 0.9375rem; color: var(--jt-text); }
 
   /* Vote cluster — visual grouping for up + down so they read as
      equal-weight peers in the action bar. End-user goal: both
@@ -1259,7 +1262,8 @@
      which spaces are alive. Same gap as the other stats: pushed to the end
      with an auto margin it floated a different distance on every card. */
   .jt-space-card-activity { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .jt-space-grid-more { margin-block-start: var(--jt-space-3); text-align: center; }
+  /* .jt-app scope: the `.jt-app p` reset (0,1,1) otherwise zeroes this margin and the link touches the grid. */
+  .jt-app .jt-space-grid-more { margin-block-start: var(--jt-space-4); text-align: center; }
   .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
   .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
   .jt-space-card-badge svg { flex-shrink: 0; width: 12px; height: 12px; }

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-16T05:46:54+00:00\n"
+"POT-Creation-Date: 2026-10-16T12:20:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -494,9 +494,9 @@ msgstr ""
 #: includes/models/class-reply.php:533
 #: includes/models/class-reply.php:602
 #: includes/models/class-reply.php:606
-#: includes/models/class-space-member.php:296
+#: includes/models/class-space-member.php:321
 #: includes/models/class-space.php:322
-#: includes/models/class-space.php:384
+#: includes/models/class-space.php:407
 #: includes/moderation/class-moderation-service.php:728
 #: templates/views/category.php:20
 #: templates/views/new-post.php:20
@@ -630,7 +630,7 @@ msgstr ""
 
 #: includes/admin/ajax/class-spaces-handler.php:704
 #: includes/api/class-spaces-controller.php:1267
-#: includes/models/class-join-request.php:153
+#: includes/models/class-join-request.php:163
 msgid "This request has already been handled."
 msgstr ""
 
@@ -829,13 +829,13 @@ msgstr ""
 #: includes/admin/views/content.php:398
 #: includes/admin/views/revisions.php:129
 #: includes/class-shortcodes.php:251
-#: includes/integrations/class-buddypress.php:884
-#: includes/integrations/class-buddypress.php:1009
-#: includes/integrations/class-buddypress.php:1042
-#: includes/integrations/class-buddypress.php:1073
+#: includes/integrations/class-buddypress.php:891
+#: includes/integrations/class-buddypress.php:1016
+#: includes/integrations/class-buddypress.php:1049
+#: includes/integrations/class-buddypress.php:1080
 #: templates/partials/feed-card.php:67
 #: templates/partials/moderation/flag-card.php:74
-#: templates/partials/post-card.php:160
+#: templates/partials/post-card.php:163
 #: templates/partials/reply-card.php:149
 #: templates/views/moderation.php:533
 #: templates/views/notifications.php:315
@@ -869,10 +869,10 @@ msgstr ""
 #: includes/api/class-replies-controller.php:832
 #: includes/class-author.php:60
 #: includes/integrations/class-buddypress.php:237
-#: includes/integrations/class-buddypress.php:882
+#: includes/integrations/class-buddypress.php:889
 #: templates/partials/avatar.php:17
 #: templates/partials/feed-card.php:31
-#: templates/partials/post-card.php:121
+#: templates/partials/post-card.php:124
 #: templates/partials/reply-card.php:119
 #: templates/partials/reply-card.php:265
 #: templates/partials/reply-card.php:271
@@ -1300,7 +1300,7 @@ msgstr ""
 #: includes/class-nav-menus.php:96
 #: includes/functions.php:29
 #: includes/functions.php:39
-#: includes/integrations/class-fluent-community.php:1040
+#: includes/integrations/class-fluent-community.php:1039
 msgid "Community"
 msgstr ""
 
@@ -1484,14 +1484,14 @@ msgstr ""
 
 #: includes/admin/views/categories.php:49
 #: includes/admin/views/categories.php:292
-#: includes/models/class-space.php:1713
+#: includes/models/class-space.php:1736
 msgid "Public"
 msgstr ""
 
 #. translators: 1: singular topic label; 2: singular reply label.
 #: includes/admin/views/categories.php:50
 #: includes/admin/views/categories.php:293
-#: includes/models/class-space.php:1717
+#: includes/models/class-space.php:1740
 #: jetonomy.php:634
 #: templates/partials/icon-picker.php:164
 #: templates/partials/post-badges.php:20
@@ -1502,7 +1502,7 @@ msgstr ""
 
 #: includes/admin/views/categories.php:51
 #: includes/admin/views/categories.php:294
-#: includes/models/class-space.php:1721
+#: includes/models/class-space.php:1744
 #: jetonomy.php:634
 msgid "Hidden"
 msgstr ""
@@ -2915,8 +2915,8 @@ msgstr ""
 #: includes/admin/views/spaces.php:63
 #: includes/admin/views/spaces.php:164
 #: includes/admin/views/spaces.php:213
-#: includes/integrations/class-buddypress.php:805
-#: includes/integrations/class-buddypress.php:917
+#: includes/integrations/class-buddypress.php:812
+#: includes/integrations/class-buddypress.php:924
 #: templates/partials/sidebar.php:132
 msgid "Forum"
 msgstr ""
@@ -3138,7 +3138,7 @@ msgid "Level 3's moderation powers only apply to roles you gave those capabiliti
 msgstr ""
 
 #: includes/admin/views/settings.php:470
-#: includes/integrations/class-buddypress.php:1097
+#: includes/integrations/class-buddypress.php:1104
 msgid "Level"
 msgstr ""
 
@@ -3159,7 +3159,7 @@ msgstr ""
 #: includes/admin/views/settings.php:490
 #: includes/admin/views/users.php:115
 #: includes/class-privacy.php:467
-#: includes/integrations/class-buddypress.php:1096
+#: includes/integrations/class-buddypress.php:1103
 #: templates/views/user-profile.php:240
 msgid "Reputation"
 msgstr ""
@@ -4406,7 +4406,7 @@ msgstr ""
 
 #. translators: %s: where the link returns to - the configured space label, or a specific space title.
 #: includes/admin/views/space-edit.php:29
-#: includes/integrations/class-fluent-community.php:841
+#: includes/integrations/class-fluent-community.php:840
 #: templates/views/new-post.php:59
 #: templates/views/new-post.php:100
 #, php-format
@@ -4447,7 +4447,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:120
 #: includes/admin/views/spaces.php:83
 #: includes/functions.php:1650
-#: templates/partials/feed-card.php:123
+#: templates/partials/feed-card.php:125
 msgid "Open"
 msgstr ""
 
@@ -4538,7 +4538,7 @@ msgstr ""
 #: includes/class-template-loader.php:445
 #: templates/partials/feed-card.php:50
 #: templates/partials/managed-by-card.php:23
-#: templates/partials/post-card.php:129
+#: templates/partials/post-card.php:132
 #: templates/partials/reply-card.php:131
 #: templates/views/my-spaces.php:102
 #: templates/views/single-post.php:812
@@ -5717,7 +5717,7 @@ msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
 #: includes/api/class-spaces-controller.php:951
-#: includes/models/class-space.php:387
+#: includes/models/class-space.php:410
 #, php-format
 msgid "This %s is already archived."
 msgstr ""
@@ -5735,7 +5735,7 @@ msgstr ""
 #. translators: %s: the singular Space label, lowercase.
 #: includes/api/class-spaces-controller.php:1148
 #: includes/api/class-spaces-controller.php:1343
-#: includes/models/class-space-member.php:395
+#: includes/models/class-space-member.php:420
 #, php-format
 msgid "User does not belong to this %s."
 msgstr ""
@@ -5753,7 +5753,7 @@ msgstr ""
 
 #. translators: %s: comma-separated list of valid space roles.
 #: includes/api/class-spaces-controller.php:1330
-#: includes/models/class-space-member.php:386
+#: includes/models/class-space-member.php:411
 #, php-format
 msgid "Invalid role. Allowed: %s."
 msgstr ""
@@ -6172,7 +6172,7 @@ msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #: includes/class-blocks.php:382
-#: includes/integrations/class-fluent-community.php:906
+#: includes/integrations/class-fluent-community.php:905
 #, php-format
 msgid "Recent %s"
 msgstr ""
@@ -7123,8 +7123,8 @@ msgid "Bookmark"
 msgstr ""
 
 #: includes/class-template-loader.php:1781
-#: templates/partials/post-card.php:172
-#: templates/partials/post-card.php:173
+#: templates/partials/post-card.php:175
+#: templates/partials/post-card.php:176
 #: templates/views/single-post.php:685
 #: templates/views/single-post.php:686
 msgid "Remove bookmark"
@@ -7594,7 +7594,7 @@ msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
 #: includes/helpers.php:688
-#: includes/integrations/class-buddypress.php:890
+#: includes/integrations/class-buddypress.php:897
 #: templates/partials/sidebar.php:157
 #, php-format
 msgid "View all %s"
@@ -7776,33 +7776,33 @@ msgid "View discussion"
 msgstr ""
 
 #. translators: %s: the compose action for this space type, e.g. "Ask a Question".
-#: includes/integrations/class-buddypress.php:859
+#: includes/integrations/class-buddypress.php:866
 #: templates/views/space.php:379
 #, php-format
 msgid "+ %s"
 msgstr ""
 
 #. translators: %s: plural topic label.
-#: includes/integrations/class-buddypress.php:865
+#: includes/integrations/class-buddypress.php:872
 #, php-format
 msgid "No %s yet. Start a discussion!"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:954
-#: includes/integrations/class-fluent-community.php:949
+#: includes/integrations/class-buddypress.php:961
+#: includes/integrations/class-fluent-community.php:948
 #: templates/views/user-profile.php:302
 msgid "Bookmarks"
 msgstr ""
 
 #. translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces".
-#: includes/integrations/class-buddypress.php:1014
-#: includes/integrations/class-buddypress.php:1047
+#: includes/integrations/class-buddypress.php:1021
+#: includes/integrations/class-buddypress.php:1054
 #, php-format
 msgid "No forum %s yet."
 msgstr ""
 
 #. translators: %s: singular reply label.
-#: includes/integrations/class-buddypress.php:1036
+#: includes/integrations/class-buddypress.php:1043
 #: templates/partials/composer.php:84
 #: templates/views/user-profile.php:372
 #, php-format
@@ -7810,41 +7810,41 @@ msgid "Private %s"
 msgstr ""
 
 #. translators: %s: plural topic label.
-#: includes/integrations/class-buddypress.php:1078
+#: includes/integrations/class-buddypress.php:1085
 #, php-format
 msgid "No bookmarked %s yet."
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1097
+#: includes/integrations/class-buddypress.php:1104
 msgid "Trust"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1106
+#: includes/integrations/class-buddypress.php:1113
 msgid "View Full Forum Profile"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1146
-#: includes/integrations/class-buddypress.php:1155
+#: includes/integrations/class-buddypress.php:1153
+#: includes/integrations/class-buddypress.php:1162
 msgid "Discussion Forum"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1150
+#: includes/integrations/class-buddypress.php:1157
 msgid "Add a discussion forum to this group. Members will be synced automatically."
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1158
+#: includes/integrations/class-buddypress.php:1165
 msgid "No forum"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1159
+#: includes/integrations/class-buddypress.php:1166
 msgid "Create new discussion forum"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1161
+#: includes/integrations/class-buddypress.php:1168
 msgid "Link existing forum"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1240
+#: includes/integrations/class-buddypress.php:1247
 msgid "Group Forum"
 msgstr ""
 
@@ -7983,181 +7983,181 @@ msgid "Member-submitted directory listings."
 msgstr ""
 
 #. translators: %s: FluentCommunity-configured site title (e.g. "Acme Community").
-#: includes/integrations/class-fluent-community.php:646
+#: includes/integrations/class-fluent-community.php:645
 #, php-format
 msgid "View on %s"
 msgstr ""
 
 #. translators: %s: FluentCommunity-configured site title.
-#: includes/integrations/class-fluent-community.php:770
+#: includes/integrations/class-fluent-community.php:769
 #, php-format
 msgid "Also on %s"
 msgstr ""
 
 #. translators: 1: the singular Space label, lowercase, 2: FluentCommunity-configured site title.
-#: includes/integrations/class-fluent-community.php:772
+#: includes/integrations/class-fluent-community.php:771
 #, php-format
 msgid "This %1$s has a matching feed on %2$s."
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:788
+#: includes/integrations/class-fluent-community.php:787
 msgid "Open Feed"
 msgstr ""
 
 #. translators: %s: plural topic label.
-#: includes/integrations/class-fluent-community.php:887
+#: includes/integrations/class-fluent-community.php:886
 #, php-format
 msgid "%s started"
 msgstr ""
 
 #. translators: %s: singular topic label.
-#: includes/integrations/class-fluent-community.php:912
+#: includes/integrations/class-fluent-community.php:911
 #, php-format
 msgid "Untitled %s"
 msgstr ""
 
 #. translators: %s: plural topic label.
-#: includes/integrations/class-fluent-community.php:930
+#: includes/integrations/class-fluent-community.php:929
 #, php-format
 msgid "%s followed"
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:970
+#: includes/integrations/class-fluent-community.php:969
 msgid "View all on forum"
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1014
-#: includes/integrations/class-fluent-community.php:1136
+#: includes/integrations/class-fluent-community.php:1013
+#: includes/integrations/class-fluent-community.php:1135
 #: templates/partials/space-tabs.php:31
 #: templates/partials/space-tabs.php:41
 msgid "Discussions"
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1055
+#: includes/integrations/class-fluent-community.php:1054
 msgid "FluentCommunity"
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1091
+#: includes/integrations/class-fluent-community.php:1090
 msgid "FluentCommunity settings saved."
 msgstr ""
 
 #. translators: 1: pair count, 2: members added to Jetonomy, 3: members added to FluentCommunity, 4: the plural Member label, lowercase
-#: includes/integrations/class-fluent-community.php:1100
+#: includes/integrations/class-fluent-community.php:1099
 #, php-format
 msgid "Backfill complete. Pairs processed: %1$d, %4$s added to Jetonomy: %2$d, %4$s added to FluentCommunity: %3$d."
 msgstr ""
 
 #. translators: 1: the plural Space label, lowercase, 2: the plural Member label, lowercase.
-#: includes/integrations/class-fluent-community.php:1108
+#: includes/integrations/class-fluent-community.php:1107
 #, php-format
 msgid "Some %1$s had more than 5,000 %2$s. Re-run the backfill to continue."
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1120
+#: includes/integrations/class-fluent-community.php:1119
 msgid "FluentCommunity Integration"
 msgstr ""
 
 #. translators: 1: the plural Space label, lowercase, 2: the plural Member label, lowercase.
-#: includes/integrations/class-fluent-community.php:1124
+#: includes/integrations/class-fluent-community.php:1123
 #, php-format
 msgid "Pair FluentCommunity spaces with Jetonomy %1$s so %2$s can jump between the feed and the discussions in one click."
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1131
+#: includes/integrations/class-fluent-community.php:1130
 msgid "Tab Label"
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/integrations/class-fluent-community.php:1141
+#: includes/integrations/class-fluent-community.php:1140
 #, php-format
 msgid "Shown on the FluentCommunity space header, the Jetonomy %s header, and the profile section. Leave blank to reset to \"Discussions\"."
 msgstr ""
 
 #. translators: %s: the singular Space label.
-#: includes/integrations/class-fluent-community.php:1151
+#: includes/integrations/class-fluent-community.php:1150
 #, php-format
 msgid "%s Pairings"
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/integrations/class-fluent-community.php:1155
+#: includes/integrations/class-fluent-community.php:1154
 #, php-format
 msgid "Each row pairs one FluentCommunity space with one Jetonomy %s. A tab linking between the two appears on both sides. Leave the Jetonomy column set to \"Not paired\" to disable a row."
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1163
+#: includes/integrations/class-fluent-community.php:1162
 msgid "No FluentCommunity spaces found. Create a space in FluentCommunity first."
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1173
+#: includes/integrations/class-fluent-community.php:1172
 msgid "FluentCommunity Space"
 msgstr ""
 
 #. translators: %s: the singular Space label.
-#: includes/integrations/class-fluent-community.php:1176
+#: includes/integrations/class-fluent-community.php:1175
 #, php-format
 msgid "Paired Jetonomy %s"
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1189
+#: includes/integrations/class-fluent-community.php:1188
 msgid "(Not paired)"
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1211
+#: includes/integrations/class-fluent-community.php:1210
 msgid "Sync Behavior"
 msgstr ""
 
 #. translators: 1: the plural Space label, lowercase, 2: the singular Member label, 3: the singular Member label, lowercase.
-#: includes/integrations/class-fluent-community.php:1213
+#: includes/integrations/class-fluent-community.php:1212
 #, php-format
 msgid "Controls what happens across paired %1$s. %2$s sync is add-only: joins on either side add the %3$s to both; leaves stay on the side they happened. This keeps behavior predictable and prevents accidental removal from both at once."
 msgstr ""
 
 #. translators: %s: the singular Member label.
-#: includes/integrations/class-fluent-community.php:1218
+#: includes/integrations/class-fluent-community.php:1217
 #, php-format
 msgid "%s sync"
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/integrations/class-fluent-community.php:1222
+#: includes/integrations/class-fluent-community.php:1221
 #, php-format
 msgid "When someone joins one side, add them to the paired %s on the other side."
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1227
+#: includes/integrations/class-fluent-community.php:1226
 msgid "Activity broadcast"
 msgstr ""
 
 #. translators: 1: the singular Topic label, lowercase, 2: the singular Space label, lowercase.
-#: includes/integrations/class-fluent-community.php:1231
+#: includes/integrations/class-fluent-community.php:1230
 #, php-format
 msgid "When a new %1$s is created in a paired Jetonomy %2$s, post an announcement in the paired FluentCommunity feed with a link back to the %1$s."
 msgstr ""
 
 #. translators: %s: the plural Member label, lowercase.
-#: includes/integrations/class-fluent-community.php:1240
+#: includes/integrations/class-fluent-community.php:1239
 #, php-format
 msgid "Backfill existing %s"
 msgstr ""
 
 #. translators: 1: the plural Space label, lowercase, 2: the plural Member label, lowercase.
-#: includes/integrations/class-fluent-community.php:1242
+#: includes/integrations/class-fluent-community.php:1241
 #, php-format
 msgid "After pairing %1$s, run this once to sync %2$s who already belong to one side but not the other. Safe to run multiple times; %2$s already in both sides are skipped. Large %1$s are capped at 5,000 %2$s per run; re-run to continue."
 msgstr ""
 
 #. translators: %s: the plural Member label, lowercase.
-#: includes/integrations/class-fluent-community.php:1247
+#: includes/integrations/class-fluent-community.php:1246
 #, php-format
 msgid "Sync existing %s now"
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1253
+#: includes/integrations/class-fluent-community.php:1252
 msgid "Save FluentCommunity Settings"
 msgstr ""
 
-#: includes/integrations/class-fluent-community.php:1268
+#: includes/integrations/class-fluent-community.php:1267
 msgid "You do not have permission to change these settings."
 msgstr ""
 
@@ -8297,7 +8297,7 @@ msgid "Please log in to use this invite."
 msgstr ""
 
 #. translators: 1: singular member label, lowercase; 2: singular space label, lowercase.
-#: includes/models/class-join-request.php:105
+#: includes/models/class-join-request.php:109
 #, php-format
 msgid "This %1$s is banned from this %2$s. Deny the request or lift the ban first."
 msgstr ""
@@ -8390,30 +8390,30 @@ msgstr ""
 msgid "You cannot join this %s."
 msgstr ""
 
-#: includes/models/class-space-member.php:286
+#: includes/models/class-space-member.php:311
 msgid "You must be logged in to join."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space-member.php:309
+#: includes/models/class-space-member.php:334
 #, php-format
 msgid "You are already in this %s."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space-member.php:326
+#: includes/models/class-space-member.php:351
 #, php-format
 msgid "This %s is invite-only."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space-member.php:883
+#: includes/models/class-space-member.php:908
 #, php-format
 msgid "This %s must keep at least one admin. Promote someone else first."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space-member.php:913
+#: includes/models/class-space-member.php:938
 #, php-format
 msgid "Only the owner of this %s or a site administrator can change the owner's role."
 msgstr ""
@@ -8425,43 +8425,43 @@ msgid "This %1$s already owns the %2$s."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space.php:345
+#: includes/models/class-space.php:346
 #, php-format
 msgid "The %s could not be handed over. Please try again."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space.php:394
+#: includes/models/class-space.php:417
 #, php-format
 msgid "No one else can take over this %s, so it cannot be transferred. An administrator must delete it permanently instead."
 msgstr ""
 
 #. translators: %s: the singular Space label, lowercase.
-#: includes/models/class-space.php:1714
+#: includes/models/class-space.php:1737
 #, php-format
 msgid "Anyone can find this %s and read it."
 msgstr ""
 
 #. translators: 1: the singular Space label, lowercase, 2: the plural Member label, lowercase.
-#: includes/models/class-space.php:1718
+#: includes/models/class-space.php:1741
 #, php-format
 msgid "Anyone can find this %1$s, but only %2$s can read it."
 msgstr ""
 
 #. translators: 1: the plural Member label, lowercase, 2: the singular Space label, lowercase.
-#: includes/models/class-space.php:1722
+#: includes/models/class-space.php:1745
 #, php-format
 msgid "Only %1$s can find this %2$s. It is invite-only."
 msgstr ""
 
 #. translators: 1: the singular Space label, lowercase, 2: rejected type, 3: comma-separated list of valid types.
-#: includes/models/class-space.php:1756
+#: includes/models/class-space.php:1779
 #, php-format
 msgid "Invalid %1$s type \"%2$s\". Use one of: %3$s."
 msgstr ""
 
 #. translators: %s: the plural Space label, lowercase.
-#: includes/models/class-space.php:1829
+#: includes/models/class-space.php:1852
 #, php-format
 msgid "Hidden %s must use the invite-only join policy."
 msgstr ""
@@ -9054,7 +9054,7 @@ msgstr ""
 #. translators: %s: the topic or reply label, singular or plural.
 #: includes/notifications/class-notifier.php:1660
 #: includes/notifications/class-notifier.php:1664
-#: templates/partials/feed-card.php:114
+#: templates/partials/feed-card.php:116
 #, php-format
 msgid "View %s"
 msgstr ""
@@ -9770,22 +9770,22 @@ msgstr ""
 
 #: templates/partials/feed-card.php:51
 #: templates/partials/managed-by-card.php:24
-#: templates/partials/post-card.php:130
+#: templates/partials/post-card.php:133
 #: templates/partials/reply-card.php:132
 #: templates/views/my-spaces.php:102
 msgid "Mod"
 msgstr ""
 
 #. translators: %s: plural reply label.
-#: templates/partials/feed-card.php:118
-#: templates/partials/post-card.php:115
+#: templates/partials/feed-card.php:120
+#: templates/partials/post-card.php:118
 #, php-format
 msgid "You have unread %s"
 msgstr ""
 
 #. translators: %s: plural reply label.
-#: templates/partials/feed-card.php:118
-#: templates/partials/post-card.php:116
+#: templates/partials/feed-card.php:120
+#: templates/partials/post-card.php:119
 msgid "New"
 msgstr ""
 
@@ -10022,11 +10022,11 @@ msgstr ""
 msgid "Vote on this %s"
 msgstr ""
 
-#: templates/partials/post-card.php:108
+#: templates/partials/post-card.php:111
 msgid "Answered"
 msgstr ""
 
-#: templates/partials/post-card.php:110
+#: templates/partials/post-card.php:113
 msgid "Needs answer"
 msgstr ""
 
