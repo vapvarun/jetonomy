@@ -2854,6 +2854,12 @@
    heading clears the sticky host-theme header instead of tucking under it. */
 #notification-preferences { scroll-margin-top: var(--jt-scroll-offset); }
 .jt-notif-prefs { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
+.jt-blocked-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
+.jt-blocked-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; }
+.jt-blocked-row + .jt-blocked-row { border-top: 1px solid var(--jt-border); }
+.jt-blocked-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--jt-text); }
+.jt-blocked-pager { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); }
+@media (max-width: 480px) { .jt-blocked-pager { flex-wrap: wrap; } }
 .jt-notif-optout { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
 .jt-notif-optout input { margin-top: 0.15rem; flex-shrink: 0; }
 .jt-notif-row { display: grid; grid-template-columns: 1fr 3.5rem 3.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--jt-border); font-size: 0.875rem; color: var(--jt-text); }
