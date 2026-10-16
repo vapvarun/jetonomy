@@ -70,8 +70,22 @@ class Subscriptions_Controller extends Base_Controller {
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];
 
-		$rows  = Subscription::list_for_user( $user_id, $limit, $offset );
-		$total = Subscription::count_for_user( $user_id );
+		// ?object_type=&object_id= narrows to that one object. The follow buttons
+		// delete whatever this returns first, so ignoring the filter unfollowed the
+		// member's newest subscription instead of the topic they clicked.
+		$object_type = sanitize_key( (string) $request->get_param( 'object_type' ) );
+		$object_id   = absint( $request->get_param( 'object_id' ) );
+		if ( '' !== $object_type || $object_id ) {
+			$row    = in_array( $object_type, array( 'space', 'post' ), true ) && $object_id
+				? Subscription::find_for( $user_id, $object_type, $object_id )
+				: null;
+			$rows   = $row ? array( $row ) : array();
+			$total  = count( $rows );
+			$offset = 0;
+		} else {
+			$rows  = Subscription::list_for_user( $user_id, $limit, $offset );
+			$total = Subscription::count_for_user( $user_id );
+		}
 
 		$items = array_map( array( $this, 'prepare_subscription' ), $rows );
 		$items = $this->attach_subscription_targets( $items );
