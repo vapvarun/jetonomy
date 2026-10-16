@@ -64,7 +64,7 @@ $per_page = (int) apply_filters( 'jetonomy_moderation_per_page', 25 );
 // count, and the Banned panel has its own, different total. Clamping the banned
 // list with the flags ceiling pinned it to page 1 whenever there were fewer
 // flags than restrictions - the rows past 25 stayed unreachable.
-$jt_raw_paged = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$jt_raw_paged = \Jetonomy\list_page(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $paged        = $jt_raw_paged;
 $total        = Moderation_Service::count_pending_flags( $user_id );
 $total_pages  = max( 1, (int) ceil( $total / $per_page ) );

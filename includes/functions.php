@@ -147,6 +147,20 @@ function route_url( string $route, ...$args ): string {
 }
 
 /**
+ * The page number a front-end list is on, from Jetonomy's own `pg` param.
+ *
+ * Not WordPress's `paged`: some sites (and plugins) redirect ?paged=N to
+ * /page/N/, a path no community route has, so Next landed on a 404. `paged`
+ * is still read so links shared before 2.0.2 open the right page.
+ *
+ * @return int 1 or more.
+ */
+function list_page(): int {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
+	return max( 1, absint( wp_unslash( $_GET['pg'] ?? $_GET['paged'] ?? 1 ) ) );
+}
+
+/**
  * Cache-busting version for one asset file: "<version>+<mtime>".
  *
  * A fix shipped under an unchanged plugin version (a hotfix, a QA build, a

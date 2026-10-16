@@ -133,6 +133,29 @@ class OwnerPassFixesTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '@example.test', \Jetonomy\user_handle( $user ), 'the public handle is not the email' );
 	}
 
+	public function test_list_pagination_never_links_with_the_wordpress_paged_param(): void {
+		ob_start();
+		\Jetonomy\Template_Loader::partial(
+			'pagination-nav',
+			array(
+				'pages' => 3,
+				'paged' => 2,
+				'base'  => \Jetonomy\route_url( 'moderation' ),
+			)
+		);
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'pg=1', $html );
+		$this->assertStringContainsString( 'pg=3', $html );
+		$this->assertStringNotContainsString( 'paged=', $html, 'sites that rewrite ?paged to /page/N/ turned Next into a 404' );
+
+		$_GET = array( 'pg' => '4' );
+		$this->assertSame( 4, \Jetonomy\list_page() );
+		$_GET = array( 'paged' => '3' );
+		$this->assertSame( 3, \Jetonomy\list_page(), 'links shared before the change still open their page' );
+		$_GET = array();
+		$this->assertSame( 1, \Jetonomy\list_page() );
+	}
+
 	public function test_the_owners_mention_subject_is_used(): void {
 		update_option(
 			'jetonomy_email_templates',

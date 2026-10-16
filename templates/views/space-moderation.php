@@ -72,7 +72,7 @@ if ( ! in_array( $jt_kind, array( 'post', 'reply' ), true ) ) {
 // hundred into a single response - the rows past the fold unreachable in practice and
 // the page growing without limit. Same PER_PAGE contract as the cross-space dashboard.
 $per_page     = (int) apply_filters( 'jetonomy_moderation_per_page', 25 );
-$jt_raw_paged = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$jt_raw_paged = \Jetonomy\list_page(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 $jt_flag_total = Moderation_Service::count_pending_flags( $user_id, $space_id );
 $jt_flag_pages = max( 1, (int) ceil( $jt_flag_total / $per_page ) );

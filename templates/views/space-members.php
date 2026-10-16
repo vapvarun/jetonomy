@@ -54,7 +54,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
  * @return int Members per page.
  */
 $jt_members_per_page = (int) apply_filters( 'jetonomy_space_members_per_page', 25 );
-$jt_members_paged    = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$jt_members_paged    = \Jetonomy\list_page(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $jt_members_total    = \Jetonomy\Models\SpaceMember::count_by_space( (int) $space->id );
 $jt_members_pages    = max( 1, (int) ceil( $jt_members_total / $jt_members_per_page ) );
 if ( $jt_members_paged > $jt_members_pages ) {
@@ -463,8 +463,8 @@ $role_labels = array(
 				<?php
 				if ( $jt_members_pages > 1 ) :
 					$jt_members_base_url = \Jetonomy\route_url( 'space-members', $space->slug );
-					$jt_members_prev_url = add_query_arg( 'paged', max( 1, $jt_members_paged - 1 ), $jt_members_base_url );
-					$jt_members_next_url = add_query_arg( 'paged', min( $jt_members_pages, $jt_members_paged + 1 ), $jt_members_base_url );
+					$jt_members_prev_url = add_query_arg( 'pg', max( 1, $jt_members_paged - 1 ), $jt_members_base_url );
+					$jt_members_next_url = add_query_arg( 'pg', min( $jt_members_pages, $jt_members_paged + 1 ), $jt_members_base_url );
 					?>
 					<nav class="jt-pagination" aria-label="<?php printf( /* translators: %s: plural member label. */ esc_attr__( '%s pagination', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>">
 						<?php if ( $jt_members_paged > 1 ) : ?>

@@ -371,6 +371,7 @@ Permissions that follow the Permissions screen, private spaces and private repli
 * Fix      - Taking back a vote no longer leaves "0 people voted" in the bell.
 * Fix      - Removing the last bookmark shows the empty state straight away.
 * Fix      - Re-importing demo data no longer awards the site admin the same badge again.
+* Fix      - Next and Previous on member lists, tag pages, notifications and moderation queues no longer end on a 404 on sites that rewrite paged links.
 * Fix      - Profile links work for members whose username is an email address or contains spaces or other special characters, and older profile links still open.
 * Fix      - The email telling a member their join request was answered is headed "Your join request was answered".
 * Security - Site moderators can no longer edit, trash, approve or resolve reports on content in private spaces they cannot read, and their moderation queues, report lists and counts leave those spaces out.
