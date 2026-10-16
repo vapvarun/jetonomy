@@ -566,6 +566,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	outline: 2px solid var(--jt-accent);
 	outline-offset: -2px;
 }
+.jt-userpanel-link.is-active {
+	background: var(--jt-accent-light);
+	color: var(--jt-accent-strong);
+	font-weight: 600;
+}
 .jt-userpanel-link--logout {
 	margin-top: 4px;
 	padding-top: 10px;

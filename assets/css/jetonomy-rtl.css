@@ -795,7 +795,7 @@
   .jt-editor-body:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; border-radius: var(--jt-radius-sm); }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
   .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--jt-border); }
-  .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); font-family: var(--jt-font-mono); }
+  .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); }
 
   /* ── Card (sidebar) ── */
   .jt-card { background: var(--jt-surface); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); box-shadow: var(--jt-shadow-sm); padding-block: var(--jt-space-5); padding-inline: var(--jt-space-5); }
@@ -1870,6 +1870,9 @@
   .jt-mod-flag-space:hover { color: var(--jt-accent); text-decoration: underline; }
   .jt-mod-flag-age { margin-inline-start: auto; font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-mod-flag-title { font-weight: 600; font-size: 0.9375rem; color: var(--jt-text); }
+  /* The per-space card (flag-card.php) stacks title and excerpt above its actions. */
+  .jt-mod-flag > .jt-mod-flag-title, .jt-mod-flag > .jt-mod-flag-excerpt { margin: 0 0 var(--jt-space-2); }
+  .jt-mod-flag > .jt-mod-flag-title a { color: inherit; }
   .jt-mod-flag-excerpt { font-size: 0.9375rem; color: var(--jt-text-secondary); line-height: 1.5; word-break: break-word; }
   .jt-mod-flag-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); border-block-start: 1px solid var(--jt-border); }
   .jt-mod-flag-row .jt-mod-flag-reporter { margin-inline-start: 0; font-size: 0.8125rem; color: var(--jt-text-tertiary); }
@@ -2011,6 +2014,12 @@
 
   /* ── Time stat on post rows ── */
   .jt-row-time { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); white-space: nowrap; }
+  /* In the narrow last column a longer phrase ("saved 2 minutes ago", or any
+     translation) wraps instead of being clipped by the card. */
+  .jt-row-stat .jt-row-time { white-space: normal; text-wrap: balance; }
+  /* A state shown in a button's place (Invite Only, Awaiting Approval): not clickable. */
+  .jt-app .jt-btn--status { cursor: default; opacity: 0.7; text-align: center; }
+  .jt-app .jt-invite-landing { text-align: center; padding: 48px 0; }
 
   /* ── Category page header ── */
   .jt-cat-page-row { display: flex; align-items: center; gap: var(--jt-space-3); margin-bottom: var(--jt-space-4); }
@@ -2964,6 +2973,13 @@
 }
 .jt-modal-msg { font-size: 0.9375rem; line-height: 1.5; margin: 0 0 16px; color: var(--jt-text); }
 .jt-modal-input { width: 100%; margin-bottom: 16px; resize: vertical; }
+.jt-modal-hint { margin: -8px 0 16px; font-size: 0.875rem; color: var(--jt-danger-strong); }
+/* Report dialog reasons (view.js jetonomyReport). */
+.jt-report-reasons { display: grid; gap: var(--jt-space-2); margin: 0 0 var(--jt-space-3); }
+.jt-report-reason { display: flex; align-items: center; gap: var(--jt-space-2); font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; }
+.jt-report-reason input { margin: 0; accent-color: var(--jt-accent); }
+.jt-modal-hint:empty { display: none; }
+.jt-modal-actions .jt-btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 /* The confirm/alert/prompt modal is appended to <body>, OUTSIDE .jt-app, so the
    `.jt-app .jt-btn` rules never reach its buttons - they'd render as bare native
@@ -3708,10 +3724,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
     min-inline-size: var(--jt-tap);
     justify-content: center;
   }
-  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-login-prompt a, .jt-notif-item__select) {
+  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-notif-item__select) {
     position: relative;
   }
-  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-login-prompt a, .jt-notif-item__select)::after {
+  .jt-app :is(.jt-v-btn, a.jt-tag, .jt-tag-link, .jt-crumb a, a.jt-user-link, .jt-reply-author, .jt-reply-permalink, .jt-toggle, .jt-row-sub a, .jt-trend-title a, .jt-leader-name a, .jt-member-name, .jt-sidebar-link a, .jt-sidebar-link-text, .jt-cat-name a, .jt-row-title-link, .jt-notif-item__select)::after {
     content: "";
     position: absolute;
     inset-block: min(0px, calc((100% - var(--jt-tap)) / 2));

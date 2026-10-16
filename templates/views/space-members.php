@@ -54,7 +54,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
  * @return int Members per page.
  */
 $jt_members_per_page = (int) apply_filters( 'jetonomy_space_members_per_page', 25 );
-$jt_members_paged    = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$jt_members_paged    = \Jetonomy\list_page(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $jt_members_total    = \Jetonomy\Models\SpaceMember::count_by_space( (int) $space->id );
 $jt_members_pages    = max( 1, (int) ceil( $jt_members_total / $jt_members_per_page ) );
 if ( $jt_members_paged > $jt_members_pages ) {
@@ -81,7 +81,7 @@ $jt_member_users_by_id = array();
 foreach ( $jt_member_users as $jt_u ) {
 	$jt_member_users_by_id[ (int) $jt_u->ID ] = $jt_u;
 }
-$category       = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$category       = $space->category_id ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 $viewer_id      = get_current_user_id();
 $viewer_is_sadm = \Jetonomy\Permissions\Permission_Engine::is_space_admin( $viewer_id, (int) $space->id );
 $viewer_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, (int) $space->id );
@@ -101,9 +101,8 @@ $jt_pending_requests = array();
  */
 $jt_pending_cap = (int) apply_filters( 'jetonomy_space_pending_requests_shown', 50 );
 if ( $viewer_is_priv ) {
-	$jt_pending_all      = \Jetonomy\Models\JoinRequest::list_pending_for_space( (int) $space->id );
-	$jt_pending_total    = count( $jt_pending_all );
-	$jt_pending_requests = array_slice( $jt_pending_all, 0, $jt_pending_cap );
+	$jt_pending_total    = \Jetonomy\Models\JoinRequest::count_pending_for_space( (int) $space->id );
+	$jt_pending_requests = \Jetonomy\Models\JoinRequest::list_pending_for_space( (int) $space->id, $jt_pending_cap );
 }
 
 // Invite links, surfaced to space ADMINS on the front-end (mirrors the wp-admin
@@ -298,7 +297,7 @@ $role_labels = array(
 											echo esc_html(
 												$jt_invite->expires_at
 													/* translators: %s: expiry date. */
-													? sprintf( __( 'Expires %s', 'jetonomy' ), date_i18n( get_option( 'date_format' ), strtotime( (string) $jt_invite->expires_at ) ) )
+													? sprintf( __( 'Expires %s', 'jetonomy' ), \Jetonomy\Models\InviteLink::expiry_label( $jt_invite ) )
 													: __( 'No expiry', 'jetonomy' )
 											);
 											?>
@@ -464,8 +463,8 @@ $role_labels = array(
 				<?php
 				if ( $jt_members_pages > 1 ) :
 					$jt_members_base_url = \Jetonomy\route_url( 'space-members', $space->slug );
-					$jt_members_prev_url = add_query_arg( 'paged', max( 1, $jt_members_paged - 1 ), $jt_members_base_url );
-					$jt_members_next_url = add_query_arg( 'paged', min( $jt_members_pages, $jt_members_paged + 1 ), $jt_members_base_url );
+					$jt_members_prev_url = add_query_arg( 'pg', max( 1, $jt_members_paged - 1 ), $jt_members_base_url );
+					$jt_members_next_url = add_query_arg( 'pg', min( $jt_members_pages, $jt_members_paged + 1 ), $jt_members_base_url );
 					?>
 					<nav class="jt-pagination" aria-label="<?php printf( /* translators: %s: plural member label. */ esc_attr__( '%s pagination', 'jetonomy' ), esc_attr( \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>">
 						<?php if ( $jt_members_paged > 1 ) : ?>

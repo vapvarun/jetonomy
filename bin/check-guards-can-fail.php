@@ -41,6 +41,23 @@ $plugin_dir = dirname( __DIR__ );
 $pro_dir    = dirname( $plugin_dir ) . '/jetonomy-pro';
 
 $mutations = [
+	// Refusal journeys (qa-actions Phase 5). Each puts back a 2.0.2 bug.
+	// RF2 (a decided request stays decided) is not registered: four layers
+	// refuse it (the REST handler, approve(), settle() and its conditional
+	// UPDATE), so no single mutation turns the journey red. The model layers
+	// are pinned in SpacesIntegrityTest::test_a_decided_request_is_not_decided_again.
+	[
+		'guard' => 'RF4',
+		'what'  => 'archived and locked spaces take new members again',
+		'file'  => $plugin_dir . '/includes/models/class-space-member.php',
+		'find'  => "if ( in_array( (string) ( \$space->status ?? 'active' ), array( 'archived', 'locked' ), true ) ) {",
+		'to'    => "if ( false ) {",
+	],
+	// RF7 (single-use invite) is not registered: its race layer, the atomic
+	// claim in InviteLink::use_invite(), sits behind is_valid(), so a
+	// sequential journey cannot see it removed. SpacesIntegrityTest
+	// ::test_the_last_invite_use_goes_to_one_person calls use_invite()
+	// directly and fails if the claim stops checking for room.
 	[
 		'guard' => 'DC1',
 		'what'  => 'Post::delete stops firing jetonomy_after_delete_post',

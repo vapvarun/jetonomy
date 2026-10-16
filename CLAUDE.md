@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 83 REST routes (113 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 82 without it - do not cite the length of the manifest's endpoints array, which holds 88 entries for 82 unique paths), 44 AJAX handlers, 250 hooks fired (113 actions, 137 filters), 23 tables, 22 capabilities (2.0.2 retired jetonomy_create_spaces), 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` and independently re-derived from source on 2026-10-06 for 2.0.1 (`wp jetonomy qa-actions` 469 pass + 1 environment skip); if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 84 REST routes (114 method-endpoints; the count INCLUDES the /jetonomy/v1 index route, 83 without it - do not cite the length of the manifest's endpoints array, which holds 88 entries for 82 unique paths), 44 AJAX handlers, 253 hooks fired (114 actions, 139 filters), 23 tables, 22 capabilities (2.0.2 retired jetonomy_create_spaces), 8 blocks, 8 shortcodes, 16 WP-CLI command groups (15 subject roots + the bare `wp jetonomy` utility set), 8 cron hooks, 15 admin pages. Counts reconciled against `audit/manifest.json` on 2026-10-16 for 2.0.2 and enforced by `bin/check-manifest-fresh.php`; if you change any of these surfaces, update this line in the same commit — a stale count here is worse than none, because it is the first thing every session reads. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed. **`manifest_refresh: agent-enumeration-only`** — do NOT let the deterministic generator (`write-manifest.mjs`) overwrite `audit/manifest.json` on this plugin. Verified 2026-09-08: it zeroed `wp_cli` (16 to 0) and `capabilities` (23 to 0), cut `ajax` 44 to 15 and `cron` 7 to 2, dropped the `where` provenance from every hook, and pulled Pro's `jt_pro_*` tables into free's table list. Refresh by verified enumeration against source instead, and diff any generator run against the committed manifest before keeping a byte of it.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -43,9 +43,15 @@ extra careful; never fix blindly.
    is Q&A-only). Don't "fix" a correct guard.
 5. **Local CI before declaring done** (not just the pre-commit hook):
    - `php bin/audit-rest-routes.php includes/` and `... ../jetonomy-pro/includes/` → both OK
-   - `wp jetonomy qa-actions` → all green (expected total lives in `docs/qa/qa-config.json` → `qa_actions.expected_total`; 286 as of 1.9.4 — never restate it here)
+   - `wp jetonomy qa-actions` → all green (zero FAIL lines; it fails on its own when a phase runs no checks, so no total is recorded anywhere to go stale)
    - free+pro boot smoke (`../jetonomy-pro/tools/smoke-test.php`)
    - browser-verify every frontend/template change (incl. 390px mobile)
+6. **Checks change with the plugin, or they fail.** A check that no longer matches the code reports green while proving nothing, which is worse than no check. `bin/local-ci.sh` and CI enforce it:
+   - `php bin/check-manifest-fresh.php` (pre-commit): the manifest and this file's counts match the code; `wp eval-file` adds live REST methods.
+   - `bin/qa-runtime-coverage.php` (with `WP_TESTS_DIR`): what the suite actually reached. A request to a route that no longer exists fails (mark a deliberate one `@expects-no-route`), every write or membership/moderation route must be reached, and `audit/qa-runtime-baseline.json` only shrinks.
+   - `php bin/check-new-tests-fail-on-base.php`: a test added with a fix must fail on the code before it; mark coverage of behaviour that already worked `@covers-existing`.
+   - `wp jetonomy qa-actions` Phase 5 walks refusal paths (RF1-RF10); a phase that runs no checks fails the run.
+   - `php bin/check-runbook-fresh.php`: each smoke-runbook journey names the files it covers (`**Covers:**`) and the commit it was last checked at (`**Verified:**`); a release build fails while any is stale.
 
 ## Build Rule (enforced)
 
@@ -153,7 +159,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 - **WP**: 6.7+ required
 - **Namespace**: `Jetonomy\`
 - **Table prefix**: `jt_` (23 custom tables)
-- **REST API**: `jetonomy/v1` (87 endpoints, 22 controllers; 161 endpoints with Pro)
+- **REST API**: `jetonomy/v1` (84 REST routes, 114 method-endpoints, 23 controllers; 143 routes with Pro)
 
 ## Architecture
 - **Database**: Custom MySQL tables via `dbDelta()` - NOT WordPress CPTs
@@ -175,7 +181,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/models/` | 22 model classes (Category, Space, Post, Reply, Vote, etc.) |
 | `includes/permissions/class-permission-engine.php` | 3-layer permission resolver |
 | `includes/trust/` | Trust levels (0-5), reputation calculator, auto-evaluator |
-| `includes/api/` | 23 REST API controller classes (87 routes) |
+| `includes/api/` | 23 REST API controller classes (84 REST routes) |
 | `includes/adapters/` | 4 interfaces (membership, email, search, AI) + Adapter_Registry and the WP Roles, wp_mail, MemberPress, PMPro and Ollama adapters. Pro registers the rest (WooCommerce, RCP, LearnDash, Tutor). |
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |

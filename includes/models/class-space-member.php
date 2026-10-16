@@ -122,9 +122,12 @@ class SpaceMember extends Model {
 		} else {
 			$source = in_array( $source, array( 'manual', 'invite', 'rule', 'tier' ), true ) ? $source : 'manual';
 
-			static::db()->query(
+			// IGNORE + the (space_id, user_id) key: when two requests join at
+			// once, only the one whose row lands counts the member and fires
+			// the join hooks; the other is a no-op, not a second join.
+			$written = static::db()->query(
 				static::db()->prepare(
-					'INSERT INTO ' . static::table() . ' (space_id, user_id, role, joined_at, source) VALUES (%d, %d, %s, %s, %s)',
+					'INSERT IGNORE INTO ' . static::table() . ' (space_id, user_id, role, joined_at, source) VALUES (%d, %d, %s, %s, %s)',
 					$space_id,
 					$user_id,
 					$role,
@@ -132,6 +135,10 @@ class SpaceMember extends Model {
 					$source
 				)
 			);
+			if ( false === $written ) {
+				return new \WP_Error( 'jetonomy_join_failed', __( 'The membership could not be saved. Please try again.', 'jetonomy' ), array( 'status' => 500 ) );
+			}
+			$exists = 0 === (int) $written;
 		}
 
 		if ( ! $exists ) {
@@ -226,6 +233,25 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Why a member may not join this space on their own (join, request or
+	 * invite), or null. An archived or locked space takes no one new, and a
+	 * member banned from the space cannot walk back in. Staff grants through
+	 * add() are a separate, deliberate path and do not ask this.
+	 *
+	 * @param object $space   Space row.
+	 * @param int    $user_id Joining user.
+	 */
+	public static function join_blocked( object $space, int $user_id ): ?\WP_Error {
+		if ( in_array( (string) ( $space->status ?? 'active' ), array( 'archived', 'locked' ), true ) ) {
+			return new \WP_Error( 'jetonomy_space_restricted', sprintf( /* translators: 1: singular space label, lowercase; 2: plural member label, lowercase. */ __( 'This %1$s is archived or locked and is not taking new %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ), array( 'status' => 403 ) );
+		}
+		if ( Restriction::is_space_banned( $user_id, (int) $space->id ) ) {
+			return new \WP_Error( 'jetonomy_space_banned', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'You cannot join this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 403 ) );
+		}
+		return null;
+	}
+
+	/**
 	 * Self-service join (facade — the single "a user asks to join" path).
 	 *
 	 * Distinct from add(): add() is the low-level primitive used by invite
@@ -270,6 +296,11 @@ class SpaceMember extends Model {
 				sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 				array( 'status' => 404 )
 			);
+		}
+
+		$blocked = self::join_blocked( $space, $user_id );
+		if ( $blocked ) {
+			return $blocked;
 		}
 
 		if ( self::is_member( $space_id, $user_id ) ) {

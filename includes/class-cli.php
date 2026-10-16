@@ -516,9 +516,10 @@ class CLI {
 		if ( empty( $template_keys ) ) {
 			$record( 'notification_keys', 'notifications.php $type_labels parseable', false, 'Could not parse template or file missing' );
 		} else {
-			// Types with a label but deliberately no member preference: 'flag' is
-			// kept only for rows older versions wrote, and a member who asked to
-			// join always hears the answer (join_request_result).
+			// Types with a label that may have no stored default: 'flag' is kept
+			// only for rows older versions wrote; join_request_result arrived
+			// after most sites seeded their defaults and is on by default at
+			// read time (Notifier::EMAIL_ON_WHEN_UNSET), so its key is optional.
 			$display_only = array( 'flag', 'join_request_result' );
 			foreach ( array_diff( $template_keys, $display_only ) as $key ) {
 				$in_settings = array_key_exists( $key, $notif_defs );
@@ -979,34 +980,64 @@ class CLI {
 		\WP_CLI::log( '' );
 		\WP_CLI::log( '--- Jetonomy Action Tests ---' );
 
+		// Runtime coverage (CI, bin/local-ci.sh): record what this run reached.
+		if ( getenv( 'JETONOMY_COVERAGE_OUT' ) ) {
+			require_once JETONOMY_DIR . 'includes/qa/class-coverage-recorder.php';
+			\Jetonomy\QA\Coverage_Recorder::start( (string) getenv( 'JETONOMY_COVERAGE_OUT' ) );
+		}
+		$phase = static function ( string $name ): void {
+			if ( class_exists( '\\Jetonomy\\QA\\Coverage_Recorder', false ) ) {
+				\Jetonomy\QA\Coverage_Recorder::set_test( 'qa-actions: ' . $name );
+			}
+			\WP_CLI::log( '' );
+			\WP_CLI::log( $name );
+		};
+
 		$footprint_before = self::qa_footprint();
 
-		\WP_CLI::log( '' );
-		\WP_CLI::log( 'Phase 1: REST Round-Trip Tests' );
+		$phase( 'Phase 1: REST Round-Trip Tests' );
 		$rest = new \Jetonomy\QA\REST_Tests();
 		$r1   = $rest->run();
 
-		\WP_CLI::log( '' );
-		\WP_CLI::log( 'Phase 2: Model Unit Tests' );
+		$phase( 'Phase 2: Model Unit Tests' );
 		$model = new \Jetonomy\QA\Model_Tests();
 		$r2    = $model->run();
 
-		\WP_CLI::log( '' );
-		\WP_CLI::log( 'Phase 3: Pro Extension Tests' );
+		$phase( 'Phase 3: Pro Extension Tests' );
 		$pro = new \Jetonomy\QA\Pro_Tests();
 		$r3  = $pro->run();
 
-		\WP_CLI::log( '' );
-		\WP_CLI::log( 'Phase 4: Journey Smoke Tests (C1-C12)' );
+		$phase( 'Phase 4: Journey Smoke Tests (C1-C12)' );
 		$journey = new \Jetonomy\QA\Journey_Tests();
 		$r4      = $journey->run();
 
-		$total_pass = $r1['pass'] + $r2['pass'] + $r3['pass'] + $r4['pass'];
-		$total_fail = $r1['fail'] + $r2['fail'] + $r3['fail'] + $r4['fail'];
+		$phase( 'Phase 5: Refusal Journeys (RF1-RF10)' );
+		$refusal = new \Jetonomy\QA\Refusal_Tests();
+		$r5      = $refusal->run();
+
+		$total_pass = $r1['pass'] + $r2['pass'] + $r3['pass'] + $r4['pass'] + $r5['pass'];
+		$total_fail = $r1['fail'] + $r2['fail'] + $r3['fail'] + $r4['fail'] + $r5['fail'];
 		// Skips are reported separately and never counted as passes. They used
 		// to be logged as passing checks, so a box where fixtures failed to
 		// build could report a green suite while asserting almost nothing.
-		$total_skip = $r1['skipped'] + $r2['skipped'] + $r3['skipped'] + $r4['skipped'];
+		$total_skip = $r1['skipped'] + $r2['skipped'] + $r3['skipped'] + $r4['skipped'] + $r5['skipped'];
+
+		// A phase that ran nothing is a failure, not a pass: it is what a
+		// fixture problem or a skipped include looks like. (This replaces a
+		// fixed expected total in qa-config.json that nothing read, so it sat
+		// stale for two releases.) Pro's phase may be empty only without Pro.
+		foreach ( array(
+			'REST'    => $r1,
+			'Model'   => $r2,
+			'Pro'     => $r3,
+			'Journey' => $r4,
+			'Refusal' => $r5,
+		) as $phase_name => $phase_result ) {
+			if ( 0 === $phase_result['pass'] + $phase_result['fail'] && ( 'Pro' !== $phase_name || defined( 'JETONOMY_PRO_VERSION' ) ) ) {
+				++$total_fail;
+				\WP_CLI::warning( sprintf( '%s phase ran no checks.', $phase_name ) );
+			}
+		}
 
 		// The suite runs on real sites: every fixture must leave the data and
 		// its counters exactly as it found them.
@@ -1030,6 +1061,7 @@ class CLI {
 		\WP_CLI::log( sprintf( '  Model Tests:    %d/%d', $r2['pass'], $r2['pass'] + $r2['fail'] ) );
 		\WP_CLI::log( sprintf( '  Pro Tests:      %d/%d', $r3['pass'], $r3['pass'] + $r3['fail'] ) );
 		\WP_CLI::log( sprintf( '  Journey Tests:  %d/%d', $r4['pass'], $r4['pass'] + $r4['fail'] ) );
+		\WP_CLI::log( sprintf( '  Refusal Tests:  %d/%d', $r5['pass'], $r5['pass'] + $r5['fail'] ) );
 		\WP_CLI::log( sprintf( '  TOTAL:          %d/%d', $total_pass, $total_pass + $total_fail ) );
 		if ( $total_skip > 0 ) {
 			\WP_CLI::log( sprintf( '  SKIPPED:        %d (not counted as passes)', $total_skip ) );

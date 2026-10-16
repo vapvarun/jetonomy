@@ -7,6 +7,8 @@
     <extensions>
         <!-- One test = one request = one static-memo lifetime (see the class docblock). -->
         <extension class="Jetonomy_Memo_Reset_Extension"/>
+        <!-- Names each test for the runtime coverage recorder (off unless JETONOMY_COVERAGE_OUT is set). -->
+        <extension class="Jetonomy_Coverage_Extension"/>
     </extensions>
     <testsuites>
         <testsuite name="unit">

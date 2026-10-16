@@ -49,6 +49,14 @@ class Revisions_List_Table extends \WP_List_Table {
 	private array $title_cache = array();
 
 	/**
+	 * Rows whose post or reply no longer exists, keyed by "{type}:{id}" =>
+	 * the newest revision's stored title (or text excerpt for replies).
+	 *
+	 * @var array<string, string>
+	 */
+	private array $deleted = array();
+
+	/**
 	 * Posts and replies this page's rows point at, for anonymous-actor masking.
 	 *
 	 * @var array<string, object>
@@ -221,8 +229,46 @@ class Revisions_List_Table extends \WP_List_Table {
 		}
 
 		foreach ( Reply::parents_by_ids( array_unique( $reply_ids ) ) as $id => $parent ) {
-			$this->title_cache[ 'reply:' . $id ] = $parent['title'];
+			$this->title_cache[ 'reply:' . $id ] = (string) $parent['title'];
 		}
+
+		// The source is gone: fall back to what the newest revision stored.
+		// shortcut: one indexed lookup per DELETED row only (at most a page of 20); move to a batched model query if deleted rows dominate.
+		foreach ( $rows as $row ) {
+			$key = $row->object_type . ':' . (int) $row->object_id;
+			if ( '' === ( $this->title_cache[ $key ] ?? '' ) ) {
+				$latest                = Revision::list_for_object( (string) $row->object_type, (int) $row->object_id, 1 )[0] ?? null;
+				$this->deleted[ $key ] = $latest ? self::stored_title( $latest ) : '';
+			}
+		}
+	}
+
+	/**
+	 * What a revision snapshot says the object was called: its stored title,
+	 * or for a titleless reply a short excerpt of its text.
+	 *
+	 * @param object $revision jt_revisions row.
+	 * @return string Unescaped, may be empty.
+	 */
+	public static function stored_title( object $revision ): string {
+		$title = trim( (string) ( $revision->title ?? '' ) );
+		return '' !== $title ? $title : wp_trim_words( wp_strip_all_tags( (string) ( $revision->content ?? '' ) ), 10, '…' );
+	}
+
+	/**
+	 * Heading text for an object whose source was deleted, e.g.
+	 * "Which backup plugin? (deleted)", or "Deleted topic" when nothing was stored.
+	 *
+	 * @param string $type   Object type (post or reply).
+	 * @param string $stored Stored title from stored_title().
+	 * @return string Unescaped.
+	 */
+	public static function deleted_title( string $type, string $stored ): string {
+		if ( '' === $stored ) {
+			return Activity_List_Table::deleted_label( 'post' === $type ? 'topic' : $type );
+		}
+		/* translators: %s: title of a topic or reply that has since been deleted. */
+		return sprintf( __( '%s (deleted)', 'jetonomy' ), $stored );
 	}
 
 	/**
@@ -241,10 +287,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		if ( '' === $type ) {
 			return '&mdash;';
 		}
-		return sprintf(
-			'<code>%s</code>',
-			esc_html( Admin::object_type_label( $type ) )
-		);
+		return esc_html( Admin::object_type_label( $type ) );
 	}
 
 	public function column_object_title( $item ): string {
@@ -260,12 +303,7 @@ class Revisions_List_Table extends \WP_List_Table {
 		// Replies don't have their own title — fall back to the parent
 		// post's title, prefixed so the row is still scannable.
 		if ( '' === $title ) {
-			$label = sprintf(
-				/* translators: 1: reply label, lowercase (e.g. "reply"). 2: reply ID. */
-				__( '%1$s #%2$d', 'jetonomy' ),
-				Admin::object_type_label( $type ),
-				$id
-			);
+			$label = self::deleted_title( $type, $this->deleted[ $cache_key ] ?? '' );
 		} elseif ( 'reply' === $type ) {
 			$label = sprintf(
 				/* translators: 1: reply label (e.g. "Reply"). 2: parent post title. */
@@ -322,7 +360,7 @@ class Revisions_List_Table extends \WP_List_Table {
 	public function column_last_edited_by( $item ): string {
 		$user_id = (int) ( $item->last_edited_by ?? 0 );
 		if ( $user_id <= 0 ) {
-			return '<em>' . esc_html__( 'Unknown', 'jetonomy' ) . '</em>';
+			return self::editor_not_recorded();
 		}
 		if ( \Jetonomy\Author::hides_actor( $user_id, $this->objects[ $item->object_type . ':' . (int) $item->object_id ] ?? null ) ) {
 			return '<em>' . esc_html__( 'Anonymous', 'jetonomy' ) . '</em>';
@@ -339,11 +377,29 @@ class Revisions_List_Table extends \WP_List_Table {
 	}
 
 	/**
+	 * "Edited by" cell for a revision with no editor on record (imported or
+	 * created by a background process rather than a signed-in member).
+	 *
+	 * @return string Escaped HTML.
+	 */
+	public static function editor_not_recorded(): string {
+		/* translators: %s: member label, lowercase (e.g. "member"). */
+		$why = sprintf( __( 'Made by an import or a background process, not a signed-in %s.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) );
+		return '<em title="' . esc_attr( $why ) . '">' . esc_html__( 'Not recorded', 'jetonomy' ) . '</em>';
+	}
+
+	/**
 	 * Empty-state copy when no rows match the active filters.
 	 */
 	public function no_items(): void {
-		/* translators: %s: reply label, lowercase (e.g. "reply"). */
-		echo esc_html( sprintf( __( 'No revisions have been recorded yet. Revisions are created automatically when a post or %s is edited.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ) );
+		echo esc_html(
+			sprintf(
+				/* translators: 1: topic label, lowercase (e.g. "topic"). 2: reply label, lowercase (e.g. "reply"). */
+				__( 'No revisions have been recorded yet. Revisions are created automatically when a %1$s or %2$s is edited.', 'jetonomy' ),
+				\Jetonomy\jetonomy_label( 'topic', false, true ),
+				\Jetonomy\jetonomy_label( 'reply', false, true )
+			)
+		);
 	}
 
 	/**
@@ -359,7 +415,7 @@ class Revisions_List_Table extends \WP_List_Table {
 				<label class="screen-reader-text" for="jt-revisions-type"><?php esc_html_e( 'Filter by type', 'jetonomy' ); ?></label>
 				<select id="jt-revisions-type" name="object_type">
 					<option value=""><?php esc_html_e( 'All types', 'jetonomy' ); ?></option>
-					<option value="post" <?php selected( $filters['object_type'], 'post' ); ?>><?php esc_html_e( 'Posts', 'jetonomy' ); ?></option>
+					<option value="post" <?php selected( $filters['object_type'], 'post' ); ?>><?php echo esc_html( \Jetonomy\jetonomy_label( 'topic', true ) ); ?></option>
 					<option value="reply" <?php selected( $filters['object_type'], 'reply' ); ?>><?php echo esc_html( \Jetonomy\jetonomy_label( 'reply', true ) ); ?></option>
 				</select>
 

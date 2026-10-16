@@ -37,22 +37,25 @@ class Space_Moderation_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'list_flags' ),
 				'permission_callback' => array( $this, 'require_view_space_queue' ),
-				'args'                => array(
-					'id'     => array(
-						'type'     => 'integer',
-						'required' => true,
-						'minimum'  => 1,
-					),
-					// Same contract as the global queue (/moderation/flags). Without
-					// this the Upheld/Dismissed chips on the per-space screen sent a
-					// status the route never registered, WP dropped it silently, and
-					// the filter returned pending rows forever — dead UI that looked
-					// like "no results" rather than "this filter does nothing".
-					'status' => array(
-						'type'    => 'string',
-						'default' => 'pending',
-						'enum'    => array( 'pending', 'valid', 'dismissed', 'all' ),
-					),
+				'args'                => array_merge(
+					$this->get_collection_params(),
+					array(
+						'id'     => array(
+							'type'     => 'integer',
+							'required' => true,
+							'minimum'  => 1,
+						),
+						// Same contract as the global queue (/moderation/flags). Without
+						// this the Upheld/Dismissed chips on the per-space screen sent a
+						// status the route never registered, WP dropped it silently, and
+						// the filter returned pending rows forever — dead UI that looked
+						// like "no results" rather than "this filter does nothing".
+						'status' => array(
+							'type'    => 'string',
+							'default' => 'pending',
+							'enum'    => array( 'pending', 'valid', 'dismissed', 'all' ),
+						),
+					)
 				),
 			)
 		);

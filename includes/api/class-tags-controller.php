@@ -227,20 +227,19 @@ class Tags_Controller extends Base_Controller {
 		$offset = absint( $request->get_param( 'offset' ) ?? 0 );
 		$sort   = $request->get_param( 'sort' ) ?? 'popular';
 
-		$tags  = 'alphabetical' === $sort ? Tag::list_alphabetical( $limit, $offset ) : Tag::list_popular( $limit, $offset );
-		$total = Tag::count();
-
-		// Report what this viewer can read, not the stored all-spaces count
-		// (same rule as the sidebar and tag search).
-		$counts = \Jetonomy\Models\Post::count_by_tags_visible( wp_list_pluck( $tags, 'id' ) );
-		foreach ( $tags as $tag ) {
-			$tag->post_count = $counts[ (int) $tag->id ] ?? 0;
-		}
+		// Only tags this viewer can read a topic under, counted as they see
+		// them (same rule as the sidebar and tag search): a tag used only in
+		// private spaces must not appear, even with a count of 0.
+		// Guests share one cached answer per page (the bulk of traffic, as in
+		// the sidebar); members vary by membership and read it live.
+		$sort    = 'alphabetical' === $sort ? 'alphabetical' : 'popular';
+		$load    = static fn() => \Jetonomy\Models\Post::list_tags_visible( $sort, $limit, $offset );
+		$visible = is_user_logged_in() ? $load() : \Jetonomy\Cache::remember( "tags:visible:guest:{$sort}:{$limit}:{$offset}", $load, 900 );
 
 		return $this->paginated_response(
-			$tags,
+			$visible['rows'],
 			array(
-				'total'  => $total,
+				'total'  => $visible['total'],
 				'offset' => $offset,
 			)
 		);

@@ -34,8 +34,14 @@ abstract class Model {
 		return $row ?: null;
 	}
 
+	/**
+	 * @return int New row ID, or 0 when the insert failed (insert_id would
+	 *             otherwise still hold the previous insert's ID).
+	 */
 	public static function insert( array $data ): int {
-		static::db()->insert( static::table(), $data );
+		if ( false === static::db()->insert( static::table(), $data ) ) {
+			return 0;
+		}
 		return (int) static::db()->insert_id;
 	}
 

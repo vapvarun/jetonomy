@@ -45,7 +45,18 @@ $export_url = wp_nonce_url(
 	<hr class="wp-header-end" />
 
 	<p class="description">
-		<?php esc_html_e( 'Audit trail of community events. Read-only. Adjust retention via the daily prune cron.', 'jetonomy' ); ?>
+		<?php
+		$jt_retention = (int) ( get_option( 'jetonomy_settings', array() )['activity_log_retention_days'] ?? 90 );
+		esc_html_e( 'Everything that happens in your community, newest first.', 'jetonomy' );
+		echo ' ';
+		echo esc_html(
+			$jt_retention > 0
+				/* translators: %s: number of days. */
+				? sprintf( _n( 'Entries older than %s day are deleted automatically.', 'Entries older than %s days are deleted automatically.', $jt_retention, 'jetonomy' ), number_format_i18n( $jt_retention ) )
+				: __( 'Entries are kept until you delete them.', 'jetonomy' )
+		);
+		?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-settings&tab=general#jt-activity-log-settings' ) ); ?>"><?php esc_html_e( 'Change how long entries are kept', 'jetonomy' ); ?></a>
 	</p>
 
 	<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">

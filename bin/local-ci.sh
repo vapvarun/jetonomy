@@ -196,6 +196,23 @@ else
     FAILED_GATES+=("terminology")
 fi
 
+step "Manifest freshness (free)"
+if php bin/check-manifest-fresh.php >/dev/null 2>&1; then
+    ok "manifest matches the code (hooks, AJAX, cron, routes, CLAUDE.md counts)"
+else
+    php bin/check-manifest-fresh.php 2>/dev/null | tail -8
+    fail "manifest has drifted from the code"
+    FAILED_GATES+=("manifest-fresh")
+fi
+
+step "Smoke runbook freshness (report; blocks at release)"
+if php bin/check-runbook-fresh.php >/dev/null 2>&1; then
+    ok "every runbook journey verified against the current code"
+else
+    php bin/check-runbook-fresh.php 2>/dev/null | tail -4
+    warn "runbook journeys need review before the next release (bin/build-release.sh blocks on this)"
+fi
+
 step "Data layer (free)"
 if bin/check-data-layer.sh; then
     ok "no new \$wpdb use outside models"
@@ -253,6 +270,31 @@ if [ "$DO_COMBO" -eq 1 ]; then
     else
         ok "PHPUnit combo clean — $COMBO"
     fi
+fi
+
+# --- Gate 4b: runtime coverage + regression proof (host test library) -----
+# Both need the WordPress test library on the host (WP_TESTS_DIR). Without it
+# they did NOT run: say so plainly rather than pass quietly. CI runs both.
+step "Runtime coverage and new-test proof"
+if [ -n "${WP_TESTS_DIR:-}" ] && [ -f "${WP_TESTS_DIR}/includes/functions.php" ]; then
+    COV_DIR=$(mktemp -d)
+    JETONOMY_COVERAGE_OUT="$COV_DIR/phpunit.json" JETONOMY_TEST_SKIP_PRO=1 php vendor/bin/phpunit \
+        --testsuite=unit,integration,security,error-paths,concurrency >/dev/null 2>&1
+    if php bin/qa-runtime-coverage.php --runtime="$COV_DIR/phpunit.json"; then
+        ok "runtime coverage: must-cover reached, no stale tests, baseline not grown"
+    else
+        fail "runtime coverage gate"
+        FAILED_GATES+=("runtime-coverage")
+    fi
+    rm -rf "${COV_DIR:?}"
+    if php bin/check-new-tests-fail-on-base.php; then
+        ok "every new regression test fails on the base branch"
+    else
+        fail "a new test passes on the old code (or could not run)"
+        FAILED_GATES+=("new-tests-fail-on-base")
+    fi
+else
+    warn "NOT RUN: set WP_TESTS_DIR to the host WordPress test library to run these locally (CI always runs them)"
 fi
 
 # --- Gate 5: browser smoke (optional) -----------------------------------

@@ -313,9 +313,9 @@ class Users_Controller extends Base_Controller {
 				// the server could not resolve whenever the two differ (a login
 				// of `john.smith` has the nicename `john-smith`).
 				'handle'       => \Jetonomy\user_handle( $u ),
-				// Kept for third-party consumers that already read it. Not what
-				// the composer inserts.
-				'login'        => $u->user_login,
+				// Kept for third-party consumers that already read it, but the
+				// handle too: user_login is an email on email-as-username sites.
+				'login'        => \Jetonomy\user_handle( $u ),
 				// RAW on purpose: the mention picker renders name and handle as
 				// two separate fields (composer.js jt-mention-name /
 				// jt-mention-login), so applying the "both" mode here would
@@ -553,7 +553,7 @@ class Users_Controller extends Base_Controller {
 				// Must cover every type shown in the Edit-Profile + admin
 				// Notification Defaults UIs, or that toggle is silently dropped on
 				// save (idea_status_changed / moderation / join_request were missing).
-				$valid_types = array( 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'idea_status_changed', 'moderation', 'join_request', 'message' );
+				$valid_types = array( 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'idea_status_changed', 'moderation', 'join_request', 'join_request_result', 'message' );
 				$prefs       = array();
 				foreach ( $notif_input as $type => $channels ) {
 					if ( ! in_array( $type, $valid_types, true ) ) {

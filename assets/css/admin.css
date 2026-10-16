@@ -3712,6 +3712,54 @@ tr.jetonomy-moderated td {
 	}
 }
 
+/* With six or more roles the matrix is wider than its card, and overlay
+   scrollbars (macOS, touch) hide the only sign that more columns exist: the
+   last roles looked clipped. The capability column now stays put while roles
+   scroll under it (its edge shadow shows there is more), the scrollbar is
+   drawn whenever the platform allows, and the view prints a one-line hint. */
+.jetonomy-admin .jt-matrix-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: var(--jt-admin-border-strong) transparent;
+}
+
+/* A table with overflow:hidden (set for rounded table cards) becomes the
+   sticky cells' scroll container and pins them to nothing. */
+.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide {
+	overflow: visible;
+}
+
+.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide thead th:first-child,
+.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide th[scope="row"] {
+	position: sticky;
+	inset-inline-start: 0;
+	z-index: 1;
+	background: var(--jt-admin-white);
+	box-shadow: inset -1px 0 0 var(--jt-admin-border), 6px 0 8px -6px var(--jt-admin-border-strong);
+}
+
+.jetonomy-admin .jt-matrix-scroll-hint {
+	margin: 0;
+	padding: 10px 20px 0;
+}
+
+@media screen and (max-width: 782px) {
+	/* Leave room for at least one role column beside the sticky label. */
+	.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide th[scope="row"] {
+		min-width: 150px;
+		width: 150px;
+		white-space: normal;
+		overflow-wrap: break-word;
+	}
+
+	.jetonomy-admin .jt-matrix-scroll table.jt-settings-matrix--wide th[scope="row"] code {
+		word-break: break-all;
+	}
+
+	.jetonomy-admin .jt-matrix-scroll-hint {
+		padding-inline: 14px;
+	}
+}
+
 /* ── Settings matrix primitive ─────────────────────────────
    For EDITABLE configuration tables (permissions grid, email templates,
    notification toggles): these are forms, not data lists — on small screens
@@ -4242,3 +4290,66 @@ tr.jetonomy-moderated td {
 .jetonomy-admin .jt-tier-badge--agency { background: var(--jt-admin-warn-light, #fef3c7); color: var(--jt-admin-warn-dark, #92400e); }
 .jetonomy-admin .jt-tier-badge--growth { background: var(--jt-admin-info-light, #e0e7ff); color: var(--jt-admin-info-dark, #3730a3); }
 
+
+/* ── Trust level names (Settings > Permissions, Trust Levels card) ──
+   A fieldset under the thresholds table: legend styled like a card title,
+   then one labelled field per level in a grid that stacks on phones. */
+.jt-trust-names {
+	border: 0;
+	border-top: 1px solid var(--jt-admin-border);
+	margin: 0;
+	padding: 14px 20px 20px;
+	min-width: 0;
+}
+
+.jt-trust-names > legend {
+	float: inline-start;
+	width: 100%;
+	padding: 0;
+	margin: 0 0 2px;
+}
+
+.jt-trust-names > .description {
+	clear: both;
+	margin: 0 0 14px;
+}
+
+.jt-trust-name-fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 14px 20px;
+}
+
+.jt-trust-name-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.jt-trust-name-field > span {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--jt-admin-text-4);
+}
+
+.jt-trust-name-field > input.regular-text {
+	width: 100%;
+	max-width: none;
+}
+
+@media (max-width: 480px) {
+	.jt-trust-names {
+		padding-inline: 14px;
+	}
+
+	.jt-trust-name-fields {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Per-type note under an email template's name (e.g. the confirmation email). */
+.jetonomy-admin .jetonomy-email-templates-table th .description {
+	font-weight: 400;
+	margin: 4px 0 0;
+}

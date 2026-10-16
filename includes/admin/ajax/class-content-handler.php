@@ -75,7 +75,7 @@ class Content_Handler {
 
 		$id = absint( $_POST['post_id'] ?? 0 );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
+			wp_send_json_error( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ) );
 		}
 
 		$data = array();
@@ -110,7 +110,7 @@ class Content_Handler {
 		 * @param int $user_id  Editing user ID.
 		 */
 		do_action( 'jetonomy_post_updated', $id, (int) ( Post::find( $id )->space_id ?? 0 ), get_current_user_id() );
-		wp_send_json_success( array( 'message' => __( 'Post updated.', 'jetonomy' ) ) );
+		wp_send_json_success( array( 'message' => sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s updated.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ) ) );
 	}
 
 	public function ajax_delete_post(): void {
@@ -122,7 +122,7 @@ class Content_Handler {
 		$id     = absint( $_POST['post_id'] ?? 0 );
 		$status = sanitize_text_field( wp_unslash( $_POST['status'] ?? 'trash' ) );
 		if ( ! $id ) {
-			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
+			wp_send_json_error( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Invalid %s ID.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ) );
 		}
 
 		// Route through the moderation choke-point so the status write, pending

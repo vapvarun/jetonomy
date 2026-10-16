@@ -17,7 +17,7 @@ $ajax_url  = admin_url( 'admin-ajax.php' );
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?php esc_html_e( 'Jetonomy Setup', 'jetonomy' ); ?></title>
+<title><?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( '%s Setup', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></title>
 <?php
 // Standalone page — set screen context and disable admin bar / deprecated hooks.
 if ( function_exists( 'set_current_screen' ) ) {
@@ -71,7 +71,7 @@ wp_head();
 				<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
 			</svg>
 		</div>
-		<h1 class="jt-setup-title"><?php esc_html_e( 'Jetonomy Setup', 'jetonomy' ); ?></h1>
+		<h1 class="jt-setup-title"><?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( '%s Setup', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></h1>
 		<p class="jt-setup-subtitle"><?php esc_html_e( "Let's get your community ready in a few simple steps.", 'jetonomy' ); ?></p>
 	</div>
 
@@ -96,7 +96,7 @@ wp_head();
 
 	<!-- Step 1: Welcome + Basics -->
 	<div class="jt-setup-card jt-step jt-step--active" id="jt-step-1">
-		<h2><?php esc_html_e( 'Welcome to Jetonomy', 'jetonomy' ); ?></h2>
+		<h2><?php /* translators: %s: the community name or, in wp-admin, the product name. */ echo esc_html( sprintf( __( 'Welcome to %s', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></h2>
 		<p class="jt-setup-card__desc"><?php esc_html_e( 'Configure the basics for your community. You can always change these later in Settings.', 'jetonomy' ); ?></p>
 
 		<div class="jt-setup-error" id="jt-error-1"></div>
@@ -142,7 +142,7 @@ wp_head();
 				<div class="jt-radio-option">
 					<input type="radio" name="jt-default-type" id="jt-type-feed" value="feed">
 					<label for="jt-type-feed">
-						<strong><?php esc_html_e( 'Show &amp; Tell', 'jetonomy' ); ?></strong>
+						<strong><?php esc_html_e( 'Feed', 'jetonomy' ); ?></strong>
 						<span><?php esc_html_e( 'Short-form feed for status updates, screenshots, and quick wins', 'jetonomy' ); ?></span>
 					</label>
 				</div>
@@ -210,7 +210,7 @@ wp_head();
 			<?php jetonomy_echo_icon( 'check-circle', 48 ); ?>
 		</div>
 		<h2 class="jt-success-heading"><?php esc_html_e( 'Your community is ready!', 'jetonomy' ); ?></h2>
-		<p class="jt-success-sub"><?php esc_html_e( 'Everything is set up. Start exploring your new Jetonomy community.', 'jetonomy' ); ?></p>
+		<p class="jt-success-sub"><?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( 'Everything is set up. Start exploring your new %s community.', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></p>
 
 		<div class="jt-success-cta">
 			<a href="<?php echo esc_url( home_url( '/' . $base_slug . '/' ) ); ?>" class="jt-btn jt-btn--primary" id="jt-visit-community" target="_blank">

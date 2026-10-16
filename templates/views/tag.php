@@ -33,7 +33,7 @@ if ( ! in_array( $sort, array( 'latest', 'popular' ), true ) ) {
 // 30 a page; the total counts only what this viewer may read, like the list.
 $per_page = 30;
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$paged       = max( 1, (int) ( $_GET['paged'] ?? 1 ) );
+$paged       = \Jetonomy\list_page();
 $offset      = ( $paged - 1 ) * $per_page;
 $total_posts = \Jetonomy\Models\Post::count_by_tag_visible( (int) $tag->id );
 $total_pages = (int) ceil( max( 1, $total_posts ) / $per_page );
@@ -132,15 +132,15 @@ $crumbs = array(
 				if ( $total_pages > 1 ) :
 					$prev_url = add_query_arg(
 						array(
-							'sort'  => $sort,
-							'paged' => $paged - 1,
+							'sort' => $sort,
+							'pg'   => $paged - 1,
 						),
 						$tag_url
 					);
 					$next_url = add_query_arg(
 						array(
-							'sort'  => $sort,
-							'paged' => $paged + 1,
+							'sort' => $sort,
+							'pg'   => $paged + 1,
 						),
 						$tag_url
 					);

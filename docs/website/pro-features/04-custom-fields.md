@@ -73,7 +73,7 @@ Private fields are still editable by the member but do not appear on their publi
 
 ## How Members Fill In Fields
 
-Members edit their custom fields at `/community/u/{username}/edit/` under the **Profile Details** section. Required fields show a red asterisk. Saving the profile validates all required fields before updating.
+Members edit their custom fields at `/community/u/{profile-slug}/edit/` (the Edit profile link on their profile) under the **Profile Details** section. Required fields show a red asterisk. Saving the profile validates all required fields before updating.
 
 > **Tip:** Guide members to complete their profiles right after joining by linking to the edit profile page in your welcome notification or email digest.
 

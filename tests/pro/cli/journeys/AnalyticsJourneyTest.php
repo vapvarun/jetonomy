@@ -270,7 +270,7 @@ class AnalyticsJourneyTest extends WP_UnitTestCase {
 		$header = str_getcsv( $lines[0] );
 
 		$this->assertSame(
-			array( 'Date', 'Posts', 'Replies', 'New Users', 'Votes' ),
+			array( 'Date', \Jetonomy_Pro\label( 'topic', true ), \Jetonomy_Pro\label( 'reply', true ), 'New Users', 'Votes' ),
 			$header,
 			'the download and the command must agree on the columns'
 		);

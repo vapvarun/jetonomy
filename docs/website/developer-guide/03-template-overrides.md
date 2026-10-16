@@ -74,8 +74,8 @@ You do not need to copy all of these. Only create the files you want to customiz
 | `views/my-spaces.php` | `my-spaces` | `/community/my-spaces/` |
 | `views/drafts.php` | `drafts` | `/community/drafts/` |
 | `views/bookmarks.php` | `bookmarks` | `/community/bookmarks/` |
-| `views/user-profile.php` | `profile` | `/community/u/{login}/` |
-| `views/edit-profile.php` | `edit-profile` | `/community/u/{login}/edit/` |
+| `views/user-profile.php` | `profile` | `/community/u/{nicename}/` |
+| `views/edit-profile.php` | `edit-profile` | `/community/u/{nicename}/edit/` |
 | `views/leaderboard.php` | `leaderboard` | `/community/leaderboard/` |
 | `views/notifications.php` | `notifications` | `/community/notifications/` |
 | `views/moderation.php` | `moderation` | `/community/mod/` |

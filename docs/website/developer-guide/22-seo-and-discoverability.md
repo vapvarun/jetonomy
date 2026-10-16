@@ -15,7 +15,7 @@ On every community page Jetonomy prints a `<script type="application/ld+json">` 
 | `/community/s/{slug}/t/{slug}/` (Q&A topic with an accepted answer) | `QAPage` (`Question` + `Answer` + `Person`) | Q&A rich result |
 | `/community/s/{slug}/t/{slug}/` (discussion topic) | `DiscussionForumPosting` + `InteractionCounter` | Forum-post rich result with vote + reply counts |
 | `/community/tag/{slug}/` | `CollectionPage` + `ItemList` | Itemised tag list |
-| `/community/u/{login}/` | `Person` | Author/profile |
+| `/community/u/{nicename}/` | `Person` | Author/profile |
 | breadcrumbed pages | `BreadcrumbList` | Breadcrumb trail |
 
 `QAPage` and `DiscussionForumPosting` are the two schemas Google specifically documents for forum content, and the `InteractionCounter` nodes feed the up-vote and answer counts straight from your tables. Validate any page with Google's [Rich Results Test](https://search.google.com/test/rich-results).

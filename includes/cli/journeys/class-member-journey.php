@@ -309,23 +309,19 @@ final class Member_Journey {
 			return Journey_Result::fail( sprintf( 'Join request %d not found.', $request_id ) );
 		}
 
-		$ok = JoinRequest::approve( $request_id, $reviewer_id );
-		if ( ! $ok ) {
-			return Journey_Result::fail( sprintf( 'JoinRequest::approve(%d) returned false.', $request_id ) );
-		}
-
 		$space_id = (int) $row->space_id;
 		$user_id  = (int) $row->user_id;
 
-		$added = SpaceMember::add( $space_id, $user_id, 'member' );
-		if ( is_wp_error( $added ) ) {
+		// Admits first, then settles: a refused admission leaves it pending.
+		$approved = JoinRequest::approve( $request_id, $reviewer_id );
+		if ( is_wp_error( $approved ) ) {
 			return Journey_Result::from_wp_error(
-				$added,
+				$approved,
 				array(
 					'id'       => $request_id,
 					'space_id' => $space_id,
 					'user_id'  => $user_id,
-					'status'   => 'approved',
+					'status'   => 'pending',
 				)
 			);
 		}

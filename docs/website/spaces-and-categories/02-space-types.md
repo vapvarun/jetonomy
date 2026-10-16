@@ -92,12 +92,12 @@ A space with no posts yet does not show a generic "No posts" message. The empty 
 
 | Space type | Empty-state message | Button |
 |------------|--------------------|--------|
-| Forum | "No posts yet. Be the first to start a discussion!" | New Post |
+| Forum | "No topics yet. Be the first to start a discussion!" | New Post |
 | Q&A | "No questions yet. Ask the first one and get answers from the community." | Ask a question |
 | Feed | "Nothing posted yet. Share the first update." | Share an update |
 | Ideas | "No ideas yet. Suggest the first one and let the community vote." | Suggest an idea |
 
-The button only appears for a visitor who is actually allowed to post in the space. A member (or anyone who can join an open space) sees the call-to-action; a visitor who cannot post sees the message without a button.
+The invitation and the button only appear for a visitor who is actually allowed to post in the space. A visitor who cannot post (logged out, not a member yet, waiting on a join request, or read-only) sees just the first sentence, such as "No ideas yet.", with no button. Archived and locked spaces say "No topics were posted here." The same rule applies to a topic with no replies: "Be the first to reply!" shows only to someone who can reply.
 
 > **Note:** Space cards on the community home and category listings also carry an "Active [time] ago" recency signal (for example, "Active 2 hours ago"), so members can tell a thriving space from a dormant one at a glance. A space with no recorded activity shows no label.
 

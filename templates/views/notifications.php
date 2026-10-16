@@ -24,7 +24,7 @@ $filter = isset( $_GET['filter'] ) ? sanitize_key( wp_unslash( $_GET['filter'] )
 $filter = in_array( $filter, array( 'all', 'unread', 'mentions', 'replies', 'votes', 'badges' ), true ) ? $filter : 'all';
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-$current_page = isset( $_GET['paged'] ) ? max( 1, (int) wp_unslash( $_GET['paged'] ) ) : 1;
+$current_page = \Jetonomy\list_page();
 $page_size    = 20;
 $offset       = ( $current_page - 1 ) * $page_size;
 
@@ -161,8 +161,8 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 		<?php
 		foreach ( $filter_tabs as $tab_slug => $tab_label ) :
 			$tab_url   = 'all' === $tab_slug
-				? remove_query_arg( array( 'filter', 'paged' ) )
-				: add_query_arg( array( 'filter' => $tab_slug ), remove_query_arg( 'paged' ) );
+				? remove_query_arg( array( 'filter', 'pg', 'paged' ) )
+				: add_query_arg( array( 'filter' => $tab_slug ), remove_query_arg( array( 'pg', 'paged' ) ) );
 			$tab_count = $counts[ $tab_slug ] ?? 0;
 			$is_active = $filter === $tab_slug;
 			$tab_class = 'jt-notif-tab';
@@ -350,7 +350,7 @@ $settings_url = \Jetonomy\get_profile_action_url( 'notification-settings', get_c
 			'pagination',
 			array(
 				'has_more'  => $has_more,
-				'param_key' => 'paged',
+				'param_key' => 'pg',
 				'target'    => '.jt-notif-list',
 			)
 		);

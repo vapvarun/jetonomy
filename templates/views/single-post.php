@@ -67,6 +67,12 @@ if ( $space && in_array( $space->visibility, array( 'private', 'hidden' ), true 
 	// hit "private space" opening the very post they wrote (2026-08-06).
 	if ( ! $user_id || ! \Jetonomy\Models\Space::admitted( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
+			// A hidden space is not discoverable, so its topics answer exactly
+			// like a missing one: a different message confirmed a guessed URL.
+			if ( 'hidden' === $space->visibility ) {
+				$jt_not_found();
+				return;
+			}
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				array(
@@ -128,7 +134,7 @@ $jt_author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $pos
 $jt_author_masked  = (int) $jt_author_display['id'] !== (int) $post->author_id;
 $profile           = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $tags              = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
-$category          = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$category          = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find_visible( (int) $space->category_id ) : null;
 
 $author_id = (int) $post->author_id;
 $trust     = $profile ? (int) $profile->trust_level : 0;
@@ -942,14 +948,27 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					</aside>
 				<?php endif; ?>
 
+				<?php
+				// "may actually reply here", not merely "is logged in": a Read-grant admits
+				// a member to the space without granting create_replies, and POST /replies
+				// then 403s. Gate the composer on the same permission the server enforces so
+				// a read-only member never sees a Post Reply box they cannot submit - the
+				// Vote / New-Topic seam, applied to the reply surface. The empty state
+				// below uses it too, so it never invites a reply the viewer cannot post.
+				$jt_can_reply_here = $jt_is_live
+					&& $jt_viewer_id
+					&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
+				?>
 				<?php if ( empty( $reply_batch ) ) : ?>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						array(
 							'icon'    => 'empty-replies',
-							// jt-terms-ok: 'reply' at the end is the verb; the noun comes from the label.
-							'message' => sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet. Be the first to reply!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
+							'message' => ( $jt_can_reply_here && ( ! $post->is_closed || $jt_can_moderate_here ) )
+								// jt-terms-ok: 'reply' at the end is the verb; the noun comes from the label.
+								? sprintf( /* translators: %s: plural reply label. */ __( 'No %s yet. Be the first to reply!', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) )
+								: sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ),
 						)
 					);
 					?>
@@ -998,16 +1017,6 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			</div>
 
 			<!-- Composer -->
-			<?php
-			// "may actually reply here", not merely "is logged in": a Read-grant admits
-			// a member to the space without granting create_replies, and POST /replies
-			// then 403s. Gate the composer on the same permission the server enforces so
-			// a read-only member never sees a Post Reply box they cannot submit - the
-			// Vote / New-Topic seam, applied to the reply surface.
-			$jt_can_reply_here = $jt_is_live
-				&& $jt_viewer_id
-				&& \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'create_replies', (int) $post->space_id );
-			?>
 			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
 					<?php printf( /* translators: 1: singular topic label; 2: plural reply label. */ esc_html__( 'This %1$s is closed and no longer accepts %2$s.', 'jetonomy' ), esc_html( \Jetonomy\jetonomy_label( 'topic', false, true ) ), esc_html( \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
@@ -1033,9 +1042,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 				</div>
 			<?php elseif ( ! is_user_logged_in() ) : ?>
-				<div class="jt-login-prompt">
-					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); /* jt-terms-ok: verb */ ?></a>
-				</div>
+				<?php
+				// Guests get the composer partial's own logged-out state (the
+				// styled Log in to reply button), so there is one copy of it.
+				\Jetonomy\Template_Loader::partial( 'composer', array( 'post_url' => $post_url ) );
+				?>
 			<?php endif; ?>
 		</main>
 

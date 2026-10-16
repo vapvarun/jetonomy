@@ -39,7 +39,7 @@ The `posts` tab is active when the URL is the bare profile URL (no sub-tab segme
 
 ## Step 1: Register a Template for the Tab Content
 
-Register a new route via `jetonomy_template_map` and point it to a PHP template in your plugin or theme. The template receives the user login from `get_query_var( 'jetonomy_slug' )`.
+Register a new route via `jetonomy_template_map` and point it to a PHP template in your plugin or theme. The template receives the profile slug from `get_query_var( 'jetonomy_slug' )`; resolve it with `\Jetonomy\profile_user()`, which reads the member's `user_nicename` (and still accepts an older login-based link).
 
 ```php
 add_filter( 'jetonomy_template_map', function( array $map ): array {
@@ -55,8 +55,7 @@ A minimal template for the route:
 <?php
 // my-plugin/templates/profile-portfolio.php
 
-$login = get_query_var( 'jetonomy_slug' );
-$user  = get_user_by( 'login', $login );
+$user = \Jetonomy\profile_user( (string) get_query_var( 'jetonomy_slug' ) );
 
 if ( ! $user ) {
     wp_redirect( home_url( '/' ) );
@@ -110,7 +109,7 @@ add_filter( 'jetonomy_profile_tabs', function( array $tabs, WP_User $user, bool 
 
     $tabs['portfolio'] = [
         'label' => __( 'Portfolio', 'my-plugin' ),
-        'url'   => home_url( "/{$base}/u/{$user->user_login}/portfolio/" ),
+        'url'   => home_url( "/{$base}/u/{$user->user_nicename}/portfolio/" ),
     ];
 
     return $tabs;
@@ -127,7 +126,7 @@ The following block can be placed in your theme's `functions.php` or in a site-s
 /**
  * Portfolio tab on member profiles.
  *
- * 1. Registers a /community/u/{login}/portfolio/ URL.
+ * 1. Registers a /community/u/{nicename}/portfolio/ URL.
  * 2. Loads a custom template for that URL.
  * 3. Adds a "Portfolio" tab to the profile tab bar.
  */
@@ -157,7 +156,7 @@ add_filter( 'jetonomy_profile_tabs', function( array $tabs, WP_User $user, bool 
 
     $tabs['portfolio'] = [
         'label' => __( 'Portfolio', 'my-plugin' ),
-        'url'   => home_url( "/{$base}/u/{$user->user_login}/portfolio/" ),
+        'url'   => home_url( "/{$base}/u/{$user->user_nicename}/portfolio/" ),
     ];
 
     return $tabs;

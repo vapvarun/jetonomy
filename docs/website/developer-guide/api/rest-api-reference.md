@@ -94,7 +94,7 @@ POST   /spaces/{id}/join-requests/{request_id}/deny         Deny
 PATCH  /spaces/{id}/members/{user_id}                      Change role (space admin)
 DELETE /spaces/{id}/members/{user_id}                       Leave/remove
 POST   /spaces/{id}/invite                                  Generate invite link (space admin)
-GET    /invite/{token}                                     Accept invite
+POST   /invite/{token}                                     Accept invite and join (logged in; GET before 2.0.3)
 GET    /spaces/{id}/access-rules                           List access rules (jetonomy_manage_spaces)
 POST   /spaces/{id}/access-rules                           Create an access rule (jetonomy_manage_spaces)
 DELETE /access-rules/{id}                                   Delete an access rule (jetonomy_manage_spaces)

@@ -831,7 +831,7 @@ class Replies_Controller extends Base_Controller {
 			// already fetched above — passed through to avoid a second query.
 			$author_name   = \Jetonomy\Author::for_display( $author_id, $reply, $author ?: null )['name'] ?: __( 'Anonymous', 'jetonomy' );
 			$author_avatar = $author ? \Jetonomy\Avatar::display_url( $author_id, 64 ) : '';
-			$author_login  = $author ? $author->user_login : '';
+			$author_login  = $author ? \Jetonomy\user_handle( $author ) : '';
 			$trust_level   = $profile ? (int) $profile->trust_level : 0;
 			$reputation    = $profile ? (int) $profile->reputation : 0;
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';

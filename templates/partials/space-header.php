@@ -78,13 +78,20 @@ $_jt_can_edit_space = is_user_logged_in()
 			// hidden, so space moderators get their queue here.
 			$_jt_mod_uid = get_current_user_id();
 			if ( $_jt_mod_uid && \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( $_jt_mod_uid, (int) $space->id ) ) :
-				$_jt_queue_count = \Jetonomy\Moderation\Moderation_Service::count_pending_flags( $_jt_mod_uid, (int) $space->id )
-					+ \Jetonomy\Moderation\Moderation_Service::count_pending_approvals( $_jt_mod_uid, 'post', (int) $space->id )
+				$_jt_flag_count  = \Jetonomy\Moderation\Moderation_Service::count_pending_flags( $_jt_mod_uid, (int) $space->id );
+				$_jt_held_count  = \Jetonomy\Moderation\Moderation_Service::count_pending_approvals( $_jt_mod_uid, 'post', (int) $space->id )
 					+ \Jetonomy\Moderation\Moderation_Service::count_pending_approvals( $_jt_mod_uid, 'reply', (int) $space->id );
+				$_jt_queue_count = $_jt_flag_count + $_jt_held_count;
+				// Open the tab the count is about: the queue opens on Flags, so
+				// held content alone used to land on "0 pending flags".
+				$_jt_queue_url = \Jetonomy\route_url( 'space-moderation', $space->slug );
+				if ( 0 === $_jt_flag_count && $_jt_held_count > 0 ) {
+					$_jt_queue_url = add_query_arg( 'view', 'approvals', $_jt_queue_url );
+				}
 				?>
 				<p class="jt-space-edit-cta">
 					<a class="jt-btn jt-btn-sm jt-btn-ghost"
-						href="<?php echo esc_url( \Jetonomy\route_url( 'space-moderation', $space->slug ) ); ?>">
+						href="<?php echo esc_url( $_jt_queue_url ); ?>">
 						<?php jetonomy_echo_icon( 'shield', 14 ); ?>
 						<?php esc_html_e( 'Moderation queue', 'jetonomy' ); ?>
 						<?php if ( $_jt_queue_count > 0 ) : ?>
@@ -105,20 +112,22 @@ $_jt_can_edit_space = is_user_logged_in()
 			</div>
 		</div>
 		<?php
+		// An archived or locked space takes no new members (SpaceMember::join_blocked()),
+		// so a non-member there gets Follow, never a Join button that would fail.
 		if ( is_user_logged_in() ) :
-			if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
+			if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted ) :
 				// Invite-only: show a disabled badge instead of Follow/Join.
 				?>
-				<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;">
+				<span class="jt-btn jt-btn-sm jt-btn-ghost jt-btn--status">
 					<?php esc_html_e( 'Invite Only', 'jetonomy' ); ?>
 				</span>
 				<?php
-			elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
+			elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted ) :
 				// Approval required: check for existing pending request.
 				$_jt_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
 				if ( $_jt_pending ) :
 					?>
-					<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;text-align:center;">
+					<span class="jt-btn jt-btn-sm jt-btn-ghost jt-btn--status">
 						<?php esc_html_e( 'Awaiting Approval', 'jetonomy' ); ?>
 					</span>
 					<?php
@@ -132,7 +141,7 @@ $_jt_can_edit_space = is_user_logged_in()
 					</button>
 				<?php endif; ?>
 				<?php
-			elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) :
+			elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits && ! $is_restricted ) :
 				// Open space, non-member: show Join Space button (instant membership).
 				$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
 				?>

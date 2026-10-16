@@ -8,6 +8,8 @@
  * @var object[] $categories
  * @var array<int,object{user_id:int,role:string,space_role?:string,joined_at?:string,display_name?:string}> $members
  * @var object[] $access_rules
+ * @var object[] $join_requests First page of pending join requests.
+ * @var int      $join_total    Every pending join request on the space.
  *
  * @package Jetonomy
  */
@@ -40,7 +42,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			<a href="<?php echo esc_url( $edit_url . '&tab=join_requests' ); ?>" class="nav-tab <?php echo esc_attr( 'join_requests' === $active_tab ? 'nav-tab-active' : '' ); ?>">
 				<?php esc_html_e( 'Join Requests', 'jetonomy' ); ?>
 				<?php if ( ! empty( $join_requests ) ) : ?>
-					<span class="count">(<?php echo (int) count( $join_requests ); ?>)</span>
+					<span class="count">(<?php echo (int) $join_total; ?>)</span>
 				<?php endif; ?>
 			</a>
 		<?php endif; ?>
@@ -397,8 +399,8 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<p class="jt-settings-card__title"><?php esc_html_e( 'How access rules work', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc">
 						<?php
-						/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-						echo esc_html( sprintf( __( 'A rule lets people in to this %s. It never locks anyone out on its own - visibility and join policy do that.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+						/* translators: 1: the singular space label, lowercase (e.g. space, group). 2: member label, plural, lowercase (e.g. "members"). */
+						echo esc_html( sprintf( __( 'A rule lets more people in to this %1$s: anyone who matches it gets what it grants, without being added to the %2$s list. Who else gets in is set by the %1$s\'s visibility and join policy. Adding a role, capability, trust level or membership rule to a Public %1$s switches it to Private, so that the rule is what decides who gets in.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\jetonomy_label( 'member', true, true ) ) );
 						?>
 					</p>
 				</div>
@@ -412,7 +414,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<tbody>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Read', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: 1: space label, lowercase (e.g. "space"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Lets people in to read. It does not hold anyone back - on a public %1$s that anyone may join, a signed-in %2$s can still post, because the rule admits and only visibility and join policy restrict.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'space', false, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: %s: member label, plural, lowercase (e.g. "members"). */ echo esc_html( sprintf( __( 'Lets matching people in to read. It takes nothing away from people who already get in another way, such as %s on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ) ); ?></td>
 						</tr>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Participate', 'jetonomy' ); ?></strong></td>
@@ -420,7 +422,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						</tr>
 						<tr>
 							<td data-colname="<?php esc_attr_e( 'Grants', 'jetonomy' ); ?>"><strong><?php esc_html_e( 'Full', 'jetonomy' ); ?></strong></td>
-							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Participate, plus edit other people\'s posts, close and pin %1$s - but only for people whose WordPress role already allows moderation. For an ordinary %2$s this behaves exactly like Participate.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></td>
+							<td data-colname="<?php esc_attr_e( 'What the person can do', 'jetonomy' ); ?>"><?php /* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: member label, lowercase (e.g. "member"). */ echo esc_html( sprintf( __( 'Participate, plus edit other people\'s content, close and pin %1$s - but only for people whose WordPress role already allows moderation. For an ordinary %2$s this behaves exactly like Participate.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'member', false, true ) ) ); ?></td>
 						</tr>
 					</tbody>
 				</table>
@@ -431,16 +433,20 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<strong><?php esc_html_e( 'A rule can never hand out moderation.', 'jetonomy' ); ?></strong>
 					<?php
 					printf(
-						/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: the singular space label the site owner configured, lowercase (e.g. space, group). */
-						esc_html__( 'Editing, closing or pinning other people\'s %1$s comes from the person\'s WordPress role - set those under Jetonomy - Settings - Permissions. Ordinary taking part is different: being admitted to any %2$s, by a rule or by the roster, carries reading, posting, replying, voting and reporting on its own. That holds for roles Jetonomy does not map, such as the ones a course or membership plugin creates for its own members.', 'jetonomy' ), // jt-terms-ok: "members" here is a membership plugin's own word.
+						/* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: the singular space label the site owner configured, lowercase (e.g. space, group). 3: product name shown in wp-admin (default "Jetonomy"). */
+						esc_html__( 'Editing, closing or pinning other people\'s %1$s comes from the person\'s WordPress role - set those under %3$s - Settings - Permissions. Ordinary taking part is different: being admitted to any %2$s, by a rule or by the roster, carries reading, posting, replying, voting and reporting on its own. That holds for roles %3$s does not map, such as the ones a course or membership plugin creates for its own members.', 'jetonomy' ), // jt-terms-ok: "members" here is a membership plugin's own word.
 						esc_html( \Jetonomy\jetonomy_label( 'topic', true, true ) ),
-						esc_html( \Jetonomy\space_label( false, true ) )
+						esc_html( \Jetonomy\space_label( false, true ) ),
+						esc_html( \Jetonomy\Admin\Admin::brand_name() )
 					);
 					?>
 				</p>
 				<p class="description">
 					<strong><?php esc_html_e( 'Membership rules are live.', 'jetonomy' ); ?></strong>
-					<?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'Access begins the moment a plan becomes active and ends when it lapses - there is nothing to sync and nothing to undo by hand. "Sync %s" is only needed if you also want these people listed on the roster.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+					<?php esc_html_e( 'Access begins the moment a plan becomes active and ends when it lapses. There is nothing to sync or undo by hand.', 'jetonomy' ); ?>
+					<?php if ( $jt_has_membership ) : ?>
+						<?php /* translators: %s: member label, plural (e.g. "Members"). */ echo esc_html( sprintf( __( 'The "Sync %s" button on a membership rule below is only for listing those people on the roster as well.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true ) ) ); ?>
+					<?php endif; ?>
 				</p>
 			</div>
 
@@ -551,7 +557,8 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						'variant' => 'compact',
 						'icon'    => 'lock',
 						'title'   => __( 'No access rules', 'jetonomy' ),
-						'body'    => __( 'Default permissions apply. Add a rule to limit access by role, membership, or trust level.', 'jetonomy' ),
+						/* translators: %s: the singular space label, lowercase (e.g. space, group). */
+						'body'    => sprintf( __( 'Only this %s\'s visibility and join policy decide who gets in. Add a rule to let more people in by role, capability, trust level or membership.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					),
 					'cell'      => static function ( $rule, string $key ) use ( $space ): void {
 						// Membership rules store a raw level id; the adapter
@@ -609,7 +616,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			<form id="jetonomy-space-settings-form" data-space-id="<?php echo absint( $space->id ); ?>">
 				<table class="form-table"><!-- jetonomy-audit-table-ok: WP core settings form, not a data list; core stacks form-table th/td below 782px -->
 					<tr>
-						<th scope="row"><label for="ss-who-can-post"><?php esc_html_e( 'Who Can Post', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="ss-who-can-post"><?php esc_html_e( 'Who Can Post', 'jetonomy' ); // jt-terms-ok: "post" is the verb here. ?></label></th>
 						<td>
 							<select id="ss-who-can-post">
 								<option value="" <?php selected( $space_settings['who_can_post'] ?? '', '' ); ?>><?php esc_html_e( 'Anyone who can see it (no restriction)', 'jetonomy' ); ?></option>
@@ -634,7 +641,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<label>
 								<input type="checkbox" id="ss-require-approval" value="1" <?php checked( ! empty( $space_settings['require_approval'] ) ); ?>>
-								<?php esc_html_e( 'New posts require moderator approval before publishing', 'jetonomy' ); ?>
+								<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'New %s require moderator approval before publishing', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?>
 							</label>
 						</td>
 					</tr>
@@ -643,12 +650,12 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<label>
 								<input type="checkbox" id="ss-allow-voting" value="1" <?php checked( ( $space_settings['allow_voting'] ?? '1' ) === '1' ); ?>>
-								<?php /* translators: %s: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'Enable upvote/downvote on posts and %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
+								<?php /* translators: 1: topic label, plural, lowercase (e.g. "topics"). 2: reply label, plural, lowercase (e.g. "replies"). */ echo esc_html( sprintf( __( 'Enable upvote/downvote on %1$s and %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) ) ); ?>
 							</label>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="ss-posts-per-page"><?php esc_html_e( 'Posts Per Page', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="ss-posts-per-page"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( '%s Per Page', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true ) ) ); ?></label></th>
 						<td>
 							<?php
 							// Render empty (not 0) when no per-space override, so the "Default"
@@ -752,7 +759,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<!-- Join Requests Tab -->
 		<div class="jetonomy-tab-content">
 			<?php /* translators: %d: number of pending join requests */ ?>
-		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), (int) count( $join_requests ) ); ?></h2>
+		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), (int) $join_total ); ?></h2>
 			<?php
 			// Same filter as the members table: drop requests whose WP account
 			// has since gone, and let the cell renderer re-read from WP's cache.

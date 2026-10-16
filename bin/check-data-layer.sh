@@ -32,4 +32,14 @@ while read -r file count; do
 		fail=1
 	fi
 done <<< "$current"
+
+# Member-facing templates read categories through the viewer's visibility rule.
+# Category::find() returns hidden categories too, and four templates printed a
+# hidden category's name in their breadcrumb (2.0.3 audit). find_visible() only.
+leaks=$(grep -rn 'Category::find(' templates --include='*.php' 2>/dev/null)
+if [ -n "$leaks" ]; then
+	echo "$leaks"
+	echo "Templates must use Category::find_visible(), not Category::find()."
+	fail=1
+fi
 exit $fail

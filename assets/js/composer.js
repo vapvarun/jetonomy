@@ -791,7 +791,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
         e.preventDefault();
 
         var spaceId = btn.dataset.spaceId;
-        var nonce   = btn.dataset.nonce;
         if (!spaceId) return;
 
         // Restore the server-rendered label on failure: it carries the owner's
@@ -829,15 +828,26 @@ document.addEventListener( 'DOMContentLoaded', () => {
         e.preventDefault();
 
         var spaceId = btn.dataset.spaceId;
-        var nonce   = btn.dataset.nonce;
         if (!spaceId) return;
+
+        // Same optional message the gate page asks for, so a request made from
+        // the header reaches the admins with the member's reason too.
+        var ask = window.jetonomyPrompt
+            ? window.jetonomyPrompt( wp.i18n.__( 'Tell the admins why you want to join (optional).', 'jetonomy' ), {
+                placeholder: wp.i18n.__( 'Optional: why do you want to join?', 'jetonomy' ),
+                confirmLabel: wp.i18n.__( 'Request to join', 'jetonomy' ),
+            } )
+            : Promise.resolve( '' );
+
+        ask.then(function(message) {
+        if (message === null) return; // Cancelled.
 
         btn.disabled = true;
         btn.textContent = wp.i18n.__( 'Requesting…', 'jetonomy' );
 
         window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
-            body: {},
+            body: { message: String( message || '' ).trim() },
         })
         .then(function(res) {
             var data = res.data || {};
@@ -855,6 +865,26 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 (window.bnToast ? window.bnToast(data.message || wp.i18n.__( 'Could not submit request.', 'jetonomy' ), 'error') : null);
             }
         });
+        });
+    });
+
+    // Withdraw a pending join request (gate page).
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.jt-withdraw-request-btn');
+        if (!btn) return;
+        e.preventDefault();
+        var spaceId = btn.dataset.spaceId;
+        if (!spaceId) return;
+        btn.disabled = true;
+        window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/join-requests/mine', { method: 'DELETE' } )
+        .then(function(res) {
+            if (res.ok || 404 === res.status) {
+                window.location.reload();
+                return;
+            }
+            btn.disabled = false;
+            (window.bnToast ? window.bnToast((res.data && res.data.message) || wp.i18n.__( 'Could not withdraw the request. Please try again.', 'jetonomy' ), 'error') : null);
+        });
     });
 
     // Request-to-join form (approval policy — gate block form).
@@ -864,7 +894,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
         e.preventDefault();
 
         var spaceId = form.dataset.spaceId;
-        var nonce   = form.dataset.nonce;
         var message = (form.querySelector('[name="message"]') || {}).value || '';
         if (!spaceId) return;
 
@@ -878,8 +907,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             var data = res.data || {};
             if (data.status === 'pending') {
-                showGateMessage(form, data.message || wp.i18n.__( 'Request submitted. Awaiting approval.', 'jetonomy' ), false);
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = wp.i18n.__( 'Request Sent', 'jetonomy' ); }
+                // Reload into the server's pending state (names the space,
+                // offers Withdraw) instead of stacking a second line on the
+                // old "Request to join" text.
+                window.location.reload();
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {

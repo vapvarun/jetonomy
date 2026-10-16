@@ -160,6 +160,17 @@ class Spaces_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_join_requests' ),
 				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => $this->get_collection_params(),
+			)
+		);
+		// A member takes back their own pending request (only ever their own).
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/join-requests/mine',
+			array(
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => array( $this, 'withdraw_join_request' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 			)
 		);
 		register_rest_route(
@@ -216,6 +227,7 @@ class Spaces_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_invites' ),
 				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'args'                => $this->get_collection_params(),
 			)
 		);
 
@@ -233,9 +245,11 @@ class Spaces_Controller extends Base_Controller {
 			$ns,
 			'/invite/(?P<token>[a-zA-Z0-9]+)',
 			array(
-				'methods'             => \WP_REST_Server::READABLE,
+				// POST: accepting changes membership, so it must never run on a
+				// plain GET (link prefetchers, cross-site image tags).
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'use_invite' ),
-				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 			)
 		);
 
@@ -350,6 +364,10 @@ class Spaces_Controller extends Base_Controller {
 
 		$rule_type  = (string) $request->get_param( 'rule_type' );
 		$rule_value = sanitize_text_field( (string) $request->get_param( 'rule_value' ) );
+		$invalid    = AccessRule::value_error( $rule_type, $rule_value );
+		if ( $invalid ) {
+			return $invalid;
+		}
 
 		$id = AccessRule::create(
 			array(
@@ -669,10 +687,12 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		// Auto-add creator as admin.
-		$add_result = SpaceMember::add( $id, get_current_user_id(), 'admin' );
-		if ( is_wp_error( $add_result ) ) {
-			return $add_result;
+		// Space::create() made the creator its admin. If a join filter vetoed
+		// that, nobody could manage the space: remove it rather than leave an
+		// orphan behind a "failed" answer that invites a duplicate retry.
+		if ( 'admin' !== SpaceMember::get_role( (int) $id, get_current_user_id() ) ) {
+			\Jetonomy\Space_Purge::purge( (int) $id );
+			return new WP_Error( 'jetonomy_create_failed', sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( 'Failed to create %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 500 ) );
 		}
 
 		// The creator follows their space, so they hear about new topics; they
@@ -710,6 +730,16 @@ class Spaces_Controller extends Base_Controller {
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
 			return $this->permission_error();
+		}
+
+		// An archived or locked space is read-only to its own admins: a site
+		// admin's archive, or a purge in progress, must not be edited around.
+		// The one change allowed is unarchiving (status=active, checked by
+		// can_unarchive() below). Site staff who manage spaces can still edit.
+		if ( in_array( (string) ( $space->status ?? 'active' ), array( 'archived', 'locked' ), true )
+			&& ! current_user_can( 'jetonomy_manage_spaces' )
+			&& 'active' !== $request->get_param( 'status' ) ) {
+			return new WP_Error( 'jetonomy_space_readonly', sprintf( /* translators: %s: the singular Space label, lowercase. */ __( 'This %s is archived or locked, so it cannot be edited. Unarchive it first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ), array( 'status' => 409 ) );
 		}
 
 		$data = array();
@@ -1152,8 +1182,12 @@ class Spaces_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		$pagination = $this->get_pagination( $request );
+		$rows       = JoinRequest::list_pending_for_space( $id, $pagination['limit'], $pagination['offset'] );
+		cache_users( array_map( static fn( $r ) => (int) $r->user_id, $rows ) );
+
 		$items = array();
-		foreach ( JoinRequest::list_pending_for_space( $id ) as $row ) {
+		foreach ( $rows as $row ) {
 			$uid     = (int) $row->user_id;
 			$user    = get_userdata( $uid );
 			$items[] = array(
@@ -1167,10 +1201,27 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
+		return $this->paginated_response(
+			$items,
+			array(
+				'total'  => JoinRequest::count_pending_for_space( $id ),
+				'offset' => $pagination['offset'],
+			)
+		);
+	}
+
+	/**
+	 * DELETE /spaces/{id}/join-requests/mine — Withdraw the caller's pending request.
+	 */
+	public function withdraw_join_request( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id = absint( $request->get_param( 'id' ) );
+		if ( ! JoinRequest::withdraw( $id, get_current_user_id() ) ) {
+			return new WP_Error( 'jetonomy_no_pending_request', __( 'You have no pending request here.', 'jetonomy' ), array( 'status' => 404 ) );
+		}
 		return new WP_REST_Response(
 			array(
-				'data' => $items,
-				'meta' => array( 'total' => count( $items ) ),
+				'status'   => 'withdrawn',
+				'space_id' => $id,
 			),
 			200
 		);
@@ -1185,13 +1236,11 @@ class Spaces_Controller extends Base_Controller {
 			return $err;
 		}
 
-		// Mark approved (fires jetonomy_join_request_approved -> Notifier in-app
-		// + email) then admit the requester. Same two-step the admin AJAX
-		// handler and the CLI member journey run.
-		JoinRequest::approve( (int) $jr->id, get_current_user_id() );
-		$added = SpaceMember::add( (int) $space->id, (int) $jr->user_id, 'member' );
-		if ( is_wp_error( $added ) ) {
-			return $added;
+		// Admits the requester, then marks the request approved (which tells
+		// them). Same call as the admin AJAX handler and the CLI journey.
+		$approved = JoinRequest::approve( (int) $jr->id, get_current_user_id() );
+		if ( is_wp_error( $approved ) ) {
+			return $approved;
 		}
 
 		return new WP_REST_Response(
@@ -1214,7 +1263,9 @@ class Spaces_Controller extends Base_Controller {
 			return $err;
 		}
 
-		JoinRequest::deny( (int) $jr->id, get_current_user_id() );
+		if ( ! JoinRequest::deny( (int) $jr->id, get_current_user_id() ) ) {
+			return new WP_Error( 'jetonomy_join_request_processed', __( 'This request has already been handled.', 'jetonomy' ), array( 'status' => 409 ) );
+		}
 
 		return new WP_REST_Response(
 			array(
@@ -1347,32 +1398,21 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		$max_uses   = absint( $request->get_param( 'max_uses' ) );
-		$expires_at = $request->get_param( 'expires_at' );
-
-		if ( $expires_at ) {
-			$expires_at = sanitize_text_field( $expires_at );
+		$expires_at = InviteLink::expiry_utc( $request->get_param( 'expires_at' ) );
+		if ( is_wp_error( $expires_at ) ) {
+			return $expires_at;
 		}
 
-		$token = InviteLink::generate( $id, $user_id, $max_uses, $expires_at ?: null );
+		$token  = InviteLink::generate( $id, $user_id, $max_uses, $expires_at );
+		$invite = '' !== $token ? InviteLink::find_by_token( $token ) : null;
+		if ( ! $invite ) {
+			return new WP_Error( 'jetonomy_invite_failed', __( 'The invite link could not be created. Please try again.', 'jetonomy' ), array( 'status' => 500 ) );
+		}
 
 		// Read the row back so the response carries the same shape GET
-		// /spaces/{id}/invites returns — including the `id` the caller needs to
-		// revoke the link it just made. Returning only the token forced the
-		// front-end to reload the page before its own new link was actionable.
-		$invite = InviteLink::find_by_token( $token );
-
-		return new WP_REST_Response(
-			array_merge(
-				$invite ? $this->prepare_invite( $invite ) : array(),
-				array(
-					'token'      => $token,
-					'invite_url' => $this->invite_url( $token ),
-					'max_uses'   => $max_uses,
-					'expires_at' => $expires_at ?: null,
-				)
-			),
-			201
-		);
+		// /spaces/{id}/invites returns, including the `id` the caller needs to
+		// revoke the link it just made, and the stored (UTC) expiry.
+		return new WP_REST_Response( array_merge( $this->prepare_invite( $invite ), array( 'token' => $token ) ), 201 );
 	}
 
 	/**
@@ -1394,12 +1434,13 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	private function prepare_invite( object $invite ): array {
 		return array(
-			'id'         => (int) $invite->id,
-			'invite_url' => $this->invite_url( (string) $invite->token ),
-			'max_uses'   => (int) $invite->max_uses,
-			'use_count'  => (int) $invite->use_count,
-			'expires_at' => $invite->expires_at,
-			'is_valid'   => InviteLink::is_valid( $invite ),
+			'id'            => (int) $invite->id,
+			'invite_url'    => $this->invite_url( (string) $invite->token ),
+			'max_uses'      => (int) $invite->max_uses,
+			'use_count'     => (int) $invite->use_count,
+			'expires_at'    => $invite->expires_at,
+			'expires_label' => InviteLink::expiry_label( $invite ),
+			'is_valid'      => InviteLink::is_valid( $invite ),
 		);
 	}
 
@@ -1423,14 +1464,15 @@ class Spaces_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		$items = array_map( array( $this, 'prepare_invite' ), InviteLink::list_by_space( $id ) );
+		$pagination = $this->get_pagination( $request );
+		$items      = array_map( array( $this, 'prepare_invite' ), InviteLink::list_by_space( $id, $pagination['limit'], $pagination['offset'] ) );
 
-		return new WP_REST_Response(
+		return $this->paginated_response(
+			$items,
 			array(
-				'data' => $items,
-				'meta' => array( 'total' => count( $items ) ),
-			),
-			200
+				'total'  => InviteLink::count_by_space( $id ),
+				'offset' => $pagination['offset'],
+			)
 		);
 	}
 
@@ -1469,7 +1511,7 @@ class Spaces_Controller extends Base_Controller {
 	}
 
 	/**
-	 * GET /invite/{token} — Validate and use an invite link.
+	 * POST /invite/{token} — Validate and use an invite link.
 	 */
 	public function use_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$token = sanitize_text_field( $request->get_param( 'token' ) );

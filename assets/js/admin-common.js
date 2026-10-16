@@ -31,7 +31,6 @@
 			// %1$s stays a literal %s, filled with the space name at click time.
 			purgeTypeToConfirm:   sprintf( /* translators: 1: the space name the operator must retype. 2: topic label, lowercase. 3: reply label, lowercase. 4: member label, plural lowercase. 5: space label, lowercase. */ __( 'This destroys every %2$s, %3$s and attachment in %1$s, including content written by other %4$s. It cannot be undone. Type the %5$s name to confirm.', 'jetonomy' ), '%s', TOPIC, REPLY, MEMBERS, SPACE ),
 			purgeConfirmLabel:    __( 'Delete permanently', 'jetonomy' ),
-			purgeNameMismatch:    __( 'That name did not match, so nothing was deleted.', 'jetonomy' ),
 			confirmSpam:          __( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
 			confirmTrash:         __( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
 			saving:               __( 'Saving…', 'jetonomy' ),
@@ -686,15 +685,11 @@
 							confirmLabel: self.i18n.purgeConfirmLabel
 						}
 					).then(function(typed) {
-						// null = cancelled. A mismatch cannot reach here (the
-						// button stays disabled), but re-check anyway: the
-						// dialog is convenience, never the control.
-						if (typed === null) return false;
-						if (String(typed).trim() !== title) {
-							self.toast(self.i18n.purgeNameMismatch || self.i18n.error, 'error');
-							return false;
-						}
-						return true;
+						// null = cancelled. The dialog explains a mismatch and
+						// should only resolve on an exact match, but this is the
+						// one check the purge request relies on, so it never
+						// trusts the dialog alone.
+						return typed !== null && String(typed).trim() === title;
 					});
 				} else {
 					var warning = mode === 'purge'
@@ -1322,7 +1317,7 @@
 				var uses = invite.max_uses > 0
 					? (invite.used_count + ' / ' + invite.max_uses)
 					: (invite.used_count + ' / ' + (i18n.inviteUnlimited));
-				var expires = invite.expires_at ? invite.expires_at : (i18n.inviteNever);
+				var expires = invite.expires_at ? (invite.expires_label || invite.expires_at) : (i18n.inviteNever);
 				if (!invite.is_valid) {
 					expires = (i18n.inviteExpired);
 				}
@@ -1414,6 +1409,7 @@
 							max_uses: res.data.max_uses,
 							used_count: 0,
 							expires_at: res.data.expires_at,
+							expires_label: res.data.expires_label,
 							is_valid: true
 						}));
 						copyToClipboard(res.data.invite_url);
@@ -1669,35 +1665,55 @@
 				}
 			});
 
+			// One modal serves Ban, Silence and IP ban; its title and confirm button
+			// follow the chosen type so the operator never confirms the wrong action.
+			var banActions = {
+				global_ban: __( 'Ban User', 'jetonomy' ),
+				silence:    __( 'Silence User', 'jetonomy' ),
+				ip_ban:     __( 'Ban IP address', 'jetonomy' )
+			};
+			var syncBanModal = function() {
+				var type = $('#ban-type').val();
+				var label = banActions[ type ] || banActions.global_ban;
+				$('#ban-modal-title').text(label);
+				$('#jetonomy-confirm-ban').text(label);
+				$('#ban-ip-row').prop('hidden', 'ip_ban' !== type);
+				// An IP ban keeps the address in the reason column, so a typed reason would be dropped.
+				$('#ban-reason-row').prop('hidden', 'ip_ban' === type);
+			};
+			var openBanModal = function($trigger, type, duration, labelFormat) {
+				var username = $trigger.data('username') || $trigger.closest('tr').find('.column-username strong').text();
+				$('#ban-user-id').val($trigger.data('user-id'));
+				$('#ban-user-label').text(sprintf(labelFormat, username));
+				$('#ban-type').val(type);
+				$('#ban-reason').val('');
+				$('#ban-ip').val('');
+				$('#ban-duration').val(duration);
+				syncBanModal();
+				$('#jetonomy-ban-modal').show();
+			};
+			$(document).on('change', '#ban-type', syncBanModal);
+
 			// Ban User - Show Modal
 			$(document).on('click', '.jetonomy-ban-trigger', function(e) {
 				e.preventDefault();
-				var userId = $(this).data('user-id');
-				var username = $(this).data('username');
-
-				$('#ban-user-id').val(userId);
 				/* translators: %s: username of the member being banned. */
-				$('#ban-user-label').text(sprintf(__('Banning: %s', 'jetonomy'), username));
-				$('#ban-type').val('global_ban');
-				$('#ban-reason').val('');
-				$('#ban-duration').val('permanent');
-				$('#jetonomy-ban-modal').show();
+				openBanModal($(this), 'global_ban', 'permanent', __('Banning: %s', 'jetonomy'));
 			});
 
 			// Silence User - Show Modal with Silence preselected
 			$(document).on('click', '.jetonomy-silence-trigger', function(e) {
 				e.preventDefault();
-				var userId = $(this).data('user-id');
-				var $row = $(this).closest('tr');
-				var username = $row.find('.column-username strong').text();
-
-				$('#ban-user-id').val(userId);
 				/* translators: %s: username of the member being silenced. */
-				$('#ban-user-label').text(sprintf(__('Silencing: %s', 'jetonomy'), username));
-				$('#ban-type').val('silence');
-				$('#ban-reason').val('');
-				$('#ban-duration').val('7d');
-				$('#jetonomy-ban-modal').show();
+				openBanModal($(this), 'silence', '7d', __('Silencing: %s', 'jetonomy'));
+			});
+
+			// Ban IP - Show Modal with IP ban preselected
+			$(document).on('click', '.jetonomy-ban-ip-trigger', function(e) {
+				e.preventDefault();
+				/* translators: %s: username of the member whose IP address is being banned. */
+				openBanModal($(this), 'ip_ban', 'permanent', __('Banning an IP address used by: %s', 'jetonomy'));
+				$('#ban-ip').trigger('focus');
 			});
 
 			// Confirm Ban
@@ -1709,15 +1725,21 @@
 				$btn.prop('disabled', true);
 				self.showSpinner($btn);
 
+				var banType = $('#ban-type').val();
 				self.ajax('jetonomy_ban_user', {
 					user_id: userId,
-					type: $('#ban-type').val(),
+					type: banType,
 					reason: $('#ban-reason').val(),
+					ip: $('#ban-ip').val(),
 					duration: $('#ban-duration').val()
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);
 						$('#jetonomy-ban-modal').hide();
+						// An IP ban is not the member's own standing; it is lifted from Moderation > Banned Users.
+						if ('ip_ban' === banType) {
+							return;
+						}
 						// Toggle row action: Ban → Unban
 						var $row = $('tr[data-user-id="' + userId + '"]');
 						$row.find('.ban').html(

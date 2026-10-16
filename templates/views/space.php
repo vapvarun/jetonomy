@@ -56,6 +56,8 @@ $_jt_unmet_membership = $_jt_user_id
 	: array();
 
 if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_jt_is_member && ! $_jt_is_admin && ! $_jt_rule_admits ) {
+	// The gate names what is behind it: the space's own description, briefly.
+	$_jt_gate_about = wp_trim_words( wp_strip_all_tags( (string) ( $space->description ?? '' ) ), 30 );
 	if ( ! $_jt_user_id ) {
 		// Guest - prompt to log in. Only private spaces get here: a hidden
 		// space answers 404 to guests before this template runs
@@ -118,17 +120,19 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 	} elseif ( 'invite' === $_jt_join_policy ) {
 		// Invite-only — cannot self-join. Hidden spaces always land here
 		// (forced above) so the message wording works for both.
+		// A hidden space is never named; a private one says which space it is.
 		$invite_message = $_jt_is_hidden
 			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
 			? sprintf( __( 'This %s is hidden and invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
-			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-			: sprintf( __( 'This %s is invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+			/* translators: %s: space title. */
+			: sprintf( __( '%s is invite-only. You need an invitation to join.', 'jetonomy' ), $space->title );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
-				'icon'    => 'lock',
-				'message' => $invite_message,
-				'tone'    => 'forbidden',
+				'icon'        => 'lock',
+				'message'     => $invite_message,
+				'description' => $_jt_is_hidden ? '' : $_jt_gate_about,
+				'tone'        => 'forbidden',
 			)
 		);
 		return;
@@ -139,9 +143,15 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				array(
-					'icon'    => 'check-circle',
-					/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-					'message' => sprintf( __( 'Your request to join this %s is awaiting approval.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					'icon'        => 'check-circle',
+					/* translators: %s: space title. */
+					'message'     => sprintf( __( 'Your request to join %s is awaiting approval.', 'jetonomy' ), $space->title ),
+					'description' => $_jt_gate_about,
+					'slot'        => static function () use ( $space ) {
+						?>
+						<button type="button" class="jt-btn jt-btn-ghost jt-withdraw-request-btn" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Withdraw request', 'jetonomy' ); ?></button>
+						<?php
+					},
 				)
 			);
 			return;
@@ -150,12 +160,13 @@ if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) && ! $_j
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			array(
-				'icon'    => 'lock',
-				/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
-				'message' => sprintf( __( 'This %s is private. Request to join and an admin will review it.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
-				'tone'    => 'forbidden',
+				'icon'        => 'lock',
+				/* translators: %s: space title. */
+				'message'     => sprintf( __( '%s is private. Request to join and an admin will review it.', 'jetonomy' ), $space->title ),
+				'description' => $_jt_gate_about,
+				'tone'        => 'forbidden',
 				// The form sits inside the gate card, not floating below it.
-				'slot'    => static function () use ( $space, $join_nonce ) {
+				'slot'        => static function () use ( $space, $join_nonce ) {
 					?>
 					<form class="jt-join-request-form jt-space-gate-form" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
 						<textarea class="jt-input" name="message" rows="3" aria-label="<?php esc_attr_e( 'Message to the admins (optional)', 'jetonomy' ); ?>" placeholder="<?php esc_attr_e( 'Optional: why do you want to join?', 'jetonomy' ); ?>"></textarea>
@@ -387,10 +398,29 @@ $crumbs[] = array(
 				// invites a question, a feed invites an update, an ideas space
 				// invites an idea — "No posts yet" reads as generic and dead.
 				$_jt_space_type = (string) ( $space->type ?? 'forum' );
-				if ( 'unanswered' === $sort ) {
+				// Mirror the space-header New Topic gate (Permission_Engine::can,
+				// which folds in membership, admin, trust AND the access rule's
+				// grant LEVEL) instead of the binary $_jt_rule_admits - a Read-only
+				// rule-admit is admitted but cannot post, and the server refuses
+				// it, so it must not get a New Post CTA either.
+				$_jt_can_post = ! $is_restricted && is_user_logged_in() && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id );
+				if ( $is_restricted ) {
+					// No invitation to post where posting is closed.
+					/* translators: %s: plural topic label. */
+					$_jt_no_posts_msg = sprintf( __( 'No %s were posted here.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
+				} elseif ( 'unanswered' === $sort ) {
 					$_jt_no_posts_msg = ( 'qa' === $_jt_space_type )
 						? __( 'Every question has an accepted answer.', 'jetonomy' )
 						: sprintf( /* translators: 1: plural topic label; 2: plural reply label. */ __( 'No %1$s without %2$s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ), \Jetonomy\jetonomy_label( 'reply', true, true ) );
+				} elseif ( ! $_jt_can_post ) {
+					// Not a member yet, a guest, or read-only: same noun, no invitation it cannot act on.
+					$_jt_no_posts_by_type = array(
+						'qa'    => __( 'No questions yet.', 'jetonomy' ),
+						'feed'  => __( 'Nothing posted yet.', 'jetonomy' ),
+						'ideas' => __( 'No ideas yet.', 'jetonomy' ),
+					);
+					/* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */
+					$_jt_no_posts_msg = $_jt_no_posts_by_type[ $_jt_space_type ] ?? sprintf( __( 'No %s yet.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) );
 				} else {
 					switch ( $_jt_space_type ) {
 						case 'qa':
@@ -413,12 +443,6 @@ $crumbs[] = array(
 					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
 				);
 				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? \Jetonomy\compose_label( $_jt_space_type );
-				// Mirror the space-header New Topic gate (Permission_Engine::can,
-				// which folds in membership, admin, trust AND the access rule's
-				// grant LEVEL) instead of the binary $_jt_rule_admits - a Read-only
-				// rule-admit is admitted but cannot post, and the server refuses
-				// it, so it must not get a New Post CTA either.
-				$_jt_can_post = is_user_logged_in() && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'create_posts', (int) $space->id );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					array(

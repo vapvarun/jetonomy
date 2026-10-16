@@ -661,6 +661,23 @@ class Blocks {
 		// enough, or the link 404s. See \Jetonomy\messaging_active().
 		$show_messages = \Jetonomy\messaging_active();
 		$logout_url    = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
+		// Mark the link for the page being viewed: the longest path that
+		// contains the request wins, so Edit Profile beats My Profile, and only
+		// paths are compared, so a profile URL rewritten elsewhere still matches.
+		$jt_path    = static fn( string $url ): string => untrailingslashit( rawurldecode( (string) wp_parse_url( $url, PHP_URL_PATH ) ) );
+		$jt_request = $jt_path( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+		$jt_current = '';
+		$jt_best    = 0;
+		foreach ( compact( 'profile_url', 'notifs_url', 'messages_url', 'my_spaces_url', 'subs_url', 'new_space_url', 'edit_url' ) as $jt_key => $jt_url ) {
+			$jt_link = $jt_path( (string) $jt_url );
+			if ( '' !== $jt_link && strlen( $jt_link ) > $jt_best && str_starts_with( $jt_request . '/', $jt_link . '/' ) ) {
+				$jt_best    = strlen( $jt_link );
+				$jt_current = $jt_key;
+			}
+		}
+		$jt_link_attrs = static fn( string $key ): string => $key === $jt_current
+			? 'class="jt-userpanel-link is-active" aria-current="page"'
+			: 'class="jt-userpanel-link"';
 		$title         = isset( $attributes['title'] ) && '' !== $attributes['title']
 			? (string) $attributes['title']
 			: sprintf( /* translators: %s: user display name */ __( 'Hi, %s', 'jetonomy' ), user_display_name( $user ) );
@@ -686,34 +703,34 @@ class Blocks {
 			</div>
 
 			<nav class="jt-userpanel-links" aria-label="<?php esc_attr_e( 'Account', 'jetonomy' ); ?>">
-				<a href="<?php echo esc_url( $profile_url ); ?>" class="jt-userpanel-link">
+				<a href="<?php echo esc_url( $profile_url ); ?>" <?php echo $jt_link_attrs( 'profile_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
 				</a>
-				<a href="<?php echo esc_url( $notifs_url ); ?>" class="jt-userpanel-link">
+				<a href="<?php echo esc_url( $notifs_url ); ?>" <?php echo $jt_link_attrs( 'notifs_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></span>
 					<?php if ( $unread > 0 ) : ?>
 						<span class="jt-userpanel-badge"><?php echo esc_html( (string) $unread ); ?></span>
 					<?php endif; ?>
 				</a>
 				<?php if ( $show_messages ) : ?>
-					<a href="<?php echo esc_url( $messages_url ); ?>" class="jt-userpanel-link">
+					<a href="<?php echo esc_url( $messages_url ); ?>" <?php echo $jt_link_attrs( 'messages_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 						<span class="jt-userpanel-link-label"><?php esc_html_e( 'Messages', 'jetonomy' ); ?></span>
 					</a>
 				<?php endif; ?>
-				<a href="<?php echo esc_url( $my_spaces_url ); ?>" class="jt-userpanel-link">
+				<a href="<?php echo esc_url( $my_spaces_url ); ?>" <?php echo $jt_link_attrs( 'my_spaces_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 					<?php /* translators: %s: the plural space label the site owner configured (e.g. spaces, groups). */ ?>
 					<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></span>
 				</a>
-				<a href="<?php echo esc_url( $subs_url ); ?>" class="jt-userpanel-link">
+				<a href="<?php echo esc_url( $subs_url ); ?>" <?php echo $jt_link_attrs( 'subs_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Subscriptions', 'jetonomy' ); ?></span>
 				</a>
 				<?php if ( $can_create_space ) : ?>
-					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">
+					<a href="<?php echo esc_url( $new_space_url ); ?>" <?php echo $jt_link_attrs( 'new_space_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 						<?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ ?>
 						<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 					</a>
 				<?php endif; ?>
-				<a href="<?php echo esc_url( $edit_url ); ?>" class="jt-userpanel-link">
+				<a href="<?php echo esc_url( $edit_url ); ?>" <?php echo $jt_link_attrs( 'edit_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed attribute strings. ?>>
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></span>
 				</a>
 				<a href="<?php echo esc_url( $logout_url ); ?>" class="jt-userpanel-link jt-userpanel-link--logout">

@@ -33,6 +33,36 @@ $space_url = \Jetonomy\route_url( 'space', esc_attr( $space->slug ) );
 // front: offer a Join CTA when joining would grant the right (open space,
 // non-member), otherwise a plain permission-denied state.
 $jt_user_id = get_current_user_id();
+
+// An archived or locked space takes no new topics. Same check, same message
+// as the write (Content_Gate), so nobody writes a topic the server refuses.
+$jt_closed = \Jetonomy\Permissions\Content_Gate::space_accepts_content( (int) $space->id );
+if ( is_wp_error( $jt_closed ) ) {
+	\Jetonomy\Template_Loader::partial(
+		'breadcrumb',
+		array(
+			'crumbs' => array(
+				array(
+					'label' => $space->title,
+					'url'   => $space_url,
+				),
+			),
+		)
+	);
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		array(
+			'icon'      => 'lock',
+			'icon_size' => 48,
+			'message'   => $jt_closed->get_error_message(),
+			/* translators: %s: where the link returns to - the configured space label, or a specific space title. */
+			'cta_label' => sprintf( __( 'Back to %s', 'jetonomy' ), $space->title ),
+			'cta_url'   => $space_url,
+		)
+	);
+	return;
+}
+
 if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts', (int) $space->id ) ) {
 	$jt_can_join = ( 'open' === \Jetonomy\Models\Space::effective_join_policy( $space ) )
 		&& ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $jt_user_id );

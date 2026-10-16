@@ -62,6 +62,13 @@ final class Space_Purge {
 	private static string $last_error = '';
 
 	/**
+	 * Why the last purge() stopped early, or '' when it finished.
+	 */
+	public static function last_error(): string {
+		return self::$last_error;
+	}
+
+	/**
 	 * Listen for orphan remediation.
 	 *
 	 * The backfill fires `jetonomy_purge_orphan_space` per id rather than
@@ -342,6 +349,13 @@ final class Space_Purge {
 				'ref'    => 'space',
 				'where'  => "object_type = 'space'",
 			),
+			// An importer re-run must not "find" a purged space by its old id.
+			array(
+				'table'  => table( 'import_map' ),
+				'column' => 'object_id',
+				'ref'    => 'space',
+				'where'  => "object_type = 'space'",
+			),
 
 			// One hop out: rows hanging off the space's topics.
 			array(
@@ -371,7 +385,7 @@ final class Space_Purge {
 		// can never be forgotten for the other, which is the drift this whole
 		// class is built to avoid.
 		foreach ( array( 'post', 'reply' ) as $ref ) {
-			foreach ( array( 'notifications', 'subscriptions', 'activity_log', 'votes', 'flags', 'attachments', 'revisions' ) as $t ) {
+			foreach ( array( 'notifications', 'subscriptions', 'activity_log', 'votes', 'flags', 'attachments', 'revisions', 'import_map' ) as $t ) {
 				// subscriptions is ENUM('space','post') — it cannot hold a reply.
 				if ( 'reply' === $ref && 'subscriptions' === $t ) {
 					continue;

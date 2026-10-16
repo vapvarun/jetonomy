@@ -253,9 +253,12 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// controller gets cursor support for free by reading `offset` alone — several
 		// (e.g. /users/{id}/posts) only ever read `offset`, so a client paginating
 		// with `after` was pinned to page 1 forever. `after` wins when both are sent.
+		// Clamped here for every controller: a route that forgot to declare
+		// limit/offset args must still not take ?limit=0 (or -1, or 5000) as
+		// "the whole table" - the same 1..100 page as get_collection_params().
 		return array(
-			'limit'  => (int) ( $request->get_param( 'limit' ) ?? 20 ),
-			'offset' => $after > 0 ? $after : $offset,
+			'limit'  => min( 100, max( 1, (int) ( $request->get_param( 'limit' ) ?? 20 ) ) ),
+			'offset' => max( 0, $after > 0 ? $after : $offset ),
 			'sort'   => $request->get_param( 'sort' ) ?? 'latest',
 			'after'  => $after,
 			'before' => (int) ( $request->get_param( 'before' ) ?? 0 ),
@@ -609,7 +612,8 @@ abstract class Base_Controller extends WP_REST_Controller {
 				// API clients (mobile app) render initials from author_name — the
 				// same fallback the web templates use. Never the Gravatar mystery-man.
 				'author_avatar'       => $user ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
-				'author_login'        => $user ? $user->user_login : '',
+				// Key kept for API clients; the value is the public handle (nicename), never user_login, which is an email on email-as-username sites.
+				'author_login'        => $user ? \Jetonomy\user_handle( $user ) : '',
 				'trust_level'         => $profile ? (int) $profile->trust_level : 0,
 				'reputation'          => $profile ? (int) $profile->reputation : 0,
 				'profile_url'         => $uid ? \Jetonomy\get_profile_url( $uid ) : '',
@@ -681,6 +685,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			'category_id'      => $space->category_id ? (int) $space->category_id : null,
 			'title'            => $space->title,
 			'slug'             => $space->slug,
+			'url'              => \Jetonomy\route_url( 'space', rawurlencode( (string) $space->slug ) ),
 			'description'      => $space->description ?? '',
 			'type'             => $space->type ?? 'forum',
 			'visibility'       => $space->visibility ?? 'public',
@@ -769,7 +774,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 			// already fetched above — passed through to avoid a second query.
 			$author_name   = \Jetonomy\Author::for_display( $author_id, $post, $author ?: null )['name'] ?: __( 'Anonymous', 'jetonomy' );
 			$author_avatar = $author ? \Jetonomy\Avatar::display_url( $author_id, 64 ) : '';
-			$author_login  = $author ? $author->user_login : '';
+			$author_login  = $author ? \Jetonomy\user_handle( $author ) : '';
 			$trust_level   = $profile ? (int) $profile->trust_level : 0;
 			$reputation    = $profile ? (int) $profile->reputation : 0;
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';

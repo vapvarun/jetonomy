@@ -42,6 +42,8 @@
 		confirm: __( 'Confirm', 'jetonomy' ),
 		submit: __( 'Submit', 'jetonomy' ),
 		ok: __( 'OK', 'jetonomy' ),
+		matchRequired: __( 'Type the name above to confirm.', 'jetonomy' ),
+		matchWrong: __( 'That does not match the name, so nothing was deleted.', 'jetonomy' ),
 	};
 
 	if ( window.jetonomyConfirm && window.jetonomyAlert && window.jetonomyPrompt ) {
@@ -144,16 +146,40 @@
 		//
 		// Comparison is trimmed but case-SENSITIVE and exact: a near-miss must
 		// not pass, or the guard is theatre.
+		//
+		// The button looks disabled until the name matches but stays clickable
+		// (aria-disabled, not disabled): a click on a dead button gave no answer
+		// and left the operator wondering why nothing happened.
+		var blocked = null;
 		if ( input && opts.requireMatch ) {
-			okBtn.disabled = true;
+			var hint = document.createElement( 'p' );
+			hint.className = 'jt-modal-hint';
+			hint.id = 'jt-modal-hint-' + dialogIdCounter;
+			hint.setAttribute( 'aria-live', 'polite' );
+			input.setAttribute( 'aria-describedby', hint.id );
+			box.insertBefore( hint, actions );
+
+			var matches = function () {
+				return input.value.trim() === String( opts.requireMatch );
+			};
+			okBtn.setAttribute( 'aria-disabled', 'true' );
 			input.addEventListener( 'input', function () {
-				okBtn.disabled = input.value.trim() !== String( opts.requireMatch );
+				okBtn.setAttribute( 'aria-disabled', matches() ? 'false' : 'true' );
+				hint.textContent = '';
 			} );
+			blocked = function () {
+				if ( matches() ) {
+					return false;
+				}
+				hint.textContent = '' === input.value.trim() ? labels.matchRequired : labels.matchWrong;
+				input.focus();
+				return true;
+			};
 		}
 
 		overlay.appendChild( box );
 
-		return { overlay: overlay, okBtn: okBtn, cancelBtn: cancelBtn, input: input };
+		return { overlay: overlay, okBtn: okBtn, cancelBtn: cancelBtn, input: input, blocked: blocked };
 	}
 
 	// Selector covering everything reasonably tabbable inside the dialog.
@@ -209,8 +235,12 @@
 					return;
 				}
 				// Prompt: Enter inside a single-line input submits.
-				if ( e.key === 'Enter' && opts.kind === 'prompt' && ! opts.multiline && document.activeElement === dom.input && ! dom.okBtn.disabled ) {
+				if ( e.key === 'Enter' && opts.kind === 'prompt' && ! opts.multiline && document.activeElement === dom.input ) {
 					e.preventDefault();
+					// Enter takes the same gate as a click on the button.
+					if ( dom.blocked && dom.blocked() ) {
+						return;
+					}
 					close( dom.input.value );
 					return;
 				}
@@ -234,6 +264,9 @@
 			}
 
 			dom.okBtn.addEventListener( 'click', function () {
+				if ( dom.blocked && dom.blocked() ) {
+					return;
+				}
 				if ( opts.kind === 'prompt' ) {
 					close( dom.input ? dom.input.value : '' );
 				} else {

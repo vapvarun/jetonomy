@@ -147,6 +147,20 @@ function route_url( string $route, ...$args ): string {
 }
 
 /**
+ * The page number a front-end list is on, from Jetonomy's own `pg` param.
+ *
+ * Not WordPress's `paged`: some sites (and plugins) redirect ?paged=N to
+ * /page/N/, a path no community route has, so Next landed on a 404. `paged`
+ * is still read so links shared before 2.0.2 open the right page.
+ *
+ * @return int 1 or more.
+ */
+function list_page(): int {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page number.
+	return max( 1, absint( wp_unslash( $_GET['pg'] ?? $_GET['paged'] ?? 1 ) ) );
+}
+
+/**
  * Cache-busting version for one asset file: "<version>+<mtime>".
  *
  * A fix shipped under an unchanged plugin version (a hotfix, a QA build, a
@@ -577,6 +591,34 @@ function messaging_active(): bool {
 		$active = array_key_exists( 'messages', (array) apply_filters( 'jetonomy_template_map', array() ) );
 	}
 	return (bool) $active;
+}
+
+/**
+ * Where "Message" on a member's profile leads, or '' for no button.
+ *
+ * Jetonomy Pro's own messaging when it is active; otherwise whichever
+ * messenger the site runs (WPMediaVerse, BuddyNext...) supplies its link
+ * through the filter. Jetonomy renders the button; the messenger owns the
+ * conversation.
+ *
+ * @param \WP_User $member The member being viewed.
+ */
+function member_message_url( \WP_User $member ): string {
+	$url = messaging_active() ? route_url( 'messages' ) . '?to=' . rawurlencode( $member->user_login ) : '';
+
+	/**
+	 * Filter the link behind a profile's Message button ('' hides it).
+	 *
+	 * A messenger that is not Jetonomy's own (Pro messaging stands down while
+	 * WPMediaVerse is active) returns a link that opens a conversation with
+	 * this member.
+	 *
+	 * @since 2.0.2
+	 *
+	 * @param string   $url    Link, or '' for no button.
+	 * @param \WP_User $member The member being viewed.
+	 */
+	return (string) apply_filters( 'jetonomy_member_message_url', $url, $member );
 }
 
 /**
@@ -1015,8 +1057,27 @@ function community_profile_url( int $user_id ): string {
 		return '';
 	}
 
-	// rawurlencode because a login may legally contain a space or non-ASCII.
-	return route_url( 'profile', rawurlencode( $user->user_login ) );
+	// The nicename, not the login: it is WordPress's URL-safe public slug. A login
+	// with "@" (email-as-username), a space or non-ASCII never survives the
+	// rewrite round trip, because WP_MatchesMapRegex re-encodes the match.
+	return route_url( 'profile', $user->user_nicename );
+}
+
+/**
+ * The member a /u/{slug}/ route names, or null.
+ *
+ * Profile links carry the nicename; links shared before 2.0.2 carried the
+ * login, so that still resolves.
+ *
+ * @param string $slug The route slug.
+ * @return \WP_User|null
+ */
+function profile_user( string $slug ): ?\WP_User {
+	if ( '' === $slug ) {
+		return null;
+	}
+	$user = get_user_by( 'slug', $slug ) ?: get_user_by( 'login', rawurldecode( $slug ) );
+	return $user ?: null;
 }
 
 /**
@@ -1074,7 +1135,7 @@ function get_profile_action_url( string $action, int $user_id ): string {
 	if ( '' === $base ) {
 		return '';
 	}
-	$edit = route_url( 'edit-profile', rawurlencode( get_userdata( $user_id )->user_login ) );
+	$edit = route_url( 'edit-profile', get_userdata( $user_id )->user_nicename );
 
 	$urls = array(
 		'profile'               => $base,

@@ -50,14 +50,103 @@ function jetonomyConfirm( message, opts = {} ) {
 	} );
 }
 
+/**
+ * Report dialog: a reason (the moderation queue's own list) plus optional
+ * details. Resolves { reason, description }, or null when cancelled. A report
+ * needs a reason; free text alone used to be filed as "Other", empty included.
+ *
+ * @param {string} message Dialog question.
+ * @param {Object} labels  The store's i18n (state.i18n): reasons and button text.
+ * @return {Promise<{reason:string,description:string}|null>}
+ */
+function jetonomyReport( message, labels ) {
+	return new Promise( ( resolve ) => {
+		const t       = jtModalI18n();
+		const i18n    = labels || {};
+		const reasons = i18n.reportReasons || { spam: 'Spam', offensive: 'Offensive', off_topic: 'Off-topic', harassment: 'Harassment', other: 'Other' };
+		const overlay = document.createElement( 'div' );
+		overlay.className = 'jt-modal-overlay';
+		const box = document.createElement( 'div' );
+		box.className = 'jt-modal-box';
+		box.setAttribute( 'role', 'dialog' );
+		box.setAttribute( 'aria-modal', 'true' );
+		const msg = document.createElement( 'p' );
+		msg.className = 'jt-modal-msg';
+		msg.id = 'jt-report-title';
+		msg.textContent = message;
+		box.setAttribute( 'aria-labelledby', msg.id );
+		box.appendChild( msg );
+
+		const list = document.createElement( 'div' );
+		list.className = 'jt-report-reasons';
+		list.setAttribute( 'role', 'radiogroup' );
+		list.setAttribute( 'aria-labelledby', msg.id );
+		Object.keys( reasons ).forEach( ( key ) => {
+			const label = document.createElement( 'label' );
+			label.className = 'jt-report-reason';
+			const radio = document.createElement( 'input' );
+			radio.type = 'radio';
+			radio.name = 'jt-report-reason';
+			radio.value = key;
+			label.appendChild( radio );
+			label.appendChild( document.createTextNode( ' ' + reasons[ key ] ) );
+			list.appendChild( label );
+		} );
+		box.appendChild( list );
+
+		const details = document.createElement( 'textarea' );
+		details.className = 'jt-modal-input jt-input';
+		details.rows = 3;
+		details.placeholder = i18n.reportDetails || 'Add details (optional)';
+		details.setAttribute( 'aria-label', details.placeholder );
+		box.appendChild( details );
+
+		const hint = document.createElement( 'p' );
+		hint.className = 'jt-modal-hint';
+		hint.setAttribute( 'aria-live', 'polite' );
+		box.appendChild( hint );
+
+		const actions = document.createElement( 'div' );
+		actions.className = 'jt-modal-actions';
+		const cancelBtn = document.createElement( 'button' );
+		cancelBtn.type = 'button';
+		cancelBtn.className = 'jt-btn jt-btn-ghost';
+		cancelBtn.textContent = t.modalCancel || 'Cancel';
+		const okBtn = document.createElement( 'button' );
+		okBtn.type = 'button';
+		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.textContent = i18n.reportSubmit || 'Report';
+		const close = ( value ) => { overlay.remove(); resolve( value ); };
+		cancelBtn.addEventListener( 'click', () => close( null ) );
+		okBtn.addEventListener( 'click', () => {
+			const picked = list.querySelector( 'input:checked' );
+			if ( ! picked ) {
+				hint.textContent = i18n.reportChooseReason || 'Choose a reason.';
+				const first = list.querySelector( 'input' );
+				if ( first ) first.focus();
+				return;
+			}
+			close( { reason: picked.value, description: details.value.trim() } );
+		} );
+		list.addEventListener( 'change', () => { hint.textContent = ''; } );
+		actions.appendChild( cancelBtn );
+		actions.appendChild( okBtn );
+		box.appendChild( actions );
+		overlay.appendChild( box );
+		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) close( null ); } );
+		overlay.addEventListener( 'keydown', ( e ) => { if ( 'Escape' === e.key ) close( null ); } );
+		document.body.appendChild( overlay );
+		const first = list.querySelector( 'input' );
+		if ( first ) first.focus();
+	} );
+}
+
 function jetonomyPrompt( message, options ) {
 	// Back-compat: every caller before 1.9.4 passed a plain placeholder string.
 	const opts = 'string' === typeof options ? { placeholder: options } : ( options || {} );
-	// requireMatch turns this into a type-to-confirm gate: the submit button
-	// stays disabled until the typed text matches exactly. Used for actions
-	// with no undo, so the weight of the confirmation matches the weight of
-	// the action - the same contract admin-common.js already uses for space purge.
-	const requireMatch = opts.requireMatch ? String( opts.requireMatch ) : '';
+	// Type-to-confirm (requireMatch) lives only in the shared window.jetonomyPrompt
+	// (jetonomy-modals.js), which the space purge calls; this copy serves the
+	// free-text prompts (report reasons, split title).
 
 	return new Promise( ( resolve ) => {
 		const t = jtModalI18n();
@@ -69,18 +158,10 @@ function jetonomyPrompt( message, options ) {
 		msg.className = 'jt-modal-msg';
 		msg.textContent = message;
 		box.appendChild( msg );
-		// A single-line field when confirming a name: you are copying a label,
-		// not composing a message, and a 3-row textarea invites newlines that
-		// then fail the exact match.
-		const input = document.createElement( requireMatch ? 'input' : 'textarea' );
+		const input = document.createElement( 'textarea' );
 		input.className = 'jt-modal-input jt-input';
 		input.placeholder = opts.placeholder || '';
-		if ( requireMatch ) {
-			input.type = 'text';
-			input.autocomplete = 'off';
-		} else {
-			input.rows = 3;
-		}
+		input.rows = 3;
 		box.appendChild( input );
 		const actions = document.createElement( 'div' );
 		actions.className = 'jt-modal-actions';
@@ -92,15 +173,6 @@ function jetonomyPrompt( message, options ) {
 		okBtn.className = 'jt-btn jt-btn-fill' + ( opts.danger ? ' jt-btn-danger' : '' );
 		okBtn.textContent = opts.confirmLabel || t.modalSubmit || 'Submit';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( input.value.trim() ); } );
-		if ( requireMatch ) {
-			okBtn.disabled = true;
-			input.addEventListener( 'input', () => {
-				okBtn.disabled = input.value.trim() !== requireMatch;
-			} );
-			input.addEventListener( 'keydown', ( e ) => {
-				if ( 'Enter' === e.key && ! okBtn.disabled ) { okBtn.click(); }
-			} );
-		}
 		actions.appendChild( cancelBtn );
 		actions.appendChild( okBtn );
 		box.appendChild( actions );
@@ -167,7 +239,14 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		// does type-ahead, so adding one would reimplement the browser.
 		const fetchAllSpaces = ( acc = [], offset = 0 ) =>
 			window.jetonomyRest.restFetch( '/spaces?movable_by_me=1&limit=100&offset=' + offset )
-				.then( ( r ) => r.data || {} )
+				// restFetch resolves on errors too; reject so the .catch below
+				// says the list failed instead of "No other spaces available".
+				.then( ( r ) => {
+					if ( ! r || ! r.ok ) {
+						throw new Error( 'spaces' );
+					}
+					return r.data || {};
+				} )
 				.then( ( data ) => {
 					const page = Array.isArray( data.data ) ? data.data : ( Array.isArray( data ) ? data : [] );
 					const all = acc.concat( page );
@@ -684,8 +763,14 @@ function jtModerateJoinRequest( btn, action ) {
         { method: 'POST', body: {} }
     ).then( ( res ) => {
         if ( ! res || ! res.ok ) {
-            if ( row ) row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = false; } );
-            return;
+            const msg = ( res && res.data && res.data.message ) || 'Could not update the request. Please try again.';
+            if ( window.bnToast ) window.bnToast( msg, 'error' );
+            // Decided elsewhere (404/409): the row is stale, so drop it below.
+            const stale = res && ( 404 === res.status || 409 === res.status );
+            if ( ! stale ) {
+                if ( row ) row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = false; } );
+                return;
+            }
         }
         if ( ! row ) return;
         const list = row.parentNode;
@@ -770,9 +855,9 @@ function jtBuildInviteRow( panel, invite ) {
 
     const exp = document.createElement( 'span' );
     if ( invite.expires_at ) {
-        const parsed = new Date( invite.expires_at.replace( ' ', 'T' ) );
-        const shown  = isNaN( parsed.getTime() ) ? invite.expires_at : parsed.toLocaleDateString();
-        exp.textContent = ( d.jtExpiresFormat || 'Expires %s' ).replace( '%s', shown );
+        // expires_label is formatted server-side in the site timezone; the
+        // browser's own timezone would shift the date.
+        exp.textContent = ( d.jtExpiresFormat || 'Expires %s' ).replace( '%s', invite.expires_label || invite.expires_at );
     } else {
         exp.textContent = d.jtNoExpiry || 'No expiry';
     }
@@ -907,6 +992,26 @@ const _n = ( single, plural, n, domain ) => {
     return ( translated === single || translated === plural ) ? ( 1 === n ? single : plural ) : translated;
 };
 
+// Handlers that delete nodes by hand inside the router region (resolve a flag,
+// approve, remove a bookmark) leave the router's virtual DOM pointing at nodes
+// that are gone, and the next soft navigation patches the new page into them:
+// the Trash tab after a Remove rendered its count but an empty list. Once that
+// has happened, the next navigation is a full page load. Removals the router
+// makes itself are discarded right after each navigation (takeRecords).
+let regionDirty = false;
+const regionObserver = 'undefined' !== typeof MutationObserver
+    ? new MutationObserver( ( records ) => {
+        if ( records.some( ( r ) => r.removedNodes.length ) ) regionDirty = true;
+    } )
+    : null;
+const watchRegion = () => {
+    const region = document.querySelector( '[data-wp-router-region="jetonomy/main"]' );
+    if ( ! regionObserver || ! region ) return;
+    regionObserver.disconnect();
+    regionObserver.observe( region, { childList: true, subtree: true } );
+};
+watchRegion();
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -1022,10 +1127,15 @@ const { state, actions } = store( 'jetonomy', {
             // full-load; default is client-side navigation — no allow-list to keep.
             const editorRoute = 's' === seg[ 0 ] && [ 't', 'new' ].includes( seg[ 2 ] );
             if ( editorRoute ) return; // full-page load
+            if ( regionDirty || ( regionObserver && regionObserver.takeRecords().some( ( r ) => r.removedNodes.length ) ) ) return; // full-page load
             event.preventDefault();
             try {
                 const router = yield import( '@wordpress/interactivity-router' );
                 yield router.actions.navigate( href );
+                // The swap was the router's own work, not a hand edit.
+                regionDirty = false;
+                watchRegion();
+                if ( regionObserver ) regionObserver.takeRecords();
 
                 // The iAPI store auto-hydrates swapped content, but classic
                 // content scripts (Load More, link previews) bind on page load
@@ -1451,7 +1561,7 @@ const { state, actions } = store( 'jetonomy', {
             if ( Object.keys( customFields ).length > 0 ) payload.custom_fields = customFields;
 
             const res = yield window.jetonomyRest.restFetch( '/spaces', { method: 'POST', body: payload } );
-            if ( ! res.ok || ! res.data || ! res.data.slug ) {
+            if ( ! res.ok || ! res.data || ! res.data.url ) {
                 if ( errBox ) {
                     errBox.textContent = ( res.data && res.data.message ) || i18n.createSpaceFailed || 'Could not create the space. Please try again.';
                     errBox.hidden = false;
@@ -1459,7 +1569,7 @@ const { state, actions } = store( 'jetonomy', {
                 if ( btn ) btn.disabled = false;
                 return;
             }
-            window.location.href = ( form.dataset.jtCommunityBase || '' ) + '/s/' + res.data.slug + '/';
+            window.location.href = res.data.url;
         },
 
         // ── Edit space (edit-space form; declarative, was space-edit.js) ──
@@ -2384,7 +2494,18 @@ const { state, actions } = store( 'jetonomy', {
                         if ( card ) {
                             card.style.transition = 'opacity 200ms';
                             card.style.opacity = '0';
-                            setTimeout( () => card.remove(), 220 );
+                            setTimeout( () => {
+                                const list = card.parentNode;
+                                card.remove();
+                                // The last one gone: show the page's own empty state.
+                                if ( list && ! list.querySelector( '.jt-row' ) ) {
+                                    const empty = document.querySelector( '.jt-bookmarks-empty' );
+                                    if ( empty ) {
+                                        empty.hidden = false;
+                                        list.remove();
+                                    }
+                                }
+                            }, 220 );
                         }
                     }
                 },
@@ -2410,13 +2531,13 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
-            const reason = yield jetonomyPrompt( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
-            if ( reason === null ) return; // Cancelled
+            const report = yield jetonomyReport( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n );
+            if ( report === null ) return; // Cancelled
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    body: { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason },
+                    body: { object_type: 'post', object_id: parseInt( postId ), reason: report.reason, description: report.description },
                 } );
                 if ( res.ok ) {
                     // Reflect "already reported" state inline so the next click
@@ -2442,13 +2563,13 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
-            const reason = yield jetonomyPrompt( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
-            if ( reason === null ) return;
+            const report = yield jetonomyReport( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n );
+            if ( report === null ) return; // Cancelled
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    body: { object_type: 'reply', object_id: parseInt( replyId ), reason: 'other', description: reason },
+                    body: { object_type: 'reply', object_id: parseInt( replyId ), reason: report.reason, description: report.description },
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
@@ -2467,13 +2588,13 @@ const { state, actions } = store( 'jetonomy', {
             const userId = el.ref.dataset.userId;
             if ( ! userId ) return;
 
-            const reason = yield jetonomyPrompt( state.i18n?.reportUserPrompt || 'Why are you reporting this user?', state.i18n?.reportUserPlaceholder || 'Describe the issue...' );
-            if ( reason === null ) return;
+            const report = yield jetonomyReport( state.i18n?.reportUserPrompt || 'Why are you reporting this user?', state.i18n );
+            if ( report === null ) return; // Cancelled
 
             try {
                 const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    body: { object_type: 'user', object_id: parseInt( userId ), reason: 'other', description: reason },
+                    body: { object_type: 'user', object_id: parseInt( userId ), reason: report.reason, description: report.description },
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );

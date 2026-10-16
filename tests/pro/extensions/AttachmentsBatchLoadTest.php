@@ -28,6 +28,9 @@ class AttachmentsBatchLoadTest extends WP_UnitTestCase {
 		if ( ! class_exists( \Jetonomy\Attachments::class ) ) {
 			$this->markTestSkipped( 'Free attachments renderer not loaded.' );
 		}
+		if ( ! class_exists( \Jetonomy_Pro\Extensions\Attachments\Model::class ) ) {
+			$this->markTestSkipped( 'Jetonomy Pro is not active.' );
+		}
 
 		Schema::create_tables();
 		( new \Jetonomy\Attachments() )->register();

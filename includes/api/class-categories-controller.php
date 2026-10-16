@@ -82,9 +82,12 @@ class Categories_Controller extends Base_Controller {
 		$spaces_by_cat = Space::visible_by_category();
 
 		$node = function ( object $category ) use ( $spaces_by_cat ): array {
-			$item             = $this->prepare_category( $category );
-			$item['spaces']   = $spaces_by_cat[ (int) $category->id ] ?? array();
-			$item['children'] = array();
+			$item           = $this->prepare_category( $category );
+			$item['spaces'] = $spaces_by_cat[ (int) $category->id ] ?? array();
+			// The viewer's count, not the stored one: the stored total includes
+			// private and hidden spaces the viewer cannot see.
+			$item['space_count'] = count( $item['spaces'] );
+			$item['children']    = array();
 			return $item;
 		};
 
@@ -115,6 +118,8 @@ class Categories_Controller extends Base_Controller {
 
 		$data           = $this->prepare_category( $category );
 		$data['spaces'] = Space::list_by_category( $id );
+		// Matches the list above (see list_items()).
+		$data['space_count'] = count( $data['spaces'] );
 
 		return new WP_REST_Response( $data, 200 );
 	}

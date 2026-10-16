@@ -36,7 +36,7 @@ $community_title = \Jetonomy\community_title();
 if ( ! is_user_logged_in() ) :
 	$jt_welcome_heading = (string) apply_filters(
 		'jetonomy_home_welcome_heading',
-		/* translators: %s: community title. */
+		/* translators: %s: the community name or, in wp-admin, the product name. */
 		sprintf( __( 'Welcome to %s', 'jetonomy' ), $community_title )
 	);
 	// No setting writes a tagline; the subheading is changed through this

@@ -112,7 +112,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 						</td>
 						<th class="column-name column-primary"><?php echo $sort_link( 'name', __( 'Name', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
 						<th class="column-slug"><?php echo $sort_link( 'slug', __( 'Slug', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
-						<th class="column-count"><?php echo $sort_link( 'post_count', __( 'Posts', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
+						<th class="column-count"><?php echo $sort_link( 'post_count', \Jetonomy\jetonomy_label( 'topic', true ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
 					</tr>
 				</thead>
 				<tbody id="jetonomy-tags-list">
@@ -135,8 +135,8 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 									'colspan' => 4,
 									'icon'    => 'tag',
 									'title'   => __( 'No tags yet', 'jetonomy' ),
-									/* translators: %s: member label, plural, lowercase (e.g. "members"). */
-									'body'    => sprintf( __( 'Tags help %s find related posts. Create your first one using the form on the left.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ) ),
+									/* translators: 1: member label, plural, lowercase (e.g. "members"). 2: topic label, plural, lowercase (e.g. "topics"). */
+									'body'    => sprintf( __( 'Tags help %1$s find related %2$s. Create your first one using the form on the left.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', true, true ), \Jetonomy\jetonomy_label( 'topic', true, true ) ),
 								)
 							);
 							?>
@@ -157,7 +157,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 									<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 								</td>
 								<td class="column-slug" data-colname="<?php esc_attr_e( 'Slug', 'jetonomy' ); ?>"><code><?php echo esc_html( $tag->slug ); ?></code></td>
-								<td class="column-count" data-colname="<?php esc_attr_e( 'Posts', 'jetonomy' ); ?>">
+								<td class="column-count" data-colname="<?php echo esc_attr( \Jetonomy\jetonomy_label( 'topic', true ) ); ?>">
 									<?php
 									$count = absint( $tag->post_count ?? 0 );
 									if ( $count > 0 ) {
@@ -234,7 +234,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 					<div class="jetonomy-form-field">
 						<label for="edit-tag-name"><?php esc_html_e( 'Name', 'jetonomy' ); ?> <span class="required">*</span></label>
 						<input type="text" id="edit-tag-name" class="regular-text" required>
-						<p class="jetonomy-form-field__hint"><?php esc_html_e( 'Shown on posts and in the tag directory.', 'jetonomy' ); ?></p>
+						<p class="jetonomy-form-field__hint"><?php /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ echo esc_html( sprintf( __( 'Shown on %s and in the tag directory.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', true, true ) ) ); ?></p>
 					</div>
 					<div class="jetonomy-form-field">
 						<label for="edit-tag-slug"><?php esc_html_e( 'Slug', 'jetonomy' ); ?></label>

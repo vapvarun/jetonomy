@@ -29,7 +29,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 		<div class="jetonomy-empty-state">
 			<span class="dashicons dashicons-database-import"></span>
 			<h2><?php esc_html_e( 'No Forum Data Detected', 'jetonomy' ); ?></h2>
-			<p><?php esc_html_e( 'Jetonomy can import from bbPress, wpForo, and Asgaros. Install one of these plugins and create some content, then come back here to import.', 'jetonomy' ); ?></p>
+			<p><?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( '%s can import from bbPress, wpForo, and Asgaros. Install one of these plugins and create some content, then come back here to import.', 'jetonomy' ), \Jetonomy\Admin\Admin::brand_name() ) ); ?></p>
 			<div class="jetonomy-import-sources">
 				<div class="jetonomy-import-source jetonomy-import-source--unavailable" data-source="bbpress">
 					<h3><?php esc_html_e( 'bbPress', 'jetonomy' ); ?></h3>

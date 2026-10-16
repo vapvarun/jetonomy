@@ -170,7 +170,7 @@ class Admin {
 			'jetonomy',
 			$jt_spaces_label,
 			$jt_spaces_label,
-			'jetonomy_manage_settings',
+			'jetonomy_manage_spaces', // The capability every Spaces action checks.
 			'jetonomy-spaces',
 			array( $this, 'render_spaces' )
 		);
@@ -267,7 +267,7 @@ class Admin {
 		}
 
 		// Hidden setup wizard page (no menu item).
-		add_submenu_page( '', __( 'Jetonomy Setup', 'jetonomy' ), '', 'manage_options', 'jetonomy-setup', array( $this, 'render_setup' ) );
+		add_submenu_page( '', sprintf( /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ __( '%s Setup', 'jetonomy' ), self::brand_name() ), '', 'manage_options', 'jetonomy-setup', array( $this, 'render_setup' ) );
 	}
 
 	/**
@@ -285,6 +285,26 @@ class Admin {
 		}
 		include JETONOMY_DIR . 'includes/admin/views/setup-wizard.php';
 		exit;
+	}
+
+	/**
+	 * The product name wp-admin shows in headings, banners and help text.
+	 *
+	 * One source for every "Jetonomy ..." heading, so Pro's White Label (which
+	 * fills `jetonomy_brand_name` from its Brand Name setting) renames them all.
+	 * The admin menu label has its own filter, `jetonomy_admin_menu_label`.
+	 *
+	 * @return string Unescaped.
+	 */
+	public static function brand_name(): string {
+		/**
+		 * Filters the product name shown in wp-admin headings and help text.
+		 *
+		 * @since 2.0.2
+		 *
+		 * @param string $name Product name. Default "Jetonomy".
+		 */
+		return (string) apply_filters( 'jetonomy_brand_name', __( 'Jetonomy', 'jetonomy' ) );
 	}
 
 	/**
@@ -312,13 +332,14 @@ class Admin {
 	/**
 	 * Display name for a stored object type (space, reply, category, ...).
 	 *
-	 * Terminology nouns use the owner's label; other types (post, user) are
-	 * humanized from the key as before.
+	 * Terminology nouns use the owner's label (a stored "post" is the topic
+	 * noun); other types (user) are humanized from the key.
 	 *
 	 * @param string $type Object type key.
 	 * @return string Unescaped.
 	 */
 	public static function object_type_label( string $type ): string {
+		$type = 'post' === $type ? 'topic' : $type; // Stored as "post"; the owner calls it a topic.
 		return isset( \Jetonomy\label_defaults()[ $type ] ) ? \Jetonomy\jetonomy_label( $type ) : ucfirst( str_replace( '_', ' ', $type ) );
 	}
 
@@ -334,7 +355,8 @@ class Admin {
 	public static function action_label( string $code ): string {
 		switch ( $code ) {
 			case 'created_post':
-				return __( 'Created a post', 'jetonomy' );
+				/* translators: %s: topic label, lowercase (e.g. "topic"). */
+				return sprintf( __( 'Started a %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic', false, true ) );
 			case 'created_reply':
 				return __( 'Replied', 'jetonomy' );
 			case 'voted':
@@ -358,6 +380,60 @@ class Admin {
 		return ucwords( str_replace( '_', ' ', $code ) );
 	}
 
+	/**
+	 * Every notification type Settings -> Email lists, with its admin label.
+	 *
+	 * The one list behind the Notification Defaults table, the Email Templates
+	 * editor and both sanitizer allowlists, so a new type added here shows up
+	 * (and saves) everywhere at once. `toggle` is false for emails a member
+	 * cannot switch off (welcome, verification reminder): they get a template
+	 * row but no on/off default. Template defaults live in
+	 * Notifier::get_default_template(). `note` is an optional line shown under
+	 * the template row.
+	 *
+	 * @return array<string, array{label: string, toggle: bool, note: string}>
+	 */
+	public static function email_types(): array {
+		$topic = \Jetonomy\jetonomy_label( 'topic', false, true );
+		$types = array(
+			/* translators: %s: member label, lowercase (e.g. "member"). */
+			'user_welcome'          => array( sprintf( __( 'Welcome: new %s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'member', false, true ) ), false ),
+			/* translators: 1: reply label (e.g. "Reply"). 2: the item replied to, lowercase (e.g. "topic" or "reply"). */
+			'reply_to_post'         => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), $topic ), true ),
+			/* translators: 1: reply label (e.g. "Reply"). 2: the item replied to, lowercase (e.g. "topic" or "reply"). */
+			'reply_to_reply'        => array( sprintf( __( '%1$s to your %2$s', 'jetonomy' ), \Jetonomy\jetonomy_label( 'reply' ), \Jetonomy\jetonomy_label( 'reply', false, true ) ), true ),
+			'mention'               => array( __( 'Mention (@username)', 'jetonomy' ), true ),
+			'accepted_answer'       => array( __( 'Your answer accepted', 'jetonomy' ), true ),
+			'idea_status_changed'   => array( __( 'Your idea roadmap status changed', 'jetonomy' ), true ),
+			/* translators: 1: singular topic label, lowercase. 2: singular space label, lowercase. */
+			'new_post_in_sub'       => array( sprintf( __( 'New %1$s in subscribed %2$s', 'jetonomy' ), $topic, \Jetonomy\space_label( false, true ) ), true ),
+			'badge_earned'          => array( __( 'Badge earned', 'jetonomy' ), true ),
+			/* translators: %s: singular topic label, lowercase. */
+			'vote_on_post'          => array( sprintf( __( 'Vote on your %s', 'jetonomy' ), $topic ), true ),
+			/* translators: %s: singular topic label, lowercase. */
+			'reaction'              => array( sprintf( __( 'Reaction on your %s', 'jetonomy' ), $topic ), true ),
+			'moderation'            => array( __( 'Moderator action on your content', 'jetonomy' ), true ),
+			'flag_resolved'         => array( __( 'Your report was reviewed', 'jetonomy' ), true ),
+			/* translators: %s: the singular space label the site owner configured (e.g. space, group). */
+			'join_request'          => array( sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ), true ),
+			'join_request_result'   => array( __( 'Your join request was answered', 'jetonomy' ), true ),
+			'verification'          => array( __( 'Confirm your email (new accounts)', 'jetonomy' ), false, __( 'The confirmation link is always added below your text. Placeholders here: {site} and {user}.', 'jetonomy' ) ),
+			'verification_reminder' => array( __( 'Verification reminder', 'jetonomy' ), false ),
+		);
+		// Pro private messages go through Notifier too, but only while that extension is live.
+		if ( \Jetonomy\messaging_active() ) {
+			$types['message'] = array( __( 'Private message', 'jetonomy' ), true );
+		}
+		return array_map(
+			static fn( array $t ): array => array(
+				'label'  => $t[0],
+				'toggle' => $t[1],
+				'note'   => $t[2] ?? '',
+			),
+			$types
+		);
+	}
+
 	// ── Settings API ──
 
 	/**
@@ -376,7 +452,7 @@ class Admin {
 		}
 		printf(
 			'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
-			esc_html__( 'Jetonomy:', 'jetonomy' ),
+			esc_html( sprintf( /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ __( '%s:', 'jetonomy' ), self::brand_name() ) ),
 			esc_html__( 'your community cannot be reached while permalinks are set to Plain. Visitors see the homepage instead.', 'jetonomy' ),
 			esc_url( admin_url( 'options-permalink.php' ) ),
 			esc_html__( 'Choose a permalink structure', 'jetonomy' )
@@ -601,29 +677,9 @@ class Admin {
 			return $stored;
 		}
 
-		$allowed_types = array(
-			'user_welcome',
-			'reply_to_post',
-			'reply_to_reply',
-			'mention',
-			'accepted_answer',
-			'new_post_in_sub',
-			'badge_earned',
-			'vote_on_post',
-			// Settings -> Email renders a template row for this type (views/settings.php), and
-			// Notifier looks up an override for whatever type it is sending. A type missing
-			// from this allowlist would have its custom subject/body silently discarded on
-			// save. Keep this list in step with $tmpl_types in the view.
-			'idea_status_changed',
-			'reaction',
-			'moderation',
-			'flag_resolved',
-			'join_request',
-			// A8: editor row for the A10 reminder cron's email. Without this
-			// the form silently strips any verification_reminder override
-			// because the loop below only persists allowlisted keys.
-			'verification_reminder',
-		);
+		// One list for the editor rows and this allowlist (Admin::email_types()),
+		// so a type with a row can never have its override discarded on save.
+		$allowed_types = array_keys( self::email_types() );
 
 		$clean = array();
 		foreach ( $allowed_types as $type ) {
@@ -899,30 +955,11 @@ class Admin {
 			$clean['verification_reminder_hours'] = min( 168, max( 0, absint( $input['verification_reminder_hours'] ?? 24 ) ) );
 
 			// Notification defaults — checkbox values absent when unchecked, so default false if not present.
-			$notif_types = array(
-				'reply_to_post',
-				'reply_to_reply',
-				'mention',
-				'accepted_answer',
-				'new_post_in_sub',
-				'badge_earned',
-				'vote_on_post',
-				'reaction',
-				'moderation',
-				'flag_resolved',
-				'join_request',
-				// Listed so unchecking its admin default is saved instead of reverting to the
-				// seeded true/true.
-				'idea_status_changed',
-				// Pro private messages. Only rendered (and so only submitted)
-				// while that extension is live; otherwise keep what is stored.
-				'message',
-			);
+			// Same single list as the Notification Defaults table. Pro's `message`
+			// is only in it (rendered, and so submitted) while messaging is live.
+			$notif_types = array_keys( array_filter( self::email_types(), static fn( array $t ): bool => $t['toggle'] ) );
 			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : array();
 			foreach ( $notif_types as $nt ) {
-				if ( 'message' === $nt && ! \Jetonomy\messaging_active() ) {
-					continue;
-				}
 				$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : array();
 				$clean['notification_defaults'][ $nt ] = array(
 					'web'   => ! empty( $nt_data['web'] ),
@@ -1119,16 +1156,16 @@ class Admin {
 		}
 		$opted_out = (bool) get_user_meta( $user->ID, 'jetonomy_email_opt_out', true );
 		?>
-		<h2><?php esc_html_e( 'Jetonomy', 'jetonomy' ); ?></h2>
+		<h2><?php echo esc_html( self::brand_name() ); ?></h2>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Community emails', 'jetonomy' ); ?></th>
 				<td>
 					<label for="jetonomy_email_opt_out">
 						<input type="checkbox" name="jetonomy_email_opt_out" id="jetonomy_email_opt_out" value="1" <?php checked( $opted_out ); ?> />
-						<?php esc_html_e( 'Pause all Jetonomy email notifications for this user.', 'jetonomy' ); ?>
+						<?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( 'Pause all %s email notifications for this user.', 'jetonomy' ), self::brand_name() ) ); ?>
 					</label>
-					<p class="description"><?php esc_html_e( 'When enabled, the email verification reminder and other Jetonomy emails are suppressed. Web notifications are unaffected.', 'jetonomy' ); ?></p>
+					<p class="description"><?php /* translators: %s: product name shown in wp-admin (default "Jetonomy"). */ echo esc_html( sprintf( __( 'When enabled, the email verification reminder and other %s emails are suppressed. Web notifications are unaffected.', 'jetonomy' ), self::brand_name() ) ); ?></p>
 				</td>
 			</tr>
 		</table>
@@ -1454,6 +1491,9 @@ class Admin {
 	}
 
 	public function render_spaces(): void {
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'jetonomy' ), 403 );
+		}
 		$action   = sanitize_text_field( $_GET['action'] ?? 'list' );
 		$space_id = absint( $_GET['space_id'] ?? 0 );
 
@@ -1475,6 +1515,7 @@ class Admin {
 			$access_rules   = AccessRule::list_for_space( $space_id );
 			$space_settings = Space::get_settings( $space_id );
 			$join_requests  = JoinRequest::list_pending_for_space( $space_id );
+			$join_total     = JoinRequest::count_pending_for_space( $space_id );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
 		}
@@ -1856,7 +1897,7 @@ class Admin {
 	private function render_post_replies( int $post_id ): void {
 		$post = Post::find( $post_id );
 		if ( ! $post ) {
-			wp_die( esc_html__( 'Post not found.', 'jetonomy' ) );
+			wp_die( esc_html( sprintf( /* translators: %s: the owner-configured noun (space, topic, reply, member or category), sometimes with a count such as "14 spaces". */ __( '%s not found.', 'jetonomy' ), \Jetonomy\jetonomy_label( 'topic' ) ) ) );
 		}
 
 		// Status filter.

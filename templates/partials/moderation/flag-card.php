@@ -53,7 +53,8 @@ $object_url = isset( $context->permalink ) ? (string) $context->permalink : '';
 
 if ( '' === $object_url ) {
 	$jt_flag_context = \Jetonomy\Moderation\Moderation_Service::flag_context( array( $flag ), \Jetonomy\base_url() );
-	$object_url      = $jt_flag_context[ $flag->object_type . ':' . (int) $flag->object_id ]->permalink ?? '';
+	$context         = $jt_flag_context[ $flag->object_type . ':' . (int) $flag->object_id ] ?? null;
+	$object_url      = $context->permalink ?? '';
 }
 ?>
 <div class="jt-mod-flag jt-mod-item"
@@ -74,6 +75,25 @@ if ( '' === $object_url ) {
 			?>
 		</span>
 	</div>
+
+	<?php
+	// What was flagged: the topic title and the start of the flagged text, as
+	// the site-wide queue shows, so a moderator need not open every item.
+	if ( isset( $context->object, $context->topic ) ) :
+		$jt_fc_plain   = (string) ( $context->object->content_plain ?? wp_strip_all_tags( (string) ( $context->object->content ?? '' ) ) );
+		$jt_fc_excerpt = mb_strlen( $jt_fc_plain ) > 140 ? trim( mb_substr( $jt_fc_plain, 0, 140 ) ) . '…' : trim( $jt_fc_plain );
+		?>
+		<p class="jt-mod-flag-title">
+			<?php if ( $object_url ) : ?>
+				<a href="<?php echo esc_url( $object_url ); ?>"><?php echo esc_html( jetonomy_post_title_or_excerpt( $context->topic ) ); ?></a>
+			<?php else : ?>
+				<?php echo esc_html( jetonomy_post_title_or_excerpt( $context->topic ) ); ?>
+			<?php endif; ?>
+		</p>
+		<?php if ( '' !== $jt_fc_excerpt ) : ?>
+			<p class="jt-mod-flag-excerpt"><?php echo esc_html( $jt_fc_excerpt ); ?></p>
+		<?php endif; ?>
+	<?php endif; ?>
 
 	<?php if ( ! empty( $flag->description ) ) : ?>
 		<p class="jt-mod-flag-note">
