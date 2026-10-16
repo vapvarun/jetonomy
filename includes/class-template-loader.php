@@ -1629,7 +1629,8 @@ class Template_Loader {
 	 * a proper 404 HTTP status code rather than 200.
 	 */
 	private static function maybe_set_404( array $data ): void {
-		$slug = $data['slug'] ?? '';
+		$slug    = $data['slug'] ?? '';
+		$missing = false;
 
 		switch ( $data['route'] ) {
 			case 'space':
@@ -1641,7 +1642,7 @@ class Template_Loader {
 					// A hidden space answers 404 to non-members — its existence
 					// is concealed, same as the view templates render. Missing and concealed are indistinguishable.
 					if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
-						status_header( 404 );
+						$missing = true;
 					}
 				}
 				break;
@@ -1656,28 +1657,36 @@ class Template_Loader {
 					// in-template gates run after the theme has begun output, which is why the
 					// status is decided here.
 					if ( ! $post || ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
-						status_header( 404 );
+						$missing = true;
 					}
 				}
 				break;
 
 			case 'profile':
 				if ( $slug && ! \Jetonomy\profile_user( $slug ) ) {
-					status_header( 404 );
+					$missing = true;
 				}
 				break;
 
 			case 'tag':
 				if ( $slug && ! \Jetonomy\Models\Tag::find_by_slug( $slug ) ) {
-					status_header( 404 );
+					$missing = true;
 				}
 				break;
 
 			case 'category':
 				if ( $slug && ! \Jetonomy\Models\Category::find_by_slug( $slug ) ) {
-					status_header( 404 );
+					$missing = true;
 				}
 				break;
+		}
+
+		// The flag gives a concealed page the same title as a missing one; a title
+		// built from the slug, or a neutral label only for real-but-hidden content,
+		// would tell a visitor which is which.
+		if ( $missing ) {
+			status_header( 404 );
+			self::$not_found = true;
 		}
 	}
 
